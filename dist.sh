@@ -4,7 +4,7 @@
 # where NNN is the revision number of the working copy.
 
 REV=`svnversion .`
-DISTNAME=cvs2svn-0.${REV}
+DISTNAME=cvs2svn-r${REV}
 
 if echo ${REV} | grep -q -e '[^0-9]'; then
    echo "Packaging requires a single-revision, pristine working copy."

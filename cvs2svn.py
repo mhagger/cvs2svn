@@ -1696,7 +1696,7 @@ class PersistenceManager(Singleton):
     if len(svn_commit.cvs_revs) and name:
       msg = """An SVNCommit cannot have cvs_revisions *and* a
       corresponding symbolic name ('%s') to fill.""" % name
-      raise self.SVNCommitInternalInconsistencyError(msg)
+      raise SVNCommit.SVNCommitInternalInconsistencyError(msg)
 
     return svn_commit
     

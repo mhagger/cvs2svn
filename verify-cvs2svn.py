@@ -41,6 +41,20 @@ CVS_CMD = 'cvs'
 SVN_CMD = 'svn'
 
 
+# Minimal, incomplete, version of popen2.Popen4 for those platforms
+# for which popen2 does not provide it.
+try:
+  Popen4 = popen2.Popen4
+except AttributeError:
+  class Popen4:
+    def __init__(self, cmd):
+      if type(cmd) != str:
+        cmd = " ".join(cmd)
+      self.fromchild, self.tochild = popen2.popen4(cmd)
+    def wait(self):
+      return self.fromchild.close() or self.tochild.close()
+
+
 class CvsRepos:
   def __init__(self, path):
     """Open the CVS repository at PATH."""
@@ -73,7 +87,7 @@ class CvsRepos:
     else:
       cmd.extend([ '-D', 'now' ])
     cmd.extend([ '-d', dest_path, self.module ])
-    pipe = popen2.Popen4(cmd)
+    pipe = Popen4(cmd)
     output = pipe.fromchild.read()
     status = pipe.wait()
     if status or output:
@@ -103,7 +117,7 @@ class SvnRepos:
     """Export PATH to DEST_PATH."""
     url = string.join([self.url, path], '/')
     cmd = [ SVN_CMD, 'export', '-q', url, dest_path ]
-    pipe = popen2.Popen4(cmd)
+    pipe = Popen4(cmd)
     output = pipe.fromchild.read()
     status = pipe.wait()
     if status or output:
@@ -127,7 +141,7 @@ class SvnRepos:
   def list(self, path):
     """Return a list of all files and directories in PATH."""
     cmd = [ SVN_CMD, 'ls', self.url + '/' + path ]
-    pipe = popen2.Popen4(cmd)
+    pipe = Popen4(cmd)
     lines = pipe.fromchild.readlines()
     status = pipe.wait()
     if status:

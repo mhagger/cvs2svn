@@ -3926,12 +3926,13 @@ class Ctx:
     self.excludes = []
 
 class MimeMapper:
-  "A class that provides mappings from file names to MIME types."
+  """A class that provides mappings from file names to MIME types.
+  Note that we should really be using Python's 'mimetypes' module.
+  See http://cvs2svn.tigris.org/servlets/ReadMsg?list=dev&msgNo=266
+  for more."""
 
   def __init__(self):
     self.mappings = { }
-    self.missing_mappings = { }
-
 
   def set_mime_types_file(self, mime_types_file):
     for line in fileinput.input(mime_types_file):
@@ -3965,13 +3966,7 @@ class MimeMapper:
       extension = basename
     if self.mappings.has_key(extension):
       return self.mappings[extension]
-    self.missing_mappings[extension] = 1
     return None
-
-
-  def print_missing_mappings(self):
-    for ext in self.missing_mappings.keys():
-      sys.stderr.write("%s: no MIME mapping for *.%s\n" % (warning_prefix, ext))
 
 
 def convert(start_pass, end_pass):
@@ -4262,9 +4257,6 @@ def main():
   finally:
     try: os.rmdir(os.path.join(ctx.tmpdir, 'cvs2svn.lock'))
     except: pass
-
-  if ctx.mime_types_file:
-    ctx.mime_mapper.print_missing_mappings()
 
 if __name__ == '__main__':
   main()

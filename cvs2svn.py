@@ -2063,8 +2063,8 @@ def is_trunk_vendor_revision(default_branches_db, cvs_path, cvs_rev):
     received_last_dot = cvs_rev.rindex(".")
     default_branch = val[:val_last_dot]
     received_branch = cvs_rev[:received_last_dot]
-    default_rev_component = val[val_last_dot + 1:]
-    received_rev_component = cvs_rev[received_last_dot + 1:]
+    default_rev_component = int(val[val_last_dot + 1:])
+    received_rev_component = int(cvs_rev[received_last_dot + 1:])
     if (default_branch == received_branch
         and received_rev_component <= default_rev_component):
       return 1

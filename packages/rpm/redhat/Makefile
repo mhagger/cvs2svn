@@ -9,13 +9,13 @@
 SVN_TOP_DIR := $(shell pwd)/../../..
 
 SPECFILE := cvs2svn.spec
+VERSION_FILE := $(SVN_TOP_DIR)/dist.sh
 
 RPMDIR := rpms
 
 NAME := $(shell grep '^Name:' < $(SPECFILE) | sed -e 's/^Name: //')
-VERSION := $(shell grep '^Version:' < $(SPECFILE) | sed -e 's/^Version: //')
-VERSION := 0.$(shell svn st -v $(SPECFILE) | cut -b 10- | ( read one two ; echo $$one ) )
-RELEASE := 1
+VERSION := $(shell grep '^VERSION=' < $(VERSION_FILE) | sed -e 's/^VERSION=//' -e 's/-.*//')
+RELEASE := $(shell svn st -v $(SPECFILE) | cut -b 10- | (read one two ; echo $$one ) )
 
 SOURCE_RPM_DIR := $(HOME)/$(RPMDIR)/sources/$(NAME)-$(VERSION)-$(RELEASE)
 

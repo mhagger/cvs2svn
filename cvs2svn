@@ -375,13 +375,9 @@ def gen_key():
   return key
 
 # ============================================================================
-# Reusable code segment. This code is duplicated in the following locations:
-# - subversion/build/generator/gen_win.py
-# - subversion/subversion/bindings/swig/python/svn/core.py
-# - cvs2svn/cvs2svn
-#  
-# Please keep all copies in sync.
-#
+# This code is copied with a few modifications from:
+#   subversion/subversion/bindings/swig/python/svn/core.py
+
 if sys.platform == "win32":
   _escape_shell_arg_re = re.compile(r'(\\+)(\"|$)')
 

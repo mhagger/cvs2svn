@@ -14,5 +14,6 @@ Also:
    - Read the class documentation in cvs2svn.py.
    - Please put a new test in run-tests.py when you fix a bug.
    - Use 2 spaces between sentences in comments and docstrings.
+     (This helps sentence-motion commands in some editors.)
 
 Enjoy!

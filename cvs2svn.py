@@ -1820,11 +1820,17 @@ class SymbolicNameTracker:
       closing_key = self.br_closing_revs_key
       copyfrom_rev_key = self.br_copyfrom_rev_key
 
+    limit_rev = dumper.revision
+    if jit_new_rev and jit_new_rev[0]:
+      # Because in this case the current rev is complete,
+      # so is a valid copyfrom source
+      limit_rev = limit_rev + 1  
+
     if not val.has_key(copyfrom_rev_key):
       # If not already copied this subdir, calculate its "best rev"
       # and see if it differs from parent's best rev.
       scores = self.score_revisions(val.get(opening_key), val.get(closing_key))
-      rev = self.best_rev(scores, dumper.revision)
+      rev = self.best_rev(scores, limit_rev)
 
       if rev == SVN_INVALID_REVNUM:
         return  # name is a branch, but we're doing a tag, or vice versa
@@ -1835,7 +1841,7 @@ class SymbolicNameTracker:
         else:
           copy_dst = make_path(ctx, dst_path, name, None)
 
-        expected_entries = self.cleanup_entries(rev, dumper.revision,
+        expected_entries = self.cleanup_entries(rev, limit_rev,
                                                 val, is_tag)
         if (rev != parent_rev):
           if jit_new_rev and jit_new_rev[0]:

@@ -29,7 +29,6 @@ import fileinput
 import string
 import getopt
 import stat
-import string
 import md5
 import marshal
 import errno

@@ -708,6 +708,55 @@ def mixed_commit():
     raise svntest.Failure
 
 
+def split_time_branch():
+  "branch some trunk files, and later branch the rest"
+  # See test-data/main-cvsrepos/proj/README.
+  repos, wc, logs = ensure_conversion('main')
+
+  # First change on the branch, creating it
+  rev = 28
+  if not logs[rev].changed_paths == {
+    '/branches/B_SPLIT (from /trunk:23)': 'A',
+    '/branches/B_SPLIT/partial-prune': 'D',
+    '/branches/B_SPLIT/single-files': 'D',
+    '/branches/B_SPLIT/proj/default': 'M',
+    '/branches/B_SPLIT/proj/sub1/default': 'M',
+    '/branches/B_SPLIT/proj/sub1/subsubA/default': 'M',
+    '/branches/B_SPLIT/proj/sub1/subsubB': 'D',
+    '/branches/B_SPLIT/proj/sub2/default': 'M',
+    '/branches/B_SPLIT/proj/sub2/subsubA/default': 'M',
+    }:
+    raise svntest.Failure
+
+  if logs[rev].msg.find('First change on branch B_SPLIT.') != 0:
+    raise svntest.Failure
+
+  # A trunk commit for the file which was not branched
+  rev = 29
+  if not logs[rev].changed_paths == {
+    '/trunk/proj/sub1/subsubB/default': 'M',
+    }:
+    raise svntest.Failure
+
+  if logs[rev].msg.find('A trunk change to sub1/subsubB/default.  '
+      'This was committed about an') != 0:
+    raise svntest.Failure
+
+  # Add the file not already branched to the branch, with modification:w
+  rev = 30
+  if not logs[rev].changed_paths == {
+    '/branches/B_SPLIT/proj/sub1/subsubB (from /trunk/proj/sub1/subsubB:29)':
+      'A',
+    '/branches/B_SPLIT/proj/sub1/subsubB/default': 'M',
+    '/branches/B_SPLIT/proj/sub3/default': 'M',
+    }:
+    raise svntest.Failure
+
+  if logs[rev].msg.find('This change affects sub3/default and '
+      'sub1/subsubB/default, on branch') != 0:
+    raise svntest.Failure
+
+
 def bogus_tag():
   "conversion of invalid symbolic names"
   ret, ign, ign = ensure_conversion('bogus-tag')
@@ -1211,6 +1260,7 @@ test_list = [ None,
               XFail(mixed_time_tag),
               XFail(mixed_time_branch_with_added_file),
               mixed_commit,
+              split_time_branch,
               bogus_tag,
               overlapping_branch,
               tolerate_corruption,

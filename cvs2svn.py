@@ -760,7 +760,6 @@ class CollectData(rcsparse.Sink):
     # it is forced to be treated as a tag by the user.
     self.forced_tag_branches = { }
 
-    self.cvs_rev_db = CVSRevisionDatabase(DB_OPEN_CREATE)
     self.tags_db = TagsDatabase(DB_OPEN_CREATE)
 
     # See set_fname() for initializations of other variables.
@@ -1163,7 +1162,6 @@ class CollectData(rcsparse.Sink):
                         self.taglist.get(revision, []),
                         self.branchlist.get(revision, []))
     self.revs.write(str(c_rev) + "\n")
-    self.cvs_rev_db.log_revision(c_rev)
 
     if not self.metadata_db.has_key(digest):
       self.metadata_db[digest] = (author, log)
@@ -3694,18 +3692,29 @@ def pass3(ctx):
   Log().write(LOG_QUIET, "Done")
 
 def pass4(ctx):
-  """If we're not doing a trunk-only conversion, iterate through sorted revs
-  and generate the LastSymbolicNameDatabase, which contains the last
-  CVSRevision that is a source for each tag or branch.
+  """Iterate through sorted revs, storing them in a database.
+  If we're not doing a trunk-only conversion, generate the
+  LastSymbolicNameDatabase, which contains the last CVSRevision
+  that is a source for each tag or branch.
   """
-  if ctx.trunk_only:
-    return
-
-  Log().write(LOG_QUIET, "Finding last CVS revisions for all symbolic names...")
-  last_sym_name_db = LastSymbolicNameDatabase(DB_OPEN_CREATE)
+  Log().write(LOG_QUIET,
+      "Copying CVS revision data from flat file to database...")
+  cvs_revs_db = CVSRevisionDatabase(DB_OPEN_CREATE)
+  if not ctx.trunk_only:
+    Log().write(LOG_QUIET,
+        "and finding last CVS revisions for all symbolic names...")
+    last_sym_name_db = LastSymbolicNameDatabase(DB_OPEN_CREATE)
+  else:
+    # This is to avoid testing ctx.trunk_only every time around the loop
+    class DummyLSNDB:
+      def noop(*args): pass
+      log_revision = noop
+      create_database = noop
+    last_sym_name_db = DummyLSNDB()
 
   for line in fileinput.FileInput(DATAFILE + SORTED_REVS_SUFFIX):
     c_rev = CVSRevision(ctx, line[:-1])
+    cvs_revs_db.log_revision(c_rev)
     last_sym_name_db.log_revision(c_rev)
 
   last_sym_name_db.create_database()

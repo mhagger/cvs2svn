@@ -579,10 +579,11 @@ class CVSRevision:
     If there is one argument in ARGS, it is a string, in the format of
     a line from a revs file.  Do *not* include a trailing newline.
 
-    If there are multiple ARGS, there must be 15 of them,
+    If there are multiple ARGS, there must be 16 of them,
     comprising a parsed revs line:
        timestamp       -->  (int) date stamp for this cvs revision
        digest          -->  (string) digest of author+logmsg
+       prev_timestamp  -->  (int) date stamp for the previous cvs revision
        op              -->  (char) OP_ADD, OP_CHANGE, or OP_DELETE
        prev_rev        -->  (string or None) previous CVS rev, e.g., "1.2"
        rev             -->  (string) this CVS rev, e.g., "1.3"
@@ -600,46 +601,50 @@ class CVSRevision:
     The two forms of initialization are equivalent."""
 
     self._ctx = ctx
-    if len(args) == 15:
-      (self.timestamp, self.digest, self.op, self.prev_rev, self.rev, 
-       self.next_rev, self.file_in_attic, self.file_executable,
-       self.file_size, self.deltatext_code, self.fname, 
+    if len(args) == 16:
+      (self.timestamp, self.digest, self.prev_timestamp, self.op,
+       self.prev_rev, self.rev, self.next_rev, self.file_in_attic,
+       self.file_executable, self.file_size, self.deltatext_code, self.fname, 
        self.mode, self.branch_name, self.tags, self.branches) = args
     elif len(args) == 1:
-      data = args[0].split(' ', 13)
+      data = args[0].split(' ', 14)
       self.timestamp = int(data[0], 16)
       self.digest = data[1]
-      self.op = data[2]
-      self.prev_rev = data[3]
+      if data[2] == "*":
+        self.prev_timestamp = None
+      else:
+        self.prev_timestamp = int(data[2])
+      self.op = data[3]
+      self.prev_rev = data[4]
       if self.prev_rev == "*":
         self.prev_rev = None
-      self.rev = data[4]
-      self.next_rev = data[5]
+      self.rev = data[5]
+      self.next_rev = data[6]
       if self.next_rev == "*":
         self.next_rev = None
-      self.file_in_attic = data[6]
+      self.file_in_attic = data[7]
       if self.file_in_attic == "*":
         self.file_in_attic = None
-      self.file_executable = data[7]
+      self.file_executable = data[8]
       if self.file_executable == "*":
         self.file_executable = None
-      self.file_size = int(data[8])
-      self.deltatext_code = data[9]
-      self.mode = data[10]
+      self.file_size = int(data[9])
+      self.deltatext_code = data[10]
+      self.mode = data[11]
       if self.mode == "*":
         self.mode = None
-      self.branch_name = data[11]
+      self.branch_name = data[12]
       if self.branch_name == "*":
         self.branch_name = None
-      ntags = int(data[12])
-      tags = data[13].split(' ', ntags + 1)
+      ntags = int(data[13])
+      tags = data[14].split(' ', ntags + 1)
       nbranches = int(tags[ntags])
       branches = tags[ntags + 1].split(' ', nbranches)
       self.fname = branches[nbranches]
       self.tags = tags[:ntags]
       self.branches = branches[:nbranches]
     else:
-      raise TypeError, 'CVSRevision() takes 2 or 12 arguments (%d given)' % \
+      raise TypeError, 'CVSRevision() takes 2 or 16 arguments (%d given)' % \
           (len(args) + 1)
     if ctx is not None:
       self.cvs_path = relative_name(self._ctx.cvsroot, self.fname[:-2])
@@ -657,8 +662,8 @@ class CVSRevision:
     return revnum + "/" + self.fname
 
   def __str__(self):
-    return ('%08lx %s %s %s %s %s %s %s %d %s %s %s %d%s%s %d%s%s %s' % (
-      self.timestamp, self.digest, self.op,
+    return ('%08lx %s %s %s %s %s %s %s %s %d %s %s %s %d%s%s %d%s%s %s' % (
+      self.timestamp, self.digest, self.prev_timestamp or "*", self.op,
       (self.prev_rev or "*"), self.rev, (self.next_rev or "*"),
       (self.file_in_attic or "*"), (self.file_executable or "*"),
       self.file_size,
@@ -1168,10 +1173,20 @@ class CollectData(cvs2svn_rcsparse.Sink):
           # the previous revision occurred later than the current revision.
           # shove the previous revision back in time (and any before it that
           # may need to shift).
+
+          # We sync backwards and not forwards because any given CVS
+          # Revision has only one previous revision.  However, a CVS
+          # Revision can *be* a previous revision for many other
+          # revisions (e.g., a revision that is the source of multiple
+          # branches).  This becomes relevant when we do the secondary
+          # synchronization in pass 2--we can make certain that we
+          # don't resync a revision earlier than it's previous
+          # revision, but it would be non-trivial to make sure that we
+          # don't resync revision R *after* any revisions that have R
+          # as a previous revision.
           while t_p >= t_c:
             self.rev_data[prev][0] = t_c - 1	# new timestamp
             self.rev_data[prev][2] = t_p	# old timestamp
-
             msg =  "RESYNC: '%s' (%s): old time='%s' delta=%ds" \
                   % (relative_name(self.cvsroot, self.fname),
                      prev, time.ctime(t_p), t_c - 1 - t_p)
@@ -1212,6 +1227,10 @@ class CollectData(cvs2svn_rcsparse.Sink):
       if self.default_branches_db.has_key(rel_name):
         del self.default_branches_db[rel_name]
 
+    # Get the timestamp of the previous revision
+    prev_rev = self.prev_rev.get(revision, None)
+    prev_timestamp, ign, ign = self.rev_data.get(prev_rev, [None, None, None])
+
     # How to tell if a CVSRevision is an add, a change, or a deletion:
     #
     # It's a delete if RCS state is 'dead'
@@ -1235,7 +1254,7 @@ class CollectData(cvs2svn_rcsparse.Sink):
     else:
       deltatext_code = DELTATEXT_EMPTY
 
-    c_rev = CVSRevision(Ctx(), timestamp, digest, op,
+    c_rev = CVSRevision(Ctx(), timestamp, digest, prev_timestamp, op,
                         self.prev_rev[revision], revision,
                         self.next_rev.get(revision),
                         self.file_in_attic, self.file_executable,
@@ -3684,6 +3703,11 @@ def pass2():
     for record in resync[c_rev.digest]:
       if record[0] <= c_rev.timestamp <= record[1]:
         # bingo! remap the time on this (record[2] is the new time).
+
+
+        # print out warning in pass2 if the resync timestamp is <
+        # prev_rev timestamp
+
         msg = "RESYNC: '%s' (%s): old time='%s' delta=%ds" \
               % (relative_name(Ctx().cvsroot, c_rev.fname),
                  c_rev.rev, time.ctime(c_rev.timestamp),

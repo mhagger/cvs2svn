@@ -145,13 +145,8 @@ class Log:
     #   "1993-06-18 00:46:07 -0500 (Fri, 18 Jun 1993)"
     #
     # and time.mktime() converts from localtime, it all works out very
-    # happily.  Subversion 1.0.8 and 1.1.0-rc4 has a bug that gives us
-    # "(no date)" strings for revisions with no changed paths when using
-    # "svn log -v".  Work around that bug by setting date to None here.
-    if len(date) == 0 or (date[0] == '(' and date[-1] == ')'):
-      self.date = None
-    else:
-      self.date = time.mktime(svn_strptime(date[0:19]))
+    # happily.
+    self.date = time.mktime(svn_strptime(date[0:19]))
 
     # The changed paths will be accumulated later, as log data is read.
     # Keys here are paths such as '/trunk/foo/bar', values are letter

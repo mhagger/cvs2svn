@@ -1264,7 +1264,7 @@ class SymbolingsLogger:
     self.closings.close()
     for line in fileinput.FileInput(SYMBOL_CLOSINGS_TMP):
       (name, rev_key) = line.rstrip().split(" ", 1)
-      svn_revnum = PersistenceManager().get_svn_revnum(rev_key)
+      svn_revnum = self._ctx._persistence_manager.get_svn_revnum(rev_key)
 
       c_rev = cvs_revs_db.get_revision(rev_key)
       self._log(name, svn_revnum, c_rev.svn_path, CLOSING)
@@ -1607,7 +1607,7 @@ class SymbolicNameFillingGuide:
     return not len(self.things)
 
 
-class PersistenceManager(Singleton):
+class PersistenceManager:
   """The PersistenceManager allows us to effectively store SVNCommits
   to disk and retrieve them later using only their subversion revision
   number as the key.  It also returns the subversion revision number
@@ -1617,15 +1617,15 @@ class PersistenceManager(Singleton):
   on-disk databases so that SVNCommits can be retrieved on-demand.
 
   CTX is the usual annoying semi-global ctx object."""
-  def init(self, ctx):
+  def __init__(self, ctx):
     self._ctx = ctx
     self.svn2cvs_db = Database(SVN_REVNUMS_TO_CVS_REVS, DB_OPEN_CREATE)
-    Cleanup().register(SVN_REVNUMS_TO_CVS_REVS, pass8, self.cleanup)
+    Cleanup().register(SVN_REVNUMS_TO_CVS_REVS, pass8)
     self.cvs2svn_db = Database(CVS_REVS_TO_SVN_REVNUMS, DB_OPEN_CREATE)
-    Cleanup().register(CVS_REVS_TO_SVN_REVNUMS, pass8, self.cleanup)
+    Cleanup().register(CVS_REVS_TO_SVN_REVNUMS, pass8)
     self.svn_commit_names_dates = Database(SVN_COMMIT_NAMES_DATES,
                                            DB_OPEN_CREATE)
-    Cleanup().register(SVN_COMMIT_NAMES_DATES, pass8, self.cleanup)
+    Cleanup().register(SVN_COMMIT_NAMES_DATES, pass8)
     self.svn_commit_metadata = Database(METADATA_DB, DB_OPEN_READ)
     self.cvs_revisions = CVSRevisionDatabase(DB_OPEN_READ, ctx)
     ###PERF kff Elsewhere there are comments about sucking the tags db
@@ -1633,7 +1633,7 @@ class PersistenceManager(Singleton):
     if not ctx.trunk_only:
       self.tags_db = TagsDatabase(DB_OPEN_READ)
       self.motivating_revnums = Database(MOTIVATING_REVNUMS, DB_OPEN_CREATE)
-      Cleanup().register(MOTIVATING_REVNUMS, pass8, self.cleanup)
+      Cleanup().register(MOTIVATING_REVNUMS, pass8)
     
     # "branch_name" -> svn_revnum in which branch was last filled.
     # This is used by CVSCommit._pre_commit, to prevent creating a fill
@@ -1721,17 +1721,6 @@ class PersistenceManager(Singleton):
     """Store MOTIVATING_REVNUM as the value of SVN_REVNUM"""
     self.motivating_revnums[str(svn_revnum)] = str(motivating_revnum)
 
-  def cleanup(self):
-    """This should be called before the program exits to make sure
-    that our databases get properly closed."""
-    # Python 2.2 doesn't properly close these databases when using
-    # bsddb3, so we set them to None so they'll be gc'ed.
-    self.svn2cvs_db = None
-    self.cvs2svn_db = None
-    self.svn_commit_names_dates = None
-    if not self._ctx.trunk_only:
-      self.motivating_revnums = None
-      
 
 class CVSCommit:
   """Each instance of this class contains a number of CVS Revisions
@@ -1875,7 +1864,7 @@ class CVSCommit:
       # Different '.' counts indicate that c_rev is now on a different
       # line of development (and may need a fill)
       if c_rev.rev.count('.') != c_rev.prev_rev.count('.'):
-        pm = PersistenceManager()
+        pm = self._ctx._persistence_manager
         svn_revnum = pm.get_svn_revnum(c_rev.unique_key(c_rev.prev_rev))
         # It should be the case that when we have a file F that
         # is added on branch B (thus, F on trunk is in state
@@ -1955,7 +1944,7 @@ class CVSCommit:
                              % (c_rev.filename(),
                                 c_rev.branches[0]))
         author, log_msg = \
-                PersistenceManager(self._ctx).svn_commit_metadata[c_rev.digest]
+            self._ctx._persistence_manager.svn_commit_metadata[c_rev.digest]
         if not log_msg == cvs_generated_msg:
           add_revision(c_rev)
       else:
@@ -2177,16 +2166,16 @@ class SVNCommit:
   def flush(self):
     Log().write(LOG_NORMAL, "Creating Subversion commit %d (%s)" 
                 % (self.revnum, self._description))
-    PersistenceManager(self._ctx).set_cvs_revs(self.revnum, self.cvs_revs)
+    self._ctx._persistence_manager.set_cvs_revs(self.revnum, self.cvs_revs)
 
     if self.motivating_revnum is not None:
-      PersistenceManager(self._ctx).set_motivating_revnum(self.revnum,
+      self._ctx._persistence_manager.set_motivating_revnum(self.revnum,
                                                 self.motivating_revnum)
 
     # If we're not a primary commit, then store our date and/or our
     # symbolic_name
     if not self._is_primary_commit():
-      PersistenceManager(self._ctx).set_name_and_date(self.revnum,
+      self._ctx._persistence_manager.set_name_and_date(self.revnum,
                                                 self.symbolic_name,
                                                 self._max_date)
 
@@ -2278,6 +2267,7 @@ class CVSRevisionAggregator:
     self.latest_primary_svn_commit = None
 
     self._ctx._symbolings_logger = SymbolingsLogger(ctx)
+    self._ctx._persistence_manager = PersistenceManager(ctx)
 
 
   def process_revision(self, c_rev):
@@ -3790,6 +3780,7 @@ def pass7(ctx):
 def pass8(ctx):
   svncounter = 2 # Repository initialization is 1.
   repos = SVNRepositoryMirror(ctx)
+  persistence_manager = PersistenceManager(ctx)
 
   if (ctx.target):
     repos.add_delegate(RepositoryDelegate(ctx))
@@ -3798,10 +3789,10 @@ def pass8(ctx):
     repos.add_delegate(DumpfileDelegate(ctx))
     Log().write(LOG_QUIET, "Starting Subversion Dumpfile.")
 
-  repos.add_delegate(StdoutDelegate(PersistenceManager(ctx).total_revs() + 1))
+  repos.add_delegate(StdoutDelegate(persistence_manager.total_revs() + 1))
 
   while(1):
-    svn_commit = PersistenceManager(ctx).get_svn_commit(svncounter)
+    svn_commit = persistence_manager.get_svn_commit(svncounter)
     if not svn_commit:
       break
     repos.commit(svn_commit)
@@ -4164,10 +4155,6 @@ def main():
   finally:
     try: os.rmdir('cvs2svn.lock')
     except: pass
-
-  # We need to call PersistenceManager's cleanup function before exit
-  # to make sure that the databases are closed properly.
-  PersistenceManager(ctx).cleanup()
 
   if ctx.mime_types_file:
     ctx.mime_mapper.print_missing_mappings()

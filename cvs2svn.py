@@ -2950,9 +2950,23 @@ def main():
     ctx.mime_mapper = MimeMapper()
     ctx.mime_mapper.set_mime_types_file(ctx.mime_types_file)
 
-  ctx.default_branches_db = Database(DEFAULT_BRANCHES_DB, 'n')
-
-  convert(ctx, start_pass=start_pass)
+  # Lock the current directory for temporary files.
+  try:
+    os.mkdir('cvs2svn.lock')
+  except OSError:
+    sys.stderr.write(error_prefix +
+        ": cvs2svn writes temporary files to the current working directory.\n"
+        "  The directory 'cvs2svn.lock' exists, indicating that another\n"
+        "  cvs2svn process is currently using the current directory for its\n"
+        "  temporary workspace. If you are certain that is not the case,\n"
+        "  remove the 'cvs2svn.lock' directory.\n")
+    sys.exit(1)
+  try:
+    ctx.default_branches_db = Database(DEFAULT_BRANCHES_DB, 'n')
+    convert(ctx, start_pass=start_pass)
+  finally:
+    try: os.rmdir('cvs2svn.lock')
+    except: pass
 
   if ctx.mime_types_file:
     ctx.mime_mapper.print_missing_mappings()

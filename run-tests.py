@@ -1709,6 +1709,22 @@ def keywords():
     raise svntest.Failure
 
 
+def ignore():
+  "test setting of svn:ignore property among others"
+  repos, wc, logs = ensure_conversion('cvsignore')
+  wc_tree = svntest.tree.build_tree_from_wc(wc, 1)
+  topdir_props = props_for_path(wc_tree, 'trunk/proj')
+  subdir_props = props_for_path(wc_tree, '/trunk/proj/subdir')
+
+  if topdir_props['svn:ignore'] != \
+     '*.idx\n*.aux\n*.dvi\n*.log\nfoo\nbar\nbaz\nqux\n':
+    raise svntest.Failure
+
+  if subdir_props['svn:ignore'] != \
+     '*.idx\n*.aux\n*.dvi\n*.log\nfoo\nbar\nbaz\nqux\n':
+    raise svntest.Failure
+
+
 #----------------------------------------------------------------------
 
 ########################################################################
@@ -1758,6 +1774,7 @@ test_list = [ None,
               symbolic_name_filling_guide,
               eol_mime,
               keywords,
+              ignore,
              ]
 
 if __name__ == '__main__':

@@ -653,8 +653,8 @@ def mixed_time_tag():
     '/tags/T_MIXED (from /trunk:19)': 'A',
     '/tags/T_MIXED/partial-prune': 'D',
     '/tags/T_MIXED/single-files': 'D',
-    '/tags/T_MIXED/proj/sub2/subsubA/default (from /trunk:16)': 'R',
-    '/tags/T_MIXED/proj/sub3/default (from /trunk:18)': 'R',
+    '/tags/T_MIXED/proj/sub2/subsubA (from /trunk/proj/sub2/subsubA:16)': 'R',
+    '/tags/T_MIXED/proj/sub3 (from /trunk/proj/sub3:18)': 'R',
     }:
     raise svntest.Failure
 
@@ -681,8 +681,9 @@ def mixed_time_branch_with_added_file():
     '/branches/B_MIXED (from /trunk:20)': 'A',
     '/branches/B_MIXED/partial-prune': 'D',
     '/branches/B_MIXED/single-files': 'D',
-    '/branches/B_MIXED/proj/sub2/subsubA/default (from /trunk:16)': 'R',
-    '/branches/B_MIXED/proj/sub3/default (from /trunk:18)': 'R',
+    '/branches/B_MIXED/proj/sub2/subsubA (from /trunk/proj/sub2/subsubA:16)':
+      'R',
+    '/branches/B_MIXED/proj/sub3 (from /trunk/proj/sub3:18)': 'R',
     '/branches/B_MIXED/proj/sub2/branch_B_MIXED_only': 'A',
     }:
     raise svntest.Failure
@@ -1257,8 +1258,8 @@ test_list = [ None,
               simple_commits,
               simple_tags,
               simple_branch_commits,
-              XFail(mixed_time_tag),
-              XFail(mixed_time_branch_with_added_file),
+              mixed_time_tag,
+              mixed_time_branch_with_added_file,
               mixed_commit,
               split_time_branch,
               bogus_tag,

@@ -1052,7 +1052,7 @@ class Dumper:
       self.init_dumpfile()
     elif ctx.create_repos:
       print "creating repos '%s'" % (self.target)
-      run_command('%s create %s' % (self.svnadmin, self.target))
+      run_command('%s create --bdb-txn-nosync %s' % (self.svnadmin, self.target))
 
     
   def init_dumpfile(self):
@@ -1672,13 +1672,13 @@ class SymbolicNameTracker:
 
        [(REV1 SCORE1), (REV2 SCORE2), ...]
 
-    where REV2 > REV1 and all scores are > 0.  OPENINGS and CLOSINGS
-    are the values of self.tags_opening_revs_key and
-    self.tags_closing_revs_key, or self.br_opening_revs_key and
-    self.br_closing_revs_key, from some file or directory node, or
-    else None.
+    where REV2 > REV1.  OPENINGS and CLOSINGS are the values of
+    self.tags_opening_revs_key and self.tags_closing_revs_key, or
+    self.br_opening_revs_key and self.br_closing_revs_key, from some file or
+    directory node, or else None.
 
-    Each score indicates that copying the corresponding revision of
+    Each score indicates that copying the corresponding revision (or any
+    following revision up to the next revision in the list) of
     the object in question would yield that many correct paths at or
     underneath the object.  There may be other paths underneath it
     which are not correct and need to be deleted or recopied; those
@@ -1698,43 +1698,54 @@ class SymbolicNameTracker:
     scores = []
     opening_score_accum = 0
     for i in range(len(openings)):
-      pair = openings[i]
-      opening_score_accum = opening_score_accum + pair[1]
-      scores.append((pair[0], opening_score_accum))
+      opening_rev, opening_score = openings[i]
+      opening_score_accum = opening_score_accum + opening_score
+      scores.append((opening_rev, opening_score_accum))
     min = 0
     for i in range(len(closings)):
-      closing_rev   = closings[i][0]
-      closing_score = closings[i][1]
+      closing_rev, closing_score = closings[i]
+      done_exact_rev = None
+      insert_index = None
+      insert_score = None
       for j in range(min, len(scores)):
-        opening_pair = scores[j]
-        if closing_rev <= opening_pair[0]:
-          scores[j] = (opening_pair[0], opening_pair[1] - closing_score)
+        score_rev, score = scores[j]
+        if score_rev >= closing_rev:
+          if not done_exact_rev:
+            if score_rev > closing_rev:
+              insert_index = j
+              insert_score = scores[j-1][1] - closing_score
+            done_exact_rev = 1
+          scores[j] = (score_rev, score - closing_score)
         else:
           min = j + 1
+      if not done_exact_rev:
+        scores.append((closing_rev,scores[-1][1] - closing_score))
+      if insert_index is not None:
+        scores.insert(insert_index, (closing_rev, insert_score))
     return scores
   
-  def best_rev(self, scores, limit_rev):
+  def best_rev(self, scores, prefer_rev, limit_rev):
     """Return the revision older than LIMIT_REV with the highest score
-    from SCORES, a list returned by score_revisions()."""
+    from SCORES, a list returned by score_revisions(). When the maximum score
+    is shared by multiple revisions, the oldest revision is selected, unless
+    PREFER_REV is one of the possibilities, in which case, it is selected."""
     max_score = 0
+    prefer_rev_score = -1
     rev = SVN_INVALID_REVNUM
     for pair in scores:
       if pair[1] > max_score and pair[0] < limit_rev:
         max_score = pair[1]
         rev = pair[0]
+      if pair[0] <= prefer_rev:
+        prefer_rev_score = pair[1]
+    if prefer_rev_score == max_score:
+      rev = prefer_rev
     return rev
 
   def is_best_rev(self, scores, rev, limit_rev):
     """Return true if REV has the highest score for revisions older than
     LIMIT_REV from SCORES, a list returned by score_revisions()."""
-    max_score = 0
-    rev_score = 0
-    for pair in scores:
-      if pair[1] > max_score and pair[0] < limit_rev:
-        max_score = pair[1]
-      if pair[0] <= rev:
-        rev_score = pair[1]
-    return rev_score == max_score
+    return self.best_rev(scores, rev, limit_rev) == rev
 
   # Helper for copy_descend().
   def cleanup_entries(self, rev, limit_rev, entries, is_tag):
@@ -1804,7 +1815,7 @@ class SymbolicNameTracker:
       # If not already copied this subdir, calculate its "best rev"
       # and see if it differs from parent's best rev.
       scores = self.score_revisions(val.get(opening_key), val.get(closing_key))
-      rev = self.best_rev(scores, limit_rev)
+      rev = self.best_rev(scores, parent_rev, limit_rev)
 
       if rev == SVN_INVALID_REVNUM:
         return  # name is a branch, but we're doing a tag, or vice versa

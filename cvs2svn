@@ -3260,6 +3260,11 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
       if c_rev.file_executable:
         prop_contents = prop_contents + 'K 14\nsvn:executable\nV 1\n*\n'
 
+      # Set the svn:keywords property, if appropriate.  See issue #2.
+      if c_rev.mode is None or c_rev.mode == 'kv' or c_rev.mode == 'kvl':
+        prop_contents = prop_contents + \
+                        'K 12\nsvn:keywords\nV 14\nauthor date id\n'
+
       # Set mime-type and eol.  These two properties are intertwingled;
       # follow the conditionals carefully.  See also issue #39.
       mime_type = None

@@ -291,6 +291,12 @@ directories) before running your conversion.
   </tr>
 
   <tr>
+    <td align=right><tt>--profile</tt></td>
+    <td>Dump Python <a href="http://docs.python.org/lib/module-hotshot.html"
+        >Hotshot</a> profiling data to the file <tt>cvs2svn.hotshot</tt>.
+  </tr>
+
+  <tr>
     <td align=right><tt>--svnadmin=PATH</tt></td>
     <td>If the svnadmin program is not on your $PATH you should
       specify the absolute path to <tt>svnadmin</tt> with this
@@ -301,7 +307,7 @@ directories) before running your conversion.
     <td align=right><tt>--trunk-only</tt></td>
     <td>Convert only the main line of development from the CVS
       repository (commonly referred to in Subversion parlance as
-      "trunk", ignoring all tags and branches.</td>
+      "trunk"), ignoring all tags and branches.</td>
   </tr>
 
   <tr>
@@ -333,7 +339,7 @@ directories) before running your conversion.
     <td align=right><tt>--dump-only</tt></td>
     <td>Convert the CVS repository to a Subversion dumpfile instead of
       a Subversion repository (useful for importing a CVS Repository
-      into an existing Subversion repository.</td>
+      into an existing Subversion repository).</td>
   </tr>
 
   <tr>
@@ -386,13 +392,32 @@ directories) before running your conversion.
   <tr>
     <td align=right><tt>--mime-types=FILE</tt></td>
     <td>Specify an apache-style mime.types file for setting
-      svn:mime-type properties on files in the Subversion
+      <tt>svn:mime-type</tt> properties on files in the Subversion
       repository.</td>
   </tr>
 
   <tr>
-    <td align=right><tt>--set-eol-style</tt></td>
-    <td>Automatically set svn:eol-style=native for text files</td>
+    <td align=right><tt>--no-default-eol</tt></td>
+    <td>Suppress cvs2svn's usual eol behavior, which is to set the
+    <tt>svn:eol-style</tt> property to "native" on all files that CVS
+    would do end-of-line translation for, namely, all files not marked
+    with the <tt>kb</tt> expansion mode.  With the
+    <tt>--no-default-eol</tt> option, cvs2svn will only set
+    svn:eol-style according to the <tt>--eol-from-mime-type</tt>
+    option (see below).</td>
+  </tr>
+
+  <tr>
+    <td align=right><tt>--eol-from-mime-type</tt></td>
+    <td><p>Set the <tt>svn:eol-style</tt> property to "native" on all
+    files whose mime type begins with "text/", except those marked
+    with the <tt>kb</tt> expansion mode.  This option is meaningless
+    unless <tt>--mime-types</tt> is also passed.  There is
+    also little point passing <tt>--eol-from-mime-type</tt> without
+    passing <tt>--no-default-eol</tt> too, since without
+    <tt>--no-default-eol</tt>, all non-<tt>kb</tt> files will get an
+    <tt>svn:eol-style</tt> of "native" anyway, whether or not their
+    mime type says to.</td> 
   </tr>
 
 </table>

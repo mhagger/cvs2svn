@@ -3590,6 +3590,7 @@ class RepositoryDelegate(DumpfileDelegate):
       sys.exit('%s: svnadmin load failed with exit status: %s\n'
                'and the following output:\n'
                '%s' % (error_prefix, exit_status, error_output))
+    os.remove(self.dumpfile_path)
 
 
 class StdoutDelegate(SVNRepositoryMirrorDelegate):

@@ -1826,6 +1826,13 @@ def vendor_branch_delete_add():
   # This will error if the bug is present
   repos, wc, logs = ensure_conversion('vendor-branch-delete-add')
 
+def resync_pass2_ordering_bug():
+  "reveal a bug that resyncs timestamps in pass2"
+  repos, wc, logs = ensure_conversion('resync-pass2-ordering')
+  # If the conversion succeeds, then we're okay.  We could check the
+  # actual revisions, too, but the main thing is to know that the
+  # conversion doesn't fail.
+
 
 #----------------------------------------------------------------------
 
@@ -1882,6 +1889,7 @@ test_list = [ None,
               XFail(revision_reorder_bug),
               exclude,
               vendor_branch_delete_add,
+              XFail(resync_pass2_ordering_bug),
              ]
 
 if __name__ == '__main__':

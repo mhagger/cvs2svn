@@ -1076,9 +1076,9 @@ class CollectData(rcsparse.Sink):
             self.rev_data[prev][0] = t_c - 1	# new timestamp
             self.rev_data[prev][2] = t_p	# old timestamp
 
-            msg =  "RESYNC: '%s' (%s) : old time='%s' new time='%s'" \
+            msg =  "RESYNC: '%s' (%s): old time='%s' delta=%ds" \
                   % (relative_name(self.cvsroot, self.fname),
-                     prev, time.ctime(t_p), time.ctime(t_c - 1))
+                     prev, time.ctime(t_p), t_c - 1 - t_p)
             Log().write(LOG_VERBOSE, msg)
 
             current = prev
@@ -3644,9 +3644,10 @@ def pass2(ctx):
     for record in resync[c_rev.digest]:
       if record[0] <= c_rev.timestamp <= record[1]:
         # bingo! remap the time on this (record[2] is the new time).
-        msg = "RESYNC: '%s' (%s) : old time='%s' new time='%s'" \
+        msg = "RESYNC: '%s' (%s): old time='%s' delta=%ds" \
               % (relative_name(ctx.cvsroot, c_rev.fname),
-                 c_rev.rev, time.ctime(c_rev.timestamp), time.ctime(record[2]))
+                 c_rev.rev, time.ctime(c_rev.timestamp),
+                 record[2] - c_rev.timestamp)
         Log().write(LOG_VERBOSE, msg)
 
         # adjust the time range. we want the COMMIT_THRESHOLD from the

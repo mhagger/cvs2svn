@@ -19,6 +19,9 @@ Prefix: /usr
 Convert CVS repositories to Subversion repositories.
 
 %changelog
+* Mon Jan 17 2005 David Summers <david@summersoft.fay.ar.us> 1.2.0-1
+- Fix installation of man page.
+
 * Tue Aug 03 2004 David Summers <david@summersoft.fay.ar.us> 1.1.0-rc2-1309
 - Now includes www documentation.
 
@@ -64,10 +67,8 @@ mkdir -p $RPM_BUILD_ROOT/usr/bin
 
 make install DESTDIR=$RPM_BUILD_ROOT
 
-# Check for man page (in future?)
-if [ -f $RPM_BUILD_DIR/cvs2svn-%{version}/cvs2svn.1 ]; then
-   cp $RPM_BUILD_DIR/cvs2svn-%{version}/cvs2svn.1 $RPM_BUILD_ROOT/usr/share/man/man1
-fi
+mkdir -p $RPM_BUILD_ROOT/usr/share/man/man1
+cp $RPM_BUILD_DIR/cvs2svn-%{version}/cvs2svn.1 $RPM_BUILD_ROOT/usr/share/man/man1
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -79,3 +80,4 @@ rm -rf $RPM_BUILD_ROOT
 %doc www
 /usr/bin/*
 /usr/lib/python2.2/site-packages/*
+/usr/share/man/man1/*

@@ -1,12 +1,6 @@
                        How cvs2svn.py Works
                        ====================
 
-IMPORTANT NOTE: cvs2svn.py has recently been redesigned.  This design
-document is still being re-written to correspond to the current
-design.  Meanwhile, redesign.txt contains the notes that guided the
-redesign.
-Current status: Document is current upto and including pass 3.
-
 A cvs2svn run consists of eight passes.  Each pass saves the data it
 produces to files on disk, so that a) we don't hold huge amounts of
 state in memory, and b) the conversion process is resumable.
@@ -193,6 +187,122 @@ seeing that the log digest is different, and reseparates the commits.
 Pass 4:
 =======
 
+This pass has two primary objectives:
+
+1. Create a database that maps CVSRevision unique keys to the actual
+   CVSRevision string from the revs file (whose format is described
+   above in pass 1).  This results in a database containing one
+   key-value pair for each line in the revs file.  This gives us the
+   ability to pass around these smaller keys instead of whole CVS
+   revisions (which look like lines from the s-revs file).  See the
+   CVSRevision class for more details on what the unique key is.
+
+2. Find and create a database containing the last CVS revision that is
+   a source (also referred to as an "opening" revision) for all
+   symbolic names.  This will result in a database containing
+   key-value pairs whose key is the unique key for a CVSRevision, and
+   whose value is a list of symbolic names for which that CVSRevision
+   is the last "opening."
+
+   The format for this file is:
+
+       cvs-symname-last-revs.db:
+            Key                      Value    
+            CVS Revision             array of Symbolic names
+     
+       For example:
+ 
+            1.38/foo/bar/baz.txt,v  --> [TAG11, BRANCH38]
+            1.93/foo/qux/bat.c,v    --> [TAG39]
+            1.4/foo/bar/baz.txt,v   --> [BRANCH48, BRANCH37]
+            1.18/foo/bar/quux.txt,v --> [TAG320, TAG1178]
+   
+Pass 5:
+=======
+
+Primarily, this pass gathers CVS revisions into Subversion revisions
+(a Subversion revision is comprised of one or more CVS revisions)
+before we actually begin committing (where "committing" means either
+to a Subversion repository or to a dump file).
+
+This pass does the following:
+
+1. Creates a database file to map Subversion Revision numbers to their
+   corresponding CVS Revisions (cvs2svn-svn-revnums-to-cvs-revs.db).
+   Creates another database file to map CVS Revisions to their
+   Subversion Revision numbers (cvs2svn-cvs-revs-to-svn-revnums.db).
+
+2. When a file is copied to a symbolic name in cvs2svn, there are a
+   range of valid Subversion revisions that we can copy the file from.
+   The first valid Subversion revision number for a symbolic name is
+   called the "Opening", and the first *invalid* Subversion revision
+   number encountered after the "Opening" is called the "Closing".  In
+   this pass, the SymbolingsLogger class writes one line to
+   cvs2svn-symbolic-names.txt per CVS file, per symbolic name, per
+   opening or closing. 
+
+3. For each CVS Revision in s-revs, we write out a line (for each
+   symbolic name that it opens) to a symbolic-names.txt file if it is
+   the first possible source revision (the "opening" revision) for a
+   copy to create a branch or tag, or if it is the last possible
+   revision (the "closing" revision) for a copy to create a branch or
+   tag.  Not every opening will have a corresponding closing.
+
+   The format of each line is:
+
+       SYMBOLIC_NAME SVN_REVNUM TYPE CVSRevision.unique_key()
+       
+   For example:
+
+       MY_TAG1 234 O 1.3/foo/bar/baz.txt,v
+       MY_BRANCH3 245 O 1.13/foo/qux/bat.c,v
+       MY_TAG1 241 C 1.4/foo/bar/baz.txt,v
+       MY_BRANCH_BLAH 201 O 1.1/foo/bar/quux.txt,v
+
+   Here is what the columns mean:
+
+   SYMBOLIC_NAME: The name of the branch or tag that starts or ends
+                  in this CVS Revision (There can be multiples per
+                  CVS rev)
+
+   SVN_REVNUM: The Subversion revision number that is the opening or
+               closing for this SYMBOLIC_NAME.
+
+   TYPE: "O" for Openings and "C" for Closings.
+
+   CVSRevision.unique_key(): This is a unique key that identifies
+                             the CVSRevision where this opening or
+                             closing happened.
+                               
+   See SymbolingsLogger for more details.
+
+Pass 6:
+=======
+
+This pass merely sorts cvs2svn-symbolic-names.txt into
+cvs2svn-symbolic-names-s.txt.  This orders the file first by symbolic
+name, and second by Subversion revision number, thus grouping all
+openings and closings for each symbolic name together.
+
+Pass 7:
+=======
+
+This pass iterates through all the lines in
+cvs2svn-symbolic-names-s.txt, writing out a database file mapping
+SYMBOLIC_NAME to the file offset in SYMBOL_OPENINGS_CLOSINGS_SORTED
+where SYMBOLIC_NAME is first encountered.  This will allow us to seek
+to the various offsets in the file and sequentially read only the
+openings and closings that we need.
+
+Pass 8:
+=======
+
+The 8th pass will has very little "thinking" to do--it basically going
+opens the svn-nums-to-cvs-revs.db and, starting with Subversion
+revision 2 (revision 1 creates /trunk, /tags, and /branches), and
+sequentially play out all the commits to either a Subversion
+repository or to a dumpfile.
+
 In --dump-only mode, the result of this pass is a Subversion
 repository dumpfile (suitable for input to 'svnadmin load').  The
 dumpfile is the data's last static stage: last chance to check over
@@ -228,11 +338,17 @@ same is true for a branch, with the added constraint that for any
 particular file, the branch must have been created before the first
 commit on the branch.
 
-Answering the second question first: cvs2svn creates tags and branches
-as late as possible.  For branches, this is "just in time" creation --
-the moment it sees the first commit on a branch, it snaps the entire
-branch into existence (or as much of it as possible), and then outputs
-the branch commit.
+Answering the second question first: cvs2svn creates tags as soon as
+possible and branches as late as possible.
+
+Tags are created as soon cvs2svn encounters the last CVS Revision that
+is a source for that tag.  The whole tag is created in one Subversion
+commit.
+
+For branches, this is "just in time" creation -- the moment it sees
+the first commit on a branch, it snaps the entire branch into
+existence (or as much of it as possible), and then outputs the branch
+commit.
 
 The reason we say "as much of it as possible" is that it's possible to
 have a branch where some files have branch commits occuring earlier
@@ -243,12 +359,6 @@ can, that is, as much of it as there are source revisions available to
 copy, and leave the rest for later.  "Later" might mean just until
 other branch commits come in, or else during a cleanup stage that
 happens at the end of this pass (about which more later).
-
-All tags are created during the cleanup stage, after all regular
-commits have been made.  That way there's no need to worry whether all
-the required revisions for a particular tag have been committed yet,
-and it's as correct as any other time, since no one can tell when a
-tag was made anyway.
 
 How just-in-time branch creation works:
 
@@ -276,83 +386,14 @@ which in turn map entry names to other unique keys:
 
 (The leaf nodes -- files -- are also dictionaries, for simplicity.)
 
-Both file and directory dictionaries store metadata under special keys
-whose names start with "/", so they can always be distinguished from
-entries (for example, search for "/mutable", "/openings", or
-"/closings" in cvs2svn.py).
-
 The repository mirror allows cvs2svn to remember what paths exist in
-what revisions.  For each file path in a revision, it records what
-tags and branches can sprout from that revision; when the file
-changes, these attributes do not propagate to the new revision, since
-the symbolic name isn't based on that revision.
+what revisions.
 
-The symbolic name trees are all stored in one db file, as paths, where
-the first element in each path is the symbolic name, and the rest is
-the full Subversion path to the file in question.  For example, if the
-Subversion revision 7 is the root of branch 'Rel_1', this fact would
-be recorded under the path
+For details on how branches and tags are created, please see the
+docstring the SymbolingsLogger class (and its methods).
 
-   '/Rel_1/myproj/trunk/lib/driver.c'
-
-(the exact layout is dependent on the make_path() function in
-cvs2svn.py, which may change).
-
-   root_key  ==> { 'Rel_1' : 'a', ... }
-   'a'       ==> { 'myproj' : 'b', ... }
-   'b'       ==> { 'trunk : 'c', ... }
-   'c'       ==> { 'lib' : 'd', ... }
-   'd'       ==> { 'driver.c' : 'e', ... }
-   'e'       ==> { }
-
-The source revision is stored in the leaf node, and also in all the
-parent nodes, in the manner described in the class documentation for
-'SymbolicNameTracker'.  The special entries "/opening" and "/closing"
-are not shown above, for brevity, but their values are where the
-revision ranges are stored (that is, the ranges indicating when this
-path could be copied from to produce the tag or branch in question).
-
-When it's time to create a branch or tag, cvs2svn.py walks the
-appropriate symbolic name tree, calculating the ideal source revision
-for each subpath (see 'SymbolicNameTracker' for the exact algorithm)
-and emitting the minimum number of copies to the dumpfile and to the
-skeleton repository mirror.  As it goes, it marks each path as
-emitted, so that we don't redo the same copies during the cleanup
-phase later on.
-
-At this point, the entire branch is done except for:
-
-   1. Any source revisions that haven't yet been committed (this is
-      a rare situation, but anyway such revisions will automatically
-      be handled later by the same algorithm, invoked either due to
-      another commit on the branch, or in the cleanup phase), and
-
-   2. Files that were accidentally copied onto the branch as part of a
-      subtree, but which don't actually belong on the branch, because
-      the corresponding CVS file doesn't contain that tag.
-
-We handle (2) by doing tree diffs between the newly copied tree in the
-skeleton repository mirror, and the corresponding portion of the
-symbolic name tree.  If the skeleton mirror has a file that's not in
-the symbolic name tree, we emit a delete to the dumpfile and remove
-that path from the skeleton mirror.
-
-The cleanup phase happens after all regular changes have been
-processed.  Just loop over the "root directory" of the symbolic name
-tree, running the same creation algorithm on each name (we'll have to
-distinguish between branches and tags, probably through a special
-entry on the directory object), skipping parts of the tree already
-marked as copied.
-
-
-Pass 5:
-=======
-
-Unless we're skipping cleanup, remove all our intermediate files.
-
-
-
-
+-*- -*- -*- -*- -*- -*- -*- -*- -*- -*- -*- -*- -*- -*- -*- -*- -*- -*-
+- -*- -*- -*- -*- -*- -*- -*- -*- -*- -*- -*- -*- -*- -*- -*- -*- -*- -
 -*- -*- -*- -*- -*- -*- -*- -*- -*- -*- -*- -*- -*- -*- -*- -*- -*- -*-
 
 Some older notes and ideas about cvs2svn.  Not deleted, because they

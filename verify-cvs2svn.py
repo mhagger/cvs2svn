@@ -207,16 +207,19 @@ def tree_compare(base1, base2, run_diff, rel_path=''):
   return ok
 
 
-def _verify_contents_single(cvsrepos, svnrepos, kind, label, run_diff,
-                            tempdir):
+def verify_contents_single(cvsrepos, svnrepos, kind, label, ctx):
   """Verify that the contents of the HEAD revision of all directories
   and files in the Subversion repository SVNREPOS matches the ones in
   the CVS repository CVSREPOS.  KIND can be either 'trunk', 'tag' or
-  'branch'.  If KIND is either 'tag' och 'branch', LABEL is used to
-  specify the name of the tag och branch.  Use TEMPDIR for all
-  temporary files."""
-  cvs_export_dir = os.path.join(tempdir, 'cvs-export')
-  svn_export_dir = os.path.join(tempdir, 'svn-export')
+  'branch'.  If KIND is either 'tag' or 'branch', LABEL is used to
+  specify the name of the tag or branch.  CTX has the attributes:
+  CTX.tempdir: specifying the directory for all temporary files.
+  CTX.skip_cleanup: if true, the temporary files are not deleted.
+  CTX.run_diff: if true, run diff on differing files.
+  """
+  itemname = kind + (kind != 'trunk' and '-' + label or '')
+  cvs_export_dir = os.path.join(ctx.tempdir, 'cvs-export-' + itemname)
+  svn_export_dir = os.path.join(ctx.tempdir, 'svn-export-' + itemname)
 
   try:
     cvsrepos.export(cvs_export_dir, label)
@@ -227,62 +230,33 @@ def _verify_contents_single(cvsrepos, svnrepos, kind, label, run_diff,
     else:
       svnrepos.export_branch(svn_export_dir, label)
 
-    if not tree_compare(cvs_export_dir, svn_export_dir, run_diff):
+    if not tree_compare(cvs_export_dir, svn_export_dir, ctx.run_diff):
       return 0
   finally:
-    if os.path.exists(cvs_export_dir):
-      shutil.rmtree(cvs_export_dir)
-    if os.path.exists(svn_export_dir):
-      shutil.rmtree(svn_export_dir)
+    if not ctx.skip_cleanup:
+      if os.path.exists(cvs_export_dir):
+        shutil.rmtree(cvs_export_dir)
+      if os.path.exists(svn_export_dir):
+        shutil.rmtree(svn_export_dir)
   return 1
 
 
-def verify_contents_trunk(cvsrepos, svnrepos, run_diff, tempdir):
-  """Verify that the contents of the HEAD revision of all directories
-  and files in the trunk in the Subversion repository SVNREPOS matches
-  the ones in the CVS repository CVSREPOS.  Use TEMPDIR for all
-  temporary files."""
-  return _verify_contents_single(cvsrepos, svnrepos, 'trunk', None,
-                                 run_diff, tempdir)
-
-
-def verify_contents_tag(cvsrepos, svnrepos, tag, run_diff, tempdir):
-  """Verify that the contents of the HEAD revision of all directories
-  and files in the tag TAG in the Subversion repository SVNREPOS matches
-  the ones in the CVS repository CVSREPOS.  Use TEMPDIR for all
-  temporary files."""
-  return _verify_contents_single(cvsrepos, svnrepos, 'tag', tag,
-                                 run_diff, tempdir)
-
-
-def verify_contents_branch(cvsrepos, svnrepos, branch, run_diff, tempdir):
-  """Verify that the contents of the HEAD revision of all directories
-  and files in the branch BRANCH in the Subversion repository SVNREPOS
-  matches the ones in the CVS repository CVSREPOS.  Use TEMPDIR for all
-  temporary files."""
-  return _verify_contents_single(cvsrepos, svnrepos, 'branch', branch,
-                                 run_diff, tempdir)
-
-
-def verify_contents(cvsrepos, svnrepos, run_diff, tempdir):
+def verify_contents(cvsrepos, svnrepos, ctx):
   """Verify that the contents of the HEAD revision of all directories
   and files in the trunk, all tags and all branches in the Subversion
   repository SVNREPOS matches the ones in the CVS repository CVSREPOS.
-  Use TEMPDIR for all temporary files."""
-  cvs_export_dir = os.path.join(tempdir, 'cvs-export')
-  svn_export_dir = os.path.join(tempdir, 'svn-export')
-
+  CTX is passed through to verify_contents_single()."""
   anomalies = []
 
   # Verify contents of trunk
   print 'Verifying trunk'
-  if not verify_contents_trunk(cvsrepos, svnrepos, run_diff, tempdir):
+  if not verify_contents_single(cvsrepos, svnrepos, 'trunk', None, ctx):
     anomalies.append('trunk')
 
   # Verify contents of all tags
   for tag in svnrepos.tags():
     print 'Verifying tag', tag
-    if not verify_contents_tag(cvsrepos, svnrepos, tag, run_diff, tempdir):
+    if not verify_contents_single(cvsrepos, svnrepos, 'tag', tag, ctx):
       anomalies.append('tag:' + tag)
 
   # Verify contents of all branches
@@ -291,8 +265,7 @@ def verify_contents(cvsrepos, svnrepos, run_diff, tempdir):
       print 'Skipped branch', branch
     else:
       print 'Verifying branch', branch
-      if not verify_contents_branch(cvsrepos, svnrepos, branch, run_diff,
-                                    tempdir):
+      if not verify_contents_single(cvsrepos, svnrepos, 'branch', branch, ctx):
         anomalies.append('branch:' + branch)
 
   # Show the results
@@ -300,9 +273,14 @@ def verify_contents(cvsrepos, svnrepos, run_diff, tempdir):
   if len(anomalies) == 0:
     print 'No content anomalies detected'
   else:
-    print len(anomalies), 'content anomalies detected:'
+    print '%d content anomal%s detected:' % (len(anomalies),
+        len(anomalies) == 1 and "y" or "ies")
     for anomaly in anomalies:
       print '   ', anomaly
+
+
+class OptionContext:
+  pass
 
 
 def main(argv):
@@ -311,7 +289,7 @@ def main(argv):
     print 'USAGE: %s cvs-repos-path svn-repos-path' \
           % os.path.basename(argv[0])
     print '  --branch=BRANCH  verify contents of the branch BRANCH only'
-    print '  --diff           run diff on differeing files'
+    print '  --diff           run diff on differing files'
     print '  --help, -h       print this usage message and exit'
     print '  --tag=TAG        verify contents of the tag TAG only'
     print '  --tempdir=PATH   path to store temporary files'
@@ -324,15 +302,18 @@ def main(argv):
   try:
     opts, args = getopt.getopt(argv[1:], 'h',
                                [ 'branch=', 'diff', 'help', 'tag=', 'tempdir=',
-                                 'trunk=' ])
+                                 'trunk', 'skip-cleanup' ])
   except getopt.GetoptError, e:
     error(e)
     usage()
     sys.exit(1)
 
   # Default values
-  run_diff = 0
-  tempdir = ''
+  ctx = OptionContext()
+  ctx.run_diff = 0
+  ctx.tempdir = ''
+  ctx.skip_cleanup = 0
+
   verify_branch = None
   verify_tag = None
   verify_trunk = None
@@ -341,16 +322,18 @@ def main(argv):
     if (opt == '--branch'):
       verify_branch = value
     elif (opt == '--diff'):
-      run_diff = 1
+      ctx.run_diff = 1
     elif (opt == '--help') or (opt == '-h'):
       usage()
       sys.exit(0)
     elif (opt == '--tag'):
       verify_tag = value
     elif (opt == '--tempdir'):
-      tempdir = value
+      ctx.tempdir = value
     elif (opt == '--trunk'):
       verify_trunk = 1
+    elif (opt == '--skip-cleanup'):
+      ctx.skip_cleanup = 1
       
   # Consistency check for options and arguments.
   if len(args) != 2:
@@ -372,17 +355,16 @@ def main(argv):
     # Do our thing...
     if verify_branch:
       print 'Verifying branch', verify_branch
-      verify_contents_branch(cvsrepos, svnrepos, verify_branch, run_diff,
-                             tempdir)
+      verify_contents_single(cvsrepos, svnrepos, 'branch', verify_branch, ctx)
     elif verify_tag:
       print 'Verifying tag', verify_tag
-      verify_contents_tag(cvsrepos, svnrepos, verify_tag, run_diff, tempdir)
+      verify_contents_single(cvsrepos, svnrepos, 'tag', verify_tag, ctx)
     elif verify_trunk:
       print 'Verifying trunk'
-      verify_contents_trunk(cvsrepos, svnrepos, run_diff, tempdir)
+      verify_contents_single(cvsrepos, svnrepos, 'trunk', None, ctx)
     else:
       # Verify trunk, tags and branches
-      verify_contents(cvsrepos, svnrepos, run_diff, tempdir)
+      verify_contents(cvsrepos, svnrepos, ctx)
   except RuntimeError, e:
     error(str(e))
   except KeyboardInterrupt:

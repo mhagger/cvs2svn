@@ -4160,13 +4160,17 @@ def main():
   # Lock the current directory for temporary files.
   try:
     os.mkdir('cvs2svn.lock')
-  except OSError:
-    sys.stderr.write(error_prefix +
-        ": cvs2svn writes temporary files to the current working directory.\n"
-        "  The directory 'cvs2svn.lock' exists, indicating that another\n"
-        "  cvs2svn process is currently using the current directory for its\n"
-        "  temporary workspace. If you are certain that is not the case,\n"
-        "  remove the 'cvs2svn.lock' directory.\n")
+  except OSError, e:
+    if str(e).find("Permission denied") > 0:
+      sys.stderr.write(error_prefix + ": Permission denied:"
+                       + " No write access to output directory.\n")
+    else:
+      sys.stderr.write(error_prefix +
+          ": cvs2svn writes temporary files to the current working directory.\n"
+          "  The directory 'cvs2svn.lock' exists, indicating that another\n"
+          "  cvs2svn process is currently using the current directory for its\n"
+          "  temporary workspace. If you are certain that is not the case,\n"
+          "  remove the 'cvs2svn.lock' directory.\n")
     sys.exit(1)
   try:
     if os.path.isfile(DEFAULT_BRANCHES_DB):

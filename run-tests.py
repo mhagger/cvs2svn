@@ -1699,6 +1699,20 @@ def eol_mime():
     raise svntest.Failure
 
 
+def check_props(allprops, fname, keywords, eol_style, mime_type):
+  "helper function for keywords test"
+  props = allprops[fname]
+  if (keywords == props.get('svn:keywords') and
+      eol_style == props.get('svn:eol-style') and
+      mime_type == props.get('svn:mime-type') ):
+    pass
+  else:
+    print "Unexpected properties for '%s'" % fname
+    print "keywords:\t%s\t%s" % (keywords, props.get('svn:keywords'))
+    print "eol-style:\t%s\t%s" % (eol_style, props.get('svn:eol-style'))
+    print "mime-type:\t%s\t%s" % (mime_type, props.get('svn:mime-type'))
+    raise svntest.Failure
+
 def keywords():
   "test setting of svn:keywords property among others"
   repos, wc, logs = ensure_conversion('keywords')
@@ -1713,54 +1727,14 @@ def keywords():
     'foo.kv'      : props_for_path(wc_tree, '/trunk/foo.kv'),
     }
 
-  if allprops['foo.default'].get('svn:keywords') != 'author date id revision':
-    raise svntest.Failure
-  if allprops['foo.default'].get('svn:eol-style') != 'native':
-    raise svntest.Failure
-  if allprops['foo.default'].get('svn:mime-type') is not None:
-    raise svntest.Failure
-  
-  if allprops['foo.kkvl'].get('svn:keywords') != 'author date id revision':
-    raise svntest.Failure
-  if allprops['foo.kkvl'].get('svn:eol-style') != 'native':
-    raise svntest.Failure
-  if allprops['foo.kkvl'].get('svn:mime-type') is not None:
-    raise svntest.Failure
-  
-  if allprops['foo.kkv'].get('svn:keywords') != 'author date id revision':
-    raise svntest.Failure
-  if allprops['foo.kkv'].get('svn:eol-style') != 'native':
-    raise svntest.Failure
-  if allprops['foo.kkv'].get('svn:mime-type') is not None:
-    raise svntest.Failure
-  
-  if allprops['foo.kb'].get('svn:keywords') is not None:
-    raise svntest.Failure
-  if allprops['foo.kb'].get('svn:eol-style') is not None:
-    raise svntest.Failure
-  if allprops['foo.kb'].get('svn:mime-type') != 'application/octet-stream':
-    raise svntest.Failure
-  
-  if allprops['foo.kk'].get('svn:keywords') is not None:
-    raise svntest.Failure
-  if allprops['foo.kk'].get('svn:eol-style') != 'native':
-    raise svntest.Failure
-  if allprops['foo.kk'].get('svn:mime-type') is not None:
-    raise svntest.Failure
-  
-  if allprops['foo.ko'].get('svn:keywords') is not None:
-    raise svntest.Failure
-  if allprops['foo.ko'].get('svn:eol-style') != 'native':
-    raise svntest.Failure
-  if allprops['foo.default'].get('svn:mime-type') is not None:
-    raise svntest.Failure
-  
-  if allprops['foo.kv'].get('svn:keywords') is not None:
-    raise svntest.Failure
-  if allprops['foo.kv'].get('svn:eol-style') != 'native':
-    raise svntest.Failure
-  if allprops['foo.kv'].get('svn:mime-type') is not None:
-    raise svntest.Failure
+  check_props(allprops, 'foo.default', 'Author Date Id Revision', 'native',
+      None)
+  check_props(allprops, 'foo.kkvl', 'Author Date Id Revision', 'native', None)
+  check_props(allprops, 'foo.kkv', 'Author Date Id Revision', 'native', None)
+  check_props(allprops, 'foo.kb', None, None, 'application/octet-stream')
+  check_props(allprops, 'foo.kk', None, 'native', None)
+  check_props(allprops, 'foo.ko', None, 'native', None)
+  check_props(allprops, 'foo.kv', None, 'native', None)
 
 
 def ignore():

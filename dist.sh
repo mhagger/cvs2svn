@@ -47,4 +47,5 @@ echo ""
 echo "Done:"
 echo ""
 ls -l ${DIST_FULL}
+md5sum ${DIST_FULL}
 echo ""

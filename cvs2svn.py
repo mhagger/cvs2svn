@@ -983,7 +983,7 @@ class RepositoryMirror:
 
     return Change(op, old_names[0], old_names[1], deletions, copyfrom_rev)
 
-  def delete_path(self, path, tags, branches, prune=None):
+  def delete_path(self, path, prune=None):
     """Delete PATH from the tree.  PATH may not have a leading slash.
 
     Return a tuple (path_deleted, closed_tags, closed_branches), where
@@ -993,10 +993,6 @@ class RepositoryMirror:
     which could be rooted in the previous revision of PATH, but not in
     this revision, because this rev changes PATH.  If path_deleted is
     None, then closed_tags and closed_branches will both be empty.
-
-    TAGS are any tags that sprout from this revision of PATH, BRANCHES
-    are any branches that sprout from this revision of PATH.  (I can't
-    imagine that there are any of either, what to do if there are?)
 
     If PRUNE is not None, then delete the highest possible directory,
     which means the returned path may differ from PATH.  In other
@@ -1135,10 +1131,6 @@ class RepositoryMirror:
       retpath = path
 
     return retpath, old_names[0], old_names[1]
-
-    ### We've no place to put tags + branches.  Suspect we just
-    ### shouldn't be taking them as arguments, which the doc string
-    ### implies already.  Ponder.
 
   def close(self):
     # Just stabilize the last revision.  This may or may not affect
@@ -1500,10 +1492,7 @@ class Dumper:
     Iff PRUNE is true, then the path deleted can be not None, yet
     shorter than SVN_PATH because of pruning."""
     deleted_path, closed_tags, closed_branches \
-                  = self.repos_mirror.delete_path(svn_path,
-                                                  c_rev.tags,
-                                                  c_rev.branches,
-                                                  ctx.prune)
+                  = self.repos_mirror.delete_path(svn_path, ctx.prune)
     if deleted_path:
       print "    (deleted '%s')" % deleted_path
       self.dumpfile.write('Node-path: %s\n'
@@ -2395,10 +2384,11 @@ class Commit:
       print "    deleting %s : '%s'" % (c_rev.rev, c_rev.svn_path())
       if svn_rev == SVN_INVALID_REVNUM:
         svn_rev = dumper.start_revision(props)
-      # Uh, can this even happen on a deleted path?  Hmmm.  If not,
-      # there's no risk, since tags and branches would just be empty
-      # and therefore enrooting would be a no-op.  Still, it would
-      # be clearer to know for sure and simply not call it.
+      # Can this even happen on a deleted path? Yes, it can, e.g., a
+      # dead branchpoint revision. In which case, we need to enroot to
+      # avoid a "No origin records" error. And tags? Need to enroot so
+      # that a tag set only on deleted revisions is still created in 
+      # the subversion repository.
       sym_tracker.enroot_tags(c_rev.svn_path(), svn_rev, c_rev.tags)
       sym_tracker.enroot_branches(c_rev.svn_path(), svn_rev, c_rev.branches)
       ### FIXME: this will return path_deleted == None if no path

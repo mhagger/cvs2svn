@@ -419,6 +419,11 @@ def ensure_conversion(name, error_re=None, trunk_only=None,
 def show_usage():
   "cvs2svn with no arguments shows usage"
   out = run_cvs2svn(None)
+  if (len(out) > 2 and out[0].find('ERROR:') == 0
+      and out[1].find('DBM module')):
+    print 'cvs2svn cannot execute due to lack of proper DBM module.'
+    print 'Exiting without running any further tests.'
+    sys.exit(1)
   if out[0].find('USAGE') < 0:
     print 'Basic cvs2svn invocation failed.'
     raise svntest.Failure

@@ -180,6 +180,7 @@ class CollectData(rcsparse.Sink):
     self.resync = open(log_fname_base + RESYNC_SUFFIX, 'w')
     self.default_branches_db = default_branches_db
     self.metadata_db = Database(METADATA_DB, 'n')
+    self.fatal_errors = []
 
     # Branch and tag label types.
     self.BRANCH_LABEL = 0
@@ -306,11 +307,13 @@ class CollectData(rcsparse.Sink):
 
     try:
       if self.label_type[name] != label_type:
-        sys.exit("%s: in '%s':\n"
-                 "   '%s' is defined as %s here, but as a %s elsewhere"
-                 % (error_prefix, self.fname, name,
-                    self.LABEL_TYPES[label_type],
-                    self.LABEL_TYPES[self.label_type[name]]))
+        err = ("%s: in '%s' (BRANCH/TAG MISMATCH):\n   '%s' "
+               " is defined as %s here, but as a %s elsewhere"
+               % (error_prefix, self.fname, name,
+                  self.LABEL_TYPES[label_type],
+                  self.LABEL_TYPES[self.label_type[name]]))
+        sys.stderr.write(err)
+        self.fatal_errors.append(err)
     except KeyError:
       self.label_type[name] = label_type
 
@@ -2408,8 +2411,12 @@ def pass1(ctx):
   os.path.walk(ctx.cvsroot, visit_file, (cd, p, stats))
   if ctx.verbose:
     print 'processed', stats[0], 'files'
-
-
+  if len(cd.fatal_errors) > 0:
+    sys.exit("Pass 1 complete.\n" + "=" * 75 + "\n"
+             + "Error summary:\n"
+             + "\n".join(cd.fatal_errors)
+             + "\nExited due to fatal error(s).")
+ 
 def pass2(ctx):
   "Pass 2: clean up the revision information."
 

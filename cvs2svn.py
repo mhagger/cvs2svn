@@ -1293,7 +1293,7 @@ class Dumper:
     ### use it to set svn:mime-type.
 
     basename = os.path.basename(rcs_file[:-2])
-    pipe_cmd = 'co -q -p%s %s' % (cvs_rev, escape_shell_arg(rcs_file))
+    pipe_cmd = 'co -q -x,v -p%s %s' % (cvs_rev, escape_shell_arg(rcs_file))
     pipe = os.popen(pipe_cmd, PIPE_READ_MODE)
 
     # You might think we could just test

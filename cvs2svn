@@ -460,7 +460,7 @@ class Log:
     self.logger.write(' '.join(map(str,args)) + "\n")
     # Ensure that log output doesn't get out-of-order with respect to
     # stderr output.
-    self.logger.flush();
+    self.logger.flush()
 
 
 class Cleanup:
@@ -4059,8 +4059,8 @@ def pass2():
                                         c_rev.prev_rev, c_rev.prev_timestamp))
           # If resyncing our rev to c_rev.prev_timestamp + 1 will place
           # the timestamp of c_rev within COMMIT_THRESHOLD of the
-          # attempted sync time, then sync back to c_rev.prev_timestapm
-          # + 1...                 
+          # attempted sync time, then sync back to c_rev.prev_timestamp
+          # + 1...
           if (c_rev.prev_timestamp - record[2]) < COMMIT_THRESHOLD:
             new_timestamp = c_rev.prev_timestamp + 1
             Log().write(LOG_WARN, "%s: Time set to %s" % (warning_prefix,

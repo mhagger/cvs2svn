@@ -7,6 +7,7 @@ Version 1.2.0
  Bugs fixed:
  * Convert files with svn:eol-style to have LF end of lines only.
  * Fix hang in pass 8 for files that ended with a CR.
+ * Import unexpanded keywords into the repository.
  * Fix the handling of the $Revision$ keyword.
  * Fix bug in branch/tag creation edge case.
 

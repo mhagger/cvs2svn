@@ -30,7 +30,6 @@ import getopt
 import stat
 import string
 import md5
-import anydbm
 import marshal
 
 # Warnings and errors start with these strings.  They are typically
@@ -55,6 +54,7 @@ except ImportError:
   pass
 
 # 2. These DBM modules are not good for cvs2svn.
+import anydbm
 if (anydbm._defaultmod.__name__ == 'dumbdbm'
     or anydbm._defaultmod.__name__ == 'dbm'):
   print 'ERROR: your installation of Python does not contain a suitable'

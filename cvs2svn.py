@@ -2686,7 +2686,7 @@ class _ctx:
 class MimeMapper:
   "A class that provides mappings from file names to MIME types."
 
-  def _init_(self):
+  def __init__(self):
     self.mappings = { }
     self.missing_mappings = { }
 

@@ -572,8 +572,10 @@ def visit_file(arg, dirname, files):
       p.parse(open(pathname, 'rb'), cd)
       stats[0] = stats[0] + 1
     except (rcsparse.common.RCSParseError, ValueError, RuntimeError):
-      print "%s: '%s' is not a valid ,v file, ignoring" \
-            % (warning_prefix, pathname)
+      err = "%s: '%s' is not a valid ,v file" \
+            % (error_prefix, pathname)
+      print err
+      cd.fatal_errors.append(err)
     except:
       print "Exception occurred while parsing %s" % pathname
       raise

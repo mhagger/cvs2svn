@@ -1,0 +1,92 @@
+head	1.2;
+branch	1.1.1;
+access;
+symbols
+        branch-off-of-default-branch:1.1.1.2.0.2
+	upstream:1.1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2003.03.25.12.51.44;	author fitz;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2000.10.20.07.15.19;	author fitz;	state Exp;
+branches
+	1.1.1.1;
+next	;
+
+1.1.1.1
+date	2000.10.20.07.15.19;	author fitz;	state Exp;
+branches;
+next	1.1.1.2;
+
+1.1.1.2
+date	2002.01.10.11.03.58;	author fitz;	state Exp;
+branches
+	1.1.1.2.2.1;
+next	;
+
+1.1.1.2.2.1
+date	2003.03.18.01.36.42;	author fitz;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@This is a log message.
+@
+text
+@d1 1
+a1 1
+This is revision 1.2 of file.txt
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d1 1
+a1 1
+This is the initial import of file.txt
+@
+
+
+1.1.1.1
+log
+@Initial Import. 
+@
+text
+@@
+
+
+1.1.1.2
+log
+@This is a log message.
+@
+text
+@d1 1
+a1 1
+This is the first commit on the default branch.
+@
+
+
+1.1.1.2.2.1
+log
+@This is a log message.
+@
+text
+@d1 1
+a1 1
+This is a commit on a branch off of the default branch.
+@

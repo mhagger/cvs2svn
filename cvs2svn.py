@@ -1105,9 +1105,11 @@ class CollectData(cvs2svn_rcsparse.Sink):
 
     # Ratchet up the highest vendor head revision, if necessary.
     if self.default_branch:
-      if revision.find(self.default_branch + ".") == 0:
+      default_branch_root = self.default_branch + "."
+      if ((revision.find(default_branch_root) == 0)
+          and (default_branch_root.count('.') == revision.count('.'))):
         # This revision is on the default branch, so record that it is
-        # the new highest vendor head revision.
+        # the new highest default branch head revision.
         rel_name = relative_name(self.cvsroot, self.fname)[:-2]
         self.default_branches_db[rel_name] = revision
     else:

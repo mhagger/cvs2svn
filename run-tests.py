@@ -601,7 +601,7 @@ def simple_tags():
     }:
     raise svntest.Failure
 
-  rev = 40
+  rev = 39
   if not logs.has_key(rev):
     raise svntest.Failure
   if not logs[rev].changed_paths == {

@@ -1,0 +1,24 @@
+head	1.1;
+access;
+symbols
+	BRANCH:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2004.01.01.12.00.00;	author jrandom;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@@

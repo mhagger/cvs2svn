@@ -798,6 +798,14 @@ def enroot_race():
     raise svntest.Failure
 
 
+def enroot_race_obo():
+  "do use the last completed rev as a copy source"
+  repos, wc, logs = ensure_conversion('enroot-race-obo')
+  if not ((len(logs) == 2) and
+      (logs[2].changed_paths.get('/branches/BRANCH (from /trunk:1)') == 'A')):
+    raise svntest.Failure
+
+
 def branch_delete_first():
   "correctly handle deletion as initial branch action"
   # See test-data/branch-delete-first-cvsrepos/README.
@@ -1155,6 +1163,7 @@ test_list = [ None,
               resync_misgroups,
               tagged_branch_and_trunk,
               enroot_race,
+              enroot_race_obo,
               branch_delete_first,
               nonascii_filenames,
               vendor_branch_sameness,

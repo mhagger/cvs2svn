@@ -1242,6 +1242,30 @@ def default_branches():
     raise svntest.Failure
 
 
+def compose_tag_three_sources():
+  "compose a tag from three sources"
+  repos, wc, logs = ensure_conversion('compose-tag-three-sources')
+
+  if not logs[1].changed_paths == { '/trunk': 'A', '/trunk/a': 'A',
+    '/trunk/b': 'A', '/trunk/c': 'A' }: raise svntest.Failure
+
+  if not logs[2].changed_paths == { '/branches': 'A',
+    '/branches/b1 (from /trunk:1)': 'A', '/branches/b1/a': 'M',
+    '/branches/b1/b': 'M', '/branches/b1/c': 'M',
+    }: raise svntest.Failure
+
+  if not logs[3].changed_paths == {
+    '/branches/b2 (from /trunk:1)': 'A', '/branches/b2/a': 'M',
+    '/branches/b2/b': 'M', '/branches/b2/c': 'M',
+    }: raise svntest.Failure
+
+  if not logs[4].changed_paths == { '/tags': 'A',
+    '/tags/T (from /trunk:1)': 'A',
+    '/tags/T/b (from /branches/b1/b:2)': 'R',
+    '/tags/T/c (from /branches/b2/c:3)': 'R',
+    }: raise svntest.Failure
+
+
 #----------------------------------------------------------------------
 
 ########################################################################
@@ -1279,6 +1303,7 @@ test_list = [ None,
               nonascii_filenames,
               vendor_branch_sameness,
               default_branches,
+              XFail(compose_tag_three_sources),
              ]
 
 if __name__ == '__main__':

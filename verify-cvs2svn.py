@@ -40,7 +40,7 @@ class CvsRepos:
       module = os.path.basename(path)
       while not os.path.exists(os.path.join(self.cvsroot, 'CVSROOT')):
         parent = os.path.dirname(self.cvsroot)
-        if parent == path:
+        if parent == self.cvsroot:
           raise RuntimeError('Cannot find the CVSROOT directory')
         module = os.path.join(os.path.basename(self.cvsroot), module)
         self.cvsroot = parent

@@ -192,18 +192,6 @@ SVN_COMMIT_NAMES_DATES = 'cvs2svn-svn-commit-names-and-dates.db'
 # that synchronizes the default branch with trunk.
 MOTIVATING_REVNUMS = 'cvs2svn-svn-motivating-commit-revnums.db'
 
-# os.popen() on Windows seems to require an access-mode string of 'rb'
-# in cases where the process will output binary information to stdout.
-# Without the 'b' we get IOErrors upon closing the pipe.  Unfortunately
-# 'rb' isn't accepted in the Linux version of os.popen().  As a purely
-# practical matter, we compensate by switching on os.name.
-if os.name == 'nt':
-  PIPE_READ_MODE = 'rb'
-  PIPE_WRITE_MODE = 'wb'
-else:
-  PIPE_READ_MODE = 'r'
-  PIPE_WRITE_MODE = 'w'
-
 # How many bytes to read at a time from a pipe.  128 kiB should be
 # large enough to be efficient without wasting too much memory.
 PIPE_READ_SIZE = 128 * 1024
@@ -3240,7 +3228,8 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     ### use it to set svn:mime-type.  See issue #39.
     pipe_cmd = 'co -q -x,v -p%s %s' \
                % (c_rev.rev, escape_shell_arg(c_rev.rcs_path()))
-    pipe = os.popen(pipe_cmd, PIPE_READ_MODE)
+    pipe_in, pipe_out, pipe_err = os.popen3(pipe_cmd, 'b')
+    pipe_in.close()
 
     if op == OP_ADD:
       action = 'add'
@@ -3271,14 +3260,17 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     # Insert the rev contents, calculating length and checksum as we go.
     checksum = md5.new()
     length = 0
-    buf = pipe.read(PIPE_READ_SIZE)
+    buf = pipe_out.read(PIPE_READ_SIZE)
     while buf:
       checksum.update(buf)
       length = length + len(buf)
       self.dumpfile.write(buf)
-      buf = pipe.read(PIPE_READ_SIZE)
-    if pipe.close() is not None:
-      sys.exit('%s: Command failed: "%s"' % (error_prefix, pipe_cmd))
+      buf = pipe_out.read(PIPE_READ_SIZE)
+    pipe_out.close()
+    error_output = pipe_err.read()
+    if pipe_err.close() is not None:
+      sys.exit("%s: The command '%s' failed with the following output:\n"
+               "%s" % (error_prefix, pipe_cmd, error_output))
 
     # Go back to patch up the length and checksum headers:
     self.dumpfile.seek(pos, 0)
@@ -3351,9 +3343,16 @@ class RepositoryDelegate(DumpfileDelegate):
     self._commit_in_progress = None
 
     self.dumpfile = open(self.dumpfile_path, 'w+b')
-    self.loader_pipe = os.popen('%s load -q %s' %
-        (self.svnadmin, self.target), PIPE_WRITE_MODE)
-    self._write_dumpfile_header(self.loader_pipe)
+    self.loader_pipe, pipe_out, self.loader_pipe_err = \
+        os.popen3('%s load -q %s' % (self.svnadmin, self.target), 'b')
+    pipe_out.close()
+    try:
+      self._write_dumpfile_header(self.loader_pipe)
+    except IOError:
+      sys.stderr.write("%s: svnadmin failed with the following output while "
+                       "loading the dumpfile:\n" % (error_prefix))
+      sys.stderr.write(self.loader_pipe_err.read())
+      sys.exit(1)
 
   def _feed_pipe(self):
     """Feed the revision stored in the dumpfile to the svnadmin
@@ -3363,7 +3362,13 @@ class RepositoryDelegate(DumpfileDelegate):
       data = self.dumpfile.read(128*1024) # Chunk size is arbitrary
       if not len(data):
         break
-      self.loader_pipe.write(data)
+      try:
+        self.loader_pipe.write(data)
+      except IOError:
+        sys.stderr.write("%s: svnadmin failed with the following output while "
+                         "loading the dumpfile:\n" % (error_prefix))
+        sys.stderr.write(self.loader_pipe_err.read())
+        sys.exit(1)
 
   def start_commit(self, svn_commit):
     """Start a new commit.  If a commit is already in progress, close
@@ -3380,8 +3385,11 @@ class RepositoryDelegate(DumpfileDelegate):
     """Loads the last commit into the repository."""
     self._feed_pipe()
     self.dumpfile.close()
-    if self.loader_pipe.close() is not None:
-      sys.exit('%s: svnadmin load failed' % (error_prefix))
+    self.loader_pipe.close()
+    error_output = self.loader_pipe_err.read()
+    if self.loader_pipe_err.close() is not None:
+      sys.exit('%s: svnadmin load failed with the following output:\n'
+               '%s' % (error_prefix, error_output))
 
 
 class StdoutDelegate(SVNRepositoryMirrorDelegate):

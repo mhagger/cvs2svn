@@ -781,45 +781,42 @@ class CVSRevision:
     if len(args) == 16:
       (self.timestamp, self.digest, self.prev_timestamp, self.op,
        self.prev_rev, self.rev, self.next_rev, self.file_in_attic,
-       self.file_executable, self.file_size, self.deltatext_code, self.fname, 
+       self.file_executable, self.file_size, self.deltatext_code,
+       self.fname, 
        self.mode, self.branch_name, self.tags, self.branches) = args
     elif len(args) == 1:
       data = args[0].split(' ', 14)
-      self.timestamp = int(data[0], 16)
-      self.digest = data[1]
-      if data[2] == "*":
+      (self.timestamp, self.digest, self.prev_timestamp, self.op,
+       self.prev_rev, self.rev, self.next_rev, self.file_in_attic,
+       self.file_executable, self.file_size, self.deltatext_code,
+       self.mode, self.branch_name, numtags, remainder) = data
+      # Patch up data items which are not simple strings
+      self.timestamp = int(self.timestamp, 16)
+      if self.prev_timestamp == "*":
         self.prev_timestamp = 0
       else:
-        self.prev_timestamp = int(data[2])
-      self.op = data[3]
-      self.prev_rev = data[4]
+        self.prev_timestamp = int(self.prev_timestamp)
       if self.prev_rev == "*":
         self.prev_rev = None
-      self.rev = data[5]
-      self.next_rev = data[6]
       if self.next_rev == "*":
         self.next_rev = None
-      self.file_in_attic = data[7]
       if self.file_in_attic == "*":
         self.file_in_attic = None
-      self.file_executable = data[8]
       if self.file_executable == "*":
         self.file_executable = None
-      self.file_size = int(data[9])
-      self.deltatext_code = data[10]
-      self.mode = data[11]
+      self.file_size = int(self.file_size)
       if self.mode == "*":
         self.mode = None
-      self.branch_name = data[12]
       if self.branch_name == "*":
         self.branch_name = None
-      ntags = int(data[13])
-      tags = data[14].split(' ', ntags + 1)
-      nbranches = int(tags[ntags])
-      branches = tags[ntags + 1].split(' ', nbranches)
-      self.fname = branches[nbranches]
-      self.tags = tags[:ntags]
-      self.branches = branches[:nbranches]
+      numtags = int(numtags)
+      tags_and_numbranches_and_remainder = remainder.split(' ', numtags + 1)
+      self.tags = tags_and_numbranches_and_remainder[:-2]
+      numbranches = int(tags_and_numbranches_and_remainder[-2])
+      remainder = tags_and_numbranches_and_remainder[-1]
+      branches_and_fname = remainder.split(' ', numbranches)
+      self.branches = branches_and_fname[:-1]
+      self.fname = branches_and_fname[-1]
     else:
       raise TypeError, 'CVSRevision() takes 2 or 16 arguments (%d given)' % \
           (len(args) + 1)

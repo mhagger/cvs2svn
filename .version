@@ -1,8 +1,0 @@
-0
-
-# Only the first line of this file matters.  Right now it supplies the
-# major version number for cvs2svn, i.e., the X in cvs2svn-X.Y.tar.gz.
-#
-# Later, perhaps when 1.0 comes out, this file could supply all parts
-# of the version number, if we decide not to continue doing the
-# "minor version == global revision number" thing.  We'll see.

@@ -1,16 +1,13 @@
 #!/bin/sh
 
-# Build a cvs2svn distribution.  For now, we ship cvs2svn-X.NNN.tar.gz,
-# where X is the major version number, and NNN is the revision number
-# of the working copy, which serves as the minor version number.
+# Build a cvs2svn distribution.
 
-MAJOR=`head -1 .version`
-MINOR=`svnversion -n .`
-VN=${MAJOR}.${MINOR}
-DIST_BASE=cvs2svn-${VN}
+VERSION=1.0.0-rc1
+WC_REV=`svnversion -n .`
+DIST_BASE=cvs2svn-${VERSION}
 DIST_FULL=${DIST_BASE}.tar.gz
 
-if echo ${MINOR} | grep -q -e '[^0-9]'; then
+if echo ${WC_REV} | grep -q -e '[^0-9]'; then
    echo "Packaging requires a single-revision, pristine working copy."
    echo ""
    echo "Run 'svn update' to get a working copy without mixed revisions,"
@@ -19,7 +16,7 @@ if echo ${MINOR} | grep -q -e '[^0-9]'; then
 fi
 
 # Clean up anything that might have been left from a previous run.
-rm -rf dist MANIFEST cvs2svn-${VN} ${DIST_FULL}
+rm -rf dist MANIFEST cvs2svn-${VERSION} ${DIST_FULL}
 
 # Build the dist, Python's way.
 ./setup.py sdist
@@ -33,7 +30,7 @@ svn export -q test-data ${DIST_BASE}/test-data
 svn export -q svntest ${DIST_BASE}/svntest
 svn export -q www ${DIST_BASE}/www
 # Oh, and while we're at it, let's fix cvs2svn's version number.
-sed -e "s/^VERSION = .*/VERSION = '${VN}'/" < cvs2svn > cvs2svn.tmp
+sed -e "s/^VERSION = .*/VERSION = '${VERSION}'/" < cvs2svn > cvs2svn.tmp
 mv cvs2svn.tmp ${DIST_BASE}/cvs2svn
 chmod a+x ${DIST_BASE}/cvs2svn
 tar zcf ${DIST_FULL} ${DIST_BASE}

@@ -1,10 +1,15 @@
-head	1.1;
+head	1.2;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 expand	@b@;
 
+
+1.2
+date	2004.07.26.23.38.17;	author kfogel;	state Exp;
+branches;
+next	1.1;
 
 1.1
 date	2004.07.19.20.57.24;	author jrandom;	state Exp;
@@ -16,10 +21,21 @@ desc
 @@
 
 
+1.2
+log
+@Commit a second revision of every file.
+@
+text
+@This is the first revision in this file.
+This line was added in the second revision.
+@
+
+
 1.1
 log
 @Add a file.
 @
 text
-@This is the only revision in this file.
+@d2 1
 @
+

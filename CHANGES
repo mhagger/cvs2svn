@@ -1,3 +1,16 @@
+Version 1.2.0
+(xx January 2005, from /tags/1.2.0)
+
+ New features:
+ * --fs-type=TYPE: make it possible to specify the filesystem type.
+
+ Bugs fixed:
+ * Convert files with svn:eol-style to have LF end of lines only.
+ * Fix hang in pass 8 for files that ended with a CR.
+ * Fix the handling of the $Revision$ keyword.
+ * Fix bug in branch/tag creation edge case.
+
+
 Version 1.1.0
 (15 September 2004, from /tags/1.1.0)
 

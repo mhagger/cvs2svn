@@ -1,0 +1,4 @@
+text/xml                     xml
+application/zip              zip
+text/csv                     csv
+application/what-is-dbf      dbf

@@ -1,0 +1,48 @@
+This repository is for testing that setting of svn:eol-style works as
+expected, that the mime mapper also works, and that mime types and eol
+styles interact with each other correctly.  Issue #39 has more about
+how these interactions work.
+
+The 'mime-mappings.txt' file for this repository is stored right here,
+in the repository itself.  It won't be converted because it doesn't
+end with ,v.
+
+The table below says what to expect for the data here.  We assume that
+--mime-types is passed every time; the only question is whether
+none/one/both of --no-default-eol and --eol-from-mime-type are passed:
+
+  foo.txt (no -kb, mime file says nothing):
+     --NO flags:            eol native, no mime type
+     --no-default-eol:      no eol, no mime type
+     --eol-from-mime-type:  native eol, no mime type
+     --BOTH flags:          no eol, no mime type
+
+  foo.xml (no -kb, mime file says text):
+     --NO flags:            eol native, mime type "text/blah"
+     --no-default-eol:      no eol, mime type "text/blah"
+     --eol-from-mime-type:  native eol, mime type "text/blah"
+     --BOTH flags:          native eol, mime type "text/blah"
+
+  foo.zip (no -kb, mime file says non-text):
+     --NO flags:            eol native, mime type "blah/blah"
+     --no-default-eol:      no eol, mime type "blah/blah"
+     --eol-from-mime-type:  eol native, mime type "blah/blah"
+     --BOTH flags:          no eol, mime type "blah/blah"
+
+  foo.bin (has -kb, mime file says nothing):
+     --NO flags:            no eol, mime type "application/octet-stream"
+     --no-default-eol:      no eol, mime type "application/octet-stream"
+     --eol-from-mime-type:  no eol, mime type "application/octet-stream"
+     --BOTH flags:          no eol, mime type "application/octet-stream"
+
+  foo.csv (has -kb, mime file says text):
+     --NO flags:            no eol, mime type "text/blah"
+     --no-default-eol:      no eol, mime type "text/blah"
+     --eol-from-mime-type:  no eol, mime type "text/blah"
+     --BOTH flags:          no eol, mime type "text/blah"
+
+  foo.dbf (has -kb, mime file says non-text):
+     --NO flags:            no eol, mime type "blah/blah"
+     --no-default-eol:      no eol, mime type "blah/blah"
+     --eol-from-mime-type:  no eol, mime type "blah/blah"
+     --BOTH flags:          no eol, mime type "blah/blah"

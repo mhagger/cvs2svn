@@ -3114,19 +3114,28 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     property on files, when they are changed due to a corresponding
     CVS revision.
 
-    If Ctx().mime_mapper is true, then it is a MimeMapper instance, used
-    to determine whether or not to set the 'svn:mime-type' property on
-    files.
+    If Ctx().mime_mapper is not None, then it is a MimeMapper
+    instance, used to determine whether or not to set the
+    'svn:mime-type' property on files.  But even if Ctx().mime_mapper
+    is None, files marked with the CVS 'kb' flag will receive a mime
+    type of "application/octet-stream".
 
-    If Ctx().set_eol_style is true, then set 'svn:eol-style' to 'native'
-    for files not marked with the CVS 'kb' flag.  (But see issue #39
-    for how this might change.)""" 
+    Unless Ctx().no_default_eol is true, set 'svn:eol-style' to
+    'native' for files not marked with the CVS 'kb' flag, except as
+    superseded by Ctx().eol_from_mime_type (see below).
+
+    If Ctx().eol_from_mime_type is not None, then set 'svn:eol-style'
+    to 'native' for all files to which Ctx().mime_mapper assigns a
+    mime type beginning with "text/", and don't set 'svn:eol-style'
+    for files assigned a type not beginning with "text/".
+    """ 
     if dumpfile_path:
       self.dumpfile_path = dumpfile_path
     else:
       self.dumpfile_path = Ctx().dumpfile
     self.set_cvs_revnum_properties = Ctx().cvs_revnums
-    self.set_eol_style = Ctx().set_eol_style
+    self.eol_from_mime_type = Ctx().eol_from_mime_type
+    self.no_default_eol = Ctx().no_default_eol
     self.mime_mapper = Ctx().mime_mapper
     self.path_encoding = Ctx().encoding
     
@@ -3250,37 +3259,36 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     if c_rev.file_executable:
       prop_contents = prop_contents + 'K 14\nsvn:executable\nV 1\n*\n'
 
-    # If the file is marked as binary, it gets a default MIME type of
-    # "application/octet-stream".  Otherwise, it gets a default EOL
-    # style of "native".
+    # Set mime-type and eol.  These two properties are intertwingled;
+    # follow the conditionals carefully.  See also issue #39.
     mime_type = None
     eol_style = None
-    if c_rev.mode == 'b':
-      mime_type = 'application/octet-stream'
-    else:
-      eol_style = 'native'
 
-    # If using the MIME mapper, possibly override the default MIME
-    # type and EOL style.
     if self.mime_mapper:
-      mtype = self.mime_mapper.get_type_from_filename(c_rev.cvs_path)
-      if mtype:
-        mime_type = mtype
-        if not mime_type.startswith("text/"):
-          eol_style = None
+      mime_type = self.mime_mapper.get_type_from_filename(c_rev.cvs_path)
 
-    # Possibly set the svn:mime-type and svn:eol-style properties.
+    if not c_rev.mode == 'b':
+      if not self.no_default_eol:
+        eol_style = 'native'
+      elif mime_type and self.eol_from_mime_type:
+        if mime_type.startswith("text/"):
+          eol_style = 'native'
+        else:
+          eol_style = None
+    elif mime_type is None:
+      # file is kb, and no other mimetype specified
+      mime_type = 'application/octet-stream'
+
     if mime_type:
       prop_contents = prop_contents + ('K 13\nsvn:mime-type\nV %d\n%s\n' % \
                                        (len(mime_type), mime_type))
-    if self.set_eol_style and eol_style:
-      prop_contents = prop_contents + 'K 13\nsvn:eol-style\nV 6\nnative\n'
+    if eol_style:
+      prop_contents = prop_contents + ('K 13\nsvn:eol-style\nV %d\n%s\n' % \
+                                       (len(eol_style), eol_style))
                                          
     # Calculate the property length (+10 for "PROPS-END\n")
     props_len = len(prop_contents) + 10
     
-    ### FIXME: We ought to notice the -kb flag set on the RCS file and
-    ### use it to set svn:mime-type.  See issue #39.
     pipe_cmd = 'co -q -x,v -p%s %s' \
                % (c_rev.rev, escape_shell_arg(c_rev.rcs_path()))
     pipe = Popen3(pipe_cmd, True)
@@ -3914,7 +3922,8 @@ class Ctx:
     self.encoding = "ascii"
     self.mime_types_file = None
     self.mime_mapper = None
-    self.set_eol_style = 0
+    self.no_default_eol = 0
+    self.eol_from_mime_type = 0
     self.svnadmin = "svnadmin"
     self.username = None
     self.print_help = 0
@@ -4038,9 +4047,8 @@ def usage():
   print '  --cvs-revnums        record CVS revision numbers as file properties'
   print '  --mime-types=FILE    specify an apache-style mime.types file for\n' \
         '                       setting svn:mime-type'
-  print '  --set-eol-style      automatically set svn:eol-style=native for\n' \
-        '                       text files'
-
+  print '  --eol-from-mime-type fooo'
+  print '  --no-default-eol     fooo'
 
 def main():
   # Convenience var, so we don't have to keep instantiating this Borg.
@@ -4055,7 +4063,8 @@ def main():
                                  "username=", "existing-svnrepos",
                                  "branches=", "tags=", "encoding=",
                                  "force-branch=", "force-tag=", "exclude=",
-                                 "mime-types=", "set-eol-style",
+                                 "mime-types=", "eol-from-mime-type",
+                                 "no-default-eol",
                                  "trunk-only", "no-prune", "dry-run",
                                  "dump-only", "dumpfile=", "tmpdir=",
                                  "svnadmin=", "skip-cleanup", "cvs-revnums",
@@ -4131,8 +4140,10 @@ def main():
         sys.exit(error_prefix + ": '%s' is not a valid regexp.\n" % (value))
     elif opt == '--mime-types':
       ctx.mime_types_file = value
-    elif opt == '--set-eol-style':
-      ctx.set_eol_style = 1
+    elif opt == '--eol-from-mime-type':
+      ctx.eol_from_mime_type = 1
+    elif opt == '--no-default-eol':
+      ctx.no_default_eol = 1
     elif opt == '--username':
       ctx.username = value
     elif opt == '--skip-cleanup':

@@ -4107,8 +4107,8 @@ def usage():
   print '  --cvs-revnums        record CVS revision numbers as file properties'
   print '  --mime-types=FILE    specify an apache-style mime.types file for\n' \
         '                       setting svn:mime-type'
-  print '  --eol-from-mime-type fooo'
-  print '  --no-default-eol     fooo'
+  print '  --eol-from-mime-type set svn:eol-style by mime type (only with --mime-types)'
+  print '  --no-default-eol     don\'t set svn:eol-style by CVS defaults'
 
 def main():
   # Convenience var, so we don't have to keep instantiating this Borg.

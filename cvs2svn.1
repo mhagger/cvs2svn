@@ -1,0 +1,158 @@
+.TH CVS2SVN "1" "Aug 12, 2004" "Subversion" "User Commands"
+.SH NAME
+cvs2svn \- convert a cvs repository into a subversion repository
+.SH SYNOPSIS
+.B cvs2svn
+[\fIOPTION\fR]... \fI-s svn-repos-path cvs-repos-path\fR
+.br
+.B cvs2svn
+[\fIOPTION\fR]... \fI--dump-only cvs-repos-path\fR
+.SH DESCRIPTION
+Create a new Subversion repository based on the version history stored in a
+CVS repository. Each CVS commit will be mirrored in the Subversion
+repository, including such information as date of commit and id of the
+committer.
+.TP
+\fB--help\fR, \fB-h\fR
+Print out usage message and exit with success.
+.TP
+\fB--version\fR
+Print the version number.
+.TP
+\fB-q\fR
+Quiet, print less information while running.
+.TP
+\fB-v\fR
+Verbose, print more information while running.
+.TP
+\fB-s\fR=\fIpath\fR
+Load CVS repository into the Subversion repository located at PATH. If there
+is no Subversion repository at \fIpath\fR, create a new one.
+.TP
+\fB-p\fR \fIstart\fR[:\fIend\fR]
+Start the program at pass \fIstart\fR and stop it at pass \fIstop\fR, both
+may range from 1 (the default) to 8. For this to work the earlier passes
+must have been completed before on the same CVS repository, and the
+generated data files must be in the current directory. Also, \fIstop\fR can
+be omitted, in this case only the pass specified in \fIstart\fR will be
+executed.
+.TP
+\fB--existing-svnrepos\fR
+Load into existing SVN repository, instead of creating one. Please note that
+you must own the repository, or at least be in the group which owns it, and
+have group writeable files/directories.
+.TP
+\fB--dump-only\fR
+Just produce a dumpfile, don't commit to a repos.
+.TP
+\fB--dumpfile\fR=\fIpath\fR
+Set the \fIpath\fR and optionaly name of the dumpfile. The default is
+\fIcvs2svn-dump\fR in the current directory.
+.TP
+\fB--tmpdir\fR=\fIpath\fR
+Set the \fIpath\fR to use for temporary data. Default is the current directory.
+.TP
+\fB--profile\fR
+Profile with 'hotshot' (into file \fIcvs2svn.hotshot\fR).
+.TP
+\fB--dry-run\fR
+Do not create a repository or a dumpfile; just print the details of what
+cvs2svn would do if it were really converting your repository.
+.TP
+\fB--use-cvs\fR
+Use CVS instead of RCS 'co' to extract data (only use this if having
+problems with RCS, as CVS is much slower).
+.TP
+\fB--svnadmin\fR=\fIpath\fR
+Path to the the \fIsvnadmin\fR program.
+.TP
+\fB--trunk-only\fR
+Convert only trunk commits, not tags nor branches.
+.TP
+\fB--trunk\fR=\fIpath\fR
+Put the trunk (main branch) into the subdirectory \fIpath\fR of the
+Subversion repository (default is \fItrunk\fR).
+.TP
+\fB--branches\fR=\fIpath\fR
+Put branch copies under the subdirectory \fIpath\fR of the Subversion
+repository (default is \fIbranches\fR).
+.TP
+\fB--tags\fR=\fIpath\fR
+Put tag copies under the subdirectory \fIpath\fR of the Subversion
+repository (default is \fItags\fR).
+.TP
+\fB--no-prune\fR
+When all files are deleted from a directory in the Subversion repository,
+don't delete the empty directory (the default is to delete any empty
+directories.
+.TP
+\fB--encoding\fR=\fIencoding\fR
+Set \fIencoding\fR of log messages in CVS repos (default is ascii).
+.TP
+\fB--force-branch\fR=\fIname\fR
+Force \fIname\fR to be a branch.
+.TP
+\fB--force-tag\fR=\fIname\fR
+Force \fIname\fR to be a tag.
+.TP
+\fB--exclude\fR=\fIregexp\fR
+Exclude branches and tags matching \fIregexp\fR.
+.TP
+\fB--username\fR=\fIname\fR
+Set the default username to \fIname\fR when cvs2svn doesn't have a username
+from the CVS repository to work with.  This happens when a branch or tag is
+created. The default name is "unknown".
+.TP
+\fB--skip-cleanup\fR
+Prevent the deletion of intermediate files.
+.TP
+\fB--bdb-txn-nosync\fR
+Pass \fI--bdb-txn-nosync\fR to "svnadmin create".
+.TP
+\fB--cvs-revnums\fR
+Record CVS revision numbers as file properties.
+.TP
+\fB--mime-types\fR=\fIfile\fR
+Specify an apache-style mime.types \fIfile\fR for setting svn:mime-type .
+On \fIDebian GNU/Linux\fR systems, you can have one at \fI/etc/mime.types\fR
+by installing the \fImime-support\fR package.
+.TP
+\fB--eol-from-mime-type\fR
+Set svn:eol-style by mime type (only with \fI--mime-types\fR).
+.TP
+\fB--no-default-eol\fR
+Don't set svn:eol-style by CVS defaults.
+.TP
+\fB--keywords-off\fR
+Don't set svn:keywords on any files (cvs2svn sets svn:keywords to
+"author date id" on non-binary files by default).
+.SH FILES
+The current directory is used as scratch space for data files of the form
+\fIcvs2svn-data.*\fR and a dumpfile named \fIcvs2svn-dump\fR.
+.SH AUTHORS
+Main authors are:
+.br
+C. Michael Pilato <cmpilato@collab.net>
+.br
+Greg Stein <gstein@lyra.org>
+.br
+Branko Čibej <brane@xbc.nu>
+.br
+Blair Zajac <blair@orcaware.com>
+.br
+Max Bowsher <maxb@ukf.net>
+.br
+Brian Fitzpatrick <fitz@red-bean.com>
+.br
+Tobias Ringström <tobias@ringstrom.mine.nu>
+.br
+Karl Fogel <kfogel@collab.net>
+.br
+Erik Hülsmann <e.huelsmann@gmx.net>
+.br
+David Summers <david@summersoft.fay.ar.us>
+.PP
+Manpage was written for the Debian GNU/Linux system by
+Laszlo 'GCS' Boszormenyi <gcs@lsc.hu> (but may be used by others).
+.SH SEE ALSO
+cvs(1), svn(1), svnadmin(1)

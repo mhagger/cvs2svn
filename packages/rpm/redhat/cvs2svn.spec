@@ -19,7 +19,12 @@ Prefix: /usr
 Convert CVS repositories to Subversion repositories.
 
 %changelog
-* Mon Mar 15 2004 David Summers <david@summersoft.fay.ar.us> 0.0.829-1
+* Tue Jul 06 2004 David Summers <david@summersoft.fay.ar.us> 0.1222-1
+- Track changes to build system.
+- Now uses Makefile.
+- Cleanup CVS directories from package.
+
+* Mon Mar 15 2004 David Summers <david@summersoft.fay.ar.us> 0.829-1
 - Switched version to accomodate suggestions in mailing list.
 - Packaged verify-cvs2vn script.
 
@@ -36,7 +41,7 @@ echo "*** Running regression tests on cvs2svn ***"
 LANG=en_US.UTF-8
 export LANG
 
-./run-tests.py
+make check
 %endif
 
 %install
@@ -54,12 +59,20 @@ chmod a+x $RPM_BUILD_ROOT/usr/bin/verify-cvs2svn
 # Copy python files.
 
 mkdir -p $RPM_BUILD_ROOT/usr/lib/python2.2/site-packages
-cp -r rcsparse $RPM_BUILD_ROOT/usr/lib/python2.2/site-packages/rcsparse
+cp -r cvs2svn_rcsparse $RPM_BUILD_ROOT/usr/lib/python2.2/site-packages/cvs2svn_rcsparse
 
 # Check for man page (in future?)
 if [ -f $RPM_BUILD_DIR/cvs2svn-%{version}/cvs2svn.1 ]; then
    cp $RPM_BUILD_DIR/cvs2svn-%{version}/cvs2svn.1 $RPM_BUILD_ROOT/usr/share/man/man1
 fi
+
+(cd $RPM_BUILD_ROOT
+find . -name 'CVS' -exec rm -rf {} \;
+)
+
+(cd $RPM_BUILD_ROOT
+find . -name '.cvsignore' -exec rm -f {} \;
+)
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -67,5 +80,6 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-,root,root)
 %doc BUGS COMMITTERS COPYING HACKING README
+%doc design-notes.txt
 /usr/bin/*
 /usr/lib/python2.2/site-packages/*

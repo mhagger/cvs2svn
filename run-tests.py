@@ -665,10 +665,11 @@ def mixed_commit():
   repos, wc, logs = ensure_conversion('main')
 
   rev = 23
-  for path in ('/trunk/proj/sub2/default', 
-               '/branches/B_MIXED/proj/sub2/branch_B_MIXED_only'):
-    if not (logs[rev].changed_paths.get(path) == 'M'):
-      raise svntest.Failure
+  if not logs[rev].changed_paths == {
+    '/trunk/proj/sub2/default': 'M',
+    '/branches/B_MIXED/proj/sub2/branch_B_MIXED_only': 'M',
+    }:
+    raise svntest.Failure
 
   if logs[rev].msg.find('A single commit affecting one file on branch B_MIXED '
                        'and one on trunk.') != 0:

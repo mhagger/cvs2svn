@@ -622,9 +622,6 @@ class CVSRevision:
       len(self.branches), self.branches and " " or "", " ".join(self.branches),
       self.fname, ))
 
-  def symbolic_names(self):
-    return self.tags + self.branches
-
   # Returns true if this CVSRevision is the opening CVSRevision for
   # NAME (for this RCS file).
   def opens_symbolic_name(self, name):
@@ -1163,9 +1160,10 @@ class SymbolingsLogger:
   """Manage the file that contains lines for symbol openings and
   closings.
 
-  Determine valid SVNRevision ranges from which a file can be copied
-  when creating a branch or tag in Subversion.  Do this by finding
-  "Openings" and "Closings" for each file copied onto a branch or tag.
+  This data will later be used to determine valid SVNRevision ranges
+  from which a file can be copied when creating a branch or tag in
+  Subversion.  Do this by finding "Openings" and "Closings" for each
+  file copied onto a branch or tag.
 
   An "Opening" is the CVSRevision from which a given branch/tag
   sprouts on a path.
@@ -1207,15 +1205,14 @@ class SymbolingsLogger:
     # CVSRevision is a default branch revision.
     self.open_paths_with_default_branches = { }
 
-  def log_names_for_rev(self, names, c_rev, svn_revnum):
-    """Iterate through NAMES.  Based on the type of C_REV we have,
-    either log an opening or, if C_REV.next_rev is not None, a
-    closing.  The opening uses SVN_REVNUM, but the closing (if any)
-    will have its revnum determined later."""
-    for name in names:
+  def log_revision(self, c_rev, svn_revnum):
+    """Log any openings found in C_REV, and if C_REV.next_rev is not
+    None, a closing.  The opening uses SVN_REVNUM, but the closing (if
+    any) will have its revnum determined later."""
+    for name in c_rev.tags + c_rev.branches:
       name = _clean_symbolic_name(name)
       self._note_default_branch_opening(c_rev, name)
-      if not c_rev.op == OP_DELETE:
+      if c_rev.op != OP_DELETE:
         self._log(name, svn_revnum, c_rev.svn_path, OPENING)
       
       # If our c_rev has a next_rev, then that's the closing rev for
@@ -1224,13 +1221,6 @@ class SymbolingsLogger:
       if c_rev.next_rev is not None:
         self.closings.write('%s %s\n' %
                             (name, c_rev.unique_key(c_rev.next_rev))) 
-
-  def log_revision(self, c_rev, svn_revnum):
-    """Examine a CVS Revision to see if it opens a symbolic name."""
-    # We log this revision if:
-    # - There is branch/tag OPENING activity in this c_rev
-    if ((len(c_rev.tags) > 0) or (len(c_rev.branches) > 0)):
-      self.log_names_for_rev(c_rev.symbolic_names(), c_rev, svn_revnum)
 
   def _log(self, name, svn_revnum, svn_path, type):
     """Write out a single line to the symbol_openings_closings file
@@ -1244,10 +1234,9 @@ class SymbolingsLogger:
                                                type, svn_path))
 
   def close(self):
-    # Iterate through the closings file, lookup the svn_revnum for
-    # each closing CVSRevision, and write a proper line out to the
-    # symbolings file.
-
+    """Iterate through the closings file, lookup the svn_revnum for
+    each closing CVSRevision, and write a proper line out to the
+    symbolings file."""
     # Use this to get the c_rev.svn_path of our rev_key
     cvs_revs_db = CVSRevisionDatabase(DB_OPEN_READ, self._ctx)
 

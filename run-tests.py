@@ -736,7 +736,7 @@ def mixed_time_branch_with_added_file():
 
   # A branch from the same place as T_MIXED in the previous test,
   # plus a file added directly to the branch
-  check_rev(logs, 33, sym_log_msg('B_MIXED'), {
+  check_rev(logs, 32, sym_log_msg('B_MIXED'), {
     '/branches/B_MIXED (from /trunk:31)': 'A',
     '/branches/B_MIXED/partial-prune': 'D',
     '/branches/B_MIXED/single-files': 'D',
@@ -1453,7 +1453,7 @@ test_list = [ None,
               resync_bug,
               branch_from_default_branch,
               file_in_attic_too,
-              XFail(symbolic_name_filling_guide),
+              symbolic_name_filling_guide,
              ]
 
 if __name__ == '__main__':

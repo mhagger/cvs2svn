@@ -686,7 +686,13 @@ class CVSRevision:
     if name in self.tags:
       return 1
     if name in self.branches:
-      return 1
+      # If this c_rev opens a branch and our op is OP_DELETE, then
+      # that means that the file that this c_rev belongs to was
+      # created on the branch, so for all intents and purposes, this
+      # c_rev is *technically* not an opening.  See Issue #62 for more
+      # information.
+      if self.op != OP_DELETE:
+        return 1
     return 0
 
   def is_default_branch_revision(self):

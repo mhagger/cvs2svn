@@ -55,7 +55,7 @@ mkdir -p $RPM_BUILD_ROOT/usr/bin
 make install DESTDIR=$RPM_BUILD_ROOT
 
 # Install verify-cvs2svn.
-#sed -e 's;#!/usr/bin/env python;#!/usr/bin/env python2;' < $RPM_BUILD_DIR/%{name}-%{version}/verify-cvs2svn.py > $RPM_BUILD_ROOT/usr/bin/verify-cvs2svn
+#sed -e 's;#!/usr/bin/env python;#!/usr/bin/env python2;' < $RPM_BUILD_DIR/%{name}-%{version}/verify-cvs2svn > $RPM_BUILD_ROOT/usr/bin/verify-cvs2svn
 #chmod a+x $RPM_BUILD_ROOT/usr/bin/verify-cvs2svn
 
 # Check for man page (in future?)
@@ -65,8 +65,8 @@ fi
 
 
 # Patch in version number to cvs2svn
-sed -e "s/^VERSION = .*/VERSION = '%{version}'/" < $RPM_BUILD_ROOT/usr/bin/cvs2svn.py > $RPM_BUILD_ROOT/usr/bin/cvs2svn
-rm -f $RPM_BUILD_ROOT/usr/bin/cvs2svn.py
+sed -e "s/^VERSION = .*/VERSION = '%{version}'/" < $RPM_BUILD_ROOT/usr/bin/cvs2svn > $RPM_BUILD_ROOT/usr/bin/cvs2svn
+rm -f $RPM_BUILD_ROOT/usr/bin/cvs2svn
 chmod a+x $RPM_BUILD_ROOT/usr/bin/cvs2svn
 
 

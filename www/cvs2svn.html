@@ -211,7 +211,7 @@ directories) before running your conversion.
 <ul>
   <li>As root, run 'make install'.</li>
 
-  <li>Or, if you do not wish to install cvs2svn.py on your system, you
+  <li>Or, if you do not wish to install cvs2svn on your system, you
     can simply run it out of this directory.  As long as it can find
     the 'cvs2svn_rcsparse' library, it should be happy.</li>
 </ul>
@@ -225,7 +225,7 @@ directories) before running your conversion.
 
   <tr>
     <td colspan=2>
-      <tt>USAGE: cvs2svn.py [-s svn-repos-path|--dump-only] cvs-repos-path</tt>
+      <tt>USAGE: cvs2svn [-s svn-repos-path|--dump-only] cvs-repos-path</tt>
     </td>
   </tr>
 
@@ -406,24 +406,24 @@ directories) before running your conversion.
 repository, run the script like this:</p>
 
 <pre>
-   $ cvs2svn.py -s NEW_SVNREPOS CVSREPOS
+   $ cvs2svn -s NEW_SVNREPOS CVSREPOS
 </pre>
   
 <p>To create a new Subversion repository containing only trunk commits,
 and omitting all branches and tags from the CVS repository, do</p>
 
 <pre>
-   $ cvs2svn.py --trunk-only -s NEW_SVNREPOS CVSREPOS
+   $ cvs2svn --trunk-only -s NEW_SVNREPOS CVSREPOS
 </pre>
 
 <p>To create a Subversion dumpfile (suitable for 'svnadmin load') from
 a CVS repository, run it like this:</p>
 
 <pre>
-   $ cvs2svn.py --dump-only --dumpfile DUMPFILE CVSREPOS
+   $ cvs2svn --dump-only --dumpfile DUMPFILE CVSREPOS
 </pre>
   
-<p>As it works, cvs2svn.py will create many temporary files in the
+<p>As it works, cvs2svn will create many temporary files in the
 current directory.  This is normal.  If the entire conversion is
 successful, however, those tempfiles will be automatically removed.
 If the conversion is not successful, or if you specify the

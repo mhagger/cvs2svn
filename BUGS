@@ -11,7 +11,7 @@ for that, see
 
 Before reporting a bug, check to see
 
-   a) if you are already running the latest version of cvs2svn.py
+   a) if you are already running the latest version of cvs2svn
 
    b) if your bug is already filed in the issue tracker (see
       http://tinyurl.com/2uxwv for a list of all open bugs).
@@ -20,13 +20,13 @@ Then, mail your bug report to dev@cvs2svn.tigris.org.
 
 To be useful, a bug report should include the following information:
 
-   * The revision of cvs2svn.py you ran.  Look for a line like
-     "$LastChangedRevision: 789 $" near the top of cvs2svn.py (the
+   * The revision of cvs2svn you ran.  Look for a line like
+     "$LastChangedRevision: 789 $" near the top of cvs2svn (the
      number will probably be different, of course).
 
    * The version of Subversion you used it with.
 
-   * The exact cvs2svn.py command line you invoked, and the output it
+   * The exact cvs2svn command line you invoked, and the output it
      produced.
 
    * The data you ran it on.  If your CVS repository is small (only a

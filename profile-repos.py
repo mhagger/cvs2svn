@@ -16,7 +16,7 @@
 
 """
 Report information about CVS revisions, tags, and branches in a CVS
-repository by examining the results of running pass 1 of cvs2svn.py on
+repository by examining the results of running pass 1 of cvs2svn on
 that repository.  NOTE: You have to run the conversion passes
 yourself!
 """

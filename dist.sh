@@ -33,10 +33,10 @@ rm ${DIST_FULL}
 svn export -q test-data ${DIST_BASE}/test-data
 svn export -q svntest ${DIST_BASE}/svntest
 svn export -q www ${DIST_BASE}/www
-# Oh, and while we're at it, let's fix cvs2svn.py's version number.
-sed -e "s/^VERSION = .*/VERSION = '${VN}'/" < cvs2svn.py > cvs2svn.py.tmp
-mv cvs2svn.py.tmp ${DIST_BASE}/cvs2svn.py
-chmod a+x ${DIST_BASE}/cvs2svn.py
+# Oh, and while we're at it, let's fix cvs2svn's version number.
+sed -e "s/^VERSION = .*/VERSION = '${VN}'/" < cvs2svn > cvs2svn.tmp
+mv cvs2svn.tmp ${DIST_BASE}/cvs2svn
+chmod a+x ${DIST_BASE}/cvs2svn
 tar zcf ${DIST_FULL} ${DIST_BASE}
 rm -rf ${DIST_BASE}
 

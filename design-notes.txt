@@ -1,5 +1,5 @@
-                       How cvs2svn.py Works
-                       ====================
+                         How cvs2svn Works
+                         =================
 
 A cvs2svn run consists of eight passes.  Each pass saves the data it
 produces to files on disk, so that a) we don't hold huge amounts of

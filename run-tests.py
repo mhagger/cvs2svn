@@ -28,9 +28,9 @@ import os.path
 import locale
 
 # This script needs to run in the correct directory.  Make sure we're there.
-if not (os.path.exists('cvs2svn.py') and os.path.exists('test-data')):
+if not (os.path.exists('cvs2svn') and os.path.exists('test-data')):
   sys.stderr.write("error: I need to be run in the directory containing "
-                   "'cvs2svn.py' and 'test-data'.\n")
+                   "'cvs2svn' and 'test-data'.\n")
   sys.exit(1)
 
 # Load the Subversion test framework.
@@ -41,7 +41,7 @@ Skip = svntest.testcase.Skip
 XFail = svntest.testcase.XFail
 Item = svntest.wc.StateItem
 
-cvs2svn = os.path.abspath('cvs2svn.py')
+cvs2svn = os.path.abspath('cvs2svn')
 
 # We use the installed svn and svnlook binaries, instead of using
 # svntest.main.run_svn() and svntest.main.run_svnlook(), because the
@@ -103,8 +103,8 @@ def run_cvs2svn(error_re, *varargs):
   # Use the same python that is running this script
   return run_program(sys.executable, error_re, cvs2svn, *varargs)
   # On Windows, for an unknown reason, the cmd.exe process invoked by
-  # os.system('sort ...') in cvs2svn.py receives invalid stdio handles, if
-  # cvs2svn is started as "cvs2svn.py ...".  "python cvs2svn.py ..." avoids
+  # os.system('sort ...') in cvs2svn receives invalid stdio handles, if
+  # cvs2svn is started as "cvs2svn ...".  "python cvs2svn ..." avoids
   # this.  Therefore, the redirection of the output to the .s-revs file fails.
   # We no longer use the problematic invocation on any system, but this
   # comment remains to warn about this problem.
@@ -327,10 +327,10 @@ def ensure_conversion(name, error_re=None, trunk_only=None,
   match some line of stderr printed by the conversion.  If there is an
   error and ERROR_RE is not set, then raise svntest.Failure.
 
-  If TRUNK_ONLY is set, then pass the --trunk-only option to cvs2svn.py
+  If TRUNK_ONLY is set, then pass the --trunk-only option to cvs2svn
   if converting NAME for the first time.
 
-  If NO_PRUNE is set, then pass the --no-prune option to cvs2svn.py
+  If NO_PRUNE is set, then pass the --no-prune option to cvs2svn
   if converting NAME for the first time.
 
   If PASSBYPASS is set, then cvs2svn is run multiple times, each time

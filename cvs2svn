@@ -574,7 +574,7 @@ class CVSRevision:
     (Note that this class treats CTX as const, because the caller
     likely passed in a Borg instance of a Ctx.  The reason this class
     takes CTX as as a parameter, instead of just instantiating a Ctx
-    itself, is that this class should be usable outside cvs2svn.py.)
+    itself, is that this class should be usable outside cvs2svn.)
 
     If there is one argument in ARGS, it is a string, in the format of
     a line from a revs file.  Do *not* include a trailing newline.
@@ -3895,7 +3895,7 @@ _passes = [
 
 
 class Ctx:
-  """Session state for this run of cvs2svn.py.  For example, run-time
+  """Session state for this run of cvs2svn.  For example, run-time
   options are stored here.  This class is a Borg."""
   __shared_state = { }
   def __init__(self):

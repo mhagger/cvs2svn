@@ -1,3 +1,3 @@
-include *.py dist.sh
+include cvs2svn verify-cvs2svn *.py dist.sh
 include Makefile .version
 include README BUGS COMMITTERS COPYING HACKING design-notes.txt

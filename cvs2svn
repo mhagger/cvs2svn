@@ -324,16 +324,20 @@ def relative_name(cvsroot, fname):
                    " cvsroot\n" % (error_prefix, cvsroot, fname))
   sys.exit(1)
 
-def get_co_pipe(path, revision):
-  """Return a command string, and the pipe created using that string."""
-  pipe_cmd = 'co -q -x,v -p%s %s' % (revision, escape_shell_arg(path))
+def get_co_pipe(c_rev):
+  """Return a command string, and the pipe created using that string.
+  C_REV is a CVSRevision. The pipe returns the text of that CVS Revision."""
+  ctx = Ctx()
+  pipe_cmd = 'cvs %s co -r%s -p %s' % \
+      (ctx.cvs_global_arguments, c_rev.rev,
+          escape_shell_arg(ctx.cvs_module + c_rev.cvs_path))
   pipe = Popen3(pipe_cmd, True)
   pipe.tochild.close()
   return pipe_cmd, pipe
 
 def generate_ignores(c_rev):
   # Read in props
-  pipe_cmd, pipe = get_co_pipe(c_rev.rcs_path(), c_rev.rev)
+  pipe_cmd, pipe = get_co_pipe(c_rev)
   buf = pipe.fromchild.read(PIPE_READ_SIZE)
   raw_ignore_val = ""
   while buf:
@@ -798,15 +802,6 @@ class CVSRevision:
       return self._ctx.branches_base + '/' + branch_name + '/' + path
     else:
       return self._ctx.trunk_base + '/' + path
-
-  def rcs_path(self):
-    """Returns the actual filesystem path to the RCS file of this
-    CVSRevision."""
-    if self.file_in_attic is None:
-      return self.fname
-    else:
-      basepath, filename = os.path.split(self.fname)
-      return os.path.join(basepath, 'Attic', filename)
 
   def filename(self):
     "Return the last path component of self.fname, minus the ',v'"
@@ -3428,7 +3423,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
                           % (self._utf8_path(dir_path), ignore_len,
                              ignore_len, ignore_contents))
 
-    pipe_cmd, pipe = get_co_pipe(c_rev.rcs_path(), c_rev.rev)
+    pipe_cmd, pipe = get_co_pipe(c_rev)
     self.dumpfile.write('Node-path: %s\n'
                         'Node-kind: file\n'
                         'Node-action: %s\n'
@@ -4311,9 +4306,32 @@ def main():
 
   if not os.path.isdir(ctx.cvsroot):
     sys.stderr.write(error_prefix +
-                     ": the cvs-repos-path '%s' is not an "
+                     ": the given CVS repository path '%s' is not an "
                      "existing directory.\n" % ctx.cvsroot)
     sys.exit(1)
+
+  # Ascend above the specified root if necessary, to find the cvs_repository
+  # (a directory containing a CVSROOT directory) and the cvs_module (the
+  # path of the conversion root within the cvs repository)
+  # NB: cvs_module must be seperated by '/' *not* by os.sep .
+  ctx.cvs_repository = os.path.abspath(ctx.cvsroot)
+  prev_cvs_repository = None
+  ctx.cvs_module = ""
+  while prev_cvs_repository != ctx.cvs_repository:
+    if os.path.isdir(os.path.join(ctx.cvs_repository, 'CVSROOT')):
+      break
+    prev_cvs_repository = ctx.cvs_repository
+    ctx.cvs_repository, module_component = os.path.split(ctx.cvs_repository)
+    ctx.cvs_module = module_component + "/" + ctx.cvs_module
+  else:
+    # Hit the root (of the drive, on Windows) without finding a CVSROOT dir.
+    sys.stderr.write(error_prefix +
+                     ": the path '%s' is not a CVS repository, nor a path " \
+                     "within a CVS repository. A CVS repository contains a " \
+                     "a CVSROOT directory within its root directory.\n" \
+                     % ctx.cvs_root)
+    sys.exit(1)
+  os.environ['CVSROOT'] = ctx.cvs_repository
 
   if (not ctx.target) and (not ctx.dump_only):
     sys.stderr.write(error_prefix +
@@ -4380,6 +4398,26 @@ def main():
                      % ctx.tmpdir)
     sys.exit(1)
 
+  def cvs_ok():
+    pipe = Popen3('cvs %s version' % Ctx().cvs_global_arguments, True)
+    pipe.tochild.close()
+    pipe.fromchild.read()
+    errmsg = pipe.childerr.read()
+    status = pipe.wait()
+    ok = len(errmsg) > 0 or status != 0
+    return (ok, status, errmsg)
+
+  ctx.cvs_global_arguments = "-q -R"
+  ok, cvs_exitstatus, cvs_errmsg = cvs_ok()
+  if not ok:
+    ctx.cvs_global_arguments = "-q"
+    ok, cvs_exitstatus, cvs_errmsg = cvs_ok()
+
+  if not ok:
+    sys.stderr.write(error_prefix +
+        ": error executing CVS: Status %s, Error Output\n" % (cvs_exitstatus,)
+        + cvs_errmsg)
+  
   # But do lock the tmpdir, to avoid process clash.
   try:
     os.mkdir(os.path.join(ctx.tmpdir, 'cvs2svn.lock'))

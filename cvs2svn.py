@@ -1814,12 +1814,14 @@ class SVNCommit:
     try: 
       ### FIXME: The 'replace' behavior should be an option, like
       ### --encoding is.
-      unicode_author = None
+      utf8_author = None
       if self._author is not None:
         unicode_author = unicode(self._author, self._ctx.encoding, 'replace')
+        utf8_author = unicode_author.encode('utf8')
       unicode_log = unicode(self.get_log_msg(), self._ctx.encoding, 'replace')
-      return { 'svn:author' : unicode_author.encode('utf8'),
-               'svn:log'    : unicode_log.encode('utf8'),
+      utf8_log = unicode_log.encode('utf8')
+      return { 'svn:author' : utf8_author,
+               'svn:log'    : utf8_log,
                'svn:date'   : date }
     except UnicodeError:
       Log().write(LOG_WARN, '%s: problem encoding author or log message:'

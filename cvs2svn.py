@@ -3044,7 +3044,7 @@ def main():
   ctx.forced_tags = []
 
   start_pass = 1
-  end_pass = len(_passes) - 1
+  end_pass = len(_passes)
 
   try:
     opts, args = getopt.getopt(sys.argv[1:], 'p:s:vh',
@@ -3068,7 +3068,7 @@ def main():
         start_pass, end_pass = map(int, value.split(':'))
       else:
         end_pass = start_pass = int(value)
-      if start_pass > len(_passes):
+      if start_pass > len(_passes) or start_pass < 1:
         print '%s: illegal value (%d) for starting pass. '\
               'must be 1 through %d.' % (error_prefix, int(start_pass),
                                          len(_passes))

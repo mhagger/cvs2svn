@@ -149,6 +149,17 @@ CVS_REVS_DB = 'cvs2svn-cvs-revs.db'
 # names), values are ignorable.
 TAGS_DB = 'cvs2svn-tags.db'
 
+# A list all tags.  Each line consists of the tag name and the number
+# of files in which it exists, separated by a space.
+TAGS_LIST = 'cvs2svn-tags.txt'
+
+# A list of all branches.  The file is stored as a plain text file
+# to make it easy to look at in an editor.  Each line contains the
+# branch name, the number of files where the branch is created, the
+# commit count, and a list of tags and branches that are defined on
+# revisions in the branch.
+BRANCHES_LIST = 'cvs2svn-branches.txt'
+
 # These two databases provide a bidirectional mapping between
 # CVSRevision.unique_key()s and Subversion revision numbers.
 #
@@ -333,6 +344,12 @@ def print_node_tree(tree, root_node, indent_depth=0):
       continue
     print_node_tree(tree, value, (indent_depth + 1))
 
+def match_regexp_list(regexp_list, string):
+  """Return 1 if string matches any of the compiled regexps in REGEXP_LIST,
+  else return None."""
+  for regexp in regexp_list:
+    if regexp.match(string):
+      return 1
 
 # These constants represent the log levels that this script supports
 LOG_WARN = -1
@@ -709,6 +726,133 @@ class CVSRevision:
     "Return the last path component of self.fname, minus the ',v'"
     return self.fname.split('/')[-1][:-2]
 
+class SymbolDatabase:
+  """This database records information on all symbols in the RCS
+  files.  It is created in pass 1 and it is used in pass 2."""
+  def __init__(self):
+    # A hash that maps tag names to commit counts
+    self.tags = { }
+    # A hash that maps branch names to lists of the format
+    # [ create_count, commit_count, blockers ], where blockers
+    # is a hash that lists the symbols that depend on the
+    # the branch.  The blockers hash is used as a set, so the
+    # values are not used.
+    self.branches = { }
+
+  def register_tag_creation(self, name):
+    """Register the creation of the tag NAME."""
+    if not self.tags.has_key(name):
+      self.tags[name] = 0
+    self.tags[name] += 1
+
+  def _branch(self, name):
+    """Helper function to get a branch node that will create and
+    initialize the node if it does not exist."""
+    if not self.branches.has_key(name):
+      self.branches[name] = [ 0, 0, { } ]
+    return self.branches[name]
+
+  def register_branch_creation(self, name):
+    """Register the creation of the branch NAME."""
+    self._branch(name)[0] += 1
+
+  def register_branch_commit(self, name):
+    """Register a commit on the branch NAME."""
+    self._branch(name)[1] += 1
+
+  def register_branch_blocker(self, name, blocker):
+    """Register BLOCKER as a blocker on the branch NAME."""
+    self._branch(name)[2][blocker] = None
+
+  def branch_has_commit(self, name):
+    """Return non-zero if NAME has commits.  Returns 0 if name
+    is not a branch or if it has no commits."""
+    return self.branches.has_key(name) and self.branches[name][1]
+
+  def find_excluded_symbols(self, regexp_list):
+    """Returns a hash of all symbols thaht match the regexps in
+    REGEXP_LISTE.  The hash is used as a set so the values are
+    not used."""
+    excludes = { }
+    for tag in self.tags.keys():
+      if match_regexp_list(regexp_list, tag):
+        excludes[tag] = None
+    for branch in self.branches.keys():
+      if match_regexp_list(regexp_list, branch):
+        excludes[branch] = None
+    return excludes
+
+  def find_branch_exclude_blockers(self, branch, excludes):
+    """Find all blockers of BRANCH, excluding the ones in the hash
+    EXCLUDES."""
+    blockers = { }
+    if excludes.has_key(branch):
+      for blocker in self.branches[branch][2]:
+        if not excludes.has_key(blocker):
+          blockers[blocker] = None
+    return blockers
+
+  def find_blocked_excludes(self, excludes):
+    """Find all branches not in EXCLUDES that have blocking symbols that
+    are not themselves excluded.  Return a hash that maps branch names
+    to a hash of blockers.  The hash of blockes is used as a set so the
+    values are not used."""
+    blocked_branches = { }
+    for branch in self.branches.keys():
+      blockers = self.find_branch_exclude_blockers(branch, excludes)
+      if blockers:
+        blocked_branches[branch] = blockers
+    return blocked_branches
+
+  def find_mismatches(self, excludes=None):
+    """Find all symbols that are defined as both tags and branches,
+    excluding the ones in EXCLUDES.  Returns a list of 4-tuples with
+    the symbol name, tag count, branch count and commit count."""
+    if excludes is None:
+      excludes = { }
+    mismatches = [ ]
+    for branch in self.branches.keys():
+      if not excludes.has_key(branch) and self.tags.has_key(branch):
+        mismatches.append((branch,                    # name
+                           self.tags[branch],         # tag count
+                           self.branches[branch][0],  # branch count
+                           self.branches[branch][1])) # commit count
+    return mismatches
+
+  def read(self):
+    """Read the symbol database from files."""
+    f = open(TAGS_LIST)
+    while 1:
+      line = f.readline()
+      if not line:
+        break
+      tag, count = line.split()
+      self.tags[tag] = int(count)
+
+    f = open(BRANCHES_LIST)
+    while 1:
+      line = f.readline()
+      if not line:
+        break
+      words = line.split()
+      self.branches[words[0]] = [ int(words[1]), int(words[2]), { } ]
+      for blocker in words[3:]:
+        self.branches[words[0]][2][blocker] = None
+
+  def write(self):
+    """Store the symbol database to files."""
+    f = open(TAGS_LIST, "w")
+    for tag, count in self.tags.items():
+      f.write("%s %d\n" % (tag, count))
+
+    f = open(BRANCHES_LIST, "w")
+    for branch, info in self.branches.items():
+      f.write("%s %d %d" % (branch, info[0], info[1]))
+      if info[2]:
+        f.write(" ")
+        f.write(" ".join(info[2].keys()))
+      f.write("\n")
+
 class CollectData(rcsparse.Sink):
   def __init__(self, ctx):
     self._ctx = ctx
@@ -722,32 +866,11 @@ class CollectData(rcsparse.Sink):
     self.metadata_db = Database(METADATA_DB, DB_OPEN_NEW)
     Cleanup().register(METADATA_DB, pass8)
     self.fatal_errors = []
-    self.next_faked_branch_num = 999999
     self.num_files = 0
+    self.symbol_db = SymbolDatabase()
 
     # 1 if we've collected data for at least one file, None otherwise.
     self.found_valid_file = None
-    
-    # Branch and tag label types.
-    self.BRANCH_LABEL = 0
-    self.VENDOR_BRANCH_LABEL = 1
-    self.TAG_LABEL = 2
-    # A label type to string conversion list
-    self.LABEL_TYPES = [ 'branch', 'vendor branch', 'tag' ]
-    # A dict mapping label names to types
-    self.label_type = { }
-
-    # A list of labels that are to be treated as branches even if they
-    # are defined as tags in CVS.
-    self.forced_branches = ctx.forced_branches
-    # A list of labels that are to be treated as tags even if they are
-    # defined as branches in CVS.
-    self.forced_tags = ctx.forced_tags
-    # A list of branches that may not contain any commits because
-    # it is forced to be treated as a tag by the user.
-    self.forced_tag_branches = { }
-
-    self.tags_db = TagsDatabase(DB_OPEN_NEW)
 
     # See set_fname() for initializations of other variables.
 
@@ -833,10 +956,6 @@ class CollectData(rcsparse.Sink):
     # trunk.  This records the date at which 1.2 was committed.
     self.first_non_vendor_revision_date = None
 
-    # A list of branches for which we have already shown an error for
-    # the current file.
-    self.forced_tag_error_branches = [ ]
-
   def set_principal_branch(self, branch):
     self.default_branch = branch
 
@@ -856,6 +975,7 @@ class CollectData(rcsparse.Sink):
       if not self.branchlist.has_key(sprout_rev):
         self.branchlist[sprout_rev] = []
       self.branchlist[sprout_rev].append(name)
+      self.symbol_db.register_branch_creation(name)
     else:
       sys.stderr.write("%s: in '%s':\n"
                        "   branch '%s' already has name '%s',\n"
@@ -898,79 +1018,20 @@ class CollectData(rcsparse.Sink):
       return
 
     if branch_tag.match(revision):
-      label_type = self.BRANCH_LABEL
-    elif vendor_tag.match(revision):
-      label_type = self.VENDOR_BRANCH_LABEL
-    else:
-      label_type = self.TAG_LABEL
-
-    if name in self.forced_branches:
-      if label_type == self.VENDOR_BRANCH_LABEL:
-        sys.exit(error_prefix + "Error: --force-branch does not work "
-                 "with vendor branches.")
-      elif label_type == self.TAG_LABEL:
-        # Append a faked branch suffix to the revision to simulate
-        # an empty branch.
-        revision += ".0." + str(self.next_faked_branch_num)
-        self.next_faked_branch_num += 1
-        label_type = self.BRANCH_LABEL
-    elif name in self.forced_tags:
-      if label_type == self.VENDOR_BRANCH_LABEL:
-        sys.exit(error_prefix + "Error: --force-tag does not work "
-                 "with vendor branches.")
-      elif label_type == self.BRANCH_LABEL:
-        # Remove the .0.N suffix, where N is the branch number.  Store
-        # the branch revision prefix in forced_tag_branches so that we
-        # can detect if the branch is not empty.
-        rev_parts = revision.split(".")
-        branch_num = rev_parts[-1]
-        revision = string.join(rev_parts[:-2], ".")
-        self.forced_tag_branches[revision + "." + branch_num] = name
-        label_type = self.TAG_LABEL
-
-    if label_type == self.BRANCH_LABEL:
       self.add_cvs_branch(revision, name)
-    elif label_type == self.VENDOR_BRANCH_LABEL:
+    elif vendor_tag.match(revision):
       self.set_branch_name(revision, name)
     else:
       if not self.taglist.has_key(revision):
         self.taglist[revision] = []
       self.taglist[revision].append(name)
-      self.tags_db[name] = None
-
-    try:
-      # if label_types are different and at least one is a tag (We
-      # don't want to error on branch/vendor branch mismatches)
-      if (self.label_type[name] != label_type
-          and(self.label_type[name] == self.TAG_LABEL
-              or label_type == self.TAG_LABEL)):
-        err = ("%s: in '%s' (BRANCH/TAG MISMATCH):\n   '%s' "
-               " is defined as %s here, but as a %s elsewhere"
-               % (error_prefix, self.fname, name,
-                  self.LABEL_TYPES[label_type],
-                  self.LABEL_TYPES[self.label_type[name]]))
-        sys.stderr.write(err + '\n')
-        self.fatal_errors.append(err)
-    except KeyError:
-      self.label_type[name] = label_type
+      self.symbol_db.register_tag_creation(name)
 
   def define_revision(self, revision, timestamp, author, state,
                       branches, next):
 
     # Record the state of our revision for later calculations
     self.rev_state[revision] = state
-
-    # Check that this revision is not on a branch that has been forced
-    # to be a tag.
-    branch_rev = revision[:revision.rfind('.')]
-    if (self.forced_tag_branches.has_key(branch_rev)
-        and branch_rev not in self.forced_tag_error_branches):
-      err = ("%s: in '%s':\n   "
-             "'%s' cannot be forced to be a tag because it contains commits" %
-             (error_prefix, self.fname, self.forced_tag_branches[branch_rev]))
-      sys.stderr.write(err + '\n')
-      self.fatal_errors.append(err)
-      self.forced_tag_error_branches.append(branch_rev)
 
     # store the rev_data as a list in case we have to jigger the timestamp
     self.rev_data[revision] = [int(timestamp), author, None]
@@ -1036,16 +1097,20 @@ class CollectData(rcsparse.Sink):
           rel_name = relative_name(self.cvsroot, self.fname)[:-2]
           self.default_branches_db[rel_name] = revision
 
-    # Check for unlabeled branches, record them.  We tried to collect
-    # all branch names when we parsed the symbolic name header
-    # earlier, of course, but that didn't catch unlabeled branches.
-    # If a branch is unlabeled, this is our first encounter with it,
-    # so we have to record its data now.
     if not trunk_rev.match(revision):
+      # Check for unlabeled branches, record them.  We tried to collect
+      # all branch names when we parsed the symbolic name header
+      # earlier, of course, but that didn't catch unlabeled branches.
+      # If a branch is unlabeled, this is our first encounter with it,
+      # so we have to record its data now.
       branch_number = revision[:revision.rindex(".")]
       if not self.branch_names.has_key(branch_number):
         branch_name = "unlabeled-" + branch_number
         self.set_branch_name(branch_number, branch_name)
+
+      # Register the commit on this non-trunk branch
+      branch_name = self.branch_names[branch_number]
+      self.symbol_db.register_branch_commit(branch_name)
 
   def tree_completed(self):
     "The revision tree has been parsed.  Analyze it for consistency."
@@ -1154,7 +1219,18 @@ class CollectData(rcsparse.Sink):
       self.metadata_db[digest] = (author, log)
 
   def parse_completed(self):
+    # Walk through all branches and tags and register them with
+    # their parent branch in the symbol database.
+    for revision, symbols in self.taglist.items() + self.branchlist.items():
+      for symbol in symbols:
+        name = self.rev_to_branch_name(revision)
+        if name is not None:
+          self.symbol_db.register_branch_blocker(name, symbol)
+
     self.num_files = self.num_files + 1
+
+  def write_symbol_db(self):
+    self.symbol_db.write()
 
 class SymbolingsLogger:
   """Manage the file that contains lines for symbol openings and
@@ -1617,6 +1693,10 @@ class CVSCommit:
       # this revision if the log message is not the standard cvs
       # fabricated log message.
       if c_rev.prev_rev is None:
+        # c_rev.branches may be empty if the originating branch
+        # has been excluded.
+        if not c_rev.branches:
+          continue
         cvs_generated_msg = ('file %s was initially added on branch %s.\n'
                              % (c_rev.filename(),
                                 c_rev.branches[0]))
@@ -3564,6 +3644,8 @@ def pass1(ctx):
   os.path.walk(ctx.cvsroot, visit_file, cd)
   Log().write(LOG_VERBOSE, 'Processed', cd.num_files, 'files')
 
+  cd.write_symbol_db()
+
   if len(cd.fatal_errors) > 0:
     sys.exit("Pass 1 complete.\n" + "=" * 75 + "\n"
              + "Error summary:\n"
@@ -3580,6 +3662,71 @@ def pass1(ctx):
  
 def pass2(ctx):
   "Pass 2: clean up the revision information."
+
+  symbol_db = SymbolDatabase()
+  symbol_db.read()
+
+  # Convert the list of regexps to a list of strings
+  excludes = symbol_db.find_excluded_symbols(ctx.excludes)
+
+  error_detected = 0
+
+  Log().write(LOG_QUIET, "Checking for blocked exclusions...")
+  blocked_excludes = symbol_db.find_blocked_excludes(excludes)
+  if blocked_excludes:
+    for branch, blockers in blocked_excludes.items():
+      sys.stderr.write(error_prefix + ": The branch '%s' cannot be "
+                       "excluded because the following symbols depend "
+                       "on it:\n" % (branch))
+      for blocker in blockers:
+        sys.stderr.write("    '%s'\n" % (blocker))
+    sys.stderr.write("\n")
+    error_detected = 1
+
+  Log().write(LOG_QUIET, "Checking for forced tags with commits...")
+  invalid_forced_tags = [ ]
+  for forced_tag in ctx.forced_tags:
+    if excludes.has_key(forced_tag):
+      continue
+    if symbol_db.branch_has_commit(forced_tag):
+      invalid_forced_tags.append(forced_tag)
+  if invalid_forced_tags:
+    sys.stderr.write(error_prefix + ": The following branches cannot be "
+                     "forced to be tags because they have commits:\n")
+    for tag in invalid_forced_tags:
+      sys.stderr.write("    '%s'\n" % (tag))
+    sys.stderr.write("\n")
+    error_detected = 1
+
+  Log().write(LOG_QUIET, "Checking for tag/branch mismatches...")
+  mismatches = symbol_db.find_mismatches(excludes)
+  def is_not_forced(mismatch):
+    name = mismatch[0]
+    return not (name in ctx.forced_tags or name in ctx.forced_branches)
+  mismatches = filter(is_not_forced, mismatches)
+  if mismatches:
+    sys.stderr.write(error_prefix + ": The following symbols are tags "
+                     "in some files and branches in others.\nUse "
+                     "--force-tag, --force-branch and/or --exclude to "
+                     "resolve the symbols.\n")
+    for name, tag_count, branch_count, commit_count in mismatches:
+      sys.stderr.write("    '%s' is a tag in %d files, a branch in "
+                       "%d files and has commits in %d files.\n"
+                       % (name, tag_count, branch_count, commit_count))
+    error_detected = 1
+
+  # Bail out now if we found errors
+  if error_detected:
+    sys.exit(1)
+
+  # Create the tags database
+  tags_db = TagsDatabase(DB_OPEN_NEW)
+  for tag in symbol_db.tags.keys():
+    if tag not in ctx.forced_branches:
+      tags_db[tag] = None
+  for tag in ctx.forced_tags:
+    tags_db[tag] = None
+
   Log().write(LOG_QUIET, "Re-synchronizing CVS revision timestamps...")
 
   # We may have recorded some changes in revisions' timestamp.  We need to
@@ -3635,6 +3782,29 @@ def pass2(ctx):
   # process the revisions file, looking for items to clean up
   for line in fileinput.FileInput(DATAFILE + REVS_SUFFIX):
     c_rev = CVSRevision(ctx, line[:-1])
+
+    # Skip this entire revision if it's on an excluded branch
+    if excludes.has_key(c_rev.branch_name):
+      continue
+
+    # Remove all references to excluded tags and branches
+    def not_excluded(symbol, excludes=excludes):
+      return not excludes.has_key(symbol)
+    c_rev.branches = filter(not_excluded, c_rev.branches)
+    c_rev.tags = filter(not_excluded, c_rev.tags)
+
+    # Convert all branches that are forced to be tags
+    for forced_tag in ctx.forced_tags:
+      if forced_tag in c_rev.branches:
+        c_rev.branches.remove(forced_tag)
+        c_rev.tags.append(forced_tag)
+
+    # Convert all tags that are forced to be branches
+    for forced_branch in ctx.forced_branches:
+      if forced_branch in c_rev.tags:
+        c_rev.tags.remove(forced_branch)
+        c_rev.branches.append(forced_branch)
+
     if not resync.has_key(c_rev.digest):
       output.write(line)
       continue
@@ -3909,6 +4079,7 @@ def usage(ctx):
         % ctx.encoding
   print '  --force-branch=NAME  Force NAME to be a branch.'
   print '  --force-tag=NAME     Force NAME to be a tag.'
+  print '  --exclude=REGEXP     Exclude branches and tags matching REGEXP.'
   print '  --username=NAME      username for cvs2svn-synthesized commits'
   print '  --skip-cleanup       prevent the deletion of intermediate files'
   print '  --bdb-txn-nosync     pass --bdb-txn-nosync to "svnadmin create"'
@@ -3947,6 +4118,7 @@ def main():
   ctx.bdb_txn_nosync = 0
   ctx.forced_branches = []
   ctx.forced_tags = []
+  ctx.excludes = []
 
   start_pass = 1
   end_pass = len(_passes)
@@ -3956,7 +4128,7 @@ def main():
                                [ "help", "create", "trunk=",
                                  "username=", "existing-svnrepos",
                                  "branches=", "tags=", "encoding=",
-                                 "force-branch=", "force-tag=",
+                                 "force-branch=", "force-tag=", "exclude=",
                                  "mime-types=", "set-eol-style",
                                  "trunk-only", "no-prune", "dry-run",
                                  "dump-only", "dumpfile=", "svnadmin=",
@@ -4024,6 +4196,11 @@ def main():
       ctx.forced_branches.append(value)
     elif opt == '--force-tag':
       ctx.forced_tags.append(value)
+    elif opt == '--exclude':
+      try:
+        ctx.excludes.append(re.compile('^' + value + '$'))
+      except re.error, e:
+        sys.exit(error_prefix + ": '%s' is not a valid regexp.\n" % (value))
     elif opt == '--mime-types':
       ctx.mime_types_file = value
     elif opt == '--set-eol-style':

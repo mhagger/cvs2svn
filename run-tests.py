@@ -1710,21 +1710,21 @@ def keywords():
     'foo.kv'      : props_for_path(wc_tree, '/trunk/foo.kv'),
     }
 
-  if allprops['foo.default'].get('svn:keywords') != 'author date id':
+  if allprops['foo.default'].get('svn:keywords') != 'author date id revision':
     raise svntest.Failure
   if allprops['foo.default'].get('svn:eol-style') != 'native':
     raise svntest.Failure
   if allprops['foo.default'].get('svn:mime-type') is not None:
     raise svntest.Failure
   
-  if allprops['foo.kkvl'].get('svn:keywords') != 'author date id':
+  if allprops['foo.kkvl'].get('svn:keywords') != 'author date id revision':
     raise svntest.Failure
   if allprops['foo.kkvl'].get('svn:eol-style') != 'native':
     raise svntest.Failure
   if allprops['foo.kkvl'].get('svn:mime-type') is not None:
     raise svntest.Failure
   
-  if allprops['foo.kkv'].get('svn:keywords') != 'author date id':
+  if allprops['foo.kkv'].get('svn:keywords') != 'author date id revision':
     raise svntest.Failure
   if allprops['foo.kkv'].get('svn:eol-style') != 'native':
     raise svntest.Failure

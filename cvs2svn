@@ -573,7 +573,19 @@ class StatsKeeper:
                     'svn_rev_count' : None,
                     'first_rev_date' : 1L<<32,
                     'last_rev_date' : 0,
+                    'pass_timings' : { },
+                    'start_time' : 0,
+                    'end_time' : 0,
                     }
+
+  def log_duration_for_pass(self, duration, pass_num):
+    self.data['pass_timings'][pass_num] = duration
+
+  def set_start_time(self, start):
+    self.data['start_time'] = start
+
+  def set_end_time(self, end):
+    self.data['end_time'] = end
 
   def _bump_item(self, key, amount=1):
     self.data[key] = self.data[key] + amount
@@ -617,20 +629,21 @@ class StatsKeeper:
   def __str__(self):
     svn_revs_str = ""
     if self.data['svn_rev_count'] is not None:
-      svn_revs_str = ('     Total SVN Commits: %10s\n'
+      svn_revs_str = ('Total SVN Commits:      %10s\n'
                       % self.data['svn_rev_count'])
 
     return ('\n'                                \
-            '           cvs2svn Statistics\n'   \
-            '           ------------------\n'   \
-            '       Total CVS Files: %10i\n'    \
-            '   Total CVS Revisions: %10i\n'    \
-            '     Total Unique Tags: %10i\n'    \
-            ' Total Unique Branches: %10i\n'    \
-            '  CVS Repos Size in Kb: %10i\n'    \
+            'cvs2svn Statistics:\n'             \
+            '------------------\n'              \
+            'Total CVS Files:        %10i\n'    \
+            'Total CVS Revisions:    %10i\n'    \
+            'Total Unique Tags:      %10i\n'    \
+            'Total Unique Branches:  %10i\n'    \
+            'CVS Repos Size in KB:   %10i\n'    \
             '%s'                                \
-            '   First Revision Date: %s\n'      \
-            '    Last Revision Date: %s'        \
+            'First Revision Date:    %s\n'      \
+            'Last Revision Date:     %s\n'      \
+            '------------------'                \
             % (self.data['repos_file_count'],
                self.data['cvs_revs_count'],
                len(self.data['tags']),
@@ -640,6 +653,25 @@ class StatsKeeper:
                time.ctime(self.data['first_rev_date']),
                time.ctime(self.data['last_rev_date']),
                ))
+
+  def timings(self):
+    passes = self.data['pass_timings'].keys()
+    passes.sort()
+    str = 'Timings:\n------------------\n'
+
+    def desc(val):
+      if val == 1: return "second"
+      return "seconds"
+
+    for pass_num in passes:
+      duration = int(self.data['pass_timings'][pass_num])
+      p_str = ('pass %d:%6d %s\n'
+               % (pass_num, duration, desc(duration)))
+      str = str + p_str
+
+    total = int(self.data['end_time'] - self.data['start_time'])
+    str = str + ('total: %6d %s' % (total, desc(total)))
+    return str
 
 
 class LastSymbolicNameDatabase:
@@ -3800,9 +3832,6 @@ def pass1():
              + "at a CVS repository?\n"
              + "\nExited due to fatal error(s).")
 
-  Log().write(LOG_QUIET, StatsKeeper())
-  Log().write(LOG_QUIET, '(These are unaltered CVS repository stats and do not\n'
-              + ' reflect tags or branches excluded via --exclude)')
   StatsKeeper().reset_c_rev_info()
   StatsKeeper().archive()
   Log().write(LOG_QUIET, "Done")
@@ -4127,8 +4156,6 @@ def pass8():
     svncounter += 1
 
   StatsKeeper().set_svn_rev_count(persistence_manager.total_revs())
-  Log().write(LOG_QUIET, StatsKeeper())
-  StatsKeeper().archive()
   repos.finish()
 
 _passes = [
@@ -4233,11 +4260,14 @@ def convert(start_pass, end_pass):
   "Convert a CVS repository to an SVN repository."
 
   cleanup = Cleanup()
-  times = [ None ] * (end_pass)
+  times = [ None ] * (end_pass + 1)
+  times[start_pass - 1] = time.time()
+  StatsKeeper().set_start_time(time.time())
   for i in range(start_pass - 1, end_pass):
-    times[i] = time.time()
     Log().write(LOG_QUIET, '----- pass %d -----' % (i + 1))
     _passes[i]()
+    times[i + 1] = time.time()
+    StatsKeeper().log_duration_for_pass(times[i + 1] - times[i], i + 1)
     # Dispose of items in Ctx() not intended to live past the end of the pass
     # (Identified by exactly one leading underscore)
     for attr in dir(Ctx()):
@@ -4246,14 +4276,14 @@ def convert(start_pass, end_pass):
         delattr(Ctx(), attr)
     if not Ctx().skip_cleanup:
       cleanup.cleanup(_passes[i])
-  times.append(time.time())
-  Log().write(LOG_QUIET, '------------------')
+    StatsKeeper().set_end_time(time.time())
 
-  for i in range(start_pass, end_pass + 1):
-    Log().write(LOG_QUIET, 'pass %d: %d seconds'
-                % (i, int(times[i] - times[i-1])))
-  Log().write(LOG_QUIET, ' total:',
-              int(times[-1] - times[start_pass-1]), 'seconds')
+  Log().write(LOG_QUIET, StatsKeeper())
+  if end_pass < 4:
+    Log().write(LOG_QUIET, '(These are unaltered CVS repository stats and do not\n'
+                + ' reflect tags or branches excluded via --exclude)\n')
+  StatsKeeper().archive()
+  print StatsKeeper().timings()
 
 
 def usage():
@@ -4508,7 +4538,6 @@ def main():
                      "existing directory.\n" % ctx.target)
     sys.exit(1)
 
-  print "FITZ:", ctx.target
   if not ctx.dump_only and not ctx.existing_svnrepos \
      and (not ctx.dry_run) and os.path.exists(ctx.target):
     sys.stderr.write(error_prefix +

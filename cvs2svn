@@ -603,9 +603,11 @@ class StatsKeeper:
     if c_rev.timestamp > self.data['last_rev_date']:
       self.data['last_rev_date'] = c_rev.timestamp
 
-    self._bump_item('repos_size', c_rev.file_size)
-
+    # Only add the size if this is the first time we see the file.
+    if not self.repos_files.has_key(c_rev.fname):
+      self._bump_item('repos_size', c_rev.file_size)
     self.repos_files[c_rev.fname] = None
+
     self.data['repos_file_count'] = len(self.repos_files)
 
   def set_svn_rev_count(self, count):

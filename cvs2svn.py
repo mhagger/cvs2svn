@@ -2661,7 +2661,7 @@ def get_symbol_closing_revs(ctx):
     for branch in c_rev.branches:
       symbols[SymbolicName(branch)] = c_rev.unique_key()
     if c_rev.branch_name:
-      symbols[SymbolicName(branch)] = c_rev.unique_key()
+      symbols[SymbolicName(c_rev.branch_name)] = c_rev.unique_key()
 
   # Creates an inversion of symbols above--a dictionary of lists (key
   # = CVS rev unique_key: val = list of symbols that close in that

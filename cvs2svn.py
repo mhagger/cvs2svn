@@ -223,21 +223,6 @@ CLEAN_REVS_SUFFIX = '.c-revs'
 SORTED_REVS_SUFFIX = '.s-revs'
 RESYNC_SUFFIX = '.resync'
 
-# This list should contain all data files that we create in the course
-# of running the program.  To avoid running with stale files, we will delete
-# all of these files first thing in pass1.
-all_files = [CVS_REVS_DB, CVS_REVS_TO_SVN_REVNUMS, 
-             DATAFILE + CLEAN_REVS_SUFFIX, DATAFILE + RESYNC_SUFFIX, 
-             DATAFILE + REVS_SUFFIX, DATAFILE + SORTED_REVS_SUFFIX,
-             DEFAULT_BRANCHES_DB,
-             METADATA_DB, MOTIVATING_REVNUMS, SVN_COMMIT_NAMES_DATES,
-             SVN_MIRROR_NODES_DB, SVN_MIRROR_REVISIONS_DB,
-             SVN_REVNUMS_TO_CVS_REVS, SYMBOL_CLOSINGS_TMP,
-             SYMBOL_LAST_CVS_REVS_DB, SYMBOL_OFFSETS_DB,
-             SYMBOL_OPENINGS_CLOSINGS, SYMBOL_OPENINGS_CLOSINGS_SORTED,
-             TAGS_DB,
-             ]
-
 SVN_INVALID_REVNUM = -1
 
 COMMIT_THRESHOLD = 5 * 60	# flush a commit if a 5 minute gap occurs
@@ -3562,16 +3547,6 @@ class StdoutDelegate(SVNRepositoryMirrorDelegate):
     Log().write(LOG_QUIET, "Done.")
 
 def pass1(ctx):
-
-  cleanup_banner_shown = None
-  for file in all_files:
-    if os.path.isfile(file):
-      if cleanup_banner_shown is None:
-        Log().write(LOG_VERBOSE, "Cleaning up files from a previous run...")
-        cleanup_banner_shown = 1;
-      Log().write(LOG_VERBOSE, "  Deleting", file)
-      os.unlink(file)
-
   Log().write(LOG_QUIET, "Examining all CVS ',v' files...")
   cd = CollectData(ctx)
 

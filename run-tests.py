@@ -1412,7 +1412,12 @@ def symbolic_name_filling_guide():
   repos, wc, logs = ensure_conversion('symbolic-name-overfill')
 
 
-# Helper for tests involving file contents and properties.
+# Helpers for tests involving file contents and properties.
+
+class NodeTreeWalkException:
+  "Exception class for node tree traversals."
+  pass
+
 def node_for_path(node, path):
   "In the tree rooted under SVNTree NODE, return the node at PATH."
   if node.name != '__SVN_ROOT_NODE':
@@ -1439,10 +1444,6 @@ def eol_mime():
   mime_path = os.path.abspath(os.path.join(test_data_dir,
                                            'eol-mime-cvsrepos',
                                            'mime.types'))
-
-  class NodeTreeWalkException:
-    "Exception class for node tree traversals."
-    pass
 
   def the_usual_suspects(wc_root):
     """Return a dictionary mapping files onto their prop dicts.

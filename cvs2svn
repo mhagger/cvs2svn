@@ -3255,37 +3255,38 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     else:
       prop_contents = ''
     
-    # Tack on the executableness, if any.
-    if c_rev.file_executable:
-      prop_contents = prop_contents + 'K 14\nsvn:executable\nV 1\n*\n'
+    if op == OP_ADD:
+      # Tack on the executableness, if any.
+      if c_rev.file_executable:
+        prop_contents = prop_contents + 'K 14\nsvn:executable\nV 1\n*\n'
 
-    # Set mime-type and eol.  These two properties are intertwingled;
-    # follow the conditionals carefully.  See also issue #39.
-    mime_type = None
-    eol_style = None
+      # Set mime-type and eol.  These two properties are intertwingled;
+      # follow the conditionals carefully.  See also issue #39.
+      mime_type = None
+      eol_style = None
 
-    if self.mime_mapper:
-      mime_type = self.mime_mapper.get_type_from_filename(c_rev.cvs_path)
+      if self.mime_mapper:
+        mime_type = self.mime_mapper.get_type_from_filename(c_rev.cvs_path)
 
-    if not c_rev.mode == 'b':
-      if not self.no_default_eol:
-        eol_style = 'native'
-      elif mime_type and self.eol_from_mime_type:
-        if mime_type.startswith("text/"):
+      if not c_rev.mode == 'b':
+        if not self.no_default_eol:
           eol_style = 'native'
-        else:
-          eol_style = None
-    elif mime_type is None:
-      # file is kb, and no other mimetype specified
-      mime_type = 'application/octet-stream'
+        elif mime_type and self.eol_from_mime_type:
+          if mime_type.startswith("text/"):
+            eol_style = 'native'
+          else:
+            eol_style = None
+      elif mime_type is None:
+        # file is kb, and no other mimetype specified
+        mime_type = 'application/octet-stream'
 
-    if mime_type:
-      prop_contents = prop_contents + ('K 13\nsvn:mime-type\nV %d\n%s\n' % \
-                                       (len(mime_type), mime_type))
-    if eol_style:
-      prop_contents = prop_contents + ('K 13\nsvn:eol-style\nV %d\n%s\n' % \
-                                       (len(eol_style), eol_style))
-                                         
+      if mime_type:
+        prop_contents = prop_contents + ('K 13\nsvn:mime-type\nV %d\n%s\n' % \
+                                         (len(mime_type), mime_type))
+      if eol_style:
+        prop_contents = prop_contents + ('K 13\nsvn:eol-style\nV %d\n%s\n' % \
+                                         (len(eol_style), eol_style))
+
     # Calculate the property length (+10 for "PROPS-END\n")
     props_len = len(prop_contents) + 10
     

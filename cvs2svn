@@ -2671,7 +2671,6 @@ class SymbolicNameFillingGuide:
       path_so_far = ""
       # Walk up the path, one node at a time.
       components = svn_path.split('/')
-      last_path_component = components[-1]
       for component in components:
         path_so_far = path_so_far + '/' + component
 
@@ -2683,10 +2682,9 @@ class SymbolicNameFillingGuide:
         else:
           child_key = self.node_tree[parent_key][component]
 
-        # If this is the leaf, add the openings and closings.
-        if component is last_path_component:
-          self.node_tree[child_key] = open_close
         parent_key = child_key
+      # Having reached the leaf, attach the value
+      self.node_tree[parent_key] = open_close
     #print_node_tree(self.node_tree, self.root_key) 
 
   def is_empty(self):

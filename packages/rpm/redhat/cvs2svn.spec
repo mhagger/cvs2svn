@@ -19,6 +19,10 @@ Prefix: /usr
 Convert CVS repositories to Subversion repositories.
 
 %changelog
+* Wed Jul 06 2004 David Summers <david@summersoft.fay.ar.us> 0.1237-1
+- Make use of new DESTDIR capability for "make install".
+- Take out hacks to install files and delete CVS and .cvsignore files.
+
 * Tue Jul 06 2004 David Summers <david@summersoft.fay.ar.us> 0.1222-1
 - Track changes to build system.
 - Now uses Makefile.
@@ -48,34 +52,21 @@ make check
 rm -rf $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT/usr/bin
 
-# Install cvs2svn
-sed -e 's;#!/usr/bin/env python;#!/usr/bin/env python2;' < $RPM_BUILD_DIR/%{name}-%{version}/cvs2svn.py > $RPM_BUILD_ROOT/usr/bin/cvs2svn
-chmod a+x $RPM_BUILD_ROOT/usr/bin/cvs2svn
+make install DESTDIR=$RPM_BUILD_ROOT
 
 # Install verify-cvs2svn.
-sed -e 's;#!/usr/bin/env python;#!/usr/bin/env python2;' < $RPM_BUILD_DIR/%{name}-%{version}/verify-cvs2svn.py > $RPM_BUILD_ROOT/usr/bin/verify-cvs2svn
-chmod a+x $RPM_BUILD_ROOT/usr/bin/verify-cvs2svn
-
-# Copy python files.
-
-mkdir -p $RPM_BUILD_ROOT/usr/lib/python2.2/site-packages
-cp -r cvs2svn_rcsparse $RPM_BUILD_ROOT/usr/lib/python2.2/site-packages/cvs2svn_rcsparse
+#sed -e 's;#!/usr/bin/env python;#!/usr/bin/env python2;' < $RPM_BUILD_DIR/%{name}-%{version}/verify-cvs2svn.py > $RPM_BUILD_ROOT/usr/bin/verify-cvs2svn
+#chmod a+x $RPM_BUILD_ROOT/usr/bin/verify-cvs2svn
 
 # Check for man page (in future?)
 if [ -f $RPM_BUILD_DIR/cvs2svn-%{version}/cvs2svn.1 ]; then
    cp $RPM_BUILD_DIR/cvs2svn-%{version}/cvs2svn.1 $RPM_BUILD_ROOT/usr/share/man/man1
 fi
 
-(cd $RPM_BUILD_ROOT
-find . -name 'CVS' -exec rm -rf {} \;
-)
-
-(cd $RPM_BUILD_ROOT
-find . -name '.cvsignore' -exec rm -f {} \;
-)
 
 # Patch in version number to cvs2svn
-sed -e "s/^VERSION = .*/VERSION = '%{version}'/" < $RPM_BUILD_ROOT/usr/bin/cvs2svn > $RPM_BUILD_ROOT/usr/bin/cvs2svn.tmp && mv $RPM_BUILD_ROOT/usr/bin/cvs2svn.tmp $RPM_BUILD_ROOT/usr/bin/cvs2svn
+sed -e "s/^VERSION = .*/VERSION = '%{version}'/" < $RPM_BUILD_ROOT/usr/bin/cvs2svn.py > $RPM_BUILD_ROOT/usr/bin/cvs2svn
+rm -f $RPM_BUILD_ROOT/usr/bin/cvs2svn.py
 chmod a+x $RPM_BUILD_ROOT/usr/bin/cvs2svn
 
 

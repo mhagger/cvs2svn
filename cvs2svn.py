@@ -1052,7 +1052,7 @@ class Dumper:
       self.init_dumpfile()
     elif ctx.create_repos:
       print "creating repos '%s'" % (self.target)
-      run_command('%s create --bdb-txn-nosync %s' % (self.svnadmin, self.target))
+      run_command('%s create %s' % (self.svnadmin, self.target))
 
     
   def init_dumpfile(self):

@@ -1169,7 +1169,7 @@ class CollectData(rcsparse.Sink):
   def parse_completed(self):
     self.num_files = self.num_files + 1
 
-class SymbolingsLogger(Singleton):
+class SymbolingsLogger:
   """Manage the file that contains lines for symbol openings and
   closings.
 
@@ -1203,7 +1203,7 @@ class SymbolingsLogger(Singleton):
   thing would be to copy the branch from somewhere between 24 and 29,
   inclusive.
   """
-  def init(self, ctx):
+  def __init__(self, ctx):
     self._ctx = ctx
     self.symbolings = open(SYMBOL_OPENINGS_CLOSINGS, 'a')
     Cleanup().register(SYMBOL_OPENINGS_CLOSINGS, pass8)
@@ -1973,7 +1973,7 @@ class CVSCommit:
 
     if not self._ctx.trunk_only:    
       for c_rev in self.revisions():
-        SymbolingsLogger(self._ctx).log_revision(c_rev, svn_commit.revnum)
+        self._ctx._symbolings_logger.log_revision(c_rev, svn_commit.revnum)
 
   def _post_commit(self):
     """Generates any SVNCommits that we can perform now that _commit
@@ -1992,7 +1992,7 @@ class CVSCommit:
       svn_commit.set_motivating_revnum(self.motivating_commit.revnum)
       for c_rev in self.default_branch_cvs_revisions:
         svn_commit.add_revision(c_rev)
-        SymbolingsLogger(self._ctx).log_default_branch_closing(
+        self._ctx._symbolings_logger.log_default_branch_closing(
           c_rev, svn_commit.revnum)
       self.secondary_commits.append(svn_commit)
     
@@ -2275,6 +2275,8 @@ class CVSRevisionAggregator:
     # created in self.attempt_to_commit_symbols().
     self.latest_primary_svn_commit = None
 
+    self._ctx._symbolings_logger = SymbolingsLogger(ctx)
+
 
   def process_revision(self, c_rev):
     # Each time we read a new line, we scan the commits we've
@@ -2331,7 +2333,8 @@ class CVSRevisionAggregator:
       self.attempt_to_commit_symbols(ready_queue, c_rev) 
 
   def flush(self):
-    """Commit anything left in self.cvs_commits."""
+    """Commit anything left in self.cvs_commits. Then inform the
+    SymbolingsLogger that all commits are done."""
 
     ready_queue = [ ]
     for k, v in self.cvs_commits.items():
@@ -2344,6 +2347,9 @@ class CVSRevisionAggregator:
       ready_queue.remove(cvs_commit_tuple)
       del self.cvs_commits[cvs_commit_tuple[1]]
       self.attempt_to_commit_symbols([]) 
+  
+    if not self._ctx.trunk_only:
+      self._ctx._symbolings_logger.close()
     
   def attempt_to_commit_symbols(self, queued_commits, c_rev=None):
     """
@@ -3736,8 +3742,6 @@ def pass5(ctx):
       aggregator.process_revision(c_rev)
   aggregator.flush()
 
-  if not ctx.trunk_only:
-    SymbolingsLogger(ctx).close()
   Log().write(LOG_QUIET, "Done")
 
 def pass6(ctx):
@@ -3881,6 +3885,11 @@ def convert(ctx, start_pass, end_pass):
     times[i] = time.time()
     Log().write(LOG_QUIET, '----- pass %d -----' % (i + 1))
     _passes[i](ctx)
+    # Dispose of items in ctx not intended to live past the end of the pass
+    # (Identified by exactly one leading underscore)
+    for i in dir(ctx):
+      if len(i) > 2 and i[0] == '_' and i[1] != '_':
+        delattr(ctx, i)
     if not ctx.skip_cleanup:
       cleanup.cleanup(_passes[i])
   times.append(time.time())

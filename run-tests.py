@@ -351,7 +351,10 @@ def ensure_conversion(name, error_re=None, passbypass=None, *args):
   args.sort()
 
   for arg in args:
+    # Replace some characters that Win32 isn't happy about having in a
+    # filename (which was causing the eol_mime test to fail).
     sanitized_arg = arg.replace("--", "-").replace("=", "-").replace("/", "+")
+    sanitized_arg = sanitized_arg.replace(":",".").replace("\\","+")
     conv_id = conv_id + sanitized_arg
 
   if passbypass:

@@ -1205,8 +1205,8 @@ class SymbolingsLogger:
   """
   def __init__(self, ctx):
     self._ctx = ctx
-    self.symbolings = open(SYMBOL_OPENINGS_CLOSINGS, 'a')
-    Cleanup().register(SYMBOL_OPENINGS_CLOSINGS, pass8)
+    self.symbolings = open(SYMBOL_OPENINGS_CLOSINGS, 'w')
+    Cleanup().register(SYMBOL_OPENINGS_CLOSINGS, pass6)
     self.closings = open(SYMBOL_CLOSINGS_TMP, 'w')
     Cleanup().register(SYMBOL_CLOSINGS_TMP, pass5)
 
@@ -1270,7 +1270,6 @@ class SymbolingsLogger:
       self._log(name, svn_revnum, c_rev.svn_path, CLOSING)
 
     self.symbolings.close()
-    self.symbolings = open(SYMBOL_OPENINGS_CLOSINGS, 'a')
 
   def _note_default_branch_opening(self, c_rev, symbolic_name):
     """If C_REV is a default branch revision, log C_REV.svn_trunk_path

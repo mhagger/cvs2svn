@@ -7,19 +7,21 @@ from distutils.core import setup
 assert sys.version >= '2', "Install Python 2.0 or greater"
 
 ### This duplicates logic already found in dist.sh.  We could change
-### dist.sh to pass the revnum in, but on the other hand, it's kind of
-### nice that setup.py stands on its own.
+### dist.sh to pass the revnum in, but setup.py already parses a
+### standard set of arguments thanks to distutils.core, and it might
+### get messy if we interfered with that.
 def get_version():
   "Return a distribution version number based on this working copy."
+  major = open('.version').readline().strip()
   p = os.popen('svnversion -n .')
-  svn_version = ''
+  minor = ''
   while 1:
     new_data = p.read()
     if new_data:
-      svn_version = svn_version + new_data
+      minor = minor + new_data
     else:
       break
-  return "0." + svn_version
+  return major + "." + minor
 
 setup(
     # Metadata.

@@ -1,14 +1,16 @@
 #!/bin/sh
 
-# Build a cvs2svn distribution.  For now, we ship cvs2svn-0.NNN.tar.gz,
-# where NNN is the revision number of the working copy.
+# Build a cvs2svn distribution.  For now, we ship cvs2svn-X.NNN.tar.gz,
+# where X is the major version number, and NNN is the revision number
+# of the working copy, which serves as the minor version number.
 
-REV=`svnversion -n .`
-VN=0.${REV}
+MAJOR=`head -1 .version`
+MINOR=`svnversion -n .`
+VN=${MAJOR}.${MINOR}
 DIST_BASE=cvs2svn-${VN}
 DIST_FULL=${DIST_BASE}.tar.gz
 
-if echo ${REV} | grep -q -e '[^0-9]'; then
+if echo ${MINOR} | grep -q -e '[^0-9]'; then
    echo "Packaging requires a single-revision, pristine working copy."
    echo ""
    echo "Run 'svn update' to get a working copy without mixed revisions,"

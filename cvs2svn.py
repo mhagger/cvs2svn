@@ -557,35 +557,6 @@ def visit_file(arg, dirname, files):
             % (warning_prefix, pathname)
 
 
-class RevInfoParser(rcsparse.Sink):
-  def __init__(self):
-    self.authors = { }	# revision -> author
-    self.logs = { }	# revision -> log message
-
-  def define_revision(self, revision, timestamp, author, state,
-                      branches, next):
-    self.authors[revision] = author
-
-  def set_revision_info(self, revision, log, text):
-    self.logs[revision] = log
-
-  def parse_cvs_file(self, rcs_pathname):
-    try:
-      rcsfile = open(rcs_pathname, 'rb')
-    except:
-      try:
-        dirname, fname = os.path.split(rcs_pathname)
-        rcs_pathname = os.path.join(dirname, "Attic", fname)
-        rcsfile = open(rcs_pathname, 'rb')
-      except:
-        ### should use a better error
-        raise RuntimeError, ("%s: '%s' appeared to be under CVS control, "
-                             "but the RCS file is inaccessible."
-                             % (error_prefix, rcs_pathname))
-
-    rcsparse.Parser().parse(rcsfile, self)
-
-
 # Return a string that has not been returned by gen_key() before.
 gen_key_base = 0L
 def gen_key():

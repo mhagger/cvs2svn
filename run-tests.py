@@ -659,6 +659,38 @@ def mixed_time_tag():
     raise svntest.Failure
 
 
+def mixed_time_branch_with_added_file():
+  "mixed-time branch, and a file added to the branch"
+  # See test-data/main-cvsrepos/proj/README.
+  repos, wc, logs = ensure_conversion('main')
+
+  # Empty revision, purely to store the log message of the dead 1.1 revision
+  # required by the RCS file format
+  rev = 20
+  if not logs[rev].changed_paths == { }:
+    raise svntest.Failure
+
+  if logs[rev].msg.find('file branch_B_MIXED_only was initially added on '
+      'branch B_MIXED.') != 0:
+    raise svntest.Failure
+
+  # A branch from the same place as T_MIXED in the previous test,
+  # plus a file added directly to the branch
+  rev = 21
+  if not logs[rev].changed_paths == {
+    '/branches/B_MIXED (from /trunk:20)': 'A',
+    '/branches/B_MIXED/partial-prune': 'D',
+    '/branches/B_MIXED/single-files': 'D',
+    '/branches/B_MIXED/proj/sub2/subsubA/default (from /trunk:16)': 'R',
+    '/branches/B_MIXED/proj/sub3/default (from /trunk:18)': 'R',
+    '/branches/B_MIXED/proj/sub2/branch_B_MIXED_only': 'A',
+    }:
+    raise svntest.Failure
+
+  if logs[rev].msg.find('Add a file on branch B_MIXED.') != 0:
+    raise svntest.Failure
+
+
 def mixed_commit():
   "a commit affecting both trunk and a branch"
   # See test-data/main-cvsrepos/proj/README.
@@ -1177,6 +1209,7 @@ test_list = [ None,
               simple_tags,
               simple_branch_commits,
               XFail(mixed_time_tag),
+              XFail(mixed_time_branch_with_added_file),
               mixed_commit,
               bogus_tag,
               overlapping_branch,

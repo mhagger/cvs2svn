@@ -2664,7 +2664,12 @@ class SVNRepositoryMirror:
   def _change_path(self, cvs_rev):
     """Register a change in self.youngest for the CVS_REV's svn_path
     in the repository mirror."""
-    self._add_or_change_path(cvs_rev.svn_path)
+    # We do not have to call this.  Why?  Because our mirror is only
+    # concerned with the presence or absence of paths.  A file content
+    # change does not change this, therefore, no mirror modification
+    # is required.
+    #
+    # self._add_or_change_path(cvs_rev.svn_path)
     self._invoke_delegates('change_path', cvs_rev)
 
   def _add_path(self, cvs_rev):

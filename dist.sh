@@ -4,7 +4,8 @@
 # where NNN is the revision number of the working copy.
 
 REV=`svnversion -n .`
-DIST_BASE=cvs2svn-0.${REV}
+VN=0.${REV}
+DIST_BASE=cvs2svn-${VN}
 DIST_FULL=${DIST_BASE}.tar.gz
 
 if echo ${REV} | grep -q -e '[^0-9]'; then
@@ -16,7 +17,7 @@ if echo ${REV} | grep -q -e '[^0-9]'; then
 fi
 
 # Clean up anything that might have been left from a previous run.
-rm -rf dist MANIFEST cvs2svn-0.${REV} ${DIST_FULL}
+rm -rf dist MANIFEST cvs2svn-${VN} ${DIST_FULL}
 
 # Build the dist, Python's way.
 ./setup.py sdist
@@ -29,6 +30,10 @@ tar zxf ${DIST_FULL}
 rm ${DIST_FULL}
 svn export -q test-data ${DIST_BASE}/test-data
 svn export -q svntest ${DIST_BASE}/svntest
+# Oh, and while we're at it, let's fix cvs2svn.py's version number.
+sed -e "s/^VERSION = .*/VERSION = '${VN}'/" < cvs2svn.py > cvs2svn.py.tmp
+mv cvs2svn.py.tmp ${DIST_BASE}/cvs2svn.py
+chmod a+x ${DIST_BASE}/cvs2svn.py
 tar zcf ${DIST_FULL} ${DIST_BASE}
 rm -rf ${DIST_BASE}
 

@@ -40,12 +40,18 @@ def do_it(revs_file):
     if not line:
       break
     pieces = line.split(' ')
-    num_tags = int(pieces[6])
+    try:
+      num_tags = int(pieces[6])
+    except ValueError: # probably just the end of the line
+      continue
     max_tags = (num_tags > max_tags) and num_tags or max_tags
     total_tags = total_tags + num_tags
     for i in range(num_tags):
       tags[pieces[6 + i + 1]] = None
-    num_branches = int(pieces[6 + num_tags + 1])
+    try:
+      num_branches = int(pieces[6 + num_tags + 1])
+    except ValueError: # probably just the end of the line
+      continue
     max_branches = (num_branches > max_branches) \
                    and num_branches or max_branches
     total_branches = total_branches + num_branches
@@ -59,16 +65,16 @@ def do_it(revs_file):
   num_symbols = len(symbols.keys())
   num_tags = len(tags.keys())
   num_branches = len(branches.keys())
-  avg_tags = total_tags * 100.0 / line_count
-  avg_branches = total_branches * 100.0 / line_count
+  avg_tags = total_tags * 1.0 / line_count
+  avg_branches = total_branches * 1.0 / line_count
   
   print '       Total Revisions: %d\n' \
         '     Total Unique Tags: %d\n' \
         '    Peak Revision Tags: %d\n' \
-        '    Avg. Tags/Revision: %2.1f%%\n' \
+        '    Avg. Tags/Revision: %2.1f\n' \
         ' Total Unique Branches: %d\n' \
         'Peak Revision Branches: %d\n' \
-        'Avg. Branches/Revision: %2.1f%%\n' \
+        'Avg. Branches/Revision: %2.1f\n' \
         '  Total Unique Symbols: %d%s\n' \
         % (line_count, 
            num_tags,
@@ -85,7 +91,7 @@ def do_it(revs_file):
 if __name__ == "__main__":
   argc = len(sys.argv)
   if argc < 2:
-    print 'Usage: %s /path/to/CVS/cvs2svn-data.[c-|s-|]revs' \
+    print 'Usage: %s /path/to/cvs2svn-data.[c-|s-|]revs' \
         % (os.path.basename(sys.argv[0]))
     print __doc__
     sys.exit(0)

@@ -3712,7 +3712,7 @@ class RepositoryDelegate(DumpfileDelegate):
       # the svn repository (until cvs is done, at least)).  However,
       # for the sake of caution, we'll turn no-sync off in self.finish
       # unless the user passed --bdb-txn-nosync to cvs2svn.
-      run_command('%s create %s %s' % (self.svnadmin, "--bdb-txn-nosync",
+      run_command('%s create %s "%s"' % (self.svnadmin, "--bdb-txn-nosync",
                                        self.target))
 
     # Since the output of this run is a repository, not a dumpfile,
@@ -3723,7 +3723,7 @@ class RepositoryDelegate(DumpfileDelegate):
     self._commit_in_progress = None
 
     self.dumpfile = open(self.dumpfile_path, 'w+b')
-    self.loader_pipe = Popen3('%s load -q %s' % (self.svnadmin, self.target),
+    self.loader_pipe = Popen3('%s load -q "%s"' % (self.svnadmin, self.target),
                               True)
     self.loader_pipe.fromchild.close()
     try:

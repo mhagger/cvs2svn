@@ -2555,14 +2555,6 @@ def pass4(ctx):
     # but must *not* commit it yet, because there may be earlier commits
     # pending, which are waiting for the COMMIT_THRESHOLD to elapse.
 
-    # The old code said:
-      # ### ISSUE: the has_file() check below is not optimal.
-      # It does fix the dataloss bug where revisions would get lost
-      # if checked in too quickly, but it can also break apart the 
-      # commits. The correct fix would require tracking the dependencies
-      # between change sets and committing them in proper order.
-    # I'm not entirely sure what "break apart commits" means, and I think
-    # my fix is correct, despite the the last sentence of the old comment.
     if commits.has_key(id) and commits[id].has_file(fname):
       unused_id = id+'-'
       while commits.has_key(unused_id):

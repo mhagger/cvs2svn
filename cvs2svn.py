@@ -870,10 +870,12 @@ class SymbolDatabase:
   def write(self):
     """Store the symbol database to files."""
     f = open(temp(TAGS_LIST), "w")
+    Cleanup().register(temp(TAGS_LIST), pass2)
     for tag, count in self.tags.items():
       f.write("%s %d\n" % (tag, count))
 
     f = open(temp(BRANCHES_LIST), "w")
+    Cleanup().register(temp(BRANCHES_LIST), pass2)
     for branch, info in self.branches.items():
       f.write("%s %d %d" % (branch, info[0], info[1]))
       if info[2]:

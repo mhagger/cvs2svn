@@ -1286,30 +1286,55 @@ def compose_tag_three_sources():
   "compose a tag from three sources"
   repos, wc, logs = ensure_conversion('compose-tag-three-sources')
 
-  if not logs[1].changed_paths == { '/trunk': 'A', '/trunk/a': 'A',
-    '/trunk/b': 'A', '/trunk/c': 'A' }: raise svntest.Failure
+  check_rev(logs, 1, "Add on trunk", {
+    '/trunk': 'A',
+    '/trunk/tagged-on-trunk-1.2-a': 'A',
+    '/trunk/tagged-on-trunk-1.2-b': 'A',
+    '/trunk/tagged-on-trunk-1.1': 'A',
+    '/trunk/tagged-on-b1': 'A',
+    '/trunk/tagged-on-b2': 'A',
+    })
 
-  if not logs[2].changed_paths == { '/branches': 'A',
+  check_rev(logs, 2, sym_log_msg('b1'), {
+    '/branches': 'A',
     '/branches/b1 (from /trunk:1)': 'A',
-    }: raise svntest.Failure
+    })
 
-  if not logs[3].changed_paths == {
-    '/branches/b1/a': 'M', '/branches/b1/b': 'M', '/branches/b1/c': 'M',
-    }: raise svntest.Failure
+  check_rev(logs, 3, "Commit on branch b1", {
+    '/branches/b1/tagged-on-trunk-1.2-a': 'M',
+    '/branches/b1/tagged-on-trunk-1.2-b': 'M',
+    '/branches/b1/tagged-on-trunk-1.1': 'M',
+    '/branches/b1/tagged-on-b1': 'M',
+    '/branches/b1/tagged-on-b2': 'M',
+    })
 
-  if not logs[4].changed_paths == {
+  check_rev(logs, 4, sym_log_msg('b2'), {
     '/branches/b2 (from /trunk:1)': 'A',
-    }: raise svntest.Failure
+    })
 
-  if not logs[5].changed_paths == {
-    '/branches/b2/a': 'M', '/branches/b2/b': 'M', '/branches/b2/c': 'M',
-    }: raise svntest.Failure
+  check_rev(logs, 5, "Commit on branch b2", {
+    '/branches/b2/tagged-on-trunk-1.2-a': 'M',
+    '/branches/b2/tagged-on-trunk-1.2-b': 'M',
+    '/branches/b2/tagged-on-trunk-1.1': 'M',
+    '/branches/b2/tagged-on-b1': 'M',
+    '/branches/b2/tagged-on-b2': 'M',
+    })
 
-  if not logs[6].changed_paths == { '/tags': 'A',
-    '/tags/T (from /trunk:1)': 'A',
-    '/tags/T/b (from /branches/b1/b:3)': 'R',
-    '/tags/T/c (from /branches/b2/c:5)': 'R',
-    }: raise svntest.Failure
+  check_rev(logs, 6, "Commit again on trunk", {
+    '/trunk/tagged-on-trunk-1.2-a': 'M',
+    '/trunk/tagged-on-trunk-1.2-b': 'M',
+    '/trunk/tagged-on-trunk-1.1': 'M',
+    '/trunk/tagged-on-b1': 'M',
+    '/trunk/tagged-on-b2': 'M',
+    })
+
+  check_rev(logs, 7, sym_log_msg('T',1), {
+    '/tags': 'A',
+    '/tags/T (from /trunk:6)': 'A',
+    '/tags/T/tagged-on-b1 (from /branches/b1/tagged-on-b1:3)': 'R',
+    '/tags/T/tagged-on-b2 (from /branches/b2/tagged-on-b2:5)': 'R',
+    '/tags/T/tagged-on-trunk-1.1 (from /trunk/tagged-on-trunk-1.1:1)': 'R',
+    })
 
 
 #----------------------------------------------------------------------

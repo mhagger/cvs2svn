@@ -1,0 +1,75 @@
+head	1.2;
+access;
+symbols
+	T:1.1.4.1
+	b2:1.1.0.4
+	b1:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2004.03.16.17.41.24;	author max;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.03.11.01.46.11;	author max;	state Exp;
+branches
+	1.1.2.1
+	1.1.4.1;
+next	;
+
+1.1.2.1
+date	2004.03.11.01.49.00;	author max;	state Exp;
+branches;
+next	;
+
+1.1.4.1
+date	2004.03.11.01.49.16;	author max;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Commit again on trunk
+@
+text
+@trunk-again
+@
+
+
+1.1
+log
+@Add on trunk
+@
+text
+@d1 1
+@
+
+
+1.1.4.1
+log
+@Commit on branch b2
+@
+text
+@a0 1
+b2
+@
+
+
+1.1.2.1
+log
+@Commit on branch b1
+@
+text
+@a0 1
+b1
+@
+
+

@@ -1293,320 +1293,6 @@ class SymbolingsLogger:
       del self.open_paths_with_default_branches[path]
 
 
-class SymbolingsReader:
-  """Provides an interface to the SYMBOL_OPENINGS_CLOSINGS_SORTED file
-  and the SYMBOL_OFFSETS_DB.  Does the heavy lifting of finding and
-  returning the correct opening and closing Subversion revision
-  numbers for a given symbolic name."""
-  def __init__(self, ctx):
-    """Opens the SYMBOL_OPENINGS_CLOSINGS_SORTED for reading, and
-    reads the offsets database into memory."""
-    self._ctx = ctx
-    self.symbolings = open(SYMBOL_OPENINGS_CLOSINGS_SORTED, 'r')
-    # The offsets_db is really small, and we need to read and write
-    # from it a fair bit, so suck it into memory
-    offsets_db = Database(SYMBOL_OFFSETS_DB, DB_OPEN_READ) 
-    self.offsets = { }
-    for key in offsets_db.db.keys():
-      #print " ZOO:", key, offsets_db[key]
-      self.offsets[key] = offsets_db[key]
-
-  def filling_guide_for_symbol(self, symbolic_name, svn_revnum):
-    """Given SYMBOLIC_NAME and SVN_REVNUM, return a new
-    SymbolicNameFillingGuide object.
-
-    Note that if we encounter an opening rev in this fill, but the
-    corresponding closing rev takes place later than SVN_REVNUM, the
-    closing will not be passed to SymbolicNameFillingGuide in this
-    fill (and will be discarded when encountered in a later fill).
-    This is perfectly fine, because we can still do a valid fill
-    without the closing--we always try to fill what we can as soon as
-    we can."""
-    # It's possible to have a branch start with a file that was added
-    # on a branch
-    if not self.offsets.has_key(symbolic_name):
-      return SymbolicNameFillingGuide(self._ctx, symbolic_name)
-    # set our read offset for self.symbolings to the offset for
-    # symbolic_name
-    self.symbolings.seek(self.offsets[symbolic_name])
-
-    symbol_fill = SymbolicNameFillingGuide(self._ctx, symbolic_name)
-    while (1):
-      line = self.symbolings.readline().rstrip()
-      if not line:
-        break
-      name, revnum, type, svn_path = line.split(" ", 3)
-      revnum = int(revnum)
-      if (revnum > svn_revnum
-          or name != symbolic_name):
-        break
-      symbol_fill.register(svn_path, revnum, type)
-
-    # get current offset of the read marker and set it to the offset
-    # for the beginning of the line we just read if we used anything
-    # we read.
-    if not symbol_fill.is_empty():
-      # Subtract one cause we rstripped the CR above.
-      self.offsets[symbolic_name] = self.symbolings.tell() - len(line) - 1
-                               
-    symbol_fill.make_node_tree()
-    return symbol_fill
-  
-
-class SymbolicNameFillingGuide:
-  """A SymbolicNameFillingGuide is essentially a node tree
-  representing the source paths to be copied to fill
-  self.symbolic_name in the current SVNCommit.
-
-  After calling self.register() on a series of openings and closings,
-  call self.make_node_tree() to prepare self.node_tree for
-  examination.  See the docstring for self.make_node_tree() for
-  details on the structure of self.node_tree.
-
-  By walking self.node_tree and calling self.get_best_revnum() on each
-  node, the caller can determine what subversion revision number to
-  copy the path corresponding to that node from.  self.node_tree
-  should be treated as read-only.
-
-  The caller can then descend to sub-nodes to see if their "best
-  revnum" differs from their parents' and if it does, take appropriate
-  actions to "patch up" the subtrees."""
-  def __init__(self, ctx, symbolic_name):
-    """Initializes a SymbolicNameFillingGuide for SYMBOLIC_NAME and
-    prepares it for receiving openings and closings.
-
-    Returns a fully functional and armed SymbolicNameFillingGuide
-    object."""
-    self._ctx = ctx
-    self.name = symbolic_name
-
-    self.opening_key = "/o"
-    self.closing_key = "/c"
-
-    # A dictionary of SVN_PATHS and SVN_REVNUMS whose format is:
-    #
-    # { svn_path : { self.opening_key : svn_revnum,
-    #                self.closing_key : svn_revnum }
-    #                ...}
-    self.things = { }
-
-    # The key for the root node of the node tree
-    self.root_key = '0'
-    # The dictionary that holds our node tree, seeded with the root key.
-    self.node_tree = { self.root_key : { } }
-
-  def get_best_revnum(self, node, preferred_revnum):
-    """ Determine the best subversion revision number to use when
-    copying the source tree beginning at NODE. Returns a
-    subversion revision number.
-
-    PREFERRED_REVNUM is passed to self._best_rev and used to
-    calculate the best_revnum."""
-    revnum = SVN_INVALID_REVNUM
-
-    # Aggregate openings and closings from the rev tree
-    openings = self._list_revnums_for_key(node, self.opening_key)
-    closings = self._list_revnums_for_key(node, self.closing_key)
-
-    # Score the lists
-    scores = self._score_revisions(self._sum_revnum_counts(openings),
-                                  self._sum_revnum_counts(closings))
-
-    revnum, max_score = self._best_rev(scores, preferred_revnum)
-  
-    if revnum == SVN_INVALID_REVNUM:
-      sys.stderr.write(error_prefix + ": failed to find a revision "
-                       + "to copy from when copying %s\n" % name)
-      sys.exit(1)
-    return revnum, max_score
-
-
-  def _best_rev(self, scores, preferred_rev):
-    """Return the revision with the highest score from SCORES, a list
-    returned by _score_revisions(). When the maximum score is shared
-    by multiple revisions, the oldest revision is selected, unless
-    PREFERRED_REV is one of the possibilities, in which case, it is
-    selected."""
-    max_score = 0
-    preferred_rev_score = -1
-    rev = SVN_INVALID_REVNUM
-    for revnum, count in scores:
-      if count > max_score:
-        max_score = count
-        rev = revnum
-      if revnum <= preferred_rev:
-        preferred_rev_score = count
-    if preferred_rev_score == max_score:
-      rev = preferred_rev
-    return rev, max_score
-
-
-  def _score_revisions(self, openings, closings):
-    """Return a list of revisions and scores based on OPENINGS and
-    CLOSINGS.  The returned list looks like:
-
-       [(REV1 SCORE1), (REV2 SCORE2), ...]
-
-    where REV2 > REV1.  OPENINGS and CLOSINGS are the values of
-    self.opening__key and self.closing_key from some file or
-    directory node, or else None.
-
-    Each score indicates that copying the corresponding revision (or
-    any following revision up to the next revision in the list) of the
-    object in question would yield that many correct paths at or
-    underneath the object.  There may be other paths underneath it
-    which are not correct and would need to be deleted or recopied;
-    those can only be detected by descending and examining their
-    scores.
-
-    If OPENINGS is false, return the empty list."""
-    # First look for easy outs.
-    if not openings:
-      return []
-
-    # Must be able to call len(closings) below.
-    if closings is None:
-      closings = []
-
-    # No easy out, so wish for lexical closures and calculate the scores :-). 
-    scores = []
-    opening_score_accum = 0
-    for i in range(len(openings)):
-      opening_rev, opening_score = openings[i]
-      opening_score_accum = opening_score_accum + opening_score
-      scores.append((opening_rev, opening_score_accum))
-    min = 0
-    for i in range(len(closings)):
-      closing_rev, closing_score = closings[i]
-      done_exact_rev = None
-      insert_index = None
-      insert_score = None
-      for j in range(min, len(scores)):
-        score_rev, score = scores[j]
-        if score_rev >= closing_rev:
-          if not done_exact_rev:
-            if score_rev > closing_rev:
-              insert_index = j
-              insert_score = scores[j-1][1] - closing_score
-            done_exact_rev = 1
-          scores[j] = (score_rev, score - closing_score)
-        else:
-          min = j + 1
-      if not done_exact_rev:
-        scores.append((closing_rev,scores[-1][1] - closing_score))
-      if insert_index is not None:
-        scores.insert(insert_index, (closing_rev, insert_score))
-    return scores
-
-  def _sum_revnum_counts(self, rev_list):
-    """Takes an array of revisions (REV_LIST), for example:
-
-      [21, 18, 6, 49, 39, 24, 24, 24, 24, 24, 24, 24]
-
-    and adds up every occurrence of each revision and returns a sorted
-    array of tuples containing (svn_revnum, count):
-
-      [(6, 1), (18, 1), (21, 1), (24, 7), (39, 1), (49, 1)]
-    """
-    s = {}
-    for k in rev_list: # Add up the scores
-      if s.has_key(k):
-        s[k] = s[k] + 1
-      else:
-        s[k] = 1
-    a = s.items()
-    a.sort()
-    return a
-
-  def _list_revnums_for_key(self, node, revnum_type_key):
-    """Scan self.node_tree and return a list of all the revision
-    numbers (including duplicates) contained in REVNUM_TYPE_KEY values
-    for all leaf nodes at and under NODE.
-
-    REVNUM_TYPE_KEY should be either self.opening_key or
-    self.closing_key."""
-    revnums = []
-
-    # If the node has self.opening_key, it must be a leaf node--all
-    # leaf nodes have at least an opening key (although they may not
-    # have a closing key.  Fetch revnum and return
-    if (self.node_tree[node].has_key(self.opening_key) and
-        self.node_tree[node].has_key(revnum_type_key)):
-      revnums.append(self.node_tree[node][revnum_type_key])
-      return revnums
-
-    for key, node_contents in self.node_tree[node].items():
-      if key[0] == '/':
-        continue 
-      revnums = revnums + \
-          self._list_revnums_for_key(node_contents, revnum_type_key)
-    return revnums
-
-  def register(self, svn_path, svn_revnum, type):
-    """Collects opening and closing revisions for this
-    SymbolicNameFillingGuide.  SVN_PATH is the source path that needs
-    to be copied into self.symbolic_name, and SVN_REVNUM is either the
-    first svn revision number that we can copy from (our opening), or
-    the last (not inclusive) svn revision number that we can copy from
-    (our closing).  TYPE indicates whether this path is an opening or a
-    a closing.
-
-    The opening for a given SVN_PATH must be passed before the closing
-    for it to have any effect... any closing encountered before a
-    corresponding opening will be discarded.
-
-    It is not necessary to pass a corresponding closing for every
-    opening.
-    """
-    # Always log an OPENING
-    if type == OPENING:
-      self.things[svn_path] = {self.opening_key: svn_revnum}
-    # Only log a closing if we've already registered the opening for that path.
-    elif type == CLOSING and self.things.has_key(svn_path):
-      # When we have a non-trunk default branch, we may have multiple
-      # closings--only register the first closing we encounter.
-      if not self.things[svn_path].has_key(self.closing_key):
-        self.things[svn_path][self.closing_key] = svn_revnum
-
-  def make_node_tree(self):
-    """Generates the SymbolicNameFillingGuide's node tree from
-    self.things.  Each leaf node maps self.opening_key to the earliest
-    subversion revision from which this node/path may be copied; and
-    optionally map self.closing_key to the subversion revision one
-    higher than the last revision from which this node/path may be
-    copied.  Intermediate nodes never contain opening or closing
-    flags."""
-
-    for svn_path, open_close in self.things.items():
-      parent_key = self.root_key
-
-      path_so_far = ""
-      # Walk up the path, one node at a time.
-      components = svn_path.split('/')
-      last_path_component = components[-1]
-      for component in components:
-        path_so_far = path_so_far + '/' + component
-
-        child_key = None
-        if not self.node_tree[parent_key].has_key(component):
-          child_key = gen_key()
-          self.node_tree[child_key] = { }
-          self.node_tree[parent_key][component] = child_key
-        else:
-          child_key = self.node_tree[parent_key][component]
-
-        # If this is the leaf, add the openings and closings.
-        if component is last_path_component:
-          self.node_tree[child_key] = open_close
-        parent_key = child_key
-    #print_node_tree(self.node_tree, self.root_key) 
-
-  def is_empty(self):
-    """Return true if we haven't accumulated any openings or closings,
-    false otherwise."""
-    return not len(self.things)
-
-
 class PersistenceManager:
   """The PersistenceManager allows us to effectively store SVNCommits
   to disk and retrieve them later using only their subversion revision
@@ -2384,6 +2070,320 @@ class CVSRevisionAggregator:
       svn_commit.flush()
       self.done_symbols.append(sym)
       del self.pending_symbols[sym]
+
+
+class SymbolingsReader:
+  """Provides an interface to the SYMBOL_OPENINGS_CLOSINGS_SORTED file
+  and the SYMBOL_OFFSETS_DB.  Does the heavy lifting of finding and
+  returning the correct opening and closing Subversion revision
+  numbers for a given symbolic name."""
+  def __init__(self, ctx):
+    """Opens the SYMBOL_OPENINGS_CLOSINGS_SORTED for reading, and
+    reads the offsets database into memory."""
+    self._ctx = ctx
+    self.symbolings = open(SYMBOL_OPENINGS_CLOSINGS_SORTED, 'r')
+    # The offsets_db is really small, and we need to read and write
+    # from it a fair bit, so suck it into memory
+    offsets_db = Database(SYMBOL_OFFSETS_DB, DB_OPEN_READ) 
+    self.offsets = { }
+    for key in offsets_db.db.keys():
+      #print " ZOO:", key, offsets_db[key]
+      self.offsets[key] = offsets_db[key]
+
+  def filling_guide_for_symbol(self, symbolic_name, svn_revnum):
+    """Given SYMBOLIC_NAME and SVN_REVNUM, return a new
+    SymbolicNameFillingGuide object.
+
+    Note that if we encounter an opening rev in this fill, but the
+    corresponding closing rev takes place later than SVN_REVNUM, the
+    closing will not be passed to SymbolicNameFillingGuide in this
+    fill (and will be discarded when encountered in a later fill).
+    This is perfectly fine, because we can still do a valid fill
+    without the closing--we always try to fill what we can as soon as
+    we can."""
+    # It's possible to have a branch start with a file that was added
+    # on a branch
+    if not self.offsets.has_key(symbolic_name):
+      return SymbolicNameFillingGuide(self._ctx, symbolic_name)
+    # set our read offset for self.symbolings to the offset for
+    # symbolic_name
+    self.symbolings.seek(self.offsets[symbolic_name])
+
+    symbol_fill = SymbolicNameFillingGuide(self._ctx, symbolic_name)
+    while (1):
+      line = self.symbolings.readline().rstrip()
+      if not line:
+        break
+      name, revnum, type, svn_path = line.split(" ", 3)
+      revnum = int(revnum)
+      if (revnum > svn_revnum
+          or name != symbolic_name):
+        break
+      symbol_fill.register(svn_path, revnum, type)
+
+    # get current offset of the read marker and set it to the offset
+    # for the beginning of the line we just read if we used anything
+    # we read.
+    if not symbol_fill.is_empty():
+      # Subtract one cause we rstripped the CR above.
+      self.offsets[symbolic_name] = self.symbolings.tell() - len(line) - 1
+                               
+    symbol_fill.make_node_tree()
+    return symbol_fill
+  
+
+class SymbolicNameFillingGuide:
+  """A SymbolicNameFillingGuide is essentially a node tree
+  representing the source paths to be copied to fill
+  self.symbolic_name in the current SVNCommit.
+
+  After calling self.register() on a series of openings and closings,
+  call self.make_node_tree() to prepare self.node_tree for
+  examination.  See the docstring for self.make_node_tree() for
+  details on the structure of self.node_tree.
+
+  By walking self.node_tree and calling self.get_best_revnum() on each
+  node, the caller can determine what subversion revision number to
+  copy the path corresponding to that node from.  self.node_tree
+  should be treated as read-only.
+
+  The caller can then descend to sub-nodes to see if their "best
+  revnum" differs from their parents' and if it does, take appropriate
+  actions to "patch up" the subtrees."""
+  def __init__(self, ctx, symbolic_name):
+    """Initializes a SymbolicNameFillingGuide for SYMBOLIC_NAME and
+    prepares it for receiving openings and closings.
+
+    Returns a fully functional and armed SymbolicNameFillingGuide
+    object."""
+    self._ctx = ctx
+    self.name = symbolic_name
+
+    self.opening_key = "/o"
+    self.closing_key = "/c"
+
+    # A dictionary of SVN_PATHS and SVN_REVNUMS whose format is:
+    #
+    # { svn_path : { self.opening_key : svn_revnum,
+    #                self.closing_key : svn_revnum }
+    #                ...}
+    self.things = { }
+
+    # The key for the root node of the node tree
+    self.root_key = '0'
+    # The dictionary that holds our node tree, seeded with the root key.
+    self.node_tree = { self.root_key : { } }
+
+  def get_best_revnum(self, node, preferred_revnum):
+    """ Determine the best subversion revision number to use when
+    copying the source tree beginning at NODE. Returns a
+    subversion revision number.
+
+    PREFERRED_REVNUM is passed to self._best_rev and used to
+    calculate the best_revnum."""
+    revnum = SVN_INVALID_REVNUM
+
+    # Aggregate openings and closings from the rev tree
+    openings = self._list_revnums_for_key(node, self.opening_key)
+    closings = self._list_revnums_for_key(node, self.closing_key)
+
+    # Score the lists
+    scores = self._score_revisions(self._sum_revnum_counts(openings),
+                                  self._sum_revnum_counts(closings))
+
+    revnum, max_score = self._best_rev(scores, preferred_revnum)
+  
+    if revnum == SVN_INVALID_REVNUM:
+      sys.stderr.write(error_prefix + ": failed to find a revision "
+                       + "to copy from when copying %s\n" % name)
+      sys.exit(1)
+    return revnum, max_score
+
+
+  def _best_rev(self, scores, preferred_rev):
+    """Return the revision with the highest score from SCORES, a list
+    returned by _score_revisions(). When the maximum score is shared
+    by multiple revisions, the oldest revision is selected, unless
+    PREFERRED_REV is one of the possibilities, in which case, it is
+    selected."""
+    max_score = 0
+    preferred_rev_score = -1
+    rev = SVN_INVALID_REVNUM
+    for revnum, count in scores:
+      if count > max_score:
+        max_score = count
+        rev = revnum
+      if revnum <= preferred_rev:
+        preferred_rev_score = count
+    if preferred_rev_score == max_score:
+      rev = preferred_rev
+    return rev, max_score
+
+
+  def _score_revisions(self, openings, closings):
+    """Return a list of revisions and scores based on OPENINGS and
+    CLOSINGS.  The returned list looks like:
+
+       [(REV1 SCORE1), (REV2 SCORE2), ...]
+
+    where REV2 > REV1.  OPENINGS and CLOSINGS are the values of
+    self.opening__key and self.closing_key from some file or
+    directory node, or else None.
+
+    Each score indicates that copying the corresponding revision (or
+    any following revision up to the next revision in the list) of the
+    object in question would yield that many correct paths at or
+    underneath the object.  There may be other paths underneath it
+    which are not correct and would need to be deleted or recopied;
+    those can only be detected by descending and examining their
+    scores.
+
+    If OPENINGS is false, return the empty list."""
+    # First look for easy outs.
+    if not openings:
+      return []
+
+    # Must be able to call len(closings) below.
+    if closings is None:
+      closings = []
+
+    # No easy out, so wish for lexical closures and calculate the scores :-). 
+    scores = []
+    opening_score_accum = 0
+    for i in range(len(openings)):
+      opening_rev, opening_score = openings[i]
+      opening_score_accum = opening_score_accum + opening_score
+      scores.append((opening_rev, opening_score_accum))
+    min = 0
+    for i in range(len(closings)):
+      closing_rev, closing_score = closings[i]
+      done_exact_rev = None
+      insert_index = None
+      insert_score = None
+      for j in range(min, len(scores)):
+        score_rev, score = scores[j]
+        if score_rev >= closing_rev:
+          if not done_exact_rev:
+            if score_rev > closing_rev:
+              insert_index = j
+              insert_score = scores[j-1][1] - closing_score
+            done_exact_rev = 1
+          scores[j] = (score_rev, score - closing_score)
+        else:
+          min = j + 1
+      if not done_exact_rev:
+        scores.append((closing_rev,scores[-1][1] - closing_score))
+      if insert_index is not None:
+        scores.insert(insert_index, (closing_rev, insert_score))
+    return scores
+
+  def _sum_revnum_counts(self, rev_list):
+    """Takes an array of revisions (REV_LIST), for example:
+
+      [21, 18, 6, 49, 39, 24, 24, 24, 24, 24, 24, 24]
+
+    and adds up every occurrence of each revision and returns a sorted
+    array of tuples containing (svn_revnum, count):
+
+      [(6, 1), (18, 1), (21, 1), (24, 7), (39, 1), (49, 1)]
+    """
+    s = {}
+    for k in rev_list: # Add up the scores
+      if s.has_key(k):
+        s[k] = s[k] + 1
+      else:
+        s[k] = 1
+    a = s.items()
+    a.sort()
+    return a
+
+  def _list_revnums_for_key(self, node, revnum_type_key):
+    """Scan self.node_tree and return a list of all the revision
+    numbers (including duplicates) contained in REVNUM_TYPE_KEY values
+    for all leaf nodes at and under NODE.
+
+    REVNUM_TYPE_KEY should be either self.opening_key or
+    self.closing_key."""
+    revnums = []
+
+    # If the node has self.opening_key, it must be a leaf node--all
+    # leaf nodes have at least an opening key (although they may not
+    # have a closing key.  Fetch revnum and return
+    if (self.node_tree[node].has_key(self.opening_key) and
+        self.node_tree[node].has_key(revnum_type_key)):
+      revnums.append(self.node_tree[node][revnum_type_key])
+      return revnums
+
+    for key, node_contents in self.node_tree[node].items():
+      if key[0] == '/':
+        continue 
+      revnums = revnums + \
+          self._list_revnums_for_key(node_contents, revnum_type_key)
+    return revnums
+
+  def register(self, svn_path, svn_revnum, type):
+    """Collects opening and closing revisions for this
+    SymbolicNameFillingGuide.  SVN_PATH is the source path that needs
+    to be copied into self.symbolic_name, and SVN_REVNUM is either the
+    first svn revision number that we can copy from (our opening), or
+    the last (not inclusive) svn revision number that we can copy from
+    (our closing).  TYPE indicates whether this path is an opening or a
+    a closing.
+
+    The opening for a given SVN_PATH must be passed before the closing
+    for it to have any effect... any closing encountered before a
+    corresponding opening will be discarded.
+
+    It is not necessary to pass a corresponding closing for every
+    opening.
+    """
+    # Always log an OPENING
+    if type == OPENING:
+      self.things[svn_path] = {self.opening_key: svn_revnum}
+    # Only log a closing if we've already registered the opening for that path.
+    elif type == CLOSING and self.things.has_key(svn_path):
+      # When we have a non-trunk default branch, we may have multiple
+      # closings--only register the first closing we encounter.
+      if not self.things[svn_path].has_key(self.closing_key):
+        self.things[svn_path][self.closing_key] = svn_revnum
+
+  def make_node_tree(self):
+    """Generates the SymbolicNameFillingGuide's node tree from
+    self.things.  Each leaf node maps self.opening_key to the earliest
+    subversion revision from which this node/path may be copied; and
+    optionally map self.closing_key to the subversion revision one
+    higher than the last revision from which this node/path may be
+    copied.  Intermediate nodes never contain opening or closing
+    flags."""
+
+    for svn_path, open_close in self.things.items():
+      parent_key = self.root_key
+
+      path_so_far = ""
+      # Walk up the path, one node at a time.
+      components = svn_path.split('/')
+      last_path_component = components[-1]
+      for component in components:
+        path_so_far = path_so_far + '/' + component
+
+        child_key = None
+        if not self.node_tree[parent_key].has_key(component):
+          child_key = gen_key()
+          self.node_tree[child_key] = { }
+          self.node_tree[parent_key][component] = child_key
+        else:
+          child_key = self.node_tree[parent_key][component]
+
+        # If this is the leaf, add the openings and closings.
+        if component is last_path_component:
+          self.node_tree[child_key] = open_close
+        parent_key = child_key
+    #print_node_tree(self.node_tree, self.root_key) 
+
+  def is_empty(self):
+    """Return true if we haven't accumulated any openings or closings,
+    false otherwise."""
+    return not len(self.things)
 
 
 class FillSource:

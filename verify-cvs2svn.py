@@ -67,7 +67,7 @@ class CvsRepos:
     the HEAD revision, or any valid CVS revision string to export that
     revision."""
     os.mkdir(dest_path)
-    cmd = [ CVS_CMD, '-Q', '-d', self.cvsroot, 'export' ]
+    cmd = [ CVS_CMD, '-Q', '-d', ':local:' + self.cvsroot, 'export' ]
     if rev:
       cmd.extend([ '-r', rev ])
     else:
@@ -345,7 +345,10 @@ def main(argv):
   if args[1].find('://') != -1:
     svn_url = args[1]
   else:
-    svn_url = 'file://' + os.path.abspath(args[1])
+    abspath = os.path.abspath(args[1])
+    svn_url = 'file://' + (abspath[0] != '/' and '/' or '') + abspath
+    if os.sep != '/':
+      svn_url = svn_url.replace(os.sep, '/')
 
   try:
     # Open the repositories

@@ -136,6 +136,11 @@ DATAFILE = 'cvs2svn-data'
 # and no newline.
 TOTAL_SVN_REVS = 'cvs2svn-total-revs'
 
+# This file contains a marshalled copy of all the statistics that we
+# gather throughout the various runs of cvs2svn.  The data stored as a
+# marshalled dictionary.
+STATISTICS_FILE = 'cvs2svn-statistics.'
+
 # This text file contains records (1 per line) that describe svn
 # filesystem paths that are the opening and closing source revisions
 # for copies to tags and branches.  The format is as follows:
@@ -554,6 +559,89 @@ class Database:
     if self.has_key(key):
       return self.__getitem__(key)
     return default
+
+
+class StatsKeeper:
+  __shared_state = { }
+  def __init__(self):
+    self.__dict__ = self.__shared_state
+    if self.__dict__:
+      return
+    self.filename = temp(STATISTICS_FILE)
+    Cleanup().register(self.filename, pass8)
+
+    if os.path.exists(self.filename):
+      self.unarchive()
+    else:
+      self.data = { 'cvs_revs_count' : 0,
+                    'tags': { },
+                    'branches' : { },
+                    'repos_size' : 0,
+                    'svn_rev_count' : None,
+                    'first_rev_date' : 1L<<32,
+                    'last_rev_date' : 0,
+                    }
+
+  def _bump_item(self, key, amount=1):
+    self.data[key] = self.data[key] + amount
+
+  def reset_c_rev_info(self):
+    self.data['cvs_revs_count'] = 0
+    self.data['tags'] = { }
+    self.data['branches'] = { }
+
+  def record_c_rev(self, c_rev):
+    self._bump_item('cvs_revs_count')
+
+    for tag in c_rev.tags:
+      self.data['tags'][tag] = None
+    for branch in c_rev.branches:
+      self.data['branches'][branch] = None
+
+    if c_rev.timestamp < self.data['first_rev_date']:
+      self.data['first_rev_date'] = c_rev.timestamp
+
+    if c_rev.timestamp > self.data['last_rev_date']:
+      self.data['last_rev_date'] = c_rev.timestamp
+
+    self._bump_item('repos_size', c_rev.file_size)
+
+  def set_svn_rev_count(self, count):
+    self.data['svn_rev_count'] = count
+
+  def svn_rev_count(self, count):
+    return self.data['svn_rev_count']
+
+  def archive(self):
+    open(self.filename, 'w').write(marshal.dumps(self.data))
+
+  def unarchive(self):
+    self.data = marshal.loads(open(self.filename, 'r').read())
+
+  def __str__(self):
+    svn_revs_str = ""
+    if self.data['svn_rev_count'] is not None:
+      svn_revs_str = ('     Total SVN Commits: %10s\n'
+                      % self.data['svn_rev_count'])
+
+    return ('\n'                                \
+            '           cvs2svn Statistics\n'   \
+            '           ------------------\n'   \
+            '   Total CVS Revisions: %10i\n'    \
+            '     Total Unique Tags: %10i\n'    \
+            ' Total Unique Branches: %10i\n'    \
+            '  CVS Repos Size in Kb: %10i\n'    \
+            '%s'                                \
+            '   First Revision Date: %s\n'      \
+            '    Last Revision Date: %s'        \
+            % (self.data['cvs_revs_count'],
+               len(self.data['tags']),
+               len(self.data['branches']),
+               (self.data['repos_size'] / 1024),
+               svn_revs_str,
+               time.ctime(self.data['first_rev_date']),
+               time.ctime(self.data['last_rev_date']),
+               ))
 
 
 class LastSymbolicNameDatabase:
@@ -1333,6 +1421,7 @@ class CollectData(cvs2svn_rcsparse.Sink):
                         self.taglist.get(revision, []),
                         self.branchlist.get(revision, []))
     self.revs.write(str(c_rev) + "\n")
+    StatsKeeper().record_c_rev(c_rev)
 
     if not self.metadata_db.has_key(digest):
       self.metadata_db[digest] = (author, log)
@@ -3709,6 +3798,11 @@ def pass1():
              + "at a CVS repository?\n"
              + "\nExited due to fatal error(s).")
 
+  Log().write(LOG_QUIET, StatsKeeper())
+  Log().write(LOG_QUIET, '(These are unaltered CVS repository stats and do not\n'
+              + ' reflect tags or branches excluded via --exclude)')
+  StatsKeeper().reset_c_rev_info()
+  StatsKeeper().archive()
   Log().write(LOG_QUIET, "Done")
  
 def pass2():
@@ -3936,8 +4030,10 @@ def pass4():
     c_rev = CVSRevision(Ctx(), line[:-1])
     cvs_revs_db.log_revision(c_rev)
     last_sym_name_db.log_revision(c_rev)
+    StatsKeeper().record_c_rev(c_rev)
 
   last_sym_name_db.create_database()
+  StatsKeeper().archive()
   Log().write(LOG_QUIET, "Done")
 
 def pass5():
@@ -4028,6 +4124,9 @@ def pass8():
     repos.commit(svn_commit)
     svncounter += 1
 
+  StatsKeeper().set_svn_rev_count(persistence_manager.total_revs())
+  Log().write(LOG_QUIET, StatsKeeper())
+  StatsKeeper().archive()
   repos.finish()
 
 _passes = [

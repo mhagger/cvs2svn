@@ -68,7 +68,7 @@ def do_it(revs_file):
   avg_tags = total_tags * 1.0 / line_count
   avg_branches = total_branches * 1.0 / line_count
   
-  print '       Total Revisions: %d\n' \
+  print '   Total CVS Revisions: %d\n' \
         '     Total Unique Tags: %d\n' \
         '    Peak Revision Tags: %d\n' \
         '    Avg. Tags/Revision: %2.1f\n' \

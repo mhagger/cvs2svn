@@ -419,11 +419,11 @@ def print_node_tree(tree, root_node, indent_depth=0):
     print_node_tree(tree, value, (indent_depth + 1))
 
 def match_regexp_list(regexp_list, string):
-  """Return 1 if string matches any of the compiled regexps in REGEXP_LIST,
-  else return None."""
+  """Test whether STRING matches any of the compiled regexps in REGEXP_LIST."""
   for regexp in regexp_list:
     if regexp.match(string):
-      return 1
+      return True
+  return False
 
 # These constants represent the log levels that this script supports
 LOG_WARN = -1

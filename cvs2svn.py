@@ -2945,9 +2945,8 @@ def main():
       or (string.find(ctx.branches_base, '/') > -1)):
     sys.stderr.write("%s: cannot pass multicomponent path to "
                      "--trunk, --tags, or --branches yet.\n"
-                     "  See http://subversion.tigris.org/issues/show_bug.cgi?"
-                     "id=1409 "
-                     "for details.\n" % error_prefix)
+                     "  See http://cvs2svn.tigris.org/issues/show_bug.cgi?"
+                     "id=7 for details.\n" % error_prefix)
     sys.exit(1)
 
   if ctx.existing_svnrepos and not os.path.isdir(ctx.target):

@@ -46,7 +46,7 @@ if sys.hexversion < 0x2000000:
 
 # DBM module selection
 
-# 1. If we have bsddb3, it is probably newer than bsddb. Fake bsddb = bsddb3,
+# 1. If we have bsddb3, it is probably newer than bsddb.  Fake bsddb = bsddb3,
 #    so that the dbhash module used by anydbm will use bsddb3.
 try:
   import bsddb3
@@ -224,7 +224,7 @@ SORTED_REVS_SUFFIX = '.s-revs'
 RESYNC_SUFFIX = '.resync'
 
 # This list should contain all data files that we create in the course
-# of running the program. To avoid running with stale files, we will delete
+# of running the program.  To avoid running with stale files, we will delete
 # all of these files first thing in pass1.
 all_files = [CVS_REVS_DB, CVS_REVS_TO_SVN_REVNUMS, 
              DATAFILE + CLEAN_REVS_SUFFIX, DATAFILE + RESYNC_SUFFIX, 
@@ -375,7 +375,7 @@ class Log(Singleton):
  
   def write(self, log_level, *args):
     """This is the public method to use for writing to a file.  Only
-    messages whose LOG_LEVEL is <= self.log_level will be printed. If
+    messages whose LOG_LEVEL is <= self.log_level will be printed.  If
     there are multiple ARGS, they will be separated by a space."""
     if log_level > self.log_level:
       return
@@ -385,7 +385,7 @@ class Log(Singleton):
 
 
 class Cleanup(Singleton):
-  """This singleton class manages any files created by cvs2svn. When
+  """This singleton class manages any files created by cvs2svn.  When
   you first create a file, call Cleanup.register, passing the
   filename, and the last pass that you need the file.  After the end
   of that pass, your file will be cleaned up after running an optional
@@ -432,7 +432,7 @@ DB_OPEN_NEW = 'n'
 class Database:
   def __init__(self, filename, mode):
     # pybsddb3 has a bug which prevents it from working with
-    # Berkeley DB 4.2 if you open the db with 'n' ("new"). This
+    # Berkeley DB 4.2 if you open the db with 'n' ("new").  This
     # causes the DB_TRUNCATE flag to be passed, which is disallowed
     # for databases protected by lock and transaction support
     # (bsddb databases use locking from bsddb version 4.2.4 onwards).
@@ -526,7 +526,8 @@ class CVSRevisionDatabase:
 
 
 class TagsDatabase(Database):
-  """A Database to store which symbolic names are tags. Each key is a tag name.
+  """A Database to store which symbolic names are tags.
+  Each key is a tag name.
   The value has no meaning, and should be set to None."""
   def __init__(self, mode):
     Database.__init__(self, TAGS_DB, mode)
@@ -546,7 +547,7 @@ class CVSRevision:
        is_default_branch_revision()
     
     If there is one argument in ARGS, it is a string, in the format of
-    a line from a revs file. Do *not* include a trailing newline.
+    a line from a revs file.  Do *not* include a trailing newline.
 
     If there are multiple ARGS, there must be 15 of them,
     comprising a parsed revs line:
@@ -1064,11 +1065,11 @@ class CollectData(rcsparse.Sink):
         self.set_branch_name(branch_number, branch_name)
 
   def tree_completed(self):
-    "The revision tree has been parsed. Analyze it for consistency."
+    "The revision tree has been parsed.  Analyze it for consistency."
 
     # Our algorithm depends upon the timestamps on the revisions occuring
-    # monotonically over time. That is, we want to see rev 1.34 occur in
-    # time before rev 1.35. If we inserted 1.35 *first* (due to the time-
+    # monotonically over time.  That is, we want to see rev 1.34 occur in
+    # time before rev 1.35.  If we inserted 1.35 *first* (due to the time-
     # sorting), and then tried to insert 1.34, we'd be screwed.
 
     # to perform the analysis, we'll simply visit all of the 'previous'
@@ -1214,7 +1215,7 @@ class SymbolingsLogger:
     Cleanup().register(SYMBOL_CLOSINGS_TMP, pass5)
 
     # This keys of this dictionary are Subversion repository *source*
-    # paths for which we've encountered an 'opening'. The values are
+    # paths for which we've encountered an 'opening'.  The values are
     # the symbolic names that this path has opened.  The only paths
     # that should be in this dict are paths whose corresponding
     # CVSRevision is a default branch revision.
@@ -1529,7 +1530,7 @@ class CVSCommit:
     # of a commit could get gradually expanded to be arbitrarily
     # longer than COMMIT_THRESHOLD.  I'm not sure this is a huge
     # problem, and anyway deciding where to break it up would be a
-    # judgement call. For now, we just print a warning in commit() if
+    # judgement call.  For now, we just print a warning in commit() if
     # this happens.
     if c_rev.timestamp < self.t_min:
       self.t_min = c_rev.timestamp
@@ -1987,12 +1988,12 @@ class CVSRevisionAggregator:
         del self.cvs_commits[digest_key]
         continue
       # If the inbound commit is on the same file as a pending commit,
-      # close the pending commit to further changes. Don't flush it though,
+      # close the pending commit to further changes.  Don't flush it though,
       # as there may be other pending commits dated before this one.
       # ### ISSUE: the has_file() check below is not optimal.
       # It does fix the dataloss bug where revisions would get lost
       # if checked in too quickly, but it can also break apart the
-      # commits. The correct fix would require tracking the dependencies
+      # commits.  The correct fix would require tracking the dependencies
       # between change sets and committing them in proper order.
       if cvs_commit.has_file(c_rev.fname):
         unused_id = digest_key + '-'
@@ -2032,7 +2033,7 @@ class CVSRevisionAggregator:
       self.attempt_to_commit_symbols(ready_queue, c_rev) 
 
   def flush(self):
-    """Commit anything left in self.cvs_commits. Then inform the
+    """Commit anything left in self.cvs_commits.  Then inform the
     SymbolingsLogger that all commits are done."""
 
     ready_queue = [ ]
@@ -2196,8 +2197,8 @@ class SymbolicNameFillingGuide:
     self.node_tree = { self.root_key : { } }
 
   def get_best_revnum(self, node, preferred_revnum):
-    """ Determine the best subversion revision number to use when
-    copying the source tree beginning at NODE. Returns a
+    """Determine the best subversion revision number to use when
+    copying the source tree beginning at NODE.  Returns a
     subversion revision number.
 
     PREFERRED_REVNUM is passed to self._best_rev and used to
@@ -2223,7 +2224,7 @@ class SymbolicNameFillingGuide:
 
   def _best_rev(self, scores, preferred_rev):
     """Return the revision with the highest score from SCORES, a list
-    returned by _score_revisions(). When the maximum score is shared
+    returned by _score_revisions().  When the maximum score is shared
     by multiple revisions, the oldest revision is selected, unless
     PREFERRED_REV is one of the possibilities, in which case, it is
     selected."""
@@ -3621,7 +3622,7 @@ def pass2(ctx):
   "Pass 2: clean up the revision information."
   Log().write(LOG_QUIET, "Re-synchronizing CVS revision timestamps...")
 
-  # We may have recorded some changes in revisions' timestamp. We need to
+  # We may have recorded some changes in revisions' timestamp.  We need to
   # scan for any other files which may have had the same log message and
   # occurred at "the same time" and change their timestamps, too.
 
@@ -3637,9 +3638,9 @@ def pass2(ctx):
 
     #
     # A digest maps to a sequence of lists which specify a lower and upper
-    # time bound for matching up the commit. We keep a sequence of these
+    # time bound for matching up the commit.  We keep a sequence of these
     # because a number of checkins with the same log message (e.g. an empty
-    # log message) could need to be remapped. We also make them a list because
+    # log message) could need to be remapped.  We also make them a list because
     # we will dynamically expand the lower/upper bound as we find commits
     # that fall into a particular msg and time range.
     #
@@ -3742,7 +3743,7 @@ def pass4(ctx):
 def pass5(ctx):
   """
   Generate the SVNCommit <-> CVSRevision mapping
-  databases. CVSCommit._commit also calls SymbolingsLogger to register
+  databases.  CVSCommit._commit also calls SymbolingsLogger to register
   CVSRevisions that represent an opening or closing for a path on a
   branch or tag.  See SymbolingsLogger for more details.
   """
@@ -3871,7 +3872,7 @@ class MimeMapper:
     extension = extension[1:]
 
     # If there is no extension (or the file ends with a period), use
-    # the base name for mapping. This allows us to set mappings for
+    # the base name for mapping.  This allows us to set mappings for
     # files such as README or Makefile:
     if not extension:
       extension = basename

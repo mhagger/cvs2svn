@@ -23,7 +23,7 @@ Here we go:
 93.06.18.05.46.08;  jrandom;  Exp;  1.1.1.1 () () partial-prune/sub/Attic/first
 
     [Notes: these files had no 'vendortag' symbol for 1.1.1.1,
-     so it just looks like another commit!]
+     so they go in an unlabeled branch.]
 
 *** end rev 2 ***
 
@@ -44,8 +44,8 @@ Here we go:
 95.03.31.07.44.02;  jrandom;  Exp;  1.1.1.1 () () full-prune/Attic/second
 95.03.31.07.44.02;  jrandom;  Exp;  1.1.1.1 () () full-prune-reappear/sub/Attic/second
 95.03.31.07.44.02;  jrandom;  Exp;  1.1.1.1 () () partial-prune/sub/Attic/second
-   [Again, no symbols associated with these revisions, so they appear
-    on trunk despite looking like branch revisions.]
+   [Again, these files had no 'vendortag' symbol for 1.1.1.1,
+    so they go in an unlabeled branch.]
 
 *** end rev 6 ***
 

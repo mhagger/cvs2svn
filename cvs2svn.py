@@ -1411,10 +1411,11 @@ def format_date(date):
   return time.strftime("%Y-%m-%dT%H:%M:%S.000000Z", time.gmtime(date))
 
 
-def make_revision_props(ctx, symbolic_name, is_tag):
+def make_revision_props(ctx, symbolic_name, is_tag, date=None):
   """Return a dictionary of revision properties for the manufactured
   commit that finished SYMBOLIC_NAME.  If IS_TAG is true, write the
-  log message as though for a tag, else as though for a branch."""
+  log message as though for a tag, else as though for a branch.
+  If DATE is passed, use it as the value of the svn:date property."""
   if is_tag:
     type = 'tag'
   else:
@@ -1431,7 +1432,7 @@ def make_revision_props(ctx, symbolic_name, is_tag):
   
   return { 'svn:author' : ctx.username,
            'svn:log' : log,
-           'svn:date' : format_date(time.time())}
+           'svn:date' : date or format_date(time.time())}
 
 
 class SymbolicNameTracker:
@@ -1808,11 +1809,14 @@ class SymbolicNameTracker:
 
     If IS_TAG is true, NAME is treated as a tag, else as a branch.
 
-    If JIT_NEW_REV is not None, it is a list of one element.  If that
-    element is true, then if any copies are to be made, invoke
-    DUMPER.start_revision() before the first copy, then set
+    If JIT_NEW_REV is not None, it is a list of one or two elements.
+    If the first element is true, then if any copies are to be made,
+    invoke DUMPER.start_revision() before the first copy, then set
     JIT_NEW_REV[0] to None, so no more new revisions are made for this
     symbolic name anywhere in this descent.
+
+    The second element, if present, is the string to be used for the svn:date
+    property of any JIT-created revision.
     
     ('JIT' == 'Just In Time'.)"""
     ### Hmmm, is passing [1] instead of 1 an idiomatic way of passing
@@ -1857,7 +1861,8 @@ class SymbolicNameTracker:
                                                 val, is_tag)
         if (rev != parent_rev):
           if jit_new_rev and jit_new_rev[0]:
-            dumper.start_revision(make_revision_props(ctx, name, is_tag))
+            dumper.start_revision(make_revision_props(ctx, name, is_tag,
+              len(jit_new_rev) > 1 and jit_new_rev[1] or None))
             jit_new_rev[0] = None
           if dumper.copy_path(src_path, rev, copy_dst, expected_entries):
             parent_rev = rev
@@ -1897,11 +1902,7 @@ class SymbolicNameTracker:
 
     If IS_TAG is true, NAME is treated as a tag, else as a branch.
 
-    If JIT_NEW_REV is not None, it is a list of one element.  If that
-    element is true, then if any copies are to be made, invoke
-    DUMPER.start_revision() before the first copy.
-
-    ('JIT' == 'Just In Time'.)""" 
+    JIT_NEW_REV is as documented for the copy_descend() function.""" 
 
     # A source path looks like this in the symbolic name tree:
     #
@@ -1996,11 +1997,7 @@ class SymbolicNameTracker:
     and CTX.branches_base to determine the source and destination
     paths in the Subversion repository.
 
-    If JIT_NEW_REV is not None, it is a list of one element.  If that
-    element is true, then if any copies are to be made, invoke
-    DUMPER.start_revision() before the first copy.
-
-    ('JIT' == 'Just In Time'.)""" 
+    JIT_NEW_REV is as documented for the copy_descend() function.""" 
     self.fill_name(dumper, ctx, tag, 1, jit_new_rev)
 
   def fill_branch(self, dumper, ctx, branch, jit_new_rev=None):
@@ -2009,11 +2006,7 @@ class SymbolicNameTracker:
     and CTX.branches_base to determine the source and destination
     paths in the Subversion repository.
 
-    If JIT_NEW_REV is not None, it is a list of one element.  If that
-    element is true, then if any copies are to be made, invoke
-    DUMPER.start_revision() before the first copy.
-
-    ('JIT' == 'Just In Time'.)""" 
+    JIT_NEW_REV is as documented for the copy_descend() function.""" 
     self.fill_name(dumper, ctx, branch, None, jit_new_rev)
 
   def finish(self, dumper, ctx):
@@ -2228,7 +2221,7 @@ class Commit:
         ### keyed on full paths, to reduce the check to a quick
         ### constant time query.
         if not dumper.probe_path(svn_path):
-          sym_tracker.fill_branch(dumper, ctx, br, [1])
+          sym_tracker.fill_branch(dumper, ctx, br, [1, date])
 
     for rcs_file, cvs_rev, dt_code, br, tags, branches in self.deletes:
       # compute a repository path, dropping the ,v from the file name
@@ -2243,7 +2236,7 @@ class Commit:
         ### keyed on full paths, to reduce the check to a quick
         ### constant time query.
         if not dumper.probe_path(svn_path):
-          sym_tracker.fill_branch(dumper, ctx, br, [1])
+          sym_tracker.fill_branch(dumper, ctx, br, [1, date])
 
 
     # Now that any branches we need exist, we can do the commits.

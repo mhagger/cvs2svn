@@ -1078,47 +1078,6 @@ def format_date(date):
   # A Subversion date looks like "2002-09-29T14:44:59.000000Z"
   return time.strftime("%Y-%m-%dT%H:%M:%S.000000Z", time.gmtime(date))
 
-def read_resync(fname):
-  "Read the .resync file into memory."
-
-  ### note that we assume that we can hold the entire resync file in
-  ### memory. really large repositories with whacky timestamps could
-  ### bust this assumption. should that ever happen, then it is possible
-  ### to split the resync file into pieces and make multiple passes,
-  ### using each piece.
-
-  #
-  # A digest maps to a sequence of lists which specify a lower and upper
-  # time bound for matching up the commit. We keep a sequence of these
-  # because a number of checkins with the same log message (e.g. an empty
-  # log message) could need to be remapped. We also make them a list because
-  # we will dynamically expand the lower/upper bound as we find commits
-  # that fall into a particular msg and time range.
-  #
-  # resync == digest -> [ [old_time_lower, old_time_upper, new_time], ... ]
-  #
-  resync = { }
-
-  for line in fileinput.FileInput(fname):
-    t1 = int(line[:8], 16)
-    digest = line[9:DIGEST_END_IDX]
-    t2 = int(line[DIGEST_END_IDX+1:], 16)
-    t1_l = t1 - COMMIT_THRESHOLD/2
-    t1_u = t1 + COMMIT_THRESHOLD/2
-    if resync.has_key(digest):
-      resync[digest].append([t1_l, t1_u, t2])
-    else:
-      resync[digest] = [ [t1_l, t1_u, t2] ]
-
-  # For each digest, sort the resync items in it in increasing order,
-  # based on the lower time bound.
-  digests = resync.keys()
-  for digest in digests:
-    (resync[digest]).sort()
-
-  return resync
-
-
 class SymbolingsLogger(Singleton):
   """Manage the file that contains lines for symbol openings and
   closings.
@@ -1650,33 +1609,6 @@ class SymbolicNameFillingGuide:
     """Return true if we haven't accumulated any openings or closings,
     false otherwise."""
     return not len(self.things)
-
-
-def generate_offsets_for_symbolings():
-  """This function iterates through all the lines in
-  SYMBOL_OPENINGS_CLOSINGS_SORTED, writing out a file mapping
-  SYMBOLIC_NAME to the file offset in SYMBOL_OPENINGS_CLOSINGS_SORTED
-  where SYMBOLIC_NAME is first encountered.  This will allow us to
-  seek to the various offsets in the file and sequentially read only
-  the openings and closings that we need."""
-
-  ###PERF This is a fine example of a db that can be in-memory and
-  #just flushed to disk when we're done.  Later, it can just be sucked
-  #back into memory.
-  offsets_db = Database(SYMBOL_OFFSETS_DB, DB_OPEN_CREATE) 
-  Cleanup().register(SYMBOL_OFFSETS_DB, pass8)
-  
-  file = open(SYMBOL_OPENINGS_CLOSINGS_SORTED, 'r')
-  old_sym = ""
-  while 1:
-    line = file.readline()
-    if not line:
-      break
-    sym, svn_revnum, cvs_rev_key = line.split(" ", 2)
-    if not sym == old_sym:
-      Log().write(LOG_VERBOSE, " ", sym)
-      old_sym = sym
-      offsets_db[sym] = file.tell() - len(line)
 
 
 class SVNCommitInternalInconsistencyError(Exception):
@@ -3680,6 +3612,46 @@ def pass2(ctx):
   # occurred at "the same time" and change their timestamps, too.
 
   # read the resync data file
+  def read_resync(fname):
+    "Read the .resync file into memory."
+
+    ### note that we assume that we can hold the entire resync file in
+    ### memory. really large repositories with whacky timestamps could
+    ### bust this assumption. should that ever happen, then it is possible
+    ### to split the resync file into pieces and make multiple passes,
+    ### using each piece.
+
+    #
+    # A digest maps to a sequence of lists which specify a lower and upper
+    # time bound for matching up the commit. We keep a sequence of these
+    # because a number of checkins with the same log message (e.g. an empty
+    # log message) could need to be remapped. We also make them a list because
+    # we will dynamically expand the lower/upper bound as we find commits
+    # that fall into a particular msg and time range.
+    #
+    # resync == digest -> [ [old_time_lower, old_time_upper, new_time], ... ]
+    #
+    resync = { }
+
+    for line in fileinput.FileInput(fname):
+      t1 = int(line[:8], 16)
+      digest = line[9:DIGEST_END_IDX]
+      t2 = int(line[DIGEST_END_IDX+1:], 16)
+      t1_l = t1 - COMMIT_THRESHOLD/2
+      t1_u = t1 + COMMIT_THRESHOLD/2
+      if resync.has_key(digest):
+        resync[digest].append([t1_l, t1_u, t2])
+      else:
+        resync[digest] = [ [t1_l, t1_u, t2] ]
+
+    # For each digest, sort the resync items in it in increasing order,
+    # based on the lower time bound.
+    digests = resync.keys()
+    for digest in digests:
+      (resync[digest]).sort()
+
+    return resync
+
   resync = read_resync(DATAFILE + RESYNC_SUFFIX)
 
   output = open(DATAFILE + CLEAN_REVS_SUFFIX, 'w')
@@ -3772,6 +3744,33 @@ def pass6(ctx):
 
 def pass7(ctx):
   Log().write(LOG_QUIET, "Determining offsets for all symbolic names...")
+
+  def generate_offsets_for_symbolings():
+    """This function iterates through all the lines in
+    SYMBOL_OPENINGS_CLOSINGS_SORTED, writing out a file mapping
+    SYMBOLIC_NAME to the file offset in SYMBOL_OPENINGS_CLOSINGS_SORTED
+    where SYMBOLIC_NAME is first encountered.  This will allow us to
+    seek to the various offsets in the file and sequentially read only
+    the openings and closings that we need."""
+
+    ###PERF This is a fine example of a db that can be in-memory and
+    #just flushed to disk when we're done.  Later, it can just be sucked
+    #back into memory.
+    offsets_db = Database(SYMBOL_OFFSETS_DB, DB_OPEN_CREATE) 
+    Cleanup().register(SYMBOL_OFFSETS_DB, pass8)
+    
+    file = open(SYMBOL_OPENINGS_CLOSINGS_SORTED, 'r')
+    old_sym = ""
+    while 1:
+      line = file.readline()
+      if not line:
+        break
+      sym, svn_revnum, cvs_rev_key = line.split(" ", 2)
+      if not sym == old_sym:
+        Log().write(LOG_VERBOSE, " ", sym)
+        old_sym = sym
+        offsets_db[sym] = file.tell() - len(line)
+
   if not ctx.trunk_only:
     generate_offsets_for_symbolings()
   Log().write(LOG_QUIET, "Done.")

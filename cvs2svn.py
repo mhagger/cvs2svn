@@ -380,7 +380,8 @@ class CollectData(rcsparse.Sink):
       sys.stderr.write("%s: in '%s':\n"
                        "   '%s' is not a valid tag or branch name, ignoring\n"
                        % (warning_prefix, self.fname, name))
-    elif branch_tag.match(revision):
+      return
+    if branch_tag.match(revision):
       label_type = self.BRANCH_LABEL
       self.add_cvs_branch(revision, name)
     elif vendor_tag.match(revision):

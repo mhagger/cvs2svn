@@ -1001,6 +1001,25 @@ def nonascii_filenames():
   new_locale = 'en_US.ISO8859-1'
   locale_changed = None
 
+  # From http://docs.python.org/lib/module-sys.html
+  #
+  # getfilesystemencoding():
+  #
+  # Return the name of the encoding used to convert Unicode filenames
+  # into system file names, or None if the system default encoding is
+  # used. The result value depends on the operating system:
+  #
+  # - On Windows 9x, the encoding is ``mbcs''.
+  # - On Mac OS X, the encoding is ``utf-8''.
+  # - On Unix, the encoding is the user's preference according to the
+  #   result of nl_langinfo(CODESET), or None if the
+  #   nl_langinfo(CODESET) failed.
+  # - On Windows NT+, file names are Unicode natively, so no conversion is performed.
+
+  # So we're going to skip this test on Mac OS X for now.
+  if sys.platform == "darwin":
+    raise svntest.Skip
+
   try:
     # change locale to non-UTF-8 locale to generate latin1 names
     locale.setlocale(locale.LC_ALL, # this might be too broad?

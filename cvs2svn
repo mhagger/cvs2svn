@@ -4427,7 +4427,7 @@ def main():
 
   if ctx.use_cvs:
     def cvs_ok():
-      pipe = Popen3('cvs %s version' % Ctx().cvs_global_arguments, True)
+      pipe = Popen3('cvs %s --version' % Ctx().cvs_global_arguments, True)
       pipe.tochild.close()
       pipe.fromchild.read()
       errmsg = pipe.childerr.read()

@@ -2569,7 +2569,7 @@ class Commit:
               'changes in r%d,\n'                                           \
               'which included commits to RCS files with non-trunk default ' \
               'branches.\n' % previous_rev
-        props = { 'svn:author' : 'cvs2svn',
+        props = { 'svn:author' : ctx.username,
                   'svn:log' : msg,
                   'svn:date' : date }
         svn_rev = dumper.start_revision(props)

@@ -280,6 +280,69 @@ def _path_join(*components):
   Empty component are skipped."""
   return string.join(filter(None, components), '/')
 
+def run_command(command):
+  if os.system(command):
+    sys.exit('Command failed: "%s"' % command)
+
+def relative_name(cvsroot, fname):
+  l = len(cvsroot)
+  if fname[:l] == cvsroot:
+    if fname[l] == os.sep:
+      return string.replace(fname[l+1:], os.sep, '/')
+    return string.replace(fname[l:], os.sep, '/')
+  sys.stderr.write("%s: relative_path('%s', '%s'): fname is not a sub-path of"
+                   " cvsroot\n" % (error_prefix, cvsroot, fname))
+  sys.exit(1)
+
+# Return a string that has not been returned by gen_key() before.
+gen_key_base = 0L
+def gen_key():
+  global gen_key_base
+  key = '%x' % gen_key_base
+  gen_key_base = gen_key_base + 1
+  return key
+
+if sys.platform == "win32":
+  def escape_shell_arg(str):
+    return '"' + string.replace(str, '"', '"^""') + '"'
+else:
+  def escape_shell_arg(str):
+    return "'" + string.replace(str, "'", "'\\''") + "'"
+
+def format_date(date):
+  """Return an svn-compatible date string for DATE (seconds since epoch)."""
+  # A Subversion date looks like "2002-09-29T14:44:59.000000Z"
+  return time.strftime("%Y-%m-%dT%H:%M:%S.000000Z", time.gmtime(date))
+
+def sort_file(infile, outfile):
+  # sort the log files
+
+  # GNU sort will sort our dates differently (incorrectly!) if our
+  # LC_ALL is anything but 'C', so if LC_ALL is set, temporarily set
+  # it to 'C'
+  if os.environ.has_key('LC_ALL'):
+    lc_all_tmp = os.environ['LC_ALL']
+  else:
+    lc_all_tmp = None
+  os.environ['LC_ALL'] = 'C'
+  run_command('sort %s > %s' % (infile, outfile))
+  if lc_all_tmp is None:
+    del os.environ['LC_ALL']
+  else:
+    os.environ['LC_ALL'] = lc_all_tmp
+
+def print_node_tree(tree, root_node, indent_depth=0):
+  """For debugging purposes.  Prints all nodes in TREE that are
+  rooted at ROOT_NODE.  INDENT_DEPTH is merely for purposes of
+  debugging with the print statement in this function."""
+  if not indent_depth:
+    print "TREE", "=" * 75
+  print "TREE:", " " * (indent_depth * 2), root_node, tree[root_node]
+  for key, value in tree[root_node].items():
+    if key[0] == '/': #Skip flags
+      continue
+    print_node_tree(tree, value, (indent_depth + 1))
+
 
 class Singleton(object):
   """If you wish to have a class that you can only instantiate once,
@@ -403,6 +466,70 @@ class Database:
   def len(self):
     return len(self.db)
    
+
+class LastSymbolicNameDatabase(Database):
+  """ Passing every CVSRevision in s-revs to this class will result in
+  a Database whose key is the last CVS Revision a symbolicname was
+  seen in, and whose value is a list of all symbolicnames that were
+  last seen in that revision."""
+  def __init__(self, mode):
+    self.symbols = {}
+    self.symbol_revs_db = Database(SYMBOL_LAST_CVS_REVS_DB, mode)
+    Cleanup().register(SYMBOL_LAST_CVS_REVS_DB, pass8)
+
+  # Once we've gone through all the revs,
+  # symbols.keys() will be a list of all tags and branches, and
+  # their corresponding values will be a key into the last CVS revision
+  # that they were used in.
+  def log_revision(self, c_rev):
+    # Gather last CVS Revision for symbolic name info and tag info
+    for tag in c_rev.tags:
+      self.symbols[tag] = c_rev.unique_key()
+    if c_rev.op is not OP_DELETE:
+      for branch in c_rev.branches:
+        self.symbols[branch] = c_rev.unique_key()
+
+  # Creates an inversion of symbols above--a dictionary of lists (key
+  # = CVS rev unique_key: val = list of symbols that close in that
+  # rev.
+  def create_database(self):
+    for sym, rev_unique_key in self.symbols.items():
+      if self.symbol_revs_db.has_key(rev_unique_key):
+        ary = self.symbol_revs_db[rev_unique_key]
+        ary.append(sym)
+        self.symbol_revs_db[rev_unique_key] = ary
+      else:
+        self.symbol_revs_db[rev_unique_key] = [sym]
+
+
+class CVSRevisionDatabase:
+  """A Database to store CVSRevision objects and retrieve them by their
+  unique_key()."""
+
+  def __init__(self, mode, ctx=None):
+    """Initialize an instance, opening database in MODE (like the MODE
+    argument to Database or anydbm.open()).  CTX is required if you
+    wish to call the get_revision() method."""
+    self._ctx = ctx
+    self.cvs_revs_db = Database(CVS_REVS_DB, mode)
+    Cleanup().register(CVS_REVS_DB, pass8)
+
+  def log_revision(self, c_rev):
+    """Add C_REV, a CVSRevision, to the database."""
+    self.cvs_revs_db[c_rev.unique_key()] = str(c_rev)
+
+  def get_revision(self, unique_key):
+    """Return the CVSRevision stored under UNIQUE_KEY."""
+    return CVSRevision(self._ctx, self.cvs_revs_db[unique_key])
+
+
+class TagsDatabase(Database):
+  """A Database to store which symbolic names are tags. Each key is a tag name.
+  The value has no meaning, and should be set to None."""
+  def __init__(self, mode):
+    Database.__init__(self, TAGS_DB, mode)
+    Cleanup().register(TAGS_DB, pass8)
+
 
 class CVSRevision:
   def __init__(self, ctx, *args):
@@ -1044,40 +1171,6 @@ class CollectData(rcsparse.Sink):
   def parse_completed(self):
     self.num_files = self.num_files + 1
 
-def run_command(command):
-  if os.system(command):
-    sys.exit('Command failed: "%s"' % command)
-
-def relative_name(cvsroot, fname):
-  l = len(cvsroot)
-  if fname[:l] == cvsroot:
-    if fname[l] == os.sep:
-      return string.replace(fname[l+1:], os.sep, '/')
-    return string.replace(fname[l:], os.sep, '/')
-  sys.stderr.write("%s: relative_path('%s', '%s'): fname is not a sub-path of"
-                   " cvsroot\n" % (error_prefix, cvsroot, fname))
-  sys.exit(1)
-
-# Return a string that has not been returned by gen_key() before.
-gen_key_base = 0L
-def gen_key():
-  global gen_key_base
-  key = '%x' % gen_key_base
-  gen_key_base = gen_key_base + 1
-  return key
-
-if sys.platform == "win32":
-  def escape_shell_arg(str):
-    return '"' + string.replace(str, '"', '"^""') + '"'
-else:
-  def escape_shell_arg(str):
-    return "'" + string.replace(str, "'", "'\\''") + "'"
-
-def format_date(date):
-  """Return an svn-compatible date string for DATE (seconds since epoch)."""
-  # A Subversion date looks like "2002-09-29T14:44:59.000000Z"
-  return time.strftime("%Y-%m-%dT%H:%M:%S.000000Z", time.gmtime(date))
-
 class SymbolingsLogger(Singleton):
   """Manage the file that contains lines for symbol openings and
   closings.
@@ -1201,100 +1294,6 @@ class SymbolingsLogger(Singleton):
         self._log(name, svn_revnum, path, CLOSING)
       # Remove them from the openings list as we're done with them.
       del self.open_paths_with_default_branches[path]
-
-
-class LastSymbolicNameDatabase(Database):
-  """ Passing every CVSRevision in s-revs to this class will result in
-  a Database whose key is the last CVS Revision a symbolicname was
-  seen in, and whose value is a list of all symbolicnames that were
-  last seen in that revision."""
-  def __init__(self, mode):
-    self.symbols = {}
-    self.symbol_revs_db = Database(SYMBOL_LAST_CVS_REVS_DB, mode)
-    Cleanup().register(SYMBOL_LAST_CVS_REVS_DB, pass8)
-
-  # Once we've gone through all the revs,
-  # symbols.keys() will be a list of all tags and branches, and
-  # their corresponding values will be a key into the last CVS revision
-  # that they were used in.
-  def log_revision(self, c_rev):
-    # Gather last CVS Revision for symbolic name info and tag info
-    for tag in c_rev.tags:
-      self.symbols[tag] = c_rev.unique_key()
-    if c_rev.op is not OP_DELETE:
-      for branch in c_rev.branches:
-        self.symbols[branch] = c_rev.unique_key()
-
-  # Creates an inversion of symbols above--a dictionary of lists (key
-  # = CVS rev unique_key: val = list of symbols that close in that
-  # rev.
-  def create_database(self):
-    for sym, rev_unique_key in self.symbols.items():
-      if self.symbol_revs_db.has_key(rev_unique_key):
-        ary = self.symbol_revs_db[rev_unique_key]
-        ary.append(sym)
-        self.symbol_revs_db[rev_unique_key] = ary
-      else:
-        self.symbol_revs_db[rev_unique_key] = [sym]
-
-
-class CVSRevisionDatabase:
-  """A Database to store CVSRevision objects and retrieve them by their
-  unique_key()."""
-
-  def __init__(self, mode, ctx=None):
-    """Initialize an instance, opening database in MODE (like the MODE
-    argument to Database or anydbm.open()).  CTX is required if you
-    wish to call the get_revision() method."""
-    self._ctx = ctx
-    self.cvs_revs_db = Database(CVS_REVS_DB, mode)
-    Cleanup().register(CVS_REVS_DB, pass8)
-
-  def log_revision(self, c_rev):
-    """Add C_REV, a CVSRevision, to the database."""
-    self.cvs_revs_db[c_rev.unique_key()] = str(c_rev)
-
-  def get_revision(self, unique_key):
-    """Return the CVSRevision stored under UNIQUE_KEY."""
-    return CVSRevision(self._ctx, self.cvs_revs_db[unique_key])
-
-
-class TagsDatabase(Database):
-  """A Database to store which symbolic names are tags. Each key is a tag name.
-  The value has no meaning, and should be set to None."""
-  def __init__(self, mode):
-    Database.__init__(self, TAGS_DB, mode)
-    Cleanup().register(TAGS_DB, pass8)
-
-
-def sort_file(infile, outfile):
-  # sort the log files
-
-  # GNU sort will sort our dates differently (incorrectly!) if our
-  # LC_ALL is anything but 'C', so if LC_ALL is set, temporarily set
-  # it to 'C'
-  if os.environ.has_key('LC_ALL'):
-    lc_all_tmp = os.environ['LC_ALL']
-  else:
-    lc_all_tmp = None
-  os.environ['LC_ALL'] = 'C'
-  run_command('sort %s > %s' % (infile, outfile))
-  if lc_all_tmp is None:
-    del os.environ['LC_ALL']
-  else:
-    os.environ['LC_ALL'] = lc_all_tmp
-
-def print_node_tree(tree, root_node, indent_depth=0):
-  """For debugging purposes.  Prints all nodes in TREE that are
-  rooted at ROOT_NODE.  INDENT_DEPTH is merely for purposes of
-  debugging with the print statement in this function."""
-  if not indent_depth:
-    print "TREE", "=" * 75
-  print "TREE:", " " * (indent_depth * 2), root_node, tree[root_node]
-  for key, value in tree[root_node].items():
-    if key[0] == '/': #Skip flags
-      continue
-    print_node_tree(tree, value, (indent_depth + 1))
 
 
 class SymbolingsReader:

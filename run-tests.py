@@ -1875,7 +1875,7 @@ test_list = [ None,
               exclude,
               vendor_branch_delete_add,
               XFail(resync_pass2_ordering_bug),
-              XFail(native_eol),                    # 50
+              native_eol,                           # 50
              ]
 
 if __name__ == '__main__':

@@ -3346,6 +3346,31 @@ class SVNCommitItem:
       self.svn_props['cvs2svn:cvs-rev'] = c_rev.rev
       make_svn_props = True
 
+    # Set mime-type and eol.  These two properties are intertwingled;
+    # follow the conditionals carefully.  See also issue #39.
+    mime_type = None
+    eol_style = None
+
+    if self.mime_mapper:
+      mime_type = self.mime_mapper.get_type_from_filename(c_rev.cvs_path)
+
+    if not c_rev.mode == 'b':
+      if not self.no_default_eol:
+        eol_style = 'native'
+      elif mime_type and self.eol_from_mime_type:
+        if mime_type.startswith("text/"):
+          eol_style = 'native'
+        else:
+          eol_style = None
+    elif mime_type is None:
+      # file is kb, and no other mimetype specified
+      mime_type = 'application/octet-stream'
+
+    # Remember if we need to filter the EOLs.  We can't use self.svn_props
+    # becase they are only set on the first revision and we need to filter
+    # all revisions.
+    self.needs_eol_filter = eol_style == 'native'
+
     # If asked to fill in the Subversion properties ('svn:' ones), do so.
     if make_svn_props:
       # Tack on the executableness, if any.
@@ -3356,26 +3381,6 @@ class SVNCommitItem:
       if c_rev.mode is None or c_rev.mode == 'kv' or c_rev.mode == 'kvl':
         if not self.keywords_off:
           self.svn_props['svn:keywords'] = 'Author Date Id Revision'
-
-      # Set mime-type and eol.  These two properties are intertwingled;
-      # follow the conditionals carefully.  See also issue #39.
-      mime_type = None
-      eol_style = None
-
-      if self.mime_mapper:
-        mime_type = self.mime_mapper.get_type_from_filename(c_rev.cvs_path)
-
-      if not c_rev.mode == 'b':
-        if not self.no_default_eol:
-          eol_style = 'native'
-        elif mime_type and self.eol_from_mime_type:
-          if mime_type.startswith("text/"):
-            eol_style = 'native'
-          else:
-            eol_style = None
-      elif mime_type is None:
-        # file is kb, and no other mimetype specified
-        mime_type = 'application/octet-stream'
 
       if mime_type:
         self.svn_props['svn:mime-type'] = mime_type
@@ -3676,8 +3681,8 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     if prop_contents:
       self.dumpfile.write(prop_contents)
 
-    # If svn:eol-style is set to native, all EOLs must be converted to LFs
-    if svn_props.get('svn:eol-style', '') == 'native':
+    # Insert a filter to convert all EOLs to LFs if neccessary
+    if s_item.needs_eol_filter:
       data_reader = LF_EOL_Filter(pipe.fromchild)
     else:
       data_reader = pipe.fromchild

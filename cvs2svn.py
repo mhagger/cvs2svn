@@ -238,8 +238,6 @@ all_files = [CVS_REVS_DB, CVS_REVS_TO_SVN_REVNUMS,
              TAGS_DB,
              ]
 
-ATTIC = os.sep + 'Attic'
-
 SVN_INVALID_REVNUM = -1
 
 COMMIT_THRESHOLD = 5 * 60	# flush a commit if a 5 minute gap occurs
@@ -3577,6 +3575,7 @@ def pass1(ctx):
   Log().write(LOG_QUIET, "Examining all CVS ',v' files...")
   cd = CollectData(ctx)
 
+  os_sep_plus_Attic = os.sep + 'Attic'
   def visit_file(baton, dirname, files):
     cd = baton
     for fname in files:
@@ -3584,7 +3583,7 @@ def pass1(ctx):
         continue
       cd.found_valid_file = 1
       pathname = os.path.join(dirname, fname)
-      if dirname[-6:] == ATTIC:
+      if dirname[-6:] == os_sep_plus_Attic:
         # drop the 'Attic' portion from the pathname for the canonical name.
         cd.set_fname(os.path.join(dirname[:-6], fname), pathname)
       else:

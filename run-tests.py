@@ -1302,7 +1302,7 @@ test_list = [ None,
               nonascii_filenames,
               vendor_branch_sameness,
               default_branches,
-              XFail(compose_tag_three_sources),
+              compose_tag_three_sources,
              ]
 
 if __name__ == '__main__':

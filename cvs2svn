@@ -318,17 +318,18 @@ def relative_name(cvsroot, fname):
                    " cvsroot\n" % (error_prefix, cvsroot, fname))
   sys.exit(1)
 
-def get_co_pipe(c_rev):
+def get_co_pipe(c_rev, extra_arguments=''):
   """Return a command string, and the pipe created using that string.
-  C_REV is a CVSRevision. The pipe returns the text of that CVS Revision."""
+  C_REV is a CVSRevision, and EXTRA_ARGUMENTS is used to add extra
+  arguments.  The pipe returns the text of that CVS Revision."""
   ctx = Ctx()
   if ctx.use_cvs:
-    pipe_cmd = 'cvs %s co -r%s -p %s' % \
-               (ctx.cvs_global_arguments, c_rev.rev,
+    pipe_cmd = 'cvs %s co -r%s -p %s %s' % \
+               (ctx.cvs_global_arguments, c_rev.rev, extra_arguments,
                 escape_shell_arg(ctx.cvs_module + c_rev.cvs_path))
   else:
-    pipe_cmd = 'co -q -x,v -p%s %s' % \
-               (c_rev.rev, escape_shell_arg(c_rev.rcs_path()))
+    pipe_cmd = 'co -q -x,v -p%s %s %s' % \
+               (c_rev.rev, extra_arguments, escape_shell_arg(c_rev.rcs_path()))
   pipe = Popen3(pipe_cmd, True)
   pipe.tochild.close()
   return pipe_cmd, pipe
@@ -3350,6 +3351,7 @@ class SVNCommitItem:
     # follow the conditionals carefully.  See also issue #39.
     mime_type = None
     eol_style = None
+    keywords = None
 
     if self.mime_mapper:
       mime_type = self.mime_mapper.get_type_from_filename(c_rev.cvs_path)
@@ -3366,10 +3368,18 @@ class SVNCommitItem:
       # file is kb, and no other mimetype specified
       mime_type = 'application/octet-stream'
 
+    # Set the svn:keywords property, if appropriate.  See issue #2.
+    if not self.keywords_off and (c_rev.mode is None or c_rev.mode == 'kv' or
+                                  c_rev.mode == 'kvl'):
+      keywords = 'Author Date Id Revision'
+
     # Remember if we need to filter the EOLs.  We can't use self.svn_props
     # becase they are only set on the first revision and we need to filter
     # all revisions.
     self.needs_eol_filter = eol_style == 'native'
+
+    # Remember if this file has svn:keywords set
+    self.has_keywords = keywords is not None
 
     # If asked to fill in the Subversion properties ('svn:' ones), do so.
     if make_svn_props:
@@ -3378,9 +3388,8 @@ class SVNCommitItem:
         self.svn_props['svn:executable'] = '*'
 
       # Set the svn:keywords property, if appropriate.  See issue #2.
-      if c_rev.mode is None or c_rev.mode == 'kv' or c_rev.mode == 'kvl':
-        if not self.keywords_off:
-          self.svn_props['svn:keywords'] = 'Author Date Id Revision'
+      if keywords:
+        self.svn_props['svn:keywords'] = 'Author Date Id Revision'
 
       if mime_type:
         self.svn_props['svn:mime-type'] = mime_type
@@ -3662,7 +3671,14 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
                           % (self._utf8_path(dir_path), ignore_len,
                              ignore_len, ignore_contents))
 
-    pipe_cmd, pipe = get_co_pipe(c_rev)
+    # If the file has keywords, we must use -kk to prevent CVS/RCS from
+    # expanding the keywords because they must be unexpanded in the
+    # repository, or Subversion will get confused.
+    if s_item.has_keywords:
+      pipe_cmd, pipe = get_co_pipe(c_rev, '-kk')
+    else:
+      pipe_cmd, pipe = get_co_pipe(c_rev)
+
     self.dumpfile.write('Node-path: %s\n'
                         'Node-kind: file\n'
                         'Node-action: %s\n'

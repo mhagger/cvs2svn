@@ -311,8 +311,7 @@ def check_rev(logs, rev, msg, changed_paths):
 # The log_dictionary comes from parse_log(svn_repos).
 already_converted = { }
 
-def ensure_conversion(name, error_re=None, trunk_only=None,
-                      no_prune=None, encoding=None, passbypass=None):
+def ensure_conversion(name, error_re=None, passbypass=None, *args):
   """Convert CVS repository NAME to Subversion, but only if it has not
   been converted before by this invocation of this script.  If it has
   been converted before, do nothing.
@@ -327,31 +326,33 @@ def ensure_conversion(name, error_re=None, trunk_only=None,
   match some line of stderr printed by the conversion.  If there is an
   error and ERROR_RE is not set, then raise svntest.Failure.
 
-  If TRUNK_ONLY is set, then pass the --trunk-only option to cvs2svn
-  if converting NAME for the first time.
-
-  If NO_PRUNE is set, then pass the --no-prune option to cvs2svn
-  if converting NAME for the first time.
-
   If PASSBYPASS is set, then cvs2svn is run multiple times, each time
   with a -p option starting at 1 and increasing to a (hardcoded) maximum.
 
   NAME is just one word.  For example, 'main' would mean to convert
   './test-data/main-cvsrepos', and after the conversion, the resulting
   Subversion repository would be in './tmp/main-svnrepos', and a
-  checked out head working copy in './tmp/main-wc'."""
+  checked out head working copy in './tmp/main-wc'.
 
-  arg_list = []
+  Any other options to pass to cvs2svn should be in ARGS, each element
+  being one option, e.g., '--trunk-only'.  If the option takes an
+  argument, include it directly, e.g., '--mime-types=PATH'.  The order
+  of elements in ARGS does not matter.
+  """
+
+  # Identifying tag for this conversion.  This allows us to avoid
+  # running the same conversion more than once, when multiple tests
+  # use exactly the same conversion.
   conv_id = name
-  if no_prune:
-    arg_list.append( '--no-prune' )
-    conv_id  = conv_id + '-noprune'
-  if trunk_only:
-    arg_list.append( '--trunk-only' )
-    conv_id  = conv_id + '-trunkonly'
-  if encoding:
-    arg_list.append( '--encoding=' + encoding )
-    conv_id  = conv_id + '-encoding=' + encoding
+
+  # Convert args from tuple to list, then sort them, so we can
+  # construct a reliable conv_id.
+  args = [x for x in args]
+  args.sort()
+
+  for arg in args:
+    conv_id = conv_id + arg
+
   if passbypass:
     conv_id = conv_id + '-passbypass'
 
@@ -375,12 +376,12 @@ def ensure_conversion(name, error_re=None, trunk_only=None,
         erase(wc)
         
         try:
-          arg_list.extend( [ '--bdb-txn-nosync', '-s', svnrepos, cvsrepos ] )
+          args.extend( [ '--bdb-txn-nosync', '-s', svnrepos, cvsrepos ] )
           if passbypass:
             for p in range(1, 9):
-              apply(run_cvs2svn, [ error_re, '-p', str(p) ] + arg_list)
+              apply(run_cvs2svn, [ error_re, '-p', str(p) ] + args)
           else:
-            ret = apply(run_cvs2svn, [ error_re ] + arg_list)
+            ret = apply(run_cvs2svn, [ error_re ] + args)
         except RunProgramException:
           raise svntest.Failure
         except MissingErrorException:
@@ -883,7 +884,8 @@ def double_delete():
   # handle a file in the root of the repository (there were some
   # bugs in cvs2svn's svn path construction for top-level files); and
   # the --no-prune option.
-  repos, wc, logs = ensure_conversion('double-delete', None, 1, 1)
+  repos, wc, logs = ensure_conversion('double-delete', None, None,
+                                      '--trunk-only' , '--no-prune')
   
   path = '/trunk/twice-removed'
   rev = 2
@@ -1020,7 +1022,8 @@ def nonascii_filenames():
       os.rename(base_path, new_path)
 
     # if ensure_conversion can generate a 
-    repos, wc, logs = ensure_conversion('non-ascii', encoding='latin1')
+    repos, wc, logs = ensure_conversion('non-ascii', None, None,
+                                        '--encoding=latin1')
   finally:
     if locale_changed:
       locale.setlocale(locale.LC_ALL, current_locale)

@@ -26,8 +26,7 @@ rm -rf dist MANIFEST cvs2svn-${VN} ${DIST_FULL}
 mv dist/${DIST_FULL} .
 
 # Unfortunately, building the dist Python's way doesn't seem to give
-# us an obvious method for including the svntest/ and test-data/
-# subdirs.  So, we rewire it! 
+# us an obvious method for including subdirs.  So, we rewire it! 
 tar zxf ${DIST_FULL}
 rm ${DIST_FULL}
 svn export -q test-data ${DIST_BASE}/test-data

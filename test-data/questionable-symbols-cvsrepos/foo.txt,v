@@ -1,0 +1,361 @@
+head	1.2;
+access;
+symbols
+	Branch_Z:1.1.0.10
+	Branch_Y:1.1.0.8
+	Branch_X:1.1.0.6
+	Branch_W:1.1.0.4
+	Branch_V:1.1.0.2
+	Branch_E:1.2.0.10
+	Branch_D:1.2.0.8
+	Branch_C:1.2.0.6
+	Branch_B:1.2.0.4
+	Branch_A:1.2.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2004.07.26.23.38.17;	author kfogel;	state Exp;
+branches
+	1.2.2.1
+	1.2.4.1
+	1.2.6.1
+	1.2.8.1
+	1.2.10.1;
+next	1.1;
+
+1.1
+date	2004.07.19.20.57.24;	author jrandom;	state Exp;
+branches
+	1.1.2.1
+	1.1.4.1
+	1.1.6.1
+	1.1.8.1
+	1.1.10.1;
+next	;
+
+1.1.2.1
+date	2004.08.11.18.27.06;	author kfogel;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2004.08.11.18.28.12;	author kfogel;	state Exp;
+branches;
+next	;
+
+1.1.4.1
+date	2004.08.11.18.27.09;	author kfogel;	state Exp;
+branches;
+next	1.1.4.2;
+
+1.1.4.2
+date	2004.08.11.18.28.15;	author kfogel;	state Exp;
+branches;
+next	;
+
+1.1.6.1
+date	2004.08.11.18.27.12;	author kfogel;	state Exp;
+branches;
+next	1.1.6.2;
+
+1.1.6.2
+date	2004.08.11.18.28.18;	author kfogel;	state Exp;
+branches;
+next	;
+
+1.1.8.1
+date	2004.08.11.18.27.15;	author kfogel;	state Exp;
+branches;
+next	1.1.8.2;
+
+1.1.8.2
+date	2004.08.11.18.28.21;	author kfogel;	state Exp;
+branches;
+next	;
+
+1.1.10.1
+date	2004.08.11.18.27.18;	author kfogel;	state Exp;
+branches;
+next	1.1.10.2;
+
+1.1.10.2
+date	2004.08.11.18.28.24;	author kfogel;	state Exp;
+branches;
+next	;
+
+1.2.2.1
+date	2004.08.11.18.26.55;	author kfogel;	state Exp;
+branches;
+next	1.2.2.2;
+
+1.2.2.2
+date	2004.08.11.18.27.57;	author kfogel;	state Exp;
+branches;
+next	;
+
+1.2.4.1
+date	2004.08.11.18.26.57;	author kfogel;	state Exp;
+branches;
+next	1.2.4.2;
+
+1.2.4.2
+date	2004.08.11.18.28.00;	author kfogel;	state Exp;
+branches;
+next	;
+
+1.2.6.1
+date	2004.08.11.18.26.59;	author kfogel;	state Exp;
+branches;
+next	1.2.6.2;
+
+1.2.6.2
+date	2004.08.11.18.28.03;	author kfogel;	state Exp;
+branches;
+next	;
+
+1.2.8.1
+date	2004.08.11.18.27.01;	author kfogel;	state Exp;
+branches;
+next	1.2.8.2;
+
+1.2.8.2
+date	2004.08.11.18.28.06;	author kfogel;	state Exp;
+branches;
+next	;
+
+1.2.10.1
+date	2004.08.11.18.27.03;	author kfogel;	state Exp;
+branches;
+next	1.2.10.2;
+
+1.2.10.2
+date	2004.08.11.18.28.09;	author kfogel;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Commit a second revision of every file.
+@
+text
+@This is the first revision in this file.
+This line was added in the second revision.
+@
+
+
+1.2.10.1
+log
+@Committing branch change (unique code 'E').
+@
+text
+@a2 1
+First commit on this branch (unique code 'E').
+@
+
+
+1.2.10.2
+log
+@Committing another branch change (unique code 'E').
+@
+text
+@a3 1
+Second commit on this branch (unique code 'E').
+@
+
+
+1.2.8.1
+log
+@Committing branch change (unique code 'D').
+@
+text
+@a2 1
+First commit on this branch (unique code 'D').
+@
+
+
+1.2.8.2
+log
+@Committing another branch change (unique code 'D').
+@
+text
+@a3 1
+Second commit on this branch (unique code 'D').
+@
+
+
+1.2.6.1
+log
+@Committing branch change (unique code 'C').
+@
+text
+@a2 1
+First commit on this branch (unique code 'C').
+@
+
+
+1.2.6.2
+log
+@Committing another branch change (unique code 'C').
+@
+text
+@a3 1
+Second commit on this branch (unique code 'C').
+@
+
+
+1.2.4.1
+log
+@Committing branch change (unique code 'B').
+@
+text
+@a2 1
+First commit on this branch (unique code 'B').
+@
+
+
+1.2.4.2
+log
+@Committing another branch change (unique code 'B').
+@
+text
+@a3 1
+Second commit on this branch (unique code 'B').
+@
+
+
+1.2.2.1
+log
+@Committing branch change (unique code 'A').
+@
+text
+@a2 1
+First commit on this branch (unique code 'A').
+@
+
+
+1.2.2.2
+log
+@Committing another branch change (unique code 'A').
+@
+text
+@a3 1
+Second commit on this branch (unique code 'A').
+@
+
+
+1.1
+log
+@Add a file.
+@
+text
+@d2 1
+@
+
+
+1.1.10.1
+log
+@Committing branch change (unique code 'Z').
+@
+text
+@a1 1
+First commit on this branch (unique code 'Z').
+@
+
+
+1.1.10.2
+log
+@Committing another branch change (unique code 'Z').
+@
+text
+@a2 1
+Second commit on this branch (unique code 'Z').
+@
+
+
+1.1.8.1
+log
+@Committing branch change (unique code 'Y').
+@
+text
+@a1 1
+First commit on this branch (unique code 'Y').
+@
+
+
+1.1.8.2
+log
+@Committing another branch change (unique code 'Y').
+@
+text
+@a2 1
+Second commit on this branch (unique code 'Y').
+@
+
+
+1.1.6.1
+log
+@Committing branch change (unique code 'X').
+@
+text
+@a1 1
+First commit on this branch (unique code 'X').
+@
+
+
+1.1.6.2
+log
+@Committing another branch change (unique code 'X').
+@
+text
+@a2 1
+Second commit on this branch (unique code 'X').
+@
+
+
+1.1.4.1
+log
+@Committing branch change (unique code 'W').
+@
+text
+@a1 1
+First commit on this branch (unique code 'W').
+@
+
+
+1.1.4.2
+log
+@Committing another branch change (unique code 'W').
+@
+text
+@a2 1
+Second commit on this branch (unique code 'W').
+@
+
+
+1.1.2.1
+log
+@Committing branch change (unique code 'V').
+@
+text
+@a1 1
+First commit on this branch (unique code 'V').
+@
+
+
+1.1.2.2
+log
+@Committing another branch change (unique code 'V').
+@
+text
+@a2 1
+Second commit on this branch (unique code 'V').
+@
+
+

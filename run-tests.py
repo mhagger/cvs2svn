@@ -1817,6 +1817,13 @@ def exclude():
       if item[:10] == '/branches/' or item[:6] == '/tags/':
         raise svntest.Failure
 
+
+def vendor_branch_delete_add():
+  "add trunk file that was deleted on vendor branch"
+  # This will error if the bug is present
+  repos, wc, logs = ensure_conversion('vendor-branch-delete-add')
+
+
 #----------------------------------------------------------------------
 
 ########################################################################
@@ -1871,6 +1878,7 @@ test_list = [ None,
               questionable_symbols,
               XFail(revision_reorder_bug),
               exclude,
+              vendor_branch_delete_add,
              ]
 
 if __name__ == '__main__':

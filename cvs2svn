@@ -3206,7 +3206,29 @@ class SVNRepositoryMirror:
           if cvs_rev.op == OP_ADD:
             self._add_path(cvs_rev)
           elif cvs_rev.op == OP_CHANGE:
-            self._change_path(cvs_rev)
+            # Fix for Issue #74:
+            #
+            # Here's the scenario.  You have file FOO that is imported
+            # on a non-trunk vendor branch.  So in r1.1 and r1.1.1.1,
+            # the file exists.
+            #
+            # Moving forward in time, FOO is deleted on the default
+            # branch (r1.1.1.2).  cvs2svn determines that this delete
+            # also needs to happen on trunk, so FOO is deleted on
+            # trunk.
+            #
+            # Along come r1.2, whose op is OP_CHANGE (because r1.1 is
+            # not 'dead', we assume it's a change).  However, since
+            # our trunk file has been deleted, svnadmin blows up--you
+            # can't change a file that doesn't exist!
+            #
+            # Soooo... we just check the path, and if it doesn't
+            # exist, we do an add... if the path does exist, it's
+            # business as usual.
+            if not self._path_exists(cvs_rev.svn_path):
+              self._add_path(cvs_rev)
+            else:
+              self._change_path(cvs_rev)
 
         if cvs_rev.op == OP_DELETE:
           self._delete_path(cvs_rev.svn_path, Ctx().prune)

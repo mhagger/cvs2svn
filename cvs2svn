@@ -334,9 +334,13 @@ def get_co_pipe(c_rev):
   """Return a command string, and the pipe created using that string.
   C_REV is a CVSRevision. The pipe returns the text of that CVS Revision."""
   ctx = Ctx()
-  pipe_cmd = 'cvs %s co -r%s -p %s' % \
-      (ctx.cvs_global_arguments, c_rev.rev,
-          escape_shell_arg(ctx.cvs_module + c_rev.cvs_path))
+  if ctx.use_cvs:
+    pipe_cmd = 'cvs %s co -r%s -p %s' % \
+               (ctx.cvs_global_arguments, c_rev.rev,
+                escape_shell_arg(ctx.cvs_module + c_rev.cvs_path))
+  else:
+    pipe_cmd = 'co -q -x,v -p%s %s' % \
+               (c_rev.rev, escape_shell_arg(c_rev.rcs_path()))
   pipe = Popen3(pipe_cmd, True)
   pipe.tochild.close()
   return pipe_cmd, pipe
@@ -805,6 +809,15 @@ class CVSRevision:
       return self._ctx.branches_base + '/' + branch_name + '/' + path
     else:
       return self._ctx.trunk_base + '/' + path
+
+  def rcs_path(self):
+    """Returns the actual filesystem path to the RCS file of this
+    CVSRevision."""
+    if self.file_in_attic is None:
+      return self.fname
+    else:
+      basepath, filename = os.path.split(self.fname)
+      return os.path.join(basepath, 'Attic', filename)
 
   def filename(self):
     "Return the last path component of self.fname, minus the ',v'"
@@ -4057,6 +4070,7 @@ class Ctx:
     self.mime_mapper = None
     self.no_default_eol = 0
     self.eol_from_mime_type = 0
+    self.use_cvs = None
     self.svnadmin = "svnadmin"
     self.username = None
     self.print_help = 0
@@ -4155,6 +4169,8 @@ def usage():
   print '  --profile            profile with \'hotshot\' (into file cvs2svn.hotshot)'
   print '  --dry-run            do not create a repository or a dumpfile;'
   print '                       just print what would happen.'
+  print '  --use-cvs            use CVS instead of RCS \'co\' to extract data'
+  print '                       (only use this if having problems with RCS)'
   print '  --svnadmin=PATH      path to the svnadmin program'
   print '  --trunk-only         convert only trunk commits, not tags nor branches'
   print '  --trunk=PATH         path for trunk (default: %s)'    \
@@ -4193,8 +4209,8 @@ def main():
                                  "username=", "existing-svnrepos",
                                  "branches=", "tags=", "encoding=",
                                  "force-branch=", "force-tag=", "exclude=",
-                                 "mime-types=", "eol-from-mime-type",
-                                 "no-default-eol",
+                                 "use-cvs", "mime-types=",
+                                 "eol-from-mime-type", "no-default-eol",
                                  "trunk-only", "no-prune", "dry-run",
                                  "dump-only", "dumpfile=", "tmpdir=",
                                  "svnadmin=", "skip-cleanup", "cvs-revnums",
@@ -4241,6 +4257,8 @@ def main():
       ctx.dumpfile = value
     elif opt == '--tmpdir':
       ctx.tmpdir = value
+    elif opt == '--use-cvs':
+      ctx.use_cvs = 1
     elif opt == '--svnadmin':
       ctx.svnadmin = value
     elif opt == '--trunk-only':
@@ -4318,28 +4336,29 @@ def main():
                      "existing directory.\n" % ctx.cvsroot)
     sys.exit(1)
 
-  # Ascend above the specified root if necessary, to find the cvs_repository
-  # (a directory containing a CVSROOT directory) and the cvs_module (the
-  # path of the conversion root within the cvs repository)
-  # NB: cvs_module must be seperated by '/' *not* by os.sep .
-  ctx.cvs_repository = os.path.abspath(ctx.cvsroot)
-  prev_cvs_repository = None
-  ctx.cvs_module = ""
-  while prev_cvs_repository != ctx.cvs_repository:
-    if os.path.isdir(os.path.join(ctx.cvs_repository, 'CVSROOT')):
-      break
-    prev_cvs_repository = ctx.cvs_repository
-    ctx.cvs_repository, module_component = os.path.split(ctx.cvs_repository)
-    ctx.cvs_module = module_component + "/" + ctx.cvs_module
-  else:
-    # Hit the root (of the drive, on Windows) without finding a CVSROOT dir.
-    sys.stderr.write(error_prefix +
-                     ": the path '%s' is not a CVS repository, nor a path " \
-                     "within a CVS repository. A CVS repository contains a " \
-                     "a CVSROOT directory within its root directory.\n" \
-                     % ctx.cvsroot)
-    sys.exit(1)
-  os.environ['CVSROOT'] = ctx.cvs_repository
+  if ctx.use_cvs:
+    # Ascend above the specified root if necessary, to find the cvs_repository
+    # (a directory containing a CVSROOT directory) and the cvs_module (the
+    # path of the conversion root within the cvs repository)
+    # NB: cvs_module must be seperated by '/' *not* by os.sep .
+    ctx.cvs_repository = os.path.abspath(ctx.cvsroot)
+    prev_cvs_repository = None
+    ctx.cvs_module = ""
+    while prev_cvs_repository != ctx.cvs_repository:
+      if os.path.isdir(os.path.join(ctx.cvs_repository, 'CVSROOT')):
+        break
+      prev_cvs_repository = ctx.cvs_repository
+      ctx.cvs_repository, module_component = os.path.split(ctx.cvs_repository)
+      ctx.cvs_module = module_component + "/" + ctx.cvs_module
+    else:
+      # Hit the root (of the drive, on Windows) without finding a CVSROOT dir.
+      sys.stderr.write(error_prefix +
+                       ": the path '%s' is not a CVS repository, nor a path " \
+                       "within a CVS repository.  A CVS repository contains " \
+                       "a CVSROOT directory within its root directory.\n" \
+                       % ctx.cvsroot)
+      sys.exit(1)
+    os.environ['CVSROOT'] = ctx.cvs_repository
 
   if (not ctx.target) and (not ctx.dump_only):
     sys.stderr.write(error_prefix +
@@ -4406,25 +4425,26 @@ def main():
                      % ctx.tmpdir)
     sys.exit(1)
 
-  def cvs_ok():
-    pipe = Popen3('cvs %s version' % Ctx().cvs_global_arguments, True)
-    pipe.tochild.close()
-    pipe.fromchild.read()
-    errmsg = pipe.childerr.read()
-    status = pipe.wait()
-    ok = len(errmsg) == 0 and status == 0
-    return (ok, status, errmsg)
+  if ctx.use_cvs:
+    def cvs_ok():
+      pipe = Popen3('cvs %s version' % Ctx().cvs_global_arguments, True)
+      pipe.tochild.close()
+      pipe.fromchild.read()
+      errmsg = pipe.childerr.read()
+      status = pipe.wait()
+      ok = len(errmsg) == 0 and status == 0
+      return (ok, status, errmsg)
 
-  ctx.cvs_global_arguments = "-q -R"
-  ok, cvs_exitstatus, cvs_errmsg = cvs_ok()
-  if not ok:
-    ctx.cvs_global_arguments = "-q"
+    ctx.cvs_global_arguments = "-q -R"
     ok, cvs_exitstatus, cvs_errmsg = cvs_ok()
+    if not ok:
+      ctx.cvs_global_arguments = "-q"
+      ok, cvs_exitstatus, cvs_errmsg = cvs_ok()
 
-  if not ok:
-    sys.stderr.write(error_prefix +
-        ": error executing CVS: Status %s, Error Output\n" % (cvs_exitstatus,)
-        + cvs_errmsg)
+    if not ok:
+      sys.stderr.write(error_prefix +
+                       ": error executing CVS: status %s, error output:\n" \
+                       % (cvs_exitstatus) + cvs_errmsg)
   
   # But do lock the tmpdir, to avoid process clash.
   try:

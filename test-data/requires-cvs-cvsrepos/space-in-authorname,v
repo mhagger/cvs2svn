@@ -1,0 +1,39 @@
+head	1.2;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2004.07.26.23.38.17;	author William Lyon Phelps III;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.07.19.20.57.24;	author j random;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Commit a second revision of every file.
+@
+text
+@This is the first revision in this file.
+This line was added in the second revision.
+@
+
+
+1.1
+log
+@Add a file.
+@
+text
+@d2 1
+@

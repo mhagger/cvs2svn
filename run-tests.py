@@ -1755,6 +1755,24 @@ def ignore():
     raise svntest.Failure
 
 
+def requires_cvs():
+  "test that CVS can still do what RCS can't"
+  # See issues 4, 11, 29 for the bugs whose regression we're testing for.
+  repos, wc, logs = ensure_conversion('requires-cvs', None, None, "--use-cvs")
+
+  atsign_contents = file(os.path.join(wc, "trunk", "atsign-add")).read()
+  cl_contents     = file(os.path.join(wc, "trunk", "client_lock.idl")).read()
+  
+  if atsign_contents[-1:] == "@":
+    raise svntest.Failure
+  if cl_contents.find("gregh\n//\n//Integration for locks") < 0:
+    raise svntest.Failure
+
+  if not (logs[21].author == "William Lyon Phelps III" and
+          logs[20].author == "j random"):
+    raise svntest.Failure
+
+
 #----------------------------------------------------------------------
 
 ########################################################################
@@ -1805,6 +1823,7 @@ test_list = [ None,
               eol_mime,
               keywords,
               ignore,
+              requires_cvs,
              ]
 
 if __name__ == '__main__':

@@ -1,0 +1,115 @@
+head	1.2;
+access;
+symbols
+	TDMS_CSA:1.2.0.8
+	v1_1_0p1a:1.2
+	ASSAPP-1:1.2.0.6
+	CASSTASS9:1.2
+	CASSTASS8:1.2
+	CASSTASS7:1.2
+	CASSTASS6:1.2
+	CASSTASS5:1.2
+	CASSTASS4:1.2
+	CASSTASS3:1.2
+	CASSTASS2:1.2
+	CASSTASS1:1.2
+	CASSTASS:1.2.0.4
+	v1_0_4:1.2
+	UDT2001:1.2.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2001.10.09.07.30.31;	author gregh;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.10.03.00.59.06;	author gregh;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@
+Integration for locks
+@
+text
+@//================================================================== -*- C++ -*-
+//
+// File		client_lock.idl
+//
+// Description
+//   Lock for interface objects.
+//
+//$Id: client_lock.idl,v 1.1 2001/10/03 00:59:06 gregh Exp $
+//
+//$Log: client_lock.idl,v $
+//Revision 1.1  2001/10/03 00:59:06  gregh
+//
+//Added graph points to track, and added advisory locks to track, marker
+//look, sensor, and ownship interfaces.
+//
+//
+//==============================================================================
+
+#ifndef	_CLIENT_LOCK_IDL_
+#define _CLIENT_LOCK_IDL_
+
+#include "tdms.idl"
+#include "client.idl"
+#include "exception.idl"
+
+module Orb {
+
+
+//==============================================================================
+
+  interface I_Client_Lock {
+    // Record Locking (used as base interface for all leaf object interfaces)
+    // Note that locks are advisory, so clients need not acquire or honour.
+
+    void	acquire_read_lock(in I_Client objref) raises (Lock_Failed);
+    void	acquire_write_lock(in I_Client objref) raises (Lock_Failed); // promotes a read lock
+    void	release_lock(in I_Client objref);
+  };
+
+//==============================================================================
+
+};
+
+#endif
+
+
+
+
+
+
+@
+
+
+1.1
+log
+@
+Added graph points to track, and added advisory locks to track, marker
+look, sensor, and ownship interfaces.
+@
+text
+@d8 7
+a14 1
+//$Id: tdms.idl,v 1.28 2001/09/11 08:10:55 daveb Exp $
+a15 1
+//$Log: tdms.idl,v $
+d24 1
+d35 2
+a36 2
+    void	acquire_read_lock(in I_Client objref);
+    void	acquire_write_lock(in I_Client objref); // this will promote a read lock
+@
+

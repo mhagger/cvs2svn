@@ -505,4 +505,6 @@ Further design thoughts from Greg Stein <gstein@lyra.org>
   policies may have been used.
 
   For example: I found one of the projects with a "permissions 644;"
-  line in the "gnuplot" repository. CVS ignores these RCS newphrases.
+  line in the "gnuplot" repository.  Most RCS releases issue warnings
+  about that (although they properly handle/skip the lines), and CVS
+  ignores RCS newphrases altogether.

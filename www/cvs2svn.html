@@ -189,14 +189,24 @@ directories) before running your conversion.
 
 <ul>
 
-  <li>Python 2.0 or greater</li>
+  <li>Python 2.0 or greater.  See
+      <a href="http://www.python.org/">http://www.python.org/.</a>
+  </li>
+  <li>One or both of RCS `co' or CVS.  The RCS home page is
+     <a href="http://www.cs.purdue.edu/homes/trinkle/RCS/"
+             >http://www.cs.purdue.edu/homes/trinkle/RCS/</a>,
+     and the CVS home page is
+     <a href="http://ccvs.cvshome.org/">http://ccvs.cvshome.org/</a>
 
-  <li>CVS.  The CVS home page is <a
-    href="http://ccvs.cvshome.org/">http://ccvs.cvshome.org/</a></li>
-
+  By default, cvs2svn only depends on RCS 'co', and we recommend this
+  as it is faster.  Most likely you will never encounter the edge
+  cases that would make it necessary to use CVS instead.  See the <a
+  href="#use-cvs">--use-cvs flag</a> for more details.
+  </li>
   <li>GNU sort.  GNU sort is part of the coreutils
     package, see <a
-    href="http://www.gnu.org/software/coreutils/">http://www.gnu.org/software/coreutils/</a>.</li>
+    href="http://www.gnu.org/software/coreutils/"
+         >http://www.gnu.org/software/coreutils/</a>.</li>
 
 </ul>
 
@@ -290,6 +300,33 @@ directories) before running your conversion.
     <td align=right><tt>--profile</tt></td>
     <td>Dump Python <a href="http://docs.python.org/lib/module-hotshot.html"
         >Hotshot</a> profiling data to the file <tt>cvs2svn.hotshot</tt>.
+  </tr>
+
+  <tr>
+    <a name="use-cvs"></a>
+    <td align=right><tt>--use-cvs</tt></td>
+    <td>If RCS <b><tt>co</tt></b> is having trouble extracting certain
+      revisions, you may need to pass this flag, which causes cvs2svn
+      to use CVS instead of RCS to read the repository.  RCS is much
+      faster, so it's the default, but in certain rare cases it has
+      problems with data that CVS doesn't have problems with.
+      Specifically:
+      <ul>
+        <li>RCS can't handle spaces in author names:<br/>
+          <a href="http://cvs2svn.tigris.org/issues/show_bug.cgi?id=4"
+                  >http://cvs2svn.tigris.org/issues/show_bug.cgi?id=4</a>
+        </li>
+        <br/>
+        <li>"Unterminated keyword" misread by RCS:<br/>
+          <a href="http://cvs2svn.tigris.org/issues/show_bug.cgi?id=11"
+                  >http://cvs2svn.tigris.org/issues/show_bug.cgi?id=11</a>
+        </li>
+        <br/>
+        <li>RCS handles the "$Log$" keyword differently from CVS:<br/>
+          <a href="http://cvs2svn.tigris.org/issues/show_bug.cgi?id=29"
+                  >http://cvs2svn.tigris.org/issues/show_bug.cgi?id=29</a>
+        </li>
+      </ul>
   </tr>
 
   <tr>

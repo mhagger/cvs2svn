@@ -1044,37 +1044,49 @@ class Dumper:
     self.dump_only = ctx.dump_only
     self.dumpfile = None
     self.path_encoding = ctx.encoding
+    self.loader_pipe = None
     
     # If all we're doing here is dumping, we can go ahead and
     # initialize our single dumpfile.  Else, if we're suppose to
     # create the repository, do so.
     if self.dump_only:
       self.init_dumpfile()
-    elif ctx.create_repos:
-      print "creating repos '%s'" % (self.target)
-      run_command('%s create %s %s' % (self.svnadmin, ctx.bdb_txn_nosync
-        and "--bdb-txn-nosync" or "", self.target))
+      self.write_dumpfile_header(self.dumpfile)
+    else:
+      if ctx.create_repos:
+        print "creating repos '%s'" % (self.target)
+        run_command('%s create %s %s' % (self.svnadmin, ctx.bdb_txn_nosync
+          and "--bdb-txn-nosync" or "", self.target))
+      self.loader_pipe = os.popen('%s load -q %s' %
+          (self.svnadmin, self.target), 'w')
+      self.write_dumpfile_header(self.loader_pipe)
 
     
   def init_dumpfile(self):
     # Open the dumpfile for binary-mode write.
     self.dumpfile = open(self.dumpfile_path, 'wb')
 
+
+  def write_dumpfile_header(self, fileobj):
     # Initialize the dumpfile with the standard headers:
     #
     # The CVS repository doesn't have a UUID, and the Subversion
     # repository will be created with one anyway.  So when we load
-    # the dumpfile, we'll tell svnadmin to ignore the UUID below. 
-    self.dumpfile.write('SVN-fs-dump-format-version: 2\n'
-                        '\n')
+    # the dumpfile, we don't specify a UUID.
+    fileobj.write('SVN-fs-dump-format-version: 2\n\n')
 
   def flush_and_remove_dumpfile(self):
     if self.dumpfile is None:
       return
     self.dumpfile.close()
-    print "loading revision %d into '%s'" % (self.revision, self.target)
-    run_command('%s load -q %s < %s'
-                % (self.svnadmin, self.target, self.dumpfile_path))
+    print "piping revision %d into '%s' loader" % (self.revision, self.target)
+    dumpfile = file(self.dumpfile_path)
+    while True:
+      data = dumpfile.read(1024*1024) # Choice of 1MB chunks is arbitrary
+      if not len(data): break
+      self.loader_pipe.write(data)
+    dumpfile.close()  
+
     os.remove(self.dumpfile_path)
   
   def start_revision(self, props):
@@ -1377,6 +1389,11 @@ class Dumper:
       self.dumpfile.close()
     else:
       self.flush_and_remove_dumpfile()
+      ret = self.loader_pipe.close()
+      if ret:
+        sys.stderr.write('%s: svnadmin load exited with error code %s' %
+            (error_prefix, ret))
+        sys.exit(1)
 
 
 def format_date(date):

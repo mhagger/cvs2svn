@@ -3064,20 +3064,19 @@ def main():
 
   for opt, value in opts:
     if opt == '-p':
-      if value.find('-') > 0:
-        start_pass, end_pass = map(int(x), value.split('-'))
-        if end_pass < 1 or end_pass > len(_passes):
-          print '%s: illegal value (%d) for ending pass. ' \
-                'must be 1 through %d.' % (error_prefix, end_pass,
-                                           len(_passes))
-          sys.exit(1)
+      if value.find(':') > 0:
+        start_pass, end_pass = map(int, value.split(':'))
       else:
-        start_pass = int(value)
-        end_pass = start_pass
-      if start_pass < 1 or start_pass > len(_passes):
-        print '%s: illegal value (%d) for starting pass. ' \
-              'must be 1 through %d.' % (error_prefix, start_pass,
+        end_pass = start_pass = int(value)
+      if start_pass > len(_passes):
+        print '%s: illegal value (%d) for starting pass. '\
+              'must be 1 through %d.' % (error_prefix, int(start_pass),
                                          len(_passes))
+        sys.exit(1)
+      if end_pass < start_pass or end_pass > len(_passes):
+        print '%s: illegal value (%d) for ending pass. ' \
+              'must be %d through %d.' % (error_prefix, int(end_pass),
+                                          int(start_pass), len(_passes))
         sys.exit(1)
     elif (opt == '--help') or (opt == '-h'):
       ctx.print_help = 1

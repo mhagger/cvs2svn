@@ -2952,23 +2952,23 @@ class MimeMapper:
       sys.stderr.write("%s: no MIME mapping for *.%s\n" % (warning_prefix, ext))
 
 
-def convert(ctx, start_pass=1):
+def convert(ctx, start_pass, end_pass):
   "Convert a CVS repository to an SVN repository."
 
   if not os.path.exists(ctx.cvsroot):
     sys.stderr.write(error_prefix + ': \'%s\' does not exist.\n' % ctx.cvsroot)
     sys.exit(1)
 
-  times = [ None ] * len(_passes)
-  for i in range(start_pass - 1, len(_passes)):
+  times = [ None ] * (end_pass)
+  for i in range(start_pass - 1, end_pass):
     times[i] = time.time()
     print '----- pass %d -----' % (i + 1)
     _passes[i](ctx)
   times.append(time.time())
 
-  for i in range(start_pass, len(_passes)+1):
+  for i in range(start_pass, end_pass + 1):
     print 'pass %d: %d seconds' % (i, int(times[i] - times[i-1]))
-  print ' total:', int(times[len(_passes)] - times[start_pass-1]), 'seconds'
+  print ' total:', int(times[-1] - times[start_pass-1]), 'seconds'
 
 
 def usage(ctx):
@@ -2977,7 +2977,8 @@ def usage(ctx):
   print '  --help, -h           print this usage message and exit with success'
   print '  -v                   verbose'
   print '  -s PATH              path for SVN repos'
-  print '  -p NUM               start at pass NUM of %d' % len(_passes)
+  print '  -p START[-END]       start at pass START, end at pass END of %d' % len(_passes)
+  print '                       If only START is given, run only pass START'
   print '  --existing-svnrepos  load into existing SVN repository'
   print '  --dumpfile=PATH      name of intermediate svn dumpfile'
   print '  --svnadmin=PATH      path to the svnadmin program'
@@ -3035,6 +3036,7 @@ def main():
   ctx.forced_tags = []
 
   start_pass = 1
+  end_pass = len(_passes) - 1
 
   try:
     opts, args = getopt.getopt(sys.argv[1:], 'p:s:vh',
@@ -3054,7 +3056,16 @@ def main():
 
   for opt, value in opts:
     if opt == '-p':
-      start_pass = int(value)
+      if value.find('-') > 0:
+        start_pass, end_pass = map(int(x), value.split('-'))
+        if end_pass < 1 or end_pass > len(_passes):
+          print '%s: illegal value (%d) for ending pass. ' \
+                'must be 1 through %d.' % (error_prefix, end_pass,
+                                           len(_passes))
+          sys.exit(1)
+      else:
+        start_pass = int(value)
+        end_pass = start_pass
       if start_pass < 1 or start_pass > len(_passes):
         print '%s: illegal value (%d) for starting pass. ' \
               'must be 1 through %d.' % (error_prefix, start_pass,
@@ -3196,7 +3207,7 @@ def main():
     sys.exit(1)
   try:
     ctx.default_branches_db = Database(DEFAULT_BRANCHES_DB, 'n')
-    convert(ctx, start_pass=start_pass)
+    convert(ctx, start_pass, end_pass)
   finally:
     try: os.rmdir('cvs2svn.lock')
     except: pass

@@ -1,0 +1,40 @@
+head	1.2;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2004.07.03.19.35.06;	author max;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.07.03.19.33.42;	author max;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Modify a.
+Add b.
+@
+text
+@modify
+@
+
+
+1.1
+log
+@Add a.
+@
+text
+@d1 1
+@
+

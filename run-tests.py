@@ -1361,6 +1361,13 @@ def individual_passes():
   if logs != logs2:
     raise svntest.Failure
 
+
+def resync_bug():
+  "reveal a big bug in our resync algorithm"
+  # This will fail if the bug is present
+  repos, wc, logs = ensure_conversion('resync-bug')
+
+
 #----------------------------------------------------------------------
 
 ########################################################################
@@ -1404,6 +1411,7 @@ test_list = [ None,
               no_spurious_svn_commits,
               invalid_closings_on_trunk,
               individual_passes,
+              XFail(resync_bug),
              ]
 
 if __name__ == '__main__':

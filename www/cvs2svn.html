@@ -10,7 +10,11 @@
 
   <li><a href="#reqs">Requirements</a></li>
 
+  <li><a href="#install">Installation</a></li>
+
   <li><a href="#cmd-ref">Command line reference</a></li>
+
+  <li><a href="#examples">A few examples</a></li>
 
 </ul>
 
@@ -191,18 +195,33 @@ directories) before running your conversion.
 
   <li>Python 2.0 or greater</li>
 
-  <li>RCS co</li>
+  <li>RCS co.  The RCS home page is <a
+    href="http://www.cs.purdue.edu/homes/trinkle/RCS/">http://www.cs.purdue.edu/homes/trinkle/RCS/</a></li>
 
-  <li>GNU sort</li>
+  <li>GNU sort.  GNU sort is part of the coreutils
+    package, see <a
+    href="http://www.gnu.org/software/coreutils/">http://www.gnu.org/software/coreutils/</a>.</li>
 
 </ul>
-  
+
+<hr>
+<a name="install">
+<h1>Installation</h1>
+
+<ul>
+  <li>As root, run 'make install'.</li>
+
+  <li>Or, if you do not wish to install cvs2svn.py on your system, you
+    can simply run it out of this directory.  As long as it can find
+    the 'cvs2svn_rcsparse' library, it should be happy.</li>
+</ul>
+    
 <hr>
 <a name="cmd-ref">
 <h1>Command line reference</h1>
 
 
-<table border=1 cellpadding=10 cellspacing=3>
+<table border=1 cellpadding=10 cellspacing=3 width=80%>
 
   <tr>
     <td colspan=2>
@@ -377,3 +396,37 @@ directories) before running your conversion.
   </tr>
 
 </table>
+
+<hr>
+<a name="examples">
+<h1>A Few Examples</h1>
+
+
+<p>To create a new Subversion repository by converting an existing CVS
+repository, run the script like this:</p>
+
+<pre>
+   $ cvs2svn.py -s NEW_SVNREPOS CVSREPOS
+</pre>
+  
+<p>To create a new Subversion repository containing only trunk commits,
+and omitting all branches and tags from the CVS repository, do</p>
+
+<pre>
+   $ cvs2svn.py --trunk-only -s NEW_SVNREPOS CVSREPOS
+</pre>
+
+<p>To create a Subversion dumpfile (suitable for 'svnadmin load') from
+a CVS repository, run it like this:</p>
+
+<pre>
+   $ cvs2svn.py --dump-only --dumpfile DUMPFILE CVSREPOS
+</pre>
+  
+<p>As it works, cvs2svn.py will create many temporary files in the
+current directory.  This is normal.  If the entire conversion is
+successful, however, those tempfiles will be automatically removed.
+If the conversion is not successful, or if you specify the
+'--skip-cleanup' option, cvs2svn will leave the temporary files behind
+for possible debugging.</p>
+  

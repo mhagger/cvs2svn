@@ -16,4 +16,7 @@ Also:
    - Use 2 spaces between sentences in comments and docstrings.
      (This helps sentence-motion commands in some editors.)
 
-Enjoy!
+Some places in cvs2svn.py use the "Borg" design pattern, see
+http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/66531.
+
+Happy hacking!

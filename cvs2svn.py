@@ -186,6 +186,14 @@ symbolic_name_transtbl = string.maketrans('/\\',',;')
 # strings.
 class Database:
   def __init__(self, filename, mode):
+    ### pybsddb3 has a bug which prevents it from working with
+    ### Berkeley DB 4.2 (it passes the DB_TRUNCATE flag, which is
+    ### disallowed for databases protected by lock and transaction
+    ### support).  So let's fake it.
+    if mode == 'n':
+      if os.path.exists(filename):
+        os.remove(filename)
+      mode = 'c'
     self.db = anydbm.open(filename, mode)
 
   def has_key(self, key):

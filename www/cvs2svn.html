@@ -453,6 +453,17 @@ directories) before running your conversion.
     mime type says to.</td> 
   </tr>
 
+  <tr>
+    <td align=right><tt>--keywords-off</tt></td>
+    <td>By default, cvs2svn sets <tt>svn:keywords</tt> on CVS files to
+    "author id date" if the mode of the RCS file in question is either
+    kv, kvl or <b>not</b> kb.  If you use the <tt>--keywords-off</tt>
+    switch, cvs2svn will not set <tt>svn:keywords</tt> for any file.
+    While this will not touch the keywords in the contents of your
+    files, Subversion will not expand them.
+    </td> 
+  </tr>
+
 </table>
 
 <hr>

@@ -3124,6 +3124,7 @@ class SVNCommitItem:
     self.set_cvs_revnum_properties = Ctx().cvs_revnums
     self.eol_from_mime_type = Ctx().eol_from_mime_type
     self.no_default_eol = Ctx().no_default_eol
+    self.keywords_off = Ctx().keywords_off
     self.mime_mapper = Ctx().mime_mapper
 
     # We begin with only a "CVS revision" property.
@@ -3140,7 +3141,8 @@ class SVNCommitItem:
 
       # Set the svn:keywords property, if appropriate.  See issue #2.
       if c_rev.mode is None or c_rev.mode == 'kv' or c_rev.mode == 'kvl':
-        self.svn_props['svn:keywords'] = 'author date id'
+        if not self.keywords_off:
+          self.svn_props['svn:keywords'] = 'author date id'
 
       # Set mime-type and eol.  These two properties are intertwingled;
       # follow the conditionals carefully.  See also issue #39.
@@ -4070,6 +4072,7 @@ class Ctx:
     self.mime_mapper = None
     self.no_default_eol = 0
     self.eol_from_mime_type = 0
+    self.keywords_off = 0
     self.use_cvs = None
     self.svnadmin = "svnadmin"
     self.username = None
@@ -4194,6 +4197,8 @@ def usage():
         '                       setting svn:mime-type'
   print '  --eol-from-mime-type set svn:eol-style by mime type (only with --mime-types)'
   print '  --no-default-eol     don\'t set svn:eol-style by CVS defaults'
+  print '  --keywords-off       don\'t set svn:keywords on any files (cvs2svn sets svn:keywords to '
+  print '                       "author date id" on non-binary files by default)'
 
 def main():
   # Convenience var, so we don't have to keep instantiating this Borg.
@@ -4214,7 +4219,7 @@ def main():
                                  "trunk-only", "no-prune", "dry-run",
                                  "dump-only", "dumpfile=", "tmpdir=",
                                  "svnadmin=", "skip-cleanup", "cvs-revnums",
-                                 "bdb-txn-nosync", "version", "profile"])
+                                 "bdb-txn-nosync", "version", "profile", "keywords-off"])
   except getopt.GetoptError, e:
     sys.stderr.write(error_prefix + ': ' + str(e) + '\n\n')
     usage()
@@ -4298,6 +4303,8 @@ def main():
       ctx.eol_from_mime_type = 1
     elif opt == '--no-default-eol':
       ctx.no_default_eol = 1
+    elif opt == '--keywords-off':
+      ctx.keywords_off = 1
     elif opt == '--username':
       ctx.username = value
     elif opt == '--skip-cleanup':

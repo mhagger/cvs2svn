@@ -14,7 +14,8 @@ RPMDIR := rpms
 
 NAME := $(shell grep '^Name:' < $(SPECFILE) | sed -e 's/^Name: //')
 VERSION := $(shell grep '^Version:' < $(SPECFILE) | sed -e 's/^Version: //')
-RELEASE := $(shell svn st -v $(SPECFILE) | cut -b 10- | ( read one two ; echo $$one ) )
+VERSION := 0.0.$(shell svn st -v $(SPECFILE) | cut -b 10- | ( read one two ; echo $$one ) )
+RELEASE := 1
 
 SOURCE_RPM_DIR := $(HOME)/$(RPMDIR)/sources/$(NAME)-$(VERSION)-$(RELEASE)
 

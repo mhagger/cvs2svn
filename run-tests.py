@@ -156,6 +156,12 @@ class Log:
     # The msg will be accumulated later, as log data is read.
     self.msg = ''
 
+  def __cmp__(self, other):
+    return cmp(self.revision, other.revision) or \
+        cmp(self.author, other.author) or cmp(self.date, other.date) or \
+        cmp(self.changed_paths, other.changed_paths) or \
+        cmp(self.msg, other.msg)
+
 
 def parse_log(svn_repos):
   """Return a dictionary of Logs, keyed on revision number, for SVN_REPOS."""
@@ -303,7 +309,7 @@ def check_rev(logs, rev, msg, changed_paths):
 already_converted = { }
 
 def ensure_conversion(name, error_re=None, trunk_only=None,
-                      no_prune=None, encoding=None):
+                      no_prune=None, encoding=None, passbypass=None):
   """Convert CVS repository NAME to Subversion, but only if it has not
   been converted before by this invocation of this script.  If it has
   been converted before, do nothing.
@@ -324,6 +330,9 @@ def ensure_conversion(name, error_re=None, trunk_only=None,
   If NO_PRUNE is set, then pass the --no-prune option to cvs2svn.py
   if converting NAME for the first time.
 
+  If PASSBYPASS is set, then cvs2svn is run multiple times, each time
+  with a -p option starting at 1 and increasing to a (hardcoded) maximum.
+
   NAME is just one word.  For example, 'main' would mean to convert
   './test-data/main-cvsrepos', and after the conversion, the resulting
   Subversion repository would be in './tmp/main-svnrepos', and a
@@ -340,6 +349,8 @@ def ensure_conversion(name, error_re=None, trunk_only=None,
   if encoding:
     arg_list.append( '--encoding=' + encoding )
     conv_id  = conv_id + '-encoding=' + encoding
+  if passbypass:
+    conv_id = conv_id + '-passbypass'
 
   if not already_converted.has_key(conv_id):
     try:
@@ -362,8 +373,11 @@ def ensure_conversion(name, error_re=None, trunk_only=None,
         
         try:
           arg_list.extend( [ '--bdb-txn-nosync', '-s', svnrepos, cvsrepos ] )
-          arg_list.insert(0, error_re)
-          ret = apply(run_cvs2svn, arg_list)
+          if passbypass:
+            for p in range(1, 9):
+              apply(run_cvs2svn, [ error_re, '-p', str(p) ] + arg_list)
+          else:
+            ret = apply(run_cvs2svn, [ error_re ] + arg_list)
         except RunProgramException:
           raise svntest.Failure
         except MissingErrorException:
@@ -1337,7 +1351,16 @@ def invalid_closings_on_trunk():
   # The conversion will fail if the bug is present, and
   # ensure_conversion would raise svntest.Failure.
   repos, wc, logs = ensure_conversion('invalid-closings-on-trunk')
-  
+
+
+def individual_passes():
+  "run each pass individually"
+  repos, wc, logs = ensure_conversion('main')
+  repos2, wc2, logs2 = ensure_conversion('main', passbypass=1)
+
+  if logs != logs2:
+    raise svntest.Failure
+
 #----------------------------------------------------------------------
 
 ########################################################################
@@ -1380,6 +1403,7 @@ test_list = [ None,
               empty_trunk,
               no_spurious_svn_commits,
               invalid_closings_on_trunk,
+              individual_passes,
              ]
 
 if __name__ == '__main__':

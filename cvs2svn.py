@@ -3275,9 +3275,11 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
       buf = pipe.fromchild.read(PIPE_READ_SIZE)
     pipe.fromchild.close()
     error_output = pipe.childerr.read()
-    if pipe.wait():
-      sys.exit("%s: The command '%s' failed with the following output:\n"
-               "%s" % (error_prefix, pipe_cmd, error_output))
+    exit_status = pipe.wait()
+    if exit_status:
+      sys.exit("%s: The command '%s' failed with exit status: %s\n"
+               "and the following output:\n"
+               "%s" % (error_prefix, pipe_cmd, exit_status, error_output))
 
     # Go back to patch up the length and checksum headers:
     self.dumpfile.seek(pos, 0)
@@ -3394,9 +3396,11 @@ class RepositoryDelegate(DumpfileDelegate):
     self.dumpfile.close()
     self.loader_pipe.tochild.close()
     error_output = self.loader_pipe.childerr.read()
-    if self.loader_pipe.wait() is not None:
-      sys.exit('%s: svnadmin load failed with the following output:\n'
-               '%s' % (error_prefix, error_output))
+    exit_status = self.loader_pipe.wait()
+    if exit_status:
+      sys.exit('%s: svnadmin load failed with exit status: %s\n'
+               'and the following output:\n'
+               '%s' % (error_prefix, exit_status, error_output))
 
 
 class StdoutDelegate(SVNRepositoryMirrorDelegate):

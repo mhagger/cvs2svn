@@ -1336,6 +1336,8 @@ class Dumper:
     # Calculate the total length of the props section.
     total_len = 10  # len('PROPS-END\n')
     for propname in props.keys():
+      if props[propname] is None:
+        continue
       klen = len(propname)
       klen_len = len('K %d' % klen)
       vlen = len(props[propname])
@@ -1351,8 +1353,10 @@ class Dumper:
                         % (self.revision, total_len, total_len))
 
     for propname in props.keys():
+      if props[propname] is None:
+        continue
       self.dumpfile.write('K %d\n' 
-                          '%s\n' 
+                          '%s\n'
                           'V %d\n' 
                           '%s\n' % (len(propname),
                                     propname,
@@ -3004,8 +3008,6 @@ def usage(ctx):
   print '  --force-branch=NAME  Force NAME to be a branch.'
   print '  --force-tag=NAME     Force NAME to be a tag.'
   print '  --username=NAME      username for cvs2svn-synthesized commits'
-  print '                                                  (default: %s)' \
-        % ctx.username
   print '  --skip-cleanup       prevent the deletion of intermediate files'
   print '  --bdb-txn-nosync     pass --bdb-txn-nosync to "svnadmin create"'
   print '  --cvs-revnums        record CVS revision numbers as file properties'
@@ -3035,7 +3037,7 @@ def main():
   ctx.mime_mapper = None
   ctx.set_eol_style = 0
   ctx.svnadmin = "svnadmin"
-  ctx.username = "unknown"
+  ctx.username = None
   ctx.print_help = 0
   ctx.skip_cleanup = 0
   ctx.cvs_revnums = 0

@@ -3114,6 +3114,7 @@ class SVNCommitItem:
     self.svn_props = { }
     if self.set_cvs_revnum_properties:
       self.svn_props['cvs2svn:cvs-rev'] = c_rev.rev
+      make_svn_props = True
 
     # If asked to fill in the Subversion properties ('svn:' ones), do so.
     if make_svn_props:

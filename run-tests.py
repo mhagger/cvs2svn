@@ -1471,10 +1471,14 @@ def eol_mime():
   # the same FILE, but vary --no-default-eol and --eol-from-mime-type.
   # Thus there's one conversion with neither flag, one with just the
   # former, one with just the latter, and one with both.
+  #
+  # In two of the four conversions, we pass --cvs-revnums to make
+  # certain that there are no bad interactions.
 
   ## Neither --no-default-eol nor --eol-from-mime-type. ##
   repos, wc, logs = ensure_conversion('eol-mime', None, None,
-                                      '--mime-types=%s' % mime_path)
+                                      '--mime-types=%s' % mime_path,
+                                      '--cvs-revnums')
   wc_tree = svntest.tree.build_tree_from_wc(wc, 1)
   allprops = the_usual_suspects(wc_tree)
 
@@ -1483,11 +1487,16 @@ def eol_mime():
     raise svntest.Failure
   if allprops['foo.txt'].get('svn:mime-type') is not None:
     raise svntest.Failure
+  if not allprops['foo.txt'].get('cvs2svn:cvs-rev') == '1.2':
+    print "FITZ:", allprops['foo.txt']
+    raise svntest.Failure
 
   # foo.xml (no -kb, mime file says text)
   if allprops['foo.xml'].get('svn:eol-style') != 'native':
     raise svntest.Failure
   if allprops['foo.xml'].get('svn:mime-type') != 'text/xml':
+    raise svntest.Failure
+  if not allprops['foo.xml'].get('cvs2svn:cvs-rev') == '1.2':
     raise svntest.Failure
 
   # foo.zip (no -kb, mime file says non-text)
@@ -1495,11 +1504,15 @@ def eol_mime():
     raise svntest.Failure
   if allprops['foo.zip'].get('svn:mime-type') != 'application/zip':
     raise svntest.Failure
+  if not allprops['foo.zip'].get('cvs2svn:cvs-rev') == '1.2':
+    raise svntest.Failure
 
   # foo.bin (has -kb, mime file says nothing)
   if allprops['foo.bin'].get('svn:eol-style') is not None:
     raise svntest.Failure
   if allprops['foo.bin'].get('svn:mime-type') != 'application/octet-stream':
+    raise svntest.Failure
+  if not allprops['foo.bin'].get('cvs2svn:cvs-rev') == '1.2':
     raise svntest.Failure
 
   # foo.csv (has -kb, mime file says text)
@@ -1507,11 +1520,15 @@ def eol_mime():
     raise svntest.Failure
   if allprops['foo.csv'].get('svn:mime-type') != 'text/csv':
     raise svntest.Failure
+  if not allprops['foo.csv'].get('cvs2svn:cvs-rev') == '1.2':
+    raise svntest.Failure
 
   # foo.dbf (has -kb, mime file says non-text)
   if allprops['foo.dbf'].get('svn:eol-style') is not None:
     raise svntest.Failure
   if allprops['foo.dbf'].get('svn:mime-type') != 'application/what-is-dbf':
+    raise svntest.Failure
+  if not allprops['foo.dbf'].get('cvs2svn:cvs-rev') == '1.2':
     raise svntest.Failure
 
   ## Just --no-default-eol, not --eol-from-mime-type. ##
@@ -1560,7 +1577,8 @@ def eol_mime():
   ## Just --eol-from-mime-type, not --no-default-eol. ##
   repos, wc, logs = ensure_conversion('eol-mime', None, None,
                                       '--mime-types=%s' % mime_path,
-                                      '--eol-from-mime-type')
+                                      '--eol-from-mime-type',
+                                      '--cvs-revnums')
   wc_tree = svntest.tree.build_tree_from_wc(wc, 1)
   allprops = the_usual_suspects(wc_tree)
 
@@ -1569,11 +1587,15 @@ def eol_mime():
     raise svntest.Failure
   if allprops['foo.txt'].get('svn:mime-type') is not None:
     raise svntest.Failure
+  if not allprops['foo.txt'].get('cvs2svn:cvs-rev') == '1.2':
+    raise svntest.Failure
 
   # foo.xml (no -kb, mime file says text)
   if allprops['foo.xml'].get('svn:eol-style') != 'native':
     raise svntest.Failure
   if allprops['foo.xml'].get('svn:mime-type') != 'text/xml':
+    raise svntest.Failure
+  if not allprops['foo.xml'].get('cvs2svn:cvs-rev') == '1.2':
     raise svntest.Failure
 
   # foo.zip (no -kb, mime file says non-text)
@@ -1581,11 +1603,15 @@ def eol_mime():
     raise svntest.Failure
   if allprops['foo.zip'].get('svn:mime-type') != 'application/zip':
     raise svntest.Failure
+  if not allprops['foo.zip'].get('cvs2svn:cvs-rev') == '1.2':
+    raise svntest.Failure
 
   # foo.bin (has -kb, mime file says nothing)
   if allprops['foo.bin'].get('svn:eol-style') is not None:
     raise svntest.Failure
   if allprops['foo.bin'].get('svn:mime-type') != 'application/octet-stream':
+    raise svntest.Failure
+  if not allprops['foo.bin'].get('cvs2svn:cvs-rev') == '1.2':
     raise svntest.Failure
 
   # foo.csv (has -kb, mime file says text)
@@ -1593,11 +1619,15 @@ def eol_mime():
     raise svntest.Failure
   if allprops['foo.csv'].get('svn:mime-type') != 'text/csv':
     raise svntest.Failure
+  if not allprops['foo.csv'].get('cvs2svn:cvs-rev') == '1.2':
+    raise svntest.Failure
 
   # foo.dbf (has -kb, mime file says non-text)
   if allprops['foo.dbf'].get('svn:eol-style') is not None:
     raise svntest.Failure
   if allprops['foo.dbf'].get('svn:mime-type') != 'application/what-is-dbf':
+    raise svntest.Failure
+  if not allprops['foo.dbf'].get('cvs2svn:cvs-rev') == '1.2':
     raise svntest.Failure
 
   ## Both --no-default-eol and --eol-from-mime-type. ##

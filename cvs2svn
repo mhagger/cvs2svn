@@ -458,6 +458,9 @@ class Log:
     if self.use_timestamps:
       self._timestamp()
     self.logger.write(' '.join(map(str,args)) + "\n")
+    # Ensure that log output doesn't get out-of-order with respect to
+    # stderr output.
+    self.logger.flush();
 
 
 class Cleanup:

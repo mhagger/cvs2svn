@@ -2970,7 +2970,7 @@ class SVNRepositoryMirror:
                                                copy_source.revnum)
       prune_ok = 1
     else:
-      dest_entries = None # I.e. unknown
+      dest_entries = self.nodes_db[dest_key]
 
     # Create the SRC_ENTRIES hash from SOURCES.  The keys are path
     # elements and the values are lists of FillSource classes where
@@ -2985,9 +2985,6 @@ class SVNRepositoryMirror:
         src_entries[entry].append(FillSource(source.prefix, key))
 
     if prune_ok:
-      # Get the list of dest_entries if we don't have them already.
-      if dest_entries is None:
-        dest_entries = self.nodes_db[dest_key]
       # Delete the entries in DEST_ENTRIES that are not in src_entries.
       for entry in dest_entries:
         if entry[0] == '/': # Skip flags
@@ -2998,10 +2995,9 @@ class SVNRepositoryMirror:
     # Recurse into the SRC_ENTRIES keys sorted in alphabetical order.
     src_keys = src_entries.keys()
     src_keys.sort()
-    dest_node = self.nodes_db[dest_key]
     for src_key in src_keys:
-      if src_key in dest_node:
-        next_dest_key = dest_node[src_key]
+      if src_key in dest_entries:
+        next_dest_key = dest_entries[src_key]
       else:
         next_dest_key = None
       self._fill(symbol_fill, dest_prefix, next_dest_key,

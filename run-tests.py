@@ -486,38 +486,50 @@ def simple_commits():
 
   # The initial import.
   rev = 16
-  for path in ('/trunk/proj', '/trunk/proj/default', '/trunk/proj/sub1',
-               '/trunk/proj/sub1/default', '/trunk/proj/sub1/subsubA',
-               '/trunk/proj/sub1/subsubA/default', '/trunk/proj/sub1/subsubB',
-               '/trunk/proj/sub1/subsubB/default', '/trunk/proj/sub2',
-               '/trunk/proj/sub2/default', '/trunk/proj/sub2/subsubA',
-               '/trunk/proj/sub2/subsubA/default', '/trunk/proj/sub3',
-               '/trunk/proj/sub3/default'):
-    if not (logs[rev].changed_paths.get(path) == 'A'):
-      raise svntest.Failure
+  if not logs[rev].changed_paths == {
+    '/trunk/proj': 'A',
+    '/trunk/proj/default': 'A',
+    '/trunk/proj/sub1': 'A',
+    '/trunk/proj/sub1/default': 'A',
+    '/trunk/proj/sub1/subsubA': 'A',
+    '/trunk/proj/sub1/subsubA/default': 'A',
+    '/trunk/proj/sub1/subsubB': 'A',
+    '/trunk/proj/sub1/subsubB/default': 'A',
+    '/trunk/proj/sub2': 'A',
+    '/trunk/proj/sub2/default': 'A',
+    '/trunk/proj/sub2/subsubA': 'A',
+    '/trunk/proj/sub2/subsubA/default': 'A',
+    '/trunk/proj/sub3': 'A',
+    '/trunk/proj/sub3/default': 'A',
+    }:
+    raise svntest.Failure
 
   if logs[rev].msg.find('Initial revision') != 0:
     raise svntest.Failure
     
   # The first commit.
   rev = 18
-  for path in ('/trunk/proj/sub1/subsubA/default', '/trunk/proj/sub3/default'):
-    if not (logs[rev].changed_paths.get(path) == 'M'):
-      raise svntest.Failure
+  if not logs[rev].changed_paths == {
+    '/trunk/proj/sub1/subsubA/default': 'M',
+    '/trunk/proj/sub3/default': 'M',
+    }:
+    raise svntest.Failure
 
   if logs[rev].msg.find('First commit to proj, affecting two files.') != 0:
     raise svntest.Failure
 
   # The second commit.
   rev = 19
-  for path in ('/trunk/proj/default', '/trunk/proj/sub1/default',
-               '/trunk/proj/sub1/subsubA/default',
-               '/trunk/proj/sub1/subsubB/default',
-               '/trunk/proj/sub2/default',
-               '/trunk/proj/sub2/subsubA/default',
-               '/trunk/proj/sub3/default'):
-    if not (logs[rev].changed_paths.get(path) == 'M'):
-      raise svntest.Failure
+  if not logs[rev].changed_paths == {
+    '/trunk/proj/default': 'M',
+    '/trunk/proj/sub1/default': 'M',
+    '/trunk/proj/sub1/subsubA/default': 'M',
+    '/trunk/proj/sub1/subsubB/default': 'M',
+    '/trunk/proj/sub2/default': 'M',
+    '/trunk/proj/sub2/subsubA/default': 'M',
+    '/trunk/proj/sub3/default': 'M'
+    }:
+    raise svntest.Failure
 
   if logs[rev].msg.find('Second commit to proj, affecting all 7 files.') != 0:
     raise svntest.Failure
@@ -587,60 +599,58 @@ def interleaved_commits():
 
 
 def simple_tags():
-  "simple tags"
+  "simple tags and branches with no commits"
   # See test-data/main-cvsrepos/proj/README.
   repos, wc, logs = ensure_conversion('main')
  
-  rev = 37
-  if not logs.has_key(rev):
-    raise svntest.Failure
-  if not logs[rev].changed_paths == {
-    '/tags/T_ALL_INITIAL_FILES (from /branches/vendorbranch:17)': 'A',
-    '/tags/T_ALL_INITIAL_FILES/single-files': 'D',
-    '/tags/T_ALL_INITIAL_FILES/partial-prune': 'D'
-    }:
-    raise svntest.Failure
-
-  rev = 39
-  if not logs.has_key(rev):
-    raise svntest.Failure
-  if not logs[rev].changed_paths == {
-    '/tags/T_ALL_INITIAL_FILES_BUT_ONE/single-files': 'D',
-    '/tags/T_ALL_INITIAL_FILES_BUT_ONE (from /branches/vendorbranch:17)': 'A',
-    '/tags/T_ALL_INITIAL_FILES_BUT_ONE/partial-prune': 'D',
-    '/tags/T_ALL_INITIAL_FILES_BUT_ONE/proj/sub1/subsubB': 'D',
-    }:
-    raise svntest.Failure
-
+  # Verify the copy source for the tags we are about to check
+  # No need to verify r16, as simple_commits did that
   rev = 17
-  if not logs.has_key(rev):
-    raise svntest.Failure
   if not logs[rev].changed_paths == {
     '/branches/vendorbranch/proj (from /trunk/proj:16)': 'A',
     }:
     raise svntest.Failure
 
-  rev = 16
-  if not logs.has_key(rev):
+  if logs[rev].msg.find('Initial import.') != 0:
     raise svntest.Failure
+
+  # Tag on rev 1.1.1.1 of all files in proj
+  rev = 36
   if not logs[rev].changed_paths == {
-    '/trunk/proj': 'A',
-    '/trunk/proj/default': 'A',
-    '/trunk/proj/sub1': 'A',
-    '/trunk/proj/sub1/default': 'A',
-    '/trunk/proj/sub1/subsubA': 'A',
-    '/trunk/proj/sub1/subsubA/default': 'A',
-    '/trunk/proj/sub1/subsubB': 'A',
-    '/trunk/proj/sub1/subsubB/default': 'A',
-    '/trunk/proj/sub2': 'A',
-    '/trunk/proj/sub2/default': 'A',
-    '/trunk/proj/sub2/subsubA': 'A',
-    '/trunk/proj/sub2/subsubA/default': 'A',
-    '/trunk/proj/sub3': 'A',
-    '/trunk/proj/sub3/default': 'A',
+    '/tags/T_ALL_INITIAL_FILES (from /branches/vendorbranch:17)': 'A',
+    '/tags/T_ALL_INITIAL_FILES/single-files': 'D',
+    '/tags/T_ALL_INITIAL_FILES/partial-prune': 'D',
     }:
     raise svntest.Failure
 
+  # The same, as a branch
+  rev = 33
+  if not logs[rev].changed_paths == {
+    '/branches/B_FROM_INITIALS (from /branches/vendorbranch:17)': 'A',
+    '/branches/B_FROM_INITIALS/single-files': 'D',
+    '/branches/B_FROM_INITIALS/partial-prune': 'D',
+    }:
+    raise svntest.Failure
+
+  # Tag on rev 1.1.1.1 of all files in proj, except one
+  rev = 38
+  if not logs[rev].changed_paths == {
+    '/tags/T_ALL_INITIAL_FILES_BUT_ONE (from /branches/vendorbranch:17)': 'A',
+    '/tags/T_ALL_INITIAL_FILES_BUT_ONE/single-files': 'D',
+    '/tags/T_ALL_INITIAL_FILES_BUT_ONE/partial-prune': 'D',
+    '/tags/T_ALL_INITIAL_FILES_BUT_ONE/proj/sub1/subsubB': 'D',
+    }:
+    raise svntest.Failure
+
+  # The same, as a branch
+  rev = 34
+  if not logs[rev].changed_paths == {
+    '/branches/B_FROM_INITIALS_BUT_ONE (from /branches/vendorbranch:17)': 'A',
+    '/branches/B_FROM_INITIALS_BUT_ONE/single-files': 'D',
+    '/branches/B_FROM_INITIALS_BUT_ONE/partial-prune': 'D',
+    '/branches/B_FROM_INITIALS_BUT_ONE/proj/sub1/subsubB': 'D',
+    }:
+    raise svntest.Failure
 
 def simple_branch_commits():
   "simple branch commits"
@@ -648,14 +658,12 @@ def simple_branch_commits():
   repos, wc, logs = ensure_conversion('main')
 
   rev = 22
-  if not logs.has_key(rev):
+  if not logs[rev].changed_paths == {
+    '/branches/B_MIXED/proj/default': 'M',
+    '/branches/B_MIXED/proj/sub1/default': 'M',
+    '/branches/B_MIXED/proj/sub2/subsubA/default': 'M',
+    }:
     raise svntest.Failure
-
-  for path in ('/branches/B_MIXED/proj/default',
-               '/branches/B_MIXED/proj/sub1/default',
-               '/branches/B_MIXED/proj/sub2/subsubA/default'):
-    if not (logs[rev].changed_paths.get(path) == 'M'):
-      raise svntest.Failure
 
   if logs[rev].msg.find('Modify three files, on branch B_MIXED.') != 0:
     raise svntest.Failure

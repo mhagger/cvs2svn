@@ -354,33 +354,6 @@ def show_usage():
     raise svntest.Failure
 
 
-def bogus_tag():
-  "conversion of invalid symbolic names"
-  ret, ign, ign = ensure_conversion('bogus-tag')
-
-
-def overlapping_branch():
-  "ignore a file with a branch with two names"
-  repos, wc, logs = ensure_conversion('overlapping-branch',
-                                      '.*cannot also have name \'vendorB\'')
-  nonlap_path = '/trunk/nonoverlapping-branch'
-  lap_path = '/trunk/overlapping-branch'
-  if not (logs[3].changed_paths.get('/branches/vendorA (from /trunk:2)')
-          == 'A'):
-    raise svntest.Failure
-  # We don't know what order the first two commits would be in, since
-  # they have different log messages but the same timestamps.  As only
-  # one of the files would be on the vendorB branch in the regression
-  # case being tested here, we allow for either order.
-  if ((logs[3].changed_paths.get('/branches/vendorB (from /trunk:1)')
-       == 'A')
-      or (logs[3].changed_paths.get('/branches/vendorB (from /trunk:2)')
-          == 'A')):
-    raise svntest.Failure
-  if len(logs) > 3:
-    raise svntest.Failure
-
-
 def attr_exec():
   "detection of the executable flag"
   repos, wc, logs = ensure_conversion('main')
@@ -479,62 +452,6 @@ def prune_with_care():
       raise svntest.Failure
 
 
-def simple_commits():
-  "simple trunk commits"
-  # See test-data/main-cvsrepos/proj/README.
-  repos, wc, logs = ensure_conversion('main')
-
-  # The initial import.
-  rev = 16
-  if not logs[rev].changed_paths == {
-    '/trunk/proj': 'A',
-    '/trunk/proj/default': 'A',
-    '/trunk/proj/sub1': 'A',
-    '/trunk/proj/sub1/default': 'A',
-    '/trunk/proj/sub1/subsubA': 'A',
-    '/trunk/proj/sub1/subsubA/default': 'A',
-    '/trunk/proj/sub1/subsubB': 'A',
-    '/trunk/proj/sub1/subsubB/default': 'A',
-    '/trunk/proj/sub2': 'A',
-    '/trunk/proj/sub2/default': 'A',
-    '/trunk/proj/sub2/subsubA': 'A',
-    '/trunk/proj/sub2/subsubA/default': 'A',
-    '/trunk/proj/sub3': 'A',
-    '/trunk/proj/sub3/default': 'A',
-    }:
-    raise svntest.Failure
-
-  if logs[rev].msg.find('Initial revision') != 0:
-    raise svntest.Failure
-    
-  # The first commit.
-  rev = 18
-  if not logs[rev].changed_paths == {
-    '/trunk/proj/sub1/subsubA/default': 'M',
-    '/trunk/proj/sub3/default': 'M',
-    }:
-    raise svntest.Failure
-
-  if logs[rev].msg.find('First commit to proj, affecting two files.') != 0:
-    raise svntest.Failure
-
-  # The second commit.
-  rev = 19
-  if not logs[rev].changed_paths == {
-    '/trunk/proj/default': 'M',
-    '/trunk/proj/sub1/default': 'M',
-    '/trunk/proj/sub1/subsubA/default': 'M',
-    '/trunk/proj/sub1/subsubB/default': 'M',
-    '/trunk/proj/sub2/default': 'M',
-    '/trunk/proj/sub2/subsubA/default': 'M',
-    '/trunk/proj/sub3/default': 'M'
-    }:
-    raise svntest.Failure
-
-  if logs[rev].msg.find('Second commit to proj, affecting all 7 files.') != 0:
-    raise svntest.Failure
-
-
 def interleaved_commits():
   "two interleaved trunk commits, different log msgs"
   # See test-data/main-cvsrepos/proj/README.
@@ -595,6 +512,62 @@ def interleaved_commits():
   rev = rev + 2
   if not ((check_letters(rev, logs) and check_numbers(rev + 1, logs))
           or (check_numbers(rev, logs) and check_letters(rev + 1, logs))):
+    raise svntest.Failure
+
+
+def simple_commits():
+  "simple trunk commits"
+  # See test-data/main-cvsrepos/proj/README.
+  repos, wc, logs = ensure_conversion('main')
+
+  # The initial import.
+  rev = 16
+  if not logs[rev].changed_paths == {
+    '/trunk/proj': 'A',
+    '/trunk/proj/default': 'A',
+    '/trunk/proj/sub1': 'A',
+    '/trunk/proj/sub1/default': 'A',
+    '/trunk/proj/sub1/subsubA': 'A',
+    '/trunk/proj/sub1/subsubA/default': 'A',
+    '/trunk/proj/sub1/subsubB': 'A',
+    '/trunk/proj/sub1/subsubB/default': 'A',
+    '/trunk/proj/sub2': 'A',
+    '/trunk/proj/sub2/default': 'A',
+    '/trunk/proj/sub2/subsubA': 'A',
+    '/trunk/proj/sub2/subsubA/default': 'A',
+    '/trunk/proj/sub3': 'A',
+    '/trunk/proj/sub3/default': 'A',
+    }:
+    raise svntest.Failure
+
+  if logs[rev].msg.find('Initial revision') != 0:
+    raise svntest.Failure
+    
+  # The first commit.
+  rev = 18
+  if not logs[rev].changed_paths == {
+    '/trunk/proj/sub1/subsubA/default': 'M',
+    '/trunk/proj/sub3/default': 'M',
+    }:
+    raise svntest.Failure
+
+  if logs[rev].msg.find('First commit to proj, affecting two files.') != 0:
+    raise svntest.Failure
+
+  # The second commit.
+  rev = 19
+  if not logs[rev].changed_paths == {
+    '/trunk/proj/default': 'M',
+    '/trunk/proj/sub1/default': 'M',
+    '/trunk/proj/sub1/subsubA/default': 'M',
+    '/trunk/proj/sub1/subsubB/default': 'M',
+    '/trunk/proj/sub2/default': 'M',
+    '/trunk/proj/sub2/subsubA/default': 'M',
+    '/trunk/proj/sub3/default': 'M'
+    }:
+    raise svntest.Failure
+
+  if logs[rev].msg.find('Second commit to proj, affecting all 7 files.') != 0:
     raise svntest.Failure
 
 
@@ -682,6 +655,33 @@ def mixed_commit():
 
   if logs[rev].msg.find('A single commit affecting one file on branch B_MIXED '
                        'and one on trunk.') != 0:
+    raise svntest.Failure
+
+
+def bogus_tag():
+  "conversion of invalid symbolic names"
+  ret, ign, ign = ensure_conversion('bogus-tag')
+
+
+def overlapping_branch():
+  "ignore a file with a branch with two names"
+  repos, wc, logs = ensure_conversion('overlapping-branch',
+                                      '.*cannot also have name \'vendorB\'')
+  nonlap_path = '/trunk/nonoverlapping-branch'
+  lap_path = '/trunk/overlapping-branch'
+  if not (logs[3].changed_paths.get('/branches/vendorA (from /trunk:2)')
+          == 'A'):
+    raise svntest.Failure
+  # We don't know what order the first two commits would be in, since
+  # they have different log messages but the same timestamps.  As only
+  # one of the files would be on the vendorB branch in the regression
+  # case being tested here, we allow for either order.
+  if ((logs[3].changed_paths.get('/branches/vendorB (from /trunk:1)')
+       == 'A')
+      or (logs[3].changed_paths.get('/branches/vendorB (from /trunk:2)')
+          == 'A')):
+    raise svntest.Failure
+  if len(logs) > 3:
     raise svntest.Failure
 
 
@@ -1150,17 +1150,17 @@ def default_branches():
 # list all tests here, starting with None:
 test_list = [ None,
               show_usage,
-              bogus_tag,
-              overlapping_branch,
               attr_exec,
               space_fname,
               two_quick,
               prune_with_care,
-              simple_commits,
               interleaved_commits,
+              simple_commits,
               simple_tags,
               simple_branch_commits,
               mixed_commit,
+              bogus_tag,
+              overlapping_branch,
               tolerate_corruption,
               phoenix_branch,
               ctrl_char_in_log,

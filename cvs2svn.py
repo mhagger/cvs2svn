@@ -2909,34 +2909,6 @@ class SVNRepositoryMirror:
                % cvs_rev.op)
         raise SVNRepositoryMirrorUnexpectedOperationError, msg
 
-  # We need to fix our code to allow multiple component
-  # trunk/branches/tags (issue #7)
-  def _dest_path_for_source_path(self, symbolic_name, path):
-    """Given source path PATH, returns the copy destination path under
-    SYMBOLIC_NAME.
-
-    For example, if PATH is 'trunk', and SYMBOLIC_NAME 'mytag' is a
-    tag, then we will return 'tags/mytag'.
-
-    However, branches are treated slightly differently, for example,
-    if PATH is 'branches/mybranch', and SYMBOLIC_NAME 'mytag' is a
-    tag, then we will *still* return 'tags/mytag'.
-
-    This function's behavior is undefined if any of
-    self._ctx.[branches_base|trunk_base] is more than one
-    path element long."""
-    base_dest_path = self._ctx.branches_base
-    if self.tags_db.has_key(symbolic_name):
-      base_dest_path = self._ctx.tags_base
-
-    components = path.split('/')
-    if components[0] == self._ctx.branches_base:
-      components = components[1:]
-    dest = base_dest_path + '/' + symbolic_name 
-    if len(components) > 1:
-      dest = dest + '/' + '/'.join(components[1:])
-    return dest
-
   def _fill(self, symbol_fill, dest_prefix, sources, path = None,
             parent_source_prefix = None, preferred_revnum = None,
             prune_ok = None):

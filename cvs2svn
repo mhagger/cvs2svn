@@ -106,6 +106,8 @@ trunk_rev = re.compile('^[0-9]+\\.[0-9]+$')
 branch_tag = re.compile('^[0-9.]+\\.0\\.[0-9]+$')
 vendor_tag = re.compile('^[0-9]+\\.[0-9]+\\.[0-9]+$')
 
+SVN_KEYWORDS_VALUE = 'Author Date Id Revision'
+
 # This really only matches standard '1.1.1.*'-style vendor revisions.
 # One could conceivably have a file whose default branch is 1.1.3 or
 # whatever, or was that at some point in time, with vendor revisions
@@ -3367,7 +3369,7 @@ class SVNCommitItem:
     # Set the svn:keywords property, if appropriate.  See issue #2.
     if not self.keywords_off and (c_rev.mode is None or c_rev.mode == 'kv' or
                                   c_rev.mode == 'kvl'):
-      keywords = 'Author Date Id Revision'
+      keywords = SVN_KEYWORDS_VALUE
 
     # Remember if we need to filter the EOLs.  We can't use self.svn_props
     # becase they are only set on the first revision and we need to filter
@@ -3385,7 +3387,7 @@ class SVNCommitItem:
 
       # Set the svn:keywords property, if appropriate.  See issue #2.
       if keywords:
-        self.svn_props['svn:keywords'] = 'Author Date Id Revision'
+        self.svn_props['svn:keywords'] = SVN_KEYWORDS_VALUE
 
       if mime_type:
         self.svn_props['svn:mime-type'] = mime_type
@@ -4482,9 +4484,9 @@ def usage():
         '                       setting svn:mime-type'
   print '  --eol-from-mime-type set svn:eol-style by mime type (only with --mime-types)'
   print '  --no-default-eol     don\'t set svn:eol-style by CVS defaults'
-  print '  --keywords-off       don\'t set svn:keywords on any files (cvs2svn sets'
-  print '                       "svn:keywords to author date id" on non-binary files'
-  print '                       by default)'
+  print '  --keywords-off       don\'t set svn:keywords on any files (by default,'
+  print '                       cvs2svn sets svn:keywords on non-binary files to'
+  print '                       "%s")' % SVN_KEYWORDS_VALUE
 
 def main():
   # Convenience var, so we don't have to keep instantiating this Borg.

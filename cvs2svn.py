@@ -33,14 +33,12 @@ import md5
 import anydbm
 import marshal
 
-# Make sure this Python is recent enough.
-import sys
-
 # Warnings and errors start with these strings.  They are typically
 # followed by a colon and a space, as in "%s: " ==> "Warning: ".
 warning_prefix = "Warning"
 error_prefix = "Error"
 
+# Make sure this Python is recent enough.
 if sys.hexversion < 0x2000000:
   sys.stderr.write("'%s: Python 2.0 or higher required, "
                    "see www.python.org.\n" % error_prefix)

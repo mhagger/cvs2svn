@@ -24,12 +24,11 @@ Prerequisites:
 Installation:
 =============
 
-  - To install on your system, run './setup.py install' in this
-    directory, as root.
+  - As root, run 'make install'.
 
-  - If you do not wish to install cvs2svn.py on your system, you can
-    simply run it out of this directory.  As long as it can find the
-    'cvs2svn_rcsparse' library, it should be happy.
+  - Or, if you do not wish to install cvs2svn.py on your system, you
+    can simply run it out of this directory.  As long as it can find
+    the 'cvs2svn_rcsparse' library, it should be happy.
 
 Basic Usage:
 ============

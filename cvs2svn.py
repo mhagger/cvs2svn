@@ -1305,8 +1305,7 @@ class Dumper:
                           '\n' % (self.utf8_path(path + '/' + ent)))
 
   def add_or_change_path(self, cvs_path, svn_path, cvs_rev, rcs_file,
-                         tags, branches, cvs_revnums):
-
+                         tags, branches, ctx):
     # figure out the real file path for "co"
     try:
       f_st = os.stat(rcs_file)
@@ -1316,7 +1315,7 @@ class Dumper:
       f_st = os.stat(rcs_file)
 
     # We begin with only a "CVS revision" property.
-    if cvs_revnums:
+    if ctx.cvs_revnums:
       prop_contents = 'K 15\ncvs2svn:cvs-rev\nV %d\n%s\n' \
                       % (len(cvs_rev), cvs_rev)
     else:
@@ -1326,11 +1325,22 @@ class Dumper:
     if f_st[0] & stat.S_IXUSR:
       prop_contents = prop_contents + 'K 14\nsvn:executable\nV 1\n*\n'
 
+    # Set MIME type, and maybe eol-style for text files.
+    if ctx.mime_mapper:
+      mime_type = ctx.mime_mapper.get_type_from_filename(cvs_path)
+      if mime_type:
+        prop_contents = prop_contents + ('K 13\nsvn:mime-type\nV %d\n%s\n' % \
+            (len(mime_type), mime_type))
+        if ctx.set_eol_style and mime_type.startswith("text/"):
+          prop_contents = prop_contents + 'K 13\nsvn:eol-style\nV 6\nnative\n'
+
     # Calculate the property length (+10 for "PROPS-END\n")
     props_len = len(prop_contents) + 10
     
     ### FIXME: We ought to notice the -kb flag set on the RCS file and
     ### use it to set svn:mime-type.
+    ### (How this will interact with the mime-mapper code
+    ### has yet to be decided.)
 
     basename = os.path.basename(rcs_file[:-2])
     pipe_cmd = 'co -q -x,v -p%s %s' % (cvs_rev, escape_shell_arg(rcs_file))
@@ -2307,7 +2317,7 @@ class Commit:
                                                rcs_file,
                                                tags,
                                                branches,
-                                               ctx.cvs_revnums)
+                                               ctx)
         if is_trunk_vendor_revision(ctx.default_branches_db,
                                     cvs_path, cvs_rev):
           default_branch_copies.append((cvs_path, br, tags, branches))
@@ -2661,6 +2671,55 @@ class _ctx:
   pass
 
 
+class MimeMapper:
+  "A class that provides mappings from file names to MIME types."
+
+  def _init_(self):
+    self.mappings = { }
+    self.missing_mappings = { }
+
+
+  def set_mime_types_file(self, mime_types_file):
+    for line in fileinput.input(mime_types_file):
+      if line.startswith("#"):
+        continue
+
+      # format of a line is something like
+      # text/plain c h cpp
+      extensions = line.split()
+      if len(extensions) < 2:
+        continue
+      type = extensions.pop(0)
+      for ext in extensions:
+        if self.mappings.has_key(ext) and self.mappings[ext] != type:
+          sys.stderr.write("%s: ambiguous MIME mapping for *.%s (%s or %s)\n" \
+                           % (warning_prefix, ext, self.mappings[ext], type))
+        self.mappings[ext] = type
+
+
+  def get_type_from_filename(self, filename):
+    basename, extension = os.path.splitext(os.path.basename(filename))
+
+    # Extension includes the dot, so strip it (will leave extension
+    # empty if filename ends with a dot, which is ok):
+    extension = extension[1:]
+
+    # If there is no extension (or the file ends with a period), use
+    # the base name for mapping. This allows us to set mappings for
+    # files such as README or Makefile:
+    if not extension:
+      extension = basename
+    if self.mappings.has_key(extension):
+      return self.mappings[extension]
+    self.missing_mappings[extension] = 1
+    return None
+
+
+  def print_missing_mappings(self):
+    for ext in self.missing_mappings:
+      sys.stderr.write("%s: no MIME mapping for *.%s\n" % (warning_prefix, ext))
+
+
 def convert(ctx, start_pass=1):
   "Convert a CVS repository to an SVN repository."
 
@@ -2708,7 +2767,10 @@ def usage(ctx):
   print '  --skip-cleanup       prevent the deletion of intermediate files'
   print '  --bdb-txn-nosync     pass --bdb-txn-nosync to "svnadmin create"'
   print '  --cvs-revnums        record CVS revision numbers as file properties'
-        
+  print '  --mime-types=FILE    specify an apache-style mime.types file for\n' \
+        '                       setting svn:mime-type'
+  print '  --set-eol-style      automatically set svn:eol-style=native for\n' \
+        '                       text files (needs --mime-types)'
 
 
 def main():
@@ -2728,6 +2790,9 @@ def main():
   ctx.tags_base = "tags"
   ctx.branches_base = "branches"
   ctx.encoding = "ascii"
+  ctx.mime_types_file = None
+  ctx.mime_mapper = None
+  ctx.set_eol_style = 0
   ctx.svnadmin = "svnadmin"
   ctx.username = "unknown"
   ctx.print_help = 0
@@ -2742,6 +2807,7 @@ def main():
                                [ "help", "create", "trunk=",
                                  "username=", "existing-svnrepos",
                                  "branches=", "tags=", "encoding=",
+                                 "mime-types=", "set-eol-style",
                                  "trunk-only", "no-prune",
                                  "dump-only", "dumpfile=", "svnadmin=",
                                  "skip-cleanup", "cvs-revnums",
@@ -2787,6 +2853,10 @@ def main():
       ctx.dump_only = 1
     elif opt == '--encoding':
       ctx.encoding = value
+    elif opt == '--mime-types':
+      ctx.mime_types_file = value
+    elif opt == '--set-eol-style':
+      ctx.set_eol_style = 1
     elif opt == '--username':
       ctx.username = value
     elif opt == '--skip-cleanup':
@@ -2867,10 +2937,22 @@ def main():
                      "'--existing-svnrepos'.\n" % ctx.target)
     sys.exit(1)
 
+  if ctx.set_eol_style and not ctx.mime_types_file:
+    sys.stderr.write(error_prefix +
+                     ": can only pass '--set-eol-style' if you also pass"
+                     " '--mime-types'.\n")
+    sys.exit(1)
+
+  if ctx.mime_types_file:
+    ctx.mime_mapper = MimeMapper()
+    ctx.mime_mapper.set_mime_types_file(ctx.mime_types_file)
+
   ctx.default_branches_db = Database(DEFAULT_BRANCHES_DB, 'n')
 
   convert(ctx, start_pass=start_pass)
 
+  if ctx.mime_types_file:
+    ctx.mime_mapper.print_missing_mappings()
 
 if __name__ == '__main__':
   main()

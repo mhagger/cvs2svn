@@ -273,13 +273,15 @@ class CVSRevision:
 
 
 class CollectData(rcsparse.Sink):
-  def __init__(self, cvsroot, log_fname_base, default_branches_db):
+  def __init__(self, cvsroot, log_fname_base, default_branches_db,
+               forced_branches, forced_tags):
     self.cvsroot = cvsroot
     self.revs = open(log_fname_base + REVS_SUFFIX, 'w')
     self.resync = open(log_fname_base + RESYNC_SUFFIX, 'w')
     self.default_branches_db = default_branches_db
     self.metadata_db = Database(METADATA_DB, 'n')
     self.fatal_errors = []
+    self.next_faked_branch_num = 999999
 
     # Branch and tag label types.
     self.BRANCH_LABEL = 0
@@ -289,6 +291,16 @@ class CollectData(rcsparse.Sink):
     self.LABEL_TYPES = [ 'branch', 'vendor branch', 'tag' ]
     # A dict mapping label names to types
     self.label_type = { }
+
+    # A list of labels that are to be treated as branches even if they
+    # are defined as tags in CVS.
+    self.forced_branches = forced_branches
+    # A list of labels that are to be treated as tags even if they are
+    # defined as branches in CVS.
+    self.forced_tags = forced_tags
+    # A list of branches that may not contain any commits because
+    # it is forced to be treated as a tag by the user.
+    self.forced_tag_branches = { }
 
     # See set_fname() for initializations of other variables.
 
@@ -325,6 +337,10 @@ class CollectData(rcsparse.Sink):
     # commit of 1.2, at which point the file's default branch became
     # trunk.  This records the date at which 1.2 was committed.
     self.first_non_vendor_revision_date = None
+
+    # A list of branches for which we have already shown an error for
+    # the current file.
+    self.forced_tag_error_branches = [ ]
 
   def set_principal_branch(self, branch):
     self.default_branch = branch
@@ -393,14 +409,43 @@ class CollectData(rcsparse.Sink):
                        "   '%s' is not a valid tag or branch name, ignoring\n"
                        % (warning_prefix, self.fname, name))
       return
+
     if branch_tag.match(revision):
       label_type = self.BRANCH_LABEL
-      self.add_cvs_branch(revision, name)
     elif vendor_tag.match(revision):
       label_type = self.VENDOR_BRANCH_LABEL
-      self.set_branch_name(revision, name)
     else:
       label_type = self.TAG_LABEL
+
+    if name in self.forced_branches:
+      if label_type == self.VENDOR_BRANCH_LABEL:
+        sys.exit(error_prefix + "Error: --force-branch does not work "
+                 "with vendor branches.")
+      elif label_type == self.TAG_LABEL:
+        # Append a faked branch suffix to the revision to simulate
+        # an empty branch.
+        revision += ".0." + str(self.next_faked_branch_num)
+        self.next_faked_branch_num += 1
+        label_type = self.BRANCH_LABEL
+    elif name in self.forced_tags:
+      if label_type == self.VENDOR_BRANCH_LABEL:
+        sys.exit(error_prefix + "Error: --force-tag does not work "
+                 "with vendor branches.")
+      elif label_type == self.BRANCH_LABEL:
+        # Remove the .0.N suffix, where N is the branch number.  Store
+        # the branch revision prefix in forced_tag_branches so that we
+        # can detect if the branch is not empty.
+        rev_parts = revision.split(".")
+        branch_num = rev_parts[-1]
+        revision = string.join(rev_parts[:-2], ".")
+        self.forced_tag_branches[revision + "." + branch_num] = name
+        label_type = self.TAG_LABEL
+
+    if label_type == self.BRANCH_LABEL:
+      self.add_cvs_branch(revision, name)
+    elif label_type == self.VENDOR_BRANCH_LABEL:
+      self.set_branch_name(revision, name)
+    else:
       if not self.taglist.has_key(revision):
         self.taglist[revision] = []
       self.taglist[revision].append(name)
@@ -428,6 +473,18 @@ class CollectData(rcsparse.Sink):
       op = OP_DELETE
     else:
       op = OP_CHANGE
+
+    # Check that this revision is not on a branch that has been forced
+    # to be a tag.
+    branch_rev = revision[:revision.rfind('.')]
+    if (self.forced_tag_branches.has_key(branch_rev)
+        and branch_rev not in self.forced_tag_error_branches):
+      err = ("%s: in '%s':\n   "
+             "'%s' cannot be forced to be a tag because it contains commits" %
+             (error_prefix, self.fname, self.forced_tag_branches[branch_rev]))
+      sys.stderr.write(err + '\n')
+      self.fatal_errors.append(err)
+      self.forced_tag_error_branches.append(branch_rev)
 
     # store the rev_data as a list in case we have to jigger the timestamp
     self.rev_data[revision] = [int(timestamp), author, op, None]
@@ -2502,7 +2559,8 @@ def read_resync(fname):
 
 
 def pass1(ctx):
-  cd = CollectData(ctx.cvsroot, DATAFILE, ctx.default_branches_db)
+  cd = CollectData(ctx.cvsroot, DATAFILE, ctx.default_branches_db,
+                   ctx.forced_branches, ctx.forced_tags)
   p = rcsparse.Parser()
   stats = [ 0 ]
   os.path.walk(ctx.cvsroot, visit_file, (cd, p, stats))
@@ -2787,6 +2845,8 @@ def usage(ctx):
   print '  --dump-only          just produce a dumpfile, don\'t commit to a repos'
   print '  --encoding=ENC       encoding of log messages in CVS repos (default: %s)' \
         % ctx.encoding
+  print '  --force-branch=NAME  Force NAME to be a branch.'
+  print '  --force-tag=NAME     Force NAME to be a tag.'
   print '  --username=NAME      username for cvs2svn-synthesized commits'
   print '                                                  (default: %s)' \
         % ctx.username
@@ -2825,6 +2885,8 @@ def main():
   ctx.skip_cleanup = 0
   ctx.cvs_revnums = 0
   ctx.bdb_txn_nosync = 0
+  ctx.forced_branches = []
+  ctx.forced_tags = []
 
   start_pass = 1
 
@@ -2833,6 +2895,7 @@ def main():
                                [ "help", "create", "trunk=",
                                  "username=", "existing-svnrepos",
                                  "branches=", "tags=", "encoding=",
+                                 "force-branch=", "force-tag=",
                                  "mime-types=", "set-eol-style",
                                  "trunk-only", "no-prune",
                                  "dump-only", "dumpfile=", "svnadmin=",
@@ -2879,6 +2942,10 @@ def main():
       ctx.dump_only = 1
     elif opt == '--encoding':
       ctx.encoding = value
+    elif opt == '--force-branch':
+      ctx.forced_branches.append(value)
+    elif opt == '--force-tag':
+      ctx.forced_tags.append(value)
     elif opt == '--mime-types':
       ctx.mime_types_file = value
     elif opt == '--set-eol-style':

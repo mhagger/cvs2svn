@@ -443,7 +443,8 @@ LOG_NORMAL = 1
 LOG_VERBOSE = 2
 class Log:
   """A Simple logging facility.  Each line will be timestamped is
-  self.use_timestamps is TRUE.  This class is a Borg."""
+  self.use_timestamps is TRUE.  This class is a Borg, see
+  http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/66531."""
   __shared_state = {}
   def __init__(self):
     self.__dict__ = self.__shared_state
@@ -474,7 +475,8 @@ class Cleanup:
   you first create a file, call Cleanup.register, passing the
   filename, and the last pass that you need the file.  After the end
   of that pass, your file will be cleaned up after running an optional
-  callback.  This class is a Borg."""
+  callback.  This class is a Borg, see
+  http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/66531."""
 
   __shared_state = {}
   def __init__(self):

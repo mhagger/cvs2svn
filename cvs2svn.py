@@ -2110,7 +2110,6 @@ class SVNCommit:
   def set_motivating_revnum(self, revnum):
     "Set self.motivating_revnum to REVNUM."
     self.motivating_revnum = revnum
-    PersistenceManager(self._ctx).set_motivating_revnum(self.revnum, revnum)
 
   def set_author(self, author):
     """Set this SVNCommit's author to AUTHOR (a locally-encoded string).
@@ -2179,6 +2178,10 @@ class SVNCommit:
     Log().write(LOG_NORMAL, "Creating Subversion commit %d (%s)" 
                 % (self.revnum, self._description))
     PersistenceManager(self._ctx).set_cvs_revs(self.revnum, self.cvs_revs)
+
+    if self.motivating_revnum is not None:
+      PersistenceManager(self._ctx).set_motivating_revnum(self.revnum,
+                                                self.motivating_revnum)
 
     # If we're not a primary commit, then store our date and/or our
     # symbolic_name

@@ -1,0 +1,58 @@
+head	1.3;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2003.09.11.13.57.15;	author qwerty;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2003.09.11.13.57.15;	author qwerty;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2003.09.09.15.47.53;	author qwerty;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@x
+@
+text
+@x
+x
+x
+x
+x
+@
+
+
+1.2
+log
+@x
+@
+text
+@d1 1
+a1 1
+x
+@
+
+
+1.1
+log
+@x
+@
+text
+@@
+

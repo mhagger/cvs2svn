@@ -1801,6 +1801,13 @@ def questionable_symbols():
   # actual branch paths, too, but the main thing is to know that the
   # conversion doesn't fail.
 
+def revision_reorder_bug():
+  "reveal a bug that reorders file revisions"
+  repos, wc, logs = ensure_conversion('revision-reorder-bug')
+  # If the conversion succeeds, then we're okay.  We could check the
+  # actual revisions, too, but the main thing is to know that the
+  # conversion doesn't fail.
+
 #----------------------------------------------------------------------
 
 ########################################################################
@@ -1853,6 +1860,7 @@ test_list = [ None,
               ignore,
               requires_cvs,
               questionable_symbols,
+              XFail(revision_reorder_bug),
              ]
 
 if __name__ == '__main__':

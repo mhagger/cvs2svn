@@ -4,7 +4,7 @@ cvs2svn.py: a script to create SVN repositories from CVS repositories.
    *                                                                   *
    *          This is BETA SOFTWARE; your mileage may vary.            *
    *                                                                   *
-   *                   http://cvs2svn.tigris.org                       *
+   *                  http://cvs2svn.tigris.org/                       *
    *                                                                   *
    *********************************************************************
 

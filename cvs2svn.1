@@ -1,4 +1,4 @@
-.TH CVS2SVN "1" "Aug 12, 2004" "Subversion" "User Commands"
+.TH CVS2SVN "1" "Sep 13, 2004" "Subversion" "User Commands"
 .SH NAME
 cvs2svn \- convert a cvs repository into a subversion repository
 .SH SYNOPSIS
@@ -98,10 +98,21 @@ Force \fIname\fR to be a tag.
 \fB--exclude\fR=\fIregexp\fR
 Exclude branches and tags matching \fIregexp\fR.
 .TP
+\fB--symbol-transform\fR=\fIP\fR:\fIS\fR
+Transform symbol names from \fIP\fR to \fIS\fR where \fIP\fR and \fIS\fR
+use Python regexp and reference syntax respectively. You may specify any
+number of these options; they will be applied left to right in the order
+given on the command line.
+.br
+This option can be useful if you're converting a repository in which the
+developer used directory-wide symbol names like 1_0, 1_1 and 2_1 as a
+kludgy form of release tagging (the C-x v s command in Emacs VC mode
+encourages this practice).
+.TP
 \fB--username\fR=\fIname\fR
 Set the default username to \fIname\fR when cvs2svn doesn't have a username
 from the CVS repository to work with.  This happens when a branch or tag is
-created. The default name is "unknown".
+created. The default name is "\fIunknown\fR".
 .TP
 \fB--skip-cleanup\fR
 Prevent the deletion of intermediate files.

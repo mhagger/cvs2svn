@@ -4242,10 +4242,16 @@ def main():
     elif opt == '--trunk-only':
       ctx.trunk_only = 1
     elif opt == '--trunk':
+      if not value:
+        sys.exit("%s: cannot pass an empty path to %s." % (error_prefix, opt))
       ctx.trunk_base = value
     elif opt == '--branches':
+      if not value:
+        sys.exit("%s: cannot pass an empty path to %s." % (error_prefix, opt))
       ctx.branches_base = value
     elif opt == '--tags':
+      if not value:
+        sys.exit("%s: cannot pass an empty path to %s." % (error_prefix, opt))
       ctx.tags_base = value
     elif opt == '--no-prune':
       ctx.prune = None

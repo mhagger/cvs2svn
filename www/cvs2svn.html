@@ -362,6 +362,34 @@ directories) before running your conversion.
   </tr>
 
   <tr>
+    <td align=right><tt>--symbol-transform=PATTERN:SUBSTITUTION</tt></td>
+    <td><p>Transform RCS/CVS symbol names before entering them into 
+      Subversion. The PATTERN and SUBSTITUTION use Python regexp and reference 
+      syntax. You may specify any number of these options; they will be
+      applied left to right in the order given on the command line.</p>
+
+      <p>This option can be useful if you're converting a repository in
+      which the developer used directory-wide symbol names like 1_0, 1_1 
+      and 2_1 as a kludgy form of release tagging (the C-x v s command
+      in Emacs VC mode encourages this practice).  A command like</p>
+
+<listing>
+cvs2svn --symbol-transform='([0-9])-(.*):release-\1.\2' -q -s SVN RCS
+</listing>
+
+      <p>will transform a local CVS repository into a local SVN repository, 
+      performing the following sort of mappings of RCS symbolic names to 
+      SVN tags:</p>
+
+<listing>
+1-0 &rarr; release-1.0
+1-1 &rarr; release-1.1
+2-0 &rarr; release-2.0
+</listing>
+      <p></td>
+  </tr>
+
+  <tr>
     <td align=right><tt>--no-prune</tt></td>
     <td>When all files are deleted from a directory in the Subversion
       repository, don't delete the empty directory (the default is to

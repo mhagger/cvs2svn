@@ -1226,6 +1226,12 @@ class CollectData(cvs2svn_rcsparse.Sink):
     header, for example: '1.7', '1.7.0.2', or '1.1.1' or '1.1.1.1'.
     This function will determine what kind of symbolic name it is by
     inspection, and record it in the right places."""
+    for (pattern, replacement) in Ctx().symbol_transforms:
+      newname = re.sub(pattern, replacement, name)
+      Log().write(LOG_WARN, "In '%s':\n"
+                       "   symbol '%s' transformed to '%s'\n"
+                       % (self.fname, name, newname))
+      name = newname
     if branch_tag.match(revision):
       self.add_cvs_branch(revision, name)
     elif vendor_tag.match(revision):
@@ -4216,6 +4222,7 @@ class Ctx:
     self.forced_branches = []
     self.forced_tags = []
     self.excludes = []
+    self.symbol_transforms = []
 
 class MimeMapper:
   """A class that provides mappings from file names to MIME types.
@@ -4354,7 +4361,8 @@ def main():
                                  "trunk-only", "no-prune", "dry-run",
                                  "dump-only", "dumpfile=", "tmpdir=",
                                  "svnadmin=", "skip-cleanup", "cvs-revnums",
-                                 "bdb-txn-nosync", "version", "profile", "keywords-off"])
+                                 "bdb-txn-nosync", "version", "profile",
+                                 "keywords-off", "symbol-transform="])
   except getopt.GetoptError, e:
     sys.stderr.write(error_prefix + ': ' + str(e) + '\n\n')
     usage()
@@ -4454,6 +4462,8 @@ def main():
           'default,\nand passing the option is deprecated.\n')
     elif opt == '--profile':
       profiling = 1
+    elif opt == '--symbol-transform':
+      ctx.symbol_transforms.append(value.split(":"))
       
   if ctx.print_help:
     usage()

@@ -271,6 +271,15 @@ class CVSRevision:
       output.write('%s ' % (branch))
     output.write('%s\n' % self.fname)
 
+  def contains_symbolic_name(self, name):
+    if name in self.tags:
+      return 1
+    if name in self.branches:
+      return 1
+    if self.branch_name == name:
+      return 1
+    return 0
+
 
 class CollectData(rcsparse.Sink):
   def __init__(self, cvsroot, log_fname_base, default_branches_db,
@@ -1618,6 +1627,14 @@ def make_revision_props(ctx, symbolic_name, is_tag, date=None):
            'svn:date' : date or format_date(time.time())}
 
 
+class DummySymbolicNameTracker:
+  def __getattr__(self, attr):
+    return self.noop
+
+  def noop(self, *foo):
+    pass
+
+
 class SymbolicNameTracker:
   """Track the Subversion path/revision ranges of CVS symbolic names.
   This is done in a .db file, representing a tree in the usual way.
@@ -1687,16 +1704,17 @@ class SymbolicNameTracker:
     # The keys for the opening and closing revision lists attached to
     # each directory or file.  Includes "/" so as never to conflict
     # with any real entry.
-    self.tags_opening_revs_key = "/tag-openings"
-    self.tags_closing_revs_key = "/tag-closings"
-    self.br_opening_revs_key   = "/br-openings"
-    self.br_closing_revs_key   = "/br-closings"
+    ### TODO These should be 2 chars when not debugging
+    self.opening_revs_key = "/o"
+    self.closing_revs_key = "/c"
 
     # When a node is copied into the repository, the revision copied
     # is stored under the appropriate key, and the corresponding
     # opening and closing rev lists are removed.
-    self.tags_copyfrom_rev_key = "/tags-copyfrom-rev"
-    self.br_copyfrom_rev_key = "/br-copyfrom-rev"
+    self.copyfrom_rev_key = "/r"
+    self.file_key = "/f"
+    ###TODO self.tags should be stored in the symnames_db
+    self.tags = {}
 
   def probe_path(self, symbolic_name, path, debugging=None):
     """If 'SYMBOLIC_NAME/PATH' exists in the symbolic name tree,
@@ -1740,62 +1758,59 @@ class SymbolicNameTracker:
     # It's not actually a parent at this point, it's the leaf node.
     return parent
 
-  def bump_rev_count(self, item_key, rev, revlist_key):
-    """Increment REV's count in opening or closing list under KEY.
-    REVLIST_KEY is self.*_opening_revs_key or self.*_closing_revs_key,
-    and indicates which rev list to increment REV's count in.
-
-    For example, if REV is 7, REVLIST_KEY is
-    self.tags_opening_revs_key, and the entry's tags opening revs list
-    looks like this
-
-         [(2, 5), (7, 2), (10, 15)]
-
-    then afterwards it would look like this:
-
-         [(2, 5), (7, 3), (10, 15)]
-
-    But if no tuple for revision 7 were present, then one would be
-    added, for example
-
-         [(2, 5), (10, 15)]
-
-    would become
-
-         [(2, 5), (7, 1), (10, 15)]
-
-    The list is sorted by ascending revision both before and after."""
-
-    entry_val = self.db[item_key]
-    
-    if not entry_val.has_key(revlist_key):
-      entry_val[revlist_key] = [(rev, 1)]
-    else:
-      rev_counts = entry_val[revlist_key]
-      for i in range(len(rev_counts)):
-        this_rev, this_count = rev_counts[i]
-        if rev == this_rev:
-          rev_counts[i] = (this_rev, this_count + 1)
-          break
-        elif this_rev > rev:
-          if i > 0:
-            i = i - 1
-          rev_counts.insert(i, (rev, 1))
-          break
-      else:
-        rev_counts.append((rev, 1))
-      entry_val[revlist_key] = rev_counts
-
-    self.db[item_key] = entry_val
 
   # The verb form of "root" is "root", but that would be misleading in
   # this case; and the opposite of "uproot" is presumably "downroot",
   # but that wouldn't exactly clarify either.  Hence, "enroot" :-).
-  def enroot_names(self, svn_path, svn_rev, names, opening_key):
+  def enroot_names(self, svn_path, svn_rev, names):
     """Record SVN_PATH at SVN_REV as the earliest point from which the
-    symbolic names in NAMES could be copied.  OPENING_KEY is
-    self.tags_opening_revs_key or self.br_opening_revs_key, to
-    indicate whether NAMES contains tag names or branch names.
+    symbolic names in NAMES could be copied.  SVN_PATH does not start
+    with '/'."""
+
+    # Guard against names == None
+    if not names:
+      return
+
+    for name in names:
+      components = [name] + string.split(svn_path, '/')
+      last_component = components[-1]
+      parent_key = self.root_key
+      for component in components:
+        parent = self.db[parent_key]
+        if not parent.has_key(component):
+          new_child_key = gen_key()
+          parent[component] = new_child_key
+          if component is last_component:
+            self.db[new_child_key] = {self.file_key : 1,
+                                      self.opening_revs_key : svn_rev}
+          else:
+            self.db[new_child_key] = {}
+          self.db[parent_key] = parent
+        # One way or another, parent now has an entry for component.
+        this_entry_key = parent[component]
+        this_entry_val = self.db[this_entry_key]
+        # Swaparoo.
+        parent_key = this_entry_key
+        parent = this_entry_val
+
+
+  def enroot_tags(self, svn_path, svn_rev, tags):
+    """Record SVN_PATH at SVN_REV as the earliest point from which the
+    symbolic names in TAGS could be copied.  SVN_PATH does not start
+    with '/'."""
+    for tag in tags:
+      self.tags[tag] = None
+    self.enroot_names(svn_path, svn_rev, tags)
+
+  def enroot_branches(self, svn_path, svn_rev, branches):
+    """Record SVN_PATH at SVN_REV as the earliest point from which the
+    symbolic names in BRANCHES could be copied.  SVN_PATH does not
+    start with '/'."""
+    self.enroot_names(svn_path, svn_rev, branches)
+
+  def close_names(self, svn_path, svn_rev, names):
+    """Record that as of SVN_REV, SVN_PATH could no longer be the
+    source from which any of symbolic names in NAMES could be copied.
     SVN_PATH does not start with '/'."""
 
     # Guard against names == None
@@ -1805,52 +1820,15 @@ class SymbolicNameTracker:
     for name in names:
       components = [name] + string.split(svn_path, '/')
       parent_key = self.root_key
+      parent = self.db[parent_key]
+      # If this symbolic name isn't even in the tracker anymore,
+      # bail (RepositoryMirror may return closed names for tags and
+      # branches that are already closed, and we should just ignore
+      # them).
+      if not parent.has_key(name):
+        return
+      last_component = components[-1]
       for component in components:
-        self.bump_rev_count(parent_key, svn_rev, opening_key)
-        parent = self.db[parent_key]
-        if not parent.has_key(component):
-          new_child_key = gen_key()
-          parent[component] = new_child_key
-          self.db[new_child_key] = {}
-          self.db[parent_key] = parent
-        # One way or another, parent now has an entry for component.
-        this_entry_key = parent[component]
-        this_entry_val = self.db[this_entry_key]
-        # Swaparoo.
-        parent_key = this_entry_key
-        parent = this_entry_val
-
-      self.bump_rev_count(parent_key, svn_rev, opening_key)
-
-  def enroot_tags(self, svn_path, svn_rev, tags):
-    """Record SVN_PATH at SVN_REV as the earliest point from which the
-    symbolic names in TAGS could be copied.  SVN_PATH does not start
-    with '/'."""
-    self.enroot_names(svn_path, svn_rev, tags, self.tags_opening_revs_key)
-
-  def enroot_branches(self, svn_path, svn_rev, branches):
-    """Record SVN_PATH at SVN_REV as the earliest point from which the
-    symbolic names in BRANCHES could be copied.  SVN_PATH does not
-    start with '/'."""
-    self.enroot_names(svn_path, svn_rev, branches, self.br_opening_revs_key)
-
-  def close_names(self, svn_path, svn_rev, names, closing_key):
-    """Record that as of SVN_REV, SVN_PATH could no longer be the
-    source from which any of symbolic names in NAMES could be copied.
-    CLOSING_KEY is self.tags_closing_revs_key or
-    self.br_closing_revs_key, to indicate whether NAMES are tags or
-    branches.  SVN_PATH does not start with '/'."""
-
-    # Guard against names == None
-    if not names:
-      return
-
-    for name in names:
-      components = [name] + string.split(svn_path, '/')
-      parent_key = self.root_key
-      for component in components:
-        self.bump_rev_count(parent_key, svn_rev, closing_key)
-        parent = self.db[parent_key]
         # Check for a "can't happen".
         if not parent.has_key(component):
           sys.stderr.write("%s: in path '%s', value for parent key '%s' "
@@ -1859,23 +1837,26 @@ class SymbolicNameTracker:
           sys.exit(1)
         this_entry_key = parent[component]
         this_entry_val = self.db[this_entry_key]
+
+        if component is last_component:
+          this_entry_val[self.closing_revs_key] = svn_rev
+          self.db[this_entry_key] = this_entry_val
+
         # Swaparoo.
         parent_key = this_entry_key
         parent = this_entry_val
-
-      self.bump_rev_count(parent_key, svn_rev, closing_key)
 
   def close_tags(self, svn_path, svn_rev, tags):
     """Record that as of SVN_REV, SVN_PATH could no longer be the
     source from which any of TAGS could be copied.  SVN_PATH does not
     start with '/'."""
-    self.close_names(svn_path, svn_rev, tags, self.tags_closing_revs_key)
+    self.close_names(svn_path, svn_rev, tags)
 
   def close_branches(self, svn_path, svn_rev, branches):
     """Record that as of SVN_REV, SVN_PATH could no longer be the
     source from which any of BRANCHES could be copied.  SVN_PATH does
     not start with '/'."""
-    self.close_names(svn_path, svn_rev, branches, self.br_closing_revs_key)
+    self.close_names(svn_path, svn_rev, branches)
 
   def score_revisions(self, openings, closings):
     """Return a list of revisions and scores based on OPENINGS and
@@ -1884,8 +1865,8 @@ class SymbolicNameTracker:
        [(REV1 SCORE1), (REV2 SCORE2), ...]
 
     where REV2 > REV1.  OPENINGS and CLOSINGS are the values of
-    self.tags_opening_revs_key and self.tags_closing_revs_key, or
-    self.br_opening_revs_key and self.br_closing_revs_key, from some file or
+    self.opening_revs_key and self.closing_revs_key, or
+    self.opening_revs_key and self.closing_revs_key, from some file or
     directory node, or else None.
 
     Each score indicates that copying the corresponding revision (or any
@@ -1958,26 +1939,92 @@ class SymbolicNameTracker:
     LIMIT_REV from SCORES, a list returned by score_revisions()."""
     return self.best_rev(scores, rev, limit_rev) == rev
 
+  def jit_score_node(self, node):
+    """Return two arrays: one of opening scores and one of closing
+    scores.  To do this, we walk the tree to each leaf node, get the
+    opening and closing score from there, and walk back up."""
+
+    root_key = node
+    tree = {} # Make a little node tree here in-mem
+    self.copy_node_tree(self.db, tree, node)
+    #self.print_node_tree(tree, root_key)
+
+    openings = self.list_revnums_in_node_tree(tree, node, self.opening_revs_key)
+    closings = self.list_revnums_in_node_tree(tree, node, self.closing_revs_key)
+    return self.condense_scores(openings), self.condense_scores(closings)
+
+  def condense_scores(self, scores):
+    """Takes an array of revisions (scores), for example:
+
+      [21, 18, 6, 49, 39, 24, 24, 24, 24, 24, 24, 24]
+
+    and adds up every occurrence of each revision and returns a sorted
+    array of tuples containing (svn_revnum, count):
+
+      [(6, 1), (18, 1), (21, 1), (24, 7), (39, 1), (49, 1)]
+    """
+    s = {}
+    for k in scores: # Add up the scores
+      if s.has_key(k):
+        s[k] = s[k] + 1
+      else:
+        s[k] = 1
+    a = s.items()
+    a.sort()
+    return a
+
+  def list_revnums_in_node_tree(self, tree, node, revnum_type_key):
+    """Scan TREE and return a list of all the revision numbers (including
+    duplicates) contained in REVNUM_TYPE_KEY values for all nodes under NODE,
+    including the score for NODE itself."""
+    revnums = []
+    if tree[node].has_key(revnum_type_key) and \
+        tree[node].has_key(self.file_key):
+      # If here, then we're at a leaf: Fetch revnum and return
+      revnums.append(tree[node][revnum_type_key])
+      return revnums
+
+    for key, value in tree[node].items():
+      if key[0] == '/': #Skip flags
+        continue
+      revnums = revnums + \
+          self.list_revnums_in_node_tree(tree, value, revnum_type_key)
+    return revnums
+
+  def print_node_tree(self, tree, root_node, indent_depth=0):
+    """For debugging purposes.  Prints all nodes in TREE that are
+    rooted at ROOT_NODE.  INDENT_DEPTH is merely for purposes of
+    debugging with the print statement in this function."""
+    #print "NNN:", " " * (indent_depth * 2), root_node, tree[root_node]
+    for key, value in tree[root_node].items():
+      if key[0] == '/': #Skip flags
+        continue
+      self.print_node_tree(tree, value, (indent_depth + 1))
+
+  def copy_node_tree(self, src, dst, start):
+    """Helper for jit_score_node.  Recursively copies START node and
+    all nodes under it from SRC to DST."""
+    dst[start] = src[start] 
+    for k, v in dst[start].items():
+      if k[0] == '/': #Skip flags
+        continue
+      self.copy_node_tree(src, dst, v)
+
   # Helper for copy_descend().
   def cleanup_entries(self, rev, limit_rev, entries, is_tag):
     """Return a copy of ENTRIES, minus the individual entries whose
     highest scoring revision doesn't match REV (and also, minus and
     special '/'-denoted flags).  IS_TAG is 1 or None, based on whether
     this work is being done for the sake of a tag or a branch."""
-    if is_tag:
-      opening_key = self.tags_opening_revs_key
-      closing_key = self.tags_closing_revs_key
-    else:
-      opening_key = self.br_opening_revs_key
-      closing_key = self.br_closing_revs_key
-
     new_entries = {}
-    for key in entries.keys():
+    for key, entry in entries.items():
       if key[0] == '/': # Skip flags
         continue
-      entry = entries.get(key)
       val = self.db[entry]
-      scores = self.score_revisions(val.get(opening_key), val.get(closing_key))
+
+      opening_scores, closing_scores = self.jit_score_node(entry)
+      scores = self.score_revisions(opening_scores, closing_scores)
+
       if self.is_best_rev(scores, rev, limit_rev):
         new_entries[key] = entry
     return new_entries
@@ -2010,25 +2057,17 @@ class SymbolicNameTracker:
     key = parent[entry_name]
     val = self.db[key]
 
-    if is_tag:
-      opening_key = self.tags_opening_revs_key
-      closing_key = self.tags_closing_revs_key
-      copyfrom_rev_key = self.tags_copyfrom_rev_key
-    else:
-      opening_key = self.br_opening_revs_key
-      closing_key = self.br_closing_revs_key
-      copyfrom_rev_key = self.br_copyfrom_rev_key
-
     limit_rev = dumper.revision
     if jit_new_rev and jit_new_rev[0]:
       # Because in this case the current rev is complete,
       # so is a valid copyfrom source
       limit_rev = limit_rev + 1  
 
-    if not val.has_key(copyfrom_rev_key):
+    if not val.has_key(self.copyfrom_rev_key):
       # If not already copied this subdir, calculate its "best rev"
       # and see if it differs from parent's best rev.
-      scores = self.score_revisions(val.get(opening_key), val.get(closing_key))
+      opening_scores, closing_scores = self.jit_score_node(key)
+      scores = self.score_revisions(opening_scores, closing_scores)
       rev = self.best_rev(scores, parent_rev, limit_rev)
 
       if rev == SVN_INVALID_REVNUM:
@@ -2062,11 +2101,11 @@ class SymbolicNameTracker:
           dumper.prune_entries(copy_dst, expected_entries)
 
         # Record that this copy is done:
-        val[copyfrom_rev_key] = parent_rev
-        if val.has_key(opening_key):
-          del val[opening_key]
-        if val.has_key(closing_key):
-          del val[closing_key]
+        val[self.copyfrom_rev_key] = parent_rev
+        if val.has_key(self.opening_revs_key):
+          del val[self.opening_revs_key]
+        if val.has_key(self.closing_revs_key):
+          del val[self.closing_revs_key]
         self.db[key] = val
 
     for ent in val.keys():
@@ -2126,10 +2165,9 @@ class SymbolicNameTracker:
     parent_key = parent[name]
     parent = self.db[parent_key]
 
-    really_is_tag = parent.has_key(self.tags_opening_revs_key)
-    if is_tag and really_is_tag:
+    if is_tag and self.tags.has_key(name):
       print "filling tag '%s'." % name
-    elif not is_tag and not really_is_tag:
+    elif not is_tag and not self.tags.has_key(name):
       print "filling branch '%s'." % name
     else:
       return
@@ -2242,7 +2280,36 @@ class SymbolicNameTracker:
         if name[0] != '/':
           self.fill_tag(dumper, ctx, name, [1])
 
+      if 0: # Left in temporarily for debugging
+        print "Cleaning up:"
+        for name in parent.keys():
+          if name[0] != '/':
+            print "Deleting", name
+            self.cleanup_symbol(name)
 
+  def cleanup_symbol(self, name):
+    """Remove the entire node tree rooted at /NAME from the
+    SymbolicNameTracker."""
+    root_dir = self.db[self.root_key]
+    self.del_node(root_dir[name])       # Recursively delete the node-tree
+    del root_dir[name]                  # Delete NAME from the root_dir
+    self.db[self.root_key] = root_dir   # Save the new root_dir
+
+  def del_node(self, node):
+    """Recursively delete NODE and all its children from the db."""
+    for key, subnode in self.db[node].items():
+      if key[0] == '/': # Skip flags
+        continue
+      self.del_node(subnode)
+    del self.db[node]
+
+  # Left in temporarily for debugging purposes
+  #def __del__(self):
+  #  print "=" * 75
+  #  for key in self.db.db.keys():
+  #    print key, self.db[key]
+
+        
 def is_trunk_vendor_revision(default_branches_db, cvs_path, cvs_rev):
   """Return 1 if CVS_REV of CVS_PATH is a trunk (i.e., head) vendor
   revision according to DEFAULT_BRANCHES_DB, else return None."""
@@ -2261,6 +2328,7 @@ def is_trunk_vendor_revision(default_branches_db, cvs_path, cvs_rev):
   return None
 
 
+### TODO add digest to constructor, then use it in __cmp__
 class Commit:
   def __init__(self, author, log):
     self.author = author
@@ -2279,6 +2347,7 @@ class Commit:
     self.t_min = 1L<<32
     self.t_max = 0
 
+  ###TODO: Tertiary sort by digest
   def __cmp__(self, other):
     # Commits should be sorted by t_max.  If both self and other have
     # the same t_max, break the tie using t_min.
@@ -2286,6 +2355,17 @@ class Commit:
 
   def has_file(self, fname):
     return self.files.has_key(fname)
+
+  def revisions(self):
+    return self.changes + self.deletes
+
+  def contains_symbolic_name(self, name):
+    """Returns true if any CVSRevision in this commit is on a tag or a
+    branch or is the origin of a tag or branch."""
+    for c_rev in self.revisions():
+      if c_rev.contains_symbolic_name(name):
+        return 1
+    return 0
 
   def add(self, c_rev):
     # Record the time range of this commit.
@@ -2557,6 +2637,50 @@ def read_resync(fname):
 
   return resync
 
+class SymbolicName:
+  def __init__(self, name, isTag=None):
+    self.name = name
+    self.isTag = isTag
+
+  def __hash__(self):
+    return hash(self.name)
+
+  def __cmp__(self, other):
+    return  cmp(self.name, other.name)
+
+
+###TODO break this out into a separate pass
+def get_symbol_closing_revs(ctx):
+  """Iterate through sorted revs, accumulating tags and branches as it
+  goes.  Returns a dictionary whose key is the last revision a
+  symbolicname was seen in, and whose value is a list of all
+  symbolicnames that were last seen in that revision."""
+
+  # Once we've gone through all the revs,
+  # symbols.keys() will be a list of all tags and branches, and
+  # their corresponding values will be a key into the last CVS revision
+  # that they were used in.
+  symbols = {}
+  for line in fileinput.FileInput(ctx.log_fname_base + SORTED_REVS_SUFFIX):
+    c_rev = CVSRevision(ctx, line)
+
+    for tag in c_rev.tags:
+      symbols[SymbolicName(tag, 1)] = c_rev.unique_key()
+    for branch in c_rev.branches:
+      symbols[SymbolicName(branch)] = c_rev.unique_key()
+    if c_rev.branch_name:
+      symbols[SymbolicName(branch)] = c_rev.unique_key()
+
+  # Creates an inversion of symbols above--a dictionary of lists (key
+  # = CVS rev unique_key: val = list of symbols that close in that
+  # rev.
+  symbol_revs = {}
+  for sym, rev_unique_key in symbols.items():
+    if symbol_revs.has_key(rev_unique_key):
+      symbol_revs[rev_unique_key].append(sym)
+    else:
+      symbol_revs[rev_unique_key] = [sym]
+  return symbol_revs
 
 def pass1(ctx):
   cd = CollectData(ctx.cvsroot, DATAFILE, ctx.default_branches_db,
@@ -2635,7 +2759,11 @@ def pass3(ctx):
 
 
 def pass4(ctx):
-  sym_tracker = SymbolicNameTracker()
+  if ctx.trunk_only:
+    sym_tracker = DummySymbolicNameTracker()
+  else:
+    sym_tracker = SymbolicNameTracker()
+    symbols_closed_by_revkey = get_symbol_closing_revs(ctx)
   metadata_db = Database(METADATA_DB, 'r')
 
   # A dictionary of Commit objects, keyed by digest.  Each object
@@ -2656,6 +2784,7 @@ def pass4(ctx):
   # Start the dumpfile object.
   dumper = Dumper(ctx)
 
+  pending_symbols = {}
   # process the logfiles, creating the target
   for line in fileinput.FileInput(ctx.log_fname_base + SORTED_REVS_SUFFIX):
     c_rev = CVSRevision(ctx, line)
@@ -2703,6 +2832,32 @@ def pass4(ctx):
       c = commits[c_rev.digest] = Commit(author, log)
     c.add(c_rev)
 
+    if ctx.trunk_only:
+      continue
+    #####################################################################
+    for sym in symbols_closed_by_revkey.get(c_rev.unique_key(), []):
+      pending_symbols[sym] = None
+
+    open_symbols = {}
+    for sym in pending_symbols.keys():
+      for k, v in commits.items():
+        if v.contains_symbolic_name(sym.name):
+          open_symbols[sym] = None
+          break
+
+    sorted_pending_symbols_keys = pending_symbols.keys()
+    sorted_pending_symbols_keys.sort()
+    for sym in sorted_pending_symbols_keys:
+      if open_symbols.has_key(sym): # sym is still open--don't close it now.
+        continue
+      if sym.isTag:
+        sym_tracker.fill_tag(dumper, ctx, sym.name, [1])
+      else:
+        sym_tracker.fill_branch(dumper, ctx, sym.name, [1])
+      sym_tracker.cleanup_symbol(sym.name)
+      del pending_symbols[sym]
+    #####################################################################
+
   # End of the sorted revs file.  Flush any remaining commits:
   if commits:
     process = commits.values()
@@ -2728,7 +2883,8 @@ def pass5(ctx):
   os.unlink(SVN_REVISIONS_DB)
   os.unlink(NODES_DB)
   os.unlink(SYMBOLIC_NAME_ROOTS_DB)
-  os.unlink(SYMBOLIC_NAMES_DB)
+  if not ctx.trunk_only:
+    os.unlink(SYMBOLIC_NAMES_DB)
   os.unlink(METADATA_DB)
 
   # This is the only DB reference still reachable at this point; lose

@@ -344,9 +344,9 @@ class Log:
   self.use_timestamps is TRUE.  This class is a Borg."""
   _shared_state = {}
   def __init__(self):
-    if self.__dict__ is self._shared_state:
-      return
     self.__dict__ = self._shared_state
+    if self.__dict__:
+      return
     self.log_level = LOG_NORMAL
     # Set this to true if you want to see timestamps on each line output.
     self.use_timestamps = None
@@ -376,9 +376,9 @@ class Cleanup:
 
   _shared_state = {}
   def __init__(self):
-    if self.__dict__ is self._shared_state:
-      return
     self.__dict__ = self._shared_state
+    if self.__dict__:
+      return
     self._log = {}
     self._callbacks = {}
 

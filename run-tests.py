@@ -27,14 +27,13 @@ import time
 import os.path
 import locale
 
-# This script needs to run in tools/cvs2svn/.  Make sure we're there.
+# This script needs to run in the correct directory.  Make sure we're there.
 if not (os.path.exists('cvs2svn.py') and os.path.exists('test-data')):
-  sys.stderr.write("error: I need to be run in 'tools/cvs2svn/' "
-                   "in the Subversion tree.\n")
+  sys.stderr.write("error: I need to be run in the directory containing "
+                   "'cvs2svn.py' and 'test-data'.\n")
   sys.exit(1)
 
-# Find the Subversion test framework.
-sys.path += [os.path.abspath('../../subversion/tests/clients/cmdline')]
+# Load the Subversion test framework.
 import svntest
 
 # Abbreviations

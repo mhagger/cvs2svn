@@ -2754,6 +2754,14 @@ def main():
     usage(ctx)
     sys.exit(1)
 
+  ctx.cvsroot = args[0]
+
+  if not os.path.isdir(ctx.cvsroot):
+    sys.stderr.write(error_prefix +
+                     ": the cvs-repos-path '%s' is not an "
+                     "existing directory.\n" % ctx.cvsroot)
+    sys.exit(1)
+
   if (not ctx.target) and (not ctx.dump_only):
     sys.stderr.write(error_prefix +
                      ": must pass one of '-s' or '--dump-only'.\n")
@@ -2785,9 +2793,14 @@ def main():
                      "for details.\n" % error_prefix)
     sys.exit(1)
 
-  ctx.default_branches_db = Database(DEFAULT_BRANCHES_DB, 'n')
+  if (not ctx.dump_only) and (not ctx.create_repos) and \
+      not os.path.isdir(ctx.target):
+    sys.stderr.write(error_prefix +
+                     ": the svn-repos-path '%s' is not an "
+                     "existing directory.\n" % ctx.target)
+    sys.exit(1)
 
-  ctx.cvsroot = args[0]
+  ctx.default_branches_db = Database(DEFAULT_BRANCHES_DB, 'n')
 
   convert(ctx, start_pass=start_pass)
 

@@ -573,6 +573,7 @@ class StatsKeeper:
                     'tags': { },
                     'branches' : { },
                     'repos_size' : 0,
+                    'repos_files' : { },
                     'svn_rev_count' : None,
                     'first_rev_date' : 1L<<32,
                     'last_rev_date' : 0,
@@ -602,6 +603,9 @@ class StatsKeeper:
 
     self._bump_item('repos_size', c_rev.file_size)
 
+    self.data['repos_files'][c_rev.fname] = None
+
+
   def set_svn_rev_count(self, count):
     self.data['svn_rev_count'] = count
 
@@ -623,6 +627,7 @@ class StatsKeeper:
     return ('\n'                                \
             '           cvs2svn Statistics\n'   \
             '           ------------------\n'   \
+            '       Total CVS Files: %10i\n'    \
             '   Total CVS Revisions: %10i\n'    \
             '     Total Unique Tags: %10i\n'    \
             ' Total Unique Branches: %10i\n'    \
@@ -630,7 +635,8 @@ class StatsKeeper:
             '%s'                                \
             '   First Revision Date: %s\n'      \
             '    Last Revision Date: %s'        \
-            % (self.data['cvs_revs_count'],
+            % (len(self.data['repos_files']),
+               self.data['cvs_revs_count'],
                len(self.data['tags']),
                len(self.data['branches']),
                (self.data['repos_size'] / 1024),

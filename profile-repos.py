@@ -10,6 +10,8 @@ def do_it(revs_file):
   max_tags = 0
   max_branches = 0
   line_count = 0
+  total_tags = 0
+  total_branches = 0
   
   while 1:
     line_count = line_count + 1
@@ -19,11 +21,13 @@ def do_it(revs_file):
     pieces = line.split(' ')
     num_tags = int(pieces[6])
     max_tags = (num_tags > max_tags) and num_tags or max_tags
+    total_tags = total_tags + num_tags
     for i in range(num_tags):
       tags[pieces[6 + i + 1]] = None
     num_branches = int(pieces[6 + num_tags + 1])
     max_branches = (num_branches > max_branches) \
                    and num_branches or max_branches
+    total_branches = total_branches + num_branches
     for i in range(num_branches):
       branches[pieces[6 + num_tags + 1 + i + 1]] = None
 
@@ -34,20 +38,27 @@ def do_it(revs_file):
   num_symbols = len(symbols.keys())
   num_tags = len(tags.keys())
   num_branches = len(branches.keys())
+  avg_tags = total_tags * 100.0 / line_count
+  avg_branches = total_branches * 100.0 / line_count
   
   print '       Total Revisions: %d\n' \
         '     Total Unique Tags: %d\n' \
-        ' Total Unique Branches: %d\n' \
-        '  Total Unique Symbols: %d%s\n' \
         '    Peak Revision Tags: %d\n' \
-        'Peak Revision Branches: %d' \
+        '    Avg. Tags/Revision: %2.1f%%\n' \
+        ' Total Unique Branches: %d\n' \
+        'Peak Revision Branches: %d\n' \
+        'Avg. Branches/Revision: %2.1f%%\n' \
+        '  Total Unique Symbols: %d%s\n' \
         % (line_count, 
            num_tags,
+           max_tags,
+           avg_tags,
            num_branches,
+           max_branches,
+           avg_branches,
            num_symbols,
            num_symbols == num_tags + num_branches and ' ' or ' (!)',
-           max_tags,
-           max_branches)
+           )
 
 
 if __name__ == "__main__":

@@ -460,7 +460,7 @@ class LastSymbolicNameDatabase:
   def __init__(self, mode):
     self.symbols = {}
     self.symbol_revs_db = Database(SYMBOL_LAST_CVS_REVS_DB, mode)
-    Cleanup().register(SYMBOL_LAST_CVS_REVS_DB, pass8)
+    Cleanup().register(SYMBOL_LAST_CVS_REVS_DB, pass5)
 
   # Once we've gone through all the revs,
   # symbols.keys() will be a list of all tags and branches, and
@@ -718,7 +718,7 @@ class CollectData(rcsparse.Sink):
     self.resync = open(DATAFILE + RESYNC_SUFFIX, 'w')
     Cleanup().register(DATAFILE + RESYNC_SUFFIX, pass2)
     self.default_branches_db = Database(DEFAULT_BRANCHES_DB, DB_OPEN_NEW)
-    Cleanup().register(DEFAULT_BRANCHES_DB, pass8)
+    Cleanup().register(DEFAULT_BRANCHES_DB, pass5)
     self.metadata_db = Database(METADATA_DB, DB_OPEN_NEW)
     Cleanup().register(METADATA_DB, pass8)
     self.fatal_errors = []

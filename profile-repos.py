@@ -27,13 +27,27 @@ def do_it(revs_file):
     for i in range(num_branches):
       branches[pieces[6 + num_tags + 1 + i + 1]] = None
 
+  symbols = {}
+  symbols.update(tags)
+  symbols.update(branches)
+
+  num_symbols = len(symbols.keys())
+  num_tags = len(tags.keys())
+  num_branches = len(branches.keys())
+  
   print '       Total Revisions: %d\n' \
         '     Total Unique Tags: %d\n' \
         ' Total Unique Branches: %d\n' \
+        '  Total Unique Symbols: %d%s\n' \
         '    Peak Revision Tags: %d\n' \
         'Peak Revision Branches: %d' \
-        % (line_count, len(tags.keys()), len(branches.keys()),
-           max_tags, max_branches)
+        % (line_count, 
+           num_tags,
+           num_branches,
+           num_symbols,
+           num_symbols == num_tags + num_branches and ' ' or ' (!)',
+           max_tags,
+           max_branches)
 
 
 if __name__ == "__main__":

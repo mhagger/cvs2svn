@@ -2931,17 +2931,6 @@ class SVNRepositoryMirror:
                  src_entries[src_key], _path_join(path, src_key),
                  copy_source.prefix, sources[0].revnum, prune_ok)
 
-  def _get_invalid_entries(self, valid_entries, all_entries):
-    """Return a list of keys in ALL_ENTRIES that do not occur in
-    VALID_ENTRIES.  Ignore any key that begins with '/'."""
-    bogons = [ ]
-    for key in all_entries.keys():
-      if key[0] == '/':
-        continue
-      if not valid_entries.has_key(key):
-        bogons.append(key)
-    return bogons
-
   def _open_path(self, path):
     """Open a chain of mutable nodes for PATH from the youngest
     revision.  Any nodes in the chain that are already mutable will be

@@ -1507,7 +1507,6 @@ def eol_mime():
   if allprops['foo.txt'].get('svn:mime-type') is not None:
     raise svntest.Failure
   if not allprops['foo.txt'].get('cvs2svn:cvs-rev') == '1.2':
-    print "FITZ:", allprops['foo.txt']
     raise svntest.Failure
 
   # foo.xml (no -kb, mime file says text)

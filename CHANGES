@@ -1,5 +1,5 @@
 Version 1.2.0
-(xx January 2005, from /tags/1.2.0)
+(11 January 2005, from /tags/1.2.0)
 
  New features:
  * --fs-type=TYPE: make it possible to specify the filesystem type.

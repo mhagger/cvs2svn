@@ -334,26 +334,19 @@ def print_node_tree(tree, root_node, indent_depth=0):
     print_node_tree(tree, value, (indent_depth + 1))
 
 
-class Singleton(object):
-  """If you wish to have a class that you can only instantiate once,
-  then this is your superclass."""
-  def __new__(cls, *args, **kwds):
-    singleton = cls.__dict__.get("__singleton__")
-    if singleton is not None:
-      return singleton
-    cls.__singleton__ = singleton = object.__new__(cls)
-    singleton.init(*args, **kwds)
-    return singleton
-
 # These constants represent the log levels that this script supports
 LOG_WARN = -1
 LOG_QUIET = 0
 LOG_NORMAL = 1
 LOG_VERBOSE = 2
-class Log(Singleton):
+class Log:
   """A Simple logging facility.  Each line will be timestamped is
-  self.use_timestamps is TRUE."""
-  def init(self):
+  self.use_timestamps is TRUE.  This class is a Borg."""
+  _shared_state = {}
+  def __init__(self):
+    if self.__dict__ is self._shared_state:
+      return
+    self.__dict__ = self._shared_state
     self.log_level = LOG_NORMAL
     # Set this to true if you want to see timestamps on each line output.
     self.use_timestamps = None
@@ -374,15 +367,18 @@ class Log(Singleton):
     self.logger.write(' '.join(map(str,args)) + "\n")
 
 
-class Cleanup(Singleton):
+class Cleanup:
   """This singleton class manages any files created by cvs2svn.  When
   you first create a file, call Cleanup.register, passing the
   filename, and the last pass that you need the file.  After the end
   of that pass, your file will be cleaned up after running an optional
-  callback."""
+  callback.  This class is a Borg."""
 
-  # We're a singleton, so we use init, not __init__
-  def init(self):
+  _shared_state = {}
+  def __init__(self):
+    if self.__dict__ is self._shared_state:
+      return
+    self.__dict__ = self._shared_state
     self._log = {}
     self._callbacks = {}
 

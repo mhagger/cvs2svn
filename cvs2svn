@@ -4242,7 +4242,6 @@ def main():
           'default,\nand passing the option is deprecated.\n')
     elif opt == '--profile':
       profiling = 1
-      pass
       
   if ctx.print_help:
     usage()

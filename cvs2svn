@@ -3662,9 +3662,14 @@ class RepositoryDelegate(DumpfileDelegate):
     self.target = Ctx().target
     if not Ctx().existing_svnrepos:
       Log().write(LOG_NORMAL,"Creating new repository '%s'" % (self.target))
-      run_command('%s create %s %s' % (self.svnadmin, Ctx().bdb_txn_nosync
-                                       and "--bdb-txn-nosync"
-                                       or "", self.target))
+      # We always pass the --bdb-txn-nosync switch to svnadmin here
+      # because it gives us a 4-5x speed boost (If cvs2svn is creating
+      # the repository, cvs2svn should be the only program accessing
+      # the svn repository (until cvs is done, at least)).  However,
+      # for the sake of caution, we'll turn no-sync off in self.finish
+      # unless the user passed --bdb-txn-nosync to cvs2svn.
+      run_command('%s create %s %s' % (self.svnadmin, "--bdb-txn-nosync",
+                                       self.target))
 
     # Since the output of this run is a repository, not a dumpfile,
     # the temporary dumpfiles we create should go in the tmpdir.
@@ -3724,6 +3729,17 @@ class RepositoryDelegate(DumpfileDelegate):
                'and the following output:\n'
                '%s' % (error_prefix, exit_status, error_output))
     os.remove(self.dumpfile_path)
+
+    # If we created the repository and --bdb-no-sync wasn't passed,
+    # then comment out the DB_TXN_NOSYNC line in the DB_CONFIG file
+    if (not Ctx().existing_svnrepos) and (not Ctx().bdb_txn_nosync):
+      db_config = os.path.join(self.target, "db/DB_CONFIG")
+      no_sync = 'set_flags DB_TXN_NOSYNC\n'
+
+      contents = open(db_config, 'r').readlines()
+      index = contents.index(no_sync)
+      contents[index] = '# ' + no_sync
+      contents = open(db_config, 'w').writelines(contents)
 
 
 class StdoutDelegate(SVNRepositoryMirrorDelegate):

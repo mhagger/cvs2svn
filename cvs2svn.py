@@ -2769,6 +2769,10 @@ class SVNRepositoryMirror:
     symbol_fill = self.symbolings_reader.filling_guide_for_symbol(
       svn_commit.symbolic_name, self.youngest)
 
+    # Create the list of sources for the symbolic name.  All source
+    # prefixes must be direct sources for the destination, i.e. we
+    # must have 'trunk' and 'branches/my_branch' and not just
+    # 'branches'.
     sources = []
     for entry, key in symbol_fill.node_tree[symbol_fill.root_key].items():
       if entry == self._ctx.trunk_base:

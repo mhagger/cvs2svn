@@ -669,7 +669,7 @@ class CVSRevision:
       self.timestamp = int(data[0], 16)
       self.digest = data[1]
       if data[2] == "*":
-        self.prev_timestamp = None
+        self.prev_timestamp = 0
       else:
         self.prev_timestamp = int(data[2])
       self.op = data[3]
@@ -1296,7 +1296,7 @@ class CollectData(cvs2svn_rcsparse.Sink):
 
     # Get the timestamp of the previous revision
     prev_rev = self.prev_rev.get(revision, None)
-    prev_timestamp, ign, ign = self.rev_data.get(prev_rev, [None, None, None])
+    prev_timestamp, ign, ign = self.rev_data.get(prev_rev, [0, None, None])
 
     # How to tell if a CVSRevision is an add, a change, or a deletion:
     #

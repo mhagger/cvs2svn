@@ -2183,6 +2183,7 @@ class SymbolingsReader:
 
     symbol_fill = SymbolicNameFillingGuide(self._ctx, symbolic_name)
     while (1):
+      fpos = self.symbolings.tell()
       line = self.symbolings.readline().rstrip()
       if not line:
         break
@@ -2197,8 +2198,7 @@ class SymbolingsReader:
     # for the beginning of the line we just read if we used anything
     # we read.
     if not symbol_fill.is_empty():
-      # Subtract one cause we rstripped the CR above.
-      self.offsets[symbolic_name] = self.symbolings.tell() - len(line) - 1
+      self.offsets[symbolic_name] = fpos
                                
     symbol_fill.make_node_tree()
     return symbol_fill
@@ -3734,6 +3734,7 @@ def pass7(ctx):
     file = open(SYMBOL_OPENINGS_CLOSINGS_SORTED, 'r')
     old_sym = ""
     while 1:
+      fpos = file.tell()
       line = file.readline()
       if not line:
         break
@@ -3741,7 +3742,7 @@ def pass7(ctx):
       if not sym == old_sym:
         Log().write(LOG_VERBOSE, " ", sym)
         old_sym = sym
-        offsets_db[sym] = file.tell() - len(line)
+        offsets_db[sym] = fpos
 
   if not ctx.trunk_only:
     generate_offsets_for_symbolings()

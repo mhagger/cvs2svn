@@ -8,9 +8,10 @@ state in memory, and b) the conversion process is resumable.
 Pass 1:
 =======
 
-The goal of this pass is to get a summary of all the revisions for
-each file written out to 'cvs2svn-data.revs'; at the end of this
-stage, revisions will be grouped by RCS file, not by logical commits.
+The goal of this pass is to write to 'cvs2svn-data.revs' a summary of
+all the revisions for each RCS file.  Each revision will be
+represented by one line.  At the end of this stage, the revisions
+(i.e., the lines) will be grouped by RCS file, not by logical commits.
 
 We walk over the repository, processing each RCS file with
 rcsparse.parse(), using cvs2svn's CollectData class, which is a

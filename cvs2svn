@@ -130,12 +130,6 @@ DUMPFILE = 'cvs2svn-dump'
 # grouping.  See design-notes.txt for details.
 DATAFILE = 'cvs2svn-data'
 
-# This is a file that contains nothing more than the total amount of
-# Subversion revisions (calculated in pass5) that we will create in
-# our new Subversion repository.  The file contains a single number
-# and no newline.
-TOTAL_SVN_REVS = 'cvs2svn-total-revs'
-
 # This file contains a marshalled copy of all the statistics that we
 # gather throughout the various runs of cvs2svn.  The data stored as a
 # marshalled dictionary.
@@ -617,7 +611,7 @@ class StatsKeeper:
   def set_svn_rev_count(self, count):
     self.data['svn_rev_count'] = count
 
-  def svn_rev_count(self, count):
+  def svn_rev_count(self):
     return self.data['svn_rev_count']
 
   def archive(self):
@@ -1616,10 +1610,6 @@ class PersistenceManager:
     # This is used by CVSCommit._pre_commit, to prevent creating a fill
     # revision which would have nothing to do.
     self.last_filled = {}
-
-  def total_revs(self):
-    """Return the total number of Subversion revisions."""
-    return int(open(temp(TOTAL_SVN_REVS), 'r').read())
 
   def get_svn_revnum(self, cvs_rev_unique_key):
     """Return the Subversion revision number in which
@@ -4083,10 +4073,8 @@ def pass5():
       aggregator.process_revision(c_rev)
   aggregator.flush()
 
-  # Now that we're done with the revision mapping, record the total
-  # number of SVNCommits we have.
-  open(temp(TOTAL_SVN_REVS), 'w').write(str(SVNCommit.revnum - 1))
-  Cleanup().register(temp(TOTAL_SVN_REVS), pass8)
+  StatsKeeper().set_svn_rev_count(SVNCommit.revnum - 1)
+  StatsKeeper().archive()
   Log().write(LOG_QUIET, "Done")
 
 def pass6():
@@ -4146,7 +4134,7 @@ def pass8():
       repos.add_delegate(DumpfileDelegate())
     Log().write(LOG_QUIET, "Starting Subversion Dumpfile.")
 
-  repos.add_delegate(StdoutDelegate(persistence_manager.total_revs()))
+  repos.add_delegate(StdoutDelegate(StatsKeeper().svn_rev_count()))
 
   while(1):
     svn_commit = persistence_manager.get_svn_commit(svncounter)
@@ -4155,7 +4143,6 @@ def pass8():
     repos.commit(svn_commit)
     svncounter += 1
 
-  StatsKeeper().set_svn_rev_count(persistence_manager.total_revs())
   repos.finish()
 
 _passes = [

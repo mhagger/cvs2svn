@@ -400,7 +400,7 @@ def sort_file(infile, outfile):
   # The -T option to sort has a nice side effect.  The Win32 sort is
   # case insensitive and cannot be used, and since it does not
   # understand the -T option and dies if we try to use it, there is
-  # no risk that we that sort by accident.
+  # no risk that we use that sort by accident.
   run_command('sort -T %s %s > %s' % (Ctx().tmpdir, infile, outfile))
   if lc_all_tmp is None:
     del os.environ['LC_ALL']

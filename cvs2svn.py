@@ -2948,7 +2948,7 @@ class MimeMapper:
 
 
   def print_missing_mappings(self):
-    for ext in self.missing_mappings:
+    for ext in self.missing_mappings.keys():
       sys.stderr.write("%s: no MIME mapping for *.%s\n" % (warning_prefix, ext))
 
 

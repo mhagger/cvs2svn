@@ -3887,9 +3887,9 @@ def convert(ctx, start_pass, end_pass):
     _passes[i](ctx)
     # Dispose of items in ctx not intended to live past the end of the pass
     # (Identified by exactly one leading underscore)
-    for i in dir(ctx):
-      if len(i) > 2 and i[0] == '_' and i[1] != '_':
-        delattr(ctx, i)
+    for attr in dir(ctx):
+      if len(attr) > 2 and attr[0] == '_' and attr[1] != '_':
+        delattr(ctx, attr)
     if not ctx.skip_cleanup:
       cleanup.cleanup(_passes[i])
   times.append(time.time())

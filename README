@@ -20,8 +20,7 @@ Subversion's own history was converted from CVS into a 3000+ revision
 svn repository.  Your Mileage May Vary.  To see a list of all open
 cvs2svn bugs, visit:
 
-   http://cvs2svn.tigris.org/issues/buglist.cgi?component=subversion&issue_status=NEW&issue_status=STARTED&issue_status=REOPENED
-
+   http://cvs2svn.tigris.org/issues/buglist.cgi?component=cvs2svn&issue_status=NEW&issue_status=STARTED&issue_status=REOPENED
 
 Installing cvs2svn:
 ===================
@@ -65,12 +64,12 @@ Using cvs2svn:
   To create a new Subversion repository by converting an existing CVS
   repository, run the script like this:
 
-     $ cvs2svn.py --create -s NEW_SVNREPOS CVSREPOS
+     $ cvs2svn.py -s NEW_SVNREPOS CVSREPOS
 
   To create a new Subversion repository containing only trunk commits,
   and omitting all branches and tags from the CVS repository, do
 
-     $ cvs2svn.py --trunk-only --create -s NEW_SVNREPOS CVSREPOS
+     $ cvs2svn.py --trunk-only -s NEW_SVNREPOS CVSREPOS
 
   To create a Subversion dumpfile (suitable for 'svnadmin load') from
   a CVS repository, run it like this:

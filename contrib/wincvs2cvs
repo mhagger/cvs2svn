@@ -12,7 +12,7 @@
 
 # Hack around strangeness in PERL
 LANG=C
-export C
+export LANG
 
 # Do the dastardly deed.
 find . -type f -print0 | xargs -0 perl -pi -e 's/author\s+(\w+)\s(\w+);/author

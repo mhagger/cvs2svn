@@ -1710,7 +1710,7 @@ def keywords():
 
 
 def ignore():
-  "test setting of svn:ignore property among others"
+  "test setting of svn:ignore property"
   repos, wc, logs = ensure_conversion('cvsignore')
   wc_tree = svntest.tree.build_tree_from_wc(wc, 1)
   topdir_props = props_for_path(wc_tree, 'trunk/proj')

@@ -14,4 +14,4 @@ check:
 	@./run-tests.py
 
 clean:
-	@rm -rf cvs2svn-*.tar.gz *.pyc
+	@rm -rf cvs2svn-*.tar.gz *.pyc build

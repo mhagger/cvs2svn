@@ -52,20 +52,55 @@ except:
   True = 1
   False = 0
 
-# Minimal, incomplete, version of popen2.Popen3 for those platforms
-# for which popen2 does not provide it.
+# Opening pipes was a mess before Python 2.4, because some methods did
+# not exist on some platforms, and some behaved differenly on other.
+# Python 2.4 solved this by adding the subprocess module, but since we
+# cannot require such a new version, we cannot use it directly, but
+# must implement a simplified Popen using the best means neccessary.
+# 
+# The SimplePopen class only has the following members and methods, all
+# behaving as documented in the subprocess.Popen class:
+#     - stdin
+#     - stdout
+#     - stderr
+#     - wait
 try:
-  Popen3 = popen2.Popen3
-except AttributeError:
-  class Popen3:
-    def __init__(self, cmd, capturestderr):
-      if type(cmd) != str:
-        cmd = " ".join(cmd)
-      self.fromchild, self.tochild, self.childerr = popen2.popen3(cmd,
-                                                                  mode='b')
-    def wait(self):
-      return self.fromchild.close() or self.tochild.close() or \
-             self.childerr.close()
+  # First try subprocess.Popen...
+  import subprocess
+  class SimplePopen:
+    def __init__(self, cmd, capture_stderr):
+      if capture_stderr:
+        stderr = subprocess.PIPE
+      else:
+        stderr = None
+      self._popen = subprocess.Popen(cmd, stdin=subprocess.PIPE,
+                                    stdout=subprocess.PIPE, stderr=stderr)
+      self.stdin = self._popen.stdin
+      self.stdout = self._popen.stdout
+      if capture_stderr:
+        self.stderr = self._popen.stderr
+      self.wait = self._popen.wait
+except ImportError:
+  if hasattr(popen2, 'Popen3'):
+    # ...then try popen2.Popen3...
+    class SimplePopen:
+      def __init__(self, cmd, capture_stderr):
+        self._popen3 = popen2.Popen3(cmd, capture_stderr)
+        self.stdin = self._popen3.tochild
+        self.stdout = self._popen3.fromchild
+        if capture_stderr:
+          self.stderr = self._popen3.childerr
+        self.wait = self._popen3.wait
+  else:
+    # ...and if all fails, use popen2.popen3...
+    class SimplePopen:
+      def __init__(self, cmd, capture_stderr):
+        if type(cmd) != str:
+          cmd = argv_to_command_string(cmd)
+        self.stdout, self.stdin, self.stderr = popen2.popen3(cmd, mode='b')
+      def wait(self):
+        return self.stdout.close() or self.stdin.close() or \
+               self.stderr.close()
 
 # DBM module selection
 
@@ -320,32 +355,34 @@ def relative_name(cvsroot, fname):
                    " cvsroot\n" % (error_prefix, cvsroot, fname))
   sys.exit(1)
 
-def get_co_pipe(c_rev, extra_arguments=''):
+def get_co_pipe(c_rev, extra_arguments=None):
   """Return a command string, and the pipe created using that string.
   C_REV is a CVSRevision, and EXTRA_ARGUMENTS is used to add extra
   arguments.  The pipe returns the text of that CVS Revision."""
   ctx = Ctx()
+  if extra_arguments is None:
+    extra_arguments = []
   if ctx.use_cvs:
-    pipe_cmd = 'cvs %s co -r%s -p %s %s' % \
-               (ctx.cvs_global_arguments, c_rev.rev, extra_arguments,
-                escape_shell_arg(ctx.cvs_module + c_rev.cvs_path))
+    pipe_cmd = [ 'cvs' ] + ctx.cvs_global_arguments + \
+               [ 'co', '-r' + c_rev.rev, '-p' ] + extra_arguments + \
+               [ ctx.cvs_module + c_rev.cvs_path ];
   else:
-    pipe_cmd = 'co -q -x,v -p%s %s %s' % \
-               (c_rev.rev, extra_arguments, escape_shell_arg(c_rev.rcs_path()))
-  pipe = Popen3(pipe_cmd, True)
-  pipe.tochild.close()
+    pipe_cmd = [ 'co', '-q', '-x,v', '-p' + c_rev.rev ] + extra_arguments + \
+               [ c_rev.rcs_path() ]
+  pipe = SimplePopen(pipe_cmd, True)
+  pipe.stdin.close()
   return pipe_cmd, pipe
 
 def generate_ignores(c_rev):
   # Read in props
   pipe_cmd, pipe = get_co_pipe(c_rev)
-  buf = pipe.fromchild.read(PIPE_READ_SIZE)
+  buf = pipe.stdout.read(PIPE_READ_SIZE)
   raw_ignore_val = ""
   while buf:
     raw_ignore_val = raw_ignore_val + buf
-    buf = pipe.fromchild.read(PIPE_READ_SIZE)
-  pipe.fromchild.close()
-  error_output = pipe.childerr.read()
+    buf = pipe.stdout.read(PIPE_READ_SIZE)
+  pipe.stdout.close()
+  error_output = pipe.stderr.read()
   exit_status = pipe.wait()
   if exit_status:
     sys.exit("%s: The command '%s' failed with exit status: %s\n"
@@ -3672,7 +3709,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     # expanding the keywords because they must be unexpanded in the
     # repository, or Subversion will get confused.
     if s_item.has_keywords:
-      pipe_cmd, pipe = get_co_pipe(c_rev, '-kk')
+      pipe_cmd, pipe = get_co_pipe(c_rev, [ '-kk' ])
     else:
       pipe_cmd, pipe = get_co_pipe(c_rev)
 
@@ -3696,9 +3733,9 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
 
     # Insert a filter to convert all EOLs to LFs if neccessary
     if s_item.needs_eol_filter:
-      data_reader = LF_EOL_Filter(pipe.fromchild)
+      data_reader = LF_EOL_Filter(pipe.stdout)
     else:
-      data_reader = pipe.fromchild
+      data_reader = pipe.stdout
 
     # Insert the rev contents, calculating length and checksum as we go.
     checksum = md5.new()
@@ -3711,8 +3748,8 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
       length = length + len(buf)
       self.dumpfile.write(buf)
 
-    pipe.fromchild.close()
-    error_output = pipe.childerr.read()
+    pipe.stdout.close()
+    error_output = pipe.stderr.read()
     exit_status = pipe.wait()
     if exit_status:
       sys.exit("%s: The command '%s' failed with exit status: %s\n"
@@ -3817,15 +3854,15 @@ class RepositoryDelegate(DumpfileDelegate):
     self._commit_in_progress = None
 
     self.dumpfile = open(self.dumpfile_path, 'w+b')
-    self.loader_pipe = Popen3('%s load -q "%s"' % (self.svnadmin, self.target),
-                              True)
-    self.loader_pipe.fromchild.close()
+    self.loader_pipe = SimplePopen([ self.svnadmin, 'load', '-q',
+                                     self.target ], True)
+    self.loader_pipe.stdout.close()
     try:
-      self._write_dumpfile_header(self.loader_pipe.tochild)
+      self._write_dumpfile_header(self.loader_pipe.stdin)
     except IOError:
       sys.stderr.write("%s: svnadmin failed with the following output while "
                        "loading the dumpfile:\n" % (error_prefix))
-      sys.stderr.write(self.loader_pipe.childerr.read())
+      sys.stderr.write(self.loader_pipe.stderr.read())
       sys.exit(1)
 
   def _feed_pipe(self):
@@ -3837,11 +3874,11 @@ class RepositoryDelegate(DumpfileDelegate):
       if not len(data):
         break
       try:
-        self.loader_pipe.tochild.write(data)
+        self.loader_pipe.stdin.write(data)
       except IOError:
         sys.stderr.write("%s: svnadmin failed with the following output while "
                          "loading the dumpfile:\n" % (error_prefix))
-        sys.stderr.write(self.loader_pipe.childerr.read())
+        sys.stderr.write(self.loader_pipe.stderr.read())
         sys.exit(1)
 
   def start_commit(self, svn_commit):
@@ -3859,8 +3896,8 @@ class RepositoryDelegate(DumpfileDelegate):
     """Loads the last commit into the repository."""
     self._feed_pipe()
     self.dumpfile.close()
-    self.loader_pipe.tochild.close()
-    error_output = self.loader_pipe.childerr.read()
+    self.loader_pipe.stdin.close()
+    error_output = self.loader_pipe.stderr.read()
     exit_status = self.loader_pipe.wait()
     if exit_status:
       sys.exit('%s: svnadmin load failed with exit status: %s\n'
@@ -4737,18 +4774,19 @@ def main():
 
   if ctx.use_cvs:
     def cvs_ok():
-      pipe = Popen3('cvs %s --version' % Ctx().cvs_global_arguments, True)
-      pipe.tochild.close()
-      pipe.fromchild.read()
-      errmsg = pipe.childerr.read()
+      pipe = SimplePopen([ 'cvs' ] + Ctx().cvs_global_arguments + \
+                         [ '--version' ], True)
+      pipe.stdin.close()
+      pipe.stdout.read()
+      errmsg = pipe.stderr.read()
       status = pipe.wait()
       ok = len(errmsg) == 0 and status == 0
       return (ok, status, errmsg)
 
-    ctx.cvs_global_arguments = "-q -R"
+    ctx.cvs_global_arguments = [ "-q", "-R" ]
     ok, cvs_exitstatus, cvs_errmsg = cvs_ok()
     if not ok:
-      ctx.cvs_global_arguments = "-q"
+      ctx.cvs_global_arguments = [ "-q" ]
       ok, cvs_exitstatus, cvs_errmsg = cvs_ok()
 
     if not ok:

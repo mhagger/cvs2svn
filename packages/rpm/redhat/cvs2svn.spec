@@ -2,7 +2,7 @@
 Summary: Convert CVS repositories to Subversion repositories.
 Name: cvs2svn
 Version: 0.1
-Release: 1
+Release: @RELEASE@
 Copyright: BSD
 Group: Utilities/System
 URL: http://cvs2svn.tigris.org

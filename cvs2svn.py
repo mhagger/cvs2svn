@@ -3491,6 +3491,13 @@ def pass1():
         # drop the 'Attic' portion from the pathname for the canonical name.
         cd.set_fname(os.path.join(dirname[:-6], fname), pathname)
       else:
+        # If this file also exists in the attic, it's a fatal error
+        attic_path = os.path.join(dirname, 'Attic', fname)
+        if os.path.exists(attic_path):
+          err = "%s: A CVS repository cannot contain both %s and %s" \
+                % (error_prefix, pathname, attic_path)
+          sys.stderr.write(err + '\n')
+          cd.fatal_errors.append(err)
         cd.set_fname(pathname, pathname)
       Log().write(LOG_NORMAL, pathname)
       try:

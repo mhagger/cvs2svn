@@ -1394,6 +1394,14 @@ def branch_from_default_branch():
     '/trunk/proj/file.txt (from /branches/upstream/proj/file.txt:5)': 'R',
     })
 
+def file_in_attic_too():
+  "die if a file exists in and out of the attic"
+  try:
+    ensure_conversion('file-in-attic-too')
+    raise MissingErrorException
+  except svntest.Failure:
+    pass
+
 #----------------------------------------------------------------------
 
 ########################################################################
@@ -1439,6 +1447,7 @@ test_list = [ None,
               individual_passes,
               XFail(resync_bug),
               branch_from_default_branch,
+              file_in_attic_too,
              ]
 
 if __name__ == '__main__':

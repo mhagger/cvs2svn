@@ -425,6 +425,30 @@ def match_regexp_list(regexp_list, string):
       return True
   return False
 
+class LF_EOL_Filter:
+  """Filter a stream and convert all end-of-line markers (CRLF, CR or LF)
+  into LFs only."""
+  def __init__(self, stream):
+    self.stream = stream
+    self.carry_cr = False
+    self.eof = False
+
+  def read(self, size):
+    while True:
+      buf = self.stream.read(size)
+      self.eof = len(buf) == 0
+      if self.carry_cr:
+        buf = '\r' + buf
+        self.carry_cr = False
+      if not self.eof and buf[-1] == '\r':
+        self.carry_cr = True
+        buf = buf[:-1]
+      buf = string.replace(buf, '\r\n', '\n')
+      buf = string.replace(buf, '\r', '\n')
+      if len(buf) > 0 or self.eof:
+        return buf
+
+
 # These constants represent the log levels that this script supports
 LOG_WARN = -1
 LOG_QUIET = 0
@@ -3607,29 +3631,23 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     if prop_contents:
       self.dumpfile.write(prop_contents)
 
+    # If svn:eol-style is set to native, all EOLs must be converted to LFs
+    if svn_props.get('svn:eol-style', '') == 'native':
+      data_reader = LF_EOL_Filter(pipe.fromchild)
+    else:
+      data_reader = pipe.fromchild
+
     # Insert the rev contents, calculating length and checksum as we go.
     checksum = md5.new()
     length = 0
-    normalize_crlf = sys.platform == "win32" \
-                     and svn_props.has_key('svn:eol-style')
-    trailing_cr = ""
-    buf = pipe.fromchild.read(PIPE_READ_SIZE)
-    while buf:
-      if normalize_crlf:
-        buf = string.replace(buf,"\r\n","\n")
-        if buf[-1] == "\r":
-          trailing_cr = "\r"
-          buf = buf[:-1]
-        else:
-          trailing_cr = ""
+    while True:
+      buf = data_reader.read(PIPE_READ_SIZE)
+      if buf == '':
+        break
       checksum.update(buf)
       length = length + len(buf)
       self.dumpfile.write(buf)
-      # optimize because of python's immutable strings
-      if trailing_cr:
-        buf = trailing_cr + pipe.fromchild.read(PIPE_READ_SIZE)
-      else:
-        buf = pipe.fromchild.read(PIPE_READ_SIZE)
+
     pipe.fromchild.close()
     error_output = pipe.childerr.read()
     exit_status = pipe.wait()

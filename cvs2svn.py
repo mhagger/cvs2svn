@@ -1817,9 +1817,8 @@ class SVNCommit:
       unicode_author = None
       if self._author is not None:
         unicode_author = unicode(self._author, self._ctx.encoding, 'replace')
-        unicode_author.encode('utf8')
       unicode_log = unicode(self.get_log_msg(), self._ctx.encoding, 'replace')
-      return { 'svn:author' : unicode_author,
+      return { 'svn:author' : unicode_author.encode('utf8'),
                'svn:log'    : unicode_log.encode('utf8'),
                'svn:date'   : date }
     except UnicodeError:

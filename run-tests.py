@@ -642,6 +642,23 @@ def simple_branch_commits():
     raise svntest.Failure
 
 
+def mixed_time_tag():
+  "mixed-time tag"
+  # See test-data/main-cvsrepos/proj/README.
+  repos, wc, logs = ensure_conversion('main')
+
+  rev = 35
+  if not logs[rev].changed_paths == {
+    '/tags': 'A',
+    '/tags/T_MIXED (from /trunk:19)': 'A',
+    '/tags/T_MIXED/partial-prune': 'D',
+    '/tags/T_MIXED/single-files': 'D',
+    '/tags/T_MIXED/proj/sub2/subsubA/default (from /trunk:16)': 'R',
+    '/tags/T_MIXED/proj/sub3/default (from /trunk:18)': 'R',
+    }:
+    raise svntest.Failure
+
+
 def mixed_commit():
   "a commit affecting both trunk and a branch"
   # See test-data/main-cvsrepos/proj/README.
@@ -1158,6 +1175,7 @@ test_list = [ None,
               simple_commits,
               simple_tags,
               simple_branch_commits,
+              XFail(mixed_time_tag),
               mixed_commit,
               bogus_tag,
               overlapping_branch,

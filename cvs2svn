@@ -4084,6 +4084,7 @@ def usage():
   print '  --existing-svnrepos  load into existing SVN repository'
   print '  --dumpfile=PATH      name of intermediate svn dumpfile'
   print '  --tmpdir=PATH        directory to use for tmp data (default to cwd)'
+  print '  --profile            profile with \'hotshot\' (into file cvs2svn.hotshot)'
   print '  --dry-run            do not create a repository or a dumpfile;'
   print '                       just print what would happen.'
   print '  --svnadmin=PATH      path to the svnadmin program'
@@ -4128,7 +4129,7 @@ def main():
                                  "trunk-only", "no-prune", "dry-run",
                                  "dump-only", "dumpfile=", "tmpdir=",
                                  "svnadmin=", "skip-cleanup", "cvs-revnums",
-                                 "bdb-txn-nosync", "version"])
+                                 "bdb-txn-nosync", "version", "profile"])
   except getopt.GetoptError, e:
     sys.stderr.write(error_prefix + ': ' + str(e) + '\n\n')
     usage()
@@ -4216,6 +4217,10 @@ def main():
       sys.stderr.write(warning_prefix +
           ': The behaviour produced by the --create option is now the '
           'default,\nand passing the option is deprecated.\n')
+    elif opt == '--profile':
+      # Do nothing.  This option was parsed manually before the
+      # invocation of main().
+      pass
       
   if ctx.print_help:
     usage()
@@ -4330,4 +4335,26 @@ def main():
     except: pass
 
 if __name__ == '__main__':
-  main()
+  # Since regular option parsing happens in main(), and the profiler
+  # invokes main(), the simplest thing to do is just look for the
+  # '--profile' option here.
+  #
+  # Naturally, we'd prefer to use the "'--profile' in sys.argv"
+  # syntax.  Unfortunately, http://docs.python.org/lib/typesseq.html
+  # seems to indicate that that's (effectively) only in Python 2.3 or
+  # higher, so we search for the option manually.
+  #
+  # Oh, and we're just going to assume that we'll never be invoked on
+  # a repository named "--profile".  I mean, ya gotta live on the wild
+  # side sometimes.
+  profiling = 0
+  for arg in sys.argv:
+    if arg == '--profile':
+      profiling = 1
+  if profiling:
+      import hotshot
+      prof = hotshot.Profile('cvs2svn.hotshot')
+      prof.runcall(main)
+      prof.close()
+  else:
+    main()

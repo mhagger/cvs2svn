@@ -12,12 +12,6 @@ if echo ${REV} | grep -q -e '[^0-9]'; then
    exit 1
 fi
 
-SPURIA=`svn status --no-ignore`
-
-SAVED_IFS_1=${IFS}
-IFS='
-'
-
 rm -rf ${DISTNAME}
 mkdir ${DISTNAME}
 
@@ -25,6 +19,12 @@ cd ${DISTNAME}
 
 # Ignore the error about copying '..' into '.'.
 cp -f -a .. . 2>/dev/null
+
+SPURIA=`svn status --no-ignore`
+
+SAVED_IFS_1=${IFS}
+IFS='
+'
 
 # Clean out unversioned files.
 for line in ${SPURIA}; do
@@ -34,7 +34,7 @@ for line in ${SPURIA}; do
      /bin/true
    else
      junk=`echo ${line} | cut -b8-`
-     rm ${junk}
+     rm -rf ${junk}
    fi
 done
 

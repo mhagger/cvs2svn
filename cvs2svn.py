@@ -561,6 +561,9 @@ def visit_file(arg, dirname, files):
     except rcsparse.common.RCSExpected:
       print "%s: '%s' is not a valid ,v file, ignoring" \
             % (warning_prefix, pathname)
+    except:
+      print "Exception occurred while parsing %s" % pathname
+      raise
 
 
 # Return a string that has not been returned by gen_key() before.

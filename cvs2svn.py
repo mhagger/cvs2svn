@@ -1052,7 +1052,8 @@ class Dumper:
       self.init_dumpfile()
     elif ctx.create_repos:
       print "creating repos '%s'" % (self.target)
-      run_command('%s create %s' % (self.svnadmin, self.target))
+      run_command('%s create %s %s' % (self.svnadmin, ctx.bdb_txn_nosync
+        and "--bdb-txn-nosync" or "", self.target))
 
     
   def init_dumpfile(self):
@@ -2612,6 +2613,8 @@ def usage(ctx):
         % ctx.username
   print '  --skip-cleanup   prevent the deletion of intermediate files (default: %s)' \
         % ctx.skip_cleanup
+  print '  --bdb-txn-nosync pass --bdb-txn-nosync to "svnadmin create" (default: %s)' \
+        % ctx.bdb_txn_nosync
   print '  --cvs-revnums    record CVS revision numbers as file properties (default: %s)' \
         % ctx.cvs_revnums
         
@@ -2639,6 +2642,7 @@ def main():
   ctx.print_help = 0
   ctx.skip_cleanup = 0
   ctx.cvs_revnums = 0
+  ctx.bdb_txn_nosync = 0
 
   start_pass = 1
 
@@ -2649,7 +2653,8 @@ def main():
                                  "branches=", "tags=", "encoding=",
                                  "trunk-only", "no-prune",
                                  "dump-only", "dumpfile=", "svnadmin=",
-                                 "skip-cleanup", "cvs-revnums"])
+                                 "skip-cleanup", "cvs-revnums",
+                                 "bdb-txn-nosync"])
   except getopt.GetoptError, e:
     sys.stderr.write(error_prefix + ': ' + str(e) + '\n\n')
     usage(ctx)
@@ -2697,6 +2702,8 @@ def main():
       ctx.skip_cleanup = 1
     elif opt == '--cvs-revnums':
       ctx.cvs_revnums = 1
+    elif opt == '--bdb-txn-nosync':
+      ctx.bdb_txn_nosync = 1
       
   if ctx.print_help:
     usage(ctx)
@@ -2726,6 +2733,12 @@ def main():
   if ctx.create_repos and ctx.dump_only:
     sys.stderr.write(error_prefix +
                      ": cannot pass both '--create' and '--dump-only'.\n")
+    sys.exit(1)
+
+  if not ctx.create_repos and ctx.bdb_txn_nosync:
+    sys.stderr.write(error_prefix +
+                     ": can only pass '--bdb-txn-nosync' if you also pass"
+                     " '--create'.\n")
     sys.exit(1)
 
   if ((string.find(ctx.trunk_base, '/') > -1)

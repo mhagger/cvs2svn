@@ -303,7 +303,7 @@ def ensure_conversion(name, error_re=None, trunk_only=None,
       erase(wc)
       
       try:
-        arg_list = [ '--create', '-s', svnrepos, cvsrepos ]
+        arg_list = [ '--bdb-txn-nosync', '--create', '-s', svnrepos, cvsrepos ]
 
         if no_prune:
           arg_list[:0] = [ '--no-prune' ]

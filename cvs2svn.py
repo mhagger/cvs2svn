@@ -108,7 +108,7 @@ DUMPFILE = 'cvs2svn-dump'  # The "dumpfile" we create to load into the repos
 #
 # SYMBOL_NAME SVN_REVNUM TYPE SVN_PATH
 #
-# Where type is either OPENING orCLOSING.  The SYMBOL_NAME and
+# Where type is either OPENING or CLOSING.  The SYMBOL_NAME and
 # SVN_REVNUM are the primary and secondary sorting criteria for
 # creating SYMBOL_OPENINGS_CLOSINGS_SORTED.
 SYMBOL_OPENINGS_CLOSINGS = 'cvs2svn-symbolic-names.txt'
@@ -250,7 +250,7 @@ DELTATEXT_EMPTY    = 'E'
 DIGEST_END_IDX = 9 + (sha.digestsize * 2)
 
 # Constants used in SYMBOL_OPENINGS_CLOSINGS
-OPENING = '0'
+OPENING = 'O'
 CLOSING = 'C'
 
 # Officially, CVS symbolic names must use a fairly restricted set of

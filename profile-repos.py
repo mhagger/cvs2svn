@@ -22,6 +22,7 @@ yourself!
 """
 
 import sys, os, os.path, string
+from cvs2svn import CVSRevision
 
 def do_it(revs_file):
   fp = open(revs_file, 'r')
@@ -39,24 +40,25 @@ def do_it(revs_file):
     line = fp.readline()
     if not line:
       break
-    pieces = line.split(' ')
-    try:
-      num_tags = int(pieces[6])
-    except ValueError: # probably just the end of the line
-      continue
-    max_tags = (num_tags > max_tags) and num_tags or max_tags
+
+    # Get a CVSRevision to describe this line
+    c_rev = CVSRevision(None, line)
+
+    # Handle tags
+    num_tags = len(c_rev.tags)
+    max_tags = (num_tags > max_tags) \
+               and num_tags or max_tags
     total_tags = total_tags + num_tags
-    for i in range(num_tags):
-      tags[pieces[6 + i + 1]] = None
-    try:
-      num_branches = int(pieces[6 + num_tags + 1])
-    except ValueError: # probably just the end of the line
-      continue
+    for tag in c_rev.tags:
+      tags[tag] = None
+
+    # Handle branches
+    num_branches = len(c_rev.branches)
     max_branches = (num_branches > max_branches) \
                    and num_branches or max_branches
     total_branches = total_branches + num_branches
-    for i in range(num_branches):
-      branches[pieces[6 + num_tags + 1 + i + 1]] = None
+    for branch in c_rev.branches:
+      branches[branch] = None
 
   symbols = {}
   symbols.update(tags)

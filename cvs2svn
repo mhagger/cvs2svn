@@ -3313,8 +3313,10 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     
     # Calculate the total length of the props section.
     props = svn_commit.get_revprops()
+    prop_names = props.keys()
+    prop_names.sort()
     total_len = 10  # len('PROPS-END\n')
-    for propname in props.keys():
+    for propname in prop_names:
       if props[propname] is None:
         continue
       klen = len(propname)
@@ -3331,7 +3333,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
                         '\n'
                         % (self.revision, total_len, total_len))
 
-    for propname in props.keys():
+    for propname in prop_names:
       if props[propname] is None:
         continue
       self.dumpfile.write('K %d\n' 

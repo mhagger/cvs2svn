@@ -1,0 +1,66 @@
+head	1.2;
+access;
+symbols
+	vendorbranch:1.1.1;
+locks; strict;
+comment	@# @;
+expand	@o@;
+
+
+1.2
+date	2003.03.03.03.03.03;	author cc;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2001.01.01.01.01.01;	author aa;	state Exp;
+branches
+	1.1.1.1;
+next	;
+
+1.1.1.1
+date	2001.01.01.01.01.01;	author aa;	state Exp;
+branches;
+next	1.1.1.2;
+
+1.1.1.2
+date	2002.02.02.02.02.02;	author bb;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@1.2
+@
+text
+@@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@@
+
+
+1.1.1.1
+log
+@1.1.1.1
+@
+text
+@@
+
+
+1.1.1.2
+log
+@1.1.1.2
+@
+text
+@@
+

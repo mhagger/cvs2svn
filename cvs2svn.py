@@ -223,13 +223,12 @@ SORTED_REVS_SUFFIX = '.s-revs'
 RESYNC_SUFFIX = '.resync'
 
 # This list should contain all data files that we create in the course
-# of running the program, with the exception of the
-# DEFAULT_BRANCHES_DB, which is created before pass1.  To avoid
-# running with stale files, we will delete all of these files first
-# thing in pass1.
+# of running the program. To avoid running with stale files, we will delete
+# all of these files first thing in pass1.
 all_files = [CVS_REVS_DB, CVS_REVS_TO_SVN_REVNUMS, 
              DATAFILE + CLEAN_REVS_SUFFIX, DATAFILE + RESYNC_SUFFIX, 
              DATAFILE + REVS_SUFFIX, DATAFILE + SORTED_REVS_SUFFIX,
+             DEFAULT_BRANCHES_DB,
              METADATA_DB, MOTIVATING_REVNUMS, SVN_COMMIT_NAMES_DATES,
              SVN_MIRROR_NODES_DB, SVN_MIRROR_REVISIONS_DB,
              SVN_REVNUMS_TO_CVS_REVS, SYMBOL_CLOSINGS_TMP,
@@ -649,8 +648,8 @@ class CVSRevision:
     """Return 1 if SELF.rev of SELF.cvs_path is a default branch
     revision according to DEFAULT_BRANCHES_DB (see the conditions
     documented there), else return None."""
-    if self._ctx.default_branches_db.has_key(self.cvs_path):
-      val = self._ctx.default_branches_db[self.cvs_path]
+    if self._ctx._default_branches_db.has_key(self.cvs_path):
+      val = self._ctx._default_branches_db[self.cvs_path]
       val_last_dot = val.rindex(".")
       our_last_dot = self.rev.rindex(".")
       default_branch = val[:val_last_dot]
@@ -731,7 +730,8 @@ class CollectData(rcsparse.Sink):
     Cleanup().register(DATAFILE + REVS_SUFFIX, pass2)
     self.resync = open(DATAFILE + RESYNC_SUFFIX, 'w')
     Cleanup().register(DATAFILE + RESYNC_SUFFIX, pass2)
-    self.default_branches_db = ctx.default_branches_db
+    self.default_branches_db = Database(DEFAULT_BRANCHES_DB, DB_OPEN_CREATE)
+    Cleanup().register(DEFAULT_BRANCHES_DB, pass8)
     self.metadata_db = Database(METADATA_DB, DB_OPEN_CREATE)
     Cleanup().register(METADATA_DB, pass8)
     self.fatal_errors = []
@@ -1954,6 +1954,7 @@ class CVSRevisionAggregator:
 
     self._ctx._symbolings_logger = SymbolingsLogger(ctx)
     self._ctx._persistence_manager = PersistenceManager(ctx)
+    self._ctx._default_branches_db = Database(DEFAULT_BRANCHES_DB, DB_OPEN_READ)
 
 
   def process_revision(self, c_rev):
@@ -4125,11 +4126,6 @@ def main():
     ctx.mime_mapper = MimeMapper()
     ctx.mime_mapper.set_mime_types_file(ctx.mime_types_file)
 
-  def clear_default_branches_db():
-    # This is the only DB reference still reachable at this point;
-    # lose it before removing the file.
-    ctx.default_branches_db = None
-
   # Lock the current directory for temporary files.
   try:
     os.mkdir('cvs2svn.lock')
@@ -4146,12 +4142,7 @@ def main():
           "  remove the 'cvs2svn.lock' directory.\n")
     sys.exit(1)
   try:
-    if os.path.isfile(DEFAULT_BRANCHES_DB):
-      os.unlink(DEFAULT_BRANCHES_DB)
-    ctx.default_branches_db = Database(DEFAULT_BRANCHES_DB, DB_OPEN_CREATE)
-    Cleanup().register(DEFAULT_BRANCHES_DB, pass8, clear_default_branches_db)
     convert(ctx, start_pass, end_pass)
-    ctx.default_branches_db = None
   finally:
     try: os.rmdir('cvs2svn.lock')
     except: pass

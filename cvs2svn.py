@@ -793,7 +793,7 @@ class CollectData(rcsparse.Sink):
     if file_stat[0] & stat.S_IXUSR:
       self.file_executable = 1      
 
-    # revision -> [timestamp, author, operation, old-timestamp]
+    # revision -> [timestamp, author, old-timestamp]
     self.rev_data = { }
 
     # Maps revision number (key) to the revision number of the
@@ -836,10 +836,10 @@ class CollectData(rcsparse.Sink):
     # apply to the key revision.
     self.taglist = { }
 
-    # This is always a number -- rcsparse calls this the "principal
-    # branch", but CVS and RCS refer to it as the "default branch",
-    # so that's what we call it, even though the rcsparse API setter
-    # method is still 'set_principal_branch'.
+    # If set, this is an RCS branch number -- rcsparse calls this the
+    # "principal branch", but CVS and RCS refer to it as the "default
+    # branch", so that's what we call it, even though the rcsparse API
+    # setter method is still 'set_principal_branch'.
     self.default_branch = None
 
     # If the RCS file doesn't have a default branch anymore, but does

@@ -47,11 +47,24 @@ if sys.hexversion < 0x2000000:
 # Don't settle for less.
 if (anydbm._defaultmod.__name__ == 'dumbdbm'
     or anydbm._defaultmod.__name__ == 'dbm'):
-  print 'ERROR: your installation of Python does not contain a proper'
+  print 'ERROR: your installation of Python does not contain a suitable'
   print '  DBM module. This script cannot continue.'
   print '  to solve: see http://python.org/doc/current/lib/module-anydbm.html'
   print '  for details.'
   sys.exit(1)
+
+if hasattr(anydbm._defaultmod, 'bsddb') \
+    and not hasattr(anydbm._defaultmod.bsddb, '__version__'):
+  try:
+    gdbm = __import__('gdbm')
+  except ImportError:
+    sys.stderr.write(warning_prefix +
+        ': The version of the bsddb module found '
+        'on your computer has been reported to malfunction on some datasets, '
+        'causing KeyError exceptions. You may wish to upgrade your Python to '
+        'version 2.3 or later.\n')
+  else:
+    anydbm._defaultmod = gdbm
 
 trunk_rev = re.compile('^[0-9]+\\.[0-9]+$')
 branch_tag = re.compile('^[0-9.]+\\.0\\.[0-9]+$')

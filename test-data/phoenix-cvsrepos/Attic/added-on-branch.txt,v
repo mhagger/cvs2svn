@@ -1,0 +1,40 @@
+head	1.1;
+access;
+symbols
+	xiphophorus:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2004.06.15.15.33.01;	author fitz;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2004.06.15.15.33.01;	author fitz;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@file added-on-branch.txt was initially added on branch xiphophorus.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@File added on branch xiphophorus
+@
+text
+@a0 1
+This file was added on the branch xiphophorus.@
+

@@ -1,0 +1,246 @@
+This repository is for testing cvs2svn's pruning choices when filling
+symbolic names.  The layout is:
+
+     /one.txt
+      two.txt
+      /foo/three.txt
+           four.txt
+      /bar/five.txt
+           six.txt
+
+Every file was imported in a standard way, then revisions 1.2 and 1.3
+were committed on every file.  Then this branch was made on four
+files (/one.txt, /two.txt, /foo/three.txt, /foo/four.txt):
+
+    BRANCH: sprouts from 1.3 (so branch number 1.3.0.2)
+
+Then a revision was committed on that branch, creating revision
+1.3.2.1 on those files.
+
+No branch was made on /bar/five.txt nor /bar/six.txt.  Thus, when
+BRANCH is created, subdir /bar should be deleted entirely.  But if you
+revert r1125 of cvs2svn.py, /bar won't be deleted.
+
+Search below for the word "Suppose" for more details.  (Note that we
+still don't have a test for the proposed 'if not prune_ok:'
+conditional, though.)
+
+--------------------8-<-------cut-here---------8-<-----------------------
+
+ From nobody Wed Jun  2 18:24:01 2004
+ Sender: kfogel@newton.ch.collab.net
+ To: fitz@tigris.org
+ Cc: commits@cvs2svn.tigris.org
+ Subject: Re: cvs2svn commit: r1035 - branches/may-04-redesign
+ References: <200405290539.i4T5dmM10064@morbius.ch.collab.net>
+ From: kfogel@collab.net
+ Reply-To: kfogel@collab.net
+ X-Windows: putting new limits on productivity.
+ Date: 02 Jun 2004 18:24:00 -0500
+ In-Reply-To: <200405290539.i4T5dmM10064@morbius.ch.collab.net>
+ Message-ID: <85vfi9czn3.fsf@newton.ch.collab.net>
+ Lines: 200
+ User-Agent: Gnus/5.09 (Gnus v5.9.0) Emacs/21.1.50
+ MIME-Version: 1.0
+ Content-Type: text/plain; charset=us-ascii
+ 
+ fitz@tigris.org writes:
+ > Modified: branches/may-04-redesign/cvs2svn.py
+ > ==============================================================================
+ > --- branches/may-04-redesign/cvs2svn.py	(original)
+ > +++ branches/may-04-redesign/cvs2svn.py	Sat May 29 00:39:43 2004
+ > @@ -4802,15 +4802,16 @@
+ >      return dest
+ >  
+ >    def _fill(self, symbol_fill, key, name,
+ > -            parent_path_so_far=None, preferred_revnum=None):
+ > +            parent_path_so_far=None, preferred_revnum=None, prune_ok=None):
+ >      """Descends through all nodes in SYMBOL_FILL.node_tree that are
+ >      rooted at KEY, which is a string key into SYMBOL_FILL.node_tree.
+ >      Generates copy (and delete) commands for all destination nodes
+ >      that don't exist in NAME.
+ >  
+ > -    PARENT_PATH_SO_FAR is the parent directory of the path(s) that may
+ > -    be copied in this invocation of the method.  If None, that means
+ > -    that our source path starts from the root of the repository.
+ > +    PARENT_PATH_SO_FAR is the parent directory of the source path(s)
+ > +    that may be copied in this invocation of the method.  If None,
+ > +    that means that our source path starts from the root of the
+ > +    repository.
+ >  
+ >      PREFERRED_REVNUM is an int which is the source revision number
+ >      that the caller (who may have copied KEY's parent) used to
+ > @@ -4818,9 +4819,15 @@
+ >      is preferable to any other (which probably means that no copies
+ >      have happened yet).
+ >  
+ > -    PARENT_PATH_SO_FAR and PREFERRED_REVNUM should only be passed in
+ > -    by recursive calls."""
+ > +    PRUNE_OK means that a copy has been made in this recursion, and
+ > +    it's safe to prune directories that are not in SYMBOL_FILL.node_tree.
+ 
+ This documentation of PRUNE_OK might want to be a little more
+ detailed, and make clear the cause-effect relationship between the
+ first and second clauses.  I.e., PRUNE_OK doesn't mean two unrelated
+ things, it means one thing that happens to have an implication.
+ 
+ Also, the pruning behavior applies to files as well as directories,
+ no?  (Maybe you were tempted to say "directories" because that's what
+ the unrelated --prune flag to cvs2svn affects... Which is one reason
+ not to call this new param 'prune_ok'; see later for another reason.)
+ 
+ Anyway, I'm thinking something like this for the doc:
+ 
+    PRUNE_OK means that a copy has already been made higher in this
+    recursion, and that therefore it's safe to prune directories and
+    files that do not appear in the part of SYMBOL_FILL.node_tree()
+    governing this recursion.
+ 
+ If that were the doc string, would it be accurate?
+ 
+ > @@ -4839,7 +4846,7 @@
+ >        src_revnum = None
+ >        # if our destination path doesn't already exist, then we may
+ >        # have to make a copy.
+ > -      if (dest_path is not None and not self.path_exists(dest_path)):
+ > +      if not self.path_exists(dest_path):
+ >          src_revnum = symbol_fill.get_best_revnum(key, preferred_revnum)
+ >  
+ >          # If the revnum of our parent's copy (src_revnum) is the same
+ > @@ -4849,6 +4856,7 @@
+ >          if src_revnum != preferred_revnum:
+ >            # Do the copy
+ >            new_entries = self.copy_path(src_path_so_far, dest_path, src_revnum)
+ > +          prune_ok = peer_path_unsafe_for_pruning = 1
+ >            # Delete invalid entries that got swept in by the copy.
+ >            valid_entries = symbol_fill.node_tree[key]
+ >            bad_entries = self._get_invalid_entries(valid_entries, new_entries)
+ > @@ -4857,8 +4865,25 @@
+ >              del_path = dest_path + '/' + entry
+ >              self.delete_path(del_path)
+ >  
+ > -      self._fill(symbol_fill, key, name, src_path_so_far, src_revnum)
+ > +      self._fill(symbol_fill, key, name, src_path_so_far, src_revnum, prune_ok)
+ > +
+ > +    if peer_path_unsafe_for_pruning:
+ > +      return
+ > +    # Any entries still present in the dest directory that we've just
+ > +    # created by copying, but not in
+ > +    # symbol_fill.node_tree[parent_key], don't belong and should be
+ > +    # deleted as well.  If we haven't actually made a copy, do
+ > +    # nothing.
+ > +    if parent_path_so_far and prune_ok:
+ > +      this_path = self._dest_path_for_source_path(name, parent_path_so_far)
+ > +      ign, this_contents = self._node_for_path(this_path, self.youngest)
+ > +      expected_contents = symbol_fill.node_tree[parent_key]
+ > +      bad_entries = self._get_invalid_entries(expected_contents, this_contents)
+ > +      for entry in bad_entries:
+ > +        del_path = this_path + '/' + entry
+ >  
+ > +        print "FITZ: deleting path", del_path
+ > +        self.delete_path(del_path)
+ 
+ Hmmm.  Okay, I get the general idea here, and like it.  
+ 
+ There's something weird about 'peer_path_unsafe_for_pruning',
+ though...  Let me see if I can put my finger on it.
+ 
+ Suppose we first make this copy:
+ 
+    cp  /trunk/foo/ @ r4   -->   /branches/MYBRANCH/foo/
+ 
+ That sets 'peer_path_unsafe_for_pruning' to 1 in the stack frame for
+ "/" (that is, the frame in which "/foo" is a child entry).  Great.
+ Suppose that foo@4 had two subdirs, "/foo/bar/" and "/foo/baz/", only
+ the first of which is on this branch at all, albeit from r6 not r4.
+ 
+ So, now we recurse down and copy "bar/" from r6:
+ 
+    del /branches/MYBRANCH/foo/bar/
+    cp  /trunk/foo/bar/ @ r6   -->   /branches/MYBRANCH/foo/bar/
+ 
+ That sets 'peer_path_unsafe_for_pruning' to 1 in the stack frame for
+ "/foo", of course, since "/foo/bar" is a child entry of that.  But
+ remember, earlier when we copied "/foo", we accidentally got
+ "/foo/baz/" as well, which needs to be pruned out.
+ 
+ We used to have code to prune that, but it's commented out now, see
+ the comment that begins "###TODO OPTIMIZE: If we keep a list
+ COPIED_PATHS of...".
+ 
+ So the question is, who *will* prune "/foo/baz/"?  All of the stack
+ frames we've created in this fill have 'peer_path_unsafe_for_pruning'
+ set to 1, so all of them will return early, without entering the blob
+ of code at the end that is supposed to clean up these bad entries.
+ 
+ Thus, I don't think anyone can prune "/foo/baz/", even though it
+ clearly must be pruned.  Another way of saying it is, that commented
+ out loop that's supposed to be just an optimization is actually not an
+ optimization -- it's correctness code.
+ 
+ But I'm not saying the answer here is just to uncomment that loop.  I
+ think also 'peer_path_unsafe_for_pruning' should not get set *if*
+ 'prune_ok' is already set!  In other words
+ 
+    prune_ok = peer_path_unsafe_for_pruning = 1
+ 
+ should be changed to
+ 
+    if not prune_ok:
+      prune_ok = peer_path_unsafe_for_pruning = 1
+ 
+ Because if 'prune_ok' is already set, then we're already in a
+ recursive call after a copy, so peer paths are, in fact, safe for
+ pruning, even though they are peer paths!  (One way to think of it is
+ that the name 'prune_ok' should be 'we_are_now_under_a_copy', or
+ 'copy_happened', or something like that.  What the param really
+ indicates is that all dest paths being generated in this leg of the
+ recursion are underneath a copy -- the fact that pruning is okay is
+ merely one consequence of that situation.)
+ 
+ Is this making any sense, or am I off my rocker?
+ 
+ The comment right before the final blob of code confused me for a
+ minute...
+ 
+     # Any entries still present in the dest directory that we've just
+     # created by copying, but not in
+     # symbol_fill.node_tree[parent_key], don't belong and should be
+     # deleted as well.  If we haven't actually made a copy, do
+     # nothing.
+ 
+ ... because it talks about "any entries still present in the dest
+ directory that we've just copied", yet 'parent_path_so_far' is *not* a
+ directory we just copied, rather it's the parent of things we may or
+ may not have copied.  IOW, this code (the last bit of code in the
+ function, right below the above comment)...
+ 
+   if parent_path_so_far and prune_ok:
+     this_path = self._dest_path_for_source_path(name, parent_path_so_far)
+     ign, this_contents = self._node_for_path(this_path, self.youngest)
+     expected_contents = symbol_fill.node_tree[parent_key]
+     bad_entries = self._get_invalid_entries(expected_contents, this_contents)
+     for entry in bad_entries:
+       del_path = this_path + '/' + entry
+       self.delete_path(del_path)
+ 
+ ... cannot be talking about a directory we've just copied in this
+ stack frame, but rather about a directory copied in some previous
+ frame, for which we're now in a recursive call (that is, an old
+ parent_path_so_far got extended by one or more entry components,
+ following a copy).
+ 
+ Perhaps this is what is meant by "the dest directory that we've just
+ copied", and all we need to do is clarify things by saying "the dest
+ directory at or under a copy made in an call higher up in this
+ recursion".  Well that's clumsy, but you know what I mean.
+ 
+ Anyway, those are my thoughts for now.  Are they anything like yours,
+ or have I fanned off into my own private Oort cloud of insanity?
+ 
+ Btw, can't say I share the feeling that _fill() has gotten overly
+ complex.  I mean, apparently it has a bug or two right now, but in
+ general it seems to be about as complex as the problem it solves -- I
+ wouldn't want to break it up any further.
+ 
+ -K

@@ -1,0 +1,77 @@
+head	1.2;
+access;
+symbols
+	TAG-ALL-FILES:1.1
+	vtag-1:1.1.1.1
+	vbranchA:1.1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2004.02.19.15.43.13;	author fitz;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.02.09.15.43.13;	author kfogel;	state Exp;
+branches
+	1.1.1.1;
+next	;
+
+1.1.1.1
+date	2004.02.09.15.43.13;	author kfogel;	state Exp;
+branches;
+next	1.1.1.2;
+
+1.1.1.2
+date	2004.02.09.15.43.13;	author kfogel;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Commit to trunk-changed-later.txt later in its life
+@
+text
+@This is a change to trunk-changed-later.txt intended to generate
+multiple closings (since it was on a default branch prior to this
+commit).
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d1 3
+a3 1
+This is vtag-1 (on vbranchA) of trunk-changed-later.txt.
+@
+
+
+1.1.1.1
+log
+@Import (vbranchA, vtag-1).
+@
+text
+@@
+
+
+1.1.1.2
+log
+@Import (vbranchA, vtag-3).
+@
+text
+@d1 1
+a1 1
+This is vtag-3 (on vbranchA) of trunk-changed-later.txt.
+@
+
+

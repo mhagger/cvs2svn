@@ -1,0 +1,4 @@
+This test checks a case where pass5 generates a fill which isn't actually
+needed, causing cvs2svn to die when it composes an empty revision in pass8.
+
+The bug was originally detected converting the apache 1.3 cvs repository.

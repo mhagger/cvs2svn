@@ -472,7 +472,7 @@ def prune_with_care():
   # pruning from going farther than the subdirectory containing first
   # and second.
 
-  rev = 10
+  rev = 11
   for path in ('/trunk/full-prune/first',
                '/trunk/full-prune-reappear/sub/first',
                '/trunk/partial-prune/sub/first'):
@@ -480,7 +480,7 @@ def prune_with_care():
       print "Revision %d failed to remove '%s'." % (rev, path)
       raise svntest.Failure
 
-  rev = 12
+  rev = 13
   for path in ('/trunk/full-prune',
                '/trunk/full-prune-reappear',
                '/trunk/partial-prune/sub'):
@@ -565,7 +565,7 @@ def simple_commits():
   repos, wc, logs = ensure_conversion('main')
 
   # The initial import.
-  rev = 22
+  rev = 23
   if not logs[rev].changed_paths == {
     '/trunk/proj': 'A',
     '/trunk/proj/default': 'A',
@@ -588,7 +588,7 @@ def simple_commits():
     raise svntest.Failure
     
   # The first commit.
-  rev = 29
+  rev = 30
   if not logs[rev].changed_paths == {
     '/trunk/proj/sub1/subsubA/default': 'M',
     '/trunk/proj/sub3/default': 'M',
@@ -599,7 +599,7 @@ def simple_commits():
     raise svntest.Failure
 
   # The second commit.
-  rev = 30
+  rev = 31
   if not logs[rev].changed_paths == {
     '/trunk/proj/default': 'M',
     '/trunk/proj/sub1/default': 'M',
@@ -622,11 +622,11 @@ def simple_tags():
  
   # Verify the copy source for the tags we are about to check
   # No need to verify the copyfrom revision, as simple_commits did that
-  check_rev(logs, 23, sym_log_msg('vendorbranch'), {
-    '/branches/vendorbranch/proj (from /trunk/proj:22)': 'A',
+  check_rev(logs, 24, sym_log_msg('vendorbranch'), {
+    '/branches/vendorbranch/proj (from /trunk/proj:23)': 'A',
     })
 
-  fromstr = ' (from /branches/vendorbranch:24)'
+  fromstr = ' (from /branches/vendorbranch:25)'
 
   # Tag on rev 1.1.1.1 of all files in proj
   rev = find_tag_rev(logs, 'T_ALL_INITIAL_FILES')
@@ -637,7 +637,7 @@ def simple_tags():
     })
 
   # The same, as a branch
-  check_rev(logs, 25, sym_log_msg('B_FROM_INITIALS'), {
+  check_rev(logs, 26, sym_log_msg('B_FROM_INITIALS'), {
     '/branches/B_FROM_INITIALS'+fromstr: 'A',
     '/branches/B_FROM_INITIALS/single-files': 'D',
     '/branches/B_FROM_INITIALS/partial-prune': 'D',
@@ -653,7 +653,7 @@ def simple_tags():
     })
 
   # The same, as a branch
-  check_rev(logs, 26, sym_log_msg('B_FROM_INITIALS_BUT_ONE'), {
+  check_rev(logs, 27, sym_log_msg('B_FROM_INITIALS_BUT_ONE'), {
     '/branches/B_FROM_INITIALS_BUT_ONE'+fromstr: 'A',
     '/branches/B_FROM_INITIALS_BUT_ONE/single-files': 'D',
     '/branches/B_FROM_INITIALS_BUT_ONE/partial-prune': 'D',
@@ -685,13 +685,13 @@ def mixed_time_tag():
 
   rev = find_tag_rev(logs, 'T_MIXED')
   expected = {  
-    '/tags/T_MIXED (from /trunk:30)': 'A',
+    '/tags/T_MIXED (from /trunk:31)': 'A',
     '/tags/T_MIXED/partial-prune': 'D',
     '/tags/T_MIXED/single-files': 'D',
-    '/tags/T_MIXED/proj/sub2/subsubA (from /trunk/proj/sub2/subsubA:22)': 'R',
-    '/tags/T_MIXED/proj/sub3 (from /trunk/proj/sub3:29)': 'R',
+    '/tags/T_MIXED/proj/sub2/subsubA (from /trunk/proj/sub2/subsubA:23)': 'R',
+    '/tags/T_MIXED/proj/sub3 (from /trunk/proj/sub3:30)': 'R',
     }
-  if rev == 15:
+  if rev == 16:
     expected['/tags'] = 'A'
   if not logs[rev].changed_paths == expected:
     raise svntest.Failure
@@ -702,20 +702,15 @@ def mixed_time_branch_with_added_file():
   # See test-data/main-cvsrepos/proj/README.
   repos, wc, logs = ensure_conversion('main')
 
-  # Empty revision, purely to store the log message of the dead 1.1 revision
-  # required by the RCS file format
-  check_rev(logs, 32, 'file branch_B_MIXED_only was initially added on '
-      'branch B_MIXED.', {})
-
   # A branch from the same place as T_MIXED in the previous test,
   # plus a file added directly to the branch
   check_rev(logs, 33, sym_log_msg('B_MIXED'), {
-    '/branches/B_MIXED (from /trunk:32)': 'A',
+    '/branches/B_MIXED (from /trunk:31)': 'A',
     '/branches/B_MIXED/partial-prune': 'D',
     '/branches/B_MIXED/single-files': 'D',
-    '/branches/B_MIXED/proj/sub2/subsubA (from /trunk/proj/sub2/subsubA:22)':
+    '/branches/B_MIXED/proj/sub2/subsubA (from /trunk/proj/sub2/subsubA:23)':
       'R',
-    '/branches/B_MIXED/proj/sub3 (from /trunk/proj/sub3:29)': 'R',
+    '/branches/B_MIXED/proj/sub3 (from /trunk/proj/sub3:30)': 'R',
     })
 
   check_rev(logs, 34, 'Add a file on branch B_MIXED.', {
@@ -740,15 +735,16 @@ def split_time_branch():
   # See test-data/main-cvsrepos/proj/README.
   repos, wc, logs = ensure_conversion('main')
 
+  rev = 42
   # First change on the branch, creating it
-  check_rev(logs, 42, sym_log_msg('B_SPLIT'), {
+  check_rev(logs, rev, sym_log_msg('B_SPLIT'), {
     '/branches/B_SPLIT (from /trunk:36)': 'A',
     '/branches/B_SPLIT/partial-prune': 'D',
     '/branches/B_SPLIT/single-files': 'D',
     '/branches/B_SPLIT/proj/sub1/subsubB': 'D',
     })
 
-  check_rev(logs, 43, 'First change on branch B_SPLIT.', {
+  check_rev(logs, rev + 1, 'First change on branch B_SPLIT.', {
     '/branches/B_SPLIT/proj/default': 'M',
     '/branches/B_SPLIT/proj/sub1/default': 'M',
     '/branches/B_SPLIT/proj/sub1/subsubA/default': 'M',
@@ -757,17 +753,17 @@ def split_time_branch():
     })
 
   # A trunk commit for the file which was not branched
-  check_rev(logs, 44, 'A trunk change to sub1/subsubB/default.  '
+  check_rev(logs, rev + 2, 'A trunk change to sub1/subsubB/default.  '
       'This was committed about an', {
     '/trunk/proj/sub1/subsubB/default': 'M',
     })
 
   # Add the file not already branched to the branch, with modification:w
-  check_rev(logs, 45, sym_log_msg('B_SPLIT'), {
+  check_rev(logs, rev + 3, sym_log_msg('B_SPLIT'), {
     '/branches/B_SPLIT/proj/sub1/subsubB (from /trunk/proj/sub1/subsubB:44)': 'A',
     })
 
-  check_rev(logs, 46, 'This change affects sub3/default and '
+  check_rev(logs, rev + 4, 'This change affects sub3/default and '
       'sub1/subsubB/default, on branch', {
     '/branches/B_SPLIT/proj/sub1/subsubB/default': 'M',
     '/branches/B_SPLIT/proj/sub3/default': 'M',
@@ -785,45 +781,50 @@ def overlapping_branch():
                                       '.*cannot also have name \'vendorB\'')
   nonlap_path = '/trunk/nonoverlapping-branch'
   lap_path = '/trunk/overlapping-branch'
-  if not (logs[3].changed_paths.get('/branches/vendorA (from /trunk:2)')
+  rev = 4
+  if not (logs[rev].changed_paths.get('/branches/vendorA (from /trunk:3)')
           == 'A'):
     raise svntest.Failure
   # We don't know what order the first two commits would be in, since
   # they have different log messages but the same timestamps.  As only
   # one of the files would be on the vendorB branch in the regression
   # case being tested here, we allow for either order.
-  if ((logs[3].changed_paths.get('/branches/vendorB (from /trunk:1)')
+  if ((logs[rev].changed_paths.get('/branches/vendorB (from /trunk:2)')
        == 'A')
-      or (logs[3].changed_paths.get('/branches/vendorB (from /trunk:2)')
+      or (logs[rev].changed_paths.get('/branches/vendorB (from /trunk:3)')
           == 'A')):
     raise svntest.Failure
-  if not logs[4].changed_paths == {}:
+  if not logs[rev + 1].changed_paths == {}:
     raise svntest.Failure
-  if len(logs) != 4:
+  if len(logs) != rev + 1:
     raise svntest.Failure
 
 
 def phoenix_branch():
   "convert a branch file rooted in a 'dead' revision"
   repos, wc, logs = ensure_conversion('phoenix')
-  check_rev(logs, 6, sym_log_msg('volsung_20010721'), {
-    '/branches/volsung_20010721 (from /trunk:5)': 'A'
+  check_rev(logs, 8, sym_log_msg('volsung_20010721'), {
+    '/branches/volsung_20010721 (from /trunk:7)': 'A',
+    '/branches/volsung_20010721/file.txt' : 'D'
     })
-  check_rev(logs, 7, 'This file was supplied by Jack Moffitt', {
+  check_rev(logs, 9, 'This file was supplied by Jack Moffitt', {
     '/branches/volsung_20010721/phoenix': 'A' })
 
 
+###TODO: We check for 4 changed paths here to accomodate creating tags
+###and branches in rev 1, but that will change, so this will
+###eventually change back.
 def ctrl_char_in_log():
   "handle a control char in a log message"
   # This was issue #1106.
+  rev = 2
   repos, wc, logs = ensure_conversion('ctrl-char-in-log')
-  if not ((logs[1].changed_paths.get('/trunk') == 'A')
-          and (logs[1].changed_paths.get('/trunk/ctrl-char-in-log') == 'A')
-          and (len(logs[1].changed_paths) == 2)):
-    print "Revision 1 of 'ctrl-char-in-log,v' was not converted successfully."
+  if not ((logs[rev].changed_paths.get('/trunk/ctrl-char-in-log') == 'A')
+          and (len(logs[rev].changed_paths) == 1)):
+    print "Revision 2 of 'ctrl-char-in-log,v' was not converted successfully."
     raise svntest.Failure
-  if logs[1].msg.find('\x04') < 0:
-    print "Log message of 'ctrl-char-in-log,v' (rev 1) is wrong."
+  if logs[rev].msg.find('\x04') < 0:
+    print "Log message of 'ctrl-char-in-log,v' (rev 2) is wrong."
     raise svntest.Failure
 
 
@@ -853,20 +854,20 @@ def double_delete():
   repos, wc, logs = ensure_conversion('double-delete', None, 1, 1)
   
   path = '/trunk/twice-removed'
-
-  if not (logs[1].changed_paths.get(path) == 'A'):
+  rev = 2
+  if not (logs[rev].changed_paths.get(path) == 'A'):
     raise svntest.Failure
 
-  if logs[1].msg.find('Initial revision') != 0:
+  if logs[rev].msg.find('Initial revision') != 0:
     raise svntest.Failure
 
-  if not (logs[2].changed_paths.get(path) == 'D'):
+  if not (logs[rev + 1].changed_paths.get(path) == 'D'):
     raise svntest.Failure
 
-  if logs[2].msg.find('Remove this file for the first time.') != 0:
+  if logs[rev + 1].msg.find('Remove this file for the first time.') != 0:
     raise svntest.Failure
 
-  if logs[2].changed_paths.has_key('/trunk'):
+  if logs[rev + 1].changed_paths.has_key('/trunk'):
     raise svntest.Failure
 
 
@@ -904,13 +905,14 @@ def enroot_race():
   "never use the rev-in-progress as a copy source"
   # See issue #1427 and r8544.
   repos, wc, logs = ensure_conversion('enroot-race')
-  if not logs[7].changed_paths == {
-    '/branches/mybranch (from /trunk:6)': 'A',
+  rev = 8
+  if not logs[rev].changed_paths == {
+    '/branches/mybranch (from /trunk:7)': 'A',
     '/branches/mybranch/proj/a.txt': 'D',
     '/branches/mybranch/proj/b.txt': 'D',
     }:
     raise svntest.Failure
-  if not logs[8].changed_paths == {
+  if not logs[rev + 1].changed_paths == {
     '/branches/mybranch/proj/c.txt': 'M',
     '/trunk/proj/a.txt': 'M',
     '/trunk/proj/b.txt': 'M',
@@ -921,8 +923,8 @@ def enroot_race():
 def enroot_race_obo():
   "do use the last completed rev as a copy source"
   repos, wc, logs = ensure_conversion('enroot-race-obo')
-  if not ((len(logs) == 2) and
-      (logs[2].changed_paths.get('/branches/BRANCH (from /trunk:1)') == 'A')):
+  if not ((len(logs) == 3) and
+      (logs[3].changed_paths.get('/branches/BRANCH (from /trunk:2)') == 'A')):
     raise svntest.Failure
 
 
@@ -1020,11 +1022,12 @@ def vendor_branch_sameness():
   # b.txt should be 'M'odified, and (for different reasons) c.txt and
   # d.txt should be 'D'eleted.
 
-  if logs[1].msg.find('Initial revision') != 0:
+  rev = 2
+  ###TODO Convert to check_rev.
+  if logs[rev].msg.find('Initial revision') != 0:
     raise svntest.Failure
 
-  if not logs[1].changed_paths == {
-    '/trunk' : 'A',
+  if not logs[rev].changed_paths == {
     '/trunk/proj' : 'A',
     '/trunk/proj/a.txt' : 'A',
     '/trunk/proj/b.txt' : 'A',
@@ -1033,20 +1036,19 @@ def vendor_branch_sameness():
     }:
     raise svntest.Failure
 
-  if logs[2].msg.find(sym_log_msg('vbranchA')) != 0:
+  if logs[rev + 1].msg.find(sym_log_msg('vbranchA')) != 0:
     raise svntest.Failure
 
-  if not logs[2].changed_paths == {
-    '/branches' : 'A',
-    '/branches/vbranchA (from /trunk:1)' : 'A',
+  if not logs[rev + 1].changed_paths == { 
+   '/branches/vbranchA (from /trunk:2)' : 'A',
     '/branches/vbranchA/proj/d.txt' : 'D',
     }:
     raise svntest.Failure
 
-  if logs[3].msg.find('First vendor branch revision.') != 0:
+  if logs[rev + 2].msg.find('First vendor branch revision.') != 0:
     raise svntest.Failure
 
-  if not logs[3].changed_paths == {
+  if not logs[rev + 2].changed_paths == {
     '/branches/vbranchA/proj/b.txt' : 'M',
     '/branches/vbranchA/proj/c.txt' : 'D',
     }:
@@ -1087,44 +1089,43 @@ def default_branches():
   #       never had a default branch.
   #
 
-  check_rev(logs, 17, sym_log_msg('vtag-4',1), {
-    '/tags/vtag-4 (from /branches/vbranchA:12)' : 'A',
+  check_rev(logs, 18, sym_log_msg('vtag-4',1), {
+    '/tags/vtag-4 (from /branches/vbranchA:16)' : 'A',
     '/tags/vtag-4/proj/d.txt '
-    '(from /branches/unlabeled-1.1.1/proj/d.txt:12)' : 'A',
+    '(from /branches/unlabeled-1.1.1/proj/d.txt:16)' : 'A',
     })
 
-  check_rev(logs, 16, sym_log_msg('vtag-1',1), {
-    '/tags/vtag-1 (from /branches/vbranchA:4)' : 'A',
+  check_rev(logs, 6, sym_log_msg('vtag-1',1), {
+    '/tags/vtag-1 (from /branches/vbranchA:5)' : 'A',
     '/tags/vtag-1/proj/d.txt '
-    '(from /branches/unlabeled-1.1.1/proj/d.txt:4)' : 'A',
-    })
-
-  check_rev(logs, 15, sym_log_msg('vtag-2',1), {
-    '/tags/vtag-2 (from /branches/vbranchA:5)' : 'A',
-    '/tags/vtag-2/proj/d.txt '
     '(from /branches/unlabeled-1.1.1/proj/d.txt:5)' : 'A',
     })
 
-  check_rev(logs, 14, sym_log_msg('vtag-3',1), {
-    '/tags' : 'A',
-    '/tags/vtag-3 (from /branches/vbranchA:7)' : 'A',
-    '/tags/vtag-3/proj/d.txt '
+  check_rev(logs, 9, sym_log_msg('vtag-2',1), {
+    '/tags/vtag-2 (from /branches/vbranchA:7)' : 'A',
+    '/tags/vtag-2/proj/d.txt '
     '(from /branches/unlabeled-1.1.1/proj/d.txt:7)' : 'A',
-    '/tags/vtag-3/proj/e.txt '
-    '(from /branches/unlabeled-1.1.1/proj/e.txt:7)' : 'A',
     })
 
-  check_rev(logs, 13, "This commit was generated by cvs2svn "
-                       "to compensate for changes in r12,", {
-    '/trunk/proj/b.txt (from /branches/vbranchA/proj/b.txt:12)' : 'R',
-    '/trunk/proj/c.txt (from /branches/vbranchA/proj/c.txt:12)' : 'R',
-    '/trunk/proj/d.txt (from /branches/unlabeled-1.1.1/proj/d.txt:12)' : 'R',
-    '/trunk/proj/deleted-on-vendor-branch.txt '
-    '(from /branches/vbranchA/proj/deleted-on-vendor-branch.txt:12)' : 'A',
-    '/trunk/proj/e.txt (from /branches/unlabeled-1.1.1/proj/e.txt:12)' : 'R',
+  check_rev(logs, 12, sym_log_msg('vtag-3',1), {
+    '/tags/vtag-3 (from /branches/vbranchA:10)' : 'A',
+    '/tags/vtag-3/proj/d.txt '
+    '(from /branches/unlabeled-1.1.1/proj/d.txt:10)' : 'A',
+    '/tags/vtag-3/proj/e.txt '
+    '(from /branches/unlabeled-1.1.1/proj/e.txt:10)' : 'A',
     })
-  
-  check_rev(logs, 12, "Import (vbranchA, vtag-4).", {
+
+  check_rev(logs, 17, "This commit was generated by cvs2svn "
+                       "to compensate for changes in r16,", {
+    '/trunk/proj/b.txt (from /branches/vbranchA/proj/b.txt:16)' : 'R',
+    '/trunk/proj/c.txt (from /branches/vbranchA/proj/c.txt:16)' : 'R',
+    '/trunk/proj/d.txt (from /branches/unlabeled-1.1.1/proj/d.txt:16)' : 'R',
+    '/trunk/proj/deleted-on-vendor-branch.txt '
+    '(from /branches/vbranchA/proj/deleted-on-vendor-branch.txt:16)' : 'A',
+    '/trunk/proj/e.txt (from /branches/unlabeled-1.1.1/proj/e.txt:16)' : 'R',
+    })
+
+  check_rev(logs, 16, "Import (vbranchA, vtag-4).", {
     '/branches/unlabeled-1.1.1/proj/d.txt' : 'M',
     '/branches/unlabeled-1.1.1/proj/e.txt' : 'M',
     '/branches/vbranchA/proj/a.txt' : 'M',
@@ -1134,30 +1135,30 @@ def default_branches():
     '/branches/vbranchA/proj/deleted-on-vendor-branch.txt' : 'A',
     })
 
-  check_rev(logs, 11, sym_log_msg('vbranchA'), {
+  check_rev(logs, 15, sym_log_msg('vbranchA'), {
     '/branches/vbranchA/proj/added-then-imported.txt '
-    '(from /trunk/proj/added-then-imported.txt:10)' : 'A',
+    '(from /trunk/proj/added-then-imported.txt:14)' : 'A',
     })
 
-  check_rev(logs, 10, "Add a file to the working copy.", {
+  check_rev(logs, 14, "Add a file to the working copy.", {
     '/trunk/proj/added-then-imported.txt' : 'A',
     })
 
-  check_rev(logs, 9, "First regular commit, to a.txt, on vtag-3.", {
+  check_rev(logs, 13, "First regular commit, to a.txt, on vtag-3.", {
     '/trunk/proj/a.txt' : 'M',
     })
 
-  check_rev(logs, 8, "This commit was generated by cvs2svn "
-                      "to compensate for changes in r7,", {
-    '/trunk/proj/a.txt (from /branches/vbranchA/proj/a.txt:7)' : 'R',
-    '/trunk/proj/b.txt (from /branches/vbranchA/proj/b.txt:7)' : 'R',
-    '/trunk/proj/c.txt (from /branches/vbranchA/proj/c.txt:7)' : 'R',
-    '/trunk/proj/d.txt (from /branches/unlabeled-1.1.1/proj/d.txt:7)' : 'R',
+  check_rev(logs, 11, "This commit was generated by cvs2svn "
+                      "to compensate for changes in r10,", {
+    '/trunk/proj/a.txt (from /branches/vbranchA/proj/a.txt:10)' : 'R',
+    '/trunk/proj/b.txt (from /branches/vbranchA/proj/b.txt:10)' : 'R',
+    '/trunk/proj/c.txt (from /branches/vbranchA/proj/c.txt:10)' : 'R',
+    '/trunk/proj/d.txt (from /branches/unlabeled-1.1.1/proj/d.txt:10)' : 'R',
     '/trunk/proj/deleted-on-vendor-branch.txt' : 'D',
-    '/trunk/proj/e.txt (from /branches/unlabeled-1.1.1/proj/e.txt:7)' : 'R',
+    '/trunk/proj/e.txt (from /branches/unlabeled-1.1.1/proj/e.txt:10)' : 'R',
     })
 
-  check_rev(logs, 7, "Import (vbranchA, vtag-3).", {
+  check_rev(logs, 10, "Import (vbranchA, vtag-3).", {
     '/branches/unlabeled-1.1.1/proj/d.txt' : 'M',
     '/branches/unlabeled-1.1.1/proj/e.txt' : 'M',
     '/branches/vbranchA/proj/a.txt' : 'M',
@@ -1166,18 +1167,18 @@ def default_branches():
     '/branches/vbranchA/proj/deleted-on-vendor-branch.txt' : 'D',
     })
 
-  check_rev(logs, 6, "This commit was generated by cvs2svn "
-                      "to compensate for changes in r5,", {
-    '/trunk/proj/a.txt (from /branches/vbranchA/proj/a.txt:5)' : 'R',
-    '/trunk/proj/b.txt (from /branches/vbranchA/proj/b.txt:5)' : 'R',
-    '/trunk/proj/c.txt (from /branches/vbranchA/proj/c.txt:5)' : 'R',
-    '/trunk/proj/d.txt (from /branches/unlabeled-1.1.1/proj/d.txt:5)' : 'R',
+  check_rev(logs, 8, "This commit was generated by cvs2svn "
+                      "to compensate for changes in r7,", {
+    '/trunk/proj/a.txt (from /branches/vbranchA/proj/a.txt:7)' : 'R',
+    '/trunk/proj/b.txt (from /branches/vbranchA/proj/b.txt:7)' : 'R',
+    '/trunk/proj/c.txt (from /branches/vbranchA/proj/c.txt:7)' : 'R',
+    '/trunk/proj/d.txt (from /branches/unlabeled-1.1.1/proj/d.txt:7)' : 'R',
     '/trunk/proj/deleted-on-vendor-branch.txt '
-    '(from /branches/vbranchA/proj/deleted-on-vendor-branch.txt:5)' : 'R',
-    '/trunk/proj/e.txt (from /branches/unlabeled-1.1.1/proj/e.txt:5)' : 'R',
+    '(from /branches/vbranchA/proj/deleted-on-vendor-branch.txt:7)' : 'R',
+    '/trunk/proj/e.txt (from /branches/unlabeled-1.1.1/proj/e.txt:7)' : 'R',
     })
 
-  check_rev(logs, 5, "Import (vbranchA, vtag-2).", {
+  check_rev(logs, 7, "Import (vbranchA, vtag-2).", {
     '/branches/unlabeled-1.1.1/proj/d.txt' : 'M',
     '/branches/unlabeled-1.1.1/proj/e.txt' : 'M',
     '/branches/vbranchA/proj/a.txt' : 'M',
@@ -1186,25 +1187,23 @@ def default_branches():
     '/branches/vbranchA/proj/deleted-on-vendor-branch.txt' : 'M',
     })
 
-  check_rev(logs, 4, "Import (vbranchA, vtag-1).", {}) 
+  check_rev(logs, 5, "Import (vbranchA, vtag-1).", {}) 
                      
-  check_rev(logs, 3, sym_log_msg('vbranchA'), {
-    '/branches/vbranchA (from /trunk:1)' : 'A',
+  check_rev(logs, 4, sym_log_msg('vbranchA'), {
+    '/branches/vbranchA (from /trunk:2)' : 'A',
     '/branches/vbranchA/proj/d.txt' : 'D',
     '/branches/vbranchA/proj/e.txt' : 'D',
     })
 
-  check_rev(logs, 2, sym_log_msg('unlabeled-1.1.1'), {
-    '/branches' : 'A',
-    '/branches/unlabeled-1.1.1 (from /trunk:1)' : 'A',
+  check_rev(logs, 3, sym_log_msg('unlabeled-1.1.1'), {
+    '/branches/unlabeled-1.1.1 (from /trunk:2)' : 'A',
     '/branches/unlabeled-1.1.1/proj/a.txt' : 'D',
     '/branches/unlabeled-1.1.1/proj/b.txt' : 'D',
     '/branches/unlabeled-1.1.1/proj/c.txt' : 'D',
     '/branches/unlabeled-1.1.1/proj/deleted-on-vendor-branch.txt' : 'D',
     })
 
-  check_rev(logs, 1, "Initial revision", {
-    '/trunk' : 'A',
+  check_rev(logs, 2, "Initial revision", {
     '/trunk/proj' : 'A',
     '/trunk/proj/a.txt' : 'A',
     '/trunk/proj/b.txt' : 'A',
@@ -1219,8 +1218,7 @@ def compose_tag_three_sources():
   "compose a tag from three sources"
   repos, wc, logs = ensure_conversion('compose-tag-three-sources')
 
-  check_rev(logs, 1, "Add on trunk", {
-    '/trunk': 'A',
+  check_rev(logs, 2, "Add on trunk", {
     '/trunk/tagged-on-trunk-1.2-a': 'A',
     '/trunk/tagged-on-trunk-1.2-b': 'A',
     '/trunk/tagged-on-trunk-1.1': 'A',
@@ -1228,12 +1226,15 @@ def compose_tag_three_sources():
     '/trunk/tagged-on-b2': 'A',
     })
 
-  check_rev(logs, 2, sym_log_msg('b1'), {
-    '/branches': 'A',
-    '/branches/b1 (from /trunk:1)': 'A',
+  check_rev(logs, 3, sym_log_msg('b1'), {
+    '/branches/b1 (from /trunk:2)': 'A',
     })
 
-  check_rev(logs, 3, "Commit on branch b1", {
+  check_rev(logs, 4, sym_log_msg('b2'), {
+    '/branches/b2 (from /trunk:2)': 'A',
+    })
+
+  check_rev(logs, 5, "Commit on branch b1", {
     '/branches/b1/tagged-on-trunk-1.2-a': 'M',
     '/branches/b1/tagged-on-trunk-1.2-b': 'M',
     '/branches/b1/tagged-on-trunk-1.1': 'M',
@@ -1241,11 +1242,7 @@ def compose_tag_three_sources():
     '/branches/b1/tagged-on-b2': 'M',
     })
 
-  check_rev(logs, 4, sym_log_msg('b2'), {
-    '/branches/b2 (from /trunk:1)': 'A',
-    })
-
-  check_rev(logs, 5, "Commit on branch b2", {
+  check_rev(logs, 6, "Commit on branch b2", {
     '/branches/b2/tagged-on-trunk-1.2-a': 'M',
     '/branches/b2/tagged-on-trunk-1.2-b': 'M',
     '/branches/b2/tagged-on-trunk-1.1': 'M',
@@ -1253,7 +1250,7 @@ def compose_tag_three_sources():
     '/branches/b2/tagged-on-b2': 'M',
     })
 
-  check_rev(logs, 6, "Commit again on trunk", {
+  check_rev(logs, 7, "Commit again on trunk", {
     '/trunk/tagged-on-trunk-1.2-a': 'M',
     '/trunk/tagged-on-trunk-1.2-b': 'M',
     '/trunk/tagged-on-trunk-1.1': 'M',
@@ -1261,15 +1258,78 @@ def compose_tag_three_sources():
     '/trunk/tagged-on-b2': 'M',
     })
 
-  check_rev(logs, 7, sym_log_msg('T',1), {
-    '/tags': 'A',
-    '/tags/T (from /trunk:6)': 'A',
-    '/tags/T/tagged-on-b1 (from /branches/b1/tagged-on-b1:3)': 'R',
-    '/tags/T/tagged-on-b2 (from /branches/b2/tagged-on-b2:5)': 'R',
-    '/tags/T/tagged-on-trunk-1.1 (from /trunk/tagged-on-trunk-1.1:1)': 'R',
+  check_rev(logs, 8, sym_log_msg('T',1), {
+    '/tags/T (from /trunk:7)': 'A',
+    '/tags/T/tagged-on-b2 (from /branches/b2/tagged-on-b2:7)': 'R',
+    '/tags/T/tagged-on-trunk-1.1 (from /trunk/tagged-on-trunk-1.1:2)': 'R',
+    '/tags/T/tagged-on-b1 (from /branches/b1/tagged-on-b1:7)': 'R',
     })
 
 
+def pass5_when_to_fill():
+  "reserve a svn revnum for a fill only when required"
+  # The conversion will fail if the bug is present, and
+  # ensure_conversion would raise svntest.Failure.
+  repos, wc, logs = ensure_conversion('pass5-when-to-fill')
+  
+
+def empty_trunk():
+  "don't break when the trunk is empty"
+  # The conversion will fail if the bug is present, and
+  # ensure_conversion would raise svntest.Failure.
+  repos, wc, logs = ensure_conversion('empty-trunk')
+  
+def no_spurious_svn_commits():
+  "ensure that we don't create any spurious commits"
+  repos, wc, logs = ensure_conversion('phoenix')
+
+  # Check spurious commit that could be created in CVSCommit._pre_commit
+  #   (When you add a file on a branch, CVS creates a trunk revision
+  #   in state 'dead'.  If the log message of that commit is equal to
+  #   the one that CVS generates, we do not ever create a 'fill'
+  #   SVNCommit for it.)
+  #
+  # and spurious commit that could be created in CVSCommit._commit
+  #   (When you add a file on a branch, CVS creates a trunk revision
+  #   in state 'dead'.  If the log message of that commit is equal to
+  #   the one that CVS generates, we do not create a primary SVNCommit
+  #   for it.)
+  check_rev(logs, 18, 'File added on branch xiphophorus', {
+    '/branches/xiphophorus/added-on-branch.txt' : 'A',
+    })
+
+  # Check to make sure that a commit *is* generated:
+  #   (When you add a file on a branch, CVS creates a trunk revision
+  #   in state 'dead'.  If the log message of that commit is NOT equal
+  #   to the one that CVS generates, we create a primary SVNCommit to
+  #   serve as a home for the log message in question.
+  check_rev(logs, 19, 'file added-on-branch2.txt was initially added on '
+            + 'branch xiphophorus,\nand this log message was tweaked', {})
+
+  # Check spurious commit that could be created in
+  # CVSRevisionAggregator.attempt_to_commit_symbols
+  #   (We shouldn't consider a CVSRevision whose op is OP_DEAD as a
+  #   candidate for the LastSymbolicNameDatabase.
+  check_rev(logs, 20, 'This file was also added on branch xiphophorus,', {
+    '/branches/xiphophorus/added-on-branch2.txt' : 'A',
+    })
+
+
+def peer_path_pruning():
+  "make sure that filling prunes paths correctly"
+  repos, wc, logs = ensure_conversion('peer-path-pruning')
+  check_rev(logs, 8, sym_log_msg('BRANCH'), {
+    '/branches/BRANCH (from /trunk:6)'         : 'A',
+    '/branches/BRANCH/bar'                     : 'D',
+    '/branches/BRANCH/foo (from /trunk/foo:7)' : 'R',
+    })
+
+def invalid_closings_on_trunk():
+  "verify correct revs are copied to default branches"
+  # The conversion will fail if the bug is present, and
+  # ensure_conversion would raise svntest.Failure.
+  repos, wc, logs = ensure_conversion('invalid-closings-on-trunk')
+  
 #----------------------------------------------------------------------
 
 ########################################################################
@@ -1307,6 +1367,11 @@ test_list = [ None,
               vendor_branch_sameness,
               default_branches,
               compose_tag_three_sources,
+              pass5_when_to_fill,
+              peer_path_pruning,
+              empty_trunk,
+              no_spurious_svn_commits,
+              invalid_closings_on_trunk,
              ]
 
 if __name__ == '__main__':

@@ -1,0 +1,24 @@
+head	1.1;
+access;
+symbols
+	TAG-ALL-FILES:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2004.02.19.15.43.13;	author fitz;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Committing files a.txt and b.txt on trunk.
+@
+text
+@@

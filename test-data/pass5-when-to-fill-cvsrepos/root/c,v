@@ -1,0 +1,39 @@
+head	1.1;
+access;
+symbols
+	mybranch:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2004.06.05.13.31.17;	author max;	state Exp;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2004.06.05.13.31.18;	author max;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Add c to trunk
+@
+text
+@@
+
+
+1.1.2.1
+log
+@Branch commit of c
+@
+text
+@@
+

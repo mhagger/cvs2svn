@@ -1,0 +1,67 @@
+This repository is for testing cvs2svn's choices of which directories
+to copy when filling symbolic names.  The layout is:
+
+     /one.txt
+      two.txt
+      three.txt
+      /sub1/four.txt
+            five.txt
+            six.txt
+            sub2/seven.txt
+                 eight.txt
+                 nine.txt
+                 ten.txt
+
+Every file was imported in a standard way, then revisions 1.2 and 1.3
+were committed on every file.  Then a branch was made:
+
+    BRANCH_1: sprouts from every file's 1.3 (so branch number 1.3.0.2)
+
+Then a revision was committed on that branch, creating revision
+1.3.2.1 on every file.  Next a branch was made from that revision, on
+every file:
+
+    BRANCH_2: sprouts from every file's 1.3.2.1 (so branch number 1.3.2.1.0.2)
+
+The rest of the branches below all sprout from either trunk, or from
+the first revision on BRANCH_1 (that is, from 1.3.2.1), in various
+combinations.  Every branch below exists on every file, the only
+question is where the branch is rooted for each file.
+
+    BRANCH_3: Sprouts from trunk everywhere except sub1/sub2/*, where
+              it sprouts from BRANCH_1 for all four files.
+
+    BRANCH_4: Sprouts from trunk everywhere except for
+              sub1/sub2/ten.txt, where it sprouts from BRANCH_1.  Note
+              that this is a clear minority in sub1/sub2/, since it
+              still sprouts from trunk on the other three files there
+              ('seven.txt', 'eight.txt', and 'nine.txt').
+
+    BRANCH_5: Sprouts from trunk everywhere except for
+              sub1/sub2/nine.txt and sub1/sub2/ten.txt, where it
+              sprouts from BRANCH_1.  This is an even division in
+              sub1/sub2/, since it sprouts from trunk on two files
+              ('seven.txt' and 'eight.txt') and from BRANCH_1 on the
+              other two ('nine.txt' and 'ten.txt').
+
+    BRANCH_6: Sprouts from trunk everywhere except for
+              sub1/sub2/eight.txt, sub1/sub2/nine.txt, and
+              sub1/sub2/ten.txt, where it sprouts from BRANCH_1.  This
+              is a clear majority in favor of BRANCH_1, since BRANCH_6
+              sprouts from trunk on only one file ('seven.txt') and
+              from BRANCH_1 on the other three ('eight.txt',
+              'nine.txt' and 'ten.txt').
+
+    BRANCH_7: Sprouts from trunk everywhere except sub1/five.txt and
+              sub1/six.txt, where it sprouts from BRANCH_1.  This is a
+              majority in favor of BRANCH_1 there, as the only other
+              file in that directory is 'four.txt', but note that both
+              the parent directory and the sole subdirectory are
+              majority from trunk.
+
+    BRANCH_8: The reverse of BRANCH_7.  Sprouts from BRANCH_1
+              everywhere except sub1/five.txt and sub1/six.txt, where
+              it sprouts from trunk.  This is a majority in favor of
+              trunk there, as the only other file in that directory is
+              'four.txt', but note that both the parent directory and
+              the sole subdirectory are majority from BRANCH_1.

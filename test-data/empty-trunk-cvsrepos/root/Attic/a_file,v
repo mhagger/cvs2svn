@@ -1,0 +1,40 @@
+head	1.1;
+access;
+symbols
+	mytag:1.1.2.1
+	mybranch:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2004.06.05.14.14.45;	author max;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2004.06.05.14.14.45;	author max;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@file a_file was initially added on branch mybranch.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@Add a_file
+@
+text
+@@
+

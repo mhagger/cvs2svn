@@ -1,0 +1,26 @@
+head	1.1;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2000.09.01.09.56.05;	author fitz;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@initial import
+@
+text
+@This is a file on trunk that has a few revisions.  It's here only to
+make sure that it doesn't accidentally get copied over to any branches
+when they get created.
+@

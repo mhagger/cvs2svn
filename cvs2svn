@@ -351,7 +351,10 @@ def sort_file(infile, outfile):
   else:
     lc_all_tmp = None
   os.environ['LC_ALL'] = 'C'
-  run_command('sort -T %s %s > %s' % (Ctx().tmpdir, infile, outfile))
+  if sys.platform == "win32":
+    run_command('sort %s /T %s > %s' % (infile, Ctx().tmpdir, outfile))
+  else:  
+    run_command('sort -T %s %s > %s' % (Ctx().tmpdir, infile, outfile))
   if lc_all_tmp is None:
     del os.environ['LC_ALL']
   else:

@@ -1,10 +1,15 @@
-head	1.1;
+head	1.2;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 expand	@b@;
 
+
+1.2
+date	2004.07.28.10.42.27;	author kfogel;	state Exp;
+branches;
+next	1.1;
 
 1.1
 date	2004.07.19.20.57.24;	author jrandom;	state Exp;
@@ -16,12 +21,12 @@ desc
 @@
 
 
-1.1
+1.2
 log
-@Add a file.
+@Commit a second revision, appending text to the first revision.
 @
 text
-@This is the only revision in this file.
+@This is the first revision in this file.
 
 It has three keywords:
 
@@ -30,4 +35,15 @@ It has three keywords:
   $Date$
 
   $Id$
+This second revision appends some text to the first revision.
 @
+
+
+1.1
+log
+@Add a file.
+@
+text
+@d10 1
+@
+

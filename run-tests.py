@@ -1645,6 +1645,70 @@ def eol_mime():
     raise svntest.Failure
 
 
+def keywords():
+  "test setting of svn:keywords property among others"
+  repos, wc, logs = ensure_conversion('keywords')
+  wc_tree = svntest.tree.build_tree_from_wc(wc, 1)
+  allprops = {
+    'foo.default' : props_for_path(wc_tree, '/trunk/foo.default'),
+    'foo.kkvl'    : props_for_path(wc_tree, '/trunk/foo.kkvl'),
+    'foo.kkv'     : props_for_path(wc_tree, '/trunk/foo.kkv'),
+    'foo.kb'      : props_for_path(wc_tree, '/trunk/foo.kb'),
+    'foo.kk'      : props_for_path(wc_tree, '/trunk/foo.kk'),
+    'foo.ko'      : props_for_path(wc_tree, '/trunk/foo.ko'),
+    'foo.kv'      : props_for_path(wc_tree, '/trunk/foo.kv'),
+    }
+
+  if allprops['foo.default'].get('svn:keywords') != 'author date id':
+    raise svntest.Failure
+  if allprops['foo.default'].get('svn:eol-style') != 'native':
+    raise svntest.Failure
+  if allprops['foo.default'].get('svn:mime-type') is not None:
+    raise svntest.Failure
+  
+  if allprops['foo.kkvl'].get('svn:keywords') != 'author date id':
+    raise svntest.Failure
+  if allprops['foo.kkvl'].get('svn:eol-style') != 'native':
+    raise svntest.Failure
+  if allprops['foo.kkvl'].get('svn:mime-type') is not None:
+    raise svntest.Failure
+  
+  if allprops['foo.kkv'].get('svn:keywords') != 'author date id':
+    raise svntest.Failure
+  if allprops['foo.kkv'].get('svn:eol-style') != 'native':
+    raise svntest.Failure
+  if allprops['foo.kkv'].get('svn:mime-type') is not None:
+    raise svntest.Failure
+  
+  if allprops['foo.kb'].get('svn:keywords') is not None:
+    raise svntest.Failure
+  if allprops['foo.kb'].get('svn:eol-style') is not None:
+    raise svntest.Failure
+  if allprops['foo.kb'].get('svn:mime-type') != 'application/octet-stream':
+    raise svntest.Failure
+  
+  if allprops['foo.kk'].get('svn:keywords') is not None:
+    raise svntest.Failure
+  if allprops['foo.kk'].get('svn:eol-style') != 'native':
+    raise svntest.Failure
+  if allprops['foo.kk'].get('svn:mime-type') is not None:
+    raise svntest.Failure
+  
+  if allprops['foo.ko'].get('svn:keywords') is not None:
+    raise svntest.Failure
+  if allprops['foo.ko'].get('svn:eol-style') != 'native':
+    raise svntest.Failure
+  if allprops['foo.default'].get('svn:mime-type') is not None:
+    raise svntest.Failure
+  
+  if allprops['foo.kv'].get('svn:keywords') is not None:
+    raise svntest.Failure
+  if allprops['foo.kv'].get('svn:eol-style') != 'native':
+    raise svntest.Failure
+  if allprops['foo.kv'].get('svn:mime-type') is not None:
+    raise svntest.Failure
+
+
 #----------------------------------------------------------------------
 
 ########################################################################
@@ -1693,6 +1757,7 @@ test_list = [ None,
               file_in_attic_too,
               symbolic_name_filling_guide,
               eol_mime,
+              keywords,
              ]
 
 if __name__ == '__main__':

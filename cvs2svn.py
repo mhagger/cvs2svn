@@ -2210,14 +2210,13 @@ class Commit:
     # Tells whether we actually wrote anything to the dumpfile.
     svn_rev = SVN_INVALID_REVNUM
 
+    # If any of the changes we are about to do are on branches, we need to
+    # check and maybe fill them (in their own revisions) *before* we start
+    # then data revision. So we have to iterate over changes and deletes twice.
     for rcs_file, cvs_rev, dt_code, br, tags, branches in self.changes:
       # compute a repository path, dropping the ,v from the file name
       cvs_path = relative_name(ctx.cvsroot, rcs_file[:-2])
       svn_path = make_path(ctx, cvs_path, br)
-      if svn_rev == SVN_INVALID_REVNUM:
-        svn_rev = dumper.start_revision(props)
-      sym_tracker.enroot_tags(svn_path, svn_rev, tags)
-      sym_tracker.enroot_branches(svn_path, svn_rev, branches)
       if br:
         ### FIXME: Here is an obvious optimization point.  Probably
         ### dump.probe_path(PATH) is kind of slow, because it does N
@@ -2227,7 +2226,33 @@ class Commit:
         ### keyed on full paths, to reduce the check to a quick
         ### constant time query.
         if not dumper.probe_path(svn_path):
-          sym_tracker.fill_branch(dumper, ctx, br)
+          sym_tracker.fill_branch(dumper, ctx, br, [1])
+
+    for rcs_file, cvs_rev, dt_code, br, tags, branches in self.deletes:
+      # compute a repository path, dropping the ,v from the file name
+      cvs_path = relative_name(ctx.cvsroot, rcs_file[:-2])
+      svn_path = make_path(ctx, cvs_path, br)
+      if br:
+        ### FIXME: Here is an obvious optimization point.  Probably
+        ### dump.probe_path(PATH) is kind of slow, because it does N
+        ### database lookups for the N components in PATH.  If this
+        ### turns out to be a performance bottleneck, we can just
+        ### maintain a database mirroring just the head tree, but
+        ### keyed on full paths, to reduce the check to a quick
+        ### constant time query.
+        if not dumper.probe_path(svn_path):
+          sym_tracker.fill_branch(dumper, ctx, br, [1])
+
+
+    # Now that any branches we need exist, we can do the commits.
+    for rcs_file, cvs_rev, dt_code, br, tags, branches in self.changes:
+      # compute a repository path, dropping the ,v from the file name
+      cvs_path = relative_name(ctx.cvsroot, rcs_file[:-2])
+      svn_path = make_path(ctx, cvs_path, br)
+      if svn_rev == SVN_INVALID_REVNUM:
+        svn_rev = dumper.start_revision(props)
+      sym_tracker.enroot_tags(svn_path, svn_rev, tags)
+      sym_tracker.enroot_branches(svn_path, svn_rev, branches)
       print "    adding or changing %s : '%s'" % (cvs_rev, svn_path)
 
       # Only make a change if we need to.  When 1.1.1.1 has an empty
@@ -2269,16 +2294,6 @@ class Commit:
       # be clearer to know for sure and simply not call it.
       sym_tracker.enroot_tags(svn_path, svn_rev, tags)
       sym_tracker.enroot_branches(svn_path, svn_rev, branches)
-      if br:
-        ### FIXME: Here is an obvious optimization point.  Probably
-        ### dump.probe_path(PATH) is kind of slow, because it does N
-        ### database lookups for the N components in PATH.  If this
-        ### turns out to be a performance bottleneck, we can just
-        ### maintain a database mirroring just the head tree, but
-        ### keyed on full paths, to reduce the check to a quick
-        ### constant time query.
-        if not dumper.probe_path(svn_path):
-          sym_tracker.fill_branch(dumper, ctx, br)
       ### FIXME: this will return path_deleted == None if no path
       ### was deleted.  But we'll already have started the revision
       ### by then, so it's a bit late to use the knowledge!  Need to

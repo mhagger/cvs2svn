@@ -251,10 +251,49 @@ def erase(path):
 
 
 def find_tag_rev(logs, tagname):
+  """Search LOGS for a log message containing 'TAGNAME' and return the
+  revision in which it was found."""
   for i in xrange(len(logs), 0, -1):
     if logs[i].msg.find("'"+tagname+"'") != -1:
       return i
   raise ValueError("Tag %s not found in logs" % tagname)
+
+
+def sym_log_msg(symbolic_name, is_tag=None):
+  """Return the expected log message for a cvs2svn-synthesized revision
+  creating branch or tag SYMBOLIC_NAME."""
+  # This is a copy-paste of part of cvs2svn's make_revision_props
+  if is_tag:
+    type = 'tag'
+  else:
+    type = 'branch'
+
+  # In Python 2.2.3, we could use textwrap.fill().  Oh well :-).
+  if len(symbolic_name) >= 13:
+    space_or_newline = '\n'
+  else:
+    space_or_newline = ' '
+
+  log = "This commit was manufactured by cvs2svn to create %s%s'%s'." \
+      % (type, space_or_newline, symbolic_name)
+
+  return log
+
+
+def check_rev(logs, rev, msg, changed_paths):
+  """Verify the REV of LOGS has the MSG and CHANGED_PATHS specified."""
+  fail = None
+  if logs[rev].msg.find(msg) != 0:
+    print "Revision %d log message was:\n%s\n" % (rev, logs[rev].msg)
+    print "It should have begun with:\n%s\n" % (msg,)
+    fail = 1
+  if logs[rev].changed_paths != changed_paths:
+    print "Revision %d changed paths list was:\n%s\n" % (rev,
+        logs[rev].changed_paths)
+    print "It should have been:\n%s\n" % (changed_paths,)
+    fail = 1
+  if fail:
+    raise svntest.Failure
 
 
 # List of already converted names; see the NAME argument to ensure_conversion.
@@ -433,7 +472,7 @@ def prune_with_care():
   # pruning from going farther than the subdirectory containing first
   # and second.
 
-  rev = 7
+  rev = 10
   for path in ('/trunk/full-prune/first',
                '/trunk/full-prune-reappear/sub/first',
                '/trunk/partial-prune/sub/first'):
@@ -441,7 +480,7 @@ def prune_with_care():
       print "Revision %d failed to remove '%s'." % (rev, path)
       raise svntest.Failure
 
-  rev = 9
+  rev = 12
   for path in ('/trunk/full-prune',
                '/trunk/full-prune-reappear',
                '/trunk/partial-prune/sub'):
@@ -449,9 +488,8 @@ def prune_with_care():
       print "Revision %d failed to remove '%s'." % (rev, path)
       raise svntest.Failure
 
-  rev = 31
+  rev = 41
   for path in ('/trunk/full-prune-reappear',
-               '/trunk/full-prune-reappear',
                '/trunk/full-prune-reappear/appears-later'):
     if not (logs[rev].changed_paths.get(path) == 'A'):
       print "Revision %d failed to create path '%s'." % (rev, path)
@@ -464,7 +502,7 @@ def interleaved_commits():
   repos, wc, logs = ensure_conversion('main')
 
   # The initial import.
-  rev = 24
+  rev = 31
   for path in ('/trunk/interleaved',
                '/trunk/interleaved/1',
                '/trunk/interleaved/2',
@@ -515,7 +553,7 @@ def interleaved_commits():
   # One of the commits was letters only, the other was numbers only.
   # But they happened "simultaneously", so we don't assume anything
   # about which commit appeared first, we just try both ways.
-  rev = rev + 2
+  rev = rev + 3
   if not ((check_letters(rev, logs) and check_numbers(rev + 1, logs))
           or (check_numbers(rev, logs) and check_letters(rev + 1, logs))):
     raise svntest.Failure
@@ -527,7 +565,7 @@ def simple_commits():
   repos, wc, logs = ensure_conversion('main')
 
   # The initial import.
-  rev = 16
+  rev = 21
   if not logs[rev].changed_paths == {
     '/trunk/proj': 'A',
     '/trunk/proj/default': 'A',
@@ -550,7 +588,7 @@ def simple_commits():
     raise svntest.Failure
     
   # The first commit.
-  rev = 18
+  rev = 24
   if not logs[rev].changed_paths == {
     '/trunk/proj/sub1/subsubA/default': 'M',
     '/trunk/proj/sub3/default': 'M',
@@ -561,7 +599,7 @@ def simple_commits():
     raise svntest.Failure
 
   # The second commit.
-  rev = 19
+  rev = 25
   if not logs[rev].changed_paths == {
     '/trunk/proj/default': 'M',
     '/trunk/proj/sub1/default': 'M',
@@ -583,29 +621,31 @@ def simple_tags():
   repos, wc, logs = ensure_conversion('main')
  
   # Verify the copy source for the tags we are about to check
-  # No need to verify r16, as simple_commits did that
-  rev = 17
+  # No need to verify the copyfrom revision, as simple_commits did that
+  rev = 22
   if not logs[rev].changed_paths == {
-    '/branches/vendorbranch/proj (from /trunk/proj:16)': 'A',
+    '/branches/vendorbranch/proj (from /trunk/proj:21)': 'A',
     }:
     raise svntest.Failure
 
-  if logs[rev].msg.find('Initial import.') != 0:
+  fromstr = ' (from /branches/vendorbranch:23)'
+
+  if logs[rev].msg.find(sym_log_msg('vendorbranch')) != 0:
     raise svntest.Failure
 
   # Tag on rev 1.1.1.1 of all files in proj
   rev = find_tag_rev(logs, 'T_ALL_INITIAL_FILES')
   if not logs[rev].changed_paths == {
-    '/tags/T_ALL_INITIAL_FILES (from /branches/vendorbranch:17)': 'A',
+    '/tags/T_ALL_INITIAL_FILES'+fromstr: 'A',
     '/tags/T_ALL_INITIAL_FILES/single-files': 'D',
     '/tags/T_ALL_INITIAL_FILES/partial-prune': 'D',
     }:
     raise svntest.Failure
 
   # The same, as a branch
-  rev = 33
+  rev = 44
   if not logs[rev].changed_paths == {
-    '/branches/B_FROM_INITIALS (from /branches/vendorbranch:17)': 'A',
+    '/branches/B_FROM_INITIALS'+fromstr: 'A',
     '/branches/B_FROM_INITIALS/single-files': 'D',
     '/branches/B_FROM_INITIALS/partial-prune': 'D',
     }:
@@ -614,7 +654,7 @@ def simple_tags():
   # Tag on rev 1.1.1.1 of all files in proj, except one
   rev = find_tag_rev(logs, 'T_ALL_INITIAL_FILES_BUT_ONE')
   if not logs[rev].changed_paths == {
-    '/tags/T_ALL_INITIAL_FILES_BUT_ONE (from /branches/vendorbranch:17)': 'A',
+    '/tags/T_ALL_INITIAL_FILES_BUT_ONE'+fromstr: 'A',
     '/tags/T_ALL_INITIAL_FILES_BUT_ONE/single-files': 'D',
     '/tags/T_ALL_INITIAL_FILES_BUT_ONE/partial-prune': 'D',
     '/tags/T_ALL_INITIAL_FILES_BUT_ONE/proj/sub1/subsubB': 'D',
@@ -622,9 +662,9 @@ def simple_tags():
     raise svntest.Failure
 
   # The same, as a branch
-  rev = 34
+  rev = 45
   if not logs[rev].changed_paths == {
-    '/branches/B_FROM_INITIALS_BUT_ONE (from /branches/vendorbranch:17)': 'A',
+    '/branches/B_FROM_INITIALS_BUT_ONE'+fromstr: 'A',
     '/branches/B_FROM_INITIALS_BUT_ONE/single-files': 'D',
     '/branches/B_FROM_INITIALS_BUT_ONE/partial-prune': 'D',
     '/branches/B_FROM_INITIALS_BUT_ONE/proj/sub1/subsubB': 'D',
@@ -636,7 +676,7 @@ def simple_branch_commits():
   # See test-data/main-cvsrepos/proj/README.
   repos, wc, logs = ensure_conversion('main')
 
-  rev = 22
+  rev = 29
   if not logs[rev].changed_paths == {
     '/branches/B_MIXED/proj/default': 'M',
     '/branches/B_MIXED/proj/sub1/default': 'M',
@@ -655,13 +695,13 @@ def mixed_time_tag():
 
   rev = find_tag_rev(logs, 'T_MIXED')
   expected = {  
-    '/tags/T_MIXED (from /trunk:19)': 'A',
+    '/tags/T_MIXED (from /trunk:25)': 'A',
     '/tags/T_MIXED/partial-prune': 'D',
     '/tags/T_MIXED/single-files': 'D',
-    '/tags/T_MIXED/proj/sub2/subsubA (from /trunk/proj/sub2/subsubA:16)': 'R',
-    '/tags/T_MIXED/proj/sub3 (from /trunk/proj/sub3:18)': 'R',
+    '/tags/T_MIXED/proj/sub2/subsubA (from /trunk/proj/sub2/subsubA:21)': 'R',
+    '/tags/T_MIXED/proj/sub3 (from /trunk/proj/sub3:24)': 'R',
     }
-  if rev == 35:
+  if rev == 46:
     expected['/tags'] = 'A'
   if not logs[rev].changed_paths == expected:
     raise svntest.Failure
@@ -674,7 +714,7 @@ def mixed_time_branch_with_added_file():
 
   # Empty revision, purely to store the log message of the dead 1.1 revision
   # required by the RCS file format
-  rev = 20
+  rev = 26
   if not logs[rev].changed_paths == { }:
     raise svntest.Failure
 
@@ -684,14 +724,22 @@ def mixed_time_branch_with_added_file():
 
   # A branch from the same place as T_MIXED in the previous test,
   # plus a file added directly to the branch
-  rev = 21
+  rev = 27
   if not logs[rev].changed_paths == {
-    '/branches/B_MIXED (from /trunk:20)': 'A',
+    '/branches/B_MIXED (from /trunk:26)': 'A',
     '/branches/B_MIXED/partial-prune': 'D',
     '/branches/B_MIXED/single-files': 'D',
-    '/branches/B_MIXED/proj/sub2/subsubA (from /trunk/proj/sub2/subsubA:16)':
+    '/branches/B_MIXED/proj/sub2/subsubA (from /trunk/proj/sub2/subsubA:21)':
       'R',
-    '/branches/B_MIXED/proj/sub3 (from /trunk/proj/sub3:18)': 'R',
+    '/branches/B_MIXED/proj/sub3 (from /trunk/proj/sub3:24)': 'R',
+    }:
+    raise svntest.Failure
+
+  if logs[rev].msg.find(sym_log_msg('B_MIXED')) != 0:
+    raise svntest.Failure
+
+  rev = 28
+  if not logs[rev].changed_paths == {
     '/branches/B_MIXED/proj/sub2/branch_B_MIXED_only': 'A',
     }:
     raise svntest.Failure
@@ -705,7 +753,7 @@ def mixed_commit():
   # See test-data/main-cvsrepos/proj/README.
   repos, wc, logs = ensure_conversion('main')
 
-  rev = 23
+  rev = 30
   if not logs[rev].changed_paths == {
     '/trunk/proj/sub2/default': 'M',
     '/branches/B_MIXED/proj/sub2/branch_B_MIXED_only': 'M',
@@ -723,15 +771,23 @@ def split_time_branch():
   repos, wc, logs = ensure_conversion('main')
 
   # First change on the branch, creating it
-  rev = 28
+  rev = 36
   if not logs[rev].changed_paths == {
-    '/branches/B_SPLIT (from /trunk:23)': 'A',
+    '/branches/B_SPLIT (from /trunk:30)': 'A',
     '/branches/B_SPLIT/partial-prune': 'D',
     '/branches/B_SPLIT/single-files': 'D',
+    '/branches/B_SPLIT/proj/sub1/subsubB': 'D',
+    }:
+    raise svntest.Failure
+
+  if logs[rev].msg.find(sym_log_msg('B_SPLIT')) != 0:
+    raise svntest.Failure
+
+  rev = 37
+  if not logs[rev].changed_paths == {
     '/branches/B_SPLIT/proj/default': 'M',
     '/branches/B_SPLIT/proj/sub1/default': 'M',
     '/branches/B_SPLIT/proj/sub1/subsubA/default': 'M',
-    '/branches/B_SPLIT/proj/sub1/subsubB': 'D',
     '/branches/B_SPLIT/proj/sub2/default': 'M',
     '/branches/B_SPLIT/proj/sub2/subsubA/default': 'M',
     }:
@@ -741,7 +797,7 @@ def split_time_branch():
     raise svntest.Failure
 
   # A trunk commit for the file which was not branched
-  rev = 29
+  rev = 38
   if not logs[rev].changed_paths == {
     '/trunk/proj/sub1/subsubB/default': 'M',
     }:
@@ -752,10 +808,18 @@ def split_time_branch():
     raise svntest.Failure
 
   # Add the file not already branched to the branch, with modification:w
-  rev = 30
+  rev = 39
   if not logs[rev].changed_paths == {
-    '/branches/B_SPLIT/proj/sub1/subsubB (from /trunk/proj/sub1/subsubB:29)':
+    '/branches/B_SPLIT/proj/sub1/subsubB (from /trunk/proj/sub1/subsubB:38)':
       'A',
+    }:
+    raise svntest.Failure
+
+  if logs[rev].msg.find(sym_log_msg('B_SPLIT')) != 0:
+    raise svntest.Failure
+
+  rev = 40
+  if not logs[rev].changed_paths == {
     '/branches/B_SPLIT/proj/sub1/subsubB/default': 'M',
     '/branches/B_SPLIT/proj/sub3/default': 'M',
     }:
@@ -789,7 +853,9 @@ def overlapping_branch():
       or (logs[3].changed_paths.get('/branches/vendorB (from /trunk:2)')
           == 'A')):
     raise svntest.Failure
-  if len(logs) > 3:
+  if not logs[4].changed_paths == {}:
+    raise svntest.Failure
+  if len(logs) != 4:
     raise svntest.Failure
 
 
@@ -806,11 +872,11 @@ def tolerate_corruption():
 def phoenix_branch():
   "convert a branch file rooted in a 'dead' revision"
   repos, wc, logs = ensure_conversion('phoenix')
-  chpaths = logs[4].changed_paths
-  if not ((chpaths.get('/branches/volsung_20010721 (from /trunk:3)') == 'A')
-          and (chpaths.get('/branches/volsung_20010721/phoenix') == 'A')
-          and (len(chpaths) == 2)):
-    print "Revision 4 not as expected."
+  if not logs[5].changed_paths == {
+    '/branches/volsung_20010721 (from /trunk:4)': 'A' }:
+    raise svntest.Failure
+  if not logs[6].changed_paths == {
+    '/branches/volsung_20010721/phoenix': 'A' }:
     raise svntest.Failure
 
 
@@ -905,12 +971,17 @@ def enroot_race():
   "never use the rev-in-progress as a copy source"
   # See issue #1427 and r8544.
   repos, wc, logs = ensure_conversion('enroot-race')
-  if not ((logs[6].changed_paths.get('/branches/mybranch (from /trunk:5)')
-           == 'A')
-          and (logs[6].changed_paths.get('/branches/mybranch/proj/c.txt')
-               == 'M')
-          and (logs[6].changed_paths.get('/trunk/proj/a.txt') == 'M')
-          and (logs[6].changed_paths.get('/trunk/proj/b.txt') == 'M')):
+  if not logs[7].changed_paths == {
+    '/branches/mybranch (from /trunk:6)': 'A',
+    '/branches/mybranch/proj/a.txt': 'D',
+    '/branches/mybranch/proj/b.txt': 'D',
+    }:
+    raise svntest.Failure
+  if not logs[8].changed_paths == {
+    '/branches/mybranch/proj/c.txt': 'M',
+    '/trunk/proj/a.txt': 'M',
+    '/trunk/proj/b.txt': 'M',
+    }:
     raise svntest.Failure
 
 
@@ -1029,15 +1100,22 @@ def vendor_branch_sameness():
     }:
     raise svntest.Failure
 
-  if logs[2].msg.find('First vendor branch revision.') != 0:
+  if logs[2].msg.find(sym_log_msg('vbranchA')) != 0:
     raise svntest.Failure
 
   if not logs[2].changed_paths == {
     '/branches' : 'A',
     '/branches/vbranchA (from /trunk:1)' : 'A',
+    '/branches/vbranchA/proj/d.txt' : 'D',
+    }:
+    raise svntest.Failure
+
+  if logs[3].msg.find('First vendor branch revision.') != 0:
+    raise svntest.Failure
+
+  if not logs[3].changed_paths == {
     '/branches/vbranchA/proj/b.txt' : 'M',
     '/branches/vbranchA/proj/c.txt' : 'D',
-    '/branches/vbranchA/proj/d.txt' : 'D',
     }:
     raise svntest.Failure
 
@@ -1076,168 +1154,123 @@ def default_branches():
   #       never had a default branch.
   #
 
-  if logs[14].msg.find("This commit was manufactured by cvs2svn "
-                       "to create tag 'vtag-4'.") != 0:
-    raise svntest.Failure
-
-  if not logs[14].changed_paths == {
-    '/tags/vtag-4 (from /branches/vbranchA:9)' : 'A',
+  check_rev(logs, 17, sym_log_msg('vtag-4',1), {
+    '/tags/vtag-4 (from /branches/vbranchA:12)' : 'A',
     '/tags/vtag-4/proj/d.txt '
-    '(from /branches/unlabeled-1.1.1/proj/d.txt:9)' : 'A',
-    }:
-    raise svntest.Failure
+    '(from /branches/unlabeled-1.1.1/proj/d.txt:12)' : 'A',
+    })
 
-  if logs[13].msg.find("This commit was manufactured by cvs2svn "
-                       "to create tag 'vtag-1'.") != 0:
-    raise svntest.Failure
-
-  if not logs[13].changed_paths == {
-    '/tags/vtag-1 (from /branches/vbranchA:2)' : 'A',
+  check_rev(logs, 16, sym_log_msg('vtag-1',1), {
+    '/tags/vtag-1 (from /branches/vbranchA:4)' : 'A',
     '/tags/vtag-1/proj/d.txt '
-    '(from /branches/unlabeled-1.1.1/proj/d.txt:2)' : 'A',
-    }:
-    raise svntest.Failure
+    '(from /branches/unlabeled-1.1.1/proj/d.txt:4)' : 'A',
+    })
 
-  if logs[12].msg.find("This commit was manufactured by cvs2svn "
-                       "to create tag 'vtag-2'.") != 0:
-    raise svntest.Failure
-  if not logs[12].changed_paths == {
-    '/tags/vtag-2 (from /branches/vbranchA:3)' : 'A',
+  check_rev(logs, 15, sym_log_msg('vtag-2',1), {
+    '/tags/vtag-2 (from /branches/vbranchA:5)' : 'A',
     '/tags/vtag-2/proj/d.txt '
-    '(from /branches/unlabeled-1.1.1/proj/d.txt:3)' : 'A',
-    }:
-    raise svntest.Failure
-
-  if logs[11].msg.find("This commit was manufactured by cvs2svn "
-                       "to create tag 'vtag-3'.") != 0:
-    raise svntest.Failure
-  if not logs[11].changed_paths == {
-    '/tags' : 'A',
-    '/tags/vtag-3 (from /branches/vbranchA:5)' : 'A',
-    '/tags/vtag-3/proj/d.txt '
     '(from /branches/unlabeled-1.1.1/proj/d.txt:5)' : 'A',
-    '/tags/vtag-3/proj/e.txt '
-    '(from /branches/unlabeled-1.1.1/proj/e.txt:5)' : 'A',
-    }:
-    raise svntest.Failure
+    })
 
-  if logs[10].msg.find("This commit was generated by cvs2svn "
-                       "to compensate for changes in r9,") != 0:
-    raise svntest.Failure
-  if not logs[10].changed_paths == {
-    '/trunk/proj/b.txt (from /branches/vbranchA/proj/b.txt:9)' : 'R',
-    '/trunk/proj/c.txt (from /branches/vbranchA/proj/c.txt:9)' : 'R',
-    '/trunk/proj/d.txt (from /branches/unlabeled-1.1.1/proj/d.txt:9)' : 'R',
+  check_rev(logs, 14, sym_log_msg('vtag-3',1), {
+    '/tags' : 'A',
+    '/tags/vtag-3 (from /branches/vbranchA:7)' : 'A',
+    '/tags/vtag-3/proj/d.txt '
+    '(from /branches/unlabeled-1.1.1/proj/d.txt:7)' : 'A',
+    '/tags/vtag-3/proj/e.txt '
+    '(from /branches/unlabeled-1.1.1/proj/e.txt:7)' : 'A',
+    })
+
+  check_rev(logs, 13, "This commit was generated by cvs2svn "
+                       "to compensate for changes in r12,", {
+    '/trunk/proj/b.txt (from /branches/vbranchA/proj/b.txt:12)' : 'R',
+    '/trunk/proj/c.txt (from /branches/vbranchA/proj/c.txt:12)' : 'R',
+    '/trunk/proj/d.txt (from /branches/unlabeled-1.1.1/proj/d.txt:12)' : 'R',
     '/trunk/proj/deleted-on-vendor-branch.txt '
-    '(from /branches/vbranchA/proj/deleted-on-vendor-branch.txt:9)' : 'A',
-    '/trunk/proj/e.txt (from /branches/unlabeled-1.1.1/proj/e.txt:9)' : 'R',
-    }:
-    raise svntest.Failure
+    '(from /branches/vbranchA/proj/deleted-on-vendor-branch.txt:12)' : 'A',
+    '/trunk/proj/e.txt (from /branches/unlabeled-1.1.1/proj/e.txt:12)' : 'R',
+    })
   
-  if logs[9].msg.find("Import (vbranchA, vtag-4).") != 0:
-    raise svntest.Failure
-                     
-  if not logs[9].changed_paths == {
+  check_rev(logs, 12, "Import (vbranchA, vtag-4).", {
     '/branches/unlabeled-1.1.1/proj/d.txt' : 'M',
     '/branches/unlabeled-1.1.1/proj/e.txt' : 'M',
     '/branches/vbranchA/proj/a.txt' : 'M',
-    '/branches/vbranchA/proj/added-then-imported.txt '
-    '(from /trunk/proj/added-then-imported.txt:7)' : 'A',
+    '/branches/vbranchA/proj/added-then-imported.txt': 'M', # CHECK!!!
     '/branches/vbranchA/proj/b.txt' : 'M',
     '/branches/vbranchA/proj/c.txt' : 'M',
     '/branches/vbranchA/proj/deleted-on-vendor-branch.txt' : 'A',
-    }:
-    raise svntest.Failure
+    })
 
-  if logs[8].msg.find("First regular commit, to a.txt, on vtag-3.") != 0:
-    raise svntest.Failure
-                     
-  if not logs[8].changed_paths == {
+  check_rev(logs, 11, sym_log_msg('vbranchA'), {
+    '/branches/vbranchA/proj/added-then-imported.txt '
+    '(from /trunk/proj/added-then-imported.txt:9)' : 'A',
+    })
+
+  check_rev(logs, 10, "First regular commit, to a.txt, on vtag-3.", {
     '/trunk/proj/a.txt' : 'M',
-    }:
-    raise svntest.Failure
+    })
 
-  if logs[7].msg.find("Add a file to the working copy.") != 0:
-    raise svntest.Failure
-                     
-  if not logs[7].changed_paths == {
+  check_rev(logs, 9, "Add a file to the working copy.", {
     '/trunk/proj/added-then-imported.txt' : 'A',
-    }:
-    raise svntest.Failure
+    })
 
-  if logs[6].msg.find("This commit was generated by cvs2svn "
-                      "to compensate for changes in r5,") != 0:
-    raise svntest.Failure
-  if not logs[6].changed_paths == {
-    '/trunk/proj/a.txt (from /branches/vbranchA/proj/a.txt:5)' : 'R',
-    '/trunk/proj/b.txt (from /branches/vbranchA/proj/b.txt:5)' : 'R',
-    '/trunk/proj/c.txt (from /branches/vbranchA/proj/c.txt:5)' : 'R',
-    '/trunk/proj/d.txt (from /branches/unlabeled-1.1.1/proj/d.txt:5)' : 'R',
+  check_rev(logs, 8, "This commit was generated by cvs2svn "
+                      "to compensate for changes in r7,", {
+    '/trunk/proj/a.txt (from /branches/vbranchA/proj/a.txt:7)' : 'R',
+    '/trunk/proj/b.txt (from /branches/vbranchA/proj/b.txt:7)' : 'R',
+    '/trunk/proj/c.txt (from /branches/vbranchA/proj/c.txt:7)' : 'R',
+    '/trunk/proj/d.txt (from /branches/unlabeled-1.1.1/proj/d.txt:7)' : 'R',
     '/trunk/proj/deleted-on-vendor-branch.txt' : 'D',
-    '/trunk/proj/e.txt (from /branches/unlabeled-1.1.1/proj/e.txt:5)' : 'R',
-    }:
-    raise svntest.Failure
+    '/trunk/proj/e.txt (from /branches/unlabeled-1.1.1/proj/e.txt:7)' : 'R',
+    })
 
-  if logs[5].msg.find("Import (vbranchA, vtag-3).") != 0:
-    raise svntest.Failure
-                     
-  if not logs[5].changed_paths == {
+  check_rev(logs, 7, "Import (vbranchA, vtag-3).", {
     '/branches/unlabeled-1.1.1/proj/d.txt' : 'M',
     '/branches/unlabeled-1.1.1/proj/e.txt' : 'M',
     '/branches/vbranchA/proj/a.txt' : 'M',
     '/branches/vbranchA/proj/b.txt' : 'M',
     '/branches/vbranchA/proj/c.txt' : 'M',
     '/branches/vbranchA/proj/deleted-on-vendor-branch.txt' : 'D',
-    }:
-    raise svntest.Failure
+    })
 
-  if logs[4].msg.find("This commit was generated by cvs2svn "
-                      "to compensate for changes in r3,") != 0:
-    raise svntest.Failure
-  if not logs[4].changed_paths == {
-    '/trunk/proj/a.txt (from /branches/vbranchA/proj/a.txt:3)' : 'R',
-    '/trunk/proj/b.txt (from /branches/vbranchA/proj/b.txt:3)' : 'R',
-    '/trunk/proj/c.txt (from /branches/vbranchA/proj/c.txt:3)' : 'R',
-    '/trunk/proj/d.txt (from /branches/unlabeled-1.1.1/proj/d.txt:3)' : 'R',
+  check_rev(logs, 6, "This commit was generated by cvs2svn "
+                      "to compensate for changes in r5,", {
+    '/trunk/proj/a.txt (from /branches/vbranchA/proj/a.txt:5)' : 'R',
+    '/trunk/proj/b.txt (from /branches/vbranchA/proj/b.txt:5)' : 'R',
+    '/trunk/proj/c.txt (from /branches/vbranchA/proj/c.txt:5)' : 'R',
+    '/trunk/proj/d.txt (from /branches/unlabeled-1.1.1/proj/d.txt:5)' : 'R',
     '/trunk/proj/deleted-on-vendor-branch.txt '
-    '(from /branches/vbranchA/proj/deleted-on-vendor-branch.txt:3)' : 'R',
-    '/trunk/proj/e.txt (from /branches/unlabeled-1.1.1/proj/e.txt:3)' : 'R',
-    }:
-    raise svntest.Failure
+    '(from /branches/vbranchA/proj/deleted-on-vendor-branch.txt:5)' : 'R',
+    '/trunk/proj/e.txt (from /branches/unlabeled-1.1.1/proj/e.txt:5)' : 'R',
+    })
 
-  if logs[3].msg.find("Import (vbranchA, vtag-2).") != 0:
-    raise svntest.Failure
-                     
-  if not logs[3].changed_paths == {
+  check_rev(logs, 5, "Import (vbranchA, vtag-2).", {
     '/branches/unlabeled-1.1.1/proj/d.txt' : 'M',
     '/branches/unlabeled-1.1.1/proj/e.txt' : 'M',
     '/branches/vbranchA/proj/a.txt' : 'M',
     '/branches/vbranchA/proj/b.txt' : 'M',
     '/branches/vbranchA/proj/c.txt' : 'M',
     '/branches/vbranchA/proj/deleted-on-vendor-branch.txt' : 'M',
-    }:
-    raise svntest.Failure
+    })
 
-  if logs[2].msg.find("Import (vbranchA, vtag-1).") != 0:
-    raise svntest.Failure
+  check_rev(logs, 4, "Import (vbranchA, vtag-1).", {}) 
                      
-  if not logs[2].changed_paths == {
+  check_rev(logs, 3, sym_log_msg('vbranchA'), {
+    '/branches/vbranchA (from /trunk:1)' : 'A',
+    '/branches/vbranchA/proj/d.txt' : 'D',
+    '/branches/vbranchA/proj/e.txt' : 'D',
+    })
+
+  check_rev(logs, 2, sym_log_msg('unlabeled-1.1.1'), {
     '/branches' : 'A',
     '/branches/unlabeled-1.1.1 (from /trunk:1)' : 'A',
     '/branches/unlabeled-1.1.1/proj/a.txt' : 'D',
     '/branches/unlabeled-1.1.1/proj/b.txt' : 'D',
     '/branches/unlabeled-1.1.1/proj/c.txt' : 'D',
     '/branches/unlabeled-1.1.1/proj/deleted-on-vendor-branch.txt' : 'D',
-    '/branches/vbranchA (from /trunk:1)' : 'A',
-    '/branches/vbranchA/proj/d.txt' : 'D',
-    '/branches/vbranchA/proj/e.txt' : 'D',
-    }:
-    raise svntest.Failure
+    })
 
-  if logs[1].msg.find("Initial revision") != 0:
-    raise svntest.Failure
-                     
-  if not logs[1].changed_paths == {
+  check_rev(logs, 1, "Initial revision", {
     '/trunk' : 'A',
     '/trunk/proj' : 'A',
     '/trunk/proj/a.txt' : 'A',
@@ -1246,8 +1279,7 @@ def default_branches():
     '/trunk/proj/d.txt' : 'A',
     '/trunk/proj/deleted-on-vendor-branch.txt' : 'A',
     '/trunk/proj/e.txt' : 'A',
-    }:
-    raise svntest.Failure
+    })
 
 
 def compose_tag_three_sources():
@@ -1258,19 +1290,25 @@ def compose_tag_three_sources():
     '/trunk/b': 'A', '/trunk/c': 'A' }: raise svntest.Failure
 
   if not logs[2].changed_paths == { '/branches': 'A',
-    '/branches/b1 (from /trunk:1)': 'A', '/branches/b1/a': 'M',
-    '/branches/b1/b': 'M', '/branches/b1/c': 'M',
+    '/branches/b1 (from /trunk:1)': 'A',
     }: raise svntest.Failure
 
   if not logs[3].changed_paths == {
-    '/branches/b2 (from /trunk:1)': 'A', '/branches/b2/a': 'M',
-    '/branches/b2/b': 'M', '/branches/b2/c': 'M',
+    '/branches/b1/a': 'M', '/branches/b1/b': 'M', '/branches/b1/c': 'M',
     }: raise svntest.Failure
 
-  if not logs[4].changed_paths == { '/tags': 'A',
+  if not logs[4].changed_paths == {
+    '/branches/b2 (from /trunk:1)': 'A',
+    }: raise svntest.Failure
+
+  if not logs[5].changed_paths == {
+    '/branches/b2/a': 'M', '/branches/b2/b': 'M', '/branches/b2/c': 'M',
+    }: raise svntest.Failure
+
+  if not logs[6].changed_paths == { '/tags': 'A',
     '/tags/T (from /trunk:1)': 'A',
-    '/tags/T/b (from /branches/b1/b:2)': 'R',
-    '/tags/T/c (from /branches/b2/c:3)': 'R',
+    '/tags/T/b (from /branches/b1/b:3)': 'R',
+    '/tags/T/c (from /branches/b2/c:5)': 'R',
     }: raise svntest.Failure
 
 

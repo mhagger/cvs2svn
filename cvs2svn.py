@@ -2858,7 +2858,8 @@ class SVNRepositoryMirror:
                                svn_commit.symbolic_name)
 
     if sources:
-      self._fill(symbol_fill, dest_prefix, sources)
+      dest_key = self._node_for_path(dest_prefix, self.youngest)[0]
+      self._fill(symbol_fill, dest_prefix, dest_key, sources)
     else:
       # We can only get here for a branch whose first commit is an add
       # (as opposed to a copy).
@@ -2874,7 +2875,7 @@ class SVNRepositoryMirror:
         # current revision number minus 1
         source_path = self._ctx.trunk_base
         entries = self._copy_path(source_path, dest_path,
-                                  svn_commit.revnum - 1) 
+                                  svn_commit.revnum - 1)[1]
         # Now since we've just copied trunk to a branch that's
         # *supposed* to be empty, we delete any entries in the
         # copied directory.
@@ -2909,16 +2910,17 @@ class SVNRepositoryMirror:
                % cvs_rev.op)
         raise SVNRepositoryMirrorUnexpectedOperationError, msg
 
-  def _fill(self, symbol_fill, dest_prefix, sources, path = None,
-            parent_source_prefix = None, preferred_revnum = None,
-            prune_ok = None):
+  def _fill(self, symbol_fill, dest_prefix, dest_key, sources,
+            path = None, parent_source_prefix = None,
+            preferred_revnum = None, prune_ok = None):
     """Fill the tag or branch at DEST_PREFIX + PATH with items from
     SOURCES, and recurse into the child items.
 
     DEST_PREFIX is the prefix of the destination directory, e.g.
     '/tags/my_tag' or '/branches/my_branch', and SOURCES is a list of
     FillSource classes that are candidates to be copied to the
-    destination.
+    destination.  DEST_KEY is the key in self.nodes_db to the
+    destination, or None if the destination does not yet exist.
 
     PATH is the path relative to DEST_PREFIX.  If PATH is None, we
     are at the top level, e.g. '/tags/my_tag'.
@@ -2950,22 +2952,25 @@ class SVNRepositoryMirror:
 
     src_path = _path_join(copy_source.prefix, path)
     dest_path = _path_join(dest_prefix, path)
-    dest_exists = self._path_exists(dest_path)
 
     # Figure out if we shall copy to this destination and delete any
     # destination path that is in the way.
-    dest_entries = None # I.e. unknown
-    if dest_exists:
-      if prune_ok and (parent_source_prefix != copy_source.prefix or
+    do_copy = 0
+    if dest_key is None:
+      do_copy = 1
+    elif prune_ok and (parent_source_prefix != copy_source.prefix or
                        copy_source.revnum != preferred_revnum):
-        # We are about to replace the destination, so we need to remove
-        # it before we perform the copy.
-        self._delete_path(dest_path)
-        dest_entries = self._copy_path(src_path, dest_path, copy_source.revnum)
-        prune_ok = 1
-    else:
-      dest_entries = self._copy_path(src_path, dest_path, copy_source.revnum)
+      # We are about to replace the destination, so we need to remove
+      # it before we perform the copy.
+      self._delete_path(dest_path)
+      do_copy = 1
+
+    if do_copy:
+      dest_key, dest_entries = self._copy_path(src_path, dest_path,
+                                               copy_source.revnum)
       prune_ok = 1
+    else:
+      dest_entries = None # I.e. unknown
 
     # Create the SRC_ENTRIES hash from SOURCES.  The keys are path
     # elements and the values are lists of FillSource classes where
@@ -2982,7 +2987,7 @@ class SVNRepositoryMirror:
     if prune_ok:
       # Get the list of dest_entries if we don't have them already.
       if dest_entries is None:
-        dest_entries = self._list(dest_path)
+        dest_entries = self.nodes_db[dest_key]
       # Delete the entries in DEST_ENTRIES that are not in src_entries.
       for entry in dest_entries:
         if entry[0] == '/': # Skip flags
@@ -2993,10 +2998,15 @@ class SVNRepositoryMirror:
     # Recurse into the SRC_ENTRIES keys sorted in alphabetical order.
     src_keys = src_entries.keys()
     src_keys.sort()
+    dest_node = self.nodes_db[dest_key]
     for src_key in src_keys:
-      self._fill(symbol_fill, dest_prefix, src_entries[src_key],
-                 _path_join(path, src_key), copy_source.prefix,
-                 sources[0].revnum, prune_ok)
+      if src_key in dest_node:
+        next_dest_key = dest_node[src_key]
+      else:
+        next_dest_key = None
+      self._fill(symbol_fill, dest_prefix, next_dest_key,
+                 src_entries[src_key], _path_join(path, src_key),
+                 copy_source.prefix, sources[0].revnum, prune_ok)
 
   def _get_invalid_entries(self, valid_entries, all_entries):
     """Return a list of keys in ALL_ENTRIES that do not occur in
@@ -3043,8 +3053,8 @@ class SVNRepositoryMirror:
     In the youngest revision of the repository, DEST_PATH's parent
     *must* exist, but DEST_PATH *cannot* exist.
 
-    Return the contents of the new node at DEST_PATH as a dictionary.
-    """
+    Return the node key and the contents of the new node at DEST_PATH
+    as a dictionary."""
     # get the contents of the node of our src_path
     ign, src_node_contents = self._node_for_path(src_path, src_revnum)
     # get the dest node from self.youngest--it will always be mutable.
@@ -3073,7 +3083,7 @@ class SVNRepositoryMirror:
     dest_node_contents[dest_basename] = key
     self.nodes_db[dest_node_key] = dest_node_contents
     self._invoke_delegates('copy_path', src_path, dest_path, src_revnum)
-    return new_node
+    return key, new_node
 
   def _node_for_path(self, path, revnum, ignore_leaf=None):
     """Locates the node key in the filesystem for the last element of
@@ -3085,8 +3095,9 @@ class SVNRepositoryMirror:
     This method should never be called with a PATH that isn't in the
     repository.
 
-    Returns a tuple consisting of the nodes_db key and its
-    contents."""
+    Returns (None, None) if called with a PATH that isn't in the
+    repository, else return a tuple consisting of the nodes_db key and
+    its contents."""
     node_key, node_contents = self._get_root_node_for_revnum(revnum)
 
     components = path.split('/')
@@ -3094,6 +3105,8 @@ class SVNRepositoryMirror:
     for component in components:
       if component is last_component and ignore_leaf:
         break
+      if component not in node_contents:
+        return None, None
       node_key = node_contents[component]
       node_contents = self.nodes_db[node_key]
 
@@ -3121,21 +3134,6 @@ class SVNRepositoryMirror:
       parent_node_contents = this_entry_val
       previous_component = component
     return 1
-
-  def _list(self, path):
-    """Return a list of the children of PATH (which must exist).  PATH
-    must not start with '/'."""
-    parent_node_key, parent_node_contents = self._get_youngest_root_node()
-    previous_component = "/"
-
-    components = string.split(path, '/')
-    for component in components:
-      this_entry_key = parent_node_contents[component]
-      this_entry_val = self.nodes_db[this_entry_key]
-      parent_node_key = this_entry_key
-      parent_node_contents = this_entry_val
-      previous_component = component
-    return this_entry_val.keys()
 
   def commit(self, svn_commit):
     """Add an SVNCommit to the SVNRepository, incrementing the

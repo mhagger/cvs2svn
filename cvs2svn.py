@@ -849,6 +849,12 @@ class RepositoryMirror:
         # current path shares any history with any older live parent
         # of the dead revision, so we do nothing and return.
         return Change(OP_NOOP, [], [], deletions)
+    if expected_entries is not None:
+      # If it is not None, then even if it is an empty list/tuple,
+      # we need to approve this item in its parent's approved entries list.
+      approved_entries = parent.get(self.approved_entries) or {}
+      approved_entries[last_component] = 1
+      parent[self.approved_entries] = approved_entries
     if expected_entries:
       approved_entries = new_val.get(self.approved_entries) or { }
       new_approved_entries = { }
@@ -861,13 +867,6 @@ class RepositoryMirror:
           else:
             new_approved_entries[ent] = 1
       new_val[self.approved_entries] = new_approved_entries
-    elif expected_entries is not None:
-      # If its logically false but not None, then it is an empty list/tuple.
-      # This means we are copying a file explicitly, and need to add its name
-      # into its *parent's* approved entries list.
-      approved_entries = parent.get(self.approved_entries) or {}
-      approved_entries[last_component] = 1
-      parent[self.approved_entries] = approved_entries
     parent[last_component] = leaf_key
     self.nodes_db[parent_key] = parent
     self.symroots_db[path] = (tags, branches)

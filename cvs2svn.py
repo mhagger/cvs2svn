@@ -728,7 +728,7 @@ class CVSRevision:
 
   def filename(self):
     "Return the last path component of self.fname, minus the ',v'"
-    return self.fname.split('/')[-1][:-2]
+    return os.path.split(self.fname)[-1][:-2]
 
 class SymbolDatabase:
   """This database records information on all symbols in the RCS

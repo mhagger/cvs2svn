@@ -130,6 +130,12 @@ DUMPFILE = 'cvs2svn-dump'
 # grouping.  See design-notes.txt for details.
 DATAFILE = 'cvs2svn-data'
 
+# This is a file that contains nothing more than the total amount of
+# Subversion revisions (calculated in pass5) that we will create in
+# our new Subversion repository.  The file contains a single number
+# and no newline.
+TOTAL_SVN_REVS = 'cvs2svn-total-revs'
+
 # This text file contains records (1 per line) that describe svn
 # filesystem paths that are the opening and closing source revisions
 # for copies to tags and branches.  The format is as follows:
@@ -543,9 +549,6 @@ class Database:
       return self.__getitem__(key)
     return default
 
-  def len(self):
-    return len(self.db)
-   
 
 class LastSymbolicNameDatabase:
   """ Passing every CVSRevision in s-revs to this class will result in
@@ -1488,7 +1491,7 @@ class PersistenceManager:
 
   def total_revs(self):
     """Return the total number of Subversion revisions."""
-    return self.svn2cvs_db.len()
+    return int(open(temp(TOTAL_SVN_REVS), 'r').read())
 
   def get_svn_revnum(self, cvs_rev_unique_key):
     """Return the Subversion revision number in which
@@ -3940,6 +3943,10 @@ def pass5():
       aggregator.process_revision(c_rev)
   aggregator.flush()
 
+  # Now that we're done with the revision mapping, record the total
+  # number of SVNCommits we have.
+  open(temp(TOTAL_SVN_REVS), 'w').write(str(SVNCommit.revnum - 1))
+  Cleanup().register(temp(TOTAL_SVN_REVS), pass8)
   Log().write(LOG_QUIET, "Done")
 
 def pass6():
@@ -3999,7 +4006,7 @@ def pass8():
       repos.add_delegate(DumpfileDelegate())
     Log().write(LOG_QUIET, "Starting Subversion Dumpfile.")
 
-  repos.add_delegate(StdoutDelegate(persistence_manager.total_revs() + 1))
+  repos.add_delegate(StdoutDelegate(persistence_manager.total_revs()))
 
   while(1):
     svn_commit = persistence_manager.get_svn_commit(svncounter)

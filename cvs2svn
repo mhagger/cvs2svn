@@ -4339,8 +4339,9 @@ def usage():
         '                       setting svn:mime-type'
   print '  --eol-from-mime-type set svn:eol-style by mime type (only with --mime-types)'
   print '  --no-default-eol     don\'t set svn:eol-style by CVS defaults'
-  print '  --keywords-off       don\'t set svn:keywords on any files (cvs2svn sets svn:keywords to '
-  print '                       "author date id" on non-binary files by default)'
+  print '  --keywords-off       don\'t set svn:keywords on any files (cvs2svn sets'
+  print '                       "svn:keywords to author date id" on non-binary files'
+  print '                       by default)'
 
 def main():
   # Convenience var, so we don't have to keep instantiating this Borg.

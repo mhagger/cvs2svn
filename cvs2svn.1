@@ -1,4 +1,4 @@
-.TH CVS2SVN "1" "Sep 13, 2004" "Subversion" "User Commands"
+.TH CVS2SVN "1" "Oct 24, 2004" "Subversion" "User Commands"
 .SH NAME
 cvs2svn \- convert a cvs repository into a subversion repository
 .SH SYNOPSIS
@@ -119,6 +119,9 @@ Prevent the deletion of intermediate files.
 .TP
 \fB--bdb-txn-nosync\fR
 Pass \fI--bdb-txn-nosync\fR to "svnadmin create".
+.TP
+\fB--fs-type\fR
+Pass \fI--fs-type\fR=\fItype\fR to "svnadmin create".
 .TP
 \fB--cvs-revnums\fR
 Record CVS revision numbers as file properties.

@@ -3706,17 +3706,33 @@ class RepositoryDelegate(DumpfileDelegate):
     self.target = Ctx().target
     if not Ctx().existing_svnrepos:
       Log().write(LOG_NORMAL,"Creating new repository '%s'" % (self.target))
-      if Ctx().fsfs:
-        run_command('%s create %s "%s"' % (self.svnadmin, "--fs-type=fsfs",
+      if Ctx().fs_type and Ctx().fs_type != 'bdb':
+        # User specified something other than bdb.
+        run_command('%s create %s "%s"' % (self.svnadmin,
+                                           "--fs-type=%s" % Ctx().fs_type,
                                            self.target))
+      elif Ctx().fs_type:
+        # User explicitly specified bdb.
+        #
+        # Since this is a BDB repository, pass --bdb-txn-nosync,
+        # because it gives us a 4-5x speed boost (if cvs2svn is
+        # creating the repository, cvs2svn should be the only program
+        # accessing the svn repository (until cvs is done, at least)).
+        # But we'll turn no-sync off in self.finish(), unless
+        # instructed otherwise.
+        run_command('%s create %s %s "%s"' % (self.svnadmin,
+                                              "--fs-type=bdb",
+                                              "--bdb-txn-nosync",
+                                              self.target))
       else:
-        # Pass --bdb-txn-nosync if this is a BDB repository, because
-        # it gives us a 4-5x speed boost (if cvs2svn is creating the
-        # repository, cvs2svn should be the only program accessing the
-        # svn repository (until cvs is done, at least)).  But we turn
-        # no-sync off in self.finish(), unless instructed otherwise.
-        run_command('%s create %s "%s"' % (self.svnadmin, "--bdb-txn-nosync",
+        # User didn't say what kind repository (bdb, fsfs, etc).
+        # We still pass --bdb-txn-nosync.  It's a no-op if the default
+        # repository type doesn't support it, but we definitely want
+        # it if BDB is the default.
+        run_command('%s create %s "%s"' % (self.svnadmin,
+                                           "--bdb-txn-nosync",
                                            self.target))
+        
 
     # Since the output of this run is a repository, not a dumpfile,
     # the temporary dumpfiles we create should go in the tmpdir.
@@ -3783,9 +3799,9 @@ class RepositoryDelegate(DumpfileDelegate):
     # default in BDB repositories.
     #
     # We determine if this is a BDB repository by looking for the
-    # DB_CONFIG file (which doesn't exist in FSFS), rather than by
-    # checking Ctx().fsfs.  That way this code will Do The Right Thing
-    # even if svnadmin creates FSFS repositories by default someday.
+    # DB_CONFIG file, which doesn't exist in FSFS, rather than by
+    # checking Ctx().fs_type.  That way this code will Do The Right
+    # Thing in all circumstances.
     db_config = os.path.join(self.target, "db/DB_CONFIG")
     if (not Ctx().existing_svnrepos and not Ctx().bdb_txn_nosync
         and os.path.exists(db_config)):
@@ -4268,7 +4284,7 @@ class Ctx:
     self.skip_cleanup = 0
     self.cvs_revnums = 0
     self.bdb_txn_nosync = 0
-    self.fsfs = 0
+    self.fs_type = None
     self.forced_branches = []
     self.forced_tags = []
     self.excludes = []
@@ -4386,7 +4402,7 @@ def usage():
   print '  --username=NAME      username for cvs2svn-synthesized commits'
   print '  --skip-cleanup       prevent the deletion of intermediate files'
   print '  --bdb-txn-nosync     pass --bdb-txn-nosync to "svnadmin create"'
-  print '  --fsfs               pass --fs-type=fsfs "svnadmin create"'
+  print '  --fs-type=TYPE       pass --fs-type=TYPE to "svnadmin create"'
   print '  --cvs-revnums        record CVS revision numbers as file properties'
   print '  --mime-types=FILE    specify an apache-style mime.types file for\n' \
         '                       setting svn:mime-type'
@@ -4415,7 +4431,7 @@ def main():
                                  "trunk-only", "no-prune", "dry-run",
                                  "dump-only", "dumpfile=", "tmpdir=",
                                  "svnadmin=", "skip-cleanup", "cvs-revnums",
-                                 "bdb-txn-nosync", "fsfs",
+                                 "bdb-txn-nosync", "fs-type=",
                                  "version", "profile",
                                  "keywords-off", "symbol-transform="])
   except getopt.GetoptError, e:
@@ -4511,8 +4527,8 @@ def main():
       ctx.cvs_revnums = 1
     elif opt == '--bdb-txn-nosync':
       ctx.bdb_txn_nosync = 1
-    elif opt == '--fsfs':
-      ctx.fsfs = 1
+    elif opt == '--fs-type':
+      ctx.fs_type = value
     elif opt == '--create':
       sys.stderr.write(warning_prefix +
           ': The behaviour produced by the --create option is now the '
@@ -4592,14 +4608,17 @@ def main():
   not_both(ctx.dump_only, '--dump-only',
            ctx.bdb_txn_nosync, '--bdb-txn-nosync')
 
-  not_both(ctx.fsfs, '--fsfs',
-           ctx.existing_svnrepos, '--existing-svnrepos')
-
-  not_both(ctx.fsfs, '--fsfs',
-           ctx.bdb_txn_nosync, '--bdb-txn-nosync')
-
   not_both(ctx.quiet, '-q',
            ctx.verbose, '-v')
+
+  not_both(ctx.fs_type, '--fs-type',
+           ctx.existing_svnrepos, '--existing-svnrepos')
+
+  if ctx.fs_type and ctx.fs_type != 'bdb' and ctx.bdb_txn_nosync:
+    sys.stderr.write(error_prefix +
+                     ": cannot pass --bdb-txn-nosync with --fs-type=%s.\n" \
+                     % ctx.fs_type)
+    sys.exit(1)
 
   if ((string.find(ctx.trunk_base, '/') > -1)
       or (string.find(ctx.tags_base, '/') > -1)

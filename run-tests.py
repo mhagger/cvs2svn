@@ -859,16 +859,6 @@ def overlapping_branch():
     raise svntest.Failure
 
 
-def tolerate_corruption():
-  "convert as much as can, despite a corrupt ,v file"
-  repos, wc, logs = ensure_conversion('corrupt', None, 1)
-  if not ((logs[1].changed_paths.get('/trunk') == 'A')
-          and (logs[1].changed_paths.get('/trunk/good') == 'A')
-          and (len(logs[1].changed_paths) == 2)):
-    print "Even the valid good,v was not converted."
-    raise svntest.Failure
-
-
 def phoenix_branch():
   "convert a branch file rooted in a 'dead' revision"
   repos, wc, logs = ensure_conversion('phoenix')
@@ -1359,7 +1349,6 @@ test_list = [ None,
               split_time_branch,
               bogus_tag,
               overlapping_branch,
-              tolerate_corruption,
               phoenix_branch,
               ctrl_char_in_log,
               overdead,

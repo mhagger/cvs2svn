@@ -32,6 +32,7 @@ import string
 import md5
 import marshal
 import errno
+import popen2
 
 # Warnings and errors start with these strings.  They are typically
 # followed by a colon and a space, as in "%s: " ==> "Warning: ".
@@ -50,6 +51,21 @@ try:
 except:
   True = 1
   False = 0
+
+# Minimal, incomplete, version of popen2.Popen3 for those platforms
+# for which popen2 does not provide it.
+try:
+  Popen3 = popen2.Popen3
+except AttributeError:
+  class Popen3:
+    def __init__(self, cmd, capturestderr):
+      if type(cmd) != str:
+        cmd = " ".join(cmd)
+      self.fromchild, self.tochild, self.childerr = popen2.popen3(cmd,
+                                                                  mode='b')
+    def wait(self):
+      return self.fromchild.close() or self.tochild.close() or \
+             self.childerr.close()
 
 # DBM module selection
 
@@ -3228,8 +3244,8 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     ### use it to set svn:mime-type.  See issue #39.
     pipe_cmd = 'co -q -x,v -p%s %s' \
                % (c_rev.rev, escape_shell_arg(c_rev.rcs_path()))
-    pipe_in, pipe_out, pipe_err = os.popen3(pipe_cmd, 'b')
-    pipe_in.close()
+    pipe = Popen3(pipe_cmd, True)
+    pipe.tochild.close()
 
     if op == OP_ADD:
       action = 'add'
@@ -3260,15 +3276,15 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     # Insert the rev contents, calculating length and checksum as we go.
     checksum = md5.new()
     length = 0
-    buf = pipe_out.read(PIPE_READ_SIZE)
+    buf = pipe.fromchild.read(PIPE_READ_SIZE)
     while buf:
       checksum.update(buf)
       length = length + len(buf)
       self.dumpfile.write(buf)
-      buf = pipe_out.read(PIPE_READ_SIZE)
-    pipe_out.close()
-    error_output = pipe_err.read()
-    if pipe_err.close() is not None:
+      buf = pipe.fromchild.read(PIPE_READ_SIZE)
+    pipe.fromchild.close()
+    error_output = pipe.childerr.read()
+    if pipe.wait():
       sys.exit("%s: The command '%s' failed with the following output:\n"
                "%s" % (error_prefix, pipe_cmd, error_output))
 
@@ -3343,15 +3359,15 @@ class RepositoryDelegate(DumpfileDelegate):
     self._commit_in_progress = None
 
     self.dumpfile = open(self.dumpfile_path, 'w+b')
-    self.loader_pipe, pipe_out, self.loader_pipe_err = \
-        os.popen3('%s load -q %s' % (self.svnadmin, self.target), 'b')
-    pipe_out.close()
+    self.loader_pipe = Popen3('%s load -q %s' % (self.svnadmin, self.target),
+                              True)
+    self.loader_pipe.fromchild.close()
     try:
-      self._write_dumpfile_header(self.loader_pipe)
+      self._write_dumpfile_header(self.loader_pipe.tochild)
     except IOError:
       sys.stderr.write("%s: svnadmin failed with the following output while "
                        "loading the dumpfile:\n" % (error_prefix))
-      sys.stderr.write(self.loader_pipe_err.read())
+      sys.stderr.write(self.loader_pipe.childerr.read())
       sys.exit(1)
 
   def _feed_pipe(self):
@@ -3363,11 +3379,11 @@ class RepositoryDelegate(DumpfileDelegate):
       if not len(data):
         break
       try:
-        self.loader_pipe.write(data)
+        self.loader_pipe.tochild.write(data)
       except IOError:
         sys.stderr.write("%s: svnadmin failed with the following output while "
                          "loading the dumpfile:\n" % (error_prefix))
-        sys.stderr.write(self.loader_pipe_err.read())
+        sys.stderr.write(self.loader_pipe.childerr.read())
         sys.exit(1)
 
   def start_commit(self, svn_commit):
@@ -3385,9 +3401,9 @@ class RepositoryDelegate(DumpfileDelegate):
     """Loads the last commit into the repository."""
     self._feed_pipe()
     self.dumpfile.close()
-    self.loader_pipe.close()
-    error_output = self.loader_pipe_err.read()
-    if self.loader_pipe_err.close() is not None:
+    self.loader_pipe.tochild.close()
+    error_output = self.loader_pipe.childerr.read()
+    if self.loader_pipe.wait() is not None:
       sys.exit('%s: svnadmin load failed with the following output:\n'
                '%s' % (error_prefix, error_output))
 

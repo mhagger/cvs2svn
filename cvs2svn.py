@@ -1897,7 +1897,10 @@ class SymbolicNameTracker:
       rev = self.best_rev(scores, parent_rev, limit_rev)
 
       if rev == SVN_INVALID_REVNUM:
-        return  # name is a branch, but we're doing a tag, or vice versa
+        sys.stderr.write(error_prefix +
+            ": failed to find a revision to copy from when copying %s " \
+            "'%s'\n" % (is_tag and "tag" or "branch", name))
+        sys.exit(1)
 
       else:
         if is_tag:
@@ -1987,6 +1990,14 @@ class SymbolicNameTracker:
 
     parent_key = parent[name]
     parent = self.db[parent_key]
+
+    really_is_tag = parent.has_key(self.tags_opening_revs_key)
+    if is_tag and really_is_tag:
+      print "filling tag '%s'." % name
+    elif not is_tag and not really_is_tag:
+      print "filling branch '%s'." % name
+    else:
+      return
 
     # All Subversion source paths under the branch start with one of
     # three things:
@@ -2090,12 +2101,10 @@ class SymbolicNameTracker:
       print "Finishing branches:"
       for name in parent.keys():
         if name[0] != '/':
-          print "finishing '%s' as branch" % name
           self.fill_branch(dumper, ctx, name, [1])
       print "Finishing tags:"
       for name in parent.keys():
         if name[0] != '/':
-          print "finishing '%s' as tag" % name
           self.fill_tag(dumper, ctx, name, [1])
 
 

@@ -1,19 +1,26 @@
 # Makefile for packaging and installing cvs2svn.
 
-DESTDIR=/usr/local
-
 all:
 	@echo "Use 'make install' to install, or 'make dist' to package",
 	@echo " or 'make check' to run tests."
 
 dist:
-	@./dist.sh
+	./dist.sh
 
 install:
-	@./setup.py install --prefix=${DESTDIR}
+	@case "${DESTDIR}" in \
+	"") \
+	echo ./setup.py install ; \
+	./setup.py install ; \
+	;; \
+	*) \
+	echo ./setup.py install --root=${DESTDIR} ; \
+	./setup.py install --root=${DESTDIR} ; \
+	;; \
+	esac
 
 check:
-	@./run-tests.py
+	./run-tests.py
 
 clean:
-	@rm -rf cvs2svn-*.tar.gz *.pyc build
+	rm -rf cvs2svn-*.tar.gz *.pyc build

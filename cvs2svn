@@ -4271,7 +4271,6 @@ def convert(start_pass, end_pass):
   if end_pass < 4:
     Log().write(LOG_QUIET, '(These are unaltered CVS repository stats and do not\n'
                 + ' reflect tags or branches excluded via --exclude)\n')
-  StatsKeeper().archive()
   print StatsKeeper().timings()
 
 

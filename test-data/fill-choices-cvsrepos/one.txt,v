@@ -1,6 +1,8 @@
 head	1.3;
 access;
 symbols
+	TAG_B1:1.3.12.1
+	BRANCH_B1:1.3.0.12
 	BRANCH_8:1.3.2.1.0.4
 	BRANCH_7:1.3.0.10
 	BRANCH_5:1.3.0.8
@@ -17,7 +19,8 @@ comment	@# @;
 1.3
 date	2004.06.07.18.42.06;	author kfogel;	state Exp;
 branches
-	1.3.2.1;
+	1.3.2.1
+	1.3.12.1;
 next	1.2;
 
 1.2
@@ -41,6 +44,11 @@ date	2004.06.07.20.29.58;	author kfogel;	state Exp;
 branches;
 next	;
 
+1.3.12.1
+date	2004.06.28.22.03.12;	author tori;	state Exp;
+branches;
+next	;
+
 
 desc
 @@
@@ -52,6 +60,17 @@ log
 @
 text
 @Another small change.
+@
+
+
+1.3.12.1
+log
+@First change on branch BRANCH_B1
+@
+text
+@d1 1
+a1 1
+Yet another small change.
 @
 
 

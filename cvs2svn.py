@@ -1066,7 +1066,7 @@ class Dumper:
       self.init_dumpfile()
       self.write_dumpfile_header(self.dumpfile)
     else:
-      if ctx.create_repos:
+      if not ctx.existing_svnrepos:
         print "creating repos '%s'" % (self.target)
         run_command('%s create %s %s' % (self.svnadmin, ctx.bdb_txn_nosync
           and "--bdb-txn-nosync" or "", self.target))
@@ -2628,33 +2628,31 @@ def convert(ctx, start_pass=1):
 def usage(ctx):
   print 'USAGE: %s [-n] [-v] [-s svn-repos-path] [-p pass] cvs-repos-path' \
         % os.path.basename(sys.argv[0])
-  print '  --help, -h       print this usage message and exit with success'
-  print '  -n               dry run; parse CVS repos, but do not construct SVN repos'
-  print '  -v               verbose'
-  print '  -s PATH          path for SVN repos'
-  print '  -p NUM           start at pass NUM of %d' % len(_passes)
-  print '  --create         create a new SVN repository'
-  print '  --dumpfile=PATH  name of intermediate svn dumpfile'
-  print '  --svnadmin=PATH  path to the svnadmin program'
-  print '  --trunk-only     convert only trunk commits, not tags nor branches'
-  print '  --trunk=PATH     path for trunk (default: %s)'    \
+  print '  --help, -h           print this usage message and exit with success'
+  print '  -n                   dry run; parse CVS repos, but do not construct SVN repos'
+  print '  -v                   verbose'
+  print '  -s PATH              path for SVN repos'
+  print '  -p NUM               start at pass NUM of %d' % len(_passes)
+  print '  --existing-svnrepos  load into existing SVN repository'
+  print '  --dumpfile=PATH      name of intermediate svn dumpfile'
+  print '  --svnadmin=PATH      path to the svnadmin program'
+  print '  --trunk-only         convert only trunk commits, not tags nor branches'
+  print '  --trunk=PATH         path for trunk (default: %s)'    \
         % ctx.trunk_base
-  print '  --branches=PATH  path for branches (default: %s)' \
+  print '  --branches=PATH      path for branches (default: %s)' \
         % ctx.branches_base
-  print '  --tags=PATH      path for tags (default: %s)'     \
+  print '  --tags=PATH          path for tags (default: %s)'     \
         % ctx.tags_base
-  print '  --no-prune       don\'t prune empty directories'
-  print '  --dump-only      just produce a dumpfile, don\'t commit to a repos'
-  print '  --encoding=ENC   encoding of log messages in CVS repos (default: %s)' \
+  print '  --no-prune           don\'t prune empty directories'
+  print '  --dump-only          just produce a dumpfile, don\'t commit to a repos'
+  print '  --encoding=ENC       encoding of log messages in CVS repos (default: %s)' \
         % ctx.encoding
-  print '  --username=NAME  default name when CVS repos has no name (default: %s)' \
+  print '  --username=NAME      username for cvs2svn-synthesized commits'
+  print '                                                  (default: %s)' \
         % ctx.username
-  print '  --skip-cleanup   prevent the deletion of intermediate files (default: %s)' \
-        % ctx.skip_cleanup
-  print '  --bdb-txn-nosync pass --bdb-txn-nosync to "svnadmin create" (default: %s)' \
-        % ctx.bdb_txn_nosync
-  print '  --cvs-revnums    record CVS revision numbers as file properties (default: %s)' \
-        % ctx.cvs_revnums
+  print '  --skip-cleanup       prevent the deletion of intermediate files'
+  print '  --bdb-txn-nosync     pass --bdb-txn-nosync to "svnadmin create"'
+  print '  --cvs-revnums        record CVS revision numbers as file properties'
         
 
 
@@ -2668,7 +2666,7 @@ def main():
   ctx.verbose = 0
   ctx.dry_run = 0
   ctx.prune = 1
-  ctx.create_repos = 1
+  ctx.existing_svnrepos = 0
   ctx.dump_only = 0
   ctx.trunk_only = 0
   ctx.trunk_base = "trunk"
@@ -2715,7 +2713,7 @@ def main():
     elif opt == '-s':
       ctx.target = value
     elif opt == '--existing-svnrepos':
-      ctx.create_repos = 0
+      ctx.existing_svnrepos = 1
     elif opt == '--dumpfile':
       ctx.dumpfile = value
     elif opt == '--svnadmin':
@@ -2780,14 +2778,19 @@ def main():
                      ": cannot pass both '-s' and '--dump-only'.\n")
     sys.exit(1)
 
-  if ctx.create_repos and ctx.dump_only:
+  if ctx.dump_only and ctx.existing_svnrepos:
     sys.stderr.write(error_prefix +
-                     ": cannot pass both '--create' and '--dump-only'.\n")
+        ": cannot pass both '--dump-only' and '--existing-svnrepos'.\n")
     sys.exit(1)
 
-  if not ctx.create_repos and ctx.bdb_txn_nosync:
+  if ctx.existing_svnrepos and ctx.bdb_txn_nosync:
     sys.stderr.write(error_prefix +
         ": cannot pass both '--existing-svnrepos' and '--bdb-txn-nosync'.\n")
+    sys.exit(1)
+
+  if ctx.dump_only and ctx.bdb_txn_nosync:
+    sys.stderr.write(error_prefix +
+        ": cannot pass both '--dump-only' and '--bdb-txn-nosync'.\n")
     sys.exit(1)
 
   if ((string.find(ctx.trunk_base, '/') > -1)
@@ -2800,14 +2803,14 @@ def main():
                      "for details.\n" % error_prefix)
     sys.exit(1)
 
-  if (not ctx.dump_only) and (not ctx.create_repos) and \
-      not os.path.isdir(ctx.target):
+  if ctx.existing_svnrepos and not os.path.isdir(ctx.target):
     sys.stderr.write(error_prefix +
                      ": the svn-repos-path '%s' is not an "
                      "existing directory.\n" % ctx.target)
     sys.exit(1)
 
-  if ctx.create_repos and os.path.exists(ctx.target):
+  if not ctx.dump_only and not ctx.existing_svnrepos \
+      and os.path.exists(ctx.target):
     sys.stderr.write(error_prefix +
                      ": the svn-repos-path '%s' exists.\nRemove it, or pass "
                      "'--existing-svnrepos'.\n" % ctx.target)

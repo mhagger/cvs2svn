@@ -423,25 +423,27 @@ class Cleanup(Singleton):
 
 
 # Always use these constants for opening databases.
-DB_OPEN_CREATE = 'c'
 DB_OPEN_READ = 'r'
+DB_OPEN_NEW = 'n'
 
 # A wrapper for anydbm that uses the marshal module to store items as
 # strings.
 class Database:
   def __init__(self, filename, mode):
     # pybsddb3 has a bug which prevents it from working with
-    # Berkeley DB 4.2 if you open the db with 'n' ("new".   This
+    # Berkeley DB 4.2 if you open the db with 'n' ("new"). This
     # causes the DB_TRUNCATE flag to be passed, which is disallowed
-    # for databases protected by lock and transaction support).
+    # for databases protected by lock and transaction support
+    # (bsddb databases use locking from bsddb version 4.2.4 onwards).
     #
-    # Theoretically, we should never receive the 'n' flag, because
-    # all callers should be using the DB_OPEN_* constants anyway.  But
-    # protect just in case.
-    if mode == 'n':
-      sys.stderr.write("Cannot open databases with 'n' flag ('%s').\n"
-                       % filename)
-      sys.exit(1)
+    # Therefore, manually perform the removal (we can do this, because
+    # we know that for bsddb - but *not* anydbm in general - the database
+    # consists of one file with the name we specify, rather than several
+    # based on that name).
+    if mode == 'n' and anydbm._defaultmod.__name__ == 'dbhash':
+      if os.path.isfile(filename):
+        os.unlink(filename)
+      mode = 'c'
 
     self.db = anydbm.open(filename, mode)
 
@@ -730,9 +732,9 @@ class CollectData(rcsparse.Sink):
     Cleanup().register(DATAFILE + REVS_SUFFIX, pass2)
     self.resync = open(DATAFILE + RESYNC_SUFFIX, 'w')
     Cleanup().register(DATAFILE + RESYNC_SUFFIX, pass2)
-    self.default_branches_db = Database(DEFAULT_BRANCHES_DB, DB_OPEN_CREATE)
+    self.default_branches_db = Database(DEFAULT_BRANCHES_DB, DB_OPEN_NEW)
     Cleanup().register(DEFAULT_BRANCHES_DB, pass8)
-    self.metadata_db = Database(METADATA_DB, DB_OPEN_CREATE)
+    self.metadata_db = Database(METADATA_DB, DB_OPEN_NEW)
     Cleanup().register(METADATA_DB, pass8)
     self.fatal_errors = []
     self.next_faked_branch_num = 999999
@@ -760,7 +762,7 @@ class CollectData(rcsparse.Sink):
     # it is forced to be treated as a tag by the user.
     self.forced_tag_branches = { }
 
-    self.tags_db = TagsDatabase(DB_OPEN_CREATE)
+    self.tags_db = TagsDatabase(DB_OPEN_NEW)
 
     # See set_fname() for initializations of other variables.
 
@@ -1302,15 +1304,23 @@ class PersistenceManager:
   All information pertinent to each SVNCommit is stored in a series of
   on-disk databases so that SVNCommits can be retrieved on-demand.
 
-  CTX is the usual annoying semi-global ctx object."""
-  def __init__(self, ctx):
+  CTX is the usual annoying semi-global ctx object.
+  
+  MODE is one of the constants DB_OPEN_NEW or DB_OPEN_READ.
+  In 'new' mode, PersistenceManager will initialize a new set of on-disk
+  databases and be fully-featured.
+  In 'read' mode, PersistenceManager will open existing on-disk databases
+  and the set_* methods will be unavailable."""
+  def __init__(self, ctx, mode):
     self._ctx = ctx
-    self.svn2cvs_db = Database(SVN_REVNUMS_TO_CVS_REVS, DB_OPEN_CREATE)
+    self.mode = mode
+    if mode not in (DB_OPEN_NEW, DB_OPEN_READ):
+      raise RuntimeError, "Invalid 'mode' argument to PersistenceManager"
+    self.svn2cvs_db = Database(SVN_REVNUMS_TO_CVS_REVS, mode)
     Cleanup().register(SVN_REVNUMS_TO_CVS_REVS, pass8)
-    self.cvs2svn_db = Database(CVS_REVS_TO_SVN_REVNUMS, DB_OPEN_CREATE)
+    self.cvs2svn_db = Database(CVS_REVS_TO_SVN_REVNUMS, mode)
     Cleanup().register(CVS_REVS_TO_SVN_REVNUMS, pass8)
-    self.svn_commit_names_dates = Database(SVN_COMMIT_NAMES_DATES,
-                                           DB_OPEN_CREATE)
+    self.svn_commit_names_dates = Database(SVN_COMMIT_NAMES_DATES, mode)
     Cleanup().register(SVN_COMMIT_NAMES_DATES, pass8)
     self.svn_commit_metadata = Database(METADATA_DB, DB_OPEN_READ)
     self.cvs_revisions = CVSRevisionDatabase(DB_OPEN_READ, ctx)
@@ -1318,7 +1328,7 @@ class PersistenceManager:
     ### into memory.  That seems like a good idea.
     if not ctx.trunk_only:
       self.tags_db = TagsDatabase(DB_OPEN_READ)
-      self.motivating_revnums = Database(MOTIVATING_REVNUMS, DB_OPEN_CREATE)
+      self.motivating_revnums = Database(MOTIVATING_REVNUMS, mode)
       Cleanup().register(MOTIVATING_REVNUMS, pass8)
     
     # "branch_name" -> svn_revnum in which branch was last filled.
@@ -1386,6 +1396,9 @@ class PersistenceManager:
   def set_cvs_revs(self, svn_revnum, cvs_revs):
     """Record the bidirectional mapping between SVN_REVNUM and
     CVS_REVS.""" 
+    if self.mode == DB_OPEN_READ:
+      raise RuntimeError, \
+          'Write operation attempted on read-only PersistenceManager'
     for c_rev in cvs_revs:
       Log().write(LOG_VERBOSE, " ", c_rev.unique_key())
     self.svn2cvs_db[str(svn_revnum)] = [x.unique_key() for x in cvs_revs]
@@ -1394,6 +1407,9 @@ class PersistenceManager:
 
   def set_name_and_date(self, svn_revnum, name, date):
     """Associate symbolic name NAME and DATE with SVN_REVNUM."""
+    if self.mode == DB_OPEN_READ:
+      raise RuntimeError, \
+          'Write operation attempted on read-only PersistenceManager'
     self.svn_commit_names_dates[str(svn_revnum)] = (name, date)
     self.last_filled[name] = svn_revnum
 
@@ -1405,6 +1421,9 @@ class PersistenceManager:
 
   def set_motivating_revnum(self, svn_revnum, motivating_revnum):
     """Store MOTIVATING_REVNUM as the value of SVN_REVNUM"""
+    if self.mode == DB_OPEN_READ:
+      raise RuntimeError, \
+          'Write operation attempted on read-only PersistenceManager'
     self.motivating_revnums[str(svn_revnum)] = str(motivating_revnum)
 
 
@@ -1953,7 +1972,7 @@ class CVSRevisionAggregator:
     self.latest_primary_svn_commit = None
 
     self._ctx._symbolings_logger = SymbolingsLogger(ctx)
-    self._ctx._persistence_manager = PersistenceManager(ctx)
+    self._ctx._persistence_manager = PersistenceManager(ctx, DB_OPEN_NEW)
     self._ctx._default_branches_db = Database(DEFAULT_BRANCHES_DB, DB_OPEN_READ)
 
 
@@ -2445,13 +2464,13 @@ class SVNRepositoryMirror:
     self.delegates = [ ]
 
     # This corresponds to the 'revisions' table in a Subversion fs.
-    self.revs_db = Database(SVN_MIRROR_REVISIONS_DB, DB_OPEN_CREATE)
+    self.revs_db = Database(SVN_MIRROR_REVISIONS_DB, DB_OPEN_NEW)
     Cleanup().register(SVN_MIRROR_REVISIONS_DB, pass8)
 
     # This corresponds to the 'nodes' table in a Subversion fs.  (We
     # don't need a 'representations' or 'strings' table because we
     # only track metadata, not file contents.)
-    self.nodes_db = Database(SVN_MIRROR_NODES_DB, DB_OPEN_CREATE)
+    self.nodes_db = Database(SVN_MIRROR_NODES_DB, DB_OPEN_NEW)
     Cleanup().register(SVN_MIRROR_NODES_DB, pass8)
 
     # Init a root directory with no entries at revision 0.
@@ -3698,11 +3717,11 @@ def pass4(ctx):
   """
   Log().write(LOG_QUIET,
       "Copying CVS revision data from flat file to database...")
-  cvs_revs_db = CVSRevisionDatabase(DB_OPEN_CREATE)
+  cvs_revs_db = CVSRevisionDatabase(DB_OPEN_NEW)
   if not ctx.trunk_only:
     Log().write(LOG_QUIET,
         "and finding last CVS revisions for all symbolic names...")
-    last_sym_name_db = LastSymbolicNameDatabase(DB_OPEN_CREATE)
+    last_sym_name_db = LastSymbolicNameDatabase(DB_OPEN_NEW)
   else:
     # This is to avoid testing ctx.trunk_only every time around the loop
     class DummyLSNDB:
@@ -3759,7 +3778,7 @@ def pass7(ctx):
     ###PERF This is a fine example of a db that can be in-memory and
     #just flushed to disk when we're done.  Later, it can just be sucked
     #back into memory.
-    offsets_db = Database(SYMBOL_OFFSETS_DB, DB_OPEN_CREATE) 
+    offsets_db = Database(SYMBOL_OFFSETS_DB, DB_OPEN_NEW) 
     Cleanup().register(SYMBOL_OFFSETS_DB, pass8)
     
     file = open(SYMBOL_OPENINGS_CLOSINGS_SORTED, 'r')
@@ -3781,7 +3800,7 @@ def pass7(ctx):
 def pass8(ctx):
   svncounter = 2 # Repository initialization is 1.
   repos = SVNRepositoryMirror(ctx)
-  persistence_manager = PersistenceManager(ctx)
+  persistence_manager = PersistenceManager(ctx, DB_OPEN_READ)
 
   if (ctx.target):
     repos.add_delegate(RepositoryDelegate(ctx))

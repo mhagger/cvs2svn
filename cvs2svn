@@ -2082,10 +2082,10 @@ class SVNCommit:
     # *primary* commit where the default branch changes actually
     # happened.  It is None otherwise.
     #
-    # It is possible for multiple for multiple synchronization commits
-    # to refer to the same motivating commit revision number, and it
-    # is possible for a single synchronization commit to contain
-    # CVSRevisions on multiple different default branches.
+    # It is possible for multiple synchronization commits to refer to
+    # the same motivating commit revision number, and it is possible
+    # for a single synchronization commit to contain CVSRevisions on
+    # multiple different default branches.
     self.motivating_revnum = None
 
     # is_tag is true only if this commit is a fill of a symbolic name

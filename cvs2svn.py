@@ -1654,7 +1654,9 @@ class CVSCommit:
     if len(svn_commit.cvs_revs) > 0:
       svn_commit.flush()
     else:
-      SVNRevNum().rollback_revnum()
+      # We will not be flushing this SVNCommit, so rollback the
+      # SVNCommit revision counter.
+      SVNCommit.revnum = SVNCommit.revnum - 1
 
     if not self._ctx.trunk_only:    
       for c_rev in self.revisions():
@@ -1733,6 +1735,11 @@ class SVNCommit:
   3. Updates trunk to reflect the contents of a particular branch
      (this is to handle RCS default branches)."""
 
+  # The revision number to assign to the next new SVNCommit.
+  # We start at 2 because SVNRepositoryMirror uses the first commit
+  # to create trunk, tags, and branches.
+  revnum = 2
+    
   class SVNCommitInternalInconsistencyError(Exception):
     """Exception raised if we encounter an impossible state in the
     SVNCommit Databases."""
@@ -1764,7 +1771,11 @@ class SVNCommit:
     self._max_date = 0  # Latest date seen so far.
 
     self.cvs_revs = cvs_revs or []
-    self.revnum = revnum or SVNRevNum().get_next_revnum()
+    if revnum:
+      self.revnum = revnum
+    else:
+      self.revnum = SVNCommit.revnum
+      SVNCommit.revnum = SVNCommit.revnum + 1
 
     # The symbolic name that is filled in this SVNCommit, if any
     self.symbolic_name = None
@@ -1923,20 +1934,6 @@ class SVNCommit:
           'which included commits to RCS files with non-trunk default ' \
           'branches.\n' % self.motivating_revnum
     return msg
-
-class SVNRevNum(Singleton):
-  def init(self):
-    # We start at 1 because SVNRepositoryMirror uses the first commit
-    # to create trunk, tags, and branches.
-    self.revnum = 1
-    
-  def get_next_revnum(self):
-    self.revnum = self.revnum + 1
-    return self.revnum
-
-  def rollback_revnum(self):
-    "Decrement the Subversion revision number."
-    self.revnum = self.revnum - 1
 
 class CVSRevisionAggregator:
   """This class groups CVSRevisions into CVSCommits that represent

@@ -3765,10 +3765,12 @@ def pass8(ctx):
   persistence_manager = PersistenceManager(ctx, DB_OPEN_READ)
 
   if (ctx.target):
-    repos.add_delegate(RepositoryDelegate(ctx))
+    if not ctx.dry_run:
+      repos.add_delegate(RepositoryDelegate(ctx))
     Log().write(LOG_QUIET, "Starting Subversion Repository.")
   else:
-    repos.add_delegate(DumpfileDelegate(ctx))
+    if not ctx.dry_run:
+      repos.add_delegate(DumpfileDelegate(ctx))
     Log().write(LOG_QUIET, "Starting Subversion Dumpfile.")
 
   repos.add_delegate(StdoutDelegate(persistence_manager.total_revs() + 1))
@@ -3890,6 +3892,8 @@ def usage(ctx):
   print '                       (implicitly enables --skip-cleanup)'
   print '  --existing-svnrepos  load into existing SVN repository'
   print '  --dumpfile=PATH      name of intermediate svn dumpfile'
+  print '  --dry-run            do not create a repository or a dumpfile;'
+  print '                       just print what would happen.'
   print '  --svnadmin=PATH      path to the svnadmin program'
   print '  --trunk-only         convert only trunk commits, not tags nor branches'
   print '  --trunk=PATH         path for trunk (default: %s)'    \
@@ -3925,6 +3929,7 @@ def main():
   ctx.prune = 1
   ctx.existing_svnrepos = 0
   ctx.dump_only = 0
+  ctx.dry_run = 0
   ctx.trunk_only = 0
   ctx.trunk_base = "trunk"
   ctx.tags_base = "tags"
@@ -3952,7 +3957,7 @@ def main():
                                  "branches=", "tags=", "encoding=",
                                  "force-branch=", "force-tag=",
                                  "mime-types=", "set-eol-style",
-                                 "trunk-only", "no-prune",
+                                 "trunk-only", "no-prune", "dry-run",
                                  "dump-only", "dumpfile=", "svnadmin=",
                                  "skip-cleanup", "cvs-revnums",
                                  "bdb-txn-nosync", "version"])
@@ -4010,6 +4015,8 @@ def main():
       ctx.prune = None
     elif opt == '--dump-only':
       ctx.dump_only = 1
+    elif opt == '--dry-run':
+      ctx.dry_run = 1
     elif opt == '--encoding':
       ctx.encoding = value
     elif opt == '--force-branch':

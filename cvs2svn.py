@@ -1089,7 +1089,7 @@ class Dumper:
       return
     self.dumpfile.close()
     print "piping revision %d into '%s' loader" % (self.revision, self.target)
-    dumpfile = file(self.dumpfile_path)
+    dumpfile = open(self.dumpfile_path)
     while True:
       data = dumpfile.read(1024*1024) # Choice of 1MB chunks is arbitrary
       if not len(data): break

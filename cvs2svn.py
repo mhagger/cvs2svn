@@ -2782,25 +2782,21 @@ def main():
                      ": must pass one of '-s' or '--dump-only'.\n")
     sys.exit(1)
 
-  if ctx.target and ctx.dump_only:
-    sys.stderr.write(error_prefix +
-                     ": cannot pass both '-s' and '--dump-only'.\n")
-    sys.exit(1)
+  def not_both(opt1val, opt1name, opt2val, opt2name):
+    if opt1val and opt2val:
+      sys.stderr.write(error_prefix + ": cannot pass both '%s' and '%s'.\n" \
+          % (opt1name, opt2name))
 
-  if ctx.dump_only and ctx.existing_svnrepos:
-    sys.stderr.write(error_prefix +
-        ": cannot pass both '--dump-only' and '--existing-svnrepos'.\n")
-    sys.exit(1)
+  not_both(ctx.target, '-s', ctx.dump_only, '--dump-only')
 
-  if ctx.existing_svnrepos and ctx.bdb_txn_nosync:
-    sys.stderr.write(error_prefix +
-        ": cannot pass both '--existing-svnrepos' and '--bdb-txn-nosync'.\n")
-    sys.exit(1)
+  not_both(ctx.dump_only, '--dump-only',
+    ctx.existing_svnrepos, '--existing-svnrepos')
 
-  if ctx.dump_only and ctx.bdb_txn_nosync:
-    sys.stderr.write(error_prefix +
-        ": cannot pass both '--dump-only' and '--bdb-txn-nosync'.\n")
-    sys.exit(1)
+  not_both(ctx.bdb_txn_nosync, '--bdb-txn-nosync',
+    ctx.existing_svnrepos, '--existing-svnrepos')
+
+  not_both(ctx.dump_only, '--dump-only',
+    ctx.bdb_txn_nosync, '--bdb-txn-nosync')
 
   if ((string.find(ctx.trunk_base, '/') > -1)
       or (string.find(ctx.tags_base, '/') > -1)

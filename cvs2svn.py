@@ -1610,11 +1610,6 @@ class SymbolicNameFillingGuide:
     return not len(self.things)
 
 
-class SVNCommitInternalInconsistencyError(Exception):
-  """Exception raised if we encounter an impossible state in the
-  SVNCommit Databases."""
-  pass
-
 class PersistenceManager(Singleton):
   """The PersistenceManager allows us to effectively store SVNCommits
   to disk and retrieve them later using only their subversion revision
@@ -1701,7 +1696,7 @@ class PersistenceManager(Singleton):
     if len(svn_commit.cvs_revs) and name:
       msg = """An SVNCommit cannot have cvs_revisions *and* a
       corresponding symbolic name ('%s') to fill.""" % name
-      raise SVNCommitInternalInconsistencyError(msg)
+      raise self.SVNCommitInternalInconsistencyError(msg)
 
     return svn_commit
     
@@ -2058,6 +2053,12 @@ class SVNCommit:
 
   3. Updates trunk to reflect the contents of a particular branch
      (this is to handle RCS default branches)."""
+
+  class SVNCommitInternalInconsistencyError(Exception):
+    """Exception raised if we encounter an impossible state in the
+    SVNCommit Databases."""
+    pass
+
   def __init__(self, ctx, description="", revnum=None, cvs_revs=None):
     """Instantiate an SVNCommit with CTX.  DESCRIPTION is for debugging only.
     If REVNUM, the SVNCommit will correspond to that revision number;
@@ -2389,19 +2390,6 @@ class CVSRevisionAggregator:
       del self.pending_symbols[sym]
 
 
-class SVNRepositoryMirrorPathExistsError(Exception):
-  """Exception raised if an attempt is made to add a path to the
-  repository mirror and that path already exists in the youngest
-  revision of the repository."""
-  pass
-
-
-class SVNRepositoryMirrorUnexpectedOperationError(Exception):
-  """Exception raised if a CVSRevision is found to have an unexpected
-  operation (OP) value."""
-  pass
-
-
 class FillSource:
   """Representation of a fill source used by the symbol filler in
   SVNRepositoryMirror."""
@@ -2425,12 +2413,6 @@ class FillSource:
     return other.score.__cmp__(self.score)
 
 
-class SVNRepositoryMirrorInvalidFillOperation(Exception):
-  """Exception raised if an empty SymbolicNameFillingGuide is returned
-  during a fill where the branch in question already exists."""
-  pass
-
-
 class SVNRepositoryMirror:
   """Mirror a Subversion Repository as it is constructed, one
   SVNCommit at a time.  The mirror is skeletal; it does not contain
@@ -2442,8 +2424,24 @@ class SVNRepositoryMirror:
 
   *** WARNING *** All path arguments to methods in this class CANNOT
       have leading or trailing slashes.
-
   """
+
+  class SVNRepositoryMirrorPathExistsError(Exception):
+    """Exception raised if an attempt is made to add a path to the
+    repository mirror and that path already exists in the youngest
+    revision of the repository."""
+    pass
+
+  class SVNRepositoryMirrorUnexpectedOperationError(Exception):
+    """Exception raised if a CVSRevision is found to have an unexpected
+    operation (OP) value."""
+    pass
+
+  class SVNRepositoryMirrorInvalidFillOperationError(Exception):
+    """Exception raised if an empty SymbolicNameFillingGuide is returned
+    during a fill where the branch in question already exists."""
+    pass
+
   def __init__(self, ctx):
     """Set up the SVNRepositoryMirror and prepare it for SVNCommits."""
     self._ctx = ctx
@@ -2819,7 +2817,7 @@ class SVNRepositoryMirror:
         msg = "Error filling branch '" + symbol_fill.name + "'.\n"
         msg = msg + "Received an empty SymbolicNameFillingGuide and\n"
         msg = msg + "attempted to create a branch that already exists."
-        raise SVNRepositoryMirrorInvalidFillOperation, msg
+        raise self.SVNRepositoryMirrorInvalidFillOperationError, msg
 
   def _synchronize_default_branch(self, svn_commit):
     """Propagate any changes that happened on a non-trunk default
@@ -2839,7 +2837,7 @@ class SVNRepositoryMirror:
       else:
         msg = ("Unknown CVSRevision operation '%s' in default branch sync."
                % cvs_rev.op)
-        raise SVNRepositoryMirrorUnexpectedOperationError, msg
+        raise self.SVNRepositoryMirrorUnexpectedOperationError, msg
 
   def _fill(self, symbol_fill, dest_prefix, dest_key, sources,
             path = None, parent_source_prefix = None,
@@ -2997,7 +2995,7 @@ class SVNRepositoryMirror:
     if dest_node_contents.has_key(dest_basename):
       msg = "Attempt to add path '%s' to repository mirror " % dest_path
       msg = msg + "when it already exists in the mirror."
-      raise SVNRepositoryMirrorPathExistsError, msg
+      raise self.SVNRepositoryMirrorPathExistsError, msg
 
     # Generate new mutable node new_node from SRC_NODE_CONTENTS and
     # update DEST_NODE_CONTENTS with

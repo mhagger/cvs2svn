@@ -4593,7 +4593,7 @@ def main():
   def not_both(opt1val, opt1name, opt2val, opt2name):
     if opt1val and opt2val:
       sys.stderr.write(error_prefix + ": cannot pass both '%s' and '%s'.\n" \
-          % (opt1name, opt2name))
+                       % (opt1name, opt2name))
       sys.exit(1)
 
   not_both(ctx.target, '-s',

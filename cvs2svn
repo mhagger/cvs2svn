@@ -4238,7 +4238,7 @@ def pass4():
   cvs_revs_db = CVSRevisionDatabase(DB_OPEN_NEW)
   if not Ctx().trunk_only:
     Log().write(LOG_QUIET,
-        "and finding last CVS revisions for all symbolic names...")
+        "Finding last CVS revisions for all symbolic names...")
     last_sym_name_db = LastSymbolicNameDatabase(DB_OPEN_NEW)
   else:
     # This is to avoid testing Ctx().trunk_only every time around the loop

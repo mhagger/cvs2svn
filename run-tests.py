@@ -329,61 +329,69 @@ def ensure_conversion(name, error_re=None, trunk_only=None,
   Subversion repository would be in './tmp/main-svnrepos', and a
   checked out head working copy in './tmp/main-wc'."""
 
-  cvsrepos = os.path.abspath(os.path.join(test_data_dir, '%s-cvsrepos' % name))
+  arg_list = []
+  conv_id = name
+  if no_prune:
+    arg_list.append( '--no-prune' )
+    conv_id  = conv_id + '-noprune'
+  if trunk_only:
+    arg_list.append( '--trunk-only' )
+    conv_id  = conv_id + '-trunkonly'
+  if encoding:
+    arg_list.append( '--encoding=' + encoding )
+    conv_id  = conv_id + '-encoding=' + encoding
 
-  if not already_converted.has_key(name):
-
-    if not os.path.isdir(tmp_dir):
-      os.mkdir(tmp_dir)
-
-    saved_wd = os.getcwd()
+  if not already_converted.has_key(conv_id):
     try:
-      os.chdir(tmp_dir)
-      
-      svnrepos = '%s-svnrepos' % name
-      wc       = '%s-wc' % name
+      if not os.path.isdir(tmp_dir):
+        os.mkdir(tmp_dir)
 
-      # Clean up from any previous invocations of this script.
-      erase(svnrepos)
-      erase(wc)
-      
+      cvsrepos = os.path.abspath(os.path.join(test_data_dir,
+        '%s-cvsrepos' % name))
+
+      saved_wd = os.getcwd()
       try:
-        arg_list = [ '--bdb-txn-nosync', '-s', svnrepos, cvsrepos ]
+        os.chdir(tmp_dir)
+        
+        svnrepos = '%s-svnrepos' % conv_id
+        wc       = '%s-wc' % conv_id
 
-        if no_prune:
-          arg_list[:0] = [ '--no-prune' ]
+        # Clean up from any previous invocations of this script.
+        erase(svnrepos)
+        erase(wc)
+        
+        try:
+          arg_list.extend( [ '--bdb-txn-nosync', '-s', svnrepos, cvsrepos ] )
+          arg_list.insert(0, error_re)
+          ret = apply(run_cvs2svn, arg_list)
+        except RunProgramException:
+          raise svntest.Failure
+        except MissingErrorException:
+          print "Test failed because no error matched '%s'" % error_re
+          raise svntest.Failure
 
-        if trunk_only:
-          arg_list[:0] = [ '--trunk-only' ]
+        if not os.path.isdir(svnrepos):
+          print "Repository not created: '%s'" \
+                % os.path.join(os.getcwd(), svnrepos)
+          raise svntest.Failure
 
-        if encoding:
-          arg_list[:0] = [ '--encoding=' + encoding ]
+        run_svn('co', repos_to_url(svnrepos), wc)
+        log_dict = parse_log(svnrepos)
+      finally:
+        os.chdir(saved_wd)
 
-        arg_list[:0] = [ error_re ]
+      # This name is done for the rest of this session.
+      already_converted[conv_id] = (os.path.join('tmp', svnrepos),
+          os.path.join('tmp', wc), log_dict)
+    except svntest.Failure:
+      # Remember the failure so that a future attempt to run this conversion
+      # does not bother to retry, but fails immediately.
+      already_converted[conv_id] = None
+      raise
 
-        ret = apply(run_cvs2svn, arg_list)
-      except RunProgramException:
-        raise svntest.Failure
-      except MissingErrorException:
-        print "Test failed because no error matched '%s'" % error_re
-        raise svntest.Failure
-
-      if not os.path.isdir(svnrepos):
-        print "Repository not created: '%s'" \
-              % os.path.join(os.getcwd(), svnrepos)
-        raise svntest.Failure
-
-      run_svn('co', repos_to_url(svnrepos), wc)
-      log_dict = parse_log(svnrepos)
-    finally:
-      os.chdir(saved_wd)
-
-    # This name is done for the rest of this session.
-    already_converted[name] = (os.path.join('tmp', svnrepos),
-                               os.path.join('tmp', wc),
-                               log_dict)
-
-  return already_converted[name]
+  if already_converted[conv_id] is None:
+    raise svntest.Failure
+  return already_converted[conv_id]
 
 
 #----------------------------------------------------------------------

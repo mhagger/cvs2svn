@@ -2,7 +2,7 @@
 
 # Build a cvs2svn distribution.
 
-VERSION=1.1.0-dev
+VERSION=1.2.0-dev
 WC_REV=`svnversion -n .`
 DIST_BASE=cvs2svn-${VERSION}
 DIST_FULL=${DIST_BASE}.tar.gz

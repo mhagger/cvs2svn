@@ -2664,7 +2664,7 @@ def main():
   ctx.verbose = 0
   ctx.dry_run = 0
   ctx.prune = 1
-  ctx.create_repos = 0
+  ctx.create_repos = 1
   ctx.dump_only = 0
   ctx.trunk_only = 0
   ctx.trunk_base = "trunk"
@@ -2683,7 +2683,7 @@ def main():
   try:
     opts, args = getopt.getopt(sys.argv[1:], 'p:s:vnh',
                                [ "help", "create", "trunk=",
-                                 "username=",
+                                 "username=", "existing-svnrepos",
                                  "branches=", "tags=", "encoding=",
                                  "trunk-only", "no-prune",
                                  "dump-only", "dumpfile=", "svnadmin=",
@@ -2710,8 +2710,8 @@ def main():
       ctx.dry_run = 1
     elif opt == '-s':
       ctx.target = value
-    elif opt == '--create':
-      ctx.create_repos = 1
+    elif opt == '--existing-svnrepos':
+      ctx.create_repos = 0
     elif opt == '--dumpfile':
       ctx.dumpfile = value
     elif opt == '--svnadmin':
@@ -2738,6 +2738,10 @@ def main():
       ctx.cvs_revnums = 1
     elif opt == '--bdb-txn-nosync':
       ctx.bdb_txn_nosync = 1
+    elif opt == '--create':
+      sys.stderr.write(warning_prefix +
+          ': The behaviour produced by the --create option is now the '
+          'default,\nand passing the option is deprecated.\n')
       
   if ctx.print_help:
     usage(ctx)
@@ -2779,8 +2783,7 @@ def main():
 
   if not ctx.create_repos and ctx.bdb_txn_nosync:
     sys.stderr.write(error_prefix +
-                     ": can only pass '--bdb-txn-nosync' if you also pass"
-                     " '--create'.\n")
+        ": cannot pass both '--existing-svnrepos' and '--bdb-txn-nosync'.\n")
     sys.exit(1)
 
   if ((string.find(ctx.trunk_base, '/') > -1)
@@ -2798,6 +2801,12 @@ def main():
     sys.stderr.write(error_prefix +
                      ": the svn-repos-path '%s' is not an "
                      "existing directory.\n" % ctx.target)
+    sys.exit(1)
+
+  if ctx.create_repos and os.path.exists(ctx.target):
+    sys.stderr.write(error_prefix +
+                     ": the svn-repos-path '%s' exists.\nRemove it, or pass "
+                     "'--existing-svnrepos'.\n" % ctx.target)
     sys.exit(1)
 
   ctx.default_branches_db = Database(DEFAULT_BRANCHES_DB, 'n')

@@ -1544,7 +1544,7 @@ class CVSCommit:
     # counted.
     accounted_for_sym_names = [ ]
 
-    def fill_needed(c_rev):
+    def fill_needed(c_rev, pm):
       """Return 1 if this is the first commit on a new branch (for
       this file) and we need to fill the branch; else return 0
       (meaning that some other file's first commit on the branch has
@@ -1552,12 +1552,13 @@ class CVSCommit:
 
       If C_REV.op is OP_ADD, only return 1 if the branch that this
       commit is on has no last filled revision.
+
+      PM is a PersistenceManager to query.
       """
 
       # Different '.' counts indicate that c_rev is now on a different
       # line of development (and may need a fill)
       if c_rev.rev.count('.') != c_rev.prev_rev.count('.'):
-        pm = self._ctx._persistence_manager
         svn_revnum = pm.get_svn_revnum(c_rev.unique_key(c_rev.prev_rev))
         # It should be the case that when we have a file F that
         # is added on branch B (thus, F on trunk is in state
@@ -1584,7 +1585,7 @@ class CVSCommit:
       if c_rev.branch_name \
           and c_rev.branch_name not in accounted_for_sym_names \
           and c_rev.branch_name not in self.done_symbols \
-          and fill_needed(c_rev):
+          and fill_needed(c_rev, self._ctx._persistence_manager):
         svn_commit = SVNCommit(self._ctx, "pre-commit symbolic name '%s'"
                                % c_rev.branch_name)
         svn_commit.set_symbolic_name(c_rev.branch_name)
@@ -1620,12 +1621,6 @@ class CVSCommit:
         if c_rev.is_default_branch_revision():
           self.default_branch_cvs_revisions.append(c_rev)
 
-    # Utility function for the loop over self.deletes.
-    def add_revision(c_rev):
-      svn_commit.add_revision(c_rev)
-      if c_rev.is_default_branch_revision():
-        self.default_branch_cvs_revisions.append(c_rev)
-
     for c_rev in self.deletes:
       # When a file is added on a branch, CVS not only adds the file
       # on the branch, but generates a trunk revision (typically
@@ -1638,10 +1633,12 @@ class CVSCommit:
                                 c_rev.branches[0]))
         author, log_msg = \
             self._ctx._persistence_manager.svn_commit_metadata[c_rev.digest]
-        if not log_msg == cvs_generated_msg:
-          add_revision(c_rev)
-      else:
-        add_revision(c_rev)
+        if log_msg == cvs_generated_msg:
+          continue
+      
+      svn_commit.add_revision(c_rev)
+      if c_rev.is_default_branch_revision():
+        self.default_branch_cvs_revisions.append(c_rev)
 
     # There is a slight chance that we didn't actually register any
     # CVSRevisions with our SVNCommit (see loop over self.deletes
@@ -2211,6 +2208,12 @@ class SymbolicNameFillingGuide:
     max_score = 0
     preferred_rev_score = -1
     rev = SVN_INVALID_REVNUM
+    if preferred_rev is None:
+      # Comparison order of different types is arbitrary. Do not
+      # expect None to compare less than int values below.
+      # In Python 2.3 None compares with ints like negative infinity.
+      # In Python 2.0 None compares with ints like positive infinity.
+      preferred_rev = SVN_INVALID_REVNUM
     for revnum, count in scores:
       if count > max_score:
         max_score = count
@@ -2408,7 +2411,7 @@ class FillSource:
     score order."""
     if self.score is None or other.score is None:
       raise TypeError, 'Tried to compare unscored FillSource'
-    return other.score.__cmp__(self.score)
+    return cmp(other.score, self.score)
 
 
 class SVNRepositoryMirror:
@@ -2465,8 +2468,6 @@ class SVNRepositoryMirror:
     # being constructed.  (Yes, this is exactly analogous to the
     # Subversion filesystem code's concept of mutability.)
     self.mutable_flag = "/m"
-    # This could represent a new mutable directory or file.
-    self.empty_mutable_thang = { self.mutable_flag : 1 }
 
     if not ctx.trunk_only:
       ###PERF IMPT: Suck this into memory.
@@ -2631,8 +2632,7 @@ class SVNRepositoryMirror:
         self.nodes_db[new_key] = pval
 
     if new_key is None:
-      new_key = gen_key()
-      self.nodes_db[new_key] = self.empty_mutable_thang
+      new_key = self._new_mutable_node()[0]
 
     # Install the new root entry.
     self.revs_db[str(self.youngest)] = new_key
@@ -2734,7 +2734,7 @@ class SVNRepositoryMirror:
     """Creates a new (mutable) node in the nodes_db and returns the
     node's key.  If NODE_CONTENTS is not None, then dict.update() the
     contents of the new node with NODE_CONTENTS before returning."""
-    contents = dict(self.empty_mutable_thang)
+    contents = { self.mutable_flag : 1 }
     if node_contents is not None:
       contents.update(node_contents)
     key = gen_key()
@@ -2806,7 +2806,7 @@ class SVNRepositoryMirror:
         # Now since we've just copied trunk to a branch that's
         # *supposed* to be empty, we delete any entries in the
         # copied directory.
-        for entry in entries:
+        for entry in entries.keys():
           if entry[0] == '/':
             continue
           del_path = dest_path + '/' + entry
@@ -2913,7 +2913,7 @@ class SVNRepositoryMirror:
 
     if prune_ok:
       # Delete the entries in DEST_ENTRIES that are not in src_entries.
-      for entry in dest_entries:
+      for entry in dest_entries.keys():
         if entry[0] == '/': # Skip flags
           continue
         if not src_entries.has_key(entry):
@@ -2923,7 +2923,7 @@ class SVNRepositoryMirror:
     src_keys = src_entries.keys()
     src_keys.sort()
     for src_key in src_keys:
-      if src_key in dest_entries:
+      if dest_entries.has_key(src_key):
         next_dest_key = dest_entries[src_key]
       else:
         next_dest_key = None
@@ -3017,7 +3017,7 @@ class SVNRepositoryMirror:
     for component in components:
       if component is last_component and ignore_leaf:
         break
-      if component not in node_contents:
+      if not node_contents.has_key(component):
         return None, None
       node_key = node_contents[component]
       node_contents = self.nodes_db[node_key]
@@ -3532,11 +3532,13 @@ class StdoutDelegate(SVNRepositoryMirrorDelegate):
     Log().write(LOG_VERBOSE, "Finished creating Subversion repository.")
     Log().write(LOG_QUIET, "Done.")
 
+# This should be a local to pass1,
+# but Python 2.0 does not support nested scopes.
+OS_SEP_PLUS_ATTIC = os.sep + 'Attic'
 def pass1(ctx):
   Log().write(LOG_QUIET, "Examining all CVS ',v' files...")
   cd = CollectData(ctx)
 
-  os_sep_plus_Attic = os.sep + 'Attic'
   def visit_file(baton, dirname, files):
     cd = baton
     for fname in files:
@@ -3544,7 +3546,7 @@ def pass1(ctx):
         continue
       cd.found_valid_file = 1
       pathname = os.path.join(dirname, fname)
-      if dirname[-6:] == os_sep_plus_Attic:
+      if dirname[-6:] == OS_SEP_PLUS_ATTIC:
         # drop the 'Attic' portion from the pathname for the canonical name.
         cd.set_fname(os.path.join(dirname[:-6], fname), pathname)
       else:

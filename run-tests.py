@@ -100,14 +100,14 @@ def run_cvs2svn(error_re, *varargs):
   If ERROR_RE is not None, it is a string regular expression that must
   match some line of stderr.  If it fails to match, raise
   MissingErrorException."""
-  if sys.platform == "win32":
-    # For an unknown reason, without this special case, the cmd.exe process
-    # invoked by os.system('sort ...') in cvs2svn.py receives invalid stdio
-    # handles. Therefore, the redirection of the output to the .s-revs file
-    # fails.
-    return run_program("python", error_re, cvs2svn, *varargs)
-  else:
-    return run_program(cvs2svn, error_re, *varargs)
+  # Use the same python that is running this script
+  return run_program(sys.executable, error_re, cvs2svn, *varargs)
+  # On Windows, for an unknown reason, the cmd.exe process invoked by
+  # os.system('sort ...') in cvs2svn.py receives invalid stdio handles, if
+  # cvs2svn is started as "cvs2svn.py ...".  "python cvs2svn.py ..." avoids
+  # this.  Therefore, the redirection of the output to the .s-revs file fails.
+  # We no longer use the problematic invocation on any system, but this
+  # comment remains to warn about this problem.
 
 
 def run_svn(*varargs):

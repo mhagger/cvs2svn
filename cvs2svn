@@ -3852,13 +3852,9 @@ def pass2():
         c_rev.tags.remove(forced_branch)
         c_rev.branches.append(forced_branch)
 
-    if not resync.has_key(c_rev.digest):
-      output.write(line)
-      continue
-
-    # we have a hit. see if this is "near" any of the resync records we
+    # see if this is "near" any of the resync records we
     # have recorded for this digest [of the log message].
-    for record in resync[c_rev.digest]:
+    for record in resync.get(c_rev.digest, []):
       if record[0] <= c_rev.timestamp <= record[1]:
         # bingo! remap the time on this (record[2] is the new time).
 
@@ -3897,13 +3893,11 @@ def pass2():
         Log().write(LOG_VERBOSE, msg)
 
         c_rev.timestamp = new_timestamp
-        output.write(str(c_rev) + "\n")
 
         # stop looking for hits
         break
-    else:
-      # the file/rev did not need to have its time changed.
-      output.write(line)
+
+    output.write(str(c_rev) + "\n")
   Log().write(LOG_QUIET, "Done")
 
 def pass3():

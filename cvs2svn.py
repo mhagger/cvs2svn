@@ -854,6 +854,9 @@ class RepositoryMirror:
             deletions.append(ent)
           else:
             new_approved_entries[ent] = 1
+      for ent in expected_entries.keys():
+        if not new_approved_entries.has_key(ent):
+          new_approved_entries[ent] = 1
       new_val[self.approved_entries] = new_approved_entries
     parent[last_component] = leaf_key
     self.nodes_db[parent_key] = parent
@@ -1245,6 +1248,8 @@ class Dumper:
     
   def prune_entries(self, path, expected):
     """Delete any entries in PATH that are not in list EXPECTED.
+    Register the contents of EXPECTED as not-to-be-pruned even if it does not
+    currently exist - under the assumption that it will soon be created.
     PATH need not be a directory, but of course nothing will happen if
     it's a file.  Entries beginning with '/' are ignored as usual."""
     change = self.repos_mirror.change_path(path,

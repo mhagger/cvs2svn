@@ -115,8 +115,19 @@ vendor_tag = re.compile('^[0-9]+\\.[0-9]+\\.[0-9]+$')
 # default branch anyway, so we don't want this to match them anyway.
 vendor_revision = re.compile('^(1\\.1\\.1)\\.([0-9])+$')
 
+# If this run's output is a repository, then (in the tmpdir) we use
+# a dumpfile of this name for repository loads.
+#
+# If this run's output is a dumpfile, then this is default name of
+# that dumpfile, but in the current directory (unless the user has
+# specified a dumpfile path, of course, in which case it will be
+# wherever the user said).
+DUMPFILE = 'cvs2svn-dump'
+
+# This file appears with different suffixes at different stages of
+# processing.  CVS revisions are cleaned and sorted here, for commit
+# grouping.  See design-notes.txt for details.
 DATAFILE = 'cvs2svn-data'
-DUMPFILE = 'cvs2svn-dump'  # The "dumpfile" we create to load into the repos
 
 # This text file contains records (1 per line) that describe svn
 # filesystem paths that are the opening and closing source revisions
@@ -269,6 +280,11 @@ DIGEST_END_IDX = 9 + (sha.digestsize * 2)
 OPENING = 'O'
 CLOSING = 'C'
 
+def temp(basename):
+  """Return a path to BASENAME in Ctx().tmpdir.
+  This is a convenience function to save horizontal space in source."""
+  return os.path.join(Ctx().tmpdir, basename)
+
 # Officially, CVS symbolic names must use a fairly restricted set of
 # characters.  Unofficially, CVS 1.10 allows any character but [$,.:;@]
 # We don't care if some repositories out there use characters outside the
@@ -334,7 +350,7 @@ def sort_file(infile, outfile):
   else:
     lc_all_tmp = None
   os.environ['LC_ALL'] = 'C'
-  run_command('sort %s > %s' % (infile, outfile))
+  run_command('sort -T %s %s > %s' % (Ctx().tmpdir, infile, outfile))
   if lc_all_tmp is None:
     del os.environ['LC_ALL']
   else:
@@ -487,8 +503,8 @@ class LastSymbolicNameDatabase:
   last seen in that revision."""
   def __init__(self, mode):
     self.symbols = {}
-    self.symbol_revs_db = Database(SYMBOL_LAST_CVS_REVS_DB, mode)
-    Cleanup().register(SYMBOL_LAST_CVS_REVS_DB, pass5)
+    self.symbol_revs_db = Database(temp(SYMBOL_LAST_CVS_REVS_DB), mode)
+    Cleanup().register(temp(SYMBOL_LAST_CVS_REVS_DB), pass5)
 
   # Once we've gone through all the revs,
   # symbols.keys() will be a list of all tags and branches, and
@@ -522,8 +538,8 @@ class CVSRevisionDatabase:
   def __init__(self, mode):
     """Initialize an instance, opening database in MODE (like the MODE
     argument to Database or anydbm.open())."""
-    self.cvs_revs_db = Database(CVS_REVS_DB, mode)
-    Cleanup().register(CVS_REVS_DB, pass8)
+    self.cvs_revs_db = Database(temp(CVS_REVS_DB), mode)
+    Cleanup().register(temp(CVS_REVS_DB), pass8)
 
   def log_revision(self, c_rev):
     """Add C_REV, a CVSRevision, to the database."""
@@ -539,8 +555,8 @@ class TagsDatabase(Database):
   Each key is a tag name.
   The value has no meaning, and should be set to None."""
   def __init__(self, mode):
-    Database.__init__(self, TAGS_DB, mode)
-    Cleanup().register(TAGS_DB, pass8)
+    Database.__init__(self, temp(TAGS_DB), mode)
+    Cleanup().register(temp(TAGS_DB), pass8)
 
 
 class CVSRevision:
@@ -833,7 +849,7 @@ class SymbolDatabase:
 
   def read(self):
     """Read the symbol database from files."""
-    f = open(TAGS_LIST)
+    f = open(temp(TAGS_LIST))
     while 1:
       line = f.readline()
       if not line:
@@ -841,7 +857,7 @@ class SymbolDatabase:
       tag, count = line.split()
       self.tags[tag] = int(count)
 
-    f = open(BRANCHES_LIST)
+    f = open(temp(BRANCHES_LIST))
     while 1:
       line = f.readline()
       if not line:
@@ -853,11 +869,11 @@ class SymbolDatabase:
 
   def write(self):
     """Store the symbol database to files."""
-    f = open(TAGS_LIST, "w")
+    f = open(temp(TAGS_LIST), "w")
     for tag, count in self.tags.items():
       f.write("%s %d\n" % (tag, count))
 
-    f = open(BRANCHES_LIST, "w")
+    f = open(temp(BRANCHES_LIST), "w")
     for branch, info in self.branches.items():
       f.write("%s %d %d" % (branch, info[0], info[1]))
       if info[2]:
@@ -868,14 +884,14 @@ class SymbolDatabase:
 class CollectData(cvs2svn_rcsparse.Sink):
   def __init__(self):
     self.cvsroot = Ctx().cvsroot
-    self.revs = open(DATAFILE + REVS_SUFFIX, 'w')
-    Cleanup().register(DATAFILE + REVS_SUFFIX, pass2)
-    self.resync = open(DATAFILE + RESYNC_SUFFIX, 'w')
-    Cleanup().register(DATAFILE + RESYNC_SUFFIX, pass2)
-    self.default_branches_db = Database(DEFAULT_BRANCHES_DB, DB_OPEN_NEW)
-    Cleanup().register(DEFAULT_BRANCHES_DB, pass5)
-    self.metadata_db = Database(METADATA_DB, DB_OPEN_NEW)
-    Cleanup().register(METADATA_DB, pass8)
+    self.revs = open(temp(DATAFILE + REVS_SUFFIX), 'w')
+    Cleanup().register(temp(DATAFILE + REVS_SUFFIX), pass2)
+    self.resync = open(temp(DATAFILE + RESYNC_SUFFIX), 'w')
+    Cleanup().register(temp(DATAFILE + RESYNC_SUFFIX), pass2)
+    self.default_branches_db = Database(temp(DEFAULT_BRANCHES_DB), DB_OPEN_NEW)
+    Cleanup().register(temp(DEFAULT_BRANCHES_DB), pass5)
+    self.metadata_db = Database(temp(METADATA_DB), DB_OPEN_NEW)
+    Cleanup().register(temp(METADATA_DB), pass8)
     self.fatal_errors = []
     self.num_files = 0
     self.symbol_db = SymbolDatabase()
@@ -1279,10 +1295,10 @@ class SymbolingsLogger:
   inclusive.
   """
   def __init__(self):
-    self.symbolings = open(SYMBOL_OPENINGS_CLOSINGS, 'w')
-    Cleanup().register(SYMBOL_OPENINGS_CLOSINGS, pass6)
-    self.closings = open(SYMBOL_CLOSINGS_TMP, 'w')
-    Cleanup().register(SYMBOL_CLOSINGS_TMP, pass5)
+    self.symbolings = open(temp(SYMBOL_OPENINGS_CLOSINGS), 'w')
+    Cleanup().register(temp(SYMBOL_OPENINGS_CLOSINGS), pass6)
+    self.closings = open(temp(SYMBOL_CLOSINGS_TMP), 'w')
+    Cleanup().register(temp(SYMBOL_CLOSINGS_TMP), pass5)
 
     # This keys of this dictionary are Subversion repository *source*
     # paths for which we've encountered an 'opening'.  The values are
@@ -1327,7 +1343,7 @@ class SymbolingsLogger:
     cvs_revs_db = CVSRevisionDatabase(DB_OPEN_READ)
 
     self.closings.close()
-    for line in fileinput.FileInput(SYMBOL_CLOSINGS_TMP):
+    for line in fileinput.FileInput(temp(SYMBOL_CLOSINGS_TMP)):
       (name, rev_key) = line.rstrip().split(" ", 1)
       svn_revnum = Ctx()._persistence_manager.get_svn_revnum(rev_key)
 
@@ -1376,20 +1392,20 @@ class PersistenceManager:
     self.mode = mode
     if mode not in (DB_OPEN_NEW, DB_OPEN_READ):
       raise RuntimeError, "Invalid 'mode' argument to PersistenceManager"
-    self.svn2cvs_db = Database(SVN_REVNUMS_TO_CVS_REVS, mode)
-    Cleanup().register(SVN_REVNUMS_TO_CVS_REVS, pass8)
-    self.cvs2svn_db = Database(CVS_REVS_TO_SVN_REVNUMS, mode)
-    Cleanup().register(CVS_REVS_TO_SVN_REVNUMS, pass8)
-    self.svn_commit_names_dates = Database(SVN_COMMIT_NAMES_DATES, mode)
-    Cleanup().register(SVN_COMMIT_NAMES_DATES, pass8)
-    self.svn_commit_metadata = Database(METADATA_DB, DB_OPEN_READ)
+    self.svn2cvs_db = Database(temp(SVN_REVNUMS_TO_CVS_REVS), mode)
+    Cleanup().register(temp(SVN_REVNUMS_TO_CVS_REVS), pass8)
+    self.cvs2svn_db = Database(temp(CVS_REVS_TO_SVN_REVNUMS), mode)
+    Cleanup().register(temp(CVS_REVS_TO_SVN_REVNUMS), pass8)
+    self.svn_commit_names_dates = Database(temp(SVN_COMMIT_NAMES_DATES), mode)
+    Cleanup().register(temp(SVN_COMMIT_NAMES_DATES), pass8)
+    self.svn_commit_metadata = Database(temp(METADATA_DB), DB_OPEN_READ)
     self.cvs_revisions = CVSRevisionDatabase(DB_OPEN_READ)
     ###PERF kff Elsewhere there are comments about sucking the tags db
     ### into memory.  That seems like a good idea.
     if not Ctx().trunk_only:
       self.tags_db = TagsDatabase(DB_OPEN_READ)
-      self.motivating_revnums = Database(MOTIVATING_REVNUMS, mode)
-      Cleanup().register(MOTIVATING_REVNUMS, pass8)
+      self.motivating_revnums = Database(temp(MOTIVATING_REVNUMS), mode)
+      Cleanup().register(temp(MOTIVATING_REVNUMS), pass8)
     
     # "branch_name" -> svn_revnum in which branch was last filled.
     # This is used by CVSCommit._pre_commit, to prevent creating a fill
@@ -2005,9 +2021,9 @@ class CVSRevisionAggregator:
   """This class groups CVSRevisions into CVSCommits that represent
   at least one SVNCommit."""
   def __init__(self):
-    self.metadata_db = Database(METADATA_DB, DB_OPEN_READ)
+    self.metadata_db = Database(temp(METADATA_DB), DB_OPEN_READ)
     if not Ctx().trunk_only:
-      self.last_revs_db = Database(SYMBOL_LAST_CVS_REVS_DB, DB_OPEN_READ)
+      self.last_revs_db = Database(temp(SYMBOL_LAST_CVS_REVS_DB), DB_OPEN_READ)
     self.cvs_commits = {}
     self.pending_symbols = {}
     # A list of symbols for which we've already encountered the last
@@ -2024,7 +2040,8 @@ class CVSRevisionAggregator:
 
     Ctx()._symbolings_logger = SymbolingsLogger()
     Ctx()._persistence_manager = PersistenceManager(DB_OPEN_NEW)
-    Ctx()._default_branches_db = Database(DEFAULT_BRANCHES_DB, DB_OPEN_READ)
+    Ctx()._default_branches_db = Database(temp(DEFAULT_BRANCHES_DB),
+                                          DB_OPEN_READ)
 
 
   def process_revision(self, c_rev):
@@ -2150,10 +2167,10 @@ class SymbolingsReader:
   def __init__(self):
     """Opens the SYMBOL_OPENINGS_CLOSINGS_SORTED for reading, and
     reads the offsets database into memory."""
-    self.symbolings = open(SYMBOL_OPENINGS_CLOSINGS_SORTED, 'r')
+    self.symbolings = open(temp(SYMBOL_OPENINGS_CLOSINGS_SORTED), 'r')
     # The offsets_db is really small, and we need to read and write
     # from it a fair bit, so suck it into memory
-    offsets_db = Database(SYMBOL_OFFSETS_DB, DB_OPEN_READ) 
+    offsets_db = Database(temp(SYMBOL_OFFSETS_DB), DB_OPEN_READ) 
     self.offsets = { }
     for key in offsets_db.db.keys():
       #print " ZOO:", key, offsets_db[key]
@@ -2527,14 +2544,14 @@ class SVNRepositoryMirror:
     self.delegates = [ ]
 
     # This corresponds to the 'revisions' table in a Subversion fs.
-    self.revs_db = Database(SVN_MIRROR_REVISIONS_DB, DB_OPEN_NEW)
-    Cleanup().register(SVN_MIRROR_REVISIONS_DB, pass8)
+    self.revs_db = Database(temp(SVN_MIRROR_REVISIONS_DB), DB_OPEN_NEW)
+    Cleanup().register(temp(SVN_MIRROR_REVISIONS_DB), pass8)
 
     # This corresponds to the 'nodes' table in a Subversion fs.  (We
     # don't need a 'representations' or 'strings' table because we
     # only track metadata, not file contents.)
-    self.nodes_db = Database(SVN_MIRROR_NODES_DB, DB_OPEN_NEW)
-    Cleanup().register(SVN_MIRROR_NODES_DB, pass8)
+    self.nodes_db = Database(temp(SVN_MIRROR_NODES_DB), DB_OPEN_NEW)
+    Cleanup().register(temp(SVN_MIRROR_NODES_DB), pass8)
 
     # Start at revision 0 without a root node.  It will be created
     # by _open_writable_root_node.
@@ -3061,9 +3078,9 @@ class SVNRepositoryMirrorDelegate:
 class DumpfileDelegate(SVNRepositoryMirrorDelegate):
   """Create a Subversion dumpfile."""
 
-  def __init__(self):
+  def __init__(self, dumpfile_path=None):
     """Return a new DumpfileDelegate instance, attached to a dumpfile
-    named according to Ctx().dumpfile, using Ctx().encoding.
+    DUMPFILE_PATH (Ctx().dumpfile, if None), using Ctx().encoding.
 
     If Ctx().cvs_revnums is true, then set the 'cvs2svn:cvs-revnum'
     property on files, when they are changed due to a corresponding
@@ -3076,7 +3093,10 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     If Ctx().set_eol_style is true, then set 'svn:eol-style' to 'native'
     for files not marked with the CVS 'kb' flag.  (But see issue #39
     for how this might change.)""" 
-    self.dumpfile_path = Ctx().dumpfile
+    if dumpfile_path:
+      self.dumpfile_path = dumpfile_path
+    else:
+      self.dumpfile_path = Ctx().dumpfile
     self.set_cvs_revnum_properties = Ctx().cvs_revnums
     self.set_eol_style = Ctx().set_eol_style
     self.mime_mapper = Ctx().mime_mapper
@@ -3346,7 +3366,10 @@ class RepositoryDelegate(DumpfileDelegate):
       run_command('%s create %s %s' % (self.svnadmin, Ctx().bdb_txn_nosync
                                        and "--bdb-txn-nosync"
                                        or "", self.target))
-    DumpfileDelegate.__init__(self)
+
+    # Since the output of this run is a repository, not a dumpfile,
+    # the temporary dumpfiles we create should go in the tmpdir.
+    DumpfileDelegate.__init__(self, temp(Ctx().dumpfile))
 
     # This is 1 if a commit is in progress, otherwise None.
     self._commit_in_progress = None
@@ -3610,13 +3633,13 @@ def pass2():
 
     return resync
 
-  resync = read_resync(DATAFILE + RESYNC_SUFFIX)
+  resync = read_resync(temp(DATAFILE + RESYNC_SUFFIX))
 
-  output = open(DATAFILE + CLEAN_REVS_SUFFIX, 'w')
-  Cleanup().register(DATAFILE + CLEAN_REVS_SUFFIX, pass3)
+  output = open(temp(DATAFILE + CLEAN_REVS_SUFFIX), 'w')
+  Cleanup().register(temp(DATAFILE + CLEAN_REVS_SUFFIX), pass3)
 
   # process the revisions file, looking for items to clean up
-  for line in fileinput.FileInput(DATAFILE + REVS_SUFFIX):
+  for line in fileinput.FileInput(temp(DATAFILE + REVS_SUFFIX)):
     c_rev = CVSRevision(Ctx(), line[:-1])
 
     # Skip this entire revision if it's on an excluded branch
@@ -3673,9 +3696,9 @@ def pass2():
 
 def pass3():
   Log().write(LOG_QUIET, "Sorting CVS revisions...")
-  sort_file(DATAFILE + CLEAN_REVS_SUFFIX,
-            DATAFILE + SORTED_REVS_SUFFIX)
-  Cleanup().register(DATAFILE + SORTED_REVS_SUFFIX, pass5)
+  sort_file(temp(DATAFILE + CLEAN_REVS_SUFFIX),
+            temp(DATAFILE + SORTED_REVS_SUFFIX))
+  Cleanup().register(temp(DATAFILE + SORTED_REVS_SUFFIX), pass5)
   Log().write(LOG_QUIET, "Done")
 
 def pass4():
@@ -3699,7 +3722,7 @@ def pass4():
       create_database = noop
     last_sym_name_db = DummyLSNDB()
 
-  for line in fileinput.FileInput(DATAFILE + SORTED_REVS_SUFFIX):
+  for line in fileinput.FileInput(temp(DATAFILE + SORTED_REVS_SUFFIX)):
     c_rev = CVSRevision(Ctx(), line[:-1])
     cvs_revs_db.log_revision(c_rev)
     last_sym_name_db.log_revision(c_rev)
@@ -3717,7 +3740,7 @@ def pass5():
   Log().write(LOG_QUIET, "Mapping CVS revisions to Subversion commits...")
 
   aggregator = CVSRevisionAggregator()
-  for line in fileinput.FileInput(DATAFILE + SORTED_REVS_SUFFIX):
+  for line in fileinput.FileInput(temp(DATAFILE + SORTED_REVS_SUFFIX)):
     c_rev = CVSRevision(Ctx(), line[:-1])
     if not (Ctx().trunk_only and c_rev.branch_name is not None):
       aggregator.process_revision(c_rev)
@@ -3729,8 +3752,9 @@ def pass6():
   Log().write(LOG_QUIET, "Sorting symbolic name source revisions...")
 
   if not Ctx().trunk_only:
-    sort_file(SYMBOL_OPENINGS_CLOSINGS, SYMBOL_OPENINGS_CLOSINGS_SORTED)
-    Cleanup().register(SYMBOL_OPENINGS_CLOSINGS_SORTED, pass8)
+    sort_file(temp(SYMBOL_OPENINGS_CLOSINGS),
+              temp(SYMBOL_OPENINGS_CLOSINGS_SORTED))
+    Cleanup().register(temp(SYMBOL_OPENINGS_CLOSINGS_SORTED), pass8)
   Log().write(LOG_QUIET, "Done")
 
 def pass7():
@@ -3747,10 +3771,10 @@ def pass7():
     ###PERF This is a fine example of a db that can be in-memory and
     #just flushed to disk when we're done.  Later, it can just be sucked
     #back into memory.
-    offsets_db = Database(SYMBOL_OFFSETS_DB, DB_OPEN_NEW) 
-    Cleanup().register(SYMBOL_OFFSETS_DB, pass8)
+    offsets_db = Database(temp(SYMBOL_OFFSETS_DB), DB_OPEN_NEW) 
+    Cleanup().register(temp(SYMBOL_OFFSETS_DB), pass8)
     
-    file = open(SYMBOL_OPENINGS_CLOSINGS_SORTED, 'r')
+    file = open(temp(SYMBOL_OPENINGS_CLOSINGS_SORTED), 'r')
     old_sym = ""
     while 1:
       fpos = file.tell()
@@ -3816,6 +3840,7 @@ class Ctx:
     self.cvsroot = None
     self.target = None
     self.dumpfile = DUMPFILE
+    self.tmpdir = '.'
     self.verbose = 0
     self.quiet = 0
     self.prune = 1
@@ -3934,6 +3959,7 @@ def usage():
   print '                       (implicitly enables --skip-cleanup)'
   print '  --existing-svnrepos  load into existing SVN repository'
   print '  --dumpfile=PATH      name of intermediate svn dumpfile'
+  print '  --tmpdir=PATH        directory to use for tmp data (default to cwd)'
   print '  --dry-run            do not create a repository or a dumpfile;'
   print '                       just print what would happen.'
   print '  --svnadmin=PATH      path to the svnadmin program'
@@ -3976,8 +4002,8 @@ def main():
                                  "force-branch=", "force-tag=", "exclude=",
                                  "mime-types=", "set-eol-style",
                                  "trunk-only", "no-prune", "dry-run",
-                                 "dump-only", "dumpfile=", "svnadmin=",
-                                 "skip-cleanup", "cvs-revnums",
+                                 "dump-only", "dumpfile=", "tmpdir=",
+                                 "svnadmin=", "skip-cleanup", "cvs-revnums",
                                  "bdb-txn-nosync", "version"])
   except getopt.GetoptError, e:
     sys.stderr.write(error_prefix + ': ' + str(e) + '\n\n')
@@ -4019,6 +4045,8 @@ def main():
       ctx.existing_svnrepos = 1
     elif opt == '--dumpfile':
       ctx.dumpfile = value
+    elif opt == '--tmpdir':
+      ctx.tmpdir = value
     elif opt == '--svnadmin':
       ctx.svnadmin = value
     elif opt == '--trunk-only':
@@ -4137,9 +4165,23 @@ def main():
     ctx.mime_mapper = MimeMapper()
     ctx.mime_mapper.set_mime_types_file(ctx.mime_types_file)
 
-  # Lock the current directory for temporary files.
+  # Make sure the tmp directory exists.  Note that we don't check if
+  # it's empty -- we want to be able to use, for example, "." to hold
+  # tempfiles.  But if we *did* want check if it were empty, we'd do
+  # something like os.stat(ctx.tmpdir)[stat.ST_NLINK], of course :-).
+  if not os.path.exists(ctx.tmpdir):
+    os.mkdir(ctx.tmpdir)
+  elif not os.path.isdir(ctx.tmpdir):
+    sys.stderr.write(error_prefix +
+       ": cvs2svn tried to use '%s' for temporary files, but that path\n"
+       "  exists and is not a directory.  Please make it be a directory,\n"
+       "  or specify some other directory for temporary files.\n" \
+                     % ctx.tmpdir)
+    sys.exit(1)
+
+  # But do lock the tmpdir, to avoid process clash.
   try:
-    os.mkdir('cvs2svn.lock')
+    os.mkdir(os.path.join(ctx.tmpdir, 'cvs2svn.lock'))
   except OSError, e:
     if e.errno == errno.EACCES:
       sys.stderr.write(error_prefix + ": Permission denied:"
@@ -4147,17 +4189,18 @@ def main():
       sys.exit(1)
     if e.errno == errno.EEXIST:
       sys.stderr.write(error_prefix +
-          ": cvs2svn writes temporary files to the current working directory.\n"
-          "  The directory 'cvs2svn.lock' exists, indicating that another\n"
-          "  cvs2svn process is currently using the current directory for its\n"
-          "  temporary workspace. If you are certain that is not the case,\n"
-          "  remove the 'cvs2svn.lock' directory.\n")
+          ": cvs2svn is using directory '%s' for temporary files, but\n"
+          "  subdirectory '%s/cvs2svn.lock' exists, indicating that another\n"
+          "  cvs2svn process is currently using '%s' as its temporary\n"
+          "  workspace.  If you are certain that is not the case,\n"
+          "  then remove the '%s/cvs2svn.lock' subdirectory.\n" \
+                       % (ctx.tmpdir, ctx.tmpdir, ctx.tmpdir, ctx.tmpdir))
       sys.exit(1)
     raise
   try:
     convert(start_pass, end_pass)
   finally:
-    try: os.rmdir('cvs2svn.lock')
+    try: os.rmdir(os.path.join(ctx.tmpdir, 'cvs2svn.lock'))
     except: pass
 
   if ctx.mime_types_file:

@@ -21,8 +21,10 @@ svn repository.  Your Mileage May Vary.  To see a list of all open
 cvs2svn bugs, visit:
 
    http://cvs2svn.tigris.org/issues/buglist.cgi?component=subversion&issue_status=NEW&issue_status=STARTED&issue_status=REOPENED
-Using cvs2svn:
-==============
+
+
+Installing cvs2svn:
+===================
 
 * Prerequisites:
 
@@ -36,6 +38,13 @@ Using cvs2svn:
     entirely into memory.  GNU sort is part of the coreutils
     package, see http://www.gnu.org/software/coreutils/.
 
+* cvs2svn Itself:
+
+  - cvs2svn itself does not require installation. Simply run the script
+    from this directory.
+
+* If you want to install cvs2svn even though you do not need to:
+
   - If you're not running cvs2svn.py from this directory, then make
     sure to install the rcsparse/ tree somewhere where Python can
     find it.  Note that it's a CVS working copy, so we can update
@@ -46,6 +55,10 @@ Using cvs2svn:
     http://viewcvs.sourceforge.net/.  Someday rcsparse will be an
     independent Python project, and then we can depend on it in a
     more normal way.
+
+
+Using cvs2svn:
+==============
 
 * Basic usage:
 

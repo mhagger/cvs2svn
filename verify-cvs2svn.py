@@ -48,17 +48,19 @@ class CvsRepos:
     if not os.path.isdir(path):
       raise RuntimeError('CVS path is not a directory')
 
-    self.cvsroot = os.path.dirname(path)
-    self.module = os.path.basename(path)
-    while not os.path.exists(os.path.join(self.cvsroot, 'CVSROOT')):
-      parent = os.path.dirname(self.cvsroot)
-      if parent == self.cvsroot:
-        if os.path.exists(os.path.join(path, 'CVSROOT')):
-          raise RuntimeError('Cannot verify whole repositories')
-        else:
+    if os.path.exists(os.path.join(path, 'CVSROOT')):
+      # The whole repository
+      self.module = "."
+      self.cvsroot = path
+    else:
+      self.cvsroot = os.path.dirname(path)
+      self.module = os.path.basename(path)
+      while not os.path.exists(os.path.join(self.cvsroot, 'CVSROOT')):
+        parent = os.path.dirname(self.cvsroot)
+        if parent == self.cvsroot:
           raise RuntimeError('Cannot find the CVSROOT')
-      self.module = os.path.join(os.path.basename(self.cvsroot), self.module)
-      self.cvsroot = parent
+        self.module = os.path.join(os.path.basename(self.cvsroot), self.module)
+        self.cvsroot = parent
 
   def export(self, dest_path, rev=None):
     """Export revision REV to DEST_PATH where REV can be None to export
@@ -285,10 +287,13 @@ def verify_contents(cvsrepos, svnrepos, run_diff, tempdir):
 
   # Verify contents of all branches
   for branch in svnrepos.branches():
-    print 'Verifying branch', branch
-    if not verify_contents_branch(cvsrepos, svnrepos, branch, run_diff,
-                                  tempdir):
-      anomalies.append('branch:' + branch)
+    if branch[:10] == 'unlabeled-':
+      print 'Skipped branch', branch
+    else:
+      print 'Verifying branch', branch
+      if not verify_contents_branch(cvsrepos, svnrepos, branch, run_diff,
+                                    tempdir):
+        anomalies.append('branch:' + branch)
 
   # Show the results
   print

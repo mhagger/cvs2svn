@@ -31,6 +31,7 @@ import stat
 import string
 import md5
 import marshal
+import errno
 
 # Warnings and errors start with these strings.  They are typically
 # followed by a colon and a space, as in "%s: " ==> "Warning: ".
@@ -4149,17 +4150,19 @@ def main():
   try:
     os.mkdir('cvs2svn.lock')
   except OSError, e:
-    if str(e).find("Permission denied") > 0:
+    if e.errno = errno.EACCES:
       sys.stderr.write(error_prefix + ": Permission denied:"
                        + " No write access to output directory.\n")
-    else:
+      sys.exit(1)
+    if e.errno = errno.EEXIST:
       sys.stderr.write(error_prefix +
           ": cvs2svn writes temporary files to the current working directory.\n"
           "  The directory 'cvs2svn.lock' exists, indicating that another\n"
           "  cvs2svn process is currently using the current directory for its\n"
           "  temporary workspace. If you are certain that is not the case,\n"
           "  remove the 'cvs2svn.lock' directory.\n")
-    sys.exit(1)
+      sys.exit(1)
+    raise
   try:
     convert(ctx, start_pass, end_pass)
   finally:

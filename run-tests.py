@@ -250,6 +250,13 @@ def erase(path):
     os.remove(path)
 
 
+def find_tag_rev(logs, tagname):
+  for i in xrange(len(logs), 0, -1):
+    if logs[i].msg.find("'"+tagname+"'") != -1:
+      return i
+  raise ValueError("Tag %s not found in logs" % tagname)
+
+
 # List of already converted names; see the NAME argument to ensure_conversion.
 #
 # Keys are names, values are tuples: (svn_repos, svn_wc, log_dictionary).
@@ -587,7 +594,7 @@ def simple_tags():
     raise svntest.Failure
 
   # Tag on rev 1.1.1.1 of all files in proj
-  rev = 36
+  rev = find_tag_rev(logs, 'T_ALL_INITIAL_FILES')
   if not logs[rev].changed_paths == {
     '/tags/T_ALL_INITIAL_FILES (from /branches/vendorbranch:17)': 'A',
     '/tags/T_ALL_INITIAL_FILES/single-files': 'D',
@@ -605,7 +612,7 @@ def simple_tags():
     raise svntest.Failure
 
   # Tag on rev 1.1.1.1 of all files in proj, except one
-  rev = 38
+  rev = find_tag_rev(logs, 'T_ALL_INITIAL_FILES_BUT_ONE')
   if not logs[rev].changed_paths == {
     '/tags/T_ALL_INITIAL_FILES_BUT_ONE (from /branches/vendorbranch:17)': 'A',
     '/tags/T_ALL_INITIAL_FILES_BUT_ONE/single-files': 'D',
@@ -646,15 +653,17 @@ def mixed_time_tag():
   # See test-data/main-cvsrepos/proj/README.
   repos, wc, logs = ensure_conversion('main')
 
-  rev = 35
-  if not logs[rev].changed_paths == {
-    '/tags': 'A',
+  rev = find_tag_rev(logs, 'T_MIXED')
+  expected = {  
     '/tags/T_MIXED (from /trunk:19)': 'A',
     '/tags/T_MIXED/partial-prune': 'D',
     '/tags/T_MIXED/single-files': 'D',
     '/tags/T_MIXED/proj/sub2/subsubA (from /trunk/proj/sub2/subsubA:16)': 'R',
     '/tags/T_MIXED/proj/sub3 (from /trunk/proj/sub3:18)': 'R',
-    }:
+    }
+  if rev == 35:
+    expected['/tags'] = 'A'
+  if not logs[rev].changed_paths == expected:
     raise svntest.Failure
 
 

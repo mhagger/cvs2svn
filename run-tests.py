@@ -351,7 +351,8 @@ def ensure_conversion(name, error_re=None, passbypass=None, *args):
   args.sort()
 
   for arg in args:
-    conv_id = conv_id + arg
+    sanitized_arg = arg.replace("--", "-").replace("=", "-").replace("/", "+")
+    conv_id = conv_id + sanitized_arg
 
   if passbypass:
     conv_id = conv_id + '-passbypass'
@@ -1410,6 +1411,237 @@ def symbolic_name_filling_guide():
   # This will fail if the bug is present
   repos, wc, logs = ensure_conversion('symbolic-name-overfill')
 
+
+def eol_mime():
+  "test eol settings and mime types together"
+  ###TODO: It's a bit klugey to construct this path here.  But so far
+  ### there's only one test with a mime.types file.  If we have more,
+  ### we should abstract this into some helper, which would be located
+  ### near ensure_conversion().  Note that it is a convention of this
+  ### test suite for a mime.types file to be located in the top level
+  ### of the CVS repository to which it applies.
+  mime_path = os.path.abspath(os.path.join(test_data_dir,
+                                           'eol-mime-cvsrepos',
+                                           'mime.types'))
+
+  class NodeTreeWalkException:
+    "Exception class for node tree traversals."
+    pass
+
+  def get_node_for_path(node, path):
+    "In the tree rooted under NODE, return the node at PATH."
+    if node.name != '__SVN_ROOT_NODE':
+      raise NodeTreeWalkException
+    path = path.strip('/')
+    components = path.split('/')
+    for component in components:
+      node = svntest.tree.get_child(node, component)
+    return node
+
+  def get_props_for_path(node, path):
+    "In the tree rooted under NODE, return the prop dict for the node at PATH."
+    return get_node_for_path(node, path).props
+
+  def get_the_usual_suspects(wc_root):
+    """Return a dictionary mapping files onto their prop dicts.
+    The files are the six files of interest under WC_ROOT, but with
+    the 'trunk/' prefix removed.  Thus the returned dictionary looks
+    like this:
+
+       'foo.txt'  ==>  { property dictionary for '/trunk/foo.txt' }
+       'foo.xml'  ==>  { property dictionary for '/trunk/foo.xml' }
+       'foo.zip'  ==>  { property dictionary for '/trunk/foo.zip' }
+       'foo.bin'  ==>  { property dictionary for '/trunk/foo.bin' }
+       'foo.csv'  ==>  { property dictionary for '/trunk/foo.csv' }
+       'foo.dbf'  ==>  { property dictionary for '/trunk/foo.dbf' }
+    """
+    return {
+      'foo.txt' : get_props_for_path(wc_root, 'trunk/foo.txt'),
+      'foo.xml' : get_props_for_path(wc_root, 'trunk/foo.xml'),
+      'foo.zip' : get_props_for_path(wc_root, 'trunk/foo.zip'),
+      'foo.bin' : get_props_for_path(wc_root, 'trunk/foo.bin'),
+      'foo.csv' : get_props_for_path(wc_root, 'trunk/foo.csv'),
+      'foo.dbf' : get_props_for_path(wc_root, 'trunk/foo.dbf'),
+      }
+
+  # We do four conversions.  Each time, we pass --mime-types=FILE with
+  # the same FILE, but vary --no-default-eol and --eol-from-mime-type.
+  # Thus there's one conversion with neither flag, one with just the
+  # former, one with just the latter, and one with both.
+
+  ## Neither --no-default-eol nor --eol-from-mime-type. ##
+  repos, wc, logs = ensure_conversion('eol-mime', None, None,
+                                      '--mime-types=%s' % mime_path)
+  wc_tree = svntest.tree.build_tree_from_wc(wc, 1)
+  allprops = get_the_usual_suspects(wc_tree)
+
+  # foo.txt (no -kb, mime file says nothing)
+  if allprops['foo.txt'].get('svn:eol-style') != 'native':
+    raise svntest.Failure
+  if allprops['foo.txt'].get('svn:mime-type') is not None:
+    raise svntest.Failure
+
+  # foo.xml (no -kb, mime file says text)
+  if allprops['foo.xml'].get('svn:eol-style') != 'native':
+    raise svntest.Failure
+  if allprops['foo.xml'].get('svn:mime-type') != 'text/xml':
+    raise svntest.Failure
+
+  # foo.zip (no -kb, mime file says non-text)
+  if allprops['foo.zip'].get('svn:eol-style') != 'native':
+    raise svntest.Failure
+  if allprops['foo.zip'].get('svn:mime-type') != 'application/zip':
+    raise svntest.Failure
+
+  # foo.bin (has -kb, mime file says nothing)
+  if allprops['foo.bin'].get('svn:eol-style') is not None:
+    raise svntest.Failure
+  if allprops['foo.bin'].get('svn:mime-type') != 'application/octet-stream':
+    raise svntest.Failure
+
+  # foo.csv (has -kb, mime file says text)
+  if allprops['foo.csv'].get('svn:eol-style') is not None:
+    raise svntest.Failure
+  if allprops['foo.csv'].get('svn:mime-type') != 'text/csv':
+    raise svntest.Failure
+
+  # foo.dbf (has -kb, mime file says non-text)
+  if allprops['foo.dbf'].get('svn:eol-style') is not None:
+    raise svntest.Failure
+  if allprops['foo.dbf'].get('svn:mime-type') != 'application/what-is-dbf':
+    raise svntest.Failure
+
+  ## Just --no-default-eol, not --eol-from-mime-type. ##
+  repos, wc, logs = ensure_conversion('eol-mime', None, None,
+                                      '--mime-types=%s' % mime_path,
+                                      '--no-default-eol')
+  wc_tree = svntest.tree.build_tree_from_wc(wc, 1)
+  allprops = get_the_usual_suspects(wc_tree)
+
+  # foo.txt (no -kb, mime file says nothing)
+  if allprops['foo.txt'].get('svn:eol-style') is not None:
+    raise svntest.Failure
+  if allprops['foo.txt'].get('svn:mime-type') is not None:
+    raise svntest.Failure
+
+  # foo.xml (no -kb, mime file says text)
+  if allprops['foo.xml'].get('svn:eol-style') is not None:
+    raise svntest.Failure
+  if allprops['foo.xml'].get('svn:mime-type') != 'text/xml':
+    raise svntest.Failure
+
+  # foo.zip (no -kb, mime file says non-text)
+  if allprops['foo.zip'].get('svn:eol-style') is not None:
+    raise svntest.Failure
+  if allprops['foo.zip'].get('svn:mime-type') != 'application/zip':
+    raise svntest.Failure
+
+  # foo.bin (has -kb, mime file says nothing)
+  if allprops['foo.bin'].get('svn:eol-style') is not None:
+    raise svntest.Failure
+  if allprops['foo.bin'].get('svn:mime-type') != 'application/octet-stream':
+    raise svntest.Failure
+
+  # foo.csv (has -kb, mime file says text)
+  if allprops['foo.csv'].get('svn:eol-style') is not None:
+    raise svntest.Failure
+  if allprops['foo.csv'].get('svn:mime-type') != 'text/csv':
+    raise svntest.Failure
+
+  # foo.dbf (has -kb, mime file says non-text)
+  if allprops['foo.dbf'].get('svn:eol-style') is not None:
+    raise svntest.Failure
+  if allprops['foo.dbf'].get('svn:mime-type') != 'application/what-is-dbf':
+    raise svntest.Failure
+
+  ## Just --eol-from-mime-type, not --no-default-eol. ##
+  repos, wc, logs = ensure_conversion('eol-mime', None, None,
+                                      '--mime-types=%s' % mime_path,
+                                      '--eol-from-mime-type')
+  wc_tree = svntest.tree.build_tree_from_wc(wc, 1)
+  allprops = get_the_usual_suspects(wc_tree)
+
+  # foo.txt (no -kb, mime file says nothing)
+  if allprops['foo.txt'].get('svn:eol-style') != 'native':
+    raise svntest.Failure
+  if allprops['foo.txt'].get('svn:mime-type') is not None:
+    raise svntest.Failure
+
+  # foo.xml (no -kb, mime file says text)
+  if allprops['foo.xml'].get('svn:eol-style') != 'native':
+    raise svntest.Failure
+  if allprops['foo.xml'].get('svn:mime-type') != 'text/xml':
+    raise svntest.Failure
+
+  # foo.zip (no -kb, mime file says non-text)
+  if allprops['foo.zip'].get('svn:eol-style') != 'native':
+    raise svntest.Failure
+  if allprops['foo.zip'].get('svn:mime-type') != 'application/zip':
+    raise svntest.Failure
+
+  # foo.bin (has -kb, mime file says nothing)
+  if allprops['foo.bin'].get('svn:eol-style') is not None:
+    raise svntest.Failure
+  if allprops['foo.bin'].get('svn:mime-type') != 'application/octet-stream':
+    raise svntest.Failure
+
+  # foo.csv (has -kb, mime file says text)
+  if allprops['foo.csv'].get('svn:eol-style') is not None:
+    raise svntest.Failure
+  if allprops['foo.csv'].get('svn:mime-type') != 'text/csv':
+    raise svntest.Failure
+
+  # foo.dbf (has -kb, mime file says non-text)
+  if allprops['foo.dbf'].get('svn:eol-style') is not None:
+    raise svntest.Failure
+  if allprops['foo.dbf'].get('svn:mime-type') != 'application/what-is-dbf':
+    raise svntest.Failure
+
+  ## Both --no-default-eol and --eol-from-mime-type. ##
+  repos, wc, logs = ensure_conversion('eol-mime', None, None,
+                                      '--mime-types=%s' % mime_path,
+                                      '--eol-from-mime-type',
+                                      '--no-default-eol')
+  wc_tree = svntest.tree.build_tree_from_wc(wc, 1)
+  allprops = get_the_usual_suspects(wc_tree)
+
+  # foo.txt (no -kb, mime file says nothing)
+  if allprops['foo.txt'].get('svn:eol-style') is not None:
+    raise svntest.Failure
+  if allprops['foo.txt'].get('svn:mime-type') is not None:
+    raise svntest.Failure
+
+  # foo.xml (no -kb, mime file says text)
+  if allprops['foo.xml'].get('svn:eol-style') != 'native':
+    raise svntest.Failure
+  if allprops['foo.xml'].get('svn:mime-type') != 'text/xml':
+    raise svntest.Failure
+
+  # foo.zip (no -kb, mime file says non-text)
+  if allprops['foo.zip'].get('svn:eol-style') is not None:
+    raise svntest.Failure
+  if allprops['foo.zip'].get('svn:mime-type') != 'application/zip':
+    raise svntest.Failure
+
+  # foo.bin (has -kb, mime file says nothing)
+  if allprops['foo.bin'].get('svn:eol-style') is not None:
+    raise svntest.Failure
+  if allprops['foo.bin'].get('svn:mime-type') != 'application/octet-stream':
+    raise svntest.Failure
+
+  # foo.csv (has -kb, mime file says text)
+  if allprops['foo.csv'].get('svn:eol-style') is not None:
+    raise svntest.Failure
+  if allprops['foo.csv'].get('svn:mime-type') != 'text/csv':
+    raise svntest.Failure
+
+  # foo.dbf (has -kb, mime file says non-text)
+  if allprops['foo.dbf'].get('svn:eol-style') is not None:
+    raise svntest.Failure
+  if allprops['foo.dbf'].get('svn:mime-type') != 'application/what-is-dbf':
+    raise svntest.Failure
+
+
 #----------------------------------------------------------------------
 
 ########################################################################
@@ -1457,9 +1689,20 @@ test_list = [ None,
               branch_from_default_branch,
               file_in_attic_too,
               symbolic_name_filling_guide,
+              eol_mime,
              ]
 
 if __name__ == '__main__':
+
+  # The Subversion test suite code assumes it's being invoked from
+  # within a working copy of the Subversion sources, and tries to use
+  # the binaries in that tree.  Since the cvs2svn tree never contains
+  # a Subversion build, we just use the system's installed binaries.
+  svntest.main.svn_binary         = 'svn'
+  svntest.main.svnlook_binary     = 'svnlook'
+  svntest.main.svnadmin_binary    = 'svnadmin'
+  svntest.main.svnversion_binary  = 'svnversion'
+
   svntest.main.run_tests(test_list)
   # NOTREACHED
 

@@ -2635,7 +2635,7 @@ def pass4(ctx):
   if commits:
     process = commits.values()
     process.sort()
-    for  c in process:
+    for c in process:
       c.commit(dumper, ctx, sym_tracker)
     count = count + len(process)
 

@@ -44,6 +44,13 @@ if sys.hexversion < 0x2000000:
                    "see www.python.org.\n" % error_prefix)
   sys.exit(1)
 
+# Pretend we have true booleans on older python versions
+try:
+  True
+except:
+  True = 1
+  False = 0
+
 # DBM module selection
 
 # 1. If we have bsddb3, it is probably newer than bsddb.  Fake bsddb = bsddb3,

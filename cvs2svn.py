@@ -4150,11 +4150,11 @@ def main():
   try:
     os.mkdir('cvs2svn.lock')
   except OSError, e:
-    if e.errno = errno.EACCES:
+    if e.errno == errno.EACCES:
       sys.stderr.write(error_prefix + ": Permission denied:"
                        + " No write access to output directory.\n")
       sys.exit(1)
-    if e.errno = errno.EEXIST:
+    if e.errno == errno.EEXIST:
       sys.stderr.write(error_prefix +
           ": cvs2svn writes temporary files to the current working directory.\n"
           "  The directory 'cvs2svn.lock' exists, indicating that another\n"

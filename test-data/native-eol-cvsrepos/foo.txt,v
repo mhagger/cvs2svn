@@ -1,0 +1,77 @@
+head	1.4;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.4
+date	2005.01.04.19.59.01;	author tori;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2005.01.04.19.58.15;	author tori;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2005.01.04.19.57.04;	author tori;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.01.04.19.55.50;	author tori;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@Mixed EOLs
+@
+text
+@And then
+mixedEOLs
+@
+
+
+1.3
+log
+@CR EOLs
+@
+text
+@d1 2
+a2 1
+And thenCREOLs@
+
+
+1.2
+log
+@CRLF EOLs
+@
+text
+@d1 1
+a1 3
+Then
+CRLF
+EOLs
+@
+
+
+1.1
+log
+@LF EOLs
+@
+text
+@d1 3
+a3 3
+First
+LF
+EOLs
+@
+

@@ -1807,6 +1807,17 @@ def resync_pass2_ordering_bug():
   # actual revisions, too, but the main thing is to know that the
   # conversion doesn't fail.
 
+def native_eol():
+  "only LFs for svn:eol-style=native files"
+  repos, wc, logs = ensure_conversion('native-eol', None, None)
+  lines = run_program(svntest.main.svnadmin_binary, None, 'dump', '-q', repos)
+  # Verify that all files in the dump have LF EOLs.  We're actually
+  # testing the whole dump file, but the dump file itself only uses
+  # LF EOLs, so we're safe.
+  for line in lines:
+    if line[-1] != '\n' or line[:-1].find('\r') != -1:
+      raise svntest.Failure
+
 
 #----------------------------------------------------------------------
 
@@ -1864,6 +1875,7 @@ test_list = [ None,
               exclude,
               vendor_branch_delete_add,
               XFail(resync_pass2_ordering_bug),
+              XFail(native_eol),                    # 50
              ]
 
 if __name__ == '__main__':

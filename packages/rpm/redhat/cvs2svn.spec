@@ -19,6 +19,9 @@ Prefix: /usr
 Convert CVS repositories to Subversion repositories.
 
 %changelog
+* Tue Aug 03 2004 David Summers <david@summersoft.fay.ar.us> 1.1.0-rc2-1309
+- Now includes www documentation.
+
 * Tue Aug 03 2004 David Summers <david@summersoft.fay.ar.us> 1.1.0-rc2-1308
 - Now depends on cvs instead of rcs.
 - Fixed SPEC file to install new cvs2svn instead of cvs2svn.py.
@@ -73,5 +76,6 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 %doc BUGS COMMITTERS COPYING HACKING README
 %doc design-notes.txt
+%doc www
 /usr/bin/*
 /usr/lib/python2.2/site-packages/*

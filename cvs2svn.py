@@ -2140,6 +2140,11 @@ class Commit:
     self.t_min = 1L<<32
     self.t_max = 0
 
+  def __cmp__(self, other):
+    # Commits should be sorted by t_max.  If both self and other have
+    # the same t_max, break the tie using t_min.
+    return cmp(self.t_max, other.t_max) or cmp(self.t_min, other.t_min)
+
   def has_file(self, fname):
     return self.files.has_key(fname)
 
@@ -2582,7 +2587,7 @@ def pass4(ctx):
     process = [ ]
     for scan_id, scan_c in commits.items():
       if scan_c.t_max + COMMIT_THRESHOLD < timestamp:
-        process.append((scan_c.t_max, scan_c))
+        process.append(scan_c)
         del commits[scan_id]
         continue
       # If the inbound commit is on the same file as a pending commit,
@@ -2604,7 +2609,7 @@ def pass4(ctx):
     # to be committed, because this latest rev couldn't possibly be
     # part of any of them.  Sort them into time-order, then commit 'em.
     process.sort()
-    for t_max, c in process:
+    for c in process:
       c.commit(dumper, ctx, sym_tracker)
     count = count + len(process)
 
@@ -2619,11 +2624,9 @@ def pass4(ctx):
 
   # End of the sorted revs file.  Flush any remaining commits:
   if commits:
-    process = [ ]
-    for id, c in commits.items():
-      process.append((c.t_max, c))
+    process = commits.values()
     process.sort()
-    for t_max, c in process:
+    for  c in process:
       c.commit(dumper, ctx, sym_tracker)
     count = count + len(process)
 

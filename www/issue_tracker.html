@@ -1,0 +1,108 @@
+
+<!-- jump to issue form: -->
+ <table border="0" cellspacing="0" cellpadding="3">
+  <tr>
+
+   <td id="issueid">
+    <form method="get" action="http://cvs2svn.tigris.org/issues/show_bug.cgi" tabindex="1">
+    <input name="id" size="6" tabindex="2" />
+    <input type="submit" value="Jump to issue" tabindex="3" />
+    </form>
+   </td>
+  </tr>
+ </table>
+ 
+
+
+<h1>cvs2svn Issue Tracker</h1>
+
+<h2>Issue Tracker Guidelines</h2>
+
+<div class="alert">
+<p>We welcome bug reports and enhancement requests.  However, to make
+   the process of prioritizing cvs2svn tasks easier, we ask that you
+   follow a few guidelines.  Before filing an issue in the Issue
+   Tracker, please:</p>
+
+<ul>
+  <li>Look through the <a
+      href="http://cvs2svn.tigris.org/issues/buglist.cgi?component=cvs2svn"
+      >existing issues</a> to determine if your concern has already
+      been noted by someone else.</li>
+  <li>Make sure that you've read the appropriate documentation (for
+      example, the <a
+      href="http://svn.collab.net/repos/cvs2svn/trunk/README">README</a>)
+      to verify that you are using the software appropriately, and to
+      determine if any problems you are seeing are perhaps not real bugs.</li>
+  <li>Send email to the dev list (<a
+      href="mailto:dev@cvs2svn.tigris.org">dev@cvs2svn.tigris.org</a>)
+      fully describing the enhancement or bug that brought you here
+      today.  That will give the maintainers a chance to ask you
+      questions, confirm that it is a bug, explain the behavior, etc.</li>
+</ul>
+</div>
+
+<h2>What the Fields Mean</h2>
+
+<p>When an issue is first filed, it automatically goes in the
+<b>"---"</b> milestone, meaning it is unscheduled.  A developer will
+examine it and maybe talk to other developers, then estimate the bug's
+severity, the effort required to fix it, and schedule it in a numbered
+milestone, for example <b><a
+href="http://cvs2svn.tigris.org/issues/buglist.cgi?target_milestone=1.0"
+>1.0</a></b>.  (Or they may put it the <b><a
+href="http://cvs2svn.tigris.org/issues/buglist.cgi?target_milestone=future"
+>future</a></b> or <b><a
+href="http://cvs2svn.tigris.org/issues/buglist.cgi?target_milestone=no%20milestone"
+>no&nbsp;milestone</a></b> milestones, if they consider it tolerable for all currently planned releases.)
+</p>
+
+<p> An issue filed in <b>future</b> might still get fixed soon, if
+some committer decides they want it done.  Putting it in <b>future</b>
+merely means we're not planning to block any particular release on
+that issue. </p>
+
+<p>
+Severity is represented in the <b>Priority</b> field.  Here is how
+priority numbers map to severity:
+</p>
+
+<p>
+<ul>
+
+   <li><b>P1:</b> <i>Prevents work from getting done, causes data
+         loss, or BFI ("Bad First Impression" -- too embarrassing for
+         a public release).</i>
+   </li>
+
+   <li><b>P2:</b> <i>Workaround required to get stuff done.</i>
+   </li>
+
+   <li><b>P3:</b> <i>Like P2, but rarely encountered in normal usage.</i>
+   </li>
+
+   <li><b>P4:</b> <i>Developer concern only, API stability or
+         cleanliness issue.</i>
+   </li>
+
+   <li><b>P5:</b> <i>Nice to fix, but in a pinch we could live with it.</i>
+   </li>
+
+</ul>
+</p>
+
+<p>
+Effort Required is sometimes represented in the <b>Status
+Whiteboard</b> with an "<b>e number</b>", which is the average of the
+most optimistic and most pessimistic projections for number of
+engineer/days needed to fix the bug.  The e number always comes first,
+so we can sort on the field, but we include the actual spread after
+it, so we know when we're dealing with a wide range.  For example
+"<b>e2.5&nbsp;(2&nbsp;/&nbsp;3)</b>" is not quite the same as 
+"<b>e2.5&nbsp;(1&nbsp;/&nbsp;4)</b>"!
+
+<h2>Enter the Issue Tracker</h2>
+
+<p>And so, with further ado, we give you (drumroll&hellip;) <a 
+   href="http://cvs2svn.tigris.org/servlets/ProjectIssues">the cvs2svn
+   Issue Tracker</a>.</p>

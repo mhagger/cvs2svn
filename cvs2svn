@@ -894,7 +894,6 @@ class SymbolDatabase:
 
 class CollectData(cvs2svn_rcsparse.Sink):
   def __init__(self):
-    self.cvsroot = Ctx().cvsroot
     self.revs = open(temp(DATAFILE + REVS_SUFFIX), 'w')
     Cleanup().register(temp(DATAFILE + REVS_SUFFIX), pass2)
     self.resync = open(temp(DATAFILE + RESYNC_SUFFIX), 'w')
@@ -4039,11 +4038,6 @@ class MimeMapper:
 
 def convert(start_pass, end_pass):
   "Convert a CVS repository to an SVN repository."
-
-  if not os.path.exists(Ctx().cvsroot):
-    sys.stderr.write(error_prefix + ': \'%s\' does not exist.\n'
-                     % Ctx().cvsroot)
-    sys.exit(1)
 
   cleanup = Cleanup()
   times = [ None ] * (end_pass)

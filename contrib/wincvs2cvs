@@ -1,0 +1,21 @@
+#! /bin/sh
+# Evidently WinCVS allows incorrect author names (with spaces in them).
+# This scripts puts a "_" character in between any entry with double strings in
+# the CVS/RCS file "author" fields.
+# This changes the file in such a way that there is no change in file size.
+#
+# Example: Change "author David Summers;" to "author David_Summers;"
+#
+# *** WARNING: Make *SURE* you run this on a COPY of the repository and not the
+# repository itself until you are ABSOLUTELY SURE that it doesn't do anything
+# bad.
+
+# Hack around strangeness in PERL
+LANG=C
+export C
+
+# Do the dastardly deed.
+find . -type f -print0 | xargs -0 perl -pi -e 's/author\s+(\w+)\s(\w+);/author
+$1_$2;/'
+
+exit 0

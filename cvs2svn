@@ -297,19 +297,13 @@ def temp(basename):
   This is a convenience function to save horizontal space in source."""
   return os.path.join(Ctx().tmpdir, basename)
 
-# Officially, CVS symbolic names must use a fairly restricted set of
-# characters.  Unofficially, CVS 1.10 allows any character but [$,.:;@]
-# We don't care if some repositories out there use characters outside the
-# official set, as long as their tags start with a letter.
 # Since the unofficial set also includes [/\] we need to translate those
 # into ones that don't conflict with Subversion limitations.
-symbolic_name_re = re.compile('^[a-zA-Z].*$')
-
 def _clean_symbolic_name(name):
   """Return symbolic name NAME, translating characters that Subversion
   does not allow in a pathname."""
-  name = name.replace('/',',')
-  name = name.replace('\\',';')
+  name = name.replace('/','++')
+  name = name.replace('\\','--')
   return name
 
 def _path_join(*components):
@@ -1204,12 +1198,6 @@ class CollectData(cvs2svn_rcsparse.Sink):
     header, for example: '1.7', '1.7.0.2', or '1.1.1' or '1.1.1.1'.
     This function will determine what kind of symbolic name it is by
     inspection, and record it in the right places."""
-    if not symbolic_name_re.match(name):
-      sys.stderr.write("%s: in '%s':\n"
-                       "   '%s' is not a valid tag or branch name, ignoring\n"
-                       % (warning_prefix, self.fname, name))
-      return
-
     if branch_tag.match(revision):
       self.add_cvs_branch(revision, name)
     elif vendor_tag.match(revision):

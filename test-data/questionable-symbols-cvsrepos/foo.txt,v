@@ -1,15 +1,15 @@
 head	1.2;
 access;
 symbols
-	Branch_Z:1.1.0.10
-	Branch_Y:1.1.0.8
-	Branch_X:1.1.0.6
-	Branch_W:1.1.0.4
-	Branch_V:1.1.0.2
-	Branch_E:1.2.0.10
-	Branch_D:1.2.0.8
-	Branch_C:1.2.0.6
-	Branch_B:1.2.0.4
+	BranchWith/Slash_Z:1.1.0.10
+	/BranchStartsWithSlash_Y:1.1.0.8
+	#BranchStartsWithHash_X:1.1.0.6
+	BranchWith.Dot_W:1.1.0.4
+	3BranchStartsWithNumber_V:1.1.0.2
+	BranchWith\Backslash_E:1.2.0.10
+	BranchWith///ThreeSlashes_D:1.2.0.8
+	BranchWith.Various/Prohibited\Symbols_C:1.2.0.6
+	\BranchStartsWithBackslash_B:1.2.0.4
 	Branch_A:1.2.0.2;
 locks; strict;
 comment	@# @;

@@ -1794,6 +1794,13 @@ def requires_cvs():
     raise svntest.Failure
 
 
+def questionable_symbols():
+  "test that we can handle weird symbolic names"
+  repos, wc, logs = ensure_conversion('questionable-symbols')
+  # If the conversion succeeds, then we're okay.  We could check the
+  # actual branch paths, too, but the main thing is to know that the
+  # conversion doesn't fail.
+
 #----------------------------------------------------------------------
 
 ########################################################################
@@ -1845,6 +1852,7 @@ test_list = [ None,
               keywords,
               ignore,
               requires_cvs,
+              questionable_symbols,
              ]
 
 if __name__ == '__main__':

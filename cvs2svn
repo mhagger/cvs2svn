@@ -3775,9 +3775,12 @@ class RepositoryDelegate(DumpfileDelegate):
     os.remove(self.dumpfile_path)
 
     # If we created the repository and --bdb-no-sync wasn't passed,
-    # then comment out the DB_TXN_NOSYNC line in the DB_CONFIG file
-    if (not Ctx().existing_svnrepos) and (not Ctx().bdb_txn_nosync):
-      db_config = os.path.join(self.target, "db/DB_CONFIG")
+    # then comment out the DB_TXN_NOSYNC line in the DB_CONFIG file.
+    # DB_CONFIG does not exist in fsfs repositories, so we test for
+    # that too.
+    db_config = os.path.join(self.target, "db/DB_CONFIG")
+    if (not Ctx().existing_svnrepos and not Ctx().bdb_txn_nosync
+        and os.path.exists(db_config)):
       no_sync = 'set_flags DB_TXN_NOSYNC\n'
 
       contents = open(db_config, 'r').readlines()

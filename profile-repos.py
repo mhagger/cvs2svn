@@ -1,4 +1,25 @@
 #!/usr/bin/env python
+# ====================================================================
+# Copyright (c) 2000-2004 CollabNet.  All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.  The terms
+# are also available at http://subversion.tigris.org/license-1.html.
+# If newer versions of this license are posted there, you may use a
+# newer version instead, at your option.
+#
+# This software consists of voluntary contributions made by many
+# individuals.  For exact contribution history, see the revision
+# history and logs, available at http://cvs2svn.tigris.org/.
+# ====================================================================
+
+
+"""
+Report information about CVS revisions, tags, and branches in a CVS
+repository by examining the results of running pass 1 of cvs2svn.py on
+that repository.  NOTE: You have to run the conversion passes
+yourself!
+"""
 
 import sys, os, os.path, string
 
@@ -66,12 +87,6 @@ if __name__ == "__main__":
   if argc < 2:
     print 'Usage: %s /path/to/CVS/cvs2svn-data.[c-|s-|]revs' \
         % (os.path.basename(sys.argv[0]))
-    print
-    print 'Report information about CVS revisions, tags, and branches in a by'
-    print 'CVS repository by examining the results of running pass 1 of'
-    print 'cvs2svn.py on that repository.  NOTE:  You have to run the con-'
-    print 'version passes yourself!'
-    print
+    print __doc__
     sys.exit(0)
   do_it(sys.argv[1])
-  

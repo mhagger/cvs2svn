@@ -13,8 +13,8 @@
 # history and logs, available at http://cvs2svn.tigris.org/.
 # ====================================================================
 #
-# The purpose of cvs2svn is to verify the result of a cvs2svn
-# repository conversion.  The following tests are performed:
+# The purpose of verify-cvs2svn.py is to verify the result of a
+# cvs2svn repository conversion.  The following tests are performed:
 #
 # 1. Content checking of the HEAD revision of trunk, all tags and all
 #    branches.  Only the tags and branches in the Subversion
@@ -24,7 +24,7 @@
 # This program only works if you converted a subdirectory of a CVS
 # repository, and not the whole repository.  If you really did convert
 # a whole repository and need to check it, you must create a CVSROOT
-# one directory above the current root using cvs init.
+# directory above the current root using cvs init.
 #
 # ====================================================================
 

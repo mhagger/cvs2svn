@@ -308,7 +308,11 @@ class CollectData(rcsparse.Sink):
       self.taglist[revision].append(name)
 
     try:
-      if self.label_type[name] != label_type:
+      # if label_types are different and at least one is a tag (We
+      # don't want to error on branch/vendor branch mismatches)
+      if (self.label_type[name] != label_type
+          and(self.label_type[name] == self.TAG_LABEL
+              or label_type == self.TAG_LABEL)):
         err = ("%s: in '%s' (BRANCH/TAG MISMATCH):\n   '%s' "
                " is defined as %s here, but as a %s elsewhere"
                % (error_prefix, self.fname, name,

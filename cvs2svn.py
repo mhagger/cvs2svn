@@ -467,7 +467,7 @@ class Database:
     return len(self.db)
    
 
-class LastSymbolicNameDatabase(Database):
+class LastSymbolicNameDatabase:
   """ Passing every CVSRevision in s-revs to this class will result in
   a Database whose key is the last CVS Revision a symbolicname was
   seen in, and whose value is a list of all symbolicnames that were

@@ -354,7 +354,7 @@ def main(argv):
 
   cvs_path = args[0]
   # Check if the use supplied an URL or a path
-  if '://' in args[1]:
+  if args[1].find('://') != -1:
     svn_url = args[1]
   else:
     svn_url = 'file://' + os.path.abspath(args[1])

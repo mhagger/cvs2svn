@@ -12,36 +12,13 @@ if echo ${REV} | grep -q -e '[^0-9]'; then
    exit 1
 fi
 
-rm -rf ${DISTNAME}
-mkdir ${DISTNAME}
+echo -n "Creating distribution directory ${DISTNAME}..."
+rm -rf ${DISTNAME} 2>/dev/null
+echo "done."
 
-cd ${DISTNAME}
-
-# Ignore the error about copying '..' into '.'.
-cp -f -a .. . 2>/dev/null
-
-SPURIA=`svn status --no-ignore`
-
-SAVED_IFS_1=${IFS}
-IFS='
-'
-
-# Clean out unversioned files.
-for line in ${SPURIA}; do
-   if echo ${line} | grep -q -e '^Performing status on external item'; then
-     /bin/true
-   elif echo ${line} | grep -q -e '^X '; then
-     /bin/true
-   else
-     junk=`echo ${line} | cut -b8-`
-     rm -rf ${junk}
-   fi
-done
-
-# Clean out svn metadata.
-find . -name ".svn" | xargs rm -rf
-
-cd ..
+echo -n "Exporting data..."
+svn export . ${DISTNAME} > /dev/null
+echo "done."
 
 rm -f ${DISTNAME}.tar.gz
 tar zcf ${DISTNAME}.tar.gz ${DISTNAME}

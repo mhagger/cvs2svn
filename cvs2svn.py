@@ -1392,7 +1392,7 @@ class Dumper:
 
     # Set MIME type, and maybe eol-style for text files.
     if ctx.mime_mapper:
-      mime_type = ctx.mime_mapper.get_type_from_filename(cvs_path)
+      mime_type = ctx.mime_mapper.get_type_from_filename(c_rev.cvs_path())
       if mime_type:
         prop_contents = prop_contents + ('K 13\nsvn:mime-type\nV %d\n%s\n' % \
             (len(mime_type), mime_type))

@@ -3249,7 +3249,7 @@ class SVNCommitItem:
       # Set the svn:keywords property, if appropriate.  See issue #2.
       if c_rev.mode is None or c_rev.mode == 'kv' or c_rev.mode == 'kvl':
         if not self.keywords_off:
-          self.svn_props['svn:keywords'] = 'author date id'
+          self.svn_props['svn:keywords'] = 'author date id revision'
 
       # Set mime-type and eol.  These two properties are intertwingled;
       # follow the conditionals carefully.  See also issue #39.

@@ -35,9 +35,9 @@ import errno
 import popen2
 
 # Warnings and errors start with these strings.  They are typically
-# followed by a colon and a space, as in "%s: " ==> "Warning: ".
-warning_prefix = "Warning"
-error_prefix = "Error"
+# followed by a colon and a space, as in "%s: " ==> "WARNING: ".
+warning_prefix = "WARNING"
+error_prefix = "ERROR"
 
 # Make sure this Python is recent enough.
 if sys.hexversion < 0x2000000:
@@ -1187,11 +1187,16 @@ class CollectData(cvs2svn_rcsparse.Sink):
           while t_p >= t_c:
             self.rev_data[prev][0] = t_c - 1	# new timestamp
             self.rev_data[prev][2] = t_p	# old timestamp
+            delta = t_c - 1 - t_p
+            rel_name = relative_name(self.cvsroot, self.fname)
             msg =  "RESYNC: '%s' (%s): old time='%s' delta=%ds" \
-                  % (relative_name(self.cvsroot, self.fname),
-                     prev, time.ctime(t_p), t_c - 1 - t_p)
+                  % (rel_name,
+                     prev, time.ctime(t_p), delta)
             Log().write(LOG_VERBOSE, msg)
-
+            if (delta > COMMIT_THRESHOLD
+                or delta < (COMMIT_THRESHOLD * -1)):
+              str = "%s: Significant timestamp change for '%s' (%d seconds)"
+              Log().write(LOG_WARN, str % (warning_prefix, rel_name, delta))
             current = prev
             prev = self.prev_rev[current]
             if not prev:
@@ -3704,22 +3709,42 @@ def pass2():
       if record[0] <= c_rev.timestamp <= record[1]:
         # bingo! remap the time on this (record[2] is the new time).
 
-
-        # print out warning in pass2 if the resync timestamp is <
-        # prev_rev timestamp
-
-        msg = "RESYNC: '%s' (%s): old time='%s' delta=%ds" \
-              % (relative_name(Ctx().cvsroot, c_rev.fname),
-                 c_rev.rev, time.ctime(c_rev.timestamp),
-                 record[2] - c_rev.timestamp)
-        Log().write(LOG_VERBOSE, msg)
-
+        rel_name = relative_name(Ctx().cvsroot, c_rev.fname)
         # adjust the time range. we want the COMMIT_THRESHOLD from the
         # bounds of the earlier/latest commit in this group.
         record[0] = min(record[0], c_rev.timestamp - COMMIT_THRESHOLD/2)
         record[1] = max(record[1], c_rev.timestamp + COMMIT_THRESHOLD/2)
 
-        c_rev.timestamp = record[2]
+        # By default this will be the new timestamp
+        new_timestamp = record[2]
+        # If the new timestamp is earlier than that of our previous revision
+        if record[2] < c_rev.prev_timestamp:
+          desc = ("%s: Attempt to set timestamp of revision %s on file %s"
+                  + " to time %s, which is before previous the time of"
+                  + " revision %s (%s):")
+          Log().write(LOG_WARN, desc % (warning_prefix, c_rev.rev, rel_name,
+                                       record[2], c_rev.prev_rev,
+                                       c_rev.prev_timestamp))
+          # If resyncing our rev to c_rev.prev_timestamp + 1 will place
+          # the timestamp of c_rev within COMMIT_THRESHOLD of the
+          # attempted sync time, then sync back to c_rev.prev_timestapm
+          # + 1...                 
+          if (c_rev.prev_timestamp - record[2]) < COMMIT_THRESHOLD:
+            new_timestamp = c_rev.prev_timestamp + 1
+            Log().write(LOG_WARN, "%s: Time set to %s" % (warning_prefix,
+                                                          new_timestamp))
+          # ...otherwise, make no change
+          else:
+            new_timestamp = c_rev.timestamp
+            Log().write(LOG_WARN, "%s: Timestamp left untouched" %
+                        warning_prefix)
+
+        msg = "RESYNC: '%s' (%s): old time='%s' delta=%ds" \
+              % (rel_name, c_rev.rev, time.ctime(c_rev.timestamp),
+                 record[2] - c_rev.timestamp)
+        Log().write(LOG_VERBOSE, msg)
+
+        c_rev.timestamp = new_timestamp
         output.write(str(c_rev) + "\n")
 
         # stop looking for hits

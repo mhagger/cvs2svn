@@ -1445,7 +1445,7 @@ test_list = [ None,
               no_spurious_svn_commits,
               invalid_closings_on_trunk,
               individual_passes,
-              XFail(resync_bug),
+              resync_bug,
               branch_from_default_branch,
               file_in_attic_too,
              ]

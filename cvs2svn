@@ -325,20 +325,27 @@ def relative_name(cvsroot, fname):
   sys.exit(1)
 
 def get_co_pipe(path, revision):
+  """Return a command string, and the pipe created using that string."""
   pipe_cmd = 'co -q -x,v -p%s %s' % (revision, escape_shell_arg(path))
   pipe = Popen3(pipe_cmd, True)
   pipe.tochild.close()
-  return pipe
+  return pipe_cmd, pipe
 
 def generate_ignores(c_rev):
   # Read in props
-  pipe = get_co_pipe(c_rev.rcs_path(), c_rev.rev)
+  pipe_cmd, pipe = get_co_pipe(c_rev.rcs_path(), c_rev.rev)
   buf = pipe.fromchild.read(PIPE_READ_SIZE)
   raw_ignore_val = ""
   while buf:
     raw_ignore_val = raw_ignore_val + buf
     buf = pipe.fromchild.read(PIPE_READ_SIZE)
   pipe.fromchild.close()
+  error_output = pipe.childerr.read()
+  exit_status = pipe.wait()
+  if exit_status:
+    sys.exit("%s: The command '%s' failed with exit status: %s\n"
+             "and the following output:\n"
+             "%s" % (error_prefix, pipe_cmd, exit_status, error_output))
 
   # Tweak props: First, convert any spaces to newlines...
   raw_ignore_val = '\n'.join(raw_ignore_val.split())
@@ -3099,7 +3106,7 @@ class SVNRepositoryMirror:
 
 class SVNCommitItem:
   """A wrapper class for CVSRevision objects upon which
-   Subversion-related datum (such as properties) may be hung."""
+   Subversion-related data (such as properties) may be hung."""
   
   def __init__(self, c_rev, make_svn_props):
     self.c_rev = c_rev
@@ -3387,7 +3394,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
                           % (self._utf8_path(dir_path), ignore_len,
                              ignore_len, ignore_contents))
 
-    pipe = get_co_pipe(c_rev.rcs_path(), c_rev.rev)
+    pipe_cmd, pipe = get_co_pipe(c_rev.rcs_path(), c_rev.rev)
     self.dumpfile.write('Node-path: %s\n'
                         'Node-kind: file\n'
                         'Node-action: %s\n'

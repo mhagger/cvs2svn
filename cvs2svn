@@ -4137,6 +4137,7 @@ def main():
   # Convenience var, so we don't have to keep instantiating this Borg.
   ctx = Ctx()
 
+  profiling = None
   start_pass = 1
   end_pass = len(_passes)
 
@@ -4240,8 +4241,7 @@ def main():
           ': The behaviour produced by the --create option is now the '
           'default,\nand passing the option is deprecated.\n')
     elif opt == '--profile':
-      # Do nothing.  This option was parsed manually before the
-      # invocation of main().
+      profiling = 1
       pass
       
   if ctx.print_help:
@@ -4351,32 +4351,16 @@ def main():
       sys.exit(1)
     raise
   try:
-    convert(start_pass, end_pass)
+    if profiling:
+      import hotshot
+      prof = hotshot.Profile('cvs2svn.hotshot')
+      prof.runcall(convert, start_pass, end_pass)
+      prof.close()
+    else:
+      convert(start_pass, end_pass)
   finally:
     try: os.rmdir(os.path.join(ctx.tmpdir, 'cvs2svn.lock'))
     except: pass
 
 if __name__ == '__main__':
-  # Since regular option parsing happens in main(), and the profiler
-  # invokes main(), the simplest thing to do is just look for the
-  # '--profile' option here.
-  #
-  # Naturally, we'd prefer to use the "'--profile' in sys.argv"
-  # syntax.  Unfortunately, http://docs.python.org/lib/typesseq.html
-  # seems to indicate that that's (effectively) only in Python 2.3 or
-  # higher, so we search for the option manually.
-  #
-  # Oh, and we're just going to assume that we'll never be invoked on
-  # a repository named "--profile".  I mean, ya gotta live on the wild
-  # side sometimes.
-  profiling = 0
-  for arg in sys.argv:
-    if arg == '--profile':
-      profiling = 1
-  if profiling:
-      import hotshot
-      prof = hotshot.Profile('cvs2svn.hotshot')
-      prof.runcall(main)
-      prof.close()
-  else:
-    main()
+  main()

@@ -367,9 +367,9 @@ LOG_VERBOSE = 2
 class Log:
   """A Simple logging facility.  Each line will be timestamped is
   self.use_timestamps is TRUE.  This class is a Borg."""
-  _shared_state = {}
+  __shared_state = {}
   def __init__(self):
-    self.__dict__ = self._shared_state
+    self.__dict__ = self.__shared_state
     if self.__dict__:
       return
     self.log_level = LOG_NORMAL
@@ -399,9 +399,9 @@ class Cleanup:
   of that pass, your file will be cleaned up after running an optional
   callback.  This class is a Borg."""
 
-  _shared_state = {}
+  __shared_state = {}
   def __init__(self):
-    self.__dict__ = self._shared_state
+    self.__dict__ = self.__shared_state
     if self.__dict__:
       return
     self._log = {}
@@ -519,11 +519,9 @@ class CVSRevisionDatabase:
   """A Database to store CVSRevision objects and retrieve them by their
   unique_key()."""
 
-  def __init__(self, mode, ctx=None):
+  def __init__(self, mode):
     """Initialize an instance, opening database in MODE (like the MODE
-    argument to Database or anydbm.open()).  CTX is required if you
-    wish to call the get_revision() method."""
-    self._ctx = ctx
+    argument to Database or anydbm.open())."""
     self.cvs_revs_db = Database(CVS_REVS_DB, mode)
     Cleanup().register(CVS_REVS_DB, pass8)
 
@@ -533,7 +531,7 @@ class CVSRevisionDatabase:
 
   def get_revision(self, unique_key):
     """Return the CVSRevision stored under UNIQUE_KEY."""
-    return CVSRevision(self._ctx, self.cvs_revs_db[unique_key])
+    return CVSRevision(Ctx(), self.cvs_revs_db[unique_key])
 
 
 class TagsDatabase(Database):
@@ -547,7 +545,7 @@ class TagsDatabase(Database):
 
 class CVSRevision:
   def __init__(self, ctx, *args):
-    """Initialize a new CVSRevision with context CTX and ARGS.
+    """Initialize a new CVSRevision with Ctx object CTX, and ARGS.
 
     If CTX is None, the following members and methods of the
     instantiated CVSRevision class object will be unavailable (or
@@ -557,6 +555,11 @@ class CVSRevision:
        svn_trunk_path
        is_default_branch_revision()
     
+    (Note that this class treats CTX as const, because the caller
+    likely passed in a Borg instance of a Ctx.  The reason this class
+    takes CTX as as a parameter, instead of just instantiating a Ctx
+    itself, is that this class should be usable outside cvs2svn.py.)
+
     If there is one argument in ARGS, it is a string, in the format of
     a line from a revs file.  Do *not* include a trailing newline.
 
@@ -579,6 +582,7 @@ class CVSRevision:
        fname           -->  (string) relative path of file in CVS repos
 
     The two forms of initialization are equivalent."""
+
     self._ctx = ctx
     if len(args) == 15:
       (self.timestamp, self.digest, self.op, self.prev_rev, self.rev, 
@@ -862,9 +866,8 @@ class SymbolDatabase:
       f.write("\n")
 
 class CollectData(cvs2svn_rcsparse.Sink):
-  def __init__(self, ctx):
-    self._ctx = ctx
-    self.cvsroot = ctx.cvsroot
+  def __init__(self):
+    self.cvsroot = Ctx().cvsroot
     self.revs = open(DATAFILE + REVS_SUFFIX, 'w')
     Cleanup().register(DATAFILE + REVS_SUFFIX, pass2)
     self.resync = open(DATAFILE + RESYNC_SUFFIX, 'w')
@@ -1212,7 +1215,7 @@ class CollectData(cvs2svn_rcsparse.Sink):
     else:
       deltatext_code = DELTATEXT_EMPTY
 
-    c_rev = CVSRevision(self._ctx, timestamp, digest, op,
+    c_rev = CVSRevision(Ctx(), timestamp, digest, op,
                         self.prev_rev[revision], revision,
                         self.next_rev.get(revision),
                         self.file_in_attic, self.file_executable,
@@ -1275,8 +1278,7 @@ class SymbolingsLogger:
   thing would be to copy the branch from somewhere between 24 and 29,
   inclusive.
   """
-  def __init__(self, ctx):
-    self._ctx = ctx
+  def __init__(self):
     self.symbolings = open(SYMBOL_OPENINGS_CLOSINGS, 'w')
     Cleanup().register(SYMBOL_OPENINGS_CLOSINGS, pass6)
     self.closings = open(SYMBOL_CLOSINGS_TMP, 'w')
@@ -1322,12 +1324,12 @@ class SymbolingsLogger:
     each closing CVSRevision, and write a proper line out to the
     symbolings file."""
     # Use this to get the c_rev.svn_path of our rev_key
-    cvs_revs_db = CVSRevisionDatabase(DB_OPEN_READ, self._ctx)
+    cvs_revs_db = CVSRevisionDatabase(DB_OPEN_READ)
 
     self.closings.close()
     for line in fileinput.FileInput(SYMBOL_CLOSINGS_TMP):
       (name, rev_key) = line.rstrip().split(" ", 1)
-      svn_revnum = self._ctx._persistence_manager.get_svn_revnum(rev_key)
+      svn_revnum = Ctx()._persistence_manager.get_svn_revnum(rev_key)
 
       c_rev = cvs_revs_db.get_revision(rev_key)
       self._log(name, svn_revnum, c_rev.svn_path, CLOSING)
@@ -1365,15 +1367,12 @@ class PersistenceManager:
   All information pertinent to each SVNCommit is stored in a series of
   on-disk databases so that SVNCommits can be retrieved on-demand.
 
-  CTX is the usual annoying semi-global ctx object.
-  
   MODE is one of the constants DB_OPEN_NEW or DB_OPEN_READ.
   In 'new' mode, PersistenceManager will initialize a new set of on-disk
   databases and be fully-featured.
   In 'read' mode, PersistenceManager will open existing on-disk databases
   and the set_* methods will be unavailable."""
-  def __init__(self, ctx, mode):
-    self._ctx = ctx
+  def __init__(self, mode):
     self.mode = mode
     if mode not in (DB_OPEN_NEW, DB_OPEN_READ):
       raise RuntimeError, "Invalid 'mode' argument to PersistenceManager"
@@ -1384,10 +1383,10 @@ class PersistenceManager:
     self.svn_commit_names_dates = Database(SVN_COMMIT_NAMES_DATES, mode)
     Cleanup().register(SVN_COMMIT_NAMES_DATES, pass8)
     self.svn_commit_metadata = Database(METADATA_DB, DB_OPEN_READ)
-    self.cvs_revisions = CVSRevisionDatabase(DB_OPEN_READ, ctx)
+    self.cvs_revisions = CVSRevisionDatabase(DB_OPEN_READ)
     ###PERF kff Elsewhere there are comments about sucking the tags db
     ### into memory.  That seems like a good idea.
-    if not ctx.trunk_only:
+    if not Ctx().trunk_only:
       self.tags_db = TagsDatabase(DB_OPEN_READ)
       self.motivating_revnums = Database(MOTIVATING_REVNUMS, mode)
       Cleanup().register(MOTIVATING_REVNUMS, pass8)
@@ -1414,7 +1413,7 @@ class PersistenceManager:
 
     This method can throw SVNCommitInternalInconsistencyError.
     """
-    svn_commit = SVNCommit(self._ctx, "Retrieved from disk", svn_revnum)
+    svn_commit = SVNCommit("Retrieved from disk", svn_revnum)
     c_rev_keys = self.svn2cvs_db.get(str(svn_revnum), None)
     if c_rev_keys == None:
       return None
@@ -1432,7 +1431,7 @@ class PersistenceManager:
         svn_commit.set_log_msg(log_msg)
 
     # If we're doing a trunk-only conversion, we don't need to do any more work.
-    if self._ctx.trunk_only:
+    if Ctx().trunk_only:
       return svn_commit
 
     name, date = self._get_name_and_date(svn_revnum)
@@ -1495,9 +1494,7 @@ class CVSCommit:
   generate a Subversion Commit (or Commits) for the set of CVS
   Revisions in the grouping."""
 
-  def __init__(self, ctx, digest, author, log):
-    self._ctx = ctx
-
+  def __init__(self, digest, author, log):
     self.digest = digest
     self.author = author
     self.log = log
@@ -1658,8 +1655,8 @@ class CVSCommit:
       if c_rev.branch_name \
           and c_rev.branch_name not in accounted_for_sym_names \
           and c_rev.branch_name not in self.done_symbols \
-          and fill_needed(c_rev, self._ctx._persistence_manager):
-        svn_commit = SVNCommit(self._ctx, "pre-commit symbolic name '%s'"
+          and fill_needed(c_rev, Ctx()._persistence_manager):
+        svn_commit = SVNCommit("pre-commit symbolic name '%s'"
                                % c_rev.branch_name)
         svn_commit.set_symbolic_name(c_rev.branch_name)
         self.secondary_commits.append(svn_commit)
@@ -1674,7 +1671,7 @@ class CVSCommit:
     # state 'dead'), the conversion will still generate a Subversion
     # revision containing the log message for the second dead
     # revision, because we don't want to lose that information.
-    svn_commit = SVNCommit(self._ctx, "commit")
+    svn_commit = SVNCommit("commit")
     self.motivating_commit = svn_commit
 
     for c_rev in self.changes:
@@ -1709,7 +1706,7 @@ class CVSCommit:
                              % (c_rev.filename(),
                                 c_rev.branches[0]))
         author, log_msg = \
-            self._ctx._persistence_manager.svn_commit_metadata[c_rev.digest]
+            Ctx()._persistence_manager.svn_commit_metadata[c_rev.digest]
         if log_msg == cvs_generated_msg:
           continue
       
@@ -1728,9 +1725,9 @@ class CVSCommit:
       # SVNCommit revision counter.
       SVNCommit.revnum = SVNCommit.revnum - 1
 
-    if not self._ctx.trunk_only:    
+    if not Ctx().trunk_only:    
       for c_rev in self.revisions():
-        self._ctx._symbolings_logger.log_revision(c_rev, svn_commit.revnum)
+        Ctx()._symbolings_logger.log_revision(c_rev, svn_commit.revnum)
 
   def _post_commit(self):
     """Generates any SVNCommits that we can perform now that _commit
@@ -1745,15 +1742,15 @@ class CVSCommit:
     # Only generate a commit if we have default branch revs
     if len(self.default_branch_cvs_revisions):
       # Generate an SVNCommit for all of our default branch c_revs.
-      svn_commit = SVNCommit(self._ctx, "post-commit default branch(es)")
+      svn_commit = SVNCommit("post-commit default branch(es)")
       svn_commit.set_motivating_revnum(self.motivating_commit.revnum)
       for c_rev in self.default_branch_cvs_revisions:
         svn_commit.add_revision(c_rev)
-        self._ctx._symbolings_logger.log_default_branch_closing(
-          c_rev, svn_commit.revnum)
+        Ctx()._symbolings_logger.log_default_branch_closing(c_rev,
+                                                            svn_commit.revnum)
       self.secondary_commits.append(svn_commit)
     
-  def process_revisions(self, ctx, done_symbols):
+  def process_revisions(self, done_symbols):
     """Process all the CVSRevisions that this instance has, creating
     one or more SVNCommits in the process.  Generate fill SVNCommits
     only for symbols not in DONE_SYMBOLS (avoids unnecessary
@@ -1779,7 +1776,7 @@ class CVSCommit:
       Log().write(LOG_WARN, '%s: grouping spans more than %d seconds'
                   % (warning_prefix, COMMIT_THRESHOLD))
 
-    if ctx.trunk_only: # Only do the primary commit if we're trunk-only
+    if Ctx().trunk_only: # Only do the primary commit if we're trunk-only
       self._commit()
       return self.motivating_commit
 
@@ -1815,8 +1812,8 @@ class SVNCommit:
     SVNCommit Databases."""
     pass
 
-  def __init__(self, ctx, description="", revnum=None, cvs_revs=None):
-    """Instantiate an SVNCommit with CTX.  DESCRIPTION is for debugging only.
+  def __init__(self, description="", revnum=None, cvs_revs=None):
+    """Instantiate an SVNCommit.  DESCRIPTION is for debugging only.
     If REVNUM, the SVNCommit will correspond to that revision number;
     and if CVS_REVS, then they must be the exact set of CVSRevisions for
     REVNUM.
@@ -1824,7 +1821,6 @@ class SVNCommit:
     It is an error to pass CVS_REVS without REVNUM, but you may pass
     REVNUM without CVS_REVS, and then add a revision at a time by
     invoking add_revision()."""
-    self._ctx = ctx
     self._description = description
 
     # Revprop metadata for this commit.
@@ -1836,7 +1832,7 @@ class SVNCommit:
     # in UTF8, but callers aren't required to set them in UTF8.
     # Therefore, accessor methods are used to set them, and
     # self.get_revprops() is used to to get them, in dictionary form.
-    self._author = self._ctx.username
+    self._author = Ctx().username
     self._log_msg = "This log message means an SVNCommit was used too soon."
     self._max_date = 0  # Latest date seen so far.
 
@@ -1904,9 +1900,9 @@ class SVNCommit:
       ### --encoding is.
       utf8_author = None
       if self._author is not None:
-        unicode_author = unicode(self._author, self._ctx.encoding, 'replace')
+        unicode_author = unicode(self._author, Ctx().encoding, 'replace')
         utf8_author = unicode_author.encode('utf8')
-      unicode_log = unicode(self.get_log_msg(), self._ctx.encoding, 'replace')
+      unicode_log = unicode(self.get_log_msg(), Ctx().encoding, 'replace')
       utf8_log = unicode_log.encode('utf8')
       return { 'svn:author' : utf8_author,
                'svn:log'    : utf8_log,
@@ -1941,18 +1937,18 @@ class SVNCommit:
   def flush(self):
     Log().write(LOG_NORMAL, "Creating Subversion commit %d (%s)" 
                 % (self.revnum, self._description))
-    self._ctx._persistence_manager.set_cvs_revs(self.revnum, self.cvs_revs)
+    Ctx()._persistence_manager.set_cvs_revs(self.revnum, self.cvs_revs)
 
     if self.motivating_revnum is not None:
-      self._ctx._persistence_manager.set_motivating_revnum(self.revnum,
-                                                self.motivating_revnum)
+      Ctx()._persistence_manager.set_motivating_revnum(self.revnum,
+                                                       self.motivating_revnum)
 
     # If we're not a primary commit, then store our date and/or our
     # symbolic_name
     if not self._is_primary_commit():
-      self._ctx._persistence_manager.set_name_and_date(self.revnum,
-                                                self.symbolic_name,
-                                                self._max_date)
+      Ctx()._persistence_manager.set_name_and_date(self.revnum,
+                                                   self.symbolic_name,
+                                                   self._max_date)
 
   def __str__(self):
     """ Print a human-readable description of this SVNCommit.  This
@@ -2008,10 +2004,9 @@ class SVNCommit:
 class CVSRevisionAggregator:
   """This class groups CVSRevisions into CVSCommits that represent
   at least one SVNCommit."""
-  def __init__(self, ctx):
-    self._ctx = ctx
+  def __init__(self):
     self.metadata_db = Database(METADATA_DB, DB_OPEN_READ)
-    if not ctx.trunk_only:
+    if not Ctx().trunk_only:
       self.last_revs_db = Database(SYMBOL_LAST_CVS_REVS_DB, DB_OPEN_READ)
     self.cvs_commits = {}
     self.pending_symbols = {}
@@ -2027,9 +2022,9 @@ class CVSRevisionAggregator:
     # created in self.attempt_to_commit_symbols().
     self.latest_primary_svn_commit = None
 
-    self._ctx._symbolings_logger = SymbolingsLogger(ctx)
-    self._ctx._persistence_manager = PersistenceManager(ctx, DB_OPEN_NEW)
-    self._ctx._default_branches_db = Database(DEFAULT_BRANCHES_DB, DB_OPEN_READ)
+    Ctx()._symbolings_logger = SymbolingsLogger()
+    Ctx()._persistence_manager = PersistenceManager(DB_OPEN_NEW)
+    Ctx()._default_branches_db = Database(DEFAULT_BRANCHES_DB, DB_OPEN_READ)
 
 
   def process_revision(self, c_rev):
@@ -2063,9 +2058,8 @@ class CVSRevisionAggregator:
       cvs_commit = self.cvs_commits[c_rev.digest]
     else:
       author, log = self.metadata_db[c_rev.digest]
-      self.cvs_commits[c_rev.digest] = CVSCommit(self._ctx,
-                                               c_rev.digest,
-                                               author, log)
+      self.cvs_commits[c_rev.digest] = CVSCommit(c_rev.digest,
+                                                 author, log)
       cvs_commit = self.cvs_commits[c_rev.digest]
     cvs_commit.add_revision(c_rev)
 
@@ -2082,7 +2076,7 @@ class CVSRevisionAggregator:
 
     for cvs_commit in ready_queue[:]:
       self.latest_primary_svn_commit \
-          = cvs_commit.process_revisions(self._ctx, self.done_symbols)
+          = cvs_commit.process_revisions(self.done_symbols)
       ready_queue.remove(cvs_commit)
       self.attempt_to_commit_symbols(ready_queue, c_rev) 
 
@@ -2097,13 +2091,13 @@ class CVSRevisionAggregator:
     ready_queue.sort()
     for cvs_commit_tuple in ready_queue[:]:
       self.latest_primary_svn_commit = \
-        cvs_commit_tuple[0].process_revisions(self._ctx, self.done_symbols)
+        cvs_commit_tuple[0].process_revisions(self.done_symbols)
       ready_queue.remove(cvs_commit_tuple)
       del self.cvs_commits[cvs_commit_tuple[1]]
       self.attempt_to_commit_symbols([]) 
   
-    if not self._ctx.trunk_only:
-      self._ctx._symbolings_logger.close()
+    if not Ctx().trunk_only:
+      Ctx()._symbolings_logger.close()
     
   def attempt_to_commit_symbols(self, queued_commits, c_rev=None):
     """
@@ -2118,7 +2112,7 @@ class CVSRevisionAggregator:
     # names that this c_rev is the last *source* CVSRevision for and
     # add them to those left over from previous passes through the
     # aggregator.
-    if c_rev and not self._ctx.trunk_only:
+    if c_rev and not Ctx().trunk_only:
       for sym in self.last_revs_db.get(c_rev.unique_key(), []):
         self.pending_symbols[sym] = None
 
@@ -2140,7 +2134,7 @@ class CVSRevisionAggregator:
     for sym in sorted_pending_symbols_keys:
       if open_symbols.has_key(sym): # sym is still open--don't close it.
         continue
-      svn_commit = SVNCommit(self._ctx, "closing tag/branch '%s'" % sym)
+      svn_commit = SVNCommit("closing tag/branch '%s'" % sym)
       svn_commit.set_symbolic_name(sym)
       svn_commit.set_date(self.latest_primary_svn_commit.get_date())
       svn_commit.flush()
@@ -2153,10 +2147,9 @@ class SymbolingsReader:
   and the SYMBOL_OFFSETS_DB.  Does the heavy lifting of finding and
   returning the correct opening and closing Subversion revision
   numbers for a given symbolic name."""
-  def __init__(self, ctx):
+  def __init__(self):
     """Opens the SYMBOL_OPENINGS_CLOSINGS_SORTED for reading, and
     reads the offsets database into memory."""
-    self._ctx = ctx
     self.symbolings = open(SYMBOL_OPENINGS_CLOSINGS_SORTED, 'r')
     # The offsets_db is really small, and we need to read and write
     # from it a fair bit, so suck it into memory
@@ -2180,12 +2173,12 @@ class SymbolingsReader:
     # It's possible to have a branch start with a file that was added
     # on a branch
     if not self.offsets.has_key(symbolic_name):
-      return SymbolicNameFillingGuide(self._ctx, symbolic_name)
+      return SymbolicNameFillingGuide(symbolic_name)
     # set our read offset for self.symbolings to the offset for
     # symbolic_name
     self.symbolings.seek(self.offsets[symbolic_name])
 
-    symbol_fill = SymbolicNameFillingGuide(self._ctx, symbolic_name)
+    symbol_fill = SymbolicNameFillingGuide(symbolic_name)
     while (1):
       fpos = self.symbolings.tell()
       line = self.symbolings.readline().rstrip()
@@ -2226,13 +2219,12 @@ class SymbolicNameFillingGuide:
   The caller can then descend to sub-nodes to see if their "best
   revnum" differs from their parents' and if it does, take appropriate
   actions to "patch up" the subtrees."""
-  def __init__(self, ctx, symbolic_name):
+  def __init__(self, symbolic_name):
     """Initializes a SymbolicNameFillingGuide for SYMBOLIC_NAME and
     prepares it for receiving openings and closings.
 
     Returns a fully functional and armed SymbolicNameFillingGuide
     object."""
-    self._ctx = ctx
     self.name = symbolic_name
 
     self.opening_key = "/o"
@@ -2530,9 +2522,8 @@ class SVNRepositoryMirror:
     during a fill where the branch in question already exists."""
     pass
 
-  def __init__(self, ctx):
+  def __init__(self):
     """Set up the SVNRepositoryMirror and prepare it for SVNCommits."""
-    self._ctx = ctx
     self.delegates = [ ]
 
     # This corresponds to the 'revisions' table in a Subversion fs.
@@ -2551,10 +2542,10 @@ class SVNRepositoryMirror:
     self.new_root_key = None
     self.new_nodes = { }
 
-    if not ctx.trunk_only:
+    if not Ctx().trunk_only:
       ###PERF IMPT: Suck this into memory.
       self.tags_db = TagsDatabase(DB_OPEN_READ)
-      self.symbolings_reader = SymbolingsReader(self._ctx)
+      self.symbolings_reader = SymbolingsReader()
 
   def _initialize_repository(self, date):
     """Initialize the repository by creating the directories for
@@ -2562,15 +2553,15 @@ class SVNRepositoryMirror:
     after all delegates are added to the repository mirror."""
     # Make a 'fake' SVNCommit so we can take advantage of the revprops
     # magic therein
-    svn_commit = SVNCommit(self._ctx,"Initialization", 1)
+    svn_commit = SVNCommit("Initialization", 1)
     svn_commit.set_date(date)
     svn_commit.set_log_msg("New repository initialized by cvs2svn.")
 
     self._start_commit(svn_commit)
-    self._mkdir(self._ctx.trunk_base)
-    if not self._ctx.trunk_only:
-      self._mkdir(self._ctx.branches_base)
-      self._mkdir(self._ctx.tags_base)
+    self._mkdir(Ctx().trunk_base)
+    if not Ctx().trunk_only:
+      self._mkdir(Ctx().branches_base)
+      self._mkdir(Ctx().tags_base)
 
   def _start_commit(self, svn_commit):
     """Start a new commit."""
@@ -2784,17 +2775,17 @@ class SVNRepositoryMirror:
     # 'branches'.
     sources = []
     for entry, key in symbol_fill.node_tree[symbol_fill.root_key].items():
-      if entry == self._ctx.trunk_base:
+      if entry == Ctx().trunk_base:
         sources.append(FillSource(entry, key))
-      elif entry == self._ctx.branches_base:
+      elif entry == Ctx().branches_base:
         for entry2, key2 in symbol_fill.node_tree[key].items():
           sources.append(FillSource(entry + '/' + entry2, key2))
       else:
         raise # Should never happen
     if self.tags_db.has_key(svn_commit.symbolic_name):
-      dest_prefix = _path_join(self._ctx.tags_base, svn_commit.symbolic_name)
+      dest_prefix = _path_join(Ctx().tags_base, svn_commit.symbolic_name)
     else:
-      dest_prefix = _path_join(self._ctx.branches_base,
+      dest_prefix = _path_join(Ctx().branches_base,
                                svn_commit.symbolic_name)
 
     if sources:
@@ -2803,7 +2794,7 @@ class SVNRepositoryMirror:
     else:
       # We can only get here for a branch whose first commit is an add
       # (as opposed to a copy).
-      dest_path = self._ctx.branches_base + '/' + symbol_fill.name
+      dest_path = Ctx().branches_base + '/' + symbol_fill.name
       if not self._path_exists(dest_path):
         # If our symbol_fill was empty, that means that our first
         # commit on the branch was to a file added on the branch, and
@@ -2813,7 +2804,7 @@ class SVNRepositoryMirror:
         #
         # ...we create the branch by copying trunk from the our
         # current revision number minus 1
-        source_path = self._ctx.trunk_base
+        source_path = Ctx().trunk_base
         entries = self._copy_path(source_path, dest_path,
                                   svn_commit.revnum - 1)[1]
         # Now since we've just copied trunk to a branch that's
@@ -2986,7 +2977,7 @@ class SVNRepositoryMirror:
             self._change_path(cvs_rev)
 
         if cvs_rev.op == OP_DELETE:
-          self._delete_path(cvs_rev.svn_path, self._ctx.prune)
+          self._delete_path(cvs_rev.svn_path, Ctx().prune)
 
   def cleanup(self):
     """Callback for the Cleanup.register in self.__init__."""
@@ -3070,26 +3061,26 @@ class SVNRepositoryMirrorDelegate:
 class DumpfileDelegate(SVNRepositoryMirrorDelegate):
   """Create a Subversion dumpfile."""
 
-  def __init__(self, ctx):
+  def __init__(self):
     """Return a new DumpfileDelegate instance, attached to a dumpfile
-    named according to CTX.dumpfile, using CTX.encoding.
+    named according to Ctx().dumpfile, using Ctx().encoding.
 
-    If CTX.cvs_revnums is true, then set the 'cvs2svn:cvs-revnum'
+    If Ctx().cvs_revnums is true, then set the 'cvs2svn:cvs-revnum'
     property on files, when they are changed due to a corresponding
     CVS revision.
 
-    If CTX.mime_mapper is true, then it is a MimeMapper instance, used
+    If Ctx().mime_mapper is true, then it is a MimeMapper instance, used
     to determine whether or not to set the 'svn:mime-type' property on
     files.
 
-    If CTX.set_eol_style is true, then set 'svn:eol-style' to 'native'
+    If Ctx().set_eol_style is true, then set 'svn:eol-style' to 'native'
     for files not marked with the CVS 'kb' flag.  (But see issue #39
     for how this might change.)""" 
-    self.dumpfile_path = ctx.dumpfile
-    self.set_cvs_revnum_properties = ctx.cvs_revnums
-    self.set_eol_style = ctx.set_eol_style
-    self.mime_mapper = ctx.mime_mapper
-    self.path_encoding = ctx.encoding
+    self.dumpfile_path = Ctx().dumpfile
+    self.set_cvs_revnum_properties = Ctx().cvs_revnums
+    self.set_eol_style = Ctx().set_eol_style
+    self.mime_mapper = Ctx().mime_mapper
+    self.path_encoding = Ctx().encoding
     
     self.dumpfile = open(self.dumpfile_path, 'wb')
     self._write_dumpfile_header(self.dumpfile)
@@ -3345,15 +3336,15 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
 class RepositoryDelegate(DumpfileDelegate):
   """Creates a new Subversion Repository.  DumpfileDelegate does all
   of the heavy lifting."""
-  def __init__(self, ctx):
-    self.svnadmin = ctx.svnadmin
-    self.target = ctx.target
-    if not ctx.existing_svnrepos:
+  def __init__(self):
+    self.svnadmin = Ctx().svnadmin
+    self.target = Ctx().target
+    if not Ctx().existing_svnrepos:
       Log().write(LOG_NORMAL,"Creating new repository '%s'" % (self.target))
-      run_command('%s create %s %s' % (self.svnadmin, ctx.bdb_txn_nosync
+      run_command('%s create %s %s' % (self.svnadmin, Ctx().bdb_txn_nosync
                                        and "--bdb-txn-nosync"
                                        or "", self.target))
-    DumpfileDelegate.__init__(self, ctx)
+    DumpfileDelegate.__init__(self)
 
     # This is 1 if a commit is in progress, otherwise None.
     self._commit_in_progress = None
@@ -3454,9 +3445,9 @@ class StdoutDelegate(SVNRepositoryMirrorDelegate):
 # This should be a local to pass1,
 # but Python 2.0 does not support nested scopes.
 OS_SEP_PLUS_ATTIC = os.sep + 'Attic'
-def pass1(ctx):
+def pass1():
   Log().write(LOG_QUIET, "Examining all CVS ',v' files...")
-  cd = CollectData(ctx)
+  cd = CollectData()
 
   def visit_file(baton, dirname, files):
     cd = baton
@@ -3482,7 +3473,7 @@ def pass1(ctx):
         Log().write(LOG_WARN, "Exception occurred while parsing %s" % pathname)
         raise
 
-  os.path.walk(ctx.cvsroot, visit_file, cd)
+  os.path.walk(Ctx().cvsroot, visit_file, cd)
   Log().write(LOG_VERBOSE, 'Processed', cd.num_files, 'files')
 
   cd.write_symbol_db()
@@ -3501,14 +3492,14 @@ def pass1(ctx):
 
   Log().write(LOG_QUIET, "Done")
  
-def pass2(ctx):
+def pass2():
   "Pass 2: clean up the revision information."
 
   symbol_db = SymbolDatabase()
   symbol_db.read()
 
   # Convert the list of regexps to a list of strings
-  excludes = symbol_db.find_excluded_symbols(ctx.excludes)
+  excludes = symbol_db.find_excluded_symbols(Ctx().excludes)
 
   error_detected = 0
 
@@ -3526,7 +3517,7 @@ def pass2(ctx):
 
   Log().write(LOG_QUIET, "Checking for forced tags with commits...")
   invalid_forced_tags = [ ]
-  for forced_tag in ctx.forced_tags:
+  for forced_tag in Ctx().forced_tags:
     if excludes.has_key(forced_tag):
       continue
     if symbol_db.branch_has_commit(forced_tag):
@@ -3543,7 +3534,7 @@ def pass2(ctx):
   mismatches = symbol_db.find_mismatches(excludes)
   def is_not_forced(mismatch):
     name = mismatch[0]
-    return not (name in ctx.forced_tags or name in ctx.forced_branches)
+    return not (name in Ctx().forced_tags or name in Ctx().forced_branches)
   mismatches = filter(is_not_forced, mismatches)
   if mismatches:
     sys.stderr.write(error_prefix + ": The following symbols are tags "
@@ -3563,9 +3554,9 @@ def pass2(ctx):
   # Create the tags database
   tags_db = TagsDatabase(DB_OPEN_NEW)
   for tag in symbol_db.tags.keys():
-    if tag not in ctx.forced_branches:
+    if tag not in Ctx().forced_branches:
       tags_db[tag] = None
-  for tag in ctx.forced_tags:
+  for tag in Ctx().forced_tags:
     tags_db[tag] = None
 
   Log().write(LOG_QUIET, "Re-synchronizing CVS revision timestamps...")
@@ -3622,7 +3613,7 @@ def pass2(ctx):
 
   # process the revisions file, looking for items to clean up
   for line in fileinput.FileInput(DATAFILE + REVS_SUFFIX):
-    c_rev = CVSRevision(ctx, line[:-1])
+    c_rev = CVSRevision(Ctx(), line[:-1])
 
     # Skip this entire revision if it's on an excluded branch
     if excludes.has_key(c_rev.branch_name):
@@ -3635,13 +3626,13 @@ def pass2(ctx):
     c_rev.tags = filter(not_excluded, c_rev.tags)
 
     # Convert all branches that are forced to be tags
-    for forced_tag in ctx.forced_tags:
+    for forced_tag in Ctx().forced_tags:
       if forced_tag in c_rev.branches:
         c_rev.branches.remove(forced_tag)
         c_rev.tags.append(forced_tag)
 
     # Convert all tags that are forced to be branches
-    for forced_branch in ctx.forced_branches:
+    for forced_branch in Ctx().forced_branches:
       if forced_branch in c_rev.tags:
         c_rev.tags.remove(forced_branch)
         c_rev.branches.append(forced_branch)
@@ -3656,7 +3647,7 @@ def pass2(ctx):
       if record[0] <= c_rev.timestamp <= record[1]:
         # bingo! remap the time on this (record[2] is the new time).
         msg = "RESYNC: '%s' (%s): old time='%s' delta=%ds" \
-              % (relative_name(ctx.cvsroot, c_rev.fname),
+              % (relative_name(Ctx().cvsroot, c_rev.fname),
                  c_rev.rev, time.ctime(c_rev.timestamp),
                  record[2] - c_rev.timestamp)
         Log().write(LOG_VERBOSE, msg)
@@ -3676,14 +3667,14 @@ def pass2(ctx):
       output.write(line)
   Log().write(LOG_QUIET, "Done")
 
-def pass3(ctx):
+def pass3():
   Log().write(LOG_QUIET, "Sorting CVS revisions...")
   sort_file(DATAFILE + CLEAN_REVS_SUFFIX,
             DATAFILE + SORTED_REVS_SUFFIX)
   Cleanup().register(DATAFILE + SORTED_REVS_SUFFIX, pass5)
   Log().write(LOG_QUIET, "Done")
 
-def pass4(ctx):
+def pass4():
   """Iterate through sorted revs, storing them in a database.
   If we're not doing a trunk-only conversion, generate the
   LastSymbolicNameDatabase, which contains the last CVSRevision
@@ -3692,12 +3683,12 @@ def pass4(ctx):
   Log().write(LOG_QUIET,
       "Copying CVS revision data from flat file to database...")
   cvs_revs_db = CVSRevisionDatabase(DB_OPEN_NEW)
-  if not ctx.trunk_only:
+  if not Ctx().trunk_only:
     Log().write(LOG_QUIET,
         "and finding last CVS revisions for all symbolic names...")
     last_sym_name_db = LastSymbolicNameDatabase(DB_OPEN_NEW)
   else:
-    # This is to avoid testing ctx.trunk_only every time around the loop
+    # This is to avoid testing Ctx().trunk_only every time around the loop
     class DummyLSNDB:
       def noop(*args): pass
       log_revision = noop
@@ -3705,14 +3696,14 @@ def pass4(ctx):
     last_sym_name_db = DummyLSNDB()
 
   for line in fileinput.FileInput(DATAFILE + SORTED_REVS_SUFFIX):
-    c_rev = CVSRevision(ctx, line[:-1])
+    c_rev = CVSRevision(Ctx(), line[:-1])
     cvs_revs_db.log_revision(c_rev)
     last_sym_name_db.log_revision(c_rev)
 
   last_sym_name_db.create_database()
   Log().write(LOG_QUIET, "Done")
 
-def pass5(ctx):
+def pass5():
   """
   Generate the SVNCommit <-> CVSRevision mapping
   databases.  CVSCommit._commit also calls SymbolingsLogger to register
@@ -3721,24 +3712,24 @@ def pass5(ctx):
   """
   Log().write(LOG_QUIET, "Mapping CVS revisions to Subversion commits...")
 
-  aggregator = CVSRevisionAggregator(ctx)
+  aggregator = CVSRevisionAggregator()
   for line in fileinput.FileInput(DATAFILE + SORTED_REVS_SUFFIX):
-    c_rev = CVSRevision(ctx, line[:-1])
-    if not (ctx.trunk_only and c_rev.branch_name is not None):
+    c_rev = CVSRevision(Ctx(), line[:-1])
+    if not (Ctx().trunk_only and c_rev.branch_name is not None):
       aggregator.process_revision(c_rev)
   aggregator.flush()
 
   Log().write(LOG_QUIET, "Done")
 
-def pass6(ctx):
+def pass6():
   Log().write(LOG_QUIET, "Sorting symbolic name source revisions...")
 
-  if not ctx.trunk_only:
+  if not Ctx().trunk_only:
     sort_file(SYMBOL_OPENINGS_CLOSINGS, SYMBOL_OPENINGS_CLOSINGS_SORTED)
     Cleanup().register(SYMBOL_OPENINGS_CLOSINGS_SORTED, pass8)
   Log().write(LOG_QUIET, "Done")
 
-def pass7(ctx):
+def pass7():
   Log().write(LOG_QUIET, "Determining offsets for all symbolic names...")
 
   def generate_offsets_for_symbolings():
@@ -3768,22 +3759,22 @@ def pass7(ctx):
         old_sym = sym
         offsets_db[sym] = fpos
 
-  if not ctx.trunk_only:
+  if not Ctx().trunk_only:
     generate_offsets_for_symbolings()
   Log().write(LOG_QUIET, "Done.")
 
-def pass8(ctx):
+def pass8():
   svncounter = 2 # Repository initialization is 1.
-  repos = SVNRepositoryMirror(ctx)
-  persistence_manager = PersistenceManager(ctx, DB_OPEN_READ)
+  repos = SVNRepositoryMirror()
+  persistence_manager = PersistenceManager(DB_OPEN_READ)
 
-  if (ctx.target):
-    if not ctx.dry_run:
-      repos.add_delegate(RepositoryDelegate(ctx))
+  if (Ctx().target):
+    if not Ctx().dry_run:
+      repos.add_delegate(RepositoryDelegate())
     Log().write(LOG_QUIET, "Starting Subversion Repository.")
   else:
-    if not ctx.dry_run:
-      repos.add_delegate(DumpfileDelegate(ctx))
+    if not Ctx().dry_run:
+      repos.add_delegate(DumpfileDelegate())
     Log().write(LOG_QUIET, "Starting Subversion Dumpfile.")
 
   repos.add_delegate(StdoutDelegate(persistence_manager.total_revs() + 1))
@@ -3809,9 +3800,41 @@ _passes = [
   ]
 
 
-class _ctx:
-  pass
-
+class Ctx:
+  """Session state for this run of cvs2svn.py.  For example, run-time
+  options are stored here.  This class is a Borg."""
+  __shared_state = { }
+  def __init__(self):
+    self.__dict__ = self.__shared_state
+    if self.__dict__:
+      return
+    # Else, initialize to defaults.
+    self.cvsroot = None
+    self.target = None
+    self.dumpfile = DUMPFILE
+    self.verbose = 0
+    self.quiet = 0
+    self.prune = 1
+    self.existing_svnrepos = 0
+    self.dump_only = 0
+    self.dry_run = 0
+    self.trunk_only = 0
+    self.trunk_base = "trunk"
+    self.tags_base = "tags"
+    self.branches_base = "branches"
+    self.encoding = "ascii"
+    self.mime_types_file = None
+    self.mime_mapper = None
+    self.set_eol_style = 0
+    self.svnadmin = "svnadmin"
+    self.username = None
+    self.print_help = 0
+    self.skip_cleanup = 0
+    self.cvs_revnums = 0
+    self.bdb_txn_nosync = 0
+    self.forced_branches = []
+    self.forced_tags = []
+    self.excludes = []
 
 class MimeMapper:
   "A class that provides mappings from file names to MIME types."
@@ -3862,11 +3885,12 @@ class MimeMapper:
       sys.stderr.write("%s: no MIME mapping for *.%s\n" % (warning_prefix, ext))
 
 
-def convert(ctx, start_pass, end_pass):
+def convert(start_pass, end_pass):
   "Convert a CVS repository to an SVN repository."
 
-  if not os.path.exists(ctx.cvsroot):
-    sys.stderr.write(error_prefix + ': \'%s\' does not exist.\n' % ctx.cvsroot)
+  if not os.path.exists(Ctx().cvsroot):
+    sys.stderr.write(error_prefix + ': \'%s\' does not exist.\n'
+                     % Ctx().cvsroot)
     sys.exit(1)
 
   cleanup = Cleanup()
@@ -3874,13 +3898,14 @@ def convert(ctx, start_pass, end_pass):
   for i in range(start_pass - 1, end_pass):
     times[i] = time.time()
     Log().write(LOG_QUIET, '----- pass %d -----' % (i + 1))
-    _passes[i](ctx)
-    # Dispose of items in ctx not intended to live past the end of the pass
+    _passes[i]()
+    # Dispose of items in Ctx() not intended to live past the end of the pass
     # (Identified by exactly one leading underscore)
-    for attr in dir(ctx):
-      if len(attr) > 2 and attr[0] == '_' and attr[1] != '_':
-        delattr(ctx, attr)
-    if not ctx.skip_cleanup:
+    for attr in dir(Ctx()):
+      if (len(attr) > 2 and attr[0] == '_' and attr[1] != '_'
+          and not attr[:6] == "_Ctx__"):
+        delattr(Ctx(), attr)
+    if not Ctx().skip_cleanup:
       cleanup.cleanup(_passes[i])
   times.append(time.time())
   Log().write(LOG_QUIET, '------------------')
@@ -3892,7 +3917,7 @@ def convert(ctx, start_pass, end_pass):
               int(times[-1] - times[start_pass-1]), 'seconds')
 
 
-def usage(ctx):
+def usage():
   print 'USAGE: %s [-v] [-s svn-repos-path] [-p pass] cvs-repos-path' \
         % os.path.basename(sys.argv[0])
   print '  --help, -h           print this usage message and exit with success'
@@ -3910,15 +3935,15 @@ def usage(ctx):
   print '  --svnadmin=PATH      path to the svnadmin program'
   print '  --trunk-only         convert only trunk commits, not tags nor branches'
   print '  --trunk=PATH         path for trunk (default: %s)'    \
-        % ctx.trunk_base
+        % Ctx().trunk_base
   print '  --branches=PATH      path for branches (default: %s)' \
-        % ctx.branches_base
+        % Ctx().branches_base
   print '  --tags=PATH          path for tags (default: %s)'     \
-        % ctx.tags_base
+        % Ctx().tags_base
   print '  --no-prune           don\'t prune empty directories'
   print '  --dump-only          just produce a dumpfile, don\'t commit to a repos'
   print '  --encoding=ENC       encoding of log messages in CVS repos (default: %s)' \
-        % ctx.encoding
+        % Ctx().encoding
   print '  --force-branch=NAME  Force NAME to be a branch.'
   print '  --force-tag=NAME     Force NAME to be a tag.'
   print '  --exclude=REGEXP     Exclude branches and tags matching REGEXP.'
@@ -3933,34 +3958,8 @@ def usage(ctx):
 
 
 def main():
-  # prepare the operation context
-  ctx = _ctx()
-  ctx.cvsroot = None
-  ctx.target = None
-  ctx.dumpfile = DUMPFILE
-  ctx.verbose = 0
-  ctx.quiet = 0
-  ctx.prune = 1
-  ctx.existing_svnrepos = 0
-  ctx.dump_only = 0
-  ctx.dry_run = 0
-  ctx.trunk_only = 0
-  ctx.trunk_base = "trunk"
-  ctx.tags_base = "tags"
-  ctx.branches_base = "branches"
-  ctx.encoding = "ascii"
-  ctx.mime_types_file = None
-  ctx.mime_mapper = None
-  ctx.set_eol_style = 0
-  ctx.svnadmin = "svnadmin"
-  ctx.username = None
-  ctx.print_help = 0
-  ctx.skip_cleanup = 0
-  ctx.cvs_revnums = 0
-  ctx.bdb_txn_nosync = 0
-  ctx.forced_branches = []
-  ctx.forced_tags = []
-  ctx.excludes = []
+  # Convenience var, so we don't have to keep instantiating this Borg.
+  ctx = Ctx()
 
   start_pass = 1
   end_pass = len(_passes)
@@ -3978,7 +3977,7 @@ def main():
                                  "bdb-txn-nosync", "version"])
   except getopt.GetoptError, e:
     sys.stderr.write(error_prefix + ': ' + str(e) + '\n\n')
-    usage(ctx)
+    usage()
     sys.exit(1)
 
   for opt, value in opts:
@@ -4061,18 +4060,18 @@ def main():
           'default,\nand passing the option is deprecated.\n')
       
   if ctx.print_help:
-    usage(ctx)
+    usage()
     sys.exit(0)
 
   # Consistency check for options and arguments.
   if len(args) == 0:
-    usage(ctx)
+    usage()
     sys.exit(1)
 
   if len(args) > 1:
     sys.stderr.write(error_prefix +
                      ": must pass only one CVS repository.\n")
-    usage(ctx)
+    usage()
     sys.exit(1)
 
   ctx.cvsroot = args[0]
@@ -4152,7 +4151,7 @@ def main():
       sys.exit(1)
     raise
   try:
-    convert(ctx, start_pass, end_pass)
+    convert(start_pass, end_pass)
   finally:
     try: os.rmdir('cvs2svn.lock')
     except: pass

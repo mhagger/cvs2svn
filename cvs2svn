@@ -3297,12 +3297,15 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
 
     # Calculate the property length (+10 for "PROPS-END\n")
     props_len = len(prop_contents) + 10
-    
-    pipe_cmd = 'co -q -x,v -p%s %s' \
-               % (c_rev.rev, escape_shell_arg(c_rev.rcs_path()))
-    pipe = Popen3(pipe_cmd, True)
-    pipe.tochild.close()
 
+    def _get_co_pipe(c_rev):
+      pipe_cmd = 'co -q -x,v -p%s %s' \
+                 % (c_rev.rev, escape_shell_arg(c_rev.rcs_path()))
+      pipe = Popen3(pipe_cmd, True)
+      pipe.tochild.close()
+      return pipe
+
+    pipe = _get_co_pipe(c_rev)
     if op == OP_ADD:
       action = 'add'
     elif op == OP_CHANGE:
@@ -3311,6 +3314,54 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
       sys.stderr.write("%s: _add_or_change_path() called with bad op ('%s')"
                        % (error_prefix, op))
       sys.exit(1)
+
+    ############################
+    # ###FIXME It would be nice to have this ignore stuff in a separate function
+    # treat .cvsignore as a directory property
+    dir_path, basename = os.path.split(c_rev.svn_path)
+    if basename == ".cvsignore":
+      # Read in props
+      buf = pipe.fromchild.read(PIPE_READ_SIZE)
+      raw_ignore_val = ""
+      while buf:
+        raw_ignore_val = raw_ignore_val + buf
+        buf = pipe.fromchild.read(PIPE_READ_SIZE)
+      pipe.fromchild.close()
+      # Open pipe over again.
+      pipe = _get_co_pipe(c_rev)
+
+      # Tweak props: First, convert any spaces to newlines...
+      raw_ignore_val = '\n'.join(raw_ignore_val.split())
+      raw_ignores = raw_ignore_val.split('\n')
+      ignore_vals = [ ]
+      for ignore in raw_ignores:
+        # Reset the list if we encounter a '!'
+        # See http://cvsbook.red-bean.com/cvsbook.html#cvsignore
+        if ignore == '!':
+          ignore_vals = [ ]
+          continue
+        # Skip empty lines
+        if len(ignore) == 0:
+          continue
+        ignore_vals.append(ignore)
+
+      ignore_contents = '\n'.join(ignore_vals)
+      ignore_contents = ('K 10\nsvn:ignore\nV %d\n%s\n' % \
+                         (len(ignore_contents), ignore_contents))
+      # Calculate the ignore property's length (+10 for "PROPS-END\n")
+      ignore_len = len(ignore_contents) + 10
+
+      # write headers, then props
+      self.dumpfile.write('Node-path: %s\n'
+                          'Node-kind: dir\n'
+                          'Node-action: change\n'
+                          'Prop-content-length: %d\n'
+                          'Content-length: %d\n\n'
+                          '%s'
+                          'PROPS-END\n'
+                          % (self._utf8_path(dir_path), ignore_len,
+                             ignore_len, ignore_contents))
+    ############################
 
     self.dumpfile.write('Node-path: %s\n'
                         'Node-kind: file\n'

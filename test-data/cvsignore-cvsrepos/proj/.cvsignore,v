@@ -1,0 +1,47 @@
+head	1.2;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2004.07.22.16.03.32;	author fitz;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.07.22.16.02.36;	author fitz;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Add a few more ignore lines, plus a blank line.
+@
+text
+@*.idx
+*.aux
+*.dvi
+*.log
+foo
+bar
+baz
+qux
+
+@
+
+
+1.1
+log
+@initial import
+@
+text
+@d5 5
+@
+

@@ -1,0 +1,26 @@
+head	1.1;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2004.07.19.20.57.24;	author jrandom;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Add a file.
+@
+text
+@This is the only revision in this file.
+
+It's made of meat.
+@

@@ -1684,18 +1684,14 @@ class CVSCommit:
     The returned SVNCommit is the commit that motivated any other
     SVNCommits generated in this CVSCommit."""
     self.done_symbols = done_symbols
-    seconds = self.t_max - self.t_min
+    seconds = self.t_max - self.t_min + 1
 
     Log().write(LOG_VERBOSE, '-' * 60)
-
-    seconds = seconds + 1
     Log().write(LOG_VERBOSE, 'CVS Revision grouping:')
     if seconds == 1:
       Log().write(LOG_VERBOSE, '  Start time: %s (duration: 1 second)'
                   % time.ctime(self.t_max))
     else:
-      if seconds == 1: duration_str = 'second'
-      Log().write(LOG_VERBOSE, 'CVS Revision grouping:')
       Log().write(LOG_VERBOSE, '  Start time: %s' % time.ctime(self.t_min))
       Log().write(LOG_VERBOSE, '  End time:   %s (duration: %d seconds)'
                   % (time.ctime(self.t_max), seconds))

@@ -74,6 +74,11 @@ find . -name 'CVS' -exec rm -rf {} \;
 find . -name '.cvsignore' -exec rm -f {} \;
 )
 
+# Patch in version number to cvs2svn
+sed -e "s/^VERSION = .*/VERSION = '%{version}'/" < $RPM_BUILD_ROOT/usr/bin/cvs2svn > $RPM_BUILD_ROOT/usr/bin/cvs2svn.tmp && mv $RPM_BUILD_ROOT/usr/bin/cvs2svn.tmp $RPM_BUILD_ROOT/usr/bin/cvs2svn
+chmod a+x $RPM_BUILD_ROOT/usr/bin/cvs2svn
+
+
 %clean
 rm -rf $RPM_BUILD_ROOT
 

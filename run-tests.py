@@ -1808,6 +1808,15 @@ def revision_reorder_bug():
   # actual revisions, too, but the main thing is to know that the
   # conversion doesn't fail.
 
+def exclude():
+  "test that exclude really excludes everything"
+  repos, wc, logs = ensure_conversion('main', None, None,
+                                      '--exclude=.*')
+  for log in logs.values():
+    for item in log.changed_paths.keys():
+      if item[:10] == '/branches/' or item[:6] == '/tags/':
+        raise svntest.Failure
+
 #----------------------------------------------------------------------
 
 ########################################################################
@@ -1861,6 +1870,7 @@ test_list = [ None,
               requires_cvs,
               questionable_symbols,
               XFail(revision_reorder_bug),
+              exclude,
              ]
 
 if __name__ == '__main__':

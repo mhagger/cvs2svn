@@ -254,7 +254,7 @@ def erase(path):
   """Unconditionally remove PATH and its subtree, if any.  PATH may be
   non-existent, a file or symlink, or a directory."""
   if os.path.isdir(path):
-    shutil.rmtree(path)
+    svntest.main.safe_rmtree(path)
   elif os.path.exists(path):
     os.remove(path)
 
@@ -1019,7 +1019,7 @@ def nonascii_filenames():
   finally:
     if locale_changed:
       locale.setlocale(locale.LC_ALL, current_locale)
-    shutil.rmtree(dstrepos_path)
+    svntest.main.safe_rmtree(dstrepos_path)
     
 
 def vendor_branch_sameness():

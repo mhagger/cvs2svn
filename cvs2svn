@@ -1228,10 +1228,10 @@ class CollectData(cvs2svn_rcsparse.Sink):
     inspection, and record it in the right places."""
     for (pattern, replacement) in Ctx().symbol_transforms:
       newname = re.sub(pattern, replacement, name)
-      Log().write(LOG_WARN, "In '%s':\n"
-                       "   symbol '%s' transformed to '%s'\n"
-                       % (self.fname, name, newname))
-      name = newname
+      if newname != name:
+        Log().write(LOG_WARN, "   symbol '%s' transformed to '%s'"
+                    % (name, newname))
+        name = newname
     if branch_tag.match(revision):
       self.add_cvs_branch(revision, name)
     elif vendor_tag.match(revision):
@@ -4328,9 +4328,11 @@ def usage():
   print '  --dump-only          just produce a dumpfile, don\'t commit to a repos'
   print '  --encoding=ENC       encoding of log messages in CVS repos (default: %s)' \
         % Ctx().encoding
-  print '  --force-branch=NAME  Force NAME to be a branch.'
-  print '  --force-tag=NAME     Force NAME to be a tag.'
-  print '  --exclude=REGEXP     Exclude branches and tags matching REGEXP.'
+  print '  --force-branch=NAME  force NAME to be a branch'
+  print '  --force-tag=NAME     force NAME to be a tag'
+  print '  --exclude=REGEXP     exclude branches and tags matching REGEXP'
+  print '  --symbol-transform=P:S transform symbol names from P to S where P and S'
+  print '                       use Python regexp and reference syntax respectively'
   print '  --username=NAME      username for cvs2svn-synthesized commits'
   print '  --skip-cleanup       prevent the deletion of intermediate files'
   print '  --bdb-txn-nosync     pass --bdb-txn-nosync to "svnadmin create"'

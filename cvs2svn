@@ -4468,7 +4468,7 @@ def main():
       sys.exit(1)
     os.environ['CVSROOT'] = ctx.cvs_repository
 
-  if (not ctx.target) and (not ctx.dump_only):
+  if (not ctx.target) and (not ctx.dump_only) and (not ctx.dry_run):
     sys.stderr.write(error_prefix +
                      ": must pass one of '-s' or '--dump-only'.\n")
     sys.exit(1)
@@ -4508,8 +4508,9 @@ def main():
                      "existing directory.\n" % ctx.target)
     sys.exit(1)
 
+  print "FITZ:", ctx.target
   if not ctx.dump_only and not ctx.existing_svnrepos \
-      and os.path.exists(ctx.target):
+     and (not ctx.dry_run) and os.path.exists(ctx.target):
     sys.stderr.write(error_prefix +
                      ": the svn-repos-path '%s' exists.\nRemove it, or pass "
                      "'--existing-svnrepos'.\n" % ctx.target)

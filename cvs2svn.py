@@ -416,7 +416,7 @@ class CollectData(rcsparse.Sink):
                % (error_prefix, self.fname, name,
                   self.LABEL_TYPES[label_type],
                   self.LABEL_TYPES[self.label_type[name]]))
-        sys.stderr.write(err)
+        sys.stderr.write(err + '\n')
         self.fatal_errors.append(err)
     except KeyError:
       self.label_type[name] = label_type
@@ -660,7 +660,7 @@ def visit_file(arg, dirname, files):
     except (rcsparse.common.RCSParseError, ValueError, RuntimeError):
       err = "%s: '%s' is not a valid ,v file" \
             % (error_prefix, pathname)
-      print err
+      sys.stderr.write(err + '\n')
       cd.fatal_errors.append(err)
     except:
       print "Exception occurred while parsing %s" % pathname

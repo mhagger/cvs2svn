@@ -1402,6 +1402,11 @@ def file_in_attic_too():
   except svntest.Failure:
     pass
 
+def symbolic_name_filling_guide():
+  "reveal a big bug in our SymbolicNameFillingGuide"
+  # This will fail if the bug is present
+  repos, wc, logs = ensure_conversion('symbolic-name-overfill')
+
 #----------------------------------------------------------------------
 
 ########################################################################
@@ -1448,6 +1453,7 @@ test_list = [ None,
               resync_bug,
               branch_from_default_branch,
               file_in_attic_too,
+              XFail(symbolic_name_filling_guide),
              ]
 
 if __name__ == '__main__':

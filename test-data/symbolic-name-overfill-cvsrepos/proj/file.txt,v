@@ -1,0 +1,41 @@
+head	1.1;
+access;
+symbols
+	branch1:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2004.07.23.19.16.28;	author fitz;	state Exp;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2004.07.23.19.17.22;	author fitz;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@initial import
+@
+text
+@This is a file.  That's all there is to it.@
+
+
+1.1.2.1
+log
+@Commit to file on branch.
+@
+text
+@d1 1
+a1 1
+This is a file.  It's now on a branch.@
+

@@ -1,0 +1,42 @@
+head	1.1;
+access;
+symbols
+	branch1:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2004.07.23.19.28.17;	author fitz;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2004.07.23.19.28.17;	author fitz;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@file branched-file.txt was initially added on branch branch1.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@initial import
+@
+text
+@a0 2
+This file added on a branch.
+
+@
+

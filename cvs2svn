@@ -3336,10 +3336,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     self.dumpfile.write("Node-path: %s\n" 
                         "Node-kind: dir\n"
                         "Node-action: add\n"
-                        "Prop-content-length: 10\n"
                         "Content-length: 10\n"
-                        "\n"
-                        "PROPS-END\n"
                         "\n"
                         "\n" % self._utf8_path(path))
 
@@ -3361,8 +3358,37 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     c_rev = s_item.c_rev
     svn_props = s_item.svn_props
     
-    # Calculate the (sorted-by-name) property string and length (+10
-    # for "PROPS-END\n")
+    # The property handling here takes advantage of an undocumented
+    # but IMHO consistent feature of the Subversion dumpfile-loading
+    # code.  When a node's properties aren't mentioned (that is, the
+    # "Prop-content-length:" header is absent, no properties are
+    # listed at all, and there is no "PROPS-END\n" line) then no
+    # change is made to the node's properties.
+    #
+    # This is consistent with the way dumpfiles behave w.r.t. text
+    # content changes, so I'm comfortable relying on it.  If you
+    # commit a change to *just* the properties of some node that
+    # already has text contents from a previous revision, then in the
+    # dumpfile output for the prop change, no "Text-content-length:"
+    # nor "Text-content-md5:" header will be present, and the text of
+    # the file will not be given.  But this does not cause the file's
+    # text to be erased!  It simply remains unchanged.
+    #
+    # This works out great for cvs2svn, due to lucky coincidences:
+    #
+    # For files, the only properties we ever set are set in the first
+    # revision; all other revisions (including on branches) inherit
+    # from that.  After the first revision, we never change file
+    # properties, therefore, there is no need to remember the full set
+    # of properties on a given file once we've set it.
+    #
+    # For directories, the only property we set is "svn:ignore", and
+    # while we may change it after the first revision, we always do so
+    # based on the contents of a ".cvsignore" file -- in other words,
+    # CVS is doing the remembering for us, so we still don't have to
+    # preserve the previous value of the property ourselves.
+    
+    # Calculate the (sorted-by-name) property string and length, if any.
     prop_contents = ''
     prop_names = svn_props.keys()
     prop_names.sort()
@@ -3371,7 +3397,15 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
       prop_contents = prop_contents + \
                       'K %d\n%s\nV %d\n%s\n' \
                       % (len(pname), pname, len(pval), pval)
-    props_len = len(prop_contents) + 10
+    if prop_contents:
+      prop_contents = prop_contents + 'PROPS-END\n'
+      props_len = len(prop_contents)
+    else:
+      props_len = 0
+
+    props_header = ''
+    if props_len:
+      props_header = 'Prop-content-length: %d\n' % props_len
 
     # treat .cvsignore as a directory property
     dir_path, basename = os.path.split(c_rev.svn_path)
@@ -3380,17 +3414,17 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
       ignore_contents = '\n'.join(ignore_vals)
       ignore_contents = ('K 10\nsvn:ignore\nV %d\n%s\n' % \
                          (len(ignore_contents), ignore_contents))
-      # Calculate the ignore property's length (+10 for "PROPS-END\n")
-      ignore_len = len(ignore_contents) + 10
+      ignore_contents = ignore_contents + 'PROPS-END\n'
+      ignore_len = len(ignore_contents)
 
       # write headers, then props
       self.dumpfile.write('Node-path: %s\n'
                           'Node-kind: dir\n'
                           'Node-action: change\n'
                           'Prop-content-length: %d\n'
-                          'Content-length: %d\n\n'
+                          'Content-length: %d\n'
+                          '\n'
                           '%s'
-                          'PROPS-END\n'
                           % (self._utf8_path(dir_path), ignore_len,
                              ignore_len, ignore_contents))
 
@@ -3398,10 +3432,10 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     self.dumpfile.write('Node-path: %s\n'
                         'Node-kind: file\n'
                         'Node-action: %s\n'
-                        'Prop-content-length: %d\n'
+                        '%s'  # no property header if no props
                         'Text-content-length: '
                         % (self._utf8_path(c_rev.svn_path),
-                           action, props_len))
+                           action, props_header))
 
     pos = self.dumpfile.tell()
 
@@ -3410,7 +3444,8 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
                         'Content-length: 0000000000000000\n'
                         '\n')
 
-    self.dumpfile.write(prop_contents + 'PROPS-END\n')
+    if prop_contents:
+      self.dumpfile.write(prop_contents)
 
     # Insert the rev contents, calculating length and checksum as we go.
     checksum = md5.new()

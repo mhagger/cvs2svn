@@ -1692,7 +1692,7 @@ test_list = [ None,
               branch_from_default_branch,
               file_in_attic_too,
               symbolic_name_filling_guide,
-              XFail(eol_mime),
+              eol_mime,
              ]
 
 if __name__ == '__main__':

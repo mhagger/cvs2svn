@@ -2503,14 +2503,17 @@ def pass3(ctx):
   # GNU sort will sort our dates differently (incorrectly!) if our
   # LC_ALL is anything but 'C', so if LC_ALL is set, temporarily set
   # it to 'C'
-  lc_all_tmp = os.getenv('LC_ALL')
-  os.putenv('LC_ALL', 'C')
+  if os.environ.has_key('LC_ALL'):
+    lc_all_tmp = os.environ['LC_ALL']
+  else:
+    lc_all_tmp = None
+  os.environ['LC_ALL'] = 'C'
   run_command('sort %s > %s' % (ctx.log_fname_base + CLEAN_REVS_SUFFIX,
                                 ctx.log_fname_base + SORTED_REVS_SUFFIX))
-  if lc_all_tmp is not None:
-    os.putenv('LC_ALL', lc_all_tmp)
+  if lc_all_tmp is None:
+    del os.environ['LC_ALL']
   else:
-    os.unsetenv('LC_ALL')
+    os.environ['LC_ALL'] = lc_all_tmp
 
 
 def pass4(ctx):

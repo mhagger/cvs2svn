@@ -33,6 +33,7 @@ svn export -q www ${DIST_BASE}/www
 sed -e "s/^VERSION = .*/VERSION = '${VERSION}'/" < cvs2svn > cvs2svn.tmp
 mv cvs2svn.tmp ${DIST_BASE}/cvs2svn
 chmod a+x ${DIST_BASE}/cvs2svn
+cp cvs2svn.1 ${DIST_BASE}
 tar zcf ${DIST_FULL} ${DIST_BASE}
 rm -rf ${DIST_BASE}
 

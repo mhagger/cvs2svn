@@ -4580,25 +4580,26 @@ def main():
           % (opt1name, opt2name))
       sys.exit(1)
 
-  not_both(ctx.target, '-s', ctx.dump_only, '--dump-only')
+  not_both(ctx.target, '-s',
+           ctx.dump_only, '--dump-only')
 
   not_both(ctx.dump_only, '--dump-only',
-    ctx.existing_svnrepos, '--existing-svnrepos')
+           ctx.existing_svnrepos, '--existing-svnrepos')
 
   not_both(ctx.bdb_txn_nosync, '--bdb-txn-nosync',
-    ctx.existing_svnrepos, '--existing-svnrepos')
+           ctx.existing_svnrepos, '--existing-svnrepos')
 
   not_both(ctx.dump_only, '--dump-only',
-    ctx.bdb_txn_nosync, '--bdb-txn-nosync')
+           ctx.bdb_txn_nosync, '--bdb-txn-nosync')
 
   not_both(ctx.fsfs, '--fsfs',
-    ctx.existing_svnrepos, '--existing-svnrepos')
+           ctx.existing_svnrepos, '--existing-svnrepos')
 
   not_both(ctx.fsfs, '--fsfs',
-    ctx.bdb_txn_nosync, '--bdb-txn-nosync')
+           ctx.bdb_txn_nosync, '--bdb-txn-nosync')
 
   not_both(ctx.quiet, '-q',
-    ctx.verbose, '-v')
+           ctx.verbose, '-v')
 
   if ((string.find(ctx.trunk_base, '/') > -1)
       or (string.find(ctx.tags_base, '/') > -1)

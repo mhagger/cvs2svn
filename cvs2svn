@@ -139,7 +139,7 @@ TOTAL_SVN_REVS = 'cvs2svn-total-revs'
 # This file contains a marshalled copy of all the statistics that we
 # gather throughout the various runs of cvs2svn.  The data stored as a
 # marshalled dictionary.
-STATISTICS_FILE = 'cvs2svn-statistics.'
+STATISTICS_FILE = 'cvs2svn-statistics'
 
 # This text file contains records (1 per line) that describe svn
 # filesystem paths that are the opening and closing source revisions
@@ -565,6 +565,8 @@ class StatsKeeper:
       return
     self.filename = temp(STATISTICS_FILE)
     Cleanup().register(self.filename, pass8)
+    # This can get kinda large, so we don't store it in our data dict.
+    self.repos_files = { }
 
     if os.path.exists(self.filename):
       self.unarchive()
@@ -573,7 +575,7 @@ class StatsKeeper:
                     'tags': { },
                     'branches' : { },
                     'repos_size' : 0,
-                    'repos_files' : { },
+                    'repos_file_count' : 0,
                     'svn_rev_count' : None,
                     'first_rev_date' : 1L<<32,
                     'last_rev_date' : 0,
@@ -603,8 +605,8 @@ class StatsKeeper:
 
     self._bump_item('repos_size', c_rev.file_size)
 
-    self.data['repos_files'][c_rev.fname] = None
-
+    self.repos_files[c_rev.fname] = None
+    self.data['repos_file_count'] = len(self.repos_files)
 
   def set_svn_rev_count(self, count):
     self.data['svn_rev_count'] = count
@@ -635,7 +637,7 @@ class StatsKeeper:
             '%s'                                \
             '   First Revision Date: %s\n'      \
             '    Last Revision Date: %s'        \
-            % (len(self.data['repos_files']),
+            % (self.data['repos_file_count'],
                self.data['cvs_revs_count'],
                len(self.data['tags']),
                len(self.data['branches']),

@@ -4329,7 +4329,7 @@ def main():
                      ": the path '%s' is not a CVS repository, nor a path " \
                      "within a CVS repository. A CVS repository contains a " \
                      "a CVSROOT directory within its root directory.\n" \
-                     % ctx.cvs_root)
+                     % ctx.cvsroot)
     sys.exit(1)
   os.environ['CVSROOT'] = ctx.cvs_repository
 

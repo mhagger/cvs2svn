@@ -1,0 +1,18 @@
+This directory provides the 'rcsparse' library that cvs2svn.py depends on.
+
+Although rcsparse ships with ViewCVS, http://viewcvs.sourceforge.net/,
+we don't want to just use the whatever rcsparse we find installed on
+the system -- such as one that's part of a local ViewCVS installation.
+Instead, we want to use the exact version of rcsparse that is tested &
+known to work with this version of cvs2svn.py.
+
+Hence this directory.  It is both a CVS working copy *and* a
+Subversion working copy.  Any time we want to upgrade to a newer
+rcsparse, we just run 'update.sh', which in turn runs 'cvs update'.
+(Don't run 'cvs update' by hand -- always use update.sh, because it
+does a bit more than just run CVS.)  
+
+We control when these upgrades happen, and install this library under
+the name 'cvs2svn_rcsparse', so it won't conflict with any 'rcsparse'
+already on the system; cvs2svn.py is careful to import it as
+'cvs2svn_rcsparse'.

@@ -3,25 +3,41 @@
 # Build a cvs2svn distribution.  For now, we ship cvs2svn-0.NNN.tar.gz,
 # where NNN is the revision number of the working copy.
 
-REV=`svnversion .`
-DISTNAME=cvs2svn-r${REV}
+REV=`svnversion -n .`
+DIST_BASE=cvs2svn-0.${REV}
+DIST_FULL=${DIST_BASE}.tar.gz
 
 if echo ${REV} | grep -q -e '[^0-9]'; then
    echo "Packaging requires a single-revision, pristine working copy."
-   echo "Run 'svn update' to get a working copy without mixed revisions."
+   echo ""
+   echo "Run 'svn update' to get a working copy without mixed revisions,"
+   echo "and make sure there are no local modifications."
    exit 1
 fi
 
-echo -n "Creating distribution directory ${DISTNAME}..."
-rm -rf ${DISTNAME} 2>/dev/null
-echo "done."
+# Clean up anything that might have been left from a previous run.
+rm -rf dist MANIFEST cvs2svn-0.${REV} ${DIST_FULL}
 
-echo -n "Exporting data..."
-svn export . ${DISTNAME} > /dev/null
-echo "done."
+# Build the dist, Python's way.
+./setup.py sdist
+mv dist/${DIST_FULL} .
 
-rm -f ${DISTNAME}.tar.gz
-tar zcf ${DISTNAME}.tar.gz ${DISTNAME}
-rm -rf ${DISTNAME}
+# Unfortunately, building the dist Python's way doesn't seem to give
+# us an obvious method for including the svntest/ and test-data/
+# subdirs.  So, we rewire it! 
+tar zxf ${DIST_FULL}
+rm ${DIST_FULL}
+svn export -q test-data ${DIST_BASE}/test-data
+svn export -q svntest ${DIST_BASE}/svntest
+tar zcf ${DIST_FULL} ${DIST_BASE}
+rm -rf ${DIST_BASE}
 
-ls -l ${DISTNAME}.tar.gz
+# Clean up after this run.
+rm -rf dist MANIFEST
+
+# We're outta here.
+echo ""
+echo "Done:"
+echo ""
+ls -l ${DIST_FULL}
+echo ""

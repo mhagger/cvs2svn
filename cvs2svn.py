@@ -18,7 +18,7 @@
 
 VERSION = 'r' + "$LastChangedRevision$"[22:-2]
 
-import rcsparse
+import cvs2svn_rcsparse
 import os
 import sys
 import sha
@@ -853,7 +853,7 @@ class SymbolDatabase:
         f.write(" ".join(info[2].keys()))
       f.write("\n")
 
-class CollectData(rcsparse.Sink):
+class CollectData(cvs2svn_rcsparse.Sink):
   def __init__(self, ctx):
     self._ctx = ctx
     self.cvsroot = ctx.cvsroot
@@ -3631,8 +3631,8 @@ def pass1(ctx):
         cd.set_fname(pathname, pathname)
       Log().write(LOG_NORMAL, pathname)
       try:
-        rcsparse.parse(open(pathname, 'rb'), cd)
-      except (rcsparse.common.RCSParseError, ValueError, RuntimeError):
+        cvs2svn_rcsparse.parse(open(pathname, 'rb'), cd)
+      except (cvs2svn_rcsparse.common.RCSParseError, ValueError, RuntimeError):
         err = "%s: '%s' is not a valid ,v file" \
               % (error_prefix, pathname)
         sys.stderr.write(err + '\n')

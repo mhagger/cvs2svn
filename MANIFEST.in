@@ -1,0 +1,2 @@
+include *.py dist.sh
+include README BUGS COMMITTERS COPYING HACKING design-notes.txt

@@ -204,6 +204,10 @@ else:
   PIPE_READ_MODE = 'r'
   PIPE_WRITE_MODE = 'w'
 
+# How many bytes to read at a time from a pipe.  128 kiB should be
+# large enough to be efficient without wasting too much memory.
+PIPE_READ_SIZE = 128 * 1024
+
 # Record the default RCS branches, if any, for CVS filepaths.
 #
 # The keys are CVS filepaths, relative to the top of the repository
@@ -3267,12 +3271,12 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     # Insert the rev contents, calculating length and checksum as we go.
     checksum = md5.new()
     length = 0
-    buf = pipe.read()
+    buf = pipe.read(PIPE_READ_SIZE)
     while buf:
       checksum.update(buf)
       length = length + len(buf)
       self.dumpfile.write(buf)
-      buf = pipe.read()
+      buf = pipe.read(PIPE_READ_SIZE)
     if pipe.close() is not None:
       sys.exit('%s: Command failed: "%s"' % (error_prefix, pipe_cmd))
 

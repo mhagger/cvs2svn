@@ -31,6 +31,11 @@ Convert CVS repositories to Subversion repositories.
 
 %if %{make_cvs2svn_check}
 echo "*** Running regression tests on cvs2svn ***"
+
+# RPM build sets LANG=C which doesn't pass the tests so (temporarily) "fix" this.
+LANG=en_US.UTF-8
+export LANG
+
 ./run-tests.py
 %endif
 

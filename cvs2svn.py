@@ -2547,25 +2547,25 @@ def pass4(ctx):
 
     # Each time we read a new line, we scan the commits we've
     # accumulated so far to see if any are ready for processing now.
-    # First, however, we check whether the inbound line has the same id
-    # (i.e. author and log) as a pending commit, but is for a file already
-    # present in that commit. In which case, we are dealing with 2 commits 
-    # with the same author and log, within COMMIT_THRESHOLD seconds.
-    # We close the first commit by munging its id in the commits dictionary
-    # but must *not* commit it yet, because there may be earlier commits
-    # pending, which are waiting for the COMMIT_THRESHOLD to elapse.
-
-    if commits.has_key(id) and commits[id].has_file(fname):
-      unused_id = id+'-'
-      while commits.has_key(unused_id):
-        unused_id = unused_id + '-'
-      commits[unused_id] = commits[id]
-      del commits[id]
-
     process = [ ]
     for scan_id, scan_c in commits.items():
       if scan_c.t_max + COMMIT_THRESHOLD < timestamp:
         process.append((scan_c.t_max, scan_c))
+        del commits[scan_id]
+        continue
+      # If the inbound commit is on the same file as a pending commit,
+      # close the pending commit to further changes. Don't flush it though,
+      # as there may be other pending commits dated before this one.
+      # ### ISSUE: the has_file() check below is not optimal.
+      # It does fix the dataloss bug where revisions would get lost
+      # if checked in too quickly, but it can also break apart the
+      # commits. The correct fix would require tracking the dependencies
+      # between change sets and committing them in proper order.
+      if scan_c.has_file(fname):
+        unused_id = scan_id + '-'
+        while commits.has_key(unused_id):
+          unused_id = unused_id + '-'
+        commits[unused_id] = scan_c
         del commits[scan_id]
 
     # If there are any elements in 'process' at this point, they need

@@ -184,6 +184,9 @@ def parse_log(svn_repos):
       line = line[:-1]
       op_portion = line[3:4]
       path_portion = line[5:]
+      # If we're running on Windows we get backslashes instead of
+      # forward slashes.
+      path_portion = path_portion.replace('\\', '/')
       # # We could parse out history information, but currently we
       # # just leave it in the path portion because that's how some
       # # tests expect it.
@@ -423,6 +426,8 @@ def show_usage():
 
 def attr_exec():
   "detection of the executable flag"
+  if sys.platform == 'win32':
+    raise svntest.Skip
   repos, wc, logs = ensure_conversion('main')
   st = os.stat(os.path.join(wc, 'trunk', 'single-files', 'attr-exec'))
   if not st[0] & stat.S_IXUSR:

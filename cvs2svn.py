@@ -1849,6 +1849,9 @@ class SymbolicNameTracker:
             jit_new_rev[0] = None
           if dumper.copy_path(src_path, rev, copy_dst, expected_entries):
             parent_rev = rev
+          else:
+            # If we didn't copy, then we need to prune
+            dumper.prune_entries(copy_dst, expected_entries)
         else:
           # Even if we kept the already-present revision of this entry
           # instead of copying a new one, we still need to prune out

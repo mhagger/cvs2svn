@@ -2639,7 +2639,6 @@ def main():
   ctx.print_help = 0
   ctx.skip_cleanup = 0
   ctx.cvs_revnums = 0
-  ctx.default_branches_db = Database(DEFAULT_BRANCHES_DB, 'n')
 
   start_pass = 1
 
@@ -2738,6 +2737,8 @@ def main():
                      "id=1409 "
                      "for details.\n" % error_prefix)
     sys.exit(1)
+
+  ctx.default_branches_db = Database(DEFAULT_BRANCHES_DB, 'n')
 
   ctx.cvsroot = args[0]
 

@@ -1412,6 +1412,22 @@ def symbolic_name_filling_guide():
   repos, wc, logs = ensure_conversion('symbolic-name-overfill')
 
 
+# Helper for tests involving file contents and properties.
+def node_for_path(node, path):
+  "In the tree rooted under SVNTree NODE, return the node at PATH."
+  if node.name != '__SVN_ROOT_NODE':
+    raise NodeTreeWalkException
+  path = path.strip('/')
+  components = path.split('/')
+  for component in components:
+    node = svntest.tree.get_child(node, component)
+  return node
+
+# Helper for tests involving properties.
+def props_for_path(node, path):
+  "In the tree rooted under SVNTree NODE, return the prop dict for PATH."
+  return node_for_path(node, path).props
+
 def eol_mime():
   "test eol settings and mime types together"
   ###TODO: It's a bit klugey to construct this path here.  But so far
@@ -1428,21 +1444,7 @@ def eol_mime():
     "Exception class for node tree traversals."
     pass
 
-  def get_node_for_path(node, path):
-    "In the tree rooted under NODE, return the node at PATH."
-    if node.name != '__SVN_ROOT_NODE':
-      raise NodeTreeWalkException
-    path = path.strip('/')
-    components = path.split('/')
-    for component in components:
-      node = svntest.tree.get_child(node, component)
-    return node
-
-  def get_props_for_path(node, path):
-    "In the tree rooted under NODE, return the prop dict for the node at PATH."
-    return get_node_for_path(node, path).props
-
-  def get_the_usual_suspects(wc_root):
+  def the_usual_suspects(wc_root):
     """Return a dictionary mapping files onto their prop dicts.
     The files are the six files of interest under WC_ROOT, but with
     the 'trunk/' prefix removed.  Thus the returned dictionary looks
@@ -1456,12 +1458,12 @@ def eol_mime():
        'foo.dbf'  ==>  { property dictionary for '/trunk/foo.dbf' }
     """
     return {
-      'foo.txt' : get_props_for_path(wc_root, 'trunk/foo.txt'),
-      'foo.xml' : get_props_for_path(wc_root, 'trunk/foo.xml'),
-      'foo.zip' : get_props_for_path(wc_root, 'trunk/foo.zip'),
-      'foo.bin' : get_props_for_path(wc_root, 'trunk/foo.bin'),
-      'foo.csv' : get_props_for_path(wc_root, 'trunk/foo.csv'),
-      'foo.dbf' : get_props_for_path(wc_root, 'trunk/foo.dbf'),
+      'foo.txt' : props_for_path(wc_root, 'trunk/foo.txt'),
+      'foo.xml' : props_for_path(wc_root, 'trunk/foo.xml'),
+      'foo.zip' : props_for_path(wc_root, 'trunk/foo.zip'),
+      'foo.bin' : props_for_path(wc_root, 'trunk/foo.bin'),
+      'foo.csv' : props_for_path(wc_root, 'trunk/foo.csv'),
+      'foo.dbf' : props_for_path(wc_root, 'trunk/foo.dbf'),
       }
 
   # We do four conversions.  Each time, we pass --mime-types=FILE with
@@ -1473,7 +1475,7 @@ def eol_mime():
   repos, wc, logs = ensure_conversion('eol-mime', None, None,
                                       '--mime-types=%s' % mime_path)
   wc_tree = svntest.tree.build_tree_from_wc(wc, 1)
-  allprops = get_the_usual_suspects(wc_tree)
+  allprops = the_usual_suspects(wc_tree)
 
   # foo.txt (no -kb, mime file says nothing)
   if allprops['foo.txt'].get('svn:eol-style') != 'native':
@@ -1516,7 +1518,7 @@ def eol_mime():
                                       '--mime-types=%s' % mime_path,
                                       '--no-default-eol')
   wc_tree = svntest.tree.build_tree_from_wc(wc, 1)
-  allprops = get_the_usual_suspects(wc_tree)
+  allprops = the_usual_suspects(wc_tree)
 
   # foo.txt (no -kb, mime file says nothing)
   if allprops['foo.txt'].get('svn:eol-style') is not None:
@@ -1559,7 +1561,7 @@ def eol_mime():
                                       '--mime-types=%s' % mime_path,
                                       '--eol-from-mime-type')
   wc_tree = svntest.tree.build_tree_from_wc(wc, 1)
-  allprops = get_the_usual_suspects(wc_tree)
+  allprops = the_usual_suspects(wc_tree)
 
   # foo.txt (no -kb, mime file says nothing)
   if allprops['foo.txt'].get('svn:eol-style') != 'native':
@@ -1603,7 +1605,7 @@ def eol_mime():
                                       '--eol-from-mime-type',
                                       '--no-default-eol')
   wc_tree = svntest.tree.build_tree_from_wc(wc, 1)
-  allprops = get_the_usual_suspects(wc_tree)
+  allprops = the_usual_suspects(wc_tree)
 
   # foo.txt (no -kb, mime file says nothing)
   if allprops['foo.txt'].get('svn:eol-style') is not None:

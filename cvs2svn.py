@@ -919,6 +919,8 @@ class CollectData(cvs2svn_rcsparse.Sink):
     # it only once per file, instead of waiting until later where we
     # would have to do the same calculations once per CVS *revision*.
     
+    self.rel_name = relative_name(Ctx().cvsroot, self.fname)[:-2]
+
     # If the paths are not the same, then that means that the
     # canonical_name has had the 'Attic' component stripped out.
     self.file_in_attic = None
@@ -1115,8 +1117,7 @@ class CollectData(cvs2svn_rcsparse.Sink):
           and (default_branch_root.count('.') == revision.count('.'))):
         # This revision is on the default branch, so record that it is
         # the new highest default branch head revision.
-        rel_name = relative_name(self.cvsroot, self.fname)[:-2]
-        self.default_branches_db[rel_name] = revision
+        self.default_branches_db[self.rel_name] = revision
     else:
       # No default branch, so make an educated guess.
       if revision == '1.2':
@@ -1130,8 +1131,7 @@ class CollectData(cvs2svn_rcsparse.Sink):
           # We're looking at a vendor revision, and it wasn't
           # committed after this file lost its default branch, so bump
           # the maximum trunk vendor revision in the permanent record.
-          rel_name = relative_name(self.cvsroot, self.fname)[:-2]
-          self.default_branches_db[rel_name] = revision
+          self.default_branches_db[self.rel_name] = revision
 
     if not trunk_rev.match(revision):
       # Check for unlabeled branches, record them.  We tried to collect
@@ -1188,15 +1188,15 @@ class CollectData(cvs2svn_rcsparse.Sink):
             self.rev_data[prev][0] = t_c - 1	# new timestamp
             self.rev_data[prev][2] = t_p	# old timestamp
             delta = t_c - 1 - t_p
-            rel_name = relative_name(self.cvsroot, self.fname)
             msg =  "RESYNC: '%s' (%s): old time='%s' delta=%ds" \
-                  % (rel_name,
+                  % (self.rel_name,
                      prev, time.ctime(t_p), delta)
             Log().write(LOG_VERBOSE, msg)
             if (delta > COMMIT_THRESHOLD
                 or delta < (COMMIT_THRESHOLD * -1)):
               str = "%s: Significant timestamp change for '%s' (%d seconds)"
-              Log().write(LOG_WARN, str % (warning_prefix, rel_name, delta))
+              Log().write(LOG_WARN, str % (warning_prefix, self.rel_name,
+                                           delta))
             current = prev
             prev = self.prev_rev[current]
             if not prev:
@@ -1228,9 +1228,8 @@ class CollectData(cvs2svn_rcsparse.Sink):
     # default branches db.  The test is that the log message CVS uses
     # for 1.1 in imports is "Initial revision\n" with no period.
     if revision == '1.1' and log != 'Initial revision\n':
-      rel_name = relative_name(self.cvsroot, self.fname)[:-2]
-      if self.default_branches_db.has_key(rel_name):
-        del self.default_branches_db[rel_name]
+      if self.default_branches_db.has_key(self.rel_name):
+        del self.default_branches_db[self.rel_name]
 
     # Get the timestamp of the previous revision
     prev_rev = self.prev_rev.get(revision, None)
@@ -3717,7 +3716,6 @@ def pass2():
       if record[0] <= c_rev.timestamp <= record[1]:
         # bingo! remap the time on this (record[2] is the new time).
 
-        rel_name = relative_name(Ctx().cvsroot, c_rev.fname)
         # adjust the time range. we want the COMMIT_THRESHOLD from the
         # bounds of the earlier/latest commit in this group.
         record[0] = min(record[0], c_rev.timestamp - COMMIT_THRESHOLD/2)
@@ -3730,9 +3728,9 @@ def pass2():
           desc = ("%s: Attempt to set timestamp of revision %s on file %s"
                   + " to time %s, which is before previous the time of"
                   + " revision %s (%s):")
-          Log().write(LOG_WARN, desc % (warning_prefix, c_rev.rev, rel_name,
-                                       record[2], c_rev.prev_rev,
-                                       c_rev.prev_timestamp))
+          Log().write(LOG_WARN, desc % (warning_prefix, c_rev.rev,
+                                        c_rev.cvs_path, record[2],
+                                        c_rev.prev_rev, c_rev.prev_timestamp))
           # If resyncing our rev to c_rev.prev_timestamp + 1 will place
           # the timestamp of c_rev within COMMIT_THRESHOLD of the
           # attempted sync time, then sync back to c_rev.prev_timestapm
@@ -3748,7 +3746,7 @@ def pass2():
                         warning_prefix)
 
         msg = "RESYNC: '%s' (%s): old time='%s' delta=%ds" \
-              % (rel_name, c_rev.rev, time.ctime(c_rev.timestamp),
+              % (c_rev.cvs_path, c_rev.rev, time.ctime(c_rev.timestamp),
                  record[2] - c_rev.timestamp)
         Log().write(LOG_VERBOSE, msg)
 

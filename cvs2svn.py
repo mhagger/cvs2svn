@@ -2396,14 +2396,6 @@ class Commit:
       print '%s: commit spans more than %d seconds' \
             % (warning_prefix, COMMIT_THRESHOLD)
 
-    if ctx.dry_run:
-      for c_rev in self.changes:
-        print "    adding or changing '%s' : '%s'" % (c_rev.rev, c_rev.svn_path())
-      for c_rev in self.deletes:
-        print "    deleting '%s' : '%s'" % (c_rev.rev, c_rev.svn_path())
-      print '    (skipped; dry run enabled)'
-      return
-
     do_copies = [ ]
 
     # State for handling default branches.
@@ -2980,10 +2972,9 @@ def convert(ctx, start_pass=1):
 
 
 def usage(ctx):
-  print 'USAGE: %s [-n] [-v] [-s svn-repos-path] [-p pass] cvs-repos-path' \
+  print 'USAGE: %s [-v] [-s svn-repos-path] [-p pass] cvs-repos-path' \
         % os.path.basename(sys.argv[0])
   print '  --help, -h           print this usage message and exit with success'
-  print '  -n                   dry run; parse CVS repos, but do not construct SVN repos'
   print '  -v                   verbose'
   print '  -s PATH              path for SVN repos'
   print '  -p NUM               start at pass NUM of %d' % len(_passes)
@@ -3023,7 +3014,6 @@ def main():
   ctx.log_fname_base = DATAFILE
   ctx.dumpfile = DUMPFILE
   ctx.verbose = 0
-  ctx.dry_run = 0
   ctx.prune = 1
   ctx.existing_svnrepos = 0
   ctx.dump_only = 0
@@ -3047,7 +3037,7 @@ def main():
   start_pass = 1
 
   try:
-    opts, args = getopt.getopt(sys.argv[1:], 'p:s:vnh',
+    opts, args = getopt.getopt(sys.argv[1:], 'p:s:vh',
                                [ "help", "create", "trunk=",
                                  "username=", "existing-svnrepos",
                                  "branches=", "tags=", "encoding=",
@@ -3074,8 +3064,6 @@ def main():
       ctx.print_help = 1
     elif opt == '-v':
       ctx.verbose = 1
-    elif opt == '-n':
-      ctx.dry_run = 1
     elif opt == '-s':
       ctx.target = value
     elif opt == '--existing-svnrepos':

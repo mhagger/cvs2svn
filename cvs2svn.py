@@ -2985,7 +2985,7 @@ def usage(ctx):
   print '  --help, -h           print this usage message and exit with success'
   print '  -v                   verbose'
   print '  -s PATH              path for SVN repos'
-  print '  -p START[-END]       start at pass START, end at pass END of %d' % len(_passes)
+  print '  -p START[:END]       start at pass START, end at pass END of %d' % len(_passes)
   print '                       If only START is given, run only pass START'
   print '  --existing-svnrepos  load into existing SVN repository'
   print '  --dumpfile=PATH      name of intermediate svn dumpfile'

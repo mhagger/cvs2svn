@@ -1171,6 +1171,11 @@ class CollectData(cvs2svn_rcsparse.Sink):
     # trunk.  This records the date at which 1.2 was committed.
     self.first_non_vendor_revision_date = None
 
+    # A list of all symbols defined for the current file.  Used to
+    # prevent multiple definitions of a symbol, something which can
+    # easily happen when --symbol-transform is used.
+    self.defined_symbols = [ ]
+
   def set_principal_branch(self, branch):
     self.default_branch = branch
 
@@ -1232,6 +1237,12 @@ class CollectData(cvs2svn_rcsparse.Sink):
         Log().write(LOG_WARN, "   symbol '%s' transformed to '%s'"
                     % (name, newname))
         name = newname
+    if name in self.defined_symbols:
+      err = "%s: Multiple definitions of the symbol '%s' in '%s'" \
+                % (error_prefix, name, self.fname)
+      sys.stderr.write(err + "\n")
+      self.fatal_errors.append(err)
+    self.defined_symbols.append(name)
     if branch_tag.match(revision):
       self.add_cvs_branch(revision, name)
     elif vendor_tag.match(revision):

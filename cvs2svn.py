@@ -81,8 +81,10 @@ NODES_DB = 'cvs2svn-nodes.db'
 # practical matter, we compensate by switching on os.name.
 if os.name == 'nt':
   PIPE_READ_MODE = 'rb'
+  PIPE_WRITE_MODE = 'wb'
 else:
   PIPE_READ_MODE = 'r'
+  PIPE_WRITE_MODE = 'w'
 
 # Record the default RCS branches, if any, for CVS filepaths.
 #
@@ -1061,7 +1063,7 @@ class Dumper:
         run_command('%s create %s %s' % (self.svnadmin, ctx.bdb_txn_nosync
           and "--bdb-txn-nosync" or "", self.target))
       self.loader_pipe = os.popen('%s load -q %s' %
-          (self.svnadmin, self.target), 'w')
+          (self.svnadmin, self.target), PIPE_WRITE_MODE)
       self.write_dumpfile_header(self.loader_pipe)
 
     

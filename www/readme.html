@@ -1,26 +1,379 @@
 <h1>cvs2svn Documentation</h1>
 
-*** This document is an in-progress rough DRAFT outline ***
+<h2>Index</h2>
 
-General Outline
+<ul>
 
-- So you want to convert your existing CVS repository
+  <li><a href="#convert">Deciding how much to convert</a></li>
 
-- Are you sure you need all your history in Subversion?  There are
-  four basic routes to choose:
-   
-  - Top-skim (Doesn't require cvs2svn!)
+  <li><a href="#prep">Prepping your repository</a></li>
 
-  - Trunk only
+  <li><a href="#reqs">Requirements</a></li>
 
-  - Pick and choose
+  <li><a href="#cmd-ref">Command line reference</a></li>
 
-  - Full conversion
+</ul>
 
-- Requirements
+<hr>
+<a name="convert">
+<h1>Deciding how much to convert</h1>
 
-- Prepping your repository
+<p>If you're looking to switch an existing CVS repository to
+Subversion, you have a number of choices for migrating your existing
+CVS data to a Subversion repository, depending on your needs.</p>
 
-- Command line reference
+<p>There are a few basic routes to choose when switching from CVS to
+Subversion, and the one you choose will depend on how much historical
+data you want in your Subversion repository.  You may be content to
+refer to your existing (soon-to-be-converted-to-read-only) CVS
+repository for "pre-Subversion" data and start working with a new
+Subversion repository.  Maybe you prefer to squeeze every last drop of
+data out of your CVS repository into your Subversion repository.  Then
+again, perhaps you want a conversion somewhere in between these two.
+Based on these needs, we've come up with these different recommended
+paths for converting your CVS repository to a Subversion
+repository.</p>
 
-- Troubleshooting (link to FAQ)
+<ul>
+  
+  <li>Top-skim (Doesn't require cvs2svn!)</li>
+
+  <li>Trunk only</li>
+
+  <li>Pick and choose</li>
+
+  <li>Full conversion</li>
+
+  <li>Smorgasbord</li>
+
+</ul>
+
+<p>If you decide that top-skimming doesn't meet your needs and you're
+going to use cvs2svn (yay!), then be sure to read the section below on
+<a href="#prep">prepping your repository</a> before you start your
+conversion.</p>
+
+
+<h2>Top-skimming</h2>
+
+<p>This is the quickest and easiest way to get started in your new
+repository.  You're basically going to export the latest revision of
+your cvs repository, possibly do some rearranging, and then import the
+resulting files into your Subversion repository.  Typically, if you
+top-skim, that means you'll be either be keeping your old CVS
+repository around as a read-only reference for older data or just
+tossing that historical data outright (Note to you data packrats who
+have just stopped breathing, please take a deep breath and put down
+the letter opener.  You don't <i>have</i> to do this yourself--it's
+just that some people don't feel the same way you do about historical
+data.  They're really not <i>bad</i> people.  Really.).</p>
+
+<blockquote>
+
+  <p><b>Pros:</b> Quick, easy, convenient, results in a very compact and
+  "neat" Subversion repository.</p>
+
+  <p><b>Cons:</b> You've got no historical data, no branches, and no tags
+  in your Subversion repository.  If you want any of this data, you'll
+  have to go back into the CVS Repository and get it.</p>
+
+</blockquote>
+
+
+<h2>Trunk only</h2>
+
+<p>If you decide that you'd like to have the main development line of
+your historical data in your Subversion repository but don't need to
+carry over the tags and branches, you may want to skip converting your
+CVS tags and branches entirely and only convert the "trunk" of your
+repository.  To do this, you'll use the <tt>--trunk-only</tt> switch
+to cvs2svn.</p>
+
+<blockquote>
+
+  <p><b>Pros:</b>Saves disk space in your new Subversion repository.
+  Attractive to neatniks.</p>
+
+  <p><b>Cons:</b> You've got no branches and no tags in your
+  Subversion repository.</p>
+
+</blockquote>
+
+
+<h2>Pick and choose</h2>
+
+<p>Let's say, for example, that you want to convert your CVS repository's
+historical data but you have no use for the myriad daily build tags
+that you've got in your CVS repository.  In addition to that, you want
+some branches but would prefer to ignore others.  In this case, you'll
+want to use the <tt>--exclude</tt> switch to instruct cvs2svn which
+branches and tags it should ignore. </p>
+
+<blockquote>
+
+  <p><b>Pros:</b>You only get what you want from your CVS repository.
+  Saves a some space.</p>
+
+  <p><b>Cons:</b>If you forgot something, you'll have to go to your
+  CVS repository.</p>
+
+</blockquote>
+
+
+<h2>Full conversion</h2>
+
+<p>If you want to convert your entire CVS repository, including all
+tags and branches, you want a full conversion.  This is cvs2svn's
+default behavior.</p>
+
+<blockquote>
+
+  <p><b>Pros:</b> Converts every last byte of your CVS repository.</p>
+
+  <p><b>Cons:</b> Requires more disk space.</p>
+
+</blockquote>
+
+
+<h2>Smorgasbord</h2>
+
+<p>Lastly, you can convert your repository (or repositories) piece by
+piece using a combination of the above .</p>
+
+<blockquote>
+
+  <p><b>Pros:</b> You get exactly what you want.</p>
+
+  <p><b>Cons:</b> Importing converted repositories multiple times into
+  a single Subversion repository will likely break date-based range
+  commands (e.g. <tt>svn diff -r {2002-02-17:2002-03-18}</tt>) since
+  Subversion does a binary search through the repository for dates.
+  While this is not the end of the world, it can be a minor
+  inconvenience.</p>
+
+</blockquote>
+
+
+<hr>
+<a name="prep">
+<h1>Prepping your repository</h1>
+
+<p>There are a number of reasons that you may need to prep your CVS
+Repository.  If you decide that you need to change part of your CVS
+repository, we <b>strongly</b> recommend working on a <b>copy</b> of
+it instead of working on the real thing.  cvs2svn itself does not make
+any changes to your CVS repository, but if you start moving things
+around and deleting things in a CVS repository, it's all too easy to
+shoot yourself in the foot.</p>
+
+<p>If you want to convert a subdirectory in your repository, you can
+just point cvs2svn at the repository and go.</p>
+
+<p>If you want to convert your whole repository at once, you'll need
+move your CVSROOT directory aside (or cvs2svn will happily convert
+that too!).</p>
+
+<p>If there are any files that you <i>don't</i> want converted into
+your new Subversion repository, you should delete them or move them
+aside.</p>
+
+Lastly, even though you can move and copy files and directories around
+in Subversion, you may want to do some rearranging (typically of
+directories) before running your conversion.
+
+<hr>
+<a name="reqs">
+<h1>Requirements</h1>
+
+<p>cvs2svn requires the following:</p>
+
+<ul>
+
+  <li>Python 2.0 or greater</li>
+
+  <li>RCS co</li>
+
+  <li>GNU sort</li>
+
+</ul>
+  
+<hr>
+<a name="cmd-ref">
+<h1>Command line reference</h1>
+
+
+<table border=1 cellpadding=10 cellspacing=3>
+
+  <tr>
+    <td colspan=2>
+      <tt>USAGE: cvs2svn.py [-s svn-repos-path|--dump-only] cvs-repos-path</tt>
+    </td>
+  </tr>
+
+  <tr>
+    <td align=right><tt>--help, -h</tt></td>
+    <td>Print the usage message and exit with success.</td>
+  </tr>
+
+  <tr>
+    <td align=right><tt>--version</tt></td>
+    <td>Print the version number.</td>
+  </tr>
+
+  <tr>
+    <td align=right><tt>-q</tt></td>
+    <td>Tell cvs2svn to operate in quiet mode, printing little more
+      than pass starts and stops to STDOUT.</td>
+  </tr>
+
+  <tr>
+    <td align=right><tt>-v</tt></td>
+    <td>Tell cvs2svn to print <i>tons</i> of information about what
+      it's doing to STDOUT.</td>
+  </tr>
+
+  <tr>
+    <td align=right><tt>-s PATH</tt></td>
+    <td>Load CVS repository into the Subversion repository located
+      at PATH.  If there is no Subversion repository at PATH, create a
+      new one.</td>
+  </tr>
+
+  <tr>
+    <td align=right><tt>-p START[:END]</tt></td>
+    <td>Start converting at pass START, end at pass END of 8.  If only
+      START is given, run only pass START (implicitly enables
+      <tt>--skip-cleanup</tt>).</td>
+  </tr>
+
+  <tr>
+    <td align=right><tt>--existing-svnrepos</tt></td>
+    <td>Only load the converted CVS repository into an existing
+      Subversion repository.</td>
+  </tr>
+
+  <tr>
+    <td align=right><tt>--dumpfile=PATH</tt></td>
+    <td>Convert the CVS repository into a Subversion dumpfile at PATH.</td>
+  </tr>
+
+  <tr>
+    <td align=right><tt>--tmpdir=PATH</tt></td>
+    <td>Use the directory PATH for all of cvs2svn's temporary data
+      (which can be a <i>lot</i> of data.  The default value is the
+      current working directory.</td>
+  </tr>
+
+  <tr>
+    <td align=right><tt>--dry-run</tt></td>
+    <td>Do not create a repository or a dumpfile; just print the details
+      of what cvs2svn would do if it were really converting your
+      repository.</td>
+  </tr>
+
+  <tr>
+    <td align=right><tt>--svnadmin=PATH</tt></td>
+    <td>If the svnadmin program is not on your $PATH you should
+      specify the absolute path to <tt>svnadmin</tt> with this
+      switch.</td>
+  </tr>
+
+  <tr>
+    <td align=right><tt>--trunk-only</tt></td>
+    <td>Convert only the main line of development from the CVS
+      repository (commonly referred to in Subversion parlance as
+      "trunk", ignoring all tags and branches.</td>
+  </tr>
+
+  <tr>
+    <td align=right><tt>--trunk=PATH</tt></td>
+    <td>The top-level path to use for trunk in the Subversion
+      repository.  The default value is "trunk".</td>
+  </tr>
+
+  <tr>
+    <td align=right><tt>--branches=PATH</tt></td>
+    <td>The top-level path to use for branches in the Subversion
+      repository.  The default value is "branches".</td>
+  </tr>
+
+  <tr>
+    <td align=right><tt>--tags=PATH</tt></td>
+    <td>The top-level path to use for tags in the Subversion
+      repository.  The default value is "tags".</td>
+  </tr>
+
+  <tr>
+    <td align=right><tt>--no-prune</tt></td>
+    <td>When all files are deleted from a directory in the Subversion
+      repository, don't delete the empty directory (the default is to
+      delete any empty directories.</td>
+  </tr>
+
+  <tr>
+    <td align=right><tt>--dump-only</tt></td>
+    <td>Convert the CVS repository to a Subversion dumpfile instead of
+      a Subversion repository (useful for importing a CVS Repository
+      into an existing Subversion repository.</td>
+  </tr>
+
+  <tr>
+    <td align=right><tt>--encoding=ENC</tt></td>
+    <td>Use ENC as the encoding of log messages in CVS repos (default:
+      ascii)</td>
+  </tr>
+
+  <tr>
+    <td align=right><tt>--force-branch=NAME</tt></td>
+    <td>Force NAME to be a branch.</td>
+  </tr>
+
+  <tr>
+    <td align=right><tt>--force-tag=NAME</tt></td>
+    <td>Force NAME to be a tag.  This will cause an error if NAME has
+      commits on it.</td>
+  </tr>
+
+  <tr>
+    <td align=right><tt>--exclude=REGEXP</tt></td>
+    <td>Exclude branches and tags matching REGEXP from
+      conversion.</td>
+  </tr>
+
+  <tr>
+    <td align=right><tt>--username=NAME</tt></td>
+    <td>Use NAME as the author for cvs2svn-synthesized commits (the
+      default value is no author at all.</td>
+  </tr>
+
+  <tr>
+    <td align=right><tt>--skip-cleanup</tt></td>
+    <td>Prevent the deletion of the temporary files that cvs2svn
+      creates in the process of conversion.</td>
+  </tr>
+
+  <tr>
+    <td align=right><tt>--bdb-txn-nosync</tt></td>
+    <td>Pass the <tt>--bdb-txn-nosync</tt> switch to "svnadmin
+      create" when creating a new repository.</td>
+  </tr>
+
+  <tr>
+    <td align=right><tt>--cvs-revnums</tt></td>
+    <td>Record CVS revision numbers as file properties in the
+      Subversion repository/dumpfile.</td>
+  </tr>
+
+  <tr>
+    <td align=right><tt>--mime-types=FILE</tt></td>
+    <td>Specify an apache-style mime.types file for setting
+      svn:mime-type properties on files in the Subversion
+      repository.</td>
+  </tr>
+
+  <tr>
+    <td align=right><tt>--set-eol-style</tt></td>
+    <td>Automatically set svn:eol-style=native for text files</td>
+  </tr>
+
+</table>

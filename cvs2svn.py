@@ -44,7 +44,17 @@ if sys.hexversion < 0x2000000:
                    "see www.python.org.\n" % error_prefix)
   sys.exit(1)
 
-# Don't settle for less.
+# DBM module selection
+
+# 1. If we have bsddb3, it is probably newer than bsddb. Fake bsddb = bsddb3,
+#    so that the dbhash module used by anydbm will use bsddb3.
+try:
+  import bsddb3
+  sys.modules['bsddb'] = sys.modules['bsddb3']
+except ImportError:
+  pass
+
+# 2. These DBM modules are not good for cvs2svn.
 if (anydbm._defaultmod.__name__ == 'dumbdbm'
     or anydbm._defaultmod.__name__ == 'dbm'):
   print 'ERROR: your installation of Python does not contain a suitable'
@@ -53,6 +63,8 @@ if (anydbm._defaultmod.__name__ == 'dumbdbm'
   print '  for details.'
   sys.exit(1)
 
+# 3. If we are using the old bsddb185 module, then try prefer gdbm instead.
+#    Unfortunately, gdbm appears not to be trouble free, either.
 if hasattr(anydbm._defaultmod, 'bsddb') \
     and not hasattr(anydbm._defaultmod.bsddb, '__version__'):
   try:

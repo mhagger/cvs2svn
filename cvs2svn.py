@@ -658,9 +658,15 @@ class RepositoryMirror:
     # entry names, the values can be ignored).
     self.approved_entries = "/approved-entries"
 
-    # Set on a directory that's mutable in the revision currently
-    # being constructed.  (Yes, this is exactly analogous to
-    # the Subversion filesystem code's concept of mutability.)
+    # Set to a true value on a directory that's mutable in the
+    # revision currently being constructed. (Yes, this is exactly
+    # analogous to the Subversion filesystem code's concept of
+    # mutability.)
+    # Is also overloaded with a second piece of information.
+    # If the value of the flag is 2, then in addition to the node
+    # being mutable, the node and all subnodes were created by a copy
+    # operation in the current revision. In this and only this
+    # circumstance, it is valid for pruning to occur.
     self.mutable_flag = "/mutable"
     # This could represent a new mutable directory or file.
     self.empty_mutable_thang = { self.mutable_flag : 1 }
@@ -789,6 +795,7 @@ class RepositoryMirror:
     path_so_far = None
 
     deletions = []
+    in_pruneable_subtree = None
 
     parent_key = self.revs_db[str(self.youngest)]
     parent = self.nodes_db[parent_key]
@@ -826,12 +833,15 @@ class RepositoryMirror:
       # which must not happen.)
       this_entry_key = parent[component]
       this_entry_val = self.nodes_db[this_entry_key]
-      if not this_entry_val.has_key(self.mutable_flag):
+      mutable = this_entry_val.get(self.mutable_flag)
+      if not mutable:
         this_entry_val[self.mutable_flag] = 1
         this_entry_key = gen_key()
         parent[component] = this_entry_key
         self.nodes_db[this_entry_key] = this_entry_val
         self.nodes_db[parent_key] = parent
+      elif mutable == 2:
+        in_pruneable_subtree = 1
 
       parent_key = this_entry_key
       parent = this_entry_val
@@ -865,6 +875,13 @@ class RepositoryMirror:
         # current path shares any history with any older live parent
         # of the dead revision, so we do nothing and return.
         return Change(OP_NOOP, [], [], deletions)
+      # Special value of mutable flag indicates that this subtree was created
+      # by copying in this revision. Iff this is true, then it is valid to
+      # use expected_entries to prune items.
+      new_val[self.mutable_flag] = 2
+      in_pruneable_subtree = 1
+    else:
+      new_val[self.mutable_flag] = 1
     if expected_entries is not None:
       # If it is not None, then even if it is an empty list/tuple,
       # we need to approve this item in its parent's approved entries list.
@@ -878,15 +895,15 @@ class RepositoryMirror:
         if (ent[0] != '/'):
           if (not expected_entries.has_key(ent)
               and not approved_entries.has_key(ent)):
-            del new_val[ent]
-            deletions.append(ent)
+            if in_pruneable_subtree:
+              del new_val[ent]
+              deletions.append(ent)
           else:
             new_approved_entries[ent] = 1
       new_val[self.approved_entries] = new_approved_entries
     parent[last_component] = leaf_key
     self.nodes_db[parent_key] = parent
     self.symroots_db[path] = (tags, branches)
-    new_val[self.mutable_flag] = 1
     self.nodes_db[leaf_key] = new_val
 
     return Change(op, old_names[0], old_names[1], deletions, copyfrom_rev)

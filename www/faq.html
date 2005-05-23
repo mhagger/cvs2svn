@@ -1,60 +1,144 @@
+<html>
+<head>
+  <title>cvs2svn FAQ</title>
+</head>
+
+<body>
 <h1>cvs2svn FAQ</h1>
 
 <p>
 
 <![CDATA[ Table of Contents ]]>
 <ol>
-<p>
-<strong>General questions:</strong>
-</p>
-<li><a href="#example1">Is this an example question in a FAQ template?</a></li>
-<p>
-<strong>How-to:</strong>
-</p>
-<li><a href="#example2">Is this another example question?</a></li>
-<p>
-<strong>Troubleshooting:</strong>
-</p>
-<li><a href="#example3">Have we had enough examples yet?</a></li>
+
+  <p><strong>How-to:</strong></p>
+
+  <li><a href="#oneatatime">How can I convert my CVS repository one module at a time?</a></li>
+
+  <li><a href="#inverted">How can I convert project <tt>foo</tt> so
+    that <tt>trunk/tags/branches</tt> are inside of
+    <tt>foo</tt>?</a></li>
+
 </ol>
 
 <![CDATA[=========================================================]]>
 
-<p>
-<hr>
-<p>
-<h2>General questions:</h2>
-<p>
-
-<![CDATA[-----------------------------------------------------------]]>
-
-<h3><a name="example1">Is this an example question in a FAQ template?</a></h3>
-
-<p>Yes, it is.</p>
-
-<![CDATA[=========================================================]]>
-
-<p>
-<hr>
-<p>
+<p><hr></p>
 <h2>How-to:</h2>
-<p>
 
 <![CDATA[-----------------------------------------------------------]]>
 
-<h3><a name="example2">Is this another example question?</a></h3>
-<p>Yup.</p>
+<h3><a name="oneatatime" title="#oneatatime">How can I convert my CVS repository one module at a time?</a></h3>
+
+<p>If you need to convert certain CVS modules (in one large
+repository) to Subversion
+<b>now</b> and other modules <b>later</b>, you may want to convert
+your repository one module at a time.  This situation is typically
+encountered in large organizations where each project has a separate
+lifecycle and schedule, and a one-step conversion process is not
+practical.
+</p>
+
+<p>To incrementally migrate modules contained within a CVS repository
+to Subversion you will need to use cvs2svn to create a "dumpfile".
+Then, using <tt>svnadmin</tt> you will load the dumpfile into a
+project directory created within the Subversion repository.  For
+example:
+</p>
+
+<ol>
+  <li>Remember to <b>Make a backup</b> before starting.  Never run
+    cvs2svn on a live CVS repository--always work on a copy of your
+    repository.</li>
+
+  <li>Run cvs2svn against the modules you want converted
+    <pre>
+      # Copy the CVS modules into a temporary cvs repository.
+      # This is not absolutely necessary, but it's for safety's sake.
+      $ mkdir ~/newcvsrepo
+      $ mkdir ~/newcvsrepo/CVSROOT # needed by cvs2svn
+      $ cp -r /oldcvsrepo/module ~/newcvsrepo
+      
+      # Create a dumpfile containing the new CVS repository contents
+      $ mkdir ~/svndump; cd ~/svndump
+      $ cvs2svn --dump-only ~/newcvsrepo
+    </pre></li>
+
+
+  <li>Import the dump into your Subversion repository
+    <pre>
+      # Make a directory for the project.
+      $ svn mkdir file:///path/to/svnrepos/projectA -m "Added projectA directory."
+      
+      # Use "svnadmin load" to load the dumpfile.
+      $ cd ~/svndump
+      $ svnadmin --parent-dir projectA load /path/to/svnrepo < cvs2svn-dump
+    </pre></li>
+
+</ol>
+
+<![CDATA[-----------------------------------------------------------]]>
+
+<h3><a name="inverted" title="#inverted">How can I convert project <tt>foo</tt> so
+    that <tt>trunk/tags/branches</tt> are inside of
+    <tt>foo</tt>?</a></h3>
+
+  <p>Given a CVS repository with the layout:</p>
+
+<pre>
+  /project_a
+  /project_b
+</pre>
+
+  <p>cvs2svn will produce a Subversion repository with the following
+    layout:</p>
+
+<pre>
+   trunk/
+      project_a/
+         ...
+      project_b/
+         ...
+   tags/
+      ...
+   branches/
+      ...
+</pre>
+
+  <p>However, you may want your Subversion repository to be laid out
+    like this:</p>
+
+<pre>
+   project_a/
+      trunk/
+         ...
+      branches/
+         ...
+      tags/
+         ...
+   project_b/
+      trunk/
+         ...
+      branches/
+         ...
+      tags/
+         ...
+</pre>
+
+  <p>Currently, cvs2svn does not support converting a repository in
+    this manner (see <a
+    href="http://cvs2svn.tigris.org/issues/show_bug.cgi?id=86">Issue
+    #86</a> for details), however, there is a workaround.  You can
+    convert your repository one project (or module) at a time and load
+    the individual dumpfiles into your Subversion repository using
+    <tt>svnadmin</tt> with the <tt>--parent-dir</tt> switch.  See the
+    answer to <a href="#oneatatime">How can I convert my CVS
+    repository one module at a time?</a> for details.</p>
+
 
 <![CDATA[=========================================================]]>
 
-<p>
-<hr>
-<p>
-<h2>Troubleshooting:</h2>
-<p>
 
-<![CDATA[-----------------------------------------------------------]]>
 
-<h3><a name="example3">Have we had enough examples yet?</a></h3>
-
-<p>Yes, we have.</p>
+</body>
+</html>

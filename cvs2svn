@@ -1976,7 +1976,7 @@ class CVSCommit:
         if c_rev.op == OP_ADD:
           if pm.last_filled.get(c_rev.branch_name, None) is None:
             return 1
-        else:
+        elif c_rev.op == OP_CHANGE:
           if svn_revnum > pm.last_filled.get(c_rev.branch_name, 0):
             return 1
       return 0

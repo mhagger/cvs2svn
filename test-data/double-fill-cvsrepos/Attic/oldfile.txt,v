@@ -1,0 +1,41 @@
+head	1.1;
+access;
+symbols
+	BRANCH-boom:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2005.04.04.16.13.48;	author sally;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.04.04.16.13.48;	author boom;	state dead;
+branches;
+next	;
+
+
+
+desc
+@@
+
+
+1.1
+log
+@log message
+@
+text
+@@
+
+
+1.1.2.1
+log
+@file oldfile.txt was added on branch BRANCH-boom on 2005-04-06 20:15:29 +0000
+@
+text
+@@
+
+

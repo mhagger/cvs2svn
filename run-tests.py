@@ -1818,6 +1818,13 @@ def native_eol():
     if line[-1] != '\n' or line[:-1].find('\r') != -1:
       raise svntest.Failure
 
+def double_fill():
+  "reveal a bug that created a branch twice"
+  repos, wc, logs = ensure_conversion('double-fill')
+  # If the conversion succeeds, then we're okay.  We could check the
+  # actual revisions, too, but the main thing is to know that the
+  # conversion doesn't fail.
+
 
 #----------------------------------------------------------------------
 
@@ -1876,6 +1883,7 @@ test_list = [ None,
               vendor_branch_delete_add,
               XFail(resync_pass2_ordering_bug),
               native_eol,                           # 50
+              double_fill,
              ]
 
 if __name__ == '__main__':

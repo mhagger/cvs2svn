@@ -1,0 +1,67 @@
+head	1.2;
+access;
+symbols
+	BRANCH-boom:1.2.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2005.03.29.22.31.23;	author harry;	state Exp;
+branches
+	1.2.2.1;
+next	1.1;
+
+1.1
+date	2005.03.29.13.21.35;	author sally;	state dead;
+branches;
+next	;
+
+1.2.2.1
+date	2005.03.29.22.31.23;	author harry;	state dead;
+branches;
+next	1.2.2.2;
+
+1.2.2.2
+date	2005.03.29.23.36.06;	author harry;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@log message
+@
+text
+@@
+
+
+1.2.2.1
+log
+@file otherfile.txt was added on branch BRANCH-boom on 2005-03-29 23:36:06 +0000
+@
+text
+@@
+
+
+1.2.2.2
+log
+@merged trunk to boom
+@
+text
+@@
+
+
+1.1
+log
+@log message
+@
+text
+@@
+
+
+

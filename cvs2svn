@@ -867,11 +867,12 @@ class CVSRevision:
     If there is one argument in ARGS, it is a string, in the format of
     a line from a revs file.  Do *not* include a trailing newline.
 
-    If there are multiple ARGS, there must be 16 of them,
+    If there are multiple ARGS, there must be 17 of them,
     comprising a parsed revs line:
        timestamp       -->  (int) date stamp for this cvs revision
        digest          -->  (string) digest of author+logmsg
        prev_timestamp  -->  (int) date stamp for the previous cvs revision
+       next_timestamp  -->  (int) date stamp for the next cvs revision
        op              -->  (char) OP_ADD, OP_CHANGE, or OP_DELETE
        prev_rev        -->  (string or None) previous CVS rev, e.g., "1.2"
        rev             -->  (string) this CVS rev, e.g., "1.3"
@@ -889,16 +890,16 @@ class CVSRevision:
     The two forms of initialization are equivalent."""
 
     self._ctx = ctx
-    if len(args) == 16:
-      (self.timestamp, self.digest, self.prev_timestamp, self.op,
-       self.prev_rev, self.rev, self.next_rev, self.file_in_attic,
+    if len(args) == 17:
+      (self.timestamp, self.digest, self.prev_timestamp, self.next_timestamp,
+       self.op, self.prev_rev, self.rev, self.next_rev, self.file_in_attic,
        self.file_executable, self.file_size, self.deltatext_code,
        self.fname, 
        self.mode, self.branch_name, self.tags, self.branches) = args
     elif len(args) == 1:
-      data = args[0].split(' ', 14)
-      (self.timestamp, self.digest, self.prev_timestamp, self.op,
-       self.prev_rev, self.rev, self.next_rev, self.file_in_attic,
+      data = args[0].split(' ', 15)
+      (self.timestamp, self.digest, self.prev_timestamp, self.next_timestamp,
+       self.op, self.prev_rev, self.rev, self.next_rev, self.file_in_attic,
        self.file_executable, self.file_size, self.deltatext_code,
        self.mode, self.branch_name, numtags, remainder) = data
       # Patch up data items which are not simple strings
@@ -907,6 +908,10 @@ class CVSRevision:
         self.prev_timestamp = 0
       else:
         self.prev_timestamp = int(self.prev_timestamp)
+      if self.next_timestamp == "*":
+        self.next_timestamp = 0
+      else:
+        self.next_timestamp = int(self.next_timestamp)
       if self.prev_rev == "*":
         self.prev_rev = None
       if self.next_rev == "*":
@@ -929,7 +934,7 @@ class CVSRevision:
       self.branches = branches_and_fname[:-1]
       self.fname = branches_and_fname[-1]
     else:
-      raise TypeError, 'CVSRevision() takes 2 or 16 arguments (%d given)' % \
+      raise TypeError, 'CVSRevision() takes 2 or 18 arguments (%d given)' % \
           (len(args) + 1)
     if ctx is not None:
       self.cvs_path = relative_name(self._ctx.cvsroot, self.fname[:-2])
@@ -947,8 +952,9 @@ class CVSRevision:
     return revnum + "/" + self.fname
 
   def __str__(self):
-    return ('%08lx %s %s %s %s %s %s %s %s %d %s %s %s %d%s%s %d%s%s %s' % (
-      self.timestamp, self.digest, self.prev_timestamp or "*", self.op,
+    return ('%08lx %s %s %s %s %s %s %s %s %s %d %s %s %s %d%s%s %d%s%s %s' % (
+      self.timestamp, self.digest, self.prev_timestamp or "*",
+      self.next_timestamp or "*", self.op,
       (self.prev_rev or "*"), self.rev, (self.next_rev or "*"),
       (self.file_in_attic or "*"), (self.file_executable or "*"),
       self.file_size,
@@ -1538,9 +1544,12 @@ class CollectData(cvs2svn_rcsparse.Sink):
       if self.default_branches_db.has_key(self.rel_name):
         del self.default_branches_db[self.rel_name]
 
-    # Get the timestamp of the previous revision
+    # Get the timestamps of the previous and next revisions
     prev_rev = self.prev_rev[revision]
     prev_timestamp, ign, ign = self.rev_data.get(prev_rev, [0, None, None])
+
+    next_rev = self.next_rev.get(revision)
+    next_timestamp, ign, ign = self.rev_data.get(next_rev, [0, None, None])
 
     # How to tell if a CVSRevision is an add, a change, or a deletion:
     #
@@ -1565,7 +1574,8 @@ class CollectData(cvs2svn_rcsparse.Sink):
     else:
       deltatext_code = DELTATEXT_EMPTY
 
-    c_rev = CVSRevision(Ctx(), timestamp, digest, prev_timestamp, op,
+    c_rev = CVSRevision(Ctx(), timestamp, digest, prev_timestamp,
+                        next_timestamp, op,
                         self.prev_rev[revision], revision,
                         self.next_rev.get(revision),
                         self.file_in_attic, self.file_executable,

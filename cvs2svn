@@ -1489,7 +1489,7 @@ class CollectData(cvs2svn_rcsparse.Sink):
             self.rev_data[prev][0] = t_c - 1	# new timestamp
             self.rev_data[prev][2] = t_p	# old timestamp
             delta = t_c - 1 - t_p
-            msg =  "RESYNC: '%s' (%s): old time='%s' delta=%ds" \
+            msg =  "PASS1 RESYNC: '%s' (%s): old time='%s' delta=%ds" \
                   % (self.rel_name,
                      prev, time.ctime(t_p), delta)
             Log().write(LOG_VERBOSE, msg)
@@ -4213,7 +4213,7 @@ def pass2():
             Log().write(LOG_WARN, "%s: Timestamp left untouched" %
                         warning_prefix)
 
-        msg = "RESYNC: '%s' (%s): old time='%s' delta=%ds" \
+        msg = "PASS2 RESYNC: '%s' (%s): old time='%s' delta=%ds" \
               % (c_rev.cvs_path, c_rev.rev, time.ctime(c_rev.timestamp),
                  record[2] - c_rev.timestamp)
         Log().write(LOG_VERBOSE, msg)

@@ -1576,8 +1576,7 @@ class CollectData(cvs2svn_rcsparse.Sink):
 
     c_rev = CVSRevision(Ctx(), timestamp, digest, prev_timestamp,
                         next_timestamp, op,
-                        self.prev_rev[revision], revision,
-                        self.next_rev.get(revision),
+                        prev_rev, revision, next_rev,
                         self.file_in_attic, self.file_executable,
                         self.file_size,
                         deltatext_code, self.fname,

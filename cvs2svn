@@ -4181,6 +4181,13 @@ def pass2():
     # see if this is "near" any of the resync records we
     # have recorded for this digest [of the log message].
     for record in resync.get(c_rev.digest, []):
+      if record[2] == c_rev.timestamp:
+        # This means that either c_rev is the same revision that
+        # caused the resync record to exist, or c_rev is a different
+        # CVS revision that happens to have the same timestamp.  In
+        # either case, we don't have to do anything, so we...
+        continue
+
       if record[0] <= c_rev.timestamp <= record[1]:
         # bingo! remap the time on this (record[2] is the new time).
 

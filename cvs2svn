@@ -1237,11 +1237,17 @@ class CollectData(cvs2svn_rcsparse.Sink):
     #
     # Note that this revision can't be determined arithmetically (due
     # to cvsadmin -o, which is why this is necessary).
+    #
+    # If the key has no previous revision, then store None as key's
+    # value.
     self.prev_rev = { }
 
     # This dict is essentially self.prev_rev with the values mapped in
     # the other direction, so following key -> value will yield you
-    # the next revision number
+    # the next revision number.
+    #
+    # Unlike self.prev_rev, if the key has no next revision, then the
+    # key is not present.
     self.next_rev = { }
 
     # Track the state of each revision so that in set_revision_info,
@@ -1533,7 +1539,7 @@ class CollectData(cvs2svn_rcsparse.Sink):
         del self.default_branches_db[self.rel_name]
 
     # Get the timestamp of the previous revision
-    prev_rev = self.prev_rev.get(revision, None)
+    prev_rev = self.prev_rev[revision]
     prev_timestamp, ign, ign = self.rev_data.get(prev_rev, [0, None, None])
 
     # How to tell if a CVSRevision is an add, a change, or a deletion:

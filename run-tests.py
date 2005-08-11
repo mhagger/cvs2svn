@@ -1800,9 +1800,9 @@ def vendor_branch_delete_add():
   # This will error if the bug is present
   repos, wc, logs = ensure_conversion('vendor-branch-delete-add')
 
-def resync_pass2_ordering_bug():
-  "reveal a bug that resyncs timestamps in pass2"
-  repos, wc, logs = ensure_conversion('resync-pass2-ordering')
+def resync_pass2_pull_forward():
+  "ensure pass2 doesn't pull rev too far forward"
+  repos, wc, logs = ensure_conversion('resync-pass2-pull-forward')
   # If the conversion succeeds, then we're okay.  We could check the
   # actual revisions, too, but the main thing is to know that the
   # conversion doesn't fail.
@@ -1881,7 +1881,7 @@ test_list = [ None,
               XFail(revision_reorder_bug),
               exclude,
               vendor_branch_delete_add,
-              resync_pass2_ordering_bug,
+              resync_pass2_pull_forward,
               native_eol,                           # 50
               double_fill,
              ]

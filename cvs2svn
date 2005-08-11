@@ -946,9 +946,11 @@ class CVSRevision:
   # them together in a string.  By passing in self.prev_rev or
   # self.next_rev, you can get the unique key for their respective
   # CVSRevisions.
-  def unique_key(self, revnum=None):
-    if revnum is None:
+  def unique_key(self, revnum="0"):
+    if revnum is "0":
       revnum = self.rev
+    elif revnum is None:
+      return None
     return revnum + "/" + self.fname
 
   def __str__(self):

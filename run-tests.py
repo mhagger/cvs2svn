@@ -1825,6 +1825,13 @@ def double_fill():
   # actual revisions, too, but the main thing is to know that the
   # conversion doesn't fail.
 
+def resync_pass2_push_backward():
+  "ensure pass2 doesn't push rev too far backward"
+  repos, wc, logs = ensure_conversion('resync-pass2-push-backward')
+  # If the conversion succeeds, then we're okay.  We could check the
+  # actual revisions, too, but the main thing is to know that the
+  # conversion doesn't fail.
+
 
 #----------------------------------------------------------------------
 
@@ -1884,6 +1891,7 @@ test_list = [ None,
               resync_pass2_pull_forward,
               native_eol,                           # 50
               double_fill,
+              resync_pass2_push_backward,
              ]
 
 if __name__ == '__main__':

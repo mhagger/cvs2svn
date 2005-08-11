@@ -1,0 +1,36 @@
+head	1.2;
+access;
+symbols;
+locks; strict;
+
+
+1.2
+date	90.04.19.15.10.21;	author user1;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	90.04.19.15.10.21;	author user1;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Initial revision
+@
+text
+@@
+
+
+1.1
+log
+@Summary: foo
+
+@
+text
+@@

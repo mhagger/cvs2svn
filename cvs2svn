@@ -4188,13 +4188,17 @@ def pass2():
     if excludes.has_key(c_rev.branch_name):
       continue
 
-    new_prev_ts = tweaked_timestamps_db.get(
-      c_rev.unique_key(c_rev.prev_rev), None)
+    new_prev_ts = None
+    if c_rev.prev_rev is not None:
+      new_prev_ts = tweaked_timestamps_db.get(
+        c_rev.unique_key(c_rev.prev_rev), None)
     if new_prev_ts:
       c_rev.prev_timestamp = new_prev_ts
 
-    new_next_ts = tweaked_timestamps_db.get(
-      c_rev.unique_key(c_rev.next_rev), None)
+    new_next_ts = None
+    if c_rev.next_rev is not None:
+      new_next_ts = tweaked_timestamps_db.get(
+        c_rev.unique_key(c_rev.next_rev), None)
     if new_next_ts:
       c_rev.next_timestamp = new_next_ts
 

@@ -4254,7 +4254,7 @@ def pass2():
             continue
 
         # If the new timestamp is later than that of our next revision
-        if c_rev.next_timestamp and new_timestamp > c_rev.next_timestamp:
+        elif c_rev.next_timestamp and new_timestamp > c_rev.next_timestamp:
           desc = ("%s: Attempt to set timestamp of revision %s on file %s"
                   + " to time %s, which is after time of next"
                   + " revision %s (%s):")
@@ -4273,6 +4273,12 @@ def pass2():
             Log().write(LOG_WARN, "%s: Timestamp left untouched" %
                         warning_prefix)
             continue
+
+        # Fix for Issue #71: Avoid resyncing two consecutive revisions
+        # to the same timestamp.
+        elif (new_timestamp == c_rev.prev_timestamp
+              or new_timestamp == c_rev.next_timestamp):
+          continue
 
         # adjust the time range. we want the COMMIT_THRESHOLD from the
         # bounds of the earlier/latest commit in this group.

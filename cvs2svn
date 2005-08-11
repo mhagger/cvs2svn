@@ -303,6 +303,11 @@ DEFAULT_BRANCHES_DB = 'cvs2svn-default-branches.db'
 # of two elements: '(author logmessage)'.
 METADATA_DB = "cvs2svn-metadata.db"
 
+# A temporary on-disk hash that maps CVSRevision unique keys to a new
+# timestamp for that CVSRevision.  These new timestamps are created in
+# pass2, and this hash is used exclusively in pass2.
+TWEAKED_TIMESTAMPS_DB = "cvs2svn-fixed-timestamps.db"
+
 REVS_SUFFIX = '.revs'
 CLEAN_REVS_SUFFIX = '.c-revs'
 SORTED_REVS_SUFFIX = '.s-revs'
@@ -887,7 +892,10 @@ class CVSRevision:
        branches        -->  (list of strings) all branches rooted in this rev
        fname           -->  (string) relative path of file in CVS repos
 
-    The two forms of initialization are equivalent."""
+    The two forms of initialization are equivalent.
+
+    WARNING: Due to the resync process in pass2, prev_timestamp or
+    next_timestamp may be incorrect in the c-revs or s-revs files."""
 
     self._ctx = ctx
     if len(args) == 17:
@@ -4169,6 +4177,9 @@ def pass2():
   output = open(temp(DATAFILE + CLEAN_REVS_SUFFIX), 'w')
   Cleanup().register(temp(DATAFILE + CLEAN_REVS_SUFFIX), pass3)
 
+  tweaked_timestamps_db = Database(temp(TWEAKED_TIMESTAMPS_DB), DB_OPEN_NEW)
+  Cleanup().register(temp(TWEAKED_TIMESTAMPS_DB), pass2)
+
   # process the revisions file, looking for items to clean up
   for line in fileinput.FileInput(temp(DATAFILE + REVS_SUFFIX)):
     c_rev = CVSRevision(Ctx(), line[:-1])
@@ -4176,6 +4187,16 @@ def pass2():
     # Skip this entire revision if it's on an excluded branch
     if excludes.has_key(c_rev.branch_name):
       continue
+
+    new_prev_ts = tweaked_timestamps_db.get(
+      c_rev.unique_key(c_rev.prev_rev), None)
+    if new_prev_ts:
+      c_rev.prev_timestamp = new_prev_ts
+
+    new_next_ts = tweaked_timestamps_db.get(
+      c_rev.unique_key(c_rev.next_rev), None)
+    if new_next_ts:
+      c_rev.next_timestamp = new_next_ts
 
     # Remove all references to excluded tags and branches
     def not_excluded(symbol, excludes=excludes):
@@ -4206,43 +4227,65 @@ def pass2():
         continue
 
       if record[0] <= c_rev.timestamp <= record[1]:
-        # bingo! remap the time on this (record[2] is the new time).
+        # bingo!  We probably want to remap the time on this c_rev,
+        # unless the remapping would be useless because the new time
+        # would fall outside the COMMIT_THRESHOLD window for this
+        # commit group.
+        new_timestamp = record[2]
+        # If the new timestamp is earlier than that of our previous revision
+        if new_timestamp < c_rev.prev_timestamp:
+          desc = ("%s: Attempt to set timestamp of revision %s on file %s"
+                  + " to time %s, which is before previous the time of"
+                  + " revision %s (%s):")
+          Log().write(LOG_WARN, desc % (warning_prefix, c_rev.rev,
+                                        c_rev.cvs_path, new_timestamp,
+                                        c_rev.prev_rev, c_rev.prev_timestamp))
+          # If resyncing our rev to c_rev.prev_timestamp + 1 will place
+          # the timestamp of c_rev within COMMIT_THRESHOLD of the
+          # attempted resync time, then sync back to c_rev.prev_timestamp
+          # + 1...
+          if ((c_rev.prev_timestamp + 1) - new_timestamp) < COMMIT_THRESHOLD:
+            new_timestamp = c_rev.prev_timestamp + 1
+            Log().write(LOG_WARN, "%s: Time set to %s" % (warning_prefix,
+                                                          new_timestamp))
+          else:
+            Log().write(LOG_WARN, "%s: Timestamp left untouched" %
+                        warning_prefix)
+            continue
+
+        # If the new timestamp is later than that of our next revision
+        if c_rev.next_timestamp and new_timestamp > c_rev.next_timestamp:
+          desc = ("%s: Attempt to set timestamp of revision %s on file %s"
+                  + " to time %s, which is after time of next"
+                  + " revision %s (%s):")
+          Log().write(LOG_WARN, desc % (warning_prefix, c_rev.rev,
+                                        c_rev.cvs_path, new_timestamp,
+                                        c_rev.prev_rev, c_rev.next_timestamp))
+          # If resyncing our rev to c_rev.next_timestamp - 1 will place
+          # the timestamp of c_rev within COMMIT_THRESHOLD of the
+          # attempted resync time, then sync forward to c_rev.next_timestamp
+          # - 1...
+          if (new_timestamp - (c_rev.next_timestamp - 1)) < COMMIT_THRESHOLD:
+            new_timestamp = c_rev.next_timestamp - 1
+            Log().write(LOG_WARN, "%s: Time set to %s" % (warning_prefix,
+                                                          new_timestamp))
+          else:
+            Log().write(LOG_WARN, "%s: Timestamp left untouched" %
+                        warning_prefix)
+            continue
 
         # adjust the time range. we want the COMMIT_THRESHOLD from the
         # bounds of the earlier/latest commit in this group.
         record[0] = min(record[0], c_rev.timestamp - COMMIT_THRESHOLD/2)
         record[1] = max(record[1], c_rev.timestamp + COMMIT_THRESHOLD/2)
 
-        # By default this will be the new timestamp
-        new_timestamp = record[2]
-        # If the new timestamp is earlier than that of our previous revision
-        if record[2] < c_rev.prev_timestamp:
-          desc = ("%s: Attempt to set timestamp of revision %s on file %s"
-                  + " to time %s, which is before previous the time of"
-                  + " revision %s (%s):")
-          Log().write(LOG_WARN, desc % (warning_prefix, c_rev.rev,
-                                        c_rev.cvs_path, record[2],
-                                        c_rev.prev_rev, c_rev.prev_timestamp))
-          # If resyncing our rev to c_rev.prev_timestamp + 1 will place
-          # the timestamp of c_rev within COMMIT_THRESHOLD of the
-          # attempted sync time, then sync back to c_rev.prev_timestamp
-          # + 1...
-          if (c_rev.prev_timestamp - record[2]) < COMMIT_THRESHOLD:
-            new_timestamp = c_rev.prev_timestamp + 1
-            Log().write(LOG_WARN, "%s: Time set to %s" % (warning_prefix,
-                                                          new_timestamp))
-          # ...otherwise, make no change
-          else:
-            new_timestamp = c_rev.timestamp
-            Log().write(LOG_WARN, "%s: Timestamp left untouched" %
-                        warning_prefix)
-
         msg = "PASS2 RESYNC: '%s' (%s): old time='%s' delta=%ds" \
               % (c_rev.cvs_path, c_rev.rev, time.ctime(c_rev.timestamp),
-                 record[2] - c_rev.timestamp)
+                 new_timestamp - c_rev.timestamp)
         Log().write(LOG_VERBOSE, msg)
 
         c_rev.timestamp = new_timestamp
+        tweaked_timestamps_db[c_rev.unique_key()] = new_timestamp
 
         # stop looking for hits
         break

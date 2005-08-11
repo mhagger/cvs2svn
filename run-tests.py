@@ -1881,7 +1881,7 @@ test_list = [ None,
               XFail(revision_reorder_bug),
               exclude,
               vendor_branch_delete_add,
-              XFail(resync_pass2_ordering_bug),
+              resync_pass2_ordering_bug,
               native_eol,                           # 50
               double_fill,
              ]

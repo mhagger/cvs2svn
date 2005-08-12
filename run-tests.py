@@ -1832,6 +1832,13 @@ def resync_pass2_push_backward():
   # actual revisions, too, but the main thing is to know that the
   # conversion doesn't fail.
 
+def double_add():
+  "reveal a bug that added a branch file twice"
+  repos, wc, logs = ensure_conversion('double-add')
+  # If the conversion succeeds, then we're okay.  We could check the
+  # actual revisions, too, but the main thing is to know that the
+  # conversion doesn't fail.
+
 
 #----------------------------------------------------------------------
 
@@ -1892,6 +1899,7 @@ test_list = [ None,
               native_eol,                           # 50
               double_fill,
               resync_pass2_push_backward,
+              double_add,
              ]
 
 if __name__ == '__main__':

@@ -1,0 +1,36 @@
+head	1.2;
+access;
+symbols
+	boom-branch:1.2.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2005.05.04.15.08.53;	author harry;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2005.05.02.19.09.31;	author sally;	state dead;
+branches;
+next	;
+
+desc
+@@
+
+
+1.2
+log
+@merged some-branch to trunk
+@
+text
+@@
+
+
+1.1
+log
+@file seemingly-irrelevant-file.txt was initially added on branch BRANCH-sally.
+@
+text
+@@

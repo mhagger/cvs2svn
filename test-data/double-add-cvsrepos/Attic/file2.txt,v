@@ -1,0 +1,66 @@
+head	1.2;
+access;
+symbols
+	boom-branch:1.2.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2005.03.04.19.57.41;	author harry;	state Exp;
+branches
+	1.2.2.1;
+next	1.1;
+
+1.1
+date	2005.03.04.18.57.55;	author sally;	state dead;
+branches;
+next	;
+
+1.2.2.1
+date	2005.03.04.19.57.41;	author harry;	state dead;
+branches;
+next	1.2.2.2;
+
+1.2.2.2
+date	2005.03.04.21.02.34;	author harry;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@merged some-branch to trunk
+@
+text
+@@
+
+
+1.2.2.1
+log
+@file file2.txt was added on branch boom-branch on 2005-03-04 21:02:34 +0000
+@
+text
+@@
+
+
+1.2.2.2
+log
+@merged trunk to another-branch
+@
+text
+@@
+
+
+1.1
+log
+@file file2.txt was initially added on branch some-branch.
+@
+text
+@@
+
+

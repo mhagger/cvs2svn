@@ -2032,7 +2032,7 @@ class CVSCommit:
         accounted_for_sym_names.append(c_rev.branch_name)
 
   def _commit(self):
-    """Generates the primary SVNCommit that corresponds the this
+    """Generates the primary SVNCommit that corresponds to this
     CVSCommit."""
     # Generate an SVNCommit unconditionally.  Even if the only change
     # in this CVSCommit is a deletion of an already-deleted file (that

@@ -1,0 +1,79 @@
+head	1.1;
+access;
+symbols
+	branch-boom:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2005.03.04.18.57.55;	author ira;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.03.04.18.57.55;	author ira;	state Exp;
+branches;
+next	1.1.2.2;
+
+1.1.2.2
+date	2005.03.28.22.18.05;	author ira;	state Exp;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2005.03.29.20.21.54;	author ira;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2005.04.05.15.47.56;	author ira;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@file file3.txt was initially added on branch branch-boom.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@This is a log message.
+@
+text
+@@
+
+
+1.1.2.2
+log
+@This is another log message.
+@
+text
+@@
+
+
+1.1.2.3
+log
+@This is yet another log message.
+@
+text
+@@
+
+
+1.1.2.4
+log
+@ci
+@
+text
+@@
+
+

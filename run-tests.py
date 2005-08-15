@@ -1839,6 +1839,13 @@ def double_add():
   # actual revisions, too, but the main thing is to know that the
   # conversion doesn't fail.
 
+def bogus_branch_copy():
+  "reveal a bug that copies a branch file wrongly"
+  repos, wc, logs = ensure_conversion('bogus-branch-copy')
+  # If the conversion succeeds, then we're okay.  We could check the
+  # actual revisions, too, but the main thing is to know that the
+  # conversion doesn't fail.
+
 
 #----------------------------------------------------------------------
 
@@ -1900,6 +1907,7 @@ test_list = [ None,
               double_fill,
               resync_pass2_push_backward,
               double_add,
+              XFail(bogus_branch_copy),
              ]
 
 if __name__ == '__main__':

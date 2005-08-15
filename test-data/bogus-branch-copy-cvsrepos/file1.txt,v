@@ -1,0 +1,64 @@
+head	1.2;
+access;
+symbols
+	branch-boom:1.2.0.16;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2005.03.29.23.11.45;	author harry;	state Exp;
+branches
+	1.2.16.1;
+next	1.1;
+
+1.1
+date	2005.03.24.22.00.30;	author sally;	state dead;
+branches;
+next	;
+
+1.2.16.1
+date	2005.03.29.23.11.45;	author harry;	state dead;
+branches;
+next	1.2.16.2;
+
+1.2.16.2
+date	2005.04.01.23.13.40;	author harry;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@merged sally to trunk
+@
+text
+@@
+
+
+1.2.16.1
+log
+@file file1.txt was added on branch branch-boom on 2005-04-01 23:13:40 +0000
+@
+text
+@@
+
+
+1.2.16.2
+log
+@merged trunk to ira
+@
+text
+@@
+
+
+1.1
+log
+@file file1.txt was initially added on branch branch-sally.
+@
+text
+@@

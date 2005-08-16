@@ -2,9 +2,9 @@
 #
 #  run_tests.py:  test suite for cvs2svn
 #
-#  Subversion is a tool for revision control. 
+#  Subversion is a tool for revision control.
 #  See http://subversion.tigris.org for more information.
-#    
+#
 # ====================================================================
 # Copyright (c) 2000-2004 CollabNet.  All rights reserved.
 #
@@ -138,7 +138,7 @@ class Log:
   def __init__(self, revision, author, date):
     self.revision = revision
     self.author = author
-    
+
     # Internally, we represent the date as seconds since epoch (UTC).
     # Since standard subversion log output shows dates in localtime
     #
@@ -246,7 +246,7 @@ def parse_log(svn_repos):
       print 'unexpected log output (missing log separator)'
       print "Line: '%s'" % line
       sys.exit(1)
-        
+
   return logs
 
 
@@ -374,14 +374,14 @@ def ensure_conversion(name, error_re=None, passbypass=None, *args):
       saved_wd = os.getcwd()
       try:
         os.chdir(tmp_dir)
-        
+
         svnrepos = '%s-svnrepos' % conv_id
         wc       = '%s-wc' % conv_id
 
         # Clean up from any previous invocations of this script.
         erase(svnrepos)
         erase(wc)
-        
+
         try:
           args.extend( [ '--bdb-txn-nosync', '-s', svnrepos, cvsrepos ] )
           if passbypass:
@@ -474,7 +474,7 @@ def prune_with_care():
   #   revision 3:  deletes trunk/blah/cookie
   #   revision 4:  deletes blah   [re-deleting trunk/blah/cookie pruned blah!]
   #   revision 5:  does nothing
-  #   
+  #
   # After fixing cvs2svn, the sequence (correctly) looks like this:
   #
   #   revision 1:  adds trunk/blah/, adds trunk/blah/cookie
@@ -482,7 +482,7 @@ def prune_with_care():
   #   revision 3:  deletes trunk/blah/cookie
   #   revision 4:  does nothing    [because trunk/blah/cookie already deleted]
   #   revision 5:  deletes blah
-  # 
+  #
   # The difference is in 4 and 5.  In revision 4, it's not correct to
   # prune blah/, because NEWS is still in there, so revision 4 does
   # nothing now.  But when we delete NEWS in 5, that should bubble up
@@ -559,7 +559,7 @@ def interleaved_commits():
 
   if logs[rev].msg.find('Initial revision') != 0:
     raise svntest.Failure
-    
+
   # This PEP explains why we pass the 'logs' parameter to these two
   # nested functions, instead of just inheriting it from the enclosing
   # scope:   http://www.python.org/peps/pep-0227.html
@@ -626,7 +626,7 @@ def simple_commits():
 
   if logs[rev].msg.find('Initial revision') != 0:
     raise svntest.Failure
-    
+
   # The first commit.
   rev = 30
   if not logs[rev].changed_paths == {
@@ -659,7 +659,7 @@ def simple_tags():
   "simple tags and branches with no commits"
   # See test-data/main-cvsrepos/proj/README.
   repos, wc, logs = ensure_conversion('main')
- 
+
   # Verify the copy source for the tags we are about to check
   # No need to verify the copyfrom revision, as simple_commits did that
   check_rev(logs, 24, sym_log_msg('vendorbranch'), {
@@ -724,7 +724,7 @@ def mixed_time_tag():
   repos, wc, logs = ensure_conversion('main')
 
   rev = find_tag_rev(logs, 'T_MIXED')
-  expected = {  
+  expected = {
     '/tags/T_MIXED (from /trunk:31)': 'A',
     '/tags/T_MIXED/partial-prune': 'D',
     '/tags/T_MIXED/single-files': 'D',
@@ -893,7 +893,7 @@ def double_delete():
   # the --no-prune option.
   repos, wc, logs = ensure_conversion('double-delete', None, None,
                                       '--trunk-only' , '--no-prune')
-  
+
   path = '/trunk/twice-removed'
   rev = 2
   if not (logs[rev].changed_paths.get(path) == 'A'):
@@ -919,7 +919,7 @@ def split_branch():
   # The conversion will fail if the bug is present, and
   # ensure_conversion would raise svntest.Failure.
   repos, wc, logs = ensure_conversion('split-branch')
-  
+
 
 def resync_misgroups():
   "resyncing should not misorder commit groups"
@@ -928,7 +928,7 @@ def resync_misgroups():
   # The conversion will fail if the bug is present, and
   # ensure_conversion would raise svntest.Failure.
   repos, wc, logs = ensure_conversion('resync-misgroups')
-  
+
 
 def tagged_branch_and_trunk():
   "allow tags with mixed trunk and branch sources"
@@ -940,7 +940,7 @@ def tagged_branch_and_trunk():
   if (open(a_path, 'r').read().find('1.24') == -1) \
      or (open(b_path, 'r').read().find('1.5') == -1):
     raise svntest.Failure
-  
+
 
 def enroot_race():
   "never use the rev-in-progress as a copy source"
@@ -985,7 +985,7 @@ def branch_delete_first():
   if not os.path.exists(os.path.join(wc, 'branches', 'branch-3', 'file')):
     raise svntest.Failure
 
-  
+
 def nonascii_filenames():
   "non ascii files converted incorrectly"
   # see issue #1255
@@ -1047,14 +1047,14 @@ def nonascii_filenames():
       new_path = os.path.join(dstrepos_path, 'single\366files')
       os.rename(base_path, new_path)
 
-    # if ensure_conversion can generate a 
+    # if ensure_conversion can generate a
     repos, wc, logs = ensure_conversion('non-ascii', None, None,
                                         '--encoding=latin1')
   finally:
     if locale_changed:
       locale.setlocale(locale.LC_ALL, current_locale)
     svntest.main.safe_rmtree(dstrepos_path)
-    
+
 
 def vendor_branch_sameness():
   "avoid spurious changes for initial revs "
@@ -1100,7 +1100,7 @@ def vendor_branch_sameness():
   if logs[rev + 1].msg.find(sym_log_msg('vbranchA')) != 0:
     raise svntest.Failure
 
-  if not logs[rev + 1].changed_paths == { 
+  if not logs[rev + 1].changed_paths == {
    '/branches/vbranchA (from /trunk:2)' : 'A',
     '/branches/vbranchA/proj/d.txt' : 'D',
     }:
@@ -1142,8 +1142,8 @@ def default_branches():
   #       Same, but missing 1.1.1 label and all tags but 1.1.1.3.
   #
   #    deleted-on-vendor-branch.txt,v:
-  #       Like b.txt and c.txt, except that 1.1.1.3 is state 'dead'. 
-  # 
+  #       Like b.txt and c.txt, except that 1.1.1.3 is state 'dead'.
+  #
   #    added-then-imported.txt,v:
   #       Added with 'cvs add' to create 1.1, then imported with
   #       completely different contents to create 1.1.1.1, therefore
@@ -1248,8 +1248,8 @@ def default_branches():
     '/branches/vbranchA/proj/deleted-on-vendor-branch.txt' : 'M',
     })
 
-  check_rev(logs, 5, "Import (vbranchA, vtag-1).", {}) 
-                     
+  check_rev(logs, 5, "Import (vbranchA, vtag-1).", {})
+
   check_rev(logs, 4, sym_log_msg('vbranchA'), {
     '/branches/vbranchA (from /trunk:2)' : 'A',
     '/branches/vbranchA/proj/d.txt' : 'D',
@@ -1332,14 +1332,14 @@ def pass5_when_to_fill():
   # The conversion will fail if the bug is present, and
   # ensure_conversion would raise svntest.Failure.
   repos, wc, logs = ensure_conversion('pass5-when-to-fill')
-  
+
 
 def empty_trunk():
   "don't break when the trunk is empty"
   # The conversion will fail if the bug is present, and
   # ensure_conversion would raise svntest.Failure.
   repos, wc, logs = ensure_conversion('empty-trunk')
-  
+
 def no_spurious_svn_commits():
   "ensure that we don't create any spurious commits"
   repos, wc, logs = ensure_conversion('phoenix')
@@ -1760,7 +1760,7 @@ def requires_cvs():
 
   atsign_contents = file(os.path.join(wc, "trunk", "atsign-add")).read()
   cl_contents     = file(os.path.join(wc, "trunk", "client_lock.idl")).read()
-  
+
   if atsign_contents[-1:] == "@":
     raise svntest.Failure
   if cl_contents.find("gregh\n//\n//Integration for locks") < 0:

@@ -12,7 +12,7 @@ def usage():
   sys.stderr.write("Dump .db database files created by cvs2svn.\n")
   sys.exit(1)
 
-  
+
 def main():
   argc = len(sys.argv)
   if argc < 2:

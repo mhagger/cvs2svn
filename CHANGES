@@ -30,7 +30,7 @@ Version 1.1.0
  * Issue 74: No longer attempt to change non-existent files.
  * Allow the Subversion repository created to have spaces in its name.
  * Avoid erroring when using a svnadmin that uses FSFS by default.
- 
+
 
 Version 1.0.0
 (25 August 2004, from /tags/1.0.0)

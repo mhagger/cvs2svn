@@ -63,7 +63,7 @@ except:
 # Python 2.4 solved this by adding the subprocess module, but since we
 # cannot require such a new version, we cannot use it directly, but
 # must implement a simplified Popen using the best means neccessary.
-# 
+#
 # The SimplePopen class only has the following members and methods, all
 # behaving as documented in the subprocess.Popen class:
 #     - stdin
@@ -152,7 +152,7 @@ SVN_KEYWORDS_VALUE = 'Author Date Id Revision'
 # This really only matches standard '1.1.1.*'-style vendor revisions.
 # One could conceivably have a file whose default branch is 1.1.3 or
 # whatever, or was that at some point in time, with vendor revisions
-# 1.1.3.1, 1.1.3.2, etc.  But with the default branch gone now (which 
+# 1.1.3.1, 1.1.3.2, etc.  But with the default branch gone now (which
 # is the only time this regexp gets used), we'd have no basis for
 # assuming that the non-standard vendor branch had ever been the
 # default branch anyway, so we don't want this to match them anyway.
@@ -559,11 +559,11 @@ class Log:
     # Set this to true if you want to see timestamps on each line output.
     self.use_timestamps = None
     self.logger = sys.stdout
- 
+
   def _timestamp(self):
     """Output a detailed timestamp at the beginning of each line output."""
     self.logger.write(time.strftime('[%Y-%m-%d %I:%m:%S %Z] - '))
- 
+
   def write(self, log_level, *args):
     """This is the public method to use for writing to a file.  Only
     messages whose LOG_LEVEL is <= self.log_level will be printed.  If
@@ -863,7 +863,7 @@ class CVSRevision:
        svn_path
        svn_trunk_path
        is_default_branch_revision()
-    
+
     (Note that this class treats CTX as const, because the caller
     likely passed in a Borg instance of a Ctx.  The reason this class
     takes CTX as as a parameter, instead of just instantiating a Ctx
@@ -883,7 +883,7 @@ class CVSRevision:
        rev             -->  (string) this CVS rev, e.g., "1.3"
        next_rev        -->  (string or None) next CVS rev, e.g., "1.4"
        file_in_attic   -->  (char or None) true if RCS file is in Attic
-       file_executable -->  (char or None) true if RCS file has exec bit set. 
+       file_executable -->  (char or None) true if RCS file has exec bit set.
        file_size       -->  (int) size of the RCS file
        deltatext_code  -->  (char) 'N' if non-empty deltatext, else 'E'
        mode            -->  (string or None) "kkv", "kb", etc.
@@ -902,7 +902,7 @@ class CVSRevision:
       (self.timestamp, self.digest, self.prev_timestamp, self.next_timestamp,
        self.op, self.prev_rev, self.rev, self.next_rev, self.file_in_attic,
        self.file_executable, self.file_size, self.deltatext_code,
-       self.fname, 
+       self.fname,
        self.mode, self.branch_name, self.tags, self.branches) = args
     elif len(args) == 1:
       data = args[0].split(' ', 15)
@@ -1224,7 +1224,7 @@ class CollectData(cvs2svn_rcsparse.Sink):
     # We calculate and save some file metadata here, where we can do
     # it only once per file, instead of waiting until later where we
     # would have to do the same calculations once per CVS *revision*.
-    
+
     self.rel_name = relative_name(Ctx().cvsroot, self.fname)[:-2]
 
     # If the paths are not the same, then that means that the
@@ -1240,7 +1240,7 @@ class CollectData(cvs2svn_rcsparse.Sink):
     # Whether or not the executable bit is set.
     self.file_executable = None
     if file_stat[0] & stat.S_IXUSR:
-      self.file_executable = 1      
+      self.file_executable = 1
 
     # revision -> [timestamp, author, old-timestamp]
     self.rev_data = { }
@@ -1281,7 +1281,7 @@ class CollectData(cvs2svn_rcsparse.Sink):
 
     # RCS flags (used for keyword expansion).
     self.mode = None
-    
+
     # Hash mapping revision numbers, like '1.7', to lists of names
     # indicating which branches sprout from that revision, like
     # ['Release_1_0_dev', 'experimental_driver', ...].
@@ -1314,7 +1314,7 @@ class CollectData(cvs2svn_rcsparse.Sink):
 
   def set_expansion(self, mode):
     self.mode = mode
-    
+
   def set_branch_name(self, branch_number, name):
     """Record that BRANCH_NUMBER is the branch number for branch NAME,
     and that NAME sprouts from BRANCH_NUMBER .
@@ -1565,11 +1565,11 @@ class CollectData(cvs2svn_rcsparse.Sink):
     #
     # It's a delete if RCS state is 'dead'
     #
-    # It's an add if RCS state is 'Exp.' and 
+    # It's an add if RCS state is 'Exp.' and
     #      - we either have no previous revision
-    #        or 
+    #        or
     #      - we have a previous revision whose state is 'dead'
-    # 
+    #
     # Anything else is a change.
     if self.rev_state[revision] == 'dead':
       op = OP_DELETE
@@ -1670,13 +1670,13 @@ class SymbolingsLogger:
       self._note_default_branch_opening(c_rev, name)
       if c_rev.op != OP_DELETE:
         self._log(name, svn_revnum, c_rev.svn_path, OPENING)
-      
+
       # If our c_rev has a next_rev, then that's the closing rev for
       # this source revision.  Log it to closings for later processing
       # since we don't know the svn_revnum yet.
       if c_rev.next_rev is not None:
         self.closings.write('%s %s\n' %
-                            (name, c_rev.unique_key(c_rev.next_rev))) 
+                            (name, c_rev.unique_key(c_rev.next_rev)))
 
   def _log(self, name, svn_revnum, svn_path, type):
     """Write out a single line to the symbol_openings_closings file
@@ -1713,7 +1713,7 @@ class SymbolingsLogger:
     if not self.open_paths_with_default_branches.has_key(path):
       self.open_paths_with_default_branches[path] = [ ]
     self.open_paths_with_default_branches[path].append(symbolic_name)
-      
+
   def log_default_branch_closing(self, c_rev, svn_revnum):
     """If self.open_paths_with_default_branches contains
     C_REV.svn_trunk_path, then call log each name in
@@ -1760,7 +1760,7 @@ class PersistenceManager:
       self.tags_db = TagsDatabase(DB_OPEN_READ)
       self.motivating_revnums = Database(temp(MOTIVATING_REVNUMS), mode)
       Cleanup().register(temp(MOTIVATING_REVNUMS), pass8)
-    
+
     # "branch_name" -> svn_revnum in which branch was last filled.
     # This is used by CVSCommit._pre_commit, to prevent creating a fill
     # revision which would have nothing to do.
@@ -1818,10 +1818,10 @@ class PersistenceManager:
       raise SVNCommit.SVNCommitInternalInconsistencyError(msg)
 
     return svn_commit
-    
+
   def set_cvs_revs(self, svn_revnum, cvs_revs):
     """Record the bidirectional mapping between SVN_REVNUM and
-    CVS_REVS.""" 
+    CVS_REVS."""
     if self.mode == DB_OPEN_READ:
       raise RuntimeError, \
           'Write operation attempted on read-only PersistenceManager'
@@ -1864,7 +1864,7 @@ class CVSCommit:
     self.digest = digest
     self.author = author
     self.log = log
-    
+
     # Symbolic names for which the last source revision has already
     # been seen and for which the CVSRevisionAggregator has already
     # generated a fill SVNCommit.  See self.process_revisions().
@@ -1890,9 +1890,9 @@ class CVSCommit:
     # commit.  We gather these so that we can set their dates to the
     # same date as the primary commit.
     self.secondary_commits = [ ]
-    
+
     # State for handling default branches.
-    # 
+    #
     # Here is a tempting, but ultimately nugatory, bit of logic, which
     # I share with you so you may appreciate the less attractive, but
     # refreshingly non-nugatory, logic which follows it:
@@ -1967,7 +1967,7 @@ class CVSCommit:
 
     self.files[c_rev.fname] = 1
 
-  def _pre_commit(self):    
+  def _pre_commit(self):
     """Generates any SVNCommits that must exist before the main
     commit."""
 
@@ -2078,7 +2078,7 @@ class CVSCommit:
             Ctx()._persistence_manager.svn_commit_metadata[c_rev.digest]
         if log_msg == cvs_generated_msg:
           continue
-      
+
       svn_commit.add_revision(c_rev)
       if c_rev.is_default_branch_revision():
         self.default_branch_cvs_revisions.append(c_rev)
@@ -2094,7 +2094,7 @@ class CVSCommit:
       # SVNCommit revision counter.
       SVNCommit.revnum = SVNCommit.revnum - 1
 
-    if not Ctx().trunk_only:    
+    if not Ctx().trunk_only:
       for c_rev in self.revisions():
         Ctx()._symbolings_logger.log_revision(c_rev, svn_commit.revnum)
 
@@ -2118,7 +2118,7 @@ class CVSCommit:
         Ctx()._symbolings_logger.log_default_branch_closing(c_rev,
                                                             svn_commit.revnum)
       self.secondary_commits.append(svn_commit)
-    
+
   def process_revisions(self, done_symbols):
     """Process all the CVSRevisions that this instance has, creating
     one or more SVNCommits in the process.  Generate fill SVNCommits
@@ -2175,7 +2175,7 @@ class SVNCommit:
   # We start at 2 because SVNRepositoryMirror uses the first commit
   # to create trunk, tags, and branches.
   revnum = 2
-    
+
   class SVNCommitInternalInconsistencyError(Exception):
     """Exception raised if we encounter an impossible state in the
     SVNCommit Databases."""
@@ -2256,7 +2256,7 @@ class SVNCommit:
     if you do, the value may be overwritten by a later call to
     self.add_revision()."""
     self._max_date = date
-   
+
   def get_date(self):
     """Returns this SVNCommit's date as an integer."""
     return self._max_date
@@ -2264,7 +2264,7 @@ class SVNCommit:
   def get_revprops(self):
     """Return the Subversion revprops for this SVNCommit."""
     date = format_date(self._max_date)
-    try: 
+    try:
       ### FIXME: The 'replace' behavior should be an option, like
       ### --encoding is.
       utf8_author = None
@@ -2285,7 +2285,7 @@ class SVNCommit:
       Log().write(LOG_WARN, "(subversion rev %s)  Related files:" % self.revnum)
       for c_rev in self.cvs_revs:
         Log().write(LOG_WARN, " ", c_rev.fname)
-        
+
       Log().write(LOG_WARN, "Consider rerunning with (for example)",
                   "'--encoding=latin1'.\n")
       # It's better to fall back to the original (unknown encoding) data
@@ -2304,7 +2304,7 @@ class SVNCommit:
     return not (self.symbolic_name or self.motivating_revnum)
 
   def flush(self):
-    Log().write(LOG_NORMAL, "Creating Subversion commit %d (%s)" 
+    Log().write(LOG_NORMAL, "Creating Subversion commit %d (%s)"
                 % (self.revnum, self._description))
     Ctx()._persistence_manager.set_cvs_revs(self.revnum, self.cvs_revs)
 
@@ -2357,7 +2357,7 @@ class SVNCommit:
     space_or_newline = ' '
     if len(self.symbolic_name) >= 13:
       space_or_newline = '\n'
-        
+
     return "This commit was manufactured by cvs2svn to create %s%s'%s'." \
            % (type, space_or_newline, self.symbolic_name)
 
@@ -2442,13 +2442,13 @@ class CVSRevisionAggregator:
     # Make sure we attempt_to_commit_symbols for this c_rev, even if no
     # commits are ready.
     if len(ready_queue) == 0:
-      self.attempt_to_commit_symbols(ready_queue, c_rev) 
+      self.attempt_to_commit_symbols(ready_queue, c_rev)
 
     for cvs_commit in ready_queue[:]:
       self.latest_primary_svn_commit \
           = cvs_commit.process_revisions(self.done_symbols)
       ready_queue.remove(cvs_commit)
-      self.attempt_to_commit_symbols(ready_queue, c_rev) 
+      self.attempt_to_commit_symbols(ready_queue, c_rev)
 
   def flush(self):
     """Commit anything left in self.cvs_commits.  Then inform the
@@ -2464,11 +2464,11 @@ class CVSRevisionAggregator:
         cvs_commit_tuple[0].process_revisions(self.done_symbols)
       ready_queue.remove(cvs_commit_tuple)
       del self.cvs_commits[cvs_commit_tuple[1]]
-      self.attempt_to_commit_symbols([]) 
-  
+      self.attempt_to_commit_symbols([])
+
     if not Ctx().trunk_only:
       Ctx()._symbolings_logger.close()
-    
+
   def attempt_to_commit_symbols(self, queued_commits, c_rev=None):
     """
     This function generates 1 SVNCommit for each symbol in
@@ -2523,7 +2523,7 @@ class SymbolingsReader:
     self.symbolings = open(temp(SYMBOL_OPENINGS_CLOSINGS_SORTED), 'r')
     # The offsets_db is really small, and we need to read and write
     # from it a fair bit, so suck it into memory
-    offsets_db = Database(temp(SYMBOL_OFFSETS_DB), DB_OPEN_READ) 
+    offsets_db = Database(temp(SYMBOL_OFFSETS_DB), DB_OPEN_READ)
     self.offsets = { }
     for key in offsets_db.db.keys():
       #print " ZOO:", key, offsets_db[key]
@@ -2566,10 +2566,10 @@ class SymbolingsReader:
     # we read.
     if not symbol_fill.is_empty():
       self.offsets[symbolic_name] = fpos
-                               
+
     symbol_fill.make_node_tree()
     return symbol_fill
-  
+
 
 class SymbolicNameFillingGuide:
   """A SymbolicNameFillingGuide is essentially a node tree
@@ -2652,7 +2652,7 @@ class SymbolicNameFillingGuide:
                                    tally_frequencies(closings))
 
     revnum, max_score = self._best_rev(scores, preferred_revnum)
-  
+
     if revnum == SVN_INVALID_REVNUM:
       sys.stderr.write(error_prefix + ": failed to find a revision "
                        + "to copy from when copying %s\n" % name)
@@ -2713,7 +2713,7 @@ class SymbolicNameFillingGuide:
     if closings is None:
       closings = []
 
-    # No easy out, so wish for lexical closures and calculate the scores :-). 
+    # No easy out, so wish for lexical closures and calculate the scores :-).
     scores = []
     opening_score_accum = 0
     for i in range(len(openings)):
@@ -2762,7 +2762,7 @@ class SymbolicNameFillingGuide:
 
     for key, node_contents in self.node_tree[node].items():
       if key[0] == '/':
-        continue 
+        continue
       revnums = revnums + \
           self._list_revnums_for_key(node_contents, revnum_type_key)
     return revnums
@@ -2822,7 +2822,7 @@ class SymbolicNameFillingGuide:
         parent_key = child_key
       # Having reached the leaf, attach the value
       self.node_tree[parent_key] = open_close
-    #print_node_tree(self.node_tree, self.root_key) 
+    #print_node_tree(self.node_tree, self.root_key)
 
   def is_empty(self):
     """Return true if we haven't accumulated any openings or closings,
@@ -3045,7 +3045,7 @@ class SVNRepositoryMirror:
   def _path_exists(self, path):
     """If PATH exists in self.youngest of the svn repository mirror,
     return true, else return None.
-    
+
     PATH must not start with '/'."""
     return self._open_readonly_node(path, self.youngest) is not None
 
@@ -3314,7 +3314,7 @@ class SVNRepositoryMirror:
     """Add an SVNCommit to the SVNRepository, incrementing the
     Repository revision number, and changing the repository.  Invoke
     the delegates' _start_commit() method."""
-    
+
     if svn_commit.revnum == 2:
       self._initialize_repository(svn_commit.get_date())
 
@@ -3403,7 +3403,7 @@ class SVNRepositoryMirror:
 class SVNCommitItem:
   """A wrapper class for CVSRevision objects upon which
    Subversion-related data (such as properties) may be hung."""
-  
+
   def __init__(self, c_rev, make_svn_props):
     self.c_rev = c_rev
     self.set_cvs_revnum_properties = Ctx().cvs_revnums
@@ -3468,7 +3468,7 @@ class SVNCommitItem:
       if eol_style:
         self.svn_props['svn:eol-style'] = eol_style
 
-    
+
 class SVNRepositoryMirrorDelegate:
   """Abstract superclass for any delegate to SVNRepositoryMirror.
   Subclasses must implement all of the methods below.
@@ -3505,13 +3505,13 @@ class SVNRepositoryMirrorDelegate:
     """PATH is a string; see subclass implementation for
     details."""
     raise NotImplementedError
-  
+
   def copy_path(self, src_path, dest_path, src_revnum):
     """SRC_PATH and DEST_PATH are both strings, and SRC_REVNUM is a
     subversion revision number (int); see subclass implementation for
     details."""
     raise NotImplementedError
-  
+
   def finish(self):
     """Perform any cleanup necessary after all revisions have been
     committed."""
@@ -3543,13 +3543,13 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     to 'native' for all files to which Ctx().mime_mapper assigns a
     mime type beginning with "text/", and don't set 'svn:eol-style'
     for files assigned a type not beginning with "text/".
-    """ 
+    """
     if dumpfile_path:
       self.dumpfile_path = dumpfile_path
     else:
       self.dumpfile_path = Ctx().dumpfile
     self.path_encoding = Ctx().encoding
-    
+
     self.dumpfile = open(self.dumpfile_path, 'wb')
     self._write_dumpfile_header(self.dumpfile)
 
@@ -3580,11 +3580,11 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     self.revision = svn_commit.revnum
 
     # The start of a new commit typically looks like this:
-    # 
+    #
     #   Revision-number: 1
     #   Prop-content-length: 129
     #   Content-length: 129
-    #   
+    #
     #   K 7
     #   svn:log
     #   V 27
@@ -3608,7 +3608,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     # everything.  That's the generic header form for any entity in a
     # dumpfile.  But since revisions only have props, the two lengths
     # are always the same for revisions.
-    
+
     # Calculate the total length of the props section.
     props = svn_commit.get_revprops()
     prop_names = props.keys()
@@ -3623,7 +3623,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
       vlen_len = len('V %d' % vlen)
       # + 4 for the four newlines within a given property's section
       total_len = total_len + klen + klen_len + vlen + vlen_len + 4
-        
+
     # Print the revision header and props
     self.dumpfile.write('Revision-number: %d\n'
                         'Prop-content-length: %d\n'
@@ -3634,9 +3634,9 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     for propname in prop_names:
       if props[propname] is None:
         continue
-      self.dumpfile.write('K %d\n' 
+      self.dumpfile.write('K %d\n'
                           '%s\n'
-                          'V %d\n' 
+                          'V %d\n'
                           '%s\n' % (len(propname),
                                     propname,
                                     len(props[propname]),
@@ -3647,7 +3647,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
 
   def mkdir(self, path):
     """Emit the creation of directory PATH."""
-    self.dumpfile.write("Node-path: %s\n" 
+    self.dumpfile.write("Node-path: %s\n"
                         "Node-kind: dir\n"
                         "Node-action: add\n"
                         "\n"
@@ -3670,7 +3670,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     # Convenience variables
     c_rev = s_item.c_rev
     svn_props = s_item.svn_props
-    
+
     # The property handling here takes advantage of an undocumented
     # but IMHO consistent feature of the Subversion dumpfile-loading
     # code.  When a node's properties aren't mentioned (that is, the
@@ -3700,7 +3700,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     # based on the contents of a ".cvsignore" file -- in other words,
     # CVS is doing the remembering for us, so we still don't have to
     # preserve the previous value of the property ourselves.
-    
+
     # Calculate the (sorted-by-name) property string and length, if any.
     prop_contents = ''
     prop_names = svn_props.keys()
@@ -3826,7 +3826,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     self.dumpfile.write('Node-path: %s\n'
                         'Node-action: delete\n'
                         '\n' % self._utf8_path(path))
-  
+
   def copy_path(self, src_path, dest_path, src_revnum):
     """Emit the copying of SRC_PATH at SRC_REV to DEST_PATH."""
     # We don't need to include "Node-kind:" for copies; the loader
@@ -3839,7 +3839,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
                         % (self._utf8_path(dest_path),
                            src_revnum,
                            self._utf8_path(src_path)))
-  
+
   def finish(self):
     """Perform any cleanup necessary after all revisions have been
     committed."""
@@ -3880,7 +3880,7 @@ class RepositoryDelegate(DumpfileDelegate):
         run_command('%s create %s "%s"' % (self.svnadmin,
                                            "--bdb-txn-nosync",
                                            self.target))
-        
+
 
     # Since the output of this run is a repository, not a dumpfile,
     # the temporary dumpfiles we create should go in the tmpdir.
@@ -3927,7 +3927,7 @@ class RepositoryDelegate(DumpfileDelegate):
     self.dumpfile.truncate()
     DumpfileDelegate.start_commit(self, svn_commit)
     self._commit_in_progress = 1
-  
+
   def finish(self):
     """Loads the last commit into the repository."""
     self._feed_pipe()
@@ -3992,13 +3992,13 @@ class StdoutDelegate(SVNRepositoryMirrorDelegate):
   def delete_path(self, path):
     """Print a line stating that we are 'deleting' PATH."""
     Log().write(LOG_VERBOSE, "  Deleting", path)
-  
+
   def copy_path(self, src_path, dest_path, src_revnum):
     """Print a line stating that we are 'copying' revision SRC_REVNUM
     of SRC_PATH to DEST_PATH."""
     Log().write(LOG_VERBOSE, "  Copying revision", src_revnum, "of", src_path)
     Log().write(LOG_VERBOSE, "                to", dest_path)
-  
+
   def finish(self):
     """State that we are done creating our repository."""
     Log().write(LOG_VERBOSE, "Finished creating Subversion repository.")
@@ -4062,7 +4062,7 @@ def pass1():
   StatsKeeper().reset_c_rev_info()
   StatsKeeper().archive()
   Log().write(LOG_QUIET, "Done")
- 
+
 def pass2():
   "Pass 2: clean up the revision information."
 
@@ -4389,9 +4389,9 @@ def pass7():
     ###PERF This is a fine example of a db that can be in-memory and
     #just flushed to disk when we're done.  Later, it can just be sucked
     #back into memory.
-    offsets_db = Database(temp(SYMBOL_OFFSETS_DB), DB_OPEN_NEW) 
+    offsets_db = Database(temp(SYMBOL_OFFSETS_DB), DB_OPEN_NEW)
     Cleanup().register(temp(SYMBOL_OFFSETS_DB), pass8)
-    
+
     file = open(temp(SYMBOL_OPENINGS_CLOSINGS_SORTED), 'r')
     old_sym = ""
     while 1:
@@ -4737,7 +4737,7 @@ def main():
       profiling = 1
     elif opt == '--symbol-transform':
       ctx.symbol_transforms.append(value.split(":"))
-      
+
   if ctx.print_help:
     usage()
     sys.exit(0)
@@ -4881,7 +4881,7 @@ def main():
       sys.stderr.write(error_prefix +
                        ": error executing CVS: status %s, error output:\n" \
                        % (cvs_exitstatus) + cvs_errmsg)
-  
+
   # But do lock the tmpdir, to avoid process clash.
   try:
     os.mkdir(os.path.join(ctx.tmpdir, 'cvs2svn.lock'))

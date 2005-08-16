@@ -350,7 +350,7 @@ def main(argv):
       verify_trunk = 1
     elif (opt == '--skip-cleanup'):
       ctx.skip_cleanup = 1
-      
+
   # Consistency check for options and arguments.
   if len(args) != 2:
     usage()

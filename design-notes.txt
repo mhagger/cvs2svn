@@ -31,7 +31,7 @@ of the RCS file that looks like this:
    branches
    	1.6.2.1;
    next	1.5;
-   
+
    1.5
    date	2002.05.28.18.02.11;	author captnmark;	state Exp;
    branches;
@@ -88,9 +88,9 @@ The fields are:
    13. the RCS keyword substitution mode ("k", "b", etc), or "*" if none
    14. the branch on which this commit happened, or "*" if not on a branch
    15. the number of tags rooted at this revision (followed by their
-       names, space-delimited)  
+       names, space-delimited)
    16. the number of branches rooted at this revision (followed by
-       their names, space-delimited) 
+       their names, space-delimited)
    17. the path of the RCS file in the repository
 
 (Of course, in the above example, fields 15 and 16 are "0", so they have
@@ -214,16 +214,16 @@ This pass has two primary objectives:
    The format for this file is:
 
        cvs-symname-last-revs.db:
-            Key                      Value    
+            Key                      Value
             CVS Revision             array of Symbolic names
-     
+
        For example:
- 
+
             1.38/foo/bar/baz.txt,v  --> [TAG11, BRANCH38]
             1.93/foo/qux/bat.c,v    --> [TAG39]
             1.4/foo/bar/baz.txt,v   --> [BRANCH48, BRANCH37]
             1.18/foo/bar/quux.txt,v --> [TAG320, TAG1178]
-   
+
 Pass 5:
 =======
 
@@ -246,7 +246,7 @@ This pass does the following:
    number encountered after the "Opening" is called the "Closing".  In
    this pass, the SymbolingsLogger class writes one line to
    cvs2svn-symbolic-names.txt per CVS file, per symbolic name, per
-   opening or closing. 
+   opening or closing.
 
 3. For each CVS Revision in s-revs, we write out a line (for each
    symbolic name that it opens) to a symbolic-names.txt file if it is
@@ -258,7 +258,7 @@ This pass does the following:
    The format of each line is:
 
        SYMBOLIC_NAME SVN_REVNUM TYPE CVSRevision.unique_key()
-       
+
    For example:
 
        MY_TAG1 234 O 1.3/foo/bar/baz.txt,v
@@ -280,7 +280,7 @@ This pass does the following:
    CVSRevision.unique_key(): This is a unique key that identifies
                              the CVSRevision where this opening or
                              closing happened.
-                               
+
    See SymbolingsLogger for more details.
 
 Pass 6:
@@ -412,14 +412,14 @@ An email from John Gardiner Myers <jgmyers@speakeasy.net> about some
 considerations for the tool.
 
 ------
-From: John Gardiner Myers <jgmyers@speakeasy.net>                     
+From: John Gardiner Myers <jgmyers@speakeasy.net>
 Subject: Thoughts on CVS to SVN conversion
-To: gstein@lyra.org                                  
+To: gstein@lyra.org
 Date: Sun, 15 Apr 2001 17:47:10 -0700
 
 Some things you may want to consider for a CVS to SVN conversion utility:
 
-If converting a CVS repository to SVN takes days, it would be good for     
+If converting a CVS repository to SVN takes days, it would be good for
 the conversion utility to keep its progress state on disk.  If the
 conversion fails halfway through due to a network outage or power
 failure, that would allow the conversion to be resumed where it left off

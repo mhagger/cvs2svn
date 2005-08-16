@@ -34,7 +34,7 @@ def do_it(revs_file):
   line_count = 0
   total_tags = 0
   total_branches = 0
-  
+
   while 1:
     line_count = line_count + 1
     line = fp.readline()
@@ -69,7 +69,7 @@ def do_it(revs_file):
   num_branches = len(branches.keys())
   avg_tags = total_tags * 1.0 / line_count
   avg_branches = total_branches * 1.0 / line_count
-  
+
   print '   Total CVS Revisions: %d\n' \
         '     Total Unique Tags: %d\n' \
         '    Peak Revision Tags: %d\n' \
@@ -78,7 +78,7 @@ def do_it(revs_file):
         'Peak Revision Branches: %d\n' \
         'Avg. Branches/Revision: %2.1f\n' \
         '  Total Unique Symbols: %d%s\n' \
-        % (line_count, 
+        % (line_count,
            num_tags,
            max_tags,
            avg_tags,

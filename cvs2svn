@@ -511,7 +511,8 @@ def print_node_tree(tree, root_node, indent_depth=0):
     print_node_tree(tree, value, (indent_depth + 1))
 
 def match_regexp_list(regexp_list, string):
-  """Test whether STRING matches any of the compiled regexps in REGEXP_LIST."""
+  """Test whether STRING matches any of the compiled regexps in
+  REGEXP_LIST."""
   for regexp in regexp_list:
     if regexp.match(string):
       return True
@@ -962,16 +963,18 @@ class CVSRevision:
     return revnum + "/" + self.fname
 
   def __str__(self):
-    return ('%08lx %s %s %s %s %s %s %s %s %s %d %s %s %s %d%s%s %d%s%s %s' % (
-      self.timestamp, self.digest, self.prev_timestamp or "*",
-      self.next_timestamp or "*", self.op,
-      (self.prev_rev or "*"), self.rev, (self.next_rev or "*"),
-      (self.file_in_attic or "*"), (self.file_executable or "*"),
-      self.file_size,
-      self.deltatext_code, (self.mode or "*"), (self.branch_name or "*"),
-      len(self.tags), self.tags and " " or "", " ".join(self.tags),
-      len(self.branches), self.branches and " " or "", " ".join(self.branches),
-      self.fname, ))
+    return ('%08lx %s %s %s %s %s %s %s %s %s %d %s %s %s %d%s%s %d%s%s %s'
+            % (self.timestamp, self.digest, self.prev_timestamp or "*",
+              self.next_timestamp or "*", self.op, (self.prev_rev or "*"),
+              self.rev, (self.next_rev or "*"), (self.file_in_attic or "*"),
+              (self.file_executable or "*"),
+              self.file_size,
+              self.deltatext_code, (self.mode or "*"),
+              (self.branch_name or "*"),
+              len(self.tags), self.tags and " " or "", " ".join(self.tags),
+              len(self.branches), self.branches and " " or "",
+              " ".join(self.branches),
+              self.fname, ))
 
   # Returns true if this CVSRevision is the opening CVSRevision for
   # NAME (for this RCS file).
@@ -1201,7 +1204,8 @@ class CollectData(cvs2svn_rcsparse.Sink):
     Cleanup().register(temp(DATAFILE + REVS_SUFFIX), pass2)
     self.resync = open(temp(DATAFILE + RESYNC_SUFFIX), 'w')
     Cleanup().register(temp(DATAFILE + RESYNC_SUFFIX), pass2)
-    self.default_branches_db = Database(temp(DEFAULT_BRANCHES_DB), DB_OPEN_NEW)
+    self.default_branches_db = Database(temp(DEFAULT_BRANCHES_DB),
+                                        DB_OPEN_NEW)
     Cleanup().register(temp(DEFAULT_BRANCHES_DB), pass5)
     self.metadata_db = Database(temp(METADATA_DB), DB_OPEN_NEW)
     Cleanup().register(temp(METADATA_DB), pass8)
@@ -1796,7 +1800,8 @@ class PersistenceManager:
         svn_commit.set_author(author)
         svn_commit.set_log_msg(log_msg)
 
-    # If we're doing a trunk-only conversion, we don't need to do any more work.
+    # If we're doing a trunk-only conversion, we don't need to do any more
+    # work.
     if Ctx().trunk_only:
       return svn_commit
 
@@ -2282,7 +2287,8 @@ class SVNCommit:
       Log().write(LOG_WARN, "  author: '%s'" % self._author)
       Log().write(LOG_WARN, "  log:    '%s'" % self.get_log_msg().rstrip())
       Log().write(LOG_WARN, "  date:   '%s'" % date)
-      Log().write(LOG_WARN, "(subversion rev %s)  Related files:" % self.revnum)
+      Log().write(LOG_WARN,
+                  "(subversion rev %s)  Related files:" % self.revnum)
       for c_rev in self.cvs_revs:
         Log().write(LOG_WARN, " ", c_rev.fname)
 
@@ -2376,7 +2382,8 @@ class CVSRevisionAggregator:
   def __init__(self):
     self.metadata_db = Database(temp(METADATA_DB), DB_OPEN_READ)
     if not Ctx().trunk_only:
-      self.last_revs_db = Database(temp(SYMBOL_LAST_CVS_REVS_DB), DB_OPEN_READ)
+      self.last_revs_db = Database(temp(SYMBOL_LAST_CVS_REVS_DB),
+                                   DB_OPEN_READ)
     self.cvs_commits = {}
     self.pending_symbols = {}
     # A list of symbols for which we've already encountered the last
@@ -2786,7 +2793,8 @@ class SymbolicNameFillingGuide:
     # Always log an OPENING
     if type == OPENING:
       self.things[svn_path] = {self.OPENING_KEY: svn_revnum}
-    # Only log a closing if we've already registered the opening for that path.
+    # Only log a closing if we've already registered the opening for that
+    # path.
     elif type == CLOSING and self.things.has_key(svn_path):
       # When we have a non-trunk default branch, we may have multiple
       # closings--only register the first closing we encounter.
@@ -3055,7 +3063,8 @@ class SVNRepositoryMirror:
     in PARENT_CONTENTS."""
     if parent_contents.has_key(component):
       del parent_contents[component]
-      self._invoke_delegates('delete_path', _path_join(parent_path, component))
+      self._invoke_delegates('delete_path',
+                             _path_join(parent_path, component))
 
   def _delete_path(self, svn_path, should_prune=False):
     """Delete PATH from the tree.  If SHOULD_PRUNE is true, then delete
@@ -3912,8 +3921,8 @@ class RepositoryDelegate(DumpfileDelegate):
       try:
         self.loader_pipe.stdin.write(data)
       except IOError:
-        sys.stderr.write("%s: svnadmin failed with the following output while "
-                         "loading the dumpfile:\n" % (error_prefix))
+        sys.stderr.write("%s: svnadmin failed with the following output "
+                         "while loading the dumpfile:\n" % (error_prefix))
         sys.stderr.write(self.loader_pipe.stderr.read())
         sys.exit(1)
 
@@ -4033,13 +4042,15 @@ def pass1():
       Log().write(LOG_NORMAL, pathname)
       try:
         cvs2svn_rcsparse.parse(open(pathname, 'rb'), cd)
-      except (cvs2svn_rcsparse.common.RCSParseError, ValueError, RuntimeError):
+      except (cvs2svn_rcsparse.common.RCSParseError, ValueError,
+              RuntimeError):
         err = "%s: '%s' is not a valid ,v file" \
               % (error_prefix, pathname)
         sys.stderr.write(err + '\n')
         cd.fatal_errors.append(err)
       except:
-        Log().write(LOG_WARN, "Exception occurred while parsing %s" % pathname)
+        Log().write(LOG_WARN,
+                    "Exception occurred while parsing %s" % pathname)
         raise
 
   os.path.walk(Ctx().cvsroot, visit_file, cd)
@@ -4150,9 +4161,9 @@ def pass2():
     # A digest maps to a sequence of lists which specify a lower and upper
     # time bound for matching up the commit.  We keep a sequence of these
     # because a number of checkins with the same log message (e.g. an empty
-    # log message) could need to be remapped.  We also make them a list because
-    # we will dynamically expand the lower/upper bound as we find commits
-    # that fall into a particular msg and time range.
+    # log message) could need to be remapped.  We also make them a list
+    # because we will dynamically expand the lower/upper bound as we find
+    # commits that fall into a particular msg and time range.
     #
     # resync == digest -> [ [old_time_lower, old_time_upper, new_time], ... ]
     #
@@ -4512,7 +4523,7 @@ class MimeMapper:
       type = extensions.pop(0)
       for ext in extensions:
         if self.mappings.has_key(ext) and self.mappings[ext] != type:
-          sys.stderr.write("%s: ambiguous MIME mapping for *.%s (%s or %s)\n" \
+          sys.stderr.write("%s: ambiguous MIME mapping for *.%s (%s or %s)\n"
                            % (warning_prefix, ext, self.mappings[ext], type))
         self.mappings[ext] = type
 
@@ -4558,8 +4569,9 @@ def convert(start_pass, end_pass):
 
   Log().write(LOG_QUIET, StatsKeeper())
   if end_pass < 4:
-    Log().write(LOG_QUIET, '(These are unaltered CVS repository stats and do not\n'
-                + ' reflect tags or branches excluded via --exclude)\n')
+    Log().write(LOG_QUIET,
+                '(These are unaltered CVS repository stats and do not\n'
+                ' reflect tags or branches excluded via --exclude)\n')
   print StatsKeeper().timings()
 
 
@@ -4571,7 +4583,8 @@ def usage():
   print '  -q                   quiet'
   print '  -v                   verbose'
   print '  -s PATH              path for SVN repos'
-  print '  -p START[:END]       start at pass START, end at pass END of %d' % len(_passes)
+  print '  -p START[:END]       start at pass START, end at pass END of %d' \
+        % len(_passes)
   print '                       If only START is given, run only pass START'
   print '                       (implicitly enables --skip-cleanup)'
   print '  --existing-svnrepos  load into existing SVN repository'
@@ -4778,9 +4791,9 @@ def main():
     else:
       # Hit the root (of the drive, on Windows) without finding a CVSROOT dir.
       sys.stderr.write(error_prefix +
-                       ": the path '%s' is not a CVS repository, nor a path " \
-                       "within a CVS repository.  A CVS repository contains " \
-                       "a CVSROOT directory within its root directory.\n" \
+                       ": the path '%s' is not a CVS repository, nor a path "
+                       "within a CVS repository.  A CVS repository contains "
+                       "a CVSROOT directory within its root directory.\n"
                        % ctx.cvsroot)
       sys.exit(1)
     os.environ['CVSROOT'] = ctx.cvs_repository

@@ -227,7 +227,8 @@ def parse_log(svn_repos):
       line = line[:-1]
       m = log_start_re.match(line)
       if m:
-        this_log = Log(int(m.group('rev')), m.group('author'), m.group('date'))
+        this_log = Log(int(m.group('rev')), m.group('author'),
+                       m.group('date'))
         line = out.readline()
         if not line.find('Changed paths:') == 0:
           print 'unexpected log output (missing changed paths)'
@@ -350,8 +351,9 @@ def ensure_conversion(name, error_re=None, passbypass=None, *args):
   args = [x for x in args]
   args.sort()
 
-  _win32_fname_mapping = { '/': '_sl_', '\\': '_bs_', ':': '_co_', '*': '_st_',
-  '?': '_qm_', '"': '_qq_', '<': '_lt_', '>': '_gt_', '|': '_pi_', }
+  _win32_fname_mapping = { '/': '_sl_', '\\': '_bs_', ':': '_co_',
+                           '*': '_st_', '?': '_qm_', '"': '_qq_',
+                           '<': '_lt_', '>': '_gt_', '|': '_pi_', }
   for arg in args:
     # Replace some characters that Win32 isn't happy about having in a
     # filename (which was causing the eol_mime test to fail).
@@ -800,7 +802,8 @@ def split_time_branch():
 
   # Add the file not already branched to the branch, with modification:w
   check_rev(logs, rev + 3, sym_log_msg('B_SPLIT'), {
-    '/branches/B_SPLIT/proj/sub1/subsubB (from /trunk/proj/sub1/subsubB:44)': 'A',
+    '/branches/B_SPLIT/proj/sub1/subsubB (from /trunk/proj/sub1/subsubB:44)':
+    'A',
     })
 
   check_rev(logs, rev + 4, 'This change affects sub3/default and '
@@ -1020,7 +1023,8 @@ def nonascii_filenames():
   # - On Unix, the encoding is the user's preference according to the
   #   result of nl_langinfo(CODESET), or None if the
   #   nl_langinfo(CODESET) failed.
-  # - On Windows NT+, file names are Unicode natively, so no conversion is performed.
+  # - On Windows NT+, file names are Unicode natively, so no conversion is
+  #   performed.
 
   # So we're going to skip this test on Mac OS X for now.
   if sys.platform == "darwin":

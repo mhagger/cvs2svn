@@ -498,6 +498,18 @@ def sort_file(infile, outfile):
   else:
     os.environ['LC_ALL'] = lc_all_tmp
 
+def print_node_tree(tree, root_node, indent_depth=0):
+  """For debugging purposes.  Prints all nodes in TREE that are
+  rooted at ROOT_NODE.  INDENT_DEPTH is merely for purposes of
+  debugging with the print statement in this function."""
+  if not indent_depth:
+    print "TREE", "=" * 75
+  print "TREE:", " " * (indent_depth * 2), root_node, tree[root_node]
+  for key, value in tree[root_node].items():
+    if key[0] == '/': #Skip flags
+      continue
+    print_node_tree(tree, value, (indent_depth + 1))
+
 def match_regexp_list(regexp_list, string):
   """Test whether STRING matches any of the compiled regexps in REGEXP_LIST."""
   for regexp in regexp_list:
@@ -2600,18 +2612,6 @@ class SymbolicNameFillingGuide:
     self.root_key = '0'
     # The dictionary that holds our node tree, seeded with the root key.
     self.node_tree = { self.root_key : { } }
-
-  def print_node_tree(tree, root_node, indent_depth=0):
-    """For debugging purposes.  Print all nodes in TREE that are
-    rooted at ROOT_NODE.  INDENT_DEPTH is for recursive calls only;
-    the original caller need not pass it."""
-    if not indent_depth:
-      print "TREE", "=" * 75
-    print "TREE:", " " * (indent_depth * 2), root_node, tree[root_node]
-    for key, value in tree[root_node].items():
-      if key[0] == '/': #Skip flags
-        continue
-      print_node_tree(tree, value, (indent_depth + 1))
 
   def get_best_revnum(self, node, preferred_revnum):
     """Determine the best subversion revision number to use when

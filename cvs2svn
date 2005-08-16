@@ -2589,6 +2589,10 @@ class SymbolicNameFillingGuide:
   The caller can then descend to sub-nodes to see if their "best
   revnum" differs from their parents' and if it does, take appropriate
   actions to "patch up" the subtrees."""
+
+  OPENING_KEY = "/o"
+  CLOSING_KEY = "/c"
+
   def __init__(self, symbolic_name):
     """Initializes a SymbolicNameFillingGuide for SYMBOLIC_NAME and
     prepares it for receiving openings and closings.
@@ -2597,13 +2601,10 @@ class SymbolicNameFillingGuide:
     object."""
     self.name = symbolic_name
 
-    self.opening_key = "/o"
-    self.closing_key = "/c"
-
     # A dictionary of SVN_PATHS and SVN_REVNUMS whose format is:
     #
-    # { svn_path : { self.opening_key : svn_revnum,
-    #                self.closing_key : svn_revnum }
+    # { svn_path : { self.OPENING_KEY : svn_revnum,
+    #                self.CLOSING_KEY : svn_revnum }
     #                ...}
     self.things = { }
 
@@ -2622,8 +2623,8 @@ class SymbolicNameFillingGuide:
     revnum = SVN_INVALID_REVNUM
 
     # Aggregate openings and closings from the rev tree
-    openings = self._list_revnums_for_key(node, self.opening_key)
-    closings = self._list_revnums_for_key(node, self.closing_key)
+    openings = self._list_revnums_for_key(node, self.OPENING_KEY)
+    closings = self._list_revnums_for_key(node, self.CLOSING_KEY)
 
     # Helper function for scoring the lists.
     def tally_frequencies(rev_list):
@@ -2692,7 +2693,7 @@ class SymbolicNameFillingGuide:
        [(REV1 SCORE1), (REV2 SCORE2), ...]
 
     where REV2 > REV1.  OPENINGS and CLOSINGS are the values of
-    self.opening__key and self.closing_key from some file or
+    self.opening__key and self.CLOSING_KEY from some file or
     directory node, or else None.
 
     Each score indicates that copying the corresponding revision (or
@@ -2747,14 +2748,14 @@ class SymbolicNameFillingGuide:
     numbers (including duplicates) contained in REVNUM_TYPE_KEY values
     for all leaf nodes at and under NODE.
 
-    REVNUM_TYPE_KEY should be either self.opening_key or
-    self.closing_key."""
+    REVNUM_TYPE_KEY should be either self.OPENING_KEY or
+    self.CLOSING_KEY."""
     revnums = []
 
-    # If the node has self.opening_key, it must be a leaf node--all
+    # If the node has self.OPENING_KEY, it must be a leaf node--all
     # leaf nodes have at least an opening key (although they may not
     # have a closing key.  Fetch revnum and return
-    if (self.node_tree[node].has_key(self.opening_key) and
+    if (self.node_tree[node].has_key(self.OPENING_KEY) and
         self.node_tree[node].has_key(revnum_type_key)):
       revnums.append(self.node_tree[node][revnum_type_key])
       return revnums
@@ -2784,19 +2785,19 @@ class SymbolicNameFillingGuide:
     """
     # Always log an OPENING
     if type == OPENING:
-      self.things[svn_path] = {self.opening_key: svn_revnum}
+      self.things[svn_path] = {self.OPENING_KEY: svn_revnum}
     # Only log a closing if we've already registered the opening for that path.
     elif type == CLOSING and self.things.has_key(svn_path):
       # When we have a non-trunk default branch, we may have multiple
       # closings--only register the first closing we encounter.
-      if not self.things[svn_path].has_key(self.closing_key):
-        self.things[svn_path][self.closing_key] = svn_revnum
+      if not self.things[svn_path].has_key(self.CLOSING_KEY):
+        self.things[svn_path][self.CLOSING_KEY] = svn_revnum
 
   def make_node_tree(self):
     """Generates the SymbolicNameFillingGuide's node tree from
-    self.things.  Each leaf node maps self.opening_key to the earliest
+    self.things.  Each leaf node maps self.OPENING_KEY to the earliest
     subversion revision from which this node/path may be copied; and
-    optionally map self.closing_key to the subversion revision one
+    optionally map self.CLOSING_KEY to the subversion revision one
     higher than the last revision from which this node/path may be
     copied.  Intermediate nodes never contain opening or closing
     flags."""

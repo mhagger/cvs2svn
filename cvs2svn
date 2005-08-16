@@ -2625,9 +2625,30 @@ class SymbolicNameFillingGuide:
     openings = self._list_revnums_for_key(node, self.opening_key)
     closings = self._list_revnums_for_key(node, self.closing_key)
 
+    # Helper function for scoring the lists.
+    def tally_frequencies(rev_list):
+      """Takes an array of revisions (REV_LIST), for example:
+
+        [21, 18, 6, 49, 39, 24, 24, 24, 24, 24, 24, 24]
+
+      and adds up every occurrence of each revision and returns a sorted
+      array of tuples containing (svn_revnum, count):
+
+        [(6, 1), (18, 1), (21, 1), (24, 7), (39, 1), (49, 1)]
+      """
+      s = {}
+      for k in rev_list: # Add up the scores
+        if s.has_key(k):
+          s[k] = s[k] + 1
+        else:
+          s[k] = 1
+      a = s.items()
+      a.sort()
+      return a
+
     # Score the lists
-    scores = self._score_revisions(self._sum_revnum_counts(openings),
-                                  self._sum_revnum_counts(closings))
+    scores = self._score_revisions(tally_frequencies(openings),
+                                   tally_frequencies(closings))
 
     revnum, max_score = self._best_rev(scores, preferred_revnum)
   
@@ -2720,26 +2741,6 @@ class SymbolicNameFillingGuide:
       if insert_index is not None:
         scores.insert(insert_index, (closing_rev, insert_score))
     return scores
-
-  def _sum_revnum_counts(self, rev_list):
-    """Takes an array of revisions (REV_LIST), for example:
-
-      [21, 18, 6, 49, 39, 24, 24, 24, 24, 24, 24, 24]
-
-    and adds up every occurrence of each revision and returns a sorted
-    array of tuples containing (svn_revnum, count):
-
-      [(6, 1), (18, 1), (21, 1), (24, 7), (39, 1), (49, 1)]
-    """
-    s = {}
-    for k in rev_list: # Add up the scores
-      if s.has_key(k):
-        s[k] = s[k] + 1
-      else:
-        s[k] = 1
-    a = s.items()
-    a.sort()
-    return a
 
   def _list_revnums_for_key(self, node, revnum_type_key):
     """Scan self.node_tree and return a list of all the revision

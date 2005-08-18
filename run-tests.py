@@ -1911,7 +1911,7 @@ test_list = [ None,
               double_fill,
               resync_pass2_push_backward,
               double_add,
-              XFail(bogus_branch_copy),
+              bogus_branch_copy,
              ]
 
 if __name__ == '__main__':

@@ -1583,6 +1583,52 @@ class CollectData(cvs2svn_rcsparse.Sink):
     else:
       op = OP_CHANGE
 
+    def is_branch_revision(rev):
+      """Return True if this revision is not a trunk revision,
+      else return False."""
+      if rev.count('.') >= 3:
+        return True
+      return False
+
+    def is_same_line_of_development(rev1, rev2):
+      """Return True if rev1 and rev2 are on the same line of
+      development (i.e., both on trunk, or both on the same branch);
+      return False otherwise.  Either rev1 or rev2 can be None, in
+      which case automatically return False."""
+      if rev1 is None or rev2 is None:
+        return False
+      if rev1.count('.') == 1 and rev2.count('.') == 1:
+        return True
+      if rev1[0:rev1.rfind('.')] == rev2[0:rev2.rfind('.')]:
+        return True
+      return False
+
+    # There can be an odd situation where the tip revision of a branch
+    # is alive, but every predecessor on the branch is in state 'dead', 
+    # yet the revision from which the branch sprouts is alive.  (This
+    # is sort of a mirror image of the more common case of adding a
+    # file on a branch, in which the first revision on the branch is
+    # alive while the revision from which it sprouts is dead.)
+    #
+    # In this odd situation, we must mark the first live revision on
+    # the branch as an OP_CHANGE instead of an OP_ADD, because it
+    # reflects, however indirectly, a change w.r.t. the source
+    # revision from which the branch sprouts.
+    #
+    # This is issue #89.
+    cur_num = revision
+    if (is_branch_revision(revision)
+        and not self.rev_state[revision] == 'dead'):
+      while 1:
+        prev_num = self.prev_rev.get(cur_num, None)
+        if not cur_num or not prev_num:
+          break
+        if (not is_same_line_of_development(cur_num, prev_num)
+            and self.rev_state[cur_num] == 'dead'
+            and not self.rev_state[prev_num] == 'dead'):
+          op = OP_CHANGE
+        cur_num = self.prev_rev.get(cur_num, None)
+
     if text:
       deltatext_code = DELTATEXT_NONEMPTY
     else:

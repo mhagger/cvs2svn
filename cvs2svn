@@ -2357,7 +2357,7 @@ class SVNCommit:
     return not (self.symbolic_name or self.motivating_revnum)
 
   def flush(self):
-    Log().write(LOG_NORMAL, "Creating Subversion commit %d (%s)"
+    Log().write(LOG_NORMAL, "Creating Subversion r%d (%s)"
                 % (self.revnum, self._description))
     Ctx()._persistence_manager.set_cvs_revs(self.revnum, self.cvs_revs)
 
@@ -4032,7 +4032,7 @@ class StdoutDelegate(SVNRepositoryMirrorDelegate):
     """Prints out the Subversion revision number of the commit that is
     being started."""
     Log().write(LOG_VERBOSE, "=" * 60)
-    Log().write(LOG_NORMAL, "Starting Subversion commit %d / %d" %
+    Log().write(LOG_NORMAL, "Starting Subversion r%d / %d" %
                 (svn_commit.revnum, self.total_revs))
 
   def mkdir(self, path):

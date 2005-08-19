@@ -1,3 +1,18 @@
+Version 1.3.0
+(18 August 2005, from /tags/1.3.0)
+
+ Bugs fixed:
+ * Fix cvs2svn's dumpfile output to work after Subversion's r12645.
+ * Fix issue #71: Avoid resyncing two consecutive CVS revs to same time.
+ * Fix issue #88: Don't allow resyncing to throw off CVS revision order.
+ * Fix issue #89: Handle initially dead branch revisions acceptably.
+ * Fix some branch-filling bugs (r1429, r1444).
+ * Improved --encoding support when iconv_codec module is available.
+
+ Improvements and output changes:
+ * Speedups to pass8 (r1421)
+ * Use standard "rNNN" syntax when printing Subversion revisions.
+
 Version 1.2.1
 (14 February 2005, from /tags/1.2.1)
 

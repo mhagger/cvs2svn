@@ -122,10 +122,11 @@ except ImportError:
 import anydbm
 if (anydbm._defaultmod.__name__ == 'dumbdbm'
     or anydbm._defaultmod.__name__ == 'dbm'):
-  print 'ERROR: your installation of Python does not contain a suitable'
-  print '  DBM module. This script cannot continue.'
-  print '  to solve: see http://python.org/doc/current/lib/module-anydbm.html'
-  print '  for details.'
+  sys.stderr.write(
+    error_prefix
+    + ': your installation of Python does not contain a suitable\n'
+    + 'DBM module -- cvs2svn cannot continue.\n'
+    + 'See http://python.org/doc/current/lib/module-anydbm.html to solve.\n')
   sys.exit(1)
 
 # 3. If we are using the old bsddb185 module, then try prefer gdbm instead.
@@ -3625,8 +3626,10 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
       unicode_path = unicode(path, self.path_encoding, 'strict')
       return unicode_path.encode('utf-8')
     except UnicodeError:
-      print "Unable to convert a path '%s' to internal encoding." % path
-      print "Consider rerunning with (for example) '--encoding=latin1'"
+      sys.stderr.write(
+        error_prefix
+        + ": Unable to convert a path '%s' to internal encoding.\n" % path
+        + "Consider rerunning with (for example) '--encoding=latin1'.\n")
       sys.exit(1)
 
   def start_commit(self, svn_commit):
@@ -4618,7 +4621,7 @@ def convert(start_pass, end_pass):
     Log().write(LOG_QUIET,
                 '(These are unaltered CVS repository stats and do not\n'
                 ' reflect tags or branches excluded via --exclude)\n')
-  print StatsKeeper().timings()
+  Log().write(LOG_NORMAL, StatsKeeper().timings())
 
 
 def usage():
@@ -4710,14 +4713,16 @@ def main():
       else:
         end_pass = start_pass = int(value)
       if start_pass > len(_passes) or start_pass < 1:
-        print '%s: illegal value (%d) for starting pass. '\
-              'must be 1 through %d.' % (error_prefix, int(start_pass),
-                                         len(_passes))
+        sys.stderr.write(
+          '%s: illegal value (%d) for starting pass. '\
+          'must be 1 through %d.' % (error_prefix, int(start_pass),
+                                     len(_passes)))
         sys.exit(1)
       if end_pass < start_pass or end_pass > len(_passes):
-        print '%s: illegal value (%d) for ending pass. ' \
-              'must be %d through %d.' % (error_prefix, int(end_pass),
-                                          int(start_pass), len(_passes))
+        sys.stderr.write(
+          '%s: illegal value (%d) for ending pass. ' \
+          'must be %d through %d.' % (error_prefix, int(end_pass),
+                                      int(start_pass), len(_passes)))
         sys.exit(1)
     elif (opt == '--help') or (opt == '-h'):
       ctx.print_help = 1

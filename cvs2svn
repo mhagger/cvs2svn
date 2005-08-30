@@ -4952,7 +4952,7 @@ def main():
   except OSError, e:
     if e.errno == errno.EACCES:
       sys.stderr.write(error_prefix + ": Permission denied:"
-                       + " No write access to output directory.\n")
+                       + " No write access to directory '%s'.\n" % ctx.tmpdir)
       sys.exit(1)
     if e.errno == errno.EEXIST:
       sys.stderr.write(error_prefix +

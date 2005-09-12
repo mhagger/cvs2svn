@@ -353,6 +353,20 @@ def _path_join(*components):
   Empty component are skipped."""
   return string.join(filter(None, components), '/')
 
+def to_utf8(value, mode='replace'):
+  """Encode (as Unicode) VALUE, trying the encodings in Ctx.encoding
+  as valid source encodings.  Raise UnicodeError on failure of all
+  source encodings."""
+  ### FIXME: The 'replace' default mode should be an option,
+  ### like --encoding is.
+  for encoding in Ctx().encoding:
+    try:
+      return unicode(value, encoding, mode).encode('utf8')
+    except UnicodeError:
+      Log().write(LOG_VERBOSE, "Encoding '%s' failed for string '%s'"
+                  % (encoding, value))
+  raise UnicodeError
+
 def run_command(command):
   if os.system(command):
     sys.exit('Command failed: "%s"' % command)
@@ -2317,14 +2331,10 @@ class SVNCommit:
     """Return the Subversion revprops for this SVNCommit."""
     date = format_date(self._max_date)
     try:
-      ### FIXME: The 'replace' behavior should be an option, like
-      ### --encoding is.
       utf8_author = None
       if self._author is not None:
-        unicode_author = unicode(self._author, Ctx().encoding, 'replace')
-        utf8_author = unicode_author.encode('utf8')
-      unicode_log = unicode(self.get_log_msg(), Ctx().encoding, 'replace')
-      utf8_log = unicode_log.encode('utf8')
+        utf8_author = to_utf8(self._author)
+      utf8_log = to_utf8(self.get_log_msg())
       return { 'svn:author' : utf8_author,
                'svn:log'    : utf8_log,
                'svn:date'   : date }
@@ -3604,7 +3614,6 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
       self.dumpfile_path = dumpfile_path
     else:
       self.dumpfile_path = Ctx().dumpfile
-    self.path_encoding = Ctx().encoding
 
     self.dumpfile = open(self.dumpfile_path, 'wb')
     self._write_dumpfile_header(self.dumpfile)
@@ -3618,19 +3627,22 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     dumpfile.write('SVN-fs-dump-format-version: 2\n\n')
 
   def _utf8_path(self, path):
-    """Return a copy of PATH encoded in UTF-8.  PATH is assumed to be
-    encoded in self.path_encoding."""
-    try:
-      # Log messages can be converted with the 'replace' strategy,
-      # but we can't afford any lossiness here.
-      unicode_path = unicode(path, self.path_encoding, 'strict')
-      return unicode_path.encode('utf-8')
-    except UnicodeError:
-      sys.stderr.write(
-        error_prefix
-        + ": Unable to convert a path '%s' to internal encoding.\n" % path
-        + "Consider rerunning with (for example) '--encoding=latin1'.\n")
-      sys.exit(1)
+    """Return a copy of PATH encoded in UTF-8."""
+    pieces = string.split(path, '/')
+    # Convert each path component separately (as they may each use
+    # different encodings).
+    for i in range(len(pieces)):
+      try:
+        # Log messages can be converted with the 'replace' strategy,
+        # but we can't afford any lossiness here.
+        pieces[i] = to_utf8(pieces[i], 'strict')
+      except UnicodeError:
+        sys.stderr.write(
+          error_prefix
+          + ": Unable to convert a path '%s' to internal encoding.\n" % path
+          + "Consider rerunning with (for example) '--encoding=latin1'.\n")
+        sys.exit(1)
+    return string.join(pieces, '/')
 
   def start_commit(self, svn_commit):
     """Emit the start of SVN_COMMIT (an SVNCommit)."""
@@ -4531,7 +4543,7 @@ class Ctx:
     self.trunk_base = "trunk"
     self.tags_base = "tags"
     self.branches_base = "branches"
-    self.encoding = "ascii"
+    self.encoding = ["ascii"]
     self.mime_types_file = None
     self.mime_mapper = None
     self.no_default_eol = 0
@@ -4654,8 +4666,10 @@ def usage():
         % Ctx().tags_base
   print '  --no-prune           don\'t prune empty directories'
   print '  --dump-only          just produce a dumpfile, don\'t commit to a repos'
-  print '  --encoding=ENC       encoding of log messages in CVS repos (default: %s)' \
-        % Ctx().encoding
+  print '  --encoding=ENC       encoding of log messages in CVS repos'
+  print '                       Multiple of these options may be passed, where they'
+  print '                       will be treated as an ordered list of encodings to'
+  print '                       attempt (with "ascii" as a hardcoded last resort)'
   print '  --force-branch=NAME  force NAME to be a branch'
   print '  --force-tag=NAME     force NAME to be a tag'
   print '  --exclude=REGEXP     exclude branches and tags matching REGEXP'
@@ -4765,7 +4779,7 @@ def main():
     elif opt == '--dry-run':
       ctx.dry_run = 1
     elif opt == '--encoding':
-      ctx.encoding = value
+      ctx.encoding.insert(-1, value)
     elif opt == '--force-branch':
       ctx.forced_branches.append(value)
     elif opt == '--force-tag':

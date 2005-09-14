@@ -929,10 +929,8 @@ def no_trunk_prune():
   conv = ensure_conversion('overdead')
   for rev in conv.logs.keys():
     rev_logs = conv.logs[rev]
-    for changed_path in rev_logs.changed_paths.keys():
-      if changed_path == '/trunk' \
-         and rev_logs.changed_paths[changed_path] == 'D':
-        raise svntest.Failure
+    if rev_logs.changed_paths.get('/trunk') == 'D':
+      raise svntest.Failure
 
 
 def double_delete():

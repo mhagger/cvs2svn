@@ -2906,19 +2906,45 @@ class SymbolicNameFillingGuide:
   def get_sources(self):
     """Return the list of sources for this symbolic name.
 
-    All source prefixes must be direct sources for the destination,
-    i.e. we must have 'trunk' or 'branches/my_branch' and not just
-    'branches'."""
+    A source is defined to be either Ctx().trunk_base, or any
+    directory directly under Ctx().branches_base.  Raise an exception
+    if a node outside of the source directories has an option set
+    (e.g., OPENING_KEY or CLOSING_KEY)."""
+
+    return self._get_sub_sources('', self._root_key)
+
+  def _get_sub_sources(self, start_svn_path, start_node_key):
+    """Return the list of sources for this symbolic name, starting the
+    search at path START_SVN_PATH, which has node key START_NODE_KEY.
+    This is a helper method, called by get_sources() (see)."""
 
     sources = []
-    for entry, key in self.get_root_node().items():
-      if entry == Ctx().trunk_base:
-        sources.append(FillSource(entry, key))
-      elif entry == Ctx().branches_base:
-        for entry2, key2 in self.get_node(key).items():
-          sources.append(FillSource(entry + '/' + entry2, key2))
+    for entry, node_key in self.get_node(start_node_key).items():
+      svn_path = _path_join(start_svn_path, entry)
+      if svn_path == Ctx().trunk_base:
+        # Trunk is a legitimate source.  Add it to list.
+        sources.append(FillSource(svn_path, node_key))
+      elif svn_path == Ctx().branches_base:
+        # Any directories directly under branch_base are legitimate
+        # sources.  Add them to list.
+        for entry2, node_key2 in self.get_node(node_key).items():
+          if entry2[0] == '/':
+            # This implies a non-directory change directly under
+            # branch_base (not within one of the branches).  This
+            # should never happen.
+            raise
+          sources.append(FillSource(_path_join(svn_path, entry2), node_key2))
+      elif entry[0] == '/':
+        # This implies that a change was found outside of the
+        # legitimate sources.  This should never happen.
+        raise
       else:
-        raise # Should never happen
+        # This directory is not a legitimate source.  (That's OK
+        # because it hasn't changed directly.)  But directories within
+        # it have been changed, so we need to search recursively to
+        # find their enclosing sources.
+        sources.extend(self._get_sub_sources(svn_path, node_key))
+
     return sources
 
   def print_node_tree(self, root_key, indent_depth=0):

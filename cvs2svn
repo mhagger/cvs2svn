@@ -2822,8 +2822,8 @@ class SymbolicNameFillingGuide:
        [(REV1 SCORE1), (REV2 SCORE2), ...]
 
     where REV2 > REV1.  OPENINGS and CLOSINGS are the values of
-    self.opening__key and self.CLOSING_KEY from some file or
-    directory node, or else None.
+    self.OPENING_KEY and self.CLOSING_KEY from some file or directory
+    node, or else None.
 
     Each score indicates that copying the corresponding revision (or
     any following revision up to the next revision in the list) of the

@@ -2643,6 +2643,11 @@ class SymbolicNameFillingGuide:
   revnum" differs from their parents' and if it does, take appropriate
   actions to "patch up" the subtrees."""
 
+  # Keys used to store the opening and closing revision numbers in
+  # things and _node_tree.  See the comment for self.things for more
+  # information.  It is important that these strings start with '/',
+  # as that is used distinguish them from directory names when they
+  # appear in _node_tree.
   OPENING_KEY = "/o"
   CLOSING_KEY = "/c"
 

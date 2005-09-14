@@ -1830,7 +1830,7 @@ def exclude():
                                       '--exclude=.*')
   for log in conv.logs.values():
     for item in log.changed_paths.keys():
-      if item[:10] == '/branches/' or item[:6] == '/tags/':
+      if item.startswith('/branches/') or item.startswith('/tags/'):
         raise svntest.Failure
 
 

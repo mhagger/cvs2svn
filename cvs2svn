@@ -2721,26 +2721,27 @@ class SymbolicNameFillingGuide:
     self.node_tree = { self.root_key : { } }
 
     for svn_path, open_close in self.things.items():
-      parent_key = self.root_key
+      # Attach the value to the leaf
+      self.node_tree[self._get_node_key(svn_path)] = open_close
 
-      path_so_far = ""
-      # Walk up the path, one node at a time.
-      components = svn_path.split('/')
-      for component in components:
-        path_so_far = path_so_far + '/' + component
-
-        child_key = None
-        if not self.node_tree[parent_key].has_key(component):
-          child_key = gen_key()
-          self.node_tree[child_key] = { }
-          self.node_tree[parent_key][component] = child_key
-        else:
-          child_key = self.node_tree[parent_key][component]
-
-        parent_key = child_key
-      # Having reached the leaf, attach the value
-      self.node_tree[parent_key] = open_close
     #print_node_tree(self.node_tree, self.root_key)
+
+  def _get_node_key(self, svn_path):
+    """Return the node key for svn_path, creating new nodes as needed."""
+    # Walk down the path, one node at a time.
+    node_key = self.root_key
+    for component in svn_path.split('/'):
+      node = self.node_tree[node_key]
+      if not node.has_key(component):
+        child_key = gen_key()
+        self.node_tree[child_key] = { }
+        node[component] = child_key
+      else:
+        child_key = node[component]
+
+      node_key = child_key
+    # Having reached the leaf, return the key
+    return node_key
 
   def get_best_revnum(self, node, preferred_revnum):
     """Determine the best subversion revision number to use when

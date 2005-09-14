@@ -3194,13 +3194,26 @@ class SVNRepositoryMirror:
     all ancestor directories that are made empty when SVN_PATH is deleted.
     In other words, SHOULD_PRUNE is like the -P option to 'cvs checkout'.
 
-    NOTE: This function does *not* allow you delete top-level entries
-    (like /trunk, /branches, /tags), nor does it prune upwards beyond
-    those entries."""
+    NOTE: This function ignores requests to delete Ctx().trunk_base,
+    Ctx().branches_base, Ctx().tags_base, or the root directory,
+    either directly or by pruning."""
+
+    if svn_path in [
+        '', Ctx().trunk_base, Ctx().branches_base, Ctx().tags_base
+        ]:
+      return
+
     pos = svn_path.rfind('/')
-    parent_path = svn_path[:pos]
-    entry = svn_path[pos+1:]
-    parent_key, parent_contents = self._open_writable_node(parent_path, False)
+    if pos == -1:
+      parent_path = ''
+      entry = svn_path
+      parent_key, parent_contents = self._open_writable_root_node()
+    else:
+      parent_path = svn_path[:pos]
+      entry = svn_path[pos+1:]
+      parent_key, parent_contents = \
+          self._open_writable_node(parent_path, False)
+
     if parent_key is not None:
       self._fast_delete_path(parent_path, parent_contents, entry)
       # The following recursion makes pruning an O(n^2) operation in the
@@ -3208,8 +3221,7 @@ class SVNRepositoryMirror:
       # is probably rare, and the constant cost is pretty low.  Another
       # drawback is that we issue a delete for each path and not just
       # a single delete for the topmost directory pruned.
-      if (should_prune and len(parent_contents) == 0 and
-          parent_path.find('/') != -1):
+      if should_prune and len(parent_contents) == 0:
         self._delete_path(parent_path, True)
 
   def _mkdir(self, path):

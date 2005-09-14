@@ -408,9 +408,9 @@ def ensure_conversion(name, error_re=None, passbypass=None, *args):
           args.extend( [ '--bdb-txn-nosync', '-s', svnrepos, cvsrepos ] )
           if passbypass:
             for p in range(1, 9):
-              apply(run_cvs2svn, [ error_re, '-p', str(p) ] + args)
+              run_cvs2svn(error_re, '-p', str(p), *args)
           else:
-            ret = apply(run_cvs2svn, [ error_re ] + args)
+            ret = run_cvs2svn(error_re, *args)
         except RunProgramException:
           raise svntest.Failure
         except MissingErrorException:

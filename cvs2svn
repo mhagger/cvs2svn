@@ -2875,26 +2875,27 @@ class SymbolicNameFillingGuide:
   def _list_revnums_for_key(self, node_key, revnum_type_key):
     """Scan self._node_tree and return a list of all the revision
     numbers (including duplicates) contained in REVNUM_TYPE_KEY values
-    for all leaf nodes at and under NODE.
+    for all leaf nodes at and under NODE_KEY.
 
     REVNUM_TYPE_KEY should be either self.OPENING_KEY or
     self.CLOSING_KEY."""
-    revnums = []
 
     node = self.get_node(node_key)
 
     # If the node has self.OPENING_KEY, it must be a leaf node--all
     # leaf nodes have at least an opening key (although they may not
-    # have a closing key.  Fetch revnum and return
+    # have a closing key.
     if (node.has_key(self.OPENING_KEY) and node.has_key(revnum_type_key)):
-      revnums.append(node[revnum_type_key])
-      return revnums
+      # Fetch revnum and return.
+      return [ node[revnum_type_key] ]
 
+    revnums = []
     for key, node_contents in node.items():
       if key[0] == '/':
+        # This is OPENING_KEY or CLOSING_KEY; ignore it.
         continue
-      revnums = revnums + \
-          self._list_revnums_for_key(node_contents, revnum_type_key)
+      revnums.extend(
+          self._list_revnums_for_key(node_contents, revnum_type_key))
     return revnums
 
   def print_node_tree(self, root_key, indent_depth=0):

@@ -2676,6 +2676,72 @@ class SymbolicNameFillingGuide:
     # The key for the root node of the node tree
     self.root_key = '0'
 
+  def is_empty(self):
+    """Return true if we haven't accumulated any openings or closings,
+    false otherwise."""
+    return not len(self.things)
+
+  def register(self, svn_path, svn_revnum, type):
+    """Collects opening and closing revisions for this
+    SymbolicNameFillingGuide.  SVN_PATH is the source path that needs
+    to be copied into self.symbolic_name, and SVN_REVNUM is either the
+    first svn revision number that we can copy from (our opening), or
+    the last (not inclusive) svn revision number that we can copy from
+    (our closing).  TYPE indicates whether this path is an opening or a
+    a closing.
+
+    The opening for a given SVN_PATH must be passed before the closing
+    for it to have any effect... any closing encountered before a
+    corresponding opening will be discarded.
+
+    It is not necessary to pass a corresponding closing for every
+    opening.
+    """
+    # Always log an OPENING
+    if type == OPENING:
+      self.things[svn_path] = {self.OPENING_KEY: svn_revnum}
+    # Only log a closing if we've already registered the opening for that
+    # path.
+    elif type == CLOSING and self.things.has_key(svn_path):
+      # When we have a non-trunk default branch, we may have multiple
+      # closings--only register the first closing we encounter.
+      if not self.things[svn_path].has_key(self.CLOSING_KEY):
+        self.things[svn_path][self.CLOSING_KEY] = svn_revnum
+
+  def initialize_node_tree(self):
+    """Generates the SymbolicNameFillingGuide's node tree from
+    self.things.  Each leaf node maps self.OPENING_KEY to the earliest
+    subversion revision from which this node/path may be copied; and
+    optionally map self.CLOSING_KEY to the subversion revision one
+    higher than the last revision from which this node/path may be
+    copied.  Intermediate nodes never contain opening or closing
+    flags."""
+
+    # Seed the dictionary that holds our node tree with the root key.
+    self.node_tree = { self.root_key : { } }
+
+    for svn_path, open_close in self.things.items():
+      parent_key = self.root_key
+
+      path_so_far = ""
+      # Walk up the path, one node at a time.
+      components = svn_path.split('/')
+      for component in components:
+        path_so_far = path_so_far + '/' + component
+
+        child_key = None
+        if not self.node_tree[parent_key].has_key(component):
+          child_key = gen_key()
+          self.node_tree[child_key] = { }
+          self.node_tree[parent_key][component] = child_key
+        else:
+          child_key = self.node_tree[parent_key][component]
+
+        parent_key = child_key
+      # Having reached the leaf, attach the value
+      self.node_tree[parent_key] = open_close
+    #print_node_tree(self.node_tree, self.root_key)
+
   def get_best_revnum(self, node, preferred_revnum):
     """Determine the best subversion revision number to use when
     copying the source tree beginning at NODE.  Returns a
@@ -2829,72 +2895,6 @@ class SymbolicNameFillingGuide:
       revnums = revnums + \
           self._list_revnums_for_key(node_contents, revnum_type_key)
     return revnums
-
-  def register(self, svn_path, svn_revnum, type):
-    """Collects opening and closing revisions for this
-    SymbolicNameFillingGuide.  SVN_PATH is the source path that needs
-    to be copied into self.symbolic_name, and SVN_REVNUM is either the
-    first svn revision number that we can copy from (our opening), or
-    the last (not inclusive) svn revision number that we can copy from
-    (our closing).  TYPE indicates whether this path is an opening or a
-    a closing.
-
-    The opening for a given SVN_PATH must be passed before the closing
-    for it to have any effect... any closing encountered before a
-    corresponding opening will be discarded.
-
-    It is not necessary to pass a corresponding closing for every
-    opening.
-    """
-    # Always log an OPENING
-    if type == OPENING:
-      self.things[svn_path] = {self.OPENING_KEY: svn_revnum}
-    # Only log a closing if we've already registered the opening for that
-    # path.
-    elif type == CLOSING and self.things.has_key(svn_path):
-      # When we have a non-trunk default branch, we may have multiple
-      # closings--only register the first closing we encounter.
-      if not self.things[svn_path].has_key(self.CLOSING_KEY):
-        self.things[svn_path][self.CLOSING_KEY] = svn_revnum
-
-  def initialize_node_tree(self):
-    """Generates the SymbolicNameFillingGuide's node tree from
-    self.things.  Each leaf node maps self.OPENING_KEY to the earliest
-    subversion revision from which this node/path may be copied; and
-    optionally map self.CLOSING_KEY to the subversion revision one
-    higher than the last revision from which this node/path may be
-    copied.  Intermediate nodes never contain opening or closing
-    flags."""
-
-    # Seed the dictionary that holds our node tree with the root key.
-    self.node_tree = { self.root_key : { } }
-
-    for svn_path, open_close in self.things.items():
-      parent_key = self.root_key
-
-      path_so_far = ""
-      # Walk up the path, one node at a time.
-      components = svn_path.split('/')
-      for component in components:
-        path_so_far = path_so_far + '/' + component
-
-        child_key = None
-        if not self.node_tree[parent_key].has_key(component):
-          child_key = gen_key()
-          self.node_tree[child_key] = { }
-          self.node_tree[parent_key][component] = child_key
-        else:
-          child_key = self.node_tree[parent_key][component]
-
-        parent_key = child_key
-      # Having reached the leaf, attach the value
-      self.node_tree[parent_key] = open_close
-    #print_node_tree(self.node_tree, self.root_key)
-
-  def is_empty(self):
-    """Return true if we haven't accumulated any openings or closings,
-    false otherwise."""
-    return not len(self.things)
 
 
 class FillSource:

@@ -368,7 +368,7 @@ def ensure_conversion(name, error_re=None, passbypass=None, *args):
 
   # Convert args from tuple to list, then sort them, so we can
   # construct a reliable conv_id.
-  args = [x for x in args]
+  args = list(args)
   args.sort()
 
   _win32_fname_mapping = { '/': '_sl_', '\\': '_bs_', ':': '_co_',

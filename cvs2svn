@@ -2632,7 +2632,7 @@ class SymbolingsReader:
       if not symbol_fill.is_empty():
         self.offsets[symbolic_name] = fpos
 
-    symbol_fill.make_node_tree()
+    symbol_fill.initialize_node_tree()
     return symbol_fill
 
 
@@ -2642,8 +2642,8 @@ class SymbolicNameFillingGuide:
   self.symbolic_name in the current SVNCommit.
 
   After calling self.register() on a series of openings and closings,
-  call self.make_node_tree() to prepare self.node_tree for
-  examination.  See the docstring for self.make_node_tree() for
+  call self.initialize_node_tree() to prepare self.node_tree for
+  examination.  See the docstring for self.initialize_node_tree() for
   details on the structure of self.node_tree.
 
   By walking self.node_tree and calling self.get_best_revnum() on each
@@ -2859,7 +2859,7 @@ class SymbolicNameFillingGuide:
       if not self.things[svn_path].has_key(self.CLOSING_KEY):
         self.things[svn_path][self.CLOSING_KEY] = svn_revnum
 
-  def make_node_tree(self):
+  def initialize_node_tree(self):
     """Generates the SymbolicNameFillingGuide's node tree from
     self.things.  Each leaf node maps self.OPENING_KEY to the earliest
     subversion revision from which this node/path may be copied; and

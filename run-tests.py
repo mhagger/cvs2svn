@@ -179,23 +179,36 @@ class Log:
         cmp(self.changed_paths, other.changed_paths) or \
         cmp(self.msg, other.msg)
 
-  def check(self, msg, changed_paths):
-    """Verify that this Log has the MSG and CHANGED_PATHS specified."""
-    fail_msg = ''
+  def check_msg(self, msg):
+    """Verify that this Log's message starts with the specified MSG."""
     if self.msg.find(msg) != 0:
-      fail_msg += (
-        "Revision %d log message was:\n%s\n\n"
-        "It should have begun with:\n%s\n\n"
-        % (self.revision, self.msg, msg,)
-        )
+      raise svntest.Failure(
+          "Revision %d log message was:\n%s\n\n"
+          "It should have begun with:\n%s\n\n"
+          % (self.revision, self.msg, msg,)
+          )
+
+  def check_changes(self, changed_paths):
+    """Verify that this Log has precisely the CHANGED_PATHS specified.
+
+    CHANGED_PATHS is a dictionary in the same format as
+    self.changed_paths."""
+
     if self.changed_paths != changed_paths:
-      fail_msg += (
-        "Revision %d changed paths list was:\n%s\n\n"
-        "It should have been:\n%s\n\n"
-        % (self.revision, self.changed_paths, changed_paths,)
-        )
-    if fail_msg:
-      raise svntest.Failure(fail_msg)
+      raise svntest.Failure(
+          "Revision %d changed paths list was:\n%s\n\n"
+          "It should have been:\n%s\n\n"
+          % (self.revision, self.changed_paths, changed_paths,)
+          )
+
+  def check(self, msg, changed_paths):
+    """Verify that this Log has the MSG and CHANGED_PATHS specified.
+
+    CHANGED_PATHS is a dictionary in the same format as
+    self.changed_paths."""
+
+    self.check_msg(msg)
+    self.check_changes(changed_paths)
 
 
 def parse_log(svn_repos):

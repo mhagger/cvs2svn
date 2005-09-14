@@ -2898,6 +2898,24 @@ class SymbolicNameFillingGuide:
           self._list_revnums_for_key(node_contents, revnum_type_key))
     return revnums
 
+  def get_sources(self):
+    """Return the list of sources for this symbolic name.
+
+    All source prefixes must be direct sources for the destination,
+    i.e. we must have 'trunk' or 'branches/my_branch' and not just
+    'branches'."""
+
+    sources = []
+    for entry, key in self.get_root_node().items():
+      if entry == Ctx().trunk_base:
+        sources.append(FillSource(entry, key))
+      elif entry == Ctx().branches_base:
+        for entry2, key2 in self.get_node(key).items():
+          sources.append(FillSource(entry + '/' + entry2, key2))
+      else:
+        raise # Should never happen
+    return sources
+
   def print_node_tree(self, root_key, indent_depth=0):
     """For debugging purposes.  Prints all nodes in TREE that are
     rooted at ROOT_KEY.  INDENT_DEPTH is used to indent the output of
@@ -3221,20 +3239,9 @@ class SVNRepositoryMirror:
     under it."""
     symbol_fill = self.symbolings_reader.filling_guide_for_symbol(
       svn_commit.symbolic_name, self.youngest)
+    # Get the list of sources for the symbolic name.
+    sources = symbol_fill.get_sources()
 
-    # Create the list of sources for the symbolic name.  All source
-    # prefixes must be direct sources for the destination, i.e. we
-    # must have 'trunk' and 'branches/my_branch' and not just
-    # 'branches'.
-    sources = []
-    for entry, key in symbol_fill.get_root_node().items():
-      if entry == Ctx().trunk_base:
-        sources.append(FillSource(entry, key))
-      elif entry == Ctx().branches_base:
-        for entry2, key2 in symbol_fill.get_node(key).items():
-          sources.append(FillSource(entry + '/' + entry2, key2))
-      else:
-        raise # Should never happen
     if self.tags_db.has_key(svn_commit.symbolic_name):
       dest_prefix = _path_join(Ctx().tags_base, svn_commit.symbolic_name)
     else:

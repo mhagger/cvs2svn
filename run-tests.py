@@ -624,8 +624,7 @@ def interleaved_commits():
     if not (conv.logs[rev].changed_paths.get(path) == 'A'):
       raise svntest.Failure
 
-  if conv.logs[rev].msg.find('Initial revision') != 0:
-    raise svntest.Failure
+  conv.logs[rev].check_msg('Initial revision')
 
   # This PEP explains why we pass the 'log' parameter to these two
   # nested functions, instead of just inheriting it from the enclosing
@@ -675,7 +674,7 @@ def simple_commits():
 
   # The initial import.
   rev = 23
-  if not conv.logs[rev].changed_paths == {
+  conv.logs[rev].check('Initial revision', {
     '/trunk/proj': 'A',
     '/trunk/proj/default': 'A',
     '/trunk/proj/sub1': 'A',
@@ -690,27 +689,18 @@ def simple_commits():
     '/trunk/proj/sub2/subsubA/default': 'A',
     '/trunk/proj/sub3': 'A',
     '/trunk/proj/sub3/default': 'A',
-    }:
-    raise svntest.Failure
-
-  if conv.logs[rev].msg.find('Initial revision') != 0:
-    raise svntest.Failure
+    })
 
   # The first commit.
   rev = 30
-  if not conv.logs[rev].changed_paths == {
+  conv.logs[rev].check('First commit to proj, affecting two files.', {
     '/trunk/proj/sub1/subsubA/default': 'M',
     '/trunk/proj/sub3/default': 'M',
-    }:
-    raise svntest.Failure
-
-  if conv.logs[rev].msg.find('First commit to proj, affecting two files.') \
-         != 0:
-    raise svntest.Failure
+    })
 
   # The second commit.
   rev = 31
-  if not conv.logs[rev].changed_paths == {
+  conv.logs[rev].check('Second commit to proj, affecting all 7 files.', {
     '/trunk/proj/default': 'M',
     '/trunk/proj/sub1/default': 'M',
     '/trunk/proj/sub1/subsubA/default': 'M',
@@ -718,12 +708,7 @@ def simple_commits():
     '/trunk/proj/sub2/default': 'M',
     '/trunk/proj/sub2/subsubA/default': 'M',
     '/trunk/proj/sub3/default': 'M'
-    }:
-    raise svntest.Failure
-
-  if conv.logs[rev].msg.find('Second commit to proj, affecting all 7 files.') \
-         != 0:
-    raise svntest.Failure
+    })
 
 
 def simple_tags():
@@ -902,8 +887,7 @@ def overlapping_branch():
       or (conv.logs[rev].changed_paths.get('/branches/vendorB (from /trunk:3)')
           == 'A')):
     raise svntest.Failure
-  if not conv.logs[rev + 1].changed_paths == {}:
-    raise svntest.Failure
+  conv.logs[rev + 1].check_changes({})
   if len(conv.logs) != rev + 1:
     raise svntest.Failure
 
@@ -927,10 +911,9 @@ def ctrl_char_in_log():
   # This was issue #1106.
   rev = 2
   conv = ensure_conversion('ctrl-char-in-log')
-  if not ((conv.logs[rev].changed_paths.get('/trunk/ctrl-char-in-log') == 'A')
-          and (len(conv.logs[rev].changed_paths) == 1)):
-    raise svntest.Failure(
-        "Revision 2 of 'ctrl-char-in-log,v' was not converted successfully.")
+  conv.logs[rev].check_changes({
+    '/trunk/ctrl-char-in-log' : 'A',
+    })
   if conv.logs[rev].msg.find('\x04') < 0:
     raise svntest.Failure(
         "Log message of 'ctrl-char-in-log,v' (rev 2) is wrong.")
@@ -966,15 +949,11 @@ def double_delete():
   rev = 2
   if not (conv.logs[rev].changed_paths.get(path) == 'A'):
     raise svntest.Failure
-
-  if conv.logs[rev].msg.find('Initial revision') != 0:
-    raise svntest.Failure
+  conv.logs[rev].check_msg('Initial revision')
 
   if not (conv.logs[rev + 1].changed_paths.get(path) == 'D'):
     raise svntest.Failure
-
-  if conv.logs[rev + 1].msg.find('Remove this file for the first time.') != 0:
-    raise svntest.Failure
+  conv.logs[rev + 1].check_msg('Remove this file for the first time.')
 
   if conv.logs[rev + 1].changed_paths.has_key('/trunk'):
     raise svntest.Failure
@@ -1015,18 +994,16 @@ def enroot_race():
   # See issue #1427 and r8544.
   conv = ensure_conversion('enroot-race')
   rev = 8
-  if not conv.logs[rev].changed_paths == {
+  conv.logs[rev].check_changes({
     '/branches/mybranch (from /trunk:7)': 'A',
     '/branches/mybranch/proj/a.txt': 'D',
     '/branches/mybranch/proj/b.txt': 'D',
-    }:
-    raise svntest.Failure
-  if not conv.logs[rev + 1].changed_paths == {
+    })
+  conv.logs[rev + 1].check_changes({
     '/branches/mybranch/proj/c.txt': 'M',
     '/trunk/proj/a.txt': 'M',
     '/trunk/proj/b.txt': 'M',
-    }:
-    raise svntest.Failure
+    })
 
 
 def enroot_race_obo():

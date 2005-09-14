@@ -4703,6 +4703,27 @@ def convert(start_pass, end_pass):
   Log().write(LOG_NORMAL, StatsKeeper().timings())
 
 
+def normalize_ttb_path(opt, path):
+  """Normalize a path to be used for --trunk, --tags, or --branches.
+
+  1. Strip leading, trailing, and duplicated '/'.
+  2. Verify that the path is not empty.
+  3. Verify that the path is top-level.
+
+  Return the normalized path.
+
+  If the path is invalid, write an error message and exit."""
+
+  norm_path = _path_join(*path.split('/'))
+  if not norm_path:
+    sys.exit("%s: cannot pass an empty path to %s." % (error_prefix, opt))
+  if string.find(norm_path, '/') != -1:
+    sys.exit("%s: cannot pass multicomponent path to %s yet.\n"
+             "  See http://cvs2svn.tigris.org/issues/show_bug.cgi?id=7 "
+             "for details.\n" % (error_prefix, opt))
+  return norm_path
+
+
 def usage():
   print 'USAGE: %s [-v] [-s svn-repos-path] [-p pass] cvs-repos-path' \
         % os.path.basename(sys.argv[0])
@@ -4828,17 +4849,11 @@ def main():
     elif opt == '--trunk-only':
       ctx.trunk_only = 1
     elif opt == '--trunk':
-      if not value:
-        sys.exit("%s: cannot pass an empty path to %s." % (error_prefix, opt))
-      ctx.trunk_base = value
+      ctx.trunk_base = normalize_ttb_path(opt, value)
     elif opt == '--branches':
-      if not value:
-        sys.exit("%s: cannot pass an empty path to %s." % (error_prefix, opt))
-      ctx.branches_base = value
+      ctx.branches_base = normalize_ttb_path(opt, value)
     elif opt == '--tags':
-      if not value:
-        sys.exit("%s: cannot pass an empty path to %s." % (error_prefix, opt))
-      ctx.tags_base = value
+      ctx.tags_base = normalize_ttb_path(opt, value)
     elif opt == '--no-prune':
       ctx.prune = None
     elif opt == '--dump-only':
@@ -4963,15 +4978,6 @@ def main():
     sys.stderr.write(error_prefix +
                      ": cannot pass --bdb-txn-nosync with --fs-type=%s.\n" \
                      % ctx.fs_type)
-    sys.exit(1)
-
-  if ((string.find(ctx.trunk_base, '/') > -1)
-      or (string.find(ctx.tags_base, '/') > -1)
-      or (string.find(ctx.branches_base, '/') > -1)):
-    sys.stderr.write("%s: cannot pass multicomponent path to "
-                     "--trunk, --tags, or --branches yet.\n"
-                     "  See http://cvs2svn.tigris.org/issues/show_bug.cgi?"
-                     "id=7 for details.\n" % error_prefix)
     sys.exit(1)
 
   if ctx.existing_svnrepos and not os.path.isdir(ctx.target):

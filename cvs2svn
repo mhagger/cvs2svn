@@ -513,18 +513,6 @@ def sort_file(infile, outfile):
   else:
     os.environ['LC_ALL'] = lc_all_tmp
 
-def print_node_tree(tree, root_node, indent_depth=0):
-  """For debugging purposes.  Prints all nodes in TREE that are
-  rooted at ROOT_NODE.  INDENT_DEPTH is merely for purposes of
-  debugging with the print statement in this function."""
-  if not indent_depth:
-    print "TREE", "=" * 75
-  print "TREE:", " " * (indent_depth * 2), root_node, tree[root_node]
-  for key, value in tree[root_node].items():
-    if key[0] == '/': #Skip flags
-      continue
-    print_node_tree(tree, value, (indent_depth + 1))
-
 def match_regexp_list(regexp_list, string):
   """Test whether STRING matches any of the compiled regexps in
   REGEXP_LIST."""
@@ -2724,7 +2712,7 @@ class SymbolicNameFillingGuide:
       # Attach the value to the leaf
       self._node_tree[self._get_node_key(svn_path)] = open_close
 
-    #print_node_tree(self._node_tree, self._root_key)
+    #self.print_node_tree(self._root_key)
 
   def _get_node_key(self, svn_path):
     """Return the node key for svn_path, creating new nodes as needed."""
@@ -2908,6 +2896,19 @@ class SymbolicNameFillingGuide:
       revnums = revnums + \
           self._list_revnums_for_key(node_contents, revnum_type_key)
     return revnums
+
+  def print_node_tree(self, root_key, indent_depth=0):
+    """For debugging purposes.  Prints all nodes in TREE that are
+    rooted at ROOT_KEY.  INDENT_DEPTH is used to indent the output of
+    recursive calls."""
+    if not indent_depth:
+      print "TREE", "=" * 75
+    node = self.get_node(root_key)
+    print "TREE:", " " * (indent_depth * 2), root_key, node
+    for key, value in node.items():
+      if key[0] == '/': #Skip flags
+        continue
+      self.print_node_tree(value, (indent_depth + 1))
 
 
 class FillSource:

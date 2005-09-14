@@ -326,22 +326,27 @@ def check_rev(logs, rev, msg, changed_paths):
     raise svntest.Failure(fail_msg)
 
 
-# List of already converted names; see the NAME argument to ensure_conversion.
-#
-# Keys are names, values are tuples: (svn_repos, svn_wc, log_dictionary).
-# The log_dictionary comes from parse_log(svn_repos).
+class Conversion:
+  """A record of a cvs2svn conversion."""
+
+  def __init__(self, repos, wc, logs):
+    self.repos = repos
+    self.wc = wc
+    # A dictionary as returned by parse_log():
+    self.logs = logs
+
+
+# Cache of conversions that have already been done.  Keys are conv_id;
+# values are Conversion instances.
 already_converted = { }
 
 def ensure_conversion(name, error_re=None, passbypass=None, *args):
   """Convert CVS repository NAME to Subversion, but only if it has not
   been converted before by this invocation of this script.  If it has
-  been converted before, do nothing.
+  been converted before, return the Conversion object from the
+  previous invocation.
 
-  If no error, return a tuple:
-
-     svn_repository_path, wc_path, log_dict
-
-  ...log_dict being the type of dictionary returned by parse_log().
+  If no error, return a Conversion instance.
 
   If ERROR_RE is a string, it is a regular expression expected to
   match some line of stderr printed by the conversion.  If there is an
@@ -427,17 +432,29 @@ def ensure_conversion(name, error_re=None, passbypass=None, *args):
         os.chdir(saved_wd)
 
       # This name is done for the rest of this session.
-      already_converted[conv_id] = (os.path.join('tmp', svnrepos),
-          os.path.join('tmp', wc), log_dict)
+      already_converted[conv_id] = Conversion(
+          os.path.join(tmp_dir, svnrepos), os.path.join(tmp_dir, wc), log_dict)
     except svntest.Failure:
       # Remember the failure so that a future attempt to run this conversion
       # does not bother to retry, but fails immediately.
       already_converted[conv_id] = None
       raise
 
-  if already_converted[conv_id] is None:
+  conv = already_converted[conv_id]
+  if conv is None:
     raise svntest.Failure
-  return already_converted[conv_id]
+  return conv
+
+
+def ensure_conversion2(name, error_re=None, passbypass=None, *args):
+  """Call ensure_conversion().
+
+  If no error, return the main members of the conversion as a tuple:
+
+     conv.repos, conv.wc, conv.logs"""
+
+  conv = ensure_conversion(name, error_re, passbypass, *args)
+  return conv.repos, conv.wc, conv.logs
 
 
 #----------------------------------------------------------------------
@@ -461,7 +478,7 @@ def attr_exec():
   "detection of the executable flag"
   if sys.platform == 'win32':
     raise svntest.Skip
-  repos, wc, logs = ensure_conversion('main')
+  repos, wc, logs = ensure_conversion2('main')
   st = os.stat(os.path.join(wc, 'trunk', 'single-files', 'attr-exec'))
   if not st[0] & stat.S_IXUSR:
     raise svntest.Failure
@@ -469,7 +486,7 @@ def attr_exec():
 
 def space_fname():
   "conversion of filename with a space"
-  repos, wc, logs = ensure_conversion('main')
+  repos, wc, logs = ensure_conversion2('main')
   if not os.path.exists(os.path.join(wc, 'trunk', 'single-files',
                                      'space fname')):
     raise svntest.Failure
@@ -477,7 +494,7 @@ def space_fname():
 
 def two_quick():
   "two commits in quick succession"
-  repos, wc, logs = ensure_conversion('main')
+  repos, wc, logs = ensure_conversion2('main')
   logs2 = parse_log(os.path.join(repos, 'trunk', 'single-files', 'twoquick'))
   if len(logs2) != 2:
     raise svntest.Failure
@@ -518,7 +535,7 @@ def prune_with_care():
   # In the test below, 'trunk/full-prune/first' represents
   # cookie, and 'trunk/full-prune/second' represents NEWS.
 
-  repos, wc, logs = ensure_conversion('main')
+  repos, wc, logs = ensure_conversion2('main')
 
   # Confirm that revision 4 removes '/trunk/full-prune/first',
   # and that revision 6 removes '/trunk/full-prune'.
@@ -557,7 +574,7 @@ def prune_with_care():
 def interleaved_commits():
   "two interleaved trunk commits, different log msgs"
   # See test-data/main-cvsrepos/proj/README.
-  repos, wc, logs = ensure_conversion('main')
+  repos, wc, logs = ensure_conversion2('main')
 
   # The initial import.
   rev = 37
@@ -620,7 +637,7 @@ def interleaved_commits():
 def simple_commits():
   "simple trunk commits"
   # See test-data/main-cvsrepos/proj/README.
-  repos, wc, logs = ensure_conversion('main')
+  repos, wc, logs = ensure_conversion2('main')
 
   # The initial import.
   rev = 23
@@ -676,7 +693,7 @@ def simple_commits():
 def simple_tags():
   "simple tags and branches with no commits"
   # See test-data/main-cvsrepos/proj/README.
-  repos, wc, logs = ensure_conversion('main')
+  repos, wc, logs = ensure_conversion2('main')
 
   # Verify the copy source for the tags we are about to check
   # No need to verify the copyfrom revision, as simple_commits did that
@@ -722,7 +739,7 @@ def simple_tags():
 def simple_branch_commits():
   "simple branch commits"
   # See test-data/main-cvsrepos/proj/README.
-  repos, wc, logs = ensure_conversion('main')
+  repos, wc, logs = ensure_conversion2('main')
 
   rev = 35
   if not logs[rev].changed_paths == {
@@ -739,7 +756,7 @@ def simple_branch_commits():
 def mixed_time_tag():
   "mixed-time tag"
   # See test-data/main-cvsrepos/proj/README.
-  repos, wc, logs = ensure_conversion('main')
+  repos, wc, logs = ensure_conversion2('main')
 
   rev = find_tag_rev(logs, 'T_MIXED')
   expected = {
@@ -758,7 +775,7 @@ def mixed_time_tag():
 def mixed_time_branch_with_added_file():
   "mixed-time branch, and a file added to the branch"
   # See test-data/main-cvsrepos/proj/README.
-  repos, wc, logs = ensure_conversion('main')
+  repos, wc, logs = ensure_conversion2('main')
 
   # A branch from the same place as T_MIXED in the previous test,
   # plus a file added directly to the branch
@@ -779,7 +796,7 @@ def mixed_time_branch_with_added_file():
 def mixed_commit():
   "a commit affecting both trunk and a branch"
   # See test-data/main-cvsrepos/proj/README.
-  repos, wc, logs = ensure_conversion('main')
+  repos, wc, logs = ensure_conversion2('main')
 
   check_rev(logs, 36, 'A single commit affecting one file on branch B_MIXED '
       'and one on trunk.', {
@@ -791,7 +808,7 @@ def mixed_commit():
 def split_time_branch():
   "branch some trunk files, and later branch the rest"
   # See test-data/main-cvsrepos/proj/README.
-  repos, wc, logs = ensure_conversion('main')
+  repos, wc, logs = ensure_conversion2('main')
 
   rev = 42
   # First change on the branch, creating it
@@ -831,12 +848,12 @@ def split_time_branch():
 
 def bogus_tag():
   "conversion of invalid symbolic names"
-  ret, ign, ign = ensure_conversion('bogus-tag')
+  ret, ign, ign = ensure_conversion2('bogus-tag')
 
 
 def overlapping_branch():
   "ignore a file with a branch with two names"
-  repos, wc, logs = ensure_conversion('overlapping-branch',
+  repos, wc, logs = ensure_conversion2('overlapping-branch',
                                       '.*cannot also have name \'vendorB\'')
   nonlap_path = '/trunk/nonoverlapping-branch'
   lap_path = '/trunk/overlapping-branch'
@@ -861,7 +878,7 @@ def overlapping_branch():
 
 def phoenix_branch():
   "convert a branch file rooted in a 'dead' revision"
-  repos, wc, logs = ensure_conversion('phoenix')
+  repos, wc, logs = ensure_conversion2('phoenix')
   check_rev(logs, 8, sym_log_msg('volsung_20010721'), {
     '/branches/volsung_20010721 (from /trunk:7)': 'A',
     '/branches/volsung_20010721/file.txt' : 'D'
@@ -877,7 +894,7 @@ def ctrl_char_in_log():
   "handle a control char in a log message"
   # This was issue #1106.
   rev = 2
-  repos, wc, logs = ensure_conversion('ctrl-char-in-log')
+  repos, wc, logs = ensure_conversion2('ctrl-char-in-log')
   if not ((logs[rev].changed_paths.get('/trunk/ctrl-char-in-log') == 'A')
           and (len(logs[rev].changed_paths) == 1)):
     raise svntest.Failure(
@@ -889,12 +906,12 @@ def ctrl_char_in_log():
 
 def overdead():
   "handle tags rooted in a redeleted revision"
-  repos, wc, logs = ensure_conversion('overdead')
+  repos, wc, logs = ensure_conversion2('overdead')
 
 
 def no_trunk_prune():
   "ensure that trunk doesn't get pruned"
-  repos, wc, logs = ensure_conversion('overdead')
+  repos, wc, logs = ensure_conversion2('overdead')
   for rev in logs.keys():
     rev_logs = logs[rev]
     for changed_path in rev_logs.changed_paths.keys():
@@ -910,7 +927,7 @@ def double_delete():
   # handle a file in the root of the repository (there were some
   # bugs in cvs2svn's svn path construction for top-level files); and
   # the --no-prune option.
-  repos, wc, logs = ensure_conversion('double-delete', None, None,
+  repos, wc, logs = ensure_conversion2('double-delete', None, None,
                                       '--trunk-only' , '--no-prune')
 
   path = '/trunk/twice-removed'
@@ -936,8 +953,8 @@ def split_branch():
   # See test-data/split-branch-cvsrepos/README.
   #
   # The conversion will fail if the bug is present, and
-  # ensure_conversion would raise svntest.Failure.
-  repos, wc, logs = ensure_conversion('split-branch')
+  # ensure_conversion2 would raise svntest.Failure.
+  repos, wc, logs = ensure_conversion2('split-branch')
 
 
 def resync_misgroups():
@@ -945,13 +962,13 @@ def resync_misgroups():
   # See test-data/resync-misgroups-cvsrepos/README.
   #
   # The conversion will fail if the bug is present, and
-  # ensure_conversion would raise svntest.Failure.
-  repos, wc, logs = ensure_conversion('resync-misgroups')
+  # ensure_conversion2 would raise svntest.Failure.
+  repos, wc, logs = ensure_conversion2('resync-misgroups')
 
 
 def tagged_branch_and_trunk():
   "allow tags with mixed trunk and branch sources"
-  repos, wc, logs = ensure_conversion('tagged-branch-n-trunk')
+  repos, wc, logs = ensure_conversion2('tagged-branch-n-trunk')
   a_path = os.path.join(wc, 'tags', 'some-tag', 'a.txt')
   b_path = os.path.join(wc, 'tags', 'some-tag', 'b.txt')
   if not (os.path.exists(a_path) and os.path.exists(b_path)):
@@ -964,7 +981,7 @@ def tagged_branch_and_trunk():
 def enroot_race():
   "never use the rev-in-progress as a copy source"
   # See issue #1427 and r8544.
-  repos, wc, logs = ensure_conversion('enroot-race')
+  repos, wc, logs = ensure_conversion2('enroot-race')
   rev = 8
   if not logs[rev].changed_paths == {
     '/branches/mybranch (from /trunk:7)': 'A',
@@ -982,7 +999,7 @@ def enroot_race():
 
 def enroot_race_obo():
   "do use the last completed rev as a copy source"
-  repos, wc, logs = ensure_conversion('enroot-race-obo')
+  repos, wc, logs = ensure_conversion2('enroot-race-obo')
   if not ((len(logs) == 3) and
       (logs[3].changed_paths.get('/branches/BRANCH (from /trunk:2)') == 'A')):
     raise svntest.Failure
@@ -993,8 +1010,8 @@ def branch_delete_first():
   # See test-data/branch-delete-first-cvsrepos/README.
   #
   # The conversion will fail if the bug is present, and
-  # ensure_conversion would raise svntest.Failure.
-  repos, wc, logs = ensure_conversion('branch-delete-first')
+  # ensure_conversion2 would raise svntest.Failure.
+  repos, wc, logs = ensure_conversion2('branch-delete-first')
 
   # 'file' was deleted from branch-1 and branch-2, but not branch-3
   if os.path.exists(os.path.join(wc, 'branches', 'branch-1', 'file')):
@@ -1067,8 +1084,8 @@ def nonascii_filenames():
       new_path = os.path.join(dstrepos_path, 'single\366files')
       os.rename(base_path, new_path)
 
-    # if ensure_conversion can generate a
-    repos, wc, logs = ensure_conversion('non-ascii', None, None,
+    # if ensure_conversion2 can generate a
+    repos, wc, logs = ensure_conversion2('non-ascii', None, None,
                                         '--encoding=latin1')
   finally:
     if locale_changed:
@@ -1078,7 +1095,7 @@ def nonascii_filenames():
 
 def vendor_branch_sameness():
   "avoid spurious changes for initial revs "
-  repos, wc, logs = ensure_conversion('vendor-branch-sameness')
+  repos, wc, logs = ensure_conversion2('vendor-branch-sameness')
 
   # There are four files in the repository:
   #
@@ -1138,7 +1155,7 @@ def vendor_branch_sameness():
 
 def default_branches():
   "handle default branches correctly "
-  repos, wc, logs = ensure_conversion('default-branches')
+  repos, wc, logs = ensure_conversion2('default-branches')
 
   # There are seven files in the repository:
   #
@@ -1297,7 +1314,7 @@ def default_branches():
 
 def compose_tag_three_sources():
   "compose a tag from three sources"
-  repos, wc, logs = ensure_conversion('compose-tag-three-sources')
+  repos, wc, logs = ensure_conversion2('compose-tag-three-sources')
 
   check_rev(logs, 2, "Add on trunk", {
     '/trunk/tagged-on-trunk-1.2-a': 'A',
@@ -1350,19 +1367,19 @@ def compose_tag_three_sources():
 def pass5_when_to_fill():
   "reserve a svn revnum for a fill only when required"
   # The conversion will fail if the bug is present, and
-  # ensure_conversion would raise svntest.Failure.
-  repos, wc, logs = ensure_conversion('pass5-when-to-fill')
+  # ensure_conversion2 would raise svntest.Failure.
+  repos, wc, logs = ensure_conversion2('pass5-when-to-fill')
 
 
 def empty_trunk():
   "don't break when the trunk is empty"
   # The conversion will fail if the bug is present, and
-  # ensure_conversion would raise svntest.Failure.
-  repos, wc, logs = ensure_conversion('empty-trunk')
+  # ensure_conversion2 would raise svntest.Failure.
+  repos, wc, logs = ensure_conversion2('empty-trunk')
 
 def no_spurious_svn_commits():
   "ensure that we don't create any spurious commits"
-  repos, wc, logs = ensure_conversion('phoenix')
+  repos, wc, logs = ensure_conversion2('phoenix')
 
   # Check spurious commit that could be created in CVSCommit._pre_commit
   #   (When you add a file on a branch, CVS creates a trunk revision
@@ -1398,7 +1415,7 @@ def no_spurious_svn_commits():
 
 def peer_path_pruning():
   "make sure that filling prunes paths correctly"
-  repos, wc, logs = ensure_conversion('peer-path-pruning')
+  repos, wc, logs = ensure_conversion2('peer-path-pruning')
   check_rev(logs, 8, sym_log_msg('BRANCH'), {
     '/branches/BRANCH (from /trunk:6)'         : 'A',
     '/branches/BRANCH/bar'                     : 'D',
@@ -1408,14 +1425,14 @@ def peer_path_pruning():
 def invalid_closings_on_trunk():
   "verify correct revs are copied to default branches"
   # The conversion will fail if the bug is present, and
-  # ensure_conversion would raise svntest.Failure.
-  repos, wc, logs = ensure_conversion('invalid-closings-on-trunk')
+  # ensure_conversion2 would raise svntest.Failure.
+  repos, wc, logs = ensure_conversion2('invalid-closings-on-trunk')
 
 
 def individual_passes():
   "run each pass individually"
-  repos, wc, logs = ensure_conversion('main')
-  repos2, wc2, logs2 = ensure_conversion('main', passbypass=1)
+  repos, wc, logs = ensure_conversion2('main')
+  repos2, wc2, logs2 = ensure_conversion2('main', passbypass=1)
 
   if logs != logs2:
     raise svntest.Failure
@@ -1424,12 +1441,12 @@ def individual_passes():
 def resync_bug():
   "reveal a big bug in our resync algorithm"
   # This will fail if the bug is present
-  repos, wc, logs = ensure_conversion('resync-bug')
+  repos, wc, logs = ensure_conversion2('resync-bug')
 
 
 def branch_from_default_branch():
   "reveal a bug in our default branch detection code"
-  repos, wc, logs = ensure_conversion('branch-from-default-branch')
+  repos, wc, logs = ensure_conversion2('branch-from-default-branch')
 
   # This revision will be a default branch synchronization only
   # if cvs2svn is correctly determining default branch revisions.
@@ -1446,7 +1463,7 @@ def branch_from_default_branch():
 def file_in_attic_too():
   "die if a file exists in and out of the attic"
   try:
-    ensure_conversion('file-in-attic-too')
+    ensure_conversion2('file-in-attic-too')
     raise MissingErrorException
   except svntest.Failure:
     pass
@@ -1454,7 +1471,7 @@ def file_in_attic_too():
 def symbolic_name_filling_guide():
   "reveal a big bug in our SymbolicNameFillingGuide"
   # This will fail if the bug is present
-  repos, wc, logs = ensure_conversion('symbolic-name-overfill')
+  repos, wc, logs = ensure_conversion2('symbolic-name-overfill')
 
 
 # Helpers for tests involving file contents and properties.
@@ -1483,7 +1500,7 @@ def eol_mime():
   ###TODO: It's a bit klugey to construct this path here.  But so far
   ### there's only one test with a mime.types file.  If we have more,
   ### we should abstract this into some helper, which would be located
-  ### near ensure_conversion().  Note that it is a convention of this
+  ### near ensure_conversion2().  Note that it is a convention of this
   ### test suite for a mime.types file to be located in the top level
   ### of the CVS repository to which it applies.
   mime_path = os.path.abspath(os.path.join(test_data_dir,
@@ -1521,7 +1538,7 @@ def eol_mime():
   # certain that there are no bad interactions.
 
   ## Neither --no-default-eol nor --eol-from-mime-type. ##
-  repos, wc, logs = ensure_conversion('eol-mime', None, None,
+  repos, wc, logs = ensure_conversion2('eol-mime', None, None,
                                       '--mime-types=%s' % mime_path,
                                       '--cvs-revnums')
   wc_tree = svntest.tree.build_tree_from_wc(wc, 1)
@@ -1576,7 +1593,7 @@ def eol_mime():
     raise svntest.Failure
 
   ## Just --no-default-eol, not --eol-from-mime-type. ##
-  repos, wc, logs = ensure_conversion('eol-mime', None, None,
+  repos, wc, logs = ensure_conversion2('eol-mime', None, None,
                                       '--mime-types=%s' % mime_path,
                                       '--no-default-eol')
   wc_tree = svntest.tree.build_tree_from_wc(wc, 1)
@@ -1619,7 +1636,7 @@ def eol_mime():
     raise svntest.Failure
 
   ## Just --eol-from-mime-type, not --no-default-eol. ##
-  repos, wc, logs = ensure_conversion('eol-mime', None, None,
+  repos, wc, logs = ensure_conversion2('eol-mime', None, None,
                                       '--mime-types=%s' % mime_path,
                                       '--eol-from-mime-type',
                                       '--cvs-revnums')
@@ -1675,7 +1692,7 @@ def eol_mime():
     raise svntest.Failure
 
   ## Both --no-default-eol and --eol-from-mime-type. ##
-  repos, wc, logs = ensure_conversion('eol-mime', None, None,
+  repos, wc, logs = ensure_conversion2('eol-mime', None, None,
                                       '--mime-types=%s' % mime_path,
                                       '--eol-from-mime-type',
                                       '--no-default-eol')
@@ -1741,7 +1758,7 @@ def check_props(allprops, fname, keywords, eol_style, mime_type):
 
 def keywords():
   "test setting of svn:keywords property among others"
-  repos, wc, logs = ensure_conversion('keywords')
+  repos, wc, logs = ensure_conversion2('keywords')
   wc_tree = svntest.tree.build_tree_from_wc(wc, 1)
   allprops = {
     'foo.default' : props_for_path(wc_tree, '/trunk/foo.default'),
@@ -1765,7 +1782,7 @@ def keywords():
 
 def ignore():
   "test setting of svn:ignore property"
-  repos, wc, logs = ensure_conversion('cvsignore')
+  repos, wc, logs = ensure_conversion2('cvsignore')
   wc_tree = svntest.tree.build_tree_from_wc(wc, 1)
   topdir_props = props_for_path(wc_tree, 'trunk/proj')
   subdir_props = props_for_path(wc_tree, '/trunk/proj/subdir')
@@ -1782,7 +1799,7 @@ def ignore():
 def requires_cvs():
   "test that CVS can still do what RCS can't"
   # See issues 4, 11, 29 for the bugs whose regression we're testing for.
-  repos, wc, logs = ensure_conversion('requires-cvs', None, None, "--use-cvs")
+  repos, wc, logs = ensure_conversion2('requires-cvs', None, None, "--use-cvs")
 
   atsign_contents = file(os.path.join(wc, "trunk", "atsign-add")).read()
   cl_contents     = file(os.path.join(wc, "trunk", "client_lock.idl")).read()
@@ -1799,21 +1816,21 @@ def requires_cvs():
 
 def questionable_symbols():
   "test that we can handle weird symbolic names"
-  repos, wc, logs = ensure_conversion('questionable-symbols')
+  repos, wc, logs = ensure_conversion2('questionable-symbols')
   # If the conversion succeeds, then we're okay.  We could check the
   # actual branch paths, too, but the main thing is to know that the
   # conversion doesn't fail.
 
 def revision_reorder_bug():
   "reveal a bug that reorders file revisions"
-  repos, wc, logs = ensure_conversion('revision-reorder-bug')
+  repos, wc, logs = ensure_conversion2('revision-reorder-bug')
   # If the conversion succeeds, then we're okay.  We could check the
   # actual revisions, too, but the main thing is to know that the
   # conversion doesn't fail.
 
 def exclude():
   "test that exclude really excludes everything"
-  repos, wc, logs = ensure_conversion('main', None, None,
+  repos, wc, logs = ensure_conversion2('main', None, None,
                                       '--exclude=.*')
   for log in logs.values():
     for item in log.changed_paths.keys():
@@ -1824,18 +1841,18 @@ def exclude():
 def vendor_branch_delete_add():
   "add trunk file that was deleted on vendor branch"
   # This will error if the bug is present
-  repos, wc, logs = ensure_conversion('vendor-branch-delete-add')
+  repos, wc, logs = ensure_conversion2('vendor-branch-delete-add')
 
 def resync_pass2_pull_forward():
   "ensure pass2 doesn't pull rev too far forward"
-  repos, wc, logs = ensure_conversion('resync-pass2-pull-forward')
+  repos, wc, logs = ensure_conversion2('resync-pass2-pull-forward')
   # If the conversion succeeds, then we're okay.  We could check the
   # actual revisions, too, but the main thing is to know that the
   # conversion doesn't fail.
 
 def native_eol():
   "only LFs for svn:eol-style=native files"
-  repos, wc, logs = ensure_conversion('native-eol', None, None)
+  repos, wc, logs = ensure_conversion2('native-eol', None, None)
   lines = run_program(svntest.main.svnadmin_binary, None, 'dump', '-q', repos)
   # Verify that all files in the dump have LF EOLs.  We're actually
   # testing the whole dump file, but the dump file itself only uses
@@ -1846,28 +1863,28 @@ def native_eol():
 
 def double_fill():
   "reveal a bug that created a branch twice"
-  repos, wc, logs = ensure_conversion('double-fill')
+  repos, wc, logs = ensure_conversion2('double-fill')
   # If the conversion succeeds, then we're okay.  We could check the
   # actual revisions, too, but the main thing is to know that the
   # conversion doesn't fail.
 
 def resync_pass2_push_backward():
   "ensure pass2 doesn't push rev too far backward"
-  repos, wc, logs = ensure_conversion('resync-pass2-push-backward')
+  repos, wc, logs = ensure_conversion2('resync-pass2-push-backward')
   # If the conversion succeeds, then we're okay.  We could check the
   # actual revisions, too, but the main thing is to know that the
   # conversion doesn't fail.
 
 def double_add():
   "reveal a bug that added a branch file twice"
-  repos, wc, logs = ensure_conversion('double-add')
+  repos, wc, logs = ensure_conversion2('double-add')
   # If the conversion succeeds, then we're okay.  We could check the
   # actual revisions, too, but the main thing is to know that the
   # conversion doesn't fail.
 
 def bogus_branch_copy():
   "reveal a bug that copies a branch file wrongly"
-  repos, wc, logs = ensure_conversion('bogus-branch-copy')
+  repos, wc, logs = ensure_conversion2('bogus-branch-copy')
   # If the conversion succeeds, then we're okay.  We could check the
   # actual revisions, too, but the main thing is to know that the
   # conversion doesn't fail.
@@ -1884,7 +1901,7 @@ def nested_ttb_directories():
 
   for opts in opts_list:
     try:
-      ensure_conversion(
+      ensure_conversion2(
           'main', r'.*paths .* and .* are not disjoint\.', None, *opts
           )
       raise MissingErrorException

@@ -309,18 +309,21 @@ def sym_log_msg(symbolic_name, is_tag=None):
 
 def check_rev(logs, rev, msg, changed_paths):
   """Verify the REV of LOGS has the MSG and CHANGED_PATHS specified."""
-  fail = None
+  fail_msg = ''
   if logs[rev].msg.find(msg) != 0:
-    print "Revision %d log message was:\n%s\n" % (rev, logs[rev].msg)
-    print "It should have begun with:\n%s\n" % (msg,)
-    fail = 1
+    fail_msg += (
+      "Revision %d log message was:\n%s\n\n"
+      "It should have begun with:\n%s\n\n"
+      % (rev, logs[rev].msg, msg,)
+      )
   if logs[rev].changed_paths != changed_paths:
-    print "Revision %d changed paths list was:\n%s\n" % (rev,
-        logs[rev].changed_paths)
-    print "It should have been:\n%s\n" % (changed_paths,)
-    fail = 1
-  if fail:
-    raise svntest.Failure
+    fail_msg += (
+      "Revision %d changed paths list was:\n%s\n\n"
+      "It should have been:\n%s\n\n"
+      % (rev, logs[rev].changed_paths, changed_paths,)
+      )
+  if fail_msg:
+    raise svntest.Failure(fail_msg)
 
 
 # List of already converted names; see the NAME argument to ensure_conversion.
@@ -411,13 +414,12 @@ def ensure_conversion(name, error_re=None, passbypass=None, *args):
         except RunProgramException:
           raise svntest.Failure
         except MissingErrorException:
-          print "Test failed because no error matched '%s'" % error_re
-          raise svntest.Failure
+          raise svntest.Failure("Test failed because no error matched '%s'"
+                                % error_re)
 
         if not os.path.isdir(svnrepos):
-          print "Repository not created: '%s'" \
-                % os.path.join(os.getcwd(), svnrepos)
-          raise svntest.Failure
+          raise svntest.Failure("Repository not created: '%s'"
+                                % os.path.join(os.getcwd(), svnrepos))
 
         run_svn('co', repos_to_url(svnrepos), wc)
         log_dict = parse_log(svnrepos)
@@ -452,8 +454,7 @@ def show_usage():
     print 'Exiting without running any further tests.'
     sys.exit(1)
   if out[0].find('USAGE') < 0:
-    print 'Basic cvs2svn invocation failed.'
-    raise svntest.Failure
+    raise svntest.Failure('Basic cvs2svn invocation failed.')
 
 
 def attr_exec():
@@ -536,23 +537,21 @@ def prune_with_care():
                '/trunk/full-prune-reappear/sub/first',
                '/trunk/partial-prune/sub/first'):
     if not (logs[rev].changed_paths.get(path) == 'D'):
-      print "Revision %d failed to remove '%s'." % (rev, path)
-      raise svntest.Failure
+      raise svntest.Failure("Revision %d failed to remove '%s'." % (rev, path))
 
   rev = 13
   for path in ('/trunk/full-prune',
                '/trunk/full-prune-reappear',
                '/trunk/partial-prune/sub'):
     if not (logs[rev].changed_paths.get(path) == 'D'):
-      print "Revision %d failed to remove '%s'." % (rev, path)
-      raise svntest.Failure
+      raise svntest.Failure("Revision %d failed to remove '%s'." % (rev, path))
 
   rev = 47
   for path in ('/trunk/full-prune-reappear',
                '/trunk/full-prune-reappear/appears-later'):
     if not (logs[rev].changed_paths.get(path) == 'A'):
-      print "Revision %d failed to create path '%s'." % (rev, path)
-      raise svntest.Failure
+      raise svntest.Failure("Revision %d failed to create path '%s'."
+                            % (rev, path))
 
 
 def interleaved_commits():
@@ -881,11 +880,11 @@ def ctrl_char_in_log():
   repos, wc, logs = ensure_conversion('ctrl-char-in-log')
   if not ((logs[rev].changed_paths.get('/trunk/ctrl-char-in-log') == 'A')
           and (len(logs[rev].changed_paths) == 1)):
-    print "Revision 2 of 'ctrl-char-in-log,v' was not converted successfully."
-    raise svntest.Failure
+    raise svntest.Failure(
+        "Revision 2 of 'ctrl-char-in-log,v' was not converted successfully.")
   if logs[rev].msg.find('\x04') < 0:
-    print "Log message of 'ctrl-char-in-log,v' (rev 2) is wrong."
-    raise svntest.Failure
+    raise svntest.Failure(
+        "Log message of 'ctrl-char-in-log,v' (rev 2) is wrong.")
 
 
 def overdead():
@@ -1728,11 +1727,17 @@ def check_props(allprops, fname, keywords, eol_style, mime_type):
       mime_type == props.get('svn:mime-type') ):
     pass
   else:
-    print "Unexpected properties for '%s'" % fname
-    print "keywords:\t%s\t%s" % (keywords, props.get('svn:keywords'))
-    print "eol-style:\t%s\t%s" % (eol_style, props.get('svn:eol-style'))
-    print "mime-type:\t%s\t%s" % (mime_type, props.get('svn:mime-type'))
-    raise svntest.Failure
+    raise svntest.Failure(
+      "Unexpected properties for '%s'\n"
+      "keywords:\t%s\t%s\n"
+      "eol-style:\t%s\t%s\n"
+      "mime-type:\t%s\t%s\n"
+      % (fname,
+         keywords, props.get('svn:keywords'),
+         eol_style, props.get('svn:eol-style'),
+         mime_type, props.get('svn:mime-type'),
+         )
+      )
 
 def keywords():
   "test setting of svn:keywords property among others"

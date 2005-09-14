@@ -2675,8 +2675,6 @@ class SymbolicNameFillingGuide:
 
     # The key for the root node of the node tree
     self.root_key = '0'
-    # The dictionary that holds our node tree, seeded with the root key.
-    self.node_tree = { self.root_key : { } }
 
   def get_best_revnum(self, node, preferred_revnum):
     """Determine the best subversion revision number to use when
@@ -2867,6 +2865,9 @@ class SymbolicNameFillingGuide:
     higher than the last revision from which this node/path may be
     copied.  Intermediate nodes never contain opening or closing
     flags."""
+
+    # Seed the dictionary that holds our node tree with the root key.
+    self.node_tree = { self.root_key : { } }
 
     for svn_path, open_close in self.things.items():
       parent_key = self.root_key

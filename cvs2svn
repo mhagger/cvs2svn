@@ -4724,6 +4724,29 @@ def normalize_ttb_path(opt, path):
   return norm_path
 
 
+def verify_paths_disjoint(*paths):
+  """Verify that all of the paths in the argument list are disjoint.
+
+  If any of the paths is nested in another one (i.e., in the sense
+  that 'a/b/c/d' is nested in 'a/b'), or any two paths are identical,
+  write an error message and exit."""
+
+  paths = [(path.split('/'), path) for path in paths]
+  # If all overlapping elements are equal, a shorter list is
+  # considered "less than" a longer one.  Therefore if any paths are
+  # nested, this sort will leave at least one such pair adjacent, in
+  # the order [nest,nestling].
+  paths.sort()
+  for i in range(1, len(paths)):
+    split_path1, path1 = paths[i - 1]
+    split_path2, path2 = paths[i]
+    if len(split_path1) <= len(split_path2) \
+       and split_path2[:len(split_path1)] == split_path1:
+      sys.exit("%s: paths %s and %s are not disjoint.\n"
+               % (error_prefix, path1, path2,))
+      sys.exit(1)
+
+
 def usage():
   print 'USAGE: %s [-v] [-s svn-repos-path] [-p pass] cvs-repos-path' \
         % os.path.basename(sys.argv[0])
@@ -4979,6 +5002,8 @@ def main():
                      ": cannot pass --bdb-txn-nosync with --fs-type=%s.\n" \
                      % ctx.fs_type)
     sys.exit(1)
+
+  verify_paths_disjoint(ctx.trunk_base, ctx.branches_base, ctx.tags_base)
 
   if ctx.existing_svnrepos and not os.path.isdir(ctx.target):
     sys.stderr.write(error_prefix +

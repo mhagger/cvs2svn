@@ -1872,6 +1872,25 @@ def bogus_branch_copy():
   # actual revisions, too, but the main thing is to know that the
   # conversion doesn't fail.
 
+def nested_ttb_directories():
+  "require error if ttb directories are not disjoint"
+  opts_list = [
+    ('--trunk=a', '--branches=a',),
+    ('--trunk=a', '--tags=a',),
+    ('--branches=a', '--tags=a',),
+    # This option conflicts with the default trunk path:
+    ('--branches=trunk',),
+    ]
+
+  for opts in opts_list:
+    try:
+      ensure_conversion(
+          'main', r'.*paths .* and .* are not disjoint\.', None, *opts
+          )
+      raise MissingErrorException
+    except svntest.Failure:
+      pass
+
 
 #----------------------------------------------------------------------
 
@@ -1934,6 +1953,7 @@ test_list = [ None,
               resync_pass2_push_backward,
               double_add,
               bogus_branch_copy,
+              nested_ttb_directories,
              ]
 
 if __name__ == '__main__':

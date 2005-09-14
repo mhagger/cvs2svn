@@ -2,6 +2,23 @@
 #
 #  run_tests.py:  test suite for cvs2svn
 #
+#  Usage: run_tests.py [-v | --verbose] [list | <num>]
+#
+#  Options:
+#      -v, --verbose
+#          enable verbose output
+#
+#  Arguments (at most one argument is allowed):
+#      list
+#          If the word "list" is passed as an argument, the list of
+#          available tests is printed (but no tests are run).
+#
+#      <num>
+#          If a number is passed as an argument, then only the test
+#          with that number is run.
+#
+#      If no argument is specified, then all tests are run.
+#
 #  Subversion is a tool for revision control.
 #  See http://subversion.tigris.org for more information.
 #

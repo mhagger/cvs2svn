@@ -778,15 +778,11 @@ def simple_branch_commits():
   conv = ensure_conversion('main')
 
   rev = 35
-  if not conv.logs[rev].changed_paths == {
+  conv.logs[rev].check('Modify three files, on branch B_MIXED.', {
     '/branches/B_MIXED/proj/default': 'M',
     '/branches/B_MIXED/proj/sub1/default': 'M',
     '/branches/B_MIXED/proj/sub2/subsubA/default': 'M',
-    }:
-    raise svntest.Failure
-
-  if conv.logs[rev].msg.find('Modify three files, on branch B_MIXED.') != 0:
-    raise svntest.Failure
+    })
 
 
 def mixed_time_tag():
@@ -804,8 +800,7 @@ def mixed_time_tag():
     }
   if rev == 16:
     expected['/tags'] = 'A'
-  if not conv.logs[rev].changed_paths == expected:
-    raise svntest.Failure
+  conv.logs[rev].check_changes(expected)
 
 
 def mixed_time_branch_with_added_file():
@@ -1158,36 +1153,23 @@ def vendor_branch_sameness():
   # d.txt should be 'D'eleted.
 
   rev = 2
-  ###TODO Convert to Log.check().
-  if conv.logs[rev].msg.find('Initial revision') != 0:
-    raise svntest.Failure
-
-  if not conv.logs[rev].changed_paths == {
+  conv.logs[rev].check('Initial revision', {
     '/trunk/proj' : 'A',
     '/trunk/proj/a.txt' : 'A',
     '/trunk/proj/b.txt' : 'A',
     '/trunk/proj/c.txt' : 'A',
     '/trunk/proj/d.txt' : 'A',
-    }:
-    raise svntest.Failure
+    })
 
-  if conv.logs[rev + 1].msg.find(sym_log_msg('vbranchA')) != 0:
-    raise svntest.Failure
-
-  if not conv.logs[rev + 1].changed_paths == {
+  conv.logs[rev + 1].check(sym_log_msg('vbranchA'), {
    '/branches/vbranchA (from /trunk:2)' : 'A',
     '/branches/vbranchA/proj/d.txt' : 'D',
-    }:
-    raise svntest.Failure
+    })
 
-  if conv.logs[rev + 2].msg.find('First vendor branch revision.') != 0:
-    raise svntest.Failure
-
-  if not conv.logs[rev + 2].changed_paths == {
+  conv.logs[rev + 2].check('First vendor branch revision.', {
     '/branches/vbranchA/proj/b.txt' : 'M',
     '/branches/vbranchA/proj/c.txt' : 'D',
-    }:
-    raise svntest.Failure
+    })
 
 
 def default_branches():

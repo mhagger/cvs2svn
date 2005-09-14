@@ -326,6 +326,41 @@ def check_rev(logs, rev, msg, changed_paths):
     raise svntest.Failure(fail_msg)
 
 
+def make_conversion_id(name, args, passbypass):
+  """Create an identifying tag for a conversion.
+
+  The return value can also be used as part of a filesystem path.
+
+  NAME is the name of the CVS repository.
+
+  ARGS are the extra arguments to be passed to cvs2svn.
+
+  PASSBYPASS is a boolean indicating whether the conversion is to be
+  run one pass at a time.
+
+  The 1-to-1 mapping between cvs2svn command parameters and
+  conversion_ids allows us to avoid running the same conversion more
+  than once, when multiple tests use exactly the same conversion."""
+
+  conv_id = name
+
+  _win32_fname_mapping = { '/': '_sl_', '\\': '_bs_', ':': '_co_',
+                           '*': '_st_', '?': '_qm_', '"': '_qq_',
+                           '<': '_lt_', '>': '_gt_', '|': '_pi_', }
+  for arg in args:
+    # Replace some characters that Win32 isn't happy about having in a
+    # filename (which was causing the eol_mime test to fail).
+    sanitized_arg = arg
+    for a, b in _win32_fname_mapping.items():
+      sanitized_arg = sanitized_arg.replace(a, b)
+    conv_id = conv_id + sanitized_arg
+
+  if passbypass:
+    conv_id = conv_id + '-passbypass'
+
+  return conv_id
+
+
 class Conversion:
   """A record of a cvs2svn conversion."""
 
@@ -366,29 +401,12 @@ def ensure_conversion(name, error_re=None, passbypass=None, *args):
   of elements in ARGS does not matter.
   """
 
-  # Identifying tag for this conversion.  This allows us to avoid
-  # running the same conversion more than once, when multiple tests
-  # use exactly the same conversion.
-  conv_id = name
-
   # Convert args from tuple to list, then sort them, so we can
   # construct a reliable conv_id.
   args = list(args)
   args.sort()
 
-  _win32_fname_mapping = { '/': '_sl_', '\\': '_bs_', ':': '_co_',
-                           '*': '_st_', '?': '_qm_', '"': '_qq_',
-                           '<': '_lt_', '>': '_gt_', '|': '_pi_', }
-  for arg in args:
-    # Replace some characters that Win32 isn't happy about having in a
-    # filename (which was causing the eol_mime test to fail).
-    sanitized_arg = arg
-    for a, b in _win32_fname_mapping.items():
-      sanitized_arg = sanitized_arg.replace(a, b)
-    conv_id = conv_id + sanitized_arg
-
-  if passbypass:
-    conv_id = conv_id + '-passbypass'
+  conv_id = make_conversion_id(name, args, passbypass)
 
   if not already_converted.has_key(conv_id):
     try:

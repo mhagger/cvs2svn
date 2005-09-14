@@ -362,13 +362,63 @@ def make_conversion_id(name, args, passbypass):
 
 
 class Conversion:
-  """A record of a cvs2svn conversion."""
+  """A record of a cvs2svn conversion.
 
-  def __init__(self, repos, wc, logs):
-    self.repos = repos
-    self.wc = wc
-    # A dictionary as returned by parse_log():
-    self.logs = logs
+  Fields:
+
+    conv_id -- the conversion id for this Conversion.
+
+    name -- a one-word name indicating the involved repositories.
+
+    repos -- the path to the svn repository.
+
+    wc -- the path to the svn working copy.
+
+    logs -- a dictionary of Log instances, as returned by parse_log()."""
+
+  def __init__(self, conv_id, name, error_re, passbypass, args):
+    self.conv_id = conv_id
+    self.name = name
+    if not os.path.isdir(tmp_dir):
+      os.mkdir(tmp_dir)
+
+    cvsrepos = os.path.abspath(
+        os.path.join(test_data_dir, '%s-cvsrepos' % self.name))
+
+    saved_wd = os.getcwd()
+    try:
+      os.chdir(tmp_dir)
+
+      svnrepos = '%s-svnrepos' % self.conv_id
+      self.repos = os.path.join(tmp_dir, svnrepos)
+      wc       = '%s-wc' % self.conv_id
+      self.wc = os.path.join(tmp_dir, wc)
+
+      # Clean up from any previous invocations of this script.
+      erase(svnrepos)
+      erase(wc)
+
+      try:
+        args.extend( [ '--bdb-txn-nosync', '-s', svnrepos, cvsrepos ] )
+        if passbypass:
+          for p in range(1, 9):
+            run_cvs2svn(error_re, '-p', str(p), *args)
+        else:
+          run_cvs2svn(error_re, *args)
+      except RunProgramException:
+        raise svntest.Failure
+      except MissingErrorException:
+        raise svntest.Failure("Test failed because no error matched '%s'"
+                              % error_re)
+
+      if not os.path.isdir(svnrepos):
+        raise svntest.Failure("Repository not created: '%s'"
+                              % os.path.join(os.getcwd(), svnrepos))
+
+      run_svn('co', repos_to_url(svnrepos), wc)
+      self.logs = parse_log(svnrepos)
+    finally:
+      os.chdir(saved_wd)
 
 
 # Cache of conversions that have already been done.  Keys are conv_id;
@@ -410,48 +460,10 @@ def ensure_conversion(name, error_re=None, passbypass=None, *args):
 
   if not already_converted.has_key(conv_id):
     try:
-      if not os.path.isdir(tmp_dir):
-        os.mkdir(tmp_dir)
-
-      cvsrepos = os.path.abspath(os.path.join(test_data_dir,
-        '%s-cvsrepos' % name))
-
-      saved_wd = os.getcwd()
-      try:
-        os.chdir(tmp_dir)
-
-        svnrepos = '%s-svnrepos' % conv_id
-        wc       = '%s-wc' % conv_id
-
-        # Clean up from any previous invocations of this script.
-        erase(svnrepos)
-        erase(wc)
-
-        try:
-          args.extend( [ '--bdb-txn-nosync', '-s', svnrepos, cvsrepos ] )
-          if passbypass:
-            for p in range(1, 9):
-              run_cvs2svn(error_re, '-p', str(p), *args)
-          else:
-            ret = run_cvs2svn(error_re, *args)
-        except RunProgramException:
-          raise svntest.Failure
-        except MissingErrorException:
-          raise svntest.Failure("Test failed because no error matched '%s'"
-                                % error_re)
-
-        if not os.path.isdir(svnrepos):
-          raise svntest.Failure("Repository not created: '%s'"
-                                % os.path.join(os.getcwd(), svnrepos))
-
-        run_svn('co', repos_to_url(svnrepos), wc)
-        log_dict = parse_log(svnrepos)
-      finally:
-        os.chdir(saved_wd)
-
-      # This name is done for the rest of this session.
+      # Run the conversion and store the result for the rest of this
+      # session:
       already_converted[conv_id] = Conversion(
-          os.path.join(tmp_dir, svnrepos), os.path.join(tmp_dir, wc), log_dict)
+          conv_id, name, error_re, passbypass, args)
     except svntest.Failure:
       # Remember the failure so that a future attempt to run this conversion
       # does not bother to retry, but fails immediately.

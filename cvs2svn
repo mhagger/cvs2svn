@@ -2642,13 +2642,13 @@ class SymbolicNameFillingGuide:
   self.symbolic_name in the current SVNCommit.
 
   After calling self.register() on a series of openings and closings,
-  call self.initialize_node_tree() to prepare self.node_tree for
+  call self.initialize_node_tree() to prepare self._node_tree for
   examination.  See the docstring for self.initialize_node_tree() for
-  details on the structure of self.node_tree.
+  details on the structure of self._node_tree.
 
-  By walking self.node_tree and calling self.get_best_revnum() on each
+  By walking self._node_tree and calling self.get_best_revnum() on each
   node, the caller can determine what subversion revision number to
-  copy the path corresponding to that node from.  self.node_tree
+  copy the path corresponding to that node from.  self._node_tree
   should be treated as read-only.
 
   The caller can then descend to sub-nodes to see if their "best
@@ -2674,7 +2674,7 @@ class SymbolicNameFillingGuide:
     self.things = { }
 
     # The key for the root node of the node tree
-    self.root_key = '0'
+    self._root_key = '0'
 
   def is_empty(self):
     """Return true if we haven't accumulated any openings or closings,
@@ -2718,23 +2718,23 @@ class SymbolicNameFillingGuide:
     flags."""
 
     # Seed the dictionary that holds our node tree with the root key.
-    self.node_tree = { self.root_key : { } }
+    self._node_tree = { self._root_key : { } }
 
     for svn_path, open_close in self.things.items():
       # Attach the value to the leaf
-      self.node_tree[self._get_node_key(svn_path)] = open_close
+      self._node_tree[self._get_node_key(svn_path)] = open_close
 
-    #print_node_tree(self.node_tree, self.root_key)
+    #print_node_tree(self._node_tree, self._root_key)
 
   def _get_node_key(self, svn_path):
     """Return the node key for svn_path, creating new nodes as needed."""
     # Walk down the path, one node at a time.
-    node_key = self.root_key
+    node_key = self._root_key
     for component in svn_path.split('/'):
-      node = self.node_tree[node_key]
+      node = self._node_tree[node_key]
       if not node.has_key(component):
         child_key = gen_key()
-        self.node_tree[child_key] = { }
+        self._node_tree[child_key] = { }
         node[component] = child_key
       else:
         child_key = node[component]
@@ -2742,6 +2742,17 @@ class SymbolicNameFillingGuide:
       node_key = child_key
     # Having reached the leaf, return the key
     return node_key
+
+  def get_root_node(self):
+    """Return the root node."""
+
+    return self.get_node(self._root_key)
+
+  def get_node(self, node_key):
+    """Return the node with the specified NODE_KEY.  If there is no
+    such node, raise a KeyError."""
+
+    return self._node_tree[node_key]
 
   def get_best_revnum(self, node, preferred_revnum):
     """Determine the best subversion revision number to use when
@@ -2873,8 +2884,8 @@ class SymbolicNameFillingGuide:
         scores.insert(insert_index, (closing_rev, insert_score))
     return scores
 
-  def _list_revnums_for_key(self, node, revnum_type_key):
-    """Scan self.node_tree and return a list of all the revision
+  def _list_revnums_for_key(self, node_key, revnum_type_key):
+    """Scan self._node_tree and return a list of all the revision
     numbers (including duplicates) contained in REVNUM_TYPE_KEY values
     for all leaf nodes at and under NODE.
 
@@ -2882,15 +2893,16 @@ class SymbolicNameFillingGuide:
     self.CLOSING_KEY."""
     revnums = []
 
+    node = self.get_node(node_key)
+
     # If the node has self.OPENING_KEY, it must be a leaf node--all
     # leaf nodes have at least an opening key (although they may not
     # have a closing key.  Fetch revnum and return
-    if (self.node_tree[node].has_key(self.OPENING_KEY) and
-        self.node_tree[node].has_key(revnum_type_key)):
-      revnums.append(self.node_tree[node][revnum_type_key])
+    if (node.has_key(self.OPENING_KEY) and node.has_key(revnum_type_key)):
+      revnums.append(node[revnum_type_key])
       return revnums
 
-    for key, node_contents in self.node_tree[node].items():
+    for key, node_contents in node.items():
       if key[0] == '/':
         continue
       revnums = revnums + \
@@ -3213,11 +3225,11 @@ class SVNRepositoryMirror:
     # must have 'trunk' and 'branches/my_branch' and not just
     # 'branches'.
     sources = []
-    for entry, key in symbol_fill.node_tree[symbol_fill.root_key].items():
+    for entry, key in symbol_fill.get_root_node().items():
       if entry == Ctx().trunk_base:
         sources.append(FillSource(entry, key))
       elif entry == Ctx().branches_base:
-        for entry2, key2 in symbol_fill.node_tree[key].items():
+        for entry2, key2 in symbol_fill.get_node(key).items():
           sources.append(FillSource(entry + '/' + entry2, key2))
       else:
         raise # Should never happen
@@ -3283,7 +3295,7 @@ class SVNRepositoryMirror:
 
     PRUNE_OK means that a copy has been made in this recursion, and
     it's safe to prune directories that are not in
-    SYMBOL_FILL.node_tree, provided that said directory has a source
+    SYMBOL_FILL._node_tree, provided that said directory has a source
     prefix of one of the PARENT_SOURCE_PREFIX.
 
     PATH, PARENT_SOURCE_PREFIX, PRUNE_OK, and PREFERRED_REVNUM
@@ -3326,7 +3338,7 @@ class SVNRepositoryMirror:
     # this path element exists.
     src_entries = {}
     for source in sources:
-      for entry, key in symbol_fill.node_tree[source.key].items():
+      for entry, key in symbol_fill.get_node(source.key).items():
         if entry[0] == '/': # Skip flags
           continue
         if not src_entries.has_key(entry):

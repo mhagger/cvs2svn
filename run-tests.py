@@ -188,6 +188,22 @@ class Log:
           % (self.revision, self.msg, msg,)
           )
 
+  def check_change(self, path, op):
+    """Verify that this Log includes a change for PATH with operator OP."""
+
+    found_op = self.changed_paths.get(path, None)
+    if found_op is None:
+      raise svntest.Failure(
+          "Revision %d does not include change for path %s "
+          "(it should have been %s).\n"
+          % (self.revision, path, op,)
+          )
+    if found_op != op:
+      raise svntest.Failure(
+          "Revision %d path %s had op %s (it should have been %s)\n"
+          % (self.revision, path, found_op, op,)
+          )
+
   def check_changes(self, changed_paths):
     """Verify that this Log has precisely the CHANGED_PATHS specified.
 
@@ -585,22 +601,18 @@ def prune_with_care():
   for path in ('/trunk/full-prune/first',
                '/trunk/full-prune-reappear/sub/first',
                '/trunk/partial-prune/sub/first'):
-    if not (conv.logs[rev].changed_paths.get(path) == 'D'):
-      raise svntest.Failure("Revision %d failed to remove '%s'." % (rev, path))
+    conv.logs[rev].check_change(path, 'D')
 
   rev = 13
   for path in ('/trunk/full-prune',
                '/trunk/full-prune-reappear',
                '/trunk/partial-prune/sub'):
-    if not (conv.logs[rev].changed_paths.get(path) == 'D'):
-      raise svntest.Failure("Revision %d failed to remove '%s'." % (rev, path))
+    conv.logs[rev].check_change(path, 'D')
 
   rev = 47
   for path in ('/trunk/full-prune-reappear',
                '/trunk/full-prune-reappear/appears-later'):
-    if not (conv.logs[rev].changed_paths.get(path) == 'A'):
-      raise svntest.Failure("Revision %d failed to create path '%s'."
-                            % (rev, path))
+    conv.logs[rev].check_change(path, 'A')
 
 
 def interleaved_commits():
@@ -621,8 +633,7 @@ def interleaved_commits():
                '/trunk/interleaved/c',
                '/trunk/interleaved/d',
                '/trunk/interleaved/e',):
-    if not (conv.logs[rev].changed_paths.get(path) == 'A'):
-      raise svntest.Failure
+    conv.logs[rev].check_change(path, 'A')
 
   conv.logs[rev].check_msg('Initial revision')
 
@@ -875,9 +886,7 @@ def overlapping_branch():
   nonlap_path = '/trunk/nonoverlapping-branch'
   lap_path = '/trunk/overlapping-branch'
   rev = 4
-  if not (conv.logs[rev].changed_paths.get('/branches/vendorA (from /trunk:3)')
-          == 'A'):
-    raise svntest.Failure
+  conv.logs[rev].check_change('/branches/vendorA (from /trunk:3)', 'A')
   # We don't know what order the first two commits would be in, since
   # they have different log messages but the same timestamps.  As only
   # one of the files would be on the vendorB branch in the regression
@@ -945,12 +954,10 @@ def double_delete():
 
   path = '/trunk/twice-removed'
   rev = 2
-  if not (conv.logs[rev].changed_paths.get(path) == 'A'):
-    raise svntest.Failure
+  conv.logs[rev].check_change(path, 'A')
   conv.logs[rev].check_msg('Initial revision')
 
-  if not (conv.logs[rev + 1].changed_paths.get(path) == 'D'):
-    raise svntest.Failure
+  conv.logs[rev + 1].check_change(path, 'D')
   conv.logs[rev + 1].check_msg('Remove this file for the first time.')
 
   if conv.logs[rev + 1].changed_paths.has_key('/trunk'):
@@ -1007,9 +1014,8 @@ def enroot_race():
 def enroot_race_obo():
   "do use the last completed rev as a copy source"
   conv = ensure_conversion('enroot-race-obo')
-  if not ((len(conv.logs) == 3) and
-          (conv.logs[3].changed_paths.get('/branches/BRANCH (from /trunk:2)') \
-           == 'A')):
+  conv.logs[3].check_change('/branches/BRANCH (from /trunk:2)', 'A')
+  if not len(conv.logs) == 3:
     raise svntest.Failure
 
 

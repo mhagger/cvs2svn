@@ -2604,32 +2604,33 @@ class SymbolingsReader:
     This is perfectly fine, because we can still do a valid fill
     without the closing--we always try to fill what we can as soon as
     we can."""
-    # It's possible to have a branch start with a file that was added
-    # on a branch
-    if not self.offsets.has_key(symbolic_name):
-      return SymbolicNameFillingGuide(symbolic_name)
-    # set our read offset for self.symbolings to the offset for
-    # symbolic_name
-    self.symbolings.seek(self.offsets[symbolic_name])
 
     symbol_fill = SymbolicNameFillingGuide(symbolic_name)
-    while (1):
-      fpos = self.symbolings.tell()
-      line = self.symbolings.readline().rstrip()
-      if not line:
-        break
-      name, revnum, type, svn_path = line.split(" ", 3)
-      revnum = int(revnum)
-      if (revnum > svn_revnum
-          or name != symbolic_name):
-        break
-      symbol_fill.register(svn_path, revnum, type)
 
-    # get current offset of the read marker and set it to the offset
-    # for the beginning of the line we just read if we used anything
-    # we read.
-    if not symbol_fill.is_empty():
-      self.offsets[symbolic_name] = fpos
+    # It's possible to have a branch start with a file that was added
+    # on a branch
+    if self.offsets.has_key(symbolic_name):
+      # set our read offset for self.symbolings to the offset for
+      # symbolic_name
+      self.symbolings.seek(self.offsets[symbolic_name])
+
+      while 1:
+        fpos = self.symbolings.tell()
+        line = self.symbolings.readline().rstrip()
+        if not line:
+          break
+        name, revnum, type, svn_path = line.split(" ", 3)
+        revnum = int(revnum)
+        if (revnum > svn_revnum
+            or name != symbolic_name):
+          break
+        symbol_fill.register(svn_path, revnum, type)
+
+      # get current offset of the read marker and set it to the offset
+      # for the beginning of the line we just read if we used anything
+      # we read.
+      if not symbol_fill.is_empty():
+        self.offsets[symbolic_name] = fpos
 
     symbol_fill.make_node_tree()
     return symbol_fill

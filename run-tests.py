@@ -152,7 +152,7 @@ else:
     return tuple(map(int, matches)) + (0, 1, -1)
 
 class Log:
-  def __init__(self, revision, author, date):
+  def __init__(self, revision, author, date, symbols):
     self.revision = revision
     self.author = author
 
@@ -164,6 +164,10 @@ class Log:
     # and time.mktime() converts from localtime, it all works out very
     # happily.
     self.date = time.mktime(svn_strptime(date[0:19]))
+
+    # The following symbols are used for string interpolation when
+    # checking paths:
+    self.symbols = symbols
 
     # The changed paths will be accumulated later, as log data is read.
     # Keys here are paths such as '/trunk/foo/bar', values are letter
@@ -191,6 +195,7 @@ class Log:
   def check_change(self, path, op):
     """Verify that this Log includes a change for PATH with operator OP."""
 
+    path = path % self.symbols
     found_op = self.changed_paths.get(path, None)
     if found_op is None:
       raise svntest.Failure(
@@ -210,11 +215,15 @@ class Log:
     CHANGED_PATHS is a dictionary in the same format as
     self.changed_paths."""
 
-    if self.changed_paths != changed_paths:
+    cp = {}
+    for (path, op) in changed_paths.items():
+      cp[path % self.symbols] = op
+
+    if self.changed_paths != cp:
       raise svntest.Failure(
           "Revision %d changed paths list was:\n%s\n\n"
           "It should have been:\n%s\n\n"
-          % (self.revision, self.changed_paths, changed_paths,)
+          % (self.revision, self.changed_paths, cp,)
           )
 
   def check(self, msg, changed_paths):
@@ -291,8 +300,8 @@ def parse_log(svn_repos):
       line = line[:-1]
       m = log_start_re.match(line)
       if m:
-        this_log = Log(int(m.group('rev')), m.group('author'),
-                       m.group('date'))
+        this_log = Log(
+            int(m.group('rev')), m.group('author'), m.group('date'), {})
         line = out.readline()
         if not line.find('Changed paths:') == 0:
           print 'unexpected log output (missing changed paths)'

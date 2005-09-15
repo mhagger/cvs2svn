@@ -177,6 +177,26 @@ class Log:
     # The msg will be accumulated later, as log data is read.
     self.msg = ''
 
+  def absorb_changed_paths(self, out):
+    'Read changed paths from OUT into self, until no more.'
+    while 1:
+      line = out.readline()
+      if len(line) == 1: return
+      line = line[:-1]
+      op_portion = line[3:4]
+      path_portion = line[5:]
+      # If we're running on Windows we get backslashes instead of
+      # forward slashes.
+      path_portion = path_portion.replace('\\', '/')
+      # # We could parse out history information, but currently we
+      # # just leave it in the path portion because that's how some
+      # # tests expect it.
+      #
+      # m = re.match("(.*) \(from /.*:[0-9]+\)", path_portion)
+      # if m:
+      #   path_portion = m.group(1)
+      self.changed_paths[path_portion] = op_portion
+
   def __cmp__(self, other):
     return cmp(self.revision, other.revision) or \
         cmp(self.author, other.author) or cmp(self.date, other.date) or \
@@ -256,26 +276,6 @@ def parse_log(svn_repos, symbols):
       else:
         return None
 
-  def absorb_changed_paths(out, log):
-    'Read changed paths from OUT into Log item LOG, until no more.'
-    while 1:
-      line = out.readline()
-      if len(line) == 1: return
-      line = line[:-1]
-      op_portion = line[3:4]
-      path_portion = line[5:]
-      # If we're running on Windows we get backslashes instead of
-      # forward slashes.
-      path_portion = path_portion.replace('\\', '/')
-      # # We could parse out history information, but currently we
-      # # just leave it in the path portion because that's how some
-      # # tests expect it.
-      #
-      # m = re.match("(.*) \(from /.*:[0-9]+\)", path_portion)
-      # if m:
-      #   path_portion = m.group(1)
-      log.changed_paths[path_portion] = op_portion
-
   def absorb_message_body(out, num_lines, log):
     'Read NUM_LINES of log message body from OUT into Log item LOG.'
     i = 0
@@ -314,7 +314,7 @@ def parse_log(svn_repos, symbols):
           print 'unexpected log output (missing changed paths)'
           print "Line: '%s'" % line
           sys.exit(1)
-        absorb_changed_paths(out, this_log)
+        this_log.absorb_changed_paths(out)
         absorb_message_body(out, int(m.group('lines')), this_log)
         logs[this_log.revision] = this_log
       elif len(line) == 0:

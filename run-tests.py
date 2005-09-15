@@ -236,8 +236,10 @@ class Log:
     self.check_changes(changed_paths)
 
 
-def parse_log(svn_repos):
-  """Return a dictionary of Logs, keyed on revision number, for SVN_REPOS."""
+def parse_log(svn_repos, symbols):
+  """Return a dictionary of Logs, keyed on revision number, for SVN_REPOS.
+
+  Initialize the Logs' symbols with SYMBOLS."""
 
   class LineFeeder:
     'Make a list of lines behave like an open file handle.'
@@ -301,7 +303,7 @@ def parse_log(svn_repos):
       m = log_start_re.match(line)
       if m:
         this_log = Log(
-            int(m.group('rev')), m.group('author'), m.group('date'), {})
+            int(m.group('rev')), m.group('author'), m.group('date'), symbols)
         line = out.readline()
         if not line.find('Changed paths:') == 0:
           print 'unexpected log output (missing changed paths)'
@@ -444,7 +446,7 @@ class Conversion:
                               % os.path.join(os.getcwd(), svnrepos))
 
       run_svn('co', repos_to_url(svnrepos), wc)
-      self.logs = parse_log(svnrepos)
+      self.logs = parse_log(svnrepos, {})
     finally:
       os.chdir(saved_wd)
 
@@ -554,7 +556,7 @@ def two_quick():
   "two commits in quick succession"
   conv = ensure_conversion('main')
   logs = parse_log(
-      os.path.join(conv.repos, 'trunk', 'single-files', 'twoquick'))
+      os.path.join(conv.repos, 'trunk', 'single-files', 'twoquick'), {})
   if len(logs) != 2:
     raise svntest.Failure
 

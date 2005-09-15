@@ -452,7 +452,7 @@ class Conversion:
 # values are Conversion instances.
 already_converted = { }
 
-def ensure_conversion(name, error_re=None, passbypass=None, *args):
+def ensure_conversion(name, error_re=None, passbypass=None, args=None):
   """Convert CVS repository NAME to Subversion, but only if it has not
   been converted before by this invocation of this script.  If it has
   been converted before, return the Conversion object from the
@@ -478,9 +478,12 @@ def ensure_conversion(name, error_re=None, passbypass=None, *args):
   of elements in ARGS does not matter.
   """
 
-  # Convert args from tuple to list, then sort them, so we can
-  # construct a reliable conv_id.
-  args = list(args)
+  # Copy args into a list, then sort them, so we can construct a
+  # reliable conv_id.
+  if args is None:
+    args = []
+  else:
+    args = list(args)
   args.sort()
 
   conv_id = make_conversion_id(name, args, passbypass)
@@ -881,7 +884,7 @@ def bogus_tag():
 def overlapping_branch():
   "ignore a file with a branch with two names"
   conv = ensure_conversion('overlapping-branch',
-                           '.*cannot also have name \'vendorB\'')
+                           error_re='.*cannot also have name \'vendorB\'')
   nonlap_path = '/trunk/nonoverlapping-branch'
   lap_path = '/trunk/overlapping-branch'
   rev = 4
@@ -948,8 +951,8 @@ def double_delete():
   # handle a file in the root of the repository (there were some
   # bugs in cvs2svn's svn path construction for top-level files); and
   # the --no-prune option.
-  conv = ensure_conversion('double-delete', None, None,
-                           '--trunk-only' , '--no-prune')
+  conv = ensure_conversion(
+    'double-delete', args=['--trunk-only' , '--no-prune'])
 
   path = '/trunk/twice-removed'
   rev = 2
@@ -1098,7 +1101,7 @@ def nonascii_filenames():
       os.rename(base_path, new_path)
 
     # if ensure_conversion can generate a
-    conv = ensure_conversion('non-ascii', None, None, '--encoding=latin1')
+    conv = ensure_conversion('non-ascii', args=['--encoding=latin1'])
   finally:
     if locale_changed:
       locale.setlocale(locale.LC_ALL, current_locale)
@@ -1537,9 +1540,8 @@ def eol_mime():
   # certain that there are no bad interactions.
 
   ## Neither --no-default-eol nor --eol-from-mime-type. ##
-  conv = ensure_conversion('eol-mime', None, None,
-                           '--mime-types=%s' % mime_path,
-                           '--cvs-revnums')
+  conv = ensure_conversion(
+      'eol-mime', args=['--mime-types=%s' % mime_path, '--cvs-revnums'])
   wc_tree = svntest.tree.build_tree_from_wc(conv.wc, 1)
   allprops = the_usual_suspects(wc_tree)
 
@@ -1592,9 +1594,8 @@ def eol_mime():
     raise svntest.Failure
 
   ## Just --no-default-eol, not --eol-from-mime-type. ##
-  conv = ensure_conversion('eol-mime', None, None,
-                           '--mime-types=%s' % mime_path,
-                           '--no-default-eol')
+  conv = ensure_conversion(
+      'eol-mime', args=['--mime-types=%s' % mime_path, '--no-default-eol'])
   wc_tree = svntest.tree.build_tree_from_wc(conv.wc, 1)
   allprops = the_usual_suspects(wc_tree)
 
@@ -1635,10 +1636,8 @@ def eol_mime():
     raise svntest.Failure
 
   ## Just --eol-from-mime-type, not --no-default-eol. ##
-  conv = ensure_conversion('eol-mime', None, None,
-                           '--mime-types=%s' % mime_path,
-                           '--eol-from-mime-type',
-                           '--cvs-revnums')
+  conv = ensure_conversion('eol-mime', args=[
+      '--mime-types=%s' % mime_path, '--eol-from-mime-type', '--cvs-revnums'])
   wc_tree = svntest.tree.build_tree_from_wc(conv.wc, 1)
   allprops = the_usual_suspects(wc_tree)
 
@@ -1691,10 +1690,9 @@ def eol_mime():
     raise svntest.Failure
 
   ## Both --no-default-eol and --eol-from-mime-type. ##
-  conv = ensure_conversion('eol-mime', None, None,
-                           '--mime-types=%s' % mime_path,
-                           '--eol-from-mime-type',
-                           '--no-default-eol')
+  conv = ensure_conversion('eol-mime', args=[
+      '--mime-types=%s' % mime_path, '--eol-from-mime-type',
+      '--no-default-eol'])
   wc_tree = svntest.tree.build_tree_from_wc(conv.wc, 1)
   allprops = the_usual_suspects(wc_tree)
 
@@ -1798,7 +1796,7 @@ def ignore():
 def requires_cvs():
   "test that CVS can still do what RCS can't"
   # See issues 4, 11, 29 for the bugs whose regression we're testing for.
-  conv = ensure_conversion('requires-cvs', None, None, "--use-cvs")
+  conv = ensure_conversion('requires-cvs', args=["--use-cvs"])
 
   atsign_contents = file(os.path.join(conv.wc, "trunk", "atsign-add")).read()
   cl_contents = file(os.path.join(conv.wc, "trunk", "client_lock.idl")).read()
@@ -1831,8 +1829,7 @@ def revision_reorder_bug():
 
 def exclude():
   "test that exclude really excludes everything"
-  conv = ensure_conversion('main', None, None,
-                                      '--exclude=.*')
+  conv = ensure_conversion('main', args=['--exclude=.*'])
   for log in conv.logs.values():
     for item in log.changed_paths.keys():
       if item.startswith('/branches/') or item.startswith('/tags/'):
@@ -1855,7 +1852,7 @@ def resync_pass2_pull_forward():
 
 def native_eol():
   "only LFs for svn:eol-style=native files"
-  conv = ensure_conversion('native-eol', None, None)
+  conv = ensure_conversion('native-eol')
   lines = run_program(svntest.main.svnadmin_binary, None, 'dump', '-q',
                       conv.repos)
   # Verify that all files in the dump have LF EOLs.  We're actually
@@ -1901,17 +1898,17 @@ def bogus_branch_copy():
 def nested_ttb_directories():
   "require error if ttb directories are not disjoint"
   opts_list = [
-    ('--trunk=a', '--branches=a',),
-    ('--trunk=a', '--tags=a',),
-    ('--branches=a', '--tags=a',),
+    ['--trunk=a', '--branches=a',],
+    ['--trunk=a', '--tags=a',],
+    ['--branches=a', '--tags=a',],
     # This option conflicts with the default trunk path:
-    ('--branches=trunk',),
+    ['--branches=trunk',],
     ]
 
   for opts in opts_list:
     try:
       ensure_conversion(
-          'main', r'.*paths .* and .* are not disjoint\.', None, *opts
+          'main', error_re=r'.*paths .* and .* are not disjoint\.', args=opts
           )
       raise MissingErrorException
     except svntest.Failure:

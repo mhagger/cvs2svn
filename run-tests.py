@@ -633,20 +633,20 @@ def prune_with_care():
   # and second.
 
   rev = 11
-  for path in ('/trunk/full-prune/first',
-               '/trunk/full-prune-reappear/sub/first',
-               '/trunk/partial-prune/sub/first'):
+  for path in ('/%(trunk)s/full-prune/first',
+               '/%(trunk)s/full-prune-reappear/sub/first',
+               '/%(trunk)s/partial-prune/sub/first'):
     conv.logs[rev].check_change(path, 'D')
 
   rev = 13
-  for path in ('/trunk/full-prune',
-               '/trunk/full-prune-reappear',
-               '/trunk/partial-prune/sub'):
+  for path in ('/%(trunk)s/full-prune',
+               '/%(trunk)s/full-prune-reappear',
+               '/%(trunk)s/partial-prune/sub'):
     conv.logs[rev].check_change(path, 'D')
 
   rev = 47
-  for path in ('/trunk/full-prune-reappear',
-               '/trunk/full-prune-reappear/appears-later'):
+  for path in ('/%(trunk)s/full-prune-reappear',
+               '/%(trunk)s/full-prune-reappear/appears-later'):
     conv.logs[rev].check_change(path, 'A')
 
 
@@ -657,17 +657,17 @@ def interleaved_commits():
 
   # The initial import.
   rev = 37
-  for path in ('/trunk/interleaved',
-               '/trunk/interleaved/1',
-               '/trunk/interleaved/2',
-               '/trunk/interleaved/3',
-               '/trunk/interleaved/4',
-               '/trunk/interleaved/5',
-               '/trunk/interleaved/a',
-               '/trunk/interleaved/b',
-               '/trunk/interleaved/c',
-               '/trunk/interleaved/d',
-               '/trunk/interleaved/e',):
+  for path in ('/%(trunk)s/interleaved',
+               '/%(trunk)s/interleaved/1',
+               '/%(trunk)s/interleaved/2',
+               '/%(trunk)s/interleaved/3',
+               '/%(trunk)s/interleaved/4',
+               '/%(trunk)s/interleaved/5',
+               '/%(trunk)s/interleaved/a',
+               '/%(trunk)s/interleaved/b',
+               '/%(trunk)s/interleaved/c',
+               '/%(trunk)s/interleaved/d',
+               '/%(trunk)s/interleaved/e',):
     conv.logs[rev].check_change(path, 'A')
 
   conv.logs[rev].check_msg('Initial revision')
@@ -721,39 +721,39 @@ def simple_commits():
   # The initial import.
   rev = 23
   conv.logs[rev].check('Initial revision', {
-    '/trunk/proj': 'A',
-    '/trunk/proj/default': 'A',
-    '/trunk/proj/sub1': 'A',
-    '/trunk/proj/sub1/default': 'A',
-    '/trunk/proj/sub1/subsubA': 'A',
-    '/trunk/proj/sub1/subsubA/default': 'A',
-    '/trunk/proj/sub1/subsubB': 'A',
-    '/trunk/proj/sub1/subsubB/default': 'A',
-    '/trunk/proj/sub2': 'A',
-    '/trunk/proj/sub2/default': 'A',
-    '/trunk/proj/sub2/subsubA': 'A',
-    '/trunk/proj/sub2/subsubA/default': 'A',
-    '/trunk/proj/sub3': 'A',
-    '/trunk/proj/sub3/default': 'A',
+    '/%(trunk)s/proj': 'A',
+    '/%(trunk)s/proj/default': 'A',
+    '/%(trunk)s/proj/sub1': 'A',
+    '/%(trunk)s/proj/sub1/default': 'A',
+    '/%(trunk)s/proj/sub1/subsubA': 'A',
+    '/%(trunk)s/proj/sub1/subsubA/default': 'A',
+    '/%(trunk)s/proj/sub1/subsubB': 'A',
+    '/%(trunk)s/proj/sub1/subsubB/default': 'A',
+    '/%(trunk)s/proj/sub2': 'A',
+    '/%(trunk)s/proj/sub2/default': 'A',
+    '/%(trunk)s/proj/sub2/subsubA': 'A',
+    '/%(trunk)s/proj/sub2/subsubA/default': 'A',
+    '/%(trunk)s/proj/sub3': 'A',
+    '/%(trunk)s/proj/sub3/default': 'A',
     })
 
   # The first commit.
   rev = 30
   conv.logs[rev].check('First commit to proj, affecting two files.', {
-    '/trunk/proj/sub1/subsubA/default': 'M',
-    '/trunk/proj/sub3/default': 'M',
+    '/%(trunk)s/proj/sub1/subsubA/default': 'M',
+    '/%(trunk)s/proj/sub3/default': 'M',
     })
 
   # The second commit.
   rev = 31
   conv.logs[rev].check('Second commit to proj, affecting all 7 files.', {
-    '/trunk/proj/default': 'M',
-    '/trunk/proj/sub1/default': 'M',
-    '/trunk/proj/sub1/subsubA/default': 'M',
-    '/trunk/proj/sub1/subsubB/default': 'M',
-    '/trunk/proj/sub2/default': 'M',
-    '/trunk/proj/sub2/subsubA/default': 'M',
-    '/trunk/proj/sub3/default': 'M'
+    '/%(trunk)s/proj/default': 'M',
+    '/%(trunk)s/proj/sub1/default': 'M',
+    '/%(trunk)s/proj/sub1/subsubA/default': 'M',
+    '/%(trunk)s/proj/sub1/subsubB/default': 'M',
+    '/%(trunk)s/proj/sub2/default': 'M',
+    '/%(trunk)s/proj/sub2/subsubA/default': 'M',
+    '/%(trunk)s/proj/sub3/default': 'M'
     })
 
 
@@ -765,41 +765,41 @@ def simple_tags():
   # Verify the copy source for the tags we are about to check
   # No need to verify the copyfrom revision, as simple_commits did that
   conv.logs[24].check(sym_log_msg('vendorbranch'), {
-    '/branches/vendorbranch/proj (from /trunk/proj:23)': 'A',
+    '/%(branches)s/vendorbranch/proj (from /%(trunk)s/proj:23)': 'A',
     })
 
-  fromstr = ' (from /branches/vendorbranch:25)'
+  fromstr = ' (from /%(branches)s/vendorbranch:25)'
 
   # Tag on rev 1.1.1.1 of all files in proj
   log = conv.find_tag_log('T_ALL_INITIAL_FILES')
   log.check(sym_log_msg('T_ALL_INITIAL_FILES',1), {
-    '/tags/T_ALL_INITIAL_FILES'+fromstr: 'A',
-    '/tags/T_ALL_INITIAL_FILES/single-files': 'D',
-    '/tags/T_ALL_INITIAL_FILES/partial-prune': 'D',
+    '/%(tags)s/T_ALL_INITIAL_FILES'+fromstr: 'A',
+    '/%(tags)s/T_ALL_INITIAL_FILES/single-files': 'D',
+    '/%(tags)s/T_ALL_INITIAL_FILES/partial-prune': 'D',
     })
 
   # The same, as a branch
   conv.logs[26].check(sym_log_msg('B_FROM_INITIALS'), {
-    '/branches/B_FROM_INITIALS'+fromstr: 'A',
-    '/branches/B_FROM_INITIALS/single-files': 'D',
-    '/branches/B_FROM_INITIALS/partial-prune': 'D',
+    '/%(branches)s/B_FROM_INITIALS'+fromstr: 'A',
+    '/%(branches)s/B_FROM_INITIALS/single-files': 'D',
+    '/%(branches)s/B_FROM_INITIALS/partial-prune': 'D',
     })
 
   # Tag on rev 1.1.1.1 of all files in proj, except one
   log = conv.find_tag_log('T_ALL_INITIAL_FILES_BUT_ONE')
   log.check(sym_log_msg('T_ALL_INITIAL_FILES_BUT_ONE',1), {
-    '/tags/T_ALL_INITIAL_FILES_BUT_ONE'+fromstr: 'A',
-    '/tags/T_ALL_INITIAL_FILES_BUT_ONE/single-files': 'D',
-    '/tags/T_ALL_INITIAL_FILES_BUT_ONE/partial-prune': 'D',
-    '/tags/T_ALL_INITIAL_FILES_BUT_ONE/proj/sub1/subsubB': 'D',
+    '/%(tags)s/T_ALL_INITIAL_FILES_BUT_ONE'+fromstr: 'A',
+    '/%(tags)s/T_ALL_INITIAL_FILES_BUT_ONE/single-files': 'D',
+    '/%(tags)s/T_ALL_INITIAL_FILES_BUT_ONE/partial-prune': 'D',
+    '/%(tags)s/T_ALL_INITIAL_FILES_BUT_ONE/proj/sub1/subsubB': 'D',
     })
 
   # The same, as a branch
   conv.logs[27].check(sym_log_msg('B_FROM_INITIALS_BUT_ONE'), {
-    '/branches/B_FROM_INITIALS_BUT_ONE'+fromstr: 'A',
-    '/branches/B_FROM_INITIALS_BUT_ONE/single-files': 'D',
-    '/branches/B_FROM_INITIALS_BUT_ONE/partial-prune': 'D',
-    '/branches/B_FROM_INITIALS_BUT_ONE/proj/sub1/subsubB': 'D',
+    '/%(branches)s/B_FROM_INITIALS_BUT_ONE'+fromstr: 'A',
+    '/%(branches)s/B_FROM_INITIALS_BUT_ONE/single-files': 'D',
+    '/%(branches)s/B_FROM_INITIALS_BUT_ONE/partial-prune': 'D',
+    '/%(branches)s/B_FROM_INITIALS_BUT_ONE/proj/sub1/subsubB': 'D',
     })
 
 
@@ -810,9 +810,9 @@ def simple_branch_commits():
 
   rev = 35
   conv.logs[rev].check('Modify three files, on branch B_MIXED.', {
-    '/branches/B_MIXED/proj/default': 'M',
-    '/branches/B_MIXED/proj/sub1/default': 'M',
-    '/branches/B_MIXED/proj/sub2/subsubA/default': 'M',
+    '/%(branches)s/B_MIXED/proj/default': 'M',
+    '/%(branches)s/B_MIXED/proj/sub1/default': 'M',
+    '/%(branches)s/B_MIXED/proj/sub2/subsubA/default': 'M',
     })
 
 
@@ -823,14 +823,15 @@ def mixed_time_tag():
 
   log = conv.find_tag_log('T_MIXED')
   expected = {
-    '/tags/T_MIXED (from /trunk:31)': 'A',
-    '/tags/T_MIXED/partial-prune': 'D',
-    '/tags/T_MIXED/single-files': 'D',
-    '/tags/T_MIXED/proj/sub2/subsubA (from /trunk/proj/sub2/subsubA:23)': 'R',
-    '/tags/T_MIXED/proj/sub3 (from /trunk/proj/sub3:30)': 'R',
+    '/%(tags)s/T_MIXED (from /%(trunk)s:31)': 'A',
+    '/%(tags)s/T_MIXED/partial-prune': 'D',
+    '/%(tags)s/T_MIXED/single-files': 'D',
+    '/%(tags)s/T_MIXED/proj/sub2/subsubA '
+    '(from /%(trunk)s/proj/sub2/subsubA:23)': 'R',
+    '/%(tags)s/T_MIXED/proj/sub3 (from /%(trunk)s/proj/sub3:30)': 'R',
     }
   if log.revision == 16:
-    expected['/tags'] = 'A'
+    expected['/%(tags)s'] = 'A'
   log.check_changes(expected)
 
 
@@ -842,16 +843,16 @@ def mixed_time_branch_with_added_file():
   # A branch from the same place as T_MIXED in the previous test,
   # plus a file added directly to the branch
   conv.logs[32].check(sym_log_msg('B_MIXED'), {
-    '/branches/B_MIXED (from /trunk:31)': 'A',
-    '/branches/B_MIXED/partial-prune': 'D',
-    '/branches/B_MIXED/single-files': 'D',
-    '/branches/B_MIXED/proj/sub2/subsubA (from /trunk/proj/sub2/subsubA:23)':
-      'R',
-    '/branches/B_MIXED/proj/sub3 (from /trunk/proj/sub3:30)': 'R',
+    '/%(branches)s/B_MIXED (from /%(trunk)s:31)': 'A',
+    '/%(branches)s/B_MIXED/partial-prune': 'D',
+    '/%(branches)s/B_MIXED/single-files': 'D',
+    '/%(branches)s/B_MIXED/proj/sub2/subsubA '
+    '(from /%(trunk)s/proj/sub2/subsubA:23)': 'R',
+    '/%(branches)s/B_MIXED/proj/sub3 (from /%(trunk)s/proj/sub3:30)': 'R',
     })
 
   conv.logs[34].check('Add a file on branch B_MIXED.', {
-    '/branches/B_MIXED/proj/sub2/branch_B_MIXED_only': 'A',
+    '/%(branches)s/B_MIXED/proj/sub2/branch_B_MIXED_only': 'A',
     })
 
 
@@ -863,8 +864,8 @@ def mixed_commit():
   conv.logs[36].check(
       'A single commit affecting one file on branch B_MIXED '
       'and one on trunk.', {
-    '/trunk/proj/sub2/default': 'M',
-    '/branches/B_MIXED/proj/sub2/branch_B_MIXED_only': 'M',
+    '/%(trunk)s/proj/sub2/default': 'M',
+    '/%(branches)s/B_MIXED/proj/sub2/branch_B_MIXED_only': 'M',
     })
 
 
@@ -876,36 +877,36 @@ def split_time_branch():
   rev = 42
   # First change on the branch, creating it
   conv.logs[rev].check(sym_log_msg('B_SPLIT'), {
-    '/branches/B_SPLIT (from /trunk:36)': 'A',
-    '/branches/B_SPLIT/partial-prune': 'D',
-    '/branches/B_SPLIT/single-files': 'D',
-    '/branches/B_SPLIT/proj/sub1/subsubB': 'D',
+    '/%(branches)s/B_SPLIT (from /%(trunk)s:36)': 'A',
+    '/%(branches)s/B_SPLIT/partial-prune': 'D',
+    '/%(branches)s/B_SPLIT/single-files': 'D',
+    '/%(branches)s/B_SPLIT/proj/sub1/subsubB': 'D',
     })
 
   conv.logs[rev + 1].check('First change on branch B_SPLIT.', {
-    '/branches/B_SPLIT/proj/default': 'M',
-    '/branches/B_SPLIT/proj/sub1/default': 'M',
-    '/branches/B_SPLIT/proj/sub1/subsubA/default': 'M',
-    '/branches/B_SPLIT/proj/sub2/default': 'M',
-    '/branches/B_SPLIT/proj/sub2/subsubA/default': 'M',
+    '/%(branches)s/B_SPLIT/proj/default': 'M',
+    '/%(branches)s/B_SPLIT/proj/sub1/default': 'M',
+    '/%(branches)s/B_SPLIT/proj/sub1/subsubA/default': 'M',
+    '/%(branches)s/B_SPLIT/proj/sub2/default': 'M',
+    '/%(branches)s/B_SPLIT/proj/sub2/subsubA/default': 'M',
     })
 
   # A trunk commit for the file which was not branched
   conv.logs[rev + 2].check('A trunk change to sub1/subsubB/default.  '
       'This was committed about an', {
-    '/trunk/proj/sub1/subsubB/default': 'M',
+    '/%(trunk)s/proj/sub1/subsubB/default': 'M',
     })
 
   # Add the file not already branched to the branch, with modification:w
   conv.logs[rev + 3].check(sym_log_msg('B_SPLIT'), {
-    '/branches/B_SPLIT/proj/sub1/subsubB (from /trunk/proj/sub1/subsubB:44)':
-    'A',
+    '/%(branches)s/B_SPLIT/proj/sub1/subsubB '
+    '(from /%(trunk)s/proj/sub1/subsubB:44)': 'A',
     })
 
   conv.logs[rev + 4].check('This change affects sub3/default and '
       'sub1/subsubB/default, on branch', {
-    '/branches/B_SPLIT/proj/sub1/subsubB/default': 'M',
-    '/branches/B_SPLIT/proj/sub3/default': 'M',
+    '/%(branches)s/B_SPLIT/proj/sub1/subsubB/default': 'M',
+    '/%(branches)s/B_SPLIT/proj/sub3/default': 'M',
     })
 
 
@@ -918,18 +919,17 @@ def overlapping_branch():
   "ignore a file with a branch with two names"
   conv = ensure_conversion('overlapping-branch',
                            error_re='.*cannot also have name \'vendorB\'')
-  nonlap_path = '/trunk/nonoverlapping-branch'
-  lap_path = '/trunk/overlapping-branch'
   rev = 4
-  conv.logs[rev].check_change('/branches/vendorA (from /trunk:3)', 'A')
+  conv.logs[rev].check_change('/%(branches)s/vendorA (from /%(trunk)s:3)',
+                              'A')
   # We don't know what order the first two commits would be in, since
   # they have different log messages but the same timestamps.  As only
   # one of the files would be on the vendorB branch in the regression
   # case being tested here, we allow for either order.
   if ((conv.logs[rev].changed_paths.get('/branches/vendorB (from /trunk:2)')
        == 'A')
-      or (conv.logs[rev].changed_paths.get('/branches/vendorB (from /trunk:3)')
-          == 'A')):
+      or (conv.logs[rev].changed_paths.get(
+              '/branches/vendorB (from /trunk:3)') == 'A')):
     raise svntest.Failure
   conv.logs[rev + 1].check_changes({})
   if len(conv.logs) != rev + 1:
@@ -940,11 +940,11 @@ def phoenix_branch():
   "convert a branch file rooted in a 'dead' revision"
   conv = ensure_conversion('phoenix')
   conv.logs[8].check(sym_log_msg('volsung_20010721'), {
-    '/branches/volsung_20010721 (from /trunk:7)': 'A',
-    '/branches/volsung_20010721/file.txt' : 'D'
+    '/%(branches)s/volsung_20010721 (from /%(trunk)s:7)': 'A',
+    '/%(branches)s/volsung_20010721/file.txt' : 'D'
     })
   conv.logs[9].check('This file was supplied by Jack Moffitt', {
-    '/branches/volsung_20010721/phoenix': 'A' })
+    '/%(branches)s/volsung_20010721/phoenix': 'A' })
 
 
 ###TODO: We check for 4 changed paths here to accomodate creating tags
@@ -956,7 +956,7 @@ def ctrl_char_in_log():
   rev = 2
   conv = ensure_conversion('ctrl-char-in-log')
   conv.logs[rev].check_changes({
-    '/trunk/ctrl-char-in-log' : 'A',
+    '/%(trunk)s/ctrl-char-in-log' : 'A',
     })
   if conv.logs[rev].msg.find('\x04') < 0:
     raise svntest.Failure(
@@ -987,7 +987,7 @@ def double_delete():
   conv = ensure_conversion(
     'double-delete', args=['--trunk-only' , '--no-prune'])
 
-  path = '/trunk/twice-removed'
+  path = '/%(trunk)s/twice-removed'
   rev = 2
   conv.logs[rev].check_change(path, 'A')
   conv.logs[rev].check_msg('Initial revision')
@@ -1035,21 +1035,21 @@ def enroot_race():
   conv = ensure_conversion('enroot-race')
   rev = 8
   conv.logs[rev].check_changes({
-    '/branches/mybranch (from /trunk:7)': 'A',
-    '/branches/mybranch/proj/a.txt': 'D',
-    '/branches/mybranch/proj/b.txt': 'D',
+    '/%(branches)s/mybranch (from /%(trunk)s:7)': 'A',
+    '/%(branches)s/mybranch/proj/a.txt': 'D',
+    '/%(branches)s/mybranch/proj/b.txt': 'D',
     })
   conv.logs[rev + 1].check_changes({
-    '/branches/mybranch/proj/c.txt': 'M',
-    '/trunk/proj/a.txt': 'M',
-    '/trunk/proj/b.txt': 'M',
+    '/%(branches)s/mybranch/proj/c.txt': 'M',
+    '/%(trunk)s/proj/a.txt': 'M',
+    '/%(trunk)s/proj/b.txt': 'M',
     })
 
 
 def enroot_race_obo():
   "do use the last completed rev as a copy source"
   conv = ensure_conversion('enroot-race-obo')
-  conv.logs[3].check_change('/branches/BRANCH (from /trunk:2)', 'A')
+  conv.logs[3].check_change('/%(branches)s/BRANCH (from /%(trunk)s:2)', 'A')
   if not len(conv.logs) == 3:
     raise svntest.Failure
 
@@ -1067,7 +1067,8 @@ def branch_delete_first():
     raise svntest.Failure
   if os.path.exists(os.path.join(conv.wc, 'branches', 'branch-2', 'file')):
     raise svntest.Failure
-  if not os.path.exists(os.path.join(conv.wc, 'branches', 'branch-3', 'file')):
+  if not os.path.exists(
+        os.path.join(conv.wc, 'branches', 'branch-3', 'file')):
     raise svntest.Failure
 
 
@@ -1170,21 +1171,21 @@ def vendor_branch_sameness():
 
   rev = 2
   conv.logs[rev].check('Initial revision', {
-    '/trunk/proj' : 'A',
-    '/trunk/proj/a.txt' : 'A',
-    '/trunk/proj/b.txt' : 'A',
-    '/trunk/proj/c.txt' : 'A',
-    '/trunk/proj/d.txt' : 'A',
+    '/%(trunk)s/proj' : 'A',
+    '/%(trunk)s/proj/a.txt' : 'A',
+    '/%(trunk)s/proj/b.txt' : 'A',
+    '/%(trunk)s/proj/c.txt' : 'A',
+    '/%(trunk)s/proj/d.txt' : 'A',
     })
 
   conv.logs[rev + 1].check(sym_log_msg('vbranchA'), {
-   '/branches/vbranchA (from /trunk:2)' : 'A',
-    '/branches/vbranchA/proj/d.txt' : 'D',
+    '/%(branches)s/vbranchA (from /%(trunk)s:2)' : 'A',
+    '/%(branches)s/vbranchA/proj/d.txt' : 'D',
     })
 
   conv.logs[rev + 2].check('First vendor branch revision.', {
-    '/branches/vbranchA/proj/b.txt' : 'M',
-    '/branches/vbranchA/proj/c.txt' : 'D',
+    '/%(branches)s/vbranchA/proj/b.txt' : 'M',
+    '/%(branches)s/vbranchA/proj/c.txt' : 'D',
     })
 
 
@@ -1223,127 +1224,140 @@ def default_branches():
   #
 
   conv.logs[18].check(sym_log_msg('vtag-4',1), {
-    '/tags/vtag-4 (from /branches/vbranchA:16)' : 'A',
-    '/tags/vtag-4/proj/d.txt '
-    '(from /branches/unlabeled-1.1.1/proj/d.txt:16)' : 'A',
+    '/%(tags)s/vtag-4 (from /%(branches)s/vbranchA:16)' : 'A',
+    '/%(tags)s/vtag-4/proj/d.txt '
+    '(from /%(branches)s/unlabeled-1.1.1/proj/d.txt:16)' : 'A',
     })
 
   conv.logs[6].check(sym_log_msg('vtag-1',1), {
-    '/tags/vtag-1 (from /branches/vbranchA:5)' : 'A',
-    '/tags/vtag-1/proj/d.txt '
-    '(from /branches/unlabeled-1.1.1/proj/d.txt:5)' : 'A',
+    '/%(tags)s/vtag-1 (from /%(branches)s/vbranchA:5)' : 'A',
+    '/%(tags)s/vtag-1/proj/d.txt '
+    '(from /%(branches)s/unlabeled-1.1.1/proj/d.txt:5)' : 'A',
     })
 
   conv.logs[9].check(sym_log_msg('vtag-2',1), {
-    '/tags/vtag-2 (from /branches/vbranchA:7)' : 'A',
-    '/tags/vtag-2/proj/d.txt '
-    '(from /branches/unlabeled-1.1.1/proj/d.txt:7)' : 'A',
+    '/%(tags)s/vtag-2 (from /%(branches)s/vbranchA:7)' : 'A',
+    '/%(tags)s/vtag-2/proj/d.txt '
+    '(from /%(branches)s/unlabeled-1.1.1/proj/d.txt:7)' : 'A',
     })
 
   conv.logs[12].check(sym_log_msg('vtag-3',1), {
-    '/tags/vtag-3 (from /branches/vbranchA:10)' : 'A',
-    '/tags/vtag-3/proj/d.txt '
-    '(from /branches/unlabeled-1.1.1/proj/d.txt:10)' : 'A',
-    '/tags/vtag-3/proj/e.txt '
-    '(from /branches/unlabeled-1.1.1/proj/e.txt:10)' : 'A',
+    '/%(tags)s/vtag-3 (from /%(branches)s/vbranchA:10)' : 'A',
+    '/%(tags)s/vtag-3/proj/d.txt '
+    '(from /%(branches)s/unlabeled-1.1.1/proj/d.txt:10)' : 'A',
+    '/%(tags)s/vtag-3/proj/e.txt '
+    '(from /%(branches)s/unlabeled-1.1.1/proj/e.txt:10)' : 'A',
     })
 
   conv.logs[17].check("This commit was generated by cvs2svn "
                       "to compensate for changes in r16,", {
-    '/trunk/proj/b.txt (from /branches/vbranchA/proj/b.txt:16)' : 'R',
-    '/trunk/proj/c.txt (from /branches/vbranchA/proj/c.txt:16)' : 'R',
-    '/trunk/proj/d.txt (from /branches/unlabeled-1.1.1/proj/d.txt:16)' : 'R',
-    '/trunk/proj/deleted-on-vendor-branch.txt '
-    '(from /branches/vbranchA/proj/deleted-on-vendor-branch.txt:16)' : 'A',
-    '/trunk/proj/e.txt (from /branches/unlabeled-1.1.1/proj/e.txt:16)' : 'R',
+    '/%(trunk)s/proj/b.txt '
+    '(from /%(branches)s/vbranchA/proj/b.txt:16)' : 'R',
+    '/%(trunk)s/proj/c.txt '
+    '(from /%(branches)s/vbranchA/proj/c.txt:16)' : 'R',
+    '/%(trunk)s/proj/d.txt '
+    '(from /%(branches)s/unlabeled-1.1.1/proj/d.txt:16)' : 'R',
+    '/%(trunk)s/proj/deleted-on-vendor-branch.txt '
+    '(from /%(branches)s/vbranchA/proj/deleted-on-vendor-branch.txt:16)'
+    : 'A',
+    '/%(trunk)s/proj/e.txt '
+    '(from /%(branches)s/unlabeled-1.1.1/proj/e.txt:16)' : 'R',
     })
 
   conv.logs[16].check("Import (vbranchA, vtag-4).", {
-    '/branches/unlabeled-1.1.1/proj/d.txt' : 'M',
-    '/branches/unlabeled-1.1.1/proj/e.txt' : 'M',
-    '/branches/vbranchA/proj/a.txt' : 'M',
-    '/branches/vbranchA/proj/added-then-imported.txt': 'M', # CHECK!!!
-    '/branches/vbranchA/proj/b.txt' : 'M',
-    '/branches/vbranchA/proj/c.txt' : 'M',
-    '/branches/vbranchA/proj/deleted-on-vendor-branch.txt' : 'A',
+    '/%(branches)s/unlabeled-1.1.1/proj/d.txt' : 'M',
+    '/%(branches)s/unlabeled-1.1.1/proj/e.txt' : 'M',
+    '/%(branches)s/vbranchA/proj/a.txt' : 'M',
+    '/%(branches)s/vbranchA/proj/added-then-imported.txt': 'M', # CHECK!!!
+    '/%(branches)s/vbranchA/proj/b.txt' : 'M',
+    '/%(branches)s/vbranchA/proj/c.txt' : 'M',
+    '/%(branches)s/vbranchA/proj/deleted-on-vendor-branch.txt' : 'A',
     })
 
   conv.logs[15].check(sym_log_msg('vbranchA'), {
-    '/branches/vbranchA/proj/added-then-imported.txt '
-    '(from /trunk/proj/added-then-imported.txt:14)' : 'A',
+    '/%(branches)s/vbranchA/proj/added-then-imported.txt '
+    '(from /%(trunk)s/proj/added-then-imported.txt:14)' : 'A',
     })
 
   conv.logs[14].check("Add a file to the working copy.", {
-    '/trunk/proj/added-then-imported.txt' : 'A',
+    '/%(trunk)s/proj/added-then-imported.txt' : 'A',
     })
 
   conv.logs[13].check("First regular commit, to a.txt, on vtag-3.", {
-    '/trunk/proj/a.txt' : 'M',
+    '/%(trunk)s/proj/a.txt' : 'M',
     })
 
   conv.logs[11].check("This commit was generated by cvs2svn "
                       "to compensate for changes in r10,", {
-    '/trunk/proj/a.txt (from /branches/vbranchA/proj/a.txt:10)' : 'R',
-    '/trunk/proj/b.txt (from /branches/vbranchA/proj/b.txt:10)' : 'R',
-    '/trunk/proj/c.txt (from /branches/vbranchA/proj/c.txt:10)' : 'R',
-    '/trunk/proj/d.txt (from /branches/unlabeled-1.1.1/proj/d.txt:10)' : 'R',
-    '/trunk/proj/deleted-on-vendor-branch.txt' : 'D',
-    '/trunk/proj/e.txt (from /branches/unlabeled-1.1.1/proj/e.txt:10)' : 'R',
+    '/%(trunk)s/proj/a.txt '
+    '(from /%(branches)s/vbranchA/proj/a.txt:10)' : 'R',
+    '/%(trunk)s/proj/b.txt '
+    '(from /%(branches)s/vbranchA/proj/b.txt:10)' : 'R',
+    '/%(trunk)s/proj/c.txt '
+    '(from /%(branches)s/vbranchA/proj/c.txt:10)' : 'R',
+    '/%(trunk)s/proj/d.txt '
+    '(from /%(branches)s/unlabeled-1.1.1/proj/d.txt:10)' : 'R',
+    '/%(trunk)s/proj/deleted-on-vendor-branch.txt' : 'D',
+    '/%(trunk)s/proj/e.txt '
+    '(from /%(branches)s/unlabeled-1.1.1/proj/e.txt:10)' : 'R',
     })
 
   conv.logs[10].check("Import (vbranchA, vtag-3).", {
-    '/branches/unlabeled-1.1.1/proj/d.txt' : 'M',
-    '/branches/unlabeled-1.1.1/proj/e.txt' : 'M',
-    '/branches/vbranchA/proj/a.txt' : 'M',
-    '/branches/vbranchA/proj/b.txt' : 'M',
-    '/branches/vbranchA/proj/c.txt' : 'M',
-    '/branches/vbranchA/proj/deleted-on-vendor-branch.txt' : 'D',
+    '/%(branches)s/unlabeled-1.1.1/proj/d.txt' : 'M',
+    '/%(branches)s/unlabeled-1.1.1/proj/e.txt' : 'M',
+    '/%(branches)s/vbranchA/proj/a.txt' : 'M',
+    '/%(branches)s/vbranchA/proj/b.txt' : 'M',
+    '/%(branches)s/vbranchA/proj/c.txt' : 'M',
+    '/%(branches)s/vbranchA/proj/deleted-on-vendor-branch.txt' : 'D',
     })
 
   conv.logs[8].check("This commit was generated by cvs2svn "
                       "to compensate for changes in r7,", {
-    '/trunk/proj/a.txt (from /branches/vbranchA/proj/a.txt:7)' : 'R',
-    '/trunk/proj/b.txt (from /branches/vbranchA/proj/b.txt:7)' : 'R',
-    '/trunk/proj/c.txt (from /branches/vbranchA/proj/c.txt:7)' : 'R',
-    '/trunk/proj/d.txt (from /branches/unlabeled-1.1.1/proj/d.txt:7)' : 'R',
-    '/trunk/proj/deleted-on-vendor-branch.txt '
-    '(from /branches/vbranchA/proj/deleted-on-vendor-branch.txt:7)' : 'R',
-    '/trunk/proj/e.txt (from /branches/unlabeled-1.1.1/proj/e.txt:7)' : 'R',
+    '/%(trunk)s/proj/a.txt (from /%(branches)s/vbranchA/proj/a.txt:7)' : 'R',
+    '/%(trunk)s/proj/b.txt (from /%(branches)s/vbranchA/proj/b.txt:7)' : 'R',
+    '/%(trunk)s/proj/c.txt (from /%(branches)s/vbranchA/proj/c.txt:7)' : 'R',
+    '/%(trunk)s/proj/d.txt (from /%(branches)s/unlabeled-1.1.1/proj/d.txt:7)'
+    : 'R',
+    '/%(trunk)s/proj/deleted-on-vendor-branch.txt '
+    '(from /%(branches)s/vbranchA/proj/deleted-on-vendor-branch.txt:7)'
+    : 'R',
+    '/%(trunk)s/proj/e.txt '
+    '(from /%(branches)s/unlabeled-1.1.1/proj/e.txt:7)' : 'R',
     })
 
   conv.logs[7].check("Import (vbranchA, vtag-2).", {
-    '/branches/unlabeled-1.1.1/proj/d.txt' : 'M',
-    '/branches/unlabeled-1.1.1/proj/e.txt' : 'M',
-    '/branches/vbranchA/proj/a.txt' : 'M',
-    '/branches/vbranchA/proj/b.txt' : 'M',
-    '/branches/vbranchA/proj/c.txt' : 'M',
-    '/branches/vbranchA/proj/deleted-on-vendor-branch.txt' : 'M',
+    '/%(branches)s/unlabeled-1.1.1/proj/d.txt' : 'M',
+    '/%(branches)s/unlabeled-1.1.1/proj/e.txt' : 'M',
+    '/%(branches)s/vbranchA/proj/a.txt' : 'M',
+    '/%(branches)s/vbranchA/proj/b.txt' : 'M',
+    '/%(branches)s/vbranchA/proj/c.txt' : 'M',
+    '/%(branches)s/vbranchA/proj/deleted-on-vendor-branch.txt' : 'M',
     })
 
   conv.logs[5].check("Import (vbranchA, vtag-1).", {})
 
   conv.logs[4].check(sym_log_msg('vbranchA'), {
-    '/branches/vbranchA (from /trunk:2)' : 'A',
-    '/branches/vbranchA/proj/d.txt' : 'D',
-    '/branches/vbranchA/proj/e.txt' : 'D',
+    '/%(branches)s/vbranchA (from /%(trunk)s:2)' : 'A',
+    '/%(branches)s/vbranchA/proj/d.txt' : 'D',
+    '/%(branches)s/vbranchA/proj/e.txt' : 'D',
     })
 
   conv.logs[3].check(sym_log_msg('unlabeled-1.1.1'), {
-    '/branches/unlabeled-1.1.1 (from /trunk:2)' : 'A',
-    '/branches/unlabeled-1.1.1/proj/a.txt' : 'D',
-    '/branches/unlabeled-1.1.1/proj/b.txt' : 'D',
-    '/branches/unlabeled-1.1.1/proj/c.txt' : 'D',
-    '/branches/unlabeled-1.1.1/proj/deleted-on-vendor-branch.txt' : 'D',
+    '/%(branches)s/unlabeled-1.1.1 (from /%(trunk)s:2)' : 'A',
+    '/%(branches)s/unlabeled-1.1.1/proj/a.txt' : 'D',
+    '/%(branches)s/unlabeled-1.1.1/proj/b.txt' : 'D',
+    '/%(branches)s/unlabeled-1.1.1/proj/c.txt' : 'D',
+    '/%(branches)s/unlabeled-1.1.1/proj/deleted-on-vendor-branch.txt' : 'D',
     })
 
   conv.logs[2].check("Initial revision", {
-    '/trunk/proj' : 'A',
-    '/trunk/proj/a.txt' : 'A',
-    '/trunk/proj/b.txt' : 'A',
-    '/trunk/proj/c.txt' : 'A',
-    '/trunk/proj/d.txt' : 'A',
-    '/trunk/proj/deleted-on-vendor-branch.txt' : 'A',
-    '/trunk/proj/e.txt' : 'A',
+    '/%(trunk)s/proj' : 'A',
+    '/%(trunk)s/proj/a.txt' : 'A',
+    '/%(trunk)s/proj/b.txt' : 'A',
+    '/%(trunk)s/proj/c.txt' : 'A',
+    '/%(trunk)s/proj/d.txt' : 'A',
+    '/%(trunk)s/proj/deleted-on-vendor-branch.txt' : 'A',
+    '/%(trunk)s/proj/e.txt' : 'A',
     })
 
 
@@ -1352,50 +1366,51 @@ def compose_tag_three_sources():
   conv = ensure_conversion('compose-tag-three-sources')
 
   conv.logs[2].check("Add on trunk", {
-    '/trunk/tagged-on-trunk-1.2-a': 'A',
-    '/trunk/tagged-on-trunk-1.2-b': 'A',
-    '/trunk/tagged-on-trunk-1.1': 'A',
-    '/trunk/tagged-on-b1': 'A',
-    '/trunk/tagged-on-b2': 'A',
+    '/%(trunk)s/tagged-on-trunk-1.2-a': 'A',
+    '/%(trunk)s/tagged-on-trunk-1.2-b': 'A',
+    '/%(trunk)s/tagged-on-trunk-1.1': 'A',
+    '/%(trunk)s/tagged-on-b1': 'A',
+    '/%(trunk)s/tagged-on-b2': 'A',
     })
 
   conv.logs[3].check(sym_log_msg('b1'), {
-    '/branches/b1 (from /trunk:2)': 'A',
+    '/%(branches)s/b1 (from /%(trunk)s:2)': 'A',
     })
 
   conv.logs[4].check(sym_log_msg('b2'), {
-    '/branches/b2 (from /trunk:2)': 'A',
+    '/%(branches)s/b2 (from /%(trunk)s:2)': 'A',
     })
 
   conv.logs[5].check("Commit on branch b1", {
-    '/branches/b1/tagged-on-trunk-1.2-a': 'M',
-    '/branches/b1/tagged-on-trunk-1.2-b': 'M',
-    '/branches/b1/tagged-on-trunk-1.1': 'M',
-    '/branches/b1/tagged-on-b1': 'M',
-    '/branches/b1/tagged-on-b2': 'M',
+    '/%(branches)s/b1/tagged-on-trunk-1.2-a': 'M',
+    '/%(branches)s/b1/tagged-on-trunk-1.2-b': 'M',
+    '/%(branches)s/b1/tagged-on-trunk-1.1': 'M',
+    '/%(branches)s/b1/tagged-on-b1': 'M',
+    '/%(branches)s/b1/tagged-on-b2': 'M',
     })
 
   conv.logs[6].check("Commit on branch b2", {
-    '/branches/b2/tagged-on-trunk-1.2-a': 'M',
-    '/branches/b2/tagged-on-trunk-1.2-b': 'M',
-    '/branches/b2/tagged-on-trunk-1.1': 'M',
-    '/branches/b2/tagged-on-b1': 'M',
-    '/branches/b2/tagged-on-b2': 'M',
+    '/%(branches)s/b2/tagged-on-trunk-1.2-a': 'M',
+    '/%(branches)s/b2/tagged-on-trunk-1.2-b': 'M',
+    '/%(branches)s/b2/tagged-on-trunk-1.1': 'M',
+    '/%(branches)s/b2/tagged-on-b1': 'M',
+    '/%(branches)s/b2/tagged-on-b2': 'M',
     })
 
   conv.logs[7].check("Commit again on trunk", {
-    '/trunk/tagged-on-trunk-1.2-a': 'M',
-    '/trunk/tagged-on-trunk-1.2-b': 'M',
-    '/trunk/tagged-on-trunk-1.1': 'M',
-    '/trunk/tagged-on-b1': 'M',
-    '/trunk/tagged-on-b2': 'M',
+    '/%(trunk)s/tagged-on-trunk-1.2-a': 'M',
+    '/%(trunk)s/tagged-on-trunk-1.2-b': 'M',
+    '/%(trunk)s/tagged-on-trunk-1.1': 'M',
+    '/%(trunk)s/tagged-on-b1': 'M',
+    '/%(trunk)s/tagged-on-b2': 'M',
     })
 
   conv.logs[8].check(sym_log_msg('T',1), {
-    '/tags/T (from /trunk:7)': 'A',
-    '/tags/T/tagged-on-b2 (from /branches/b2/tagged-on-b2:7)': 'R',
-    '/tags/T/tagged-on-trunk-1.1 (from /trunk/tagged-on-trunk-1.1:2)': 'R',
-    '/tags/T/tagged-on-b1 (from /branches/b1/tagged-on-b1:7)': 'R',
+    '/%(tags)s/T (from /%(trunk)s:7)': 'A',
+    '/%(tags)s/T/tagged-on-b2 (from /%(branches)s/b2/tagged-on-b2:7)': 'R',
+    '/%(tags)s/T/tagged-on-trunk-1.1 '
+    '(from /%(trunk)s/tagged-on-trunk-1.1:2)': 'R',
+    '/%(tags)s/T/tagged-on-b1 (from /%(branches)s/b1/tagged-on-b1:7)': 'R',
     })
 
 
@@ -1428,7 +1443,7 @@ def no_spurious_svn_commits():
   #   the one that CVS generates, we do not create a primary SVNCommit
   #   for it.)
   conv.logs[18].check('File added on branch xiphophorus', {
-    '/branches/xiphophorus/added-on-branch.txt' : 'A',
+    '/%(branches)s/xiphophorus/added-on-branch.txt' : 'A',
     })
 
   # Check to make sure that a commit *is* generated:
@@ -1444,7 +1459,7 @@ def no_spurious_svn_commits():
   #   (We shouldn't consider a CVSRevision whose op is OP_DEAD as a
   #   candidate for the LastSymbolicNameDatabase.
   conv.logs[20].check('This file was also added on branch xiphophorus,', {
-    '/branches/xiphophorus/added-on-branch2.txt' : 'A',
+    '/%(branches)s/xiphophorus/added-on-branch2.txt' : 'A',
     })
 
 
@@ -1452,9 +1467,9 @@ def peer_path_pruning():
   "make sure that filling prunes paths correctly"
   conv = ensure_conversion('peer-path-pruning')
   conv.logs[8].check(sym_log_msg('BRANCH'), {
-    '/branches/BRANCH (from /trunk:6)'         : 'A',
-    '/branches/BRANCH/bar'                     : 'D',
-    '/branches/BRANCH/foo (from /trunk/foo:7)' : 'R',
+    '/%(branches)s/BRANCH (from /%(trunk)s:6)'         : 'A',
+    '/%(branches)s/BRANCH/bar'                     : 'D',
+    '/%(branches)s/BRANCH/foo (from /%(trunk)s/foo:7)' : 'R',
     })
 
 def invalid_closings_on_trunk():
@@ -1492,7 +1507,8 @@ def branch_from_default_branch():
   # non-trunk default branch.  Crystal clear?  I thought so.  See
   # issue #42 for more incoherent blathering.
   conv.logs[6].check("This commit was generated by cvs2svn", {
-    '/trunk/proj/file.txt (from /branches/upstream/proj/file.txt:5)': 'R',
+    '/%(trunk)s/proj/file.txt '
+    '(from /%(branches)s/upstream/proj/file.txt:5)': 'R',
     })
 
 def file_in_attic_too():
@@ -1670,7 +1686,8 @@ def eol_mime():
 
   ## Just --eol-from-mime-type, not --no-default-eol. ##
   conv = ensure_conversion('eol-mime', args=[
-      '--mime-types=%s' % mime_path, '--eol-from-mime-type', '--cvs-revnums'])
+      '--mime-types=%s' % mime_path, '--eol-from-mime-type', '--cvs-revnums'
+      ])
   wc_tree = svntest.tree.build_tree_from_wc(conv.wc, 1)
   allprops = the_usual_suspects(wc_tree)
 
@@ -1802,7 +1819,8 @@ def keywords():
 
   check_props(allprops, 'foo.default', 'Author Date Id Revision', 'native',
       None)
-  check_props(allprops, 'foo.kkvl', 'Author Date Id Revision', 'native', None)
+  check_props(allprops, 'foo.kkvl', 'Author Date Id Revision', 'native',
+              None)
   check_props(allprops, 'foo.kkv', 'Author Date Id Revision', 'native', None)
   check_props(allprops, 'foo.kb', None, None, 'application/octet-stream')
   check_props(allprops, 'foo.kk', None, 'native', None)
@@ -1832,7 +1850,8 @@ def requires_cvs():
   conv = ensure_conversion('requires-cvs', args=["--use-cvs"])
 
   atsign_contents = file(os.path.join(conv.wc, "trunk", "atsign-add")).read()
-  cl_contents = file(os.path.join(conv.wc, "trunk", "client_lock.idl")).read()
+  cl_contents = file(
+      os.path.join(conv.wc, "trunk", "client_lock.idl")).read()
 
   if atsign_contents[-1:] == "@":
     raise svntest.Failure

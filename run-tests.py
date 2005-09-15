@@ -467,7 +467,8 @@ class Conversion:
 # values are Conversion instances.
 already_converted = { }
 
-def ensure_conversion(name, error_re=None, passbypass=None, args=None):
+def ensure_conversion(name, error_re=None, passbypass=None,
+                      trunk=None, branches=None, tags=None, args=None):
   """Convert CVS repository NAME to Subversion, but only if it has not
   been converted before by this invocation of this script.  If it has
   been converted before, return the Conversion object from the
@@ -500,6 +501,21 @@ def ensure_conversion(name, error_re=None, passbypass=None, args=None):
   else:
     args = list(args)
   args.sort()
+
+  if trunk is None:
+    trunk = 'trunk'
+  else:
+    args.append('--trunk=%s' % (trunk,))
+
+  if branches is None:
+    branches = 'branches'
+  else:
+    args.append('--branches=%s' % (branches,))
+
+  if tags is None:
+    tags = 'tags'
+  else:
+    args.append('--tags=%s' % (tags,))
 
   conv_id = make_conversion_id(name, args, passbypass)
 
@@ -1913,17 +1929,17 @@ def bogus_branch_copy():
 def nested_ttb_directories():
   "require error if ttb directories are not disjoint"
   opts_list = [
-    ['--trunk=a', '--branches=a',],
-    ['--trunk=a', '--tags=a',],
-    ['--branches=a', '--tags=a',],
+    {'trunk' : 'a', 'branches' : 'a',},
+    {'trunk' : 'a', 'tags' : 'a',},
+    {'branches' : 'a', 'tags' : 'a',},
     # This option conflicts with the default trunk path:
-    ['--branches=trunk',],
+    {'branches' : 'trunk',},
     ]
 
   for opts in opts_list:
     try:
       ensure_conversion(
-          'main', error_re=r'.*paths .* and .* are not disjoint\.', args=opts
+          'main', error_re=r'.*paths .* and .* are not disjoint\.', **opts
           )
       raise MissingErrorException
     except svntest.Failure:

@@ -324,15 +324,6 @@ def erase(path):
     os.remove(path)
 
 
-def find_tag_rev(logs, tagname):
-  """Search LOGS for a log message containing 'TAGNAME' and return the
-  revision in which it was found."""
-  for i in xrange(len(logs), 0, -1):
-    if logs[i].msg.find("'"+tagname+"'") != -1:
-      return i
-  raise ValueError("Tag %s not found in logs" % tagname)
-
-
 def sym_log_msg(symbolic_name, is_tag=None):
   """Return the expected log message for a cvs2svn-synthesized revision
   creating branch or tag SYMBOLIC_NAME."""
@@ -447,6 +438,14 @@ class Conversion:
       self.logs = parse_log(svnrepos)
     finally:
       os.chdir(saved_wd)
+
+  def find_tag_log(self, tagname):
+    """Search LOGS for a log message containing 'TAGNAME' and return the
+    log in which it was found."""
+    for i in xrange(len(self.logs), 0, -1):
+      if self.logs[i].msg.find("'"+tagname+"'") != -1:
+        return self.logs[i]
+    raise ValueError("Tag %s not found in logs" % tagname)
 
 
 # Cache of conversions that have already been done.  Keys are conv_id;
@@ -736,8 +735,8 @@ def simple_tags():
   fromstr = ' (from /branches/vendorbranch:25)'
 
   # Tag on rev 1.1.1.1 of all files in proj
-  rev = find_tag_rev(conv.logs, 'T_ALL_INITIAL_FILES')
-  conv.logs[rev].check(sym_log_msg('T_ALL_INITIAL_FILES',1), {
+  log = conv.find_tag_log('T_ALL_INITIAL_FILES')
+  log.check(sym_log_msg('T_ALL_INITIAL_FILES',1), {
     '/tags/T_ALL_INITIAL_FILES'+fromstr: 'A',
     '/tags/T_ALL_INITIAL_FILES/single-files': 'D',
     '/tags/T_ALL_INITIAL_FILES/partial-prune': 'D',
@@ -751,8 +750,8 @@ def simple_tags():
     })
 
   # Tag on rev 1.1.1.1 of all files in proj, except one
-  rev = find_tag_rev(conv.logs, 'T_ALL_INITIAL_FILES_BUT_ONE')
-  conv.logs[rev].check(sym_log_msg('T_ALL_INITIAL_FILES_BUT_ONE',1), {
+  log = conv.find_tag_log('T_ALL_INITIAL_FILES_BUT_ONE')
+  log.check(sym_log_msg('T_ALL_INITIAL_FILES_BUT_ONE',1), {
     '/tags/T_ALL_INITIAL_FILES_BUT_ONE'+fromstr: 'A',
     '/tags/T_ALL_INITIAL_FILES_BUT_ONE/single-files': 'D',
     '/tags/T_ALL_INITIAL_FILES_BUT_ONE/partial-prune': 'D',
@@ -786,7 +785,7 @@ def mixed_time_tag():
   # See test-data/main-cvsrepos/proj/README.
   conv = ensure_conversion('main')
 
-  rev = find_tag_rev(conv.logs, 'T_MIXED')
+  log = conv.find_tag_log('T_MIXED')
   expected = {
     '/tags/T_MIXED (from /trunk:31)': 'A',
     '/tags/T_MIXED/partial-prune': 'D',
@@ -794,9 +793,9 @@ def mixed_time_tag():
     '/tags/T_MIXED/proj/sub2/subsubA (from /trunk/proj/sub2/subsubA:23)': 'R',
     '/tags/T_MIXED/proj/sub3 (from /trunk/proj/sub3:30)': 'R',
     }
-  if rev == 16:
+  if log.revision == 16:
     expected['/tags'] = 'A'
-  conv.logs[rev].check_changes(expected)
+  log.check_changes(expected)
 
 
 def mixed_time_branch_with_added_file():

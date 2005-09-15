@@ -524,7 +524,9 @@ def ensure_conversion(name, error_re=None, passbypass=None,
       # Run the conversion and store the result for the rest of this
       # session:
       already_converted[conv_id] = Conversion(
-          conv_id, name, error_re, passbypass, {}, args)
+          conv_id, name, error_re, passbypass,
+          {'trunk' : trunk, 'branches' : branches, 'tags' : tags},
+          args)
     except svntest.Failure:
       # Remember the failure so that a future attempt to run this conversion
       # does not bother to retry, but fails immediately.

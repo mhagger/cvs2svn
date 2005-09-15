@@ -404,11 +404,15 @@ class Conversion:
 
     wc -- the path to the svn working copy.
 
-    logs -- a dictionary of Log instances, as returned by parse_log()."""
+    logs -- a dictionary of Log instances, as returned by parse_log().
 
-  def __init__(self, conv_id, name, error_re, passbypass, args):
+    symbols -- a dictionary of symbols used for string interpolation
+        in path names."""
+
+  def __init__(self, conv_id, name, error_re, passbypass, symbols, args):
     self.conv_id = conv_id
     self.name = name
+    self.symbols = symbols
     if not os.path.isdir(tmp_dir):
       os.mkdir(tmp_dir)
 
@@ -446,7 +450,7 @@ class Conversion:
                               % os.path.join(os.getcwd(), svnrepos))
 
       run_svn('co', repos_to_url(svnrepos), wc)
-      self.logs = parse_log(svnrepos, {})
+      self.logs = parse_log(svnrepos, self.symbols)
     finally:
       os.chdir(saved_wd)
 
@@ -504,7 +508,7 @@ def ensure_conversion(name, error_re=None, passbypass=None, args=None):
       # Run the conversion and store the result for the rest of this
       # session:
       already_converted[conv_id] = Conversion(
-          conv_id, name, error_re, passbypass, args)
+          conv_id, name, error_re, passbypass, {}, args)
     except svntest.Failure:
       # Remember the failure so that a future attempt to run this conversion
       # does not bother to retry, but fails immediately.

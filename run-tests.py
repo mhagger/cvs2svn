@@ -193,7 +193,10 @@ class Log:
           )
 
   def check_change(self, path, op):
-    """Verify that this Log includes a change for PATH with operator OP."""
+    """Verify that this Log includes a change for PATH with operator OP.
+
+    PATH is allowed to include string interpolation directives (e.g.,
+    '%(trunk)s'), which are interpolated against self.symbols."""
 
     path = path % self.symbols
     found_op = self.changed_paths.get(path, None)
@@ -213,7 +216,9 @@ class Log:
     """Verify that this Log has precisely the CHANGED_PATHS specified.
 
     CHANGED_PATHS is a dictionary in the same format as
-    self.changed_paths."""
+    self.changed_paths, except that the paths strings are allowed to
+    include string interpolation directives (e.g., '%(trunk)s'), which
+    are interpolated against self.symbols."""
 
     cp = {}
     for (path, op) in changed_paths.items():
@@ -229,8 +234,8 @@ class Log:
   def check(self, msg, changed_paths):
     """Verify that this Log has the MSG and CHANGED_PATHS specified.
 
-    CHANGED_PATHS is a dictionary in the same format as
-    self.changed_paths."""
+    Convenience function to check two things at once.  MSG is passed
+    to check_msg(); CHANGED_PATHS is passed to check_changes()."""
 
     self.check_msg(msg)
     self.check_changes(changed_paths)

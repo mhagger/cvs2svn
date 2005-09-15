@@ -690,40 +690,35 @@ def interleaved_commits():
   # scope: http://www.python.org/peps/pep-0227.html
 
   def check_letters(log):
-    'Return 1 if REV is the rev where only letters were committed, else None.'
-    for path in ('/%(trunk)s/interleaved/a',
-                 '/%(trunk)s/interleaved/b',
-                 '/%(trunk)s/interleaved/c',
-                 '/%(trunk)s/interleaved/d',
-                 '/%(trunk)s/interleaved/e',):
-      if not (log.get_path_op(path) == 'M'):
-        return None
-    if log.msg.find('Committing letters only.') != 0:
-      return None
-    return 1
+    """Check if REV is the rev where only letters were committed."""
+    log.check('Committing letters only.', {
+      '/%(trunk)s/interleaved/a' : 'M',
+      '/%(trunk)s/interleaved/b' : 'M',
+      '/%(trunk)s/interleaved/c' : 'M',
+      '/%(trunk)s/interleaved/d' : 'M',
+      '/%(trunk)s/interleaved/e' : 'M',
+      })
 
   def check_numbers(log):
-    'Return 1 if REV is the rev where only numbers were committed, else None.'
-    for path in ('/%(trunk)s/interleaved/1',
-                 '/%(trunk)s/interleaved/2',
-                 '/%(trunk)s/interleaved/3',
-                 '/%(trunk)s/interleaved/4',
-                 '/%(trunk)s/interleaved/5',):
-      if not (log.get_path_op(path) == 'M'):
-        return None
-    if log.msg.find('Committing numbers only.') != 0:
-      return None
-    return 1
+    """Check if REV is the rev where only numbers were committed."""
+    log.check('Committing numbers only.', {
+      '/%(trunk)s/interleaved/1' : 'M',
+      '/%(trunk)s/interleaved/2' : 'M',
+      '/%(trunk)s/interleaved/3' : 'M',
+      '/%(trunk)s/interleaved/4' : 'M',
+      '/%(trunk)s/interleaved/5' : 'M',
+      })
 
   # One of the commits was letters only, the other was numbers only.
   # But they happened "simultaneously", so we don't assume anything
-  # about which commit appeared first, we just try both ways.
+  # about which commit appeared first, so we just try both ways.
   rev = rev + 3
-  if not ((check_letters(conv.logs[rev])
-           and check_numbers(conv.logs[rev + 1]))
-          or (check_numbers(conv.logs[rev])
-              and check_letters(conv.logs[rev + 1]))):
-    raise svntest.Failure
+  try:
+    check_letters(conv.logs[rev])
+    check_numbers(conv.logs[rev + 1])
+  except svntest.Failure:
+    check_numbers(conv.logs[rev])
+    check_letters(conv.logs[rev + 1])
 
 
 def simple_commits():

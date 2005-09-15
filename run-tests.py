@@ -203,6 +203,14 @@ class Log:
         cmp(self.changed_paths, other.changed_paths) or \
         cmp(self.msg, other.msg)
 
+  def get_path_op(self, path):
+    """Return the operator for the change involving PATH.
+
+    PATH is allowed to include string interpolation directives (e.g.,
+    '%(trunk)s'), which are interpolated against self.symbols.  Return
+    None if there is no record for PATH."""
+    return self.changed_paths.get(path % self.symbols)
+
   def check_msg(self, msg):
     """Verify that this Log's message starts with the specified MSG."""
     if self.msg.find(msg) != 0:
@@ -683,12 +691,12 @@ def interleaved_commits():
 
   def check_letters(log):
     'Return 1 if REV is the rev where only letters were committed, else None.'
-    for path in ('/trunk/interleaved/a',
-                 '/trunk/interleaved/b',
-                 '/trunk/interleaved/c',
-                 '/trunk/interleaved/d',
-                 '/trunk/interleaved/e',):
-      if not (log.changed_paths.get(path) == 'M'):
+    for path in ('/%(trunk)s/interleaved/a',
+                 '/%(trunk)s/interleaved/b',
+                 '/%(trunk)s/interleaved/c',
+                 '/%(trunk)s/interleaved/d',
+                 '/%(trunk)s/interleaved/e',):
+      if not (log.get_path_op(path) == 'M'):
         return None
     if log.msg.find('Committing letters only.') != 0:
       return None
@@ -696,12 +704,12 @@ def interleaved_commits():
 
   def check_numbers(log):
     'Return 1 if REV is the rev where only numbers were committed, else None.'
-    for path in ('/trunk/interleaved/1',
-                 '/trunk/interleaved/2',
-                 '/trunk/interleaved/3',
-                 '/trunk/interleaved/4',
-                 '/trunk/interleaved/5',):
-      if not (log.changed_paths.get(path) == 'M'):
+    for path in ('/%(trunk)s/interleaved/1',
+                 '/%(trunk)s/interleaved/2',
+                 '/%(trunk)s/interleaved/3',
+                 '/%(trunk)s/interleaved/4',
+                 '/%(trunk)s/interleaved/5',):
+      if not (log.get_path_op(path) == 'M'):
         return None
     if log.msg.find('Committing numbers only.') != 0:
       return None
@@ -931,10 +939,10 @@ def overlapping_branch():
   # they have different log messages but the same timestamps.  As only
   # one of the files would be on the vendorB branch in the regression
   # case being tested here, we allow for either order.
-  if ((conv.logs[rev].changed_paths.get('/branches/vendorB (from /trunk:2)')
-       == 'A')
-      or (conv.logs[rev].changed_paths.get(
-              '/branches/vendorB (from /trunk:3)') == 'A')):
+  if (conv.logs[rev].get_path_op(
+          '/%(branches)s/vendorB (from /%(trunk)s:2)') == 'A'
+      or conv.logs[rev].get_path_op(
+             '/%(branches)s/vendorB (from /%(trunk)s:3)') == 'A'):
     raise svntest.Failure
   conv.logs[rev + 1].check_changes({})
   if len(conv.logs) != rev + 1:
@@ -978,7 +986,7 @@ def no_trunk_prune():
   conv = ensure_conversion('overdead')
   for rev in conv.logs.keys():
     rev_logs = conv.logs[rev]
-    if rev_logs.changed_paths.get('/trunk') == 'D':
+    if rev_logs.get_path_op('/%(trunk)s') == 'D':
       raise svntest.Failure
 
 
@@ -1000,7 +1008,7 @@ def double_delete():
   conv.logs[rev + 1].check_change(path, 'D')
   conv.logs[rev + 1].check_msg('Remove this file for the first time.')
 
-  if conv.logs[rev + 1].changed_paths.has_key('/trunk'):
+  if conv.logs[rev + 1].get_path_op('/%(trunk)s') is not None:
     raise svntest.Failure
 
 

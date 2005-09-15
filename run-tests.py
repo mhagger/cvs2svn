@@ -670,20 +670,19 @@ def interleaved_commits():
 
   # The initial import.
   rev = 37
-  for path in ('/%(trunk)s/interleaved',
-               '/%(trunk)s/interleaved/1',
-               '/%(trunk)s/interleaved/2',
-               '/%(trunk)s/interleaved/3',
-               '/%(trunk)s/interleaved/4',
-               '/%(trunk)s/interleaved/5',
-               '/%(trunk)s/interleaved/a',
-               '/%(trunk)s/interleaved/b',
-               '/%(trunk)s/interleaved/c',
-               '/%(trunk)s/interleaved/d',
-               '/%(trunk)s/interleaved/e',):
-    conv.logs[rev].check_change(path, 'A')
-
-  conv.logs[rev].check_msg('Initial revision')
+  conv.logs[rev].check('Initial revision', {
+    '/%(trunk)s/interleaved' : 'A',
+    '/%(trunk)s/interleaved/1' : 'A',
+    '/%(trunk)s/interleaved/2' : 'A',
+    '/%(trunk)s/interleaved/3' : 'A',
+    '/%(trunk)s/interleaved/4' : 'A',
+    '/%(trunk)s/interleaved/5' : 'A',
+    '/%(trunk)s/interleaved/a' : 'A',
+    '/%(trunk)s/interleaved/b' : 'A',
+    '/%(trunk)s/interleaved/c' : 'A',
+    '/%(trunk)s/interleaved/d' : 'A',
+    '/%(trunk)s/interleaved/e' : 'A',
+    })
 
   # This PEP explains why we pass the 'log' parameter to these two
   # nested functions, instead of just inheriting it from the enclosing

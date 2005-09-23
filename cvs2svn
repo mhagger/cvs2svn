@@ -4945,18 +4945,20 @@ def main():
     sys.exit(1)
 
   if ctx.use_cvs:
-    # Ascend above the specified root if necessary, to find the cvs_repository
-    # (a directory containing a CVSROOT directory) and the cvs_module (the
-    # path of the conversion root within the cvs repository)
-    # NB: cvs_module must be seperated by '/' *not* by os.sep .
-    ctx.cvs_repository = os.path.abspath(ctx.cvsroot)
-    prev_cvs_repository = None
+    # Ascend above the specified root if necessary, to find the
+    # cvs_repository_root (a directory containing a CVSROOT directory)
+    # and the cvs_module (the path of the conversion root within the
+    # cvs repository) NB: cvs_module must be seperated by '/' *not* by
+    # os.sep .
+    ctx.cvs_repository_root = os.path.abspath(ctx.cvsroot)
+    prev_cvs_repository_root = None
     ctx.cvs_module = ""
-    while prev_cvs_repository != ctx.cvs_repository:
-      if os.path.isdir(os.path.join(ctx.cvs_repository, 'CVSROOT')):
+    while prev_cvs_repository_root != ctx.cvs_repository_root:
+      if os.path.isdir(os.path.join(ctx.cvs_repository_root, 'CVSROOT')):
         break
-      prev_cvs_repository = ctx.cvs_repository
-      ctx.cvs_repository, module_component = os.path.split(ctx.cvs_repository)
+      prev_cvs_repository_root = ctx.cvs_repository_root
+      ctx.cvs_repository_root, module_component = \
+          os.path.split(ctx.cvs_repository_root)
       ctx.cvs_module = module_component + "/" + ctx.cvs_module
     else:
       # Hit the root (of the drive, on Windows) without finding a CVSROOT dir.
@@ -4966,7 +4968,7 @@ def main():
                        "a CVSROOT directory within its root directory.\n"
                        % ctx.cvsroot)
       sys.exit(1)
-    os.environ['CVSROOT'] = ctx.cvs_repository
+    os.environ['CVSROOT'] = ctx.cvs_repository_root
 
   if (not ctx.target) and (not ctx.dump_only) and (not ctx.dry_run):
     sys.stderr.write(error_prefix +

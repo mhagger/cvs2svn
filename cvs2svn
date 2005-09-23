@@ -4775,7 +4775,6 @@ def normalize_ttb_path(opt, path):
 
   1. Strip leading, trailing, and duplicated '/'.
   2. Verify that the path is not empty.
-  3. Verify that the path is top-level.
 
   Return the normalized path.
 
@@ -4784,10 +4783,6 @@ def normalize_ttb_path(opt, path):
   norm_path = _path_join(*path.split('/'))
   if not norm_path:
     sys.exit("%s: cannot pass an empty path to %s." % (error_prefix, opt))
-  if string.find(norm_path, '/') != -1:
-    sys.exit("%s: cannot pass multicomponent path to %s yet.\n"
-             "  See http://cvs2svn.tigris.org/issues/show_bug.cgi?id=7 "
-             "for details.\n" % (error_prefix, opt))
   return norm_path
 
 

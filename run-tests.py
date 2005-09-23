@@ -595,7 +595,7 @@ def two_quick():
     raise svntest.Failure
 
 
-def prune_with_care():
+def prune_with_care(**kw):
   "prune, but never too much"
   # Robert Pluim encountered this lovely one while converting the
   # directory src/gnu/usr.bin/cvs/contrib/pcl-cvs/ in FreeBSD's CVS
@@ -630,7 +630,7 @@ def prune_with_care():
   # In the test below, 'trunk/full-prune/first' represents
   # cookie, and 'trunk/full-prune/second' represents NEWS.
 
-  conv = ensure_conversion('main')
+  conv = ensure_conversion('main', **kw)
 
   # Confirm that revision 4 removes '/trunk/full-prune/first',
   # and that revision 6 removes '/trunk/full-prune'.
@@ -660,6 +660,13 @@ def prune_with_care():
   for path in ('/%(trunk)s/full-prune-reappear',
                '/%(trunk)s/full-prune-reappear/appears-later'):
     conv.logs[rev].check_change(path, 'A')
+
+
+def prune_with_care_variants():
+  "prune, with alternate repo layout"
+  prune_with_care(trunk='a', branches='b', tags='c')
+  prune_with_care(trunk='a/1', branches='b/1', tags='c/1')
+  prune_with_care(trunk='a/1', branches='a/2', tags='a/3')
 
 
 def interleaved_commits():
@@ -763,10 +770,10 @@ def simple_commits():
     ))
 
 
-def simple_tags():
+def simple_tags(**kw):
   "simple tags and branches with no commits"
   # See test-data/main-cvsrepos/proj/README.
-  conv = ensure_conversion('main')
+  conv = ensure_conversion('main', **kw)
 
   # Verify the copy source for the tags we are about to check
   # No need to verify the copyfrom revision, as simple_commits did that
@@ -807,6 +814,13 @@ def simple_tags():
     ('/%(branches)s/B_FROM_INITIALS_BUT_ONE/partial-prune', 'D'),
     ('/%(branches)s/B_FROM_INITIALS_BUT_ONE/proj/sub1/subsubB', 'D'),
     ))
+
+
+def simple_tags_variants():
+  "simple tags, with alternate repo layout"
+  simple_tags(trunk='a', branches='b', tags='c')
+  simple_tags(trunk='a/1', branches='b/1', tags='c/1')
+  simple_tags(trunk='a/1', branches='a/2', tags='a/3')
 
 
 def simple_branch_commits():
@@ -942,9 +956,9 @@ def overlapping_branch():
     raise svntest.Failure
 
 
-def phoenix_branch():
+def phoenix_branch(**kw):
   "convert a branch file rooted in a 'dead' revision"
-  conv = ensure_conversion('phoenix')
+  conv = ensure_conversion('phoenix', **kw)
   conv.logs[8].check(sym_log_msg('volsung_20010721'), (
     ('/%(branches)s/volsung_20010721 (from /%(trunk)s:7)', 'A'),
     ('/%(branches)s/volsung_20010721/file.txt', 'D'),
@@ -952,6 +966,11 @@ def phoenix_branch():
   conv.logs[9].check('This file was supplied by Jack Moffitt', (
     ('/%(branches)s/volsung_20010721/phoenix', 'A'),
     ))
+
+
+def phoenix_branch_variants():
+  "'dead' revision, with alternate repo layout"
+  phoenix_branch(trunk='a/1', branches='b/1', tags='c/1')
 
 
 ###TODO: We check for 4 changed paths here to accomodate creating tags
@@ -975,13 +994,20 @@ def overdead():
   conv = ensure_conversion('overdead')
 
 
-def no_trunk_prune():
+def no_trunk_prune(**kw):
   "ensure that trunk doesn't get pruned"
-  conv = ensure_conversion('overdead')
+  conv = ensure_conversion('overdead', **kw)
   for rev in conv.logs.keys():
     rev_logs = conv.logs[rev]
     if rev_logs.get_path_op('/%(trunk)s') == 'D':
       raise svntest.Failure
+
+
+def no_trunk_prune_variants():
+  "no trunk pruning, with alternate repo layout"
+  no_trunk_prune(trunk='a', branches='b', tags='c')
+  no_trunk_prune(trunk='a/1', branches='b/1', tags='c/1')
+  no_trunk_prune(trunk='a/1', branches='a/2', tags='a/3')
 
 
 def double_delete():
@@ -1024,16 +1050,24 @@ def resync_misgroups():
   conv = ensure_conversion('resync-misgroups')
 
 
-def tagged_branch_and_trunk():
+def tagged_branch_and_trunk(**kw):
   "allow tags with mixed trunk and branch sources"
-  conv = ensure_conversion('tagged-branch-n-trunk')
-  a_path = os.path.join(conv.wc, 'tags', 'some-tag', 'a.txt')
-  b_path = os.path.join(conv.wc, 'tags', 'some-tag', 'b.txt')
+  conv = ensure_conversion('tagged-branch-n-trunk', **kw)
+
+  tags = kw.get('tags', 'tags')
+
+  a_path = os.path.join(conv.wc, tags, 'some-tag', 'a.txt')
+  b_path = os.path.join(conv.wc, tags, 'some-tag', 'b.txt')
   if not (os.path.exists(a_path) and os.path.exists(b_path)):
     raise svntest.Failure
   if (open(a_path, 'r').read().find('1.24') == -1) \
      or (open(b_path, 'r').read().find('1.5') == -1):
     raise svntest.Failure
+
+
+def tagged_branch_and_trunk_variants():
+  "mixed tags, with alternate repo layout"
+  tagged_branch_and_trunk(trunk='a/1', branches='a/2', tags='a/3')
 
 
 def enroot_race():
@@ -1061,22 +1095,29 @@ def enroot_race_obo():
     raise svntest.Failure
 
 
-def branch_delete_first():
+def branch_delete_first(**kw):
   "correctly handle deletion as initial branch action"
   # See test-data/branch-delete-first-cvsrepos/README.
   #
   # The conversion will fail if the bug is present, and
   # ensure_conversion would raise svntest.Failure.
-  conv = ensure_conversion('branch-delete-first')
+  conv = ensure_conversion('branch-delete-first', **kw)
+
+  branches = kw.get('branches', 'branches')
 
   # 'file' was deleted from branch-1 and branch-2, but not branch-3
-  if os.path.exists(os.path.join(conv.wc, 'branches', 'branch-1', 'file')):
+  if os.path.exists(os.path.join(conv.wc, branches, 'branch-1', 'file')):
     raise svntest.Failure
-  if os.path.exists(os.path.join(conv.wc, 'branches', 'branch-2', 'file')):
+  if os.path.exists(os.path.join(conv.wc, branches, 'branch-2', 'file')):
     raise svntest.Failure
   if not os.path.exists(
-        os.path.join(conv.wc, 'branches', 'branch-3', 'file')):
+        os.path.join(conv.wc, branches, 'branch-3', 'file')):
     raise svntest.Failure
+
+
+def branch_delete_first_variants():
+  "initial delete, with alternate repo layout"
+  branch_delete_first(trunk='a/1', branches='a/2', tags='a/3')
 
 
 def nonascii_filenames():
@@ -1431,11 +1472,18 @@ def pass5_when_to_fill():
   conv = ensure_conversion('pass5-when-to-fill')
 
 
-def empty_trunk():
+def empty_trunk(**kw):
   "don't break when the trunk is empty"
   # The conversion will fail if the bug is present, and
   # ensure_conversion would raise svntest.Failure.
-  conv = ensure_conversion('empty-trunk')
+  conv = ensure_conversion('empty-trunk', **kw)
+
+
+def empty_trunk_variants():
+  "empty trunk, with alternate repo layout"
+  empty_trunk(trunk='a', branches='b', tags='c')
+  empty_trunk(trunk='a/1', branches='a/2', tags='a/3')
+
 
 def no_spurious_svn_commits():
   "ensure that we don't create any spurious commits"
@@ -1473,14 +1521,20 @@ def no_spurious_svn_commits():
     ))
 
 
-def peer_path_pruning():
+def peer_path_pruning(**kw):
   "make sure that filling prunes paths correctly"
-  conv = ensure_conversion('peer-path-pruning')
+  conv = ensure_conversion('peer-path-pruning', **kw)
   conv.logs[8].check(sym_log_msg('BRANCH'), (
     ('/%(branches)s/BRANCH (from /%(trunk)s:6)', 'A'),
     ('/%(branches)s/BRANCH/bar', 'D'),
     ('/%(branches)s/BRANCH/foo (from /%(trunk)s/foo:7)', 'R'),
     ))
+
+
+def peer_path_pruning_variants():
+  "filling prune paths, with alternate repo layout"
+  peer_path_pruning(trunk='a/1', branches='a/2', tags='a/3')
+
 
 def invalid_closings_on_trunk():
   "verify correct revs are copied to default branches"
@@ -1965,6 +2019,10 @@ def nested_ttb_directories():
     {'branches' : 'a', 'tags' : 'a',},
     # This option conflicts with the default trunk path:
     {'branches' : 'trunk',},
+    # Try some nested directories:
+    {'trunk' : 'a', 'branches' : 'a/b',},
+    {'trunk' : 'a/b', 'tags' : 'a/b/c/d',},
+    {'branches' : 'a', 'tags' : 'a/b',},
     ]
 
   for opts in opts_list:
@@ -2039,7 +2097,15 @@ test_list = [ None,
               double_add,
               bogus_branch_copy,
               nested_ttb_directories,
-             ]
+              prune_with_care_variants,
+              simple_tags_variants,
+              phoenix_branch_variants,
+              no_trunk_prune_variants,
+              tagged_branch_and_trunk_variants,     # 60
+              branch_delete_first_variants,
+              empty_trunk_variants,
+              peer_path_pruning_variants,
+              ]
 
 if __name__ == '__main__':
 

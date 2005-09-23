@@ -417,14 +417,14 @@ class CVSRepositoryViaCVS(CVSRepository):
     # os.sep .
     self.cvs_repository_root = os.path.abspath(ctx.cvsroot)
     prev_cvs_repository_root = None
-    ctx.cvs_module = ""
+    self.cvs_module = ""
     while prev_cvs_repository_root != self.cvs_repository_root:
       if os.path.isdir(os.path.join(self.cvs_repository_root, 'CVSROOT')):
         break
       prev_cvs_repository_root = self.cvs_repository_root
       self.cvs_repository_root, module_component = \
           os.path.split(self.cvs_repository_root)
-      ctx.cvs_module = module_component + "/" + ctx.cvs_module
+      self.cvs_module = module_component + "/" + self.cvs_module
     else:
       # Hit the root (of the drive, on Windows) without finding a CVSROOT dir.
       sys.stderr.write(error_prefix +
@@ -462,7 +462,7 @@ class CVSRepositoryViaCVS(CVSRepository):
       extra_arguments = []
     pipe_cmd = [ 'cvs' ] + self.global_arguments + \
                [ 'co', '-r' + c_rev.rev, '-p' ] + extra_arguments + \
-               [ ctx.cvs_module + c_rev.cvs_path ];
+               [ self.cvs_module + c_rev.cvs_path ];
     pipe = SimplePopen(pipe_cmd, True)
     pipe.stdin.close()
     return pipe_cmd, pipe

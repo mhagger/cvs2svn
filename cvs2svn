@@ -381,27 +381,31 @@ def relative_name(cvsroot, fname):
                    " cvsroot\n" % (error_prefix, cvsroot, fname))
   sys.exit(1)
 
-def get_co_pipe(c_rev, extra_arguments=None):
-  """Return a command string, and the pipe created using that string.
-  C_REV is a CVSRevision, and EXTRA_ARGUMENTS is used to add extra
-  arguments.  The pipe returns the text of that CVS Revision."""
-  ctx = Ctx()
-  if extra_arguments is None:
-    extra_arguments = []
-  if ctx.use_cvs:
-    pipe_cmd = [ 'cvs' ] + ctx.cvs_global_arguments + \
-               [ 'co', '-r' + c_rev.rev, '-p' ] + extra_arguments + \
-               [ ctx.cvs_module + c_rev.cvs_path ];
-  else:
-    pipe_cmd = [ 'co', '-q', '-x,v', '-p' + c_rev.rev ] + extra_arguments + \
-               [ c_rev.rcs_path() ]
-  pipe = SimplePopen(pipe_cmd, True)
-  pipe.stdin.close()
-  return pipe_cmd, pipe
+
+class CVSRepository:
+  """A CVS repository from which data can be extracted."""
+  def get_co_pipe(self, c_rev, extra_arguments=None):
+    """Return a command string, and the pipe created using that string.
+    C_REV is a CVSRevision, and EXTRA_ARGUMENTS is used to add extra
+    arguments.  The pipe returns the text of that CVS Revision."""
+    ctx = Ctx()
+    if extra_arguments is None:
+      extra_arguments = []
+    if ctx.use_cvs:
+      pipe_cmd = [ 'cvs' ] + ctx.cvs_global_arguments + \
+                 [ 'co', '-r' + c_rev.rev, '-p' ] + extra_arguments + \
+                 [ ctx.cvs_module + c_rev.cvs_path ];
+    else:
+      pipe_cmd = [ 'co', '-q', '-x,v', '-p' + c_rev.rev ] + extra_arguments + \
+                 [ c_rev.rcs_path() ]
+    pipe = SimplePopen(pipe_cmd, True)
+    pipe.stdin.close()
+    return pipe_cmd, pipe
+
 
 def generate_ignores(c_rev):
   # Read in props
-  pipe_cmd, pipe = get_co_pipe(c_rev)
+  pipe_cmd, pipe = Ctx().cvs_repository.get_co_pipe(c_rev)
   buf = pipe.stdout.read(PIPE_READ_SIZE)
   raw_ignore_val = ""
   while buf:
@@ -3882,9 +3886,9 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     # expanding the keywords because they must be unexpanded in the
     # repository, or Subversion will get confused.
     if s_item.has_keywords:
-      pipe_cmd, pipe = get_co_pipe(c_rev, [ '-kk' ])
+      pipe_cmd, pipe = Ctx().cvs_repository.get_co_pipe(c_rev, [ '-kk' ])
     else:
-      pipe_cmd, pipe = get_co_pipe(c_rev)
+      pipe_cmd, pipe = Ctx().cvs_repository.get_co_pipe(c_rev)
 
     self.dumpfile.write('Node-path: %s\n'
                         'Node-kind: file\n'
@@ -4943,6 +4947,8 @@ def main():
                      ": the given CVS repository path '%s' is not an "
                      "existing directory.\n" % ctx.cvsroot)
     sys.exit(1)
+
+  ctx.cvs_repository = CVSRepository()
 
   if ctx.use_cvs:
     # Ascend above the specified root if necessary, to find the

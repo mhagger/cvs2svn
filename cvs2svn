@@ -435,6 +435,27 @@ class CVSRepositoryViaCVS(CVSRepository):
       sys.exit(1)
     os.environ['CVSROOT'] = ctx.cvs_repository_root
 
+    def cvs_ok():
+      pipe = SimplePopen([ 'cvs' ] + Ctx().cvs_global_arguments + \
+                         [ '--version' ], True)
+      pipe.stdin.close()
+      pipe.stdout.read()
+      errmsg = pipe.stderr.read()
+      status = pipe.wait()
+      ok = len(errmsg) == 0 and status == 0
+      return (ok, status, errmsg)
+
+    ctx.cvs_global_arguments = [ "-q", "-R" ]
+    ok, cvs_exitstatus, cvs_errmsg = cvs_ok()
+    if not ok:
+      ctx.cvs_global_arguments = [ "-q" ]
+      ok, cvs_exitstatus, cvs_errmsg = cvs_ok()
+
+    if not ok:
+      sys.stderr.write(error_prefix +
+                       ": error executing CVS: status %s, error output:\n" \
+                       % (cvs_exitstatus) + cvs_errmsg)
+
   def get_co_pipe(self, c_rev, extra_arguments=None):
     ctx = Ctx()
     if extra_arguments is None:
@@ -5064,28 +5085,6 @@ def main():
        "  or specify some other directory for temporary files.\n" \
                      % ctx.tmpdir)
     sys.exit(1)
-
-  if ctx.use_cvs:
-    def cvs_ok():
-      pipe = SimplePopen([ 'cvs' ] + Ctx().cvs_global_arguments + \
-                         [ '--version' ], True)
-      pipe.stdin.close()
-      pipe.stdout.read()
-      errmsg = pipe.stderr.read()
-      status = pipe.wait()
-      ok = len(errmsg) == 0 and status == 0
-      return (ok, status, errmsg)
-
-    ctx.cvs_global_arguments = [ "-q", "-R" ]
-    ok, cvs_exitstatus, cvs_errmsg = cvs_ok()
-    if not ok:
-      ctx.cvs_global_arguments = [ "-q" ]
-      ok, cvs_exitstatus, cvs_errmsg = cvs_ok()
-
-    if not ok:
-      sys.stderr.write(error_prefix +
-                       ": error executing CVS: status %s, error output:\n" \
-                       % (cvs_exitstatus) + cvs_errmsg)
 
   # But do lock the tmpdir, to avoid process clash.
   try:

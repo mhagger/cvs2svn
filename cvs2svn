@@ -388,16 +388,33 @@ class CVSRepository:
     """Return a command string, and the pipe created using that string.
     C_REV is a CVSRevision, and EXTRA_ARGUMENTS is used to add extra
     arguments.  The pipe returns the text of that CVS Revision."""
+    raise NotImplementedError
+
+
+class CVSRepositoryViaRCS(CVSRepository):
+  """A CVSRepository accessed via RCS."""
+
+  def get_co_pipe(self, c_rev, extra_arguments=None):
     ctx = Ctx()
     if extra_arguments is None:
       extra_arguments = []
-    if ctx.use_cvs:
-      pipe_cmd = [ 'cvs' ] + ctx.cvs_global_arguments + \
-                 [ 'co', '-r' + c_rev.rev, '-p' ] + extra_arguments + \
-                 [ ctx.cvs_module + c_rev.cvs_path ];
-    else:
-      pipe_cmd = [ 'co', '-q', '-x,v', '-p' + c_rev.rev ] + extra_arguments + \
-                 [ c_rev.rcs_path() ]
+    pipe_cmd = [ 'co', '-q', '-x,v', '-p' + c_rev.rev ] + extra_arguments + \
+               [ c_rev.rcs_path() ]
+    pipe = SimplePopen(pipe_cmd, True)
+    pipe.stdin.close()
+    return pipe_cmd, pipe
+
+
+class CVSRepositoryViaCVS(CVSRepository):
+  """A CVSRepository accessed via CVS."""
+
+  def get_co_pipe(self, c_rev, extra_arguments=None):
+    ctx = Ctx()
+    if extra_arguments is None:
+      extra_arguments = []
+    pipe_cmd = [ 'cvs' ] + ctx.cvs_global_arguments + \
+               [ 'co', '-r' + c_rev.rev, '-p' ] + extra_arguments + \
+               [ ctx.cvs_module + c_rev.cvs_path ];
     pipe = SimplePopen(pipe_cmd, True)
     pipe.stdin.close()
     return pipe_cmd, pipe
@@ -4948,9 +4965,8 @@ def main():
                      "existing directory.\n" % ctx.cvsroot)
     sys.exit(1)
 
-  ctx.cvs_repository = CVSRepository()
-
   if ctx.use_cvs:
+    ctx.cvs_repository = CVSRepositoryViaCVS()
     # Ascend above the specified root if necessary, to find the
     # cvs_repository_root (a directory containing a CVSROOT directory)
     # and the cvs_module (the path of the conversion root within the
@@ -4975,6 +4991,8 @@ def main():
                        % ctx.cvsroot)
       sys.exit(1)
     os.environ['CVSROOT'] = ctx.cvs_repository_root
+  else:
+    ctx.cvs_repository = CVSRepositoryViaRCS()
 
   if (not ctx.target) and (not ctx.dump_only) and (not ctx.dry_run):
     sys.stderr.write(error_prefix +

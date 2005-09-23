@@ -33,6 +33,7 @@ import md5
 import marshal
 import errno
 import popen2
+import types
 try:
   # Try to get access to a bunch of encodings for use with --encoding.
   # See http://cjkpython.i18n.org/ for details.
@@ -101,7 +102,7 @@ except ImportError:
     # ...and if all fails, use popen2.popen3...
     class SimplePopen:
       def __init__(self, cmd, capture_stderr):
-        if type(cmd) != str:
+        if type(cmd) != types.StringType:
           cmd = argv_to_command_string(cmd)
         self.stdout, self.stdin, self.stderr = popen2.popen3(cmd, mode='b')
       def wait(self):

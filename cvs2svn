@@ -415,15 +415,15 @@ class CVSRepositoryViaCVS(CVSRepository):
     # and the cvs_module (the path of the conversion root within the
     # cvs repository) NB: cvs_module must be seperated by '/' *not* by
     # os.sep .
-    ctx.cvs_repository_root = os.path.abspath(ctx.cvsroot)
+    self.cvs_repository_root = os.path.abspath(ctx.cvsroot)
     prev_cvs_repository_root = None
     ctx.cvs_module = ""
-    while prev_cvs_repository_root != ctx.cvs_repository_root:
-      if os.path.isdir(os.path.join(ctx.cvs_repository_root, 'CVSROOT')):
+    while prev_cvs_repository_root != self.cvs_repository_root:
+      if os.path.isdir(os.path.join(self.cvs_repository_root, 'CVSROOT')):
         break
-      prev_cvs_repository_root = ctx.cvs_repository_root
-      ctx.cvs_repository_root, module_component = \
-          os.path.split(ctx.cvs_repository_root)
+      prev_cvs_repository_root = self.cvs_repository_root
+      self.cvs_repository_root, module_component = \
+          os.path.split(self.cvs_repository_root)
       ctx.cvs_module = module_component + "/" + ctx.cvs_module
     else:
       # Hit the root (of the drive, on Windows) without finding a CVSROOT dir.
@@ -433,7 +433,7 @@ class CVSRepositoryViaCVS(CVSRepository):
                        "a CVSROOT directory within its root directory.\n"
                        % ctx.cvsroot)
       sys.exit(1)
-    os.environ['CVSROOT'] = ctx.cvs_repository_root
+    os.environ['CVSROOT'] = self.cvs_repository_root
 
     def cvs_ok(global_arguments):
       pipe = SimplePopen([ 'cvs' ] + global_arguments + \

@@ -383,6 +383,39 @@ def relative_name(cvsroot, fname):
   sys.exit(1)
 
 
+class CommandFailedException(Exception):
+  """Exception raised if check_command_runs() fails."""
+
+  pass
+
+
+def check_command_runs(cmd, cmdname):
+  """Check whether the command CMD can be executed without errors.
+
+  CMD is a list or string, as accepted by SimplePopen.  CMDNAME is the
+  name of the command as it should be included in exception error
+  messages.
+
+  This function checks three things: (1) the command can be run
+  without throwing an OSError; (2) it exits with status=0; (3) it
+  doesn't output anything to stderr.  If any of these conditions is
+  not met, raise a CommandFailedException describing the problem."""
+
+  try:
+    pipe = SimplePopen(cmd, True)
+  except OSError, e:
+    raise CommandFailedException('error executing %s: %s' % (cmdname, e,))
+  pipe.stdin.close()
+  pipe.stdout.read()
+  errmsg = pipe.stderr.read()
+  status = pipe.wait()
+  if status != 0 or errmsg:
+    msg = 'error executing %s: status %s' % (cmdname, status,)
+    if errmsg:
+      msg += ', error output:\n%s' % (errmsg,)
+    raise CommandFailedException(msg)
+
+
 class CVSRepository:
   """A CVS repository from which data can be extracted."""
   def get_co_pipe(self, c_rev, suppress_keyword_substitution=False):
@@ -437,25 +470,21 @@ class CVSRepositoryViaCVS(CVSRepository):
     os.environ['CVSROOT'] = self.cvs_repository_root
 
     def cvs_ok(global_arguments):
-      pipe = SimplePopen([ 'cvs' ] + global_arguments + \
-                         [ '--version' ], True)
-      pipe.stdin.close()
-      pipe.stdout.read()
-      errmsg = pipe.stderr.read()
-      status = pipe.wait()
-      ok = len(errmsg) == 0 and status == 0
-      return (ok, status, errmsg)
+      check_command_runs(
+        [ 'cvs' ] + global_arguments + [ '--version' ], 'cvs')
 
     self.global_arguments = [ "-q", "-R" ]
-    ok, cvs_exitstatus, cvs_errmsg = cvs_ok(self.global_arguments)
-    if not ok:
+    try:
+      cvs_ok(self.global_arguments)
+    except CommandFailedException, e:
       self.global_arguments = [ "-q" ]
-      ok, cvs_exitstatus, cvs_errmsg = cvs_ok(self.global_arguments)
-
-    if not ok:
-      sys.stderr.write(error_prefix +
-                       ": error executing CVS: status %s, error output:\n" \
-                       % (cvs_exitstatus) + cvs_errmsg)
+      try:
+        cvs_ok(self.global_arguments)
+      except CommandFailedException, e:
+        sys.stderr.write('%s: %s\n' % (error_prefix, e,))
+        sys.stderr.write(
+            'Please check that cvs is installed and in your PATH.\n')
+        sys.exit(1)
 
   def get_co_pipe(self, c_rev, suppress_keyword_substitution=False):
     pipe_cmd = [ 'cvs' ] + self.global_arguments + \

@@ -429,6 +429,16 @@ class CVSRepository:
 class CVSRepositoryViaRCS(CVSRepository):
   """A CVSRepository accessed via RCS."""
 
+  def __init__(self):
+    try:
+      check_command_runs([ 'co', '-V' ], 'co')
+    except CommandFailedException, e:
+      sys.stderr.write('%s: %s\n' % (error_prefix, e,))
+      sys.stderr.write(
+          'Please check that co is installed and in your PATH\n'
+          '(it is a part of the RCS software).\n')
+      sys.exit(1)
+
   def get_co_pipe(self, c_rev, suppress_keyword_substitution=False):
     pipe_cmd = [ 'co', '-q', '-x,v', '-p' + c_rev.rev ]
     if suppress_keyword_substitution:

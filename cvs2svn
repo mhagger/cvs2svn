@@ -461,7 +461,7 @@ class CVSRepositoryViaCVS(CVSRepository):
       extra_arguments = []
     pipe_cmd = [ 'cvs' ] + self.global_arguments + \
                [ 'co', '-r' + c_rev.rev, '-p' ] + extra_arguments + \
-               [ self.cvs_module + c_rev.cvs_path ];
+               [ self.cvs_module + c_rev.cvs_path ]
     pipe = SimplePopen(pipe_cmd, True)
     pipe.stdin.close()
     return pipe_cmd, pipe

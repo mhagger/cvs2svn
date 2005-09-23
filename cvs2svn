@@ -457,7 +457,6 @@ class CVSRepositoryViaCVS(CVSRepository):
                        % (cvs_exitstatus) + cvs_errmsg)
 
   def get_co_pipe(self, c_rev, extra_arguments=None):
-    ctx = Ctx()
     if extra_arguments is None:
       extra_arguments = []
     pipe_cmd = [ 'cvs' ] + self.global_arguments + \

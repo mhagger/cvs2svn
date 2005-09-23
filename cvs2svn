@@ -384,22 +384,23 @@ def relative_name(cvsroot, fname):
 
 class CVSRepository:
   """A CVS repository from which data can be extracted."""
-  def get_co_pipe(self, c_rev, extra_arguments=None):
-    """Return a command string, and the pipe created using that string.
-    C_REV is a CVSRevision, and EXTRA_ARGUMENTS is used to add extra
-    arguments.  The pipe returns the text of that CVS Revision."""
+  def get_co_pipe(self, c_rev, suppress_keyword_substitution=False):
+    """Return a command string, and the pipe created using that
+    string.  C_REV is a CVSRevision.  If SUPPRESS_KEYWORD_SUBSTITUTION
+    is True, then suppress the substitution of RCS/CVS keywords in the
+    output.  The pipe returns the text of that CVS Revision."""
     raise NotImplementedError
 
 
 class CVSRepositoryViaRCS(CVSRepository):
   """A CVSRepository accessed via RCS."""
 
-  def get_co_pipe(self, c_rev, extra_arguments=None):
+  def get_co_pipe(self, c_rev, suppress_keyword_substitution=False):
     ctx = Ctx()
-    if extra_arguments is None:
-      extra_arguments = []
-    pipe_cmd = [ 'co', '-q', '-x,v', '-p' + c_rev.rev ] + extra_arguments + \
-               [ c_rev.rcs_path() ]
+    pipe_cmd = [ 'co', '-q', '-x,v', '-p' + c_rev.rev ]
+    if suppress_keyword_substitution:
+      pipe_cmd.append('-kk')
+    pipe_cmd.append(c_rev.rcs_path())
     pipe = SimplePopen(pipe_cmd, True)
     pipe.stdin.close()
     return pipe_cmd, pipe
@@ -456,12 +457,12 @@ class CVSRepositoryViaCVS(CVSRepository):
                        ": error executing CVS: status %s, error output:\n" \
                        % (cvs_exitstatus) + cvs_errmsg)
 
-  def get_co_pipe(self, c_rev, extra_arguments=None):
-    if extra_arguments is None:
-      extra_arguments = []
+  def get_co_pipe(self, c_rev, suppress_keyword_substitution=False):
     pipe_cmd = [ 'cvs' ] + self.global_arguments + \
-               [ 'co', '-r' + c_rev.rev, '-p' ] + extra_arguments + \
-               [ self.cvs_module + c_rev.cvs_path ]
+               [ 'co', '-r' + c_rev.rev, '-p' ]
+    if suppress_keyword_substitution:
+      pipe_cmd.append('-kk')
+    pipe_cmd.append(self.cvs_module + c_rev.cvs_path)
     pipe = SimplePopen(pipe_cmd, True)
     pipe.stdin.close()
     return pipe_cmd, pipe
@@ -3946,13 +3947,11 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
                           % (self._utf8_path(dir_path), ignore_len,
                              ignore_len, ignore_contents))
 
-    # If the file has keywords, we must use -kk to prevent CVS/RCS from
-    # expanding the keywords because they must be unexpanded in the
-    # repository, or Subversion will get confused.
-    if s_item.has_keywords:
-      pipe_cmd, pipe = Ctx().cvs_repository.get_co_pipe(c_rev, [ '-kk' ])
-    else:
-      pipe_cmd, pipe = Ctx().cvs_repository.get_co_pipe(c_rev)
+    # If the file has keywords, we must prevent CVS/RCS from expanding
+    # the keywords because they must be unexpanded in the repository,
+    # or Subversion will get confused.
+    pipe_cmd, pipe = Ctx().cvs_repository.get_co_pipe(
+        c_rev, suppress_keyword_substitution=s_item.has_keywords)
 
     self.dumpfile.write('Node-path: %s\n'
                         'Node-kind: file\n'

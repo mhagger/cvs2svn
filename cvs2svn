@@ -396,7 +396,6 @@ class CVSRepositoryViaRCS(CVSRepository):
   """A CVSRepository accessed via RCS."""
 
   def get_co_pipe(self, c_rev, suppress_keyword_substitution=False):
-    ctx = Ctx()
     pipe_cmd = [ 'co', '-q', '-x,v', '-p' + c_rev.rev ]
     if suppress_keyword_substitution:
       pipe_cmd.append('-kk')

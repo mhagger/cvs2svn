@@ -408,6 +408,33 @@ class CVSRepositoryViaRCS(CVSRepository):
 class CVSRepositoryViaCVS(CVSRepository):
   """A CVSRepository accessed via CVS."""
 
+  def __init__(self):
+    ctx = Ctx()
+    # Ascend above the specified root if necessary, to find the
+    # cvs_repository_root (a directory containing a CVSROOT directory)
+    # and the cvs_module (the path of the conversion root within the
+    # cvs repository) NB: cvs_module must be seperated by '/' *not* by
+    # os.sep .
+    ctx.cvs_repository_root = os.path.abspath(ctx.cvsroot)
+    prev_cvs_repository_root = None
+    ctx.cvs_module = ""
+    while prev_cvs_repository_root != ctx.cvs_repository_root:
+      if os.path.isdir(os.path.join(ctx.cvs_repository_root, 'CVSROOT')):
+        break
+      prev_cvs_repository_root = ctx.cvs_repository_root
+      ctx.cvs_repository_root, module_component = \
+          os.path.split(ctx.cvs_repository_root)
+      ctx.cvs_module = module_component + "/" + ctx.cvs_module
+    else:
+      # Hit the root (of the drive, on Windows) without finding a CVSROOT dir.
+      sys.stderr.write(error_prefix +
+                       ": the path '%s' is not a CVS repository, nor a path "
+                       "within a CVS repository.  A CVS repository contains "
+                       "a CVSROOT directory within its root directory.\n"
+                       % ctx.cvsroot)
+      sys.exit(1)
+    os.environ['CVSROOT'] = ctx.cvs_repository_root
+
   def get_co_pipe(self, c_rev, extra_arguments=None):
     ctx = Ctx()
     if extra_arguments is None:
@@ -4967,30 +4994,6 @@ def main():
 
   if ctx.use_cvs:
     ctx.cvs_repository = CVSRepositoryViaCVS()
-    # Ascend above the specified root if necessary, to find the
-    # cvs_repository_root (a directory containing a CVSROOT directory)
-    # and the cvs_module (the path of the conversion root within the
-    # cvs repository) NB: cvs_module must be seperated by '/' *not* by
-    # os.sep .
-    ctx.cvs_repository_root = os.path.abspath(ctx.cvsroot)
-    prev_cvs_repository_root = None
-    ctx.cvs_module = ""
-    while prev_cvs_repository_root != ctx.cvs_repository_root:
-      if os.path.isdir(os.path.join(ctx.cvs_repository_root, 'CVSROOT')):
-        break
-      prev_cvs_repository_root = ctx.cvs_repository_root
-      ctx.cvs_repository_root, module_component = \
-          os.path.split(ctx.cvs_repository_root)
-      ctx.cvs_module = module_component + "/" + ctx.cvs_module
-    else:
-      # Hit the root (of the drive, on Windows) without finding a CVSROOT dir.
-      sys.stderr.write(error_prefix +
-                       ": the path '%s' is not a CVS repository, nor a path "
-                       "within a CVS repository.  A CVS repository contains "
-                       "a CVSROOT directory within its root directory.\n"
-                       % ctx.cvsroot)
-      sys.exit(1)
-    os.environ['CVSROOT'] = ctx.cvs_repository_root
   else:
     ctx.cvs_repository = CVSRepositoryViaRCS()
 

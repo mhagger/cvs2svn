@@ -4302,16 +4302,20 @@ def pass1():
   cd.write_symbol_db()
 
   if len(cd.fatal_errors) > 0:
-    sys.exit("Pass 1 complete.\n" + "=" * 75 + "\n"
-             + "Error summary:\n"
-             + "\n".join(cd.fatal_errors)
-             + "\nExited due to fatal error(s).")
+    raise FatalException("Pass 1 complete.\n"
+                         + "=" * 75 + "\n"
+                         + "Error summary:\n"
+                         + "\n".join(cd.fatal_errors) + "\n"
+                         + "Exited due to fatal error(s).\n")
 
   if cd.found_valid_file is None:
-    sys.exit("\nNo RCS files found in your CVS Repository!\n"
-             + "Are you absolutely certain you are pointing cvs2svn\n"
-             + "at a CVS repository?\n"
-             + "\nExited due to fatal error(s).")
+    raise FatalException(
+        "\n"
+        "No RCS files found in your CVS Repository!\n"
+        "Are you absolutely certain you are pointing cvs2svn\n"
+        "at a CVS repository?\n"
+        "\n"
+        "Exited due to fatal error(s).\n")
 
   StatsKeeper().reset_c_rev_info()
   StatsKeeper().archive()

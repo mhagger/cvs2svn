@@ -345,6 +345,15 @@ class FatalException(Exception):
   pass
 
 
+class FatalError(FatalException):
+  """A FatalException that prepends error_prefix to the message."""
+
+  def __init__(self, msg):
+    """Use (error_prefix + ': ' + MSG + '\n') as the error message."""
+
+    FatalException.__init__(self, '%s: %s\n' % (error_prefix, msg,))
+
+
 def temp(basename):
   """Return a path to BASENAME in Ctx().tmpdir.
   This is a convenience function to save horizontal space in source."""

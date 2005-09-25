@@ -335,6 +335,16 @@ DIGEST_END_IDX = 9 + (sha.digestsize * 2)
 OPENING = 'O'
 CLOSING = 'C'
 
+class FatalException(Exception):
+  """Exception thrown on a non-recoverable error.
+
+  If this exception is thrown by main(), it is caught by the global
+  layer of the program, its string representation is printed, and the
+  program is ended with an exit code of 1."""
+
+  pass
+
+
 def temp(basename):
   """Return a path to BASENAME in Ctx().tmpdir.
   This is a convenience function to save horizontal space in source."""
@@ -5148,5 +5158,12 @@ def main():
     try: os.rmdir(os.path.join(ctx.tmpdir, 'cvs2svn.lock'))
     except: pass
 
+
 if __name__ == '__main__':
-  main()
+  try:
+    main()
+  except FatalException, e:
+    sys.stderr.write(str(e))
+    sys.exit(1)
+
+

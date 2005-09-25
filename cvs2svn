@@ -389,7 +389,7 @@ def to_utf8(value, mode='replace'):
 
 def run_command(command):
   if os.system(command):
-    sys.exit('Command failed: "%s"' % command)
+    raise FatalError('Command failed: "%s"' % (command,))
 
 def relative_name(cvsroot, fname):
   l = len(cvsroot)

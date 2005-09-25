@@ -397,9 +397,9 @@ def relative_name(cvsroot, fname):
     if fname[l] == os.sep:
       return string.replace(fname[l+1:], os.sep, '/')
     return string.replace(fname[l:], os.sep, '/')
-  sys.stderr.write("%s: relative_path('%s', '%s'): fname is not a sub-path of"
-                   " cvsroot\n" % (error_prefix, cvsroot, fname))
-  sys.exit(1)
+  raise FatalError(
+      "relative_path('%s', '%s'): fname is not a sub-path of cvsroot"
+      % (cvsroot, fname,))
 
 
 class CommandFailedException(Exception):
@@ -452,11 +452,9 @@ class CVSRepositoryViaRCS(CVSRepository):
     try:
       check_command_runs([ 'co', '-V' ], 'co')
     except CommandFailedException, e:
-      sys.stderr.write('%s: %s\n' % (error_prefix, e,))
-      sys.stderr.write(
-          'Please check that co is installed and in your PATH\n'
-          '(it is a part of the RCS software).\n')
-      sys.exit(1)
+      raise FatalError('%s\n'
+                       'Please check that co is installed and in your PATH\n'
+                       '(it is a part of the RCS software).' % (e,))
 
   def get_co_pipe(self, c_rev, suppress_keyword_substitution=False):
     pipe_cmd = [ 'co', '-q', '-x,v', '-p' + c_rev.rev ]
@@ -490,12 +488,10 @@ class CVSRepositoryViaCVS(CVSRepository):
       self.cvs_module = module_component + "/" + self.cvs_module
     else:
       # Hit the root (of the drive, on Windows) without finding a CVSROOT dir.
-      sys.stderr.write(error_prefix +
-                       ": the path '%s' is not a CVS repository, nor a path "
+      raise FatalError("the path '%s' is not a CVS repository, nor a path "
                        "within a CVS repository.  A CVS repository contains "
-                       "a CVSROOT directory within its root directory.\n"
-                       % ctx.cvsroot)
-      sys.exit(1)
+                       "a CVSROOT directory within its root directory."
+                       % (ctx.cvsroot,))
     os.environ['CVSROOT'] = self.cvs_repository_root
 
     def cvs_ok(global_arguments):
@@ -510,10 +506,9 @@ class CVSRepositoryViaCVS(CVSRepository):
       try:
         cvs_ok(self.global_arguments)
       except CommandFailedException, e:
-        sys.stderr.write('%s: %s\n' % (error_prefix, e,))
-        sys.stderr.write(
-            'Please check that cvs is installed and in your PATH.\n')
-        sys.exit(1)
+        raise FatalError(
+            '%s\n'
+            'Please check that cvs is installed and in your PATH.' % (e,))
 
   def get_co_pipe(self, c_rev, suppress_keyword_substitution=False):
     pipe_cmd = [ 'cvs' ] + self.global_arguments + \
@@ -538,9 +533,9 @@ def generate_ignores(c_rev):
   error_output = pipe.stderr.read()
   exit_status = pipe.wait()
   if exit_status:
-    sys.exit("%s: The command '%s' failed with exit status: %s\n"
-             "and the following output:\n"
-             "%s" % (error_prefix, pipe_cmd, exit_status, error_output))
+    raise FatalError("The command '%s' failed with exit status: %s\n"
+                     "and the following output:\n"
+                     "%s" % (pipe_cmd, exit_status, error_output))
 
   # Tweak props: First, convert any spaces to newlines...
   raw_ignore_val = '\n'.join(raw_ignore_val.split())
@@ -2915,9 +2910,8 @@ class SymbolicNameFillingGuide:
     revnum, max_score = self._best_rev(scores, preferred_revnum)
 
     if revnum == SVN_INVALID_REVNUM:
-      sys.stderr.write(error_prefix + ": failed to find a revision "
-                       + "to copy from when copying %s\n" % name)
-      sys.exit(1)
+      raise FatalError("failed to find a revision "
+                       + "to copy from when copying %s" % name)
     return revnum, max_score
 
 
@@ -3831,11 +3825,10 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
         # but we can't afford any lossiness here.
         pieces[i] = to_utf8(pieces[i], 'strict')
       except UnicodeError:
-        sys.stderr.write(
-          error_prefix
-          + ": Unable to convert a path '%s' to internal encoding.\n" % path
-          + "Consider rerunning with (for example) '--encoding=latin1'.\n")
-        sys.exit(1)
+        raise FatalError(
+            "Unable to convert a path '%s' to internal encoding.\n"
+            "Consider rerunning with (for example) '--encoding=latin1'."
+            % (path,))
     return string.join(pieces, '/')
 
   def start_commit(self, svn_commit):
@@ -3927,9 +3920,8 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     elif op == OP_CHANGE:
       action = 'change'
     else:
-      sys.stderr.write("%s: _add_or_change_path() called with bad op ('%s')"
-                       % (error_prefix, op))
-      sys.exit(1)
+      raise FatalError("_add_or_change_path() called with bad op ('%s')"
+                       % (op,))
 
     # Convenience variables
     c_rev = s_item.c_rev
@@ -4050,9 +4042,9 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     error_output = pipe.stderr.read()
     exit_status = pipe.wait()
     if exit_status:
-      sys.exit("%s: The command '%s' failed with exit status: %s\n"
-               "and the following output:\n"
-               "%s" % (error_prefix, pipe_cmd, exit_status, error_output))
+      raise FatalError("The command '%s' failed with exit status: %s\n"
+                       "and the following output:\n"
+                       "%s" % (pipe_cmd, exit_status, error_output))
 
     # Go back to patch up the length and checksum headers:
     self.dumpfile.seek(pos, 0)
@@ -4158,10 +4150,9 @@ class RepositoryDelegate(DumpfileDelegate):
     try:
       self._write_dumpfile_header(self.loader_pipe.stdin)
     except IOError:
-      sys.stderr.write("%s: svnadmin failed with the following output while "
-                       "loading the dumpfile:\n" % (error_prefix))
-      sys.stderr.write(self.loader_pipe.stderr.read())
-      sys.exit(1)
+      raise FatalError("svnadmin failed with the following output while "
+                       "loading the dumpfile:\n"
+                       + self.loader_pipe.stderr.read())
 
   def _feed_pipe(self):
     """Feed the revision stored in the dumpfile to the svnadmin
@@ -4174,10 +4165,9 @@ class RepositoryDelegate(DumpfileDelegate):
       try:
         self.loader_pipe.stdin.write(data)
       except IOError:
-        sys.stderr.write("%s: svnadmin failed with the following output "
-                         "while loading the dumpfile:\n" % (error_prefix))
-        sys.stderr.write(self.loader_pipe.stderr.read())
-        sys.exit(1)
+        raise FatalError("svnadmin failed with the following output "
+                         "while loading the dumpfile:\n"
+                         + self.loader_pipe.stderr.read())
 
   def start_commit(self, svn_commit):
     """Start a new commit.  If a commit is already in progress, close
@@ -4198,9 +4188,9 @@ class RepositoryDelegate(DumpfileDelegate):
     error_output = self.loader_pipe.stderr.read()
     exit_status = self.loader_pipe.wait()
     if exit_status:
-      sys.exit('%s: svnadmin load failed with exit status: %s\n'
-               'and the following output:\n'
-               '%s' % (error_prefix, exit_status, error_output))
+      raise FatalError('svnadmin load failed with exit status: %s\n'
+                       'and the following output:\n'
+                       '%s' % (exit_status, error_output,))
     os.remove(self.dumpfile_path)
 
     # If this is a BDB repository, and we created the repository, and
@@ -4840,7 +4830,7 @@ def normalize_ttb_path(opt, path):
 
   norm_path = _path_join(*path.split('/'))
   if not norm_path:
-    sys.exit("%s: cannot pass an empty path to %s." % (error_prefix, opt))
+    raise FatalError("cannot pass an empty path to %s." % (opt,))
   return norm_path
 
 
@@ -4862,9 +4852,7 @@ def verify_paths_disjoint(*paths):
     split_path2, path2 = paths[i]
     if len(split_path1) <= len(split_path2) \
        and split_path2[:len(split_path1)] == split_path1:
-      sys.exit("%s: paths %s and %s are not disjoint.\n"
-               % (error_prefix, path1, path2,))
-      sys.exit(1)
+      raise FatalError("paths %s and %s are not disjoint." % (path1, path2,))
 
 
 def usage():
@@ -4958,17 +4946,13 @@ def main():
       else:
         end_pass = start_pass = int(value)
       if start_pass > len(_passes) or start_pass < 1:
-        sys.stderr.write(
-          '%s: illegal value (%d) for starting pass. '\
-          'must be 1 through %d.' % (error_prefix, int(start_pass),
-                                     len(_passes)))
-        sys.exit(1)
+        raise FatalError(
+            'illegal value (%d) for starting pass.  Must be 1 through %d.'
+            % (int(start_pass), len(_passes),))
       if end_pass < start_pass or end_pass > len(_passes):
-        sys.stderr.write(
-          '%s: illegal value (%d) for ending pass. ' \
-          'must be %d through %d.' % (error_prefix, int(end_pass),
-                                      int(start_pass), len(_passes)))
-        sys.exit(1)
+        raise FatalError(
+            'illegal value (%d) for ending pass.  Must be %d through %d.'
+            % (int(end_pass), int(start_pass), len(_passes),))
     elif (opt == '--help') or (opt == '-h'):
       ctx.print_help = 1
     elif opt == '-v':
@@ -5013,7 +4997,7 @@ def main():
       try:
         ctx.excludes.append(re.compile('^' + value + '$'))
       except re.error, e:
-        sys.exit(error_prefix + ": '%s' is not a valid regexp.\n" % (value))
+        raise FatalError("'%s' is not a valid regexp." % (value,))
     elif opt == '--mime-types':
       ctx.mime_types_file = value
     elif opt == '--eol-from-mime-type':
@@ -5059,10 +5043,8 @@ def main():
   ctx.cvsroot = args[0]
 
   if not os.path.isdir(ctx.cvsroot):
-    sys.stderr.write(error_prefix +
-                     ": the given CVS repository path '%s' is not an "
-                     "existing directory.\n" % ctx.cvsroot)
-    sys.exit(1)
+    raise FatalError("the given CVS repository path '%s' is not an "
+                     "existing directory." % ctx.cvsroot)
 
   if ctx.use_cvs:
     ctx.cvs_repository = CVSRepositoryViaCVS()
@@ -5070,15 +5052,12 @@ def main():
     ctx.cvs_repository = CVSRepositoryViaRCS()
 
   if (not ctx.target) and (not ctx.dump_only) and (not ctx.dry_run):
-    sys.stderr.write(error_prefix +
-                     ": must pass one of '-s' or '--dump-only'.\n")
-    sys.exit(1)
+    raise FatalError("must pass one of '-s' or '--dump-only'.")
 
   def not_both(opt1val, opt1name, opt2val, opt2name):
     if opt1val and opt2val:
-      sys.stderr.write(error_prefix + ": cannot pass both '%s' and '%s'.\n" \
-                       % (opt1name, opt2name))
-      sys.exit(1)
+      raise FatalError("cannot pass both '%s' and '%s'."
+                       % (opt1name, opt2name,))
 
   not_both(ctx.target, '-s',
            ctx.dump_only, '--dump-only')
@@ -5099,25 +5078,20 @@ def main():
            ctx.existing_svnrepos, '--existing-svnrepos')
 
   if ctx.fs_type and ctx.fs_type != 'bdb' and ctx.bdb_txn_nosync:
-    sys.stderr.write(error_prefix +
-                     ": cannot pass --bdb-txn-nosync with --fs-type=%s.\n" \
+    raise FatalError("cannot pass --bdb-txn-nosync with --fs-type=%s."
                      % ctx.fs_type)
-    sys.exit(1)
 
   verify_paths_disjoint(ctx.trunk_base, ctx.branches_base, ctx.tags_base)
 
   if ctx.existing_svnrepos and not os.path.isdir(ctx.target):
-    sys.stderr.write(error_prefix +
-                     ": the svn-repos-path '%s' is not an "
-                     "existing directory.\n" % ctx.target)
-    sys.exit(1)
+    raise FatalError("the svn-repos-path '%s' is not an "
+                     "existing directory." % ctx.target)
 
   if not ctx.dump_only and not ctx.existing_svnrepos \
      and (not ctx.dry_run) and os.path.exists(ctx.target):
-    sys.stderr.write(error_prefix +
-                     ": the svn-repos-path '%s' exists.\nRemove it, or pass "
-                     "'--existing-svnrepos'.\n" % ctx.target)
-    sys.exit(1)
+    raise FatalError("the svn-repos-path '%s' exists.\n"
+                     "Remove it, or pass '--existing-svnrepos'."
+                     % ctx.target)
 
   if ctx.mime_types_file:
     ctx.mime_mapper = MimeMapper()
@@ -5130,30 +5104,27 @@ def main():
   if not os.path.exists(ctx.tmpdir):
     os.mkdir(ctx.tmpdir)
   elif not os.path.isdir(ctx.tmpdir):
-    sys.stderr.write(error_prefix +
-       ": cvs2svn tried to use '%s' for temporary files, but that path\n"
-       "  exists and is not a directory.  Please make it be a directory,\n"
-       "  or specify some other directory for temporary files.\n" \
-                     % ctx.tmpdir)
-    sys.exit(1)
+    raise FatalError(
+        "cvs2svn tried to use '%s' for temporary files, but that path\n"
+        "  exists and is not a directory.  Please make it be a directory,\n"
+        "  or specify some other directory for temporary files."
+        % (ctx.tmpdir,))
 
   # But do lock the tmpdir, to avoid process clash.
   try:
     os.mkdir(os.path.join(ctx.tmpdir, 'cvs2svn.lock'))
   except OSError, e:
     if e.errno == errno.EACCES:
-      sys.stderr.write(error_prefix + ": Permission denied:"
-                       + " No write access to directory '%s'.\n" % ctx.tmpdir)
-      sys.exit(1)
+      raise FatalError("Permission denied:"
+                       + " No write access to directory '%s'." % ctx.tmpdir)
     if e.errno == errno.EEXIST:
-      sys.stderr.write(error_prefix +
-          ": cvs2svn is using directory '%s' for temporary files, but\n"
+      raise FatalError(
+          "cvs2svn is using directory '%s' for temporary files, but\n"
           "  subdirectory '%s/cvs2svn.lock' exists, indicating that another\n"
           "  cvs2svn process is currently using '%s' as its temporary\n"
           "  workspace.  If you are certain that is not the case,\n"
-          "  then remove the '%s/cvs2svn.lock' subdirectory.\n" \
-                       % (ctx.tmpdir, ctx.tmpdir, ctx.tmpdir, ctx.tmpdir))
-      sys.exit(1)
+          "  then remove the '%s/cvs2svn.lock' subdirectory."
+          % (ctx.tmpdir, ctx.tmpdir, ctx.tmpdir, ctx.tmpdir,))
     raise
   try:
     if profiling:

@@ -5097,6 +5097,17 @@ def main():
                      "Remove it, or pass '--existing-svnrepos'."
                      % ctx.target)
 
+  if ctx.target and not ctx.dry_run:
+    # Verify that svnadmin can be executed.  The 'help' subcommand
+    # should be harmless.
+    try:
+      check_command_runs([ctx.svnadmin, 'help'], 'svnadmin')
+    except CommandFailedException, e:
+      raise FatalError(
+          '%s\n'
+          'svnadmin could not be executed.  Please ensure that it is\n'
+          'installed and/or use the --svnadmin option.' % (e,))
+
   if ctx.mime_types_file:
     ctx.mime_mapper = MimeMapper()
     ctx.mime_mapper.set_mime_types_file(ctx.mime_types_file)

@@ -2486,8 +2486,7 @@ class SVNCommit:
 
   def set_symbolic_name(self, name):
     "Set self.symbolic_name to _clean_symbolic_name(NAME)."
-    name = _clean_symbolic_name(name)
-    self.symbolic_name = name
+    self.symbolic_name = _clean_symbolic_name(name)
 
   def set_motivating_revnum(self, revnum):
     "Set self.motivating_revnum to REVNUM."

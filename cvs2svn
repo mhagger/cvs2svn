@@ -2467,7 +2467,7 @@ class SVNCommit:
       self.revnum = SVNCommit.revnum
       SVNCommit.revnum = SVNCommit.revnum + 1
 
-    # The symbolic name that is filled in this SVNCommit, if any
+    # The (cleaned) symbolic name that is filled in this SVNCommit, if any.
     self.symbolic_name = None
 
     # If this commit is a default branch synchronization, this
@@ -2486,7 +2486,7 @@ class SVNCommit:
     self.is_tag = None
 
   def set_symbolic_name(self, name):
-    "Set self.symbolic_name to NAME."
+    "Set self.symbolic_name to _clean_symbolic_name(NAME)."
     name = _clean_symbolic_name(name)
     self.symbolic_name = name
 

@@ -1908,11 +1908,10 @@ class SymbolingsLogger:
     self.closings = open(temp(SYMBOL_CLOSINGS_TMP), 'w')
     Cleanup().register(temp(SYMBOL_CLOSINGS_TMP), pass5)
 
-    # This keys of this dictionary are Subversion repository *source*
-    # paths for which we've encountered an 'opening'.  The values are
-    # the (uncleaned) symbolic names that this path has opened.  The
-    # only paths that should be in this dict are paths whose
-    # corresponding CVSRevision is a default branch revision.
+    # This keys of this dictionary are *source* cvs_paths for which
+    # we've encountered an 'opening' on the default branch.  The
+    # values are the (uncleaned) symbolic names that this path has
+    # opened.
     self.open_paths_with_default_branches = { }
 
   def log_revision(self, c_rev, svn_revnum):
@@ -1962,9 +1961,9 @@ class SymbolingsLogger:
     self.symbolings.close()
 
   def _note_default_branch_opening(self, c_rev, symbolic_name):
-    """If C_REV is a default branch revision, log C_REV.svn_trunk_path
-    as an opening for SYMBOLIC_NAME."""
-    path = c_rev.svn_trunk_path
+    """If C_REV is a default branch revision, log C_REV.cvs_path as an
+    opening for SYMBOLIC_NAME."""
+    path = c_rev.cvs_path
     if not self.open_paths_with_default_branches.has_key(path):
       self.open_paths_with_default_branches[path] = [ ]
     self.open_paths_with_default_branches[path].append(symbolic_name)
@@ -1974,11 +1973,11 @@ class SymbolingsLogger:
     C_REV.svn_trunk_path, then call log each name in
     self.open_paths_with_default_branches[C_REV.svn_trunk_path] as a
     closing with SVN_REVNUM as the closing revision number. """
-    path = c_rev.svn_trunk_path
+    path = c_rev.cvs_path
     if self.open_paths_with_default_branches.has_key(path):
       # log each symbol as a closing
       for name in self.open_paths_with_default_branches[path]:
-        self._log(name, svn_revnum, c_rev.cvs_path, None, CLOSING)
+        self._log(name, svn_revnum, path, None, CLOSING)
       # Remove them from the openings list as we're done with them.
       del self.open_paths_with_default_branches[path]
 

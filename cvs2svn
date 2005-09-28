@@ -1970,9 +1970,9 @@ class SymbolingsLogger:
 
   def log_default_branch_closing(self, c_rev, svn_revnum):
     """If self.open_paths_with_default_branches contains
-    C_REV.svn_trunk_path, then call log each name in
-    self.open_paths_with_default_branches[C_REV.svn_trunk_path] as a
-    closing with SVN_REVNUM as the closing revision number. """
+    C_REV.cvs_path, then call log each name in
+    self.open_paths_with_default_branches[C_REV.cvs_path] as a closing
+    with SVN_REVNUM as the closing revision number."""
     path = c_rev.cvs_path
     if self.open_paths_with_default_branches.has_key(path):
       # log each symbol as a closing

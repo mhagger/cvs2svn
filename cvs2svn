@@ -373,6 +373,22 @@ def _path_join(*components):
   Empty component are skipped."""
   return string.join(filter(None, components), '/')
 
+def _path_split(path):
+  """Split the svn pathname PATH into a pair, (HEAD, TAIL).
+
+  This is similar to os.path.split(), but always uses '/' as path
+  separator.  PATH is an svn path, which should not start with a '/'.
+  HEAD is everything before the last slash, and TAIL is everything
+  after.  If PATH ends in a slash, TAIL will be empty.  If there is no
+  slash in PATH, HEAD will be empty.  If PATH is empty, both HEAD and
+  TAIL are empty."""
+
+  pos = path.rfind('/')
+  if pos == -1:
+    return ('', path,)
+  else:
+    return (path[:pos], path[pos+1:],)
+
 def to_utf8(value, mode='replace'):
   """Encode (as Unicode) VALUE, trying the encodings in Ctx.encoding
   as valid source encodings.  Raise UnicodeError on failure of all
@@ -390,16 +406,6 @@ def to_utf8(value, mode='replace'):
 def run_command(command):
   if os.system(command):
     raise FatalError('Command failed: "%s"' % (command,))
-
-def relative_name(cvsroot, fname):
-  l = len(cvsroot)
-  if fname[:l] == cvsroot:
-    if fname[l] == os.sep:
-      return string.replace(fname[l+1:], os.sep, '/')
-    return string.replace(fname[l:], os.sep, '/')
-  raise FatalError(
-      "relative_path('%s', '%s'): fname is not a sub-path of cvsroot"
-      % (cvsroot, fname,))
 
 
 class CommandFailedException(Exception):
@@ -978,6 +984,126 @@ class TagsDatabase(Database):
     Cleanup().register(temp(TAGS_DB), pass8)
 
 
+class Project:
+  """A project within a CVS repository."""
+
+  def __init__(self, cvs_root, trunk_path, branches_path, tags_path):
+    """Create a new Project record.
+
+    CVS_ROOT is the main CVS directory for this project (within the
+    filesystem).  TRUNK_PATH, BRANCHES_PATH, and TAGS_PATH are the
+    full, normalized directory names in svn for the corresponding part
+    of the repository."""
+
+    self.cvs_root = os.path.normpath(cvs_root)
+    self.trunk_path = trunk_path
+    self.branches_path = branches_path
+    self.tags_path = tags_path
+    verify_paths_disjoint(self.trunk_path, self.branches_path, self.tags_path)
+
+  def is_source(self, svn_path):
+    """Return True iff SVN_PATH is a legitimate source for this project.
+
+    Legitimate paths are self.trunk_path or any directory directly
+    under self.branches_path."""
+
+    if svn_path == self.trunk_path:
+      return True
+
+    (head, tail,) = _path_split(svn_path)
+    if head == self.branches_path:
+      return True
+
+    return False
+
+  def is_unremovable(self, svn_path):
+    """Return True iff the specified path must not be removed."""
+
+    return svn_path in [self.trunk_path, self.branches_path, self.tags_path]
+
+  def relative_name(self, fname):
+    """Return the path to FNAME relative to cvs_root, with ',v' removed.
+
+    FNAME is a filesystem name that has to begin (textually) with
+    self.cvs_root and end with ',v'."""
+
+    if not fname.startswith(self.cvs_root):
+      raise FatalError(
+          "relative_name: '%s' is not a sub-path of '%s'"
+          % (fname, self.cvs_root,))
+    if not fname.endswith(',v'):
+      raise FatalError("relative_name: '%s' does not end with ',v'"
+                       % (fname,))
+    l = len(self.cvs_root)
+    if fname[l] == os.sep:
+      l += 1
+    return string.replace(fname[l:-2], os.sep, '/')
+
+  def get_branch_path(self, branch_name):
+    """Return the svnpath for the branch named BRANCH_NAME.
+
+    BRANCH_NAME must already have been cleaned using
+    _clean_symbolic_name()."""
+
+    return _path_join(self.branches_path, branch_name)
+
+  def get_tag_path(self, tag_name):
+    """Return the svnpath for the tag named TAG_NAME.
+
+    TAG_NAME must already have been cleaned using
+    _clean_symbolic_name()."""
+
+    return _path_join(self.tags_path, tag_name)
+
+  def make_path(self, path, branch_name=None):
+    """Return the trunk path or branch path for PATH.
+
+    PATH is a filesystem path relative to cvs_root.  If BRANCH_NAME is
+    None, then return the svn path for this file on trunk; otherwise,
+    return the svn path for this file on the specified branch."""
+
+    # For a while, we treated each top-level subdir of the CVS
+    # repository as a "project root" and interpolated the appropriate
+    # genealogy (trunk|tag|branch) in according to the official
+    # recommended layout.  For example, the path '/foo/bar/baz.c' on
+    # branch 'Rel2' would become
+    #
+    #   /foo/branches/Rel2/bar/baz.c
+    #
+    # and on trunk it would become
+    #
+    #   /foo/trunk/bar/baz.c
+    #
+    # However, we went back to the older and simpler method of just
+    # prepending the genealogy to the front, instead of interpolating.
+    # So now we produce:
+    #
+    #   /branches/Rel2/foo/bar/baz.c
+    #   /trunk/foo/bar/baz.c
+    #
+    # Why?  Well, Jack Repenning pointed out that this way is much
+    # friendlier to "anonymously rooted subtrees" (that's a tree where
+    # the name of the top level dir doesn't matter, the point is that if
+    # you cd into it and, say, run 'make', something good will happen).
+    # By interpolating, we made it impossible to point cvs2svn at some
+    # subdir in the CVS repository and convert it as a project, because
+    # we'd treat every subdir underneath it as an independent project
+    # root, which is probably not what the user wanted.
+    #
+    # Also, see Blair Zajac's post
+    #
+    #    http://subversion.tigris.org/servlets/ReadMsg?list=dev&msgNo=38965
+    #
+    # and the surrounding thread, for why what people really want is a
+    # way of specifying an in-repository prefix path, not interpolation.
+
+    if branch_name:
+      branch_name = _clean_symbolic_name(branch_name)
+      return _path_join(self.get_branch_path(branch_name), path)
+    else:
+      return _path_join(self.trunk_path, path)
+
+
 class CVSRevision:
   def __init__(self, ctx, *args):
     """Initialize a new CVSRevision with Ctx object CTX, and ARGS.
@@ -1071,9 +1197,9 @@ class CVSRevision:
       raise TypeError, 'CVSRevision() takes 2 or 18 arguments (%d given)' % \
           (len(args) + 1)
     if ctx is not None:
-      self.cvs_path = relative_name(self._ctx.cvsroot, self.fname[:-2])
-      self.svn_path = self._make_path(self.cvs_path, self.branch_name)
-      self.svn_trunk_path = self._make_path(self.cvs_path)
+      self.cvs_path = ctx.project.relative_name(self.fname)
+      self.svn_path = ctx.project.make_path(self.cvs_path, self.branch_name)
+      self.svn_trunk_path = ctx.project.make_path(self.cvs_path)
 
   # The 'primary key' of a CVS Revision is the revision number + the
   # filename.  To provide a unique key (say, for a dict), we just glom
@@ -1133,53 +1259,6 @@ class CVSRevision:
         return 1
     # else
     return None
-
-  def _make_path(self, path, branch_name = None):
-    """Return the trunk path or branch path for PATH.
-
-    If PATH is None, return None."""
-    # For a while, we treated each top-level subdir of the CVS
-    # repository as a "project root" and interpolated the appropriate
-    # genealogy (trunk|tag|branch) in according to the official
-    # recommended layout.  For example, the path '/foo/bar/baz.c' on
-    # branch 'Rel2' would become
-    #
-    #   /foo/branches/Rel2/bar/baz.c
-    #
-    # and on trunk it would become
-    #
-    #   /foo/trunk/bar/baz.c
-    #
-    # However, we went back to the older and simpler method of just
-    # prepending the genealogy to the front, instead of interpolating.
-    # So now we produce:
-    #
-    #   /branches/Rel2/foo/bar/baz.c
-    #   /trunk/foo/bar/baz.c
-    #
-    # Why?  Well, Jack Repenning pointed out that this way is much
-    # friendlier to "anonymously rooted subtrees" (that's a tree where
-    # the name of the top level dir doesn't matter, the point is that if
-    # you cd into it and, say, run 'make', something good will happen).
-    # By interpolating, we made it impossible to point cvs2svn at some
-    # subdir in the CVS repository and convert it as a project, because
-    # we'd treat every subdir underneath it as an independent project
-    # root, which is probably not what the user wanted.
-    #
-    # Also, see Blair Zajac's post
-    #
-    #    http://subversion.tigris.org/servlets/ReadMsg?list=dev&msgNo=38965
-    #
-    # and the surrounding thread, for why what people really want is a
-    # way of specifying an in-repository prefix path, not interpolation.
-    if path is None:
-      return None
-
-    if branch_name:
-      branch_name = _clean_symbolic_name(branch_name)
-      return self._ctx.branches_base + '/' + branch_name + '/' + path
-    else:
-      return self._ctx.trunk_base + '/' + path
 
   def rcs_path(self):
     """Returns the actual filesystem path to the RCS file of this
@@ -1354,7 +1433,7 @@ class CollectData(cvs2svn_rcsparse.Sink):
     # it only once per file, instead of waiting until later where we
     # would have to do the same calculations once per CVS *revision*.
 
-    self.rel_name = relative_name(Ctx().cvsroot, self.fname)[:-2]
+    self.rel_name = Ctx().project.relative_name(self.fname)
 
     # If the paths are not the same, then that means that the
     # canonical_name has had the 'Attic' component stripped out.
@@ -3027,10 +3106,9 @@ class SymbolicNameFillingGuide:
   def get_sources(self):
     """Return the list of sources for this symbolic name.
 
-    A source is defined to be either Ctx().trunk_base, or any
-    directory directly under Ctx().branches_base.  Raise an exception
-    if a node outside of the source directories has an option set
-    (e.g., OPENING_KEY or CLOSING_KEY)."""
+    The Project instance defines what are legitimate sources.  Raise
+    an exception if a node outside of the source directories has an
+    option set (e.g., OPENING_KEY or CLOSING_KEY)."""
 
     return self._get_sub_sources('', self._root_key)
 
@@ -3039,26 +3117,17 @@ class SymbolicNameFillingGuide:
     search at path START_SVN_PATH, which has node key START_NODE_KEY.
     This is a helper method, called by get_sources() (see)."""
 
+    project = Ctx().project
     sources = []
     for entry, node_key in self.get_node(start_node_key).items():
-      svn_path = _path_join(start_svn_path, entry)
-      if svn_path == Ctx().trunk_base:
-        # Trunk is a legitimate source.  Add it to list.
-        sources.append(FillSource(svn_path, node_key))
-      elif svn_path == Ctx().branches_base:
-        # Any directories directly under branch_base are legitimate
-        # sources.  Add them to list.
-        for entry2, node_key2 in self.get_node(node_key).items():
-          if entry2[0] == '/':
-            # This implies a non-directory change directly under
-            # branch_base (not within one of the branches).  This
-            # should never happen.
-            raise
-          sources.append(FillSource(_path_join(svn_path, entry2), node_key2))
-      elif entry[0] == '/':
+      if entry[0] == '/':
         # This implies that a change was found outside of the
         # legitimate sources.  This should never happen.
         raise
+      svn_path = _path_join(start_svn_path, entry)
+      if project.is_source(svn_path):
+        # This is a legitimate source.  Add it to list.
+        sources.append(FillSource(svn_path, node_key))
       else:
         # This directory is not a legitimate source.  (That's OK
         # because it hasn't changed directly.)  But directories within
@@ -3180,10 +3249,10 @@ class SVNRepositoryMirror:
     svn_commit.set_log_msg("New repository initialized by cvs2svn.")
 
     self._start_commit(svn_commit)
-    self._mkdir(Ctx().trunk_base)
+    self._mkdir(Ctx().project.trunk_path)
     if not Ctx().trunk_only:
-      self._mkdir(Ctx().branches_base)
-      self._mkdir(Ctx().tags_base)
+      self._mkdir(Ctx().project.branches_path)
+      self._mkdir(Ctx().project.tags_path)
 
   def _start_commit(self, svn_commit):
     """Start a new commit."""
@@ -3315,25 +3384,19 @@ class SVNRepositoryMirror:
     all ancestor directories that are made empty when SVN_PATH is deleted.
     In other words, SHOULD_PRUNE is like the -P option to 'cvs checkout'.
 
-    NOTE: This function ignores requests to delete Ctx().trunk_base,
-    Ctx().branches_base, Ctx().tags_base, or the root directory,
-    either directly or by pruning."""
+    NOTE: This function ignores requests to delete the root directory
+    or any directory for which Ctx().project.is_unremovable() returns
+    True, either directly or by pruning."""
 
-    if svn_path in [
-        '', Ctx().trunk_base, Ctx().branches_base, Ctx().tags_base
-        ]:
+    if svn_path == '' or Ctx().project.is_unremovable(svn_path):
       return
 
-    pos = svn_path.rfind('/')
-    if pos == -1:
-      parent_path = ''
-      entry = svn_path
-      parent_key, parent_contents = self._open_writable_root_node()
-    else:
-      parent_path = svn_path[:pos]
-      entry = svn_path[pos+1:]
+    (parent_path, entry,) = _path_split(svn_path)
+    if parent_path:
       parent_key, parent_contents = \
           self._open_writable_node(parent_path, False)
+    else:
+      parent_key, parent_contents = self._open_writable_root_node()
 
     if parent_key is not None:
       self._fast_delete_path(parent_path, parent_contents, entry)
@@ -3375,9 +3438,7 @@ class SVNRepositoryMirror:
     src_contents = self._get_node(src_key)
 
     # Get the parent path and the base path of the dest_path
-    pos = dest_path.rindex('/')
-    dest_parent = dest_path[:pos]
-    dest_basename = dest_path[pos+1:]
+    (dest_parent, dest_basename,) = _path_split(dest_path)
     dest_parent_key, dest_parent_contents = \
                    self._open_writable_node(dest_parent, False)
 
@@ -3407,10 +3468,9 @@ class SVNRepositoryMirror:
     sources = symbol_fill.get_sources()
 
     if self.tags_db.has_key(svn_commit.symbolic_name):
-      dest_prefix = _path_join(Ctx().tags_base, svn_commit.symbolic_name)
+      dest_prefix = Ctx().project.get_tag_path(svn_commit.symbolic_name)
     else:
-      dest_prefix = _path_join(Ctx().branches_base,
-                               svn_commit.symbolic_name)
+      dest_prefix = Ctx().project.get_branch_path(svn_commit.symbolic_name)
 
     if sources:
       dest_key = self._open_writable_node(dest_prefix, False)[0]
@@ -3418,7 +3478,7 @@ class SVNRepositoryMirror:
     else:
       # We can only get here for a branch whose first commit is an add
       # (as opposed to a copy).
-      dest_path = Ctx().branches_base + '/' + symbol_fill.name
+      dest_path = Ctx().project.get_branch_path(symbol_fill.name)
       if not self._path_exists(dest_path):
         # If our symbol_fill was empty, that means that our first
         # commit on the branch was to a file added on the branch, and
@@ -3428,7 +3488,7 @@ class SVNRepositoryMirror:
         #
         # ...we create the branch by copying trunk from the our
         # current revision number minus 1
-        source_path = Ctx().trunk_base
+        source_path = Ctx().project.trunk_path
         entries = self._copy_path(source_path, dest_path,
                                   svn_commit.revnum - 1)[1]
         # Now since we've just copied trunk to a branch that's
@@ -5085,7 +5145,9 @@ def main():
     raise FatalError("cannot pass --bdb-txn-nosync with --fs-type=%s."
                      % ctx.fs_type)
 
-  verify_paths_disjoint(ctx.trunk_base, ctx.branches_base, ctx.tags_base)
+  # Create the default project (using ctx.trunk, ctx.branches, and ctx.tags):
+  ctx.project = Project(ctx.cvsroot,
+                        ctx.trunk_base, ctx.branches_base, ctx.tags_base)
 
   if ctx.existing_svnrepos and not os.path.isdir(ctx.target):
     raise FatalError("the svn-repos-path '%s' is not an "

@@ -249,7 +249,7 @@ This pass does the following:
    opening or closing.
 
 3. For each CVS Revision in s-revs, we write out a line (for each
-   symbolic name that it opens) to a symbolic-names.txt file if it is
+   symbolic name that it opens) to cvs2svn-symbolic-names.txt if it is
    the first possible source revision (the "opening" revision) for a
    copy to create a branch or tag, or if it is the last possible
    revision (the "closing" revision) for a copy to create a branch or
@@ -257,29 +257,27 @@ This pass does the following:
 
    The format of each line is:
 
-       SYMBOLIC_NAME SVN_REVNUM TYPE CVSRevision.unique_key()
+       SYMBOLIC_NAME SVN_REVNUM TYPE SVN_PATH
 
    For example:
 
-       MY_TAG1 234 O 1.3/foo/bar/baz.txt,v
-       MY_BRANCH3 245 O 1.13/foo/qux/bat.c,v
-       MY_TAG1 241 C 1.4/foo/bar/baz.txt,v
-       MY_BRANCH_BLAH 201 O 1.1/foo/bar/quux.txt,v
+       MY_TAG1 234 O trunk/foo/bar/baz.txt,v
+       MY_BRANCH3 245 O trunk/foo/qux/bat.c,v
+       MY_TAG1 241 C branches/MY_BRANCH1/foo/bar/baz.txt,v
+       MY_BRANCH_BLAH 201 O branches/MY_BRANCH1/foo/bar/quux.txt,v
 
    Here is what the columns mean:
 
    SYMBOLIC_NAME: The name of the branch or tag that starts or ends
-                  in this CVS Revision (There can be multiples per
-                  CVS rev)
+                  in this CVS Revision (there can be multiples per
+                  CVS rev).
 
    SVN_REVNUM: The Subversion revision number that is the opening or
                closing for this SYMBOLIC_NAME.
 
    TYPE: "O" for Openings and "C" for Closings.
 
-   CVSRevision.unique_key(): This is a unique key that identifies
-                             the CVSRevision where this opening or
-                             closing happened.
+   SVN_PATH: The Subversion path where this opening or closing happened.
 
    See SymbolingsLogger for more details.
 

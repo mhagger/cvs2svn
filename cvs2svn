@@ -1113,7 +1113,6 @@ class CVSRevision:
     simply will not work correctly, if at all):
        cvs_path
        svn_path
-       svn_trunk_path
        is_default_branch_revision()
 
     (Note that this class treats CTX as const, because the caller
@@ -1199,7 +1198,6 @@ class CVSRevision:
     if ctx is not None:
       self.cvs_path = ctx.project.relative_name(self.fname)
       self.svn_path = ctx.project.make_path(self.cvs_path, self.branch_name)
-      self.svn_trunk_path = ctx.project.make_path(self.cvs_path)
 
   # The 'primary key' of a CVS Revision is the revision number + the
   # filename.  To provide a unique key (say, for a dict), we just glom
@@ -3611,16 +3609,17 @@ class SVNRepositoryMirror:
     branch to the trunk of the repository.  See
     CVSCommit._post_commit() for details on why this is necessary."""
     for cvs_rev in svn_commit.cvs_revs:
+      svn_trunk_path = Ctx().project.make_path(cvs_rev.cvs_path)
       if cvs_rev.op == OP_ADD or cvs_rev.op == OP_CHANGE:
-        if self._path_exists(cvs_rev.svn_trunk_path):
+        if self._path_exists(svn_trunk_path):
           # Delete the path on trunk...
-          self._delete_path(cvs_rev.svn_trunk_path)
+          self._delete_path(svn_trunk_path)
         # ...and copy over from branch
-        self._copy_path(cvs_rev.svn_path, cvs_rev.svn_trunk_path,
+        self._copy_path(cvs_rev.svn_path, svn_trunk_path,
                         svn_commit.motivating_revnum)
       elif cvs_rev.op == OP_DELETE:
         # delete trunk path
-        self._delete_path(cvs_rev.svn_trunk_path)
+        self._delete_path(svn_trunk_path)
       else:
         msg = ("Unknown CVSRevision operation '%s' in default branch sync."
                % cvs_rev.op)

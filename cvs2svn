@@ -1939,10 +1939,10 @@ class SymbolingsLogger:
 
     TYPE should only be one of the following global constants:
     OPENING or CLOSING."""
-    svn_path = Ctx().project.make_path(cvs_path, branch_name)
     # 8 places gives us 999,999,999 SVN revs.  That *should* be enough.
-    self.symbolings.write('%s %.8d %s %s\n'
-                          % (name, svn_revnum, type, svn_path))
+    self.symbolings.write(
+        '%s %.8d %s %s %s\n'
+        % (name, svn_revnum, type, branch_name or '*', cvs_path))
 
   def close(self):
     """Iterate through the closings file, lookup the svn_revnum for
@@ -2808,7 +2808,10 @@ class SymbolingsReader:
         line = self.symbolings.readline().rstrip()
         if not line:
           break
-        name, revnum, type, svn_path = line.split(" ", 3)
+        name, revnum, type, branch_name, cvs_path = line.split(" ", 4)
+        if branch_name == '*':
+          branch_name = None
+        svn_path = Ctx().project.make_path(cvs_path, branch_name)
         name = _clean_symbolic_name(name)
         revnum = int(revnum)
         if revnum > svn_revnum or name != symbolic_name:

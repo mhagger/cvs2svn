@@ -257,14 +257,14 @@ This pass does the following:
 
    The format of each line is:
 
-       SYMBOLIC_NAME SVN_REVNUM TYPE SVN_PATH
+       SYMBOLIC_NAME SVN_REVNUM TYPE BRANCH_NAME CVS_PATH
 
    For example:
 
-       MY_TAG1 234 O trunk/foo/bar/baz.txt,v
-       MY_BRANCH3 245 O trunk/foo/qux/bat.c,v
-       MY_TAG1 241 C branches/MY_BRANCH1/foo/bar/baz.txt,v
-       MY_BRANCH_BLAH 201 O branches/MY_BRANCH1/foo/bar/quux.txt,v
+       MY_TAG1 234 O * foo/bar/baz.txt,v
+       MY_BRANCH3 245 O * foo/qux/bat.c,v
+       MY_TAG1 241 C MY_BRANCH1 foo/bar/baz.txt,v
+       MY_BRANCH_BLAH 201 O MY_BRANCH1 foo/bar/quux.txt,v
 
    Here is what the columns mean:
 
@@ -277,7 +277,10 @@ This pass does the following:
 
    TYPE: "O" for Openings and "C" for Closings.
 
-   SVN_PATH: The Subversion path where this opening or closing happened.
+   BRANCH_NAME: The (uncleaned) branch name where this opening or
+                closing happened.  '*' denotes the default branch.
+
+   CVS_PATH: The CVS path where this opening or closing happened.
 
    See SymbolingsLogger for more details.
 

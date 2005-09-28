@@ -1921,9 +1921,9 @@ class SymbolingsLogger:
     any) will have its revnum determined later."""
     for name in c_rev.tags + c_rev.branches:
       self._note_default_branch_opening(c_rev, name)
-      name = _clean_symbolic_name(name)
       if c_rev.op != OP_DELETE:
-        self._log(name, svn_revnum, c_rev.svn_path, OPENING)
+        self._log(_clean_symbolic_name(name),
+                  svn_revnum, c_rev.svn_path, OPENING)
 
       # If our c_rev has a next_rev, then that's the closing rev for
       # this source revision.  Log it to closings for later processing
@@ -1956,7 +1956,8 @@ class SymbolingsLogger:
       svn_revnum = Ctx()._persistence_manager.get_svn_revnum(rev_key)
 
       c_rev = cvs_revs_db.get_revision(rev_key)
-      self._log(name, svn_revnum, c_rev.svn_path, CLOSING)
+      self._log(_clean_symbolic_name(name),
+                svn_revnum, c_rev.svn_path, CLOSING)
 
     self.symbolings.close()
 

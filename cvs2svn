@@ -2778,7 +2778,7 @@ class SymbolingsReader:
     self.offsets = { }
     for key in offsets_db.db.keys():
       #print " ZOO:", key, offsets_db[key]
-      self.offsets[key] = offsets_db[key]
+      self.offsets[_clean_symbolic_name(key)] = offsets_db[key]
 
   def filling_guide_for_symbol(self, symbolic_name, svn_revnum):
     """Given SYMBOLIC_NAME and SVN_REVNUM, return a new

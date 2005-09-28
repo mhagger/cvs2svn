@@ -1945,7 +1945,7 @@ class SymbolingsLogger:
     """Iterate through the closings file, lookup the svn_revnum for
     each closing CVSRevision, and write a proper line out to the
     symbolings file."""
-    # Use this to get the c_rev.svn_path of our rev_key
+    # Use this to get the c_rev of our rev_key
     cvs_revs_db = CVSRevisionDatabase(DB_OPEN_READ)
 
     self.closings.close()

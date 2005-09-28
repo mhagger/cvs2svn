@@ -1922,8 +1922,7 @@ class SymbolingsLogger:
     for name in c_rev.tags + c_rev.branches:
       self._note_default_branch_opening(c_rev, name)
       if c_rev.op != OP_DELETE:
-        self._log(_clean_symbolic_name(name),
-                  svn_revnum, c_rev.svn_path, OPENING)
+        self._log(name, svn_revnum, c_rev.svn_path, OPENING)
 
       # If our c_rev has a next_rev, then that's the closing rev for
       # this source revision.  Log it to closings for later processing
@@ -1940,8 +1939,9 @@ class SymbolingsLogger:
     TYPE should only be one of the following global constants:
     OPENING or CLOSING."""
     # 8 places gives us 999,999,999 SVN revs.  That *should* be enough.
-    self.symbolings.write('%s %.8d %s %s\n' % (name, svn_revnum,
-                                               type, svn_path))
+    self.symbolings.write(
+        '%s %.8d %s %s\n'
+        % (_clean_symbolic_name(name), svn_revnum, type, svn_path))
 
   def close(self):
     """Iterate through the closings file, lookup the svn_revnum for
@@ -1956,8 +1956,7 @@ class SymbolingsLogger:
       svn_revnum = Ctx()._persistence_manager.get_svn_revnum(rev_key)
 
       c_rev = cvs_revs_db.get_revision(rev_key)
-      self._log(_clean_symbolic_name(name),
-                svn_revnum, c_rev.svn_path, CLOSING)
+      self._log(name, svn_revnum, c_rev.svn_path, CLOSING)
 
     self.symbolings.close()
 
@@ -1978,7 +1977,7 @@ class SymbolingsLogger:
     if self.open_paths_with_default_branches.has_key(path):
       # log each symbol as a closing
       for name in self.open_paths_with_default_branches[path]:
-        self._log(_clean_symbolic_name(name), svn_revnum, path, CLOSING)
+        self._log(name, svn_revnum, path, CLOSING)
       # Remove them from the openings list as we're done with them.
       del self.open_paths_with_default_branches[path]
 

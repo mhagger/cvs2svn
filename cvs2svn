@@ -2810,8 +2810,7 @@ class SymbolingsReader:
         name, revnum, type, svn_path = line.split(" ", 3)
         name = _clean_symbolic_name(name)
         revnum = int(revnum)
-        if (revnum > svn_revnum
-            or name != symbolic_name):
+        if revnum > svn_revnum or name != symbolic_name:
           break
         symbol_fill.register(svn_path, revnum, type)
 

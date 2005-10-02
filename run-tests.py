@@ -1927,12 +1927,21 @@ def requires_cvs():
     raise svntest.Failure
 
 
-def questionable_symbols():
-  "test that we can handle weird symbolic names"
+def questionable_branch_names():
+  "test that we can handle weird branch names"
   conv = ensure_conversion('questionable-symbols')
   # If the conversion succeeds, then we're okay.  We could check the
   # actual branch paths, too, but the main thing is to know that the
   # conversion doesn't fail.
+
+
+def questionable_tag_names():
+  "test that we can handle weird tag names"
+  conv = ensure_conversion('questionable-symbols')
+  for tag_name in ['Tag_A', 'TagWith--Backslash_E', 'TagWith++Slash_Z']:
+    conv.find_tag_log(tag_name).check(sym_log_msg(tag_name,1), (
+      ('/%(tags)s/' + tag_name + ' (from /trunk:8)', 'A'),
+      ))
 
 
 def revision_reorder_bug():
@@ -2086,12 +2095,13 @@ test_list = [ None,
               keywords,
               ignore,
               requires_cvs,
-              questionable_symbols,
+              questionable_branch_names,
+              XFail(questionable_tag_names),
               revision_reorder_bug,
               exclude,
               vendor_branch_delete_add,
-              resync_pass2_pull_forward,
-              native_eol,                           # 50
+              resync_pass2_pull_forward,            # 50
+              native_eol,
               double_fill,
               resync_pass2_push_backward,
               double_add,
@@ -2100,8 +2110,8 @@ test_list = [ None,
               prune_with_care_variants,
               simple_tags_variants,
               phoenix_branch_variants,
-              no_trunk_prune_variants,
-              tagged_branch_and_trunk_variants,     # 60
+              no_trunk_prune_variants,              # 60
+              tagged_branch_and_trunk_variants,
               branch_delete_first_variants,
               empty_trunk_variants,
               peer_path_pruning_variants,

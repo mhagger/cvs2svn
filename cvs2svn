@@ -2078,7 +2078,10 @@ class PersistenceManager:
       self.cvs2svn_db[c_rev.unique_key()] = svn_revnum
 
   def set_name_and_date(self, svn_revnum, name, date):
-    """Associate symbolic name NAME and DATE with SVN_REVNUM."""
+    """Associate symbolic name NAME and DATE with SVN_REVNUM.
+
+    NAME is allowed to be None."""
+
     if self.mode == DB_OPEN_READ:
       raise RuntimeError, \
           'Write operation attempted on read-only PersistenceManager'

@@ -2060,9 +2060,9 @@ class PersistenceManager:
       svn_commit.set_date(date)
 
     if len(svn_commit.cvs_revs) and name:
-      msg = """An SVNCommit cannot have cvs_revisions *and* a
-      corresponding symbolic name ('%s') to fill.""" % name
-      raise SVNCommit.SVNCommitInternalInconsistencyError(msg)
+      raise SVNCommit.SVNCommitInternalInconsistencyError(
+          "An SVNCommit cannot have cvs_revisions *and* a corresponding\n"
+          "symbolic name ('%s') to fill." % (name,))
 
     return svn_commit
 

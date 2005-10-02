@@ -2048,6 +2048,7 @@ class PersistenceManager:
 
     name, date = self._get_name_and_date(svn_revnum)
     if name:
+      name = _clean_symbolic_name(name)
       svn_commit.set_symbolic_name(name)
       svn_commit.set_date(date)
       if self.tags_db.has_key(name):
@@ -2094,11 +2095,7 @@ class PersistenceManager:
     """Return a tuple containing the symbolic name and date associated
     with SVN_REVNUM, or (None, None) if SVN_REVNUM has no such data
     associated with it."""
-    (name, date,) = self.svn_commit_names_dates.get(
-        str(svn_revnum), (None, None))
-    if name:
-      name = _clean_symbolic_name(name)
-    return (name, date,)
+    return self.svn_commit_names_dates.get(str(svn_revnum), (None, None))
 
   def set_motivating_revnum(self, svn_revnum, motivating_revnum):
     """Store MOTIVATING_REVNUM as the value of SVN_REVNUM"""

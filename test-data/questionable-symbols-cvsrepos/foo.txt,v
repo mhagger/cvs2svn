@@ -1,6 +1,10 @@
 head	1.2;
 access;
 symbols
+	TagWith/Slash_Z:1.2
+	TagWith\Backslash_E:1.2
+	TagWith///ThreeSlashes_D:1.2
+	Tag_A:1.2
 	BranchWith/Slash_Z:1.1.0.10
 	/BranchStartsWithSlash_Y:1.1.0.8
 	#BranchStartsWithHash_X:1.1.0.6

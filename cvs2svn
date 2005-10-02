@@ -2797,6 +2797,8 @@ class SymbolingsReader:
     without the closing--we always try to fill what we can as soon as
     we can."""
 
+    symbolic_name = _clean_symbolic_name(symbolic_name)
+
     symbol_fill = SymbolicNameFillingGuide(symbolic_name)
 
     # It's possible to have a branch start with a file that was added
@@ -3469,7 +3471,7 @@ class SVNRepositoryMirror:
     repository by the end of this call, even if there are no paths
     under it."""
     symbol_fill = self.symbolings_reader.filling_guide_for_symbol(
-        svn_commit.get_cleaned_symbolic_name(), self.youngest)
+        svn_commit.symbolic_name, self.youngest)
     # Get the list of sources for the symbolic name.
     sources = symbol_fill.get_sources()
 

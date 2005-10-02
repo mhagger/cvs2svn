@@ -2049,7 +2049,7 @@ class PersistenceManager:
     name, date = self._get_name_and_date(svn_revnum)
     if name:
       cleaned_name = _clean_symbolic_name(name)
-      svn_commit.set_symbolic_name(cleaned_name)
+      svn_commit.set_symbolic_name(name)
       svn_commit.set_date(date)
       if self.tags_db.has_key(cleaned_name):
         svn_commit.is_tag = 1

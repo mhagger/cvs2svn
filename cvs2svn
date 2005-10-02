@@ -2085,16 +2085,20 @@ class PersistenceManager:
     if self.mode == DB_OPEN_READ:
       raise RuntimeError, \
           'Write operation attempted on read-only PersistenceManager'
+    self.svn_commit_names_dates[str(svn_revnum)] = (name, date)
     if name:
       name = _clean_symbolic_name(name)
-    self.svn_commit_names_dates[str(svn_revnum)] = (name, date)
     self.last_filled[name] = svn_revnum
 
   def _get_name_and_date(self, svn_revnum):
     """Return a tuple containing the symbolic name and date associated
     with SVN_REVNUM, or (None, None) if SVN_REVNUM has no such data
     associated with it."""
-    return self.svn_commit_names_dates.get(str(svn_revnum), (None, None))
+    (name, date,) = self.svn_commit_names_dates.get(
+        str(svn_revnum), (None, None))
+    if name:
+      name = _clean_symbolic_name(name)
+    return (name, date,)
 
   def set_motivating_revnum(self, svn_revnum, motivating_revnum):
     """Store MOTIVATING_REVNUM as the value of SVN_REVNUM"""

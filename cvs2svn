@@ -2085,6 +2085,8 @@ class PersistenceManager:
     if self.mode == DB_OPEN_READ:
       raise RuntimeError, \
           'Write operation attempted on read-only PersistenceManager'
+    if name:
+      name = _clean_symbolic_name(name)
     self.svn_commit_names_dates[str(svn_revnum)] = (name, date)
     self.last_filled[name] = svn_revnum
 
@@ -2567,7 +2569,7 @@ class SVNCommit:
     # symbolic_name
     if not self._is_primary_commit():
       Ctx()._persistence_manager.set_name_and_date(
-          self.revnum, self.get_cleaned_symbolic_name(), self._max_date)
+          self.revnum, self.symbolic_name, self._max_date)
 
   def __str__(self):
     """ Print a human-readable description of this SVNCommit.  This

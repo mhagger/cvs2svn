@@ -2575,13 +2575,13 @@ class SVNCommit:
 
     ret = "SVNCommit #: " + str(self.revnum) + "\n"
     if self.symbolic_name:
-      ret = ret + "   symbolic name: " +  self.symbolic_name + "\n"
+      ret += "   symbolic name: " +  self.symbolic_name + "\n"
     else:
-      ret = ret + "   NO symbolic name\n"
-    ret = ret + "   debug description: " + self._description + "\n"
-    ret = ret + "   cvs_revs:\n"
+      ret += "   NO symbolic name\n"
+    ret += "   debug description: " + self._description + "\n"
+    ret += "   cvs_revs:\n"
     for c_rev in self.cvs_revs:
-      ret = ret + "     " + c_rev.unique_key() + "\n"
+      ret += "     " + c_rev.unique_key() + "\n"
     return ret
 
   def get_log_msg(self):

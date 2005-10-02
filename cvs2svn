@@ -2465,7 +2465,7 @@ class SVNCommit:
       self.revnum = SVNCommit.revnum
       SVNCommit.revnum = SVNCommit.revnum + 1
 
-    # The (cleaned) symbolic name that is filled in this SVNCommit, if any.
+    # The (uncleaned) symbolic name that is filled in this SVNCommit, if any.
     self.symbolic_name = None
 
     # If this commit is a default branch synchronization, this
@@ -2483,9 +2483,15 @@ class SVNCommit:
     # that is a tag, None in all other cases.
     self.is_tag = None
 
-  def set_symbolic_name(self, name):
-    "Set self.symbolic_name to _clean_symbolic_name(NAME)."
-    self.symbolic_name = _clean_symbolic_name(name)
+  def set_symbolic_name(self, symbolic_name):
+    "Set self.symbolic_name to SYMBOLIC_NAME."
+    self.symbolic_name = symbolic_name
+
+  def get_cleaned_symbolic_name(self):
+    if self.symbolic_name:
+      return _clean_symbolic_name(self.symbolic_name)
+    else:
+      return None
 
   def set_motivating_revnum(self, revnum):
     "Set self.motivating_revnum to REVNUM."
@@ -2564,9 +2570,8 @@ class SVNCommit:
     # If we're not a primary commit, then store our date and/or our
     # symbolic_name
     if not self._is_primary_commit():
-      Ctx()._persistence_manager.set_name_and_date(self.revnum,
-                                                   self.symbolic_name,
-                                                   self._max_date)
+      Ctx()._persistence_manager.set_name_and_date(
+          self.revnum, self.get_cleaned_symbolic_name(), self._max_date)
 
   def __str__(self):
     """ Print a human-readable description of this SVNCommit.  This
@@ -2575,7 +2580,7 @@ class SVNCommit:
 
     ret = "SVNCommit #: " + str(self.revnum) + "\n"
     if self.symbolic_name:
-      ret += "   symbolic name: " +  self.symbolic_name + "\n"
+      ret += "   symbolic name: " + self.get_cleaned_symbolic_name() + "\n"
     else:
       ret += "   NO symbolic name\n"
     ret += "   debug description: " + self._description + "\n"
@@ -2604,11 +2609,12 @@ class SVNCommit:
 
     # In Python 2.2.3, we could use textwrap.fill().  Oh well :-).
     space_or_newline = ' '
-    if len(self.symbolic_name) >= 13:
+    cleaned_symbolic_name = self.get_cleaned_symbolic_name()
+    if len(cleaned_symbolic_name) >= 13:
       space_or_newline = '\n'
 
     return "This commit was manufactured by cvs2svn to create %s%s'%s'." \
-           % (type, space_or_newline, self.symbolic_name)
+           % (type, space_or_newline, cleaned_symbolic_name)
 
   def _log_msg_for_default_branch_commit(self):
     """Creates a log message for a manufactured commit that
@@ -3463,14 +3469,16 @@ class SVNRepositoryMirror:
     repository by the end of this call, even if there are no paths
     under it."""
     symbol_fill = self.symbolings_reader.filling_guide_for_symbol(
-      svn_commit.symbolic_name, self.youngest)
+        svn_commit.get_cleaned_symbolic_name(), self.youngest)
     # Get the list of sources for the symbolic name.
     sources = symbol_fill.get_sources()
 
-    if self.tags_db.has_key(svn_commit.symbolic_name):
-      dest_prefix = Ctx().project.get_tag_path(svn_commit.symbolic_name)
+    if self.tags_db.has_key(svn_commit.get_cleaned_symbolic_name()):
+      dest_prefix = Ctx().project.get_tag_path(
+          svn_commit.get_cleaned_symbolic_name())
     else:
-      dest_prefix = Ctx().project.get_branch_path(svn_commit.symbolic_name)
+      dest_prefix = Ctx().project.get_branch_path(
+          svn_commit.get_cleaned_symbolic_name())
 
     if sources:
       dest_key = self._open_writable_node(dest_prefix, False)[0]
@@ -3637,7 +3645,7 @@ class SVNRepositoryMirror:
 
     if svn_commit.symbolic_name:
       Log().write(LOG_VERBOSE, "Filling symbolic name:",
-                  svn_commit.symbolic_name)
+                  svn_commit.get_cleaned_symbolic_name())
       self._fill_symbolic_name(svn_commit)
     elif svn_commit.motivating_revnum:
       Log().write(LOG_VERBOSE, "Synchronizing default_branch motivated by %d"

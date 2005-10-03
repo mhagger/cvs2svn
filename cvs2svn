@@ -2048,7 +2048,6 @@ class PersistenceManager:
 
     name, date = self._get_name_and_date(svn_revnum)
     if name:
-      cleaned_name = _clean_symbolic_name(name)
       svn_commit.set_symbolic_name(name)
       svn_commit.set_date(date)
       if self.tags_db.has_key(name):
@@ -2062,7 +2061,8 @@ class PersistenceManager:
     if len(svn_commit.cvs_revs) and name:
       raise SVNCommit.SVNCommitInternalInconsistencyError(
           "An SVNCommit cannot have cvs_revisions *and* a corresponding\n"
-          "symbolic name ('%s') to fill." % (cleaned_name,))
+          "symbolic name ('%s') to fill."
+          % (_clean_symbolic_name(name),))
 
     return svn_commit
 

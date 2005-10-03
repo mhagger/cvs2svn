@@ -2484,12 +2484,6 @@ class SVNCommit:
     "Set self.symbolic_name to SYMBOLIC_NAME."
     self.symbolic_name = symbolic_name
 
-  def get_cleaned_symbolic_name(self):
-    if self.symbolic_name:
-      return _clean_symbolic_name(self.symbolic_name)
-    else:
-      return None
-
   def set_motivating_revnum(self, revnum):
     "Set self.motivating_revnum to REVNUM."
     self.motivating_revnum = revnum
@@ -2577,7 +2571,8 @@ class SVNCommit:
 
     ret = "SVNCommit #: " + str(self.revnum) + "\n"
     if self.symbolic_name:
-      ret += "   symbolic name: " + self.get_cleaned_symbolic_name() + "\n"
+      ret += ("   symbolic name: " + _clean_symbolic_name(self.symbolic_name)
+              + "\n")
     else:
       ret += "   NO symbolic name\n"
     ret += "   debug description: " + self._description + "\n"
@@ -2606,7 +2601,7 @@ class SVNCommit:
 
     # In Python 2.2.3, we could use textwrap.fill().  Oh well :-).
     space_or_newline = ' '
-    cleaned_symbolic_name = self.get_cleaned_symbolic_name()
+    cleaned_symbolic_name = _clean_symbolic_name(self.symbolic_name)
     if len(cleaned_symbolic_name) >= 13:
       space_or_newline = '\n'
 
@@ -3643,7 +3638,7 @@ class SVNRepositoryMirror:
 
     if svn_commit.symbolic_name:
       Log().write(LOG_VERBOSE, "Filling symbolic name:",
-                  svn_commit.get_cleaned_symbolic_name())
+                  _clean_symbolic_name(svn_commit.symbolic_name))
       self._fill_symbolic_name(svn_commit)
     elif svn_commit.motivating_revnum:
       Log().write(LOG_VERBOSE, "Synchronizing default_branch motivated by %d"

@@ -2791,8 +2791,6 @@ class SymbolingsReader:
 
     symbol_fill = SymbolicNameFillingGuide(symbolic_name)
 
-    cleaned_symbolic_name = _clean_symbolic_name(symbolic_name)
-
     # It's possible to have a branch start with a file that was added
     # on a branch
     if self.offsets.has_key(symbolic_name):
@@ -2809,9 +2807,8 @@ class SymbolingsReader:
         if branch_name == '*':
           branch_name = None
         svn_path = Ctx().project.make_path(cvs_path, branch_name)
-        name = _clean_symbolic_name(name)
         revnum = int(revnum)
-        if revnum > svn_revnum or name != cleaned_symbolic_name:
+        if revnum > svn_revnum or name != symbolic_name:
           break
         symbol_fill.register(svn_path, revnum, type)
 

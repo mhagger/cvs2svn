@@ -2051,7 +2051,7 @@ class PersistenceManager:
       cleaned_name = _clean_symbolic_name(name)
       svn_commit.set_symbolic_name(name)
       svn_commit.set_date(date)
-      if self.tags_db.has_key(cleaned_name):
+      if self.tags_db.has_key(name):
         svn_commit.is_tag = 1
 
     motivating_revnum = self.motivating_revnums.get(str(svn_revnum), None)
@@ -3474,7 +3474,7 @@ class SVNRepositoryMirror:
     # Get the list of sources for the symbolic name.
     sources = symbol_fill.get_sources()
 
-    if self.tags_db.has_key(svn_commit.get_cleaned_symbolic_name()):
+    if self.tags_db.has_key(svn_commit.symbolic_name):
       dest_prefix = Ctx().project.get_tag_path(svn_commit.symbolic_name)
     else:
       dest_prefix = Ctx().project.get_branch_path(svn_commit.symbolic_name)

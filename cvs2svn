@@ -5087,7 +5087,11 @@ def main():
       profiling = 1
     elif opt == '--symbol-transform':
       [pattern, replacement] = value.split(":")
-      ctx.symbol_transforms.append((re.compile(pattern), replacement,))
+      try:
+        pattern = re.compile(pattern)
+      except re.error, e:
+        raise FatalError("'%s' is not a valid regexp." % (pattern,))
+      ctx.symbol_transforms.append((pattern, replacement,))
 
   if ctx.print_help:
     usage()

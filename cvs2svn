@@ -1130,11 +1130,11 @@ class CVSRevision:
        file_executable -->  (char or None) true if RCS file has exec bit set.
        file_size       -->  (int) size of the RCS file
        deltatext_code  -->  (char) 'N' if non-empty deltatext, else 'E'
+       fname           -->  (string) relative path of file in CVS repos
        mode            -->  (string or None) "kkv", "kb", etc.
        branch_name     -->  (string or None) branch on which this rev occurred
        tags            -->  (list of strings) all tags on this revision
        branches        -->  (list of strings) all branches rooted in this rev
-       fname           -->  (string) relative path of file in CVS repos
 
     The two forms of initialization are equivalent.
 

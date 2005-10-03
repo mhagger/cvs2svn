@@ -1564,7 +1564,7 @@ class CollectData(cvs2svn_rcsparse.Sink):
     This function will determine what kind of symbolic name it is by
     inspection, and record it in the right places."""
     for (pattern, replacement) in Ctx().symbol_transforms:
-      newname = re.sub(pattern, replacement, name)
+      newname = pattern.sub(replacement, name)
       if newname != name:
         Log().write(LOG_WARN, "   symbol '%s' transformed to '%s'"
                     % (name, newname))
@@ -5086,7 +5086,8 @@ def main():
     elif opt == '--profile':
       profiling = 1
     elif opt == '--symbol-transform':
-      ctx.symbol_transforms.append(value.split(":"))
+      [pattern, replacement] = value.split(":")
+      ctx.symbol_transforms.append((re.compile(pattern), replacement,))
 
   if ctx.print_help:
     usage()

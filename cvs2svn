@@ -1047,7 +1047,7 @@ class Project:
   def get_tag_path(self, tag_name):
     """Return the svnpath for the tag named TAG_NAME."""
 
-    return _path_join(self.tags_path, tag_name)
+    return _path_join(self.tags_path, _clean_symbolic_name(tag_name))
 
   def make_path(self, path, branch_name=None):
     """Return the trunk path or branch path for PATH.

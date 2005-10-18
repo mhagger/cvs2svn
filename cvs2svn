@@ -3464,12 +3464,12 @@ class SVNRepositoryMirror:
     # Get the list of sources for the symbolic name.
     sources = symbol_fill.get_sources()
 
-    if self.tags_db.has_key(svn_commit.symbolic_name):
-      dest_prefix = Ctx().project.get_tag_path(svn_commit.symbolic_name)
-    else:
-      dest_prefix = Ctx().project.get_branch_path(svn_commit.symbolic_name)
-
     if sources:
+      if self.tags_db.has_key(svn_commit.symbolic_name):
+        dest_prefix = Ctx().project.get_tag_path(svn_commit.symbolic_name)
+      else:
+        dest_prefix = Ctx().project.get_branch_path(svn_commit.symbolic_name)
+
       dest_key = self._open_writable_node(dest_prefix, False)[0]
       self._fill(symbol_fill, dest_prefix, dest_key, sources)
     else:

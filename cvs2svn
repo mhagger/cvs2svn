@@ -3594,10 +3594,7 @@ class SVNRepositoryMirror:
     src_keys = src_entries.keys()
     src_keys.sort()
     for src_key in src_keys:
-      if dest_entries.has_key(src_key):
-        next_dest_key = dest_entries[src_key]
-      else:
-        next_dest_key = None
+      next_dest_key = dest_entries.get(src_key, None)
       self._fill(symbol_fill, dest_prefix, next_dest_key,
                  src_entries[src_key], _path_join(path, src_key),
                  copy_source.prefix, sources[0].revnum, prune_ok)
@@ -4845,9 +4842,7 @@ class MimeMapper:
     # files such as README or Makefile:
     if not extension:
       extension = basename
-    if self.mappings.has_key(extension):
-      return self.mappings[extension]
-    return None
+    return self.mappings.get(extension, None)
 
 
 def convert(start_pass, end_pass):

@@ -4167,12 +4167,15 @@ class RepositoryDelegate(DumpfileDelegate):
     self.target = Ctx().target
     if not Ctx().existing_svnrepos:
       Log().write(LOG_NORMAL,"Creating new repository '%s'" % (self.target))
-      if Ctx().fs_type and Ctx().fs_type != 'bdb':
-        # User specified something other than bdb.
+      if not Ctx().fs_type:
+        # User didn't say what kind repository (bdb, fsfs, etc).
+        # We still pass --bdb-txn-nosync.  It's a no-op if the default
+        # repository type doesn't support it, but we definitely want
+        # it if BDB is the default.
         run_command('%s create %s "%s"' % (self.svnadmin,
-                                           "--fs-type=%s" % Ctx().fs_type,
+                                           "--bdb-txn-nosync",
                                            self.target))
-      elif Ctx().fs_type:
+      elif Ctx().fs_type == 'bdb':
         # User explicitly specified bdb.
         #
         # Since this is a BDB repository, pass --bdb-txn-nosync,
@@ -4186,14 +4189,10 @@ class RepositoryDelegate(DumpfileDelegate):
                                               "--bdb-txn-nosync",
                                               self.target))
       else:
-        # User didn't say what kind repository (bdb, fsfs, etc).
-        # We still pass --bdb-txn-nosync.  It's a no-op if the default
-        # repository type doesn't support it, but we definitely want
-        # it if BDB is the default.
+        # User specified something other than bdb.
         run_command('%s create %s "%s"' % (self.svnadmin,
-                                           "--bdb-txn-nosync",
+                                           "--fs-type=%s" % Ctx().fs_type,
                                            self.target))
-
 
     # Since the output of this run is a repository, not a dumpfile,
     # the temporary dumpfiles we create should go in the tmpdir.

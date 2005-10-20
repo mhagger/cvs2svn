@@ -168,12 +168,6 @@ important enough to have a distinctive log message anyway, so does it
 really matter if a couple of them accidentally get unified?  Probably
 not.
 
-NOTE: We currently have a fairly major bug in our resync code.  The
-resync_bug test demonstrates it.  The bug is that, when resyncing in
-pass 2, we take no care not to move cvs revisions before previous
-cvs revisions of the same file, thus creating the very problem we were
-attempting to avoid.
-
 Pass 3:
 =======
 

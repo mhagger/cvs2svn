@@ -2959,11 +2959,6 @@ class SymbolicNameFillingGuide:
     # Having reached the leaf, return the key
     return node_key
 
-  def get_root_node(self):
-    """Return the root node."""
-
-    return self.get_node(self._root_key)
-
   def get_node(self, node_key):
     """Return the node with the specified NODE_KEY.  If there is no
     such node, raise a KeyError."""

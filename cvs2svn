@@ -2996,10 +2996,7 @@ class SymbolicNameFillingGuide:
       """
       s = {}
       for k in rev_list: # Add up the scores
-        if s.has_key(k):
-          s[k] = s[k] + 1
-        else:
-          s[k] = 1
+        s[k] = s.get(k, 0) + 1
       a = s.items()
       a.sort()
       return a

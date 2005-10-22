@@ -2842,12 +2842,29 @@ class SymbolicNameFillingGuide:
   actions to "patch up" the subtrees."""
 
   # Keys used to store the opening and closing revision numbers in
-  # things and _node_tree.  See the comment for self.things for more
-  # information.  It is important that these strings start with '/',
-  # as that is used distinguish them from directory names when they
-  # appear in _node_tree.
+  # _node_tree.  See the comment for self.things for more information.
+  # It is important that these strings start with '/', as that is used
+  # distinguish them from directory names.
   OPENING_KEY = "/o"
   CLOSING_KEY = "/c"
+
+  class SvnRevisionRange:
+    """The range of subversion revision numbers from which a path can be
+    copied.  self.opening_revnum is the number of the earliest such
+    revision, and self.closing_revnum is one higher than the number of
+    the last such revision.  If self.closing_revnum is None, then no
+    closings were registered."""
+
+    def __init__(self, opening_revnum):
+      self.opening_revnum = opening_revnum
+      self.closing_revnum = None
+
+    def add_closing(self, closing_revnum):
+      # When we have a non-trunk default branch, we may have multiple
+      # closings--only register the first closing we encounter.
+      if self.closing_revnum is None:
+        self.closing_revnum = closing_revnum
+
 
   def __init__(self, symbolic_name):
     """Initializes a SymbolicNameFillingGuide for SYMBOLIC_NAME and
@@ -2859,9 +2876,7 @@ class SymbolicNameFillingGuide:
 
     # A dictionary of SVN_PATHS and SVN_REVNUMS whose format is:
     #
-    # { svn_path : { self.OPENING_KEY : svn_revnum,
-    #                self.CLOSING_KEY : svn_revnum }
-    #                ...}
+    # { svn_path : SvnRevisionRange }
     self.things = { }
 
     # The key for the root node of the node tree
@@ -2890,14 +2905,11 @@ class SymbolicNameFillingGuide:
     """
     # Always log an OPENING
     if type == OPENING:
-      self.things[svn_path] = {self.OPENING_KEY: svn_revnum}
+      self.things[svn_path] = self.SvnRevisionRange(svn_revnum)
     # Only log a closing if we've already registered the opening for that
     # path.
     elif type == CLOSING and self.things.has_key(svn_path):
-      # When we have a non-trunk default branch, we may have multiple
-      # closings--only register the first closing we encounter.
-      if not self.things[svn_path].has_key(self.CLOSING_KEY):
-        self.things[svn_path][self.CLOSING_KEY] = svn_revnum
+      self.things[svn_path].add_closing(svn_revnum)
 
   def initialize_node_tree(self):
     """Generates the SymbolicNameFillingGuide's node tree from
@@ -2911,8 +2923,11 @@ class SymbolicNameFillingGuide:
     # Seed the dictionary that holds our node tree with the root key.
     self._node_tree = { self._root_key : { } }
 
-    for svn_path, open_close in self.things.items():
+    for svn_path, svn_revision_range in self.things.items():
       # Attach the value to the leaf
+      open_close = { self.OPENING_KEY : svn_revision_range.opening_revnum }
+      if svn_revision_range.closing_revnum is not None:
+        open_close[self.CLOSING_KEY] = svn_revision_range.closing_revnum
       self._node_tree[self._get_node_key(svn_path)] = open_close
 
     #self.print_node_tree(self._root_key)

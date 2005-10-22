@@ -3101,21 +3101,23 @@ class SymbolicNameFillingGuide:
 
     node = self.get_node(node_key)
 
-    # If the node has self.OPENING_KEY, it must be a leaf node--all
-    # leaf nodes have at least an opening key (although they may not
-    # have a closing key.
-    if (node.has_key(self.OPENING_KEY) and node.has_key(revnum_type_key)):
-      # Fetch revnum and return.
-      return [ node[revnum_type_key] ]
-
-    revnums = []
-    for key, node_contents in node.items():
-      if key[0] == '/':
-        # This is OPENING_KEY or CLOSING_KEY; ignore it.
-        continue
-      revnums.extend(
-          self._list_revnums_for_key(node_contents, revnum_type_key))
-    return revnums
+    # A node with an OPENING_KEY is necessarily a leaf node (though
+    # it might not have a closing key).
+    if node.has_key(self.OPENING_KEY):
+      # It is a leaf node.
+      if node.has_key(revnum_type_key):
+        return [ node[revnum_type_key] ]
+      else:
+        return []
+    else:
+      # It is an intermediate node.
+      revnums = []
+      for key, subnode_key in node.items():
+        if key[0] == '/':
+          raise FatalError('Non-leaf node has non-component key')
+        revnums.extend(
+            self._list_revnums_for_key(subnode_key, revnum_type_key))
+      return revnums
 
   def get_sources(self):
     """Return the list of sources for this symbolic name.

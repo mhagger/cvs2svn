@@ -3040,9 +3040,10 @@ class SymbolicNameFillingGuide:
 
        [(REV1 SCORE1), (REV2 SCORE2), ...]
 
-    where REV2 > REV1.  OPENINGS and CLOSINGS are the values of
-    self.OPENING_KEY and self.CLOSING_KEY from some file or directory
-    node, or else None.
+    where the tuples are sorted by revision number.  OPENINGS and
+    CLOSINGS are lists of tuples [(svn_revnum, count), ...] reflecting
+    the frequency with which svn revision numbers appeared as the
+    values of self.OPENING_KEY and self.CLOSING_KEY from file nodes.
 
     Each score indicates that copying the corresponding revision (or
     any following revision up to the next revision in the list) of the
@@ -3052,14 +3053,10 @@ class SymbolicNameFillingGuide:
     those can only be detected by descending and examining their
     scores.
 
-    If OPENINGS is false, return the empty list."""
-    # First look for easy outs.
+    If OPENINGS is empty, return the empty list."""
+    # First look for easy out.
     if not openings:
       return []
-
-    # Must be able to call len(closings) below.
-    if closings is None:
-      closings = []
 
     # No easy out, so wish for lexical closures and calculate the scores :-).
     scores = []

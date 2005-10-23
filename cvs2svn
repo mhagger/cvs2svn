@@ -2946,14 +2946,15 @@ class SymbolicNameFillingGuide:
     """Return the node key for svn_path, creating new nodes as needed."""
     # Walk down the path, one node at a time.
     node_key = self._root_key
+    node = self._node_tree[node_key]
     for component in svn_path.split('/'):
-      node = self._node_tree[node_key]
       if node.has_key(component):
         node_key = node[component]
+        node = self._node_tree[node_key]
       else:
         node_key = gen_key()
-        self._node_tree[node_key] = { }
         node[component] = node_key
+        node = self._node_tree[node_key] = { }
 
     # Having reached the leaf, return the key
     return node_key

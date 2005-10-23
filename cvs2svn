@@ -2948,12 +2948,12 @@ class SymbolicNameFillingGuide:
     node_key = self._root_key
     for component in svn_path.split('/'):
       node = self._node_tree[node_key]
-      if not node.has_key(component):
+      if node.has_key(component):
+        node_key = node[component]
+      else:
         node_key = gen_key()
         self._node_tree[node_key] = { }
         node[component] = node_key
-      else:
-        node_key = node[component]
 
     # Having reached the leaf, return the key
     return node_key

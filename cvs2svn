@@ -3061,13 +3061,11 @@ class SymbolicNameFillingGuide:
     # No easy out, so wish for lexical closures and calculate the scores :-).
     scores = []
     opening_score_accum = 0
-    for i in range(len(openings)):
-      opening_rev, opening_score = openings[i]
+    for (opening_rev, opening_score) in openings:
       opening_score_accum = opening_score_accum + opening_score
       scores.append((opening_rev, opening_score_accum))
     min = 0
-    for i in range(len(closings)):
-      closing_rev, closing_score = closings[i]
+    for (closing_rev, closing_score) in closings:
       done_exact_rev = None
       insert_index = None
       insert_score = None

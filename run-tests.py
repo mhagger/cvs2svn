@@ -1191,7 +1191,7 @@ def nonascii_filenames():
 
 
 def vendor_branch_sameness():
-  "avoid spurious changes for initial revs "
+  "avoid spurious changes for initial revs"
   conv = ensure_conversion('vendor-branch-sameness')
 
   # There are four files in the repository:
@@ -1238,7 +1238,7 @@ def vendor_branch_sameness():
 
 
 def default_branches():
-  "handle default branches correctly "
+  "handle default branches correctly"
   conv = ensure_conversion('default-branches')
 
   # There are seven files in the repository:

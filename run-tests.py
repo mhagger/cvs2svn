@@ -421,7 +421,9 @@ class Conversion:
 
     _wc -- the basename of the svn working copy (within tmp_dir).
 
-    _wc_path -- the path to the svn working copy.
+    _wc_path -- the path to the svn working copy, if it has already
+        been created; otherwise, None.  (The working copy is created
+        lazily when get_wc() is called.)
 
     _svnrepos -- the basename of the svn repository (within tmp_dir)."""
 
@@ -442,7 +444,7 @@ class Conversion:
       self._svnrepos = '%s-svnrepos' % self.conv_id
       self.repos = os.path.join(tmp_dir, self._svnrepos)
       self._wc = '%s-wc' % self.conv_id
-      self._wc_path = os.path.join(tmp_dir, self._wc)
+      self._wc_path = None
 
       # Clean up from any previous invocations of this script.
       erase(self._svnrepos)
@@ -465,7 +467,6 @@ class Conversion:
         raise svntest.Failure("Repository not created: '%s'"
                               % os.path.join(os.getcwd(), self._svnrepos))
 
-      run_svn('co', repos_to_url(self._svnrepos), self._wc)
       self.logs = parse_log(self._svnrepos, self.symbols)
     finally:
       os.chdir(saved_wd)
@@ -479,7 +480,16 @@ class Conversion:
     raise ValueError("Tag %s not found in logs" % tagname)
 
   def get_wc(self):
-    """Return the path to the svn working copy."""
+    """Return the path to the svn working copy.  If it has not been
+    created yet, create it now."""
+    if self._wc_path is None:
+      saved_wd = os.getcwd()
+      try:
+        os.chdir(tmp_dir)
+        run_svn('co', repos_to_url(self._svnrepos), self._wc)
+        self._wc_path = os.path.join(tmp_dir, self._wc)
+      finally:
+        os.chdir(saved_wd)
     return self._wc_path
 
 

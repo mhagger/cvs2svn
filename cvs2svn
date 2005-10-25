@@ -2821,6 +2821,24 @@ class SymbolingsReader:
     return SymbolicNameFillingGuide(openings_closings_map)
 
 
+class SvnRevisionRange:
+  """The range of subversion revision numbers from which a path can be
+  copied.  self.opening_revnum is the number of the earliest such
+  revision, and self.closing_revnum is one higher than the number of
+  the last such revision.  If self.closing_revnum is None, then no
+  closings were registered."""
+
+  def __init__(self, opening_revnum):
+    self.opening_revnum = opening_revnum
+    self.closing_revnum = None
+
+  def add_closing(self, closing_revnum):
+    # When we have a non-trunk default branch, we may have multiple
+    # closings--only register the first closing we encounter.
+    if self.closing_revnum is None:
+      self.closing_revnum = closing_revnum
+
+
 class OpeningsClosingsMap:
   """A dictionary of openings and closings for a symbolic name in the
   current SVNCommit.
@@ -2828,23 +2846,6 @@ class OpeningsClosingsMap:
   The user should call self.register() for the openings and closings,
   then self.get_node_tree() to retrieve the information as a
   SymbolicNameFillingGuide."""
-
-  class SvnRevisionRange:
-    """The range of subversion revision numbers from which a path can be
-    copied.  self.opening_revnum is the number of the earliest such
-    revision, and self.closing_revnum is one higher than the number of
-    the last such revision.  If self.closing_revnum is None, then no
-    closings were registered."""
-
-    def __init__(self, opening_revnum):
-      self.opening_revnum = opening_revnum
-      self.closing_revnum = None
-
-    def add_closing(self, closing_revnum):
-      # When we have a non-trunk default branch, we may have multiple
-      # closings--only register the first closing we encounter.
-      if self.closing_revnum is None:
-        self.closing_revnum = closing_revnum
 
   def __init__(self, symbolic_name):
     """Initialize OpeningsClosingsMap and prepare it for receiving
@@ -2873,7 +2874,7 @@ class OpeningsClosingsMap:
     """
     # Always log an OPENING
     if type == OPENING:
-      self.things[svn_path] = self.SvnRevisionRange(svn_revnum)
+      self.things[svn_path] = SvnRevisionRange(svn_revnum)
     # Only log a closing if we've already registered the opening for that
     # path.
     elif type == CLOSING and self.things.has_key(svn_path):

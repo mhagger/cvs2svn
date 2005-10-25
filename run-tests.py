@@ -419,6 +419,8 @@ class Conversion:
     symbols -- a dictionary of symbols used for string interpolation
         in path names.
 
+    _wc -- the basename of the svn working copy (within tmp_dir).
+
     _wc_path -- the path to the svn working copy.
 
     _svnrepos -- the basename of the svn repository (within tmp_dir)."""
@@ -439,12 +441,12 @@ class Conversion:
 
       self._svnrepos = '%s-svnrepos' % self.conv_id
       self.repos = os.path.join(tmp_dir, self._svnrepos)
-      wc       = '%s-wc' % self.conv_id
-      self._wc_path = os.path.join(tmp_dir, wc)
+      self._wc = '%s-wc' % self.conv_id
+      self._wc_path = os.path.join(tmp_dir, self._wc)
 
       # Clean up from any previous invocations of this script.
       erase(self._svnrepos)
-      erase(wc)
+      erase(self._wc)
 
       try:
         args.extend( [ '--bdb-txn-nosync', '-s', self._svnrepos, cvsrepos ] )
@@ -463,7 +465,7 @@ class Conversion:
         raise svntest.Failure("Repository not created: '%s'"
                               % os.path.join(os.getcwd(), self._svnrepos))
 
-      run_svn('co', repos_to_url(self._svnrepos), wc)
+      run_svn('co', repos_to_url(self._svnrepos), self._wc)
       self.logs = parse_log(self._svnrepos, self.symbols)
     finally:
       os.chdir(saved_wd)

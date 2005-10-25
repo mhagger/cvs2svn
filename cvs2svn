@@ -2838,6 +2838,12 @@ class SvnRevisionRange:
     if self.closing_revnum is None:
       self.closing_revnum = closing_revnum
 
+  def __str__(self):
+    if self.closing_revnum is None:
+      return '[%d:]' % (self.opening_revnum,)
+    else:
+      return '[%d:%d]' % (self.opening_revnum, self.closing_revnum,)
+
 
 class OpeningsClosingsMap:
   """A dictionary of openings and closings for a symbolic name in the

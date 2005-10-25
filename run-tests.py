@@ -425,6 +425,10 @@ class Conversion:
         been created; otherwise, None.  (The working copy is created
         lazily when get_wc() is called.)
 
+    _wc_tree -- the tree built from the svn working copy, if it has
+        already been created; otherwise, None.  The tree is created
+        lazily when get_wc_tree() is called.)
+
     _svnrepos -- the basename of the svn repository (within tmp_dir)."""
 
   def __init__(self, conv_id, name, error_re, passbypass, symbols, args):
@@ -445,6 +449,7 @@ class Conversion:
       self.repos = os.path.join(tmp_dir, self._svnrepos)
       self._wc = '%s-wc' % self.conv_id
       self._wc_path = None
+      self._wc_tree = None
 
       # Clean up from any previous invocations of this script.
       erase(self._svnrepos)
@@ -493,7 +498,9 @@ class Conversion:
     return self._wc_path
 
   def get_wc_tree(self):
-    return svntest.tree.build_tree_from_wc(self.get_wc(), 1)
+    if self._wc_tree is None:
+      self._wc_tree = svntest.tree.build_tree_from_wc(self.get_wc(), 1)
+    return self._wc_tree
 
 
 # Cache of conversions that have already been done.  Keys are conv_id;

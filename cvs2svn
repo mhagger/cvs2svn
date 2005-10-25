@@ -2954,10 +2954,6 @@ class SymbolicNameFillingGuide:
 
     PREFERRED_REVNUM is passed to best_rev and used to calculate the
     best_revnum."""
-    revnum = SVN_INVALID_REVNUM
-
-    # Aggregate openings and closings from the rev tree
-    svn_revision_ranges = self._list_revnums(node)
 
     def score_revisions(svn_revision_ranges):
       """Return a list of revisions and scores based on
@@ -3034,6 +3030,9 @@ class SymbolicNameFillingGuide:
       if preferred_rev_score == max_score:
         rev = preferred_rev
       return rev, max_score
+
+    # Aggregate openings and closings from the rev tree
+    svn_revision_ranges = self._list_revnums(node)
 
     # Score the lists
     scores = score_revisions(svn_revision_ranges)

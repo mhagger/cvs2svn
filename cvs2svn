@@ -2964,24 +2964,6 @@ class SymbolicNameFillingGuide:
                  for x in svn_revision_ranges
                  if x.closing_revnum is not None ]
 
-    # Helper function for scoring the lists.
-    def tally_frequencies(rev_list):
-      """Takes an array of revisions (REV_LIST), for example:
-
-        [21, 18, 6, 49, 39, 24, 24, 24, 24, 24, 24, 24]
-
-      and adds up every occurrence of each revision and returns a sorted
-      array of tuples containing (svn_revnum, count):
-
-        [(6, 1), (18, 1), (21, 1), (24, 7), (39, 1), (49, 1)]
-      """
-      s = {}
-      for k in rev_list: # Add up the scores
-        s[k] = s.get(k, 0) + 1
-      a = s.items()
-      a.sort()
-      return a
-
     def score_revisions(openings, closings):
       """Return a list of revisions and scores based on OPENINGS and
       CLOSINGS.  The returned list looks like:
@@ -2989,8 +2971,7 @@ class SymbolicNameFillingGuide:
          [(REV1 SCORE1), (REV2 SCORE2), ...]
 
       where the tuples are sorted by revision number.  OPENINGS and
-      CLOSINGS are lists of tuples [(svn_revnum, count), ...] reflecting
-      the frequency with which svn revision numbers appeared as the
+      CLOSINGS are lists of svn revision numbers that appeared as the
       opening_revnum and closing_revnum of file nodes.
 
       Each score indicates that copying the corresponding revision (or
@@ -3006,9 +2987,9 @@ class SymbolicNameFillingGuide:
       if not openings:
         return []
 
-      # Create a list of all openings (with positive scores) and
-      # closings (with negative scores):
-      things = openings + [(rev,-score) for (rev,score) in closings]
+      # Create a list with both openings (which increment the total)
+      # and closings (which decrement the total):
+      things = [(rev,1) for rev in openings] + [(rev,-1) for rev in closings]
       # Sort by revision number:
       things.sort()
       # Initialize output list with zeroth element of things.  This
@@ -3052,8 +3033,7 @@ class SymbolicNameFillingGuide:
       return rev, max_score
 
     # Score the lists
-    scores = score_revisions(tally_frequencies(openings),
-                             tally_frequencies(closings))
+    scores = score_revisions(openings, closings)
 
     revnum, max_score = best_rev(scores, preferred_revnum)
 

@@ -419,7 +419,7 @@ class Conversion:
     symbols -- a dictionary of symbols used for string interpolation
         in path names.
 
-    _wc -- the path to the svn working copy.
+    _wc_path -- the path to the svn working copy.
 
     _svnrepos -- the basename of the svn repository (within tmp_dir)."""
 
@@ -440,7 +440,7 @@ class Conversion:
       self._svnrepos = '%s-svnrepos' % self.conv_id
       self.repos = os.path.join(tmp_dir, self._svnrepos)
       wc       = '%s-wc' % self.conv_id
-      self._wc = os.path.join(tmp_dir, wc)
+      self._wc_path = os.path.join(tmp_dir, wc)
 
       # Clean up from any previous invocations of this script.
       erase(self._svnrepos)
@@ -478,7 +478,7 @@ class Conversion:
 
   def get_wc(self):
     """Return the path to the svn working copy."""
-    return self._wc
+    return self._wc_path
 
 
 # Cache of conversions that have already been done.  Keys are conv_id;

@@ -2903,13 +2903,9 @@ class SymbolicNameFillingGuide:
   self.symbolic_name in the current SVNCommit.
 
   self._node_tree is the root of the directory tree, in the form {
-  path_component : subnode }.  Leaf nodes are dictionaries mapping
-  self.OPENING_KEY to the earliest subversion revision from which this
-  node/path may be copied, and optionally mapping self.CLOSING_KEY to
-  the subversion revision one higher than the last revision from which
-  this node/path may be copied.  Intermediate (directory) nodes map
-  relative names to subnodes and never contain opening or closing
-  flags.
+  path_component : subnode }.  Leaf nodes are instances of
+  SvnRevisionRange.  Intermediate (directory) nodes are dictionaries
+  mapping relative names to subnodes.
 
   By walking self._node_tree and calling self.get_best_revnum() on
   each node, the caller can determine what subversion revision number
@@ -2919,12 +2915,6 @@ class SymbolicNameFillingGuide:
   The caller can then descend to sub-nodes to see if their "best
   revnum" differs from their parents' and if it does, take appropriate
   actions to "patch up" the subtrees."""
-
-  # Keys used to store the opening and closing revision numbers in
-  # _node_tree.  It is important that these strings start with '/', as
-  # that is used distinguish them from relative path names.
-  OPENING_KEY = "/o"
-  CLOSING_KEY = "/c"
 
   def __init__(self, openings_closings_map):
     """Initializes a SymbolicNameFillingGuide for SYMBOLIC_NAME and
@@ -2938,10 +2928,8 @@ class SymbolicNameFillingGuide:
     self._node_tree = { }
 
     for svn_path, svn_revision_range in openings_closings_map.get_things():
-      node = self._get_node_for_path(svn_path)
-      node[self.OPENING_KEY] = svn_revision_range.opening_revnum
-      if svn_revision_range.closing_revnum is not None:
-        node[self.CLOSING_KEY] = svn_revision_range.closing_revnum
+      (head, tail) = _path_split(svn_path)
+      self._get_node_for_path(head)[tail] = svn_revision_range
 
     #self.print_node_tree(self._node_tree)
 
@@ -2969,8 +2957,12 @@ class SymbolicNameFillingGuide:
     revnum = SVN_INVALID_REVNUM
 
     # Aggregate openings and closings from the rev tree
-    openings = self._list_revnums(node, self.OPENING_KEY)
-    closings = self._list_revnums(node, self.CLOSING_KEY)
+    svn_revision_ranges = self._list_revnums(node)
+    openings = [ x.opening_revnum
+                 for x in svn_revision_ranges ]
+    closings = [ x.closing_revnum
+                 for x in svn_revision_ranges
+                 if x.closing_revnum is not None ]
 
     # Helper function for scoring the lists.
     def tally_frequencies(rev_list):
@@ -3000,7 +2992,6 @@ class SymbolicNameFillingGuide:
       raise FatalError("failed to find a revision "
                        + "to copy from when copying %s" % name)
     return revnum, max_score
-
 
   def _best_rev(self, scores, preferred_rev):
     """Return the revision with the highest score from SCORES, a list
@@ -3080,38 +3071,26 @@ class SymbolicNameFillingGuide:
         scores.insert(insert_index, (closing_rev, insert_score))
     return scores
 
-  def _list_revnums(self, node, revnum_type_key):
-    """Return a list of all the revision numbers (including
-    duplicates) contained in REVNUM_TYPE_KEY values for all leaf nodes
-    at and under NODE.
+  def _list_revnums(self, node):
+    """Return a list of all the SvnRevisionRanges (including
+    duplicates) for all leaf nodes at and under NODE."""
 
-    REVNUM_TYPE_KEY should be either self.OPENING_KEY or
-    self.CLOSING_KEY."""
-
-    # A node with an OPENING_KEY is necessarily a leaf node (though
-    # it might not have a closing key).
-    if node.has_key(self.OPENING_KEY):
+    if isinstance(node, SvnRevisionRange):
       # It is a leaf node.
-      if node.has_key(revnum_type_key):
-        return [ node[revnum_type_key] ]
-      else:
-        return []
+      return [ node ]
     else:
       # It is an intermediate node.
       revnums = []
       for key, subnode in node.items():
-        if key[0] == '/':
-          raise FatalError('Non-leaf node has non-component key')
-        revnums.extend(
-            self._list_revnums(subnode, revnum_type_key))
+        revnums.extend(self._list_revnums(subnode))
       return revnums
 
   def get_sources(self):
     """Return the list of sources for this symbolic name.
 
     The Project instance defines what are legitimate sources.  Raise
-    an exception if a node outside of the source directories has an
-    option set (e.g., OPENING_KEY or CLOSING_KEY)."""
+    an exception if a change occurred outside of the source
+    directories."""
 
     return self._get_sub_sources('', self._node_tree)
 
@@ -3121,21 +3100,21 @@ class SymbolicNameFillingGuide:
     a helper method, called by get_sources() (see)."""
 
     project = Ctx().project
-    sources = []
-    for entry, node in start_node.items():
-      if entry[0] == '/':
-        # This implies that a change was found outside of the
-        # legitimate sources.  This should never happen.
-        raise
-      svn_path = _path_join(start_svn_path, entry)
-      if project.is_source(svn_path):
-        # This is a legitimate source.  Add it to list.
-        sources.append(FillSource(svn_path, node))
-      else:
-        # This directory is not a legitimate source.  (That's OK
-        # because it hasn't changed directly.)  But directories within
-        # it have been changed, so we need to search recursively to
-        # find their enclosing sources.
+    if isinstance(start_node, SvnRevisionRange):
+      # This implies that a change was found outside of the
+      # legitimate sources.  This should never happen.
+      raise
+    elif project.is_source(start_svn_path):
+      # This is a legitimate source.  Add it to list.
+      return [ FillSource(start_svn_path, start_node) ]
+    else:
+      # This is a directory that is not a legitimate source.  (That's
+      # OK because it hasn't changed directly.)  But directories
+      # within it have been changed, so we need to search recursively
+      # to find their enclosing sources.
+      sources = []
+      for entry, node in start_node.items():
+        svn_path = _path_join(start_svn_path, entry)
         sources.extend(self._get_sub_sources(svn_path, node))
 
     return sources
@@ -3146,7 +3125,7 @@ class SymbolicNameFillingGuide:
     recursive calls."""
     if not indent_depth:
       print "TREE", "=" * 75
-    if node.has_key(self.OPENING_KEY):
+    if isinstance(node, SvnRevisionRange):
       print "TREE:", " " * (indent_depth * 2), name, node
     else:
       print "TREE:", " " * (indent_depth * 2), name
@@ -3575,12 +3554,12 @@ class SVNRepositoryMirror:
     # this path element exists.
     src_entries = {}
     for source in sources:
-      for entry, key in source.node.items():
-        if entry[0] == '/': # Skip flags
-          continue
+      if isinstance(source.node, SvnRevisionRange):
+        continue
+      for entry, node in source.node.items():
         if not src_entries.has_key(entry):
           src_entries[entry] = []
-        src_entries[entry].append(FillSource(source.prefix, key))
+        src_entries[entry].append(FillSource(source.prefix, node))
 
     if prune_ok:
       # Delete the entries in DEST_ENTRIES that are not in src_entries.

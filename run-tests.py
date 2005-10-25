@@ -502,6 +502,25 @@ class Conversion:
       self._wc_tree = svntest.tree.build_tree_from_wc(self.get_wc(), 1)
     return self._wc_tree
 
+  def check_props(self, keys, checks):
+    """Helper function for checking lots of properties.  For a list of
+    files in the conversion, check that the values of the properties
+    listed in KEYS agree with those listed in CHECKS.  CHECKS is a
+    list of tuples: [ (filename, [value, value, ...]), ...], where the
+    values are listed in the same order as the key names are listed in
+    KEYS."""
+
+    for (file, values) in checks:
+      assert len(values) == len(keys)
+      props = props_for_path(self.get_wc_tree(), file)
+      for i in range(len(keys)):
+        if props.get(keys[i]) != values[i]:
+          raise svntest.Failure(
+              "File %s has property %s set to \"%s\" "
+              "(it should have been \"%s\").\n"
+              % (file, keys[i], props.get(keys[i]), values[i],)
+              )
+
 
 # Cache of conversions that have already been done.  Keys are conv_id;
 # values are Conversion instances.
@@ -1642,26 +1661,6 @@ def props_for_path(node, path):
   return node_for_path(node, path).props
 
 
-def check_props(wc_root, keys, checks):
-  """Helper function for checking lots of properties.  For a list of
-  files in the conversion at WC_ROOT, check that the values of the
-  properties listed in KEYS agree with those listed in CHECKS.  CHECKS
-  is a list of tuples: [ (filename, [value, value, ...]), ...], where
-  the values are listed in the same order as the key names are listed
-  in KEYS."""
-
-  for (file, values) in checks:
-    assert len(values) == len(keys)
-    props = props_for_path(wc_root, file)
-    for i in range(len(keys)):
-      if props.get(keys[i]) != values[i]:
-        raise svntest.Failure(
-            "File %s has property %s set to \"%s\" "
-            "(it should have been \"%s\").\n"
-            % (file, keys[i], props.get(keys[i]), values[i],)
-            )
-
-
 def eol_mime():
   "test eol settings and mime types together"
   ###TODO: It's a bit klugey to construct this path here.  But so far
@@ -1694,9 +1693,8 @@ def eol_mime():
   ## Neither --no-default-eol nor --eol-from-mime-type. ##
   conv = ensure_conversion(
       'eol-mime', args=['--mime-types=%s' % mime_path, '--cvs-revnums'])
-  wc_tree = conv.get_wc_tree()
-  check_props(
-      wc_tree, ['svn:eol-style', 'svn:mime-type', 'cvs2svn:cvs-rev'],
+  conv.check_props(
+      ['svn:eol-style', 'svn:mime-type', 'cvs2svn:cvs-rev'],
       [
           ('trunk/foo.txt', ['native', None, '1.2']),
           ('trunk/foo.xml', ['native', 'text/xml', '1.2']),
@@ -1710,9 +1708,8 @@ def eol_mime():
   ## Just --no-default-eol, not --eol-from-mime-type. ##
   conv = ensure_conversion(
       'eol-mime', args=['--mime-types=%s' % mime_path, '--no-default-eol'])
-  wc_tree = conv.get_wc_tree()
-  check_props(
-      wc_tree, ['svn:eol-style', 'svn:mime-type', 'cvs2svn:cvs-rev'],
+  conv.check_props(
+      ['svn:eol-style', 'svn:mime-type', 'cvs2svn:cvs-rev'],
       [
           ('trunk/foo.txt', [None, None, None]),
           ('trunk/foo.xml', [None, 'text/xml', None]),
@@ -1727,9 +1724,8 @@ def eol_mime():
   conv = ensure_conversion('eol-mime', args=[
       '--mime-types=%s' % mime_path, '--eol-from-mime-type', '--cvs-revnums'
       ])
-  wc_tree = conv.get_wc_tree()
-  check_props(
-      wc_tree, ['svn:eol-style', 'svn:mime-type', 'cvs2svn:cvs-rev'],
+  conv.check_props(
+      ['svn:eol-style', 'svn:mime-type', 'cvs2svn:cvs-rev'],
       [
           ('trunk/foo.txt', ['native', None, '1.2']),
           ('trunk/foo.xml', ['native', 'text/xml', '1.2']),
@@ -1744,9 +1740,8 @@ def eol_mime():
   conv = ensure_conversion('eol-mime', args=[
       '--mime-types=%s' % mime_path, '--eol-from-mime-type',
       '--no-default-eol'])
-  wc_tree = conv.get_wc_tree()
-  check_props(
-      wc_tree, ['svn:eol-style', 'svn:mime-type', 'cvs2svn:cvs-rev'],
+  conv.check_props(
+      ['svn:eol-style', 'svn:mime-type', 'cvs2svn:cvs-rev'],
       [
           ('trunk/foo.txt', [None, None, None]),
           ('trunk/foo.xml', ['native', 'text/xml', None]),
@@ -1761,9 +1756,8 @@ def eol_mime():
 def keywords():
   "test setting of svn:keywords property among others"
   conv = ensure_conversion('keywords')
-  wc_tree = conv.get_wc_tree()
-  check_props(
-      wc_tree, ['svn:keywords', 'svn:eol-style', 'svn:mime-type'],
+  conv.check_props(
+      ['svn:keywords', 'svn:eol-style', 'svn:mime-type'],
       [
           ('trunk/foo.default', ['Author Date Id Revision', 'native', None]),
           ('trunk/foo.kkvl', ['Author Date Id Revision', 'native', None]),

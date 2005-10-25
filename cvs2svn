@@ -3018,7 +3018,6 @@ class SymbolicNameFillingGuide:
       rev = preferred_rev
     return rev, max_score
 
-
   def _score_revisions(self, openings, closings):
     """Return a list of revisions and scores based on OPENINGS and
     CLOSINGS.  The returned list looks like:
@@ -3028,7 +3027,7 @@ class SymbolicNameFillingGuide:
     where the tuples are sorted by revision number.  OPENINGS and
     CLOSINGS are lists of tuples [(svn_revnum, count), ...] reflecting
     the frequency with which svn revision numbers appeared as the
-    values of self.OPENING_KEY and self.CLOSING_KEY from file nodes.
+    opening_revnum and closing_revnum of file nodes.
 
     Each score indicates that copying the corresponding revision (or
     any following revision up to the next revision in the list) of the

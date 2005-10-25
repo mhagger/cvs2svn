@@ -2952,8 +2952,8 @@ class SymbolicNameFillingGuide:
     copying the source tree beginning at NODE.  Returns a
     subversion revision number.
 
-    PREFERRED_REVNUM is passed to self._best_rev and used to
-    calculate the best_revnum."""
+    PREFERRED_REVNUM is passed to best_rev and used to calculate the
+    best_revnum."""
     revnum = SVN_INVALID_REVNUM
 
     # Aggregate openings and closings from the rev tree
@@ -2982,93 +2982,93 @@ class SymbolicNameFillingGuide:
       a.sort()
       return a
 
-    # Score the lists
-    scores = self._score_revisions(tally_frequencies(openings),
-                                   tally_frequencies(closings))
+    def score_revisions(openings, closings):
+      """Return a list of revisions and scores based on OPENINGS and
+      CLOSINGS.  The returned list looks like:
 
-    revnum, max_score = self._best_rev(scores, preferred_revnum)
+         [(REV1 SCORE1), (REV2 SCORE2), ...]
+
+      where the tuples are sorted by revision number.  OPENINGS and
+      CLOSINGS are lists of tuples [(svn_revnum, count), ...] reflecting
+      the frequency with which svn revision numbers appeared as the
+      opening_revnum and closing_revnum of file nodes.
+
+      Each score indicates that copying the corresponding revision (or
+      any following revision up to the next revision in the list) of the
+      object in question would yield that many correct paths at or
+      underneath the object.  There may be other paths underneath it
+      which are not correct and would need to be deleted or recopied;
+      those can only be detected by descending and examining their
+      scores.
+
+      If OPENINGS is empty, return the empty list."""
+      # First look for easy out.
+      if not openings:
+        return []
+
+      # No easy out, so wish for lexical closures and calculate the scores :-).
+      scores = []
+      opening_score_accum = 0
+      for (opening_rev, opening_score) in openings:
+        opening_score_accum = opening_score_accum + opening_score
+        scores.append((opening_rev, opening_score_accum))
+      min = 0
+      for (closing_rev, closing_score) in closings:
+        done_exact_rev = None
+        insert_index = None
+        insert_score = None
+        for j in range(min, len(scores)):
+          score_rev, score = scores[j]
+          if score_rev >= closing_rev:
+            if not done_exact_rev:
+              if score_rev > closing_rev:
+                insert_index = j
+                insert_score = scores[j-1][1] - closing_score
+              done_exact_rev = 1
+            scores[j] = (score_rev, score - closing_score)
+          else:
+            min = j + 1
+        if not done_exact_rev:
+          scores.append((closing_rev,scores[-1][1] - closing_score))
+        if insert_index is not None:
+          scores.insert(insert_index, (closing_rev, insert_score))
+      return scores
+
+    def best_rev(scores, preferred_rev):
+      """Return the revision with the highest score from SCORES, a list
+      returned by score_revisions().  When the maximum score is shared
+      by multiple revisions, the oldest revision is selected, unless
+      PREFERRED_REV is one of the possibilities, in which case, it is
+      selected."""
+      max_score = 0
+      preferred_rev_score = -1
+      rev = SVN_INVALID_REVNUM
+      if preferred_rev is None:
+        # Comparison order of different types is arbitrary. Do not
+        # expect None to compare less than int values below.
+        # In Python 2.3 None compares with ints like negative infinity.
+        # In Python 2.0 None compares with ints like positive infinity.
+        preferred_rev = SVN_INVALID_REVNUM
+      for revnum, count in scores:
+        if count > max_score:
+          max_score = count
+          rev = revnum
+        if revnum <= preferred_rev:
+          preferred_rev_score = count
+      if preferred_rev_score == max_score:
+        rev = preferred_rev
+      return rev, max_score
+
+    # Score the lists
+    scores = score_revisions(tally_frequencies(openings),
+                             tally_frequencies(closings))
+
+    revnum, max_score = best_rev(scores, preferred_revnum)
 
     if revnum == SVN_INVALID_REVNUM:
       raise FatalError("failed to find a revision "
                        + "to copy from when copying %s" % name)
     return revnum, max_score
-
-  def _best_rev(self, scores, preferred_rev):
-    """Return the revision with the highest score from SCORES, a list
-    returned by _score_revisions().  When the maximum score is shared
-    by multiple revisions, the oldest revision is selected, unless
-    PREFERRED_REV is one of the possibilities, in which case, it is
-    selected."""
-    max_score = 0
-    preferred_rev_score = -1
-    rev = SVN_INVALID_REVNUM
-    if preferred_rev is None:
-      # Comparison order of different types is arbitrary. Do not
-      # expect None to compare less than int values below.
-      # In Python 2.3 None compares with ints like negative infinity.
-      # In Python 2.0 None compares with ints like positive infinity.
-      preferred_rev = SVN_INVALID_REVNUM
-    for revnum, count in scores:
-      if count > max_score:
-        max_score = count
-        rev = revnum
-      if revnum <= preferred_rev:
-        preferred_rev_score = count
-    if preferred_rev_score == max_score:
-      rev = preferred_rev
-    return rev, max_score
-
-  def _score_revisions(self, openings, closings):
-    """Return a list of revisions and scores based on OPENINGS and
-    CLOSINGS.  The returned list looks like:
-
-       [(REV1 SCORE1), (REV2 SCORE2), ...]
-
-    where the tuples are sorted by revision number.  OPENINGS and
-    CLOSINGS are lists of tuples [(svn_revnum, count), ...] reflecting
-    the frequency with which svn revision numbers appeared as the
-    opening_revnum and closing_revnum of file nodes.
-
-    Each score indicates that copying the corresponding revision (or
-    any following revision up to the next revision in the list) of the
-    object in question would yield that many correct paths at or
-    underneath the object.  There may be other paths underneath it
-    which are not correct and would need to be deleted or recopied;
-    those can only be detected by descending and examining their
-    scores.
-
-    If OPENINGS is empty, return the empty list."""
-    # First look for easy out.
-    if not openings:
-      return []
-
-    # No easy out, so wish for lexical closures and calculate the scores :-).
-    scores = []
-    opening_score_accum = 0
-    for (opening_rev, opening_score) in openings:
-      opening_score_accum = opening_score_accum + opening_score
-      scores.append((opening_rev, opening_score_accum))
-    min = 0
-    for (closing_rev, closing_score) in closings:
-      done_exact_rev = None
-      insert_index = None
-      insert_score = None
-      for j in range(min, len(scores)):
-        score_rev, score = scores[j]
-        if score_rev >= closing_rev:
-          if not done_exact_rev:
-            if score_rev > closing_rev:
-              insert_index = j
-              insert_score = scores[j-1][1] - closing_score
-            done_exact_rev = 1
-          scores[j] = (score_rev, score - closing_score)
-        else:
-          min = j + 1
-      if not done_exact_rev:
-        scores.append((closing_rev,scores[-1][1] - closing_score))
-      if insert_index is not None:
-        scores.insert(insert_index, (closing_rev, insert_score))
-    return scores
 
   def _list_revnums(self, node):
     """Return a list of all the SvnRevisionRanges (including

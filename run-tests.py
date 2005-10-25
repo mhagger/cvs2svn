@@ -492,6 +492,9 @@ class Conversion:
         os.chdir(saved_wd)
     return self._wc_path
 
+  def get_wc_tree(self):
+    return svntest.tree.build_tree_from_wc(self.get_wc(), 1)
+
 
 # Cache of conversions that have already been done.  Keys are conv_id;
 # values are Conversion instances.
@@ -1684,7 +1687,7 @@ def eol_mime():
   ## Neither --no-default-eol nor --eol-from-mime-type. ##
   conv = ensure_conversion(
       'eol-mime', args=['--mime-types=%s' % mime_path, '--cvs-revnums'])
-  wc_tree = svntest.tree.build_tree_from_wc(conv.get_wc(), 1)
+  wc_tree = conv.get_wc_tree()
   check_props(
       wc_tree, ['svn:eol-style', 'svn:mime-type', 'cvs2svn:cvs-rev'],
       [
@@ -1700,7 +1703,7 @@ def eol_mime():
   ## Just --no-default-eol, not --eol-from-mime-type. ##
   conv = ensure_conversion(
       'eol-mime', args=['--mime-types=%s' % mime_path, '--no-default-eol'])
-  wc_tree = svntest.tree.build_tree_from_wc(conv.get_wc(), 1)
+  wc_tree = conv.get_wc_tree()
   check_props(
       wc_tree, ['svn:eol-style', 'svn:mime-type', 'cvs2svn:cvs-rev'],
       [
@@ -1717,7 +1720,7 @@ def eol_mime():
   conv = ensure_conversion('eol-mime', args=[
       '--mime-types=%s' % mime_path, '--eol-from-mime-type', '--cvs-revnums'
       ])
-  wc_tree = svntest.tree.build_tree_from_wc(conv.get_wc(), 1)
+  wc_tree = conv.get_wc_tree()
   check_props(
       wc_tree, ['svn:eol-style', 'svn:mime-type', 'cvs2svn:cvs-rev'],
       [
@@ -1734,7 +1737,7 @@ def eol_mime():
   conv = ensure_conversion('eol-mime', args=[
       '--mime-types=%s' % mime_path, '--eol-from-mime-type',
       '--no-default-eol'])
-  wc_tree = svntest.tree.build_tree_from_wc(conv.get_wc(), 1)
+  wc_tree = conv.get_wc_tree()
   check_props(
       wc_tree, ['svn:eol-style', 'svn:mime-type', 'cvs2svn:cvs-rev'],
       [
@@ -1751,7 +1754,7 @@ def eol_mime():
 def keywords():
   "test setting of svn:keywords property among others"
   conv = ensure_conversion('keywords')
-  wc_tree = svntest.tree.build_tree_from_wc(conv.get_wc(), 1)
+  wc_tree = conv.get_wc_tree()
   check_props(
       wc_tree, ['svn:keywords', 'svn:eol-style', 'svn:mime-type'],
       [
@@ -1769,7 +1772,7 @@ def keywords():
 def ignore():
   "test setting of svn:ignore property"
   conv = ensure_conversion('cvsignore')
-  wc_tree = svntest.tree.build_tree_from_wc(conv.get_wc(), 1)
+  wc_tree = conv.get_wc_tree()
   topdir_props = props_for_path(wc_tree, 'trunk/proj')
   subdir_props = props_for_path(wc_tree, '/trunk/proj/subdir')
 

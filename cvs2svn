@@ -2958,31 +2958,34 @@ class SymbolicNameFillingGuide:
 
     # Aggregate openings and closings from the rev tree
     svn_revision_ranges = self._list_revnums(node)
-    openings = [ x.opening_revnum
-                 for x in svn_revision_ranges ]
-    closings = [ x.closing_revnum
-                 for x in svn_revision_ranges
-                 if x.closing_revnum is not None ]
 
-    def score_revisions(openings, closings):
-      """Return a list of revisions and scores based on OPENINGS and
-      CLOSINGS.  The returned list looks like:
+    def score_revisions(svn_revision_ranges):
+      """Return a list of revisions and scores based on
+      SVN_REVISION_RANGES.  The returned list looks like:
 
          [(REV1 SCORE1), (REV2 SCORE2), ...]
 
-      where the tuples are sorted by revision number.  OPENINGS and
-      CLOSINGS are lists of svn revision numbers that appeared as the
-      opening_revnum and closing_revnum of file nodes.
+      where the tuples are sorted by revision number.
+      SVN_REVISION_RANGES is a list of SvnRevisionRange objects.
 
-      Each score indicates that copying the corresponding revision (or
-      any following revision up to the next revision in the list) of the
-      object in question would yield that many correct paths at or
-      underneath the object.  There may be other paths underneath it
-      which are not correct and would need to be deleted or recopied;
-      those can only be detected by descending and examining their
-      scores.
+      For each svn revision that appears as either an opening_revnum
+      or closing_revnum for one of the svn_revision_ranges, output a
+      tuple indicating how many of the SvnRevisionRanges include that
+      svn_revision in its range.  A score thus indicates that copying
+      the corresponding revision (or any following revision up to the
+      next revision in the list) of the object in question would yield
+      that many correct paths at or underneath the object.  There may
+      be other paths underneath it which are not correct and would
+      need to be deleted or recopied; those can only be detected by
+      descending and examining their scores.
 
       If OPENINGS is empty, return the empty list."""
+      openings = [ x.opening_revnum
+                   for x in svn_revision_ranges ]
+      closings = [ x.closing_revnum
+                   for x in svn_revision_ranges
+                   if x.closing_revnum is not None ]
+
       # First look for easy out.
       if not openings:
         return []
@@ -3033,7 +3036,7 @@ class SymbolicNameFillingGuide:
       return rev, max_score
 
     # Score the lists
-    scores = score_revisions(openings, closings)
+    scores = score_revisions(svn_revision_ranges)
 
     revnum, max_score = best_rev(scores, preferred_revnum)
 

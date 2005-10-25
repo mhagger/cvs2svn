@@ -414,7 +414,7 @@ class Conversion:
 
     repos -- the path to the svn repository.
 
-    wc -- the path to the svn working copy.
+    _wc -- the path to the svn working copy.
 
     logs -- a dictionary of Log instances, as returned by parse_log().
 
@@ -438,7 +438,7 @@ class Conversion:
       svnrepos = '%s-svnrepos' % self.conv_id
       self.repos = os.path.join(tmp_dir, svnrepos)
       wc       = '%s-wc' % self.conv_id
-      self.wc = os.path.join(tmp_dir, wc)
+      self._wc = os.path.join(tmp_dir, wc)
 
       # Clean up from any previous invocations of this script.
       erase(svnrepos)
@@ -473,6 +473,10 @@ class Conversion:
       if self.logs[i].msg.find("'"+tagname+"'") != -1:
         return self.logs[i]
     raise ValueError("Tag %s not found in logs" % tagname)
+
+  def get_wc(self):
+    """Return the path to the svn working copy."""
+    return self._wc
 
 
 # Cache of conversions that have already been done.  Keys are conv_id;
@@ -573,7 +577,8 @@ def attr_exec():
   if sys.platform == 'win32':
     raise svntest.Skip
   conv = ensure_conversion('main')
-  st = os.stat(os.path.join(conv.wc, 'trunk', 'single-files', 'attr-exec'))
+  st = os.stat(
+      os.path.join(conv.get_wc(), 'trunk', 'single-files', 'attr-exec'))
   if not st[0] & stat.S_IXUSR:
     raise svntest.Failure
 
@@ -581,8 +586,8 @@ def attr_exec():
 def space_fname():
   "conversion of filename with a space"
   conv = ensure_conversion('main')
-  if not os.path.exists(os.path.join(conv.wc, 'trunk', 'single-files',
-                                     'space fname')):
+  if not os.path.exists(
+      os.path.join(conv.get_wc(), 'trunk', 'single-files', 'space fname')):
     raise svntest.Failure
 
 
@@ -1056,8 +1061,8 @@ def tagged_branch_and_trunk(**kw):
 
   tags = kw.get('tags', 'tags')
 
-  a_path = os.path.join(conv.wc, tags, 'some-tag', 'a.txt')
-  b_path = os.path.join(conv.wc, tags, 'some-tag', 'b.txt')
+  a_path = os.path.join(conv.get_wc(), tags, 'some-tag', 'a.txt')
+  b_path = os.path.join(conv.get_wc(), tags, 'some-tag', 'b.txt')
   if not (os.path.exists(a_path) and os.path.exists(b_path)):
     raise svntest.Failure
   if (open(a_path, 'r').read().find('1.24') == -1) \
@@ -1106,12 +1111,14 @@ def branch_delete_first(**kw):
   branches = kw.get('branches', 'branches')
 
   # 'file' was deleted from branch-1 and branch-2, but not branch-3
-  if os.path.exists(os.path.join(conv.wc, branches, 'branch-1', 'file')):
+  if os.path.exists(
+        os.path.join(conv.get_wc(), branches, 'branch-1', 'file')):
     raise svntest.Failure
-  if os.path.exists(os.path.join(conv.wc, branches, 'branch-2', 'file')):
+  if os.path.exists(
+        os.path.join(conv.get_wc(), branches, 'branch-2', 'file')):
     raise svntest.Failure
   if not os.path.exists(
-        os.path.join(conv.wc, branches, 'branch-3', 'file')):
+        os.path.join(conv.get_wc(), branches, 'branch-3', 'file')):
     raise svntest.Failure
 
 
@@ -1663,7 +1670,7 @@ def eol_mime():
   ## Neither --no-default-eol nor --eol-from-mime-type. ##
   conv = ensure_conversion(
       'eol-mime', args=['--mime-types=%s' % mime_path, '--cvs-revnums'])
-  wc_tree = svntest.tree.build_tree_from_wc(conv.wc, 1)
+  wc_tree = svntest.tree.build_tree_from_wc(conv.get_wc(), 1)
   check_props(
       wc_tree, ['svn:eol-style', 'svn:mime-type', 'cvs2svn:cvs-rev'],
       [
@@ -1679,7 +1686,7 @@ def eol_mime():
   ## Just --no-default-eol, not --eol-from-mime-type. ##
   conv = ensure_conversion(
       'eol-mime', args=['--mime-types=%s' % mime_path, '--no-default-eol'])
-  wc_tree = svntest.tree.build_tree_from_wc(conv.wc, 1)
+  wc_tree = svntest.tree.build_tree_from_wc(conv.get_wc(), 1)
   check_props(
       wc_tree, ['svn:eol-style', 'svn:mime-type', 'cvs2svn:cvs-rev'],
       [
@@ -1696,7 +1703,7 @@ def eol_mime():
   conv = ensure_conversion('eol-mime', args=[
       '--mime-types=%s' % mime_path, '--eol-from-mime-type', '--cvs-revnums'
       ])
-  wc_tree = svntest.tree.build_tree_from_wc(conv.wc, 1)
+  wc_tree = svntest.tree.build_tree_from_wc(conv.get_wc(), 1)
   check_props(
       wc_tree, ['svn:eol-style', 'svn:mime-type', 'cvs2svn:cvs-rev'],
       [
@@ -1713,7 +1720,7 @@ def eol_mime():
   conv = ensure_conversion('eol-mime', args=[
       '--mime-types=%s' % mime_path, '--eol-from-mime-type',
       '--no-default-eol'])
-  wc_tree = svntest.tree.build_tree_from_wc(conv.wc, 1)
+  wc_tree = svntest.tree.build_tree_from_wc(conv.get_wc(), 1)
   check_props(
       wc_tree, ['svn:eol-style', 'svn:mime-type', 'cvs2svn:cvs-rev'],
       [
@@ -1730,7 +1737,7 @@ def eol_mime():
 def keywords():
   "test setting of svn:keywords property among others"
   conv = ensure_conversion('keywords')
-  wc_tree = svntest.tree.build_tree_from_wc(conv.wc, 1)
+  wc_tree = svntest.tree.build_tree_from_wc(conv.get_wc(), 1)
   check_props(
       wc_tree, ['svn:keywords', 'svn:eol-style', 'svn:mime-type'],
       [
@@ -1748,7 +1755,7 @@ def keywords():
 def ignore():
   "test setting of svn:ignore property"
   conv = ensure_conversion('cvsignore')
-  wc_tree = svntest.tree.build_tree_from_wc(conv.wc, 1)
+  wc_tree = svntest.tree.build_tree_from_wc(conv.get_wc(), 1)
   topdir_props = props_for_path(wc_tree, 'trunk/proj')
   subdir_props = props_for_path(wc_tree, '/trunk/proj/subdir')
 
@@ -1766,9 +1773,10 @@ def requires_cvs():
   # See issues 4, 11, 29 for the bugs whose regression we're testing for.
   conv = ensure_conversion('requires-cvs', args=["--use-cvs"])
 
-  atsign_contents = file(os.path.join(conv.wc, "trunk", "atsign-add")).read()
+  atsign_contents = file(
+      os.path.join(conv.get_wc(), "trunk", "atsign-add")).read()
   cl_contents = file(
-      os.path.join(conv.wc, "trunk", "client_lock.idl")).read()
+      os.path.join(conv.get_wc(), "trunk", "client_lock.idl")).read()
 
   if atsign_contents[-1:] == "@":
     raise svntest.Failure

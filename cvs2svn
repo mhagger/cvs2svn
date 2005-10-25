@@ -3006,32 +3006,24 @@ class SymbolicNameFillingGuide:
       if not openings:
         return []
 
-      # No easy out, so wish for lexical closures and calculate the scores :-).
-      scores = []
-      opening_score_accum = 0
-      for (opening_rev, opening_score) in openings:
-        opening_score_accum = opening_score_accum + opening_score
-        scores.append((opening_rev, opening_score_accum))
-      min = 0
-      for (closing_rev, closing_score) in closings:
-        done_exact_rev = None
-        insert_index = None
-        insert_score = None
-        for j in range(min, len(scores)):
-          score_rev, score = scores[j]
-          if score_rev >= closing_rev:
-            if not done_exact_rev:
-              if score_rev > closing_rev:
-                insert_index = j
-                insert_score = scores[j-1][1] - closing_score
-              done_exact_rev = 1
-            scores[j] = (score_rev, score - closing_score)
-          else:
-            min = j + 1
-        if not done_exact_rev:
-          scores.append((closing_rev,scores[-1][1] - closing_score))
-        if insert_index is not None:
-          scores.insert(insert_index, (closing_rev, insert_score))
+      # Create a list of all openings (with positive scores) and
+      # closings (with negative scores):
+      things = openings + [(rev,-score) for (rev,score) in closings]
+      # Sort by revision number:
+      things.sort()
+      # Initialize output list with zeroth element of things.  This
+      # element must exist, because it was already verified that
+      # openings is not empty.
+      scores = [ things[0] ]
+      total = scores[-1][1]
+      for (rev, change) in things[1:]:
+        total += change
+        if rev == scores[-1][0]:
+          # Same revision as last entry; modify last entry:
+          scores[-1] = (rev, total)
+        else:
+          # Previously-unseen revision; create new entry:
+          scores.append((rev, total))
       return scores
 
     def best_rev(scores, preferred_rev):

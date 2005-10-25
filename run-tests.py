@@ -1610,6 +1610,27 @@ def props_for_path(node, path):
   "In the tree rooted under SVNTree NODE, return the prop dict for PATH."
   return node_for_path(node, path).props
 
+
+def check_props(wc_root, keys, checks):
+  """Helper function for checking lots of properties.  For a list of
+  files in the conversion at WC_ROOT, check that the values of the
+  properties listed in KEYS agree with those listed in CHECKS.  CHECKS
+  is a list of tuples: [ (filename, [value, value, ...]), ...], where
+  the values are listed in the same order as the key names are listed
+  in KEYS."""
+
+  for (file, values) in checks:
+    assert len(values) == len(keys)
+    props = props_for_path(wc_root, file)
+    for i in range(len(keys)):
+      if props.get(keys[i]) != values[i]:
+        raise svntest.Failure(
+            "File %s has property %s set to \"%s\" "
+            "(it should have been \"%s\").\n"
+            % (file, keys[i], props.get(keys[i]), values[i],)
+            )
+
+
 def eol_mime():
   "test eol settings and mime types together"
   ###TODO: It's a bit klugey to construct this path here.  But so far
@@ -1622,28 +1643,6 @@ def eol_mime():
                                            'eol-mime-cvsrepos',
                                            'mime.types'))
 
-  def the_usual_suspects(wc_root):
-    """Return a dictionary mapping files onto their prop dicts.
-    The files are the six files of interest under WC_ROOT, but with
-    the 'trunk/' prefix removed.  Thus the returned dictionary looks
-    like this:
-
-       'foo.txt'  ==>  { property dictionary for '/trunk/foo.txt' }
-       'foo.xml'  ==>  { property dictionary for '/trunk/foo.xml' }
-       'foo.zip'  ==>  { property dictionary for '/trunk/foo.zip' }
-       'foo.bin'  ==>  { property dictionary for '/trunk/foo.bin' }
-       'foo.csv'  ==>  { property dictionary for '/trunk/foo.csv' }
-       'foo.dbf'  ==>  { property dictionary for '/trunk/foo.dbf' }
-    """
-    return {
-      'foo.txt' : props_for_path(wc_root, 'trunk/foo.txt'),
-      'foo.xml' : props_for_path(wc_root, 'trunk/foo.xml'),
-      'foo.zip' : props_for_path(wc_root, 'trunk/foo.zip'),
-      'foo.bin' : props_for_path(wc_root, 'trunk/foo.bin'),
-      'foo.csv' : props_for_path(wc_root, 'trunk/foo.csv'),
-      'foo.dbf' : props_for_path(wc_root, 'trunk/foo.dbf'),
-      }
-
   # We do four conversions.  Each time, we pass --mime-types=FILE with
   # the same FILE, but vary --no-default-eol and --eol-from-mime-type.
   # Thus there's one conversion with neither flag, one with just the
@@ -1651,245 +1650,99 @@ def eol_mime():
   #
   # In two of the four conversions, we pass --cvs-revnums to make
   # certain that there are no bad interactions.
+  #
+  # The files are as follows:
+  #
+  #     trunk/foo.txt: no -kb, mime file says nothing.
+  #     trunk/foo.xml: no -kb, mime file says text.
+  #     trunk/foo.zip: no -kb, mime file says non-text.
+  #     trunk/foo.bin: has -kb, mime file says nothing.
+  #     trunk/foo.csv: has -kb, mime file says text.
+  #     trunk/foo.dbf: has -kb, mime file says non-text.
 
   ## Neither --no-default-eol nor --eol-from-mime-type. ##
   conv = ensure_conversion(
       'eol-mime', args=['--mime-types=%s' % mime_path, '--cvs-revnums'])
   wc_tree = svntest.tree.build_tree_from_wc(conv.wc, 1)
-  allprops = the_usual_suspects(wc_tree)
-
-  # foo.txt (no -kb, mime file says nothing)
-  if allprops['foo.txt'].get('svn:eol-style') != 'native':
-    raise svntest.Failure
-  if allprops['foo.txt'].get('svn:mime-type') is not None:
-    raise svntest.Failure
-  if not allprops['foo.txt'].get('cvs2svn:cvs-rev') == '1.2':
-    raise svntest.Failure
-
-  # foo.xml (no -kb, mime file says text)
-  if allprops['foo.xml'].get('svn:eol-style') != 'native':
-    raise svntest.Failure
-  if allprops['foo.xml'].get('svn:mime-type') != 'text/xml':
-    raise svntest.Failure
-  if not allprops['foo.xml'].get('cvs2svn:cvs-rev') == '1.2':
-    raise svntest.Failure
-
-  # foo.zip (no -kb, mime file says non-text)
-  if allprops['foo.zip'].get('svn:eol-style') != 'native':
-    raise svntest.Failure
-  if allprops['foo.zip'].get('svn:mime-type') != 'application/zip':
-    raise svntest.Failure
-  if not allprops['foo.zip'].get('cvs2svn:cvs-rev') == '1.2':
-    raise svntest.Failure
-
-  # foo.bin (has -kb, mime file says nothing)
-  if allprops['foo.bin'].get('svn:eol-style') is not None:
-    raise svntest.Failure
-  if allprops['foo.bin'].get('svn:mime-type') != 'application/octet-stream':
-    raise svntest.Failure
-  if not allprops['foo.bin'].get('cvs2svn:cvs-rev') == '1.2':
-    raise svntest.Failure
-
-  # foo.csv (has -kb, mime file says text)
-  if allprops['foo.csv'].get('svn:eol-style') is not None:
-    raise svntest.Failure
-  if allprops['foo.csv'].get('svn:mime-type') != 'text/csv':
-    raise svntest.Failure
-  if not allprops['foo.csv'].get('cvs2svn:cvs-rev') == '1.2':
-    raise svntest.Failure
-
-  # foo.dbf (has -kb, mime file says non-text)
-  if allprops['foo.dbf'].get('svn:eol-style') is not None:
-    raise svntest.Failure
-  if allprops['foo.dbf'].get('svn:mime-type') != 'application/what-is-dbf':
-    raise svntest.Failure
-  if not allprops['foo.dbf'].get('cvs2svn:cvs-rev') == '1.2':
-    raise svntest.Failure
+  check_props(
+      wc_tree, ['svn:eol-style', 'svn:mime-type', 'cvs2svn:cvs-rev'],
+      [
+          ('trunk/foo.txt', ['native', None, '1.2']),
+          ('trunk/foo.xml', ['native', 'text/xml', '1.2']),
+          ('trunk/foo.zip', ['native', 'application/zip', '1.2']),
+          ('trunk/foo.bin', [None, 'application/octet-stream', '1.2']),
+          ('trunk/foo.csv', [None, 'text/csv', '1.2']),
+          ('trunk/foo.dbf', [None, 'application/what-is-dbf', '1.2']),
+          ]
+      )
 
   ## Just --no-default-eol, not --eol-from-mime-type. ##
   conv = ensure_conversion(
       'eol-mime', args=['--mime-types=%s' % mime_path, '--no-default-eol'])
   wc_tree = svntest.tree.build_tree_from_wc(conv.wc, 1)
-  allprops = the_usual_suspects(wc_tree)
-
-  # foo.txt (no -kb, mime file says nothing)
-  if allprops['foo.txt'].get('svn:eol-style') is not None:
-    raise svntest.Failure
-  if allprops['foo.txt'].get('svn:mime-type') is not None:
-    raise svntest.Failure
-
-  # foo.xml (no -kb, mime file says text)
-  if allprops['foo.xml'].get('svn:eol-style') is not None:
-    raise svntest.Failure
-  if allprops['foo.xml'].get('svn:mime-type') != 'text/xml':
-    raise svntest.Failure
-
-  # foo.zip (no -kb, mime file says non-text)
-  if allprops['foo.zip'].get('svn:eol-style') is not None:
-    raise svntest.Failure
-  if allprops['foo.zip'].get('svn:mime-type') != 'application/zip':
-    raise svntest.Failure
-
-  # foo.bin (has -kb, mime file says nothing)
-  if allprops['foo.bin'].get('svn:eol-style') is not None:
-    raise svntest.Failure
-  if allprops['foo.bin'].get('svn:mime-type') != 'application/octet-stream':
-    raise svntest.Failure
-
-  # foo.csv (has -kb, mime file says text)
-  if allprops['foo.csv'].get('svn:eol-style') is not None:
-    raise svntest.Failure
-  if allprops['foo.csv'].get('svn:mime-type') != 'text/csv':
-    raise svntest.Failure
-
-  # foo.dbf (has -kb, mime file says non-text)
-  if allprops['foo.dbf'].get('svn:eol-style') is not None:
-    raise svntest.Failure
-  if allprops['foo.dbf'].get('svn:mime-type') != 'application/what-is-dbf':
-    raise svntest.Failure
+  check_props(
+      wc_tree, ['svn:eol-style', 'svn:mime-type', 'cvs2svn:cvs-rev'],
+      [
+          ('trunk/foo.txt', [None, None, None]),
+          ('trunk/foo.xml', [None, 'text/xml', None]),
+          ('trunk/foo.zip', [None, 'application/zip', None]),
+          ('trunk/foo.bin', [None, 'application/octet-stream', None]),
+          ('trunk/foo.csv', [None, 'text/csv', None]),
+          ('trunk/foo.dbf', [None, 'application/what-is-dbf', None]),
+          ]
+      )
 
   ## Just --eol-from-mime-type, not --no-default-eol. ##
   conv = ensure_conversion('eol-mime', args=[
       '--mime-types=%s' % mime_path, '--eol-from-mime-type', '--cvs-revnums'
       ])
   wc_tree = svntest.tree.build_tree_from_wc(conv.wc, 1)
-  allprops = the_usual_suspects(wc_tree)
-
-  # foo.txt (no -kb, mime file says nothing)
-  if allprops['foo.txt'].get('svn:eol-style') != 'native':
-    raise svntest.Failure
-  if allprops['foo.txt'].get('svn:mime-type') is not None:
-    raise svntest.Failure
-  if not allprops['foo.txt'].get('cvs2svn:cvs-rev') == '1.2':
-    raise svntest.Failure
-
-  # foo.xml (no -kb, mime file says text)
-  if allprops['foo.xml'].get('svn:eol-style') != 'native':
-    raise svntest.Failure
-  if allprops['foo.xml'].get('svn:mime-type') != 'text/xml':
-    raise svntest.Failure
-  if not allprops['foo.xml'].get('cvs2svn:cvs-rev') == '1.2':
-    raise svntest.Failure
-
-  # foo.zip (no -kb, mime file says non-text)
-  if allprops['foo.zip'].get('svn:eol-style') != 'native':
-    raise svntest.Failure
-  if allprops['foo.zip'].get('svn:mime-type') != 'application/zip':
-    raise svntest.Failure
-  if not allprops['foo.zip'].get('cvs2svn:cvs-rev') == '1.2':
-    raise svntest.Failure
-
-  # foo.bin (has -kb, mime file says nothing)
-  if allprops['foo.bin'].get('svn:eol-style') is not None:
-    raise svntest.Failure
-  if allprops['foo.bin'].get('svn:mime-type') != 'application/octet-stream':
-    raise svntest.Failure
-  if not allprops['foo.bin'].get('cvs2svn:cvs-rev') == '1.2':
-    raise svntest.Failure
-
-  # foo.csv (has -kb, mime file says text)
-  if allprops['foo.csv'].get('svn:eol-style') is not None:
-    raise svntest.Failure
-  if allprops['foo.csv'].get('svn:mime-type') != 'text/csv':
-    raise svntest.Failure
-  if not allprops['foo.csv'].get('cvs2svn:cvs-rev') == '1.2':
-    raise svntest.Failure
-
-  # foo.dbf (has -kb, mime file says non-text)
-  if allprops['foo.dbf'].get('svn:eol-style') is not None:
-    raise svntest.Failure
-  if allprops['foo.dbf'].get('svn:mime-type') != 'application/what-is-dbf':
-    raise svntest.Failure
-  if not allprops['foo.dbf'].get('cvs2svn:cvs-rev') == '1.2':
-    raise svntest.Failure
+  check_props(
+      wc_tree, ['svn:eol-style', 'svn:mime-type', 'cvs2svn:cvs-rev'],
+      [
+          ('trunk/foo.txt', ['native', None, '1.2']),
+          ('trunk/foo.xml', ['native', 'text/xml', '1.2']),
+          ('trunk/foo.zip', ['native', 'application/zip', '1.2']),
+          ('trunk/foo.bin', [None, 'application/octet-stream', '1.2']),
+          ('trunk/foo.csv', [None, 'text/csv', '1.2']),
+          ('trunk/foo.dbf', [None, 'application/what-is-dbf', '1.2']),
+          ]
+      )
 
   ## Both --no-default-eol and --eol-from-mime-type. ##
   conv = ensure_conversion('eol-mime', args=[
       '--mime-types=%s' % mime_path, '--eol-from-mime-type',
       '--no-default-eol'])
   wc_tree = svntest.tree.build_tree_from_wc(conv.wc, 1)
-  allprops = the_usual_suspects(wc_tree)
-
-  # foo.txt (no -kb, mime file says nothing)
-  if allprops['foo.txt'].get('svn:eol-style') is not None:
-    raise svntest.Failure
-  if allprops['foo.txt'].get('svn:mime-type') is not None:
-    raise svntest.Failure
-
-  # foo.xml (no -kb, mime file says text)
-  if allprops['foo.xml'].get('svn:eol-style') != 'native':
-    raise svntest.Failure
-  if allprops['foo.xml'].get('svn:mime-type') != 'text/xml':
-    raise svntest.Failure
-
-  # foo.zip (no -kb, mime file says non-text)
-  if allprops['foo.zip'].get('svn:eol-style') is not None:
-    raise svntest.Failure
-  if allprops['foo.zip'].get('svn:mime-type') != 'application/zip':
-    raise svntest.Failure
-
-  # foo.bin (has -kb, mime file says nothing)
-  if allprops['foo.bin'].get('svn:eol-style') is not None:
-    raise svntest.Failure
-  if allprops['foo.bin'].get('svn:mime-type') != 'application/octet-stream':
-    raise svntest.Failure
-
-  # foo.csv (has -kb, mime file says text)
-  if allprops['foo.csv'].get('svn:eol-style') is not None:
-    raise svntest.Failure
-  if allprops['foo.csv'].get('svn:mime-type') != 'text/csv':
-    raise svntest.Failure
-
-  # foo.dbf (has -kb, mime file says non-text)
-  if allprops['foo.dbf'].get('svn:eol-style') is not None:
-    raise svntest.Failure
-  if allprops['foo.dbf'].get('svn:mime-type') != 'application/what-is-dbf':
-    raise svntest.Failure
-
-
-def check_props(allprops, fname, keywords, eol_style, mime_type):
-  "helper function for keywords test"
-  props = allprops[fname]
-  if (keywords == props.get('svn:keywords') and
-      eol_style == props.get('svn:eol-style') and
-      mime_type == props.get('svn:mime-type') ):
-    pass
-  else:
-    raise svntest.Failure(
-      "Unexpected properties for '%s'\n"
-      "keywords:\t%s\t%s\n"
-      "eol-style:\t%s\t%s\n"
-      "mime-type:\t%s\t%s\n"
-      % (fname,
-         keywords, props.get('svn:keywords'),
-         eol_style, props.get('svn:eol-style'),
-         mime_type, props.get('svn:mime-type'),
-         )
+  check_props(
+      wc_tree, ['svn:eol-style', 'svn:mime-type', 'cvs2svn:cvs-rev'],
+      [
+          ('trunk/foo.txt', [None, None, None]),
+          ('trunk/foo.xml', ['native', 'text/xml', None]),
+          ('trunk/foo.zip', [None, 'application/zip', None]),
+          ('trunk/foo.bin', [None, 'application/octet-stream', None]),
+          ('trunk/foo.csv', [None, 'text/csv', None]),
+          ('trunk/foo.dbf', [None, 'application/what-is-dbf', None]),
+          ]
       )
+
 
 def keywords():
   "test setting of svn:keywords property among others"
   conv = ensure_conversion('keywords')
   wc_tree = svntest.tree.build_tree_from_wc(conv.wc, 1)
-  allprops = {
-    'foo.default' : props_for_path(wc_tree, '/trunk/foo.default'),
-    'foo.kkvl'    : props_for_path(wc_tree, '/trunk/foo.kkvl'),
-    'foo.kkv'     : props_for_path(wc_tree, '/trunk/foo.kkv'),
-    'foo.kb'      : props_for_path(wc_tree, '/trunk/foo.kb'),
-    'foo.kk'      : props_for_path(wc_tree, '/trunk/foo.kk'),
-    'foo.ko'      : props_for_path(wc_tree, '/trunk/foo.ko'),
-    'foo.kv'      : props_for_path(wc_tree, '/trunk/foo.kv'),
-    }
-
-  check_props(allprops, 'foo.default', 'Author Date Id Revision', 'native',
-      None)
-  check_props(allprops, 'foo.kkvl', 'Author Date Id Revision', 'native',
-              None)
-  check_props(allprops, 'foo.kkv', 'Author Date Id Revision', 'native', None)
-  check_props(allprops, 'foo.kb', None, None, 'application/octet-stream')
-  check_props(allprops, 'foo.kk', None, 'native', None)
-  check_props(allprops, 'foo.ko', None, 'native', None)
-  check_props(allprops, 'foo.kv', None, 'native', None)
+  check_props(
+      wc_tree, ['svn:keywords', 'svn:eol-style', 'svn:mime-type'],
+      [
+          ('trunk/foo.default', ['Author Date Id Revision', 'native', None]),
+          ('trunk/foo.kkvl', ['Author Date Id Revision', 'native', None]),
+          ('trunk/foo.kkv', ['Author Date Id Revision', 'native', None]),
+          ('trunk/foo.kb', [None, None, 'application/octet-stream']),
+          ('trunk/foo.kk', [None, 'native', None]),
+          ('trunk/foo.ko', [None, 'native', None]),
+          ('trunk/foo.kv', [None, 'native', None]),
+          ]
+      )
 
 
 def ignore():

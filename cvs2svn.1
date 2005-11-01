@@ -124,7 +124,10 @@ Pass \fI--bdb-txn-nosync\fR to "svnadmin create".
 Pass \fI--fs-type\fR=\fItype\fR to "svnadmin create".
 .TP
 \fB--cvs-revnums\fR
-Record CVS revision numbers as file properties.
+Record CVS revision numbers as file properties.  (Note that unless it
+is removed explicitly, the last CVS revision number will remain
+associated with the file even after the file is changed within
+Subversion.)
 .TP
 \fB--mime-types\fR=\fIfile\fR
 Specify an apache-style mime.types \fIfile\fR for setting svn:mime-type .

@@ -484,7 +484,10 @@ cvs2svn --symbol-transform='([0-9])-(.*):release-\1.\2' -q -s SVN RCS
   <tr>
     <td align=right><tt>--cvs-revnums</tt></td>
     <td>Record CVS revision numbers as file properties in the
-      Subversion repository/dumpfile.</td>
+      Subversion repository/dumpfile.  (Note that unless it is removed
+      explicitly, the last CVS revision number will remain associated
+      with the file even after the file is changed within
+      Subversion.)</td>
   </tr>
 
   <tr>

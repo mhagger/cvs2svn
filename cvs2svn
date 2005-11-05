@@ -3725,15 +3725,15 @@ class SVNCommitItem:
     # setting just determined.  See also issue #39.
     if c_rev.mode == 'b':
       eol_style = None
-    elif not Ctx().no_default_eol:
-      eol_style = 'native'
     elif Ctx().eol_from_mime_type and mime_type:
       if mime_type.startswith("text/"):
         eol_style = 'native'
       else:
         eol_style = None
-    else:
+    elif Ctx().no_default_eol:
       eol_style = None
+    else:
+      eol_style = 'native'
 
     if eol_style:
       self.svn_props['svn:eol-style'] = eol_style
@@ -4900,8 +4900,9 @@ def usage():
   print '  --cvs-revnums        record CVS revision numbers as file properties'
   print '  --mime-types=FILE    specify an apache-style mime.types file for\n' \
         '                       setting svn:mime-type'
-  print '  --eol-from-mime-type set svn:eol-style by mime type (only with --mime-types)'
-  print '  --no-default-eol     don\'t set svn:eol-style by CVS defaults'
+  print '  --eol-from-mime-type set svn:eol-style from mime type if known'
+  print '  --no-default-eol     don\'t set svn:eol-style to \'native\' for' \
+        '                       non-binary files with undetermined mime types'
   print '  --keywords-off       don\'t set svn:keywords on any files (by default,'
   print '                       cvs2svn sets svn:keywords on non-binary files to'
   print '                       "%s")' % SVN_KEYWORDS_VALUE

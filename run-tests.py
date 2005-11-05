@@ -1729,7 +1729,7 @@ def eol_mime():
       [
           ('trunk/foo.txt', ['native', None, '1.2']),
           ('trunk/foo.xml', ['native', 'text/xml', '1.2']),
-          ('trunk/foo.zip', ['native', 'application/zip', '1.2']),
+          ('trunk/foo.zip', [None, 'application/zip', '1.2']),
           ('trunk/foo.bin', [None, 'application/octet-stream', '1.2']),
           ('trunk/foo.csv', [None, 'text/csv', '1.2']),
           ('trunk/foo.dbf', [None, 'application/what-is-dbf', '1.2']),

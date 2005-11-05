@@ -498,38 +498,35 @@ cvs2svn --symbol-transform='([0-9])-(.*):release-\1.\2' -q -s SVN RCS
   </tr>
 
   <tr>
-    <td align=right><tt>--no-default-eol</tt></td>
-    <td>Suppress cvs2svn's usual eol behavior, which is to set the
-    <tt>svn:eol-style</tt> property to "native" on all files that CVS
-    would do end-of-line translation for, namely, all files not marked
-    with the <tt>kb</tt> expansion mode.  With the
-    <tt>--no-default-eol</tt> option, cvs2svn will only set
-    svn:eol-style according to the <tt>--eol-from-mime-type</tt>
-    option (see below).</td>
+    <td align=right><tt>--eol-from-mime-type</tt></td>
+    <td>For files that don't have the <tt>kb</tt> expansion mode but
+      have a known mime type, set the eol-style based on the mime
+      type.  For such files, set the <tt>svn:eol-style</tt> property
+      to "native" if the mime type begins with "text/", and leave it
+      unset (i.e., no EOL translation) otherwise.  Files with unknown
+      mime types are not affected by this option.  This option has no
+      effect unless the <tt>--mime-types</tt> option is also
+      specified.</td>
   </tr>
 
   <tr>
-    <td align=right><tt>--eol-from-mime-type</tt></td>
-    <td>Set the <tt>svn:eol-style</tt> property to "native" on all
-    files whose mime type begins with "text/", except those marked
-    with the <tt>kb</tt> expansion mode.  This option is meaningless
-    unless <tt>--mime-types</tt> is also passed.  There is
-    also little point passing <tt>--eol-from-mime-type</tt> without
-    passing <tt>--no-default-eol</tt> too, since without
-    <tt>--no-default-eol</tt>, all non-<tt>kb</tt> files will get an
-    <tt>svn:eol-style</tt> of "native" anyway, whether or not their
-    mime type says to.</td> 
+    <td align=right><tt>--no-default-eol</tt></td>
+    <td>Files that don't have the <tt>kb</tt> expansion mode and (if
+      <tt>--eol-from-mime-type</tt> is set) unknown mime type usually
+      have their <tt>svn:eol-style</tt> property to "native".  If this
+      option is specified, such files are left with no eol-style
+      (i.e., no EOL translation).</td>
   </tr>
 
   <tr>
     <td align=right><tt>--keywords-off</tt></td>
     <td>By default, cvs2svn sets <tt>svn:keywords</tt> on CVS files to
-    "author id date" if the mode of the RCS file in question is either
-    kv, kvl or <b>not</b> kb.  If you use the <tt>--keywords-off</tt>
-    switch, cvs2svn will not set <tt>svn:keywords</tt> for any file.
-    While this will not touch the keywords in the contents of your
-    files, Subversion will not expand them.
-    </td> 
+      "author id date" if the mode of the RCS file in question is
+      either kv, kvl or <b>not</b> kb.  If you use the
+      <tt>--keywords-off</tt> switch, cvs2svn will not set
+      <tt>svn:keywords</tt> for any file.  While this will not touch
+      the keywords in the contents of your files, Subversion will not
+      expand them.</td>
   </tr>
 
 </table>

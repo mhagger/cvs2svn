@@ -135,10 +135,10 @@ On \fIDebian GNU/Linux\fR systems, you can have one at \fI/etc/mime.types\fR
 by installing the \fImime-support\fR package.
 .TP
 \fB--eol-from-mime-type\fR
-Set svn:eol-style by mime type (only with \fI--mime-types\fR).
+Set svn:eol-style by mime type if known.
 .TP
 \fB--no-default-eol\fR
-Don't set svn:eol-style by CVS defaults.
+Don't set svn:eol-style for non-binary files with undetermined types.
 .TP
 \fB--keywords-off\fR
 Don't set svn:keywords on any files (cvs2svn sets svn:keywords to

@@ -3955,20 +3955,17 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     # preserve the previous value of the property ourselves.
 
     # Calculate the (sorted-by-name) property string and length, if any.
-    prop_contents = ''
-    prop_names = svn_props.keys()
-    prop_names.sort()
-    for pname in prop_names:
-      prop_contents += self._string_for_prop(pname, svn_props[pname])
-    if prop_contents:
-      prop_contents = prop_contents + 'PROPS-END\n'
-      props_len = len(prop_contents)
+    if svn_props:
+      prop_contents = ''
+      prop_names = svn_props.keys()
+      prop_names.sort()
+      for pname in prop_names:
+        prop_contents += self._string_for_prop(pname, svn_props[pname])
+      prop_contents += 'PROPS-END\n'
+      props_header = 'Prop-content-length: %d\n' % len(prop_contents)
     else:
-      props_len = 0
-
-    props_header = ''
-    if props_len:
-      props_header = 'Prop-content-length: %d\n' % props_len
+      prop_contents = ''
+      props_header = ''
 
     # treat .cvsignore as a directory property
     dir_path, basename = os.path.split(c_rev.svn_path)
@@ -4052,7 +4049,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     self.dumpfile.seek(pos + 84, 0)
     # The content length is the length of property data, text data,
     # and any metadata around/inside around them.
-    self.dumpfile.write('%16d' % (length + props_len))
+    self.dumpfile.write('%16d' % (length + len(prop_contents)))
     # Jump back to the end of the stream
     self.dumpfile.seek(0, 2)
 

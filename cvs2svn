@@ -3707,7 +3707,6 @@ class SVNCommitItem:
     # follow the conditionals carefully.  See also issue #39.
     mime_type = None
     eol_style = None
-    keywords = None
 
     if Ctx().mime_mapper:
       mime_type = Ctx().mime_mapper.get_type_from_filename(c_rev.cvs_path)
@@ -3724,17 +3723,14 @@ class SVNCommitItem:
       # file is kb, and no other mimetype specified
       mime_type = 'application/octet-stream'
 
-    # Set the svn:keywords property, if appropriate.  See issue #2.
-    if not Ctx().keywords_off and c_rev.mode in [None, 'kv', 'kvl']:
-      keywords = SVN_KEYWORDS_VALUE
+    # Should svn:keywords be set?
+    self.has_keywords = (not Ctx().keywords_off
+                         and c_rev.mode in [None, 'kv', 'kvl'])
 
     # Remember if we need to filter the EOLs.  We can't use self.svn_props
     # becase they are only set on the first revision and we need to filter
     # all revisions.
     self.needs_eol_filter = eol_style == 'native'
-
-    # Remember if this file has svn:keywords set
-    self.has_keywords = keywords is not None
 
     # If asked to fill in the Subversion properties ('svn:' ones), do so.
     if make_svn_props:
@@ -3743,7 +3739,7 @@ class SVNCommitItem:
         self.svn_props['svn:executable'] = '*'
 
       # Set the svn:keywords property, if appropriate.  See issue #2.
-      if keywords:
+      if self.has_keywords:
         self.svn_props['svn:keywords'] = SVN_KEYWORDS_VALUE
 
       if mime_type:

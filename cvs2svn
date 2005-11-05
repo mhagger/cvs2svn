@@ -3967,10 +3967,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     prop_names = svn_props.keys()
     prop_names.sort()
     for pname in prop_names:
-      pval = svn_props[pname]
-      prop_contents = prop_contents + \
-                      'K %d\n%s\nV %d\n%s\n' \
-                      % (len(pname), pname, len(pval), pval)
+      prop_contents += self._string_for_prop(pname, svn_props[pname])
     if prop_contents:
       prop_contents = prop_contents + 'PROPS-END\n'
       props_len = len(prop_contents)

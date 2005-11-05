@@ -3697,7 +3697,6 @@ class SVNCommitItem:
     for files assigned a type not beginning with "text/"."""
 
     self.c_rev = c_rev
-    self.keywords_off = Ctx().keywords_off
     self.mime_mapper = Ctx().mime_mapper
 
     # We begin with only a "CVS revision" property.
@@ -3728,8 +3727,7 @@ class SVNCommitItem:
       mime_type = 'application/octet-stream'
 
     # Set the svn:keywords property, if appropriate.  See issue #2.
-    if not self.keywords_off and (c_rev.mode is None or c_rev.mode == 'kv' or
-                                  c_rev.mode == 'kvl'):
+    if not Ctx().keywords_off and c_rev.mode in [None, 'kv', 'kvl']:
       keywords = SVN_KEYWORDS_VALUE
 
     # Remember if we need to filter the EOLs.  We can't use self.svn_props

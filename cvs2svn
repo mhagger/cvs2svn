@@ -1429,7 +1429,7 @@ class CollectData(cvs2svn_rcsparse.Sink):
     # If the paths are not the same, then that means that the
     # canonical_name has had the 'Attic' component stripped out.
     self.file_in_attic = None
-    if not canonical_name == filename:
+    if canonical_name != filename:
       self.file_in_attic = 1
 
     file_stat = os.stat(filename)
@@ -1812,15 +1812,14 @@ class CollectData(cvs2svn_rcsparse.Sink):
     #
     # This is issue #89.
     cur_num = revision
-    if (is_branch_revision(revision)
-        and not self.rev_state[revision] == 'dead'):
+    if is_branch_revision(revision) and self.rev_state[revision] != 'dead':
       while 1:
         prev_num = self.prev_rev.get(cur_num, None)
         if not cur_num or not prev_num:
           break
         if (not is_same_line_of_development(cur_num, prev_num)
             and self.rev_state[cur_num] == 'dead'
-            and not self.rev_state[prev_num] == 'dead'):
+            and self.rev_state[prev_num] != 'dead'):
           op = OP_CHANGE
         cur_num = self.prev_rev.get(cur_num, None)
 
@@ -3713,7 +3712,7 @@ class SVNCommitItem:
     if Ctx().mime_mapper:
       mime_type = Ctx().mime_mapper.get_type_from_filename(c_rev.cvs_path)
 
-    if not c_rev.mode == 'b':
+    if c_rev.mode != 'b':
       if not Ctx().no_default_eol:
         eol_style = 'native'
       elif mime_type and Ctx().eol_from_mime_type:
@@ -4656,7 +4655,7 @@ def pass7():
       if not line:
         break
       sym, svn_revnum, cvs_rev_key = line.split(" ", 2)
-      if not sym == old_sym:
+      if sym != old_sym:
         Log().write(LOG_VERBOSE, " ", sym)
         old_sym = sym
         offsets_db[sym] = fpos
@@ -4804,7 +4803,7 @@ def convert(start_pass, end_pass):
     # (Identified by exactly one leading underscore)
     for attr in dir(Ctx()):
       if (len(attr) > 2 and attr[0] == '_' and attr[1] != '_'
-          and not attr[:6] == "_Ctx__"):
+          and attr[:6] != "_Ctx__"):
         delattr(Ctx(), attr)
     if not Ctx().skip_cleanup:
       cleanup.cleanup(_passes[i])

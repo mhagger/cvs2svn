@@ -3671,10 +3671,12 @@ class SVNCommitItem:
   """A wrapper class for CVSRevision objects upon which
   Subversion-related data (such as properties) may be hung."""
 
-  def __init__(self, c_rev, make_svn_props):
-    """Initialize instance and set cvs2svn:cvs-rev property if
-    Ctx().cvs_revnums is set.  If MAKE_SVN_PROPS is true, then also
-    deduce and set svn: properties.
+  def __init__(self, c_rev, svn_props_changed):
+    """
+
+    Initialize instance and record the properties for this file.
+    SVN_PROPS_CHANGED indicates whether the svn: properties are known
+    to have changed since the last revision.
 
     If Ctx().cvs_revnums is true, then set the 'cvs2svn:cvs-rev'
     property on files, when they are changed due to a corresponding
@@ -3696,12 +3698,15 @@ class SVNCommitItem:
     for files assigned a type not beginning with "text/"."""
 
     self.c_rev = c_rev
+    # Did the svn properties change for this file (i.e., do they have
+    # to be written to the dumpfile?)
+    self.svn_props_changed = svn_props_changed
 
     # We begin with only a "CVS revision" property.
     self.svn_props = { }
     if Ctx().cvs_revnums:
       self.svn_props['cvs2svn:cvs-rev'] = c_rev.rev
-      make_svn_props = True
+      self.svn_props_changed = True
 
     # Set mime-type.
     mime_type = None
@@ -3736,21 +3741,19 @@ class SVNCommitItem:
     # all revisions.
     self.needs_eol_filter = eol_style == 'native'
 
-    # If asked to fill in the Subversion properties ('svn:' ones), do so.
-    if make_svn_props:
-      # Tack on the executableness, if any.
-      if c_rev.file_executable:
-        self.svn_props['svn:executable'] = '*'
+    # Tack on the executableness, if any.
+    if c_rev.file_executable:
+      self.svn_props['svn:executable'] = '*'
 
-      # Set the svn:keywords property, if appropriate.  See issue #2.
-      if self.has_keywords:
-        self.svn_props['svn:keywords'] = SVN_KEYWORDS_VALUE
+    # Set the svn:keywords property, if appropriate.  See issue #2.
+    if self.has_keywords:
+      self.svn_props['svn:keywords'] = SVN_KEYWORDS_VALUE
 
-      if mime_type:
-        self.svn_props['svn:mime-type'] = mime_type
+    if mime_type:
+      self.svn_props['svn:mime-type'] = mime_type
 
-      if eol_style:
-        self.svn_props['svn:eol-style'] = eol_style
+    if eol_style:
+      self.svn_props['svn:eol-style'] = eol_style
 
 
 class SVNRepositoryMirrorDelegate:
@@ -3926,7 +3929,6 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
 
     # Convenience variables
     c_rev = s_item.c_rev
-    svn_props = s_item.svn_props
 
     # The property handling here takes advantage of an undocumented
     # but IMHO consistent feature of the Subversion dumpfile-loading
@@ -3959,7 +3961,8 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     # preserve the previous value of the property ourselves.
 
     # Calculate the (sorted-by-name) property string and length, if any.
-    if svn_props:
+    if s_item.svn_props_changed:
+      svn_props = s_item.svn_props
       prop_contents = ''
       prop_names = svn_props.keys()
       prop_names.sort()

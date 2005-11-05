@@ -3674,7 +3674,6 @@ class SVNCommitItem:
 
   def __init__(self, c_rev, make_svn_props):
     self.c_rev = c_rev
-    self.set_cvs_revnum_properties = Ctx().cvs_revnums
     self.eol_from_mime_type = Ctx().eol_from_mime_type
     self.no_default_eol = Ctx().no_default_eol
     self.keywords_off = Ctx().keywords_off
@@ -3682,7 +3681,7 @@ class SVNCommitItem:
 
     # We begin with only a "CVS revision" property.
     self.svn_props = { }
-    if self.set_cvs_revnum_properties:
+    if Ctx().cvs_revnums:
       self.svn_props['cvs2svn:cvs-rev'] = c_rev.rev
       make_svn_props = True
 

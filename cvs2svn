@@ -3718,6 +3718,9 @@ class SVNCommitItem:
       # file is kb, and no other mimetype specified
       mime_type = 'application/octet-stream'
 
+    if mime_type:
+      self.svn_props['svn:mime-type'] = mime_type
+
     # Set eol-style.  This setting may be influenced by the mime-type
     # setting just determined.  See also issue #39.
     if c_rev.mode == 'b':
@@ -3732,28 +3735,25 @@ class SVNCommitItem:
     else:
       eol_style = None
 
-    # Should svn:keywords be set?
-    self.has_keywords = (not Ctx().keywords_off
-                         and c_rev.mode in [None, 'kv', 'kvl'])
+    if eol_style:
+      self.svn_props['svn:eol-style'] = eol_style
 
     # Remember if we need to filter the EOLs.  We can't use self.svn_props
     # becase they are only set on the first revision and we need to filter
     # all revisions.
     self.needs_eol_filter = eol_style == 'native'
 
+    # Should svn:keywords be set?
+    # Set the svn:keywords property, if appropriate.  See issue #2.
+    if not Ctx().keywords_off and c_rev.mode in [None, 'kv', 'kvl']:
+      self.has_keywords = True
+      self.svn_props['svn:keywords'] = SVN_KEYWORDS_VALUE
+    else:
+      self.has_keywords = False
+
     # Tack on the executableness, if any.
     if c_rev.file_executable:
       self.svn_props['svn:executable'] = '*'
-
-    # Set the svn:keywords property, if appropriate.  See issue #2.
-    if self.has_keywords:
-      self.svn_props['svn:keywords'] = SVN_KEYWORDS_VALUE
-
-    if mime_type:
-      self.svn_props['svn:mime-type'] = mime_type
-
-    if eol_style:
-      self.svn_props['svn:eol-style'] = eol_style
 
 
 class SVNRepositoryMirrorDelegate:

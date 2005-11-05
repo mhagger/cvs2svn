@@ -3670,9 +3670,32 @@ class SVNRepositoryMirror:
 
 class SVNCommitItem:
   """A wrapper class for CVSRevision objects upon which
-   Subversion-related data (such as properties) may be hung."""
+  Subversion-related data (such as properties) may be hung."""
 
   def __init__(self, c_rev, make_svn_props):
+    """Initialize instance and set cvs2svn:cvs-rev property if
+    Ctx().cvs_revnums is set.  If MAKE_SVN_PROPS is true, then also
+    deduce and set svn: properties.
+
+    If Ctx().cvs_revnums is true, then set the 'cvs2svn:cvs-rev'
+    property on files, when they are changed due to a corresponding
+    CVS revision.
+
+    If Ctx().mime_mapper is not None, then it is a MimeMapper
+    instance, used to determine whether or not to set the
+    'svn:mime-type' property on files.  But even if Ctx().mime_mapper
+    is None, files marked with the CVS 'kb' flag will receive a mime
+    type of "application/octet-stream".
+
+    Unless Ctx().no_default_eol is true, set 'svn:eol-style' to
+    'native' for files not marked with the CVS 'kb' flag, except as
+    superseded by Ctx().eol_from_mime_type (see below).
+
+    If Ctx().eol_from_mime_type is not None, then set 'svn:eol-style'
+    to 'native' for all files to which Ctx().mime_mapper assigns a
+    mime type beginning with "text/", and don't set 'svn:eol-style'
+    for files assigned a type not beginning with "text/"."""
+
     self.c_rev = c_rev
     self.eol_from_mime_type = Ctx().eol_from_mime_type
     self.no_default_eol = Ctx().no_default_eol
@@ -3790,27 +3813,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
 
   def __init__(self, dumpfile_path=None):
     """Return a new DumpfileDelegate instance, attached to a dumpfile
-    DUMPFILE_PATH (Ctx().dumpfile, if None), using Ctx().encoding.
-
-    If Ctx().cvs_revnums is true, then set the 'cvs2svn:cvs-revnum'
-    property on files, when they are changed due to a corresponding
-    CVS revision.
-
-    If Ctx().mime_mapper is not None, then it is a MimeMapper
-    instance, used to determine whether or not to set the
-    'svn:mime-type' property on files.  But even if Ctx().mime_mapper
-    is None, files marked with the CVS 'kb' flag will receive a mime
-    type of "application/octet-stream".
-
-    Unless Ctx().no_default_eol is true, set 'svn:eol-style' to
-    'native' for files not marked with the CVS 'kb' flag, except as
-    superseded by Ctx().eol_from_mime_type (see below).
-
-    If Ctx().eol_from_mime_type is not None, then set 'svn:eol-style'
-    to 'native' for all files to which Ctx().mime_mapper assigns a
-    mime type beginning with "text/", and don't set 'svn:eol-style'
-    for files assigned a type not beginning with "text/".
-    """
+    DUMPFILE_PATH (Ctx().dumpfile, if None), using Ctx().encoding."""
     if dumpfile_path:
       self.dumpfile_path = dumpfile_path
     else:

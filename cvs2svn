@@ -3697,7 +3697,6 @@ class SVNCommitItem:
     for files assigned a type not beginning with "text/"."""
 
     self.c_rev = c_rev
-    self.eol_from_mime_type = Ctx().eol_from_mime_type
     self.no_default_eol = Ctx().no_default_eol
     self.keywords_off = Ctx().keywords_off
     self.mime_mapper = Ctx().mime_mapper
@@ -3720,7 +3719,7 @@ class SVNCommitItem:
     if not c_rev.mode == 'b':
       if not self.no_default_eol:
         eol_style = 'native'
-      elif mime_type and self.eol_from_mime_type:
+      elif mime_type and Ctx().eol_from_mime_type:
         if mime_type.startswith("text/"):
           eol_style = 'native'
         else:

@@ -3703,25 +3703,29 @@ class SVNCommitItem:
       self.svn_props['cvs2svn:cvs-rev'] = c_rev.rev
       make_svn_props = True
 
-    # Set mime-type and eol.  These two properties are intertwingled;
-    # follow the conditionals carefully.  See also issue #39.
+    # Set mime-type.
     mime_type = None
-    eol_style = None
 
     if Ctx().mime_mapper:
       mime_type = Ctx().mime_mapper.get_type_from_filename(c_rev.cvs_path)
 
-    if c_rev.mode != 'b':
-      if not Ctx().no_default_eol:
-        eol_style = 'native'
-      elif mime_type and Ctx().eol_from_mime_type:
-        if mime_type.startswith("text/"):
-          eol_style = 'native'
-        else:
-          eol_style = None
-    elif mime_type is None:
+    if c_rev.mode == 'b' and mime_type is None:
       # file is kb, and no other mimetype specified
       mime_type = 'application/octet-stream'
+
+    # Set eol-style.  This setting may be influenced by the mime-type
+    # setting just determined.  See also issue #39.
+    if c_rev.mode == 'b':
+      eol_style = None
+    elif not Ctx().no_default_eol:
+      eol_style = 'native'
+    elif Ctx().eol_from_mime_type and mime_type:
+      if mime_type.startswith("text/"):
+        eol_style = 'native'
+      else:
+        eol_style = None
+    else:
+      eol_style = None
 
     # Should svn:keywords be set?
     self.has_keywords = (not Ctx().keywords_off

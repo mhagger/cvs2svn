@@ -3845,6 +3845,11 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
             % (path,))
     return string.join(pieces, '/')
 
+  def _string_for_prop(self, name, value):
+    """Return a property in the form needed for the dumpfile."""
+
+    return 'K %d\n%s\nV %d\n%s\n' % (len(name), name, len(value), value)
+
   def start_commit(self, svn_commit):
     """Emit the start of SVN_COMMIT (an SVNCommit)."""
 
@@ -3880,20 +3885,17 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     # dumpfile.  But since revisions only have props, the two lengths
     # are always the same for revisions.
 
-    # Calculate the total length of the props section.
+    # Calculate the output needed for the property definitions.
     props = svn_commit.get_revprops()
     prop_names = props.keys()
     prop_names.sort()
-    total_len = 10  # len('PROPS-END\n')
+    prop_strings = []
     for propname in prop_names:
-      if props[propname] is None:
-        continue
-      klen = len(propname)
-      klen_len = len('K %d' % klen)
-      vlen = len(props[propname])
-      vlen_len = len('V %d' % vlen)
-      # + 4 for the four newlines within a given property's section
-      total_len = total_len + klen + klen_len + vlen + vlen_len + 4
+      if props[propname] is not None:
+        prop_strings.append(self._string_for_prop(propname, props[propname]))
+
+    all_prop_strings = ''.join(prop_strings) + 'PROPS-END\n'
+    total_len = len(all_prop_strings)
 
     # Print the revision header and props
     self.dumpfile.write('Revision-number: %d\n'
@@ -3902,18 +3904,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
                         '\n'
                         % (self.revision, total_len, total_len))
 
-    for propname in prop_names:
-      if props[propname] is None:
-        continue
-      self.dumpfile.write('K %d\n'
-                          '%s\n'
-                          'V %d\n'
-                          '%s\n' % (len(propname),
-                                    propname,
-                                    len(props[propname]),
-                                    props[propname]))
-
-    self.dumpfile.write('PROPS-END\n')
+    self.dumpfile.write(all_prop_strings)
     self.dumpfile.write('\n')
 
   def mkdir(self, path):

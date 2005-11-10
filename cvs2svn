@@ -4884,7 +4884,7 @@ def usage():
         % Ctx().tags_base
   print '  --no-prune           don\'t prune empty directories'
   print '  --dump-only          just produce a dumpfile, don\'t commit to a repos'
-  print '  --encoding=ENC       encoding of log messages in CVS repos'
+  print '  --encoding=ENC       encoding of paths and log messages in CVS repos'
   print '                       Multiple of these options may be passed, where they'
   print '                       will be treated as an ordered list of encodings to'
   print '                       attempt (with "ascii" as a hardcoded last resort)'

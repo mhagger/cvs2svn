@@ -4898,11 +4898,11 @@ def usage():
   print '  --bdb-txn-nosync     pass --bdb-txn-nosync to "svnadmin create"'
   print '  --fs-type=TYPE       pass --fs-type=TYPE to "svnadmin create"'
   print '  --cvs-revnums        record CVS revision numbers as file properties'
-  print '  --mime-types=FILE    specify an apache-style mime.types file for\n' \
-        '                       setting svn:mime-type'
+  print '  --mime-types=FILE    specify an apache-style mime.types file for'
+  print '                       setting svn:mime-type'
   print '  --eol-from-mime-type set svn:eol-style from mime type if known'
-  print '  --no-default-eol     don\'t set svn:eol-style to \'native\' for' \
-        '                       non-binary files with undetermined mime types'
+  print '  --no-default-eol     don\'t set svn:eol-style to \'native\' for'
+  print '                       non-binary files with undetermined mime types'
   print '  --keywords-off       don\'t set svn:keywords on any files (by default,'
   print '                       cvs2svn sets svn:keywords on non-binary files to'
   print '                       "%s")' % SVN_KEYWORDS_VALUE

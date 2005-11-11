@@ -3699,10 +3699,6 @@ class SVNCommitItem:
     for svn_property_setter in Ctx().svn_property_setters:
       svn_property_setter.set_properties(self)
 
-    if c_rev.mode == 'b' and not self.svn_props.has_key('svn:mime-type'):
-      # file is kb, and no other mimetype specified
-      self.svn_props['svn:mime-type'] = 'application/octet-stream'
-
     # Set eol-style.  This setting may be influenced by the mime-type
     # setting just determined.  See also issue #39.
     if c_rev.mode == 'b':
@@ -4789,6 +4785,15 @@ class MimeMapper(SVNPropertySetter):
       s_item.svn_props['svn:mime-type'] = mime_type
 
 
+class BinaryFileDefaultMimeTypeSetter(SVNPropertySetter):
+  """Set the default mime type for binary files, if no other one is known."""
+
+  def set_properties(self, s_item):
+    if not s_item.svn_props.has_key('svn:mime-type') \
+           and s_item.c_rev.mode == 'b':
+      s_item.svn_props['svn:mime-type'] = 'application/octet-stream'
+
+
 def convert(start_pass, end_pass):
   "Convert a CVS repository to an SVN repository."
 
@@ -5117,6 +5122,8 @@ def main():
     mime_mapper = MimeMapper()
     mime_mapper.set_mime_types_file(ctx.mime_types_file)
     ctx.svn_property_setters.append(mime_mapper)
+
+  ctx.svn_property_setters.append(BinaryFileDefaultMimeTypeSetter())
 
   # Make sure the tmp directory exists.  Note that we don't check if
   # it's empty -- we want to be able to use, for example, "." to hold

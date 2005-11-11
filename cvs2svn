@@ -3702,8 +3702,11 @@ class SVNCommitItem:
     # to be written to the dumpfile?)
     self.svn_props_changed = svn_props_changed
 
-    # We begin with only a "CVS revision" property.
+    # The properties for this item as a map { key : value }.  If VALUE
+    # is None, no property should be set.
     self.svn_props = { }
+
+    # We begin with only a "CVS revision" property.
     if Ctx().cvs_revnums:
       self.svn_props['cvs2svn:cvs-rev'] = c_rev.rev
       self.svn_props_changed = True
@@ -3967,7 +3970,9 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
       prop_names = svn_props.keys()
       prop_names.sort()
       for pname in prop_names:
-        prop_contents += self._string_for_prop(pname, svn_props[pname])
+        pvalue = svn_props[pname]
+        if pvalue is not None:
+          prop_contents += self._string_for_prop(pname, pvalue)
       prop_contents += 'PROPS-END\n'
       props_header = 'Prop-content-length: %d\n' % len(prop_contents)
     else:

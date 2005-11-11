@@ -3727,8 +3727,9 @@ class SVNCommitItem:
     # setting just determined.  See also issue #39.
     if c_rev.mode == 'b':
       eol_style = None
-    elif Ctx().eol_from_mime_type and mime_type:
-      if mime_type.startswith("text/"):
+    elif Ctx().eol_from_mime_type \
+             and self.svn_props['svn:mime-type'] is not None:
+      if self.svn_props['svn:mime-type'].startswith("text/"):
         eol_style = 'native'
       else:
         eol_style = None
@@ -3742,7 +3743,7 @@ class SVNCommitItem:
     # Remember if we need to filter the EOLs.  We can't use self.svn_props
     # becase they are only set on the first revision and we need to filter
     # all revisions.
-    self.needs_eol_filter = eol_style is not None
+    self.needs_eol_filter = self.svn_props['svn:eol-style'] is not None
 
     # Should svn:keywords be set?
     # Set the svn:keywords property, if appropriate.  See issue #2.

@@ -3373,12 +3373,12 @@ class SVNRepositoryMirror:
     # We do not have to update the nodes because our mirror is only
     # concerned with the presence or absence of paths, and a file
     # content change does not cause any path changes.
-    self._invoke_delegates('change_path', SVNCommitItem(cvs_rev, 0))
+    self._invoke_delegates('change_path', SVNCommitItem(cvs_rev, False))
 
   def _add_path(self, cvs_rev):
     """Add the CVS_REV's svn_path to the repository mirror."""
     self._open_writable_node(cvs_rev.svn_path, True)
-    self._invoke_delegates('add_path', SVNCommitItem(cvs_rev, 1))
+    self._invoke_delegates('add_path', SVNCommitItem(cvs_rev, True))
 
   def _copy_path(self, src_path, dest_path, src_revnum):
     """Copy SRC_PATH at subversion revision number SRC_REVNUM to

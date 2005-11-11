@@ -3699,13 +3699,6 @@ class SVNCommitItem:
     for svn_property_setter in Ctx().svn_property_setters:
       svn_property_setter.set_properties(self)
 
-    if not self.svn_props.has_key('svn:eol-style') \
-         and Ctx().no_default_eol:
-      self.svn_props['svn:eol-style'] = None
-
-    if not self.svn_props.has_key('svn:eol-style'):
-      self.svn_props['svn:eol-style'] = 'native'
-
     # Remember if we need to filter the EOLs.  We can't use self.svn_props
     # becase they are only set on the first revision and we need to filter
     # all revisions.
@@ -4807,6 +4800,19 @@ class EOLStyleFromMimeTypeSetter(SVNPropertySetter):
         s_item.svn_props['svn:eol-style'] = None
 
 
+class DefaultEOLStyleSetter(SVNPropertySetter):
+  """Set the default eol-style if one has not already been set."""
+
+  def __init__(self, value):
+    """Initialize with the specified default VALUE."""
+
+    self.value = value
+
+  def set_properties(self, s_item):
+    if not s_item.svn_props.has_key('svn:eol-style'):
+      s_item.svn_props['svn:eol-style'] = self.value
+
+
 def convert(start_pass, end_pass):
   "Convert a CVS repository to an SVN repository."
 
@@ -5141,6 +5147,11 @@ def main():
 
   if ctx.eol_from_mime_type:
     ctx.svn_property_setters.append(EOLStyleFromMimeTypeSetter())
+
+  if Ctx().no_default_eol:
+    ctx.svn_property_setters.append(DefaultEOLStyleSetter(None))
+  else:
+    ctx.svn_property_setters.append(DefaultEOLStyleSetter('native'))
 
   # Make sure the tmp directory exists.  Note that we don't check if
   # it's empty -- we want to be able to use, for example, "." to hold

@@ -4719,10 +4719,9 @@ class CVSRevisionNumberSetter(SVNPropertySetter):
 class MimeMapper(SVNPropertySetter):
   """A class that provides mappings from file names to MIME types."""
 
-  def __init__(self):
+  def __init__(self, mime_types_file):
     self.mappings = { }
 
-  def set_mime_types_file(self, mime_types_file):
     for line in fileinput.input(mime_types_file):
       if line.startswith("#"):
         continue
@@ -5152,9 +5151,7 @@ def main():
           'installed and/or use the --svnadmin option.' % (e,))
 
   if ctx.mime_types_file:
-    mime_mapper = MimeMapper()
-    mime_mapper.set_mime_types_file(ctx.mime_types_file)
-    ctx.svn_property_setters.append(mime_mapper)
+    ctx.svn_property_setters.append(MimeMapper(ctx.mime_types_file))
 
   ctx.svn_property_setters.append(BinaryFileDefaultMimeTypeSetter())
   ctx.svn_property_setters.append(BinaryFileEOLStyleSetter())

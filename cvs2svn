@@ -3676,10 +3676,6 @@ class SVNCommitItem:
     SVN_PROPS_CHANGED indicates whether the svn: properties are known
     to have changed since the last revision.
 
-    If Ctx().cvs_revnums is true, then set the 'cvs2svn:cvs-rev'
-    property on files, when they are changed due to a corresponding
-    CVS revision.
-
     Files marked with the CVS 'kb' flag with no known mime type will
     receive a mime type of"application/octet-stream".
 
@@ -3699,11 +3695,6 @@ class SVNCommitItem:
     # The properties for this item as a map { key : value }.  If VALUE
     # is None, no property should be set.
     self.svn_props = { }
-
-    # We begin with only a "CVS revision" property.
-    if Ctx().cvs_revnums:
-      self.svn_props['cvs2svn:cvs-rev'] = c_rev.rev
-      self.svn_props_changed = True
 
     for svn_property_setter in Ctx().svn_property_setters:
       svn_property_setter.set_properties(self)
@@ -4738,7 +4729,6 @@ class Ctx:
     self.username = None
     self.print_help = 0
     self.skip_cleanup = 0
-    self.cvs_revnums = 0
     self.bdb_txn_nosync = 0
     self.fs_type = None
     self.forced_branches = []
@@ -4746,6 +4736,14 @@ class Ctx:
     self.excludes = []
     self.symbol_transforms = []
     self.svn_property_setters = []
+
+
+class CVSRevisionNumberSetter(SVNPropertySetter):
+  """Set the cvs2svn:cvs-rev property to the CVS revision number."""
+
+  def set_properties(self, s_item):
+    s_item.svn_props['cvs2svn:cvs-rev'] = s_item.c_rev.rev
+    s_item.svn_props_changed = True
 
 
 class MimeMapper(SVNPropertySetter):
@@ -5015,7 +5013,7 @@ def main():
     elif opt == '--skip-cleanup':
       ctx.skip_cleanup = 1
     elif opt == '--cvs-revnums':
-      ctx.cvs_revnums = 1
+      ctx.svn_property_setters.append(CVSRevisionNumberSetter())
     elif opt == '--bdb-txn-nosync':
       ctx.bdb_txn_nosync = 1
     elif opt == '--fs-type':

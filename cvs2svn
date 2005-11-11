@@ -3672,9 +3672,7 @@ class SVNCommitItem:
   Subversion-related data (such as properties) may be hung."""
 
   def __init__(self, c_rev, svn_props_changed):
-    """
-
-    Initialize instance and record the properties for this file.
+    """Initialize instance and record the properties for this file.
     SVN_PROPS_CHANGED indicates whether the svn: properties are known
     to have changed since the last revision.
 
@@ -3682,20 +3680,16 @@ class SVNCommitItem:
     property on files, when they are changed due to a corresponding
     CVS revision.
 
-    If Ctx().mime_mapper is not None, then it is a MimeMapper
-    instance, used to determine whether or not to set the
-    'svn:mime-type' property on files.  But even if Ctx().mime_mapper
-    is None, files marked with the CVS 'kb' flag will receive a mime
-    type of "application/octet-stream".
+    Files marked with the CVS 'kb' flag with no known mime type will
+    receive a mime type of"application/octet-stream".
 
     Unless Ctx().no_default_eol is true, set 'svn:eol-style' to
     'native' for files not marked with the CVS 'kb' flag, except as
     superseded by Ctx().eol_from_mime_type (see below).
 
-    If Ctx().eol_from_mime_type is not None, then set 'svn:eol-style'
-    to 'native' for all files to which Ctx().mime_mapper assigns a
-    mime type beginning with "text/", and don't set 'svn:eol-style'
-    for files assigned a type not beginning with "text/"."""
+    If Ctx().eol_from_mime_type is set and the mime type is known, then
+    set 'svn:eol-style' to 'native' if the mime type starts with "text/",
+    and leave it unset otherwise."""
 
     self.c_rev = c_rev
     # Did the svn properties change for this file (i.e., do they have
@@ -3713,10 +3707,6 @@ class SVNCommitItem:
 
     for svn_property_setter in Ctx().svn_property_setters:
       svn_property_setter.set_properties(self)
-
-    # Set mime-type.
-    if Ctx().mime_mapper:
-      Ctx().mime_mapper.set_properties(self)
 
     if c_rev.mode == 'b' and not self.svn_props.has_key('svn:mime-type'):
       # file is kb, and no other mimetype specified
@@ -4740,7 +4730,6 @@ class Ctx:
     self.branches_base = "branches"
     self.encoding = ["ascii"]
     self.mime_types_file = None
-    self.mime_mapper = None
     self.no_default_eol = 0
     self.eol_from_mime_type = 0
     self.keywords_off = 0
@@ -5130,8 +5119,9 @@ def main():
           'installed and/or use the --svnadmin option.' % (e,))
 
   if ctx.mime_types_file:
-    ctx.mime_mapper = MimeMapper()
-    ctx.mime_mapper.set_mime_types_file(ctx.mime_types_file)
+    mime_mapper = MimeMapper()
+    mime_mapper.set_mime_types_file(ctx.mime_types_file)
+    ctx.svn_property_setters.append(mime_mapper)
 
   # Make sure the tmp directory exists.  Note that we don't check if
   # it's empty -- we want to be able to use, for example, "." to hold

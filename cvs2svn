@@ -3712,23 +3712,19 @@ class SVNCommitItem:
       self.svn_props_changed = True
 
     # Set mime-type.
-    mime_type = None
-
     if Ctx().mime_mapper:
-      mime_type = Ctx().mime_mapper.set_properties(self)
+      Ctx().mime_mapper.set_properties(self)
 
-    if c_rev.mode == 'b' and mime_type is None:
+    if c_rev.mode == 'b' and not self.svn_props.has_key('svn:mime-type'):
       # file is kb, and no other mimetype specified
-      mime_type = 'application/octet-stream'
-
-    self.svn_props['svn:mime-type'] = mime_type
+      self.svn_props['svn:mime-type'] = 'application/octet-stream'
 
     # Set eol-style.  This setting may be influenced by the mime-type
     # setting just determined.  See also issue #39.
     if c_rev.mode == 'b':
       eol_style = None
     elif Ctx().eol_from_mime_type \
-             and self.svn_props['svn:mime-type'] is not None:
+             and self.svn_props.get('svn:mime-type', None) is not None:
       if self.svn_props['svn:mime-type'].startswith("text/"):
         eol_style = 'native'
       else:
@@ -4785,7 +4781,6 @@ class MimeMapper(SVNPropertySetter):
                            % (warning_prefix, ext, self.mappings[ext], type))
         self.mappings[ext] = type
 
-
   def set_properties(self, s_item):
     basename, extension = os.path.splitext(
         os.path.basename(s_item.c_rev.cvs_path)
@@ -4800,7 +4795,10 @@ class MimeMapper(SVNPropertySetter):
     # files such as README or Makefile:
     if not extension:
       extension = basename
-    return self.mappings.get(extension, None)
+
+    mime_type = self.mappings.get(extension, None)
+    if mime_type is not None:
+      s_item.svn_props['svn:mime-type'] = mime_type
 
 
 def convert(start_pass, end_pass):

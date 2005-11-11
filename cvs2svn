@@ -3715,7 +3715,7 @@ class SVNCommitItem:
     mime_type = None
 
     if Ctx().mime_mapper:
-      mime_type = Ctx().mime_mapper.get_type_from_filename(c_rev.cvs_path)
+      mime_type = Ctx().mime_mapper.set_properties(self)
 
     if c_rev.mode == 'b' and mime_type is None:
       # file is kb, and no other mimetype specified
@@ -4758,7 +4758,8 @@ class Ctx:
     self.excludes = []
     self.symbol_transforms = []
 
-class MimeMapper:
+
+class MimeMapper(SVNPropertySetter):
   """A class that provides mappings from file names to MIME types.
   Note that we should really be using Python's 'mimetypes' module.
   See http://cvs2svn.tigris.org/servlets/ReadMsg?list=dev&msgNo=266
@@ -4785,8 +4786,10 @@ class MimeMapper:
         self.mappings[ext] = type
 
 
-  def get_type_from_filename(self, filename):
-    basename, extension = os.path.splitext(os.path.basename(filename))
+  def set_properties(self, s_item):
+    basename, extension = os.path.splitext(
+        os.path.basename(s_item.c_rev.cvs_path)
+        )
 
     # Extension includes the dot, so strip it (will leave extension
     # empty if filename ends with a dot, which is ok):

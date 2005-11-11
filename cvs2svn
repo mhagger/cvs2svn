@@ -3711,6 +3711,9 @@ class SVNCommitItem:
       self.svn_props['cvs2svn:cvs-rev'] = c_rev.rev
       self.svn_props_changed = True
 
+    for svn_property_setter in Ctx().svn_property_setters:
+      svn_property_setter.set_properties(self)
+
     # Set mime-type.
     if Ctx().mime_mapper:
       Ctx().mime_mapper.set_properties(self)
@@ -4753,6 +4756,7 @@ class Ctx:
     self.forced_tags = []
     self.excludes = []
     self.symbol_transforms = []
+    self.svn_property_setters = []
 
 
 class MimeMapper(SVNPropertySetter):

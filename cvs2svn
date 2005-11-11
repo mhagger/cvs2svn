@@ -3705,13 +3705,7 @@ class SVNCommitItem:
     self.needs_eol_filter = \
         self.svn_props.get('svn:eol-style', None) is not None
 
-    # Should svn:keywords be set?
-    # Set the svn:keywords property, if appropriate.  See issue #2.
-    if not Ctx().keywords_off and c_rev.mode in [None, 'kv', 'kvl']:
-      self.has_keywords = True
-      self.svn_props['svn:keywords'] = SVN_KEYWORDS_VALUE
-    else:
-      self.has_keywords = False
+    self.has_keywords = self.svn_props.get('svn:keywords', None) is not None
 
     # Tack on the executableness, if any.
     if c_rev.file_executable:
@@ -4814,6 +4808,21 @@ class DefaultEOLStyleSetter(SVNPropertySetter):
       s_item.svn_props['svn:eol-style'] = self.value
 
 
+class KeywordsPropertySetter(SVNPropertySetter):
+  """Set the svn:keywords property based on the file's mode.  See
+  issue #2."""
+
+  def __init__(self, value):
+    """Use VALUE for the value of the svn:keywords property if it is
+    to be set."""
+
+    self.value = value
+
+  def set_properties(self, s_item):
+    if s_item.c_rev.mode in [None, 'kv', 'kvl']:
+      s_item.svn_props['svn:keywords'] = self.value
+
+
 def convert(start_pass, end_pass):
   "Convert a CVS repository to an SVN repository."
 
@@ -5149,10 +5158,14 @@ def main():
   if ctx.eol_from_mime_type:
     ctx.svn_property_setters.append(EOLStyleFromMimeTypeSetter())
 
-  if Ctx().no_default_eol:
+  if ctx.no_default_eol:
     ctx.svn_property_setters.append(DefaultEOLStyleSetter(None))
   else:
     ctx.svn_property_setters.append(DefaultEOLStyleSetter('native'))
+
+  if not ctx.keywords_off:
+    ctx.svn_property_setters.append(
+        KeywordsPropertySetter(SVN_KEYWORDS_VALUE))
 
   # Make sure the tmp directory exists.  Note that we don't check if
   # it's empty -- we want to be able to use, for example, "." to hold

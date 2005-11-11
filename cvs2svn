@@ -3699,16 +3699,6 @@ class SVNCommitItem:
     for svn_property_setter in Ctx().svn_property_setters:
       svn_property_setter.set_properties(self)
 
-    # Set eol-style.  This setting may be influenced by the mime-type
-    # setting just determined.  See also issue #39.
-    if not self.svn_props.has_key('svn:eol-style') \
-         and Ctx().eol_from_mime_type \
-         and self.svn_props.get('svn:mime-type', None) is not None:
-      if self.svn_props['svn:mime-type'].startswith("text/"):
-        self.svn_props['svn:eol-style'] = 'native'
-      else:
-        self.svn_props['svn:eol-style'] = None
-
     if not self.svn_props.has_key('svn:eol-style') \
          and Ctx().no_default_eol:
       self.svn_props['svn:eol-style'] = None
@@ -4802,6 +4792,21 @@ class BinaryFileEOLStyleSetter(SVNPropertySetter):
       s_item.svn_props['svn:eol-style'] = None
 
 
+class EOLStyleFromMimeTypeSetter(SVNPropertySetter):
+  """Set the eol-style from the mime type if it is not already known.
+
+  This setting is influenced by the mime-type setting, which must
+  already have been set.  See also issue #39."""
+
+  def set_properties(self, s_item):
+    if not s_item.svn_props.has_key('svn:eol-style') \
+       and s_item.svn_props.get('svn:mime-type', None) is not None:
+      if s_item.svn_props['svn:mime-type'].startswith("text/"):
+        s_item.svn_props['svn:eol-style'] = 'native'
+      else:
+        s_item.svn_props['svn:eol-style'] = None
+
+
 def convert(start_pass, end_pass):
   "Convert a CVS repository to an SVN repository."
 
@@ -5133,6 +5138,9 @@ def main():
 
   ctx.svn_property_setters.append(BinaryFileDefaultMimeTypeSetter())
   ctx.svn_property_setters.append(BinaryFileEOLStyleSetter())
+
+  if ctx.eol_from_mime_type:
+    ctx.svn_property_setters.append(EOLStyleFromMimeTypeSetter())
 
   # Make sure the tmp directory exists.  Note that we don't check if
   # it's empty -- we want to be able to use, for example, "." to hold

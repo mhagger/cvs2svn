@@ -3742,7 +3742,7 @@ class SVNCommitItem:
     # Remember if we need to filter the EOLs.  We can't use self.svn_props
     # becase they are only set on the first revision and we need to filter
     # all revisions.
-    self.needs_eol_filter = eol_style == 'native'
+    self.needs_eol_filter = eol_style is not None
 
     # Should svn:keywords be set?
     # Set the svn:keywords property, if appropriate.  See issue #2.

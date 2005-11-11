@@ -3721,8 +3721,7 @@ class SVNCommitItem:
       # file is kb, and no other mimetype specified
       mime_type = 'application/octet-stream'
 
-    if mime_type:
-      self.svn_props['svn:mime-type'] = mime_type
+    self.svn_props['svn:mime-type'] = mime_type
 
     # Set eol-style.  This setting may be influenced by the mime-type
     # setting just determined.  See also issue #39.
@@ -3738,8 +3737,7 @@ class SVNCommitItem:
     else:
       eol_style = 'native'
 
-    if eol_style:
-      self.svn_props['svn:eol-style'] = eol_style
+    self.svn_props['svn:eol-style'] = eol_style
 
     # Remember if we need to filter the EOLs.  We can't use self.svn_props
     # becase they are only set on the first revision and we need to filter

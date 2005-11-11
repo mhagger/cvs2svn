@@ -3707,10 +3707,6 @@ class SVNCommitItem:
 
     self.has_keywords = self.svn_props.get('svn:keywords', None) is not None
 
-    # Tack on the executableness, if any.
-    if c_rev.file_executable:
-      self.svn_props['svn:executable'] = '*'
-
 
 class SVNPropertySetter:
   """Abstract class for objects that can set properties on a SVNCommitItem."""
@@ -4823,6 +4819,14 @@ class KeywordsPropertySetter(SVNPropertySetter):
       s_item.svn_props['svn:keywords'] = self.value
 
 
+class ExecutablePropertySetter(SVNPropertySetter):
+  """Set the svn:executable property based on c_rev.file_executable."""
+
+  def set_properties(self, s_item):
+    if s_item.c_rev.file_executable:
+      s_item.svn_props['svn:executable'] = '*'
+
+
 def convert(start_pass, end_pass):
   "Convert a CVS repository to an SVN repository."
 
@@ -5166,6 +5170,8 @@ def main():
   if not ctx.keywords_off:
     ctx.svn_property_setters.append(
         KeywordsPropertySetter(SVN_KEYWORDS_VALUE))
+
+  ctx.svn_property_setters.append(ExecutablePropertySetter())
 
   # Make sure the tmp directory exists.  Note that we don't check if
   # it's empty -- we want to be able to use, for example, "." to hold

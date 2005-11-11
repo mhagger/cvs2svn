@@ -3758,6 +3758,15 @@ class SVNCommitItem:
       self.svn_props['svn:executable'] = '*'
 
 
+class SVNPropertySetter:
+  """Abstract class for objects that can set properties on a SVNCommitItem."""
+
+  def set_properties(self, s_item):
+    """Set any properties that can be determined for S_ITEM."""
+
+    raise NotImplementedError
+
+
 class SVNRepositoryMirrorDelegate:
   """Abstract superclass for any delegate to SVNRepositoryMirror.
   Subclasses must implement all of the methods below.

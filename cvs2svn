@@ -3676,16 +3676,9 @@ class SVNCommitItem:
     SVN_PROPS_CHANGED indicates whether the svn: properties are known
     to have changed since the last revision.
 
-    Files marked with the CVS 'kb' flag with no known mime type will
-    receive a mime type of"application/octet-stream".
-
-    Unless Ctx().no_default_eol is true, set 'svn:eol-style' to
-    'native' for files not marked with the CVS 'kb' flag, except as
-    superseded by Ctx().eol_from_mime_type (see below).
-
-    If Ctx().eol_from_mime_type is set and the mime type is known, then
-    set 'svn:eol-style' to 'native' if the mime type starts with "text/",
-    and leave it unset otherwise."""
+    The properties are set by the SVNPropertySetters in
+    Ctx().svn_property_setters, then we read a couple of the
+    properties back out for our own purposes."""
 
     self.c_rev = c_rev
     # Did the svn properties change for this file (i.e., do they have
@@ -3699,9 +3692,8 @@ class SVNCommitItem:
     for svn_property_setter in Ctx().svn_property_setters:
       svn_property_setter.set_properties(self)
 
-    # Remember if we need to filter the EOLs.  We can't use self.svn_props
-    # becase they are only set on the first revision and we need to filter
-    # all revisions.
+    # Remember if we need to filter the EOLs.  We could actually use
+    # self.svn_props now, since it is initialized for each revision.
     self.needs_eol_filter = \
         self.svn_props.get('svn:eol-style', None) is not None
 

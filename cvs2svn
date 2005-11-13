@@ -970,7 +970,7 @@ class CVSRevisionDatabase:
   def __init__(self, mode):
     """Initialize an instance, opening database in MODE (like the MODE
     argument to Database or anydbm.open())."""
-    self.cvs_revs_db = Database(temp(CVS_REVS_DB), mode)
+    self.cvs_revs_db = SDatabase(temp(CVS_REVS_DB), mode)
     Cleanup().register(temp(CVS_REVS_DB), pass8)
 
   def log_revision(self, c_rev):
@@ -982,13 +982,13 @@ class CVSRevisionDatabase:
     return CVSRevision(Ctx(), self.cvs_revs_db[unique_key])
 
 
-class TagsDatabase(Database):
+def TagsDatabase(mode):
   """A Database to store which symbolic names are tags.
   Each key is a tag name.
   The value has no meaning, and should be set to None."""
-  def __init__(self, mode):
-    Database.__init__(self, temp(TAGS_DB), mode)
-    Cleanup().register(temp(TAGS_DB), pass8)
+  db = SDatabase(temp(TAGS_DB), mode)
+  Cleanup().register(temp(TAGS_DB), pass8)
+  return db
 
 
 class Project:
@@ -1406,8 +1406,8 @@ class CollectData(cvs2svn_rcsparse.Sink):
     Cleanup().register(temp(DATAFILE + REVS_SUFFIX), pass2)
     self.resync = open(temp(DATAFILE + RESYNC_SUFFIX), 'w')
     Cleanup().register(temp(DATAFILE + RESYNC_SUFFIX), pass2)
-    self.default_branches_db = Database(temp(DEFAULT_BRANCHES_DB),
-                                        DB_OPEN_NEW)
+    self.default_branches_db = SDatabase(temp(DEFAULT_BRANCHES_DB),
+                                         DB_OPEN_NEW)
     Cleanup().register(temp(DEFAULT_BRANCHES_DB), pass5)
     self.metadata_db = Database(temp(METADATA_DB), DB_OPEN_NEW)
     Cleanup().register(temp(METADATA_DB), pass8)
@@ -2009,7 +2009,7 @@ class PersistenceManager:
     ### into memory.  That seems like a good idea.
     if not Ctx().trunk_only:
       self.tags_db = TagsDatabase(DB_OPEN_READ)
-      self.motivating_revnums = Database(temp(MOTIVATING_REVNUMS), mode)
+      self.motivating_revnums = SDatabase(temp(MOTIVATING_REVNUMS), mode)
       Cleanup().register(temp(MOTIVATING_REVNUMS), pass8)
 
     # "branch_name" -> svn_revnum in which branch was last filled.
@@ -2647,8 +2647,8 @@ class CVSRevisionAggregator:
 
     Ctx()._symbolings_logger = SymbolingsLogger()
     Ctx()._persistence_manager = PersistenceManager(DB_OPEN_NEW)
-    Ctx()._default_branches_db = Database(temp(DEFAULT_BRANCHES_DB),
-                                          DB_OPEN_READ)
+    Ctx()._default_branches_db = SDatabase(temp(DEFAULT_BRANCHES_DB),
+                                           DB_OPEN_READ)
 
 
   def process_revision(self, c_rev):
@@ -3179,7 +3179,7 @@ class SVNRepositoryMirror:
     self.delegates = [ ]
 
     # This corresponds to the 'revisions' table in a Subversion fs.
-    self.revs_db = Database(temp(SVN_MIRROR_REVISIONS_DB), DB_OPEN_NEW)
+    self.revs_db = SDatabase(temp(SVN_MIRROR_REVISIONS_DB), DB_OPEN_NEW)
     Cleanup().register(temp(SVN_MIRROR_REVISIONS_DB), pass8)
 
     # This corresponds to the 'nodes' table in a Subversion fs.  (We

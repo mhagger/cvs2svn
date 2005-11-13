@@ -791,9 +791,10 @@ class Database:
     del self.db[key]
 
   def get(self, key, default):
-    if self.has_key(key):
+    try:
       return self.__getitem__(key)
-    return default
+    except KeyError:
+      return default
 
 
 class StatsKeeper:

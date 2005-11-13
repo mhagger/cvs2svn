@@ -626,10 +626,7 @@ def sort_file(infile, outfile):
   # GNU sort will sort our dates differently (incorrectly!) if our
   # LC_ALL is anything but 'C', so if LC_ALL is set, temporarily set
   # it to 'C'
-  if os.environ.has_key('LC_ALL'):
-    lc_all_tmp = os.environ['LC_ALL']
-  else:
-    lc_all_tmp = None
+  lc_all_tmp = os.environ.get('LC_ALL', None)
   os.environ['LC_ALL'] = 'C'
   # The -T option to sort has a nice side effect.  The Win32 sort is
   # case insensitive and cannot be used, and since it does not
@@ -736,9 +733,7 @@ class Cleanup:
     callback registered for that file will be called at cleanup
     time.  Also note that if you register a database file you must
     close the database before cleanup, e.g. using a callback."""
-    if not self._log.has_key(which_pass):
-      self._log[which_pass] = {}
-    self._log[which_pass][file] = 1
+    self._log.setdefault(which_pass, {})[file] = 1
     if callback and not self._callbacks.has_key(file):
       self._callbacks[file] = callback
 
@@ -955,12 +950,9 @@ class LastSymbolicNameDatabase:
   # rev.
   def create_database(self):
     for sym, rev_unique_key in self.symbols.items():
-      if self.symbol_revs_db.has_key(rev_unique_key):
-        ary = self.symbol_revs_db[rev_unique_key]
-        ary.append(sym)
-        self.symbol_revs_db[rev_unique_key] = ary
-      else:
-        self.symbol_revs_db[rev_unique_key] = [sym]
+      ary = self.symbol_revs_db.get(rev_unique_key, [])
+      ary.append(sym)
+      self.symbol_revs_db[rev_unique_key] = ary
 
 
 class CVSRevisionDatabase:
@@ -1244,8 +1236,8 @@ class CVSRevision:
     """Return 1 if SELF.rev of SELF.cvs_path is a default branch
     revision according to DEFAULT_BRANCHES_DB (see the conditions
     documented there), else return None."""
-    if self._ctx._default_branches_db.has_key(self.cvs_path):
-      val = self._ctx._default_branches_db[self.cvs_path]
+    val = self._ctx._default_branches_db.get(self.cvs_path, None)
+    if val is not None:
       val_last_dot = val.rindex(".")
       our_last_dot = self.rev.rindex(".")
       default_branch = val[:val_last_dot]
@@ -1286,9 +1278,7 @@ class SymbolDatabase:
 
   def register_tag_creation(self, name):
     """Register the creation of the tag NAME."""
-    if not self.tags.has_key(name):
-      self.tags[name] = 0
-    self.tags[name] += 1
+    self.tags[name] = self.tags.get(name, 0) + 1
 
   def _branch(self, name):
     """Helper function to get a branch node that will create and
@@ -1531,9 +1521,7 @@ class CollectData(cvs2svn_rcsparse.Sink):
       # The branchlist is keyed on the revision number from which the
       # branch sprouts, so strip off the odd final component.
       sprout_rev = branch_number[:branch_number.rfind(".")]
-      if not self.branchlist.has_key(sprout_rev):
-        self.branchlist[sprout_rev] = []
-      self.branchlist[sprout_rev].append(name)
+      self.branchlist.setdefault(sprout_rev, []).append(name)
       self.symbol_db.register_branch_creation(name)
     else:
       sys.stderr.write("%s: in '%s':\n"
@@ -1587,9 +1575,7 @@ class CollectData(cvs2svn_rcsparse.Sink):
     elif vendor_tag.match(revision):
       self.set_branch_name(revision, name)
     else:
-      if not self.taglist.has_key(revision):
-        self.taglist[revision] = []
-      self.taglist[revision].append(name)
+      self.taglist.setdefault(revision, []).append(name)
       self.symbol_db.register_tag_creation(name)
 
   def define_revision(self, revision, timestamp, author, state,
@@ -1757,8 +1743,10 @@ class CollectData(cvs2svn_rcsparse.Sink):
     # default branches db.  The test is that the log message CVS uses
     # for 1.1 in imports is "Initial revision\n" with no period.
     if revision == '1.1' and log != 'Initial revision\n':
-      if self.default_branches_db.has_key(self.rel_name):
+      try:
         del self.default_branches_db[self.rel_name]
+      except KeyError:
+        pass
 
     # Get the timestamps of the previous and next revisions
     prev_rev = self.prev_rev[revision]
@@ -1960,10 +1948,8 @@ class SymbolingsLogger:
   def _note_default_branch_opening(self, c_rev, symbolic_name):
     """If C_REV is a default branch revision, log C_REV.cvs_path as an
     opening for SYMBOLIC_NAME."""
-    path = c_rev.cvs_path
-    if not self.open_paths_with_default_branches.has_key(path):
-      self.open_paths_with_default_branches[path] = [ ]
-    self.open_paths_with_default_branches[path].append(symbolic_name)
+    self.open_paths_with_default_branches.setdefault(
+        c_rev.cvs_path, []).append(symbolic_name)
 
   def log_default_branch_closing(self, c_rev, svn_revnum):
     """If self.open_paths_with_default_branches contains
@@ -3261,9 +3247,9 @@ class SVNRepositoryMirror:
 
     for component in path.split('/'):
       node_contents = self._get_node(node_key)
-      if not node_contents.has_key(component):
+      node_key = node_contents.get(component, None)
+      if node_key is None:
         return None
-      node_key = node_contents[component]
 
     return node_key
 
@@ -3293,14 +3279,12 @@ class SVNRepositoryMirror:
     components = svn_path.split('/')
     for i in range(len(components)):
       component = components[i]
-      this_key = this_contents = None
       path_so_far = _path_join(path_so_far, component)
-      if parent_contents.has_key(component):
+      this_key = parent_contents.get(component, None)
+      if this_key is not None:
         # The component exists.
-        this_key = parent_contents[component]
-        if self.new_nodes.has_key(this_key):
-          this_contents = self.new_nodes[this_key]
-        else:
+        this_contents = self.new_nodes.get(this_key, None)
+        if this_contents is None:
           # Suck the node from the nodes_db, but update the key
           this_contents = self.nodes_db[this_key]
           this_key = gen_key()
@@ -3536,9 +3520,8 @@ class SVNRepositoryMirror:
       if isinstance(source.node, SvnRevisionRange):
         continue
       for entry, node in source.node.items():
-        if not src_entries.has_key(entry):
-          src_entries[entry] = []
-        src_entries[entry].append(FillSource(source.prefix, node))
+        src_entries.setdefault(entry, []).append(
+            FillSource(source.prefix, node))
 
     if prune_ok:
       # Delete the entries in DEST_ENTRIES that are not in src_entries.
@@ -4381,10 +4364,7 @@ def pass2():
       t2 = int(line[DIGEST_END_IDX+1:], 16)
       t1_l = t1 - COMMIT_THRESHOLD/2
       t1_u = t1 + COMMIT_THRESHOLD/2
-      if resync.has_key(digest):
-        resync[digest].append([t1_l, t1_u, t2])
-      else:
-        resync[digest] = [ [t1_l, t1_u, t2] ]
+      resync.setdefault(digest, []).append([t1_l, t1_u, t2])
 
     # For each digest, sort the resync items in it in increasing order,
     # based on the lower time bound.

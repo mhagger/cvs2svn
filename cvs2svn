@@ -4806,7 +4806,8 @@ class KeywordsPropertySetter(SVNPropertySetter):
     self.value = value
 
   def set_properties(self, s_item):
-    if s_item.c_rev.mode in [None, 'kv', 'kvl']:
+    if not s_item.svn_props.has_key('svn:keywords') \
+           and s_item.c_rev.mode in [None, 'kv', 'kvl']:
       s_item.svn_props['svn:keywords'] = self.value
 
 

@@ -792,7 +792,7 @@ class Database:
 
   def get(self, key, default):
     try:
-      return self.__getitem__(key)
+      return self[key]
     except KeyError:
       return default
 

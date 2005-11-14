@@ -1685,14 +1685,13 @@ class CollectData(cvs2svn_rcsparse.Sink):
             self.rev_data[prev][2] = t_p	# old timestamp
             delta = t_c - 1 - t_p
             msg =  "PASS1 RESYNC: '%s' (%s): old time='%s' delta=%ds" \
-                  % (self.rel_name,
-                     prev, time.ctime(t_p), delta)
+                  % (self.rel_name, prev, time.ctime(t_p), delta)
             Log().write(LOG_VERBOSE, msg)
             if (delta > COMMIT_THRESHOLD
                 or delta < (COMMIT_THRESHOLD * -1)):
               str = "%s: Significant timestamp change for '%s' (%d seconds)"
-              Log().write(LOG_WARN, str % (warning_prefix, self.rel_name,
-                                           delta))
+              Log().write(LOG_WARN,
+                          str % (warning_prefix, self.rel_name, delta))
             current = prev
             prev = self.prev_rev[current]
             if not prev:

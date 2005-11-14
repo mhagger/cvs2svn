@@ -454,6 +454,25 @@ class CVSRepository:
 
     self.cvs_repos_path = os.path.normpath(cvs_repos_path)
 
+  def get_cvs_path(self, fname):
+    """Return the path to FNAME relative to cvs_root, with ',v' removed.
+
+    FNAME is a filesystem name that has to begin (textually) with
+    self.cvs_repos_path and end with ',v'.  Those parts will be
+    stripped off and os.sep will be converted to '/'."""
+
+    if not fname.startswith(self.cvs_repos_path):
+      raise FatalError(
+          "get_cvs_path: '%s' is not a sub-path of '%s'"
+          % (fname, self.cvs_repos_path,))
+    if not fname.endswith(',v'):
+      raise FatalError("get_cvs_path: '%s' does not end with ',v'"
+                       % (fname,))
+    l = len(self.cvs_repos_path)
+    if fname[l] == os.sep:
+      l += 1
+    return string.replace(fname[l:-2], os.sep, '/')
+
   def get_co_pipe(self, c_rev, suppress_keyword_substitution=False):
     """Return a command string, and the pipe created using that
     string.  C_REV is a CVSRevision.  If SUPPRESS_KEYWORD_SUBSTITUTION

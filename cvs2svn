@@ -1014,7 +1014,7 @@ class Project:
     full, normalized directory names in svn for the corresponding part
     of the repository."""
 
-    self.cvs_root = os.path.normpath(cvs_root)
+    self.cvs_root = cvs_root
     self.trunk_path = trunk_path
     self.branches_path = branches_path
     self.tags_path = tags_path
@@ -4231,7 +4231,7 @@ def pass1():
                     "Exception occurred while parsing %s" % pathname)
         raise
 
-  os.path.walk(Ctx().cvsroot, visit_file, cd)
+  os.path.walk(Ctx().project.cvs_root, visit_file, cd)
   Log().write(LOG_VERBOSE, 'Processed', cd.num_files, 'files')
 
   cd.write_symbol_db()
@@ -4646,7 +4646,6 @@ class Ctx:
     if self.__dict__:
       return
     # Else, initialize to defaults.
-    self.cvsroot = None
     self.target = None
     self.dumpfile = DUMPFILE
     self.tmpdir = '.'
@@ -5056,12 +5055,12 @@ def main():
     usage()
     sys.exit(1)
 
-  ctx.cvsroot = args[0]
+  cvsroot = args[0]
 
   if ctx.use_cvs:
-    ctx.cvs_repository = CVSRepositoryViaCVS(ctx.cvsroot)
+    ctx.cvs_repository = CVSRepositoryViaCVS(cvsroot)
   else:
-    ctx.cvs_repository = CVSRepositoryViaRCS(ctx.cvsroot)
+    ctx.cvs_repository = CVSRepositoryViaRCS(cvsroot)
 
   if (not ctx.target) and (not ctx.dump_only) and (not ctx.dry_run):
     raise FatalError("must pass one of '-s' or '--dump-only'.")
@@ -5094,7 +5093,7 @@ def main():
                      % ctx.fs_type)
 
   # Create the default project (using ctx.trunk, ctx.branches, and ctx.tags):
-  ctx.project = Project(ctx.cvsroot,
+  ctx.project = Project(ctx.cvs_repository.cvs_repos_path,
                         ctx.trunk_base, ctx.branches_base, ctx.tags_base)
 
   if ctx.existing_svnrepos and not os.path.isdir(ctx.target):

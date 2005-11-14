@@ -455,7 +455,7 @@ class CVSRepository:
     self.cvs_repos_path = os.path.normpath(cvs_repos_path)
 
   def get_cvs_path(self, fname):
-    """Return the path to FNAME relative to cvs_root, with ',v' removed.
+    """Return the path to FNAME relative to cvs_repos_path, with ',v' removed.
 
     FNAME is a filesystem name that has to begin (textually) with
     self.cvs_repos_path and end with ',v'.  Those parts will be

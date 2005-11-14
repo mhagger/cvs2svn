@@ -1056,52 +1056,21 @@ class Project:
 
     return _path_join(self.tags_path, _clean_symbolic_name(tag_name))
 
-  def make_path(self, path, branch_name=None):
-    """Return the trunk path or branch path for PATH.
+  def make_trunk_path(self, path):
+    """Return the trunk path for PATH.
 
-    PATH is a filesystem path relative to cvs_root.  If BRANCH_NAME is
-    None, then return the svn path for this file on trunk; otherwise,
-    return the svn path for this file on the specified branch."""
+    PATH is a filesystem path relative to cvs_root.  Return the svn
+    path for this file on trunk."""
 
-    # For a while, we treated each top-level subdir of the CVS
-    # repository as a "project root" and interpolated the appropriate
-    # genealogy (trunk|tag|branch) in according to the official
-    # recommended layout.  For example, the path '/foo/bar/baz.c' on
-    # branch 'Rel2' would become
-    #
-    #   /foo/branches/Rel2/bar/baz.c
-    #
-    # and on trunk it would become
-    #
-    #   /foo/trunk/bar/baz.c
-    #
-    # However, we went back to the older and simpler method of just
-    # prepending the genealogy to the front, instead of interpolating.
-    # So now we produce:
-    #
-    #   /branches/Rel2/foo/bar/baz.c
-    #   /trunk/foo/bar/baz.c
-    #
-    # Why?  Well, Jack Repenning pointed out that this way is much
-    # friendlier to "anonymously rooted subtrees" (that's a tree where
-    # the name of the top level dir doesn't matter, the point is that if
-    # you cd into it and, say, run 'make', something good will happen).
-    # By interpolating, we made it impossible to point cvs2svn at some
-    # subdir in the CVS repository and convert it as a project, because
-    # we'd treat every subdir underneath it as an independent project
-    # root, which is probably not what the user wanted.
-    #
-    # Also, see Blair Zajac's post
-    #
-    #    http://subversion.tigris.org/servlets/ReadMsg?list=dev&msgNo=38965
-    #
-    # and the surrounding thread, for why what people really want is a
-    # way of specifying an in-repository prefix path, not interpolation.
+    return _path_join(self.trunk_path, path)
 
-    if branch_name:
-      return _path_join(self.get_branch_path(branch_name), path)
-    else:
-      return _path_join(self.trunk_path, path)
+  def make_branch_path(self, branch_name, path):
+    """Return the branch path for PATH on the branch with name BRANCH_NAME.
+
+    PATH is a filesystem path relative to cvs_root.  Return the svn
+    path for this file on the specified branch."""
+
+    return _path_join(self.get_branch_path(branch_name), path)
 
 
 class CVSRevision:
@@ -1197,7 +1166,11 @@ class CVSRevision:
           (len(args) + 1)
     if ctx is not None:
       self.cvs_path = ctx.project.relative_name(self.fname)
-      self.svn_path = ctx.project.make_path(self.cvs_path, self.branch_name)
+      if self.branch_name:
+        self.svn_path = ctx.project.make_branch_path(
+            self.branch_name, self.cvs_path)
+      else:
+        self.svn_path = ctx.project.make_trunk_path(self.cvs_path)
 
   # The 'primary key' of a CVS Revision is the revision number + the
   # filename.  To provide a unique key (say, for a dict), we just glom
@@ -2805,8 +2778,9 @@ class SymbolingsReader:
           break
         name, revnum, type, branch_name, cvs_path = line.split(" ", 4)
         if branch_name == '*':
-          branch_name = None
-        svn_path = Ctx().project.make_path(cvs_path, branch_name)
+          svn_path = Ctx().project.make_trunk_path(cvs_path)
+        else:
+          svn_path = Ctx().project.make_branch_path(branch_name, cvs_path)
         revnum = int(revnum)
         if revnum > svn_revnum or name != symbolic_name:
           break
@@ -3559,7 +3533,7 @@ class SVNRepositoryMirror:
     branch to the trunk of the repository.  See
     CVSCommit._post_commit() for details on why this is necessary."""
     for cvs_rev in svn_commit.cvs_revs:
-      svn_trunk_path = Ctx().project.make_path(cvs_rev.cvs_path)
+      svn_trunk_path = Ctx().project.make_trunk_path(cvs_rev.cvs_path)
       if cvs_rev.op == OP_ADD or cvs_rev.op == OP_CHANGE:
         if self._path_exists(svn_trunk_path):
           # Delete the path on trunk...

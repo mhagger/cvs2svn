@@ -1201,12 +1201,13 @@ class CVSRevision:
       raise TypeError, 'CVSRevision() takes 2 or 18 arguments (%d given)' % \
           (len(args) + 1)
     if ctx is not None:
-      self.cvs_path = ctx.project.relative_name(self.fname)
+      self.cvs_path = ctx.cvs_repository.get_cvs_path(self.fname)
+      self.rel_name = ctx.project.relative_name(self.fname)
       if self.branch_name:
         self.svn_path = ctx.project.make_branch_path(
-            self.branch_name, self.cvs_path)
+            self.branch_name, self.rel_name)
       else:
-        self.svn_path = ctx.project.make_trunk_path(self.cvs_path)
+        self.svn_path = ctx.project.make_trunk_path(self.rel_name)
 
   # The 'primary key' of a CVS Revision is the revision number + the
   # filename.  To provide a unique key (say, for a dict), we just glom
@@ -3568,7 +3569,7 @@ class SVNRepositoryMirror:
     branch to the trunk of the repository.  See
     CVSCommit._post_commit() for details on why this is necessary."""
     for cvs_rev in svn_commit.cvs_revs:
-      svn_trunk_path = Ctx().project.make_trunk_path(cvs_rev.cvs_path)
+      svn_trunk_path = Ctx().project.make_trunk_path(cvs_rev.rel_name)
       if cvs_rev.op == OP_ADD or cvs_rev.op == OP_CHANGE:
         if self._path_exists(svn_trunk_path):
           # Delete the path on trunk...

@@ -1433,7 +1433,7 @@ class CollectData(cvs2svn_rcsparse.Sink):
     # it only once per file, instead of waiting until later where we
     # would have to do the same calculations once per CVS *revision*.
 
-    self.rel_name = Ctx().project.relative_name(self.fname)
+    self.cvs_path = Ctx().cvs_repository.get_cvs_path(self.fname)
 
     # If the paths are not the same, then that means that the
     # canonical_name has had the 'Attic' component stripped out.
@@ -1644,7 +1644,7 @@ class CollectData(cvs2svn_rcsparse.Sink):
           and (default_branch_root.count('.') == revision.count('.'))):
         # This revision is on the default branch, so record that it is
         # the new highest default branch head revision.
-        self.default_branches_db[self.rel_name] = revision
+        self.default_branches_db[self.cvs_path] = revision
     else:
       # No default branch, so make an educated guess.
       if revision == '1.2':
@@ -1658,7 +1658,7 @@ class CollectData(cvs2svn_rcsparse.Sink):
           # We're looking at a vendor revision, and it wasn't
           # committed after this file lost its default branch, so bump
           # the maximum trunk vendor revision in the permanent record.
-          self.default_branches_db[self.rel_name] = revision
+          self.default_branches_db[self.cvs_path] = revision
 
     if not trunk_rev.match(revision):
       # Check for unlabeled branches, record them.  We tried to collect
@@ -1716,13 +1716,13 @@ class CollectData(cvs2svn_rcsparse.Sink):
             self.rev_data[prev][2] = t_p	# old timestamp
             delta = t_c - 1 - t_p
             msg =  "PASS1 RESYNC: '%s' (%s): old time='%s' delta=%ds" \
-                  % (self.rel_name, prev, time.ctime(t_p), delta)
+                  % (self.cvs_path, prev, time.ctime(t_p), delta)
             Log().write(LOG_VERBOSE, msg)
             if (delta > COMMIT_THRESHOLD
                 or delta < (COMMIT_THRESHOLD * -1)):
               str = "%s: Significant timestamp change for '%s' (%d seconds)"
               Log().write(LOG_WARN,
-                          str % (warning_prefix, self.rel_name, delta))
+                          str % (warning_prefix, self.cvs_path, delta))
             current = prev
             prev = self.prev_rev[current]
             if not prev:
@@ -1755,7 +1755,7 @@ class CollectData(cvs2svn_rcsparse.Sink):
     # for 1.1 in imports is "Initial revision\n" with no period.
     if revision == '1.1' and log != 'Initial revision\n':
       try:
-        del self.default_branches_db[self.rel_name]
+        del self.default_branches_db[self.cvs_path]
       except KeyError:
         pass
 

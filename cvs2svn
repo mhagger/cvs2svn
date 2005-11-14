@@ -752,50 +752,58 @@ class Cleanup:
 DB_OPEN_READ = 'r'
 DB_OPEN_NEW = 'n'
 
-def SDatabase(filename, mode):
-  """A convenience function for opening an anydbm database."""
-  # pybsddb3 has a bug which prevents it from working with
-  # Berkeley DB 4.2 if you open the db with 'n' ("new").  This
-  # causes the DB_TRUNCATE flag to be passed, which is disallowed
-  # for databases protected by lock and transaction support
-  # (bsddb databases use locking from bsddb version 4.2.4 onwards).
-  #
-  # Therefore, manually perform the removal (we can do this, because
-  # we know that for bsddb - but *not* anydbm in general - the database
-  # consists of one file with the name we specify, rather than several
-  # based on that name).
-  if mode == 'n' and anydbm._defaultmod.__name__ == 'dbhash':
-    if os.path.isfile(filename):
-      os.unlink(filename)
-    mode = 'c'
 
-  return anydbm.open(filename, mode)
-
-
-class Database:
-  """ A wrapper for SDatabase that uses the marshal module to store items as
-  strings."""
+class AbstractDatabase:
+  """An abstract base class for anydbm-based databases."""
 
   def __init__(self, filename, mode):
-    self.db = SDatabase(filename, mode)
+    """A convenience function for opening an anydbm database."""
+    # pybsddb3 has a bug which prevents it from working with
+    # Berkeley DB 4.2 if you open the db with 'n' ("new").  This
+    # causes the DB_TRUNCATE flag to be passed, which is disallowed
+    # for databases protected by lock and transaction support
+    # (bsddb databases use locking from bsddb version 4.2.4 onwards).
+    #
+    # Therefore, manually perform the removal (we can do this, because
+    # we know that for bsddb - but *not* anydbm in general - the database
+    # consists of one file with the name we specify, rather than several
+    # based on that name).
+    if mode == 'n' and anydbm._defaultmod.__name__ == 'dbhash':
+      if os.path.isfile(filename):
+        os.unlink(filename)
+      mode = 'c'
 
-  def has_key(self, key):
-    return self.db.has_key(key)
+    self.db = anydbm.open(filename, mode)
+    self.has_key = self.db.has_key
+    self.__delitem__ = self.db.__delitem__
+
+  def get(self, key, default=None):
+    """bsddb3 doesn't have a get() method, so define one here."""
+
+    try:
+      return self[key]
+    except KeyError:
+      return default
+
+
+class SDatabase(AbstractDatabase):
+  """A database that can only store strings."""
+
+  def __getitem__(self, key):
+    return self.db[key]
+
+  def __setitem__(self, key, value):
+    self.db[key] = value
+
+
+class Database(AbstractDatabase):
+  """A database that uses the marshal module to store built-in types."""
 
   def __getitem__(self, key):
     return marshal.loads(self.db[key])
 
   def __setitem__(self, key, value):
     self.db[key] = marshal.dumps(value)
-
-  def __delitem__(self, key):
-    del self.db[key]
-
-  def get(self, key, default):
-    try:
-      return self[key]
-    except KeyError:
-      return default
 
 
 class StatsKeeper:

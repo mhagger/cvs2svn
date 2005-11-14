@@ -443,6 +443,13 @@ def check_command_runs(cmd, cmdname):
 
 class CVSRepository:
   """A CVS repository from which data can be extracted."""
+
+  def __init__(self, cvs_repos_path):
+    """CVS_REPOS_PATH is the top of the CVS repository (at least as
+    far as this run is concerned)."""
+
+    self.cvs_repos_path = cvs_repos_path
+
   def get_co_pipe(self, c_rev, suppress_keyword_substitution=False):
     """Return a command string, and the pipe created using that
     string.  C_REV is a CVSRevision.  If SUPPRESS_KEYWORD_SUBSTITUTION
@@ -454,7 +461,8 @@ class CVSRepository:
 class CVSRepositoryViaRCS(CVSRepository):
   """A CVSRepository accessed via RCS."""
 
-  def __init__(self):
+  def __init__(self, cvs_repos_path):
+    CVSRepository.__init__(self, cvs_repos_path)
     try:
       check_command_runs([ 'co', '-V' ], 'co')
     except CommandFailedException, e:
@@ -475,7 +483,8 @@ class CVSRepositoryViaRCS(CVSRepository):
 class CVSRepositoryViaCVS(CVSRepository):
   """A CVSRepository accessed via CVS."""
 
-  def __init__(self):
+  def __init__(self, cvs_repos_path):
+    CVSRepository.__init__(self, cvs_repos_path)
     ctx = Ctx()
     # Ascend above the specified root if necessary, to find the
     # cvs_repository_root (a directory containing a CVSROOT directory)
@@ -5051,9 +5060,9 @@ def main():
                      "existing directory." % ctx.cvsroot)
 
   if ctx.use_cvs:
-    ctx.cvs_repository = CVSRepositoryViaCVS()
+    ctx.cvs_repository = CVSRepositoryViaCVS(ctx.cvsroot)
   else:
-    ctx.cvs_repository = CVSRepositoryViaRCS()
+    ctx.cvs_repository = CVSRepositoryViaRCS(ctx.cvsroot)
 
   if (not ctx.target) and (not ctx.dump_only) and (not ctx.dry_run):
     raise FatalError("must pass one of '-s' or '--dump-only'.")

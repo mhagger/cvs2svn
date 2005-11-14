@@ -513,27 +513,32 @@ class CVSRepositoryViaCVS(CVSRepository):
     # and the cvs_module (the path of the conversion root within the
     # cvs repository) NB: cvs_module must be seperated by '/' *not* by
     # os.sep .
+    def is_cvs_repository_root(path):
+      return os.path.isdir(os.path.join(path, 'CVSROOT'))
+
     self.cvs_repository_root = os.path.abspath(self.cvs_repos_path)
-    prev_cvs_repository_root = None
     self.cvs_module = ""
-    while prev_cvs_repository_root != self.cvs_repository_root:
-      if os.path.isdir(os.path.join(self.cvs_repository_root, 'CVSROOT')):
-        break
+    while not is_cvs_repository_root(self.cvs_repository_root):
+      # Step up one directory:
       prev_cvs_repository_root = self.cvs_repository_root
       self.cvs_repository_root, module_component = \
           os.path.split(self.cvs_repository_root)
+      if self.cvs_repository_root == prev_cvs_repository_root:
+        # Hit the root (of the drive, on Windows) without finding a
+        # CVSROOT dir.
+        raise FatalError(
+            "the path '%s' is not a CVS repository, nor a path "
+            "within a CVS repository.  A CVS repository contains "
+            "a CVSROOT directory within its root directory."
+            % (self.cvs_repos_path,))
+
       self.cvs_module = module_component + "/" + self.cvs_module
-    else:
-      # Hit the root (of the drive, on Windows) without finding a CVSROOT dir.
-      raise FatalError("the path '%s' is not a CVS repository, nor a path "
-                       "within a CVS repository.  A CVS repository contains "
-                       "a CVSROOT directory within its root directory."
-                       % (self.cvs_repos_path,))
+
     os.environ['CVSROOT'] = self.cvs_repository_root
 
     def cvs_ok(global_arguments):
       check_command_runs(
-        [ 'cvs' ] + global_arguments + [ '--version' ], 'cvs')
+          [ 'cvs' ] + global_arguments + [ '--version' ], 'cvs')
 
     self.global_arguments = [ "-q", "-R" ]
     try:

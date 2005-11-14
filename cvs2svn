@@ -448,6 +448,10 @@ class CVSRepository:
     """CVS_REPOS_PATH is the top of the CVS repository (at least as
     far as this run is concerned)."""
 
+    if not os.path.isdir(cvs_repos_path):
+      raise FatalError("The specified CVS repository path '%s' is not an "
+                       "existing directory." % cvs_repos_path)
+
     self.cvs_repos_path = cvs_repos_path
 
   def get_co_pipe(self, c_rev, suppress_keyword_substitution=False):
@@ -5053,10 +5057,6 @@ def main():
     sys.exit(1)
 
   ctx.cvsroot = args[0]
-
-  if not os.path.isdir(ctx.cvsroot):
-    raise FatalError("the given CVS repository path '%s' is not an "
-                     "existing directory." % ctx.cvsroot)
 
   if ctx.use_cvs:
     ctx.cvs_repository = CVSRepositoryViaCVS(ctx.cvsroot)

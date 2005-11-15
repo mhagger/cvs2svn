@@ -1098,21 +1098,18 @@ class Project:
 
     return _path_join(self.tags_path, _clean_symbolic_name(tag_name))
 
-  def make_trunk_path(self, path):
-    """Return the trunk path for PATH.
+  def make_trunk_path(self, cvs_path):
+    """Return the trunk path for CVS_PATH.
 
-    PATH is a relative name (relative to project_cvs_repos_path).
     Return the svn path for this file on trunk."""
 
-    return _path_join(self.trunk_path, path)
+    return _path_join(self.trunk_path, self.relative_name(cvs_path))
 
-  def make_branch_path(self, branch_name, path):
-    """Return the branch path for PATH on the branch with name BRANCH_NAME.
+  def make_branch_path(self, branch_name, cvs_path):
+    """Return the svn path for CVS_PATH on branch BRANCH_NAME."""
 
-    PATH is a relative name (relative to project_cvs_repos_path).
-    Return the svn path for this file on the specified branch."""
-
-    return _path_join(self.get_branch_path(branch_name), path)
+    return _path_join(self.get_branch_path(branch_name),
+                      self.relative_name(cvs_path))
 
 
 class CVSRevision:
@@ -1208,12 +1205,11 @@ class CVSRevision:
           (len(args) + 1)
     if ctx is not None:
       self.cvs_path = ctx.cvs_repository.get_cvs_path(self.fname)
-      rel_name = ctx.project.relative_name(self.cvs_path)
       if self.branch_name:
-        self.svn_path = ctx.project.make_branch_path(
-            self.branch_name, rel_name)
+        self.svn_path = ctx.project.make_branch_path(self.branch_name,
+                                                     self.cvs_path)
       else:
-        self.svn_path = ctx.project.make_trunk_path(rel_name)
+        self.svn_path = ctx.project.make_trunk_path(self.cvs_path)
 
   # The 'primary key' of a CVS Revision is the revision number + the
   # filename.  To provide a unique key (say, for a dict), we just glom
@@ -3575,8 +3571,7 @@ class SVNRepositoryMirror:
     branch to the trunk of the repository.  See
     CVSCommit._post_commit() for details on why this is necessary."""
     for cvs_rev in svn_commit.cvs_revs:
-      svn_trunk_path = Ctx().project.make_trunk_path(
-          Ctx().project.relative_name(cvs_rev.cvs_path))
+      svn_trunk_path = Ctx().project.make_trunk_path(cvs_rev.cvs_path)
       if cvs_rev.op == OP_ADD or cvs_rev.op == OP_CHANGE:
         if self._path_exists(svn_trunk_path):
           # Delete the path on trunk...

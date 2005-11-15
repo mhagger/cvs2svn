@@ -1073,25 +1073,20 @@ class Project:
 
     return svn_path in [self.trunk_path, self.branches_path, self.tags_path]
 
-  def relative_name(self, fname):
-    """Return the path to FNAME relative to project_cvs_repos_path,
-    with ',v' removed.
+  def relative_name(self, cvs_path):
+    """Convert CVS_PATH into a name relative to this project's root directory.
 
-    FNAME is a filesystem name that has to begin (textually) with
-    self.project_cvs_repos_path and end with ',v'.  Remove both prefix
-    and suffix, and convert os.sep into '/'."""
+    CVS_PATH has to begin (textually) with self.project_cvs_path.
+    Remove prefix and optional '/'."""
 
-    if not fname.startswith(self.project_cvs_repos_path):
+    if not cvs_path.startswith(self.project_cvs_path):
       raise FatalError(
           "relative_name: '%s' is not a sub-path of '%s'"
-          % (fname, self.project_cvs_repos_path,))
-    if not fname.endswith(',v'):
-      raise FatalError("relative_name: '%s' does not end with ',v'"
-                       % (fname,))
-    l = len(self.project_cvs_repos_path)
-    if fname[l] == os.sep:
+          % (cvs_path, self.project_cvs_path,))
+    l = len(self.project_cvs_path)
+    if cvs_path[l] == os.sep:
       l += 1
-    return string.replace(fname[l:-2], os.sep, '/')
+    return cvs_path[l:]
 
   def get_branch_path(self, branch_name):
     """Return the svnpath for the branch named BRANCH_NAME."""
@@ -1213,7 +1208,7 @@ class CVSRevision:
           (len(args) + 1)
     if ctx is not None:
       self.cvs_path = ctx.cvs_repository.get_cvs_path(self.fname)
-      rel_name = ctx.project.relative_name(self.fname)
+      rel_name = ctx.project.relative_name(self.cvs_path)
       if self.branch_name:
         self.svn_path = ctx.project.make_branch_path(
             self.branch_name, rel_name)
@@ -3581,7 +3576,7 @@ class SVNRepositoryMirror:
     CVSCommit._post_commit() for details on why this is necessary."""
     for cvs_rev in svn_commit.cvs_revs:
       svn_trunk_path = Ctx().project.make_trunk_path(
-          Ctx().project.relative_name(cvs_rev.fname))
+          Ctx().project.relative_name(cvs_rev.cvs_path))
       if cvs_rev.op == OP_ADD or cvs_rev.op == OP_CHANGE:
         if self._path_exists(svn_trunk_path):
           # Delete the path on trunk...

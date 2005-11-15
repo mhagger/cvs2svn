@@ -1073,21 +1073,6 @@ class Project:
 
     return svn_path in [self.trunk_path, self.branches_path, self.tags_path]
 
-  def relative_name(self, cvs_path):
-    """Convert CVS_PATH into a name relative to this project's root directory.
-
-    CVS_PATH has to begin (textually) with self.project_cvs_path.
-    Remove prefix and optional '/'."""
-
-    if not cvs_path.startswith(self.project_cvs_path):
-      raise FatalError(
-          "relative_name: '%s' is not a sub-path of '%s'"
-          % (cvs_path, self.project_cvs_path,))
-    l = len(self.project_cvs_path)
-    if cvs_path[l] == os.sep:
-      l += 1
-    return cvs_path[l:]
-
   def get_branch_path(self, branch_name):
     """Return the svnpath for the branch named BRANCH_NAME."""
 
@@ -1098,18 +1083,33 @@ class Project:
 
     return _path_join(self.tags_path, _clean_symbolic_name(tag_name))
 
+  def _relative_name(self, cvs_path):
+    """Convert CVS_PATH into a name relative to this project's root directory.
+
+    CVS_PATH has to begin (textually) with self.project_cvs_path.
+    Remove prefix and optional '/'."""
+
+    if not cvs_path.startswith(self.project_cvs_path):
+      raise FatalError(
+          "_relative_name: '%s' is not a sub-path of '%s'"
+          % (cvs_path, self.project_cvs_path,))
+    l = len(self.project_cvs_path)
+    if cvs_path[l] == os.sep:
+      l += 1
+    return cvs_path[l:]
+
   def make_trunk_path(self, cvs_path):
     """Return the trunk path for CVS_PATH.
 
     Return the svn path for this file on trunk."""
 
-    return _path_join(self.trunk_path, self.relative_name(cvs_path))
+    return _path_join(self.trunk_path, self._relative_name(cvs_path))
 
   def make_branch_path(self, branch_name, cvs_path):
     """Return the svn path for CVS_PATH on branch BRANCH_NAME."""
 
     return _path_join(self.get_branch_path(branch_name),
-                      self.relative_name(cvs_path))
+                      self._relative_name(cvs_path))
 
 
 class CVSRevision:

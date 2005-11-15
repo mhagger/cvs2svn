@@ -22,6 +22,12 @@ yourself!
 """
 
 import sys, os, os.path, string
+
+# Fix things so we can import cvs2svn despite it not having a .py extension
+import imp
+imp.load_module('cvs2svn', open('cvs2svn', 'r'), 'cvs2svn',
+    ('', 'r', imp.PY_SOURCE))
+
 from cvs2svn import CVSRevision
 
 def do_it(revs_file):

@@ -1040,6 +1040,14 @@ class Project:
     corresponding part of the repository."""
 
     self.project_cvs_repos_path = project_cvs_repos_path
+    prefix = Ctx().cvs_repository.cvs_repos_path
+    if not self.project_cvs_repos_path.startswith(prefix):
+      raise FatalError("Project '%s' must start with '%s'"
+                       % (self.project_cvs_repos_path, prefix,))
+    # The project's main directory as a cvs_path:
+    self.project_cvs_path = self.project_cvs_repos_path[len(prefix):]
+    if self.project_cvs_path.startswith(os.sep):
+      self.project_cvs_path = self.project_cvs_path[1:]
     self.trunk_path = trunk_path
     self.branches_path = branches_path
     self.tags_path = tags_path

@@ -26,6 +26,7 @@ import sha
 import re
 import time
 import fileinput
+import fnmatch
 import string
 import getopt
 import stat
@@ -34,6 +35,7 @@ import marshal
 import errno
 import popen2
 import types
+import ConfigParser
 try:
   # Try to get access to a bunch of encodings for use with --encoding.
   # See http://cjkpython.i18n.org/ for details.
@@ -4688,6 +4690,8 @@ class Ctx:
     self.branches_base = "branches"
     self.encoding = ["ascii"]
     self.mime_types_file = None
+    self.auto_props_file = None
+    self.auto_props_ignore_case = False
     self.no_default_eol = 0
     self.eol_from_mime_type = 0
     self.keywords_off = 0
@@ -4753,6 +4757,101 @@ class MimeMapper(SVNPropertySetter):
     mime_type = self.mappings.get(extension, None)
     if mime_type is not None:
       s_item.svn_props['svn:mime-type'] = mime_type
+
+
+class AutoPropsPropertySetter(SVNPropertySetter):
+  """Set arbitrary svn properties based on an auto-props configuration.
+
+  This class always supports case-insensitive pattern matching, and
+  also supports case-sensitive pattern starting with Python version
+  2.1.  This restriction is caused by a limitation of Python's
+  ConfigParser prior to version 2.1.  The 'correct' behavior is not
+  quite clear, because subversion itself does an inconsistent job of
+  handling case in auto-props patterns; see
+  http://subversion.tigris.org/issues/show_bug.cgi?id=2036."""
+
+  class Pattern:
+    """Describes the properties to be set for files matching a pattern."""
+    def __init__(self, pattern, propdict):
+      # A glob-like pattern:
+      self.pattern = pattern
+      # A dictionary of properties that should be set:
+      self.propdict = propdict
+
+    def match(self, basename):
+      """Does the file with the specified basename match pattern?"""
+      return fnmatch.fnmatch(basename, self.pattern)
+
+  def __init__(self, configfilename, ignore_case):
+    config = ConfigParser.ConfigParser()
+    if ignore_case:
+      self.transform_case = self.squash_case
+    else:
+      if sys.hexversion < 0x02010000:
+        raise FatalError(
+            'Python version 2.1 or greater is required to support\n'
+            'case-sensitive pattern matching for the --auto-props option.\n'
+            'Please either use a newer python interpreter, or use the\n'
+            '--auto-props-case-insensitive option.'
+            )
+      config.optionxform = self.preserve_case
+      self.transform_case = self.preserve_case
+
+    config.readfp(file(configfilename))
+    self.patterns = []
+    for section in config.sections():
+      if self.transform_case(section) == 'auto-props':
+        for (pattern, value) in config.items(section):
+          if value:
+            self._add_pattern(pattern, value)
+
+  def squash_case(self, s):
+    return s.lower()
+
+  def preserve_case(self, s):
+    return s
+
+  def _add_pattern(self, pattern, value):
+    props = value.split(';')
+    propdict = {}
+    for prop in props:
+      s = prop.split('=', 1)
+      if len(s) == 1:
+        propdict[s[0]] = None
+      else:
+        propdict[s[0]] = s[1]
+    self.patterns.append(
+        self.Pattern(self.transform_case(pattern), propdict))
+
+  def get_propdict(self, path):
+    basename = self.transform_case(os.path.basename(path))
+    propdict = {}
+    for pattern in self.patterns:
+      if pattern.match(basename):
+        for (key,value) in pattern.propdict.items():
+          if propdict.has_key(key):
+            if propdict[key] != value:
+              Log().write(
+                  LOG_WARN,
+                  "Contradictory values set for property '%s' for file %s."
+                  % (k, path,))
+          else:
+            propdict[key] = value
+
+    print 'propdict %s -> %s' % (path, propdict,) ###
+    return propdict
+
+  def set_properties(self, s_item):
+    propdict = self.get_propdict(s_item.c_rev.cvs_path)
+    for (k,v) in propdict.items():
+      if s_item.svn_props.has_key(k):
+        if s_item.svn_props[k] != v:
+          Log().write(
+              LOG_WARN,
+              "Property '%s' already set for file %s."
+              % (k, s_item.c_rev.cvs_path,))
+      else:
+        s_item.svn_props[k] = v
 
 
 class BinaryFileDefaultMimeTypeSetter(SVNPropertySetter):
@@ -4935,6 +5034,9 @@ def usage():
   print '  --bdb-txn-nosync     pass --bdb-txn-nosync to "svnadmin create"'
   print '  --fs-type=TYPE       pass --fs-type=TYPE to "svnadmin create"'
   print '  --cvs-revnums        record CVS revision numbers as file properties'
+  print '  --auto-props=FILE    set file properties from the auto-props section'
+  print '                       of a file in svn config format'
+  print '  --auto-props-ignore-case Ignore case when matching auto-props patterns'
   print '  --mime-types=FILE    specify an apache-style mime.types file for'
   print '                       setting svn:mime-type'
   print '  --eol-from-mime-type set svn:eol-style from mime type if known'
@@ -4959,6 +5061,7 @@ def main():
                                  "branches=", "tags=", "encoding=",
                                  "force-branch=", "force-tag=", "exclude=",
                                  "use-cvs", "mime-types=",
+                                 "auto-props=", "auto-props-ignore-case",
                                  "eol-from-mime-type", "no-default-eol",
                                  "trunk-only", "no-prune", "dry-run",
                                  "dump-only", "dumpfile=", "tmpdir=",
@@ -5037,6 +5140,10 @@ def main():
         raise FatalError("'%s' is not a valid regexp." % (value,))
     elif opt == '--mime-types':
       ctx.mime_types_file = value
+    elif opt == '--auto-props':
+      ctx.auto_props_file = value
+    elif opt == '--auto-props-ignore-case':
+      ctx.auto_props_ignore_case = True
     elif opt == '--eol-from-mime-type':
       ctx.eol_from_mime_type = 1
     elif opt == '--no-default-eol':
@@ -5146,6 +5253,10 @@ def main():
 
   if ctx.mime_types_file:
     ctx.svn_property_setters.append(MimeMapper(ctx.mime_types_file))
+
+  if ctx.auto_props_file:
+    ctx.svn_property_setters.append(AutoPropsPropertySetter(
+        ctx.auto_props_file, ctx.auto_props_ignore_case))
 
   ctx.svn_property_setters.append(BinaryFileDefaultMimeTypeSetter())
   ctx.svn_property_setters.append(BinaryFileEOLStyleSetter())

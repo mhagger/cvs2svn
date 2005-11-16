@@ -1923,6 +1923,65 @@ def nested_ttb_directories():
       pass
 
 
+def auto_props_ignore_case():
+  "test auto-props (case-insensitive)"
+  ### TODO: It's a bit klugey to construct this path here.  See also
+  ### the comment in eol_mime().
+  auto_props_path = os.path.abspath(
+      os.path.join(test_data_dir, 'eol-mime-cvsrepos', 'auto-props'))
+
+  # The files are as follows:
+  #
+  #     trunk/foo.txt: no -kb, mime auto-prop says nothing.
+  #     trunk/foo.xml: no -kb, mime auto-prop says text and eol-style=CRLF.
+  #     trunk/foo.zip: no -kb, mime auto-prop says non-text.
+  #     trunk/foo.bin: has -kb, mime auto-prop says nothing.
+  #     trunk/foo.csv: has -kb, mime auto-prop says text.
+  #     trunk/foo.dbf: has -kb, mime auto-prop says non-text.
+  #     trunk/foo.UPCASE1: no -kb, no mime type.
+  #     trunk/foo.UPCASE2: no -kb, no mime type.
+
+  conv = ensure_conversion(
+      'eol-mime',
+      args=['--auto-props=%s' % auto_props_path, '--auto-props-ignore-case'])
+  conv.check_props(
+      ['myprop', 'svn:eol-style', 'svn:mime-type'],
+      [
+          ('trunk/foo.txt', ['txt', 'native', None]),
+          ('trunk/foo.xml', ['xml', 'CRLF', 'text/xml']),
+          ('trunk/foo.zip', ['zip', 'native', 'application/zip']),
+          ('trunk/foo.bin', ['bin', None, 'application/octet-stream']),
+          ('trunk/foo.csv', ['csv', None, 'text/csv']),
+          ('trunk/foo.dbf', ['dbf', None, 'application/what-is-dbf']),
+          ('trunk/foo.UPCASE1', ['UPCASE1', 'native', None]),
+          ('trunk/foo.UPCASE2', ['UPCASE2', 'native', None]),
+          ]
+      )
+
+
+def auto_props():
+  "test auto-props (case-sensitive)"
+  # See auto_props for comments.
+  auto_props_path = os.path.abspath(
+      os.path.join(test_data_dir, 'eol-mime-cvsrepos', 'auto-props'))
+
+  conv = ensure_conversion(
+      'eol-mime', args=['--auto-props=%s' % auto_props_path])
+  conv.check_props(
+      ['myprop', 'svn:eol-style', 'svn:mime-type'],
+      [
+          ('trunk/foo.txt', ['txt', 'native', None]),
+          ('trunk/foo.xml', ['xml', 'CRLF', 'text/xml']),
+          ('trunk/foo.zip', ['zip', 'native', 'application/zip']),
+          ('trunk/foo.bin', ['bin', None, 'application/octet-stream']),
+          ('trunk/foo.csv', ['csv', None, 'text/csv']),
+          ('trunk/foo.dbf', ['dbf', None, 'application/what-is-dbf']),
+          ('trunk/foo.UPCASE1', ['UPCASE1', 'native', None]),
+          ('trunk/foo.UPCASE2', [None, 'native', None]),
+          ]
+      )
+
+
 #----------------------------------------------------------------------
 
 ########################################################################
@@ -1994,7 +2053,12 @@ test_list = [ None,
               branch_delete_first_variants,
               empty_trunk_variants,
               peer_path_pruning_variants,
+              auto_props_ignore_case,
               ]
+if sys.hexversion < 0x02010000:
+  test_list.append(XFail(auto_props))
+else:
+  test_list.append(auto_props)
 
 if __name__ == '__main__':
 

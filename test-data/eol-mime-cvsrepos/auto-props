@@ -1,0 +1,15 @@
+# auto-props file for auto_props() test.
+
+[auto-props]
+
+*.txt = myprop=txt
+*.xml = myprop=xml;svn:mime-type=text/xml;svn:eol-style=CRLF
+*.zip = myprop=zip;svn:mime-type=application/zip
+
+*.bin = myprop=bin
+*.csv = myprop=csv;svn:mime-type=text/csv;svn:eol-style=CRLF
+*.dbf = myprop=dbf;svn:mime-type=application/what-is-dbf
+
+*.UPCASE1 = myprop=UPCASE1
+*.upcase2 = myprop=UPCASE2
+

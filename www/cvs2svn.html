@@ -498,6 +498,25 @@ cvs2svn --symbol-transform='([0-9])-(.*):release-\1.\2' -q -s SVN RCS
   </tr>
 
   <tr>
+    <td align=right><tt>--auto-props=FILE</tt></td>
+    <td>Specify a file in the format of Subversion's config file,
+      whose <tt>[auto-props]</tt> section can be used to set arbitrary
+      properties on files in the Subversion repository based on their
+      filenames.  (The <tt>[auto-props]</tt> section header must be
+      present; other sections of the config file, including the
+      <tt>enable-auto-props</tt> setting, are ignored.)  Filenames are
+      matched to the filename patterns case-sensitively unless the
+      <tt>--auto-props-ignore-case</tt> option is specified.</td>
+  </tr>
+
+  <tr>
+    <td align=right><tt>--auto-props-ignore-case</tt></td>
+    <td>Ignore case when pattern-matching auto-props patterns.  When
+      using Python versions earlier than 2.1, this option is
+      required if <tt>--auto-props</tt> is used.</td>
+  </tr>
+
+  <tr>
     <td align=right><tt>--eol-from-mime-type</tt></td>
     <td>For files that don't have the <tt>kb</tt> expansion mode but
       have a known mime type, set the eol-style based on the mime

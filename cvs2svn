@@ -2739,14 +2739,13 @@ class CVSRevisionAggregator:
       Ctx()._symbolings_logger.close()
 
   def attempt_to_commit_symbols(self, queued_commits, c_rev=None):
-    """
-    This function generates 1 SVNCommit for each symbol in
-    self.pending_symbols that doesn't have an opening CVSRevision in
-    either QUEUED_COMMITS or self.cvs_commits.values().
+    """Generate one SVNCommit for each symbol in self.pending_symbols
+    that doesn't have an opening CVSRevision in either QUEUED_COMMITS
+    or self.cvs_commits.values().
 
     If C_REV is not None, then we first add to self.pending_symbols
-    any symbols from C_REV that C_REV is the last CVSRevision for.
-    """
+    any symbols from C_REV for which C_REV is the last CVSRevision."""
+
     # If we're not doing a trunk-only conversion, get the symbolic
     # names that this c_rev is the last *source* CVSRevision for and
     # add them to those left over from previous passes through the

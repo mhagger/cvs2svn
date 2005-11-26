@@ -2690,9 +2690,8 @@ class CVSRevisionAggregator:
       cvs_commit = self.cvs_commits[c_rev.digest]
     else:
       author, log = self.metadata_db[c_rev.digest]
-      self.cvs_commits[c_rev.digest] = CVSCommit(c_rev.digest,
-                                                 author, log)
-      cvs_commit = self.cvs_commits[c_rev.digest]
+      cvs_commit = CVSCommit(c_rev.digest, author, log)
+      self.cvs_commits[c_rev.digest] = cvs_commit
     cvs_commit.add_revision(c_rev)
 
     # If there are any elements in the ready_queue at this point, they

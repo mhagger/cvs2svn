@@ -2639,8 +2639,17 @@ class CVSRevisionAggregator:
     if not Ctx().trunk_only:
       self.last_revs_db = Database(temp(SYMBOL_LAST_CVS_REVS_DB),
                                    DB_OPEN_READ)
+
+    # A map { key : CVSCommit } of CVS commits currently being
+    # accumulated.  If the CVSCommit is still open to further
+    # CVSRevisions, then key is CVSRevision.digest.  If not (because
+    # an inbound commit wanted to affect a file that was already
+    # within the CVSCommit), then key is CVSRevision.digest plus some
+    # number of appended '-'.
     self.cvs_commits = {}
+
     self.pending_symbols = {}
+
     # A list of symbols for which we've already encountered the last
     # CVSRevision that is a source for that symbol.  That is, the
     # final fill for this symbol has been done, and we never need to

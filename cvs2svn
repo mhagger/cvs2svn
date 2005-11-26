@@ -2759,24 +2759,23 @@ class CVSRevisionAggregator:
     that doesn't have an opening CVSRevision in either QUEUED_COMMITS
     or self.cvs_commits.values()."""
 
-    # Make a list of all symbols that still have *source* CVSRevisions
-    # in the pending commit queue (self.cvs_commits).
-    open_symbols = {}
+    # Make a list of all symbols from self.pending_symbols that do not
+    # have *source* CVSRevisions in the pending commit queue
+    # (self.cvs_commits) or in queued_commits:
+    closeable_symbols = []
     for sym in self.pending_symbols.keys():
       for cvs_commit in self.cvs_commits.values() + queued_commits:
         if cvs_commit.opens_symbolic_name(sym):
-          open_symbols[sym] = None
           break
+      else:
+        closeable_symbols.append(sym)
 
-    # Sort the pending symbols so that we will always process the
+    # Sort the closeable symbols so that we will always process the
     # symbols in the same order, regardless of the order in which the
     # dict hashing algorithm hands them back to us.  We do this so
     # that our tests will get the same results on all platforms.
-    sorted_pending_symbols_keys = self.pending_symbols.keys()
-    sorted_pending_symbols_keys.sort()
-    for sym in sorted_pending_symbols_keys:
-      if open_symbols.has_key(sym): # sym is still open--don't close it.
-        continue
+    closeable_symbols.sort()
+    for sym in closeable_symbols:
       svn_commit = SVNCommit("closing tag/branch '%s'" % sym)
       svn_commit.set_symbolic_name(sym)
       svn_commit.set_date(self.latest_primary_svn_commit.get_date())

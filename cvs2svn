@@ -2648,12 +2648,15 @@ class CVSRevisionAggregator:
     # number of appended '-'.
     self.cvs_commits = {}
 
+    # A map { symbol : None } of symbolic names for which the last
+    # source CVSRevision has already been processed but which haven't
+    # been closed yet.
     self.pending_symbols = {}
 
-    # A list of symbols for which we've already encountered the last
-    # CVSRevision that is a source for that symbol.  That is, the
-    # final fill for this symbol has been done, and we never need to
-    # fill it again.
+    # A list of closed symbols.  That is, we've already encountered
+    # the last CVSRevision that is a source for that symbol, the final
+    # fill for this symbol has been done, and we never need to fill it
+    # again.
     self.done_symbols = [ ]
 
     # This variable holds the most recently created primary svn_commit

@@ -2658,7 +2658,6 @@ class CVSRevisionAggregator:
     Ctx()._default_branches_db = SDatabase(temp(DEFAULT_BRANCHES_DB),
                                            DB_OPEN_READ)
 
-
   def process_revision(self, c_rev):
     # Each time we read a new line, we scan the commits we've
     # accumulated so far to see if any are ready for processing now.

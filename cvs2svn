@@ -2732,11 +2732,11 @@ class CVSRevisionAggregator:
       ready_queue.append((v, k))
 
     ready_queue.sort()
-    for cvs_commit_tuple in ready_queue[:]:
+    while ready_queue:
+      (cvs_commit, key) = ready_queue.pop(0)
       self.latest_primary_svn_commit = \
-        cvs_commit_tuple[0].process_revisions(self.done_symbols)
-      ready_queue.remove(cvs_commit_tuple)
-      del self.cvs_commits[cvs_commit_tuple[1]]
+          cvs_commit.process_revisions(self.done_symbols)
+      del self.cvs_commits[key]
       self._attempt_to_commit_symbols([])
 
     if not Ctx().trunk_only:

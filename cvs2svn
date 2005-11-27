@@ -4236,10 +4236,8 @@ class StdoutDelegate(SVNRepositoryMirrorDelegate):
     Log().write(LOG_VERBOSE, "Finished creating Subversion repository.")
     Log().write(LOG_QUIET, "Done.")
 
-# This should be a local to pass1,
-# but Python 2.0 does not support nested scopes.
-OS_SEP_PLUS_ATTIC = os.sep + 'Attic'
 def pass1():
+  OS_SEP_PLUS_ATTIC = os.sep + 'Attic'
   Log().write(LOG_QUIET, "Examining all CVS ',v' files...")
   cd = CollectData()
 

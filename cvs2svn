@@ -2670,15 +2670,22 @@ class CVSRevisionAggregator:
     Ctx()._default_branches_db = SDatabase(temp(DEFAULT_BRANCHES_DB),
                                            DB_OPEN_READ)
 
-  def process_revision(self, c_rev):
-    # Each time we read a new line, we scan the commits we've
-    # accumulated so far to see if any are ready for processing now.
+  def _extract_ready_commits(self, timestamp):
+    """Extract and return any active commits that expire by TIMESTAMP."""
+
     ready_queue = [ ]
     for digest_key, cvs_commit in self.cvs_commits.items():
-      if cvs_commit.t_max + COMMIT_THRESHOLD < c_rev.timestamp:
+      if cvs_commit.t_max + COMMIT_THRESHOLD < timestamp:
         ready_queue.append(cvs_commit)
         del self.cvs_commits[digest_key]
-        continue
+    return ready_queue
+
+  def process_revision(self, c_rev):
+    # Each time we read a new line, scan the accumulating commits to
+    # see if any are ready for processing.
+    ready_queue = self._extract_ready_commits(c_rev.timestamp)
+
+    for digest_key, cvs_commit in self.cvs_commits.items():
       # If the inbound commit is on the same file as a pending commit,
       # close the pending commit to further changes.  Don't flush it though,
       # as there may be other pending commits dated before this one.

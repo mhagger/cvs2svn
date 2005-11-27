@@ -2760,9 +2760,9 @@ class CVSRevisionAggregator:
     """Add to self.pending_symbols any symbols from C_REV for which
     C_REV is the last CVSRevision.
 
-    Get the symbolic names that this c_rev is the last *source*
-    CVSRevision for and add them to those left over from previous
-    passes through the aggregator."""
+    If we're not doing a trunk-only conversion, get the symbolic names
+    that this c_rev is the last *source* CVSRevision for and add them
+    to those left over from previous passes through the aggregator."""
 
     if not Ctx().trunk_only:
       for sym in self.last_revs_db.get(c_rev.unique_key(), []):

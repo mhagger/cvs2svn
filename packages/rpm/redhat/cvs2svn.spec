@@ -10,7 +10,7 @@ SOURCE0: cvs2svn-%{version}-%{release}.tar.gz
 Vendor: Summersoft
 BuildArchitectures: noarch
 Packager: David Summers <david@summersoft.fay.ar.us>
-Requires: python >= 2
+Requires: python >= 2.2
 Requires: cvs
 Requires: subversion-python >= 1.0.1
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}

@@ -4,7 +4,7 @@ import os
 import sys
 from distutils.core import setup
 
-assert sys.version >= '2', "Install Python 2.0 or greater"
+assert sys.hexversion >= 0x02020000, "Install Python 2.2 or greater"
 
 def get_version():
   "Return the version number listed in dist.sh, or None if can't find one."

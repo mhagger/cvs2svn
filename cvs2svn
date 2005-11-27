@@ -49,8 +49,8 @@ warning_prefix = "WARNING"
 error_prefix = "ERROR"
 
 # Make sure this Python is recent enough.
-if sys.hexversion < 0x2000000:
-  sys.stderr.write("'%s: Python 2.0 or higher required, "
+if sys.hexversion < 0x02020000:
+  sys.stderr.write("'%s: Python 2.2 or higher required, "
                    "see www.python.org.\n" % error_prefix)
   sys.exit(1)
 
@@ -3048,10 +3048,8 @@ class SymbolicNameFillingGuide:
       preferred_rev_score = -1
       rev = SVN_INVALID_REVNUM
       if preferred_rev is None:
-        # Comparison order of different types is arbitrary. Do not
+        # Comparison order of different types is arbitrary.  Do not
         # expect None to compare less than int values below.
-        # In Python 2.3 None compares with ints like negative infinity.
-        # In Python 2.0 None compares with ints like positive infinity.
         preferred_rev = SVN_INVALID_REVNUM
       for revnum, count in scores:
         if count > max_score:
@@ -4780,12 +4778,10 @@ class MimeMapper(SVNPropertySetter):
 class AutoPropsPropertySetter(SVNPropertySetter):
   """Set arbitrary svn properties based on an auto-props configuration.
 
-  This class always supports case-insensitive pattern matching, and
-  also supports case-sensitive pattern starting with Python version
-  2.1.  This restriction is caused by a limitation of Python's
-  ConfigParser prior to version 2.1.  The 'correct' behavior is not
-  quite clear, because subversion itself does an inconsistent job of
-  handling case in auto-props patterns; see
+  This class always supports case-sensitive and case-insensitive
+  pattern matching.  The 'correct' behavior is not quite clear,
+  because subversion itself does an inconsistent job of handling case
+  in auto-props patterns; see
   http://subversion.tigris.org/issues/show_bug.cgi?id=2036."""
 
   class Pattern:
@@ -4805,13 +4801,6 @@ class AutoPropsPropertySetter(SVNPropertySetter):
     if ignore_case:
       self.transform_case = self.squash_case
     else:
-      if sys.hexversion < 0x02010000:
-        raise FatalError(
-            'Python version 2.1 or greater is required to support\n'
-            'case-sensitive pattern matching for the --auto-props option.\n'
-            'Please either use a newer python interpreter, or use the\n'
-            '--auto-props-case-insensitive option.'
-            )
       config.optionxform = self.preserve_case
       self.transform_case = self.preserve_case
 

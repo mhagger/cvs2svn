@@ -2124,10 +2124,17 @@ class CVSCommit:
   generate a Subversion Commit (or Commits) for the set of CVS
   Revisions in the grouping."""
 
+  # The next serial number to be assigned:
+  cur_serial = 0
+
   def __init__(self, digest, author, log):
     self.digest = digest
     self.author = author
     self.log = log
+
+    # Assign a unique serial number to each CVSCommit:
+    self.serial = CVSCommit.cur_serial
+    CVSCommit.cur_serial += 1
 
     # Symbolic names for which the last source revision has already
     # been seen and for which the CVSRevisionAggregator has already

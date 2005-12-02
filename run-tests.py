@@ -58,7 +58,8 @@ Skip = svntest.testcase.Skip
 XFail = svntest.testcase.XFail
 Item = svntest.wc.StateItem
 
-cvs2svn = os.path.abspath('cvs2svn')
+# Always run from inside the tmp_dir, so use appropriate relative path.
+cvs2svn = os.path.join('..', 'cvs2svn')
 
 # We use the installed svn and svnlook binaries, instead of using
 # svntest.main.run_svn() and svntest.main.run_svnlook(), because the
@@ -438,8 +439,7 @@ class Conversion:
     if not os.path.isdir(tmp_dir):
       os.mkdir(tmp_dir)
 
-    cvsrepos = os.path.abspath(
-        os.path.join(test_data_dir, '%s-cvsrepos' % self.name))
+    cvsrepos = os.path.join('..', test_data_dir, '%s-cvsrepos' % self.name)
 
     saved_wd = os.getcwd()
     try:
@@ -605,7 +605,13 @@ def ensure_conversion(name, error_re=None, passbypass=None,
 
 def show_usage():
   "cvs2svn with no arguments shows usage"
-  out = run_cvs2svn(None)
+  saved_wd = os.getcwd()
+  try:
+    os.chdir(tmp_dir)
+    out = run_cvs2svn(None)
+  finally:
+    os.chdir(saved_wd)
+
   if (len(out) > 2 and out[0].find('ERROR:') == 0
       and out[1].find('DBM module')):
     print 'cvs2svn cannot execute due to lack of proper DBM module.'
@@ -1220,9 +1226,8 @@ def nonascii_filenames():
     raise svntest.Skip
 
   try:
-    testdata_path = os.path.abspath('test-data')
-    srcrepos_path = os.path.join(testdata_path,'main-cvsrepos')
-    dstrepos_path = os.path.join(testdata_path,'non-ascii-cvsrepos')
+    srcrepos_path = os.path.join(test_data_dir,'main-cvsrepos')
+    dstrepos_path = os.path.join(test_data_dir,'non-ascii-cvsrepos')
     if not os.path.exists(dstrepos_path):
       # create repos from existing main repos
       shutil.copytree(srcrepos_path, dstrepos_path)
@@ -1669,9 +1674,8 @@ def eol_mime():
   ### near ensure_conversion().  Note that it is a convention of this
   ### test suite for a mime.types file to be located in the top level
   ### of the CVS repository to which it applies.
-  mime_path = os.path.abspath(os.path.join(test_data_dir,
-                                           'eol-mime-cvsrepos',
-                                           'mime.types'))
+  mime_path = os.path.join('..', test_data_dir, 'eol-mime-cvsrepos',
+      'mime.types')
 
   # We do four conversions.  Each time, we pass --mime-types=FILE with
   # the same FILE, but vary --no-default-eol and --eol-from-mime-type.
@@ -1927,8 +1931,8 @@ def auto_props_ignore_case():
   "test auto-props (case-insensitive)"
   ### TODO: It's a bit klugey to construct this path here.  See also
   ### the comment in eol_mime().
-  auto_props_path = os.path.abspath(
-      os.path.join(test_data_dir, 'eol-mime-cvsrepos', 'auto-props'))
+  auto_props_path = os.path.join('..', test_data_dir, 'eol-mime-cvsrepos',
+      'auto-props')
 
   # The files are as follows:
   #
@@ -1962,8 +1966,8 @@ def auto_props_ignore_case():
 def auto_props():
   "test auto-props (case-sensitive)"
   # See auto_props for comments.
-  auto_props_path = os.path.abspath(
-      os.path.join(test_data_dir, 'eol-mime-cvsrepos', 'auto-props'))
+  auto_props_path = os.path.join('..', test_data_dir, 'eol-mime-cvsrepos',
+      'auto-props')
 
   conv = ensure_conversion(
       'eol-mime', args=['--auto-props=%s' % auto_props_path])

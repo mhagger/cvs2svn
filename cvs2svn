@@ -780,7 +780,7 @@ class Cleanup:
     """Clean up all files, and invoke callbacks, for pass WHICH_PASS."""
     if not self._log.has_key(which_pass):
       return
-    for file in self._log[which_pass].keys():
+    for file in self._log[which_pass]:
       Log().write(LOG_VERBOSE, "Deleting", file)
       if self._callbacks.has_key(file):
         self._callbacks[file]()
@@ -1332,10 +1332,10 @@ class SymbolDatabase:
     REGEXP_LISTE.  The hash is used as a set so the values are
     not used."""
     excludes = { }
-    for tag in self.tags.keys():
+    for tag in self.tags:
       if match_regexp_list(regexp_list, tag):
         excludes[tag] = None
-    for branch in self.branches.keys():
+    for branch in self.branches:
       if match_regexp_list(regexp_list, branch):
         excludes[branch] = None
     return excludes
@@ -1356,7 +1356,7 @@ class SymbolDatabase:
     to a hash of blockers.  The hash of blockes is used as a set so the
     values are not used."""
     blocked_branches = { }
-    for branch in self.branches.keys():
+    for branch in self.branches:
       blockers = self.find_branch_exclude_blockers(branch, excludes)
       if blockers:
         blocked_branches[branch] = blockers
@@ -1369,7 +1369,7 @@ class SymbolDatabase:
     if excludes is None:
       excludes = { }
     mismatches = [ ]
-    for branch in self.branches.keys():
+    for branch in self.branches:
       if not excludes.has_key(branch) and self.tags.has_key(branch):
         mismatches.append((branch,                    # name
                            self.tags[branch],         # tag count
@@ -2770,7 +2770,7 @@ class CVSRevisionAggregator:
     # have *source* CVSRevisions in the pending commit queue
     # (self.cvs_commits) or in queued_commits:
     closeable_symbols = []
-    for sym in self.pending_symbols.keys():
+    for sym in self.pending_symbols:
       for cvs_commit in self.cvs_commits.values() + queued_commits:
         if cvs_commit.opens_symbolic_name(sym):
           break
@@ -3477,7 +3477,7 @@ class SVNRepositoryMirror:
         # Now since we've just copied trunk to a branch that's
         # *supposed* to be empty, we delete any entries in the
         # copied directory.
-        for entry in entries.keys():
+        for entry in entries:
           del_path = dest_path + '/' + entry
           # Delete but don't prune.
           self._delete_path(del_path)
@@ -3564,7 +3564,7 @@ class SVNRepositoryMirror:
     if prune_ok:
       # Delete the entries in DEST_ENTRIES that are not in src_entries.
       delete_list = [ ]
-      for entry in dest_entries.keys():
+      for entry in dest_entries:
         if not src_entries.has_key(entry):
           delete_list.append(entry)
       if delete_list:
@@ -4360,7 +4360,7 @@ def pass2():
 
   # Create the tags database
   tags_db = TagsDatabase(DB_OPEN_NEW)
-  for tag in symbol_db.tags.keys():
+  for tag in symbol_db.tags:
     if tag not in Ctx().forced_branches:
       tags_db[tag] = None
   for tag in Ctx().forced_tags:

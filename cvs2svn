@@ -36,6 +36,7 @@ import errno
 import popen2
 import types
 import ConfigParser
+import UserDict
 try:
   # Try to get access to a bunch of encodings for use with --encoding.
   # See http://cjkpython.i18n.org/ for details.
@@ -792,7 +793,7 @@ DB_OPEN_READ = 'r'
 DB_OPEN_NEW = 'n'
 
 
-class AbstractDatabase:
+class AbstractDatabase(UserDict.DictMixin):
   """An abstract base class for anydbm-based databases."""
 
   def __init__(self, filename, mode):
@@ -813,16 +814,21 @@ class AbstractDatabase:
       mode = 'c'
 
     self.db = anydbm.open(filename, mode)
-    self.has_key = self.db.has_key
-    self.__delitem__ = self.db.__delitem__
 
-  def get(self, key, default=None):
-    """bsddb3 doesn't have a get() method, so define one here."""
+    # Import implementations for many mapping interface methods.
+    # Note that we specifically do not do this for any method which handles
+    # *values*, because our derived classes may define __getitem__ and
+    # __setitem__ to override the storage of values, and grabbing methods
+    # directly from the dbm object would bypass this.
+    for meth_name in ('__delitem__', 'keys',
+        '__iter__', 'has_key', '__contains__', 'iterkeys', 'clear'):
+      meth_ref = getattr(self.db, meth_name, None)
+      if meth_ref:
+        setattr(self, meth_name, meth_ref)
 
-    try:
-      return self[key]
-    except KeyError:
-      return default
+  def __delitem__(self, key):
+    "gdbm does not define a __delitem__ we can assign."
+    del self.db[key]
 
 
 class SDatabase(AbstractDatabase):
@@ -2804,7 +2810,7 @@ class SymbolingsReader:
     # from it a fair bit, so suck it into memory
     offsets_db = Database(temp(SYMBOL_OFFSETS_DB), DB_OPEN_READ)
     self.offsets = { }
-    for key in offsets_db.db.keys():
+    for key in offsets_db:
       #print " ZOO:", key, offsets_db[key]
       self.offsets[key] = offsets_db[key]
 

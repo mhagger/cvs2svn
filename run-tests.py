@@ -58,8 +58,7 @@ Skip = svntest.testcase.Skip
 XFail = svntest.testcase.XFail
 Item = svntest.wc.StateItem
 
-# Always run from inside the tmp_dir, so use appropriate relative path.
-cvs2svn = os.path.join('..', 'cvs2svn')
+cvs2svn = os.path.abspath('cvs2svn')
 
 # We use the installed svn and svnlook binaries, instead of using
 # svntest.main.run_svn() and svntest.main.run_svnlook(), because the
@@ -605,13 +604,7 @@ def ensure_conversion(name, error_re=None, passbypass=None,
 
 def show_usage():
   "cvs2svn with no arguments shows usage"
-  saved_wd = os.getcwd()
-  try:
-    os.chdir(tmp_dir)
-    out = run_cvs2svn(None)
-  finally:
-    os.chdir(saved_wd)
-
+  out = run_cvs2svn(None)
   if (len(out) > 2 and out[0].find('ERROR:') == 0
       and out[1].find('DBM module')):
     print 'cvs2svn cannot execute due to lack of proper DBM module.'

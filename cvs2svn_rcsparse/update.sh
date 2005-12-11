@@ -1,12 +1,12 @@
 #!/bin/sh
 
-# Update the rcsparse library from ViewCVS CVS
+set -ex
 
-# First update the rcsparse files
-cvs update
+VIEWVC_REPOS="http://viewvc.tigris.org/svn/viewvc"
 
-# Now update compat.py (which is not in this directory, in the upstream CVS)
-# -f option is to suppress possible -d in .cvsrc
-cvs -f update compat
-cp compat/compat.py compat.py
+# Update the rcsparse library from ViewVC
+svn export --force "$VIEWVC_REPOS/trunk/lib/vclib/ccvs/rcsparse" .
+
+# Now update compat.py (which is not in this directory, in the upstream source)
+svn export "$VIEWVC_REPOS/trunk/lib/compat.py"
 

@@ -1334,8 +1334,8 @@ class SymbolDatabase:
     return self.branches.has_key(name) and self.branches[name][1]
 
   def find_excluded_symbols(self, regexp_list):
-    """Returns a hash of all symbols thaht match the regexps in
-    REGEXP_LISTE.  The hash is used as a set so the values are
+    """Returns a hash of all symbols that match the regexps in
+    REGEXP_LIST.  The hash is used as a set so the values are
     not used."""
     excludes = { }
     for tag in self.tags:

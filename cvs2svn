@@ -149,8 +149,8 @@ if hasattr(anydbm._defaultmod, 'bsddb') \
     anydbm._defaultmod = gdbm
 
 trunk_rev = re.compile('^[0-9]+\\.[0-9]+$')
-branch_tag = re.compile('^[0-9.]+\\.0\\.[0-9]+$')
-vendor_tag = re.compile('^[0-9]+\\.[0-9]+\\.[0-9]+$')
+cvs_branch_tag = re.compile('^((?:[0-9]+\\.[0-9]+\\.)+)0\\.([0-9]+)$')
+rcs_branch_tag = re.compile('^(?:[0-9]+\\.[0-9]+\\.)+[0-9]+$')
 
 SVN_KEYWORDS_VALUE = 'Author Date Id Revision'
 
@@ -1569,18 +1569,6 @@ class CollectData(cvs2svn_rcsparse.Sink):
       return None
     return self.branch_names.get(revision[:revision.rindex(".")])
 
-  def add_cvs_branch(self, revision, branch_name):
-    """Record the root revision and branch revision for BRANCH_NAME,
-    based on REVISION.  REVISION is a CVS branch number having an even
-    number of components where the second-to-last is '0'.  For
-    example, if it's '1.7.0.2', then record that BRANCH_NAME sprouts
-    from 1.7 and has branch number 1.7.2."""
-    last_dot = revision.rfind(".")
-    branch_rev = revision[:last_dot]
-    last2_dot = branch_rev.rfind(".")
-    branch_rev = branch_rev[:last2_dot] + revision[last_dot:]
-    self.set_branch_name(branch_rev, branch_name)
-
   def define_tag(self, name, revision):
     """Record a bidirectional mapping between symbolic NAME and REVISION.
     REVISION is an unprocessed revision number from the RCS file's
@@ -1599,9 +1587,10 @@ class CollectData(cvs2svn_rcsparse.Sink):
       sys.stderr.write(err + "\n")
       self.fatal_errors.append(err)
     self.defined_symbols[name] = None
-    if branch_tag.match(revision):
-      self.add_cvs_branch(revision, name)
-    elif vendor_tag.match(revision):
+    m = cvs_branch_tag.match(revision)
+    if m:
+      self.set_branch_name(m.group(1) + m.group(2), name)
+    elif rcs_branch_tag.match(revision):
       self.set_branch_name(revision, name)
     else:
       self.taglist.setdefault(revision, []).append(name)

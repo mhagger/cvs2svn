@@ -437,7 +437,7 @@ def check_command_runs(cmd, cmdname):
   pipe.stdout.read()
   errmsg = pipe.stderr.read()
   status = pipe.wait()
-  if status != 0 or errmsg:
+  if status or errmsg:
     msg = 'error executing %s: status %s' % (cmdname, status,)
     if errmsg:
       msg += ', error output:\n%s' % (errmsg,)

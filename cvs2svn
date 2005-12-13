@@ -3723,15 +3723,6 @@ class SVNCommitItem:
     self.has_keywords = self.svn_props.get('svn:keywords', None) is not None
 
 
-class SVNPropertySetter:
-  """Abstract class for objects that can set properties on a SVNCommitItem."""
-
-  def set_properties(self, s_item):
-    """Set any properties that can be determined for S_ITEM."""
-
-    raise NotImplementedError
-
-
 class SVNRepositoryMirrorDelegate:
   """Abstract superclass for any delegate to SVNRepositoryMirror.
   Subclasses must implement all of the methods below.
@@ -4716,6 +4707,15 @@ class Ctx:
     self.excludes = []
     self.symbol_transforms = []
     self.svn_property_setters = []
+
+
+class SVNPropertySetter:
+  """Abstract class for objects that can set properties on a SVNCommitItem."""
+
+  def set_properties(self, s_item):
+    """Set any properties that can be determined for S_ITEM."""
+
+    raise NotImplementedError
 
 
 class CVSRevisionNumberSetter(SVNPropertySetter):

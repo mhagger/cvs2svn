@@ -4734,6 +4734,14 @@ class ExecutablePropertySetter(SVNPropertySetter):
       s_item.svn_props['svn:executable'] = '*'
 
 
+class BinaryFileEOLStyleSetter(SVNPropertySetter):
+  """Set the eol-style for binary files to None."""
+
+  def set_properties(self, s_item):
+    if s_item.c_rev.mode == 'b':
+      s_item.svn_props['svn:eol-style'] = None
+
+
 class MimeMapper(SVNPropertySetter):
   """A class that provides mappings from file names to MIME types."""
 
@@ -4869,14 +4877,6 @@ class BinaryFileDefaultMimeTypeSetter(SVNPropertySetter):
     if not s_item.svn_props.has_key('svn:mime-type') \
            and s_item.c_rev.mode == 'b':
       s_item.svn_props['svn:mime-type'] = 'application/octet-stream'
-
-
-class BinaryFileEOLStyleSetter(SVNPropertySetter):
-  """Set the eol-style for binary files to None."""
-
-  def set_properties(self, s_item):
-    if s_item.c_rev.mode == 'b':
-      s_item.svn_props['svn:eol-style'] = None
 
 
 class EOLStyleFromMimeTypeSetter(SVNPropertySetter):
@@ -5253,6 +5253,8 @@ def main():
 
   ctx.svn_property_setters.append(ExecutablePropertySetter())
 
+  ctx.svn_property_setters.append(BinaryFileEOLStyleSetter())
+
   if ctx.mime_types_file:
     ctx.svn_property_setters.append(MimeMapper(ctx.mime_types_file))
 
@@ -5261,7 +5263,6 @@ def main():
         ctx.auto_props_file, ctx.auto_props_ignore_case))
 
   ctx.svn_property_setters.append(BinaryFileDefaultMimeTypeSetter())
-  ctx.svn_property_setters.append(BinaryFileEOLStyleSetter())
 
   if ctx.eol_from_mime_type:
     ctx.svn_property_setters.append(EOLStyleFromMimeTypeSetter())

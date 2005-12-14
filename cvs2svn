@@ -2546,8 +2546,8 @@ class SVNCommit:
       for c_rev in self.cvs_revs:
         Log().write(LOG_WARN, " ", c_rev.fname)
 
-      Log().write(LOG_WARN, "Consider rerunning with (for example)",
-                  "'--encoding=latin1'.\n")
+      Log().write(LOG_WARN, "Consider rerunning with one or more ",
+                  "'--encoding' parameters.\n")
       # It's better to fall back to the original (unknown encoding) data
       # than to either 1) quit or 2) record nothing at all.
       return { 'svn:author' : self._author,
@@ -3812,7 +3812,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
       except UnicodeError:
         raise FatalError(
             "Unable to convert a path '%s' to internal encoding.\n"
-            "Consider rerunning with (for example) '--encoding=latin1'."
+            "Consider rerunning with one or more '--encoding' parameters."
             % (path,))
     return string.join(pieces, '/')
 

@@ -2186,9 +2186,14 @@ class CVSCommit:
 
   def __cmp__(self, other):
     # Commits should be sorted by t_max.  If both self and other have
-    # the same t_max, break the tie using t_min, and lastly, digest
+    # the same t_max, break the tie using t_min, and lastly, digest.
+    # If all those are equal, then compare based on ids, to ensure
+    # that no two instances compare equal.
     return (cmp(self.t_max, other.t_max) or cmp(self.t_min, other.t_min)
-            or cmp(self.digest, other.digest))
+            or cmp(self.digest, other.digest) or cmp(id(self), id(other)))
+
+  def __hash__(self):
+    return id(self)
 
   def has_file(self, fname):
     return self.files.has_key(fname)

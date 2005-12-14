@@ -4787,11 +4787,15 @@ class MimeMapper(SVNPropertySetter):
 class AutoPropsPropertySetter(SVNPropertySetter):
   """Set arbitrary svn properties based on an auto-props configuration.
 
-  This class always supports case-sensitive and case-insensitive
-  pattern matching.  The 'correct' behavior is not quite clear,
-  because subversion itself does an inconsistent job of handling case
-  in auto-props patterns; see
-  http://subversion.tigris.org/issues/show_bug.cgi?id=2036."""
+  This class supports case-sensitive or case-insensitive pattern
+  matching.  The 'correct' behavior is not quite clear, because
+  subversion itself does an inconsistent job of handling case in
+  auto-props patterns; see
+  http://subversion.tigris.org/issues/show_bug.cgi?id=2036.
+
+  If a property specified in auto-props has already been set to a
+  different value, print a warning and leave the old property value
+  unchanged."""
 
   class Pattern:
     """Describes the properties to be set for files matching a pattern."""
@@ -4871,7 +4875,8 @@ class AutoPropsPropertySetter(SVNPropertySetter):
 
 
 class BinaryFileDefaultMimeTypeSetter(SVNPropertySetter):
-  """Set the default mime type for binary files, if no other one is known."""
+  """If the file is binary and its svn:mime-type property is not yet
+  set, set it to 'application/octet-stream'."""
 
   def set_properties(self, s_item):
     if not s_item.svn_props.has_key('svn:mime-type') \
@@ -4880,10 +4885,12 @@ class BinaryFileDefaultMimeTypeSetter(SVNPropertySetter):
 
 
 class EOLStyleFromMimeTypeSetter(SVNPropertySetter):
-  """Set the eol-style from the mime type if it is not already known.
+  """Set svn:eol-style based on svn:mime-type.
 
-  This setting is influenced by the mime-type setting, which must
-  already have been set.  See also issue #39."""
+  If svn:mime-type is known but svn:eol-style is not, then set
+  svn:eol-style based on svn:mime-type as follows: if svn:mime-type
+  starts with 'text/', then set svn:eol-style to native; otherwise,
+  force it to remain unset.  See also issue #39."""
 
   def set_properties(self, s_item):
     if not s_item.svn_props.has_key('svn:eol-style') \
@@ -4895,7 +4902,7 @@ class EOLStyleFromMimeTypeSetter(SVNPropertySetter):
 
 
 class DefaultEOLStyleSetter(SVNPropertySetter):
-  """Set the default eol-style if one has not already been set."""
+  """Set the eol-style if one has not already been set."""
 
   def __init__(self, value):
     """Initialize with the specified default VALUE."""
@@ -4908,8 +4915,8 @@ class DefaultEOLStyleSetter(SVNPropertySetter):
 
 
 class KeywordsPropertySetter(SVNPropertySetter):
-  """Set the svn:keywords property based on the file's mode.  See
-  issue #2."""
+  """If the svn:keywords property is not yet set, set it based on the
+  file's mode.  See issue #2."""
 
   def __init__(self, value):
     """Use VALUE for the value of the svn:keywords property if it is

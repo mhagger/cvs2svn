@@ -2749,17 +2749,17 @@ class CVSRevisionAggregator:
       for sym in self.last_revs_db.get(c_rev.unique_key(), []):
         self.pending_symbols[sym] = None
 
-  def _attempt_to_commit_symbols(self, queued_commits):
+  def _attempt_to_commit_symbols(self, ready_queue):
     """Generate one SVNCommit for each symbol in self.pending_symbols
     that doesn't have an opening CVSRevision in either QUEUED_COMMITS
     or self.cvs_commits.values()."""
 
     # Make a list of all symbols from self.pending_symbols that do not
     # have *source* CVSRevisions in the pending commit queue
-    # (self.cvs_commits) or in queued_commits:
+    # (self.cvs_commits) or in ready_queue:
     closeable_symbols = []
     for sym in self.pending_symbols:
-      for cvs_commit in self.cvs_commits.values() + queued_commits:
+      for cvs_commit in self.cvs_commits.values() + ready_queue:
         if cvs_commit.opens_symbolic_name(sym):
           break
       else:

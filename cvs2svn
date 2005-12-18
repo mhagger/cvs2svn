@@ -2680,6 +2680,15 @@ class CVSRevisionAggregator:
         del self.cvs_commits[digest_key]
     return ready_queue
 
+  def _commit_ready_commits(self, ready_queue):
+    """Sort the commits from ready_queue by time, then process them."""
+    ready_queue.sort()
+    while ready_queue:
+      cvs_commit = ready_queue.pop(0)
+      self.latest_primary_svn_commit = \
+          cvs_commit.process_revisions(self.done_symbols)
+      self._attempt_to_commit_symbols(ready_queue)
+
   def process_revision(self, c_rev):
     # Each time we read a new line, scan the accumulating commits to
     # see if any are ready for processing.
@@ -2712,17 +2721,10 @@ class CVSRevisionAggregator:
       self.cvs_commits[c_rev.digest] = cvs_commit
     cvs_commit.add_revision(c_rev)
 
-    if ready_queue:
-      # Any elements in the ready_queue at this point need to be
-      # processed, because this latest rev couldn't possibly be part
-      # of any of them.  Sort them into time-order, then process 'em.
-      ready_queue.sort()
-
-      while ready_queue:
-        cvs_commit = ready_queue.pop(0)
-        self.latest_primary_svn_commit = \
-            cvs_commit.process_revisions(self.done_symbols)
-        self._attempt_to_commit_symbols(ready_queue)
+    # Any elements in the ready_queue at this point need to be
+    # processed, because this latest rev couldn't possibly be part
+    # of any of them.
+    self._commit_ready_commits(ready_queue)
 
     self._add_pending_symbols(c_rev)
 

@@ -2648,6 +2648,9 @@ class CVSRevisionAggregator:
     # number of appended '-'.
     self.cvs_commits = {}
 
+    # List of ready commits.
+    self.ready_queue = [ ]
+
     # A map { symbol : None } of symbolic names for which the last
     # source CVSRevision has already been processed but which haven't
     # been closed yet.
@@ -2673,26 +2676,24 @@ class CVSRevisionAggregator:
   def _extract_ready_commits(self, timestamp):
     """Extract and return any active commits that expire by TIMESTAMP."""
 
-    ready_queue = [ ]
     for digest_key, cvs_commit in self.cvs_commits.items():
       if cvs_commit.t_max + COMMIT_THRESHOLD < timestamp:
-        ready_queue.append(cvs_commit)
+        self.ready_queue.append(cvs_commit)
         del self.cvs_commits[digest_key]
-    return ready_queue
 
-  def _commit_ready_commits(self, ready_queue):
-    """Sort the commits from ready_queue by time, then process them."""
-    ready_queue.sort()
-    while ready_queue:
-      cvs_commit = ready_queue.pop(0)
+  def _commit_ready_commits(self):
+    """Sort the commits from self.ready_queue by time, then process them."""
+    self.ready_queue.sort()
+    while self.ready_queue:
+      cvs_commit = self.ready_queue.pop(0)
       self.latest_primary_svn_commit = \
           cvs_commit.process_revisions(self.done_symbols)
-      self._attempt_to_commit_symbols(ready_queue)
+      self._attempt_to_commit_symbols()
 
   def process_revision(self, c_rev):
     # Each time we read a new line, scan the accumulating commits to
     # see if any are ready for processing.
-    ready_queue = self._extract_ready_commits(c_rev.timestamp)
+    self._extract_ready_commits(c_rev.timestamp)
 
     for digest_key, cvs_commit in self.cvs_commits.items():
       # If the inbound commit is on the same file as a pending commit,
@@ -2721,10 +2722,10 @@ class CVSRevisionAggregator:
       self.cvs_commits[c_rev.digest] = cvs_commit
     cvs_commit.add_revision(c_rev)
 
-    # Any elements in the ready_queue at this point need to be
-    # processed, because this latest rev couldn't possibly be part
-    # of any of them.
-    self._commit_ready_commits(ready_queue)
+    # Any elements in self.ready_queue at this point need to be
+    # processed, because this latest rev couldn't possibly be part of
+    # any of them.
+    self._commit_ready_commits()
 
     self._add_pending_symbols(c_rev)
 
@@ -2732,7 +2733,8 @@ class CVSRevisionAggregator:
     """Commit anything left in self.cvs_commits.  Then inform the
     SymbolingsLogger that all commits are done."""
 
-    self._commit_ready_commits(self._extract_ready_commits(1L<<32))
+    self._extract_ready_commits(1L<<32)
+    self._commit_ready_commits()
 
     if not Ctx().trunk_only:
       Ctx()._symbolings_logger.close()
@@ -2749,17 +2751,17 @@ class CVSRevisionAggregator:
       for sym in self.last_revs_db.get(c_rev.unique_key(), []):
         self.pending_symbols[sym] = None
 
-  def _attempt_to_commit_symbols(self, ready_queue):
+  def _attempt_to_commit_symbols(self):
     """Generate one SVNCommit for each symbol in self.pending_symbols
-    that doesn't have an opening CVSRevision in either QUEUED_COMMITS
+    that doesn't have an opening CVSRevision in either self.ready_queue
     or self.cvs_commits.values()."""
 
     # Make a list of all symbols from self.pending_symbols that do not
     # have *source* CVSRevisions in the pending commit queue
-    # (self.cvs_commits) or in ready_queue:
+    # (self.cvs_commits) or in self.ready_queue:
     closeable_symbols = []
     for sym in self.pending_symbols:
-      for cvs_commit in self.cvs_commits.values() + ready_queue:
+      for cvs_commit in self.cvs_commits.values() + self.ready_queue:
         if cvs_commit.opens_symbolic_name(sym):
           break
       else:

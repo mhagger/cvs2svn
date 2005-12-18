@@ -2685,7 +2685,8 @@ class CVSRevisionAggregator:
     """Sort the commits from self.ready_queue by time, then process them."""
     self.ready_queue.sort()
     while self.ready_queue:
-      cvs_commit = self.ready_queue.pop(0)
+      cvs_commit = self.ready_queue[0]
+      del self.ready_queue[0]
       self.latest_primary_svn_commit = \
           cvs_commit.process_revisions(self.done_symbols)
       self._attempt_to_commit_symbols()

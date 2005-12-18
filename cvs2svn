@@ -2722,13 +2722,9 @@ class CVSRevisionAggregator:
         cvs_commit = ready_queue.pop(0)
         self.latest_primary_svn_commit = \
             cvs_commit.process_revisions(self.done_symbols)
-        self._add_pending_symbols(c_rev)
         self._attempt_to_commit_symbols(ready_queue)
-    else:
-      # Make sure we _add_pending_symbols() for this c_rev and
-      # _attempt_to_commit_symbols(), even if no commits are ready.
-      self._add_pending_symbols(c_rev)
-      self._attempt_to_commit_symbols(ready_queue)
+
+    self._add_pending_symbols(c_rev)
 
   def flush(self):
     """Commit anything left in self.cvs_commits.  Then inform the

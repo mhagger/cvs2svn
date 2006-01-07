@@ -2041,6 +2041,8 @@ class PersistenceManager:
         svn_commit.set_author(author)
         svn_commit.set_log_msg(log_msg)
 
+    svn_commit.set_date(date)
+
     # If we're doing a trunk-only conversion, we don't need to do any more
     # work.
     if Ctx().trunk_only:
@@ -2053,13 +2055,11 @@ class PersistenceManager:
             "symbolic name ('%s') to fill."
             % (_clean_symbolic_name(name),))
       svn_commit.set_symbolic_name(name)
-      svn_commit.set_date(date)
       if self.tags_db.has_key(name):
         svn_commit.is_tag = 1
 
     if motivating_revnum is not None:
       svn_commit.set_motivating_revnum(motivating_revnum)
-      svn_commit.set_date(date)
 
     return svn_commit
 

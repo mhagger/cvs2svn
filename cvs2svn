@@ -247,7 +247,7 @@ BRANCHES_LIST = 'cvs2svn-branches.txt'
 # not unique.
 #
 # The second maps Subversion revision numbers to tuples (c_rev_keys,
-# motivating_revnum).
+# motivating_revnum, symbolic_name, date).
 #
 # c_rev_keys is a list of CVSRevision.unique_key()s.
 #
@@ -258,19 +258,13 @@ BRANCHES_LIST = 'cvs2svn-branches.txt'
 # record it because it is (currently) not needed for anything.)
 # motivating_revnum is used when generating the log message for the
 # commit that synchronizes the default branch with trunk.
+#
+# If this is not a primary commit, then symbolic_name is the symbolic
+# name associated with the commit (if it filled a symbolic name) or
+# None (if it was a default branch sync) and date is its date.
+# Otherwise, symbolic_name and date are both None.
 CVS_REVS_TO_SVN_REVNUMS = 'cvs2svn-cvs-revs-to-svn-revnums.db'
 SVN_REVNUMS_TO_CVS_REVS = 'cvs2svn-svn-revnums-to-cvs-revs.db'
-
-# This database maps svn_revnums to tuples of (symbolic_name, date).
-#
-# The svn_revnums are the revision numbers of all non-primary
-# SVNCommits.  No primary SVNCommit has a key in this database.
-#
-# The date is stored for all commits in this database.
-#
-# For commits that fill symbolic names, the symbolic_name is stored.
-# For commits that default branch syncs, the symbolic_name is None.
-SVN_COMMIT_NAMES_DATES = 'cvs2svn-svn-commit-names-and-dates.db'
 
 # How many bytes to read at a time from a pipe.  128 kiB should be
 # large enough to be efficient without wasting too much memory.
@@ -2004,8 +1998,6 @@ class PersistenceManager:
     Cleanup().register(temp(SVN_REVNUMS_TO_CVS_REVS), pass8)
     self.cvs2svn_db = Database(temp(CVS_REVS_TO_SVN_REVNUMS), mode)
     Cleanup().register(temp(CVS_REVS_TO_SVN_REVNUMS), pass8)
-    self.svn_commit_names_dates = Database(temp(SVN_COMMIT_NAMES_DATES), mode)
-    Cleanup().register(temp(SVN_COMMIT_NAMES_DATES), pass8)
     self.svn_commit_metadata = Database(temp(METADATA_DB), DB_OPEN_READ)
     self.cvs_revisions = CVSRevisionDatabase(DB_OPEN_READ)
     ###PERF kff Elsewhere there are comments about sucking the tags db
@@ -2032,8 +2024,8 @@ class PersistenceManager:
     This method can throw SVNCommitInternalInconsistencyError.
     """
     svn_commit = SVNCommit("Retrieved from disk", svn_revnum)
-    (c_rev_keys, motivating_revnum) = self.svn2cvs_db.get(
-        str(svn_revnum), (None, None))
+    (c_rev_keys, motivating_revnum, name, date) = self.svn2cvs_db.get(
+        str(svn_revnum), (None, None, None, None))
     if c_rev_keys is None:
       return None
 
@@ -2054,7 +2046,6 @@ class PersistenceManager:
     if Ctx().trunk_only:
       return svn_commit
 
-    name, date = self._get_name_and_date(svn_revnum)
     if name:
       svn_commit.set_symbolic_name(name)
       svn_commit.set_date(date)
@@ -2073,12 +2064,6 @@ class PersistenceManager:
 
     return svn_commit
 
-  def _get_name_and_date(self, svn_revnum):
-    """Return a tuple containing the symbolic name and date associated
-    with SVN_REVNUM, or (None, None) if SVN_REVNUM has no such data
-    associated with it."""
-    return self.svn_commit_names_dates.get(str(svn_revnum), (None, None))
-
   def put_svn_commit(self, svn_revnum, cvs_revs,
                      date, name, motivating_revnum):
     """Record the bidirectional mapping between SVN_REVNUM and
@@ -2089,16 +2074,21 @@ class PersistenceManager:
 
     for c_rev in cvs_revs:
       Log().write(LOG_VERBOSE, " ", c_rev.unique_key())
-    self.svn2cvs_db[str(svn_revnum)] = ([x.unique_key() for x in cvs_revs],
-                                        motivating_revnum)
+
+    entry = ([x.unique_key() for x in cvs_revs], motivating_revnum)
+
     for c_rev in cvs_revs:
       self.cvs2svn_db[c_rev.unique_key()] = svn_revnum
 
     # If it is not a primary commit, then store its date and/or
     # name.  name is allowed to be None.
     if name or motivating_revnum:
-      self.svn_commit_names_dates[str(svn_revnum)] = (name, date)
+      entry += (name, date)
       self.last_filled[name] = svn_revnum
+    else:
+      entry += (None, None)
+
+    self.svn2cvs_db[str(svn_revnum)] = entry
 
 
 class CVSCommit:

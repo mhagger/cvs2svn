@@ -259,10 +259,10 @@ BRANCHES_LIST = 'cvs2svn-branches.txt'
 # motivating_revnum is used when generating the log message for the
 # commit that synchronizes the default branch with trunk.
 #
-# If this is not a primary commit, then symbolic_name is the symbolic
-# name associated with the commit (if it filled a symbolic name) or
-# None (if it was a default branch sync) and date is its date.
-# Otherwise, symbolic_name and date are both None.
+# symbolic_name is the symbolic name associated with the commit (if it
+# filled a symbolic name) or None otherwise.
+#
+# date is the date of the commit.
 CVS_REVS_TO_SVN_REVNUMS = 'cvs2svn-cvs-revs-to-svn-revnums.db'
 SVN_REVNUMS_TO_CVS_REVS = 'cvs2svn-svn-revnums-to-cvs-revs.db'
 
@@ -2074,20 +2074,16 @@ class PersistenceManager:
     for c_rev in cvs_revs:
       Log().write(LOG_VERBOSE, " ", c_rev.unique_key())
 
-    entry = ([x.unique_key() for x in cvs_revs], motivating_revnum)
+    self.svn2cvs_db[str(svn_revnum)] = ([x.unique_key() for x in cvs_revs],
+                                        motivating_revnum, name, date)
 
     for c_rev in cvs_revs:
       self.cvs2svn_db[c_rev.unique_key()] = svn_revnum
 
-    # If it is not a primary commit, then store its date and/or
-    # name.  name is allowed to be None.
+    # If it is not a primary commit, then record last_filled.  name is
+    # allowed to be None.
     if name or motivating_revnum:
-      entry += (name, date)
       self.last_filled[name] = svn_revnum
-    else:
-      entry += (None, None)
-
-    self.svn2cvs_db[str(svn_revnum)] = entry
 
 
 class CVSCommit:

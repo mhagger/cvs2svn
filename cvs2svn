@@ -2035,7 +2035,7 @@ class PersistenceManager:
     """
     svn_commit = SVNCommit("Retrieved from disk", svn_revnum)
     c_rev_keys = self.svn2cvs_db.get(str(svn_revnum), None)
-    if c_rev_keys == None:
+    if c_rev_keys is None:
       return None
 
     digest = None

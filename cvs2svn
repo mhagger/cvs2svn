@@ -246,7 +246,18 @@ BRANCHES_LIST = 'cvs2svn-branches.txt'
 # The first maps CVSRevision.unique_key() to a number; the values are
 # not unique.
 #
-# The second maps a number to a list of CVSRevision.unique_key()s.
+# The second maps Subversion revision numbers to tuples (c_rev_keys,
+# motivating_revnum).
+#
+# c_rev_keys is a list of CVSRevision.unique_key()s.
+#
+# If the SVNCommit is a default branch synchronization,
+# motivating_revnum is the svn_revnum of the primary SVNCommit that
+# motivated it; otherwise it is None.  (NOTE: Secondary commits that
+# fill branches and tags also have a motivating commit, but we do not
+# record it because it is (currently) not needed for anything.)
+# motivating_revnum is used when generating the log message for the
+# commit that synchronizes the default branch with trunk.
 CVS_REVS_TO_SVN_REVNUMS = 'cvs2svn-cvs-revs-to-svn-revnums.db'
 SVN_REVNUMS_TO_CVS_REVS = 'cvs2svn-svn-revnums-to-cvs-revs.db'
 
@@ -260,17 +271,6 @@ SVN_REVNUMS_TO_CVS_REVS = 'cvs2svn-svn-revnums-to-cvs-revs.db'
 # For commits that fill symbolic names, the symbolic_name is stored.
 # For commits that default branch syncs, the symbolic_name is None.
 SVN_COMMIT_NAMES_DATES = 'cvs2svn-svn-commit-names-and-dates.db'
-
-# This database maps svn_revnums of a default branch synchronization
-# commit to the svn_revnum of the primary SVNCommit that motivated it.
-#
-# (NOTE: Secondary commits that fill branches and tags also have a
-# motivating commit, but we do not record it because it is (currently)
-# not needed for anything.)
-#
-# This mapping is used when generating the log message for the commit
-# that synchronizes the default branch with trunk.
-MOTIVATING_REVNUMS = 'cvs2svn-svn-motivating-commit-revnums.db'
 
 # How many bytes to read at a time from a pipe.  128 kiB should be
 # large enough to be efficient without wasting too much memory.
@@ -2012,8 +2012,6 @@ class PersistenceManager:
     ### into memory.  That seems like a good idea.
     if not Ctx().trunk_only:
       self.tags_db = TagsDatabase(DB_OPEN_READ)
-      self.motivating_revnums = SDatabase(temp(MOTIVATING_REVNUMS), mode)
-      Cleanup().register(temp(MOTIVATING_REVNUMS), pass8)
 
     # "branch_name" -> svn_revnum in which branch was last filled.
     # This is used by CVSCommit._pre_commit, to prevent creating a fill
@@ -2034,7 +2032,8 @@ class PersistenceManager:
     This method can throw SVNCommitInternalInconsistencyError.
     """
     svn_commit = SVNCommit("Retrieved from disk", svn_revnum)
-    c_rev_keys = self.svn2cvs_db.get(str(svn_revnum), None)
+    (c_rev_keys, motivating_revnum) = self.svn2cvs_db.get(
+        str(svn_revnum), (None, None))
     if c_rev_keys is None:
       return None
 
@@ -2062,9 +2061,8 @@ class PersistenceManager:
       if self.tags_db.has_key(name):
         svn_commit.is_tag = 1
 
-    motivating_revnum = self.motivating_revnums.get(str(svn_revnum), None)
-    if motivating_revnum:
-      svn_commit.set_motivating_revnum(int(motivating_revnum))
+    if motivating_revnum is not None:
+      svn_commit.set_motivating_revnum(motivating_revnum)
       svn_commit.set_date(date)
 
     if len(svn_commit.cvs_revs) and name:
@@ -2091,12 +2089,10 @@ class PersistenceManager:
 
     for c_rev in cvs_revs:
       Log().write(LOG_VERBOSE, " ", c_rev.unique_key())
-    self.svn2cvs_db[str(svn_revnum)] = [x.unique_key() for x in cvs_revs]
+    self.svn2cvs_db[str(svn_revnum)] = ([x.unique_key() for x in cvs_revs],
+                                        motivating_revnum)
     for c_rev in cvs_revs:
       self.cvs2svn_db[c_rev.unique_key()] = svn_revnum
-
-    if motivating_revnum is not None:
-      self.motivating_revnums[str(svn_revnum)] = str(motivating_revnum)
 
     # If it is not a primary commit, then store its date and/or
     # name.  name is allowed to be None.

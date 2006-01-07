@@ -2111,6 +2111,20 @@ class PersistenceManager:
           'Write operation attempted on read-only PersistenceManager'
     self.motivating_revnums[str(svn_revnum)] = str(motivating_revnum)
 
+  def put_svn_commit(self, svn_revnum, cvs_revs,
+                     date, name, motivating_revnum):
+    """Record the bidirectional mapping between SVN_REVNUM and
+    CVS_REVS and record associated attributes."""
+    self.set_cvs_revs(svn_revnum, cvs_revs)
+
+    if motivating_revnum is not None:
+      self.set_motivating_revnum(svn_revnum, motivating_revnum)
+
+    # If it is not a primary commit, then store its date and/or
+    # symbolic_name
+    if name or motivating_revnum:
+      self.set_name_and_date(svn_revnum, name, date)
+
 
 class CVSCommit:
   """Each instance of this class contains a number of CVS Revisions
@@ -2559,24 +2573,14 @@ class SVNCommit:
     if cvs_rev.timestamp > self._max_date:
       self._max_date = cvs_rev.timestamp
 
-  def _is_primary_commit(self):
-    """Return true if this is a primary SVNCommit, false otherwise."""
-    return not (self.symbolic_name or self.motivating_revnum)
-
   def flush(self):
     Log().write(LOG_NORMAL, "Creating Subversion r%d (%s)"
                 % (self.revnum, self._description))
-    Ctx()._persistence_manager.set_cvs_revs(self.revnum, self.cvs_revs)
-
-    if self.motivating_revnum is not None:
-      Ctx()._persistence_manager.set_motivating_revnum(self.revnum,
-                                                       self.motivating_revnum)
-
-    # If we're not a primary commit, then store our date and/or our
-    # symbolic_name
-    if not self._is_primary_commit():
-      Ctx()._persistence_manager.set_name_and_date(
-          self.revnum, self.symbolic_name, self._max_date)
+    Ctx()._persistence_manager.put_svn_commit(self.revnum,
+                                              self.cvs_revs,
+                                              self._max_date,
+                                              self.symbolic_name,
+                                              self.motivating_revnum)
 
   def __str__(self):
     """ Print a human-readable description of this SVNCommit.  This

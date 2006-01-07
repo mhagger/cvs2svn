@@ -2075,26 +2075,20 @@ class PersistenceManager:
 
     return svn_commit
 
-  def set_cvs_revs(self, svn_revnum, cvs_revs):
+  def _set_cvs_revs(self, svn_revnum, cvs_revs):
     """Record the bidirectional mapping between SVN_REVNUM and
     CVS_REVS."""
-    if self.mode == DB_OPEN_READ:
-      raise RuntimeError, \
-          'Write operation attempted on read-only PersistenceManager'
     for c_rev in cvs_revs:
       Log().write(LOG_VERBOSE, " ", c_rev.unique_key())
     self.svn2cvs_db[str(svn_revnum)] = [x.unique_key() for x in cvs_revs]
     for c_rev in cvs_revs:
       self.cvs2svn_db[c_rev.unique_key()] = svn_revnum
 
-  def set_name_and_date(self, svn_revnum, name, date):
+  def _set_name_and_date(self, svn_revnum, name, date):
     """Associate symbolic name NAME and DATE with SVN_REVNUM.
 
     NAME is allowed to be None."""
 
-    if self.mode == DB_OPEN_READ:
-      raise RuntimeError, \
-          'Write operation attempted on read-only PersistenceManager'
     self.svn_commit_names_dates[str(svn_revnum)] = (name, date)
     self.last_filled[name] = svn_revnum
 
@@ -2104,26 +2098,26 @@ class PersistenceManager:
     associated with it."""
     return self.svn_commit_names_dates.get(str(svn_revnum), (None, None))
 
-  def set_motivating_revnum(self, svn_revnum, motivating_revnum):
+  def _set_motivating_revnum(self, svn_revnum, motivating_revnum):
     """Store MOTIVATING_REVNUM as the value of SVN_REVNUM"""
-    if self.mode == DB_OPEN_READ:
-      raise RuntimeError, \
-          'Write operation attempted on read-only PersistenceManager'
     self.motivating_revnums[str(svn_revnum)] = str(motivating_revnum)
 
   def put_svn_commit(self, svn_revnum, cvs_revs,
                      date, name, motivating_revnum):
     """Record the bidirectional mapping between SVN_REVNUM and
     CVS_REVS and record associated attributes."""
-    self.set_cvs_revs(svn_revnum, cvs_revs)
+    if self.mode == DB_OPEN_READ:
+      raise RuntimeError, \
+          'Write operation attempted on read-only PersistenceManager'
+    self._set_cvs_revs(svn_revnum, cvs_revs)
 
     if motivating_revnum is not None:
-      self.set_motivating_revnum(svn_revnum, motivating_revnum)
+      self._set_motivating_revnum(svn_revnum, motivating_revnum)
 
     # If it is not a primary commit, then store its date and/or
     # symbolic_name
     if name or motivating_revnum:
-      self.set_name_and_date(svn_revnum, name, date)
+      self._set_name_and_date(svn_revnum, name, date)
 
 
 class CVSCommit:

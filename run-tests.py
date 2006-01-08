@@ -44,6 +44,12 @@ import time
 import os.path
 import locale
 
+# Make sure this Python is recent enough.
+if sys.hexversion < 0x02020000:
+  sys.stderr.write("error: Python 2.2 or higher required, "
+                   "see www.python.org.\n")
+  sys.exit(1)
+
 # This script needs to run in the correct directory.  Make sure we're there.
 if not (os.path.exists('cvs2svn') and os.path.exists('test-data')):
   sys.stderr.write("error: I need to be run in the directory containing "
@@ -2051,11 +2057,8 @@ test_list = [ None,
               empty_trunk_variants,
               peer_path_pruning_variants,
               auto_props_ignore_case,
+              auto_props,
               ]
-if sys.hexversion < 0x02010000:
-  test_list.append(XFail(auto_props))
-else:
-  test_list.append(auto_props)
 
 if __name__ == '__main__':
 

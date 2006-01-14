@@ -554,17 +554,14 @@ def ensure_conversion(name, error_re=None, passbypass=None,
 
   Any other options to pass to cvs2svn should be in ARGS, each element
   being one option, e.g., '--trunk-only'.  If the option takes an
-  argument, include it directly, e.g., '--mime-types=PATH'.  The order
-  of elements in ARGS does not matter.
+  argument, include it directly, e.g., '--mime-types=PATH'.  Arguments
+  are passed to cvs2svn in the order that they appear in ARGS.
   """
 
-  # Copy args into a list, then sort them, so we can construct a
-  # reliable conv_id.
   if args is None:
     args = []
   else:
     args = list(args)
-  args.sort()
 
   if trunk is None:
     trunk = 'trunk'

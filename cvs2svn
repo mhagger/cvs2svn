@@ -1431,13 +1431,25 @@ class CollectData(cvs2svn_rcsparse.Sink):
     # 1 if we've collected data for at least one file, None otherwise.
     self.found_valid_file = None
 
-    # See set_fname() for initializations of other variables.
+    # See _set_fname() for initializations of other variables.
 
-  def set_fname(self, canonical_name, filename):
+  def get_file_data_collector(self, canonical_name, filename):
+    """Return a cvs2svn_rcsparse.Sink object that can be used to
+    collect the data for FILENAME.  FILENAME is the absolute
+    filesystem path to the file in question, and CANONICAL_NAME is
+    FILENAME with the 'Attic' component removed (if the file is indeed
+    in the Attic).
+
+    For now we return self, prepared for the specified file."""
+
+    self._set_fname(canonical_name, filename)
+    return self
+
+  def _set_fname(self, canonical_name, filename):
     """Prepare to receive data for FILENAME.  FILENAME is the absolute
     filesystem path to the file in question, and CANONICAL_NAME is
     FILENAME with the 'Attic' component removed (if the file is indeed
-    in the Attic) ."""
+    in the Attic)."""
     self.fname = canonical_name
 
     # We calculate and save some file metadata here, where we can do
@@ -4197,7 +4209,8 @@ def pass1():
       pathname = os.path.join(dirname, fname)
       if dirname.endswith(OS_SEP_PLUS_ATTIC):
         # drop the 'Attic' portion from the pathname for the canonical name.
-        cd.set_fname(os.path.join(dirname[:-6], fname), pathname)
+        fdc = cd.get_file_data_collector(os.path.join(dirname[:-6], fname),
+                                         pathname)
       else:
         # If this file also exists in the attic, it's a fatal error
         attic_path = os.path.join(dirname, 'Attic', fname)
@@ -4206,10 +4219,10 @@ def pass1():
                 % (error_prefix, pathname, attic_path)
           sys.stderr.write(err + '\n')
           cd.fatal_errors.append(err)
-        cd.set_fname(pathname, pathname)
+        fdc = cd.get_file_data_collector(pathname, pathname)
       Log().write(LOG_NORMAL, pathname)
       try:
-        cvs2svn_rcsparse.parse(open(pathname, 'rb'), cd)
+        cvs2svn_rcsparse.parse(open(pathname, 'rb'), fdc)
       except (cvs2svn_rcsparse.common.RCSParseError, ValueError,
               RuntimeError):
         err = "%s: '%s' is not a valid ,v file" \

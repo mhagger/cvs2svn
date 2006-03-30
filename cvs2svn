@@ -567,7 +567,7 @@ def generate_ignores(c_rev):
   buf = pipe.stdout.read(PIPE_READ_SIZE)
   raw_ignore_val = ""
   while buf:
-    raw_ignore_val = raw_ignore_val + buf
+    raw_ignore_val += buf
     buf = pipe.stdout.read(PIPE_READ_SIZE)
   pipe.stdout.close()
   error_output = pipe.stderr.read()
@@ -598,7 +598,7 @@ gen_key_base = 0L
 def gen_key():
   global gen_key_base
   key = '%x' % gen_key_base
-  gen_key_base = gen_key_base + 1
+  gen_key_base += 1
   return key
 
 # ============================================================================
@@ -882,7 +882,7 @@ class StatsKeeper:
     self.data['end_time'] = end
 
   def _bump_item(self, key, amount=1):
-    self.data[key] = self.data[key] + amount
+    self.data[key] += amount
 
   def reset_c_rev_info(self):
     self.data['cvs_revs_count'] = 0
@@ -963,10 +963,10 @@ class StatsKeeper:
       duration = int(self.data['pass_timings'][pass_num])
       p_str = ('pass %d:%6d %s\n'
                % (pass_num, duration, desc(duration)))
-      str = str + p_str
+      str += p_str
 
     total = int(self.data['end_time'] - self.data['start_time'])
-    str = str + ('total: %6d %s' % (total, desc(total)))
+    str += ('total: %6d %s' % (total, desc(total)))
     return str
 
 
@@ -1727,7 +1727,7 @@ class CollectData(cvs2svn_rcsparse.Sink):
             prev = self.prev_rev[current]
             if not prev:
               break
-            t_c = t_c - 1		# self.rev_data[current][0]
+            t_c -= 1		# self.rev_data[current][0]
             t_p = self.rev_data[prev][0]
 
           # break from the for-loop
@@ -1858,7 +1858,7 @@ class CollectData(cvs2svn_rcsparse.Sink):
         if name is not None:
           self.symbol_db.register_branch_blocker(name, symbol)
 
-    self.num_files = self.num_files + 1
+    self.num_files += 1
 
   def write_symbol_db(self):
     self.symbol_db.write()
@@ -2330,7 +2330,7 @@ class CVSCommit:
     else:
       # We will not be flushing this SVNCommit, so rollback the
       # SVNCommit revision counter.
-      SVNCommit.revnum = SVNCommit.revnum - 1
+      SVNCommit.revnum -= 1
 
     if not Ctx().trunk_only:
       for c_rev in self.revisions():
@@ -2448,7 +2448,7 @@ class SVNCommit:
       self.revnum = revnum
     else:
       self.revnum = SVNCommit.revnum
-      SVNCommit.revnum = SVNCommit.revnum + 1
+      SVNCommit.revnum += 1
 
     # The (uncleaned) symbolic name that is filled in this SVNCommit, if any.
     self.symbolic_name = None
@@ -2674,7 +2674,7 @@ class CVSRevisionAggregator:
         # Find a string that does is not already a key in
         # the self.cvs_commits dict
         while self.cvs_commits.has_key(unused_id):
-          unused_id = unused_id + '-'
+          unused_id += '-'
         self.cvs_commits[unused_id] = cvs_commit
         del self.cvs_commits[digest_key]
 
@@ -3383,7 +3383,7 @@ class SVNRepositoryMirror:
 
     if dest_parent_contents.has_key(dest_basename):
       msg = "Attempt to add path '%s' to repository mirror " % dest_path
-      msg = msg + "when it already exists in the mirror."
+      msg += "when it already exists in the mirror."
       raise self.SVNRepositoryMirrorPathExistsError, msg
 
     dest_parent_contents[dest_basename] = src_key
@@ -3440,8 +3440,8 @@ class SVNRepositoryMirror:
       else:
         msg = "Error filling branch '" \
               + _clean_symbolic_name(symbol_fill.name) + "'.\n"
-        msg = msg + "Received an empty SymbolicNameFillingGuide and\n"
-        msg = msg + "attempted to create a branch that already exists."
+        msg += "Received an empty SymbolicNameFillingGuide and\n"
+        msg += "attempted to create a branch that already exists."
         raise self.SVNRepositoryMirrorInvalidFillOperationError, msg
 
   def _fill(self, symbol_fill, dest_prefix, dest_key, sources,
@@ -3911,7 +3911,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
       ignore_contents = '\n'.join(ignore_vals)
       ignore_contents = ('K 10\nsvn:ignore\nV %d\n%s\n' % \
                          (len(ignore_contents), ignore_contents))
-      ignore_contents = ignore_contents + 'PROPS-END\n'
+      ignore_contents += 'PROPS-END\n'
       ignore_len = len(ignore_contents)
 
       # write headers, then props
@@ -3963,7 +3963,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
       if buf == '':
         break
       checksum.update(buf)
-      length = length + len(buf)
+      length += len(buf)
       self.dumpfile.write(buf)
 
     pipe.stdout.close()

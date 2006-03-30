@@ -4191,11 +4191,11 @@ def pass1():
   def visit_file(baton, dirname, files):
     cd = baton
     for fname in files:
-      if fname[-2:] != ',v':
+      if not fname.endswith(',v'):
         continue
       cd.found_valid_file = 1
       pathname = os.path.join(dirname, fname)
-      if dirname[-6:] == OS_SEP_PLUS_ATTIC:
+      if dirname.endswith(OS_SEP_PLUS_ATTIC):
         # drop the 'Attic' portion from the pathname for the canonical name.
         cd.set_fname(os.path.join(dirname[:-6], fname), pathname)
       else:

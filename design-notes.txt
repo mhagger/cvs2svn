@@ -13,15 +13,18 @@ all the revisions for each RCS file.  Each revision will be
 represented by one line.  At the end of this stage, the revisions
 (i.e., the lines) will be grouped by RCS file, not by logical commits.
 
-We walk over the repository, processing each RCS file with
-rcsparse.parse(), using cvs2svn's FileDataCollector class, which is a
-subclass of rcsparse.Sink(), the parser's callback class.  For each
-RCS file, the first thing the parser encounters is the administrative
-header, including the head revision, the principal branch, symbolic
-names, RCS comments, etc.  The main thing that happens here is that
-FileDataCollector.define_tag() is invoked on each symbolic name and
-its attached revision, so all the tags and branches of this file get
-collected.
+We walk over the repository, collecting data about the RCS files into
+an instance of CollectData.  Each RCS file is processed with
+rcsparse.parse(), which invokes callbacks from an instance of
+cvs2svn's FileDataCollector class (which is a subclass of
+rcsparse.Sink).
+
+For each RCS file, the first thing the parser encounters is the
+administrative header, including the head revision, the principal
+branch, symbolic names, RCS comments, etc.  The main thing that
+happens here is that FileDataCollector.define_tag() is invoked on each
+symbolic name and its attached revision, so all the tags and branches
+of this file get collected.
 
 Next, the parser hits the revision summary section.  That's the part
 of the RCS file that looks like this:

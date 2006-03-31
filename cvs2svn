@@ -1417,16 +1417,15 @@ class SymbolDatabase:
 class FileDataCollector(cvs2svn_rcsparse.Sink):
   """Class responsible for collecting RCS data for a particular file.
 
-  Any collected data that need to be remembered are stored via the
-  referenced CollectData instance.  Instances of this class are
-  created by CollectData.get_file_data_collector()."""
+  Any collected data that need to be remembered are stored into the
+  referenced CollectData instance."""
 
   def __init__(self, collect_data, canonical_name, filename):
-    """Prepare to receive data for FILENAME.  FILENAME is the absolute
-    filesystem path to the file in question, and CANONICAL_NAME is
-    FILENAME with the 'Attic' component removed (if the file is indeed
-    in the Attic).  COLLECT_DATA is used to store permanent
-    information."""
+    """Create an object that is prepared to receive data for FILENAME.
+    FILENAME is the absolute filesystem path to the file in question,
+    and CANONICAL_NAME is FILENAME with the 'Attic' component removed
+    (if the file is indeed in the Attic).  COLLECT_DATA is used to
+    store the information collected about the file."""
 
     self.collect_data = collect_data
 
@@ -1878,15 +1877,6 @@ class CollectData:
 
     # 1 if we've collected data for at least one file, None otherwise.
     self.found_valid_file = None
-
-  def get_file_data_collector(self, canonical_name, filename):
-    """Return a cvs2svn_rcsparse.Sink object that can be used to
-    collect the data for FILENAME.  FILENAME is the absolute
-    filesystem path to the file in question, and CANONICAL_NAME is
-    FILENAME with the 'Attic' component removed (if the file is indeed
-    in the Attic)."""
-
-    return FileDataCollector(self, canonical_name, filename)
 
   def write_symbol_db(self):
     self.symbol_db.write()
@@ -4226,8 +4216,8 @@ def pass1():
       pathname = os.path.join(dirname, fname)
       if dirname.endswith(OS_SEP_PLUS_ATTIC):
         # drop the 'Attic' portion from the pathname for the canonical name.
-        fdc = cd.get_file_data_collector(os.path.join(dirname[:-6], fname),
-                                         pathname)
+        fdc = FileDataCollector(cd, os.path.join(dirname[:-6], fname),
+                                pathname)
       else:
         # If this file also exists in the attic, it's a fatal error
         attic_path = os.path.join(dirname, 'Attic', fname)
@@ -4236,7 +4226,7 @@ def pass1():
                 % (error_prefix, pathname, attic_path)
           sys.stderr.write(err + '\n')
           cd.fatal_errors.append(err)
-        fdc = cd.get_file_data_collector(pathname, pathname)
+        fdc = FileDataCollector(cd, pathname, pathname)
       Log().write(LOG_NORMAL, pathname)
       try:
         cvs2svn_rcsparse.parse(open(pathname, 'rb'), fdc)

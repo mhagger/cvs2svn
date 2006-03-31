@@ -27,7 +27,6 @@ import re
 import time
 import fileinput
 import fnmatch
-import string
 import getopt
 import stat
 import md5
@@ -368,7 +367,7 @@ def _clean_symbolic_name(name):
 def _path_join(*components):
   """Join two or more pathname COMPONENTS, inserting '/' as needed.
   Empty component are skipped."""
-  return string.join(filter(None, components), '/')
+  return '/'.join(filter(None, components))
 
 def _path_split(path):
   """Split the svn pathname PATH into a pair, (HEAD, TAIL).
@@ -469,7 +468,7 @@ class CVSRepository:
           % (fname, self.cvs_repos_path,))
     if tail.endswith(',v'):
       tail = tail[:-2]
-    return string.replace(tail, os.sep, '/')
+    return tail.replace(os.sep, '/')
 
   def get_co_pipe(self, c_rev, suppress_keyword_substitution=False):
     """Return a command string, and the pipe created using that
@@ -617,7 +616,7 @@ if sys.platform == "win32":
     arg = re.sub(_escape_shell_arg_re, r'\1\1\2', arg)
 
     # surround by quotes and escape quotes inside
-    arg = '"' + string.replace(arg, '"', '"^""') + '"'
+    arg = '"' + arg.replace('"', '"^""') + '"'
     return arg
 
 
@@ -633,11 +632,11 @@ if sys.platform == "win32":
     # the leading character and removing the last quote character."
     # So to prevent the argument string from being changed we add an extra set
     # of quotes around it here.
-    return '"' + string.join(map(escape_shell_arg, argv), " ") + '"'
+    return '"' + ' '.join(map(escape_shell_arg, argv)) + '"'
 
 else:
   def escape_shell_arg(str):
-    return "'" + string.replace(str, "'", "'\\''") + "'"
+    return "'" + str.replace("'", "'\\''") + "'"
 
   def argv_to_command_string(argv):
     """Flatten a list of command line arguments into a command string.
@@ -646,7 +645,7 @@ else:
     shell which os functions like popen() and system() invoke internally.
     """
 
-    return string.join(map(escape_shell_arg, argv), " ")
+    return ' '.join(map(escape_shell_arg, argv))
 # ============================================================================
 
 def format_date(date):
@@ -672,11 +671,11 @@ def sort_file(infile, outfile):
   else:
     os.environ['LC_ALL'] = lc_all_tmp
 
-def match_regexp_list(regexp_list, string):
-  """Test whether STRING matches any of the compiled regexps in
+def match_regexp_list(regexp_list, s):
+  """Test whether string S matches any of the compiled regexps in
   REGEXP_LIST."""
   for regexp in regexp_list:
-    if regexp.match(string):
+    if regexp.match(s):
       return True
   return False
 
@@ -698,8 +697,8 @@ class LF_EOL_Filter:
       if not self.eof and buf[-1] == '\r':
         self.carry_cr = True
         buf = buf[:-1]
-      buf = string.replace(buf, '\r\n', '\n')
-      buf = string.replace(buf, '\r', '\n')
+      buf = buf.replace('\r\n', '\n')
+      buf = buf.replace('\r', '\n')
       if len(buf) > 0 or self.eof:
         return buf
 
@@ -3776,7 +3775,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
 
   def _utf8_path(self, path):
     """Return a copy of PATH encoded in UTF-8."""
-    pieces = string.split(path, '/')
+    pieces = path.split('/')
     # Convert each path component separately (as they may each use
     # different encodings).
     for i in range(len(pieces)):
@@ -3789,7 +3788,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
             "Unable to convert a path '%s' to internal encoding.\n"
             "Consider rerunning with one or more '--encoding' parameters."
             % (path,))
-    return string.join(pieces, '/')
+    return '/'.join(pieces)
 
   def _string_for_prop(self, name, value):
     """Return a property in the form needed for the dumpfile."""

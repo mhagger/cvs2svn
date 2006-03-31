@@ -57,11 +57,11 @@ example:
       # This is not absolutely necessary, but it's for safety's sake.
       $ mkdir ~/newcvsrepo
       $ mkdir ~/newcvsrepo/CVSROOT # needed by cvs2svn
-      $ cp -r /oldcvsrepo/module ~/newcvsrepo
-      
+      $ cp -r /oldcvsrepo/projectA ~/newcvsrepo
+
       # Create a dumpfile containing the new CVS repository contents
       $ mkdir ~/svndump; cd ~/svndump
-      $ cvs2svn --dump-only ~/newcvsrepo/module
+      $ cvs2svn --dump-only ~/newcvsrepo/projectA
     </pre></li>
 
 
@@ -69,7 +69,7 @@ example:
     <pre>
       # Make a directory for the project.
       $ svn mkdir file:///path/to/svnrepos/projectA -m "Added projectA directory."
-      
+
       # Use "svnadmin load" to load the dumpfile.
       $ cd ~/svndump
       $ svnadmin --parent-dir projectA load /path/to/svnrepo < cvs2svn-dump

@@ -952,7 +952,7 @@ class StatsKeeper:
   def timings(self):
     passes = self.data['pass_timings'].keys()
     passes.sort()
-    str = 'Timings:\n------------------\n'
+    output = 'Timings:\n------------------\n'
 
     def desc(val):
       if val == 1: return "second"
@@ -962,11 +962,11 @@ class StatsKeeper:
       duration = int(self.data['pass_timings'][pass_num])
       p_str = ('pass %d:%6d %s\n'
                % (pass_num, duration, desc(duration)))
-      str += p_str
+      output += p_str
 
     total = int(self.data['end_time'] - self.data['start_time'])
-    str += ('total: %6d %s' % (total, desc(total)))
-    return str
+    output += ('total: %6d %s' % (total, desc(total)))
+    return output
 
 
 class LastSymbolicNameDatabase:

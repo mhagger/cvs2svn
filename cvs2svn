@@ -1710,9 +1710,10 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
             Log().write(LOG_VERBOSE, msg)
             if (delta > COMMIT_THRESHOLD
                 or delta < (COMMIT_THRESHOLD * -1)):
-              str = "%s: Significant timestamp change for '%s' (%d seconds)"
               Log().write(LOG_WARN,
-                          str % (warning_prefix, self.cvs_path, delta))
+                          "%s: Significant timestamp change for '%s' "
+                          "(%d seconds)"
+                          % (warning_prefix, self.cvs_path, delta))
             current = prev
             prev = self.prev_rev[current]
             if not prev:

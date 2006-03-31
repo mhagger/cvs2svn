@@ -635,8 +635,8 @@ if sys.platform == "win32":
     return '"' + ' '.join(map(escape_shell_arg, argv)) + '"'
 
 else:
-  def escape_shell_arg(str):
-    return "'" + str.replace("'", "'\\''") + "'"
+  def escape_shell_arg(arg):
+    return "'" + arg.replace("'", "'\\''") + "'"
 
   def argv_to_command_string(argv):
     """Flatten a list of command line arguments into a command string.

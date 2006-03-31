@@ -1413,43 +1413,23 @@ class SymbolDatabase:
         f.write(" ".join(info[2].keys()))
       f.write("\n")
 
-class CollectData(cvs2svn_rcsparse.Sink):
-  def __init__(self):
-    self.revs = open(temp(DATAFILE + REVS_SUFFIX), 'w')
-    Cleanup().register(temp(DATAFILE + REVS_SUFFIX), pass2)
-    self.resync = open(temp(DATAFILE + RESYNC_SUFFIX), 'w')
-    Cleanup().register(temp(DATAFILE + RESYNC_SUFFIX), pass2)
-    self.default_branches_db = SDatabase(temp(DEFAULT_BRANCHES_DB),
-                                         DB_OPEN_NEW)
-    Cleanup().register(temp(DEFAULT_BRANCHES_DB), pass5)
-    self.metadata_db = Database(temp(METADATA_DB), DB_OPEN_NEW)
-    Cleanup().register(temp(METADATA_DB), pass8)
-    self.fatal_errors = []
-    self.num_files = 0
-    self.symbol_db = SymbolDatabase()
 
-    # 1 if we've collected data for at least one file, None otherwise.
-    self.found_valid_file = None
+class FileDataCollector(cvs2svn_rcsparse.Sink):
+  """Class responsible for collecting RCS data for a particular file.
 
-    # See _set_fname() for initializations of other variables.
+  Any collected data that need to be remembered are stored via the
+  referenced CollectData instance.  Instances of this class are
+  created by CollectData.get_file_data_collector()."""
 
-  def get_file_data_collector(self, canonical_name, filename):
-    """Return a cvs2svn_rcsparse.Sink object that can be used to
-    collect the data for FILENAME.  FILENAME is the absolute
-    filesystem path to the file in question, and CANONICAL_NAME is
-    FILENAME with the 'Attic' component removed (if the file is indeed
-    in the Attic).
-
-    For now we return self, prepared for the specified file."""
-
-    self._set_fname(canonical_name, filename)
-    return self
-
-  def _set_fname(self, canonical_name, filename):
+  def __init__(self, collect_data, canonical_name, filename):
     """Prepare to receive data for FILENAME.  FILENAME is the absolute
     filesystem path to the file in question, and CANONICAL_NAME is
     FILENAME with the 'Attic' component removed (if the file is indeed
-    in the Attic)."""
+    in the Attic).  COLLECT_DATA is used to store permanent
+    information."""
+
+    self.collect_data = collect_data
+
     self.fname = canonical_name
 
     # We calculate and save some file metadata here, where we can do
@@ -1557,7 +1537,7 @@ class CollectData(cvs2svn_rcsparse.Sink):
       # branch sprouts, so strip off the odd final component.
       sprout_rev = branch_number[:branch_number.rfind(".")]
       self.branchlist.setdefault(sprout_rev, []).append(name)
-      self.symbol_db.register_branch_creation(name)
+      self.collect_data.symbol_db.register_branch_creation(name)
     else:
       sys.stderr.write("%s: in '%s':\n"
                        "   branch '%s' already has name '%s',\n"
@@ -1591,7 +1571,7 @@ class CollectData(cvs2svn_rcsparse.Sink):
       err = "%s: Multiple definitions of the symbol '%s' in '%s'" \
                 % (error_prefix, name, self.fname)
       sys.stderr.write(err + "\n")
-      self.fatal_errors.append(err)
+      self.collect_data.fatal_errors.append(err)
     self.defined_symbols[name] = None
     m = cvs_branch_tag.match(revision)
     if m:
@@ -1600,7 +1580,7 @@ class CollectData(cvs2svn_rcsparse.Sink):
       self.set_branch_name(revision, name)
     else:
       self.taglist.setdefault(revision, []).append(name)
-      self.symbol_db.register_tag_creation(name)
+      self.collect_data.symbol_db.register_tag_creation(name)
 
   def define_revision(self, revision, timestamp, author, state,
                       branches, next):
@@ -1656,7 +1636,7 @@ class CollectData(cvs2svn_rcsparse.Sink):
           and (default_branch_root.count('.') == revision.count('.'))):
         # This revision is on the default branch, so record that it is
         # the new highest default branch head revision.
-        self.default_branches_db[self.cvs_path] = revision
+        self.collect_data.default_branches_db[self.cvs_path] = revision
     else:
       # No default branch, so make an educated guess.
       if revision == '1.2':
@@ -1670,7 +1650,7 @@ class CollectData(cvs2svn_rcsparse.Sink):
           # We're looking at a vendor revision, and it wasn't
           # committed after this file lost its default branch, so bump
           # the maximum trunk vendor revision in the permanent record.
-          self.default_branches_db[self.cvs_path] = revision
+          self.collect_data.default_branches_db[self.cvs_path] = revision
 
     if not trunk_rev.match(revision):
       # Check for unlabeled branches, record them.  We tried to collect
@@ -1685,7 +1665,7 @@ class CollectData(cvs2svn_rcsparse.Sink):
 
       # Register the commit on this non-trunk branch
       branch_name = self.branch_names[branch_number]
-      self.symbol_db.register_branch_commit(branch_name)
+      self.collect_data.symbol_db.register_branch_commit(branch_name)
 
   def tree_completed(self):
     "The revision tree has been parsed.  Analyze it for consistency."
@@ -1755,7 +1735,8 @@ class CollectData(cvs2svn_rcsparse.Sink):
       # the timestamp on this revision was changed. log it for later
       # resynchronization of other files's revisions that occurred
       # for this time and log message.
-      self.resync.write('%08lx %s %08lx\n' % (old_ts, digest, timestamp))
+      self.collect_data.resync.write('%08lx %s %08lx\n'
+                                     % (old_ts, digest, timestamp))
 
     # "...Give back one kadam to honor the Hebrew God whose Ark this is."
     #       -- Imam to Indy and Sallah, in 'Raiders of the Lost Ark'
@@ -1767,7 +1748,7 @@ class CollectData(cvs2svn_rcsparse.Sink):
     # for 1.1 in imports is "Initial revision\n" with no period.
     if revision == '1.1' and log != 'Initial revision\n':
       try:
-        del self.default_branches_db[self.cvs_path]
+        del self.collect_data.default_branches_db[self.cvs_path]
       except KeyError:
         pass
 
@@ -1855,11 +1836,11 @@ class CollectData(cvs2svn_rcsparse.Sink):
                         self.mode, self.rev_to_branch_name(revision),
                         self.taglist.get(revision, []),
                         self.branchlist.get(revision, []))
-    self.revs.write(str(c_rev) + "\n")
+    self.collect_data.revs.write(str(c_rev) + "\n")
     StatsKeeper().record_c_rev(c_rev)
 
-    if not self.metadata_db.has_key(digest):
-      self.metadata_db[digest] = (author, log)
+    if not self.collect_data.metadata_db.has_key(digest):
+      self.collect_data.metadata_db[digest] = (author, log)
 
   def parse_completed(self):
     # Walk through all branches and tags and register them with
@@ -1868,12 +1849,48 @@ class CollectData(cvs2svn_rcsparse.Sink):
       for symbol in symbols:
         name = self.rev_to_branch_name(revision)
         if name is not None:
-          self.symbol_db.register_branch_blocker(name, symbol)
+          self.collect_data.symbol_db.register_branch_blocker(name, symbol)
 
-    self.num_files += 1
+    self.collect_data.num_files += 1
+
+
+class CollectData:
+  """Repository for data collected by parsing the CVS repository files.
+
+  This class manages the databases into which information collected
+  from the CVS repository is stored.  The data are stored into this
+  class by FileDataCollector instances, one of which is created for
+  each file to be parsed."""
+
+  def __init__(self):
+    self.revs = open(temp(DATAFILE + REVS_SUFFIX), 'w')
+    Cleanup().register(temp(DATAFILE + REVS_SUFFIX), pass2)
+    self.resync = open(temp(DATAFILE + RESYNC_SUFFIX), 'w')
+    Cleanup().register(temp(DATAFILE + RESYNC_SUFFIX), pass2)
+    self.default_branches_db = SDatabase(temp(DEFAULT_BRANCHES_DB),
+                                         DB_OPEN_NEW)
+    Cleanup().register(temp(DEFAULT_BRANCHES_DB), pass5)
+    self.metadata_db = Database(temp(METADATA_DB), DB_OPEN_NEW)
+    Cleanup().register(temp(METADATA_DB), pass8)
+    self.fatal_errors = []
+    self.num_files = 0
+    self.symbol_db = SymbolDatabase()
+
+    # 1 if we've collected data for at least one file, None otherwise.
+    self.found_valid_file = None
+
+  def get_file_data_collector(self, canonical_name, filename):
+    """Return a cvs2svn_rcsparse.Sink object that can be used to
+    collect the data for FILENAME.  FILENAME is the absolute
+    filesystem path to the file in question, and CANONICAL_NAME is
+    FILENAME with the 'Attic' component removed (if the file is indeed
+    in the Attic)."""
+
+    return FileDataCollector(self, canonical_name, filename)
 
   def write_symbol_db(self):
     self.symbol_db.write()
+
 
 class SymbolingsLogger:
   """Manage the file that contains lines for symbol openings and

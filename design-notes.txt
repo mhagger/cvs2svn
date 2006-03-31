@@ -14,13 +14,13 @@ represented by one line.  At the end of this stage, the revisions
 (i.e., the lines) will be grouped by RCS file, not by logical commits.
 
 We walk over the repository, processing each RCS file with
-rcsparse.parse(), using cvs2svn's CollectData class, which is a
+rcsparse.parse(), using cvs2svn's FileDataCollector class, which is a
 subclass of rcsparse.Sink(), the parser's callback class.  For each
 RCS file, the first thing the parser encounters is the administrative
 header, including the head revision, the principal branch, symbolic
 names, RCS comments, etc.  The main thing that happens here is that
-CollectData.define_tag() is invoked on each symbolic name and its
-attached revision, so all the tags and branches of this file get
+FileDataCollector.define_tag() is invoked on each symbolic name and
+its attached revision, so all the tags and branches of this file get
 collected.
 
 Next, the parser hits the revision summary section.  That's the part
@@ -39,12 +39,12 @@ of the RCS file that looks like this:
 
    [...]
 
-For each revision summary, CollectData.define_revision() is invoked,
-recording that revision's metadata in various variables of the
-CollectData class instance.
+For each revision summary, FileDataCollector.define_revision() is
+invoked, recording that revision's metadata in various variables of
+the FileDataCollector class instance.
 
 After finishing the revision summaries, the parser invokes
-CollectData.tree_completed(), which loops over the revision
+FileDataCollector.tree_completed(), which loops over the revision
 information stored, determining if there are instances where a higher
 revision was committed "before" a lower one (rare, but it can happen
 when there was clock skew on the repository machine).  If there are
@@ -57,7 +57,7 @@ similarly, more details below).
 
 Next, the parser encounters the *real* revision data, which has the
 log messages and file contents.  For each revision, it invokes
-CollectData.set_revision_info(), which writes a new line to
+FileDataCollector.set_revision_info(), which writes a new line to
 cvs2svn-data.revs.  The line is constructed by the CVSRevision class -
 one of its many roles. Here is an example:
 

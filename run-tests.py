@@ -1982,6 +1982,40 @@ def auto_props():
       )
 
 
+def ctrl_char_in_filename():
+  "do not allow control characters in filenames"
+
+  try:
+    srcrepos_path = os.path.join(test_data_dir,'main-cvsrepos')
+    dstrepos_path = os.path.join(test_data_dir,'ctrl-char-filename-cvsrepos')
+    if os.path.exists(dstrepos_path):
+      svntest.main.safe_rmtree(dstrepos_path)
+
+    # create repos from existing main repos
+    shutil.copytree(srcrepos_path, dstrepos_path)
+    base_path = os.path.join(dstrepos_path, 'single-files')
+    try:
+      shutil.copyfile(os.path.join(base_path, 'twoquick,v'),
+                      os.path.join(base_path, 'two\rquick,v'))
+    except:
+      # Operating systems that don't allow control characters in
+      # filenames will hopefully have thrown an exception; in that
+      # case, just skip this test.
+      raise svntest.Skip
+
+    try:
+      conv = ensure_conversion(
+          'ctrl-char-filename',
+          error_re=(r'.*Character .* in filename .* '
+                    r'is not supported by subversion\.'),
+          )
+      raise MissingErrorException
+    except svntest.Failure:
+      pass
+  finally:
+    svntest.main.safe_rmtree(dstrepos_path)
+
+
 #----------------------------------------------------------------------
 
 ########################################################################
@@ -2055,6 +2089,7 @@ test_list = [ None,
               peer_path_pruning_variants,
               auto_props_ignore_case,
               auto_props,
+              ctrl_char_in_filename,
               ]
 
 if __name__ == '__main__':

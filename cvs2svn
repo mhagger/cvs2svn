@@ -399,6 +399,18 @@ def to_utf8(value, mode='replace'):
                   % (encoding, value))
   raise UnicodeError
 
+ctrl_characters_regexp = re.compile('[\\\x00-\\\x1f\\\x7f]')
+
+def verify_filename_legal(filename):
+  """Verify that FILENAME does not include any control characters.  If
+  it does, raise a FatalError."""
+
+  m = ctrl_characters_regexp.search(filename)
+  if m:
+    raise FatalError(
+        "Character %r in filename %r is not supported by subversion."
+        % (m.group(), filename,))
+
 def run_command(command):
   if os.system(command):
     raise FatalError('Command failed: "%s"' % (command,))
@@ -4210,6 +4222,7 @@ def pass1():
   def visit_file(baton, dirname, files):
     cd = baton
     for fname in files:
+      verify_filename_legal(fname)
       if not fname.endswith(',v'):
         continue
       cd.found_valid_file = 1

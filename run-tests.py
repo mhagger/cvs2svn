@@ -62,7 +62,6 @@ import svntest
 # Abbreviations
 Skip = svntest.testcase.Skip
 XFail = svntest.testcase.XFail
-Item = svntest.wc.StateItem
 
 cvs2svn = os.path.abspath('cvs2svn')
 

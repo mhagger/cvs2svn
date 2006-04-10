@@ -1067,13 +1067,25 @@ class CVSRevisionDatabase:
     return CVSRevision(Ctx(), self.cvs_revs_db[unique_key])
 
 
-def TagsDatabase(mode):
-  """A Database to store which symbolic names are tags.
-  Each key is a tag name.
-  The value has no meaning, and should be set to None."""
-  db = SDatabase(temp(TAGS_DB), mode)
-  Cleanup().register(temp(TAGS_DB), pass8)
-  return db
+class TagsDatabase:
+  """A Database to record symbolic names that are tags.
+
+  Each key is a tag name.  The value has no meaning, and is set to the
+  empty string.  (Since an SDatabase is used, the key cannot be set to
+  None.)"""
+
+  def __init__(self, mode):
+    self.db = SDatabase(temp(TAGS_DB), mode)
+    Cleanup().register(temp(TAGS_DB), pass8)
+
+  def add(self, item):
+    self.db[item] = ''
+
+  def remove(self, item):
+    del self.db[item]
+
+  def __contains__(self, item):
+    return self.db.has_key(item)
 
 
 class Project:
@@ -2121,7 +2133,7 @@ class PersistenceManager:
             "symbolic name ('%s') to fill."
             % (_clean_symbolic_name(name),))
       svn_commit.set_symbolic_name(name)
-      if self.tags_db.has_key(name):
+      if name in self.tags_db:
         svn_commit.is_tag = 1
 
     if motivating_revnum is not None:
@@ -3473,7 +3485,7 @@ class SVNRepositoryMirror:
     sources = symbol_fill.get_sources()
 
     if sources:
-      if self.tags_db.has_key(svn_commit.symbolic_name):
+      if svn_commit.symbolic_name in self.tags_db:
         dest_prefix = Ctx().project.get_tag_path(svn_commit.symbolic_name)
       else:
         dest_prefix = Ctx().project.get_branch_path(svn_commit.symbolic_name)
@@ -4377,9 +4389,9 @@ def pass2():
   tags_db = TagsDatabase(DB_OPEN_NEW)
   for tag in symbol_db.tags:
     if tag not in Ctx().forced_branches:
-      tags_db[tag] = None
+      tags_db.add(tag)
   for tag in Ctx().forced_tags:
-    tags_db[tag] = None
+    tags_db.add(tag)
 
   Log().write(LOG_QUIET, "Re-synchronizing CVS revision timestamps...")
 

@@ -4815,7 +4815,8 @@ class AutoPropsPropertySetter(SVNPropertySetter):
     self.patterns = []
     for section in config.sections():
       if self.transform_case(section) == 'auto-props':
-        for (pattern, value) in config.items(section):
+        for pattern in config.options(section):
+          value = config.get(section, pattern)
           if value:
             self._add_pattern(pattern, value)
 

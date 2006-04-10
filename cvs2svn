@@ -19,6 +19,8 @@
 
 VERSION = 'r' + "$LastChangedRevision$"[22:-2]
 
+from __future__ import generators
+
 import cvs2svn_rcsparse
 import os
 import sys
@@ -35,7 +37,6 @@ import errno
 import popen2
 import types
 import ConfigParser
-import UserDict
 try:
   # Try to get access to a bunch of encodings for use with --encoding.
   # See http://cjkpython.i18n.org/ for details.
@@ -798,7 +799,7 @@ DB_OPEN_READ = 'r'
 DB_OPEN_NEW = 'n'
 
 
-class AbstractDatabase(UserDict.DictMixin):
+class AbstractDatabase:
   """An abstract base class for anydbm-based databases."""
 
   def __init__(self, filename, mode):
@@ -820,11 +821,11 @@ class AbstractDatabase(UserDict.DictMixin):
 
     self.db = anydbm.open(filename, mode)
 
-    # Import implementations for many mapping interface methods.
-    # Note that we specifically do not do this for any method which handles
-    # *values*, because our derived classes may define __getitem__ and
-    # __setitem__ to override the storage of values, and grabbing methods
-    # directly from the dbm object would bypass this.
+    # Import implementations for many mapping interface methods.  Note
+    # that we specifically do not do this for any method which handles
+    # *values*, because our derived classes define __getitem__ and
+    # __setitem__ to override the storage of values, and grabbing
+    # methods directly from the dbm object would bypass this.
     for meth_name in ('__delitem__', 'keys',
         '__iter__', 'has_key', '__contains__', 'iterkeys', 'clear'):
       meth_ref = getattr(self.db, meth_name, None)
@@ -832,8 +833,42 @@ class AbstractDatabase(UserDict.DictMixin):
         setattr(self, meth_name, meth_ref)
 
   def __delitem__(self, key):
-    "gdbm does not define a __delitem__ we can assign."
+    # gdbm defines a __delitem__ method, but it cannot be assigned.  So
+    # this method provides a fallback definition via explicit delegation:
     del self.db[key]
+
+  def __iter__(self):
+    for key in self.keys():
+      yield key
+
+  def has_key(self, key):
+    try:
+      self.db[key]
+      return True
+    except KeyError:
+      return False
+
+  def __contains__(self, key):
+    return self.has_key(key)
+
+  def iterkeys(self):
+    return self.__iter__()
+
+  def clear(self):
+    for key in self.keys():
+      del self[key]
+
+  def items(self):
+    return [(key, self[key],) for key in self.keys()]
+
+  def values(self):
+    return [self[key] for key in self.keys()]
+
+  def get(self, key, default=None):
+    try:
+      return self[key]
+    except KeyError:
+      return default
 
 
 class SDatabase(AbstractDatabase):

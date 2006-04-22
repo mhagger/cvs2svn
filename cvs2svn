@@ -4909,8 +4909,9 @@ class AutoPropsPropertySetter(SVNPropertySetter):
         if s_item.svn_props[k] != v:
           Log().write(
               LOG_WARN,
-              "Property '%s' already set for file %s."
-              % (k, s_item.c_rev.cvs_path,))
+              "Property '%s' already set to %r for file %s; "
+              "auto-props value (%r) ignored."
+              % (k, s_item.svn_props[k], s_item.c_rev.cvs_path, v,))
       else:
         s_item.svn_props[k] = v
 

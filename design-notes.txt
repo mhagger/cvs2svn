@@ -86,7 +86,7 @@ The fields are:
        development).
    9.  1 if the RCS file is in the Attic, "*" if it isn't.
    10. 1 if the RCS file has the executable bit set, "*" if not.
-   12. The size of the RCS file, in bytes.
+   11. The size of the RCS file, in bytes.
    12. "N" if this revision has non-empty deltatext, else "E" for empty
    13. the RCS keyword substitution mode ("k", "b", etc), or "*" if none
    14. the branch on which this commit happened, or "*" if not on a branch

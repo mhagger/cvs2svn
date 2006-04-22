@@ -4900,7 +4900,6 @@ class AutoPropsPropertySetter(SVNPropertySetter):
           else:
             propdict[key] = value
 
-    print 'propdict %s -> %s' % (path, propdict,) ###
     return propdict
 
   def set_properties(self, s_item):

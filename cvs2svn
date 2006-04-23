@@ -1288,14 +1288,16 @@ class CVSRevision:
     self._ctx = ctx
     if len(args) == 17:
       (self.timestamp, self.digest, self.prev_timestamp, self.next_timestamp,
-       self.op, self.prev_rev, self.rev, self.next_rev, self.file_in_attic,
+       self.op, prev_rev, self.rev, next_rev, self.file_in_attic,
        self.file_executable, self.file_size, self.deltatext_code,
        self.fname,
        self.mode, self.branch_name, self.tags, self.branches) = args
+      self.prev_rev = prev_rev and CVSRevisionID(prev_rev, self.fname)
+      self.next_rev = next_rev and CVSRevisionID(next_rev, self.fname)
     elif len(args) == 1:
       data = args[0].split(' ', 15)
       (self.timestamp, self.digest, self.prev_timestamp, self.next_timestamp,
-       self.op, self.prev_rev, self.rev, self.next_rev, self.file_in_attic,
+       self.op, prev_rev, self.rev, next_rev, self.file_in_attic,
        self.file_executable, self.file_size, self.deltatext_code,
        self.mode, self.branch_name, numtags, remainder) = data
       # Patch up data items which are not simple strings
@@ -1308,10 +1310,6 @@ class CVSRevision:
         self.next_timestamp = 0
       else:
         self.next_timestamp = int(self.next_timestamp)
-      if self.prev_rev == "*":
-        self.prev_rev = None
-      if self.next_rev == "*":
-        self.next_rev = None
       if self.file_in_attic == "*":
         self.file_in_attic = None
       if self.file_executable == "*":
@@ -1329,6 +1327,14 @@ class CVSRevision:
       branches_and_fname = remainder.split(' ', numbranches)
       self.branches = branches_and_fname[:-1]
       self.fname = branches_and_fname[-1]
+      if prev_rev == "*":
+        self.prev_rev = None
+      else:
+        self.prev_rev = CVSRevisionID(prev_rev, self.fname)
+      if next_rev == "*":
+        self.next_rev = None
+      else:
+        self.next_rev = CVSRevisionID(next_rev, self.fname)
     else:
       raise TypeError, 'CVSRevision() takes 2 or 18 arguments (%d given)' % \
           (len(args) + 1)
@@ -1353,10 +1359,20 @@ class CVSRevision:
     return CVSRevisionID(revnum, self.fname).unique_key()
 
   def __str__(self):
+    if self.prev_rev is None:
+      prev_rev_str = '*'
+    else:
+      prev_rev_str = self.prev_rev.rev
+
+    if self.next_rev is None:
+      next_rev_str = '*'
+    else:
+      next_rev_str = self.next_rev.rev
+
     return ('%08lx %s %s %s %s %s %s %s %s %s %d %s %s %s %d%s%s %d%s%s %s'
             % (self.timestamp, self.digest, self.prev_timestamp or "*",
-              self.next_timestamp or "*", self.op, (self.prev_rev or "*"),
-              self.rev, (self.next_rev or "*"), (self.file_in_attic or "*"),
+              self.next_timestamp or "*", self.op, prev_rev_str,
+              self.rev, next_rev_str, (self.file_in_attic or "*"),
               (self.file_executable or "*"),
               self.file_size,
               self.deltatext_code, (self.mode or "*"),
@@ -2093,8 +2109,7 @@ class SymbolingsLogger:
       # this source revision.  Log it to closings for later processing
       # since we don't know the svn_revnum yet.
       if c_rev.next_rev is not None:
-        self.closings.write('%s %s\n' %
-                            (name, c_rev.unique_key(c_rev.next_rev)))
+        self.closings.write('%s %s\n' % (name, c_rev.next_rev.unique_key()))
 
   def _log(self, name, svn_revnum, cvs_path, branch_name, type):
     """Write out a single line to the symbol_openings_closings file
@@ -2407,8 +2422,8 @@ class CVSCommit:
 
       # Different '.' counts indicate that c_rev is now on a different
       # line of development (and may need a fill)
-      if c_rev.rev.count('.') != c_rev.prev_rev.count('.'):
-        svn_revnum = pm.get_svn_revnum(c_rev.unique_key(c_rev.prev_rev))
+      if c_rev.rev.count('.') != c_rev.prev_rev.rev.count('.'):
+        svn_revnum = pm.get_svn_revnum(c_rev.prev_rev.unique_key())
         # It should be the case that when we have a file F that
         # is added on branch B (thus, F on trunk is in state
         # 'dead'), we generate an SVNCommit to fill B iff the branch
@@ -4634,14 +4649,14 @@ def pass2():
     new_prev_ts = None
     if c_rev.prev_rev is not None:
       new_prev_ts = tweaked_timestamps_db.get(
-        c_rev.unique_key(c_rev.prev_rev), None)
+          c_rev.prev_rev.unique_key(), None)
     if new_prev_ts:
       c_rev.prev_timestamp = new_prev_ts
 
     new_next_ts = None
     if c_rev.next_rev is not None:
       new_next_ts = tweaked_timestamps_db.get(
-        c_rev.unique_key(c_rev.next_rev), None)
+        c_rev.next_rev.unique_key(), None)
     if new_next_ts:
       c_rev.next_timestamp = new_next_ts
 
@@ -4686,7 +4701,8 @@ def pass2():
                   + " revision %s (%s):")
           Log().write(LOG_WARN, desc % (warning_prefix, c_rev.rev,
                                         c_rev.cvs_path, new_timestamp,
-                                        c_rev.prev_rev, c_rev.prev_timestamp))
+                                        c_rev.prev_rev.rev,
+                                        c_rev.prev_timestamp))
           # If resyncing our rev to c_rev.prev_timestamp + 1 will place
           # the timestamp of c_rev within COMMIT_THRESHOLD of the
           # attempted resync time, then sync back to c_rev.prev_timestamp
@@ -4707,7 +4723,8 @@ def pass2():
                   + " revision %s (%s):")
           Log().write(LOG_WARN, desc % (warning_prefix, c_rev.rev,
                                         c_rev.cvs_path, new_timestamp,
-                                        c_rev.next_rev, c_rev.next_timestamp))
+                                        c_rev.next_rev.rev,
+                                        c_rev.next_timestamp))
           # If resyncing our rev to c_rev.next_timestamp - 1 will place
           # the timestamp of c_rev within COMMIT_THRESHOLD of the
           # attempted resync time, then sync forward to c_rev.next_timestamp

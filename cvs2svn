@@ -1328,31 +1328,44 @@ class CVSRevision(CVSRevisionID):
         self.svn_path = ctx.project.make_trunk_path(self.cvs_path)
 
   def __str__(self):
+    def timestamp_to_string(timestamp):
+      if timestamp:
+        return '%08lx' % timestamp
+      else:
+        return '*'
+
+    def rev_to_string(rev):
+      if rev is None:
+        return '*'
+      else:
+        return rev.rev
+
     def bool_to_string(v):
       return { True : 'T', False : 'F' }[bool(v)]
 
-    if self.prev_rev is None:
-      prev_rev_str = '*'
-    else:
-      prev_rev_str = self.prev_rev.rev
+    def list_to_string(l):
+      """Format list L as a count of elements followed by the elements
+      themselves, each separated by spaces."""
 
-    if self.next_rev is None:
-      next_rev_str = '*'
-    else:
-      next_rev_str = self.next_rev.rev
+      return ' '.join([str(len(l))] + l)
 
-    return ('%08lx %s %s %s %s %s %s %s %s %s %d %s %s %s %d%s%s %d%s%s %s'
-            % (self.timestamp, self.digest, self.prev_timestamp or "*",
-               self.next_timestamp or "*", self.op, prev_rev_str,
-               self.rev, next_rev_str,
+    return ('%s %s %s %s %s %s %s %s %s %s %d %s %s %s %s %s %s'
+            % (timestamp_to_string(self.timestamp),
+               self.digest,
+               timestamp_to_string(self.prev_timestamp),
+               timestamp_to_string(self.next_timestamp),
+               self.op,
+               rev_to_string(self.prev_rev),
+               self.rev,
+               rev_to_string(self.next_rev),
                bool_to_string(self.file_in_attic),
                bool_to_string(self.file_executable),
                self.file_size,
-               self.deltatext_code, (self.mode or "*"),
-               (self.branch_name or "*"),
-               len(self.tags), self.tags and " " or "", " ".join(self.tags),
-               len(self.branches), self.branches and " " or "",
-               " ".join(self.branches),
+               self.deltatext_code,
+               self.mode or '*',
+               self.branch_name or '*',
+               list_to_string(self.tags),
+               list_to_string(self.branches),
                self.fname,))
 
   # Returns true if this CVSRevision is the opening CVSRevision for
@@ -1410,6 +1423,18 @@ def parse_cvs_revision(ctx, line):
   LINE is a string in the format of a line from a revs file.  It should
   *not* include a trailing newline."""
 
+  def string_to_timestamp(s):
+    if s == '*':
+      return 0
+    else:
+      return int(s, 16)
+
+  def string_to_rev(s):
+    if s == '*':
+      return None
+    else:
+      return s
+
   def string_to_bool(s):
     return { 'T' : True, 'F' : False }[s]
 
@@ -1419,23 +1444,12 @@ def parse_cvs_revision(ctx, line):
    mode, branch_name, numtags, remainder) = line.split(' ', 15)
 
   # Patch up items which are not simple strings:
-  timestamp = int(timestamp, 16)
+  timestamp = string_to_timestamp(timestamp)
+  prev_timestamp = string_to_timestamp(prev_timestamp)
+  next_timestamp = string_to_timestamp(next_timestamp)
 
-  if prev_timestamp == "*":
-    prev_timestamp = 0
-  else:
-    prev_timestamp = int(prev_timestamp)
-
-  if next_timestamp == "*":
-    next_timestamp = 0
-  else:
-    next_timestamp = int(next_timestamp)
-
-  if prev_rev == "*":
-    prev_rev = None
-
-  if next_rev == "*":
-    next_rev = None
+  prev_rev = string_to_rev(prev_rev)
+  next_rev = string_to_rev(next_rev)
 
   file_in_attic = string_to_bool(file_in_attic)
   file_executable = string_to_bool(file_executable)

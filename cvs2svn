@@ -684,23 +684,26 @@ def format_date(date):
   return time.strftime("%Y-%m-%dT%H:%M:%S.000000Z", time.gmtime(date))
 
 
-def sort_file(infile, outfile):
-  # sort the log files
+def sort_file(infilename, outfilename):
+  """Sort file INFILENAME, storing the results to OUTFILENAME."""
 
   # GNU sort will sort our dates differently (incorrectly!) if our
   # LC_ALL is anything but 'C', so if LC_ALL is set, temporarily set
   # it to 'C'
   lc_all_tmp = os.environ.get('LC_ALL', None)
   os.environ['LC_ALL'] = 'C'
-  # The -T option to sort has a nice side effect.  The Win32 sort is
-  # case insensitive and cannot be used, and since it does not
-  # understand the -T option and dies if we try to use it, there is
-  # no risk that we use that sort by accident.
-  run_command('sort -T %s %s > %s' % (Ctx().tmpdir, infile, outfile))
-  if lc_all_tmp is None:
-    del os.environ['LC_ALL']
-  else:
-    os.environ['LC_ALL'] = lc_all_tmp
+  try:
+    # The -T option to sort has a nice side effect.  The Win32 sort is
+    # case insensitive and cannot be used, and since it does not
+    # understand the -T option and dies if we try to use it, there is
+    # no risk that we use that sort by accident.
+    run_command('sort -T %s %s > %s'
+                % (Ctx().tmpdir, infilename, outfilename))
+  finally:
+    if lc_all_tmp is None:
+      del os.environ['LC_ALL']
+    else:
+      os.environ['LC_ALL'] = lc_all_tmp
 
 
 def match_regexp_list(regexp_list, s):

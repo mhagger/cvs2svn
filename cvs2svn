@@ -1224,6 +1224,23 @@ class Project:
                       self._relative_name(cvs_path))
 
 
+class CVSRevisionID:
+  """An object that identifies a CVS revision of a file."""
+
+  def __init__(self, rev, fname):
+    self.rev = rev
+    self.fname = fname
+
+  def unique_key(self):
+    """Return a string that can be used as a unique key for this revision.
+
+    The 'primary key' of a CVS Revision is (revision number,
+    filename).  To make a key (say, for a dict), we just glom them
+    together into a string."""
+
+    return self.rev + '/' + self.fname
+
+
 class CVSRevision:
   def __init__(self, ctx, *args):
     """Initialize a new CVSRevision with Ctx object CTX, and ARGS.
@@ -1330,10 +1347,10 @@ class CVSRevision:
   # CVSRevisions.
   def unique_key(self, revnum="0"):
     if revnum is "0":
-      revnum = self.rev
+      return CVSRevisionID(self.rev, self.fname).unique_key()
     elif revnum is None:
       return None
-    return revnum + "/" + self.fname
+    return CVSRevisionID(revnum, self.fname).unique_key()
 
   def __str__(self):
     return ('%08lx %s %s %s %s %s %s %s %s %s %d %s %s %s %d%s%s %d%s%s %s'

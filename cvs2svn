@@ -4707,7 +4707,7 @@ def pass2():
                   + " revision %s (%s):")
           Log().write(LOG_WARN, desc % (warning_prefix, c_rev.rev,
                                         c_rev.cvs_path, new_timestamp,
-                                        c_rev.prev_rev, c_rev.next_timestamp))
+                                        c_rev.next_rev, c_rev.next_timestamp))
           # If resyncing our rev to c_rev.next_timestamp - 1 will place
           # the timestamp of c_rev within COMMIT_THRESHOLD of the
           # attempted resync time, then sync forward to c_rev.next_timestamp

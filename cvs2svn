@@ -1368,11 +1368,12 @@ class CVSRevision(CVSRevisionID):
                list_to_string(self.branches),
                self.fname,))
 
-  # Returns true if this CVSRevision is the opening CVSRevision for
-  # NAME (for this RCS file).
   def opens_symbolic_name(self, name):
+    """Return True iff this CVSRevision is the opening CVSRevision for
+    NAME (for this RCS file)."""
+
     if name in self.tags:
-      return 1
+      return True
     if name in self.branches:
       # If this c_rev opens a branch and our op is OP_DELETE, then
       # that means that the file that this c_rev belongs to was
@@ -1380,13 +1381,13 @@ class CVSRevision(CVSRevisionID):
       # c_rev is *technically* not an opening.  See Issue #62 for more
       # information.
       if self.op != OP_DELETE:
-        return 1
-    return 0
+        return True
+    return False
 
   def is_default_branch_revision(self):
-    """Return 1 if SELF.rev of SELF.cvs_path is a default branch
+    """Return True iff SELF.rev of SELF.cvs_path is a default branch
     revision according to DEFAULT_BRANCHES_DB (see the conditions
-    documented there), else return None."""
+    documented there)."""
 
     val = self._ctx._default_branches_db.get(self.cvs_path, None)
     if val is not None:
@@ -1398,9 +1399,9 @@ class CVSRevision(CVSRevisionID):
       our_rev_component = int(self.rev[our_last_dot + 1:])
       if (default_branch == our_branch
           and our_rev_component <= default_rev_component):
-        return 1
-    # else
-    return None
+        return True
+
+    return False
 
   def rcs_path(self):
     """Returns the actual filesystem path to the RCS file of this
@@ -2410,13 +2411,13 @@ class CVSCommit:
     return self.changes + self.deletes
 
   def opens_symbolic_name(self, name):
-    """Returns true if any CVSRevision in this commit is on a tag or a
+    """Return True if any CVSRevision in this commit is on a tag or a
     branch or is the origin of a tag or branch."""
 
     for c_rev in self.revisions():
       if c_rev.opens_symbolic_name(name):
-        return 1
-    return 0
+        return True
+    return False
 
   def add_revision(self, c_rev):
     # Record the time range of this commit.

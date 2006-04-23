@@ -1242,17 +1242,24 @@ class CVSRevisionID:
 
 
 class CVSRevision(CVSRevisionID):
+  """Information about a single CVS revision.
+
+  A CVSRevision holds the information known about a single version of
+  a single file."""
+
   def __init__(self, ctx,
                timestamp, digest, prev_timestamp, next_timestamp,
                op, prev_rev, rev, next_rev,
                file_in_attic, file_executable,
                file_size, deltatext_code,
                fname, mode, branch_name, tags, branches):
-    """Initialize a new CVSRevision with Ctx object CTX, and ARGS.
+    """Initialize a new CVSRevision object.
 
-    If CTX is None, the following members and methods of the
-    instantiated CVSRevision class object will be unavailable (or
-    simply will not work correctly, if at all):
+    CTX is the context to use, or None. If CTX is None, the following
+    members and methods of the instantiated CVSRevision class object
+    will be unavailable (or simply will not work correctly, if at
+    all):
+
        cvs_path
        svn_path
        is_default_branch_revision()
@@ -1268,15 +1275,17 @@ class CVSRevision(CVSRevisionID):
        PREV_TIMESTAMP  -->  (int) date stamp for the previous cvs revision
        NEXT_TIMESTAMP  -->  (int) date stamp for the next cvs revision
        OP              -->  (char) OP_ADD, OP_CHANGE, or OP_DELETE
-       PREV_REV        -->  (string or None) previous CVS rev, e.g., "1.2"
-       REV             -->  (string) this CVS rev, e.g., "1.3"
-       NEXT_REV        -->  (string or None) next CVS rev, e.g., "1.4"
+       PREV_REV        -->  (string or None) previous CVS rev, e.g., '1.2'.
+                            This is converted to a CVSRevisionID instance.
+       REV             -->  (string) this CVS rev, e.g., '1.3'
+       NEXT_REV        -->  (string or None) next CVS rev, e.g., '1.4'.
+                            This is converted to a CVSRevisionID instance.
        FILE_IN_ATTIC   -->  (char or None) true if RCS file is in Attic
        FILE_EXECUTABLE -->  (char or None) true if RCS file has exec bit set.
        FILE_SIZE       -->  (int) size of the RCS file
        DELTATEXT_CODE  -->  (char) 'N' if non-empty deltatext, else 'E'
        FNAME           -->  (string) relative path of file in CVS repos
-       MODE            -->  (string or None) "kkv", "kb", etc.
+       MODE            -->  (string or None) 'kkv', 'kb', etc.
        BRANCH_NAME     -->  (string or None) branch on which this rev occurred
        TAGS            -->  (list of strings) all tags on this revision
        BRANCHES        -->  (list of strings) all branches rooted in this rev

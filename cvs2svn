@@ -1287,8 +1287,8 @@ class CVSRevision(CVSRevisionID):
        REV             -->  (string) this CVS rev, e.g., '1.3'
        NEXT_REV        -->  (string or None) next CVS rev, e.g., '1.4'.
                             This is converted to a CVSRevisionID instance.
-       FILE_IN_ATTIC   -->  (char or None) true if RCS file is in Attic
-       FILE_EXECUTABLE -->  (char or None) true if RCS file has exec bit set.
+       FILE_IN_ATTIC   -->  (bool) true iff RCS file is in Attic
+       FILE_EXECUTABLE -->  (bool) true iff RCS file has exec bit set.
        FILE_SIZE       -->  (int) size of the RCS file
        DELTATEXT_CODE  -->  (char) 'N' if non-empty deltatext, else 'E'
        FNAME           -->  (string) relative path of file in CVS repos
@@ -1328,6 +1328,9 @@ class CVSRevision(CVSRevisionID):
         self.svn_path = ctx.project.make_trunk_path(self.cvs_path)
 
   def __str__(self):
+    def bool_to_string(v):
+      return { True : 'T', False : 'F' }[bool(v)]
+
     if self.prev_rev is None:
       prev_rev_str = '*'
     else:
@@ -1340,16 +1343,17 @@ class CVSRevision(CVSRevisionID):
 
     return ('%08lx %s %s %s %s %s %s %s %s %s %d %s %s %s %d%s%s %d%s%s %s'
             % (self.timestamp, self.digest, self.prev_timestamp or "*",
-              self.next_timestamp or "*", self.op, prev_rev_str,
-              self.rev, next_rev_str, (self.file_in_attic or "*"),
-              (self.file_executable or "*"),
-              self.file_size,
-              self.deltatext_code, (self.mode or "*"),
-              (self.branch_name or "*"),
-              len(self.tags), self.tags and " " or "", " ".join(self.tags),
-              len(self.branches), self.branches and " " or "",
-              " ".join(self.branches),
-              self.fname, ))
+               self.next_timestamp or "*", self.op, prev_rev_str,
+               self.rev, next_rev_str,
+               bool_to_string(self.file_in_attic),
+               bool_to_string(self.file_executable),
+               self.file_size,
+               self.deltatext_code, (self.mode or "*"),
+               (self.branch_name or "*"),
+               len(self.tags), self.tags and " " or "", " ".join(self.tags),
+               len(self.branches), self.branches and " " or "",
+               " ".join(self.branches),
+               self.fname,))
 
   # Returns true if this CVSRevision is the opening CVSRevision for
   # NAME (for this RCS file).
@@ -1406,6 +1410,9 @@ def parse_cvs_revision(ctx, line):
   LINE is a string in the format of a line from a revs file.  It should
   *not* include a trailing newline."""
 
+  def string_to_bool(s):
+    return { 'T' : True, 'F' : False }[s]
+
   (timestamp, digest, prev_timestamp, next_timestamp,
    op, prev_rev, rev, next_rev, file_in_attic,
    file_executable, file_size, deltatext_code,
@@ -1430,11 +1437,8 @@ def parse_cvs_revision(ctx, line):
   if next_rev == "*":
     next_rev = None
 
-  if file_in_attic == "*":
-    file_in_attic = None
-
-  if file_executable == "*":
-    file_executable = None
+  file_in_attic = string_to_bool(file_in_attic)
+  file_executable = string_to_bool(file_executable)
 
   file_size = int(file_size)
 
@@ -1627,18 +1631,14 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
 
     # If the paths are not the same, then that means that the
     # canonical_name has had the 'Attic' component stripped out.
-    self.file_in_attic = None
-    if canonical_name != filename:
-      self.file_in_attic = 1
+    self.file_in_attic = (canonical_name != filename)
 
     file_stat = os.stat(filename)
     # The size of our file in bytes
     self.file_size = file_stat[stat.ST_SIZE]
 
     # Whether or not the executable bit is set.
-    self.file_executable = None
-    if file_stat[0] & stat.S_IXUSR:
-      self.file_executable = 1
+    self.file_executable = bool(file_stat[0] & stat.S_IXUSR)
 
     # revision -> [timestamp, author, old-timestamp]
     self.rev_data = { }

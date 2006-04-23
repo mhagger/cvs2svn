@@ -64,7 +64,7 @@ FileDataCollector.set_revision_info(), which writes a new line to
 cvs2svn-data.revs.  The line is constructed by the CVSRevision class -
 one of its many roles. Here is an example:
 
-   3dc32955 5afe9b4ba41843d8eb52ae7db47a43eaa9573254 3dc32954 3dc32956 C 1.1 1.2 1.3 1 1 1024 N * 0 0 foo/bar,v
+   3dc32955 5afe9b4ba41843d8eb52ae7db47a43eaa9573254 3dc32954 3dc32956 C 1.1 1.2 1.3 T F 1024 N * 0 0 foo/bar,v
 
 The fields are:
 
@@ -84,8 +84,8 @@ The fields are:
    8.  the revision number of the next revision along this line of
        development (or "*", if it's the last revision on this line of
        development).
-   9.  1 if the RCS file is in the Attic, "*" if it isn't.
-   10. 1 if the RCS file has the executable bit set, "*" if not.
+   9.  "T" if the RCS file is in the Attic, "F" if it isn't.
+   10. "T" if the RCS file has the executable bit set, "F" if not.
    11. The size of the RCS file, in bytes.
    12. "N" if this revision has non-empty deltatext, else "E" for empty
    13. the RCS keyword substitution mode ("k", "b", etc), or "*" if none

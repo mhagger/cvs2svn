@@ -1241,7 +1241,7 @@ class CVSRevisionID:
     return self.rev + '/' + self.fname
 
 
-class CVSRevision:
+class CVSRevision(CVSRevisionID):
   def __init__(self, ctx,
                timestamp, digest, prev_timestamp, next_timestamp,
                op, prev_rev, rev, next_rev,
@@ -1284,20 +1284,20 @@ class CVSRevision:
     WARNING: Due to the resync process in pass2, prev_timestamp or
     next_timestamp may be incorrect in the c-revs or s-revs files."""
 
+    CVSRevisionID.__init__(self, rev, fname)
+
     self._ctx = ctx
     self.timestamp = timestamp
     self.digest = digest
     self.prev_timestamp = prev_timestamp
     self.next_timestamp = next_timestamp
     self.op = op
-    self.prev_rev = prev_rev and CVSRevisionID(prev_rev, fname)
-    self.rev = rev
-    self.next_rev = next_rev and CVSRevisionID(next_rev, fname)
+    self.prev_rev = prev_rev and CVSRevisionID(prev_rev, self.fname)
+    self.next_rev = next_rev and CVSRevisionID(next_rev, self.fname)
     self.file_in_attic = file_in_attic
     self.file_executable = file_executable
     self.file_size = file_size
     self.deltatext_code = deltatext_code
-    self.fname = fname
     self.mode = mode
     self.branch_name = branch_name
     self.tags = tags
@@ -1310,11 +1310,6 @@ class CVSRevision:
                                                      self.cvs_path)
       else:
         self.svn_path = ctx.project.make_trunk_path(self.cvs_path)
-
-  def unique_key(self):
-    """Return the unique key for this CVS revision."""
-
-    return CVSRevisionID(self.rev, self.fname).unique_key()
 
   def __str__(self):
     if self.prev_rev is None:

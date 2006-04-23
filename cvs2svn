@@ -1071,9 +1071,6 @@ class LastSymbolicNameDatabase:
 
   def __init__(self):
     self.symbols = {}
-    self.symbol_revs_db = Database(temp(SYMBOL_LAST_CVS_REVS_DB),
-                                   DB_OPEN_NEW)
-    Cleanup().register(temp(SYMBOL_LAST_CVS_REVS_DB), pass5)
 
   # Once we've gone through all the revs,
   # symbols.keys() will be a list of all tags and branches, and
@@ -1091,10 +1088,12 @@ class LastSymbolicNameDatabase:
   # = CVS rev unique_key: val = list of symbols that close in that
   # rev.
   def create_database(self):
+    symbol_revs_db = Database(temp(SYMBOL_LAST_CVS_REVS_DB), DB_OPEN_NEW)
+    Cleanup().register(temp(SYMBOL_LAST_CVS_REVS_DB), pass5)
     for sym, rev_unique_key in self.symbols.items():
-      ary = self.symbol_revs_db.get(rev_unique_key, [])
+      ary = symbol_revs_db.get(rev_unique_key, [])
       ary.append(sym)
-      self.symbol_revs_db[rev_unique_key] = ary
+      symbol_revs_db[rev_unique_key] = ary
 
 
 class CVSRevisionDatabase:

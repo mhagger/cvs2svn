@@ -332,6 +332,7 @@ DIGEST_END_IDX = 9 + (sha.digestsize * 2)
 OPENING = 'O'
 CLOSING = 'C'
 
+
 class FatalException(Exception):
   """Exception thrown on a non-recoverable error.
 
@@ -354,21 +355,27 @@ class FatalError(FatalException):
 def temp(basename):
   """Return a path to BASENAME in Ctx().tmpdir.
   This is a convenience function to save horizontal space in source."""
+
   return os.path.join(Ctx().tmpdir, basename)
+
 
 # Since the unofficial set also includes [/\] we need to translate those
 # into ones that don't conflict with Subversion limitations.
 def _clean_symbolic_name(name):
   """Return symbolic name NAME, translating characters that Subversion
   does not allow in a pathname."""
+
   name = name.replace('/','++')
   name = name.replace('\\','--')
   return name
 
+
 def _path_join(*components):
   """Join two or more pathname COMPONENTS, inserting '/' as needed.
   Empty component are skipped."""
+
   return '/'.join(filter(None, components))
+
 
 def _path_split(path):
   """Split the svn pathname PATH into a pair, (HEAD, TAIL).
@@ -386,10 +393,12 @@ def _path_split(path):
   else:
     return (path[:pos], path[pos+1:],)
 
+
 def to_utf8(value, mode='replace'):
   """Encode (as Unicode) VALUE, trying the encodings in Ctx.encoding
   as valid source encodings.  Raise UnicodeError on failure of all
   source encodings."""
+
   ### FIXME: The 'replace' default mode should be an option,
   ### like --encoding is.
   for encoding in Ctx().encoding:
@@ -399,6 +408,7 @@ def to_utf8(value, mode='replace'):
       Log().write(LOG_VERBOSE, "Encoding '%s' failed for string '%s'"
                   % (encoding, value))
   raise UnicodeError
+
 
 ctrl_characters_regexp = re.compile('[\\\x00-\\\x1f\\\x7f]')
 
@@ -411,6 +421,7 @@ def verify_filename_legal(filename):
     raise FatalError(
         "Character %r in filename %r is not supported by subversion."
         % (m.group(), filename,))
+
 
 def run_command(command):
   if os.system(command):
@@ -488,6 +499,7 @@ class CVSRepository:
     string.  C_REV is a CVSRevision.  If SUPPRESS_KEYWORD_SUBSTITUTION
     is True, then suppress the substitution of RCS/CVS keywords in the
     output.  The pipe returns the text of that CVS Revision."""
+
     raise NotImplementedError
 
 
@@ -607,11 +619,13 @@ def generate_ignores(c_rev):
 
 # Return a string that has not been returned by gen_key() before.
 gen_key_base = 0L
+
 def gen_key():
   global gen_key_base
   key = '%x' % gen_key_base
   gen_key_base += 1
   return key
+
 
 # ============================================================================
 # This code is copied with a few modifications from:
@@ -659,12 +673,16 @@ else:
     """
 
     return ' '.join(map(escape_shell_arg, argv))
+
+
 # ============================================================================
 
 def format_date(date):
   """Return an svn-compatible date string for DATE (seconds since epoch)."""
+
   # A Subversion date looks like "2002-09-29T14:44:59.000000Z"
   return time.strftime("%Y-%m-%dT%H:%M:%S.000000Z", time.gmtime(date))
+
 
 def sort_file(infile, outfile):
   # sort the log files
@@ -684,17 +702,21 @@ def sort_file(infile, outfile):
   else:
     os.environ['LC_ALL'] = lc_all_tmp
 
+
 def match_regexp_list(regexp_list, s):
   """Test whether string S matches any of the compiled regexps in
   REGEXP_LIST."""
+
   for regexp in regexp_list:
     if regexp.match(s):
       return True
   return False
 
+
 class LF_EOL_Filter:
   """Filter a stream and convert all end-of-line markers (CRLF, CR or LF)
   into LFs only."""
+
   def __init__(self, stream):
     self.stream = stream
     self.carry_cr = False
@@ -721,11 +743,14 @@ LOG_WARN = -1
 LOG_QUIET = 0
 LOG_NORMAL = 1
 LOG_VERBOSE = 2
+
 class Log:
   """A Simple logging facility.  Each line will be timestamped is
   self.use_timestamps is TRUE.  This class is a Borg, see
   http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/66531."""
+
   __shared_state = {}
+
   def __init__(self):
     self.__dict__ = self.__shared_state
     if self.__dict__:
@@ -737,12 +762,14 @@ class Log:
 
   def _timestamp(self):
     """Output a detailed timestamp at the beginning of each line output."""
+
     self.logger.write(time.strftime('[%Y-%m-%d %I:%m:%S %Z] - '))
 
   def write(self, log_level, *args):
     """This is the public method to use for writing to a file.  Only
     messages whose LOG_LEVEL is <= self.log_level will be printed.  If
     there are multiple ARGS, they will be separated by a space."""
+
     if log_level > self.log_level:
       return
     if self.use_timestamps:
@@ -762,6 +789,7 @@ class Cleanup:
   http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/66531."""
 
   __shared_state = {}
+
   def __init__(self):
     self.__dict__ = self.__shared_state
     if self.__dict__:
@@ -779,12 +807,14 @@ class Cleanup:
     callback registered for that file will be called at cleanup
     time.  Also note that if you register a database file you must
     close the database before cleanup, e.g. using a callback."""
+
     self._log.setdefault(which_pass, {})[file] = 1
     if callback and not self._callbacks.has_key(file):
       self._callbacks[file] = callback
 
   def cleanup(self, which_pass):
     """Clean up all files, and invoke callbacks, for pass WHICH_PASS."""
+
     if not self._log.has_key(which_pass):
       return
     for file in self._log[which_pass]:
@@ -804,6 +834,7 @@ class AbstractDatabase:
 
   def __init__(self, filename, mode):
     """A convenience function for opening an anydbm database."""
+
     # pybsddb3 has a bug which prevents it from working with
     # Berkeley DB 4.2 if you open the db with 'n' ("new").  This
     # causes the DB_TRUNCATE flag to be passed, which is disallowed
@@ -893,6 +924,7 @@ class Database(AbstractDatabase):
 
 class StatsKeeper:
   __shared_state = { }
+
   def __init__(self):
     self.__dict__ = self.__shared_state
     if self.__dict__:
@@ -1021,6 +1053,7 @@ class LastSymbolicNameDatabase:
   a Database whose key is the last CVS Revision a symbolicname was
   seen in, and whose value is a list of all symbolicnames that were
   last seen in that revision."""
+
   def __init__(self, mode):
     self.symbols = {}
     self.symbol_revs_db = Database(temp(SYMBOL_LAST_CVS_REVS_DB), mode)
@@ -1055,15 +1088,18 @@ class CVSRevisionDatabase:
   def __init__(self, mode):
     """Initialize an instance, opening database in MODE (like the MODE
     argument to Database or anydbm.open())."""
+
     self.cvs_revs_db = SDatabase(temp(CVS_REVS_DB), mode)
     Cleanup().register(temp(CVS_REVS_DB), pass8)
 
   def log_revision(self, c_rev):
     """Add C_REV, a CVSRevision, to the database."""
+
     self.cvs_revs_db[c_rev.unique_key()] = str(c_rev)
 
   def get_revision(self, unique_key):
     """Return the CVSRevision stored under UNIQUE_KEY."""
+
     return CVSRevision(Ctx(), self.cvs_revs_db[unique_key])
 
 
@@ -1317,6 +1353,7 @@ class CVSRevision:
     """Return 1 if SELF.rev of SELF.cvs_path is a default branch
     revision according to DEFAULT_BRANCHES_DB (see the conditions
     documented there), else return None."""
+
     val = self._ctx._default_branches_db.get(self.cvs_path, None)
     if val is not None:
       val_last_dot = val.rindex(".")
@@ -1334,6 +1371,7 @@ class CVSRevision:
   def rcs_path(self):
     """Returns the actual filesystem path to the RCS file of this
     CVSRevision."""
+
     if self.file_in_attic is None:
       return self.fname
     else:
@@ -1341,12 +1379,15 @@ class CVSRevision:
       return os.path.join(basepath, 'Attic', filename)
 
   def filename(self):
-    "Return the last path component of self.fname, minus the ',v'"
+    """Return the last path component of self.fname, minus the ',v'."""
+
     return os.path.split(self.fname)[-1][:-2]
+
 
 class SymbolDatabase:
   """This database records information on all symbols in the RCS
   files.  It is created in pass 1 and it is used in pass 2."""
+
   def __init__(self):
     # A hash that maps tag names to commit counts
     self.tags = { }
@@ -1359,36 +1400,43 @@ class SymbolDatabase:
 
   def register_tag_creation(self, name):
     """Register the creation of the tag NAME."""
+
     self.tags[name] = self.tags.get(name, 0) + 1
 
   def _branch(self, name):
     """Helper function to get a branch node that will create and
     initialize the node if it does not exist."""
+
     if not self.branches.has_key(name):
       self.branches[name] = [ 0, 0, { } ]
     return self.branches[name]
 
   def register_branch_creation(self, name):
     """Register the creation of the branch NAME."""
+
     self._branch(name)[0] += 1
 
   def register_branch_commit(self, name):
     """Register a commit on the branch NAME."""
+
     self._branch(name)[1] += 1
 
   def register_branch_blocker(self, name, blocker):
     """Register BLOCKER as a blocker on the branch NAME."""
+
     self._branch(name)[2][blocker] = None
 
   def branch_has_commit(self, name):
     """Return non-zero if NAME has commits.  Returns 0 if name
     is not a branch or if it has no commits."""
+
     return self.branches.has_key(name) and self.branches[name][1]
 
   def find_excluded_symbols(self, regexp_list):
     """Returns a hash of all symbols that match the regexps in
     REGEXP_LIST.  The hash is used as a set so the values are
     not used."""
+
     excludes = { }
     for tag in self.tags:
       if match_regexp_list(regexp_list, tag):
@@ -1401,6 +1449,7 @@ class SymbolDatabase:
   def find_branch_exclude_blockers(self, branch, excludes):
     """Find all blockers of BRANCH, excluding the ones in the hash
     EXCLUDES."""
+
     blockers = { }
     if excludes.has_key(branch):
       for blocker in self.branches[branch][2]:
@@ -1413,6 +1462,7 @@ class SymbolDatabase:
     are not themselves excluded.  Return a hash that maps branch names
     to a hash of blockers.  The hash of blockes is used as a set so the
     values are not used."""
+
     blocked_branches = { }
     for branch in self.branches:
       blockers = self.find_branch_exclude_blockers(branch, excludes)
@@ -1424,6 +1474,7 @@ class SymbolDatabase:
     """Find all symbols that are defined as both tags and branches,
     excluding the ones in EXCLUDES.  Returns a list of 4-tuples with
     the symbol name, tag count, branch count and commit count."""
+
     if excludes is None:
       excludes = { }
     mismatches = [ ]
@@ -1437,6 +1488,7 @@ class SymbolDatabase:
 
   def read(self):
     """Read the symbol database from files."""
+
     f = open(temp(TAGS_LIST))
     while 1:
       line = f.readline()
@@ -1457,6 +1509,7 @@ class SymbolDatabase:
 
   def write(self):
     """Store the symbol database to files."""
+
     f = open(temp(TAGS_LIST), "w")
     Cleanup().register(temp(TAGS_LIST), pass2)
     for tag, count in self.tags.items():
@@ -1585,9 +1638,10 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
 
   def set_branch_name(self, branch_number, name):
     """Record that BRANCH_NUMBER is the branch number for branch NAME,
-    and that NAME sprouts from BRANCH_NUMBER .
+    and that NAME sprouts from BRANCH_NUMBER.
     BRANCH_NUMBER is an RCS branch number with an odd number of components,
     for example '1.7.2' (never '1.7.0.2')."""
+
     if not self.branch_names.has_key(branch_number):
       self.branch_names[branch_number] = name
       # The branchlist is keyed on the revision number from which the
@@ -1608,6 +1662,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     components, for example '1.7.2.1' (never '1.7.2' nor '1.7.0.2').
     For the convenience of callers, REVISION can also be a trunk
     revision such as '1.2', in which case just return None."""
+
     if trunk_rev.match(revision):
       return None
     return self.branch_names.get(revision[:revision.rindex(".")])
@@ -1618,6 +1673,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     header, for example: '1.7', '1.7.0.2', or '1.1.1' or '1.1.1.1'.
     This function will determine what kind of symbolic name it is by
     inspection, and record it in the right places."""
+
     for (pattern, replacement) in Ctx().symbol_transforms:
       newname = pattern.sub(replacement, name)
       if newname != name:
@@ -1641,7 +1697,6 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
 
   def define_revision(self, revision, timestamp, author, state,
                       branches, next):
-
     # Record the state of our revision for later calculations
     self.rev_state[revision] = state
 
@@ -1725,7 +1780,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
       self.collect_data.symbol_db.register_branch_commit(branch_name)
 
   def tree_completed(self):
-    "The revision tree has been parsed.  Analyze it for consistency."
+    """The revision tree has been parsed.  Analyze it for consistency."""
 
     # Our algorithm depends upon the timestamps on the revisions occuring
     # monotonically over time.  That is, we want to see rev 1.34 occur in
@@ -1838,6 +1893,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     def is_branch_revision(rev):
       """Return True if this revision is not a trunk revision,
       else return False."""
+
       if rev.count('.') >= 3:
         return True
       return False
@@ -1847,6 +1903,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
       development (i.e., both on trunk, or both on the same branch);
       return False otherwise.  Either rev1 or rev2 can be None, in
       which case automatically return False."""
+
       if rev1 is None or rev2 is None:
         return False
       if rev1.count('.') == 1 and rev2.count('.') == 1:
@@ -1976,6 +2033,7 @@ class SymbolingsLogger:
   thing would be to copy the branch from somewhere between 24 and 29,
   inclusive.
   """
+
   def __init__(self):
     self.symbolings = open(temp(SYMBOL_OPENINGS_CLOSINGS), 'w')
     Cleanup().register(temp(SYMBOL_OPENINGS_CLOSINGS), pass6)
@@ -1992,6 +2050,7 @@ class SymbolingsLogger:
     """Log any openings found in C_REV, and if C_REV.next_rev is not
     None, a closing.  The opening uses SVN_REVNUM, but the closing (if
     any) will have its revnum determined later."""
+
     for name in c_rev.tags + c_rev.branches:
       self._note_default_branch_opening(c_rev, name)
       if c_rev.op != OP_DELETE:
@@ -2012,6 +2071,7 @@ class SymbolingsLogger:
 
     TYPE should only be one of the following global constants:
     OPENING or CLOSING."""
+
     # 8 places gives us 999,999,999 SVN revs.  That *should* be enough.
     self.symbolings.write(
         '%s %.8d %s %s %s\n'
@@ -2021,6 +2081,7 @@ class SymbolingsLogger:
     """Iterate through the closings file, lookup the svn_revnum for
     each closing CVSRevision, and write a proper line out to the
     symbolings file."""
+
     # Use this to get the c_rev of our rev_key
     cvs_revs_db = CVSRevisionDatabase(DB_OPEN_READ)
 
@@ -2037,6 +2098,7 @@ class SymbolingsLogger:
   def _note_default_branch_opening(self, c_rev, symbolic_name):
     """If C_REV is a default branch revision, log C_REV.cvs_path as an
     opening for SYMBOLIC_NAME."""
+
     self.open_paths_with_default_branches.setdefault(
         c_rev.cvs_path, []).append(symbolic_name)
 
@@ -2045,6 +2107,7 @@ class SymbolingsLogger:
     C_REV.cvs_path, then call log each name in
     self.open_paths_with_default_branches[C_REV.cvs_path] as a closing
     with SVN_REVNUM as the closing revision number."""
+
     path = c_rev.cvs_path
     if self.open_paths_with_default_branches.has_key(path):
       # log each symbol as a closing
@@ -2068,6 +2131,7 @@ class PersistenceManager:
   databases and be fully-featured.
   In 'read' mode, PersistenceManager will open existing on-disk databases
   and the set_* methods will be unavailable."""
+
   def __init__(self, mode):
     self.mode = mode
     if mode not in (DB_OPEN_NEW, DB_OPEN_READ):
@@ -2092,6 +2156,7 @@ class PersistenceManager:
     """Return the Subversion revision number in which
     CVS_REV_UNIQUE_KEY was committed, or SVN_INVALID_REVNUM if there
     is no mapping for CVS_REV_UNIQUE_KEY."""
+
     return int(self.cvs2svn_db.get(cvs_rev_unique_key, SVN_INVALID_REVNUM))
 
   def get_svn_commit(self, svn_revnum):
@@ -2099,8 +2164,8 @@ class PersistenceManager:
 
     If no SVNCommit exists for revnum SVN_REVNUM, then return None.
 
-    This method can throw SVNCommitInternalInconsistencyError.
-    """
+    This method can throw SVNCommitInternalInconsistencyError."""
+
     svn_commit = SVNCommit("Retrieved from disk", svn_revnum)
     (c_rev_keys, motivating_revnum, name, date) = self.svn2cvs_db.get(
         str(svn_revnum), (None, None, None, None))
@@ -2145,6 +2210,7 @@ class PersistenceManager:
                      date, name, motivating_revnum):
     """Record the bidirectional mapping between SVN_REVNUM and
     CVS_REVS and record associated attributes."""
+
     if self.mode == DB_OPEN_READ:
       raise RuntimeError, \
           'Write operation attempted on read-only PersistenceManager'
@@ -2256,6 +2322,7 @@ class CVSCommit:
   def opens_symbolic_name(self, name):
     """Returns true if any CVSRevision in this commit is on a tag or a
     branch or is the origin of a tag or branch."""
+
     for c_rev in self.revisions():
       if c_rev.opens_symbolic_name(name):
         return 1
@@ -2284,8 +2351,7 @@ class CVSCommit:
     self.files[c_rev.fname] = 1
 
   def _pre_commit(self):
-    """Generates any SVNCommits that must exist before the main
-    commit."""
+    """Generates any SVNCommits that must exist before the main commit."""
 
     # There may be multiple c_revs in this commit that would cause
     # branch B to be filled, but we only want to fill B once.  On the
@@ -2305,8 +2371,7 @@ class CVSCommit:
       If C_REV.op is OP_ADD, only return 1 if the branch that this
       commit is on has no last filled revision.
 
-      PM is a PersistenceManager to query.
-      """
+      PM is a PersistenceManager to query."""
 
       # Different '.' counts indicate that c_rev is now on a different
       # line of development (and may need a fill)
@@ -2350,6 +2415,7 @@ class CVSCommit:
   def _commit(self):
     """Generates the primary SVNCommit that corresponds to this
     CVSCommit."""
+
     # Generate an SVNCommit unconditionally.  Even if the only change
     # in this CVSCommit is a deletion of an already-deleted file (that
     # is, a CVS revision in state 'dead' whose predecessor was also in
@@ -2422,7 +2488,7 @@ class CVSCommit:
     of HEAD.  If we don't copy that commit over to Subversion's trunk,
     then there will be no Subversion tree which corresponds to that
     CVS checkout.  Of course, in order to copy the path over, we may
-    first need to delete the existing trunk there.  """
+    first need to delete the existing trunk there."""
 
     # Only generate a commit if we have default branch revs
     if len(self.default_branch_cvs_revisions):
@@ -2444,6 +2510,7 @@ class CVSCommit:
     Return the primary SVNCommit that corresponds to this CVSCommit.
     The returned SVNCommit is the commit that motivated any other
     SVNCommits generated in this CVSCommit."""
+
     self.done_symbols = done_symbols
     seconds = self.t_max - self.t_min + 1
 
@@ -2495,6 +2562,7 @@ class SVNCommit:
   class SVNCommitInternalInconsistencyError(Exception):
     """Exception raised if we encounter an impossible state in the
     SVNCommit Databases."""
+
     pass
 
   def __init__(self, description="", revnum=None, cvs_revs=None):
@@ -2506,6 +2574,7 @@ class SVNCommit:
     It is an error to pass CVS_REVS without REVNUM, but you may pass
     REVNUM without CVS_REVS, and then add a revision at a time by
     invoking add_revision()."""
+
     self._description = description
 
     # Revprop metadata for this commit.
@@ -2547,21 +2616,25 @@ class SVNCommit:
     self.is_tag = None
 
   def set_symbolic_name(self, symbolic_name):
-    "Set self.symbolic_name to SYMBOLIC_NAME."
+    """Set self.symbolic_name to SYMBOLIC_NAME."""
+
     self.symbolic_name = symbolic_name
 
   def set_motivating_revnum(self, revnum):
-    "Set self.motivating_revnum to REVNUM."
+    """Set self.motivating_revnum to REVNUM."""
+
     self.motivating_revnum = revnum
 
   def set_author(self, author):
     """Set this SVNCommit's author to AUTHOR (a locally-encoded string).
     This is the only way to set an SVNCommit's author."""
+
     self._author = author
 
   def set_log_msg(self, msg):
     """Set this SVNCommit's log message to MSG (a locally-encoded string).
     This is the only way to set an SVNCommit's log message."""
+
     self._log_msg = msg
 
   def set_date(self, date):
@@ -2570,14 +2643,17 @@ class SVNCommit:
     a CVSRevision; so you may not need to call this at all, and even
     if you do, the value may be overwritten by a later call to
     self.add_revision()."""
+
     self._max_date = date
 
   def get_date(self):
     """Returns this SVNCommit's date as an integer."""
+
     return self._max_date
 
   def get_revprops(self):
     """Return the Subversion revprops for this SVNCommit."""
+
     date = format_date(self._max_date)
     try:
       utf8_author = None
@@ -2640,6 +2716,7 @@ class SVNCommit:
   def get_log_msg(self):
     """Returns the actual log message for a primary commit, and the
     appropriate manufactured log message for a secondary commit."""
+
     if self.symbolic_name is not None:
       return self._log_msg_for_symbolic_name_commit()
     elif self.motivating_revnum is not None:
@@ -2651,6 +2728,7 @@ class SVNCommit:
     """Creates a log message for a manufactured commit that fills
     self.symbolic_name.  If self.is_tag is true, write the log message
     as though for a tag, else write it as though for a branch."""
+
     type = 'branch'
     if self.is_tag:
       type = 'tag'
@@ -2667,15 +2745,18 @@ class SVNCommit:
   def _log_msg_for_default_branch_commit(self):
     """Creates a log message for a manufactured commit that
     synchronizes a non-trunk default branch with trunk."""
+
     msg = 'This commit was generated by cvs2svn to compensate for '     \
           'changes in r%d,\n'                                           \
           'which included commits to RCS files with non-trunk default ' \
           'branches.\n' % self.motivating_revnum
     return msg
 
+
 class CVSRevisionAggregator:
   """This class groups CVSRevisions into CVSCommits that represent
   at least one SVNCommit."""
+
   def __init__(self):
     self.metadata_db = Database(temp(METADATA_DB), DB_OPEN_READ)
     if not Ctx().trunk_only:
@@ -2725,6 +2806,7 @@ class CVSRevisionAggregator:
 
   def _commit_ready_commits(self):
     """Sort the commits from self.ready_queue by time, then process them."""
+
     self.ready_queue.sort()
     while self.ready_queue:
       cvs_commit = self.ready_queue[0]
@@ -2830,9 +2912,11 @@ class SymbolingsReader:
   and the SYMBOL_OFFSETS_DB.  Does the heavy lifting of finding and
   returning the correct opening and closing Subversion revision
   numbers for a given symbolic name."""
+
   def __init__(self):
     """Opens the SYMBOL_OPENINGS_CLOSINGS_SORTED for reading, and
     reads the offsets database into memory."""
+
     self.symbolings = open(temp(SYMBOL_OPENINGS_CLOSINGS_SORTED), 'r')
     # The offsets_db is really small, and we need to read and write
     # from it a fair bit, so suck it into memory
@@ -2942,8 +3026,8 @@ class OpeningsClosingsMap:
     corresponding opening will be discarded.
 
     It is not necessary to pass a corresponding closing for every
-    opening.
-    """
+    opening."""
+
     # Always log an OPENING
     if type == OPENING:
       self.things[svn_path] = SvnRevisionRange(svn_revnum)
@@ -2955,6 +3039,7 @@ class OpeningsClosingsMap:
   def is_empty(self):
     """Return true if we haven't accumulated any openings or closings,
     false otherwise."""
+
     return not len(self.things)
 
   def get_things(self):
@@ -3001,6 +3086,7 @@ class SymbolicNameFillingGuide:
 
   def _get_node_for_path(self, svn_path):
     """Return the node key for svn_path, creating new nodes as needed."""
+
     # Walk down the path, one node at a time.
     node = self._node_tree
     for component in svn_path.split('/'):
@@ -3042,6 +3128,7 @@ class SymbolicNameFillingGuide:
       descending and examining their scores.
 
       If OPENINGS is empty, return the empty list."""
+
       openings = [ x.opening_revnum
                    for x in svn_revision_ranges ]
       closings = [ x.closing_revnum
@@ -3078,6 +3165,7 @@ class SymbolicNameFillingGuide:
       by multiple revisions, the oldest revision is selected, unless
       PREFERRED_REV is one of the possibilities, in which case, it is
       selected."""
+
       max_score = 0
       preferred_rev_score = -1
       rev = SVN_INVALID_REVNUM
@@ -3160,6 +3248,7 @@ class SymbolicNameFillingGuide:
     """For debugging purposes.  Prints all nodes in TREE that are
     rooted at NODE.  INDENT_DEPTH is used to indent the output of
     recursive calls."""
+
     if not indent_depth:
       print "TREE", "=" * 75
     if isinstance(node, SvnRevisionRange):
@@ -3173,8 +3262,10 @@ class SymbolicNameFillingGuide:
 class FillSource:
   """Representation of a fill source used by the symbol filler in
   SVNRepositoryMirror."""
+
   def __init__(self, prefix, node):
     """Create an unscored fill source with a prefix and a key."""
+
     self.prefix = prefix
     self.node = node
     self.score = None
@@ -3182,12 +3273,14 @@ class FillSource:
 
   def set_score(self, score, revnum):
     """Set the SCORE and REVNUM."""
+
     self.score = score
     self.revnum = revnum
 
   def __cmp__(self, other):
     """Comparison operator used to sort FillSources in descending
     score order."""
+
     if self.score is None or other.score is None:
       raise TypeError, 'Tried to compare unscored FillSource'
     return cmp(other.score, self.score)
@@ -3213,27 +3306,30 @@ class SVNRepositoryMirror:
   You must invoke _start_commit between SVNCommits.
 
   *** WARNING *** All path arguments to methods in this class CANNOT
-      have leading or trailing slashes.
-  """
+      have leading or trailing slashes."""
 
   class SVNRepositoryMirrorPathExistsError(Exception):
     """Exception raised if an attempt is made to add a path to the
     repository mirror and that path already exists in the youngest
     revision of the repository."""
+
     pass
 
   class SVNRepositoryMirrorUnexpectedOperationError(Exception):
     """Exception raised if a CVSRevision is found to have an unexpected
     operation (OP) value."""
+
     pass
 
   class SVNRepositoryMirrorInvalidFillOperationError(Exception):
     """Exception raised if an empty SymbolicNameFillingGuide is returned
     during a fill where the branch in question already exists."""
+
     pass
 
   def __init__(self):
     """Set up the SVNRepositoryMirror and prepare it for SVNCommits."""
+
     self.delegates = [ ]
 
     # This corresponds to the 'revisions' table in a Subversion fs.
@@ -3261,6 +3357,7 @@ class SVNRepositoryMirror:
     """Initialize the repository by creating the directories for
     trunk, tags, and branches.  This method should only be called
     after all delegates are added to the repository mirror."""
+
     # Make a 'fake' SVNCommit so we can take advantage of the revprops
     # magic therein
     svn_commit = SVNCommit("Initialization", 1)
@@ -3275,6 +3372,7 @@ class SVNRepositoryMirror:
 
   def _start_commit(self, svn_commit):
     """Start a new commit."""
+
     if self.youngest > 0:
       self._end_commit()
 
@@ -3287,6 +3385,7 @@ class SVNRepositoryMirror:
   def _end_commit(self):
     """Called at the end of each commit.  This method copies the newly
     created nodes to the on-disk nodes db."""
+
     if self.new_root_key is None:
       # No changes were made in this revision, so we make the root node
       # of the new revision be the same as the last one.
@@ -3300,6 +3399,7 @@ class SVNRepositoryMirror:
   def _get_node(self, key):
     """Returns the node contents for KEY which may refer to either
     self.nodes_db or self.new_nodes."""
+
     if self.new_nodes.has_key(key):
       return self.new_nodes[key]
     else:
@@ -3308,6 +3408,7 @@ class SVNRepositoryMirror:
   def _open_readonly_node(self, path, revnum):
     """Open a readonly node for PATH at revision REVNUM.  Returns the
     node key and node contents if the path exists, else (None, None)."""
+
     # Get the root key
     if revnum == self.youngest:
       if self.new_root_key is None:
@@ -3329,6 +3430,7 @@ class SVNRepositoryMirror:
     """Open a writable root node.  The current root node is returned
     immeditely if it is already writable.  If not, create a new one by
     copying the contents of the root node of the previous version."""
+
     if self.new_root_key is not None:
       return self.new_root_key, self.new_nodes[self.new_root_key]
 
@@ -3344,6 +3446,7 @@ class SVNRepositoryMirror:
   def _open_writable_node(self, svn_path, create):
     """Open a writable node for the path SVN_PATH, creating SVN_PATH
     and any missing directories if CREATE is True."""
+
     parent_key, parent_contents = self._open_writable_root_node()
 
     # Walk up the path, one node at a time.
@@ -3385,12 +3488,14 @@ class SVNRepositoryMirror:
     return true, else return None.
 
     PATH must not start with '/'."""
+
     return self._open_readonly_node(path, self.youngest) is not None
 
   def _fast_delete_path(self, parent_path, parent_contents, component):
     """Delete COMPONENT from the parent direcory PARENT_PATH with the
     contents PARENT_CONTENTS.  Do nothing if COMPONENT does not exist
     in PARENT_CONTENTS."""
+
     if parent_contents.has_key(component):
       del parent_contents[component]
       self._invoke_delegates('delete_path',
@@ -3427,12 +3532,14 @@ class SVNRepositoryMirror:
 
   def _mkdir(self, path):
     """Create PATH in the repository mirror at the youngest revision."""
+
     self._open_writable_node(path, True)
     self._invoke_delegates('mkdir', path)
 
   def _change_path(self, cvs_rev):
     """Register a change in self.youngest for the CVS_REV's svn_path
     in the repository mirror."""
+
     # We do not have to update the nodes because our mirror is only
     # concerned with the presence or absence of paths, and a file
     # content change does not cause any path changes.
@@ -3440,6 +3547,7 @@ class SVNRepositoryMirror:
 
   def _add_path(self, cvs_rev):
     """Add the CVS_REV's svn_path to the repository mirror."""
+
     self._open_writable_node(cvs_rev.svn_path, True)
     self._invoke_delegates('add_path', SVNCommitItem(cvs_rev, True))
 
@@ -3450,6 +3558,7 @@ class SVNRepositoryMirror:
 
     Return the node key and the contents of the new node at DEST_PATH
     as a dictionary."""
+
     # get the contents of the node of our src_path
     src_key = self._open_readonly_node(src_path, src_revnum)
     src_contents = self._get_node(src_key)
@@ -3479,6 +3588,7 @@ class SVNRepositoryMirror:
     The symbolic name is guaranteed to exist in the Subversion
     repository by the end of this call, even if there are no paths
     under it."""
+
     symbol_fill = self.symbolings_reader.filling_guide_for_symbol(
         svn_commit.symbolic_name, self.youngest)
     # Get the list of sources for the symbolic name.
@@ -3551,6 +3661,7 @@ class SVNRepositoryMirror:
 
     PATH, PARENT_SOURCE_PREFIX, PRUNE_OK, and PREFERRED_REVNUM
     should only be passed in by recursive calls."""
+
     # Calculate scores and revnums for all sources
     for source in sources:
       src_revnum, score = symbol_fill.get_best_revnum(source.node,
@@ -3622,6 +3733,7 @@ class SVNRepositoryMirror:
     """Propagate any changes that happened on a non-trunk default
     branch to the trunk of the repository.  See
     CVSCommit._post_commit() for details on why this is necessary."""
+
     for cvs_rev in svn_commit.cvs_revs:
       svn_trunk_path = Ctx().project.make_trunk_path(cvs_rev.cvs_path)
       if cvs_rev.op == OP_ADD or cvs_rev.op == OP_CHANGE:
@@ -3702,6 +3814,7 @@ class SVNRepositoryMirror:
 
   def cleanup(self):
     """Callback for the Cleanup.register in self.__init__."""
+
     self.revs_db = None
     self.nodes_db = None
 
@@ -3713,17 +3826,20 @@ class SVNRepositoryMirror:
     the delegate's corresponding repository action method.  Multiple
     delegates will be called in the order that they are added.  See
     SVNRepositoryMirrorDelegate for more information."""
+
     self.delegates.append(delegate)
 
   def _invoke_delegates(self, method, *args):
     """Iterate through each of our delegates, in the order that they
     were added, and call the delegate's method named METHOD with the
     arguments in ARGS."""
+
     for delegate in self.delegates:
       getattr(delegate, method)(*args)
 
   def finish(self):
     """Calls the delegate finish method."""
+
     self._end_commit()
     self._invoke_delegates('finish')
     self.cleanup()
@@ -3778,36 +3894,43 @@ class SVNRepositoryMirrorDelegate:
   def start_commit(self, svn_commit):
     """Perform any actions needed to start SVNCommit SVN_COMMIT;
     see subclass implementation for details."""
+
     raise NotImplementedError
 
   def mkdir(self, path):
     """PATH is a string; see subclass implementation for details."""
+
     raise NotImplementedError
 
   def add_path(self, s_item):
     """S_ITEM is an SVNCommitItem; see subclass implementation for
     details."""
+
     raise NotImplementedError
 
   def change_path(self, s_item):
     """S_ITEM is an SVNCommitItem; see subclass implementation for
     details."""
+
     raise NotImplementedError
 
   def delete_path(self, path):
     """PATH is a string; see subclass implementation for
     details."""
+
     raise NotImplementedError
 
   def copy_path(self, src_path, dest_path, src_revnum):
     """SRC_PATH and DEST_PATH are both strings, and SRC_REVNUM is a
     subversion revision number (int); see subclass implementation for
     details."""
+
     raise NotImplementedError
 
   def finish(self):
     """Perform any cleanup necessary after all revisions have been
     committed."""
+
     raise NotImplementedError
 
 
@@ -3817,6 +3940,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
   def __init__(self, dumpfile_path=None):
     """Return a new DumpfileDelegate instance, attached to a dumpfile
     DUMPFILE_PATH (Ctx().dumpfile, if None), using Ctx().encoding."""
+
     if dumpfile_path:
       self.dumpfile_path = dumpfile_path
     else:
@@ -3835,6 +3959,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
 
   def _utf8_path(self, path):
     """Return a copy of PATH encoded in UTF-8."""
+
     pieces = path.split('/')
     # Convert each path component separately (as they may each use
     # different encodings).
@@ -3914,6 +4039,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
 
   def mkdir(self, path):
     """Emit the creation of directory PATH."""
+
     self.dumpfile.write("Node-path: %s\n"
                         "Node-kind: dir\n"
                         "Node-action: add\n"
@@ -4075,20 +4201,24 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
 
   def add_path(self, s_item):
     """Emit the addition corresponding to S_ITEM, an SVNCommitItem."""
+
     self._add_or_change_path(s_item, OP_ADD)
 
   def change_path(self, s_item):
     """Emit the change corresponding to S_ITEM, an SVNCommitItem."""
+
     self._add_or_change_path(s_item, OP_CHANGE)
 
   def delete_path(self, path):
     """Emit the deletion of PATH."""
+
     self.dumpfile.write('Node-path: %s\n'
                         'Node-action: delete\n'
                         '\n' % self._utf8_path(path))
 
   def copy_path(self, src_path, dest_path, src_revnum):
     """Emit the copying of SRC_PATH at SRC_REV to DEST_PATH."""
+
     # We don't need to include "Node-kind:" for copies; the loader
     # ignores it anyway and just uses the source kind instead.
     self.dumpfile.write('Node-path: %s\n'
@@ -4103,12 +4233,14 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
   def finish(self):
     """Perform any cleanup necessary after all revisions have been
     committed."""
+
     self.dumpfile.close()
 
 
 class RepositoryDelegate(DumpfileDelegate):
   """Creates a new Subversion Repository.  DumpfileDelegate does all
   of the heavy lifting."""
+
   def __init__(self):
     self.svnadmin = Ctx().svnadmin
     self.target = Ctx().target
@@ -4162,6 +4294,7 @@ class RepositoryDelegate(DumpfileDelegate):
   def _feed_pipe(self):
     """Feed the revision stored in the dumpfile to the svnadmin
     load pipe."""
+
     self.dumpfile.seek(0)
     while 1:
       data = self.dumpfile.read(128*1024) # Chunk size is arbitrary
@@ -4178,6 +4311,7 @@ class RepositoryDelegate(DumpfileDelegate):
     """Start a new commit.  If a commit is already in progress, close
     the dumpfile, load it into the svn repository, open a new
     dumpfile, and write the header into it."""
+
     if self._commit_in_progress:
       self._feed_pipe()
     self.dumpfile.seek(0)
@@ -4187,6 +4321,7 @@ class RepositoryDelegate(DumpfileDelegate):
 
   def finish(self):
     """Loads the last commit into the repository."""
+
     self._feed_pipe()
     self.dumpfile.close()
     self.loader_pipe.stdin.close()
@@ -4224,42 +4359,51 @@ class StdoutDelegate(SVNRepositoryMirrorDelegate):
   print statements will state that we're doing something, when in
   reality, we aren't doing anything other than printing out that we're
   doing something.  Kind of zen, really."""
+
   def __init__(self, total_revs):
     self.total_revs = total_revs
 
   def start_commit(self, svn_commit):
     """Prints out the Subversion revision number of the commit that is
     being started."""
+
     Log().write(LOG_VERBOSE, "=" * 60)
     Log().write(LOG_NORMAL, "Starting Subversion r%d / %d" %
                 (svn_commit.revnum, self.total_revs))
 
   def mkdir(self, path):
     """Print a line stating that we are creating directory PATH."""
+
     Log().write(LOG_VERBOSE, "  New Directory", path)
 
   def add_path(self, s_item):
     """Print a line stating that we are 'adding' s_item.c_rev.svn_path."""
+
     Log().write(LOG_VERBOSE, "  Adding", s_item.c_rev.svn_path)
 
   def change_path(self, s_item):
     """Print a line stating that we are 'changing' s_item.c_rev.svn_path."""
+
     Log().write(LOG_VERBOSE, "  Changing", s_item.c_rev.svn_path)
 
   def delete_path(self, path):
     """Print a line stating that we are 'deleting' PATH."""
+
     Log().write(LOG_VERBOSE, "  Deleting", path)
 
   def copy_path(self, src_path, dest_path, src_revnum):
     """Print a line stating that we are 'copying' revision SRC_REVNUM
     of SRC_PATH to DEST_PATH."""
+
     Log().write(LOG_VERBOSE, "  Copying revision", src_revnum, "of", src_path)
     Log().write(LOG_VERBOSE, "                to", dest_path)
 
   def finish(self):
     """State that we are done creating our repository."""
+
     Log().write(LOG_VERBOSE, "Finished creating Subversion repository.")
     Log().write(LOG_QUIET, "Done.")
+
 
 def pass1():
   OS_SEP_PLUS_ATTIC = os.sep + 'Attic'
@@ -4326,8 +4470,9 @@ def pass1():
   StatsKeeper().archive()
   Log().write(LOG_QUIET, "Done")
 
+
 def pass2():
-  "Pass 2: clean up the revision information."
+  """Pass 2: clean up the revision information."""
 
   symbol_db = SymbolDatabase()
   symbol_db.read()
@@ -4401,7 +4546,7 @@ def pass2():
 
   # read the resync data file
   def read_resync(fname):
-    "Read the .resync file into memory."
+    """Read the .resync file into memory."""
 
     ### note that we assume that we can hold the entire resync file in
     ### memory. really large repositories with whacky timestamps could
@@ -4567,6 +4712,7 @@ def pass2():
     output.write(str(c_rev) + "\n")
   Log().write(LOG_QUIET, "Done")
 
+
 def pass3():
   Log().write(LOG_QUIET, "Sorting CVS revisions...")
   sort_file(temp(DATAFILE + CLEAN_REVS_SUFFIX),
@@ -4574,12 +4720,13 @@ def pass3():
   Cleanup().register(temp(DATAFILE + SORTED_REVS_SUFFIX), pass5)
   Log().write(LOG_QUIET, "Done")
 
+
 def pass4():
   """Iterate through sorted revs, storing them in a database.
   If we're not doing a trunk-only conversion, generate the
   LastSymbolicNameDatabase, which contains the last CVSRevision
-  that is a source for each tag or branch.
-  """
+  that is a source for each tag or branch."""
+
   Log().write(LOG_QUIET,
       "Copying CVS revision data from flat file to database...")
   cvs_revs_db = CVSRevisionDatabase(DB_OPEN_NEW)
@@ -4605,13 +4752,13 @@ def pass4():
   StatsKeeper().archive()
   Log().write(LOG_QUIET, "Done")
 
+
 def pass5():
-  """
-  Generate the SVNCommit <-> CVSRevision mapping
-  databases.  CVSCommit._commit also calls SymbolingsLogger to register
+  """Generate the SVNCommit <-> CVSRevision mapping databases.
+  CVSCommit._commit also calls SymbolingsLogger to register
   CVSRevisions that represent an opening or closing for a path on a
-  branch or tag.  See SymbolingsLogger for more details.
-  """
+  branch or tag.  See SymbolingsLogger for more details."""
+
   Log().write(LOG_QUIET, "Mapping CVS revisions to Subversion commits...")
 
   aggregator = CVSRevisionAggregator()
@@ -4625,6 +4772,7 @@ def pass5():
   StatsKeeper().archive()
   Log().write(LOG_QUIET, "Done")
 
+
 def pass6():
   Log().write(LOG_QUIET, "Sorting symbolic name source revisions...")
 
@@ -4633,6 +4781,7 @@ def pass6():
               temp(SYMBOL_OPENINGS_CLOSINGS_SORTED))
     Cleanup().register(temp(SYMBOL_OPENINGS_CLOSINGS_SORTED), pass8)
   Log().write(LOG_QUIET, "Done")
+
 
 def pass7():
   Log().write(LOG_QUIET, "Determining offsets for all symbolic names...")
@@ -4667,6 +4816,7 @@ def pass7():
   if not Ctx().trunk_only:
     generate_offsets_for_symbolings()
   Log().write(LOG_QUIET, "Done.")
+
 
 def pass8():
   svncounter = 2 # Repository initialization is 1.
@@ -4708,9 +4858,10 @@ _passes = [
 class Ctx:
   """Session state for this run of cvs2svn.  For example, run-time
   options are stored here.  This class is a Borg, see
-  http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/66531.
-  """
+  http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/66531."""
+
   __shared_state = { }
+
   def __init__(self):
     self.__dict__ = self.__shared_state
     if self.__dict__:
@@ -4840,6 +4991,7 @@ class AutoPropsPropertySetter(SVNPropertySetter):
 
   class Pattern:
     """Describes the properties to be set for files matching a pattern."""
+
     def __init__(self, pattern, propdict):
       # A glob-like pattern:
       self.pattern = pattern
@@ -4848,6 +5000,7 @@ class AutoPropsPropertySetter(SVNPropertySetter):
 
     def match(self, basename):
       """Does the file with the specified basename match pattern?"""
+
       return fnmatch.fnmatch(basename, self.pattern)
 
   def __init__(self, configfilename, ignore_case):
@@ -4973,7 +5126,7 @@ class KeywordsPropertySetter(SVNPropertySetter):
 
 
 def convert(start_pass, end_pass):
-  "Convert a CVS repository to an SVN repository."
+  """Convert a CVS repository to an SVN repository."""
 
   cleanup = Cleanup()
   times = [ None ] * (end_pass + 1)
@@ -5094,6 +5247,7 @@ def usage():
   print '  --keywords-off       don\'t set svn:keywords on any files (by default,'
   print '                       cvs2svn sets svn:keywords on non-binary files to'
   print '                       "%s")' % SVN_KEYWORDS_VALUE
+
 
 def main():
   # Convenience var, so we don't have to keep instantiating this Borg.

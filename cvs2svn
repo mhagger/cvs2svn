@@ -495,10 +495,15 @@ class CVSRepository:
     return tail.replace(os.sep, '/')
 
   def get_co_pipe(self, c_rev, suppress_keyword_substitution=False):
-    """Return a command string, and the pipe created using that
-    string.  C_REV is a CVSRevision.  If SUPPRESS_KEYWORD_SUBSTITUTION
-    is True, then suppress the substitution of RCS/CVS keywords in the
-    output.  The pipe returns the text of that CVS Revision."""
+    """Return a command string, and a pipe from which the file
+    contents of C_REV can be read.  C_REV is a CVSRevision.  If
+    SUPPRESS_KEYWORD_SUBSTITUTION is True, then suppress the
+    substitution of RCS/CVS keywords in the output.  Standard output
+    of the pipe returns the text of that CVS Revision.
+
+    The command string that is returned is provided for use in error
+    messages; it is not escaped in such a way that it could
+    necessarily be executed."""
 
     raise NotImplementedError
 
@@ -522,7 +527,7 @@ class CVSRepositoryViaRCS(CVSRepository):
     pipe_cmd.append(c_rev.rcs_path())
     pipe = SimplePopen(pipe_cmd, True)
     pipe.stdin.close()
-    return pipe_cmd, pipe
+    return ' '.join(pipe_cmd), pipe
 
 
 class CVSRepositoryViaCVS(CVSRepository):
@@ -582,7 +587,7 @@ class CVSRepositoryViaCVS(CVSRepository):
     pipe_cmd.append(self.cvs_module + c_rev.cvs_path)
     pipe = SimplePopen(pipe_cmd, True)
     pipe.stdin.close()
-    return pipe_cmd, pipe
+    return ' '.join(pipe_cmd), pipe
 
 
 def generate_ignores(c_rev):

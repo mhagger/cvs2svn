@@ -1069,9 +1069,10 @@ class LastSymbolicNameDatabase:
   seen in, and whose value is a list of all symbolicnames that were
   last seen in that revision."""
 
-  def __init__(self, mode):
+  def __init__(self):
     self.symbols = {}
-    self.symbol_revs_db = Database(temp(SYMBOL_LAST_CVS_REVS_DB), mode)
+    self.symbol_revs_db = Database(temp(SYMBOL_LAST_CVS_REVS_DB),
+                                   DB_OPEN_NEW)
     Cleanup().register(temp(SYMBOL_LAST_CVS_REVS_DB), pass5)
 
   # Once we've gone through all the revs,
@@ -4750,7 +4751,7 @@ def pass4():
   if not Ctx().trunk_only:
     Log().write(LOG_QUIET,
         "Finding last CVS revisions for all symbolic names...")
-    last_sym_name_db = LastSymbolicNameDatabase(DB_OPEN_NEW)
+    last_sym_name_db = LastSymbolicNameDatabase()
   else:
     # This is to avoid testing Ctx().trunk_only every time around the loop
     class DummyLSNDB:

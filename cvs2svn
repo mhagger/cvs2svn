@@ -617,14 +617,20 @@ def generate_ignores(c_rev):
     ignore_vals.append(ignore)
   return ignore_vals
 
-# Return a string that has not been returned by gen_key() before.
-gen_key_base = 0L
 
-def gen_key():
-  global gen_key_base
-  key = '%x' % gen_key_base
-  gen_key_base += 1
-  return key
+class KeyGenerator:
+  """Generate a series of unique strings."""
+
+  def __init__(self):
+    self.key_base = 0L
+
+  def gen_key(self):
+    """Generate and return a previously-unused key."""
+
+    key = '%x' % self.key_base
+    self.key_base += 1
+
+    return key
 
 
 # ============================================================================
@@ -3333,6 +3339,8 @@ class SVNRepositoryMirror:
   def __init__(self):
     """Set up the SVNRepositoryMirror and prepare it for SVNCommits."""
 
+    self.key_generator = KeyGenerator()
+
     self.delegates = [ ]
 
     # This corresponds to the 'revisions' table in a Subversion fs.
@@ -3441,7 +3449,7 @@ class SVNRepositoryMirror:
       new_contents = { }
     else:
       new_contents = self.nodes_db[self.revs_db[str(self.youngest - 1)]]
-    self.new_root_key = gen_key()
+    self.new_root_key = self.key_generator.gen_key()
     self.new_nodes = { self.new_root_key: new_contents }
 
     return self.new_root_key, new_contents
@@ -3465,13 +3473,13 @@ class SVNRepositoryMirror:
         if this_contents is None:
           # Suck the node from the nodes_db, but update the key
           this_contents = self.nodes_db[this_key]
-          this_key = gen_key()
+          this_key = self.key_generator.gen_key()
           self.new_nodes[this_key] = this_contents
           parent_contents[component] = this_key
       elif create:
         # The component does not exists, so we create it.
         this_contents = { }
-        this_key = gen_key()
+        this_key = self.key_generator.gen_key()
         self.new_nodes[this_key] = this_contents
         parent_contents[component] = this_key
         if i < len(components) - 1:

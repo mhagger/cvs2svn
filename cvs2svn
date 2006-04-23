@@ -1227,9 +1227,9 @@ class Project:
 class CVSRevisionID:
   """An object that identifies a CVS revision of a file."""
 
-  def __init__(self, rev, fname):
-    self.rev = rev
+  def __init__(self, fname, rev):
     self.fname = fname
+    self.rev = rev
 
   def unique_key(self):
     """Return a string that can be used as a unique key for this revision.
@@ -1284,7 +1284,7 @@ class CVSRevision(CVSRevisionID):
     WARNING: Due to the resync process in pass2, prev_timestamp or
     next_timestamp may be incorrect in the c-revs or s-revs files."""
 
-    CVSRevisionID.__init__(self, rev, fname)
+    CVSRevisionID.__init__(self, fname, rev)
 
     self._ctx = ctx
     self.timestamp = timestamp
@@ -1292,8 +1292,8 @@ class CVSRevision(CVSRevisionID):
     self.prev_timestamp = prev_timestamp
     self.next_timestamp = next_timestamp
     self.op = op
-    self.prev_rev = prev_rev and CVSRevisionID(prev_rev, self.fname)
-    self.next_rev = next_rev and CVSRevisionID(next_rev, self.fname)
+    self.prev_rev = prev_rev and CVSRevisionID(self.fname, prev_rev)
+    self.next_rev = next_rev and CVSRevisionID(self.fname, next_rev)
     self.file_in_attic = file_in_attic
     self.file_executable = file_executable
     self.file_size = file_size

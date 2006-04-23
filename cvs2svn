@@ -1346,17 +1346,10 @@ class CVSRevision:
       else:
         self.svn_path = ctx.project.make_trunk_path(self.cvs_path)
 
-  # The 'primary key' of a CVS Revision is the revision number + the
-  # filename.  To provide a unique key (say, for a dict), we just glom
-  # them together in a string.  By passing in self.prev_rev or
-  # self.next_rev, you can get the unique key for their respective
-  # CVSRevisions.
-  def unique_key(self, revnum="0"):
-    if revnum is "0":
-      return CVSRevisionID(self.rev, self.fname).unique_key()
-    elif revnum is None:
-      return None
-    return CVSRevisionID(revnum, self.fname).unique_key()
+  def unique_key(self):
+    """Return the unique key for this CVS revision."""
+
+    return CVSRevisionID(self.rev, self.fname).unique_key()
 
   def __str__(self):
     if self.prev_rev is None:

@@ -55,12 +55,19 @@ if sys.hexversion < 0x02020000:
                    "see www.python.org.\n" % error_prefix)
   sys.exit(1)
 
-# Pretend we have true booleans on older python versions
+# Pretend we have true booleans on older python versions:
 try:
   True
 except:
   True = 1
   False = 0
+
+try:
+  bool
+except:
+  def bool(x):
+    return not not x
+
 
 # Opening pipes was a mess before Python 2.4, because some methods did
 # not exist on some platforms, and some behaved differenly on other.

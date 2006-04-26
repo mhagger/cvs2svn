@@ -21,7 +21,6 @@ VERSION = 'r' + "$LastChangedRevision$"[22:-2]
 
 from __future__ import generators
 
-import cvs2svn_rcsparse
 import os
 import sys
 import sha
@@ -34,9 +33,9 @@ import stat
 import md5
 import marshal
 import errno
-import popen2
 import types
 import ConfigParser
+
 try:
   # Try to get access to a bunch of encodings for use with --encoding.
   # See http://cjkpython.i18n.org/ for details.
@@ -44,10 +43,35 @@ try:
 except ImportError:
   pass
 
-# Warnings and errors start with these strings.  They are typically
-# followed by a colon and a space, as in "%s: " ==> "WARNING: ".
-warning_prefix = "WARNING"
-error_prefix = "ERROR"
+import cvs2svn_rcsparse
+
+from cvs2svnlib.boolean import *
+
+from cvs2svnlib.common import \
+        warning_prefix, \
+        error_prefix, \
+        FatalException, \
+        FatalError
+
+from cvs2svnlib.log import \
+        LOG_WARN, \
+        LOG_QUIET, \
+        LOG_NORMAL, \
+        LOG_VERBOSE, \
+        Log
+
+from cvs2svnlib.process import \
+        SimplePopen, \
+        run_command, \
+        CommandFailedException, \
+        check_command_runs
+
+from cvs2svnlib.database import \
+        DB_OPEN_READ, \
+        DB_OPEN_NEW, \
+        SDatabase, \
+        Database
+
 
 # Make sure this Python is recent enough.
 if sys.hexversion < 0x02020000:
@@ -55,105 +79,6 @@ if sys.hexversion < 0x02020000:
                    "see www.python.org.\n" % error_prefix)
   sys.exit(1)
 
-# Pretend we have true booleans on older python versions:
-try:
-  True
-except:
-  True = 1
-  False = 0
-
-try:
-  bool
-except:
-  def bool(x):
-    return not not x
-
-
-# Opening pipes was a mess before Python 2.4, because some methods did
-# not exist on some platforms, and some behaved differenly on other.
-# Python 2.4 solved this by adding the subprocess module, but since we
-# cannot require such a new version, we cannot use it directly, but
-# must implement a simplified Popen using the best means neccessary.
-#
-# The SimplePopen class only has the following members and methods, all
-# behaving as documented in the subprocess.Popen class:
-#     - stdin
-#     - stdout
-#     - stderr
-#     - wait
-try:
-  # First try subprocess.Popen...
-  import subprocess
-  class SimplePopen:
-    def __init__(self, cmd, capture_stderr):
-      if capture_stderr:
-        stderr = subprocess.PIPE
-      else:
-        stderr = None
-      self._popen = subprocess.Popen(cmd, stdin=subprocess.PIPE,
-                                    stdout=subprocess.PIPE, stderr=stderr)
-      self.stdin = self._popen.stdin
-      self.stdout = self._popen.stdout
-      if capture_stderr:
-        self.stderr = self._popen.stderr
-      self.wait = self._popen.wait
-except ImportError:
-  if hasattr(popen2, 'Popen3'):
-    # ...then try popen2.Popen3...
-    class SimplePopen:
-      def __init__(self, cmd, capture_stderr):
-        self._popen3 = popen2.Popen3(cmd, capture_stderr)
-        self.stdin = self._popen3.tochild
-        self.stdout = self._popen3.fromchild
-        if capture_stderr:
-          self.stderr = self._popen3.childerr
-        self.wait = self._popen3.wait
-  else:
-    # ...and if all fails, use popen2.popen3...
-    class SimplePopen:
-      def __init__(self, cmd, capture_stderr):
-        if type(cmd) != types.StringType:
-          cmd = argv_to_command_string(cmd)
-        self.stdout, self.stdin, self.stderr = popen2.popen3(cmd, mode='b')
-      def wait(self):
-        return self.stdout.close() or self.stdin.close() or \
-               self.stderr.close()
-
-# DBM module selection
-
-# 1. If we have bsddb3, it is probably newer than bsddb.  Fake bsddb = bsddb3,
-#    so that the dbhash module used by anydbm will use bsddb3.
-try:
-  import bsddb3
-  sys.modules['bsddb'] = sys.modules['bsddb3']
-except ImportError:
-  pass
-
-# 2. These DBM modules are not good for cvs2svn.
-import anydbm
-if (anydbm._defaultmod.__name__ == 'dumbdbm'
-    or anydbm._defaultmod.__name__ == 'dbm'):
-  sys.stderr.write(
-    error_prefix
-    + ': your installation of Python does not contain a suitable\n'
-    + 'DBM module -- cvs2svn cannot continue.\n'
-    + 'See http://python.org/doc/current/lib/module-anydbm.html to solve.\n')
-  sys.exit(1)
-
-# 3. If we are using the old bsddb185 module, then try prefer gdbm instead.
-#    Unfortunately, gdbm appears not to be trouble free, either.
-if hasattr(anydbm._defaultmod, 'bsddb') \
-    and not hasattr(anydbm._defaultmod.bsddb, '__version__'):
-  try:
-    gdbm = __import__('gdbm')
-  except ImportError:
-    sys.stderr.write(warning_prefix +
-        ': The version of the bsddb module found '
-        'on your computer has been reported to malfunction on some datasets, '
-        'causing KeyError exceptions. You may wish to upgrade your Python to '
-        'version 2.3 or later.\n')
-  else:
-    anydbm._defaultmod = gdbm
 
 trunk_rev = re.compile('^[0-9]+\\.[0-9]+$')
 cvs_branch_tag = re.compile('^((?:[0-9]+\\.[0-9]+\\.)+)0\\.([0-9]+)$')
@@ -340,25 +265,6 @@ OPENING = 'O'
 CLOSING = 'C'
 
 
-class FatalException(Exception):
-  """Exception thrown on a non-recoverable error.
-
-  If this exception is thrown by main(), it is caught by the global
-  layer of the program, its string representation is printed, and the
-  program is ended with an exit code of 1."""
-
-  pass
-
-
-class FatalError(FatalException):
-  """A FatalException that prepends error_prefix to the message."""
-
-  def __init__(self, msg):
-    """Use (error_prefix + ': ' + MSG + '\n') as the error message."""
-
-    FatalException.__init__(self, '%s: %s\n' % (error_prefix, msg,))
-
-
 def temp(basename):
   """Return a path to BASENAME in Ctx().tmpdir.
   This is a convenience function to save horizontal space in source."""
@@ -428,44 +334,6 @@ def verify_filename_legal(filename):
     raise FatalError(
         "Character %r in filename %r is not supported by subversion."
         % (m.group(), filename,))
-
-
-def run_command(command):
-  if os.system(command):
-    raise FatalError('Command failed: "%s"' % (command,))
-
-
-class CommandFailedException(Exception):
-  """Exception raised if check_command_runs() fails."""
-
-  pass
-
-
-def check_command_runs(cmd, cmdname):
-  """Check whether the command CMD can be executed without errors.
-
-  CMD is a list or string, as accepted by SimplePopen.  CMDNAME is the
-  name of the command as it should be included in exception error
-  messages.
-
-  This function checks three things: (1) the command can be run
-  without throwing an OSError; (2) it exits with status=0; (3) it
-  doesn't output anything to stderr.  If any of these conditions is
-  not met, raise a CommandFailedException describing the problem."""
-
-  try:
-    pipe = SimplePopen(cmd, True)
-  except OSError, e:
-    raise CommandFailedException('error executing %s: %s' % (cmdname, e,))
-  pipe.stdin.close()
-  pipe.stdout.read()
-  errmsg = pipe.stderr.read()
-  status = pipe.wait()
-  if status or errmsg:
-    msg = 'error executing %s: status %s' % (cmdname, status,)
-    if errmsg:
-      msg += ', error output:\n%s' % (errmsg,)
-    raise CommandFailedException(msg)
 
 
 class CVSRepository:
@@ -645,56 +513,6 @@ class KeyGenerator:
     return key
 
 
-# ============================================================================
-# This code is copied with a few modifications from:
-#   subversion/subversion/bindings/swig/python/svn/core.py
-
-if sys.platform == "win32":
-  _escape_shell_arg_re = re.compile(r'(\\+)(\"|$)')
-
-  def escape_shell_arg(arg):
-    # The (very strange) parsing rules used by the C runtime library are
-    # described at:
-    # http://msdn.microsoft.com/library/en-us/vclang/html/_pluslang_Parsing_C.2b2b_.Command.2d.Line_Arguments.asp
-
-    # double up slashes, but only if they are followed by a quote character
-    arg = re.sub(_escape_shell_arg_re, r'\1\1\2', arg)
-
-    # surround by quotes and escape quotes inside
-    arg = '"' + arg.replace('"', '"^""') + '"'
-    return arg
-
-
-  def argv_to_command_string(argv):
-    """Flatten a list of command line arguments into a command string.
-
-    The resulting command string is expected to be passed to the system
-    shell which os functions like popen() and system() invoke internally.
-    """
-
-    # According cmd's usage notes (cmd /?), it parses the command line by
-    # "seeing if the first character is a quote character and if so, stripping
-    # the leading character and removing the last quote character."
-    # So to prevent the argument string from being changed we add an extra set
-    # of quotes around it here.
-    return '"' + ' '.join(map(escape_shell_arg, argv)) + '"'
-
-else:
-  def escape_shell_arg(arg):
-    return "'" + arg.replace("'", "'\\''") + "'"
-
-  def argv_to_command_string(argv):
-    """Flatten a list of command line arguments into a command string.
-
-    The resulting command string is expected to be passed to the system
-    shell which os functions like popen() and system() invoke internally.
-    """
-
-    return ' '.join(map(escape_shell_arg, argv))
-
-
-# ============================================================================
-
 def format_date(date):
   """Return an svn-compatible date string for DATE (seconds since epoch).
 
@@ -760,48 +578,6 @@ class LF_EOL_Filter:
         return buf
 
 
-# These constants represent the log levels that this script supports
-LOG_WARN = -1
-LOG_QUIET = 0
-LOG_NORMAL = 1
-LOG_VERBOSE = 2
-
-class Log:
-  """A Simple logging facility.  Each line will be timestamped is
-  self.use_timestamps is TRUE.  This class is a Borg, see
-  http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/66531."""
-
-  __shared_state = {}
-
-  def __init__(self):
-    self.__dict__ = self.__shared_state
-    if self.__dict__:
-      return
-    self.log_level = LOG_NORMAL
-    # Set this to true if you want to see timestamps on each line output.
-    self.use_timestamps = None
-    self.logger = sys.stdout
-
-  def _timestamp(self):
-    """Output a detailed timestamp at the beginning of each line output."""
-
-    self.logger.write(time.strftime('[%Y-%m-%d %I:%m:%S %Z] - '))
-
-  def write(self, log_level, *args):
-    """This is the public method to use for writing to a file.  Only
-    messages whose LOG_LEVEL is <= self.log_level will be printed.  If
-    there are multiple ARGS, they will be separated by a space."""
-
-    if log_level > self.log_level:
-      return
-    if self.use_timestamps:
-      self._timestamp()
-    self.logger.write(' '.join(map(str,args)) + "\n")
-    # Ensure that log output doesn't get out-of-order with respect to
-    # stderr output.
-    self.logger.flush()
-
-
 class Cleanup:
   """This singleton class manages any files created by cvs2svn.  When
   you first create a file, call Cleanup.register, passing the
@@ -844,104 +620,6 @@ class Cleanup:
       if self._callbacks.has_key(file):
         self._callbacks[file]()
       os.unlink(file)
-
-
-# Always use these constants for opening databases.
-DB_OPEN_READ = 'r'
-DB_OPEN_NEW = 'n'
-
-
-class AbstractDatabase:
-  """An abstract base class for anydbm-based databases."""
-
-  def __init__(self, filename, mode):
-    """A convenience function for opening an anydbm database."""
-
-    # pybsddb3 has a bug which prevents it from working with
-    # Berkeley DB 4.2 if you open the db with 'n' ("new").  This
-    # causes the DB_TRUNCATE flag to be passed, which is disallowed
-    # for databases protected by lock and transaction support
-    # (bsddb databases use locking from bsddb version 4.2.4 onwards).
-    #
-    # Therefore, manually perform the removal (we can do this, because
-    # we know that for bsddb - but *not* anydbm in general - the database
-    # consists of one file with the name we specify, rather than several
-    # based on that name).
-    if mode == 'n' and anydbm._defaultmod.__name__ == 'dbhash':
-      if os.path.isfile(filename):
-        os.unlink(filename)
-      mode = 'c'
-
-    self.db = anydbm.open(filename, mode)
-
-    # Import implementations for many mapping interface methods.  Note
-    # that we specifically do not do this for any method which handles
-    # *values*, because our derived classes define __getitem__ and
-    # __setitem__ to override the storage of values, and grabbing
-    # methods directly from the dbm object would bypass this.
-    for meth_name in ('__delitem__', 'keys',
-        '__iter__', 'has_key', '__contains__', 'iterkeys', 'clear'):
-      meth_ref = getattr(self.db, meth_name, None)
-      if meth_ref:
-        setattr(self, meth_name, meth_ref)
-
-  def __delitem__(self, key):
-    # gdbm defines a __delitem__ method, but it cannot be assigned.  So
-    # this method provides a fallback definition via explicit delegation:
-    del self.db[key]
-
-  def __iter__(self):
-    for key in self.keys():
-      yield key
-
-  def has_key(self, key):
-    try:
-      self.db[key]
-      return True
-    except KeyError:
-      return False
-
-  def __contains__(self, key):
-    return self.has_key(key)
-
-  def iterkeys(self):
-    return self.__iter__()
-
-  def clear(self):
-    for key in self.keys():
-      del self[key]
-
-  def items(self):
-    return [(key, self[key],) for key in self.keys()]
-
-  def values(self):
-    return [self[key] for key in self.keys()]
-
-  def get(self, key, default=None):
-    try:
-      return self[key]
-    except KeyError:
-      return default
-
-
-class SDatabase(AbstractDatabase):
-  """A database that can only store strings."""
-
-  def __getitem__(self, key):
-    return self.db[key]
-
-  def __setitem__(self, key, value):
-    self.db[key] = value
-
-
-class Database(AbstractDatabase):
-  """A database that uses the marshal module to store built-in types."""
-
-  def __getitem__(self, key):
-    return marshal.loads(self.db[key])
-
-  def __setitem__(self, key, value):
-    self.db[key] = marshal.dumps(value)
 
 
 class StatsKeeper:

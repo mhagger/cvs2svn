@@ -53,12 +53,7 @@ from cvs2svnlib.common import \
         FatalException, \
         FatalError
 
-from cvs2svnlib.log import \
-        LOG_WARN, \
-        LOG_QUIET, \
-        LOG_NORMAL, \
-        LOG_VERBOSE, \
-        Log
+from cvs2svnlib.log import Log
 
 from cvs2svnlib.process import \
         SimplePopen, \
@@ -318,7 +313,7 @@ def to_utf8(value, mode='replace'):
     try:
       return unicode(value, encoding, mode).encode('utf8')
     except UnicodeError:
-      Log().write(LOG_VERBOSE, "Encoding '%s' failed for string '%s'"
+      Log().write(Log.VERBOSE, "Encoding '%s' failed for string '%s'"
                   % (encoding, value))
   raise UnicodeError
 
@@ -616,7 +611,7 @@ class Cleanup:
     if not self._log.has_key(which_pass):
       return
     for file in self._log[which_pass]:
-      Log().write(LOG_VERBOSE, "Deleting", file)
+      Log().write(Log.VERBOSE, "Deleting", file)
       if self._callbacks.has_key(file):
         self._callbacks[file]()
       os.unlink(file)
@@ -1447,7 +1442,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     for (pattern, replacement) in Ctx().symbol_transforms:
       newname = pattern.sub(replacement, name)
       if newname != name:
-        Log().write(LOG_WARN, "   symbol '%s' transformed to '%s'"
+        Log().write(Log.WARN, "   symbol '%s' transformed to '%s'"
                     % (name, newname))
         name = newname
     if self.defined_symbols.has_key(name):
@@ -1591,10 +1586,10 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
             delta = t_c - 1 - t_p
             msg =  "PASS1 RESYNC: '%s' (%s): old time='%s' delta=%ds" \
                   % (self.cvs_path, prev, time.ctime(t_p), delta)
-            Log().write(LOG_VERBOSE, msg)
+            Log().write(Log.VERBOSE, msg)
             if (delta > COMMIT_THRESHOLD
                 or delta < (COMMIT_THRESHOLD * -1)):
-              Log().write(LOG_WARN,
+              Log().write(Log.WARN,
                           "%s: Significant timestamp change for '%s' "
                           "(%d seconds)"
                           % (warning_prefix, self.cvs_path, delta))
@@ -1985,7 +1980,7 @@ class PersistenceManager:
           'Write operation attempted on read-only PersistenceManager'
 
     for c_rev in cvs_revs:
-      Log().write(LOG_VERBOSE, " ", c_rev.unique_key())
+      Log().write(Log.VERBOSE, " ", c_rev.unique_key())
 
     self.svn2cvs_db[str(svn_revnum)] = ([x.unique_key() for x in cvs_revs],
                                         motivating_revnum, name, date)
@@ -2283,18 +2278,18 @@ class CVSCommit:
     self.done_symbols = done_symbols
     seconds = self.t_max - self.t_min + 1
 
-    Log().write(LOG_VERBOSE, '-' * 60)
-    Log().write(LOG_VERBOSE, 'CVS Revision grouping:')
+    Log().write(Log.VERBOSE, '-' * 60)
+    Log().write(Log.VERBOSE, 'CVS Revision grouping:')
     if seconds == 1:
-      Log().write(LOG_VERBOSE, '  Start time: %s (duration: 1 second)'
+      Log().write(Log.VERBOSE, '  Start time: %s (duration: 1 second)'
                   % time.ctime(self.t_max))
     else:
-      Log().write(LOG_VERBOSE, '  Start time: %s' % time.ctime(self.t_min))
-      Log().write(LOG_VERBOSE, '  End time:   %s (duration: %d seconds)'
+      Log().write(Log.VERBOSE, '  Start time: %s' % time.ctime(self.t_min))
+      Log().write(Log.VERBOSE, '  End time:   %s (duration: %d seconds)'
                   % (time.ctime(self.t_max), seconds))
 
     if seconds > COMMIT_THRESHOLD + 1:
-      Log().write(LOG_WARN, '%s: grouping spans more than %d seconds'
+      Log().write(Log.WARN, '%s: grouping spans more than %d seconds'
                   % (warning_prefix, COMMIT_THRESHOLD))
 
     if Ctx().trunk_only: # Only do the primary commit if we're trunk-only
@@ -2433,17 +2428,17 @@ class SVNCommit:
                'svn:log'    : utf8_log,
                'svn:date'   : date }
     except UnicodeError:
-      Log().write(LOG_WARN, '%s: problem encoding author or log message:'
+      Log().write(Log.WARN, '%s: problem encoding author or log message:'
                   % warning_prefix)
-      Log().write(LOG_WARN, "  author: '%s'" % self._author)
-      Log().write(LOG_WARN, "  log:    '%s'" % self.get_log_msg().rstrip())
-      Log().write(LOG_WARN, "  date:   '%s'" % date)
-      Log().write(LOG_WARN,
+      Log().write(Log.WARN, "  author: '%s'" % self._author)
+      Log().write(Log.WARN, "  log:    '%s'" % self.get_log_msg().rstrip())
+      Log().write(Log.WARN, "  date:   '%s'" % date)
+      Log().write(Log.WARN,
                   "(subversion rev %s)  Related files:" % self.revnum)
       for c_rev in self.cvs_revs:
-        Log().write(LOG_WARN, " ", c_rev.fname)
+        Log().write(Log.WARN, " ", c_rev.fname)
 
-      Log().write(LOG_WARN, "Consider rerunning with one or more ",
+      Log().write(Log.WARN, "Consider rerunning with one or more ",
                   "'--encoding' parameters.\n")
       # It's better to fall back to the original (unknown encoding) data
       # than to either 1) quit or 2) record nothing at all.
@@ -2457,7 +2452,7 @@ class SVNCommit:
       self._max_date = cvs_rev.timestamp
 
   def flush(self):
-    Log().write(LOG_NORMAL, "Creating Subversion r%d (%s)"
+    Log().write(Log.NORMAL, "Creating Subversion r%d (%s)"
                 % (self.revnum, self._description))
     Ctx()._persistence_manager.put_svn_commit(self.revnum,
                                               self.cvs_revs,
@@ -3533,17 +3528,17 @@ class SVNRepositoryMirror:
     self._start_commit(svn_commit)
 
     if svn_commit.symbolic_name:
-      Log().write(LOG_VERBOSE, "Filling symbolic name:",
+      Log().write(Log.VERBOSE, "Filling symbolic name:",
                   _clean_symbolic_name(svn_commit.symbolic_name))
       self._fill_symbolic_name(svn_commit)
     elif svn_commit.motivating_revnum:
-      Log().write(LOG_VERBOSE, "Synchronizing default_branch motivated by %d"
+      Log().write(Log.VERBOSE, "Synchronizing default_branch motivated by %d"
                   % svn_commit.motivating_revnum)
       self._synchronize_default_branch(svn_commit)
     else: # This actually commits CVSRevisions
       if len(svn_commit.cvs_revs) > 1: plural = "s"
       else: plural = ""
-      Log().write(LOG_VERBOSE, "Committing %d CVSRevision%s"
+      Log().write(Log.VERBOSE, "Committing %d CVSRevision%s"
                   % (len(svn_commit.cvs_revs), plural))
       for cvs_rev in svn_commit.cvs_revs:
         # See comment in CVSCommit._commit() for what this is all
@@ -4016,7 +4011,7 @@ class RepositoryDelegate(DumpfileDelegate):
     self.svnadmin = Ctx().svnadmin
     self.target = Ctx().target
     if not Ctx().existing_svnrepos:
-      Log().write(LOG_NORMAL,"Creating new repository '%s'" % (self.target))
+      Log().write(Log.NORMAL,"Creating new repository '%s'" % (self.target))
       if not Ctx().fs_type:
         # User didn't say what kind repository (bdb, fsfs, etc).
         # We still pass --bdb-txn-nosync.  It's a no-op if the default
@@ -4138,47 +4133,47 @@ class StdoutDelegate(SVNRepositoryMirrorDelegate):
     """Prints out the Subversion revision number of the commit that is
     being started."""
 
-    Log().write(LOG_VERBOSE, "=" * 60)
-    Log().write(LOG_NORMAL, "Starting Subversion r%d / %d" %
+    Log().write(Log.VERBOSE, "=" * 60)
+    Log().write(Log.NORMAL, "Starting Subversion r%d / %d" %
                 (svn_commit.revnum, self.total_revs))
 
   def mkdir(self, path):
     """Print a line stating that we are creating directory PATH."""
 
-    Log().write(LOG_VERBOSE, "  New Directory", path)
+    Log().write(Log.VERBOSE, "  New Directory", path)
 
   def add_path(self, s_item):
     """Print a line stating that we are 'adding' s_item.c_rev.svn_path."""
 
-    Log().write(LOG_VERBOSE, "  Adding", s_item.c_rev.svn_path)
+    Log().write(Log.VERBOSE, "  Adding", s_item.c_rev.svn_path)
 
   def change_path(self, s_item):
     """Print a line stating that we are 'changing' s_item.c_rev.svn_path."""
 
-    Log().write(LOG_VERBOSE, "  Changing", s_item.c_rev.svn_path)
+    Log().write(Log.VERBOSE, "  Changing", s_item.c_rev.svn_path)
 
   def delete_path(self, path):
     """Print a line stating that we are 'deleting' PATH."""
 
-    Log().write(LOG_VERBOSE, "  Deleting", path)
+    Log().write(Log.VERBOSE, "  Deleting", path)
 
   def copy_path(self, src_path, dest_path, src_revnum):
     """Print a line stating that we are 'copying' revision SRC_REVNUM
     of SRC_PATH to DEST_PATH."""
 
-    Log().write(LOG_VERBOSE, "  Copying revision", src_revnum, "of", src_path)
-    Log().write(LOG_VERBOSE, "                to", dest_path)
+    Log().write(Log.VERBOSE, "  Copying revision", src_revnum, "of", src_path)
+    Log().write(Log.VERBOSE, "                to", dest_path)
 
   def finish(self):
     """State that we are done creating our repository."""
 
-    Log().write(LOG_VERBOSE, "Finished creating Subversion repository.")
-    Log().write(LOG_QUIET, "Done.")
+    Log().write(Log.VERBOSE, "Finished creating Subversion repository.")
+    Log().write(Log.QUIET, "Done.")
 
 
 def pass1():
   OS_SEP_PLUS_ATTIC = os.sep + 'Attic'
-  Log().write(LOG_QUIET, "Examining all CVS ',v' files...")
+  Log().write(Log.QUIET, "Examining all CVS ',v' files...")
   cd = CollectData()
 
   def visit_file(baton, dirname, files):
@@ -4202,7 +4197,7 @@ def pass1():
           sys.stderr.write(err + '\n')
           cd.fatal_errors.append(err)
         fdc = FileDataCollector(cd, pathname, pathname)
-      Log().write(LOG_NORMAL, pathname)
+      Log().write(Log.NORMAL, pathname)
       try:
         cvs2svn_rcsparse.parse(open(pathname, 'rb'), fdc)
       except (cvs2svn_rcsparse.common.RCSParseError, ValueError,
@@ -4212,12 +4207,12 @@ def pass1():
         sys.stderr.write(err + '\n')
         cd.fatal_errors.append(err)
       except:
-        Log().write(LOG_WARN,
+        Log().write(Log.WARN,
                     "Exception occurred while parsing %s" % pathname)
         raise
 
   os.path.walk(Ctx().project.project_cvs_repos_path, visit_file, cd)
-  Log().write(LOG_VERBOSE, 'Processed', cd.num_files, 'files')
+  Log().write(Log.VERBOSE, 'Processed', cd.num_files, 'files')
 
   cd.write_symbol_db()
 
@@ -4239,7 +4234,7 @@ def pass1():
 
   StatsKeeper().reset_c_rev_info()
   StatsKeeper().archive()
-  Log().write(LOG_QUIET, "Done")
+  Log().write(Log.QUIET, "Done")
 
 
 def pass2():
@@ -4253,7 +4248,7 @@ def pass2():
 
   error_detected = 0
 
-  Log().write(LOG_QUIET, "Checking for blocked exclusions...")
+  Log().write(Log.QUIET, "Checking for blocked exclusions...")
   blocked_excludes = symbol_db.find_blocked_excludes(excludes)
   if blocked_excludes:
     for branch, blockers in blocked_excludes.items():
@@ -4265,7 +4260,7 @@ def pass2():
     sys.stderr.write("\n")
     error_detected = 1
 
-  Log().write(LOG_QUIET, "Checking for forced tags with commits...")
+  Log().write(Log.QUIET, "Checking for forced tags with commits...")
   invalid_forced_tags = [ ]
   for forced_tag in Ctx().forced_tags:
     if excludes.has_key(forced_tag):
@@ -4280,7 +4275,7 @@ def pass2():
     sys.stderr.write("\n")
     error_detected = 1
 
-  Log().write(LOG_QUIET, "Checking for tag/branch mismatches...")
+  Log().write(Log.QUIET, "Checking for tag/branch mismatches...")
   mismatches = symbol_db.find_mismatches(excludes)
   def is_not_forced(mismatch):
     name = mismatch[0]
@@ -4309,7 +4304,7 @@ def pass2():
   for tag in Ctx().forced_tags:
     tags_db.add(tag)
 
-  Log().write(LOG_QUIET, "Re-synchronizing CVS revision timestamps...")
+  Log().write(Log.QUIET, "Re-synchronizing CVS revision timestamps...")
 
   # We may have recorded some changes in revisions' timestamp.  We need to
   # scan for any other files which may have had the same log message and
@@ -4421,7 +4416,7 @@ def pass2():
           desc = ("%s: Attempt to set timestamp of revision %s on file %s"
                   + " to time %s, which is before previous the time of"
                   + " revision %s (%s):")
-          Log().write(LOG_WARN, desc % (warning_prefix, c_rev.rev,
+          Log().write(Log.WARN, desc % (warning_prefix, c_rev.rev,
                                         c_rev.cvs_path, new_timestamp,
                                         c_rev.prev_rev.rev,
                                         c_rev.prev_timestamp))
@@ -4431,10 +4426,10 @@ def pass2():
           # + 1...
           if ((c_rev.prev_timestamp + 1) - new_timestamp) < COMMIT_THRESHOLD:
             new_timestamp = c_rev.prev_timestamp + 1
-            Log().write(LOG_WARN, "%s: Time set to %s" % (warning_prefix,
+            Log().write(Log.WARN, "%s: Time set to %s" % (warning_prefix,
                                                           new_timestamp))
           else:
-            Log().write(LOG_WARN, "%s: Timestamp left untouched" %
+            Log().write(Log.WARN, "%s: Timestamp left untouched" %
                         warning_prefix)
             continue
 
@@ -4443,7 +4438,7 @@ def pass2():
           desc = ("%s: Attempt to set timestamp of revision %s on file %s"
                   + " to time %s, which is after time of next"
                   + " revision %s (%s):")
-          Log().write(LOG_WARN, desc % (warning_prefix, c_rev.rev,
+          Log().write(Log.WARN, desc % (warning_prefix, c_rev.rev,
                                         c_rev.cvs_path, new_timestamp,
                                         c_rev.next_rev.rev,
                                         c_rev.next_timestamp))
@@ -4453,10 +4448,10 @@ def pass2():
           # - 1...
           if (new_timestamp - (c_rev.next_timestamp - 1)) < COMMIT_THRESHOLD:
             new_timestamp = c_rev.next_timestamp - 1
-            Log().write(LOG_WARN, "%s: Time set to %s" % (warning_prefix,
+            Log().write(Log.WARN, "%s: Time set to %s" % (warning_prefix,
                                                           new_timestamp))
           else:
-            Log().write(LOG_WARN, "%s: Timestamp left untouched" %
+            Log().write(Log.WARN, "%s: Timestamp left untouched" %
                         warning_prefix)
             continue
 
@@ -4474,7 +4469,7 @@ def pass2():
         msg = "PASS2 RESYNC: '%s' (%s): old time='%s' delta=%ds" \
               % (c_rev.cvs_path, c_rev.rev, time.ctime(c_rev.timestamp),
                  new_timestamp - c_rev.timestamp)
-        Log().write(LOG_VERBOSE, msg)
+        Log().write(Log.VERBOSE, msg)
 
         c_rev.timestamp = new_timestamp
         tweaked_timestamps_db[c_rev.unique_key()] = new_timestamp
@@ -4483,15 +4478,15 @@ def pass2():
         break
 
     output.write(str(c_rev) + "\n")
-  Log().write(LOG_QUIET, "Done")
+  Log().write(Log.QUIET, "Done")
 
 
 def pass3():
-  Log().write(LOG_QUIET, "Sorting CVS revisions...")
+  Log().write(Log.QUIET, "Sorting CVS revisions...")
   sort_file(temp(DATAFILE + CLEAN_REVS_SUFFIX),
             temp(DATAFILE + SORTED_REVS_SUFFIX))
   Cleanup().register(temp(DATAFILE + SORTED_REVS_SUFFIX), pass5)
-  Log().write(LOG_QUIET, "Done")
+  Log().write(Log.QUIET, "Done")
 
 
 def pass4():
@@ -4500,11 +4495,11 @@ def pass4():
   LastSymbolicNameDatabase, which contains the last CVSRevision
   that is a source for each tag or branch."""
 
-  Log().write(LOG_QUIET,
+  Log().write(Log.QUIET,
       "Copying CVS revision data from flat file to database...")
   cvs_revs_db = CVSRevisionDatabase(DB_OPEN_NEW)
   if not Ctx().trunk_only:
-    Log().write(LOG_QUIET,
+    Log().write(Log.QUIET,
         "Finding last CVS revisions for all symbolic names...")
     last_sym_name_db = LastSymbolicNameDatabase()
   else:
@@ -4523,7 +4518,7 @@ def pass4():
 
   last_sym_name_db.create_database()
   StatsKeeper().archive()
-  Log().write(LOG_QUIET, "Done")
+  Log().write(Log.QUIET, "Done")
 
 
 def pass5():
@@ -4532,7 +4527,7 @@ def pass5():
   CVSRevisions that represent an opening or closing for a path on a
   branch or tag.  See SymbolingsLogger for more details."""
 
-  Log().write(LOG_QUIET, "Mapping CVS revisions to Subversion commits...")
+  Log().write(Log.QUIET, "Mapping CVS revisions to Subversion commits...")
 
   aggregator = CVSRevisionAggregator()
   for line in fileinput.FileInput(temp(DATAFILE + SORTED_REVS_SUFFIX)):
@@ -4543,21 +4538,21 @@ def pass5():
 
   StatsKeeper().set_svn_rev_count(SVNCommit.revnum - 1)
   StatsKeeper().archive()
-  Log().write(LOG_QUIET, "Done")
+  Log().write(Log.QUIET, "Done")
 
 
 def pass6():
-  Log().write(LOG_QUIET, "Sorting symbolic name source revisions...")
+  Log().write(Log.QUIET, "Sorting symbolic name source revisions...")
 
   if not Ctx().trunk_only:
     sort_file(temp(SYMBOL_OPENINGS_CLOSINGS),
               temp(SYMBOL_OPENINGS_CLOSINGS_SORTED))
     Cleanup().register(temp(SYMBOL_OPENINGS_CLOSINGS_SORTED), pass8)
-  Log().write(LOG_QUIET, "Done")
+  Log().write(Log.QUIET, "Done")
 
 
 def pass7():
-  Log().write(LOG_QUIET, "Determining offsets for all symbolic names...")
+  Log().write(Log.QUIET, "Determining offsets for all symbolic names...")
 
   def generate_offsets_for_symbolings():
     """This function iterates through all the lines in
@@ -4582,13 +4577,13 @@ def pass7():
         break
       sym, svn_revnum, cvs_rev_key = line.split(" ", 2)
       if sym != old_sym:
-        Log().write(LOG_VERBOSE, " ", sym)
+        Log().write(Log.VERBOSE, " ", sym)
         old_sym = sym
         offsets_db[sym] = fpos
 
   if not Ctx().trunk_only:
     generate_offsets_for_symbolings()
-  Log().write(LOG_QUIET, "Done.")
+  Log().write(Log.QUIET, "Done.")
 
 
 def pass8():
@@ -4599,11 +4594,11 @@ def pass8():
   if Ctx().target:
     if not Ctx().dry_run:
       repos.add_delegate(RepositoryDelegate())
-    Log().write(LOG_QUIET, "Starting Subversion Repository.")
+    Log().write(Log.QUIET, "Starting Subversion Repository.")
   else:
     if not Ctx().dry_run:
       repos.add_delegate(DumpfileDelegate())
-    Log().write(LOG_QUIET, "Starting Subversion Dumpfile.")
+    Log().write(Log.QUIET, "Starting Subversion Dumpfile.")
 
   repos.add_delegate(StdoutDelegate(StatsKeeper().svn_rev_count()))
 
@@ -4820,7 +4815,7 @@ class AutoPropsPropertySetter(SVNPropertySetter):
           if propdict.has_key(key):
             if propdict[key] != value:
               Log().write(
-                  LOG_WARN,
+                  Log.WARN,
                   "Contradictory values set for property '%s' for file %s."
                   % (k, path,))
           else:
@@ -4834,7 +4829,7 @@ class AutoPropsPropertySetter(SVNPropertySetter):
       if s_item.svn_props.has_key(k):
         if s_item.svn_props[k] != v:
           Log().write(
-              LOG_WARN,
+              Log.WARN,
               "Property '%s' already set to %r for file %s; "
               "auto-props value (%r) ignored."
               % (k, s_item.svn_props[k], s_item.c_rev.cvs_path, v,))
@@ -4906,7 +4901,7 @@ def convert(start_pass, end_pass):
   times[start_pass - 1] = time.time()
   StatsKeeper().set_start_time(time.time())
   for i in range(start_pass - 1, end_pass):
-    Log().write(LOG_QUIET, '----- pass %d -----' % (i + 1))
+    Log().write(Log.QUIET, '----- pass %d -----' % (i + 1))
     _passes[i]()
     times[i + 1] = time.time()
     StatsKeeper().log_duration_for_pass(times[i + 1] - times[i], i + 1)
@@ -4920,12 +4915,12 @@ def convert(start_pass, end_pass):
       cleanup.cleanup(_passes[i])
     StatsKeeper().set_end_time(time.time())
 
-  Log().write(LOG_QUIET, StatsKeeper())
+  Log().write(Log.QUIET, StatsKeeper())
   if end_pass < 4:
-    Log().write(LOG_QUIET,
+    Log().write(Log.QUIET,
                 '(These are unaltered CVS repository stats and do not\n'
                 ' reflect tags or branches excluded via --exclude)\n')
-  Log().write(LOG_NORMAL, StatsKeeper().timings())
+  Log().write(Log.NORMAL, StatsKeeper().timings())
 
 
 def normalize_ttb_path(opt, path):
@@ -5072,10 +5067,10 @@ def main():
     elif (opt == '--help') or (opt == '-h'):
       ctx.print_help = 1
     elif opt == '-v':
-      Log().log_level = LOG_VERBOSE
+      Log().log_level = Log.VERBOSE
       ctx.verbose = 1
     elif opt == '-q':
-      Log().log_level = LOG_QUIET
+      Log().log_level = Log.QUIET
       ctx.quiet = 1
     elif opt == '-s':
       ctx.target = value

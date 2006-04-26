@@ -23,17 +23,16 @@ import time
 from boolean import *
 
 
-# These constants represent the log levels that this script supports
-LOG_WARN = -1
-LOG_QUIET = 0
-LOG_NORMAL = 1
-LOG_VERBOSE = 2
-
-
 class Log:
   """A Simple logging facility.  Each line will be timestamped is
   self.use_timestamps is TRUE.  This class is a Borg, see
   http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/66531."""
+
+  # These constants represent the log levels that this class supports:
+  WARN = -1
+  QUIET = 0
+  NORMAL = 1
+  VERBOSE = 2
 
   __shared_state = {}
 
@@ -41,7 +40,7 @@ class Log:
     self.__dict__ = self.__shared_state
     if self.__dict__:
       return
-    self.log_level = LOG_NORMAL
+    self.log_level = Log.NORMAL
     # Set this to true if you want to see timestamps on each line output.
     self.use_timestamps = None
     self.logger = sys.stdout

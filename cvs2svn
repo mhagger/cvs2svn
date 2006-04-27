@@ -65,6 +65,8 @@ from cvs2svnlib.database import \
         SDatabase, \
         Database
 
+from cvs2svnlib.context import Ctx
+
 from cvs2svnlib import cvs_repository
 
 from cvs2svnlib import property_setters
@@ -91,15 +93,6 @@ SVN_KEYWORDS_VALUE = 'Author Date Id Revision'
 # assuming that the non-standard vendor branch had ever been the
 # default branch anyway, so we don't want this to match them anyway.
 vendor_revision = re.compile('^(1\\.1\\.1)\\.([0-9])+$')
-
-# If this run's output is a repository, then (in the tmpdir) we use
-# a dumpfile of this name for repository loads.
-#
-# If this run's output is a dumpfile, then this is default name of
-# that dumpfile, but in the current directory (unless the user has
-# specified a dumpfile path, of course, in which case it will be
-# wherever the user said).
-DUMPFILE = 'cvs2svn-dump'
 
 # This file appears with different suffixes at different stages of
 # processing.  CVS revisions are cleaned and sorted here, for commit
@@ -4494,52 +4487,6 @@ _passes = [
   pass7,
   pass8,
   ]
-
-
-class Ctx:
-  """Session state for this run of cvs2svn.  For example, run-time
-  options are stored here.  This class is a Borg, see
-  http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/66531."""
-
-  __shared_state = { }
-
-  def __init__(self):
-    self.__dict__ = self.__shared_state
-    if self.__dict__:
-      return
-    # Else, initialize to defaults.
-    self.target = None
-    self.dumpfile = DUMPFILE
-    self.tmpdir = '.'
-    self.verbose = 0
-    self.quiet = 0
-    self.prune = 1
-    self.existing_svnrepos = 0
-    self.dump_only = 0
-    self.dry_run = 0
-    self.trunk_only = 0
-    self.trunk_base = "trunk"
-    self.tags_base = "tags"
-    self.branches_base = "branches"
-    self.encoding = ["ascii"]
-    self.mime_types_file = None
-    self.auto_props_file = None
-    self.auto_props_ignore_case = False
-    self.no_default_eol = 0
-    self.eol_from_mime_type = 0
-    self.keywords_off = 0
-    self.use_cvs = None
-    self.svnadmin = "svnadmin"
-    self.username = None
-    self.print_help = 0
-    self.skip_cleanup = 0
-    self.bdb_txn_nosync = 0
-    self.fs_type = None
-    self.forced_branches = []
-    self.forced_tags = []
-    self.excludes = []
-    self.symbol_transforms = []
-    self.svn_property_setters = []
 
 
 def convert(start_pass, end_pass):

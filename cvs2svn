@@ -1307,8 +1307,8 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
           # don't resync revision R *after* any revisions that have R
           # as a previous revision.
           while t_p >= t_c:
-            self.rev_data[prev][0] = t_c - 1	# new timestamp
-            self.rev_data[prev][2] = t_p	# old timestamp
+            self.rev_data[prev][0] = t_c - 1 # new timestamp
+            self.rev_data[prev][2] = t_p # old timestamp
             delta = t_c - 1 - t_p
             msg =  "PASS1 RESYNC: '%s' (%s): old time='%s' delta=%ds" \
                   % (self.cvs_path, prev, time.ctime(t_p), delta)
@@ -1323,7 +1323,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
             prev = self.prev_rev[current]
             if not prev:
               break
-            t_c -= 1		# self.rev_data[current][0]
+            t_c -= 1 # self.rev_data[current][0]
             t_p = self.rev_data[prev][0]
 
           # break from the for-loop

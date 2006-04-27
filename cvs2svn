@@ -43,33 +43,33 @@ except ImportError:
 
 import cvs2svn_rcsparse
 
-from cvs2svnlib.boolean import *
+from cvs2svn_lib.boolean import *
 
-from cvs2svnlib.common import \
+from cvs2svn_lib.common import \
         warning_prefix, \
         error_prefix, \
         FatalException, \
         FatalError
 
-from cvs2svnlib.log import Log
+from cvs2svn_lib.log import Log
 
-from cvs2svnlib.process import \
+from cvs2svn_lib.process import \
         SimplePopen, \
         run_command, \
         CommandFailedException, \
         check_command_runs
 
-from cvs2svnlib.database import \
+from cvs2svn_lib.database import \
         DB_OPEN_READ, \
         DB_OPEN_NEW, \
         SDatabase, \
         Database
 
-from cvs2svnlib.context import Ctx
+from cvs2svn_lib.context import Ctx
 
-from cvs2svnlib import cvs_repository
+from cvs2svn_lib import cvs_repository
 
-from cvs2svnlib import property_setters
+from cvs2svn_lib import property_setters
 
 
 # Make sure this Python is recent enough.

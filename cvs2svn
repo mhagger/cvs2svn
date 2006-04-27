@@ -1469,10 +1469,10 @@ class CollectData:
   each file to be parsed."""
 
   def __init__(self):
-    self.revs = open(temp(config.DATAFILE + config.REVS_SUFFIX), 'w')
-    Cleanup().register(temp(config.DATAFILE + config.REVS_SUFFIX), pass2)
-    self.resync = open(temp(config.DATAFILE + config.RESYNC_SUFFIX), 'w')
-    Cleanup().register(temp(config.DATAFILE + config.RESYNC_SUFFIX), pass2)
+    self.revs = open(temp(config.REVS_DATAFILE), 'w')
+    Cleanup().register(temp(config.REVS_DATAFILE), pass2)
+    self.resync = open(temp(config.RESYNC_DATAFILE), 'w')
+    Cleanup().register(temp(config.RESYNC_DATAFILE), pass2)
     self.default_branches_db = SDatabase(temp(config.DEFAULT_BRANCHES_DB),
                                          DB_OPEN_NEW)
     Cleanup().register(temp(config.DEFAULT_BRANCHES_DB), pass5)
@@ -4075,17 +4075,17 @@ def pass2():
 
     return resync
 
-  resync = read_resync(temp(config.DATAFILE + config.RESYNC_SUFFIX))
+  resync = read_resync(temp(config.RESYNC_DATAFILE))
 
-  output = open(temp(config.DATAFILE + config.CLEAN_REVS_SUFFIX), 'w')
-  Cleanup().register(temp(config.DATAFILE + config.CLEAN_REVS_SUFFIX), pass3)
+  output = open(temp(config.CLEAN_REVS_DATAFILE), 'w')
+  Cleanup().register(temp(config.CLEAN_REVS_DATAFILE), pass3)
 
   tweaked_timestamps_db = Database(temp(config.TWEAKED_TIMESTAMPS_DB),
                                    DB_OPEN_NEW)
   Cleanup().register(temp(config.TWEAKED_TIMESTAMPS_DB), pass2)
 
   # process the revisions file, looking for items to clean up
-  for line in fileinput.FileInput(temp(config.DATAFILE + config.REVS_SUFFIX)):
+  for line in fileinput.FileInput(temp(config.REVS_DATAFILE)):
     c_rev = parse_cvs_revision(Ctx(), line[:-1])
 
     # Skip this entire revision if it's on an excluded branch
@@ -4216,10 +4216,9 @@ def pass2():
 
 def pass3():
   Log().write(Log.QUIET, "Sorting CVS revisions...")
-  sort_file(temp(config.DATAFILE + config.CLEAN_REVS_SUFFIX),
-            temp(config.DATAFILE + config.SORTED_REVS_SUFFIX))
-  Cleanup().register(temp(config.DATAFILE + config.SORTED_REVS_SUFFIX),
-                     pass5)
+  sort_file(temp(config.CLEAN_REVS_DATAFILE),
+            temp(config.SORTED_REVS_DATAFILE))
+  Cleanup().register(temp(config.SORTED_REVS_DATAFILE), pass5)
   Log().write(Log.QUIET, "Done")
 
 
@@ -4244,8 +4243,7 @@ def pass4():
       create_database = noop
     last_sym_name_db = DummyLSNDB()
 
-  for line in fileinput.FileInput(
-            temp(config.DATAFILE + config.SORTED_REVS_SUFFIX)):
+  for line in fileinput.FileInput(temp(config.SORTED_REVS_DATAFILE)):
     c_rev = parse_cvs_revision(Ctx(), line[:-1])
     cvs_revs_db.log_revision(c_rev)
     last_sym_name_db.log_revision(c_rev)
@@ -4265,8 +4263,7 @@ def pass5():
   Log().write(Log.QUIET, "Mapping CVS revisions to Subversion commits...")
 
   aggregator = CVSRevisionAggregator()
-  for line in fileinput.FileInput(
-            temp(config.DATAFILE + config.SORTED_REVS_SUFFIX)):
+  for line in fileinput.FileInput(temp(config.SORTED_REVS_DATAFILE)):
     c_rev = parse_cvs_revision(Ctx(), line[:-1])
     if not (Ctx().trunk_only and c_rev.branch_name is not None):
       aggregator.process_revision(c_rev)

@@ -24,6 +24,11 @@ SVN_KEYWORDS_VALUE = 'Author Date Id Revision'
 # grouping.  See design-notes.txt for details.
 DATAFILE = 'cvs2svn-data'
 
+REVS_DATAFILE = DATAFILE + '.revs'
+CLEAN_REVS_DATAFILE = DATAFILE + '.c-revs'
+SORTED_REVS_DATAFILE = DATAFILE + '.s-revs'
+RESYNC_DATAFILE = DATAFILE + '.resync'
+
 # This file contains a marshalled copy of all the statistics that we
 # gather throughout the various runs of cvs2svn.  The data stored as a
 # marshalled dictionary.
@@ -153,11 +158,6 @@ METADATA_DB = "cvs2svn-metadata.db"
 # timestamp for that CVSRevision.  These new timestamps are created in
 # pass2, and this hash is used exclusively in pass2.
 TWEAKED_TIMESTAMPS_DB = "cvs2svn-fixed-timestamps.db"
-
-REVS_SUFFIX = '.revs'
-CLEAN_REVS_SUFFIX = '.c-revs'
-SORTED_REVS_SUFFIX = '.s-revs'
-RESYNC_SUFFIX = '.resync'
 
 # If this run's output is a repository, then (in the tmpdir) we use
 # a dumpfile of this name for repository loads.

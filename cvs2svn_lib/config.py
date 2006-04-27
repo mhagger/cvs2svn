@@ -159,6 +159,15 @@ CLEAN_REVS_SUFFIX = '.c-revs'
 SORTED_REVS_SUFFIX = '.s-revs'
 RESYNC_SUFFIX = '.resync'
 
+# If this run's output is a repository, then (in the tmpdir) we use
+# a dumpfile of this name for repository loads.
+#
+# If this run's output is a dumpfile, then this is default name of
+# that dumpfile, but in the current directory (unless the user has
+# specified a dumpfile path, of course, in which case it will be
+# wherever the user said).
+DUMPFILE = 'cvs2svn-dump'
+
 # flush a commit if a 5 minute gap occurs.
 COMMIT_THRESHOLD = 5 * 60
 

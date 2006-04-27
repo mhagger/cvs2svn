@@ -70,6 +70,7 @@ from cvs2svn_lib.database import \
 
 from cvs2svn_lib.context import Ctx
 
+from cvs2svn_lib import key_generator
 from cvs2svn_lib import cvs_revision
 from cvs2svn_lib import cvs_repository
 from cvs2svn_lib import property_setters
@@ -210,21 +211,6 @@ def generate_ignores(c_rev):
       continue
     ignore_vals.append(ignore)
   return ignore_vals
-
-
-class KeyGenerator:
-  """Generate a series of unique strings."""
-
-  def __init__(self):
-    self.key_base = 0L
-
-  def gen_key(self):
-    """Generate and return a previously-unused key."""
-
-    key = '%x' % self.key_base
-    self.key_base += 1
-
-    return key
 
 
 def format_date(date):
@@ -2566,7 +2552,7 @@ class SVNRepositoryMirror:
   def __init__(self):
     """Set up the SVNRepositoryMirror and prepare it for SVNCommits."""
 
-    self.key_generator = KeyGenerator()
+    self.key_generator = key_generator.KeyGenerator()
 
     self.delegates = [ ]
 

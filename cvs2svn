@@ -45,6 +45,8 @@ import cvs2svn_rcsparse
 
 from cvs2svn_lib.boolean import *
 
+from cvs2svn_lib import config
+
 from cvs2svn_lib.common import \
         warning_prefix, \
         error_prefix, \
@@ -83,8 +85,6 @@ trunk_rev = re.compile('^[0-9]+\\.[0-9]+$')
 cvs_branch_tag = re.compile('^((?:[0-9]+\\.[0-9]+\\.)+)0\\.([0-9]+)$')
 rcs_branch_tag = re.compile('^(?:[0-9]+\\.[0-9]+\\.)+[0-9]+$')
 
-SVN_KEYWORDS_VALUE = 'Author Date Id Revision'
-
 # This really only matches standard '1.1.1.*'-style vendor revisions.
 # One could conceivably have a file whose default branch is 1.1.3 or
 # whatever, or was that at some point in time, with vendor revisions
@@ -94,149 +94,7 @@ SVN_KEYWORDS_VALUE = 'Author Date Id Revision'
 # default branch anyway, so we don't want this to match them anyway.
 vendor_revision = re.compile('^(1\\.1\\.1)\\.([0-9])+$')
 
-# This file appears with different suffixes at different stages of
-# processing.  CVS revisions are cleaned and sorted here, for commit
-# grouping.  See design-notes.txt for details.
-DATAFILE = 'cvs2svn-data'
-
-# This file contains a marshalled copy of all the statistics that we
-# gather throughout the various runs of cvs2svn.  The data stored as a
-# marshalled dictionary.
-STATISTICS_FILE = 'cvs2svn-statistics'
-
-# This text file contains records (1 per line) that describe svn
-# filesystem paths that are the opening and closing source revisions
-# for copies to tags and branches.  The format is as follows:
-#
-# SYMBOL_NAME SVN_REVNUM TYPE SVN_PATH
-#
-# Where type is either OPENING or CLOSING.  The SYMBOL_NAME and
-# SVN_REVNUM are the primary and secondary sorting criteria for
-# creating SYMBOL_OPENINGS_CLOSINGS_SORTED.
-SYMBOL_OPENINGS_CLOSINGS = 'cvs2svn-symbolic-names.txt'
-# A sorted version of the above file.
-SYMBOL_OPENINGS_CLOSINGS_SORTED = 'cvs2svn-symbolic-names-s.txt'
-
-# This file is a temporary file for storing symbolic_name -> closing
-# CVSRevision until the end of our pass where we can look up the
-# corresponding SVNRevNum for the closing revs and write these out to
-# the SYMBOL_OPENINGS_CLOSINGS.
-SYMBOL_CLOSINGS_TMP = 'cvs2svn-symbolic-names-closings-tmp.txt'
-
-# Skeleton version of an svn filesystem.
-# (These supersede and will eventually replace the two above.)
-# See class SVNRepositoryMirror for how these work.
-SVN_MIRROR_REVISIONS_DB = 'cvs2svn-svn-revisions.db'
-SVN_MIRROR_NODES_DB = 'cvs2svn-svn-nodes.db'
-
-# Offsets pointing to the beginning of each SYMBOLIC_NAME in
-# SYMBOL_OPENINGS_CLOSINGS_SORTED
-SYMBOL_OFFSETS_DB = 'cvs2svn-symbolic-name-offsets.db'
-
-# Maps CVSRevision.unique_key()s to lists of symbolic names, where
-# the CVSRevision is the last such that is a source for those symbolic
-# names.  For example, if branch B's number is 1.3.0.2 in this CVS
-# file, and this file's 1.3 is the latest (by date) revision among
-# *all* CVS files that is a source for branch B, then the
-# CVSRevision.unique_key() corresponding to this file at 1.3 would
-# list at least B in its list.
-SYMBOL_LAST_CVS_REVS_DB = 'cvs2svn-symbol-last-cvs-revs.db'
-
-# Maps CVSRevision.unique_key() to corresponding line in s-revs.
-###PERF Or, we could map to an offset into s-revs, instead of dup'ing
-### the s-revs data in this database.
-CVS_REVS_DB = 'cvs2svn-cvs-revs.db'
-
-# Lists all symbolic names that are tags.  Keys are strings (symbolic
-# names), values are ignorable.
-TAGS_DB = 'cvs2svn-tags.db'
-
-# A list all tags.  Each line consists of the tag name and the number
-# of files in which it exists, separated by a space.
-TAGS_LIST = 'cvs2svn-tags.txt'
-
-# A list of all branches.  The file is stored as a plain text file
-# to make it easy to look at in an editor.  Each line contains the
-# branch name, the number of files where the branch is created, the
-# commit count, and a list of tags and branches that are defined on
-# revisions in the branch.
-BRANCHES_LIST = 'cvs2svn-branches.txt'
-
-# These two databases provide a bidirectional mapping between
-# CVSRevision.unique_key()s and Subversion revision numbers.
-#
-# The first maps CVSRevision.unique_key() to a number; the values are
-# not unique.
-#
-# The second maps Subversion revision numbers to tuples (c_rev_keys,
-# motivating_revnum, symbolic_name, date).
-#
-# c_rev_keys is a list of CVSRevision.unique_key()s.
-#
-# If the SVNCommit is a default branch synchronization,
-# motivating_revnum is the svn_revnum of the primary SVNCommit that
-# motivated it; otherwise it is None.  (NOTE: Secondary commits that
-# fill branches and tags also have a motivating commit, but we do not
-# record it because it is (currently) not needed for anything.)
-# motivating_revnum is used when generating the log message for the
-# commit that synchronizes the default branch with trunk.
-#
-# symbolic_name is the symbolic name associated with the commit (if it
-# filled a symbolic name) or None otherwise.
-#
-# date is the date of the commit.
-CVS_REVS_TO_SVN_REVNUMS = 'cvs2svn-cvs-revs-to-svn-revnums.db'
-SVN_REVNUMS_TO_CVS_REVS = 'cvs2svn-svn-revnums-to-cvs-revs.db'
-
-# How many bytes to read at a time from a pipe.  128 kiB should be
-# large enough to be efficient without wasting too much memory.
-PIPE_READ_SIZE = 128 * 1024
-
-# Record the default RCS branches, if any, for CVS filepaths.
-#
-# The keys are CVS filepaths, relative to the top of the repository
-# and with the ",v" stripped off, so they match the cvs paths used in
-# Commit.commit().  The values are vendor branch revisions, such as
-# '1.1.1.1', or '1.1.1.2', or '1.1.1.96'.  The vendor branch revision
-# represents the highest vendor branch revision thought to have ever
-# been head of the default branch.
-#
-# The reason we record a specific vendor revision, rather than a
-# default branch number, is that there are two cases to handle:
-#
-# One case is simple.  The RCS file lists a default branch explicitly
-# in its header, such as '1.1.1'.  In this case, we know that every
-# revision on the vendor branch is to be treated as head of trunk at
-# that point in time.
-#
-# But there's also a degenerate case.  The RCS file does not currently
-# have a default branch, yet we can deduce that for some period in the
-# past it probably *did* have one.  For example, the file has vendor
-# revisions 1.1.1.1 -> 1.1.1.96, all of which are dated before 1.2,
-# and then it has 1.1.1.97 -> 1.1.1.100 dated after 1.2.  In this
-# case, we should record 1.1.1.96 as the last vendor revision to have
-# been the head of the default branch.
-DEFAULT_BRANCHES_DB = 'cvs2svn-default-branches.db'
-
-# Records the author and log message for each changeset.
-# The keys are author+log digests, the same kind used to identify
-# unique revisions in the .revs, etc files.  Each value is a tuple
-# of two elements: '(author logmessage)'.
-METADATA_DB = "cvs2svn-metadata.db"
-
-# A temporary on-disk hash that maps CVSRevision unique keys to a new
-# timestamp for that CVSRevision.  These new timestamps are created in
-# pass2, and this hash is used exclusively in pass2.
-TWEAKED_TIMESTAMPS_DB = "cvs2svn-fixed-timestamps.db"
-
-REVS_SUFFIX = '.revs'
-CLEAN_REVS_SUFFIX = '.c-revs'
-SORTED_REVS_SUFFIX = '.s-revs'
-RESYNC_SUFFIX = '.resync'
-
 SVN_INVALID_REVNUM = -1
-
-COMMIT_THRESHOLD = 5 * 60	# flush a commit if a 5 minute gap occurs
 
 # Things that can happen to a file.
 OP_NOOP   = '-'
@@ -329,11 +187,11 @@ def verify_filename_legal(filename):
 def generate_ignores(c_rev):
   # Read in props
   pipe_cmd, pipe = Ctx().cvs_repository.get_co_pipe(c_rev)
-  buf = pipe.stdout.read(PIPE_READ_SIZE)
+  buf = pipe.stdout.read(config.PIPE_READ_SIZE)
   raw_ignore_val = ""
   while buf:
     raw_ignore_val += buf
-    buf = pipe.stdout.read(PIPE_READ_SIZE)
+    buf = pipe.stdout.read(config.PIPE_READ_SIZE)
   pipe.stdout.close()
   error_output = pipe.stderr.read()
   exit_status = pipe.wait()
@@ -490,7 +348,7 @@ class StatsKeeper:
     self.__dict__ = self.__shared_state
     if self.__dict__:
       return
-    self.filename = temp(STATISTICS_FILE)
+    self.filename = temp(config.STATISTICS_FILE)
     Cleanup().register(self.filename, pass8)
     # This can get kinda large, so we don't store it in our data dict.
     self.repos_files = { }
@@ -634,8 +492,9 @@ class LastSymbolicNameDatabase:
   # = CVS rev unique_key: val = list of symbols that close in that
   # rev.
   def create_database(self):
-    symbol_revs_db = Database(temp(SYMBOL_LAST_CVS_REVS_DB), DB_OPEN_NEW)
-    Cleanup().register(temp(SYMBOL_LAST_CVS_REVS_DB), pass5)
+    symbol_revs_db = Database(temp(config.SYMBOL_LAST_CVS_REVS_DB),
+                              DB_OPEN_NEW)
+    Cleanup().register(temp(config.SYMBOL_LAST_CVS_REVS_DB), pass5)
     for sym, rev_unique_key in self.symbols.items():
       ary = symbol_revs_db.get(rev_unique_key, [])
       ary.append(sym)
@@ -650,8 +509,8 @@ class CVSRevisionDatabase:
     """Initialize an instance, opening database in MODE (like the MODE
     argument to Database or anydbm.open())."""
 
-    self.cvs_revs_db = SDatabase(temp(CVS_REVS_DB), mode)
-    Cleanup().register(temp(CVS_REVS_DB), pass8)
+    self.cvs_revs_db = SDatabase(temp(config.CVS_REVS_DB), mode)
+    Cleanup().register(temp(config.CVS_REVS_DB), pass8)
 
   def log_revision(self, c_rev):
     """Add C_REV, a CVSRevision, to the database."""
@@ -672,8 +531,8 @@ class TagsDatabase:
   None.)"""
 
   def __init__(self, mode):
-    self.db = SDatabase(temp(TAGS_DB), mode)
-    Cleanup().register(temp(TAGS_DB), pass8)
+    self.db = SDatabase(temp(config.TAGS_DB), mode)
+    Cleanup().register(temp(config.TAGS_DB), pass8)
 
   def add(self, item):
     self.db[item] = ''
@@ -709,7 +568,8 @@ class Project:
     self.trunk_path = trunk_path
     self.branches_path = branches_path
     self.tags_path = tags_path
-    verify_paths_disjoint(self.trunk_path, self.branches_path, self.tags_path)
+    verify_paths_disjoint(self.trunk_path, self.branches_path,
+                          self.tags_path)
 
   def is_source(self, svn_path):
     """Return True iff SVN_PATH is a legitimate source for this project.
@@ -1124,7 +984,7 @@ class SymbolDatabase:
   def read(self):
     """Read the symbol database from files."""
 
-    f = open(temp(TAGS_LIST))
+    f = open(temp(config.TAGS_LIST))
     while 1:
       line = f.readline()
       if not line:
@@ -1132,7 +992,7 @@ class SymbolDatabase:
       tag, count = line.split()
       self.tags[tag] = int(count)
 
-    f = open(temp(BRANCHES_LIST))
+    f = open(temp(config.BRANCHES_LIST))
     while 1:
       line = f.readline()
       if not line:
@@ -1145,13 +1005,13 @@ class SymbolDatabase:
   def write(self):
     """Store the symbol database to files."""
 
-    f = open(temp(TAGS_LIST), "w")
-    Cleanup().register(temp(TAGS_LIST), pass2)
+    f = open(temp(config.TAGS_LIST), "w")
+    Cleanup().register(temp(config.TAGS_LIST), pass2)
     for tag, count in self.tags.items():
       f.write("%s %d\n" % (tag, count))
 
-    f = open(temp(BRANCHES_LIST), "w")
-    Cleanup().register(temp(BRANCHES_LIST), pass2)
+    f = open(temp(config.BRANCHES_LIST), "w")
+    Cleanup().register(temp(config.BRANCHES_LIST), pass2)
     for branch, info in self.branches.items():
       f.write("%s %d %d" % (branch, info[0], info[1]))
       if info[2]:
@@ -1453,8 +1313,8 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
             msg =  "PASS1 RESYNC: '%s' (%s): old time='%s' delta=%ds" \
                   % (self.cvs_path, prev, time.ctime(t_p), delta)
             Log().write(Log.VERBOSE, msg)
-            if (delta > COMMIT_THRESHOLD
-                or delta < (COMMIT_THRESHOLD * -1)):
+            if (delta > config.COMMIT_THRESHOLD
+                or delta < (config.COMMIT_THRESHOLD * -1)):
               Log().write(Log.WARN,
                           "%s: Significant timestamp change for '%s' "
                           "(%d seconds)"
@@ -1609,15 +1469,15 @@ class CollectData:
   each file to be parsed."""
 
   def __init__(self):
-    self.revs = open(temp(DATAFILE + REVS_SUFFIX), 'w')
-    Cleanup().register(temp(DATAFILE + REVS_SUFFIX), pass2)
-    self.resync = open(temp(DATAFILE + RESYNC_SUFFIX), 'w')
-    Cleanup().register(temp(DATAFILE + RESYNC_SUFFIX), pass2)
-    self.default_branches_db = SDatabase(temp(DEFAULT_BRANCHES_DB),
+    self.revs = open(temp(config.DATAFILE + config.REVS_SUFFIX), 'w')
+    Cleanup().register(temp(config.DATAFILE + config.REVS_SUFFIX), pass2)
+    self.resync = open(temp(config.DATAFILE + config.RESYNC_SUFFIX), 'w')
+    Cleanup().register(temp(config.DATAFILE + config.RESYNC_SUFFIX), pass2)
+    self.default_branches_db = SDatabase(temp(config.DEFAULT_BRANCHES_DB),
                                          DB_OPEN_NEW)
-    Cleanup().register(temp(DEFAULT_BRANCHES_DB), pass5)
-    self.metadata_db = Database(temp(METADATA_DB), DB_OPEN_NEW)
-    Cleanup().register(temp(METADATA_DB), pass8)
+    Cleanup().register(temp(config.DEFAULT_BRANCHES_DB), pass5)
+    self.metadata_db = Database(temp(config.METADATA_DB), DB_OPEN_NEW)
+    Cleanup().register(temp(config.METADATA_DB), pass8)
     self.fatal_errors = []
     self.num_files = 0
     self.symbol_db = SymbolDatabase()
@@ -1666,10 +1526,10 @@ class SymbolingsLogger:
   """
 
   def __init__(self):
-    self.symbolings = open(temp(SYMBOL_OPENINGS_CLOSINGS), 'w')
-    Cleanup().register(temp(SYMBOL_OPENINGS_CLOSINGS), pass6)
-    self.closings = open(temp(SYMBOL_CLOSINGS_TMP), 'w')
-    Cleanup().register(temp(SYMBOL_CLOSINGS_TMP), pass5)
+    self.symbolings = open(temp(config.SYMBOL_OPENINGS_CLOSINGS), 'w')
+    Cleanup().register(temp(config.SYMBOL_OPENINGS_CLOSINGS), pass6)
+    self.closings = open(temp(config.SYMBOL_CLOSINGS_TMP), 'w')
+    Cleanup().register(temp(config.SYMBOL_CLOSINGS_TMP), pass5)
 
     # This keys of this dictionary are *source* cvs_paths for which
     # we've encountered an 'opening' on the default branch.  The
@@ -1716,7 +1576,7 @@ class SymbolingsLogger:
     cvs_revs_db = CVSRevisionDatabase(DB_OPEN_READ)
 
     self.closings.close()
-    for line in fileinput.FileInput(temp(SYMBOL_CLOSINGS_TMP)):
+    for line in fileinput.FileInput(temp(config.SYMBOL_CLOSINGS_TMP)):
       (name, rev_key) = line.rstrip().split(" ", 1)
       svn_revnum = Ctx()._persistence_manager.get_svn_revnum(rev_key)
 
@@ -1766,11 +1626,12 @@ class PersistenceManager:
     self.mode = mode
     if mode not in (DB_OPEN_NEW, DB_OPEN_READ):
       raise RuntimeError, "Invalid 'mode' argument to PersistenceManager"
-    self.svn2cvs_db = Database(temp(SVN_REVNUMS_TO_CVS_REVS), mode)
-    Cleanup().register(temp(SVN_REVNUMS_TO_CVS_REVS), pass8)
-    self.cvs2svn_db = Database(temp(CVS_REVS_TO_SVN_REVNUMS), mode)
-    Cleanup().register(temp(CVS_REVS_TO_SVN_REVNUMS), pass8)
-    self.svn_commit_metadata = Database(temp(METADATA_DB), DB_OPEN_READ)
+    self.svn2cvs_db = Database(temp(config.SVN_REVNUMS_TO_CVS_REVS), mode)
+    Cleanup().register(temp(config.SVN_REVNUMS_TO_CVS_REVS), pass8)
+    self.cvs2svn_db = Database(temp(config.CVS_REVS_TO_SVN_REVNUMS), mode)
+    Cleanup().register(temp(config.CVS_REVS_TO_SVN_REVNUMS), pass8)
+    self.svn_commit_metadata = Database(temp(config.METADATA_DB),
+                                        DB_OPEN_READ)
     self.cvs_revisions = CVSRevisionDatabase(DB_OPEN_READ)
     ###PERF kff Elsewhere there are comments about sucking the tags db
     ### into memory.  That seems like a good idea.
@@ -2127,8 +1988,8 @@ class CVSCommit:
       svn_commit.set_motivating_revnum(self.motivating_commit.revnum)
       for c_rev in self.default_branch_cvs_revisions:
         svn_commit.add_revision(c_rev)
-        Ctx()._symbolings_logger.log_default_branch_closing(c_rev,
-                                                            svn_commit.revnum)
+        Ctx()._symbolings_logger.log_default_branch_closing(
+            c_rev, svn_commit.revnum)
       self.secondary_commits.append(svn_commit)
 
   def process_revisions(self, done_symbols):
@@ -2154,9 +2015,9 @@ class CVSCommit:
       Log().write(Log.VERBOSE, '  End time:   %s (duration: %d seconds)'
                   % (time.ctime(self.t_max), seconds))
 
-    if seconds > COMMIT_THRESHOLD + 1:
+    if seconds > config.COMMIT_THRESHOLD + 1:
       Log().write(Log.WARN, '%s: grouping spans more than %d seconds'
-                  % (warning_prefix, COMMIT_THRESHOLD))
+                  % (warning_prefix, config.COMMIT_THRESHOLD))
 
     if Ctx().trunk_only: # Only do the primary commit if we're trunk-only
       self._commit()
@@ -2388,9 +2249,9 @@ class CVSRevisionAggregator:
   at least one SVNCommit."""
 
   def __init__(self):
-    self.metadata_db = Database(temp(METADATA_DB), DB_OPEN_READ)
+    self.metadata_db = Database(temp(config.METADATA_DB), DB_OPEN_READ)
     if not Ctx().trunk_only:
-      self.last_revs_db = Database(temp(SYMBOL_LAST_CVS_REVS_DB),
+      self.last_revs_db = Database(temp(config.SYMBOL_LAST_CVS_REVS_DB),
                                    DB_OPEN_READ)
 
     # A map { key : CVSCommit } of CVS commits currently being
@@ -2423,14 +2284,14 @@ class CVSRevisionAggregator:
 
     Ctx()._symbolings_logger = SymbolingsLogger()
     Ctx()._persistence_manager = PersistenceManager(DB_OPEN_NEW)
-    Ctx()._default_branches_db = SDatabase(temp(DEFAULT_BRANCHES_DB),
+    Ctx()._default_branches_db = SDatabase(temp(config.DEFAULT_BRANCHES_DB),
                                            DB_OPEN_READ)
 
   def _extract_ready_commits(self, timestamp):
     """Extract and return any active commits that expire by TIMESTAMP."""
 
     for digest_key, cvs_commit in self.cvs_commits.items():
-      if cvs_commit.t_max + COMMIT_THRESHOLD < timestamp:
+      if cvs_commit.t_max + config.COMMIT_THRESHOLD < timestamp:
         self.ready_queue.append(cvs_commit)
         del self.cvs_commits[digest_key]
 
@@ -2547,10 +2408,10 @@ class SymbolingsReader:
     """Opens the SYMBOL_OPENINGS_CLOSINGS_SORTED for reading, and
     reads the offsets database into memory."""
 
-    self.symbolings = open(temp(SYMBOL_OPENINGS_CLOSINGS_SORTED), 'r')
+    self.symbolings = open(temp(config.SYMBOL_OPENINGS_CLOSINGS_SORTED), 'r')
     # The offsets_db is really small, and we need to read and write
     # from it a fair bit, so suck it into memory
-    offsets_db = Database(temp(SYMBOL_OFFSETS_DB), DB_OPEN_READ)
+    offsets_db = Database(temp(config.SYMBOL_OFFSETS_DB), DB_OPEN_READ)
     self.offsets = { }
     for key in offsets_db:
       #print " ZOO:", key, offsets_db[key]
@@ -2965,14 +2826,15 @@ class SVNRepositoryMirror:
     self.delegates = [ ]
 
     # This corresponds to the 'revisions' table in a Subversion fs.
-    self.revs_db = SDatabase(temp(SVN_MIRROR_REVISIONS_DB), DB_OPEN_NEW)
-    Cleanup().register(temp(SVN_MIRROR_REVISIONS_DB), pass8)
+    self.revs_db = SDatabase(
+        temp(config.SVN_MIRROR_REVISIONS_DB), DB_OPEN_NEW)
+    Cleanup().register(temp(config.SVN_MIRROR_REVISIONS_DB), pass8)
 
     # This corresponds to the 'nodes' table in a Subversion fs.  (We
     # don't need a 'representations' or 'strings' table because we
     # only track metadata, not file contents.)
-    self.nodes_db = Database(temp(SVN_MIRROR_NODES_DB), DB_OPEN_NEW)
-    Cleanup().register(temp(SVN_MIRROR_NODES_DB), pass8)
+    self.nodes_db = Database(temp(config.SVN_MIRROR_NODES_DB), DB_OPEN_NEW)
+    Cleanup().register(temp(config.SVN_MIRROR_NODES_DB), pass8)
 
     # Start at revision 0 without a root node.  It will be created
     # by _open_writable_root_node.
@@ -3795,7 +3657,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     checksum = md5.new()
     length = 0
     while True:
-      buf = data_reader.read(PIPE_READ_SIZE)
+      buf = data_reader.read(config.PIPE_READ_SIZE)
       if buf == '':
         break
       checksum.update(buf)
@@ -4202,8 +4064,8 @@ def pass2():
       t1 = int(line[:8], 16)
       digest = line[9:DIGEST_END_IDX]
       t2 = int(line[DIGEST_END_IDX+1:], 16)
-      t1_l = t1 - COMMIT_THRESHOLD/2
-      t1_u = t1 + COMMIT_THRESHOLD/2
+      t1_l = t1 - config.COMMIT_THRESHOLD/2
+      t1_u = t1 + config.COMMIT_THRESHOLD/2
       resync.setdefault(digest, []).append([t1_l, t1_u, t2])
 
     # For each digest, sort the resync items in it in increasing order,
@@ -4213,16 +4075,17 @@ def pass2():
 
     return resync
 
-  resync = read_resync(temp(DATAFILE + RESYNC_SUFFIX))
+  resync = read_resync(temp(config.DATAFILE + config.RESYNC_SUFFIX))
 
-  output = open(temp(DATAFILE + CLEAN_REVS_SUFFIX), 'w')
-  Cleanup().register(temp(DATAFILE + CLEAN_REVS_SUFFIX), pass3)
+  output = open(temp(config.DATAFILE + config.CLEAN_REVS_SUFFIX), 'w')
+  Cleanup().register(temp(config.DATAFILE + config.CLEAN_REVS_SUFFIX), pass3)
 
-  tweaked_timestamps_db = Database(temp(TWEAKED_TIMESTAMPS_DB), DB_OPEN_NEW)
-  Cleanup().register(temp(TWEAKED_TIMESTAMPS_DB), pass2)
+  tweaked_timestamps_db = Database(temp(config.TWEAKED_TIMESTAMPS_DB),
+                                   DB_OPEN_NEW)
+  Cleanup().register(temp(config.TWEAKED_TIMESTAMPS_DB), pass2)
 
   # process the revisions file, looking for items to clean up
-  for line in fileinput.FileInput(temp(DATAFILE + REVS_SUFFIX)):
+  for line in fileinput.FileInput(temp(config.DATAFILE + config.REVS_SUFFIX)):
     c_rev = parse_cvs_revision(Ctx(), line[:-1])
 
     # Skip this entire revision if it's on an excluded branch
@@ -4290,7 +4153,8 @@ def pass2():
           # the timestamp of c_rev within COMMIT_THRESHOLD of the
           # attempted resync time, then sync back to c_rev.prev_timestamp
           # + 1...
-          if ((c_rev.prev_timestamp + 1) - new_timestamp) < COMMIT_THRESHOLD:
+          if ((c_rev.prev_timestamp + 1) - new_timestamp) \
+                 < config.COMMIT_THRESHOLD:
             new_timestamp = c_rev.prev_timestamp + 1
             Log().write(Log.WARN, "%s: Time set to %s" % (warning_prefix,
                                                           new_timestamp))
@@ -4312,7 +4176,8 @@ def pass2():
           # the timestamp of c_rev within COMMIT_THRESHOLD of the
           # attempted resync time, then sync forward to c_rev.next_timestamp
           # - 1...
-          if (new_timestamp - (c_rev.next_timestamp - 1)) < COMMIT_THRESHOLD:
+          if (new_timestamp - (c_rev.next_timestamp - 1)) \
+                 < config.COMMIT_THRESHOLD:
             new_timestamp = c_rev.next_timestamp - 1
             Log().write(Log.WARN, "%s: Time set to %s" % (warning_prefix,
                                                           new_timestamp))
@@ -4329,8 +4194,10 @@ def pass2():
 
         # adjust the time range. we want the COMMIT_THRESHOLD from the
         # bounds of the earlier/latest commit in this group.
-        record[0] = min(record[0], c_rev.timestamp - COMMIT_THRESHOLD/2)
-        record[1] = max(record[1], c_rev.timestamp + COMMIT_THRESHOLD/2)
+        record[0] = min(record[0],
+                        c_rev.timestamp - config.COMMIT_THRESHOLD/2)
+        record[1] = max(record[1],
+                        c_rev.timestamp + config.COMMIT_THRESHOLD/2)
 
         msg = "PASS2 RESYNC: '%s' (%s): old time='%s' delta=%ds" \
               % (c_rev.cvs_path, c_rev.rev, time.ctime(c_rev.timestamp),
@@ -4349,9 +4216,10 @@ def pass2():
 
 def pass3():
   Log().write(Log.QUIET, "Sorting CVS revisions...")
-  sort_file(temp(DATAFILE + CLEAN_REVS_SUFFIX),
-            temp(DATAFILE + SORTED_REVS_SUFFIX))
-  Cleanup().register(temp(DATAFILE + SORTED_REVS_SUFFIX), pass5)
+  sort_file(temp(config.DATAFILE + config.CLEAN_REVS_SUFFIX),
+            temp(config.DATAFILE + config.SORTED_REVS_SUFFIX))
+  Cleanup().register(temp(config.DATAFILE + config.SORTED_REVS_SUFFIX),
+                     pass5)
   Log().write(Log.QUIET, "Done")
 
 
@@ -4376,7 +4244,8 @@ def pass4():
       create_database = noop
     last_sym_name_db = DummyLSNDB()
 
-  for line in fileinput.FileInput(temp(DATAFILE + SORTED_REVS_SUFFIX)):
+  for line in fileinput.FileInput(
+            temp(config.DATAFILE + config.SORTED_REVS_SUFFIX)):
     c_rev = parse_cvs_revision(Ctx(), line[:-1])
     cvs_revs_db.log_revision(c_rev)
     last_sym_name_db.log_revision(c_rev)
@@ -4396,7 +4265,8 @@ def pass5():
   Log().write(Log.QUIET, "Mapping CVS revisions to Subversion commits...")
 
   aggregator = CVSRevisionAggregator()
-  for line in fileinput.FileInput(temp(DATAFILE + SORTED_REVS_SUFFIX)):
+  for line in fileinput.FileInput(
+            temp(config.DATAFILE + config.SORTED_REVS_SUFFIX)):
     c_rev = parse_cvs_revision(Ctx(), line[:-1])
     if not (Ctx().trunk_only and c_rev.branch_name is not None):
       aggregator.process_revision(c_rev)
@@ -4411,9 +4281,9 @@ def pass6():
   Log().write(Log.QUIET, "Sorting symbolic name source revisions...")
 
   if not Ctx().trunk_only:
-    sort_file(temp(SYMBOL_OPENINGS_CLOSINGS),
-              temp(SYMBOL_OPENINGS_CLOSINGS_SORTED))
-    Cleanup().register(temp(SYMBOL_OPENINGS_CLOSINGS_SORTED), pass8)
+    sort_file(temp(config.SYMBOL_OPENINGS_CLOSINGS),
+              temp(config.SYMBOL_OPENINGS_CLOSINGS_SORTED))
+    Cleanup().register(temp(config.SYMBOL_OPENINGS_CLOSINGS_SORTED), pass8)
   Log().write(Log.QUIET, "Done")
 
 
@@ -4431,10 +4301,10 @@ def pass7():
     ###PERF This is a fine example of a db that can be in-memory and
     #just flushed to disk when we're done.  Later, it can just be sucked
     #back into memory.
-    offsets_db = Database(temp(SYMBOL_OFFSETS_DB), DB_OPEN_NEW)
-    Cleanup().register(temp(SYMBOL_OFFSETS_DB), pass8)
+    offsets_db = Database(temp(config.SYMBOL_OFFSETS_DB), DB_OPEN_NEW)
+    Cleanup().register(temp(config.SYMBOL_OFFSETS_DB), pass8)
 
-    file = open(temp(SYMBOL_OPENINGS_CLOSINGS_SORTED), 'r')
+    file = open(temp(config.SYMBOL_OPENINGS_CLOSINGS_SORTED), 'r')
     old_sym = ""
     while 1:
       fpos = file.tell()
@@ -4610,7 +4480,7 @@ def usage():
   print '                       non-binary files with undetermined mime types'
   print '  --keywords-off       don\'t set svn:keywords on any files (by default,'
   print '                       cvs2svn sets svn:keywords on non-binary files to'
-  print '                       "%s")' % SVN_KEYWORDS_VALUE
+  print '                       "%s")' % config.SVN_KEYWORDS_VALUE
 
 
 def main():
@@ -4850,7 +4720,7 @@ def main():
 
   if not ctx.keywords_off:
     ctx.svn_property_setters.append(
-        property_setters.KeywordsPropertySetter(SVN_KEYWORDS_VALUE))
+        property_setters.KeywordsPropertySetter(config.SVN_KEYWORDS_VALUE))
 
   # Make sure the tmp directory exists.  Note that we don't check if
   # it's empty -- we want to be able to use, for example, "." to hold

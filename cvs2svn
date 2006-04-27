@@ -68,7 +68,9 @@ from cvs2svn_lib.database import \
         SDatabase, \
         Database
 
-from cvs2svn_lib.context import Ctx
+from cvs2svn_lib.context import \
+        Ctx, \
+        temp
 
 from cvs2svn_lib import key_generator
 from cvs2svn_lib import cvs_revision
@@ -107,13 +109,6 @@ DIGEST_END_IDX = 9 + (sha.digestsize * 2)
 # Constants used in SYMBOL_OPENINGS_CLOSINGS
 OPENING = 'O'
 CLOSING = 'C'
-
-
-def temp(basename):
-  """Return a path to BASENAME in Ctx().tmpdir.
-  This is a convenience function to save horizontal space in source."""
-
-  return os.path.join(Ctx().tmpdir, basename)
 
 
 # Since the unofficial set also includes [/\] we need to translate those

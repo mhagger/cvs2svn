@@ -17,6 +17,8 @@
 """Store the context (options, etc) for a cvs2svn run."""
 
 
+import os
+
 from boolean import *
 import config
 
@@ -65,5 +67,12 @@ class Ctx:
     self.excludes = []
     self.symbol_transforms = []
     self.svn_property_setters = []
+
+
+def temp(basename):
+  """Return a path to BASENAME in Ctx().tmpdir.
+  This is a convenience function to save horizontal space in source."""
+
+  return os.path.join(Ctx().tmpdir, basename)
 
 

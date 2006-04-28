@@ -22,6 +22,7 @@ from __future__ import generators
 import os
 
 from boolean import *
+import context
 from log import Log
 
 
@@ -56,6 +57,15 @@ class Cleanup:
     self._log.setdefault(which_pass, {})[file] = 1
     if callback and not self._callbacks.has_key(file):
       self._callbacks[file] = callback
+
+  def temp(self, basename, which_pass, callback=None):
+    """Return a temporary filename based on basename, and schedule its
+    cleanup at the end of WHICH_PASS.  See register() for more
+    information."""
+
+    filename = context.temp(basename)
+    self.register(filename, which_pass, callback)
+    return filename
 
   def cleanup(self, which_pass):
     """Clean up all files, and invoke callbacks, for pass WHICH_PASS."""

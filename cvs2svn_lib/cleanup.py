@@ -30,9 +30,8 @@ class Cleanup:
   """This singleton class manages any files created by cvs2svn.  When
   you first create a file, call Cleanup.register, passing the
   filename, and the last pass that you need the file.  After the end
-  of that pass, your file will be cleaned up after running an optional
-  callback.  This class is a Borg, see
-  http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/66531."""
+  of that pass, your file will be cleaned up.  This class is a Borg,
+  see http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/66531."""
 
   __shared_state = {}
 
@@ -41,45 +40,35 @@ class Cleanup:
     if self.__dict__:
       return
     self._log = {}
-    self._callbacks = {}
 
-  def register(self, file, which_pass, callback=None):
-    """Register FILE for cleanup at the end of WHICH_PASS, running
-    function CALLBACK prior to removal.  Registering a given FILE is
-    idempotent; you may register as many times as you wish, but it
-    will only be cleaned up once.
+  def register(self, file, which_pass):
+    """Register FILE for cleanup at the end of WHICH_PASS.
+    Registering a given FILE is idempotent; you may register as many
+    times as you wish, but it will only be cleaned up once.
 
-    Note that if a file is registered multiple times, only the first
-    callback registered for that file will be called at cleanup
-    time.  Also note that if you register a database file you must
-    close the database before cleanup, e.g. using a callback."""
+    Note that if you register a database file you must close the
+    database before cleanup."""
 
     self._log.setdefault(which_pass, {})[file] = 1
-    if callback and not self._callbacks.has_key(file):
-      self._callbacks[file] = callback
 
-  def temp(self, basename, which_pass=None, callback=None):
+  def temp(self, basename, which_pass=None):
     """Return a temporary filename based on BASENAME in Ctx().tmpdir,
     and schedule its cleanup at the end of WHICH_PASS.  See register()
-    for more information.  If WHICH_PASS is None, do not schedule any
-    cleanup activities."""
+    for more information.  If WHICH_PASS is None, do not schedule the
+    file to be cleaned up."""
 
     filename = os.path.join(Ctx().tmpdir, basename)
-    if which_pass is None:
-      assert callback is None
-    else:
-      self.register(filename, which_pass, callback)
+    if which_pass is not None:
+      self.register(filename, which_pass)
     return filename
 
   def cleanup(self, which_pass):
-    """Clean up all files, and invoke callbacks, for pass WHICH_PASS."""
+    """Clean up all files, for pass WHICH_PASS."""
 
     if not self._log.has_key(which_pass):
       return
     for file in self._log[which_pass]:
       Log().write(Log.VERBOSE, "Deleting", file)
-      if self._callbacks.has_key(file):
-        self._callbacks[file]()
       os.unlink(file)
 
 

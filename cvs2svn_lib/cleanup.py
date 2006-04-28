@@ -22,7 +22,7 @@ from __future__ import generators
 import os
 
 from boolean import *
-import context
+from context import Ctx
 from log import Log
 
 
@@ -58,13 +58,17 @@ class Cleanup:
     if callback and not self._callbacks.has_key(file):
       self._callbacks[file] = callback
 
-  def temp(self, basename, which_pass, callback=None):
-    """Return a temporary filename based on basename, and schedule its
-    cleanup at the end of WHICH_PASS.  See register() for more
-    information."""
+  def temp(self, basename, which_pass=None, callback=None):
+    """Return a temporary filename based on BASENAME in Ctx().tmpdir,
+    and schedule its cleanup at the end of WHICH_PASS.  See register()
+    for more information.  If WHICH_PASS is None, do not schedule any
+    cleanup activities."""
 
-    filename = context.temp(basename)
-    self.register(filename, which_pass, callback)
+    filename = os.path.join(Ctx().tmpdir, basename)
+    if which_pass is None:
+      assert callback is None
+    else:
+      self.register(filename, which_pass, callback)
     return filename
 
   def cleanup(self, which_pass):

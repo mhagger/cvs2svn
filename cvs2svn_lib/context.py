@@ -69,10 +69,3 @@ class Ctx:
     self.svn_property_setters = []
 
 
-def temp(basename):
-  """Return a path to BASENAME in Ctx().tmpdir.
-  This is a convenience function to save horizontal space in source."""
-
-  return os.path.join(Ctx().tmpdir, basename)
-
-

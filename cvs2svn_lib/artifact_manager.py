@@ -49,7 +49,7 @@ class TempFileArtifact(Artifact):
   """A temporary file that can be used across cvs2svn passes."""
 
   def __init__(self, basename):
-    self.name = basename
+    Artifact.__init__(self, basename)
     self.filename = os.path.join(Ctx().tmpdir, basename)
 
   def cleanup(self):
@@ -131,7 +131,7 @@ class ArtifactManager:
     If the temporary file is not an existing, registered
     TempFileArtifact, raise a FatalException."""
 
-    return get_artifact(basename).filename
+    return self.get_artifact(basename).filename
 
   def register_artifact_needed(self, which_pass, artifact_name):
     """Register that WHICH_PASS needs the artifact named ARTIFACT_NAME.

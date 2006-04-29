@@ -20,7 +20,6 @@
 import os
 
 from boolean import *
-from common import FatalException
 from context import Ctx
 from log import Log
 
@@ -101,10 +100,10 @@ class ArtifactManager:
   def register_artifact(self, which_pass, artifact):
     """Register a new ARTIFACT for management by this class.
     WHICH_PASS is the pass that creates ARTIFACT, and is also assumed
-    to need it."""
+    to need it.  It is an error to registier the same artifact more
+    than once."""
 
-    if artifact.name in self._artifacts:
-      raise FatalException('Artifact %s already registered' % (artifact,))
+    assert artifact.name not in self._artifacts
     self._artifacts[artifact.name] = artifact
     self.register_artifact_needed(which_pass, artifact.name)
 
@@ -118,18 +117,15 @@ class ArtifactManager:
 
   def get_artifact(self, artifact_name):
     """Return the artifact with the specified name.  If the artifact
-    does not currently exist, raise a FatalException."""
+    does not currently exist, raise a KeyError."""
 
-    try:
-      return self._artifacts[artifact_name]
-    except KeyError:
-      raise FatalException('Artifact %s is not available' % (artifact_name,))
+    return self._artifacts[artifact_name]
 
   def get_temp_file(self, basename):
     """Return the filename of the temporary file with the specified BASENAME.
 
     If the temporary file is not an existing, registered
-    TempFileArtifact, raise a FatalException."""
+    TempFileArtifact, raise a KeyError."""
 
     return self.get_artifact(basename).filename
 
@@ -195,14 +191,16 @@ class ArtifactManager:
     self._unregister_artifacts(which_pass)
 
   def check_clean(self):
-    """All passes have been processed.  Check that all artifacts have
-    been accounted for.  (This is mainly a consistency check, that no
-    artifacts were registered under nonexistent passes.)"""
+    """All passes have been processed.  Output a warning messages if
+    all artifacts have not been accounted for.  (This is mainly a
+    consistency check, that no artifacts were registered under
+    nonexistent passes.)"""
 
     if self._artifacts:
-      raise FatalException(
-          'The following artifacts were not cleaned up:\n    %s\n' %
-          ('\n    '.join([artifact.name for artifact in self._artifacts])))
+      Log().write(
+          Log.WARN,
+          'INTERNAL: The following artifacts were not cleaned up:\n    %s\n'
+          % ('\n    '.join([artifact.name for artifact in self._artifacts])))
 
 
 # The default ArtifactManager instance:

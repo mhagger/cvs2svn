@@ -182,8 +182,10 @@ class ArtifactManager:
     """WHICH_PASS is done.  Clean up all artifacts that are no longer
     needed."""
 
-    for artifact in self._unregister_artifacts(which_pass):
-      artifact.cleanup()
+    artifacts = self._unregister_artifacts(which_pass)
+    if not Ctx().skip_cleanup:
+      for artifact in artifacts:
+        artifact.cleanup()
 
   def pass_deferred(self, which_pass):
     """WHICH_PASS is being deferred until a future cvs2svn run.

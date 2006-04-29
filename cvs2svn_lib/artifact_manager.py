@@ -97,7 +97,7 @@ class ArtifactManager:
     # map { artifact : None } of artifacts needed by the pass.
     self._pass_needs = { }
 
-  def register_artifact(self, which_pass, artifact):
+  def register_artifact(self, artifact, which_pass):
     """Register a new ARTIFACT for management by this class.
     WHICH_PASS is the pass that creates ARTIFACT, and is also assumed
     to need it.  It is an error to registier the same artifact more
@@ -105,14 +105,14 @@ class ArtifactManager:
 
     assert artifact.name not in self._artifacts
     self._artifacts[artifact.name] = artifact
-    self.register_artifact_needed(which_pass, artifact.name)
+    self.register_artifact_needed(artifact.name, which_pass)
 
-  def register_temp_file(self, which_pass, basename):
+  def register_temp_file(self, basename, which_pass):
     """Register a temporary file with base name BASENAME as an
     artifact.  Return the filename of the temporary file."""
 
     artifact = TempFileArtifact(basename)
-    self.register_artifact(which_pass, artifact)
+    self.register_artifact(artifact, which_pass)
     return artifact.filename
 
   def get_artifact(self, artifact_name):
@@ -129,7 +129,7 @@ class ArtifactManager:
 
     return self.get_artifact(basename).filename
 
-  def register_artifact_needed(self, which_pass, artifact_name):
+  def register_artifact_needed(self, artifact_name, which_pass):
     """Register that WHICH_PASS needs the artifact named ARTIFACT_NAME.
     An artifact with this name must already have been registered."""
 
@@ -137,11 +137,11 @@ class ArtifactManager:
     artifact._passes_needed[which_pass] = None
     self._pass_needs.setdefault(which_pass, {})[artifact] = None
 
-  def register_temp_file_needed(self, which_pass, basename):
+  def register_temp_file_needed(self, basename, which_pass):
     """Register that the temporary file with base name BASENAME is
     needed by WHICH_PASS."""
 
-    self.register_artifact_needed(which_pass, basename)
+    self.register_artifact_needed(basename, which_pass)
 
   def _unregister_artifacts(self, which_pass):
     """Unregister any artifacts that were needed for WHICH_PASS.

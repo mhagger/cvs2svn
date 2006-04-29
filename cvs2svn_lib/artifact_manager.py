@@ -205,3 +205,7 @@ class ArtifactManager:
           ('\n    '.join([artifact.name for artifact in self._artifacts])))
 
 
+# The default ArtifactManager instance:
+artifact_manager = ArtifactManager()
+
+

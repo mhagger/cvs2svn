@@ -70,7 +70,7 @@ from cvs2svn_lib.database import \
 
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.cleanup import Cleanup
-from cvs2svn_lib.artifact_manager import ArtifactManager
+from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib import key_generator
 from cvs2svn_lib import cvs_revision
 from cvs2svn_lib import cvs_repository
@@ -3573,8 +3573,8 @@ class StdoutDelegate(SVNRepositoryMirrorDelegate):
 class Pass:
   """Base class for one step of the conversion."""
 
-  def register_artifacts(self, artifact_manager):
-    """Register artifacts (created and needed) in ARTIFACT_MANAGER."""
+  def register_artifacts(self):
+    """Register artifacts (created and needed) in artifact_manager."""
 
     raise NotImplementedError
 
@@ -3585,7 +3585,7 @@ class Pass:
 
 
 class Pass1(Pass):
-  def register_artifacts(self, artifact_manager):
+  def register_artifacts(self):
     pass
 
   def run(self):
@@ -3657,7 +3657,7 @@ class Pass1(Pass):
 class Pass2(Pass):
   """Pass 2: clean up the revision information."""
 
-  def register_artifacts(self, artifact_manager):
+  def register_artifacts(self):
     pass
 
   def run(self):
@@ -3906,7 +3906,7 @@ class Pass2(Pass):
 
 
 class Pass3(Pass):
-  def register_artifacts(self, artifact_manager):
+  def register_artifacts(self):
     pass
 
   def run(self):
@@ -3917,7 +3917,7 @@ class Pass3(Pass):
 
 
 class Pass4(Pass):
-  def register_artifacts(self, artifact_manager):
+  def register_artifacts(self):
     pass
 
   def run(self):
@@ -3959,7 +3959,7 @@ class Pass5(Pass):
   CVSRevisions that represent an opening or closing for a path on a
   branch or tag.  See SymbolingsLogger for more details."""
 
-  def register_artifacts(self, artifact_manager):
+  def register_artifacts(self):
     pass
 
   def run(self):
@@ -3979,7 +3979,7 @@ class Pass5(Pass):
 
 
 class Pass6(Pass):
-  def register_artifacts(self, artifact_manager):
+  def register_artifacts(self):
     pass
 
   def run(self):
@@ -3992,7 +3992,7 @@ class Pass6(Pass):
 
 
 class Pass7(Pass):
-  def register_artifacts(self, artifact_manager):
+  def register_artifacts(self):
     pass
 
   def run(self):
@@ -4031,7 +4031,7 @@ class Pass7(Pass):
 
 
 class Pass8(Pass):
-  def register_artifacts(self, artifact_manager):
+  def register_artifacts(self):
     pass
 
   def run(self):
@@ -4077,11 +4077,10 @@ def convert(start_pass, end_pass):
 
   StatsKeeper().set_start_time(time.time())
   cleanup = Cleanup()
-  artifact_manager = ArtifactManager()
 
   # Inform the artifact manager when artifacts are created and used:
   for the_pass in _passes:
-    the_pass.register_artifacts(artifact_manager)
+    the_pass.register_artifacts()
 
   # Tell the artifact manager about passes that are being skipped this run:
   for the_pass in _passes[0:start_pass - 1]:

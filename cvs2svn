@@ -70,6 +70,7 @@ from cvs2svn_lib.database import \
 
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.cleanup import Cleanup
+from cvs2svn_lib.artifact_manager import ArtifactManager
 from cvs2svn_lib import key_generator
 from cvs2svn_lib import cvs_revision
 from cvs2svn_lib import cvs_repository
@@ -3577,6 +3578,11 @@ class StdoutDelegate(SVNRepositoryMirrorDelegate):
 class Pass:
   """Base class for one step of the conversion."""
 
+  def register_artifacts(self, artifact_manager):
+    """Register artifacts (created and needed) in ARTIFACT_MANAGER."""
+
+    raise NotImplementedError
+
   def run(self):
     """Carry out this step of the conversion."""
 
@@ -3584,6 +3590,9 @@ class Pass:
 
 
 class Pass1(Pass):
+  def register_artifacts(self, artifact_manager):
+    pass
+
   def run(self):
     OS_SEP_PLUS_ATTIC = os.sep + 'Attic'
     Log().write(Log.QUIET, "Examining all CVS ',v' files...")
@@ -3652,6 +3661,9 @@ class Pass1(Pass):
 
 class Pass2(Pass):
   """Pass 2: clean up the revision information."""
+
+  def register_artifacts(self, artifact_manager):
+    pass
 
   def run(self):
     symbol_db = SymbolDatabase()
@@ -3899,6 +3911,9 @@ class Pass2(Pass):
 
 
 class Pass3(Pass):
+  def register_artifacts(self, artifact_manager):
+    pass
+
   def run(self):
     Log().write(Log.QUIET, "Sorting CVS revisions...")
     sort_file(Cleanup().temp(config.CLEAN_REVS_DATAFILE),
@@ -3907,6 +3922,9 @@ class Pass3(Pass):
 
 
 class Pass4(Pass):
+  def register_artifacts(self, artifact_manager):
+    pass
+
   def run(self):
     """Iterate through sorted revs, storing them in a database.
     If we're not doing a trunk-only conversion, generate the
@@ -3946,6 +3964,9 @@ class Pass5(Pass):
   CVSRevisions that represent an opening or closing for a path on a
   branch or tag.  See SymbolingsLogger for more details."""
 
+  def register_artifacts(self, artifact_manager):
+    pass
+
   def run(self):
     Log().write(Log.QUIET, "Mapping CVS revisions to Subversion commits...")
 
@@ -3963,6 +3984,9 @@ class Pass5(Pass):
 
 
 class Pass6(Pass):
+  def register_artifacts(self, artifact_manager):
+    pass
+
   def run(self):
     Log().write(Log.QUIET, "Sorting symbolic name source revisions...")
 
@@ -3973,6 +3997,9 @@ class Pass6(Pass):
 
 
 class Pass7(Pass):
+  def register_artifacts(self, artifact_manager):
+    pass
+
   def run(self):
     Log().write(Log.QUIET, "Determining offsets for all symbolic names...")
 
@@ -4009,6 +4036,9 @@ class Pass7(Pass):
 
 
 class Pass8(Pass):
+  def register_artifacts(self, artifact_manager):
+    pass
+
   def run(self):
     svncounter = 2 # Repository initialization is 1.
     repos = SVNRepositoryMirror()
@@ -4050,13 +4080,24 @@ _passes = [
 def convert(start_pass, end_pass):
   """Convert a CVS repository to an SVN repository."""
 
+  StatsKeeper().set_start_time(time.time())
   cleanup = Cleanup()
+  artifact_manager = ArtifactManager()
+
+  # Inform the artifact manager when artifacts are created and used:
+  for the_pass in _passes:
+    the_pass.register_artifacts(artifact_manager)
+
+  # Tell the artifact manager about passes that are being skipped this run:
+  for the_pass in _passes[0:start_pass - 1]:
+    artifact_manager.pass_skipped(the_pass)
+
   times = [ None ] * (end_pass + 1)
   times[start_pass - 1] = time.time()
-  StatsKeeper().set_start_time(time.time())
   for i in range(start_pass - 1, end_pass):
+    the_pass = _passes[i]
     Log().write(Log.QUIET, '----- pass %d -----' % (i + 1))
-    _passes[i].run()
+    the_pass.run()
     times[i + 1] = time.time()
     StatsKeeper().log_duration_for_pass(times[i + 1] - times[i], i + 1)
     # Dispose of items in Ctx() not intended to live past the end of the pass
@@ -4068,6 +4109,16 @@ def convert(start_pass, end_pass):
     if not Ctx().skip_cleanup:
       cleanup.cleanup(_passes[i].__class__)
     StatsKeeper().set_end_time(time.time())
+    # Allow the artifact manager to clean up artifacts that are no
+    # longer needed:
+    artifact_manager.pass_done(the_pass)
+
+  # Tell the artifact manager about passes that are being deferred:
+  for the_pass in _passes[end_pass:]:
+    artifact_manager.pass_deferred(the_pass)
+
+  # Consistency check:
+  artifact_manager.check_clean()
 
   Log().write(Log.QUIET, StatsKeeper())
   if end_pass < 4:

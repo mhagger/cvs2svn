@@ -156,7 +156,7 @@ class ArtifactManager:
       artifacts = self._pass_needs[which_pass].keys()
     except KeyError:
       # No artifacts were needed for that pass:
-      return
+      return []
 
     del self._pass_needs[which_pass]
 

@@ -278,7 +278,7 @@ class StatsKeeper:
     self.__dict__ = self.__shared_state
     if self.__dict__:
       return
-    self.filename = Cleanup().temp(config.STATISTICS_FILE, pass8)
+    self.filename = Cleanup().temp(config.STATISTICS_FILE, Pass8)
     # This can get kinda large, so we don't store it in our data dict.
     self.repos_files = { }
 
@@ -422,7 +422,7 @@ class LastSymbolicNameDatabase:
   # rev.
   def create_database(self):
     symbol_revs_db = Database(
-        Cleanup().temp(config.SYMBOL_LAST_CVS_REVS_DB, pass5), DB_OPEN_NEW)
+        Cleanup().temp(config.SYMBOL_LAST_CVS_REVS_DB, Pass5), DB_OPEN_NEW)
     for sym, rev_unique_key in self.symbols.items():
       ary = symbol_revs_db.get(rev_unique_key, [])
       ary.append(sym)
@@ -437,7 +437,7 @@ class CVSRevisionDatabase:
     """Initialize an instance, opening database in MODE (like the MODE
     argument to Database or anydbm.open())."""
 
-    self.cvs_revs_db = SDatabase(Cleanup().temp(config.CVS_REVS_DB, pass8),
+    self.cvs_revs_db = SDatabase(Cleanup().temp(config.CVS_REVS_DB, Pass8),
                                  mode)
 
   def log_revision(self, c_rev):
@@ -460,7 +460,7 @@ class TagsDatabase:
   None.)"""
 
   def __init__(self, mode):
-    self.db = SDatabase(Cleanup().temp(config.TAGS_DB, pass8), mode)
+    self.db = SDatabase(Cleanup().temp(config.TAGS_DB, Pass8), mode)
 
   def add(self, item):
     self.db[item] = ''
@@ -684,11 +684,11 @@ class SymbolDatabase:
   def write(self):
     """Store the symbol database to files."""
 
-    f = open(Cleanup().temp(config.TAGS_LIST, pass2), "w")
+    f = open(Cleanup().temp(config.TAGS_LIST, Pass2), "w")
     for tag, count in self.tags.items():
       f.write("%s %d\n" % (tag, count))
 
-    f = open(Cleanup().temp(config.BRANCHES_LIST, pass2), "w")
+    f = open(Cleanup().temp(config.BRANCHES_LIST, Pass2), "w")
     for branch, info in self.branches.items():
       f.write("%s %d %d" % (branch, info[0], info[1]))
       if info[2]:
@@ -1144,12 +1144,12 @@ class CollectData:
   each file to be parsed."""
 
   def __init__(self):
-    self.revs = open(Cleanup().temp(config.REVS_DATAFILE, pass2), 'w')
-    self.resync = open(Cleanup().temp(config.RESYNC_DATAFILE, pass2), 'w')
+    self.revs = open(Cleanup().temp(config.REVS_DATAFILE, Pass2), 'w')
+    self.resync = open(Cleanup().temp(config.RESYNC_DATAFILE, Pass2), 'w')
     self.default_branches_db = SDatabase(
-        Cleanup().temp(config.DEFAULT_BRANCHES_DB, pass5), DB_OPEN_NEW)
+        Cleanup().temp(config.DEFAULT_BRANCHES_DB, Pass5), DB_OPEN_NEW)
     self.metadata_db = Database(
-        Cleanup().temp(config.METADATA_DB, pass8), DB_OPEN_NEW)
+        Cleanup().temp(config.METADATA_DB, Pass8), DB_OPEN_NEW)
     self.fatal_errors = []
     self.num_files = 0
     self.symbol_db = SymbolDatabase()
@@ -1199,9 +1199,9 @@ class SymbolingsLogger:
 
   def __init__(self):
     self.symbolings = open(
-        Cleanup().temp(config.SYMBOL_OPENINGS_CLOSINGS, pass6), 'w')
+        Cleanup().temp(config.SYMBOL_OPENINGS_CLOSINGS, Pass6), 'w')
     self.closings = open(
-        Cleanup().temp(config.SYMBOL_CLOSINGS_TMP, pass5), 'w')
+        Cleanup().temp(config.SYMBOL_CLOSINGS_TMP, Pass5), 'w')
 
     # This keys of this dictionary are *source* cvs_paths for which
     # we've encountered an 'opening' on the default branch.  The
@@ -1300,9 +1300,9 @@ class PersistenceManager:
     if mode not in (DB_OPEN_NEW, DB_OPEN_READ):
       raise RuntimeError, "Invalid 'mode' argument to PersistenceManager"
     self.svn2cvs_db = Database(
-        Cleanup().temp(config.SVN_REVNUMS_TO_CVS_REVS, pass8), mode)
+        Cleanup().temp(config.SVN_REVNUMS_TO_CVS_REVS, Pass8), mode)
     self.cvs2svn_db = Database(
-        Cleanup().temp(config.CVS_REVS_TO_SVN_REVNUMS, pass8), mode)
+        Cleanup().temp(config.CVS_REVS_TO_SVN_REVNUMS, Pass8), mode)
     self.svn_commit_metadata = Database(
         Cleanup().temp(config.METADATA_DB), DB_OPEN_READ)
     self.cvs_revisions = CVSRevisionDatabase(DB_OPEN_READ)
@@ -2503,13 +2503,13 @@ class SVNRepositoryMirror:
 
     # This corresponds to the 'revisions' table in a Subversion fs.
     self.revs_db = SDatabase(
-        Cleanup().temp(config.SVN_MIRROR_REVISIONS_DB, pass8), DB_OPEN_NEW)
+        Cleanup().temp(config.SVN_MIRROR_REVISIONS_DB, Pass8), DB_OPEN_NEW)
 
     # This corresponds to the 'nodes' table in a Subversion fs.  (We
     # don't need a 'representations' or 'strings' table because we
     # only track metadata, not file contents.)
     self.nodes_db = Database(
-        Cleanup().temp(config.SVN_MIRROR_NODES_DB, pass8), DB_OPEN_NEW)
+        Cleanup().temp(config.SVN_MIRROR_NODES_DB, Pass8), DB_OPEN_NEW)
 
     # Start at revision 0 without a root node.  It will be created
     # by _open_writable_root_node.
@@ -3574,458 +3574,476 @@ class StdoutDelegate(SVNRepositoryMirrorDelegate):
     Log().write(Log.QUIET, "Done.")
 
 
-def pass1():
-  OS_SEP_PLUS_ATTIC = os.sep + 'Attic'
-  Log().write(Log.QUIET, "Examining all CVS ',v' files...")
-  cd = CollectData()
+class Pass:
+  """Base class for one step of the conversion."""
 
-  def visit_file(baton, dirname, files):
-    cd = baton
-    for fname in files:
-      verify_filename_legal(fname)
-      if not fname.endswith(',v'):
-        continue
-      cd.found_valid_file = 1
-      pathname = os.path.join(dirname, fname)
-      if dirname.endswith(OS_SEP_PLUS_ATTIC):
-        # drop the 'Attic' portion from the pathname for the canonical name.
-        fdc = FileDataCollector(cd, os.path.join(dirname[:-6], fname),
-                                pathname)
-      else:
-        # If this file also exists in the attic, it's a fatal error
-        attic_path = os.path.join(dirname, 'Attic', fname)
-        if os.path.exists(attic_path):
-          err = "%s: A CVS repository cannot contain both %s and %s" \
-                % (error_prefix, pathname, attic_path)
+  def run(self):
+    """Carry out this step of the conversion."""
+
+    raise NotImplementedError
+
+
+class Pass1(Pass):
+  def run(self):
+    OS_SEP_PLUS_ATTIC = os.sep + 'Attic'
+    Log().write(Log.QUIET, "Examining all CVS ',v' files...")
+    cd = CollectData()
+
+    def visit_file(baton, dirname, files):
+      cd = baton
+      for fname in files:
+        verify_filename_legal(fname)
+        if not fname.endswith(',v'):
+          continue
+        cd.found_valid_file = 1
+        pathname = os.path.join(dirname, fname)
+        if dirname.endswith(OS_SEP_PLUS_ATTIC):
+          # drop the 'Attic' portion from the pathname for the canonical name.
+          fdc = FileDataCollector(cd, os.path.join(dirname[:-6], fname),
+                                  pathname)
+        else:
+          # If this file also exists in the attic, it's a fatal error
+          attic_path = os.path.join(dirname, 'Attic', fname)
+          if os.path.exists(attic_path):
+            err = "%s: A CVS repository cannot contain both %s and %s" \
+                  % (error_prefix, pathname, attic_path)
+            sys.stderr.write(err + '\n')
+            cd.fatal_errors.append(err)
+          fdc = FileDataCollector(cd, pathname, pathname)
+        Log().write(Log.NORMAL, pathname)
+        try:
+          cvs2svn_rcsparse.parse(open(pathname, 'rb'), fdc)
+        except (cvs2svn_rcsparse.common.RCSParseError, ValueError,
+                RuntimeError):
+          err = "%s: '%s' is not a valid ,v file" \
+                % (error_prefix, pathname)
           sys.stderr.write(err + '\n')
           cd.fatal_errors.append(err)
-        fdc = FileDataCollector(cd, pathname, pathname)
-      Log().write(Log.NORMAL, pathname)
-      try:
-        cvs2svn_rcsparse.parse(open(pathname, 'rb'), fdc)
-      except (cvs2svn_rcsparse.common.RCSParseError, ValueError,
-              RuntimeError):
-        err = "%s: '%s' is not a valid ,v file" \
-              % (error_prefix, pathname)
-        sys.stderr.write(err + '\n')
-        cd.fatal_errors.append(err)
-      except:
-        Log().write(Log.WARN,
-                    "Exception occurred while parsing %s" % pathname)
-        raise
+        except:
+          Log().write(Log.WARN,
+                      "Exception occurred while parsing %s" % pathname)
+          raise
 
-  os.path.walk(Ctx().project.project_cvs_repos_path, visit_file, cd)
-  Log().write(Log.VERBOSE, 'Processed', cd.num_files, 'files')
+    os.path.walk(Ctx().project.project_cvs_repos_path, visit_file, cd)
+    Log().write(Log.VERBOSE, 'Processed', cd.num_files, 'files')
 
-  cd.write_symbol_db()
+    cd.write_symbol_db()
 
-  if len(cd.fatal_errors) > 0:
-    raise FatalException("Pass 1 complete.\n"
-                         + "=" * 75 + "\n"
-                         + "Error summary:\n"
-                         + "\n".join(cd.fatal_errors) + "\n"
-                         + "Exited due to fatal error(s).\n")
+    if len(cd.fatal_errors) > 0:
+      raise FatalException("Pass 1 complete.\n"
+                           + "=" * 75 + "\n"
+                           + "Error summary:\n"
+                           + "\n".join(cd.fatal_errors) + "\n"
+                           + "Exited due to fatal error(s).\n")
 
-  if cd.found_valid_file is None:
-    raise FatalException(
-        "\n"
-        "No RCS files found in your CVS Repository!\n"
-        "Are you absolutely certain you are pointing cvs2svn\n"
-        "at a CVS repository?\n"
-        "\n"
-        "Exited due to fatal error(s).\n")
+    if cd.found_valid_file is None:
+      raise FatalException(
+          "\n"
+          "No RCS files found in your CVS Repository!\n"
+          "Are you absolutely certain you are pointing cvs2svn\n"
+          "at a CVS repository?\n"
+          "\n"
+          "Exited due to fatal error(s).\n")
 
-  StatsKeeper().reset_c_rev_info()
-  StatsKeeper().archive()
-  Log().write(Log.QUIET, "Done")
+    StatsKeeper().reset_c_rev_info()
+    StatsKeeper().archive()
+    Log().write(Log.QUIET, "Done")
 
 
-def pass2():
+class Pass2(Pass):
   """Pass 2: clean up the revision information."""
 
-  symbol_db = SymbolDatabase()
-  symbol_db.read()
+  def run(self):
+    symbol_db = SymbolDatabase()
+    symbol_db.read()
 
-  # Convert the list of regexps to a list of strings
-  excludes = symbol_db.find_excluded_symbols(Ctx().excludes)
+    # Convert the list of regexps to a list of strings
+    excludes = symbol_db.find_excluded_symbols(Ctx().excludes)
 
-  error_detected = 0
+    error_detected = 0
 
-  Log().write(Log.QUIET, "Checking for blocked exclusions...")
-  blocked_excludes = symbol_db.find_blocked_excludes(excludes)
-  if blocked_excludes:
-    for branch, blockers in blocked_excludes.items():
-      sys.stderr.write(error_prefix + ": The branch '%s' cannot be "
-                       "excluded because the following symbols depend "
-                       "on it:\n" % (branch))
-      for blocker in blockers:
-        sys.stderr.write("    '%s'\n" % (blocker))
-    sys.stderr.write("\n")
-    error_detected = 1
+    Log().write(Log.QUIET, "Checking for blocked exclusions...")
+    blocked_excludes = symbol_db.find_blocked_excludes(excludes)
+    if blocked_excludes:
+      for branch, blockers in blocked_excludes.items():
+        sys.stderr.write(error_prefix + ": The branch '%s' cannot be "
+                         "excluded because the following symbols depend "
+                         "on it:\n" % (branch))
+        for blocker in blockers:
+          sys.stderr.write("    '%s'\n" % (blocker))
+      sys.stderr.write("\n")
+      error_detected = 1
 
-  Log().write(Log.QUIET, "Checking for forced tags with commits...")
-  invalid_forced_tags = [ ]
-  for forced_tag in Ctx().forced_tags:
-    if excludes.has_key(forced_tag):
-      continue
-    if symbol_db.branch_has_commit(forced_tag):
-      invalid_forced_tags.append(forced_tag)
-  if invalid_forced_tags:
-    sys.stderr.write(error_prefix + ": The following branches cannot be "
-                     "forced to be tags because they have commits:\n")
-    for tag in invalid_forced_tags:
-      sys.stderr.write("    '%s'\n" % (tag))
-    sys.stderr.write("\n")
-    error_detected = 1
-
-  Log().write(Log.QUIET, "Checking for tag/branch mismatches...")
-  mismatches = symbol_db.find_mismatches(excludes)
-  def is_not_forced(mismatch):
-    name = mismatch[0]
-    return not (name in Ctx().forced_tags or name in Ctx().forced_branches)
-  mismatches = filter(is_not_forced, mismatches)
-  if mismatches:
-    sys.stderr.write(error_prefix + ": The following symbols are tags "
-                     "in some files and branches in others.\nUse "
-                     "--force-tag, --force-branch and/or --exclude to "
-                     "resolve the symbols.\n")
-    for name, tag_count, branch_count, commit_count in mismatches:
-      sys.stderr.write("    '%s' is a tag in %d files, a branch in "
-                       "%d files and has commits in %d files.\n"
-                       % (name, tag_count, branch_count, commit_count))
-    error_detected = 1
-
-  # Bail out now if we found errors
-  if error_detected:
-    sys.exit(1)
-
-  # Create the tags database
-  tags_db = TagsDatabase(DB_OPEN_NEW)
-  for tag in symbol_db.tags:
-    if tag not in Ctx().forced_branches:
-      tags_db.add(tag)
-  for tag in Ctx().forced_tags:
-    tags_db.add(tag)
-
-  Log().write(Log.QUIET, "Re-synchronizing CVS revision timestamps...")
-
-  # We may have recorded some changes in revisions' timestamp.  We need to
-  # scan for any other files which may have had the same log message and
-  # occurred at "the same time" and change their timestamps, too.
-
-  # read the resync data file
-  def read_resync(fname):
-    """Read the .resync file into memory."""
-
-    ### note that we assume that we can hold the entire resync file in
-    ### memory. really large repositories with whacky timestamps could
-    ### bust this assumption. should that ever happen, then it is possible
-    ### to split the resync file into pieces and make multiple passes,
-    ### using each piece.
-
-    #
-    # A digest maps to a sequence of lists which specify a lower and upper
-    # time bound for matching up the commit.  We keep a sequence of these
-    # because a number of checkins with the same log message (e.g. an empty
-    # log message) could need to be remapped.  We also make them a list
-    # because we will dynamically expand the lower/upper bound as we find
-    # commits that fall into a particular msg and time range.
-    #
-    # resync == digest -> [ [old_time_lower, old_time_upper, new_time], ... ]
-    #
-    resync = { }
-
-    for line in fileinput.FileInput(fname):
-      t1 = int(line[:8], 16)
-      digest = line[9:DIGEST_END_IDX]
-      t2 = int(line[DIGEST_END_IDX+1:], 16)
-      t1_l = t1 - config.COMMIT_THRESHOLD/2
-      t1_u = t1 + config.COMMIT_THRESHOLD/2
-      resync.setdefault(digest, []).append([t1_l, t1_u, t2])
-
-    # For each digest, sort the resync items in it in increasing order,
-    # based on the lower time bound.
-    for val in resync.values():
-      val.sort()
-
-    return resync
-
-  resync = read_resync(Cleanup().temp(config.RESYNC_DATAFILE))
-
-  output = open(Cleanup().temp(config.CLEAN_REVS_DATAFILE, pass3), 'w')
-
-  tweaked_timestamps_db = Database(
-      Cleanup().temp(config.TWEAKED_TIMESTAMPS_DB, pass2), DB_OPEN_NEW)
-
-  # process the revisions file, looking for items to clean up
-  for line in fileinput.FileInput(Cleanup().temp(config.REVS_DATAFILE)):
-    c_rev = cvs_revision.parse_cvs_revision(Ctx(), line[:-1])
-
-    # Skip this entire revision if it's on an excluded branch
-    if excludes.has_key(c_rev.branch_name):
-      continue
-
-    new_prev_ts = None
-    if c_rev.prev_rev is not None:
-      new_prev_ts = tweaked_timestamps_db.get(
-          c_rev.prev_rev.unique_key(), None)
-    if new_prev_ts:
-      c_rev.prev_timestamp = new_prev_ts
-
-    new_next_ts = None
-    if c_rev.next_rev is not None:
-      new_next_ts = tweaked_timestamps_db.get(
-        c_rev.next_rev.unique_key(), None)
-    if new_next_ts:
-      c_rev.next_timestamp = new_next_ts
-
-    # Remove all references to excluded tags and branches
-    def not_excluded(symbol, excludes=excludes):
-      return not excludes.has_key(symbol)
-    c_rev.branches = filter(not_excluded, c_rev.branches)
-    c_rev.tags = filter(not_excluded, c_rev.tags)
-
-    # Convert all branches that are forced to be tags
+    Log().write(Log.QUIET, "Checking for forced tags with commits...")
+    invalid_forced_tags = [ ]
     for forced_tag in Ctx().forced_tags:
-      if forced_tag in c_rev.branches:
-        c_rev.branches.remove(forced_tag)
-        c_rev.tags.append(forced_tag)
+      if excludes.has_key(forced_tag):
+        continue
+      if symbol_db.branch_has_commit(forced_tag):
+        invalid_forced_tags.append(forced_tag)
+    if invalid_forced_tags:
+      sys.stderr.write(error_prefix + ": The following branches cannot be "
+                       "forced to be tags because they have commits:\n")
+      for tag in invalid_forced_tags:
+        sys.stderr.write("    '%s'\n" % (tag))
+      sys.stderr.write("\n")
+      error_detected = 1
 
-    # Convert all tags that are forced to be branches
-    for forced_branch in Ctx().forced_branches:
-      if forced_branch in c_rev.tags:
-        c_rev.tags.remove(forced_branch)
-        c_rev.branches.append(forced_branch)
+    Log().write(Log.QUIET, "Checking for tag/branch mismatches...")
+    mismatches = symbol_db.find_mismatches(excludes)
+    def is_not_forced(mismatch):
+      name = mismatch[0]
+      return not (name in Ctx().forced_tags or name in Ctx().forced_branches)
+    mismatches = filter(is_not_forced, mismatches)
+    if mismatches:
+      sys.stderr.write(error_prefix + ": The following symbols are tags "
+                       "in some files and branches in others.\nUse "
+                       "--force-tag, --force-branch and/or --exclude to "
+                       "resolve the symbols.\n")
+      for name, tag_count, branch_count, commit_count in mismatches:
+        sys.stderr.write("    '%s' is a tag in %d files, a branch in "
+                         "%d files and has commits in %d files.\n"
+                         % (name, tag_count, branch_count, commit_count))
+      error_detected = 1
 
-    # see if this is "near" any of the resync records we
-    # have recorded for this digest [of the log message].
-    for record in resync.get(c_rev.digest, []):
-      if record[2] == c_rev.timestamp:
-        # This means that either c_rev is the same revision that
-        # caused the resync record to exist, or c_rev is a different
-        # CVS revision that happens to have the same timestamp.  In
-        # either case, we don't have to do anything, so we...
+    # Bail out now if we found errors
+    if error_detected:
+      sys.exit(1)
+
+    # Create the tags database
+    tags_db = TagsDatabase(DB_OPEN_NEW)
+    for tag in symbol_db.tags:
+      if tag not in Ctx().forced_branches:
+        tags_db.add(tag)
+    for tag in Ctx().forced_tags:
+      tags_db.add(tag)
+
+    Log().write(Log.QUIET, "Re-synchronizing CVS revision timestamps...")
+
+    # We may have recorded some changes in revisions' timestamp.  We need to
+    # scan for any other files which may have had the same log message and
+    # occurred at "the same time" and change their timestamps, too.
+
+    # read the resync data file
+    def read_resync(fname):
+      """Read the .resync file into memory."""
+
+      ### note that we assume that we can hold the entire resync file in
+      ### memory. really large repositories with whacky timestamps could
+      ### bust this assumption. should that ever happen, then it is possible
+      ### to split the resync file into pieces and make multiple passes,
+      ### using each piece.
+
+      #
+      # A digest maps to a sequence of lists which specify a lower and upper
+      # time bound for matching up the commit.  We keep a sequence of these
+      # because a number of checkins with the same log message (e.g. an empty
+      # log message) could need to be remapped.  We also make them a list
+      # because we will dynamically expand the lower/upper bound as we find
+      # commits that fall into a particular msg and time range.
+      #
+      # resync == digest -> [[old_time_lower, old_time_upper, new_time], ...]
+      #
+      resync = { }
+
+      for line in fileinput.FileInput(fname):
+        t1 = int(line[:8], 16)
+        digest = line[9:DIGEST_END_IDX]
+        t2 = int(line[DIGEST_END_IDX+1:], 16)
+        t1_l = t1 - config.COMMIT_THRESHOLD/2
+        t1_u = t1 + config.COMMIT_THRESHOLD/2
+        resync.setdefault(digest, []).append([t1_l, t1_u, t2])
+
+      # For each digest, sort the resync items in it in increasing order,
+      # based on the lower time bound.
+      for val in resync.values():
+        val.sort()
+
+      return resync
+
+    resync = read_resync(Cleanup().temp(config.RESYNC_DATAFILE))
+
+    output = open(Cleanup().temp(config.CLEAN_REVS_DATAFILE, Pass3), 'w')
+
+    tweaked_timestamps_db = Database(
+        Cleanup().temp(config.TWEAKED_TIMESTAMPS_DB, Pass2), DB_OPEN_NEW)
+
+    # process the revisions file, looking for items to clean up
+    for line in fileinput.FileInput(Cleanup().temp(config.REVS_DATAFILE)):
+      c_rev = cvs_revision.parse_cvs_revision(Ctx(), line[:-1])
+
+      # Skip this entire revision if it's on an excluded branch
+      if excludes.has_key(c_rev.branch_name):
         continue
 
-      if record[0] <= c_rev.timestamp <= record[1]:
-        # bingo!  We probably want to remap the time on this c_rev,
-        # unless the remapping would be useless because the new time
-        # would fall outside the COMMIT_THRESHOLD window for this
-        # commit group.
-        new_timestamp = record[2]
-        # If the new timestamp is earlier than that of our previous revision
-        if new_timestamp < c_rev.prev_timestamp:
-          desc = ("%s: Attempt to set timestamp of revision %s on file %s"
-                  + " to time %s, which is before previous the time of"
-                  + " revision %s (%s):")
-          Log().write(Log.WARN, desc % (warning_prefix, c_rev.rev,
-                                        c_rev.cvs_path, new_timestamp,
-                                        c_rev.prev_rev.rev,
-                                        c_rev.prev_timestamp))
-          # If resyncing our rev to c_rev.prev_timestamp + 1 will place
-          # the timestamp of c_rev within COMMIT_THRESHOLD of the
-          # attempted resync time, then sync back to c_rev.prev_timestamp
-          # + 1...
-          if ((c_rev.prev_timestamp + 1) - new_timestamp) \
-                 < config.COMMIT_THRESHOLD:
-            new_timestamp = c_rev.prev_timestamp + 1
-            Log().write(Log.WARN, "%s: Time set to %s" % (warning_prefix,
-                                                          new_timestamp))
-          else:
-            Log().write(Log.WARN, "%s: Timestamp left untouched" %
-                        warning_prefix)
-            continue
+      new_prev_ts = None
+      if c_rev.prev_rev is not None:
+        new_prev_ts = tweaked_timestamps_db.get(
+            c_rev.prev_rev.unique_key(), None)
+      if new_prev_ts:
+        c_rev.prev_timestamp = new_prev_ts
 
-        # If the new timestamp is later than that of our next revision
-        elif c_rev.next_timestamp and new_timestamp > c_rev.next_timestamp:
-          desc = ("%s: Attempt to set timestamp of revision %s on file %s"
-                  + " to time %s, which is after time of next"
-                  + " revision %s (%s):")
-          Log().write(Log.WARN, desc % (warning_prefix, c_rev.rev,
-                                        c_rev.cvs_path, new_timestamp,
-                                        c_rev.next_rev.rev,
-                                        c_rev.next_timestamp))
-          # If resyncing our rev to c_rev.next_timestamp - 1 will place
-          # the timestamp of c_rev within COMMIT_THRESHOLD of the
-          # attempted resync time, then sync forward to c_rev.next_timestamp
-          # - 1...
-          if (new_timestamp - (c_rev.next_timestamp - 1)) \
-                 < config.COMMIT_THRESHOLD:
-            new_timestamp = c_rev.next_timestamp - 1
-            Log().write(Log.WARN, "%s: Time set to %s" % (warning_prefix,
-                                                          new_timestamp))
-          else:
-            Log().write(Log.WARN, "%s: Timestamp left untouched" %
-                        warning_prefix)
-            continue
+      new_next_ts = None
+      if c_rev.next_rev is not None:
+        new_next_ts = tweaked_timestamps_db.get(
+          c_rev.next_rev.unique_key(), None)
+      if new_next_ts:
+        c_rev.next_timestamp = new_next_ts
 
-        # Fix for Issue #71: Avoid resyncing two consecutive revisions
-        # to the same timestamp.
-        elif (new_timestamp == c_rev.prev_timestamp
-              or new_timestamp == c_rev.next_timestamp):
+      # Remove all references to excluded tags and branches
+      def not_excluded(symbol, excludes=excludes):
+        return not excludes.has_key(symbol)
+      c_rev.branches = filter(not_excluded, c_rev.branches)
+      c_rev.tags = filter(not_excluded, c_rev.tags)
+
+      # Convert all branches that are forced to be tags
+      for forced_tag in Ctx().forced_tags:
+        if forced_tag in c_rev.branches:
+          c_rev.branches.remove(forced_tag)
+          c_rev.tags.append(forced_tag)
+
+      # Convert all tags that are forced to be branches
+      for forced_branch in Ctx().forced_branches:
+        if forced_branch in c_rev.tags:
+          c_rev.tags.remove(forced_branch)
+          c_rev.branches.append(forced_branch)
+
+      # see if this is "near" any of the resync records we
+      # have recorded for this digest [of the log message].
+      for record in resync.get(c_rev.digest, []):
+        if record[2] == c_rev.timestamp:
+          # This means that either c_rev is the same revision that
+          # caused the resync record to exist, or c_rev is a different
+          # CVS revision that happens to have the same timestamp.  In
+          # either case, we don't have to do anything, so we...
           continue
 
-        # adjust the time range. we want the COMMIT_THRESHOLD from the
-        # bounds of the earlier/latest commit in this group.
-        record[0] = min(record[0],
-                        c_rev.timestamp - config.COMMIT_THRESHOLD/2)
-        record[1] = max(record[1],
-                        c_rev.timestamp + config.COMMIT_THRESHOLD/2)
+        if record[0] <= c_rev.timestamp <= record[1]:
+          # bingo!  We probably want to remap the time on this c_rev,
+          # unless the remapping would be useless because the new time
+          # would fall outside the COMMIT_THRESHOLD window for this
+          # commit group.
+          new_timestamp = record[2]
+          # If the new timestamp is earlier than that of our previous revision
+          if new_timestamp < c_rev.prev_timestamp:
+            desc = ("%s: Attempt to set timestamp of revision %s on file %s"
+                    + " to time %s, which is before previous the time of"
+                    + " revision %s (%s):")
+            Log().write(Log.WARN, desc % (warning_prefix, c_rev.rev,
+                                          c_rev.cvs_path, new_timestamp,
+                                          c_rev.prev_rev.rev,
+                                          c_rev.prev_timestamp))
+            # If resyncing our rev to c_rev.prev_timestamp + 1 will place
+            # the timestamp of c_rev within COMMIT_THRESHOLD of the
+            # attempted resync time, then sync back to c_rev.prev_timestamp
+            # + 1...
+            if ((c_rev.prev_timestamp + 1) - new_timestamp) \
+                   < config.COMMIT_THRESHOLD:
+              new_timestamp = c_rev.prev_timestamp + 1
+              Log().write(Log.WARN, "%s: Time set to %s" % (warning_prefix,
+                                                            new_timestamp))
+            else:
+              Log().write(Log.WARN, "%s: Timestamp left untouched" %
+                          warning_prefix)
+              continue
 
-        msg = "PASS2 RESYNC: '%s' (%s): old time='%s' delta=%ds" \
-              % (c_rev.cvs_path, c_rev.rev, time.ctime(c_rev.timestamp),
-                 new_timestamp - c_rev.timestamp)
-        Log().write(Log.VERBOSE, msg)
+          # If the new timestamp is later than that of our next revision
+          elif c_rev.next_timestamp and new_timestamp > c_rev.next_timestamp:
+            desc = ("%s: Attempt to set timestamp of revision %s on file %s"
+                    + " to time %s, which is after time of next"
+                    + " revision %s (%s):")
+            Log().write(Log.WARN, desc % (warning_prefix, c_rev.rev,
+                                          c_rev.cvs_path, new_timestamp,
+                                          c_rev.next_rev.rev,
+                                          c_rev.next_timestamp))
+            # If resyncing our rev to c_rev.next_timestamp - 1 will place
+            # the timestamp of c_rev within COMMIT_THRESHOLD of the
+            # attempted resync time, then sync forward to c_rev.next_timestamp
+            # - 1...
+            if (new_timestamp - (c_rev.next_timestamp - 1)) \
+                   < config.COMMIT_THRESHOLD:
+              new_timestamp = c_rev.next_timestamp - 1
+              Log().write(Log.WARN, "%s: Time set to %s" % (warning_prefix,
+                                                            new_timestamp))
+            else:
+              Log().write(Log.WARN, "%s: Timestamp left untouched" %
+                          warning_prefix)
+              continue
 
-        c_rev.timestamp = new_timestamp
-        tweaked_timestamps_db[c_rev.unique_key()] = new_timestamp
+          # Fix for Issue #71: Avoid resyncing two consecutive revisions
+          # to the same timestamp.
+          elif (new_timestamp == c_rev.prev_timestamp
+                or new_timestamp == c_rev.next_timestamp):
+            continue
 
-        # stop looking for hits
-        break
+          # adjust the time range. we want the COMMIT_THRESHOLD from the
+          # bounds of the earlier/latest commit in this group.
+          record[0] = min(record[0],
+                          c_rev.timestamp - config.COMMIT_THRESHOLD/2)
+          record[1] = max(record[1],
+                          c_rev.timestamp + config.COMMIT_THRESHOLD/2)
 
-    output.write(str(c_rev) + "\n")
-  Log().write(Log.QUIET, "Done")
+          msg = "PASS2 RESYNC: '%s' (%s): old time='%s' delta=%ds" \
+                % (c_rev.cvs_path, c_rev.rev, time.ctime(c_rev.timestamp),
+                   new_timestamp - c_rev.timestamp)
+          Log().write(Log.VERBOSE, msg)
+
+          c_rev.timestamp = new_timestamp
+          tweaked_timestamps_db[c_rev.unique_key()] = new_timestamp
+
+          # stop looking for hits
+          break
+
+      output.write(str(c_rev) + "\n")
+    Log().write(Log.QUIET, "Done")
 
 
-def pass3():
-  Log().write(Log.QUIET, "Sorting CVS revisions...")
-  sort_file(Cleanup().temp(config.CLEAN_REVS_DATAFILE),
-            Cleanup().temp(config.SORTED_REVS_DATAFILE, pass5))
-  Log().write(Log.QUIET, "Done")
+class Pass3(Pass):
+  def run(self):
+    Log().write(Log.QUIET, "Sorting CVS revisions...")
+    sort_file(Cleanup().temp(config.CLEAN_REVS_DATAFILE),
+              Cleanup().temp(config.SORTED_REVS_DATAFILE, Pass5))
+    Log().write(Log.QUIET, "Done")
 
 
-def pass4():
-  """Iterate through sorted revs, storing them in a database.
-  If we're not doing a trunk-only conversion, generate the
-  LastSymbolicNameDatabase, which contains the last CVSRevision
-  that is a source for each tag or branch."""
+class Pass4(Pass):
+  def run(self):
+    """Iterate through sorted revs, storing them in a database.
+    If we're not doing a trunk-only conversion, generate the
+    LastSymbolicNameDatabase, which contains the last CVSRevision
+    that is a source for each tag or branch."""
 
-  Log().write(Log.QUIET,
-      "Copying CVS revision data from flat file to database...")
-  cvs_revs_db = CVSRevisionDatabase(DB_OPEN_NEW)
-  if not Ctx().trunk_only:
     Log().write(Log.QUIET,
-        "Finding last CVS revisions for all symbolic names...")
-    last_sym_name_db = LastSymbolicNameDatabase()
-  else:
-    # This is to avoid testing Ctx().trunk_only every time around the loop
-    class DummyLSNDB:
-      def noop(*args): pass
-      log_revision = noop
-      create_database = noop
-    last_sym_name_db = DummyLSNDB()
+        "Copying CVS revision data from flat file to database...")
+    cvs_revs_db = CVSRevisionDatabase(DB_OPEN_NEW)
+    if not Ctx().trunk_only:
+      Log().write(Log.QUIET,
+          "Finding last CVS revisions for all symbolic names...")
+      last_sym_name_db = LastSymbolicNameDatabase()
+    else:
+      # This is to avoid testing Ctx().trunk_only every time around the loop
+      class DummyLSNDB:
+        def noop(*args): pass
+        log_revision = noop
+        create_database = noop
+      last_sym_name_db = DummyLSNDB()
 
-  for line in fileinput.FileInput(
-          Cleanup().temp(config.SORTED_REVS_DATAFILE)):
-    c_rev = cvs_revision.parse_cvs_revision(Ctx(), line[:-1])
-    cvs_revs_db.log_revision(c_rev)
-    last_sym_name_db.log_revision(c_rev)
-    StatsKeeper().record_c_rev(c_rev)
+    for line in fileinput.FileInput(
+            Cleanup().temp(config.SORTED_REVS_DATAFILE)):
+      c_rev = cvs_revision.parse_cvs_revision(Ctx(), line[:-1])
+      cvs_revs_db.log_revision(c_rev)
+      last_sym_name_db.log_revision(c_rev)
+      StatsKeeper().record_c_rev(c_rev)
 
-  last_sym_name_db.create_database()
-  StatsKeeper().archive()
-  Log().write(Log.QUIET, "Done")
+    last_sym_name_db.create_database()
+    StatsKeeper().archive()
+    Log().write(Log.QUIET, "Done")
 
 
-def pass5():
+class Pass5(Pass):
   """Generate the SVNCommit <-> CVSRevision mapping databases.
   CVSCommit._commit also calls SymbolingsLogger to register
   CVSRevisions that represent an opening or closing for a path on a
   branch or tag.  See SymbolingsLogger for more details."""
 
-  Log().write(Log.QUIET, "Mapping CVS revisions to Subversion commits...")
+  def run(self):
+    Log().write(Log.QUIET, "Mapping CVS revisions to Subversion commits...")
 
-  aggregator = CVSRevisionAggregator()
-  for line in fileinput.FileInput(
-          Cleanup().temp(config.SORTED_REVS_DATAFILE)):
-    c_rev = cvs_revision.parse_cvs_revision(Ctx(), line[:-1])
-    if not (Ctx().trunk_only and c_rev.branch_name is not None):
-      aggregator.process_revision(c_rev)
-  aggregator.flush()
+    aggregator = CVSRevisionAggregator()
+    for line in fileinput.FileInput(
+            Cleanup().temp(config.SORTED_REVS_DATAFILE)):
+      c_rev = cvs_revision.parse_cvs_revision(Ctx(), line[:-1])
+      if not (Ctx().trunk_only and c_rev.branch_name is not None):
+        aggregator.process_revision(c_rev)
+    aggregator.flush()
 
-  StatsKeeper().set_svn_rev_count(SVNCommit.revnum - 1)
-  StatsKeeper().archive()
-  Log().write(Log.QUIET, "Done")
-
-
-def pass6():
-  Log().write(Log.QUIET, "Sorting symbolic name source revisions...")
-
-  if not Ctx().trunk_only:
-    sort_file(Cleanup().temp(config.SYMBOL_OPENINGS_CLOSINGS),
-              Cleanup().temp(config.SYMBOL_OPENINGS_CLOSINGS_SORTED, pass8))
-  Log().write(Log.QUIET, "Done")
+    StatsKeeper().set_svn_rev_count(SVNCommit.revnum - 1)
+    StatsKeeper().archive()
+    Log().write(Log.QUIET, "Done")
 
 
-def pass7():
-  Log().write(Log.QUIET, "Determining offsets for all symbolic names...")
+class Pass6(Pass):
+  def run(self):
+    Log().write(Log.QUIET, "Sorting symbolic name source revisions...")
 
-  def generate_offsets_for_symbolings():
-    """This function iterates through all the lines in
-    SYMBOL_OPENINGS_CLOSINGS_SORTED, writing out a file mapping
-    SYMBOLIC_NAME to the file offset in SYMBOL_OPENINGS_CLOSINGS_SORTED
-    where SYMBOLIC_NAME is first encountered.  This will allow us to
-    seek to the various offsets in the file and sequentially read only
-    the openings and closings that we need."""
+    if not Ctx().trunk_only:
+      sort_file(Cleanup().temp(config.SYMBOL_OPENINGS_CLOSINGS),
+                Cleanup().temp(config.SYMBOL_OPENINGS_CLOSINGS_SORTED, Pass8))
+    Log().write(Log.QUIET, "Done")
 
-    ###PERF This is a fine example of a db that can be in-memory and
-    #just flushed to disk when we're done.  Later, it can just be sucked
-    #back into memory.
-    offsets_db = Database(
-        Cleanup().temp(config.SYMBOL_OFFSETS_DB, pass8), DB_OPEN_NEW)
 
-    file = open(Cleanup().temp(config.SYMBOL_OPENINGS_CLOSINGS_SORTED), 'r')
-    old_sym = ""
+class Pass7(Pass):
+  def run(self):
+    Log().write(Log.QUIET, "Determining offsets for all symbolic names...")
+
+    def generate_offsets_for_symbolings():
+      """This function iterates through all the lines in
+      SYMBOL_OPENINGS_CLOSINGS_SORTED, writing out a file mapping
+      SYMBOLIC_NAME to the file offset in SYMBOL_OPENINGS_CLOSINGS_SORTED
+      where SYMBOLIC_NAME is first encountered.  This will allow us to
+      seek to the various offsets in the file and sequentially read only
+      the openings and closings that we need."""
+
+      ###PERF This is a fine example of a db that can be in-memory and
+      #just flushed to disk when we're done.  Later, it can just be sucked
+      #back into memory.
+      offsets_db = Database(
+          Cleanup().temp(config.SYMBOL_OFFSETS_DB, Pass8), DB_OPEN_NEW)
+
+      file = open(Cleanup().temp(config.SYMBOL_OPENINGS_CLOSINGS_SORTED), 'r')
+      old_sym = ""
+      while 1:
+        fpos = file.tell()
+        line = file.readline()
+        if not line:
+          break
+        sym, svn_revnum, cvs_rev_key = line.split(" ", 2)
+        if sym != old_sym:
+          Log().write(Log.VERBOSE, " ", sym)
+          old_sym = sym
+          offsets_db[sym] = fpos
+
+    if not Ctx().trunk_only:
+      generate_offsets_for_symbolings()
+    Log().write(Log.QUIET, "Done.")
+
+
+class Pass8(Pass):
+  def run(self):
+    svncounter = 2 # Repository initialization is 1.
+    repos = SVNRepositoryMirror()
+    persistence_manager = PersistenceManager(DB_OPEN_READ)
+
+    if Ctx().target:
+      if not Ctx().dry_run:
+        repos.add_delegate(RepositoryDelegate())
+      Log().write(Log.QUIET, "Starting Subversion Repository.")
+    else:
+      if not Ctx().dry_run:
+        repos.add_delegate(DumpfileDelegate())
+      Log().write(Log.QUIET, "Starting Subversion Dumpfile.")
+
+    repos.add_delegate(StdoutDelegate(StatsKeeper().svn_rev_count()))
+
     while 1:
-      fpos = file.tell()
-      line = file.readline()
-      if not line:
+      svn_commit = persistence_manager.get_svn_commit(svncounter)
+      if not svn_commit:
         break
-      sym, svn_revnum, cvs_rev_key = line.split(" ", 2)
-      if sym != old_sym:
-        Log().write(Log.VERBOSE, " ", sym)
-        old_sym = sym
-        offsets_db[sym] = fpos
+      repos.commit(svn_commit)
+      svncounter += 1
 
-  if not Ctx().trunk_only:
-    generate_offsets_for_symbolings()
-  Log().write(Log.QUIET, "Done.")
+    repos.finish()
 
-
-def pass8():
-  svncounter = 2 # Repository initialization is 1.
-  repos = SVNRepositoryMirror()
-  persistence_manager = PersistenceManager(DB_OPEN_READ)
-
-  if Ctx().target:
-    if not Ctx().dry_run:
-      repos.add_delegate(RepositoryDelegate())
-    Log().write(Log.QUIET, "Starting Subversion Repository.")
-  else:
-    if not Ctx().dry_run:
-      repos.add_delegate(DumpfileDelegate())
-    Log().write(Log.QUIET, "Starting Subversion Dumpfile.")
-
-  repos.add_delegate(StdoutDelegate(StatsKeeper().svn_rev_count()))
-
-  while 1:
-    svn_commit = persistence_manager.get_svn_commit(svncounter)
-    if not svn_commit:
-      break
-    repos.commit(svn_commit)
-    svncounter += 1
-
-  repos.finish()
 
 _passes = [
-  pass1,
-  pass2,
-  pass3,
-  pass4,
-  pass5,
-  pass6,
-  pass7,
-  pass8,
+  Pass1(),
+  Pass2(),
+  Pass3(),
+  Pass4(),
+  Pass5(),
+  Pass6(),
+  Pass7(),
+  Pass8(),
   ]
 
 
@@ -4038,7 +4056,7 @@ def convert(start_pass, end_pass):
   StatsKeeper().set_start_time(time.time())
   for i in range(start_pass - 1, end_pass):
     Log().write(Log.QUIET, '----- pass %d -----' % (i + 1))
-    _passes[i]()
+    _passes[i].run()
     times[i + 1] = time.time()
     StatsKeeper().log_duration_for_pass(times[i + 1] - times[i], i + 1)
     # Dispose of items in Ctx() not intended to live past the end of the pass
@@ -4048,7 +4066,7 @@ def convert(start_pass, end_pass):
           and attr[:6] != "_Ctx__"):
         delattr(Ctx(), attr)
     if not Ctx().skip_cleanup:
-      cleanup.cleanup(_passes[i])
+      cleanup.cleanup(_passes[i].__class__)
     StatsKeeper().set_end_time(time.time())
 
   Log().write(Log.QUIET, StatsKeeper())

@@ -2982,12 +2982,6 @@ class SVNRepositoryMirror:
         if cvs_rev.op == common.OP_DELETE:
           self._delete_path(cvs_rev.svn_path, Ctx().prune)
 
-  def cleanup(self):
-    """Callback for the Cleanup.register in self.__init__."""
-
-    self.revs_db = None
-    self.nodes_db = None
-
   def add_delegate(self, delegate):
     """Adds DELEGATE to self.delegates.
 
@@ -3012,7 +3006,8 @@ class SVNRepositoryMirror:
 
     self._end_commit()
     self._invoke_delegates('finish')
-    self.cleanup()
+    self.revs_db = None
+    self.nodes_db = None
 
 
 class SVNCommitItem:

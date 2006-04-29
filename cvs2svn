@@ -3578,6 +3578,16 @@ class Pass:
 
     raise NotImplementedError
 
+  def _register_temp_file(self, basename):
+    """Helper method; for brevity only."""
+
+    artifact_manager.register_temp_file(basename, self)
+
+  def _register_temp_file_needed(self, basename):
+    """Helper method; for brevity only."""
+
+    artifact_manager.register_temp_file_needed(basename, self)
+
   def run(self):
     """Carry out this step of the conversion."""
 

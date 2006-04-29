@@ -279,7 +279,7 @@ class StatsKeeper:
     self.__dict__ = self.__shared_state
     if self.__dict__:
       return
-    self.filename = Cleanup().temp(config.STATISTICS_FILE, Pass8)
+    self.filename = artifact_manager.get_temp_file(config.STATISTICS_FILE)
     # This can get kinda large, so we don't store it in our data dict.
     self.repos_files = { }
 
@@ -4075,11 +4075,16 @@ _passes = [
 def convert(start_pass, end_pass):
   """Convert a CVS repository to an SVN repository."""
 
+  artifact_manager.register_temp_file(config.STATISTICS_FILE, convert)
+
   StatsKeeper().set_start_time(time.time())
   cleanup = Cleanup()
 
   # Inform the artifact manager when artifacts are created and used:
   for the_pass in _passes:
+    # The statistics object is needed for every pass:
+    artifact_manager.register_temp_file_needed(
+        config.STATISTICS_FILE, the_pass)
     the_pass.register_artifacts()
 
   # Tell the artifact manager about passes that are being skipped this run:
@@ -4111,15 +4116,18 @@ def convert(start_pass, end_pass):
   for the_pass in _passes[end_pass:]:
     artifact_manager.pass_deferred(the_pass)
 
-  # Consistency check:
-  artifact_manager.check_clean()
-
   Log().write(Log.QUIET, StatsKeeper())
   if end_pass < 4:
     Log().write(Log.QUIET,
                 '(These are unaltered CVS repository stats and do not\n'
                 ' reflect tags or branches excluded via --exclude)\n')
   Log().write(Log.NORMAL, StatsKeeper().timings())
+
+  # The overall conversion is done:
+  artifact_manager.pass_done(convert)
+
+  # Consistency check:
+  artifact_manager.check_clean()
 
 
 def normalize_ttb_path(opt, path):

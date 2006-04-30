@@ -1148,7 +1148,8 @@ class CollectData:
   def __init__(self):
     self.revs = open(artifact_manager.get_temp_file(config.REVS_DATAFILE),
                      'w')
-    self.resync = open(Cleanup().temp(config.RESYNC_DATAFILE, Pass2), 'w')
+    self.resync = open(
+        artifact_manager.get_temp_file(config.RESYNC_DATAFILE), 'w')
     self.default_branches_db = SDatabase(
         Cleanup().temp(config.DEFAULT_BRANCHES_DB, Pass5), DB_OPEN_NEW)
     self.metadata_db = Database(
@@ -3602,6 +3603,7 @@ class Pass1(Pass):
     self._register_temp_file(config.TAGS_LIST)
     self._register_temp_file(config.BRANCHES_LIST)
     self._register_temp_file(config.REVS_DATAFILE)
+    self._register_temp_file(config.RESYNC_DATAFILE)
 
   def run(self):
     OS_SEP_PLUS_ATTIC = os.sep + 'Attic'
@@ -3677,6 +3679,7 @@ class Pass2(Pass):
     self._register_temp_file_needed(config.TAGS_LIST)
     self._register_temp_file_needed(config.BRANCHES_LIST)
     self._register_temp_file_needed(config.REVS_DATAFILE)
+    self._register_temp_file_needed(config.RESYNC_DATAFILE)
 
   def run(self):
     symbol_db = SymbolDatabase()
@@ -3786,7 +3789,8 @@ class Pass2(Pass):
 
       return resync
 
-    resync = read_resync(Cleanup().temp(config.RESYNC_DATAFILE))
+    resync = read_resync(
+        artifact_manager.get_temp_file(config.RESYNC_DATAFILE))
 
     output = open(Cleanup().temp(config.CLEAN_REVS_DATAFILE, Pass3), 'w')
 

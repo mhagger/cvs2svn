@@ -81,6 +81,7 @@ from cvs2svn_lib.symbol_database import SymbolDatabase
 from cvs2svn_lib.project import Project
 from cvs2svn_lib import collect_data
 from cvs2svn_lib.symbolings_reader import SymbolingsReader
+from cvs2svn_lib.svn_commit_item import SVNCommitItem
 
 
 # Make sure this Python is recent enough.
@@ -1564,39 +1565,6 @@ class SVNRepositoryMirror:
     self._invoke_delegates('finish')
     self.revs_db = None
     self.nodes_db = None
-
-
-class SVNCommitItem:
-  """A wrapper class for CVSRevision objects upon which
-  Subversion-related data (such as properties) may be hung."""
-
-  def __init__(self, c_rev, svn_props_changed):
-    """Initialize instance and record the properties for this file.
-    SVN_PROPS_CHANGED indicates whether the svn: properties are known
-    to have changed since the last revision.
-
-    The properties are set by the SVNPropertySetters in
-    Ctx().svn_property_setters, then we read a couple of the
-    properties back out for our own purposes."""
-
-    self.c_rev = c_rev
-    # Did the svn properties change for this file (i.e., do they have
-    # to be written to the dumpfile?)
-    self.svn_props_changed = svn_props_changed
-
-    # The properties for this item as a map { key : value }.  If VALUE
-    # is None, no property should be set.
-    self.svn_props = { }
-
-    for svn_property_setter in Ctx().svn_property_setters:
-      svn_property_setter.set_properties(self)
-
-    # Remember if we need to filter the EOLs.  We could actually use
-    # self.svn_props now, since it is initialized for each revision.
-    self.needs_eol_filter = \
-        self.svn_props.get('svn:eol-style', None) is not None
-
-    self.has_keywords = self.svn_props.get('svn:keywords', None) is not None
 
 
 class SVNRepositoryMirrorDelegate:

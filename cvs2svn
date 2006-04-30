@@ -423,7 +423,8 @@ class LastSymbolicNameDatabase:
   # rev.
   def create_database(self):
     symbol_revs_db = Database(
-        Cleanup().temp(config.SYMBOL_LAST_CVS_REVS_DB, Pass5), DB_OPEN_NEW)
+        artifact_manager.get_temp_file(config.SYMBOL_LAST_CVS_REVS_DB),
+        DB_OPEN_NEW)
     for sym, rev_unique_key in self.symbols.items():
       ary = symbol_revs_db.get(rev_unique_key, [])
       ary.append(sym)
@@ -1927,7 +1928,8 @@ class CVSRevisionAggregator:
         Cleanup().temp(config.METADATA_DB), DB_OPEN_READ)
     if not Ctx().trunk_only:
       self.last_revs_db = Database(
-          Cleanup().temp(config.SYMBOL_LAST_CVS_REVS_DB), DB_OPEN_READ)
+          artifact_manager.get_temp_file(config.SYMBOL_LAST_CVS_REVS_DB),
+          DB_OPEN_READ)
 
     # A map { key : CVSCommit } of CVS commits currently being
     # accumulated.  If the CVSCommit is still open to further
@@ -3928,7 +3930,8 @@ class Pass3(Pass):
 
 class Pass4(Pass):
   def register_artifacts(self):
-    pass
+    if not Ctx().trunk_only:
+      self._register_temp_file(config.SYMBOL_LAST_CVS_REVS_DB)
 
   def run(self):
     """Iterate through sorted revs, storing them in a database.
@@ -3970,7 +3973,8 @@ class Pass5(Pass):
   branch or tag.  See SymbolingsLogger for more details."""
 
   def register_artifacts(self):
-    pass
+    if not Ctx().trunk_only:
+      self._register_temp_file_needed(config.SYMBOL_LAST_CVS_REVS_DB)
 
   def run(self):
     Log().write(Log.QUIET, "Mapping CVS revisions to Subversion commits...")

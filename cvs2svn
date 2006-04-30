@@ -94,22 +94,6 @@ if sys.hexversion < 0x02020000:
 DIGEST_END_IDX = 9 + (sha.digestsize * 2)
 
 
-def to_utf8(value, mode='replace'):
-  """Encode (as Unicode) VALUE, trying the encodings in Ctx.encoding
-  as valid source encodings.  Raise UnicodeError on failure of all
-  source encodings."""
-
-  ### FIXME: The 'replace' default mode should be an option,
-  ### like --encoding is.
-  for encoding in Ctx().encoding:
-    try:
-      return unicode(value, encoding, mode).encode('utf8')
-    except UnicodeError:
-      Log().write(Log.VERBOSE, "Encoding '%s' failed for string '%s'"
-                  % (encoding, value))
-  raise UnicodeError
-
-
 ctrl_characters_regexp = re.compile('[\\\x00-\\\x1f\\\x7f]')
 
 def verify_filename_legal(filename):
@@ -747,8 +731,8 @@ class SVNCommit:
     try:
       utf8_author = None
       if self._author is not None:
-        utf8_author = to_utf8(self._author)
-      utf8_log = to_utf8(self.get_log_msg())
+        utf8_author = Ctx().to_utf8(self._author)
+      utf8_log = Ctx().to_utf8(self.get_log_msg())
       return { 'svn:author' : utf8_author,
                'svn:log'    : utf8_log,
                'svn:date'   : date }
@@ -1648,7 +1632,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
       try:
         # Log messages can be converted with the 'replace' strategy,
         # but we can't afford any lossiness here.
-        pieces[i] = to_utf8(pieces[i], 'strict')
+        pieces[i] = Ctx().to_utf8(pieces[i], 'strict')
       except UnicodeError:
         raise FatalError(
             "Unable to convert a path '%s' to internal encoding.\n"

@@ -21,6 +21,7 @@ import os
 
 from boolean import *
 import config
+from log import Log
 
 
 class Ctx:
@@ -70,5 +71,21 @@ class Ctx:
 
   def get_temp_filename(self, basename):
     return os.path.join(self.tmpdir, basename)
+
+  def to_utf8(self, value, mode='replace'):
+    """Encode (as Unicode) VALUE, trying the encodings in self.encoding
+    as valid source encodings.  Raise UnicodeError on failure of all
+    source encodings."""
+
+    ### FIXME: The 'replace' default mode should be an option,
+    ### like --encoding is.
+    for encoding in self.encoding:
+      try:
+        return unicode(value, encoding, mode).encode('utf8')
+      except UnicodeError:
+        Log().write(Log.VERBOSE, "Encoding '%s' failed for string '%s'"
+                    % (encoding, value))
+    raise UnicodeError
+
 
 

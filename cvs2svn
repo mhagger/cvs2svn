@@ -156,14 +156,6 @@ def generate_ignores(c_rev):
   return ignore_vals
 
 
-def format_date(date):
-  """Return an svn-compatible date string for DATE (seconds since epoch).
-
-  A Subversion date looks like '2002-09-29T14:44:59.000000Z'."""
-
-  return time.strftime("%Y-%m-%dT%H:%M:%S.000000Z", time.gmtime(date))
-
-
 def sort_file(infilename, outfilename):
   """Sort file INFILENAME, storing the results to OUTFILENAME."""
 
@@ -751,7 +743,7 @@ class SVNCommit:
   def get_revprops(self):
     """Return the Subversion revprops for this SVNCommit."""
 
-    date = format_date(self._max_date)
+    date = common.format_date(self._max_date)
     try:
       utf8_author = None
       if self._author is not None:

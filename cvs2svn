@@ -439,8 +439,8 @@ class CVSRevisionDatabase:
     """Initialize an instance, opening database in MODE (like the MODE
     argument to Database or anydbm.open())."""
 
-    self.cvs_revs_db = SDatabase(Cleanup().temp(config.CVS_REVS_DB, Pass8),
-                                 mode)
+    self.cvs_revs_db = SDatabase(
+        artifact_manager.get_temp_file(config.CVS_REVS_DB), mode)
 
   def log_revision(self, c_rev):
     """Add C_REV, a CVSRevision, to the database."""
@@ -3932,6 +3932,7 @@ class Pass4(Pass):
   def register_artifacts(self):
     if not Ctx().trunk_only:
       self._register_temp_file(config.SYMBOL_LAST_CVS_REVS_DB)
+    self._register_temp_file(config.CVS_REVS_DB)
 
   def run(self):
     """Iterate through sorted revs, storing them in a database.
@@ -3975,6 +3976,7 @@ class Pass5(Pass):
   def register_artifacts(self):
     if not Ctx().trunk_only:
       self._register_temp_file_needed(config.SYMBOL_LAST_CVS_REVS_DB)
+    self._register_temp_file_needed(config.CVS_REVS_DB)
 
   def run(self):
     Log().write(Log.QUIET, "Mapping CVS revisions to Subversion commits...")
@@ -4046,7 +4048,7 @@ class Pass7(Pass):
 
 class Pass8(Pass):
   def register_artifacts(self):
-    pass
+    self._register_temp_file_needed(config.CVS_REVS_DB)
 
   def run(self):
     svncounter = 2 # Repository initialization is 1.

@@ -2513,7 +2513,8 @@ class SVNRepositoryMirror:
 
     # This corresponds to the 'revisions' table in a Subversion fs.
     self.revs_db = SDatabase(
-        Cleanup().temp(config.SVN_MIRROR_REVISIONS_DB, Pass8), DB_OPEN_NEW)
+        artifact_manager.get_temp_file(config.SVN_MIRROR_REVISIONS_DB),
+        DB_OPEN_NEW)
 
     # This corresponds to the 'nodes' table in a Subversion fs.  (We
     # don't need a 'representations' or 'strings' table because we
@@ -4083,6 +4084,7 @@ class Pass7(Pass):
 
 class Pass8(Pass):
   def register_artifacts(self):
+    self._register_temp_file(config.SVN_MIRROR_REVISIONS_DB)
     self._register_temp_file_needed(config.CVS_REVS_DB)
     self._register_temp_file_needed(config.TAGS_DB)
     self._register_temp_file_needed(config.METADATA_DB)

@@ -673,7 +673,7 @@ class SymbolDatabase:
       tag, count = line.split()
       self.tags[tag] = int(count)
 
-    f = open(Cleanup().temp(config.BRANCHES_LIST))
+    f = open(artifact_manager.get_temp_file(config.BRANCHES_LIST))
     while 1:
       line = f.readline()
       if not line:
@@ -690,7 +690,7 @@ class SymbolDatabase:
     for tag, count in self.tags.items():
       f.write("%s %d\n" % (tag, count))
 
-    f = open(Cleanup().temp(config.BRANCHES_LIST, Pass2), "w")
+    f = open(artifact_manager.get_temp_file(config.BRANCHES_LIST), "w")
     for branch, info in self.branches.items():
       f.write("%s %d %d" % (branch, info[0], info[1]))
       if info[2]:
@@ -3599,6 +3599,7 @@ class Pass:
 class Pass1(Pass):
   def register_artifacts(self):
     self._register_temp_file(config.TAGS_LIST)
+    self._register_temp_file(config.BRANCHES_LIST)
 
   def run(self):
     OS_SEP_PLUS_ATTIC = os.sep + 'Attic'
@@ -3672,6 +3673,7 @@ class Pass2(Pass):
   def register_artifacts(self):
     self._register_temp_file(config.TAGS_DB)
     self._register_temp_file_needed(config.TAGS_LIST)
+    self._register_temp_file_needed(config.BRANCHES_LIST)
 
   def run(self):
     symbol_db = SymbolDatabase()

@@ -1204,7 +1204,7 @@ class SymbolingsLogger:
 
   def __init__(self):
     self.symbolings = open(
-        Cleanup().temp(config.SYMBOL_OPENINGS_CLOSINGS, Pass6), 'w')
+        artifact_manager.get_temp_file(config.SYMBOL_OPENINGS_CLOSINGS), 'w')
     self.closings = open(
         Cleanup().temp(config.SYMBOL_CLOSINGS_TMP, Pass5), 'w')
 
@@ -3989,6 +3989,7 @@ class Pass5(Pass):
   branch or tag.  See SymbolingsLogger for more details."""
 
   def register_artifacts(self):
+    self._register_temp_file(config.SYMBOL_OPENINGS_CLOSINGS)
     if not Ctx().trunk_only:
       self._register_temp_file_needed(config.SYMBOL_LAST_CVS_REVS_DB)
     self._register_temp_file_needed(config.CVS_REVS_DB)
@@ -4014,14 +4015,15 @@ class Pass5(Pass):
 
 class Pass6(Pass):
   def register_artifacts(self):
-    pass
+    self._register_temp_file_needed(config.SYMBOL_OPENINGS_CLOSINGS)
 
   def run(self):
     Log().write(Log.QUIET, "Sorting symbolic name source revisions...")
 
     if not Ctx().trunk_only:
-      sort_file(Cleanup().temp(config.SYMBOL_OPENINGS_CLOSINGS),
-                Cleanup().temp(config.SYMBOL_OPENINGS_CLOSINGS_SORTED, Pass8))
+      sort_file(
+          artifact_manager.get_temp_file(config.SYMBOL_OPENINGS_CLOSINGS),
+          Cleanup().temp(config.SYMBOL_OPENINGS_CLOSINGS_SORTED, Pass8))
     Log().write(Log.QUIET, "Done")
 
 

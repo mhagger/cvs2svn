@@ -1151,7 +1151,8 @@ class CollectData:
     self.resync = open(
         artifact_manager.get_temp_file(config.RESYNC_DATAFILE), 'w')
     self.default_branches_db = SDatabase(
-        Cleanup().temp(config.DEFAULT_BRANCHES_DB, Pass5), DB_OPEN_NEW)
+        artifact_manager.get_temp_file(config.DEFAULT_BRANCHES_DB),
+        DB_OPEN_NEW)
     self.metadata_db = Database(
         Cleanup().temp(config.METADATA_DB, Pass8), DB_OPEN_NEW)
     self.fatal_errors = []
@@ -1964,7 +1965,8 @@ class CVSRevisionAggregator:
     Ctx()._symbolings_logger = SymbolingsLogger()
     Ctx()._persistence_manager = PersistenceManager(DB_OPEN_NEW)
     Ctx()._default_branches_db = SDatabase(
-        Cleanup().temp(config.DEFAULT_BRANCHES_DB), DB_OPEN_READ)
+        artifact_manager.get_temp_file(config.DEFAULT_BRANCHES_DB),
+        DB_OPEN_READ)
 
   def _extract_ready_commits(self, timestamp):
     """Extract and return any active commits that expire by TIMESTAMP."""
@@ -3604,6 +3606,7 @@ class Pass1(Pass):
     self._register_temp_file(config.BRANCHES_LIST)
     self._register_temp_file(config.REVS_DATAFILE)
     self._register_temp_file(config.RESYNC_DATAFILE)
+    self._register_temp_file(config.DEFAULT_BRANCHES_DB)
 
   def run(self):
     OS_SEP_PLUS_ATTIC = os.sep + 'Attic'
@@ -3989,6 +3992,7 @@ class Pass5(Pass):
       self._register_temp_file_needed(config.SYMBOL_LAST_CVS_REVS_DB)
     self._register_temp_file_needed(config.CVS_REVS_DB)
     self._register_temp_file_needed(config.TAGS_DB)
+    self._register_temp_file_needed(config.DEFAULT_BRANCHES_DB)
 
   def run(self):
     Log().write(Log.QUIET, "Mapping CVS revisions to Subversion commits...")

@@ -593,3 +593,59 @@ class SVNRepositoryMirror:
     self.nodes_db = None
 
 
+class SVNRepositoryMirrorDelegate:
+  """Abstract superclass for any delegate to SVNRepositoryMirror.
+  Subclasses must implement all of the methods below.
+
+  For each method, a subclass implements, in its own way, the
+  Subversion operation implied by the method's name.  For example, for
+  the add_path method, the DumpfileDelegate would write out a
+  "Node-add:" command to a Subversion dumpfile, the StdoutDelegate
+  would merely print that the path is being added to the repository,
+  and the RepositoryDelegate would actually cause the path to be added
+  to the Subversion repository that it is creating.
+  """
+
+  def start_commit(self, svn_commit):
+    """Perform any actions needed to start SVNCommit SVN_COMMIT;
+    see subclass implementation for details."""
+
+    raise NotImplementedError
+
+  def mkdir(self, path):
+    """PATH is a string; see subclass implementation for details."""
+
+    raise NotImplementedError
+
+  def add_path(self, s_item):
+    """S_ITEM is an SVNCommitItem; see subclass implementation for
+    details."""
+
+    raise NotImplementedError
+
+  def change_path(self, s_item):
+    """S_ITEM is an SVNCommitItem; see subclass implementation for
+    details."""
+
+    raise NotImplementedError
+
+  def delete_path(self, path):
+    """PATH is a string; see subclass implementation for
+    details."""
+
+    raise NotImplementedError
+
+  def copy_path(self, src_path, dest_path, src_revnum):
+    """SRC_PATH and DEST_PATH are both strings, and SRC_REVNUM is a
+    subversion revision number (int); see subclass implementation for
+    details."""
+
+    raise NotImplementedError
+
+  def finish(self):
+    """Perform any cleanup necessary after all revisions have been
+    committed."""
+
+    raise NotImplementedError
+
+

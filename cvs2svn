@@ -76,6 +76,7 @@ from cvs2svn_lib import cvs_repository
 from cvs2svn_lib import property_setters
 from cvs2svn_lib.svn_revision_range import SVNRevisionRange
 from cvs2svn_lib.tags_database import TagsDatabase
+from cvs2svn_lib.cvs_revision_database import CVSRevisionDatabase
 
 
 # Make sure this Python is recent enough.
@@ -430,29 +431,6 @@ class LastSymbolicNameDatabase:
       ary = symbol_revs_db.get(rev_unique_key, [])
       ary.append(sym)
       symbol_revs_db[rev_unique_key] = ary
-
-
-class CVSRevisionDatabase:
-  """A Database to store CVSRevision objects and retrieve them by their
-  unique_key()."""
-
-  def __init__(self, mode):
-    """Initialize an instance, opening database in MODE (like the MODE
-    argument to Database or anydbm.open())."""
-
-    self.cvs_revs_db = SDatabase(
-        artifact_manager.get_temp_file(config.CVS_REVS_DB), mode)
-
-  def log_revision(self, c_rev):
-    """Add C_REV, a CVSRevision, to the database."""
-
-    self.cvs_revs_db[c_rev.unique_key()] = str(c_rev)
-
-  def get_revision(self, unique_key):
-    """Return the CVSRevision stored under UNIQUE_KEY."""
-
-    return cvs_revision.parse_cvs_revision(Ctx(),
-                                           self.cvs_revs_db[unique_key])
 
 
 class Project:

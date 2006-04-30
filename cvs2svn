@@ -1206,7 +1206,7 @@ class SymbolingsLogger:
     self.symbolings = open(
         artifact_manager.get_temp_file(config.SYMBOL_OPENINGS_CLOSINGS), 'w')
     self.closings = open(
-        Cleanup().temp(config.SYMBOL_CLOSINGS_TMP, Pass5), 'w')
+        artifact_manager.get_temp_file(config.SYMBOL_CLOSINGS_TMP), 'w')
 
     # This keys of this dictionary are *source* cvs_paths for which
     # we've encountered an 'opening' on the default branch.  The
@@ -1254,7 +1254,7 @@ class SymbolingsLogger:
 
     self.closings.close()
     for line in fileinput.FileInput(
-            Cleanup().temp(config.SYMBOL_CLOSINGS_TMP)):
+            artifact_manager.get_temp_file(config.SYMBOL_CLOSINGS_TMP)):
       (name, rev_key) = line.rstrip().split(" ", 1)
       svn_revnum = Ctx()._persistence_manager.get_svn_revnum(rev_key)
 
@@ -3990,6 +3990,7 @@ class Pass5(Pass):
 
   def register_artifacts(self):
     self._register_temp_file(config.SYMBOL_OPENINGS_CLOSINGS)
+    self._register_temp_file(config.SYMBOL_CLOSINGS_TMP)
     if not Ctx().trunk_only:
       self._register_temp_file_needed(config.SYMBOL_LAST_CVS_REVS_DB)
     self._register_temp_file_needed(config.CVS_REVS_DB)

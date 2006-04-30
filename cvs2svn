@@ -3943,12 +3943,13 @@ class Pass2(Pass):
 
 class Pass3(Pass):
   def register_artifacts(self):
+    self._register_temp_file(config.SORTED_REVS_DATAFILE)
     self._register_temp_file_needed(config.CLEAN_REVS_DATAFILE)
 
   def run(self):
     Log().write(Log.QUIET, "Sorting CVS revisions...")
     sort_file(artifact_manager.get_temp_file(config.CLEAN_REVS_DATAFILE),
-              Cleanup().temp(config.SORTED_REVS_DATAFILE, Pass5))
+              artifact_manager.get_temp_file(config.SORTED_REVS_DATAFILE))
     Log().write(Log.QUIET, "Done")
 
 
@@ -3957,6 +3958,7 @@ class Pass4(Pass):
     if not Ctx().trunk_only:
       self._register_temp_file(config.SYMBOL_LAST_CVS_REVS_DB)
     self._register_temp_file(config.CVS_REVS_DB)
+    self._register_temp_file_needed(config.SORTED_REVS_DATAFILE)
 
   def run(self):
     """Iterate through sorted revs, storing them in a database.
@@ -3980,7 +3982,7 @@ class Pass4(Pass):
       last_sym_name_db = DummyLSNDB()
 
     for line in fileinput.FileInput(
-            Cleanup().temp(config.SORTED_REVS_DATAFILE)):
+            artifact_manager.get_temp_file(config.SORTED_REVS_DATAFILE)):
       c_rev = cvs_revision.parse_cvs_revision(Ctx(), line[:-1])
       cvs_revs_db.log_revision(c_rev)
       last_sym_name_db.log_revision(c_rev)
@@ -4008,13 +4010,14 @@ class Pass5(Pass):
     self._register_temp_file_needed(config.TAGS_DB)
     self._register_temp_file_needed(config.DEFAULT_BRANCHES_DB)
     self._register_temp_file_needed(config.METADATA_DB)
+    self._register_temp_file_needed(config.SORTED_REVS_DATAFILE)
 
   def run(self):
     Log().write(Log.QUIET, "Mapping CVS revisions to Subversion commits...")
 
     aggregator = CVSRevisionAggregator()
     for line in fileinput.FileInput(
-            Cleanup().temp(config.SORTED_REVS_DATAFILE)):
+            artifact_manager.get_temp_file(config.SORTED_REVS_DATAFILE)):
       c_rev = cvs_revision.parse_cvs_revision(Ctx(), line[:-1])
       if not (Ctx().trunk_only and c_rev.branch_name is not None):
         aggregator.process_revision(c_rev)

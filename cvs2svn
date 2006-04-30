@@ -1154,7 +1154,7 @@ class CollectData:
         artifact_manager.get_temp_file(config.DEFAULT_BRANCHES_DB),
         DB_OPEN_NEW)
     self.metadata_db = Database(
-        Cleanup().temp(config.METADATA_DB, Pass8), DB_OPEN_NEW)
+        artifact_manager.get_temp_file(config.METADATA_DB), DB_OPEN_NEW)
     self.fatal_errors = []
     self.num_files = 0
     self.symbol_db = SymbolDatabase()
@@ -1309,7 +1309,7 @@ class PersistenceManager:
     self.cvs2svn_db = Database(
         Cleanup().temp(config.CVS_REVS_TO_SVN_REVNUMS, Pass8), mode)
     self.svn_commit_metadata = Database(
-        Cleanup().temp(config.METADATA_DB), DB_OPEN_READ)
+        artifact_manager.get_temp_file(config.METADATA_DB), DB_OPEN_READ)
     self.cvs_revisions = CVSRevisionDatabase(DB_OPEN_READ)
     ###PERF kff Elsewhere there are comments about sucking the tags db
     ### into memory.  That seems like a good idea.
@@ -1928,7 +1928,7 @@ class CVSRevisionAggregator:
 
   def __init__(self):
     self.metadata_db = Database(
-        Cleanup().temp(config.METADATA_DB), DB_OPEN_READ)
+        artifact_manager.get_temp_file(config.METADATA_DB), DB_OPEN_READ)
     if not Ctx().trunk_only:
       self.last_revs_db = Database(
           artifact_manager.get_temp_file(config.SYMBOL_LAST_CVS_REVS_DB),
@@ -3607,6 +3607,7 @@ class Pass1(Pass):
     self._register_temp_file(config.REVS_DATAFILE)
     self._register_temp_file(config.RESYNC_DATAFILE)
     self._register_temp_file(config.DEFAULT_BRANCHES_DB)
+    self._register_temp_file(config.METADATA_DB)
 
   def run(self):
     OS_SEP_PLUS_ATTIC = os.sep + 'Attic'
@@ -3993,6 +3994,7 @@ class Pass5(Pass):
     self._register_temp_file_needed(config.CVS_REVS_DB)
     self._register_temp_file_needed(config.TAGS_DB)
     self._register_temp_file_needed(config.DEFAULT_BRANCHES_DB)
+    self._register_temp_file_needed(config.METADATA_DB)
 
   def run(self):
     Log().write(Log.QUIET, "Mapping CVS revisions to Subversion commits...")
@@ -4066,6 +4068,7 @@ class Pass8(Pass):
   def register_artifacts(self):
     self._register_temp_file_needed(config.CVS_REVS_DB)
     self._register_temp_file_needed(config.TAGS_DB)
+    self._register_temp_file_needed(config.METADATA_DB)
 
   def run(self):
     svncounter = 2 # Repository initialization is 1.

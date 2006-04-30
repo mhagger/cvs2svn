@@ -74,6 +74,7 @@ from cvs2svn_lib import key_generator
 from cvs2svn_lib import cvs_revision
 from cvs2svn_lib import cvs_repository
 from cvs2svn_lib import property_setters
+from cvs2svn_lib.svn_revision_range import SvnRevisionRange
 from cvs2svn_lib.tags_database import TagsDatabase
 
 
@@ -2126,30 +2127,6 @@ class SymbolingsReader:
         self.offsets[symbolic_name] = fpos
 
     return SymbolicNameFillingGuide(openings_closings_map)
-
-
-class SvnRevisionRange:
-  """The range of subversion revision numbers from which a path can be
-  copied.  self.opening_revnum is the number of the earliest such
-  revision, and self.closing_revnum is one higher than the number of
-  the last such revision.  If self.closing_revnum is None, then no
-  closings were registered."""
-
-  def __init__(self, opening_revnum):
-    self.opening_revnum = opening_revnum
-    self.closing_revnum = None
-
-  def add_closing(self, closing_revnum):
-    # When we have a non-trunk default branch, we may have multiple
-    # closings--only register the first closing we encounter.
-    if self.closing_revnum is None:
-      self.closing_revnum = closing_revnum
-
-  def __str__(self):
-    if self.closing_revnum is None:
-      return '[%d:]' % (self.opening_revnum,)
-    else:
-      return '[%d:%d]' % (self.opening_revnum, self.closing_revnum,)
 
 
 class OpeningsClosingsMap:

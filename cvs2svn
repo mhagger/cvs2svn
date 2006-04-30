@@ -69,7 +69,6 @@ from cvs2svn_lib.database import \
         Database
 
 from cvs2svn_lib.context import Ctx
-from cvs2svn_lib.cleanup import Cleanup
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib import key_generator
 from cvs2svn_lib import cvs_revision
@@ -4149,7 +4148,6 @@ def convert(start_pass, end_pass):
   artifact_manager.register_temp_file(config.STATISTICS_FILE, convert)
 
   StatsKeeper().set_start_time(time.time())
-  cleanup = Cleanup()
 
   # Inform the artifact manager when artifacts are created and used:
   for the_pass in _passes:
@@ -4176,8 +4174,6 @@ def convert(start_pass, end_pass):
       if (len(attr) > 2 and attr[0] == '_' and attr[1] != '_'
           and attr[:6] != "_Ctx__"):
         delattr(Ctx(), attr)
-    if not Ctx().skip_cleanup:
-      cleanup.cleanup(_passes[i].__class__)
     StatsKeeper().set_end_time(time.time())
     # Allow the artifact manager to clean up artifacts that are no
     # longer needed:

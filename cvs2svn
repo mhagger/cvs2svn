@@ -665,7 +665,7 @@ class SymbolDatabase:
   def read(self):
     """Read the symbol database from files."""
 
-    f = open(Cleanup().temp(config.TAGS_LIST))
+    f = open(artifact_manager.get_temp_file(config.TAGS_LIST))
     while 1:
       line = f.readline()
       if not line:
@@ -686,7 +686,7 @@ class SymbolDatabase:
   def write(self):
     """Store the symbol database to files."""
 
-    f = open(Cleanup().temp(config.TAGS_LIST, Pass2), "w")
+    f = open(artifact_manager.get_temp_file(config.TAGS_LIST), "w")
     for tag, count in self.tags.items():
       f.write("%s %d\n" % (tag, count))
 
@@ -3598,7 +3598,7 @@ class Pass:
 
 class Pass1(Pass):
   def register_artifacts(self):
-    pass
+    self._register_temp_file(config.TAGS_LIST)
 
   def run(self):
     OS_SEP_PLUS_ATTIC = os.sep + 'Attic'
@@ -3671,6 +3671,7 @@ class Pass2(Pass):
 
   def register_artifacts(self):
     self._register_temp_file(config.TAGS_DB)
+    self._register_temp_file_needed(config.TAGS_LIST)
 
   def run(self):
     symbol_db = SymbolDatabase()

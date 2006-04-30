@@ -74,6 +74,7 @@ from cvs2svn_lib import key_generator
 from cvs2svn_lib import cvs_revision
 from cvs2svn_lib import cvs_repository
 from cvs2svn_lib import property_setters
+from cvs2svn_lib.tags_database import TagsDatabase
 
 
 # Make sure this Python is recent enough.
@@ -451,26 +452,6 @@ class CVSRevisionDatabase:
 
     return cvs_revision.parse_cvs_revision(Ctx(),
                                            self.cvs_revs_db[unique_key])
-
-
-class TagsDatabase:
-  """A Database to record symbolic names that are tags.
-
-  Each key is a tag name.  The value has no meaning, and is set to the
-  empty string.  (Since an SDatabase is used, the key cannot be set to
-  None.)"""
-
-  def __init__(self, mode):
-    self.db = SDatabase(artifact_manager.get_temp_file(config.TAGS_DB), mode)
-
-  def add(self, item):
-    self.db[item] = ''
-
-  def remove(self, item):
-    del self.db[item]
-
-  def __contains__(self, item):
-    return self.db.has_key(item)
 
 
 class Project:

@@ -462,7 +462,7 @@ class TagsDatabase:
   None.)"""
 
   def __init__(self, mode):
-    self.db = SDatabase(Cleanup().temp(config.TAGS_DB, Pass8), mode)
+    self.db = SDatabase(artifact_manager.get_temp_file(config.TAGS_DB), mode)
 
   def add(self, item):
     self.db[item] = ''
@@ -3670,7 +3670,7 @@ class Pass2(Pass):
   """Pass 2: clean up the revision information."""
 
   def register_artifacts(self):
-    pass
+    self._register_temp_file(config.TAGS_DB)
 
   def run(self):
     symbol_db = SymbolDatabase()
@@ -3977,6 +3977,7 @@ class Pass5(Pass):
     if not Ctx().trunk_only:
       self._register_temp_file_needed(config.SYMBOL_LAST_CVS_REVS_DB)
     self._register_temp_file_needed(config.CVS_REVS_DB)
+    self._register_temp_file_needed(config.TAGS_DB)
 
   def run(self):
     Log().write(Log.QUIET, "Mapping CVS revisions to Subversion commits...")
@@ -4049,6 +4050,7 @@ class Pass7(Pass):
 class Pass8(Pass):
   def register_artifacts(self):
     self._register_temp_file_needed(config.CVS_REVS_DB)
+    self._register_temp_file_needed(config.TAGS_DB)
 
   def run(self):
     svncounter = 2 # Repository initialization is 1.

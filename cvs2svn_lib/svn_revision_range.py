@@ -14,13 +14,13 @@
 # history and logs, available at http://cvs2svn.tigris.org/.
 # ====================================================================
 
-"""This module contains the SvnRevisionRange class."""
+"""This module contains the SVNRevisionRange class."""
 
 
 from __future__ import generators
 
 
-class SvnRevisionRange:
+class SVNRevisionRange:
   """The range of subversion revision numbers from which a path can be
   copied.  self.opening_revnum is the number of the earliest such
   revision, and self.closing_revnum is one higher than the number of

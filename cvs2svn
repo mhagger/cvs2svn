@@ -74,7 +74,7 @@ from cvs2svn_lib import key_generator
 from cvs2svn_lib import cvs_revision
 from cvs2svn_lib import cvs_repository
 from cvs2svn_lib import property_setters
-from cvs2svn_lib.svn_revision_range import SvnRevisionRange
+from cvs2svn_lib.svn_revision_range import SVNRevisionRange
 from cvs2svn_lib.tags_database import TagsDatabase
 
 
@@ -2143,7 +2143,7 @@ class OpeningsClosingsMap:
 
     self.name = symbolic_name
 
-    # A dictionary of SVN_PATHS to SvnRevisionRange objects.
+    # A dictionary of SVN_PATHS to SVNRevisionRange objects.
     self.things = { }
 
   def register(self, svn_path, svn_revnum, type):
@@ -2164,7 +2164,7 @@ class OpeningsClosingsMap:
 
     # Always log an OPENING
     if type == OPENING:
-      self.things[svn_path] = SvnRevisionRange(svn_revnum)
+      self.things[svn_path] = SVNRevisionRange(svn_revnum)
     # Only log a closing if we've already registered the opening for that
     # path.
     elif type == CLOSING and self.things.has_key(svn_path):
@@ -2177,7 +2177,7 @@ class OpeningsClosingsMap:
     return not len(self.things)
 
   def get_things(self):
-    """Return a list of (svn_path, SvnRevisionRange) tuples for all
+    """Return a list of (svn_path, SVNRevisionRange) tuples for all
     svn_paths with registered openings or closings."""
 
     return self.things.items()
@@ -2189,7 +2189,7 @@ class SymbolicNameFillingGuide:
 
   self._node_tree is the root of the directory tree, in the form {
   path_component : subnode }.  Leaf nodes are instances of
-  SvnRevisionRange.  Intermediate (directory) nodes are dictionaries
+  SVNRevisionRange.  Intermediate (directory) nodes are dictionaries
   mapping relative names to subnodes.
 
   By walking self._node_tree and calling self.get_best_revnum() on
@@ -2248,11 +2248,11 @@ class SymbolicNameFillingGuide:
          [(REV1 SCORE1), (REV2 SCORE2), ...]
 
       where the tuples are sorted by revision number.
-      SVN_REVISION_RANGES is a list of SvnRevisionRange objects.
+      SVN_REVISION_RANGES is a list of SVNRevisionRange objects.
 
       For each svn revision that appears as either an opening_revnum
       or closing_revnum for one of the svn_revision_ranges, output a
-      tuple indicating how many of the SvnRevisionRanges include that
+      tuple indicating how many of the SVNRevisionRanges include that
       svn_revision in its range.  A score thus indicates that copying
       the corresponding revision (or any following revision up to the
       next revision in the list) of the object in question would yield
@@ -2331,10 +2331,10 @@ class SymbolicNameFillingGuide:
     return revnum, max_score
 
   def _list_revnums(self, node):
-    """Return a list of all the SvnRevisionRanges (including
+    """Return a list of all the SVNRevisionRanges (including
     duplicates) for all leaf nodes at and under NODE."""
 
-    if isinstance(node, SvnRevisionRange):
+    if isinstance(node, SVNRevisionRange):
       # It is a leaf node.
       return [ node ]
     else:
@@ -2359,7 +2359,7 @@ class SymbolicNameFillingGuide:
     a helper method, called by get_sources() (see)."""
 
     project = Ctx().project
-    if isinstance(start_node, SvnRevisionRange):
+    if isinstance(start_node, SVNRevisionRange):
       # This implies that a change was found outside of the
       # legitimate sources.  This should never happen.
       raise
@@ -2385,7 +2385,7 @@ class SymbolicNameFillingGuide:
 
     if not indent_depth:
       print "TREE", "=" * 75
-    if isinstance(node, SvnRevisionRange):
+    if isinstance(node, SVNRevisionRange):
       print "TREE:", " " * (indent_depth * 2), name, node
     else:
       print "TREE:", " " * (indent_depth * 2), name
@@ -2838,7 +2838,7 @@ class SVNRepositoryMirror:
     # this path element exists.
     src_entries = {}
     for source in sources:
-      if isinstance(source.node, SvnRevisionRange):
+      if isinstance(source.node, SVNRevisionRange):
         continue
       for entry, node in source.node.items():
         src_entries.setdefault(entry, []).append(

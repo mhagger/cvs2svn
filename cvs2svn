@@ -1307,7 +1307,7 @@ class PersistenceManager:
     self.svn2cvs_db = Database(
         artifact_manager.get_temp_file(config.SVN_REVNUMS_TO_CVS_REVS), mode)
     self.cvs2svn_db = Database(
-        Cleanup().temp(config.CVS_REVS_TO_SVN_REVNUMS, Pass8), mode)
+        artifact_manager.get_temp_file(config.CVS_REVS_TO_SVN_REVNUMS), mode)
     self.svn_commit_metadata = Database(
         artifact_manager.get_temp_file(config.METADATA_DB), DB_OPEN_READ)
     self.cvs_revisions = CVSRevisionDatabase(DB_OPEN_READ)
@@ -3992,6 +3992,7 @@ class Pass5(Pass):
     self._register_temp_file(config.SYMBOL_OPENINGS_CLOSINGS)
     self._register_temp_file(config.SYMBOL_CLOSINGS_TMP)
     self._register_temp_file(config.SVN_REVNUMS_TO_CVS_REVS)
+    self._register_temp_file(config.CVS_REVS_TO_SVN_REVNUMS)
     if not Ctx().trunk_only:
       self._register_temp_file_needed(config.SYMBOL_LAST_CVS_REVS_DB)
     self._register_temp_file_needed(config.CVS_REVS_DB)
@@ -4074,6 +4075,7 @@ class Pass8(Pass):
     self._register_temp_file_needed(config.TAGS_DB)
     self._register_temp_file_needed(config.METADATA_DB)
     self._register_temp_file_needed(config.SVN_REVNUMS_TO_CVS_REVS)
+    self._register_temp_file_needed(config.CVS_REVS_TO_SVN_REVNUMS)
 
   def run(self):
     svncounter = 2 # Repository initialization is 1.

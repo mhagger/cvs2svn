@@ -3686,6 +3686,7 @@ class Pass2(Pass):
   def register_artifacts(self):
     self._register_temp_file(config.TAGS_DB)
     self._register_temp_file(config.CLEAN_REVS_DATAFILE)
+    self._register_temp_file(config.TWEAKED_TIMESTAMPS_DB)
     self._register_temp_file_needed(config.TAGS_LIST)
     self._register_temp_file_needed(config.BRANCHES_LIST)
     self._register_temp_file_needed(config.REVS_DATAFILE)
@@ -3806,7 +3807,8 @@ class Pass2(Pass):
                   'w')
 
     tweaked_timestamps_db = Database(
-        Cleanup().temp(config.TWEAKED_TIMESTAMPS_DB, Pass2), DB_OPEN_NEW)
+        artifact_manager.get_temp_file(config.TWEAKED_TIMESTAMPS_DB),
+        DB_OPEN_NEW)
 
     # process the revisions file, looking for items to clean up
     for line in fileinput.FileInput(

@@ -2520,7 +2520,8 @@ class SVNRepositoryMirror:
     # don't need a 'representations' or 'strings' table because we
     # only track metadata, not file contents.)
     self.nodes_db = Database(
-        Cleanup().temp(config.SVN_MIRROR_NODES_DB, Pass8), DB_OPEN_NEW)
+        artifact_manager.get_temp_file(config.SVN_MIRROR_NODES_DB),
+        DB_OPEN_NEW)
 
     # Start at revision 0 without a root node.  It will be created
     # by _open_writable_root_node.
@@ -4085,6 +4086,7 @@ class Pass7(Pass):
 class Pass8(Pass):
   def register_artifacts(self):
     self._register_temp_file(config.SVN_MIRROR_REVISIONS_DB)
+    self._register_temp_file(config.SVN_MIRROR_NODES_DB)
     self._register_temp_file_needed(config.CVS_REVS_DB)
     self._register_temp_file_needed(config.TAGS_DB)
     self._register_temp_file_needed(config.METADATA_DB)

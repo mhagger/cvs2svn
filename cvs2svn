@@ -80,6 +80,7 @@ from cvs2svn_lib.cvs_revision_database import CVSRevisionDatabase
 from cvs2svn_lib.openings_closings import \
         OpeningsClosingsMap, \
         SymbolingsLogger
+from cvs2svn_lib.fill_source import FillSource
 
 
 # Make sure this Python is recent enough.
@@ -2195,33 +2196,6 @@ class SymbolicNameFillingGuide:
       print "TREE:", " " * (indent_depth * 2), name
       for key, value in node.items():
         self.print_node_tree(value, key, (indent_depth + 1))
-
-
-class FillSource:
-  """Representation of a fill source used by the symbol filler in
-  SVNRepositoryMirror."""
-
-  def __init__(self, prefix, node):
-    """Create an unscored fill source with a prefix and a key."""
-
-    self.prefix = prefix
-    self.node = node
-    self.score = None
-    self.revnum = None
-
-  def set_score(self, score, revnum):
-    """Set the SCORE and REVNUM."""
-
-    self.score = score
-    self.revnum = revnum
-
-  def __cmp__(self, other):
-    """Comparison operator used to sort FillSources in descending
-    score order."""
-
-    if self.score is None or other.score is None:
-      raise TypeError, 'Tried to compare unscored FillSource'
-    return cmp(other.score, self.score)
 
 
 class SVNRepositoryMirror:

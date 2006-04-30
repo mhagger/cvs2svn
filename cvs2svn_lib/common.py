@@ -52,3 +52,27 @@ class FatalError(FatalException):
     FatalException.__init__(self, '%s: %s\n' % (error_prefix, msg,))
 
 
+def path_join(*components):
+  """Join two or more pathname COMPONENTS, inserting '/' as needed.
+  Empty component are skipped."""
+
+  return '/'.join(filter(None, components))
+
+
+def path_split(path):
+  """Split the svn pathname PATH into a pair, (HEAD, TAIL).
+
+  This is similar to os.path.split(), but always uses '/' as path
+  separator.  PATH is an svn path, which should not start with a '/'.
+  HEAD is everything before the last slash, and TAIL is everything
+  after.  If PATH ends in a slash, TAIL will be empty.  If there is no
+  slash in PATH, HEAD will be empty.  If PATH is empty, both HEAD and
+  TAIL are empty."""
+
+  pos = path.rfind('/')
+  if pos == -1:
+    return ('', path,)
+  else:
+    return (path[:pos], path[pos+1:],)
+
+

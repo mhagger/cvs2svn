@@ -126,30 +126,6 @@ def _clean_symbolic_name(name):
   return name
 
 
-def _path_join(*components):
-  """Join two or more pathname COMPONENTS, inserting '/' as needed.
-  Empty component are skipped."""
-
-  return '/'.join(filter(None, components))
-
-
-def _path_split(path):
-  """Split the svn pathname PATH into a pair, (HEAD, TAIL).
-
-  This is similar to os.path.split(), but always uses '/' as path
-  separator.  PATH is an svn path, which should not start with a '/'.
-  HEAD is everything before the last slash, and TAIL is everything
-  after.  If PATH ends in a slash, TAIL will be empty.  If there is no
-  slash in PATH, HEAD will be empty.  If PATH is empty, both HEAD and
-  TAIL are empty."""
-
-  pos = path.rfind('/')
-  if pos == -1:
-    return ('', path,)
-  else:
-    return (path[:pos], path[pos+1:],)
-
-
 def to_utf8(value, mode='replace'):
   """Encode (as Unicode) VALUE, trying the encodings in Ctx.encoding
   as valid source encodings.  Raise UnicodeError on failure of all
@@ -303,7 +279,7 @@ class Project:
     if svn_path == self.trunk_path:
       return True
 
-    (head, tail,) = _path_split(svn_path)
+    (head, tail,) = common.path_split(svn_path)
     if head == self.branches_path:
       return True
 
@@ -317,12 +293,13 @@ class Project:
   def get_branch_path(self, branch_name):
     """Return the svnpath for the branch named BRANCH_NAME."""
 
-    return _path_join(self.branches_path, _clean_symbolic_name(branch_name))
+    return common.path_join(self.branches_path,
+                            _clean_symbolic_name(branch_name))
 
   def get_tag_path(self, tag_name):
     """Return the svnpath for the tag named TAG_NAME."""
 
-    return _path_join(self.tags_path, _clean_symbolic_name(tag_name))
+    return common.path_join(self.tags_path, _clean_symbolic_name(tag_name))
 
   def _relative_name(self, cvs_path):
     """Convert CVS_PATH into a name relative to this project's root directory.
@@ -344,13 +321,13 @@ class Project:
 
     Return the svn path for this file on trunk."""
 
-    return _path_join(self.trunk_path, self._relative_name(cvs_path))
+    return common.path_join(self.trunk_path, self._relative_name(cvs_path))
 
   def make_branch_path(self, branch_name, cvs_path):
     """Return the svn path for CVS_PATH on branch BRANCH_NAME."""
 
-    return _path_join(self.get_branch_path(branch_name),
-                      self._relative_name(cvs_path))
+    return common.path_join(self.get_branch_path(branch_name),
+                            self._relative_name(cvs_path))
 
 
 class FileDataCollector(cvs2svn_rcsparse.Sink):
@@ -1713,7 +1690,7 @@ class SymbolicNameFillingGuide:
     self._node_tree = { }
 
     for svn_path, svn_revision_range in openings_closings_map.get_things():
-      (head, tail) = _path_split(svn_path)
+      (head, tail) = common.path_split(svn_path)
       self._get_node_for_path(head)[tail] = svn_revision_range
 
     #self.print_node_tree(self._node_tree)
@@ -1873,7 +1850,7 @@ class SymbolicNameFillingGuide:
       # to find their enclosing sources.
       sources = []
       for entry, node in start_node.items():
-        svn_path = _path_join(start_svn_path, entry)
+        svn_path = common.path_join(start_svn_path, entry)
         sources.extend(self._get_sub_sources(svn_path, node))
 
     return sources
@@ -2065,7 +2042,7 @@ class SVNRepositoryMirror:
     components = svn_path.split('/')
     for i in range(len(components)):
       component = components[i]
-      path_so_far = _path_join(path_so_far, component)
+      path_so_far = common.path_join(path_so_far, component)
       this_key = parent_contents.get(component, None)
       if this_key is not None:
         # The component exists.
@@ -2110,7 +2087,7 @@ class SVNRepositoryMirror:
     if parent_contents.has_key(component):
       del parent_contents[component]
       self._invoke_delegates('delete_path',
-                             _path_join(parent_path, component))
+                             common.path_join(parent_path, component))
 
   def _delete_path(self, svn_path, should_prune=False):
     """Delete PATH from the tree.  If SHOULD_PRUNE is true, then delete
@@ -2124,7 +2101,7 @@ class SVNRepositoryMirror:
     if svn_path == '' or Ctx().project.is_unremovable(svn_path):
       return
 
-    (parent_path, entry,) = _path_split(svn_path)
+    (parent_path, entry,) = common.path_split(svn_path)
     if parent_path:
       parent_key, parent_contents = \
           self._open_writable_node(parent_path, False)
@@ -2175,7 +2152,7 @@ class SVNRepositoryMirror:
     src_contents = self._get_node(src_key)
 
     # Get the parent path and the base path of the dest_path
-    (dest_parent, dest_basename,) = _path_split(dest_path)
+    (dest_parent, dest_basename,) = common.path_split(dest_path)
     dest_parent_key, dest_parent_contents = \
                    self._open_writable_node(dest_parent, False)
 
@@ -2284,8 +2261,8 @@ class SVNRepositoryMirror:
     sources.sort()
     copy_source = sources[0]
 
-    src_path = _path_join(copy_source.prefix, path)
-    dest_path = _path_join(dest_prefix, path)
+    src_path = common.path_join(copy_source.prefix, path)
+    dest_path = common.path_join(dest_prefix, path)
 
     # Figure out if we shall copy to this destination and delete any
     # destination path that is in the way.
@@ -2337,7 +2314,7 @@ class SVNRepositoryMirror:
     for src_key in src_keys:
       next_dest_key = dest_entries.get(src_key, None)
       self._fill(symbol_fill, dest_prefix, next_dest_key,
-                 src_entries[src_key], _path_join(path, src_key),
+                 src_entries[src_key], common.path_join(path, src_key),
                  copy_source.prefix, sources[0].revnum, prune_ok)
 
   def _synchronize_default_branch(self, svn_commit):
@@ -3638,7 +3615,7 @@ def normalize_ttb_path(opt, path):
 
   If the path is invalid, write an error message and exit."""
 
-  norm_path = _path_join(*path.split('/'))
+  norm_path = common.path_join(*path.split('/'))
   if not norm_path:
     raise FatalError("cannot pass an empty path to %s." % (opt,))
   return norm_path

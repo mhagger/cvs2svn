@@ -61,12 +61,7 @@ from cvs2svn_lib.process import \
         CommandFailedException, \
         check_command_runs
 
-from cvs2svn_lib.database import \
-        DB_OPEN_READ, \
-        DB_OPEN_NEW, \
-        SDatabase, \
-        Database
-
+from cvs2svn_lib import database
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.stats_keeper import StatsKeeper
@@ -232,19 +227,20 @@ class PersistenceManager:
 
   def __init__(self, mode):
     self.mode = mode
-    if mode not in (DB_OPEN_NEW, DB_OPEN_READ):
+    if mode not in (database.DB_OPEN_NEW, database.DB_OPEN_READ):
       raise RuntimeError, "Invalid 'mode' argument to PersistenceManager"
-    self.svn2cvs_db = Database(
+    self.svn2cvs_db = database.Database(
         artifact_manager.get_temp_file(config.SVN_REVNUMS_TO_CVS_REVS), mode)
-    self.cvs2svn_db = Database(
+    self.cvs2svn_db = database.Database(
         artifact_manager.get_temp_file(config.CVS_REVS_TO_SVN_REVNUMS), mode)
-    self.svn_commit_metadata = Database(
-        artifact_manager.get_temp_file(config.METADATA_DB), DB_OPEN_READ)
-    self.cvs_revisions = CVSRevisionDatabase(DB_OPEN_READ)
+    self.svn_commit_metadata = database.Database(
+        artifact_manager.get_temp_file(config.METADATA_DB),
+        database.DB_OPEN_READ)
+    self.cvs_revisions = CVSRevisionDatabase(database.DB_OPEN_READ)
     ###PERF kff Elsewhere there are comments about sucking the tags db
     ### into memory.  That seems like a good idea.
     if not Ctx().trunk_only:
-      self.tags_db = TagsDatabase(DB_OPEN_READ)
+      self.tags_db = TagsDatabase(database.DB_OPEN_READ)
 
     # "branch_name" -> svn_revnum in which branch was last filled.
     # This is used by CVSCommit._pre_commit, to prevent creating a fill
@@ -311,7 +307,7 @@ class PersistenceManager:
     """Record the bidirectional mapping between SVN_REVNUM and
     CVS_REVS and record associated attributes."""
 
-    if self.mode == DB_OPEN_READ:
+    if self.mode == database.DB_OPEN_READ:
       raise RuntimeError, \
           'Write operation attempted on read-only PersistenceManager'
 
@@ -859,12 +855,13 @@ class CVSRevisionAggregator:
   at least one SVNCommit."""
 
   def __init__(self):
-    self.metadata_db = Database(
-        artifact_manager.get_temp_file(config.METADATA_DB), DB_OPEN_READ)
+    self.metadata_db = database.Database(
+        artifact_manager.get_temp_file(config.METADATA_DB),
+        database.DB_OPEN_READ)
     if not Ctx().trunk_only:
-      self.last_revs_db = Database(
+      self.last_revs_db = database.Database(
           artifact_manager.get_temp_file(config.SYMBOL_LAST_CVS_REVS_DB),
-          DB_OPEN_READ)
+          database.DB_OPEN_READ)
 
     # A map { key : CVSCommit } of CVS commits currently being
     # accumulated.  If the CVSCommit is still open to further
@@ -895,10 +892,10 @@ class CVSRevisionAggregator:
     self.latest_primary_svn_commit = None
 
     Ctx()._symbolings_logger = SymbolingsLogger()
-    Ctx()._persistence_manager = PersistenceManager(DB_OPEN_NEW)
-    Ctx()._default_branches_db = SDatabase(
+    Ctx()._persistence_manager = PersistenceManager(database.DB_OPEN_NEW)
+    Ctx()._default_branches_db = database.SDatabase(
         artifact_manager.get_temp_file(config.DEFAULT_BRANCHES_DB),
-        DB_OPEN_READ)
+        database.DB_OPEN_READ)
 
   def _extract_ready_commits(self, timestamp):
     """Extract and return any active commits that expire by TIMESTAMP."""
@@ -1060,16 +1057,16 @@ class SVNRepositoryMirror:
     self.delegates = [ ]
 
     # This corresponds to the 'revisions' table in a Subversion fs.
-    self.revs_db = SDatabase(
+    self.revs_db = database.SDatabase(
         artifact_manager.get_temp_file(config.SVN_MIRROR_REVISIONS_DB),
-        DB_OPEN_NEW)
+        database.DB_OPEN_NEW)
 
     # This corresponds to the 'nodes' table in a Subversion fs.  (We
     # don't need a 'representations' or 'strings' table because we
     # only track metadata, not file contents.)
-    self.nodes_db = Database(
+    self.nodes_db = database.Database(
         artifact_manager.get_temp_file(config.SVN_MIRROR_NODES_DB),
-        DB_OPEN_NEW)
+        database.DB_OPEN_NEW)
 
     # Start at revision 0 without a root node.  It will be created
     # by _open_writable_root_node.
@@ -1079,7 +1076,7 @@ class SVNRepositoryMirror:
 
     if not Ctx().trunk_only:
       ###PERF IMPT: Suck this into memory.
-      self.tags_db = TagsDatabase(DB_OPEN_READ)
+      self.tags_db = TagsDatabase(database.DB_OPEN_READ)
       self.symbolings_reader = SymbolingsReader()
 
   def _initialize_repository(self, date):
@@ -2300,7 +2297,7 @@ class Pass2(Pass):
       sys.exit(1)
 
     # Create the tags database
-    tags_db = TagsDatabase(DB_OPEN_NEW)
+    tags_db = TagsDatabase(database.DB_OPEN_NEW)
     for tag in symbol_db.tags:
       if tag not in Ctx().forced_branches:
         tags_db.add(tag)
@@ -2356,9 +2353,9 @@ class Pass2(Pass):
     output = open(artifact_manager.get_temp_file(config.CLEAN_REVS_DATAFILE),
                   'w')
 
-    tweaked_timestamps_db = Database(
+    tweaked_timestamps_db = database.Database(
         artifact_manager.get_temp_file(config.TWEAKED_TIMESTAMPS_DB),
-        DB_OPEN_NEW)
+        database.DB_OPEN_NEW)
 
     # process the revisions file, looking for items to clean up
     for line in fileinput.FileInput(
@@ -2518,7 +2515,7 @@ class Pass4(Pass):
 
     Log().write(Log.QUIET,
         "Copying CVS revision data from flat file to database...")
-    cvs_revs_db = CVSRevisionDatabase(DB_OPEN_NEW)
+    cvs_revs_db = CVSRevisionDatabase(database.DB_OPEN_NEW)
     if not Ctx().trunk_only:
       Log().write(Log.QUIET,
           "Finding last CVS revisions for all symbolic names...")
@@ -2615,9 +2612,9 @@ class Pass7(Pass):
       ###PERF This is a fine example of a db that can be in-memory and
       #just flushed to disk when we're done.  Later, it can just be sucked
       #back into memory.
-      offsets_db = Database(
+      offsets_db = database.Database(
           artifact_manager.get_temp_file(config.SYMBOL_OFFSETS_DB),
-          DB_OPEN_NEW)
+          database.DB_OPEN_NEW)
 
       file = open(
           artifact_manager.get_temp_file(
@@ -2656,7 +2653,7 @@ class Pass8(Pass):
   def run(self):
     svncounter = 2 # Repository initialization is 1.
     repos = SVNRepositoryMirror()
-    persistence_manager = PersistenceManager(DB_OPEN_READ)
+    persistence_manager = PersistenceManager(database.DB_OPEN_READ)
 
     if Ctx().target:
       if not Ctx().dry_run:

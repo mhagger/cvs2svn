@@ -94,8 +94,6 @@ if sys.hexversion < 0x02020000:
   sys.exit(1)
 
 
-SVN_INVALID_REVNUM = -1
-
 DIGEST_END_IDX = 9 + (sha.digestsize * 2)
 
 
@@ -257,7 +255,8 @@ class PersistenceManager:
     CVS_REV_UNIQUE_KEY was committed, or SVN_INVALID_REVNUM if there
     is no mapping for CVS_REV_UNIQUE_KEY."""
 
-    return int(self.cvs2svn_db.get(cvs_rev_unique_key, SVN_INVALID_REVNUM))
+    return int(self.cvs2svn_db.get(cvs_rev_unique_key,
+                                   common.SVN_INVALID_REVNUM))
 
   def get_svn_commit(self, svn_revnum):
     """Return an SVNCommit that corresponds to SVN_REVNUM.
@@ -1199,11 +1198,11 @@ class SymbolicNameFillingGuide:
 
       max_score = 0
       preferred_rev_score = -1
-      rev = SVN_INVALID_REVNUM
+      rev = common.SVN_INVALID_REVNUM
       if preferred_rev is None:
         # Comparison order of different types is arbitrary.  Do not
         # expect None to compare less than int values below.
-        preferred_rev = SVN_INVALID_REVNUM
+        preferred_rev = common.SVN_INVALID_REVNUM
       for revnum, count in scores:
         if count > max_score:
           max_score = count
@@ -1222,7 +1221,7 @@ class SymbolicNameFillingGuide:
 
     revnum, max_score = best_rev(scores, preferred_revnum)
 
-    if revnum == SVN_INVALID_REVNUM:
+    if revnum == common.SVN_INVALID_REVNUM:
       raise FatalError("failed to find a revision "
                        + "to copy from when copying %s" % name)
     return revnum, max_score

@@ -20,6 +20,9 @@
 from boolean import *
 
 
+SVN_INVALID_REVNUM = -1
+
+
 # Things that can happen to a file.
 OP_NOOP   = '-'
 OP_ADD    = 'A'

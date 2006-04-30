@@ -1146,7 +1146,8 @@ class CollectData:
   each file to be parsed."""
 
   def __init__(self):
-    self.revs = open(Cleanup().temp(config.REVS_DATAFILE, Pass2), 'w')
+    self.revs = open(artifact_manager.get_temp_file(config.REVS_DATAFILE),
+                     'w')
     self.resync = open(Cleanup().temp(config.RESYNC_DATAFILE, Pass2), 'w')
     self.default_branches_db = SDatabase(
         Cleanup().temp(config.DEFAULT_BRANCHES_DB, Pass5), DB_OPEN_NEW)
@@ -3600,6 +3601,7 @@ class Pass1(Pass):
   def register_artifacts(self):
     self._register_temp_file(config.TAGS_LIST)
     self._register_temp_file(config.BRANCHES_LIST)
+    self._register_temp_file(config.REVS_DATAFILE)
 
   def run(self):
     OS_SEP_PLUS_ATTIC = os.sep + 'Attic'
@@ -3674,6 +3676,7 @@ class Pass2(Pass):
     self._register_temp_file(config.TAGS_DB)
     self._register_temp_file_needed(config.TAGS_LIST)
     self._register_temp_file_needed(config.BRANCHES_LIST)
+    self._register_temp_file_needed(config.REVS_DATAFILE)
 
   def run(self):
     symbol_db = SymbolDatabase()
@@ -3791,7 +3794,8 @@ class Pass2(Pass):
         Cleanup().temp(config.TWEAKED_TIMESTAMPS_DB, Pass2), DB_OPEN_NEW)
 
     # process the revisions file, looking for items to clean up
-    for line in fileinput.FileInput(Cleanup().temp(config.REVS_DATAFILE)):
+    for line in fileinput.FileInput(
+            artifact_manager.get_temp_file(config.REVS_DATAFILE)):
       c_rev = cvs_revision.parse_cvs_revision(Ctx(), line[:-1])
 
       # Skip this entire revision if it's on an excluded branch

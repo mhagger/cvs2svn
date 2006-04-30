@@ -68,4 +68,7 @@ class Ctx:
     self.symbol_transforms = []
     self.svn_property_setters = []
 
+  def get_temp_filename(self, basename):
+    return os.path.join(self.tmpdir, basename)
+
 

@@ -49,7 +49,7 @@ class TempFileArtifact(Artifact):
 
   def __init__(self, basename):
     Artifact.__init__(self, basename)
-    self.filename = os.path.join(Ctx().tmpdir, basename)
+    self.filename = Ctx().get_temp_filename(basename)
 
   def cleanup(self):
     Log().write(Log.VERBOSE, "Deleting", self.filename)

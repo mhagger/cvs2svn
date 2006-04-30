@@ -109,10 +109,6 @@ vendor_revision = re.compile('^(1\\.1\\.1)\\.([0-9])+$')
 
 SVN_INVALID_REVNUM = -1
 
-# A deltatext either does or doesn't represent some change.
-DELTATEXT_NONEMPTY = 'N'
-DELTATEXT_EMPTY    = 'E'
-
 DIGEST_END_IDX = 9 + (sha.digestsize * 2)
 
 
@@ -642,9 +638,9 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
         cur_num = self.prev_rev.get(cur_num, None)
 
     if text:
-      deltatext_code = DELTATEXT_NONEMPTY
+      deltatext_code = common.DELTATEXT_NONEMPTY
     else:
-      deltatext_code = DELTATEXT_EMPTY
+      deltatext_code = common.DELTATEXT_EMPTY
 
     c_rev = cvs_revision.CVSRevision(
         Ctx(), timestamp, digest, prev_timestamp, next_timestamp, op,
@@ -1021,7 +1017,7 @@ class CVSCommit:
       # we were really paranoid, we could make sure 1.1's log message
       # is the CVS-generated "Initial revision\n", but I think the
       # conditions below are strict enough.)
-      if not ((c_rev.deltatext_code == DELTATEXT_EMPTY)
+      if not ((c_rev.deltatext_code == common.DELTATEXT_EMPTY)
               and (c_rev.rev == "1.1.1.1")):
         if c_rev.is_default_branch_revision():
           self.default_branch_cvs_revisions.append(c_rev)
@@ -2271,7 +2267,7 @@ class SVNRepositoryMirror:
         # about.  Note that although asking self._path_exists() is
         # somewhat expensive, we only do it if the first two (cheap)
         # tests succeed first.
-        if not ((cvs_rev.deltatext_code == DELTATEXT_EMPTY)
+        if not ((cvs_rev.deltatext_code == common.DELTATEXT_EMPTY)
                 and (cvs_rev.rev == "1.1.1.1")
                 and self._path_exists(cvs_rev.svn_path)):
           if cvs_rev.op == common.OP_ADD:

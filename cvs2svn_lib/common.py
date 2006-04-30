@@ -27,6 +27,11 @@ OP_DELETE = 'D'
 OP_CHANGE = 'C'
 
 
+# A deltatext either does or doesn't represent some change.
+DELTATEXT_NONEMPTY = 'N'
+DELTATEXT_EMPTY    = 'E'
+
+
 # Warnings and errors start with these strings.  They are typically
 # followed by a colon and a space, as in "%s: " ==> "WARNING: ".
 warning_prefix = "WARNING"

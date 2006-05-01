@@ -21,7 +21,7 @@ that repository.  NOTE: You have to run the conversion passes
 yourself!
 """
 
-import sys, os, os.path, string
+import sys, os, os.path
 
 # Fix things so we can import cvs2svn despite it not having a .py extension
 import imp

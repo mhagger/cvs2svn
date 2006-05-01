@@ -165,8 +165,6 @@ class SVNCommit:
 
   def add_revision(self, cvs_rev):
     self.cvs_revs.append(cvs_rev)
-    if cvs_rev.timestamp > self._max_date:
-      self._max_date = cvs_rev.timestamp
 
   def flush(self):
     Log().write(Log.NORMAL, "Creating Subversion r%d (%s)"

@@ -106,6 +106,7 @@ class CVSRevision(CVSRevisionID):
     self.file_executable = file_executable
     self.file_size = file_size
     self.deltatext_code = deltatext_code
+    self.deltatext_exists = (self.deltatext_code == common.DELTATEXT_NONEMPTY)
     self.mode = mode
     self.branch_name = branch_name
     self.tags = tags

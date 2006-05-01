@@ -532,9 +532,12 @@ class SVNRepositoryMirror:
         # about.  Note that although asking self._path_exists() is
         # somewhat expensive, we only do it if the first two (cheap)
         # tests succeed first.
-        if not ((cvs_rev.deltatext_code == common.DELTATEXT_EMPTY)
-                and (cvs_rev.rev == "1.1.1.1")
-                and self._path_exists(cvs_rev.svn_path)):
+        if (cvs_rev.rev == "1.1.1.1"
+            and not cvs_rev.deltatext_exists
+            and self._path_exists(cvs_rev.svn_path)):
+          # This change can be omitted.
+          pass
+        else:
           if cvs_rev.op == common.OP_ADD:
             self._add_path(cvs_rev)
           elif cvs_rev.op == common.OP_CHANGE:

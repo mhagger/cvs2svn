@@ -332,18 +332,20 @@ class CVSCommit:
 
     for c_rev in self.changes:
       svn_commit.add_revision(c_rev)
-      # Only make a change if we need to.  When 1.1.1.1 has an empty
-      # deltatext, the explanation is almost always that we're looking
-      # at an imported file whose 1.1 and 1.1.1.1 are identical.  On
-      # such imports, CVS creates an RCS file where 1.1 has the
-      # content, and 1.1.1.1 has an empty deltatext, i.e, the same
-      # content as 1.1.  There's no reason to reflect this non-change
-      # in the repository, so we want to do nothing in this case.  (If
-      # we were really paranoid, we could make sure 1.1's log message
-      # is the CVS-generated "Initial revision\n", but I think the
-      # conditions below are strict enough.)
-      if not ((c_rev.deltatext_code == common.DELTATEXT_EMPTY)
-              and (c_rev.rev == "1.1.1.1")):
+      # Only make a change if we need to:
+      if c_rev.rev == "1.1.1.1" and not c_rev.deltatext_exists:
+        # When 1.1.1.1 has an empty deltatext, the explanation is
+        # almost always that we're looking at an imported file whose
+        # 1.1 and 1.1.1.1 are identical.  On such imports, CVS creates
+        # an RCS file where 1.1 has the content, and 1.1.1.1 has an
+        # empty deltatext, i.e, the same content as 1.1.  There's no
+        # reason to reflect this non-change in the repository, so we
+        # want to do nothing in this case.  (If we were really
+        # paranoid, we could make sure 1.1's log message is the
+        # CVS-generated "Initial revision\n", but I think the
+        # conditions above are strict enough.)
+        pass
+      else:
         if c_rev.is_default_branch_revision():
           self.default_branch_cvs_revisions.append(c_rev)
 

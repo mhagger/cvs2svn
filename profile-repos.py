@@ -28,7 +28,7 @@ import imp
 imp.load_module('cvs2svn', open('cvs2svn', 'r'), 'cvs2svn',
     ('', 'r', imp.PY_SOURCE))
 
-from cvs2svn import CVSRevision
+from cvs2svn_lib.cvs_revision import parse_cvs_revision
 
 def do_it(revs_file):
   fp = open(revs_file, 'r')
@@ -48,7 +48,7 @@ def do_it(revs_file):
       break
 
     # Get a CVSRevision to describe this line
-    c_rev = CVSRevision(None, line)
+    c_rev = parse_cvs_revision(None, line)
 
     # Handle tags
     num_tags = len(c_rev.tags)

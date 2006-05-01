@@ -1,0 +1,41 @@
+head	1.2;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2005.11.27.10.43.45;	author ossi;	state tst;
+branches;
+next	1.1;
+
+1.1
+date	2005.11.27.10.42.18;	author ossi;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@big commit
+@
+text
+@file2 rev2
+@
+
+
+1.1
+log
+@adding
+@
+text
+@d1 1
+a1 1
+file2 rev1
+@
+

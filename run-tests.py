@@ -2015,6 +2015,38 @@ def ctrl_char_in_filename():
     svntest.main.safe_rmtree(dstrepos_path)
 
 
+def commit_dependencies():
+  "interleaved and multi-branch commits to same files"
+  conv = ensure_conversion("commit-dependencies")
+  conv.logs[2].check('adding', (
+    ('/%(trunk)s/interleaved', 'A'),
+    ('/%(trunk)s/interleaved/file1', 'A'),
+    ('/%(trunk)s/interleaved/file2', 'A'),
+    ))
+  conv.logs[3].check('big commit', (
+    ('/%(trunk)s/interleaved/file1', 'M'),
+    ('/%(trunk)s/interleaved/file2', 'M'),
+    ))
+  conv.logs[4].check('dependant small commit', (
+    ('/%(trunk)s/interleaved/file1', 'M'),
+    ))
+  conv.logs[5].check('adding', (
+    ('/%(trunk)s/multi-branch', 'A'),
+    ('/%(trunk)s/multi-branch/file1', 'A'),
+    ('/%(trunk)s/multi-branch/file2', 'A'),
+    ))
+  conv.logs[6].check(sym_log_msg("branch"), (
+    ('/%(branches)s/branch (from /%(trunk)s:5)', 'A'),
+    ('/%(branches)s/branch/interleaved', 'D'),
+    ))
+  conv.logs[7].check('multi-branch-commit', (
+    ('/%(trunk)s/multi-branch/file1', 'M'),
+    ('/%(trunk)s/multi-branch/file2', 'M'),
+    ('/%(branches)s/branch/multi-branch/file1', 'M'),
+    ('/%(branches)s/branch/multi-branch/file2', 'M'),
+    ))
+
+
 #----------------------------------------------------------------------
 
 ########################################################################
@@ -2089,6 +2121,7 @@ test_list = [ None,
               auto_props_ignore_case,
               auto_props,
               ctrl_char_in_filename,
+              XFail(commit_dependencies),
               ]
 
 if __name__ == '__main__':

@@ -498,11 +498,14 @@ class CVSRevisionAggregator:
         artifact_manager.get_temp_file(config.DEFAULT_BRANCHES_DB),
         database.DB_OPEN_READ)
 
-  def _extract_ready_commits(self, timestamp):
-    """Extract and return any active commits that expire by TIMESTAMP."""
+  def _extract_ready_commits(self, timestamp=None):
+    """Extract any active commits that expire by TIMESTAMP from
+    self.cvs_commits and append them to self.ready_queue.  If
+    TIMESTAMP is not specified, then extract all commits."""
 
     for digest_key, cvs_commit in self.cvs_commits.items():
-      if cvs_commit.t_max + config.COMMIT_THRESHOLD < timestamp:
+      if timestamp is None \
+             or cvs_commit.t_max + config.COMMIT_THRESHOLD < timestamp:
         self.ready_queue.append(cvs_commit)
         del self.cvs_commits[digest_key]
 
@@ -560,7 +563,7 @@ class CVSRevisionAggregator:
     """Commit anything left in self.cvs_commits.  Then inform the
     SymbolingsLogger that all commits are done."""
 
-    self._extract_ready_commits(1L<<32)
+    self._extract_ready_commits()
     self._commit_ready_commits()
 
     if not Ctx().trunk_only:

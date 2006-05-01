@@ -463,16 +463,11 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
           op = common.OP_CHANGE
         cur_num = self.prev_rev.get(cur_num, None)
 
-    if text:
-      deltatext_code = common.DELTATEXT_NONEMPTY
-    else:
-      deltatext_code = common.DELTATEXT_EMPTY
-
     c_rev = cvs_revision.CVSRevision(
         Ctx(), timestamp, digest, prev_timestamp, next_timestamp, op,
         prev_rev, revision, next_rev,
         self.file_in_attic, self.file_executable, self.file_size,
-        deltatext_code, self.fname, self.mode,
+        bool(text), self.fname, self.mode,
         self.rev_to_branch_name(revision),
         self.taglist.get(revision, []), self.branchlist.get(revision, []))
     self.collect_data.revs.write(str(c_rev) + "\n")

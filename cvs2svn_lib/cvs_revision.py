@@ -50,7 +50,7 @@ class CVSRevision(CVSRevisionID):
                timestamp, digest, prev_timestamp, next_timestamp,
                op, prev_rev, rev, next_rev,
                file_in_attic, file_executable,
-               file_size, deltatext_code,
+               file_size, deltatext_exists,
                fname, mode, branch_name, tags, branches):
     """Initialize a new CVSRevision object.
 
@@ -82,7 +82,7 @@ class CVSRevision(CVSRevisionID):
        FILE_IN_ATTIC   -->  (bool) true iff RCS file is in Attic
        FILE_EXECUTABLE -->  (bool) true iff RCS file has exec bit set.
        FILE_SIZE       -->  (int) size of the RCS file
-       DELTATEXT_CODE  -->  (char) 'N' if non-empty deltatext, else 'E'
+       DELTATEXT_EXISTS-->  (bool) true iff non-empty deltatext
        FNAME           -->  (string) relative path of file in CVS repos
        MODE            -->  (string or None) 'kkv', 'kb', etc.
        BRANCH_NAME     -->  (string or None) branch on which this rev occurred
@@ -105,8 +105,7 @@ class CVSRevision(CVSRevisionID):
     self.file_in_attic = file_in_attic
     self.file_executable = file_executable
     self.file_size = file_size
-    self.deltatext_code = deltatext_code
-    self.deltatext_exists = (self.deltatext_code == common.DELTATEXT_NONEMPTY)
+    self.deltatext_exists = deltatext_exists
     self.mode = mode
     self.branch_name = branch_name
     self.tags = tags
@@ -154,7 +153,7 @@ class CVSRevision(CVSRevisionID):
                bool_to_string(self.file_in_attic),
                bool_to_string(self.file_executable),
                self.file_size,
-               self.deltatext_code,
+               bool_to_string(self.deltatext_exists),
                self.mode or '*',
                self.branch_name or '*',
                list_to_string(self.tags),
@@ -234,7 +233,7 @@ def parse_cvs_revision(ctx, line):
 
   (timestamp, digest, prev_timestamp, next_timestamp,
    op, prev_rev, rev, next_rev, file_in_attic,
-   file_executable, file_size, deltatext_code,
+   file_executable, file_size, deltatext_exists,
    mode, branch_name, numtags, remainder) = line.split(' ', 15)
 
   # Patch up items which are not simple strings:
@@ -249,6 +248,8 @@ def parse_cvs_revision(ctx, line):
   file_executable = string_to_bool(file_executable)
 
   file_size = int(file_size)
+
+  deltatext_exists = string_to_bool(deltatext_exists)
 
   if mode == "*":
     mode = None
@@ -269,7 +270,7 @@ def parse_cvs_revision(ctx, line):
                      timestamp, digest, prev_timestamp, next_timestamp,
                      op, prev_rev, rev, next_rev,
                      file_in_attic, file_executable,
-                     file_size, deltatext_code,
+                     file_size, deltatext_exists,
                      fname, mode, branch_name, tags, branches)
 
 

@@ -87,7 +87,7 @@ The fields are:
    9.  "T" if the RCS file is in the Attic, "F" if it isn't.
    10. "T" if the RCS file has the executable bit set, "F" if not.
    11. The size of the RCS file, in bytes.
-   12. "N" if this revision has non-empty deltatext, else "E" for empty
+   12. "T" if this revision has non-empty deltatext, else "F" for empty.
    13. the RCS keyword substitution mode ("k", "b", etc), or "*" if none
    14. the branch on which this commit happened, or "*" if not on a branch
    15. the number of tags rooted at this revision (followed by their

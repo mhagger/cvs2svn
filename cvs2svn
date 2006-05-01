@@ -509,13 +509,15 @@ class CVSRevisionAggregator:
         self.ready_queue.append(cvs_commit)
         del self.cvs_commits[digest_key]
 
-  def _commit_ready_commits(self):
-    """Sort the commits from self.ready_queue by time, then process them."""
+  def _commit_ready_commits(self, timestamp=None):
+    """Sort the commits from self.ready_queue by time, then process
+    them in order.  If TIMESTAMP is specified, only process commits
+    that have timestamp previous to TIMESTAMP."""
 
     self.ready_queue.sort()
-    while self.ready_queue:
-      cvs_commit = self.ready_queue[0]
-      del self.ready_queue[0]
+    while self.ready_queue and \
+              (timestamp is None or self.ready_queue[0].t_max < timestamp):
+      cvs_commit = self.ready_queue.pop(0)
       self.latest_primary_svn_commit = \
           cvs_commit.process_revisions(self.done_symbols)
       self._attempt_to_commit_symbols()

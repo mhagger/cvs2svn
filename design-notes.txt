@@ -5,8 +5,8 @@ A cvs2svn run consists of eight passes.  Each pass saves the data it
 produces to files on disk, so that a) we don't hold huge amounts of
 state in memory, and b) the conversion process is resumable.
 
-Pass 1:
-=======
+CollectRevsPass (formerly called pass1)
+===============
 
 The goal of this pass is to write to 'cvs2svn-data.revs' a summary of
 all the revisions for each RCS file.  Each revision will be
@@ -112,7 +112,7 @@ The fields are:
 
 That's it -- the RCS file is done.
 
-When every RCS file is done, Pass 1 is complete, and:
+When every RCS file is done, CollectRevsPass is complete, and:
 
    - cvs2svn-data.revs contains a summary of every RCS file's
      revisions.  All the revisions for a given RCS file are grouped
@@ -124,8 +124,9 @@ When every RCS file is done, Pass 1 is complete, and:
    - cvs2svn-data.resync contains a small amount of resync data, in
      no particular order.
 
-Pass 2:
-=======
+
+ResyncRevsPass (formerly called pass2)
+==============
 
 This is where the resync file is used.  The goal of this pass is to
 convert cvs2svn-data.revs to a new file, 'cvs2svn-data.c-revs' (clean
@@ -134,7 +135,7 @@ timestamps.
 
 First, read the whole resync file into a hash table that maps each
 author+log digest to a list of lists.  Each sublist represents one of
-the timestamp adjustments from Pass 1, and looks like this:
+the timestamp adjustments from CollectRevsPass, and looks like this:
 
    [old_time_lower, old_time_upper, new_time]
 
@@ -151,7 +152,7 @@ those whose digest matches some resync entry, and appear to be part of
 the same commit as one of the sublists in that entry, get tweaked.
 The tweak is to adjust the commit time of the line to the new_time,
 which is taken from the resync hash and results from the adjustment
-described in Pass 1.
+described in CollectRevsPass.
 
 The way we figure out whether a given line needs to be tweaked is to
 loop over all the sublists, seeing if this commit's original time
@@ -171,8 +172,9 @@ important enough to have a distinctive log message anyway, so does it
 really matter if a couple of them accidentally get unified?  Probably
 not.
 
-Pass 3:
-=======
+
+SortRevsPass (formerly called pass3)
+============
 
 This is where we deduce the changesets, that is, the grouping of file
 changes into single commits.
@@ -185,19 +187,21 @@ changes grouped by logical commit.
 
 In some cases, the changes in a given commit may be interleaved with
 other commits that went on at the same time, because the sort gives
-precedence to date before log digest.  However, Pass 4 detects this by
-seeing that the log digest is different, and reseparates the commits.
+precedence to date before log digest.  However, CreateDatabasesPass
+detects this by seeing that the log digest is different, and
+reseparates the commits.
 
-Pass 4:
-=======
+
+CreateDatabasesPass (formerly called pass4):
+===================
 
 This pass has two primary objectives:
 
 1. Create a database that maps CVSRevision unique keys to the actual
    CVSRevision string from the revs file (whose format is described
-   above in pass 1).  This results in a database containing one
-   key-value pair for each line in the revs file.  This gives us the
-   ability to pass around these smaller keys instead of whole CVS
+   above in CollectRevsPass).  This results in a database containing
+   one key-value pair for each line in the revs file.  This gives us
+   the ability to pass around these smaller keys instead of whole CVS
    revisions (which look like lines from the s-revs file).  See the
    CVSRevision class for more details on what the unique key is.
 
@@ -221,8 +225,9 @@ This pass has two primary objectives:
             1.4/foo/bar/baz.txt,v   --> [BRANCH48, BRANCH37]
             1.18/foo/bar/quux.txt,v --> [TAG320, TAG1178]
 
-Pass 5:
-=======
+
+AggregateRevsPass (formerly called pass5)
+=================
 
 Primarily, this pass gathers CVS revisions into Subversion revisions
 (a Subversion revision is comprised of one or more CVS revisions)
@@ -281,16 +286,18 @@ This pass does the following:
 
    See SymbolingsLogger for more details.
 
-Pass 6:
-=======
+
+SortSymbolsPass (formerly called pass6)
+===============
 
 This pass merely sorts cvs2svn-symbolic-names.txt into
 cvs2svn-symbolic-names-s.txt.  This orders the file first by symbolic
 name, and second by Subversion revision number, thus grouping all
 openings and closings for each symbolic name together.
 
-Pass 7:
-=======
+
+IndexSymbolsPass (formerly called pass7)
+================
 
 This pass iterates through all the lines in
 cvs2svn-symbolic-names-s.txt, writing out a database file mapping
@@ -299,10 +306,11 @@ where SYMBOLIC_NAME is first encountered.  This will allow us to seek
 to the various offsets in the file and sequentially read only the
 openings and closings that we need.
 
-Pass 8:
-=======
 
-The 8th pass has very little "thinking" to do--it basically opens the
+OutputPass (formerly called pass8)
+==========
+
+This pass has very little "thinking" to do--it basically opens the
 svn-nums-to-cvs-revs.db and, starting with Subversion revision 2
 (revision 1 creates /trunk, /tags, and /branches), sequentially plays
 out all the commits to either a Subversion repository or to a
@@ -321,6 +329,7 @@ repository, and then removed.
 
 In both modes, the dumpfile revisions are created by walking through
 cvs2svn-data.s-revs.
+
 
                   ===============================
                       Branches and Tags Plan.

@@ -1033,6 +1033,8 @@ class CreateDatabasesPass(Pass):
       last_sym_name_db.log_revision(c_rev)
       StatsKeeper().record_c_rev(c_rev)
 
+    StatsKeeper().set_stats_reflect_exclude(True)
+
     last_sym_name_db.create_database()
     StatsKeeper().archive()
     Log().write(Log.QUIET, "Done")
@@ -1237,10 +1239,6 @@ def convert(start_pass, end_pass):
     artifact_manager.pass_deferred(the_pass)
 
   Log().write(Log.QUIET, StatsKeeper())
-  if end_pass < 4:
-    Log().write(Log.QUIET,
-                '(These are unaltered CVS repository stats and do not\n'
-                ' reflect tags or branches excluded via --exclude)\n')
   Log().write(Log.NORMAL, StatsKeeper().timings())
 
   # The overall conversion is done:

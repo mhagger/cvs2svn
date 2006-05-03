@@ -617,6 +617,10 @@ class CVSRevisionAggregator:
 class Pass:
   """Base class for one step of the conversion."""
 
+  def __init__(self):
+    # By default, use the pass object's class name as the pass name:
+    self.name = self.__class__.__name__
+
   def register_artifacts(self):
     """Register artifacts (created and needed) in artifact_manager."""
 
@@ -1212,7 +1216,8 @@ def convert(start_pass, end_pass):
   times[start_pass - 1] = time.time()
   for i in range(start_pass - 1, end_pass):
     the_pass = _passes[i]
-    Log().write(Log.QUIET, '----- pass %d -----' % (i + 1))
+    Log().write(Log.QUIET,
+                '----- pass %d (%s) -----' % (i + 1, the_pass.name,))
     the_pass.run()
     times[i + 1] = time.time()
     StatsKeeper().log_duration_for_pass(times[i + 1] - times[i], i + 1)

@@ -638,7 +638,9 @@ class Pass:
     raise NotImplementedError
 
 
-class Pass1(Pass):
+class CollectRevsPass(Pass):
+  """This pass was formerly known as pass1."""
+
   def register_artifacts(self):
     self._register_temp_file(config.TAGS_LIST)
     self._register_temp_file(config.BRANCHES_LIST)
@@ -713,8 +715,10 @@ class Pass1(Pass):
     Log().write(Log.QUIET, "Done")
 
 
-class Pass2(Pass):
-  """Pass 2: clean up the revision information."""
+class ResyncRevsPass(Pass):
+  """Clean up the revision information.
+
+  This pass was formerly known as pass2."""
 
   def register_artifacts(self):
     self._register_temp_file(config.TAGS_DB)
@@ -974,7 +978,9 @@ class Pass2(Pass):
     Log().write(Log.QUIET, "Done")
 
 
-class Pass3(Pass):
+class SortRevsPass(Pass):
+  """This pass was formerly known as pass3."""
+
   def register_artifacts(self):
     self._register_temp_file(config.SORTED_REVS_DATAFILE)
     self._register_temp_file_needed(config.CLEAN_REVS_DATAFILE)
@@ -986,7 +992,9 @@ class Pass3(Pass):
     Log().write(Log.QUIET, "Done")
 
 
-class Pass4(Pass):
+class CreateDatabasesPass(Pass):
+  """This pass was formerly known as pass4."""
+
   def register_artifacts(self):
     if not Ctx().trunk_only:
       self._register_temp_file(config.SYMBOL_LAST_CVS_REVS_DB)
@@ -1026,11 +1034,13 @@ class Pass4(Pass):
     Log().write(Log.QUIET, "Done")
 
 
-class Pass5(Pass):
+class AggregateRevsPass(Pass):
   """Generate the SVNCommit <-> CVSRevision mapping databases.
   CVSCommit._commit also calls SymbolingsLogger to register
   CVSRevisions that represent an opening or closing for a path on a
-  branch or tag.  See SymbolingsLogger for more details."""
+  branch or tag.  See SymbolingsLogger for more details.
+
+  This pass was formerly known as pass5."""
 
   def register_artifacts(self):
     self._register_temp_file(config.SYMBOL_OPENINGS_CLOSINGS)
@@ -1061,7 +1071,9 @@ class Pass5(Pass):
     Log().write(Log.QUIET, "Done")
 
 
-class Pass6(Pass):
+class SortSymbolsPass(Pass):
+  """This pass was formerly known as pass6."""
+
   def register_artifacts(self):
     if not Ctx().trunk_only:
       self._register_temp_file(config.SYMBOL_OPENINGS_CLOSINGS_SORTED)
@@ -1078,7 +1090,9 @@ class Pass6(Pass):
     Log().write(Log.QUIET, "Done")
 
 
-class Pass7(Pass):
+class IndexSymbolsPass(Pass):
+  """This pass was formerly known as pass7."""
+
   def register_artifacts(self):
     if not Ctx().trunk_only:
       self._register_temp_file(config.SYMBOL_OFFSETS_DB)
@@ -1123,7 +1137,9 @@ class Pass7(Pass):
     Log().write(Log.QUIET, "Done.")
 
 
-class Pass8(Pass):
+class OutputPass(Pass):
+  """This pass was formerly known as pass8."""
+
   def register_artifacts(self):
     self._register_temp_file(config.SVN_MIRROR_REVISIONS_DB)
     self._register_temp_file(config.SVN_MIRROR_NODES_DB)
@@ -1163,14 +1179,14 @@ class Pass8(Pass):
 
 
 _passes = [
-  Pass1(),
-  Pass2(),
-  Pass3(),
-  Pass4(),
-  Pass5(),
-  Pass6(),
-  Pass7(),
-  Pass8(),
+  CollectRevsPass(),
+  ResyncRevsPass(),
+  SortRevsPass(),
+  CreateDatabasesPass(),
+  AggregateRevsPass(),
+  SortSymbolsPass(),
+  IndexSymbolsPass(),
+  OutputPass(),
   ]
 
 

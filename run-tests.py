@@ -616,6 +616,13 @@ def show_usage():
     raise svntest.Failure('Basic cvs2svn invocation failed.')
 
 
+def show_help_passes():
+  "cvs2svn --help-passes shows pass information"
+  out = run_cvs2svn(None, '--help-passes')
+  if out[0].find('PASSES') < 0:
+    raise svntest.Failure('cvs2svn --help-passes failed.')
+
+
 def attr_exec():
   "detection of the executable flag"
   if sys.platform == 'win32':
@@ -2122,6 +2129,7 @@ test_list = [ None,
               auto_props,
               ctrl_char_in_filename,
               XFail(commit_dependencies),
+              show_help_passes,
               ]
 
 if __name__ == '__main__':

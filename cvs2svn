@@ -1250,6 +1250,12 @@ def convert(start_pass, end_pass):
   artifact_manager.check_clean()
 
 
+def help_passes():
+  print 'PASSES:'
+  for i in range(len(_passes)):
+    print '%5d : %s' % (i + 1, _passes[i].name,)
+
+
 def normalize_ttb_path(opt, path):
   """Normalize a path to be used for --trunk, --tags, or --branches.
 
@@ -1270,6 +1276,7 @@ def usage():
   print 'USAGE: %s [-v] [-s svn-repos-path] [-p pass] cvs-repos-path' \
         % os.path.basename(sys.argv[0])
   print '  --help, -h           print this usage message and exit with success'
+  print '  --help-passes        list the available passes and their numbers'
   print '  --version            print the version number'
   print '  -q                   quiet'
   print '  -v                   verbose'
@@ -1333,7 +1340,7 @@ def main():
 
   try:
     opts, args = getopt.getopt(sys.argv[1:], 'p:s:qvh',
-                               [ "help", "create", "trunk=",
+                               [ "help", "help-passes", "create", "trunk=",
                                  "username=", "existing-svnrepos",
                                  "branches=", "tags=", "encoding=",
                                  "force-branch=", "force-tag=", "exclude=",
@@ -1372,6 +1379,9 @@ def main():
             % (int(end_pass), int(start_pass), len(_passes),))
     elif (opt == '--help') or (opt == '-h'):
       ctx.print_help = 1
+    elif opt == '--help-passes':
+      help_passes()
+      sys.exit(0)
     elif opt == '-v':
       Log().log_level = Log.VERBOSE
       ctx.verbose = 1

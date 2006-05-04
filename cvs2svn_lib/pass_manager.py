@@ -28,12 +28,25 @@ from artifact_manager import artifact_manager
 
 
 class PassManager:
+  """Manage a list of passes that can be executed separately or all at once.
+
+  Passes are numbered starting with 1."""
+
   def __init__(self, passes):
+    """Construct a PassManager with the specified PASSES.
+
+    Internally, passes are numbered starting with 1.  So PASSES[0] is
+    considered to be pass number 1."""
+
     self.passes = passes
     self.num_passes = len(self.passes)
 
   def run(self, start_pass, end_pass):
-    """Convert a CVS repository to an SVN repository."""
+    """Run the specified passes, one after another.
+
+    START_PASS is the number of the first pass that should be run.
+    END_PASS is the number of the last pass that should be run.  It
+    must be that 1 <= START_PASS <= END_PASS <= self.num_passes."""
 
     artifact_manager.register_temp_file(config.STATISTICS_FILE, self)
 
@@ -84,6 +97,8 @@ class PassManager:
     artifact_manager.check_clean()
 
   def help_passes(self):
+    """Output (to sys.stdout) the indices and names of available passes."""
+
     print 'PASSES:'
     for i in range(len(self.passes)):
       print '%5d : %s' % (i + 1, self.passes[i].name,)

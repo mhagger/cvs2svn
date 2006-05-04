@@ -20,11 +20,18 @@
 import time
 
 from boolean import *
+from common import FatalError
 import config
 from context import Ctx
 from log import Log
 from stats_keeper import StatsKeeper
 from artifact_manager import artifact_manager
+
+
+class InvalidPassError(FatalError):
+  def __init__(self, msg):
+    FatalError.__init__(
+        self, msg + '\nUse --help-passes for more information.')
 
 
 class PassManager:
@@ -41,17 +48,35 @@ class PassManager:
     self.passes = passes
     self.num_passes = len(self.passes)
 
-  def get_pass_number(self, pass_name):
-    """Return the number of the pass with the specified PASS_NAME.
+  def get_pass_number(self, pass_name, default=None):
+    """Return the number of the pass indicated by PASS_NAME.
 
-    The number returned is in the range 1 <= value <= self.num_passes.
-    Raise IndexError if PASS_NAME is unknown."""
+    PASS_NAME should be a string containing the name or number of a
+    pass.  If a number, it should be in the range 1 <= value <=
+    self.num_passes.  Return an integer in the same range.  If
+    PASS_NAME is the empty string and DEFAULT is specified, return
+    DEFAULT.  Raise InvalidPassError if PASS_NAME cannot be converted
+    into a valid pass number."""
 
-    for i in range(len(self.passes)):
-      if self.passes[i].name == pass_name:
-        return i + 1
+    if not pass_name and default is not None:
+      assert 1 <= default <= self.num_passes
+      return default
 
-    raise IndexError('Unknown pass name %r' % (pass_name,))
+    try:
+      # Does pass_name look like an integer?
+      pass_number = int(pass_name)
+      if not 1 <= pass_number <= self.num_passes:
+        raise InvalidPassError(
+            'illegal value (%d) for pass number.  Must be 1 through %d or\n'
+            'the name of a known pass.'
+            % (pass_number,))
+      return pass_number
+    except ValueError:
+      # Is pass_name the name of one of the passes?
+      for i in range(len(self.passes)):
+        if self.passes[i].name == pass_name:
+          return i + 1
+      raise InvalidPassError('Unknown pass name (%r).' % (pass_name,))
 
   def run(self, start_pass, end_pass):
     """Run the specified passes, one after another.

@@ -88,7 +88,7 @@ from cvs2svn_lib.dumpfile_delegate import DumpfileDelegate
 from cvs2svn_lib.repository_delegate import RepositoryDelegate
 from cvs2svn_lib.stdout_delegate import StdoutDelegate
 from cvs2svn_lib.persistence_manager import PersistenceManager
-from cvs2svn_lib.pass_manager import convert
+from cvs2svn_lib.pass_manager import PassManager
 
 
 # Make sure this Python is recent enough.
@@ -1185,7 +1185,7 @@ class OutputPass(Pass):
     repos.finish()
 
 
-_passes = [
+pass_manager = PassManager([
   CollectRevsPass(),
   ResyncRevsPass(),
   SortRevsPass(),
@@ -1194,13 +1194,13 @@ _passes = [
   SortSymbolsPass(),
   IndexSymbolsPass(),
   OutputPass(),
-  ]
+  ])
 
 
 def help_passes():
   print 'PASSES:'
-  for i in range(len(_passes)):
-    print '%5d : %s' % (i + 1, _passes[i].name,)
+  for i in range(len(pass_manager.passes)):
+    print '%5d : %s' % (i + 1, pass_manager.passes[i].name,)
 
 
 def normalize_ttb_path(opt, path):
@@ -1229,7 +1229,7 @@ def usage():
   print '  -v                   verbose'
   print '  -s PATH              path for SVN repos'
   print '  -p START[:END]       start at pass START, end at pass END of %d' \
-        % len(_passes)
+        % len(pass_manager.passes)
   print '                       If only START is given, run only pass START'
   print '                       (implicitly enables --skip-cleanup)'
   print '  --existing-svnrepos  load into existing SVN repository'
@@ -1283,7 +1283,7 @@ def main():
 
   profiling = None
   start_pass = 1
-  end_pass = len(_passes)
+  end_pass = len(pass_manager.passes)
 
   try:
     opts, args = getopt.getopt(sys.argv[1:], 'p:s:qvh',
@@ -1316,14 +1316,14 @@ def main():
         start_pass, end_pass = map(int, value.split(':'))
       else:
         end_pass = start_pass = int(value)
-      if start_pass > len(_passes) or start_pass < 1:
+      if start_pass > len(pass_manager.passes) or start_pass < 1:
         raise FatalError(
             'illegal value (%d) for starting pass.  Must be 1 through %d.'
-            % (int(start_pass), len(_passes),))
-      if end_pass < start_pass or end_pass > len(_passes):
+            % (int(start_pass), len(pass_manager.passes),))
+      if end_pass < start_pass or end_pass > len(pass_manager.passes):
         raise FatalError(
             'illegal value (%d) for ending pass.  Must be %d through %d.'
-            % (int(end_pass), int(start_pass), len(_passes),))
+            % (int(end_pass), int(start_pass), len(pass_manager.passes),))
     elif (opt == '--help') or (opt == '-h'):
       ctx.print_help = 1
     elif opt == '--help-passes':
@@ -1552,10 +1552,10 @@ def main():
     if profiling:
       import hotshot
       prof = hotshot.Profile('cvs2svn.hotshot')
-      prof.runcall(convert, start_pass, end_pass)
+      prof.runcall(pass_manager.run, start_pass, end_pass)
       prof.close()
     else:
-      convert(_passes, start_pass, end_pass)
+      pass_manager.run(start_pass, end_pass)
   finally:
     try: os.rmdir(os.path.join(ctx.tmpdir, 'cvs2svn.lock'))
     except: pass

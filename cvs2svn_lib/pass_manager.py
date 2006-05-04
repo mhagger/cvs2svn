@@ -27,55 +27,59 @@ from stats_keeper import StatsKeeper
 from artifact_manager import artifact_manager
 
 
-def convert(passes, start_pass, end_pass):
-  """Convert a CVS repository to an SVN repository."""
+class PassManager:
+  def __init__(self, passes):
+    self.passes = passes
 
-  artifact_manager.register_temp_file(config.STATISTICS_FILE, convert)
+  def run(self, start_pass, end_pass):
+    """Convert a CVS repository to an SVN repository."""
 
-  StatsKeeper().set_start_time(time.time())
+    artifact_manager.register_temp_file(config.STATISTICS_FILE, self)
 
-  # Inform the artifact manager when artifacts are created and used:
-  for the_pass in passes:
-    # The statistics object is needed for every pass:
-    artifact_manager.register_temp_file_needed(
-        config.STATISTICS_FILE, the_pass)
-    the_pass.register_artifacts()
+    StatsKeeper().set_start_time(time.time())
 
-  # Tell the artifact manager about passes that are being skipped this run:
-  for the_pass in passes[0:start_pass - 1]:
-    artifact_manager.pass_skipped(the_pass)
+    # Inform the artifact manager when artifacts are created and used:
+    for the_pass in self.passes:
+      # The statistics object is needed for every pass:
+      artifact_manager.register_temp_file_needed(
+          config.STATISTICS_FILE, the_pass)
+      the_pass.register_artifacts()
 
-  times = [ None ] * (end_pass + 1)
-  times[start_pass - 1] = time.time()
-  for i in range(start_pass - 1, end_pass):
-    the_pass = passes[i]
-    Log().write(Log.QUIET,
-                '----- pass %d (%s) -----' % (i + 1, the_pass.name,))
-    the_pass.run()
-    times[i + 1] = time.time()
-    StatsKeeper().log_duration_for_pass(times[i + 1] - times[i], i + 1)
-    # Dispose of items in Ctx() not intended to live past the end of the pass
-    # (Identified by exactly one leading underscore)
-    for attr in dir(Ctx()):
-      if (len(attr) > 2 and attr[0] == '_' and attr[1] != '_'
-          and attr[:6] != "_Ctx__"):
-        delattr(Ctx(), attr)
-    StatsKeeper().set_end_time(time.time())
-    # Allow the artifact manager to clean up artifacts that are no
-    # longer needed:
-    artifact_manager.pass_done(the_pass)
+    # Tell the artifact manager about passes that are being skipped this run:
+    for the_pass in self.passes[0:start_pass - 1]:
+      artifact_manager.pass_skipped(the_pass)
 
-  # Tell the artifact manager about passes that are being deferred:
-  for the_pass in passes[end_pass:]:
-    artifact_manager.pass_deferred(the_pass)
+    times = [ None ] * (end_pass + 1)
+    times[start_pass - 1] = time.time()
+    for i in range(start_pass - 1, end_pass):
+      the_pass = self.passes[i]
+      Log().write(Log.QUIET,
+                  '----- pass %d (%s) -----' % (i + 1, the_pass.name,))
+      the_pass.run()
+      times[i + 1] = time.time()
+      StatsKeeper().log_duration_for_pass(times[i + 1] - times[i], i + 1)
+      # Dispose of items in Ctx() not intended to live past the end of the pass
+      # (Identified by exactly one leading underscore)
+      for attr in dir(Ctx()):
+        if (len(attr) > 2 and attr[0] == '_' and attr[1] != '_'
+            and attr[:6] != "_Ctx__"):
+          delattr(Ctx(), attr)
+      StatsKeeper().set_end_time(time.time())
+      # Allow the artifact manager to clean up artifacts that are no
+      # longer needed:
+      artifact_manager.pass_done(the_pass)
 
-  Log().write(Log.QUIET, StatsKeeper())
-  Log().write(Log.NORMAL, StatsKeeper().timings())
+    # Tell the artifact manager about passes that are being deferred:
+    for the_pass in self.passes[end_pass:]:
+      artifact_manager.pass_deferred(the_pass)
 
-  # The overall conversion is done:
-  artifact_manager.pass_done(convert)
+    Log().write(Log.QUIET, StatsKeeper())
+    Log().write(Log.NORMAL, StatsKeeper().timings())
 
-  # Consistency check:
-  artifact_manager.check_clean()
+    # The overall conversion is done:
+    artifact_manager.pass_done(self)
+
+    # Consistency check:
+    artifact_manager.check_clean()
 
 

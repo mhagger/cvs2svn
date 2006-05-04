@@ -1304,8 +1304,6 @@ def main():
         print '%s version %s' % (os.path.basename(sys.argv[0]), VERSION)
         sys.exit(0)
     elif opt == '-p':
-      # Don't cleanup if we're doing incrementals.
-      ctx.skip_cleanup = 1
       if value.find(':') > 0:
         start_pass, end_pass = map(int, value.split(':'))
       else:

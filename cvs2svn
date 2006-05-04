@@ -1196,7 +1196,7 @@ _passes = [
   ]
 
 
-def convert(start_pass, end_pass):
+def convert(passes, start_pass, end_pass):
   """Convert a CVS repository to an SVN repository."""
 
   artifact_manager.register_temp_file(config.STATISTICS_FILE, convert)
@@ -1204,20 +1204,20 @@ def convert(start_pass, end_pass):
   StatsKeeper().set_start_time(time.time())
 
   # Inform the artifact manager when artifacts are created and used:
-  for the_pass in _passes:
+  for the_pass in passes:
     # The statistics object is needed for every pass:
     artifact_manager.register_temp_file_needed(
         config.STATISTICS_FILE, the_pass)
     the_pass.register_artifacts()
 
   # Tell the artifact manager about passes that are being skipped this run:
-  for the_pass in _passes[0:start_pass - 1]:
+  for the_pass in passes[0:start_pass - 1]:
     artifact_manager.pass_skipped(the_pass)
 
   times = [ None ] * (end_pass + 1)
   times[start_pass - 1] = time.time()
   for i in range(start_pass - 1, end_pass):
-    the_pass = _passes[i]
+    the_pass = passes[i]
     Log().write(Log.QUIET,
                 '----- pass %d (%s) -----' % (i + 1, the_pass.name,))
     the_pass.run()
@@ -1235,7 +1235,7 @@ def convert(start_pass, end_pass):
     artifact_manager.pass_done(the_pass)
 
   # Tell the artifact manager about passes that are being deferred:
-  for the_pass in _passes[end_pass:]:
+  for the_pass in passes[end_pass:]:
     artifact_manager.pass_deferred(the_pass)
 
   Log().write(Log.QUIET, StatsKeeper())
@@ -1606,7 +1606,7 @@ def main():
       prof.runcall(convert, start_pass, end_pass)
       prof.close()
     else:
-      convert(start_pass, end_pass)
+      convert(_passes, start_pass, end_pass)
   finally:
     try: os.rmdir(os.path.join(ctx.tmpdir, 'cvs2svn.lock'))
     except: pass

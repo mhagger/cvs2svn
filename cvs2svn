@@ -1197,12 +1197,6 @@ pass_manager = PassManager([
   ])
 
 
-def help_passes():
-  print 'PASSES:'
-  for i in range(len(pass_manager.passes)):
-    print '%5d : %s' % (i + 1, pass_manager.passes[i].name,)
-
-
 def normalize_ttb_path(opt, path):
   """Normalize a path to be used for --trunk, --tags, or --branches.
 
@@ -1327,7 +1321,7 @@ def main():
     elif (opt == '--help') or (opt == '-h'):
       ctx.print_help = 1
     elif opt == '--help-passes':
-      help_passes()
+      pass_manager.help_passes()
       sys.exit(0)
     elif opt == '-v':
       Log().log_level = Log.VERBOSE

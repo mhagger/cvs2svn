@@ -82,4 +82,9 @@ class PassManager:
     # Consistency check:
     artifact_manager.check_clean()
 
+  def help_passes(self):
+    print 'PASSES:'
+    for i in range(len(self.passes)):
+      print '%5d : %s' % (i + 1, self.passes[i].name,)
+
 

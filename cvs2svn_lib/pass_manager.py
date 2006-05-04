@@ -109,8 +109,12 @@ class PassManager:
     Log().write(Log.QUIET, StatsKeeper())
     Log().write(Log.NORMAL, StatsKeeper().timings())
 
-    # The overall conversion is done:
-    artifact_manager.pass_done(self)
+    if index_end == self.num_passes:
+      # The overall conversion is done:
+      artifact_manager.pass_done(self)
+    else:
+      # The end is yet to come:
+      artifact_manager.pass_deferred(self)
 
     # Consistency check:
     artifact_manager.check_clean()

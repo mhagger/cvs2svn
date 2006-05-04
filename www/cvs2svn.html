@@ -302,9 +302,17 @@ directories) before running your conversion.
   </tr>
 
   <tr>
-    <td align=right><tt>-p START[:END]</tt></td>
-    <td>Start converting at pass START, end at pass END of 8.  If only
-      START is given, run only pass START.</td>
+    <td align=right><tt>-p PASS</tt></td>
+    <td>Execute only pass PASS of the conversion.  PASS can be
+    specified by name or by number (see <tt>--help-passes</tt>)</td>
+  </tr>
+
+  <tr>
+    <td align=right><tt>-p [START]:[END]</tt></td>
+    <td>Execute passes START through END of the conversion
+    (inclusive).  START and END can be specified by name or by number
+    (see <tt>--help-passes</tt>).  If START or END is missing, it
+    defaults to the first or last pass, respectively.</td>
   </tr>
 
   <tr>

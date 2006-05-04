@@ -88,7 +88,9 @@ from cvs2svn_lib.dumpfile_delegate import DumpfileDelegate
 from cvs2svn_lib.repository_delegate import RepositoryDelegate
 from cvs2svn_lib.stdout_delegate import StdoutDelegate
 from cvs2svn_lib.persistence_manager import PersistenceManager
-from cvs2svn_lib.pass_manager import PassManager
+from cvs2svn_lib.pass_manager import \
+        PassManager, \
+        InvalidPassError
 
 
 # Make sure this Python is recent enough.
@@ -1222,9 +1224,9 @@ def usage():
   print '  -q                   quiet'
   print '  -v                   verbose'
   print '  -s PATH              path for SVN repos'
-  print '  -p START[:END]       start at pass START, end at pass END of %d' \
-        % pass_manager.num_passes
-  print '                       If only START is given, run only pass START'
+  print '  -p PASS              execute only specified PASS'
+  print '  -p [START]:[END]     execute passes START through END, inclusive'
+  print '                       (PASS, START, and END can be pass names or numbers)'
   print '  --existing-svnrepos  load into existing SVN repository'
   print '  --dumpfile=PATH      name of intermediate svn dumpfile'
   print '  --tmpdir=PATH        directory to use for tmp data (default to cwd)'
@@ -1303,18 +1305,17 @@ def main():
         print '%s version %s' % (os.path.basename(sys.argv[0]), VERSION)
         sys.exit(0)
     elif opt == '-p':
-      if value.find(':') > 0:
-        start_pass, end_pass = map(int, value.split(':'))
+      if value.find(':') >= 0:
+        start_pass, end_pass = value.split(':')
+        start_pass = pass_manager.get_pass_number(start_pass, 1)
+        end_pass = pass_manager.get_pass_number(end_pass,
+                                                pass_manager.num_passes)
       else:
-        end_pass = start_pass = int(value)
-      if start_pass > pass_manager.num_passes or start_pass < 1:
-        raise FatalError(
-            'illegal value (%d) for starting pass.  Must be 1 through %d.'
-            % (int(start_pass), pass_manager.num_passes,))
-      if end_pass < start_pass or end_pass > pass_manager.num_passes:
-        raise FatalError(
-            'illegal value (%d) for ending pass.  Must be %d through %d.'
-            % (int(end_pass), int(start_pass), pass_manager.num_passes,))
+        end_pass = start_pass = pass_manager.get_pass_number(value)
+
+      if not start_pass <= end_pass:
+        raise InvalidPassError(
+            'Ending pass must not come before starting pass.')
     elif (opt == '--help') or (opt == '-h'):
       ctx.print_help = 1
     elif opt == '--help-passes':

@@ -41,6 +41,18 @@ class PassManager:
     self.passes = passes
     self.num_passes = len(self.passes)
 
+  def get_pass_number(self, pass_name):
+    """Return the number of the pass with the specified PASS_NAME.
+
+    The number returned is in the range 1 <= value <= self.num_passes.
+    Raise IndexError if PASS_NAME is unknown."""
+
+    for i in range(len(self.passes)):
+      if self.passes[i].name == pass_name:
+        return i + 1
+
+    raise IndexError('Unknown pass name %r' % (pass_name,))
+
   def run(self, start_pass, end_pass):
     """Run the specified passes, one after another.
 

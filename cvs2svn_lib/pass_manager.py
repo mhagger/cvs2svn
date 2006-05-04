@@ -48,6 +48,13 @@ class PassManager:
     END_PASS is the number of the last pass that should be run.  It
     must be that 1 <= START_PASS <= END_PASS <= self.num_passes."""
 
+    # Convert start_pass and end_pass into the indices of the passes
+    # to execute, using the Python index range convention (i.e., first
+    # pass executed and first pass *after* the ones that should be
+    # executed).
+    index_start = start_pass - 1
+    index_end = end_pass
+
     artifact_manager.register_temp_file(config.STATISTICS_FILE, self)
 
     StatsKeeper().set_start_time(time.time())
@@ -60,12 +67,12 @@ class PassManager:
       the_pass.register_artifacts()
 
     # Tell the artifact manager about passes that are being skipped this run:
-    for the_pass in self.passes[0:start_pass - 1]:
+    for the_pass in self.passes[0:index_start]:
       artifact_manager.pass_skipped(the_pass)
 
-    times = [ None ] * (end_pass + 1)
-    times[start_pass - 1] = time.time()
-    for i in range(start_pass - 1, end_pass):
+    times = [ None ] * (index_end + 1)
+    times[index_start] = time.time()
+    for i in range(index_start, index_end):
       the_pass = self.passes[i]
       Log().write(Log.QUIET,
                   '----- pass %d (%s) -----' % (i + 1, the_pass.name,))
@@ -84,7 +91,7 @@ class PassManager:
       artifact_manager.pass_done(the_pass)
 
     # Tell the artifact manager about passes that are being deferred:
-    for the_pass in self.passes[end_pass:]:
+    for the_pass in self.passes[index_end:]:
       artifact_manager.pass_deferred(the_pass)
 
     Log().write(Log.QUIET, StatsKeeper())

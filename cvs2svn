@@ -1225,7 +1225,6 @@ def usage():
   print '  -p START[:END]       start at pass START, end at pass END of %d' \
         % pass_manager.num_passes
   print '                       If only START is given, run only pass START'
-  print '                       (implicitly enables --skip-cleanup)'
   print '  --existing-svnrepos  load into existing SVN repository'
   print '  --dumpfile=PATH      name of intermediate svn dumpfile'
   print '  --tmpdir=PATH        directory to use for tmp data (default to cwd)'

@@ -30,6 +30,7 @@ from artifact_manager import artifact_manager
 class PassManager:
   def __init__(self, passes):
     self.passes = passes
+    self.num_passes = len(self.passes)
 
   def run(self, start_pass, end_pass):
     """Convert a CVS repository to an SVN repository."""

@@ -464,7 +464,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
         cur_num = self.prev_rev.get(cur_num, None)
 
     c_rev = cvs_revision.CVSRevision(
-        Ctx(), timestamp, digest, prev_timestamp, next_timestamp, op,
+        timestamp, digest, prev_timestamp, next_timestamp, op,
         prev_rev, revision, next_rev,
         self.file_in_attic, self.file_executable, self.file_size,
         bool(text), self.fname, self.mode,

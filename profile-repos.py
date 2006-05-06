@@ -48,7 +48,7 @@ def do_it(revs_file):
       break
 
     # Get a CVSRevision to describe this line
-    c_rev = parse_cvs_revision(None, line)
+    c_rev = parse_cvs_revision(line)
 
     # Handle tags
     num_tags = len(c_rev.tags)

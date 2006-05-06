@@ -44,29 +44,32 @@ class CVSRevision(CVSRevisionID):
   """Information about a single CVS revision.
 
   A CVSRevision holds the information known about a single version of
-  a single file."""
+  a single file.
 
-  def __init__(self, ctx,
+  ctx is the context to use for instances of CVSRevision, or None.  If
+  ctx is None, the following properties of instantiated CVSRevision
+  class objects will be unavailable (or simply will not work
+  correctly, if at all):
+
+     cvs_path
+     svn_path
+     is_default_branch_revision()
+
+  (Note that this class treats ctx as const, because the caller
+  likely passed in a Borg instance of a Ctx.  The reason this class
+  stores a Ctx instance, instead of just instantiating a Ctx itself,
+  is that this class should be usable outside cvs2svn.)
+  """
+
+  ctx = None
+
+  def __init__(self,
                timestamp, digest, prev_timestamp, next_timestamp,
                op, prev_rev, rev, next_rev,
                file_in_attic, file_executable,
                file_size, deltatext_exists,
                fname, mode, branch_name, tags, branches):
     """Initialize a new CVSRevision object.
-
-    CTX is the context to use, or None. If CTX is None, the following
-    members and methods of the instantiated CVSRevision class object
-    will be unavailable (or simply will not work correctly, if at
-    all):
-
-       cvs_path
-       svn_path
-       is_default_branch_revision()
-
-    (Note that this class treats CTX as const, because the caller
-    likely passed in a Borg instance of a Ctx.  The reason this class
-    takes CTX as as a parameter, instead of just instantiating a Ctx
-    itself, is that this class should be usable outside cvs2svn.)
 
     Arguments:
        TIMESTAMP       -->  (int) date stamp for this cvs revision
@@ -94,7 +97,6 @@ class CVSRevision(CVSRevisionID):
 
     CVSRevisionID.__init__(self, fname, rev)
 
-    self._ctx = ctx
     self.timestamp = timestamp
     self.digest = digest
     self.prev_timestamp = prev_timestamp
@@ -111,13 +113,13 @@ class CVSRevision(CVSRevisionID):
     self.tags = tags
     self.branches = branches
 
-    if ctx is not None:
-      self.cvs_path = ctx.cvs_repository.get_cvs_path(self.fname)
+    if self.ctx is not None:
+      self.cvs_path = self.ctx.cvs_repository.get_cvs_path(self.fname)
       if self.branch_name:
-        self.svn_path = ctx.project.make_branch_path(self.branch_name,
-                                                     self.cvs_path)
+        self.svn_path = self.ctx.project.make_branch_path(
+            self.branch_name, self.cvs_path)
       else:
-        self.svn_path = ctx.project.make_trunk_path(self.cvs_path)
+        self.svn_path = self.ctx.project.make_trunk_path(self.cvs_path)
 
   def __str__(self):
     def timestamp_to_string(timestamp):
@@ -181,7 +183,7 @@ class CVSRevision(CVSRevisionID):
     revision according to DEFAULT_BRANCHES_DB (see the conditions
     documented there)."""
 
-    val = self._ctx._default_branches_db.get(self.cvs_path, None)
+    val = self.ctx._default_branches_db.get(self.cvs_path, None)
     if val is not None:
       val_last_dot = val.rindex(".")
       our_last_dot = self.rev.rindex(".")
@@ -211,7 +213,7 @@ class CVSRevision(CVSRevisionID):
     return os.path.split(self.fname)[-1][:-2]
 
 
-def parse_cvs_revision(ctx, line):
+def parse_cvs_revision(line):
   """Parse LINE into a CVSRevision object and return the object.
   LINE is a string in the format of a line from a revs file.  It should
   *not* include a trailing newline."""
@@ -266,8 +268,7 @@ def parse_cvs_revision(ctx, line):
   branches = branches_and_fname[:-1]
   fname = branches_and_fname[-1]
 
-  return CVSRevision(ctx,
-                     timestamp, digest, prev_timestamp, next_timestamp,
+  return CVSRevision(timestamp, digest, prev_timestamp, next_timestamp,
                      op, prev_rev, rev, next_rev,
                      file_in_attic, file_executable,
                      file_size, deltatext_exists,

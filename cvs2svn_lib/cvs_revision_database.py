@@ -44,7 +44,6 @@ class CVSRevisionDatabase:
   def get_revision(self, unique_key):
     """Return the CVSRevision stored under UNIQUE_KEY."""
 
-    return cvs_revision.parse_cvs_revision(Ctx(),
-                                           self.cvs_revs_db[unique_key])
+    return cvs_revision.parse_cvs_revision(self.cvs_revs_db[unique_key])
 
 

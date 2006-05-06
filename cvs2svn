@@ -69,6 +69,7 @@ from cvs2svn_lib import cvs_repository
 from cvs2svn_lib import property_setters
 from cvs2svn_lib.svn_revision_range import SVNRevisionRange
 from cvs2svn_lib.tags_database import TagsDatabase
+from cvs2svn_lib.cvs_revision import CVSRevision
 from cvs2svn_lib.cvs_revision_database import CVSRevisionDatabase
 from cvs2svn_lib.openings_closings import \
         OpeningsClosingsMap, \
@@ -857,7 +858,7 @@ class ResyncRevsPass(Pass):
     # process the revisions file, looking for items to clean up
     for line in fileinput.FileInput(
             artifact_manager.get_temp_file(config.REVS_DATAFILE)):
-      c_rev = cvs_revision.parse_cvs_revision(Ctx(), line[:-1])
+      c_rev = cvs_revision.parse_cvs_revision(line[:-1])
 
       # Skip this entire revision if it's on an excluded branch
       if excludes.has_key(c_rev.branch_name):
@@ -1031,7 +1032,7 @@ class CreateDatabasesPass(Pass):
 
     for line in fileinput.FileInput(
             artifact_manager.get_temp_file(config.SORTED_REVS_DATAFILE)):
-      c_rev = cvs_revision.parse_cvs_revision(Ctx(), line[:-1])
+      c_rev = cvs_revision.parse_cvs_revision(line[:-1])
       cvs_revs_db.log_revision(c_rev)
       last_sym_name_db.log_revision(c_rev)
       StatsKeeper().record_c_rev(c_rev)
@@ -1070,7 +1071,7 @@ class AggregateRevsPass(Pass):
     aggregator = CVSRevisionAggregator()
     for line in fileinput.FileInput(
             artifact_manager.get_temp_file(config.SORTED_REVS_DATAFILE)):
-      c_rev = cvs_revision.parse_cvs_revision(Ctx(), line[:-1])
+      c_rev = cvs_revision.parse_cvs_revision(line[:-1])
       if not (Ctx().trunk_only and c_rev.branch_name is not None):
         aggregator.process_revision(c_rev)
     aggregator.flush()
@@ -1540,6 +1541,10 @@ def main():
           "  then remove the '%s/cvs2svn.lock' subdirectory."
           % (ctx.tmpdir, ctx.tmpdir, ctx.tmpdir, ctx.tmpdir,))
     raise
+
+  # Provide CVSRevision with a context that it can use:
+  CVSRevision.ctx = ctx
+
   try:
     if profiling:
       import hotshot

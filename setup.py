@@ -27,6 +27,6 @@ setup(
     url = "http://cvs2svn.tigris.org/",
     license = "Apache-style",
     # Data.
-    packages = ["cvs2svn_rcsparse"],
+    packages = ["cvs2svn_lib", "cvs2svn_rcsparse"],
     scripts = ["cvs2svn"]
     )

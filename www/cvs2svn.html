@@ -4,18 +4,61 @@
 
 <ul>
 
-  <li><a href="#convert">Deciding how much to convert</a></li>
-
-  <li><a href="#prep">Prepping your repository</a></li>
-
   <li><a href="#reqs">Requirements</a></li>
 
   <li><a href="#install">Installation</a></li>
+
+  <li><a href="#convert">Deciding how much to convert</a></li>
+
+  <li><a href="#prep">Prepping your repository</a></li>
 
   <li><a href="#cmd-ref">Command line reference</a></li>
 
   <li><a href="#examples">A few examples</a></li>
 
+</ul>
+
+<hr>
+<h1>Requirements</h1>
+<a name="reqs"></a>
+
+<p>cvs2svn requires the following:</p>
+
+<ul>
+
+  <li>Python 2.2 or greater.  See
+      <a href="http://www.python.org/">http://www.python.org/.</a>
+  </li>
+  <li>One or both of RCS `co' or CVS.  The RCS home page is
+     <a href="http://www.cs.purdue.edu/homes/trinkle/RCS/"
+             >http://www.cs.purdue.edu/homes/trinkle/RCS/</a>,
+     and the CVS home page is
+     <a href="http://ccvs.cvshome.org/">http://ccvs.cvshome.org/</a>.
+
+  By default, cvs2svn only depends on RCS 'co', and we recommend this
+  as it is faster.  Most likely you will never encounter the edge
+  cases that would make it necessary to use CVS instead.  See the <a
+  href="#use-cvs">--use-cvs flag</a> for more details.
+  </li>
+  <li>GNU sort, which is part of the coreutils package, see <a
+    href="http://www.gnu.org/software/coreutils/"
+         >http://www.gnu.org/software/coreutils/</a>.  Binaries for
+    Win32 can be found at <a href="http://unxutils.sourceforge.net/"
+                                  >http://unxutils.sourceforge.net/</a>.
+  </li>
+
+</ul>
+
+<hr>
+<h1>Installation</h1>
+<a name="install"></a>
+
+<ul>
+  <li>As root, run 'make install'.</li>
+
+  <li>Or, if you do not wish to install cvs2svn on your system, you
+    can simply run it out of this directory.  As long as it can find
+    the 'cvs2svn_rcsparse' library, it should be happy.</li>
 </ul>
 
 <hr>
@@ -209,49 +252,6 @@ aside.</p>
 Lastly, even though you can move and copy files and directories around
 in Subversion, you may want to do some rearranging (typically of
 directories) before running your conversion.
-
-<hr>
-<h1>Requirements</h1>
-<a name="reqs"></a>
-
-<p>cvs2svn requires the following:</p>
-
-<ul>
-
-  <li>Python 2.2 or greater.  See
-      <a href="http://www.python.org/">http://www.python.org/.</a>
-  </li>
-  <li>One or both of RCS `co' or CVS.  The RCS home page is
-     <a href="http://www.cs.purdue.edu/homes/trinkle/RCS/"
-             >http://www.cs.purdue.edu/homes/trinkle/RCS/</a>,
-     and the CVS home page is
-     <a href="http://ccvs.cvshome.org/">http://ccvs.cvshome.org/</a>.
-
-  By default, cvs2svn only depends on RCS 'co', and we recommend this
-  as it is faster.  Most likely you will never encounter the edge
-  cases that would make it necessary to use CVS instead.  See the <a
-  href="#use-cvs">--use-cvs flag</a> for more details.
-  </li>
-  <li>GNU sort, which is part of the coreutils package, see <a
-    href="http://www.gnu.org/software/coreutils/"
-         >http://www.gnu.org/software/coreutils/</a>.  Binaries for
-    Win32 can be found at <a href="http://unxutils.sourceforge.net/"
-                                  >http://unxutils.sourceforge.net/</a>.
-  </li>
-
-</ul>
-
-<hr>
-<h1>Installation</h1>
-<a name="install"></a>
-
-<ul>
-  <li>As root, run 'make install'.</li>
-
-  <li>Or, if you do not wish to install cvs2svn on your system, you
-    can simply run it out of this directory.  As long as it can find
-    the 'cvs2svn_rcsparse' library, it should be happy.</li>
-</ul>
 
 <hr>
 <h1>Command line reference</h1>

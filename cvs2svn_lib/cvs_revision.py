@@ -23,7 +23,7 @@ from boolean import *
 import common
 
 
-class CVSRevisionID:
+class CVSRevisionID(object):
   """An object that identifies a CVS revision of a file."""
 
   def __init__(self, fname, rev):
@@ -113,13 +113,19 @@ class CVSRevision(CVSRevisionID):
     self.tags = tags
     self.branches = branches
 
-    if self.ctx is not None:
-      self.cvs_path = self.ctx.cvs_repository.get_cvs_path(self.fname)
-      if self.branch_name:
-        self.svn_path = self.ctx.project.make_branch_path(
-            self.branch_name, self.cvs_path)
-      else:
-        self.svn_path = self.ctx.project.make_trunk_path(self.cvs_path)
+  def get_cvs_path(self):
+    return self.ctx.cvs_repository.get_cvs_path(self.fname)
+
+  cvs_path = property(get_cvs_path)
+
+  def get_svn_path(self):
+    if self.branch_name:
+      return self.ctx.project.make_branch_path(
+          self.branch_name, self.cvs_path)
+    else:
+      return self.ctx.project.make_trunk_path(self.cvs_path)
+
+  svn_path = property(get_svn_path)
 
   def __str__(self):
     def timestamp_to_string(timestamp):

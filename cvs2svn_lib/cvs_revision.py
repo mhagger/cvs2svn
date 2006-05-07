@@ -265,7 +265,7 @@ def _parse_cvs_revision_state(line):
   file_in_attic = string_to_bool(file_in_attic)
   file_executable = string_to_bool(file_executable)
 
-  file_size = int(file_size)
+  file_size = long(file_size)
 
   deltatext_exists = string_to_bool(deltatext_exists)
 

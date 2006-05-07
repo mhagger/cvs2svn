@@ -127,7 +127,13 @@ class CVSRevision(CVSRevisionID):
 
   svn_path = property(get_svn_path)
 
-  def __str__(self):
+  def __getstate__(self):
+    """Return the contents of this instance, encoded as a string.
+
+    The format of the output (a single string, without newlines, with
+    particular field order) is important for the correct behavior of
+    the various REVS_DATAFILEs."""
+
     def timestamp_to_string(timestamp):
       if timestamp:
         return '%08lx' % timestamp
@@ -167,6 +173,9 @@ class CVSRevision(CVSRevisionID):
                list_to_string(self.tags),
                list_to_string(self.branches),
                self.fname,))
+
+  def __setstate__(self, state):
+    self.__init__(*_parse_cvs_revision_state(state))
 
   def opens_symbolic_name(self, name):
     """Return True iff this CVSRevision is the opening CVSRevision for
@@ -219,10 +228,11 @@ class CVSRevision(CVSRevisionID):
     return os.path.split(self.fname)[-1][:-2]
 
 
-def parse_cvs_revision(line):
-  """Parse LINE into a CVSRevision object and return the object.
-  LINE is a string in the format of a line from a revs file.  It should
-  *not* include a trailing newline."""
+def _parse_cvs_revision_state(line):
+  """Parse LINE into the constructor arguments needed to create a
+  CVSRevision object and return the arguments as a tuple.  LINE is a
+  string in the format of a line from a revs file.  It should *not*
+  include a trailing newline."""
 
   def string_to_timestamp(s):
     if s == '*':
@@ -274,10 +284,17 @@ def parse_cvs_revision(line):
   branches = branches_and_fname[:-1]
   fname = branches_and_fname[-1]
 
-  return CVSRevision(timestamp, digest, prev_timestamp, next_timestamp,
-                     op, prev_rev, rev, next_rev,
-                     file_in_attic, file_executable,
-                     file_size, deltatext_exists,
-                     fname, mode, branch_name, tags, branches)
+  return (timestamp, digest, prev_timestamp, next_timestamp,
+          op, prev_rev, rev, next_rev,
+          file_in_attic, file_executable, file_size, deltatext_exists,
+          fname, mode, branch_name, tags, branches,)
+
+
+def parse_cvs_revision(line):
+  """Parse LINE into a CVSRevision instance and return the instance.
+  LINE is a string in the format of a line from a revs file.  It
+  should *not* include a trailing newline."""
+
+  return CVSRevision(*_parse_cvs_revision_state(line))
 
 

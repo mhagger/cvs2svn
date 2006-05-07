@@ -982,7 +982,7 @@ class ResyncRevsPass(Pass):
           # stop looking for hits
           break
 
-      output.write(str(c_rev) + "\n")
+      output.write(c_rev.__getstate__() + "\n")
     Log().write(Log.QUIET, "Done")
 
 

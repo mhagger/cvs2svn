@@ -470,7 +470,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
         bool(text), self.fname, self.mode,
         self.rev_to_branch_name(revision),
         self.taglist.get(revision, []), self.branchlist.get(revision, []))
-    self.collect_data.revs.write(str(c_rev) + "\n")
+    self.collect_data.revs.write(c_rev.__getstate__() + "\n")
     StatsKeeper().record_c_rev(c_rev)
 
     if not self.collect_data.metadata_db.has_key(digest):

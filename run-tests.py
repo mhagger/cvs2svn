@@ -2128,7 +2128,7 @@ test_list = [ None,
               auto_props_ignore_case,
               auto_props,
               ctrl_char_in_filename,
-              XFail(commit_dependencies),
+              commit_dependencies,
               show_help_passes,
               ]
 

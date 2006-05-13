@@ -151,6 +151,15 @@ class CVSCommit:
     self.author = author
     self.log = log
 
+    # Map { CVSCommit : None } of other CVSCommits we depend directly
+    # upon.  To avoid duplicates, this is a hash.
+    self.deps = {}
+
+    # This field remains True until this CVSCommit is moved from the
+    # expired queue to the ready queue.  At that point we stop blocking
+    # other commits.
+    self.pending = True
+
     # Symbolic names for which the last source revision has already
     # been seen and for which the CVSRevisionAggregator has already
     # generated a fill SVNCommit.  See self.process_revisions().
@@ -258,6 +267,21 @@ class CVSCommit:
       self.changes.append(c_rev)
 
     self.files[c_rev.fname] = 1
+
+  def add_dependency(self, dep):
+    self.deps[dep] = None
+
+  def resolve_dependencies(self):
+    """Resolve any dependencies that are no longer pending.
+    Return True iff this commit has no remaining unresolved dependencies."""
+
+    for dep in self.deps.keys():
+      if dep.pending:
+        return False
+      self.t_max = max(self.t_max, dep.t_max + 1)
+      del self.deps[dep]
+
+    return True
 
   def _pre_commit(self):
     """Generates any SVNCommits that must exist before the main commit."""
@@ -459,6 +483,25 @@ class CVSRevisionAggregator:
   """This class groups CVSRevisions into CVSCommits that represent
   at least one SVNCommit."""
 
+  # How it works:
+  # CVSCommits are accumulated within an interval by digest (commit log
+  # and author).
+  # In a previous implementation, we would just close a CVSCommit for further
+  # CVSRevisions and open a new CVSCommit if a second CVSRevision with the
+  # same (CVS) path arrived within the accumulation window.
+  # In the new code, there can be multiple open CVSCommits touching the same
+  # files within an accumulation window.  A hash of pending CVSRevisions with
+  # associated CVSCommits is maintained.  If a new CVSRevision is found to
+  # have a prev_rev in this hash, the corresponding CVSCommit is not
+  # eligible for accomodating the revision, but will be added to the
+  # dependency list of the commit the revision finally goes into.  When a
+  # CVSCommit moves out of its accumulation window it is not scheduled for
+  # flush immediately, but instead enqueued in expired_queue.  Only if all
+  # the CVSCommits this one depends on went out already, it can go out as
+  # well.  Timestamps are adjusted accordingly - it could happen that a small
+  # CVSCommit is commited while a big commit it depends on is still underway
+  # in other directories.
+
   def __init__(self):
     self.metadata_db = database.Database(
         artifact_manager.get_temp_file(config.METADATA_DB),
@@ -468,15 +511,21 @@ class CVSRevisionAggregator:
           artifact_manager.get_temp_file(config.SYMBOL_LAST_CVS_REVS_DB),
           database.DB_OPEN_READ)
 
-    # A map { key : CVSCommit } of CVS commits currently being
-    # accumulated.  If the CVSCommit is still open to further
-    # CVSRevisions, then key is CVSRevision.digest.  If not (because
-    # an inbound commit wanted to affect a file that was already
-    # within the CVSCommit), then key is CVSRevision.digest plus some
-    # number of appended '-'.
+    # Map of CVSRevision digests to arrays of open CVSCommits.  In each such
+    # array, every element has direct or indirect dependencies on all the
+    # preceding elements in the same array.
     self.cvs_commits = {}
 
-    # List of ready commits.
+    # Map of CVSRevision unique keys to CVSCommits they are part of.
+    self.pending_revs = {}
+
+    # List of closed CVSCommits which might still have pending dependencies.
+    self.expired_queue = []
+
+    # List of CVSCommits that are ready to be committed, but
+    # might need to be delayed until a CVSRevision with a later timestamp
+    # is read.  (This can happen if the timestamp of the ready CVSCommit
+    # had to be adjusted to make it later than its dependencies.)
     self.ready_queue = [ ]
 
     # A map { symbol : None } of symbolic names for which the last
@@ -502,16 +551,53 @@ class CVSRevisionAggregator:
         artifact_manager.get_temp_file(config.DEFAULT_BRANCHES_DB),
         database.DB_OPEN_READ)
 
+  def _get_deps(self, c_rev, deps):
+    """Add the CVSCommits that this C_REV depends on to DEPS, which is a
+    map { CVSCommit : None }.  The result includes both direct and indirect
+    dependencies, because it is used to determine what CVSCommit we can
+    be added to.  Return the commit C_REV depends on directly, if any;
+    otherwise return None."""
+
+    if not c_rev.prev_rev:
+      return None
+    dep = self.pending_revs.get(c_rev.prev_rev.unique_key(), None)
+    if dep is None:
+      return None
+    deps[dep] = None
+    for r in dep.revisions():
+      self._get_deps(r, deps)
+    return dep
+
   def _extract_ready_commits(self, timestamp=None):
     """Extract any active commits that expire by TIMESTAMP from
     self.cvs_commits and append them to self.ready_queue.  If
     TIMESTAMP is not specified, then extract all commits."""
 
-    for digest_key, cvs_commit in self.cvs_commits.items():
-      if timestamp is None \
-             or cvs_commit.t_max + config.COMMIT_THRESHOLD < timestamp:
-        self.ready_queue.append(cvs_commit)
+    # First take all expired commits out of the pool of available commits.
+    for digest_key, cvs_commits in self.cvs_commits.items():
+      for cvs_commit in cvs_commits[:]:
+        if timestamp is None \
+               or cvs_commit.t_max + config.COMMIT_THRESHOLD < timestamp:
+          self.expired_queue.append(cvs_commit)
+          cvs_commits.remove(cvs_commit)
+      if not cvs_commits:
         del self.cvs_commits[digest_key]
+
+    # Then queue all closed commits with resolved dependencies for commit.
+    # We do this here instead of in _commit_ready_commits to avoid building
+    # deps on revisions that will be flushed immediately afterwards.
+    while self.expired_queue:
+      chg = False
+      for cvs_commit in self.expired_queue[:]:
+        if cvs_commit.resolve_dependencies():
+          for r in cvs_commit.revisions():
+            del self.pending_revs[r.unique_key()]
+          self.expired_queue.remove(cvs_commit)
+          cvs_commit.pending = False
+          self.ready_queue.append(cvs_commit)
+          chg = True
+      if not chg:
+        break
 
   def _commit_ready_commits(self, timestamp=None):
     """Sort the commits from self.ready_queue by time, then process
@@ -531,37 +617,31 @@ class CVSRevisionAggregator:
     # see if any are ready for processing.
     self._extract_ready_commits(c_rev.timestamp)
 
-    for digest_key, cvs_commit in self.cvs_commits.items():
-      # If the inbound commit is on the same file as a pending commit,
-      # close the pending commit to further changes.  Don't flush it though,
-      # as there may be other pending commits dated before this one.
-      # ### ISSUE: the has_file() check below is not optimal.
-      # It does fix the dataloss bug where revisions would get lost
-      # if checked in too quickly, but it can also break apart the
-      # commits.  The correct fix would require tracking the dependencies
-      # between change sets and committing them in proper order.
-      if cvs_commit.has_file(c_rev.fname):
-        unused_id = digest_key + '-'
-        # Find a string that does is not already a key in
-        # the self.cvs_commits dict
-        while self.cvs_commits.has_key(unused_id):
-          unused_id += '-'
-        self.cvs_commits[unused_id] = cvs_commit
-        del self.cvs_commits[digest_key]
-
     # Add this item into the set of still-available commits.
-    if self.cvs_commits.has_key(c_rev.digest):
-      cvs_commit = self.cvs_commits[c_rev.digest]
+    deps = {}
+    dep = self._get_deps(c_rev, deps)
+    cvs_commits = self.cvs_commits.setdefault(c_rev.digest, [])
+    # This is pretty silly; it will add the revision to the oldest pending
+    # commit. It might be wiser to do time range matching to avoid stretching
+    # commits more than necessary.
+    for cvs_commit in cvs_commits:
+      if not deps.has_key(cvs_commit):
+        break
     else:
       author, log = self.metadata_db[c_rev.digest]
       cvs_commit = CVSCommit(c_rev.digest, author, log)
-      self.cvs_commits[c_rev.digest] = cvs_commit
+      cvs_commits.append(cvs_commit)
+    if dep is not None:
+      cvs_commit.add_dependency(dep)
     cvs_commit.add_revision(c_rev)
+    self.pending_revs[c_rev.unique_key()] = cvs_commit
 
-    # Any elements in self.ready_queue at this point need to be
-    # processed, because this latest rev couldn't possibly be part of
-    # any of them.
-    self._commit_ready_commits()
+    # If there are any elements in the ready_queue at this point, they
+    # need to be processed, because this latest rev couldn't possibly
+    # be part of any of them.  Limit the timestamp of commits to be
+    # processed, because re-stamping according to a commit's
+    # dependencies can alter the commit's timestamp.
+    self._commit_ready_commits(c_rev.timestamp)
 
     self._add_pending_symbols(c_rev)
 
@@ -589,14 +669,16 @@ class CVSRevisionAggregator:
 
   def _attempt_to_commit_symbols(self):
     """Generate one SVNCommit for each symbol in self.pending_symbols
-    that doesn't have an opening CVSRevision in either self.ready_queue
-    or self.cvs_commits.values()."""
+    that doesn't have an opening CVSRevision in either
+    self.cvs_commits, self.expired_queue or self.ready_queue."""
 
     # Make a list of all symbols from self.pending_symbols that do not
     # have *source* CVSRevisions in the pending commit queues
-    # (self.cvs_commits or self.ready_queue):
+    # (self.expired_queue or self.ready_queue):
     closeable_symbols = []
-    pending_commits = self.cvs_commits.values() + self.ready_queue
+    pending_commits = self.expired_queue + self.ready_queue
+    for commits in self.cvs_commits.itervalues():
+      pending_commits.extend(commits)
     for sym in self.pending_symbols:
       for cvs_commit in pending_commits:
         if cvs_commit.opens_symbolic_name(sym):

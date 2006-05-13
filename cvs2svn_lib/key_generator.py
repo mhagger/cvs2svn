@@ -25,17 +25,27 @@ from boolean import *
 
 
 class KeyGenerator:
-  """Generate a series of unique strings."""
+  """Generate a series of unique keys."""
 
-  def __init__(self):
-    self.key_base = 0L
+  def __init__(self, key_base=1L):
+    """Initialize a KeyGenerator with the specified KEY_BASE.
 
-  def gen_key(self):
-    """Generate and return a previously-unused key."""
+    KEY_BASE should be an int or long, and the generated keys will be
+    of the same type."""
 
-    key = '%x' % self.key_base
+    self.key_base = key_base
+
+  def gen_id(self):
+    """Generate and return a previously-unused key, as an integer."""
+
+    id = self.key_base
     self.key_base += 1
 
-    return key
+    return id
+
+  def gen_key(self):
+    """Generate and return a previously-unused key, as a string."""
+
+    return '%x' % self.gen_id()
 
 

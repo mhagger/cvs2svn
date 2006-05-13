@@ -165,7 +165,6 @@ class CVSCommit:
     # generated a fill SVNCommit.  See self.process_revisions().
     self.done_symbols = [ ]
 
-    self.files = { }
     # Lists of CVSRevisions
     self.changes = [ ]
     self.deletes = [ ]
@@ -231,9 +230,6 @@ class CVSCommit:
   def __hash__(self):
     return id(self)
 
-  def has_file(self, fname):
-    return self.files.has_key(fname)
-
   def revisions(self):
     return self.changes + self.deletes
 
@@ -265,8 +261,6 @@ class CVSCommit:
     else:
       # OP_CHANGE or OP_ADD
       self.changes.append(c_rev)
-
-    self.files[c_rev.fname] = 1
 
   def add_dependency(self, dep):
     self.deps[dep] = None

@@ -116,11 +116,11 @@ class PassManager:
       the_pass.run()
       times[i + 1] = time.time()
       StatsKeeper().log_duration_for_pass(times[i + 1] - times[i], i + 1)
-      # Dispose of items in Ctx() not intended to live past the end of the pass
-      # (Identified by exactly one leading underscore)
+      # Dispose of items in Ctx() not intended to live past the end of the
+      # pass (identified by exactly one leading underscore)
       for attr in dir(Ctx()):
-        if (len(attr) > 2 and attr[0] == '_' and attr[1] != '_'
-            and attr[:6] != "_Ctx__"):
+        if (attr.startswith('_') and not attr.startswith('__')
+            and not attr.startswith('_Ctx__')):
           delattr(Ctx(), attr)
       StatsKeeper().set_end_time(time.time())
       # Allow the artifact manager to clean up artifacts that are no

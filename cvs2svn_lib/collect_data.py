@@ -70,12 +70,16 @@ class _RevisionData:
   state of the prev_rev, we are unable to distinguish between an add
   and a change."""
 
-  def __init__(self, timestamp, author, state):
+  def __init__(self, timestamp, author, state, branches):
     self.timestamp = timestamp
     self.author = author
     self.original_timestamp = timestamp
     self._adjusted = False
     self.state = state
+
+    # Numbers of branch first revisions sprouting from this revision,
+    # as specified by define_revision():
+    self.branches = branches
 
   def adjust_timestamp(self, timestamp):
     self._adjusted = True
@@ -315,7 +319,8 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     """This is a callback method declared in Sink."""
 
     # store the rev_data as a list in case we have to jigger the timestamp
-    self._rev_data[revision] = _RevisionData(int(timestamp), author, state)
+    self._rev_data[revision] = _RevisionData(
+        int(timestamp), author, state, branches)
 
     # When on trunk, the RCS 'next' revision number points to what
     # humans might consider to be the 'previous' revision number.  For

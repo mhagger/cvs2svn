@@ -25,6 +25,7 @@ import config
 from context import Ctx
 from artifact_manager import artifact_manager
 import database
+from cvs_file_database import CVSFileDatabase
 from cvs_revision_database import CVSRevisionDatabase
 from svn_revision_range import SVNRevisionRange
 
@@ -118,7 +119,13 @@ class SymbolingsLogger:
     symbolings file."""
 
     # Use this to get the c_rev of our rev_key
-    cvs_revs_db = CVSRevisionDatabase(database.DB_OPEN_READ)
+    cvs_file_db = CVSFileDatabase(
+        artifact_manager.get_temp_file(config.CVS_FILES_DB),
+        database.DB_OPEN_READ)
+    cvs_revs_db = CVSRevisionDatabase(
+        cvs_file_db,
+        artifact_manager.get_temp_file(config.CVS_REVS_RESYNC_DB),
+        database.DB_OPEN_READ)
 
     self.closings.close()
     for line in fileinput.FileInput(

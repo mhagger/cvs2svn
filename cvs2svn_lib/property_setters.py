@@ -46,10 +46,10 @@ class CVSRevisionNumberSetter(SVNPropertySetter):
 
 
 class ExecutablePropertySetter(SVNPropertySetter):
-  """Set the svn:executable property based on c_rev.file_executable."""
+  """Set the svn:executable property based on c_rev.cvs_file.executable."""
 
   def set_properties(self, s_item):
-    if s_item.c_rev.file_executable:
+    if s_item.c_rev.cvs_file.executable:
       s_item.svn_props['svn:executable'] = '*'
 
 
@@ -57,7 +57,7 @@ class BinaryFileEOLStyleSetter(SVNPropertySetter):
   """Set the eol-style for binary files to None."""
 
   def set_properties(self, s_item):
-    if s_item.c_rev.mode == 'b':
+    if s_item.c_rev.cvs_file.mode == 'b':
       s_item.svn_props['svn:eol-style'] = None
 
 
@@ -173,8 +173,7 @@ class AutoPropsPropertySetter(SVNPropertySetter):
         for (key,value) in pattern.propdict.items():
           if propdict.has_key(key):
             if propdict[key] != value:
-              Log().write(
-                  Log.WARN,
+              Log().warn(
                   "Contradictory values set for property '%s' for file %s."
                   % (key, path,))
           else:
@@ -187,8 +186,7 @@ class AutoPropsPropertySetter(SVNPropertySetter):
     for (k,v) in propdict.items():
       if s_item.svn_props.has_key(k):
         if s_item.svn_props[k] != v:
-          Log().write(
-              Log.WARN,
+          Log().warn(
               "Property '%s' already set to %r for file %s; "
               "auto-props value (%r) ignored."
               % (k, s_item.svn_props[k], s_item.c_rev.cvs_path, v,))
@@ -202,7 +200,7 @@ class BinaryFileDefaultMimeTypeSetter(SVNPropertySetter):
 
   def set_properties(self, s_item):
     if not s_item.svn_props.has_key('svn:mime-type') \
-           and s_item.c_rev.mode == 'b':
+           and s_item.c_rev.cvs_file.mode == 'b':
       s_item.svn_props['svn:mime-type'] = 'application/octet-stream'
 
 
@@ -248,7 +246,7 @@ class KeywordsPropertySetter(SVNPropertySetter):
 
   def set_properties(self, s_item):
     if not s_item.svn_props.has_key('svn:keywords') \
-           and s_item.c_rev.mode in [None, 'kv', 'kvl']:
+           and s_item.c_rev.cvs_file.mode in [None, 'kv', 'kvl']:
       s_item.svn_props['svn:keywords'] = self.value
 
 

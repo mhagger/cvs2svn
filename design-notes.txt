@@ -8,10 +8,11 @@ state in memory, and b) the conversion process is resumable.
 CollectRevsPass (formerly called pass1)
 ===============
 
-The goal of this pass is to write to 'cvs2svn-data.revs' a summary of
-all the revisions for each RCS file.  Each revision will be
-represented by one line.  At the end of this stage, the revisions
-(i.e., the lines) will be grouped by RCS file, not by logical commits.
+The goal of this pass is to write a summary of each CVS file as a
+pickled CVSFile to 'cvs2svn-cvs-files.db', and a summary of each CVS
+file revision as a pickled CVSRevision to 'cvs2svn-cvs-revs.db'.  In
+each case, items are assigned an arbitrary key that is used to refer
+to them.
 
 We walk over the repository, collecting data about the RCS files into
 an instance of CollectData.  Each RCS file is processed with
@@ -24,7 +25,8 @@ administrative header, including the head revision, the principal
 branch, symbolic names, RCS comments, etc.  The main thing that
 happens here is that FileDataCollector.define_tag() is invoked on each
 symbolic name and its attached revision, so all the tags and branches
-of this file get collected.
+of this file get collected.  When this stage is done, the parser
+invokes admin_completed(), which writes the CVSFile to the database.
 
 Next, the parser hits the revision summary section.  That's the part
 of the RCS file that looks like this:
@@ -53,51 +55,15 @@ revision was committed "before" a lower one (rare, but it can happen
 when there was clock skew on the repository machine).  If there are
 any, it "resyncs" the timestamp of the earlier rev to be just before
 that of the later rev, but saves the original timestamp in
-self.rev_data[blah][2], so we can later write out a record to the
-resync file indicating that an adjustment was made (this makes it
-possible to catch the other parts of this commit and resync them
-similarly, more details below).
+self._rev_data[blah].original_timestamp, so we can later write out a
+record to the resync file indicating that an adjustment was made (this
+makes it possible to catch the other parts of this commit and resync
+them similarly; more details below).
 
 Next, the parser encounters the *real* revision data, which has the
 log messages and file contents.  For each revision, it invokes
-FileDataCollector.set_revision_info(), which writes a new line to
-cvs2svn-data.revs.  The line is constructed by the CVSRevision class -
-one of its many roles. Here is an example:
-
-   3dc32955 5afe9b4ba41843d8eb52ae7db47a43eaa9573254 3dc32954 3dc32956 C 1.1 1.2 1.3 T F 1024 N * 0 0 foo/bar,v
-
-The fields are:
-
-   1.  a fixed-width timestamp
-   2.  a digest of the log message + author
-   3.  a fixed-width timestamp indicating the timestamp of this
-       revision's previous revision (or "*", if it's the first
-       revision on this line of development).
-   4.  a fixed-width timestamp indicating the timestamp of this
-       revision's next revision (or "*", if it's the last revision on
-       this line of development).
-   5.  the type of change ("A"dd, "C"hange, or "D"elete)
-   6.  the revision number of the previous revision along this line of
-       development (or "*", if it's the first revision on this line of
-       development).
-   7.  the revision number
-   8.  the revision number of the next revision along this line of
-       development (or "*", if it's the last revision on this line of
-       development).
-   9.  "T" if the RCS file is in the Attic, "F" if it isn't.
-   10. "T" if the RCS file has the executable bit set, "F" if not.
-   11. The size of the RCS file, in bytes.
-   12. "T" if this revision has non-empty deltatext, else "F" for empty.
-   13. the RCS keyword substitution mode ("k", "b", etc), or "*" if none
-   14. the branch on which this commit happened, or "*" if not on a branch
-   15. the number of tags rooted at this revision (followed by their
-       names, space-delimited)
-   16. the number of branches rooted at this revision (followed by
-       their names, space-delimited)
-   17. the path of the RCS file in the repository
-
-(Of course, in the above example, fields 15 and 16 are "0", so they have
-no additional data.)
+FileDataCollector.set_revision_info(), which writes a record to
+cvs2svn-cvs-revs.db.
 
 Also, for resync'd revisions, a line like this is written out to
 'cvs2svn-data.resync':
@@ -112,14 +78,18 @@ The fields are:
 
 That's it -- the RCS file is done.
 
-When every RCS file is done, CollectRevsPass is complete, and:
+When every CVS file is done, CollectRevsPass is complete, and:
 
-   - cvs2svn-data.revs contains a summary of every RCS file's
-     revisions.  All the revisions for a given RCS file are grouped
-     together, but note that the groups are in no particular order.
-     In other words, you can't yet identify the commits from looking
-     at these lines; a multi-file commit will be scattered all over
-     the place.
+   - cvs2svn-cvs-files.db contains a record of every CVS file.
+
+   - cvs2svn-cvs-revs.db contains a summary of every revision to every
+     CVS file, including a reference to the corresponding CVS file
+     record in cvs2svn-cvs-files.db.  The order of the revisions is
+     arbitrary.  In other words, a multi-file commit will be scattered
+     all over the place.
+
+   - cvs2svn-data.a-revs contains a list of CVSRevision keys that are
+     in cvs2svn-cvs-revs.db, in the order that they were written.
 
    - cvs2svn-data.resync contains a small amount of resync data, in
      no particular order.
@@ -129,9 +99,9 @@ ResyncRevsPass (formerly called pass2)
 ==============
 
 This is where the resync file is used.  The goal of this pass is to
-convert cvs2svn-data.revs to a new file, 'cvs2svn-data.c-revs' (clean
-revs).  It's the same as the original file, except for some resync'd
-timestamps.
+output the information from cvs2svn-cvs-revs.db to a new file,
+'cvs2svn-cvs-revs-resync.db' (clean revs).  It has the same content as
+the original file, except for some resync'd timestamps.
 
 First, read the whole resync file into a hash table that maps each
 author+log digest to a list of lists.  Each sublist represents one of
@@ -146,13 +116,24 @@ empty log message, or a log message that just says "Doc tweaks.").  So
 each digest may need to "fan out" to cover multiple commits, but
 without accidentally unifying those commits.
 
-Now we loop over cvs2svn-data.revs, writing each line out to
-'cvs2svn-data.c-revs'.  Most lines are written out unchanged, but
-those whose digest matches some resync entry, and appear to be part of
-the same commit as one of the sublists in that entry, get tweaked.
-The tweak is to adjust the commit time of the line to the new_time,
-which is taken from the resync hash and results from the adjustment
-described in CollectRevsPass.
+Now we loop over cvs2svn-cvs-revs.db, and for each record write a line
+to 'cvs2svn-data.c-revs'.  Each line of this file looks like this:
+
+   3dc32955 5afe9b4ba41843d8eb52ae7db47a43eaa9573254 12ab
+
+The fields are:
+
+   1.  a fixed-width timestamp
+   2.  a digest of the log message + author
+   3.  the integer unique ID for this CVSRevision, as a hexadecimal
+       string.
+
+Any CVSRevision records in cvs2svn-cvs-revs.db whose digest matches
+some resync entry and appear to be part of the same commit as one of
+the sublists in that entry, get tweaked.  The tweak is to adjust the
+commit time of the line to the new_time, which is taken from the
+resync hash and results from the adjustment described in
+CollectRevsPass.
 
 The way we figure out whether a given line needs to be tweaked is to
 loop over all the sublists, seeing if this commit's original time
@@ -195,35 +176,25 @@ reseparates the commits.
 CreateDatabasesPass (formerly called pass4):
 ===================
 
-This pass has two primary objectives:
+Find and create a database containing the last CVS revision that is a
+source (also referred to as an "opening" revision) for all symbolic
+names.  This will result in a database containing key-value pairs
+whose key is the unique key for a CVSRevision, and whose value is a
+list of symbolic names for which that CVSRevision is the last
+"opening."
 
-1. Create a database that maps CVSRevision unique keys to the actual
-   CVSRevision string from the revs file (whose format is described
-   above in CollectRevsPass).  This results in a database containing
-   one key-value pair for each line in the revs file.  This gives us
-   the ability to pass around these smaller keys instead of whole CVS
-   revisions (which look like lines from the s-revs file).  See the
-   CVSRevision class for more details on what the unique key is.
+The format for this file is:
 
-2. Find and create a database containing the last CVS revision that is
-   a source (also referred to as an "opening" revision) for all
-   symbolic names.  This will result in a database containing
-   key-value pairs whose key is the unique key for a CVSRevision, and
-   whose value is a list of symbolic names for which that CVSRevision
-   is the last "opening."
+    cvs-symname-last-revs.db:
+         Key                      Value
+         CVS Revision             array of Symbolic names
 
-   The format for this file is:
+    For example:
 
-       cvs-symname-last-revs.db:
-            Key                      Value
-            CVS Revision             array of Symbolic names
-
-       For example:
-
-            1.38/foo/bar/baz.txt,v  --> [TAG11, BRANCH38]
-            1.93/foo/qux/bat.c,v    --> [TAG39]
-            1.4/foo/bar/baz.txt,v   --> [BRANCH48, BRANCH37]
-            1.18/foo/bar/quux.txt,v --> [TAG320, TAG1178]
+         1.38/foo/bar/baz.txt,v  --> [TAG11, BRANCH38]
+         1.93/foo/qux/bat.c,v    --> [TAG39]
+         1.4/foo/bar/baz.txt,v   --> [BRANCH48, BRANCH37]
+         1.18/foo/bar/quux.txt,v --> [TAG320, TAG1178]
 
 
 AggregateRevsPass (formerly called pass5)

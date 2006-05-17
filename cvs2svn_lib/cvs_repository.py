@@ -91,7 +91,7 @@ class CVSRepositoryViaRCS(CVSRepository):
     pipe_cmd = [ 'co', '-q', '-x,v', '-p' + c_rev.rev ]
     if suppress_keyword_substitution:
       pipe_cmd.append('-kk')
-    pipe_cmd.append(c_rev.rcs_path())
+    pipe_cmd.append(c_rev.cvs_file.filename)
     pipe = SimplePopen(pipe_cmd, True)
     pipe.stdin.close()
     return ' '.join(pipe_cmd), pipe

@@ -18,34 +18,27 @@
 
 
 from boolean import *
-import cvs_revision
 import database
 
 
-class CVSRevisionDatabase:
+class CVSFileDatabase:
   """A Database to store CVSRevision objects and retrieve them by their
   unique_key()."""
 
-  def __init__(self, cvs_file_db, filename, mode):
+  def __init__(self, filename, mode):
     """Initialize an instance, opening database in MODE (like the MODE
-    argument to Database or anydbm.open()).  Use CVS_FILE_DB to look
-    up CVSFiles."""
+    argument to Database or anydbm.open())."""
 
-    self.cvs_file_db = cvs_file_db
     self.db = database.PDatabase(filename, mode)
 
-  def log_revision(self, c_rev):
-    """Add C_REV, a CVSRevision, to the database."""
+  def log_file(self, cvs_file):
+    """Add CVS_FILE, a CVSFile instance, to the database."""
 
-    args = list(c_rev.__getinitargs__())
-    args[1] = args[1].id
-    self.db[c_rev.unique_key()] = args
+    self.db['%x' % cvs_file.id] = cvs_file
 
-  def get_revision(self, unique_key):
-    """Return the CVSRevision stored under UNIQUE_KEY."""
+  def get_file(self, id):
+    """Return the CVSFile with the specified ID."""
 
-    args = self.db[unique_key]
-    args[1] = self.cvs_file_db.get_file(args[1])
-    return cvs_revision.CVSRevision(*args)
+    return self.db['%x' % id]
 
 

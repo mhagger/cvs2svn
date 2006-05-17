@@ -73,6 +73,14 @@ class StatsKeeper:
     self.data['tags'] = { }
     self.data['branches'] = { }
 
+  def _record_cvs_file(self, cvs_file):
+    # Only add the size if this is the first time we see the file.
+    if not self.repos_files.has_key(cvs_file.id):
+      self.data['repos_size'] += cvs_file.file_size
+    self.repos_files[cvs_file.id] = None
+
+    self.data['repos_file_count'] = len(self.repos_files)
+
   def record_c_rev(self, c_rev):
     self.data['cvs_revs_count'] += 1
 
@@ -87,12 +95,7 @@ class StatsKeeper:
     if c_rev.timestamp > self.data['last_rev_date']:
       self.data['last_rev_date'] = c_rev.timestamp
 
-    # Only add the size if this is the first time we see the file.
-    if not self.repos_files.has_key(c_rev.fname):
-      self.data['repos_size'] += c_rev.file_size
-    self.repos_files[c_rev.fname] = None
-
-    self.data['repos_file_count'] = len(self.repos_files)
+    self._record_cvs_file(c_rev.cvs_file)
 
   def set_svn_rev_count(self, count):
     self.data['svn_rev_count'] = count

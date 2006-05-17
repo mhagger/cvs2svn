@@ -145,18 +145,17 @@ class SVNCommit:
                'svn:log'    : utf8_log,
                'svn:date'   : date }
     except UnicodeError:
-      Log().write(Log.WARN, '%s: problem encoding author or log message:'
-                  % warning_prefix)
-      Log().write(Log.WARN, "  author: '%s'" % self._author)
-      Log().write(Log.WARN, "  log:    '%s'" % self.get_log_msg().rstrip())
-      Log().write(Log.WARN, "  date:   '%s'" % date)
-      Log().write(Log.WARN,
-                  "(subversion rev %s)  Related files:" % self.revnum)
+      Log().warn('%s: problem encoding author or log message:'
+                 % warning_prefix)
+      Log().warn("  author: '%s'" % self._author)
+      Log().warn("  log:    '%s'" % self.get_log_msg().rstrip())
+      Log().warn("  date:   '%s'" % date)
+      Log().warn("(subversion rev %s)  Related files:" % self.revnum)
       for c_rev in self.cvs_revs:
-        Log().write(Log.WARN, " ", c_rev.fname)
+        Log().warn(" ", c_rev.cvs_file.canonical_filename)
 
-      Log().write(Log.WARN, "Consider rerunning with one or more ",
-                  "'--encoding' parameters.\n")
+      Log().warn(
+          "Consider rerunning with one or more '--encoding' parameters.\n")
       # It's better to fall back to the original (unknown encoding) data
       # than to either 1) quit or 2) record nothing at all.
       return { 'svn:author' : self._author,
@@ -167,8 +166,8 @@ class SVNCommit:
     self.cvs_revs.append(cvs_rev)
 
   def flush(self):
-    Log().write(Log.NORMAL, "Creating Subversion r%d (%s)"
-                % (self.revnum, self._description))
+    Log().normal("Creating Subversion r%d (%s)"
+                 % (self.revnum, self._description))
     Ctx()._persistence_manager.put_svn_commit(self.revnum,
                                               self.cvs_revs,
                                               self._max_date,

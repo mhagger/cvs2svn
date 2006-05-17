@@ -69,6 +69,7 @@ if hasattr(anydbm._defaultmod, 'bsddb') \
 
 # Always use these constants for opening databases.
 DB_OPEN_READ = 'r'
+DB_OPEN_WRITE = 'w'
 DB_OPEN_NEW = 'n'
 
 
@@ -172,6 +173,6 @@ class PDatabase(AbstractDatabase):
     return cPickle.loads(self.db[key])
 
   def __setitem__(self, key, value):
-    self.db[key] = cPickle.dumps(value)
+    self.db[key] = cPickle.dumps(value, True)
 
 

@@ -34,16 +34,22 @@ import config
 from log import Log
 from context import Ctx
 from artifact_manager import artifact_manager
+from cvs_file import CVSFile
 import cvs_revision
 from stats_keeper import StatsKeeper
+from key_generator import KeyGenerator
 import database
+from cvs_file_database import CVSFileDatabase
+from cvs_revision_database import CVSRevisionDatabase
 import symbol_database
 import cvs2svn_rcsparse
 
 
-trunk_rev = re.compile('^[0-9]+\\.[0-9]+$')
-cvs_branch_tag = re.compile('^((?:[0-9]+\\.[0-9]+\\.)+)0\\.([0-9]+)$')
-rcs_branch_tag = re.compile('^(?:[0-9]+\\.[0-9]+\\.)+[0-9]+$')
+OS_SEP_PLUS_ATTIC = os.sep + 'Attic'
+
+trunk_rev = re.compile(r'^[0-9]+\.[0-9]+$')
+cvs_branch_tag = re.compile(r'^((?:[0-9]+\.[0-9]+\.)+)0\.([0-9]+)$')
+rcs_branch_tag = re.compile(r'^(?:[0-9]+\.[0-9]+\.)+[0-9]+$')
 
 # This really only matches standard '1.1.1.*'-style vendor revisions.
 # One could conceivably have a file whose default branch is 1.1.3 or
@@ -52,7 +58,31 @@ rcs_branch_tag = re.compile('^(?:[0-9]+\\.[0-9]+\\.)+[0-9]+$')
 # is the only time this regexp gets used), we'd have no basis for
 # assuming that the non-standard vendor branch had ever been the
 # default branch anyway, so we don't want this to match them anyway.
-vendor_revision = re.compile('^(1\\.1\\.1)\\.([0-9])+$')
+vendor_revision = re.compile(r'^(1\.1\.1)\.([0-9])+$')
+
+
+class _RevisionData:
+  """We track the state of each revision so that in set_revision_info,
+  we can determine if our op is an add/change/delete.  We can do this
+  because in set_revision_info, we'll have all of the _RevisionData
+  for a file at our fingertips, and we need to examine the state of
+  our prev_rev to determine if we're an add or a change.  Without the
+  state of the prev_rev, we are unable to distinguish between an add
+  and a change."""
+
+  def __init__(self, timestamp, author, state):
+    self.timestamp = timestamp
+    self.author = author
+    self.original_timestamp = timestamp
+    self._adjusted = False
+    self.state = state
+
+  def adjust_timestamp(self, timestamp):
+    self._adjusted = True
+    self.timestamp = timestamp
+
+  def timestamp_was_adjusted(self):
+    return self._adjusted
 
 
 class FileDataCollector(cvs2svn_rcsparse.Sink):
@@ -61,36 +91,52 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
   Any collected data that need to be remembered are stored into the
   referenced CollectData instance."""
 
-  def __init__(self, collect_data, canonical_name, filename):
+  def __init__(self, collect_data, filename):
     """Create an object that is prepared to receive data for FILENAME.
-    FILENAME is the absolute filesystem path to the file in question,
-    and CANONICAL_NAME is FILENAME with the 'Attic' component removed
-    (if the file is indeed in the Attic).  COLLECT_DATA is used to
-    store the information collected about the file."""
+    FILENAME is the absolute filesystem path to the file in question.
+    COLLECT_DATA is used to store the information collected about the
+    file."""
 
     self.collect_data = collect_data
 
-    self.fname = canonical_name
+    (dirname, basename,) = os.path.split(filename)
+    if dirname.endswith(OS_SEP_PLUS_ATTIC):
+      # drop the 'Attic' portion from the filename for the canonical name:
+      canonical_filename = os.path.join(
+          dirname[:-len(OS_SEP_PLUS_ATTIC)], basename)
+      file_in_attic = True
+    else:
+      canonical_filename = filename
+      file_in_attic = False
 
     # We calculate and save some file metadata here, where we can do
     # it only once per file, instead of waiting until later where we
     # would have to do the same calculations once per CVS *revision*.
 
-    self.cvs_path = Ctx().cvs_repository.get_cvs_path(self.fname)
-
-    # If the paths are not the same, then that means that the
-    # canonical_name has had the 'Attic' component stripped out.
-    self.file_in_attic = (canonical_name != filename)
+    cvs_path = Ctx().cvs_repository.get_cvs_path(canonical_filename)
 
     file_stat = os.stat(filename)
     # The size of our file in bytes
-    self.file_size = file_stat[stat.ST_SIZE]
+    file_size = file_stat[stat.ST_SIZE]
 
     # Whether or not the executable bit is set.
-    self.file_executable = bool(file_stat[0] & stat.S_IXUSR)
+    file_executable = bool(file_stat[0] & stat.S_IXUSR)
 
-    # revision -> [timestamp, author, old-timestamp]
-    self.rev_data = { }
+    # mode is not known yet, so we temporarily set it to None.
+    self.cvs_file = CVSFile(
+        None, filename, canonical_filename, cvs_path,
+        file_in_attic, file_executable, file_size, None
+        )
+
+    # A map { revision -> c_rev } of the CVSRevision instances for all
+    # revisions related to this file.  Note that items in this map
+    # might be pre-filled as CVSRevisionIDs for revisions referred to
+    # by earlier revisions but not yet processed.  As the revisions
+    # are defined, the values are changed into CVSRevision instances.
+    self._c_revs = {}
+
+    # { revision : _RevisionData instance }
+    self._rev_data = { }
 
     # Maps revision number (key) to the revision number of the
     # previous revision along this line of development.
@@ -113,21 +159,9 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     # key is not present.
     self.next_rev = { }
 
-    # Track the state of each revision so that in set_revision_info,
-    # we can determine if our op is an add/change/delete.  We can do
-    # this because in set_revision_info, we'll have all of the
-    # revisions for a file at our fingertips, and we need to examine
-    # the state of our prev_rev to determine if we're an add or a
-    # change--without the state of the prev_rev, we are unable to
-    # distinguish between an add and a change.
-    self.rev_state = { }
-
     # Hash mapping branch numbers, like '1.7.2', to branch names,
     # like 'Release_1_0_dev'.
     self.branch_names = { }
-
-    # RCS flags (used for keyword expansion).
-    self.mode = None
 
     # Hash mapping revision numbers, like '1.7', to lists of names
     # indicating which branches sprout from that revision, like
@@ -156,31 +190,53 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     # easily happen when --symbol-transform is used.
     self.defined_symbols = { }
 
+  def _get_rev_id(self, revision):
+    if revision is None:
+      return None
+    id = self._c_revs.get(revision)
+    if id is None:
+      id = cvs_revision.CVSRevisionID(
+          self.collect_data.key_generator.gen_id(), self.cvs_file, revision)
+      self._c_revs[revision] = id
+    return id.id
+
   def set_principal_branch(self, branch):
+    """This is a callback method declared in Sink."""
+
     self.default_branch = branch
 
   def set_expansion(self, mode):
-    self.mode = mode
+    """This is a callback method declared in Sink."""
+
+    self.cvs_file.mode = mode
 
   def set_branch_name(self, branch_number, name):
     """Record that BRANCH_NUMBER is the branch number for branch NAME,
-    and that NAME sprouts from BRANCH_NUMBER.
-    BRANCH_NUMBER is an RCS branch number with an odd number of components,
-    for example '1.7.2' (never '1.7.0.2')."""
+    and derive and record the revision from which NAME sprouts.
+    BRANCH_NUMBER is an RCS branch number with an odd number of
+    components, for example '1.7.2' (never '1.7.0.2')."""
 
-    if not self.branch_names.has_key(branch_number):
-      self.branch_names[branch_number] = name
-      # The branchlist is keyed on the revision number from which the
-      # branch sprouts, so strip off the odd final component.
-      sprout_rev = branch_number[:branch_number.rfind(".")]
-      self.branchlist.setdefault(sprout_rev, []).append(name)
-      self.collect_data.symbol_db.register_branch_creation(name)
-    else:
+    if self.branch_names.has_key(branch_number):
       sys.stderr.write("%s: in '%s':\n"
                        "   branch '%s' already has name '%s',\n"
                        "   cannot also have name '%s', ignoring the latter\n"
-                       % (warning_prefix, self.fname, branch_number,
+                       % (warning_prefix,
+                          self.cvs_file.filename, branch_number,
                           self.branch_names[branch_number], name))
+      return
+
+    self.branch_names[branch_number] = name
+    # The branchlist is keyed on the revision number from which the
+    # branch sprouts, so strip off the odd final component.
+    sprout_rev = branch_number[:branch_number.rfind(".")]
+    self.branchlist.setdefault(sprout_rev, []).append(name)
+    self.collect_data.symbol_db.register_branch_creation(name)
+
+  def set_tag_name(self, revision, name):
+    """Record that tag NAME refers to the specified REVISION."""
+
+    self.taglist.setdefault(revision, []).append(name)
+    self.collect_data.symbol_db.register_tag_creation(name)
 
   def rev_to_branch_name(self, revision):
     """Return the name of the branch on which REVISION lies.
@@ -198,36 +254,43 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     REVISION is an unprocessed revision number from the RCS file's
     header, for example: '1.7', '1.7.0.2', or '1.1.1' or '1.1.1.1'.
     This function will determine what kind of symbolic name it is by
-    inspection, and record it in the right places."""
+    inspection, and record it in the right places.
+
+    This is a callback method declared in Sink."""
 
     for (pattern, replacement) in Ctx().symbol_transforms:
       newname = pattern.sub(replacement, name)
       if newname != name:
-        Log().write(Log.WARN, "   symbol '%s' transformed to '%s'"
-                    % (name, newname))
+        Log().warn("   symbol '%s' transformed to '%s'" % (name, newname))
         name = newname
+
     if self.defined_symbols.has_key(name):
       err = "%s: Multiple definitions of the symbol '%s' in '%s'" \
-                % (error_prefix, name, self.fname)
+                % (error_prefix, name, self.cvs_file.filename)
       sys.stderr.write(err + "\n")
       self.collect_data.fatal_errors.append(err)
+
     self.defined_symbols[name] = None
+
     m = cvs_branch_tag.match(revision)
     if m:
       self.set_branch_name(m.group(1) + m.group(2), name)
     elif rcs_branch_tag.match(revision):
       self.set_branch_name(revision, name)
     else:
-      self.taglist.setdefault(revision, []).append(name)
-      self.collect_data.symbol_db.register_tag_creation(name)
+      self.set_tag_name(revision, name)
+
+  def admin_completed(self):
+    """This is a callback method declared in Sink."""
+
+    self.collect_data.add_cvs_file(self.cvs_file)
 
   def define_revision(self, revision, timestamp, author, state,
                       branches, next):
-    # Record the state of our revision for later calculations
-    self.rev_state[revision] = state
+    """This is a callback method declared in Sink."""
 
     # store the rev_data as a list in case we have to jigger the timestamp
-    self.rev_data[revision] = [int(timestamp), author, None]
+    self._rev_data[revision] = _RevisionData(int(timestamp), author, state)
 
     # When on trunk, the RCS 'next' revision number points to what
     # humans might consider to be the 'previous' revision number.  For
@@ -270,11 +333,12 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     # Ratchet up the highest vendor head revision, if necessary.
     if self.default_branch:
       default_branch_root = self.default_branch + "."
-      if ((revision.find(default_branch_root) == 0)
-          and (default_branch_root.count('.') == revision.count('.'))):
+      if (revision.startswith(default_branch_root)
+          and default_branch_root.count('.') == revision.count('.')):
         # This revision is on the default branch, so record that it is
         # the new highest default branch head revision.
-        self.collect_data.default_branches_db[self.cvs_path] = revision
+        self.collect_data.default_branches_db[self.cvs_file.cvs_path] = \
+            revision
     else:
       # No default branch, so make an educated guess.
       if revision == '1.2':
@@ -288,7 +352,8 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
           # We're looking at a vendor revision, and it wasn't
           # committed after this file lost its default branch, so bump
           # the maximum trunk vendor revision in the permanent record.
-          self.collect_data.default_branches_db[self.cvs_path] = revision
+          self.collect_data.default_branches_db[self.cvs_file.cvs_path] = \
+              revision
 
     if not trunk_rev.match(revision):
       # Check for unlabeled branches, record them.  We tried to collect
@@ -305,77 +370,86 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
       branch_name = self.branch_names[branch_number]
       self.collect_data.symbol_db.register_branch_commit(branch_name)
 
+  def _resync_chain(self, current, prev):
+    """If the PREV revision exists and it occurred later than the
+    CURRENT revision, then shove the previous revision back in time
+    (and any before it that may need to shift).  Return True iff any
+    resyncing was done.
+
+    We sync backwards and not forwards because any given CVS Revision
+    has only one previous revision.  However, a CVS Revision can *be*
+    a previous revision for many other revisions (e.g., a revision
+    that is the source of multiple branches).  This becomes relevant
+    when we do the secondary synchronization in pass 2--we can make
+    certain that we don't resync a revision earlier than its previous
+    revision, but it would be non-trivial to make sure that we don't
+    resync revision R *after* any revisions that have R as a previous
+    revision."""
+
+    resynced = False
+    while prev is not None:
+      current_rev_data = self._rev_data[current]
+      prev_rev_data = self._rev_data[prev]
+
+      if prev_rev_data.timestamp < current_rev_data.timestamp:
+        # No resyncing needed here.
+        return resynced
+
+      old_timestamp = prev_rev_data.timestamp
+      prev_rev_data.adjust_timestamp(current_rev_data.timestamp - 1)
+      resynced = True
+      delta = prev_rev_data.timestamp - old_timestamp
+      Log().verbose(
+          "PASS1 RESYNC: '%s' (%s): old time='%s' delta=%ds"
+          % (self.cvs_file.cvs_path, prev,
+             time.ctime(old_timestamp), delta))
+      if abs(delta) > config.COMMIT_THRESHOLD:
+        Log().warn(
+            "%s: Significant timestamp change for '%s' (%d seconds)"
+            % (warning_prefix, self.cvs_file.cvs_path, delta))
+      current = prev
+      prev = self.prev_rev[current]
+
+    return resynced
+
   def tree_completed(self):
-    """The revision tree has been parsed.  Analyze it for consistency."""
+    """The revision tree has been parsed.  Analyze it for consistency.
+
+    This is a callback method declared in Sink."""
 
     # Our algorithm depends upon the timestamps on the revisions occuring
     # monotonically over time.  That is, we want to see rev 1.34 occur in
     # time before rev 1.35.  If we inserted 1.35 *first* (due to the time-
     # sorting), and then tried to insert 1.34, we'd be screwed.
 
-    # to perform the analysis, we'll simply visit all of the 'previous'
+    # To perform the analysis, we'll simply visit all of the 'previous'
     # links that we have recorded and validate that the timestamp on the
-    # previous revision is before the specified revision
+    # previous revision is before the specified revision.
 
-    # if we have to resync some nodes, then we restart the scan. just keep
-    # looping as long as we need to restart.
-    while 1:
+    # If we have to resync some nodes, then we restart the scan.  Just
+    # keep looping as long as we need to restart.
+    while True:
       for current, prev in self.prev_rev.items():
-        if not prev:
-          # no previous revision exists (i.e. the initial revision)
-          continue
-        t_c = self.rev_data[current][0]
-        t_p = self.rev_data[prev][0]
-        if t_p >= t_c:
-          # the previous revision occurred later than the current revision.
-          # shove the previous revision back in time (and any before it that
-          # may need to shift).
-
-          # We sync backwards and not forwards because any given CVS
-          # Revision has only one previous revision.  However, a CVS
-          # Revision can *be* a previous revision for many other
-          # revisions (e.g., a revision that is the source of multiple
-          # branches).  This becomes relevant when we do the secondary
-          # synchronization in pass 2--we can make certain that we
-          # don't resync a revision earlier than it's previous
-          # revision, but it would be non-trivial to make sure that we
-          # don't resync revision R *after* any revisions that have R
-          # as a previous revision.
-          while t_p >= t_c:
-            self.rev_data[prev][0] = t_c - 1 # new timestamp
-            self.rev_data[prev][2] = t_p # old timestamp
-            delta = t_c - 1 - t_p
-            msg =  "PASS1 RESYNC: '%s' (%s): old time='%s' delta=%ds" \
-                  % (self.cvs_path, prev, time.ctime(t_p), delta)
-            Log().write(Log.VERBOSE, msg)
-            if (delta > config.COMMIT_THRESHOLD
-                or delta < (config.COMMIT_THRESHOLD * -1)):
-              Log().write(Log.WARN,
-                          "%s: Significant timestamp change for '%s' "
-                          "(%d seconds)"
-                          % (warning_prefix, self.cvs_path, delta))
-            current = prev
-            prev = self.prev_rev[current]
-            if not prev:
-              break
-            t_c -= 1 # self.rev_data[current][0]
-            t_p = self.rev_data[prev][0]
-
-          # break from the for-loop
+        if self._resync_chain(current, prev):
+          # Abort for loop, causing the scan to start again:
           break
       else:
-        # finished the for-loop (no resyncing was performed)
+        # Finished the for-loop without having to resync anything.
+        # We're done.
         return
 
   def set_revision_info(self, revision, log, text):
-    timestamp, author, old_ts = self.rev_data[revision]
-    digest = sha.new(log + '\0' + author).hexdigest()
-    if old_ts:
+    """This is a callback method declared in Sink."""
+
+    rev_data = self._rev_data[revision]
+    digest = sha.new(log + '\0' + rev_data.author).hexdigest()
+    if rev_data.timestamp_was_adjusted():
       # the timestamp on this revision was changed. log it for later
       # resynchronization of other files's revisions that occurred
       # for this time and log message.
-      self.collect_data.resync.write('%08lx %s %08lx\n'
-                                     % (old_ts, digest, timestamp))
+      self.collect_data.resync.write(
+          '%08lx %s %08lx\n'
+          % (rev_data.original_timestamp, digest, rev_data.timestamp))
 
     # "...Give back one kadam to honor the Hebrew God whose Ark this is."
     #       -- Imam to Indy and Sallah, in 'Raiders of the Lost Ark'
@@ -387,16 +461,24 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     # for 1.1 in imports is "Initial revision\n" with no period.
     if revision == '1.1' and log != 'Initial revision\n':
       try:
-        del self.collect_data.default_branches_db[self.cvs_path]
+        del self.collect_data.default_branches_db[self.cvs_file.cvs_path]
       except KeyError:
         pass
 
     # Get the timestamps of the previous and next revisions
     prev_rev = self.prev_rev[revision]
-    prev_timestamp, ign, ign = self.rev_data.get(prev_rev, [0, None, None])
+    prev_rev_data = self._rev_data.get(prev_rev)
+    if prev_rev_data is None:
+      prev_timestamp = 0
+    else:
+      prev_timestamp = prev_rev_data.timestamp
 
     next_rev = self.next_rev.get(revision)
-    next_timestamp, ign, ign = self.rev_data.get(next_rev, [0, None, None])
+    next_rev_data = self._rev_data.get(next_rev)
+    if next_rev_data is None:
+      next_timestamp = 0
+    else:
+      next_timestamp = next_rev_data.timestamp
 
     # How to tell if a CVSRevision is an add, a change, or a deletion:
     #
@@ -408,10 +490,9 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     #      - we have a previous revision whose state is 'dead'
     #
     # Anything else is a change.
-    if self.rev_state[revision] == 'dead':
+    if rev_data.state == 'dead':
       op = common.OP_DELETE
-    elif ((self.prev_rev.get(revision, None) is None)
-          or (self.rev_state[self.prev_rev[revision]] == 'dead')):
+    elif prev_rev_data is None or prev_rev_data.state == 'dead':
       op = common.OP_ADD
     else:
       op = common.OP_CHANGE
@@ -452,32 +533,38 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     #
     # This is issue #89.
     cur_num = revision
-    if is_branch_revision(revision) and self.rev_state[revision] != 'dead':
+    if is_branch_revision(revision) and rev_data.state != 'dead':
       while 1:
         prev_num = self.prev_rev.get(cur_num, None)
         if not cur_num or not prev_num:
           break
         if (not is_same_line_of_development(cur_num, prev_num)
-            and self.rev_state[cur_num] == 'dead'
-            and self.rev_state[prev_num] != 'dead'):
+            and self._rev_data[cur_num].state == 'dead'
+            and self._rev_data[prev_num].state != 'dead'):
           op = common.OP_CHANGE
         cur_num = self.prev_rev.get(cur_num, None)
 
     c_rev = cvs_revision.CVSRevision(
-        timestamp, digest, prev_timestamp, next_timestamp, op,
+        self._get_rev_id(revision), self.cvs_file,
+        rev_data.timestamp, digest,
+        self._get_rev_id(prev_rev), self._get_rev_id(next_rev),
+        prev_timestamp, next_timestamp, op,
         prev_rev, revision, next_rev,
-        self.file_in_attic, self.file_executable, self.file_size,
-        bool(text), self.fname, self.mode,
+        bool(text),
         self.rev_to_branch_name(revision),
         self.taglist.get(revision, []), self.branchlist.get(revision, []))
+    self._c_revs[revision] = c_rev
     self.collect_data.add_cvs_revision(c_rev)
 
     if not self.collect_data.metadata_db.has_key(digest):
-      self.collect_data.metadata_db[digest] = (author, log)
+      self.collect_data.metadata_db[digest] = (rev_data.author, log)
 
   def parse_completed(self):
-    # Walk through all branches and tags and register them with
-    # their parent branch in the symbol database.
+    """Walk through all branches and tags and register them with their
+    parent branch in the symbol database.
+
+    This is a callback method declared in Sink."""
+
     for revision, symbols in self.taglist.items() + self.branchlist.items():
       for symbol in symbols:
         name = self.rev_to_branch_name(revision)
@@ -496,8 +583,15 @@ class CollectData:
   each file to be parsed."""
 
   def __init__(self):
-    self._revs = open(artifact_manager.get_temp_file(config.REVS_DATAFILE),
-                      'w')
+    self._cvs_file_db = CVSFileDatabase(
+        artifact_manager.get_temp_file(config.CVS_FILES_DB),
+        database.DB_OPEN_NEW)
+    self._cvs_revs_db = CVSRevisionDatabase(
+        self._cvs_file_db,
+        artifact_manager.get_temp_file(config.CVS_REVS_DB),
+        database.DB_OPEN_NEW)
+    self._all_revs = open(
+        artifact_manager.get_temp_file(config.ALL_REVS_DATAFILE), 'w')
     self.resync = open(
         artifact_manager.get_temp_file(config.RESYNC_DATAFILE), 'w')
     self.default_branches_db = database.SDatabase(
@@ -513,8 +607,24 @@ class CollectData:
     # 1 if we've collected data for at least one file, None otherwise.
     self.found_valid_file = None
 
+    # Key generator to generate unique keys for each CVSFile object:
+    self.file_key_generator = KeyGenerator(1)
+
+    # Key generator to generate unique keys for each CVSRevision object:
+    self.key_generator = KeyGenerator()
+
+  def add_cvs_file(self, cvs_file):
+    """If CVS_FILE is not already stored to _cvs_revs_db, give it a
+    persistent id and store it now.  The way we tell whether it was
+    already stored is by whether it already has a non-None id."""
+
+    assert cvs_file.id is None
+    cvs_file.id = self.file_key_generator.gen_id()
+    self._cvs_file_db.log_file(cvs_file)
+
   def add_cvs_revision(self, c_rev):
-    self._revs.write(c_rev.__getstate__() + '\n')
+    self._cvs_revs_db.log_revision(c_rev)
+    self._all_revs.write('%s\n' % (c_rev.unique_key(),))
     StatsKeeper().record_c_rev(c_rev)
 
   def write_symbol_db(self):

@@ -515,18 +515,18 @@ class SVNRepositoryMirror:
     self._start_commit(svn_commit)
 
     if svn_commit.symbolic_name:
-      Log().write(Log.VERBOSE, "Filling symbolic name:",
-                  common.clean_symbolic_name(svn_commit.symbolic_name))
+      Log().verbose("Filling symbolic name:",
+                    common.clean_symbolic_name(svn_commit.symbolic_name))
       self._fill_symbolic_name(svn_commit)
     elif svn_commit.motivating_revnum:
-      Log().write(Log.VERBOSE, "Synchronizing default_branch motivated by %d"
-                  % svn_commit.motivating_revnum)
+      Log().verbose("Synchronizing default_branch motivated by %d"
+                    % svn_commit.motivating_revnum)
       self._synchronize_default_branch(svn_commit)
     else: # This actually commits CVSRevisions
       if len(svn_commit.cvs_revs) > 1: plural = "s"
       else: plural = ""
-      Log().write(Log.VERBOSE, "Committing %d CVSRevision%s"
-                  % (len(svn_commit.cvs_revs), plural))
+      Log().verbose("Committing %d CVSRevision%s"
+                    % (len(svn_commit.cvs_revs), plural))
       for cvs_rev in svn_commit.cvs_revs:
         # See comment in CVSCommit._commit() for what this is all
         # about.  Note that although asking self._path_exists() is

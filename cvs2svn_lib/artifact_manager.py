@@ -52,7 +52,7 @@ class TempFileArtifact(Artifact):
     self.filename = Ctx().get_temp_filename(basename)
 
   def cleanup(self):
-    Log().write(Log.VERBOSE, "Deleting", self.filename)
+    Log().verbose("Deleting", self.filename)
     os.unlink(self.filename)
 
 
@@ -197,8 +197,7 @@ class ArtifactManager:
     nonexistent passes.)"""
 
     if self._artifacts:
-      Log().write(
-          Log.WARN,
+      Log().warn(
           'INTERNAL: The following artifacts were not cleaned up:\n    %s\n'
           % ('\n    '.join([artifact.name for artifact in self._artifacts])))
 

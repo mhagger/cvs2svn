@@ -36,41 +36,41 @@ class StdoutDelegate(SVNRepositoryMirrorDelegate):
     """Prints out the Subversion revision number of the commit that is
     being started."""
 
-    Log().write(Log.VERBOSE, "=" * 60)
-    Log().write(Log.NORMAL, "Starting Subversion r%d / %d" %
-                (svn_commit.revnum, self.total_revs))
+    Log().verbose("=" * 60)
+    Log().normal("Starting Subversion r%d / %d"
+                 % (svn_commit.revnum, self.total_revs))
 
   def mkdir(self, path):
     """Print a line stating that we are creating directory PATH."""
 
-    Log().write(Log.VERBOSE, "  New Directory", path)
+    Log().verbose("  New Directory", path)
 
   def add_path(self, s_item):
     """Print a line stating that we are 'adding' s_item.c_rev.svn_path."""
 
-    Log().write(Log.VERBOSE, "  Adding", s_item.c_rev.svn_path)
+    Log().verbose("  Adding", s_item.c_rev.svn_path)
 
   def change_path(self, s_item):
     """Print a line stating that we are 'changing' s_item.c_rev.svn_path."""
 
-    Log().write(Log.VERBOSE, "  Changing", s_item.c_rev.svn_path)
+    Log().verbose("  Changing", s_item.c_rev.svn_path)
 
   def delete_path(self, path):
     """Print a line stating that we are 'deleting' PATH."""
 
-    Log().write(Log.VERBOSE, "  Deleting", path)
+    Log().verbose("  Deleting", path)
 
   def copy_path(self, src_path, dest_path, src_revnum):
     """Print a line stating that we are 'copying' revision SRC_REVNUM
     of SRC_PATH to DEST_PATH."""
 
-    Log().write(Log.VERBOSE, "  Copying revision", src_revnum, "of", src_path)
-    Log().write(Log.VERBOSE, "                to", dest_path)
+    Log().verbose("  Copying revision", src_revnum, "of", src_path)
+    Log().verbose("                to", dest_path)
 
   def finish(self):
     """State that we are done creating our repository."""
 
-    Log().write(Log.VERBOSE, "Finished creating Subversion repository.")
-    Log().write(Log.QUIET, "Done.")
+    Log().verbose("Finished creating Subversion repository.")
+    Log().quiet("Done.")
 
 

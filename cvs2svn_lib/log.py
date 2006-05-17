@@ -64,4 +64,24 @@ class Log:
     # stderr output.
     self.logger.flush()
 
+  def warn(self, *args):
+    """Log a message at the WARN level."""
+
+    self.write(self.WARN, *args)
+
+  def quiet(self, *args):
+    """Log a message at the QUIET level."""
+
+    self.write(self.QUIET, *args)
+
+  def normal(self, *args):
+    """Log a message at the NORMAL level."""
+
+    self.write(self.NORMAL, *args)
+
+  def verbose(self, *args):
+    """Log a message at the VERBOSE level."""
+
+    self.write(self.VERBOSE, *args)
+
 

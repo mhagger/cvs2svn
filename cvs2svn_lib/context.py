@@ -83,8 +83,8 @@ class Ctx:
       try:
         return unicode(value, encoding, mode).encode('utf8')
       except UnicodeError:
-        Log().write(Log.VERBOSE, "Encoding '%s' failed for string '%s'"
-                    % (encoding, value))
+        Log().verbose("Encoding '%s' failed for string '%s'"
+                      % (encoding, value))
     raise UnicodeError
 
 

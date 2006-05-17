@@ -38,7 +38,7 @@ class RepositoryDelegate(DumpfileDelegate):
     self.svnadmin = Ctx().svnadmin
     self.target = Ctx().target
     if not Ctx().existing_svnrepos:
-      Log().write(Log.NORMAL,"Creating new repository '%s'" % (self.target))
+      Log().normal("Creating new repository '%s'" % (self.target))
       if not Ctx().fs_type:
         # User didn't say what kind repository (bdb, fsfs, etc).
         # We still pass --bdb-txn-nosync.  It's a no-op if the default

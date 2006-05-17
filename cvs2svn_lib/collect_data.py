@@ -473,7 +473,6 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
       if not trunk_rev.match(rev_data.rev):
         self._register_branch_commit(rev_data.rev)
 
-
     # Our algorithm depends upon the timestamps on the revisions occuring
     # monotonically over time.  That is, we want to see rev 1.34 occur in
     # time before rev 1.35.  If we inserted 1.35 *first* (due to the time-

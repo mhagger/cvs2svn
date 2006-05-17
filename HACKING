@@ -17,3 +17,25 @@ Also:
      (This helps sentence-motion commands in some editors.)
 
 Happy hacking!
+
+
+Making releases
+===============
+
+ Pre-release (repeat as appropriate):
+  A. Run the testsuite, check everything is OK.
+  B. Trial-run ./dist.sh, check the output is sane.
+
+ Creating the release:
+  1. Set VERSION in dist.sh, and then run:
+       svn copy . http://cvs2svn.tigris.org/svn/cvs2svn/tags/x.y.z
+  2. Increment the -dev VERSION in dist.sh on the trunk or branch.
+  3. Switch to the tag URL.
+  4. Run:
+       ./dist.sh
+
+ Publishing the release:
+  5. Upload tarball to website download area.
+  6. Move old releases in the 'Old' folder of the download area.
+  7. Create a project announcement on the website.
+  8. Send an announcement to announce@cvs2svn.tigris.org.

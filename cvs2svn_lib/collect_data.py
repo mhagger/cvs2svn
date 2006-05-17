@@ -128,6 +128,10 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
         file_in_attic, file_executable, file_size, None
         )
 
+    # A list [ ( name, revision) ] of each known symbol in this file
+    # with the revision number that it corresponds to.
+    self._symbols = []
+
     # A map { revision -> c_rev } of the CVSRevision instances for all
     # revisions related to this file.  Note that items in this map
     # might be pre-filled as CVSRevisionIDs for revisions referred to
@@ -185,11 +189,6 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     # trunk.  This records the date at which 1.2 was committed.
     self.first_non_vendor_revision_date = None
 
-    # A list of all symbols defined for the current file.  Used to
-    # prevent multiple definitions of a symbol, something which can
-    # easily happen when --symbol-transform is used.
-    self.defined_symbols = { }
-
   def _get_rev_id(self, revision):
     if revision is None:
       return None
@@ -209,6 +208,13 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     """This is a callback method declared in Sink."""
 
     self.cvs_file.mode = mode
+
+  def define_tag(self, name, revision):
+    """Remember the symbol name and revision, but don't process them yet.
+
+    This is a callback method declared in Sink."""
+
+    self._symbols.append( (name, revision,) )
 
   def set_branch_name(self, branch_number, name):
     """Record that BRANCH_NUMBER is the branch number for branch NAME,
@@ -249,28 +255,12 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
       return None
     return self.branch_names.get(revision[:revision.rindex(".")])
 
-  def define_tag(self, name, revision):
+  def _process_symbol(self, name, revision):
     """Record a bidirectional mapping between symbolic NAME and REVISION.
     REVISION is an unprocessed revision number from the RCS file's
     header, for example: '1.7', '1.7.0.2', or '1.1.1' or '1.1.1.1'.
     This function will determine what kind of symbolic name it is by
-    inspection, and record it in the right places.
-
-    This is a callback method declared in Sink."""
-
-    for (pattern, replacement) in Ctx().symbol_transforms:
-      newname = pattern.sub(replacement, name)
-      if newname != name:
-        Log().warn("   symbol '%s' transformed to '%s'" % (name, newname))
-        name = newname
-
-    if self.defined_symbols.has_key(name):
-      err = "%s: Multiple definitions of the symbol '%s' in '%s'" \
-                % (error_prefix, name, self.cvs_file.filename)
-      sys.stderr.write(err + "\n")
-      self.collect_data.fatal_errors.append(err)
-
-    self.defined_symbols[name] = None
+    inspection, and record it in the right places."""
 
     m = cvs_branch_tag.match(revision)
     if m:
@@ -280,9 +270,44 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     else:
       self.set_tag_name(revision, name)
 
+  def _transform_symbol(self, name):
+    """Transform the symbol NAME using the renaming rules specified
+    with --symbol-transform.  Return the transformed symbol name."""
+
+    for (pattern, replacement) in Ctx().symbol_transforms:
+      newname = pattern.sub(replacement, name)
+      if newname != name:
+        Log().warn("   symbol '%s' transformed to '%s'" % (name, newname))
+        name = newname
+
+    return name
+
+  def _process_symbols(self):
+    # A list of all symbols defined for the current file.  Used to
+    # prevent multiple definitions of a symbol, something which can
+    # easily happen when --symbol-transform is used.
+    defined_symbols = { }
+
+    for (name, revision,) in self._symbols:
+      name = self._transform_symbol(name)
+
+      if defined_symbols.has_key(name):
+        err = "%s: Multiple definitions of the symbol '%s' in '%s'" \
+                  % (error_prefix, name, self.cvs_file.filename)
+        sys.stderr.write(err + "\n")
+        self.collect_data.fatal_errors.append(err)
+
+      defined_symbols[name] = None
+
+      self._process_symbol(name, revision)
+
+    # Free memory:
+    self._symbols = None
+
   def admin_completed(self):
     """This is a callback method declared in Sink."""
 
+    self._process_symbols()
     self.collect_data.add_cvs_file(self.cvs_file)
 
   def define_revision(self, revision, timestamp, author, state,

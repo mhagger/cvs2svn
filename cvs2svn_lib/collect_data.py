@@ -147,6 +147,10 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     # { revision : _RevisionData instance }
     self._rev_data = { }
 
+    # A list [ revision ] of the revision numbers seen, in the order
+    # they were given to us by rcsparse:
+    self._rev_order = []
+
     # Maps revision number (key) to the revision number of the
     # previous revision along this line of development.
     #
@@ -366,6 +370,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
 
     rev_data = _RevisionData(
         revision, int(timestamp), author, state, branches)
+    self._rev_order.append(revision)
     self._rev_data[revision] = rev_data
 
     # When on trunk, the RCS 'next' revision number points to what
@@ -402,8 +407,6 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     elif next:
       self.prev_rev[next] = revision
       self.next_rev[revision] = next
-
-    self._process_revision_data(rev_data)
 
   def _resync_chain(self, current, prev):
     """If the PREV revision exists and it occurred later than the
@@ -451,6 +454,9 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     """The revision tree has been parsed.  Analyze it for consistency.
 
     This is a callback method declared in Sink."""
+
+    for rev in self._rev_order:
+      self._process_revision_data(self._rev_data[rev])
 
     # Our algorithm depends upon the timestamps on the revisions occuring
     # monotonically over time.  That is, we want to see rev 1.34 occur in

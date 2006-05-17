@@ -70,7 +70,8 @@ class _RevisionData:
   state of the prev_rev, we are unable to distinguish between an add
   and a change."""
 
-  def __init__(self, timestamp, author, state, branches):
+  def __init__(self, rev, timestamp, author, state, branches):
+    self.rev = rev
     self.timestamp = timestamp
     self.author = author
     self.original_timestamp = timestamp
@@ -314,13 +315,58 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     self._process_symbols()
     self.collect_data.add_cvs_file(self.cvs_file)
 
+  def _process_revision_data(self, rev_data):
+    for b in rev_data.branches:
+      self.prev_rev[b] = rev_data.rev
+
+    # Ratchet up the highest vendor head revision, if necessary.
+    if self.default_branch:
+      default_branch_root = self.default_branch + "."
+      if (rev_data.rev.startswith(default_branch_root)
+          and default_branch_root.count('.') == rev_data.rev.count('.')):
+        # This revision is on the default branch, so record that it is
+        # the new highest default branch head revision.
+        self.collect_data.default_branches_db[self.cvs_file.cvs_path] = \
+            rev_data.rev
+    else:
+      # No default branch, so make an educated guess.
+      if rev_data.rev == '1.2':
+        # This is probably the time when the file stopped having a
+        # default branch, so make a note of it.
+        self.first_non_vendor_revision_date = rev_data.timestamp
+      else:
+        m = vendor_revision.match(rev_data.rev)
+        if m and ((not self.first_non_vendor_revision_date)
+                  or (rev_data.timestamp
+                      < self.first_non_vendor_revision_date)):
+          # We're looking at a vendor revision, and it wasn't
+          # committed after this file lost its default branch, so bump
+          # the maximum trunk vendor revision in the permanent record.
+          self.collect_data.default_branches_db[self.cvs_file.cvs_path] = \
+              rev_data.rev
+
+    if not trunk_rev.match(rev_data.rev):
+      # Check for unlabeled branches, record them.  We tried to collect
+      # all branch names when we parsed the symbolic name header
+      # earlier, of course, but that didn't catch unlabeled branches.
+      # If a branch is unlabeled, this is our first encounter with it,
+      # so we have to record its data now.
+      branch_number = rev_data.rev[:rev_data.rev.rindex(".")]
+      if not self.branch_names.has_key(branch_number):
+        branch_name = "unlabeled-" + branch_number
+        self.set_branch_name(branch_number, branch_name)
+
+      # Register the commit on this non-trunk branch
+      branch_name = self.branch_names[branch_number]
+      self.collect_data.symbol_db.register_branch_commit(branch_name)
+
   def define_revision(self, revision, timestamp, author, state,
                       branches, next):
     """This is a callback method declared in Sink."""
 
-    # store the rev_data as a list in case we have to jigger the timestamp
-    self._rev_data[revision] = _RevisionData(
-        int(timestamp), author, state, branches)
+    rev_data = _RevisionData(
+        revision, int(timestamp), author, state, branches)
+    self._rev_data[revision] = rev_data
 
     # When on trunk, the RCS 'next' revision number points to what
     # humans might consider to be the 'previous' revision number.  For
@@ -357,48 +403,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
       self.prev_rev[next] = revision
       self.next_rev[revision] = next
 
-    for b in branches:
-      self.prev_rev[b] = revision
-
-    # Ratchet up the highest vendor head revision, if necessary.
-    if self.default_branch:
-      default_branch_root = self.default_branch + "."
-      if (revision.startswith(default_branch_root)
-          and default_branch_root.count('.') == revision.count('.')):
-        # This revision is on the default branch, so record that it is
-        # the new highest default branch head revision.
-        self.collect_data.default_branches_db[self.cvs_file.cvs_path] = \
-            revision
-    else:
-      # No default branch, so make an educated guess.
-      if revision == '1.2':
-        # This is probably the time when the file stopped having a
-        # default branch, so make a note of it.
-        self.first_non_vendor_revision_date = timestamp
-      else:
-        m = vendor_revision.match(revision)
-        if m and ((not self.first_non_vendor_revision_date)
-                  or (timestamp < self.first_non_vendor_revision_date)):
-          # We're looking at a vendor revision, and it wasn't
-          # committed after this file lost its default branch, so bump
-          # the maximum trunk vendor revision in the permanent record.
-          self.collect_data.default_branches_db[self.cvs_file.cvs_path] = \
-              revision
-
-    if not trunk_rev.match(revision):
-      # Check for unlabeled branches, record them.  We tried to collect
-      # all branch names when we parsed the symbolic name header
-      # earlier, of course, but that didn't catch unlabeled branches.
-      # If a branch is unlabeled, this is our first encounter with it,
-      # so we have to record its data now.
-      branch_number = revision[:revision.rindex(".")]
-      if not self.branch_names.has_key(branch_number):
-        branch_name = "unlabeled-" + branch_number
-        self.set_branch_name(branch_number, branch_name)
-
-      # Register the commit on this non-trunk branch
-      branch_name = self.branch_names[branch_number]
-      self.collect_data.symbol_db.register_branch_commit(branch_name)
+    self._process_revision_data(rev_data)
 
   def _resync_chain(self, current, prev):
     """If the PREV revision exists and it occurred later than the

@@ -17,12 +17,9 @@
 
 <h1>cvs2svn FAQ</h1>
 
-<p>
+<p><strong>How-to:</strong></p>
 
-<![CDATA[ Table of Contents ]]>
 <ol>
-
-  <p><strong>How-to:</strong></p>
 
   <li><a href="#oneatatime">How can I convert my CVS repository one module at a time?</a></li>
 
@@ -32,12 +29,9 @@
 
 </ol>
 
-<![CDATA[=========================================================]]>
+<hr />
 
-<p><hr></p>
 <h2>How-to:</h2>
-
-<![CDATA[-----------------------------------------------------------]]>
 
 <h3><a name="oneatatime" title="#oneatatime">How can I convert my CVS repository one module at a time?</a></h3>
 
@@ -88,14 +82,13 @@ example:
 
       # Use "svnadmin load" to load the dumpfile.
       $ cd ~/svndump
-      $ svnadmin --parent-dir projectA load /path/to/svnrepo < cvs2svn-dump
+      $ svnadmin --parent-dir projectA load /path/to/svnrepo &lt; cvs2svn-dump
     </pre></li>
 
   <li>Repeat steps 3 and 4 for each module you want to convert.</li>
 
 </ol>
 
-<![CDATA[-----------------------------------------------------------]]>
 
 <h3><a name="inverted" title="#inverted">How can I convert project <tt>foo</tt> so
     that <tt>trunk/tags/branches</tt> are inside of
@@ -152,9 +145,6 @@ example:
     <tt>svnadmin</tt> with the <tt>--parent-dir</tt> switch.  See the
     answer to <a href="#oneatatime">How can I convert my CVS
     repository one module at a time?</a> for details.</p>
-
-
-<![CDATA[=========================================================]]>
 
 </div>
 </body>

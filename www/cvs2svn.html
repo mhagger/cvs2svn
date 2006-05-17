@@ -35,7 +35,8 @@
 
 </ul>
 
-<hr>
+<hr />
+
 <h1>Requirements</h1>
 <a name="reqs"></a>
 
@@ -79,7 +80,8 @@ not supported and should not be expected to work</b>.  Patches to
 support the conversion of CVSNT repositories would, of course, be
 welcome.</p>
 
-<hr>
+<hr />
+
 <h1>Installation</h1>
 <a name="install"></a>
 
@@ -91,7 +93,8 @@ welcome.</p>
     the 'cvs2svn_rcsparse' library, it should be happy.</li>
 </ul>
 
-<hr>
+<hr />
+
 <h1>Deciding how much to convert</h1>
 <a name="convert"></a>
 
@@ -260,7 +263,8 @@ at a time.</p>
 
 </blockquote>
 
-<hr>
+<hr />
+
 <h1>Prepping your repository</h1>
 <a name="prep"></a>
 
@@ -283,62 +287,63 @@ Lastly, even though you can move and copy files and directories around
 in Subversion, you may want to do some rearranging (typically of
 directories) before running your conversion.
 
-<hr>
+<hr />
+
 <h1>Command line reference</h1>
 <a name="cmd-ref"></a>
 
 
-<table border=1 cellpadding=10 cellspacing=3 width=80%>
+<table border="1" cellpadding="10" cellspacing="3" width="80%">
 
   <tr>
-    <td colspan=2>
+    <td colspan="2">
       <tt>USAGE: cvs2svn [-s svn-repos-path|--dump-only] cvs-repos-path</tt>
     </td>
   </tr>
 
   <tr>
-    <td align=right><tt>--help, -h</tt></td>
+    <td align="right"><tt>--help, -h</tt></td>
     <td>Print the usage message and exit with success.</td>
   </tr>
 
   <tr>
-    <td align=right><tt>--help-passes</tt></td>
+    <td align="right"><tt>--help-passes</tt></td>
     <td>Print the numbers and names of the conversion passes and exit
     with success.</td>
   </tr>
 
   <tr>
-    <td align=right><tt>--version</tt></td>
+    <td align="right"><tt>--version</tt></td>
     <td>Print the version number.</td>
   </tr>
 
   <tr>
-    <td align=right><tt>-q</tt></td>
+    <td align="right"><tt>-q</tt></td>
     <td>Tell cvs2svn to operate in quiet mode, printing little more
       than pass starts and stops to STDOUT.</td>
   </tr>
 
   <tr>
-    <td align=right><tt>-v</tt></td>
+    <td align="right"><tt>-v</tt></td>
     <td>Tell cvs2svn to print <i>tons</i> of information about what
       it's doing to STDOUT.</td>
   </tr>
 
   <tr>
-    <td align=right><tt>-s PATH</tt></td>
+    <td align="right"><tt>-s PATH</tt></td>
     <td>Load CVS repository into the Subversion repository located
       at PATH.  If there is no Subversion repository at PATH, create a
       new one.</td>
   </tr>
 
   <tr>
-    <td align=right><tt>-p PASS</tt></td>
+    <td align="right"><tt>-p PASS</tt></td>
     <td>Execute only pass PASS of the conversion.  PASS can be
     specified by name or by number (see <tt>--help-passes</tt>)</td>
   </tr>
 
   <tr>
-    <td align=right><tt>-p [START]:[END]</tt></td>
+    <td align="right"><tt>-p [START]:[END]</tt></td>
     <td>Execute passes START through END of the conversion
     (inclusive).  START and END can be specified by name or by number
     (see <tt>--help-passes</tt>).  If START or END is missing, it
@@ -346,39 +351,38 @@ directories) before running your conversion.
   </tr>
 
   <tr>
-    <td align=right><tt>--existing-svnrepos</tt></td>
+    <td align="right"><tt>--existing-svnrepos</tt></td>
     <td>Only load the converted CVS repository into an existing
       Subversion repository.</td>
   </tr>
 
   <tr>
-    <td align=right><tt>--dumpfile=PATH</tt></td>
+    <td align="right"><tt>--dumpfile=PATH</tt></td>
     <td>Convert the CVS repository into a Subversion dumpfile at PATH.</td>
   </tr>
 
   <tr>
-    <td align=right><tt>--tmpdir=PATH</tt></td>
+    <td align="right"><tt>--tmpdir=PATH</tt></td>
     <td>Use the directory PATH for all of cvs2svn's temporary data
       (which can be a <i>lot</i> of data.  The default value is the
       current working directory.</td>
   </tr>
 
   <tr>
-    <td align=right><tt>--dry-run</tt></td>
+    <td align="right"><tt>--dry-run</tt></td>
     <td>Do not create a repository or a dumpfile; just print the details
       of what cvs2svn would do if it were really converting your
       repository.</td>
   </tr>
 
   <tr>
-    <td align=right><tt>--profile</tt></td>
+    <td align="right"><tt>--profile</tt></td>
     <td>Dump Python <a href="http://docs.python.org/lib/module-hotshot.html"
-        >Hotshot</a> profiling data to the file <tt>cvs2svn.hotshot</tt>.
+        >Hotshot</a> profiling data to the file <tt>cvs2svn.hotshot</tt>.</td>
   </tr>
 
   <tr>
-    <td align=right><tt>--use-cvs</tt></td>
-    <a name="use-cvs"></a>
+    <td align="right"><a name="use-cvs"><tt>--use-cvs</tt></a></td>
     <td>If RCS <b><tt>co</tt></b> is having trouble extracting certain
       revisions, you may need to pass this flag, which causes cvs2svn
       to use CVS instead of RCS to read the repository.  RCS is much
@@ -390,53 +394,52 @@ directories) before running your conversion.
           <a href="http://cvs2svn.tigris.org/issues/show_bug.cgi?id=4"
                   >http://cvs2svn.tigris.org/issues/show_bug.cgi?id=4</a>
         </li>
-        <br/>
         <li>"Unterminated keyword" misread by RCS:<br/>
           <a href="http://cvs2svn.tigris.org/issues/show_bug.cgi?id=11"
                   >http://cvs2svn.tigris.org/issues/show_bug.cgi?id=11</a>
         </li>
-        <br/>
         <li>RCS handles the "$Log$" keyword differently from CVS:<br/>
           <a href="http://cvs2svn.tigris.org/issues/show_bug.cgi?id=29"
                   >http://cvs2svn.tigris.org/issues/show_bug.cgi?id=29</a>
         </li>
       </ul>
+    </td>
   </tr>
 
   <tr>
-    <td align=right><tt>--svnadmin=PATH</tt></td>
+    <td align="right"><tt>--svnadmin=PATH</tt></td>
     <td>If the svnadmin program is not on your $PATH you should
       specify the absolute path to <tt>svnadmin</tt> with this
       switch.</td>
   </tr>
 
   <tr>
-    <td align=right><tt>--trunk-only</tt></td>
+    <td align="right"><tt>--trunk-only</tt></td>
     <td>Convert only the main line of development from the CVS
       repository (commonly referred to in Subversion parlance as
       "trunk"), ignoring all tags and branches.</td>
   </tr>
 
   <tr>
-    <td align=right><tt>--trunk=PATH</tt></td>
+    <td align="right"><tt>--trunk=PATH</tt></td>
     <td>The top-level path to use for trunk in the Subversion
       repository.  The default value is "trunk".</td>
   </tr>
 
   <tr>
-    <td align=right><tt>--branches=PATH</tt></td>
+    <td align="right"><tt>--branches=PATH</tt></td>
     <td>The top-level path to use for branches in the Subversion
       repository.  The default value is "branches".</td>
   </tr>
 
   <tr>
-    <td align=right><tt>--tags=PATH</tt></td>
+    <td align="right"><tt>--tags=PATH</tt></td>
     <td>The top-level path to use for tags in the Subversion
       repository.  The default value is "tags".</td>
   </tr>
 
   <tr>
-    <td align=right><tt>--symbol-transform=PAT:SUB</tt></td>
+    <td align="right"><tt>--symbol-transform=PAT:SUB</tt></td>
     <td><p>Transform RCS/CVS symbol names before entering them into
       Subversion. The PATtern and SUBstitution use Python regexp and reference
       syntax. You may specify any number of these options; they will be
@@ -447,85 +450,85 @@ directories) before running your conversion.
       and 2_1 as a kludgy form of release tagging (the C-x v s command
       in Emacs VC mode encourages this practice).  A command like</p>
 
-<listing>
+<pre>
 cvs2svn --symbol-transform='([0-9])-(.*):release-\1.\2' -q -s SVN RCS
-</listing>
+</pre>
 
       <p>will transform a local CVS repository into a local SVN repository,
       performing the following sort of mappings of RCS symbolic names to
       SVN tags:</p>
 
-<listing>
+<pre>
 1-0 &rarr; release-1.0
 1-1 &rarr; release-1.1
 2-0 &rarr; release-2.0
-</listing>
-      <p></td>
+</pre>
+    </td>
   </tr>
 
   <tr>
-    <td align=right><tt>--no-prune</tt></td>
+    <td align="right"><tt>--no-prune</tt></td>
     <td>When all files are deleted from a directory in the Subversion
       repository, don't delete the empty directory (the default is to
       delete any empty directories.</td>
   </tr>
 
   <tr>
-    <td align=right><tt>--dump-only</tt></td>
+    <td align="right"><tt>--dump-only</tt></td>
     <td>Convert the CVS repository to a Subversion dumpfile instead of
       a Subversion repository (useful for importing a CVS Repository
       into an existing Subversion repository).</td>
   </tr>
 
   <tr>
-    <td align=right><tt>--encoding=ENC</tt></td>
+    <td align="right"><tt>--encoding=ENC</tt></td>
     <td>Use ENC as the encoding of log messages in CVS repos (default:
       ascii)</td>
   </tr>
 
   <tr>
-    <td align=right><tt>--force-branch=NAME</tt></td>
+    <td align="right"><tt>--force-branch=NAME</tt></td>
     <td>Force NAME to be a branch.</td>
   </tr>
 
   <tr>
-    <td align=right><tt>--force-tag=NAME</tt></td>
+    <td align="right"><tt>--force-tag=NAME</tt></td>
     <td>Force NAME to be a tag.  This will cause an error if NAME has
       commits on it.</td>
   </tr>
 
   <tr>
-    <td align=right><tt>--exclude=REGEXP</tt></td>
+    <td align="right"><tt>--exclude=REGEXP</tt></td>
     <td>Exclude branches and tags matching REGEXP from
       conversion.</td>
   </tr>
 
   <tr>
-    <td align=right><tt>--username=NAME</tt></td>
+    <td align="right"><tt>--username=NAME</tt></td>
     <td>Use NAME as the author for cvs2svn-synthesized commits (the
       default value is no author at all.</td>
   </tr>
 
   <tr>
-    <td align=right><tt>--skip-cleanup</tt></td>
+    <td align="right"><tt>--skip-cleanup</tt></td>
     <td>Prevent the deletion of the temporary files that cvs2svn
       creates in the process of conversion.</td>
   </tr>
 
   <tr>
-    <td align=right><tt>--bdb-txn-nosync</tt></td>
+    <td align="right"><tt>--bdb-txn-nosync</tt></td>
     <td>Pass the <tt>--bdb-txn-nosync</tt> switch to "svnadmin
       create" when creating a new repository.</td>
   </tr>
 
   <tr>
-    <td align=right><tt>--fs-type=TYPE</tt></td>
+    <td align="right"><tt>--fs-type=TYPE</tt></td>
     <td>Pass the <tt>--fs-type=TYPE</tt> option to "svnadmin
       create" when creating a new repository.</td>
   </tr>
 
   <tr>
-    <td align=right><tt>--cvs-revnums</tt></td>
+    <td align="right"><tt>--cvs-revnums</tt></td>
     <td>Record CVS revision numbers as file properties in the
       Subversion repository/dumpfile.  (Note that unless it is removed
       explicitly, the last CVS revision number will remain associated
@@ -534,14 +537,14 @@ cvs2svn --symbol-transform='([0-9])-(.*):release-\1.\2' -q -s SVN RCS
   </tr>
 
   <tr>
-    <td align=right><tt>--mime-types=FILE</tt></td>
+    <td align="right"><tt>--mime-types=FILE</tt></td>
     <td>Specify an apache-style mime.types file for setting
       <tt>svn:mime-type</tt> properties on files in the Subversion
       repository.</td>
   </tr>
 
   <tr>
-    <td align=right><tt>--auto-props=FILE</tt></td>
+    <td align="right"><tt>--auto-props=FILE</tt></td>
     <td>Specify a file in the format of Subversion's config file,
       whose <tt>[auto-props]</tt> section can be used to set arbitrary
       properties on files in the Subversion repository based on their
@@ -553,12 +556,12 @@ cvs2svn --symbol-transform='([0-9])-(.*):release-\1.\2' -q -s SVN RCS
   </tr>
 
   <tr>
-    <td align=right><tt>--auto-props-ignore-case</tt></td>
+    <td align="right"><tt>--auto-props-ignore-case</tt></td>
     <td>Ignore case when pattern-matching auto-props patterns.</td>
   </tr>
 
   <tr>
-    <td align=right><tt>--eol-from-mime-type</tt></td>
+    <td align="right"><tt>--eol-from-mime-type</tt></td>
     <td>For files that don't have the <tt>kb</tt> expansion mode but
       have a known mime type, set the eol-style based on the mime
       type.  For such files, set the <tt>svn:eol-style</tt> property
@@ -570,7 +573,7 @@ cvs2svn --symbol-transform='([0-9])-(.*):release-\1.\2' -q -s SVN RCS
   </tr>
 
   <tr>
-    <td align=right><tt>--no-default-eol</tt></td>
+    <td align="right"><tt>--no-default-eol</tt></td>
     <td>Files that don't have the <tt>kb</tt> expansion mode and (if
       <tt>--eol-from-mime-type</tt> is set) unknown mime type usually
       have their <tt>svn:eol-style</tt> property to "native".  If this
@@ -579,7 +582,7 @@ cvs2svn --symbol-transform='([0-9])-(.*):release-\1.\2' -q -s SVN RCS
   </tr>
 
   <tr>
-    <td align=right><tt>--keywords-off</tt></td>
+    <td align="right"><tt>--keywords-off</tt></td>
     <td>By default, cvs2svn sets <tt>svn:keywords</tt> on CVS files to
       "author id date" if the mode of the RCS file in question is
       either kv, kvl or <b>not</b> kb.  If you use the
@@ -591,7 +594,8 @@ cvs2svn --symbol-transform='([0-9])-(.*):release-\1.\2' -q -s SVN RCS
 
 </table>
 
-<hr>
+<hr />
+
 <h1>A Few Examples</h1>
 <a name="examples"></a>
 

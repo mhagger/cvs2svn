@@ -58,16 +58,21 @@ example:
 </p>
 
 <ol>
+  <li>If the svn repository doesn't already exist, create it:
+    <pre>
+      svnadmin create file:///path/to/svnrepos
+    </pre></li>
+
   <li>Remember to <b>Make a backup</b> before starting.  Never run
     cvs2svn on a live CVS repository--always work on a copy of your
     repository.</li>
 
-  <li>Run cvs2svn against the modules you want converted
+  <li>Run cvs2svn against one of the modules you want converted:
     <pre>
       # Copy the CVS modules into a temporary cvs repository.
       # This is not absolutely necessary, but it's for safety's sake.
       $ mkdir ~/newcvsrepo
-      $ mkdir ~/newcvsrepo/CVSROOT # needed by cvs2svn
+      $ mkdir ~/newcvsrepo/CVSROOT # needed by cvs2svn --use-cvs
       $ cp -r /oldcvsrepo/projectA ~/newcvsrepo
 
       # Create a dumpfile containing the new CVS repository contents
@@ -76,7 +81,7 @@ example:
     </pre></li>
 
 
-  <li>Import the dump into your Subversion repository
+  <li>Import the dump into the Subversion repository:
     <pre>
       # Make a directory for the project.
       $ svn mkdir file:///path/to/svnrepos/projectA -m "Added projectA directory."
@@ -85,6 +90,8 @@ example:
       $ cd ~/svndump
       $ svnadmin --parent-dir projectA load /path/to/svnrepo < cvs2svn-dump
     </pre></li>
+
+  <li>Repeat steps 3 and 4 for each module you want to convert.</li>
 
 </ol>
 

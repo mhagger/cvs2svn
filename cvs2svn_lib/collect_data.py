@@ -319,14 +319,6 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     self._process_symbols()
     self.collect_data.add_cvs_file(self.cvs_file)
 
-  def _process_revision_data(self, rev_data):
-    self._set_branch_dependencies(rev_data)
-
-    self._update_default_branch(rev_data)
-
-    if not trunk_rev.match(rev_data.rev):
-      self._register_branch_commit(rev_data.rev)
-
   def define_revision(self, revision, timestamp, author, state,
                       branches, next):
     """This is a callback method declared in Sink."""
@@ -472,7 +464,15 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     This is a callback method declared in Sink."""
 
     for rev in self._rev_order:
-      self._process_revision_data(self._rev_data[rev])
+      rev_data = self._rev_data[rev]
+
+      self._set_branch_dependencies(rev_data)
+
+      self._update_default_branch(rev_data)
+
+      if not trunk_rev.match(rev_data.rev):
+        self._register_branch_commit(rev_data.rev)
+
 
     # Our algorithm depends upon the timestamps on the revisions occuring
     # monotonically over time.  That is, we want to see rev 1.34 occur in

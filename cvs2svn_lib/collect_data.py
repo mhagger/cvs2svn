@@ -82,7 +82,16 @@ class _RevisionData:
     # as specified by define_revision():
     self.branches = branches
 
-    # The revision number of the parent of this revision, if any:
+    # The revision number of the parent of this revision along the
+    # same line of development, if any.
+    #
+    # For the first revision R on a branch, we consider the revision
+    # from which R sprouted to be the 'previous'.
+    #
+    # Note that this revision can't be determined arithmetically (due
+    # to cvsadmin -o, which is why this is necessary).
+    #
+    # If the key has no previous revision, then this field is None.
     self.parent = None
 
     # The revision numbers of any children that depend on this revision:
@@ -161,25 +170,11 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     # that child depends on parent.
     self._dependencies = []
 
-    # Maps revision number (key) to the revision number of the
-    # previous revision along this line of development.
-    #
-    # For the first revision R on a branch, we consider the revision
-    # from which R sprouted to be the 'previous'.
-    #
-    # Note that this revision can't be determined arithmetically (due
-    # to cvsadmin -o, which is why this is necessary).
-    #
-    # If the key has no previous revision, then there is no entry
-    # here.
-    self.prev_rev = { }
-
     # This dict is essentially self.prev_rev with the values mapped in
     # the other direction, so following key -> value will yield you
     # the next revision number.
     #
-    # Like self.prev_rev, if the key has no next revision, then the
-    # key is not present.
+    # If the key has no next revision, then the key is not present.
     self.next_rev = { }
 
     # Hash mapping branch numbers, like '1.7.2', to branch names,
@@ -350,7 +345,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     # deltatext that you need this revision to retrieve.
     #
     # That said, we don't *want* RCS's behavior here, so we determine
-    # whether we're on trunk or a branch and set self.prev_rev
+    # whether we're on trunk or a branch and set the dependencies
     # accordingly.
     #
     # One last thing.  Note that if REVISION is a branch revision,
@@ -374,10 +369,8 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
 
     if next:
       if trunk_rev.match(revision):
-        self.prev_rev[revision] = next
         self.next_rev[next] = revision
       else:
-        self.prev_rev[next] = revision
         self.next_rev[revision] = next
 
   def _set_branch_dependencies(self, rev_data):
@@ -385,7 +378,6 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
 
     for b in rev_data.branches:
       self._dependencies.append( (rev_data.rev, b) )
-      self.prev_rev[b] = rev_data.rev
 
   def _resolve_dependencies(self):
     """Store the dependencies in self._dependencies into the rev_data
@@ -447,11 +439,11 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     branch_name = self.branch_names[branch_number]
     self.collect_data.symbol_db.register_branch_commit(branch_name)
 
-  def _resync_chain(self, current, prev):
-    """If the PREV revision exists and it occurred later than the
-    CURRENT revision, then shove the previous revision back in time
-    (and any before it that may need to shift).  Return True iff any
-    resyncing was done.
+  def _resync_chain(self, rev_data):
+    """If the REV_DATA.parent revision exists and it occurred later
+    than the REV_DATA revision, then shove the previous revision back
+    in time (and any before it that may need to shift).  Return True
+    iff any resyncing was done.
 
     We sync backwards and not forwards because any given CVS Revision
     has only one previous revision.  However, a CVS Revision can *be*
@@ -464,28 +456,26 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     revision."""
 
     resynced = False
-    while prev is not None:
-      current_rev_data = self._rev_data[current]
-      prev_rev_data = self._rev_data[prev]
+    while rev_data.parent is not None:
+      prev_rev_data = self._rev_data[rev_data.parent]
 
-      if prev_rev_data.timestamp < current_rev_data.timestamp:
+      if prev_rev_data.timestamp < rev_data.timestamp:
         # No resyncing needed here.
         return resynced
 
       old_timestamp = prev_rev_data.timestamp
-      prev_rev_data.adjust_timestamp(current_rev_data.timestamp - 1)
+      prev_rev_data.adjust_timestamp(rev_data.timestamp - 1)
       resynced = True
       delta = prev_rev_data.timestamp - old_timestamp
       Log().verbose(
           "PASS1 RESYNC: '%s' (%s): old time='%s' delta=%ds"
-          % (self.cvs_file.cvs_path, prev,
+          % (self.cvs_file.cvs_path, prev_rev_data.rev,
              time.ctime(old_timestamp), delta))
       if abs(delta) > config.COMMIT_THRESHOLD:
         Log().warn(
             "%s: Significant timestamp change for '%s' (%d seconds)"
             % (warning_prefix, self.cvs_file.cvs_path, delta))
-      current = prev
-      prev = self.prev_rev.get(current)
+      rev_data = prev_rev_data
 
     return resynced
 
@@ -518,8 +508,8 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     # If we have to resync some nodes, then we restart the scan.  Just
     # keep looping as long as we need to restart.
     while True:
-      for current, prev in self.prev_rev.items():
-        if self._resync_chain(current, prev):
+      for rev_data in self._rev_data.values():
+        if self._resync_chain(rev_data):
           # Abort for loop, causing the scan to start again:
           break
       else:
@@ -555,7 +545,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
         pass
 
     # Get the timestamps of the previous and next revisions
-    prev_rev = self.prev_rev.get(revision)
+    prev_rev = rev_data.parent
     prev_rev_data = self._rev_data.get(prev_rev)
     if prev_rev_data is None:
       prev_timestamp = 0
@@ -624,14 +614,14 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     cur_num = revision
     if is_branch_revision(revision) and rev_data.state != 'dead':
       while 1:
-        prev_num = self.prev_rev.get(cur_num)
+        prev_num = self._rev_data[cur_num].parent
         if not cur_num or not prev_num:
           break
         if (not is_same_line_of_development(cur_num, prev_num)
             and self._rev_data[cur_num].state == 'dead'
             and self._rev_data[prev_num].state != 'dead'):
           op = common.OP_CHANGE
-        cur_num = self.prev_rev.get(cur_num)
+        cur_num = self._rev_data[cur_num].parent
 
     c_rev = cvs_revision.CVSRevision(
         self._get_rev_id(revision), self.cvs_file,

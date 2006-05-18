@@ -62,12 +62,9 @@ vendor_revision = re.compile(r'^(1\.1\.1)\.([0-9])+$')
 
 
 def is_branch_revision(rev):
-  """Return True if this revision is not a trunk revision,
-  else return False."""
+  """Return True iff this revision is not a trunk revision."""
 
-  if rev.count('.') >= 3:
-    return True
-  return False
+  return rev.count('.') >= 3
 
 
 def is_same_line_of_development(rev1, rev2):

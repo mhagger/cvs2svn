@@ -151,6 +151,10 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     # they were given to us by rcsparse:
     self._rev_order = []
 
+    # A list [ (parent, child) ] of revision number pairs indicating
+    # that child depends on parent.
+    self._dependencies = []
+
     # Maps revision number (key) to the revision number of the
     # previous revision along this line of development.
     #
@@ -358,6 +362,12 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     # set.
     if next:
       if trunk_rev.match(revision):
+        self._dependencies.append( (next, revision,) )
+      else:
+        self._dependencies.append( (revision, next,) )
+
+    if next:
+      if trunk_rev.match(revision):
         self.prev_rev[revision] = next
         self.next_rev[next] = revision
       else:
@@ -368,6 +378,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     """Set any branches sprouting from REV_DATA to depend on it."""
 
     for b in rev_data.branches:
+      self._dependencies.append( (rev_data.rev, b) )
       self.prev_rev[b] = rev_data.rev
 
   def _update_default_branch(self, rev_data):

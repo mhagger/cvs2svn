@@ -160,15 +160,15 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     # Note that this revision can't be determined arithmetically (due
     # to cvsadmin -o, which is why this is necessary).
     #
-    # If the key has no previous revision, then store None as key's
-    # value.
+    # If the key has no previous revision, then there is no entry
+    # here.
     self.prev_rev = { }
 
     # This dict is essentially self.prev_rev with the values mapped in
     # the other direction, so following key -> value will yield you
     # the next revision number.
     #
-    # Unlike self.prev_rev, if the key has no next revision, then the
+    # Like self.prev_rev, if the key has no next revision, then the
     # key is not present.
     self.next_rev = { }
 
@@ -356,12 +356,13 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     # REVISION.  So when we come around to the branch revision whose
     # revision value is NEXT, its 'prev' and 'prev_rev' are already
     # set.
-    if trunk_rev.match(revision):
-      self.prev_rev[revision] = next
-      self.next_rev[next] = revision
-    elif next:
-      self.prev_rev[next] = revision
-      self.next_rev[revision] = next
+    if next:
+      if trunk_rev.match(revision):
+        self.prev_rev[revision] = next
+        self.next_rev[next] = revision
+      else:
+        self.prev_rev[next] = revision
+        self.next_rev[revision] = next
 
   def _set_branch_dependencies(self, rev_data):
     """Set any branches sprouting from REV_DATA to depend on it."""
@@ -454,7 +455,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
             "%s: Significant timestamp change for '%s' (%d seconds)"
             % (warning_prefix, self.cvs_file.cvs_path, delta))
       current = prev
-      prev = self.prev_rev[current]
+      prev = self.prev_rev.get(current)
 
     return resynced
 
@@ -522,7 +523,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
         pass
 
     # Get the timestamps of the previous and next revisions
-    prev_rev = self.prev_rev[revision]
+    prev_rev = self.prev_rev.get(revision)
     prev_rev_data = self._rev_data.get(prev_rev)
     if prev_rev_data is None:
       prev_timestamp = 0
@@ -591,14 +592,14 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     cur_num = revision
     if is_branch_revision(revision) and rev_data.state != 'dead':
       while 1:
-        prev_num = self.prev_rev.get(cur_num, None)
+        prev_num = self.prev_rev.get(cur_num)
         if not cur_num or not prev_num:
           break
         if (not is_same_line_of_development(cur_num, prev_num)
             and self._rev_data[cur_num].state == 'dead'
             and self._rev_data[prev_num].state != 'dead'):
           op = common.OP_CHANGE
-        cur_num = self.prev_rev.get(cur_num, None)
+        cur_num = self.prev_rev.get(cur_num)
 
     c_rev = cvs_revision.CVSRevision(
         self._get_rev_id(revision), self.cvs_file,

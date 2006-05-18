@@ -61,6 +61,30 @@ rcs_branch_tag = re.compile(r'^(?:[0-9]+\.[0-9]+\.)+[0-9]+$')
 vendor_revision = re.compile(r'^(1\.1\.1)\.([0-9])+$')
 
 
+def is_branch_revision(rev):
+  """Return True if this revision is not a trunk revision,
+  else return False."""
+
+  if rev.count('.') >= 3:
+    return True
+  return False
+
+
+def is_same_line_of_development(rev1, rev2):
+  """Return True if rev1 and rev2 are on the same line of
+  development (i.e., both on trunk, or both on the same branch);
+  return False otherwise.  Either rev1 or rev2 can be None, in
+  which case automatically return False."""
+
+  if rev1 is None or rev2 is None:
+    return False
+  if rev1.count('.') == 1 and rev2.count('.') == 1:
+    return True
+  if rev1[0:rev1.rfind('.')] == rev2[0:rev2.rfind('.')]:
+    return True
+  return False
+
+
 class _RevisionData:
   """We track the state of each revision so that in set_revision_info,
   we can determine if our op is an add/change/delete.  We can do this
@@ -575,28 +599,6 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
       op = common.OP_ADD
     else:
       op = common.OP_CHANGE
-
-    def is_branch_revision(rev):
-      """Return True if this revision is not a trunk revision,
-      else return False."""
-
-      if rev.count('.') >= 3:
-        return True
-      return False
-
-    def is_same_line_of_development(rev1, rev2):
-      """Return True if rev1 and rev2 are on the same line of
-      development (i.e., both on trunk, or both on the same branch);
-      return False otherwise.  Either rev1 or rev2 can be None, in
-      which case automatically return False."""
-
-      if rev1 is None or rev2 is None:
-        return False
-      if rev1.count('.') == 1 and rev2.count('.') == 1:
-        return True
-      if rev1[0:rev1.rfind('.')] == rev2[0:rev2.rfind('.')]:
-        return True
-      return False
 
     # There can be an odd situation where the tip revision of a branch
     # is alive, but every predecessor on the branch is in state 'dead', 

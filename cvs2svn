@@ -26,6 +26,10 @@ import re
 import time
 import fileinput
 import getopt
+try:
+  my_getopt = getopt.gnu_getopt
+except AttributeError:
+  my_getopt = getopt_getopt
 import marshal
 import errno
 import types
@@ -1440,7 +1444,7 @@ def main():
   end_pass = pass_manager.num_passes
 
   try:
-    opts, args = getopt.getopt(sys.argv[1:], 'p:s:qvh',
+    opts, args = my_getopt(sys.argv[1:], 'p:s:qvh',
                                [ "help", "help-passes", "create", "trunk=",
                                  "username=", "existing-svnrepos",
                                  "branches=", "tags=", "encoding=",

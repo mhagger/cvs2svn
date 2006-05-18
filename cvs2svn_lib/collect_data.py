@@ -538,6 +538,53 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
         # We're done.
         return
 
+  def _determine_operation(self, rev_data):
+    # How to tell if a CVSRevision is an add, a change, or a deletion:
+    #
+    # It's a delete if RCS state is 'dead'
+    #
+    # It's an add if RCS state is 'Exp.' and
+    #      - we either have no previous revision
+    #        or
+    #      - we have a previous revision whose state is 'dead'
+    #
+    # Anything else is a change.
+    prev_rev_data = self._rev_data.get(rev_data.parent)
+
+    if rev_data.state == 'dead':
+      op = common.OP_DELETE
+    elif prev_rev_data is None or prev_rev_data.state == 'dead':
+      op = common.OP_ADD
+    else:
+      op = common.OP_CHANGE
+
+    # There can be an odd situation where the tip revision of a branch
+    # is alive, but every predecessor on the branch is in state 'dead',
+    # yet the revision from which the branch sprouts is alive.  (This
+    # is sort of a mirror image of the more common case of adding a
+    # file on a branch, in which the first revision on the branch is
+    # alive while the revision from which it sprouts is dead.)
+    #
+    # In this odd situation, we must mark the first live revision on
+    # the branch as an OP_CHANGE instead of an OP_ADD, because it
+    # reflects, however indirectly, a change w.r.t. the source
+    # revision from which the branch sprouts.
+    #
+    # This is issue #89.
+    cur_num = rev_data.rev
+    if is_branch_revision(rev_data.rev) and rev_data.state != 'dead':
+      while 1:
+        prev_num = self._rev_data[cur_num].parent
+        if not cur_num or not prev_num:
+          break
+        if (not is_same_line_of_development(cur_num, prev_num)
+            and self._rev_data[cur_num].state == 'dead'
+            and self._rev_data[prev_num].state != 'dead'):
+          op = common.OP_CHANGE
+        cur_num = self._rev_data[cur_num].parent
+
+    return op
+
   def set_revision_info(self, revision, log, text):
     """This is a callback method declared in Sink."""
 
@@ -580,47 +627,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     else:
       next_timestamp = next_rev_data.timestamp
 
-    # How to tell if a CVSRevision is an add, a change, or a deletion:
-    #
-    # It's a delete if RCS state is 'dead'
-    #
-    # It's an add if RCS state is 'Exp.' and
-    #      - we either have no previous revision
-    #        or
-    #      - we have a previous revision whose state is 'dead'
-    #
-    # Anything else is a change.
-    if rev_data.state == 'dead':
-      op = common.OP_DELETE
-    elif prev_rev_data is None or prev_rev_data.state == 'dead':
-      op = common.OP_ADD
-    else:
-      op = common.OP_CHANGE
-
-    # There can be an odd situation where the tip revision of a branch
-    # is alive, but every predecessor on the branch is in state 'dead', 
-    # yet the revision from which the branch sprouts is alive.  (This
-    # is sort of a mirror image of the more common case of adding a
-    # file on a branch, in which the first revision on the branch is
-    # alive while the revision from which it sprouts is dead.)
-    #
-    # In this odd situation, we must mark the first live revision on
-    # the branch as an OP_CHANGE instead of an OP_ADD, because it
-    # reflects, however indirectly, a change w.r.t. the source
-    # revision from which the branch sprouts.
-    #
-    # This is issue #89.
-    cur_num = revision
-    if is_branch_revision(revision) and rev_data.state != 'dead':
-      while 1:
-        prev_num = self._rev_data[cur_num].parent
-        if not cur_num or not prev_num:
-          break
-        if (not is_same_line_of_development(cur_num, prev_num)
-            and self._rev_data[cur_num].state == 'dead'
-            and self._rev_data[prev_num].state != 'dead'):
-          op = common.OP_CHANGE
-        cur_num = self._rev_data[cur_num].parent
+    op = self._determine_operation(rev_data)
 
     c_rev = cvs_revision.CVSRevision(
         self._get_rev_id(revision), self.cvs_file,

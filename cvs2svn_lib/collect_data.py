@@ -627,13 +627,11 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     else:
       next_timestamp = next_rev_data.timestamp
 
-    op = self._determine_operation(rev_data)
-
     c_rev = cvs_revision.CVSRevision(
         self._get_rev_id(revision), self.cvs_file,
         rev_data.timestamp, digest,
         self._get_rev_id(prev_rev), self._get_rev_id(next_rev),
-        prev_timestamp, next_timestamp, op,
+        prev_timestamp, next_timestamp, self._determine_operation(rev_data),
         prev_rev, revision, next_rev,
         bool(text),
         self.rev_to_branch_name(revision),

@@ -82,6 +82,12 @@ class _RevisionData:
     # as specified by define_revision():
     self.branches = branches
 
+    # The revision number of the parent of this revision, if any:
+    self.parent = None
+
+    # The revision numbers of any children that depend on this revision:
+    self.children = []
+
   def adjust_timestamp(self, timestamp):
     self._adjusted = True
     self.timestamp = timestamp
@@ -381,6 +387,19 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
       self._dependencies.append( (rev_data.rev, b) )
       self.prev_rev[b] = rev_data.rev
 
+  def _resolve_dependencies(self):
+    """Store the dependencies in self._dependencies into the rev_data
+    objects."""
+
+    for (parent, child,) in self._dependencies:
+      self._rev_data[parent].children.append(child)
+      child_data = self._rev_data[child]
+      assert child_data.parent is None
+      child_data.parent = parent
+
+    # Free memory:
+    self._dependencies = None
+
   def _update_default_branch(self, rev_data):
     """Ratchet up the highest vendor head revision based on REV_DATA,
     if necessary."""
@@ -484,6 +503,8 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
 
       if not trunk_rev.match(rev_data.rev):
         self._register_branch_commit(rev_data.rev)
+
+    self._resolve_dependencies()
 
     # Our algorithm depends upon the timestamps on the revisions occuring
     # monotonically over time.  That is, we want to see rev 1.34 occur in

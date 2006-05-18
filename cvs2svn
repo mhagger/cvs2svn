@@ -17,10 +17,17 @@
 
 VERSION = 'r' + "$LastChangedRevision$"[22:-2]
 
+import sys
+
+# Make sure this Python is recent enough.  Do this as early as possible,
+# using only code compatible with Python 1.5.2 before the check.
+if sys.hexversion < 0x02020000:
+  sys.stderr.write("ERROR: Python 2.2 or higher required.\n")
+  sys.exit(1)
+
 from __future__ import generators
 
 import os
-import sys
 import sha
 import re
 import time
@@ -95,13 +102,6 @@ from cvs2svn_lib.persistence_manager import PersistenceManager
 from cvs2svn_lib.pass_manager import \
         PassManager, \
         InvalidPassError
-
-
-# Make sure this Python is recent enough.
-if sys.hexversion < 0x02020000:
-  sys.stderr.write("'%s: Python 2.2 or higher required, "
-                   "see www.python.org.\n" % error_prefix)
-  sys.exit(1)
 
 
 DIGEST_END_IDX = 9 + (sha.digestsize * 2)

@@ -406,13 +406,13 @@ class ResyncRevsPass(Pass):
       c_rev_key = line.strip()
       c_rev = cvs_revs_db.get_revision(c_rev_key)
 
-      if c_rev.prev_rev is not None:
-        prev_c_rev = cvs_revs_db.get_revision(c_rev.prev_rev.unique_key())
+      if c_rev.prev_id is not None:
+        prev_c_rev = cvs_revs_db.get_revision('%x' % (c_rev.prev_id,))
       else:
         prev_c_rev = None
 
-      if c_rev.next_rev is not None:
-        next_c_rev = cvs_revs_db.get_revision(c_rev.next_rev.unique_key())
+      if c_rev.next_id is not None:
+        next_c_rev = cvs_revs_db.get_revision('%x' % (c_rev.next_id,))
       else:
         next_c_rev = None
 

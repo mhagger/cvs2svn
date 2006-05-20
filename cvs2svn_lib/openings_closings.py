@@ -84,7 +84,7 @@ class SymbolingsLogger:
     self.open_paths_with_default_branches = { }
 
   def log_revision(self, c_rev, svn_revnum):
-    """Log any openings found in C_REV, and if C_REV.next_rev is not
+    """Log any openings found in C_REV, and if C_REV.next_id is not
     None, a closing.  The opening uses SVN_REVNUM, but the closing (if
     any) will have its revnum determined later."""
 
@@ -97,8 +97,8 @@ class SymbolingsLogger:
       # If our c_rev has a next_rev, then that's the closing rev for
       # this source revision.  Log it to closings for later processing
       # since we don't know the svn_revnum yet.
-      if c_rev.next_rev is not None:
-        self.closings.write('%s %s\n' % (name, c_rev.next_rev.unique_key()))
+      if c_rev.next_id is not None:
+        self.closings.write('%s %x\n' % (name, c_rev.next_id))
 
   def _log(self, name, svn_revnum, cvs_path, branch_name, type):
     """Write out a single line to the symbol_openings_closings file

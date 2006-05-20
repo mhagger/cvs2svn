@@ -89,8 +89,8 @@ class CVSRevision(CVSRevisionID):
     self.timestamp = timestamp
     self.digest = digest
     self.op = op
-    self.prev_rev = prev_id and CVSRevisionID(prev_id)
-    self.next_rev = next_id and CVSRevisionID(next_id)
+    self.prev_id = prev_id
+    self.next_id = next_id
     self.deltatext_exists = deltatext_exists
     self.branch_name = branch_name
     self.first_on_branch = first_on_branch
@@ -120,8 +120,7 @@ class CVSRevision(CVSRevisionID):
     return (
         self.id, self.cvs_file,
         self.timestamp, self.digest,
-        self.prev_rev and self.prev_rev.id,
-        self.next_rev and self.next_rev.id,
+        self.prev_id, self.next_id,
         self.op,
         self.rev,
         self.deltatext_exists,

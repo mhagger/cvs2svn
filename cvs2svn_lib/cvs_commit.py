@@ -193,7 +193,7 @@ class CVSCommit:
       # Different '.' counts indicate that c_rev is now on a different
       # line of development (and may need a fill)
       if c_rev.first_on_branch:
-        svn_revnum = pm.get_svn_revnum(c_rev.prev_rev.unique_key())
+        svn_revnum = pm.get_svn_revnum('%x' % (c_rev.prev_id,))
         # It should be the case that when we have a file F that
         # is added on branch B (thus, F on trunk is in state
         # 'dead'), we generate an SVNCommit to fill B iff the branch
@@ -267,7 +267,7 @@ class CVSCommit:
       # 1.1) for that file in state 'dead'.  We only want to add
       # this revision if the log message is not the standard cvs
       # fabricated log message.
-      if c_rev.prev_rev is None:
+      if c_rev.prev_id is None:
         # c_rev.branches may be empty if the originating branch
         # has been excluded.
         if not c_rev.branches:

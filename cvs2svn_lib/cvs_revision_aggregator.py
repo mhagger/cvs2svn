@@ -109,9 +109,9 @@ class CVSRevisionAggregator:
     be added to.  Return the commit C_REV depends on directly, if any;
     otherwise return None."""
 
-    if not c_rev.prev_rev:
+    if c_rev.prev_id is None:
       return None
-    dep = self.pending_revs.get(c_rev.prev_rev.unique_key(), None)
+    dep = self.pending_revs.get('%x' % (c_rev.prev_id,), None)
     if dep is None:
       return None
     deps[dep] = None

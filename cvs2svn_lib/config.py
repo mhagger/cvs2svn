@@ -161,11 +161,6 @@ DEFAULT_BRANCHES_DB = 'cvs2svn-default-branches.db'
 # of two elements: '(author logmessage)'.
 METADATA_DB = "cvs2svn-metadata.db"
 
-# A temporary on-disk hash that maps CVSRevision unique keys to a new
-# timestamp for that CVSRevision.  These new timestamps are created in
-# pass2, and this hash is used exclusively in pass2.
-TWEAKED_TIMESTAMPS_DB = "cvs2svn-fixed-timestamps.db"
-
 # If this run's output is a repository, then (in the tmpdir) we use
 # a dumpfile of this name for repository loads.
 #

@@ -610,24 +610,13 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
 
     # Get the timestamps of the previous and next revisions
     prev_rev = rev_data.parent
-    prev_rev_data = self._rev_data.get(prev_rev)
-    if prev_rev_data is None:
-      prev_timestamp = 0
-    else:
-      prev_timestamp = prev_rev_data.timestamp
-
     next_rev = rev_data.primary_child
-    next_rev_data = self._rev_data.get(next_rev)
-    if next_rev_data is None:
-      next_timestamp = 0
-    else:
-      next_timestamp = next_rev_data.timestamp
 
     c_rev = CVSRevision(
         self._get_rev_id(revision), self.cvs_file,
         rev_data.timestamp, digest,
         self._get_rev_id(prev_rev), self._get_rev_id(next_rev),
-        prev_timestamp, next_timestamp, self._determine_operation(rev_data),
+        self._determine_operation(rev_data),
         prev_rev, revision, next_rev,
         bool(text),
         self.rev_to_branch_name(revision),

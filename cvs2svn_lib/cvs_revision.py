@@ -66,7 +66,7 @@ class CVSRevision(CVSRevisionID):
   def __init__(self,
                id, cvs_file,
                timestamp, digest,
-               prev_id, next_id, prev_timestamp, next_timestamp,
+               prev_id, next_id,
                op, prev_rev, rev, next_rev, deltatext_exists,
                branch_name, tags, branches):
     """Initialize a new CVSRevision object.
@@ -78,8 +78,6 @@ class CVSRevision(CVSRevisionID):
        DIGEST          -->  (string) digest of author+logmsg
        PREV_ID         -->  (int) id of the previous cvs revision (or None)
        NEXT_ID         -->  (int) id of the next cvs revision (or None)
-       PREV_TIMESTAMP  -->  (int) date stamp for the previous cvs revision
-       NEXT_TIMESTAMP  -->  (int) date stamp for the next cvs revision
        OP              -->  (char) OP_ADD, OP_CHANGE, or OP_DELETE
        PREV_REV        -->  (string or None) previous CVS rev, e.g., '1.2'.
                             This is converted to a CVSRevisionID instance.
@@ -98,8 +96,6 @@ class CVSRevision(CVSRevisionID):
 
     self.timestamp = timestamp
     self.digest = digest
-    self.prev_timestamp = prev_timestamp
-    self.next_timestamp = next_timestamp
     self.op = op
     self.prev_rev = prev_rev \
                     and CVSRevisionID(prev_id, self.cvs_file, prev_rev)
@@ -130,8 +126,6 @@ class CVSRevision(CVSRevisionID):
         self.timestamp, self.digest,
         self.prev_rev and self.prev_rev.id,
         self.next_rev and self.next_rev.id,
-        self.prev_timestamp,
-        self.next_timestamp,
         self.op,
         self.prev_rev and self.prev_rev.rev,
         self.rev,

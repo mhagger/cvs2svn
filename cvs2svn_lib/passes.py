@@ -206,7 +206,6 @@ class ResyncRevsPass(Pass):
   def register_artifacts(self):
     self._register_temp_file(config.TAGS_DB)
     self._register_temp_file(config.CLEAN_REVS_DATAFILE)
-    self._register_temp_file(config.TWEAKED_TIMESTAMPS_DB)
     self._register_temp_file(config.CVS_REVS_RESYNC_DB)
     self._register_temp_file_needed(config.TAGS_LIST)
     self._register_temp_file_needed(config.BRANCHES_LIST)
@@ -329,22 +328,6 @@ class ResyncRevsPass(Pass):
 
     return resync
 
-  def _fix_prev_next_timestamps(self, c_rev, tweaked_timestamps_db):
-    """Fix up C_REV.prev_rev and C_REV.next_rev based on the contents
-    of TWEAKED_TIMESTAMPS_DB."""
-
-    if c_rev.prev_rev is not None:
-      new_prev_ts = tweaked_timestamps_db.get(
-        c_rev.prev_rev.unique_key(), None)
-      if new_prev_ts:
-        c_rev.prev_timestamp = new_prev_ts
-
-    if c_rev.next_rev is not None:
-      new_next_ts = tweaked_timestamps_db.get(
-        c_rev.next_rev.unique_key(), None)
-      if new_next_ts:
-        c_rev.next_timestamp = new_next_ts
-
   def _get_non_excluded_symbols(self, symbols, excludes):
     return [ symbol
              for symbol in symbols
@@ -417,21 +400,25 @@ class ResyncRevsPass(Pass):
     output = open(artifact_manager.get_temp_file(config.CLEAN_REVS_DATAFILE),
                   'w')
 
-    tweaked_timestamps_db = Database(
-        artifact_manager.get_temp_file(config.TWEAKED_TIMESTAMPS_DB),
-        DB_OPEN_NEW)
-
     # process the revisions file, looking for items to clean up
     for line in open(
             artifact_manager.get_temp_file(config.ALL_REVS_DATAFILE)):
       c_rev_key = line.strip()
       c_rev = cvs_revs_db.get_revision(c_rev_key)
 
+      if c_rev.prev_rev is not None:
+        prev_c_rev = cvs_revs_db.get_revision(c_rev.prev_rev.unique_key())
+      else:
+        prev_c_rev = None
+
+      if c_rev.next_rev is not None:
+        next_c_rev = cvs_revs_db.get_revision(c_rev.next_rev.unique_key())
+      else:
+        next_c_rev = None
+
       # Skip this entire revision if it's on an excluded branch
       if c_rev.branch_name in excludes:
         continue
-
-      self._fix_prev_next_timestamps(c_rev, tweaked_timestamps_db)
 
       c_rev.branches = self._get_non_excluded_symbols(c_rev.branches, excludes)
       c_rev.tags = self._get_non_excluded_symbols(c_rev.tags, excludes)
@@ -456,21 +443,21 @@ class ResyncRevsPass(Pass):
           # commit group.
           new_timestamp = record[2]
           # If the new timestamp is earlier than that of our previous revision
-          if new_timestamp < c_rev.prev_timestamp:
+          if prev_c_rev and new_timestamp < prev_c_rev.timestamp:
             Log().warn(
                 "%s: Attempt to set timestamp of revision %s on file %s"
                 " to time %s, which is before previous the time of"
                 " revision %s (%s):"
                 % (warning_prefix, c_rev.rev, c_rev.cvs_path, new_timestamp,
-                   c_rev.prev_rev.rev, c_rev.prev_timestamp))
+                   prev_c_rev.rev, prev_c_rev.timestamp))
 
-            # If resyncing our rev to c_rev.prev_timestamp + 1 will place
+            # If resyncing our rev to prev_c_rev.timestamp + 1 will place
             # the timestamp of c_rev within COMMIT_THRESHOLD of the
-            # attempted resync time, then sync back to c_rev.prev_timestamp
+            # attempted resync time, then sync back to prev_c_rev.timestamp
             # + 1...
-            if ((c_rev.prev_timestamp + 1) - new_timestamp) \
+            if ((prev_c_rev.timestamp + 1) - new_timestamp) \
                    < config.COMMIT_THRESHOLD:
-              new_timestamp = c_rev.prev_timestamp + 1
+              new_timestamp = prev_c_rev.timestamp + 1
               Log().warn("%s: Time set to %s"
                          % (warning_prefix, new_timestamp))
             else:
@@ -478,21 +465,21 @@ class ResyncRevsPass(Pass):
               continue
 
           # If the new timestamp is later than that of our next revision
-          elif c_rev.next_timestamp and new_timestamp > c_rev.next_timestamp:
+          elif next_c_rev and new_timestamp > next_c_rev.timestamp:
             Log().warn(
                 "%s: Attempt to set timestamp of revision %s on file %s"
                 " to time %s, which is after time of next"
                 " revision %s (%s):"
                 % (warning_prefix, c_rev.rev, c_rev.cvs_path, new_timestamp,
-                   c_rev.next_rev.rev, c_rev.next_timestamp))
+                   next_c_rev.rev, next_c_rev.timestamp))
 
-            # If resyncing our rev to c_rev.next_timestamp - 1 will place
+            # If resyncing our rev to next_c_rev.timestamp - 1 will place
             # the timestamp of c_rev within COMMIT_THRESHOLD of the
             # attempted resync time, then sync forward to
-            # c_rev.next_timestamp - 1...
-            if (new_timestamp - (c_rev.next_timestamp - 1)) \
+            # next_c_rev.timestamp - 1...
+            if (new_timestamp - (next_c_rev.timestamp - 1)) \
                    < config.COMMIT_THRESHOLD:
-              new_timestamp = c_rev.next_timestamp - 1
+              new_timestamp = next_c_rev.timestamp - 1
               Log().warn("%s: Time set to %s"
                          % (warning_prefix, new_timestamp))
             else:
@@ -501,8 +488,8 @@ class ResyncRevsPass(Pass):
 
           # Fix for Issue #71: Avoid resyncing two consecutive revisions
           # to the same timestamp.
-          elif (new_timestamp == c_rev.prev_timestamp
-                or new_timestamp == c_rev.next_timestamp):
+          elif (prev_c_rev and new_timestamp == prev_c_rev.timestamp
+                or next_c_rev and new_timestamp == next_c_rev.timestamp):
             continue
 
           # adjust the time range. we want the COMMIT_THRESHOLD from the
@@ -518,7 +505,6 @@ class ResyncRevsPass(Pass):
           Log().verbose(msg)
 
           c_rev.timestamp = new_timestamp
-          tweaked_timestamps_db[c_rev.unique_key()] = new_timestamp
 
           # stop looking for hits
           break

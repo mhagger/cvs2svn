@@ -18,7 +18,12 @@
 
 
 from boolean import *
-import common
+from common import clean_symbolic_name
+from common import path_join
+from common import path_split
+from common import OP_ADD
+from common import OP_CHANGE
+from common import OP_DELETE
 import config
 from context import Ctx
 from log import Log
@@ -205,7 +210,7 @@ class SVNRepositoryMirror:
     components = svn_path.split('/')
     for i in range(len(components)):
       component = components[i]
-      path_so_far = common.path_join(path_so_far, component)
+      path_so_far = path_join(path_so_far, component)
       this_key = parent_contents.get(component, None)
       if this_key is not None:
         # The component exists.
@@ -250,7 +255,7 @@ class SVNRepositoryMirror:
     if parent_contents.has_key(component):
       del parent_contents[component]
       self._invoke_delegates('delete_path',
-                             common.path_join(parent_path, component))
+                             path_join(parent_path, component))
 
   def _delete_path(self, svn_path, should_prune=False):
     """Delete PATH from the tree.  If SHOULD_PRUNE is true, then delete
@@ -264,7 +269,7 @@ class SVNRepositoryMirror:
     if svn_path == '' or Ctx().project.is_unremovable(svn_path):
       return
 
-    (parent_path, entry,) = common.path_split(svn_path)
+    (parent_path, entry,) = path_split(svn_path)
     if parent_path:
       parent_key, parent_contents = \
           self._open_writable_node(parent_path, False)
@@ -315,7 +320,7 @@ class SVNRepositoryMirror:
     src_contents = self._get_node(src_key)
 
     # Get the parent path and the base path of the dest_path
-    (dest_parent, dest_basename,) = common.path_split(dest_path)
+    (dest_parent, dest_basename,) = path_split(dest_path)
     dest_parent_key, dest_parent_contents = \
                    self._open_writable_node(dest_parent, False)
 
@@ -378,7 +383,7 @@ class SVNRepositoryMirror:
           self._delete_path(del_path)
       else:
         msg = "Error filling branch '" \
-              + common.clean_symbolic_name(symbol_fill.name) + "'.\n"
+              + clean_symbolic_name(symbol_fill.name) + "'.\n"
         msg += "Received an empty SymbolicNameFillingGuide and\n"
         msg += "attempted to create a branch that already exists."
         raise self.SVNRepositoryMirrorInvalidFillOperationError, msg
@@ -424,8 +429,8 @@ class SVNRepositoryMirror:
     sources.sort()
     copy_source = sources[0]
 
-    src_path = common.path_join(copy_source.prefix, path)
-    dest_path = common.path_join(dest_prefix, path)
+    src_path = path_join(copy_source.prefix, path)
+    dest_path = path_join(dest_prefix, path)
 
     # Figure out if we shall copy to this destination and delete any
     # destination path that is in the way.
@@ -477,7 +482,7 @@ class SVNRepositoryMirror:
     for src_key in src_keys:
       next_dest_key = dest_entries.get(src_key, None)
       self._fill(symbol_fill, dest_prefix, next_dest_key,
-                 src_entries[src_key], common.path_join(path, src_key),
+                 src_entries[src_key], path_join(path, src_key),
                  copy_source.prefix, sources[0].revnum, prune_ok)
 
   def _synchronize_default_branch(self, svn_commit):
@@ -487,14 +492,14 @@ class SVNRepositoryMirror:
 
     for cvs_rev in svn_commit.cvs_revs:
       svn_trunk_path = Ctx().project.make_trunk_path(cvs_rev.cvs_path)
-      if cvs_rev.op == common.OP_ADD or cvs_rev.op == common.OP_CHANGE:
+      if cvs_rev.op == OP_ADD or cvs_rev.op == OP_CHANGE:
         if self._path_exists(svn_trunk_path):
           # Delete the path on trunk...
           self._delete_path(svn_trunk_path)
         # ...and copy over from branch
         self._copy_path(cvs_rev.svn_path, svn_trunk_path,
                         svn_commit.motivating_revnum)
-      elif cvs_rev.op == common.OP_DELETE:
+      elif cvs_rev.op == OP_DELETE:
         # delete trunk path
         self._delete_path(svn_trunk_path)
       else:
@@ -514,7 +519,7 @@ class SVNRepositoryMirror:
 
     if svn_commit.symbolic_name:
       Log().verbose("Filling symbolic name:",
-                    common.clean_symbolic_name(svn_commit.symbolic_name))
+                    clean_symbolic_name(svn_commit.symbolic_name))
       self._fill_symbolic_name(svn_commit)
     elif svn_commit.motivating_revnum:
       Log().verbose("Synchronizing default_branch motivated by %d"
@@ -536,9 +541,9 @@ class SVNRepositoryMirror:
           # This change can be omitted.
           pass
         else:
-          if cvs_rev.op == common.OP_ADD:
+          if cvs_rev.op == OP_ADD:
             self._add_path(cvs_rev)
-          elif cvs_rev.op == common.OP_CHANGE:
+          elif cvs_rev.op == OP_CHANGE:
             # Fix for Issue #74:
             #
             # Here's the scenario.  You have file FOO that is imported
@@ -563,7 +568,7 @@ class SVNRepositoryMirror:
             else:
               self._change_path(cvs_rev)
 
-        if cvs_rev.op == common.OP_DELETE:
+        if cvs_rev.op == OP_DELETE:
           self._delete_path(cvs_rev.svn_path, Ctx().prune)
 
   def add_delegate(self, delegate):

@@ -18,7 +18,8 @@
 
 
 from boolean import *
-import common
+from common import clean_symbolic_name
+from common import format_date
 from common import warning_prefix
 from context import Ctx
 from log import Log
@@ -135,7 +136,7 @@ class SVNCommit:
   def get_revprops(self):
     """Return the Subversion revprops for this SVNCommit."""
 
-    date = common.format_date(self._max_date)
+    date = format_date(self._max_date)
     try:
       utf8_author = None
       if self._author is not None:
@@ -182,7 +183,7 @@ class SVNCommit:
     ret = "SVNCommit #: " + str(self.revnum) + "\n"
     if self.symbolic_name:
       ret += ("   symbolic name: "
-              + common.clean_symbolic_name(self.symbolic_name)
+              + clean_symbolic_name(self.symbolic_name)
               + "\n")
     else:
       ret += "   NO symbolic name\n"
@@ -214,7 +215,7 @@ class SVNCommit:
 
     # In Python 2.2.3, we could use textwrap.fill().  Oh well :-).
     space_or_newline = ' '
-    cleaned_symbolic_name = common.clean_symbolic_name(self.symbolic_name)
+    cleaned_symbolic_name = clean_symbolic_name(self.symbolic_name)
     if len(cleaned_symbolic_name) >= 13:
       space_or_newline = '\n'
 

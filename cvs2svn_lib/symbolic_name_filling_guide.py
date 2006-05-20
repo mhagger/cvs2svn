@@ -18,8 +18,10 @@
 
 
 from boolean import *
-import common
+from common import path_join
+from common import path_split
 from common import FatalError
+from common import SVN_INVALID_REVNUM
 from context import Ctx
 from svn_revision_range import SVNRevisionRange
 from fill_source import FillSource
@@ -55,7 +57,7 @@ class SymbolicNameFillingGuide:
     self._node_tree = { }
 
     for svn_path, svn_revision_range in openings_closings_map.get_things():
-      (head, tail) = common.path_split(svn_path)
+      (head, tail) = path_split(svn_path)
       self._get_node_for_path(head)[tail] = svn_revision_range
 
     #self.print_node_tree(self._node_tree)
@@ -144,11 +146,11 @@ class SymbolicNameFillingGuide:
 
       max_score = 0
       preferred_rev_score = -1
-      rev = common.SVN_INVALID_REVNUM
+      rev = SVN_INVALID_REVNUM
       if preferred_rev is None:
         # Comparison order of different types is arbitrary.  Do not
         # expect None to compare less than int values below.
-        preferred_rev = common.SVN_INVALID_REVNUM
+        preferred_rev = SVN_INVALID_REVNUM
       for revnum, count in scores:
         if count > max_score:
           max_score = count
@@ -167,7 +169,7 @@ class SymbolicNameFillingGuide:
 
     revnum, max_score = best_rev(scores, preferred_revnum)
 
-    if revnum == common.SVN_INVALID_REVNUM:
+    if revnum == SVN_INVALID_REVNUM:
       raise FatalError(
           "failed to find a revision to copy from when copying %s"
           % self.name)
@@ -216,7 +218,7 @@ class SymbolicNameFillingGuide:
       # to find their enclosing sources.
       sources = []
       for entry, node in start_node.items():
-        svn_path = common.path_join(start_svn_path, entry)
+        svn_path = path_join(start_svn_path, entry)
         sources.extend(self._get_sub_sources(svn_path, node))
 
     return sources

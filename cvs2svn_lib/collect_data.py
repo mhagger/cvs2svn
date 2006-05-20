@@ -25,21 +25,24 @@ import sha
 import stat
 
 from boolean import *
-import common
 from common import warning_prefix
 from common import error_prefix
+from common import OP_ADD
+from common import OP_CHANGE
+from common import OP_DELETE
 import config
 from log import Log
 from context import Ctx
 from artifact_manager import artifact_manager
 from cvs_file import CVSFile
-import cvs_revision
+from cvs_revision import CVSRevision
+from cvs_revision import CVSRevisionID
 from stats_keeper import StatsKeeper
 from key_generator import KeyGenerator
 import database
 from cvs_file_database import CVSFileDatabase
 from cvs_revision_database import CVSRevisionDatabase
-import symbol_database
+from symbol_database import SymbolDatabase
 import cvs2svn_rcsparse
 
 
@@ -227,7 +230,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
       return None
     id = self._c_revs.get(revision)
     if id is None:
-      id = cvs_revision.CVSRevisionID(
+      id = CVSRevisionID(
           self.collect_data.key_generator.gen_id(), self.cvs_file, revision)
       self._c_revs[revision] = id
     return id.id
@@ -550,11 +553,11 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     prev_rev_data = self._rev_data.get(rev_data.parent)
 
     if rev_data.state == 'dead':
-      op = common.OP_DELETE
+      op = OP_DELETE
     elif prev_rev_data is None or prev_rev_data.state == 'dead':
-      op = common.OP_ADD
+      op = OP_ADD
     else:
-      op = common.OP_CHANGE
+      op = OP_CHANGE
 
     # There can be an odd situation where the tip revision of a branch
     # is alive, but every predecessor on the branch is in state 'dead',
@@ -578,7 +581,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
         if (not is_same_line_of_development(cur_num, prev_num)
             and self._rev_data[cur_num].state == 'dead'
             and self._rev_data[prev_num].state != 'dead'):
-          op = common.OP_CHANGE
+          op = OP_CHANGE
         cur_num = self._rev_data[cur_num].parent
 
     return op
@@ -625,7 +628,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     else:
       next_timestamp = next_rev_data.timestamp
 
-    c_rev = cvs_revision.CVSRevision(
+    c_rev = CVSRevision(
         self._get_rev_id(revision), self.cvs_file,
         rev_data.timestamp, digest,
         self._get_rev_id(prev_rev), self._get_rev_id(next_rev),
@@ -683,7 +686,7 @@ class CollectData:
         database.DB_OPEN_NEW)
     self.fatal_errors = []
     self.num_files = 0
-    self.symbol_db = symbol_database.SymbolDatabase()
+    self.symbol_db = SymbolDatabase()
 
     # 1 if we've collected data for at least one file, None otherwise.
     self.found_valid_file = None

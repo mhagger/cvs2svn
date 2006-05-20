@@ -21,7 +21,9 @@ import os
 
 from boolean import *
 from context import Ctx
-import common
+from common import clean_symbolic_name
+from common import path_join
+from common import path_split
 from common import error_prefix
 from common import FatalError
 
@@ -57,7 +59,7 @@ def normalize_ttb_path(opt, path):
 
   If the path is invalid, write an error message and exit."""
 
-  norm_path = common.path_join(*path.split('/'))
+  norm_path = path_join(*path.split('/'))
   if not norm_path:
     raise FatalError("cannot pass an empty path to %s." % (opt,))
   return norm_path
@@ -99,7 +101,7 @@ class Project:
     if svn_path == self.trunk_path:
       return True
 
-    (head, tail,) = common.path_split(svn_path)
+    (head, tail,) = path_split(svn_path)
     if head == self.branches_path:
       return True
 
@@ -113,14 +115,12 @@ class Project:
   def get_branch_path(self, branch_name):
     """Return the svnpath for the branch named BRANCH_NAME."""
 
-    return common.path_join(self.branches_path,
-                            common.clean_symbolic_name(branch_name))
+    return path_join(self.branches_path, clean_symbolic_name(branch_name))
 
   def get_tag_path(self, tag_name):
     """Return the svnpath for the tag named TAG_NAME."""
 
-    return common.path_join(self.tags_path,
-                            common.clean_symbolic_name(tag_name))
+    return path_join(self.tags_path, clean_symbolic_name(tag_name))
 
   def _relative_name(self, cvs_path):
     """Convert CVS_PATH into a name relative to this project's root directory.
@@ -142,12 +142,12 @@ class Project:
 
     Return the svn path for this file on trunk."""
 
-    return common.path_join(self.trunk_path, self._relative_name(cvs_path))
+    return path_join(self.trunk_path, self._relative_name(cvs_path))
 
   def make_branch_path(self, branch_name, cvs_path):
     """Return the svn path for CVS_PATH on branch BRANCH_NAME."""
 
-    return common.path_join(self.get_branch_path(branch_name),
-                            self._relative_name(cvs_path))
+    return path_join(self.get_branch_path(branch_name),
+                     self._relative_name(cvs_path))
 
 

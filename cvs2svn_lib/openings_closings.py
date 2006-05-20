@@ -20,7 +20,7 @@
 import fileinput
 
 from boolean import *
-import common
+from common import OP_DELETE
 import config
 from context import Ctx
 from artifact_manager import artifact_manager
@@ -90,7 +90,7 @@ class SymbolingsLogger:
 
     for name in c_rev.tags + c_rev.branches:
       self._note_default_branch_opening(c_rev, name)
-      if c_rev.op != common.OP_DELETE:
+      if c_rev.op != OP_DELETE:
         self._log(name, svn_revnum,
                   c_rev.cvs_path, c_rev.branch_name, OPENING)
 

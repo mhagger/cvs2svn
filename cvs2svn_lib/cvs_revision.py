@@ -18,7 +18,7 @@
 
 
 from boolean import *
-import common
+from common import OP_DELETE
 
 
 class CVSRevisionID(object):
@@ -153,7 +153,7 @@ class CVSRevision(CVSRevisionID):
       # created on the branch, so for all intents and purposes, this
       # c_rev is *technically* not an opening.  See Issue #62 for more
       # information.
-      if self.op != common.OP_DELETE:
+      if self.op != OP_DELETE:
         return True
     return False
 

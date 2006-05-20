@@ -21,8 +21,9 @@ import os
 import md5
 
 from boolean import *
-import common
 from common import FatalError
+from common import OP_ADD
+from common import OP_CHANGE
 import config
 from context import Ctx
 from svn_repository_mirror import SVNRepositoryMirrorDelegate
@@ -145,9 +146,9 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     OP is either the constant OP_ADD or OP_CHANGE."""
 
     # Validation stuffs
-    if op == common.OP_ADD:
+    if op == OP_ADD:
       action = 'add'
-    elif op == common.OP_CHANGE:
+    elif op == OP_CHANGE:
       action = 'change'
     else:
       raise FatalError("_add_or_change_path() called with bad op ('%s')"
@@ -296,12 +297,12 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
   def add_path(self, s_item):
     """Emit the addition corresponding to S_ITEM, an SVNCommitItem."""
 
-    self._add_or_change_path(s_item, common.OP_ADD)
+    self._add_or_change_path(s_item, OP_ADD)
 
   def change_path(self, s_item):
     """Emit the change corresponding to S_ITEM, an SVNCommitItem."""
 
-    self._add_or_change_path(s_item, common.OP_CHANGE)
+    self._add_or_change_path(s_item, OP_CHANGE)
 
   def delete_path(self, path):
     """Emit the deletion of PATH."""

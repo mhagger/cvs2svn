@@ -18,8 +18,9 @@
 
 
 from boolean import *
-import common
 import config
+from common import clean_symbolic_name
+from common import SVN_INVALID_REVNUM
 from log import Log
 from context import Ctx
 from artifact_manager import artifact_manager
@@ -78,8 +79,7 @@ class PersistenceManager:
     CVS_REV_UNIQUE_KEY was committed, or SVN_INVALID_REVNUM if there
     is no mapping for CVS_REV_UNIQUE_KEY."""
 
-    return int(self.cvs2svn_db.get(cvs_rev_unique_key,
-                                   common.SVN_INVALID_REVNUM))
+    return int(self.cvs2svn_db.get(cvs_rev_unique_key, SVN_INVALID_REVNUM))
 
   def get_svn_commit(self, svn_revnum):
     """Return an SVNCommit that corresponds to SVN_REVNUM.
@@ -118,7 +118,7 @@ class PersistenceManager:
         raise SVNCommit.SVNCommitInternalInconsistencyError(
             "An SVNCommit cannot have cvs_revisions *and* a corresponding\n"
             "symbolic name ('%s') to fill."
-            % (common.clean_symbolic_name(name),))
+            % (clean_symbolic_name(name),))
       svn_commit.set_symbolic_name(name)
       if name in self.tags_db:
         svn_commit.is_tag = 1

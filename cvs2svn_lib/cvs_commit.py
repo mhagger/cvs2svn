@@ -20,8 +20,10 @@ import time
 
 from boolean import *
 import config
-import common
 from common import warning_prefix
+from common import OP_ADD
+from common import OP_CHANGE
+from common import OP_DELETE
 from context import Ctx
 from svn_commit import SVNCommit
 from log import Log
@@ -144,7 +146,7 @@ class CVSCommit:
     if c_rev.timestamp > self.t_max:
       self.t_max = c_rev.timestamp
 
-    if c_rev.op == common.OP_DELETE:
+    if c_rev.op == OP_DELETE:
       self.deletes.append(c_rev)
     else:
       # OP_CHANGE or OP_ADD
@@ -200,13 +202,13 @@ class CVSCommit:
         # If this c_rev.op == OP_ADD, *and* the branch has never
         # been filled before, then fill it now.  Otherwise, no need to
         # fill it.
-        if c_rev.op == common.OP_ADD:
+        if c_rev.op == OP_ADD:
           if pm.last_filled.get(c_rev.branch_name, None) is None:
             return 1
-        elif c_rev.op == common.OP_CHANGE:
+        elif c_rev.op == OP_CHANGE:
           if svn_revnum > pm.last_filled.get(c_rev.branch_name, 0):
             return 1
-        elif c_rev.op == common.OP_DELETE:
+        elif c_rev.op == OP_DELETE:
           if pm.last_filled.get(c_rev.branch_name, None) is None:
             return 1
       return 0

@@ -19,7 +19,7 @@
 
 from boolean import *
 import config
-import common
+from common import OP_DELETE
 from artifact_manager import artifact_manager
 import database
 
@@ -41,7 +41,7 @@ class LastSymbolicNameDatabase:
     # Gather last CVS Revision for symbolic name info and tag info
     for tag in c_rev.tags:
       self.symbols[tag] = c_rev.unique_key()
-    if c_rev.op is not common.OP_DELETE:
+    if c_rev.op is not OP_DELETE:
       for branch in c_rev.branches:
         self.symbols[branch] = c_rev.unique_key()
 

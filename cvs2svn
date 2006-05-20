@@ -43,7 +43,6 @@ except ImportError:
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib import config
-from cvs2svn_lib import common
 from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.common import FatalException
@@ -55,7 +54,7 @@ from cvs2svn_lib.context import Ctx
 from cvs2svn_lib import cvs_repository
 from cvs2svn_lib import property_setters
 from cvs2svn_lib.cvs_revision import CVSRevision
-from cvs2svn_lib.project import Project
+from cvs2svn_lib import project
 from cvs2svn_lib.pass_manager import PassManager
 from cvs2svn_lib.pass_manager import InvalidPassError
 from cvs2svn_lib import passes
@@ -71,22 +70,6 @@ pass_manager = PassManager([
   passes.IndexSymbolsPass(),
   passes.OutputPass(),
   ])
-
-
-def normalize_ttb_path(opt, path):
-  """Normalize a path to be used for --trunk, --tags, or --branches.
-
-  1. Strip leading, trailing, and duplicated '/'.
-  2. Verify that the path is not empty.
-
-  Return the normalized path.
-
-  If the path is invalid, write an error message and exit."""
-
-  norm_path = common.path_join(*path.split('/'))
-  if not norm_path:
-    raise FatalError("cannot pass an empty path to %s." % (opt,))
-  return norm_path
 
 
 def usage():
@@ -216,11 +199,11 @@ def main():
     elif opt == '--trunk-only':
       ctx.trunk_only = 1
     elif opt == '--trunk':
-      ctx.trunk_base = normalize_ttb_path(opt, value)
+      ctx.trunk_base = project.normalize_ttb_path(opt, value)
     elif opt == '--branches':
-      ctx.branches_base = normalize_ttb_path(opt, value)
+      ctx.branches_base = project.normalize_ttb_path(opt, value)
     elif opt == '--tags':
-      ctx.tags_base = normalize_ttb_path(opt, value)
+      ctx.tags_base = project.normalize_ttb_path(opt, value)
     elif opt == '--no-prune':
       ctx.prune = None
     elif opt == '--dump-only':
@@ -328,8 +311,9 @@ def main():
                      % ctx.fs_type)
 
   # Create the default project (using ctx.trunk, ctx.branches, and ctx.tags):
-  ctx.project = Project(ctx.cvs_repository.cvs_repos_path,
-                        ctx.trunk_base, ctx.branches_base, ctx.tags_base)
+  ctx.project = project.Project(
+      ctx.cvs_repository.cvs_repos_path,
+      ctx.trunk_base, ctx.branches_base, ctx.tags_base)
 
   if ctx.existing_svnrepos and not os.path.isdir(ctx.target):
     raise FatalError("the svn-repos-path '%s' is not an "

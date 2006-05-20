@@ -47,6 +47,22 @@ def verify_paths_disjoint(*paths):
       raise FatalError("paths %s and %s are not disjoint." % (path1, path2,))
 
 
+def normalize_ttb_path(opt, path):
+  """Normalize a path to be used for --trunk, --tags, or --branches.
+
+  1. Strip leading, trailing, and duplicated '/'.
+  2. Verify that the path is not empty.
+
+  Return the normalized path.
+
+  If the path is invalid, write an error message and exit."""
+
+  norm_path = common.path_join(*path.split('/'))
+  if not norm_path:
+    raise FatalError("cannot pass an empty path to %s." % (opt,))
+  return norm_path
+
+
 class Project:
   """A project within a CVS repository."""
 

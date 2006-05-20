@@ -69,7 +69,7 @@ class PassManager:
         raise InvalidPassError(
             'illegal value (%d) for pass number.  Must be 1 through %d or\n'
             'the name of a known pass.'
-            % (pass_number,))
+            % (pass_number,self.num_passes,))
       return pass_number
     except ValueError:
       # Is pass_name the name of one of the passes?

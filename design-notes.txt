@@ -88,8 +88,8 @@ When every CVS file is done, CollectRevsPass is complete, and:
      arbitrary.  In other words, a multi-file commit will be scattered
      all over the place.
 
-   - cvs2svn-data.a-revs contains a list of CVSRevision keys that are
-     in cvs2svn-cvs-revs.db, in the order that they were written.
+   - cvs2svn-data.a-revs.txt contains a list of CVSRevision keys that
+     are in cvs2svn-cvs-revs.db, in the order that they were written.
 
    - cvs2svn-data.resync contains a small amount of resync data, in
      no particular order.
@@ -117,7 +117,7 @@ each digest may need to "fan out" to cover multiple commits, but
 without accidentally unifying those commits.
 
 Now we loop over cvs2svn-cvs-revs.db, and for each record write a line
-to 'cvs2svn-data.c-revs'.  Each line of this file looks like this:
+to 'cvs2svn-data.c-revs.txt'.  Each line of this file looks like this:
 
    3dc32955 5afe9b4ba41843d8eb52ae7db47a43eaa9573254 12ab
 
@@ -160,11 +160,11 @@ SortRevsPass (formerly called pass3)
 This is where we deduce the changesets, that is, the grouping of file
 changes into single commits.
 
-It's very simple -- run 'sort' on cvs2svn-data.c-revs, converting it
-to 'cvs2svn-data.s-revs'.  Because of the way the data is laid out,
-this causes commits with the same digest (that is, the same author and
-log message) to be grouped together.  Poof!  We now have the CVS
-changes grouped by logical commit.
+It's very simple -- run 'sort' on cvs2svn-data.c-revs.txt, converting
+it to 'cvs2svn-data.s-revs.txt'.  Because of the way the data is laid
+out, this causes commits with the same digest (that is, the same
+author and log message) to be grouped together.  Poof!  We now have
+the CVS changes grouped by logical commit.
 
 In some cases, the changes in a given commit may be interleaved with
 other commits that went on at the same time, because the sort gives
@@ -299,7 +299,7 @@ dumpfiles representing a single revision are created, loaded into the
 repository, and then removed.
 
 In both modes, the dumpfile revisions are created by walking through
-cvs2svn-data.s-revs.
+cvs2svn-data.s-revs.txt.
 
 
                   ===============================

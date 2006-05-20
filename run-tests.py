@@ -37,7 +37,6 @@
 import sys
 import shutil
 import stat
-import string
 import re
 import os
 import time
@@ -144,7 +143,7 @@ def repos_to_url(path_to_svn_repos):
   rpath = os.path.abspath(path_to_svn_repos)
   if rpath[0] != '/':
     rpath = '/' + rpath
-  return 'file://%s' % string.replace(rpath, os.sep, '/')
+  return 'file://%s' % rpath.replace(os.sep, '/')
 
 if hasattr(time, 'strptime'):
   def svn_strptime(timestr):

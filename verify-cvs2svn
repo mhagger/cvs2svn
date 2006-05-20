@@ -34,7 +34,6 @@ import os
 import sys
 import getopt
 import popen2
-import string
 import shutil
 
 
@@ -93,7 +92,7 @@ class CvsRepos:
     output = pipe.fromchild.read()
     status = pipe.wait()
     if status or output:
-      print 'CMD FAILED:', string.join(cmd, ' ')
+      print 'CMD FAILED:', ' '.join(cmd)
       print 'Output:'
       sys.stdout.write(output)
       raise RuntimeError('CVS command failed!')
@@ -117,13 +116,13 @@ class SvnRepos:
 
   def export(self, path, dest_path):
     """Export PATH to DEST_PATH."""
-    url = string.join([self.url, path], '/')
+    url = '/'.join([self.url, path])
     cmd = [ SVN_CMD, 'export', '-q', url, dest_path ]
     pipe = Popen4(cmd)
     output = pipe.fromchild.read()
     status = pipe.wait()
     if status or output:
-      print 'CMD FAILED:', string.join(cmd, ' ')
+      print 'CMD FAILED:', ' '.join(cmd)
       print 'Output:'
       sys.stdout.write(output)
       raise RuntimeError('SVN command failed!')
@@ -147,7 +146,7 @@ class SvnRepos:
     lines = pipe.fromchild.readlines()
     status = pipe.wait()
     if status:
-      print 'CMD FAILED:', string.join(cmd, ' ')
+      print 'CMD FAILED:', ' '.join(cmd)
       print 'Output:'
       sys.stdout.writelines(lines)
       raise RuntimeError('SVN command failed!')
@@ -209,10 +208,10 @@ def tree_compare(base1, base2, run_diff, rel_path=''):
   extra = filter(lambda x: x not in entries1, entries2)
   if missing:
     print '*** ANOMALY: Directory /%s is missing entries: %s' % (
-      rel_path, string.join(missing, ', '))
+      rel_path, ', '.join(missing))
   if extra:
     print '*** ANOMALY: Directory /%s has extra entries: %s' % (
-      rel_path, string.join(extra, ', '))
+      rel_path, ', '.join(extra))
   if missing or extra:
     return 0
   ok = 1

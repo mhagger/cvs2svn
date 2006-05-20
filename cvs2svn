@@ -72,61 +72,67 @@ pass_manager = PassManager([
   ])
 
 
+usage_message_template = """\
+USAGE: %(progname)s [-v] [-s svn-repos-path] [-p pass] cvs-repos-path
+  --help, -h           print this usage message and exit with success
+  --help-passes        list the available passes and their numbers
+  --version            print the version number
+  -q                   quiet
+  -v                   verbose
+  -s PATH              path for SVN repos
+  -p PASS              execute only specified PASS
+  -p [START]:[END]     execute passes START through END, inclusive
+                       (PASS, START, and END can be pass names or numbers)
+  --existing-svnrepos  load into existing SVN repository
+  --dumpfile=PATH      name of intermediate svn dumpfile
+  --tmpdir=PATH        directory to use for tmp data (default to cwd)
+  --profile            profile with 'hotshot' (into file cvs2svn.hotshot)
+  --dry-run            do not create a repository or a dumpfile;
+                       just print what would happen.
+  --use-cvs            use CVS instead of RCS 'co' to extract data
+                       (only use this if having problems with RCS)
+  --svnadmin=PATH      path to the svnadmin program
+  --trunk-only         convert only trunk commits, not tags nor branches
+  --trunk=PATH         path for trunk (default: %(trunk_base)s)
+  --branches=PATH      path for branches (default: %(branches_base)s)
+  --tags=PATH          path for tags (default: %(tags_base)s)
+  --no-prune           don't prune empty directories
+  --dump-only          just produce a dumpfile, don't commit to a repos
+  --encoding=ENC       encoding of paths and log messages in CVS repos
+                       Multiple of these options may be passed, where they
+                       will be treated as an ordered list of encodings to
+                       attempt (with "ascii" as a hardcoded last resort)
+  --force-branch=NAME  force NAME to be a branch
+  --force-tag=NAME     force NAME to be a tag
+  --exclude=REGEXP     exclude branches and tags matching REGEXP
+  --symbol-transform=P:S transform symbol names from P to S where P and S
+                       use Python regexp and reference syntax respectively
+  --username=NAME      username for cvs2svn-synthesized commits
+  --skip-cleanup       prevent the deletion of intermediate files
+  --bdb-txn-nosync     pass --bdb-txn-nosync to "svnadmin create"
+  --fs-type=TYPE       pass --fs-type=TYPE to "svnadmin create"
+  --cvs-revnums        record CVS revision numbers as file properties
+  --auto-props=FILE    set file properties from the auto-props section
+                       of a file in svn config format
+  --auto-props-ignore-case Ignore case when matching auto-props patterns
+  --mime-types=FILE    specify an apache-style mime.types file for
+                       setting svn:mime-type
+  --eol-from-mime-type set svn:eol-style from mime type if known
+  --no-default-eol     don't set svn:eol-style to 'native' for
+                       non-binary files with undetermined mime types
+  --keywords-off       don't set svn:keywords on any files (by default,
+                       cvs2svn sets svn:keywords on non-binary files to
+                       "%(svn_keywords_value)s")
+"""
+
 def usage():
-  print 'USAGE: %s [-v] [-s svn-repos-path] [-p pass] cvs-repos-path' \
-        % os.path.basename(sys.argv[0])
-  print '  --help, -h           print this usage message and exit with success'
-  print '  --help-passes        list the available passes and their numbers'
-  print '  --version            print the version number'
-  print '  -q                   quiet'
-  print '  -v                   verbose'
-  print '  -s PATH              path for SVN repos'
-  print '  -p PASS              execute only specified PASS'
-  print '  -p [START]:[END]     execute passes START through END, inclusive'
-  print '                       (PASS, START, and END can be pass names or numbers)'
-  print '  --existing-svnrepos  load into existing SVN repository'
-  print '  --dumpfile=PATH      name of intermediate svn dumpfile'
-  print '  --tmpdir=PATH        directory to use for tmp data (default to cwd)'
-  print '  --profile            profile with \'hotshot\' (into file cvs2svn.hotshot)'
-  print '  --dry-run            do not create a repository or a dumpfile;'
-  print '                       just print what would happen.'
-  print '  --use-cvs            use CVS instead of RCS \'co\' to extract data'
-  print '                       (only use this if having problems with RCS)'
-  print '  --svnadmin=PATH      path to the svnadmin program'
-  print '  --trunk-only         convert only trunk commits, not tags nor branches'
-  print '  --trunk=PATH         path for trunk (default: %s)'    \
-        % Ctx().trunk_base
-  print '  --branches=PATH      path for branches (default: %s)' \
-        % Ctx().branches_base
-  print '  --tags=PATH          path for tags (default: %s)'     \
-        % Ctx().tags_base
-  print '  --no-prune           don\'t prune empty directories'
-  print '  --dump-only          just produce a dumpfile, don\'t commit to a repos'
-  print '  --encoding=ENC       encoding of paths and log messages in CVS repos'
-  print '                       Multiple of these options may be passed, where they'
-  print '                       will be treated as an ordered list of encodings to'
-  print '                       attempt (with "ascii" as a hardcoded last resort)'
-  print '  --force-branch=NAME  force NAME to be a branch'
-  print '  --force-tag=NAME     force NAME to be a tag'
-  print '  --exclude=REGEXP     exclude branches and tags matching REGEXP'
-  print '  --symbol-transform=P:S transform symbol names from P to S where P and S'
-  print '                       use Python regexp and reference syntax respectively'
-  print '  --username=NAME      username for cvs2svn-synthesized commits'
-  print '  --skip-cleanup       prevent the deletion of intermediate files'
-  print '  --bdb-txn-nosync     pass --bdb-txn-nosync to "svnadmin create"'
-  print '  --fs-type=TYPE       pass --fs-type=TYPE to "svnadmin create"'
-  print '  --cvs-revnums        record CVS revision numbers as file properties'
-  print '  --auto-props=FILE    set file properties from the auto-props section'
-  print '                       of a file in svn config format'
-  print '  --auto-props-ignore-case Ignore case when matching auto-props patterns'
-  print '  --mime-types=FILE    specify an apache-style mime.types file for'
-  print '                       setting svn:mime-type'
-  print '  --eol-from-mime-type set svn:eol-style from mime type if known'
-  print '  --no-default-eol     don\'t set svn:eol-style to \'native\' for'
-  print '                       non-binary files with undetermined mime types'
-  print '  --keywords-off       don\'t set svn:keywords on any files (by default,'
-  print '                       cvs2svn sets svn:keywords on non-binary files to'
-  print '                       "%s")' % config.SVN_KEYWORDS_VALUE
+  sys.stdout.write(usage_message_template % {
+      'progname' : os.path.basename(sys.argv[0]),
+      'trunk_base' : Ctx().trunk_base,
+      'branches_base' : Ctx().branches_base,
+      'tags_base' : Ctx().tags_base,
+      'svn_keywords_value' : config.SVN_KEYWORDS_VALUE,
+      })
 
 
 def main():

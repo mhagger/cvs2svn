@@ -16,22 +16,22 @@
 
 """
 Report information about CVS revisions, tags, and branches in a CVS
-repository by examining the results of running pass 1 of cvs2svn on
-that repository.  NOTE: You have to run the conversion passes
-yourself!
+repository by examining the temporary files output by pass 1 of cvs2svn
+on that repository.  NOTE: You have to run the conversion pass yourself!
 """
 
 import sys, os, os.path
 
-# Fix things so we can import cvs2svn despite it not having a .py extension
-import imp
-imp.load_module('cvs2svn', open('cvs2svn', 'r'), 'cvs2svn',
-    ('', 'r', imp.PY_SOURCE))
+from cvs2svn_lib.database import DB_OPEN_READ
+from cvs2svn_lib.config import CVS_FILES_DB, CVS_REVS_DB, ALL_REVS_DATAFILE
+from cvs2svn_lib.cvs_file_database import CVSFileDatabase
+from cvs2svn_lib.cvs_revision_database import CVSRevisionDatabase
 
-from cvs2svn_lib.cvs_revision import parse_cvs_revision
+def do_it():
+  cvs_files_db = CVSFileDatabase(CVS_FILES_DB, DB_OPEN_READ)
+  cvs_revs_db = CVSRevisionDatabase(cvs_files_db, CVS_REVS_DB, DB_OPEN_READ)
+  fp = open(ALL_REVS_DATAFILE, 'r')
 
-def do_it(revs_file):
-  fp = open(revs_file, 'r')
   tags = { }
   branches = { }
 
@@ -47,8 +47,8 @@ def do_it(revs_file):
     if not line:
       break
 
-    # Get a CVSRevision to describe this line
-    c_rev = parse_cvs_revision(line)
+    c_rev_key = line.strip()
+    c_rev = cvs_revs_db.get_revision(c_rev_key)
 
     # Handle tags
     num_tags = len(c_rev.tags)
@@ -99,8 +99,9 @@ def do_it(revs_file):
 if __name__ == "__main__":
   argc = len(sys.argv)
   if argc < 2:
-    print 'Usage: %s /path/to/cvs2svn-data.[c-|s-|]revs' \
+    print 'Usage: %s /path/to/cvs2svn-temporary-directory' \
         % (os.path.basename(sys.argv[0]))
     print __doc__
     sys.exit(0)
-  do_it(sys.argv[1])
+  os.chdir(sys.argv[1])
+  do_it()

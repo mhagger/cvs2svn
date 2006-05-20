@@ -67,7 +67,7 @@ class CVSRevisionAggregator:
     # preceding elements in the same array.
     self.cvs_commits = {}
 
-    # Map of CVSRevision unique keys to CVSCommits they are part of.
+    # Map of CVSRevision ids to the CVSCommits they are part of.
     self.pending_revs = {}
 
     # List of closed CVSCommits which might still have pending dependencies.
@@ -111,7 +111,7 @@ class CVSRevisionAggregator:
 
     if c_rev.prev_id is None:
       return None
-    dep = self.pending_revs.get('%x' % (c_rev.prev_id,), None)
+    dep = self.pending_revs.get(c_rev.prev_id, None)
     if dep is None:
       return None
     deps[dep] = None
@@ -142,7 +142,7 @@ class CVSRevisionAggregator:
       for cvs_commit in self.expired_queue[:]:
         if cvs_commit.resolve_dependencies():
           for r in cvs_commit.revisions():
-            del self.pending_revs[r.unique_key()]
+            del self.pending_revs[r.id]
           self.expired_queue.remove(cvs_commit)
           cvs_commit.pending = False
           self.ready_queue.append(cvs_commit)
@@ -185,7 +185,7 @@ class CVSRevisionAggregator:
     if dep is not None:
       cvs_commit.add_dependency(dep)
     cvs_commit.add_revision(c_rev)
-    self.pending_revs[c_rev.unique_key()] = cvs_commit
+    self.pending_revs[c_rev.id] = cvs_commit
 
     # If there are any elements in the ready_queue at this point, they
     # need to be processed, because this latest rev couldn't possibly

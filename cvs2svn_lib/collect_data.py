@@ -163,13 +163,11 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
       canonical_filename = filename
       file_in_attic = False
 
-    # We calculate and save some file metadata here, where we can do
-    # it only once per file, instead of waiting until later where we
-    # would have to do the same calculations once per CVS *revision*.
-
-    cvs_path = Ctx().cvs_repository.get_cvs_path(canonical_filename)
+    # Store file-wide metadata here, in a CVSFile object, instead of
+    # once per revision:
 
     file_stat = os.stat(filename)
+
     # The size of our file in bytes
     file_size = file_stat[stat.ST_SIZE]
 
@@ -178,7 +176,8 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
 
     # mode is not known yet, so we temporarily set it to None.
     self.cvs_file = CVSFile(
-        None, filename, canonical_filename, cvs_path,
+        None, filename, canonical_filename,
+        Ctx().cvs_repository.get_cvs_path(canonical_filename),
         file_in_attic, file_executable, file_size, None
         )
 

@@ -68,7 +68,7 @@ class CVSRevision(CVSRevisionID):
                timestamp, digest,
                prev_id, next_id,
                op, prev_rev, rev, next_rev, deltatext_exists,
-               branch_name, tags, branches):
+               branch_name, first_on_branch, tags, branches):
     """Initialize a new CVSRevision object.
 
     Arguments:
@@ -86,6 +86,7 @@ class CVSRevision(CVSRevisionID):
                             This is converted to a CVSRevisionID instance.
        DELTATEXT_EXISTS-->  (bool) true iff non-empty deltatext
        BRANCH_NAME     -->  (string or None) branch on which this rev occurred
+       FIRST_ON_BRANCH -->  (bool) true iff the first rev on its branch
        TAGS            -->  (list of strings) all tags on this revision
        BRANCHES        -->  (list of strings) all branches rooted in this rev
 
@@ -103,6 +104,7 @@ class CVSRevision(CVSRevisionID):
                     and CVSRevisionID(next_id, self.cvs_file, next_rev)
     self.deltatext_exists = deltatext_exists
     self.branch_name = branch_name
+    self.first_on_branch = first_on_branch
     self.tags = tags
     self.branches = branches
 
@@ -132,6 +134,7 @@ class CVSRevision(CVSRevisionID):
         self.next_rev and self.next_rev.rev,
         self.deltatext_exists,
         self.branch_name,
+        self.first_on_branch,
         self.tags,
         self.branches,)
 
@@ -171,7 +174,6 @@ class CVSRevision(CVSRevisionID):
     return False
 
   def is_first_on_branch(self):
-    return bool(not self.prev_rev
-                or self.rev.count('.') != self.prev_rev.rev.count('.'))
+    return self.first_on_branch
 
 

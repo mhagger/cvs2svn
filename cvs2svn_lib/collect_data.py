@@ -230,15 +230,22 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     # trunk.  This records the date at which 1.2 was committed.
     self.first_non_vendor_revision_date = None
 
+  def _make_rev_id(self, revision):
+    assert revision is not None
+    assert not self._c_revs.has_key(revision)
+    rev_id = CVSRevisionID(
+        self.collect_data.key_generator.gen_id(), self.cvs_file, revision)
+    self._c_revs[revision] = rev_id
+    return rev_id.id
+
   def _get_rev_id(self, revision):
     if revision is None:
       return None
-    id = self._c_revs.get(revision)
-    if id is None:
-      id = CVSRevisionID(
-          self.collect_data.key_generator.gen_id(), self.cvs_file, revision)
-      self._c_revs[revision] = id
-    return id.id
+    rev_id = self._c_revs.get(revision)
+    if rev_id is None:
+      return self._make_rev_id(revision)
+    else:
+      return rev_id.id
 
   def set_principal_branch(self, branch):
     """This is a callback method declared in Sink."""

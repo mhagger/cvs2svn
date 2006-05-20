@@ -24,10 +24,9 @@ from common import OP_DELETE
 class CVSRevisionID(object):
   """An object that identifies a CVS revision of a file."""
 
-  def __init__(self, id, cvs_file, rev):
+  def __init__(self, id, cvs_file):
     self.id = id
     self.cvs_file = cvs_file
-    self.rev = rev
 
   def _get_cvs_path(self):
     return self.cvs_file.cvs_path
@@ -67,7 +66,7 @@ class CVSRevision(CVSRevisionID):
                id, cvs_file,
                timestamp, digest,
                prev_id, next_id,
-               op, prev_rev, rev, next_rev, deltatext_exists,
+               op, rev, deltatext_exists,
                branch_name, first_on_branch, tags, branches):
     """Initialize a new CVSRevision object.
 
@@ -79,11 +78,7 @@ class CVSRevision(CVSRevisionID):
        PREV_ID         -->  (int) id of the previous cvs revision (or None)
        NEXT_ID         -->  (int) id of the next cvs revision (or None)
        OP              -->  (char) OP_ADD, OP_CHANGE, or OP_DELETE
-       PREV_REV        -->  (string or None) previous CVS rev, e.g., '1.2'.
-                            This is converted to a CVSRevisionID instance.
        REV             -->  (string) this CVS rev, e.g., '1.3'
-       NEXT_REV        -->  (string or None) next CVS rev, e.g., '1.4'.
-                            This is converted to a CVSRevisionID instance.
        DELTATEXT_EXISTS-->  (bool) true iff non-empty deltatext
        BRANCH_NAME     -->  (string or None) branch on which this rev occurred
        FIRST_ON_BRANCH -->  (bool) true iff the first rev on its branch
@@ -93,15 +88,14 @@ class CVSRevision(CVSRevisionID):
     WARNING: Due to the resync process in pass2, prev_timestamp or
     next_timestamp may be incorrect in the c-revs or s-revs files."""
 
-    CVSRevisionID.__init__(self, id, cvs_file, rev)
+    CVSRevisionID.__init__(self, id, cvs_file)
 
+    self.rev = rev
     self.timestamp = timestamp
     self.digest = digest
     self.op = op
-    self.prev_rev = prev_rev \
-                    and CVSRevisionID(prev_id, self.cvs_file, prev_rev)
-    self.next_rev = next_rev \
-                    and CVSRevisionID(next_id, self.cvs_file, next_rev)
+    self.prev_rev = prev_id and CVSRevisionID(prev_id, self.cvs_file)
+    self.next_rev = next_id and CVSRevisionID(next_id, self.cvs_file)
     self.deltatext_exists = deltatext_exists
     self.branch_name = branch_name
     self.first_on_branch = first_on_branch
@@ -129,9 +123,7 @@ class CVSRevision(CVSRevisionID):
         self.prev_rev and self.prev_rev.id,
         self.next_rev and self.next_rev.id,
         self.op,
-        self.prev_rev and self.prev_rev.rev,
         self.rev,
-        self.next_rev and self.next_rev.rev,
         self.deltatext_exists,
         self.branch_name,
         self.first_on_branch,

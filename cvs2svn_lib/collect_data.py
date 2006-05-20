@@ -347,7 +347,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
 
     # Create a CVSRevisionID for this revision:
     c_rev = CVSRevisionID(
-        self.collect_data.key_generator.gen_id(), self.cvs_file, revision)
+        self.collect_data.key_generator.gen_id(), self.cvs_file)
 
     # Record basic information about the revision:
     self._rev_data[revision] = _RevisionData(
@@ -613,16 +613,13 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
       except KeyError:
         pass
 
-    # Get the timestamps of the previous and next revisions
-    prev_rev = rev_data.parent
-    next_rev = rev_data.primary_child
-
     c_rev = CVSRevision(
         self._get_rev_id(revision), self.cvs_file,
         rev_data.timestamp, digest,
-        self._get_rev_id(prev_rev), self._get_rev_id(next_rev),
+        self._get_rev_id(rev_data.parent),
+        self._get_rev_id(rev_data.primary_child),
         self._determine_operation(rev_data),
-        prev_rev, revision, next_rev,
+        revision,
         bool(text),
         self.rev_to_branch_name(revision),
         self._is_first_on_branch(rev_data),

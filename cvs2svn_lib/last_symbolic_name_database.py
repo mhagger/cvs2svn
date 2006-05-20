@@ -21,7 +21,8 @@ from boolean import *
 import config
 from common import OP_DELETE
 from artifact_manager import artifact_manager
-import database
+from database import Database
+from database import DB_OPEN_NEW
 
 
 class LastSymbolicNameDatabase:
@@ -49,9 +50,9 @@ class LastSymbolicNameDatabase:
   # = CVS rev unique_key: val = list of symbols that close in that
   # rev.
   def create_database(self):
-    symbol_revs_db = database.Database(
+    symbol_revs_db = Database(
         artifact_manager.get_temp_file(config.SYMBOL_LAST_CVS_REVS_DB),
-        database.DB_OPEN_NEW)
+        DB_OPEN_NEW)
     for sym, rev_unique_key in self.symbols.items():
       ary = symbol_revs_db.get(rev_unique_key, [])
       ary.append(sym)

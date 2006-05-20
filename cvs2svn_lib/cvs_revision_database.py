@@ -18,8 +18,8 @@
 
 
 from boolean import *
-import cvs_revision
-import database
+from cvs_revision import CVSRevision
+from database import PDatabase
 
 
 class CVSRevisionDatabase:
@@ -32,7 +32,7 @@ class CVSRevisionDatabase:
     up CVSFiles."""
 
     self.cvs_file_db = cvs_file_db
-    self.db = database.PDatabase(filename, mode)
+    self.db = PDatabase(filename, mode)
 
   def log_revision(self, c_rev):
     """Add C_REV, a CVSRevision, to the database."""
@@ -46,6 +46,6 @@ class CVSRevisionDatabase:
 
     args = self.db[unique_key]
     args[1] = self.cvs_file_db.get_file(args[1])
-    return cvs_revision.CVSRevision(*args)
+    return CVSRevision(*args)
 
 

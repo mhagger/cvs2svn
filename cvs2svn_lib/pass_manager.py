@@ -20,8 +20,8 @@
 import time
 
 from boolean import *
-from common import FatalError
 import config
+from common import FatalError
 from context import Ctx
 from log import Log
 from stats_keeper import StatsKeeper

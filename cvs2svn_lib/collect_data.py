@@ -25,12 +25,12 @@ import sha
 import stat
 
 from boolean import *
+import config
 from common import warning_prefix
 from common import error_prefix
 from common import OP_ADD
 from common import OP_CHANGE
 from common import OP_DELETE
-import config
 from log import Log
 from context import Ctx
 from artifact_manager import artifact_manager
@@ -39,10 +39,13 @@ from cvs_revision import CVSRevision
 from cvs_revision import CVSRevisionID
 from stats_keeper import StatsKeeper
 from key_generator import KeyGenerator
-import database
+from database import Database
+from database import SDatabase
+from database import DB_OPEN_NEW
 from cvs_file_database import CVSFileDatabase
 from cvs_revision_database import CVSRevisionDatabase
 from symbol_database import SymbolDatabase
+
 import cvs2svn_rcsparse
 
 
@@ -668,22 +671,19 @@ class CollectData:
 
   def __init__(self):
     self._cvs_file_db = CVSFileDatabase(
-        artifact_manager.get_temp_file(config.CVS_FILES_DB),
-        database.DB_OPEN_NEW)
+        artifact_manager.get_temp_file(config.CVS_FILES_DB), DB_OPEN_NEW)
     self._cvs_revs_db = CVSRevisionDatabase(
         self._cvs_file_db,
-        artifact_manager.get_temp_file(config.CVS_REVS_DB),
-        database.DB_OPEN_NEW)
+        artifact_manager.get_temp_file(config.CVS_REVS_DB), DB_OPEN_NEW)
     self._all_revs = open(
         artifact_manager.get_temp_file(config.ALL_REVS_DATAFILE), 'w')
     self.resync = open(
         artifact_manager.get_temp_file(config.RESYNC_DATAFILE), 'w')
-    self.default_branches_db = database.SDatabase(
+    self.default_branches_db = SDatabase(
         artifact_manager.get_temp_file(config.DEFAULT_BRANCHES_DB),
-        database.DB_OPEN_NEW)
-    self.metadata_db = database.Database(
-        artifact_manager.get_temp_file(config.METADATA_DB),
-        database.DB_OPEN_NEW)
+        DB_OPEN_NEW)
+    self.metadata_db = Database(
+        artifact_manager.get_temp_file(config.METADATA_DB), DB_OPEN_NEW)
     self.fatal_errors = []
     self.num_files = 0
     self.symbol_db = SymbolDatabase()

@@ -21,10 +21,10 @@ import os
 import md5
 
 from boolean import *
+import config
 from common import FatalError
 from common import OP_ADD
 from common import OP_CHANGE
-import config
 from context import Ctx
 from svn_repository_mirror import SVNRepositoryMirrorDelegate
 

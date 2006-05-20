@@ -24,7 +24,9 @@ from common import SVN_INVALID_REVNUM
 from log import Log
 from context import Ctx
 from artifact_manager import artifact_manager
-import database
+from database import Database
+from database import DB_OPEN_NEW
+from database import DB_OPEN_READ
 from cvs_file_database import CVSFileDatabase
 from cvs_revision_database import CVSRevisionDatabase
 from tags_database import TagsDatabase
@@ -48,26 +50,24 @@ class PersistenceManager:
 
   def __init__(self, mode):
     self.mode = mode
-    if mode not in (database.DB_OPEN_NEW, database.DB_OPEN_READ):
+    if mode not in (DB_OPEN_NEW, DB_OPEN_READ):
       raise RuntimeError, "Invalid 'mode' argument to PersistenceManager"
-    self.svn2cvs_db = database.Database(
+    self.svn2cvs_db = Database(
         artifact_manager.get_temp_file(config.SVN_REVNUMS_TO_CVS_REVS), mode)
-    self.cvs2svn_db = database.Database(
+    self.cvs2svn_db = Database(
         artifact_manager.get_temp_file(config.CVS_REVS_TO_SVN_REVNUMS), mode)
-    self.svn_commit_metadata = database.Database(
-        artifact_manager.get_temp_file(config.METADATA_DB),
-        database.DB_OPEN_READ)
+    self.svn_commit_metadata = Database(
+        artifact_manager.get_temp_file(config.METADATA_DB), DB_OPEN_READ)
     self.cvs_files = CVSFileDatabase(
-        artifact_manager.get_temp_file(config.CVS_FILES_DB),
-        database.DB_OPEN_READ)
+        artifact_manager.get_temp_file(config.CVS_FILES_DB), DB_OPEN_READ)
     self.cvs_revisions = CVSRevisionDatabase(
         self.cvs_files,
         artifact_manager.get_temp_file(config.CVS_REVS_RESYNC_DB),
-        database.DB_OPEN_READ)
+        DB_OPEN_READ)
     ###PERF kff Elsewhere there are comments about sucking the tags db
     ### into memory.  That seems like a good idea.
     if not Ctx().trunk_only:
-      self.tags_db = TagsDatabase(database.DB_OPEN_READ)
+      self.tags_db = TagsDatabase(DB_OPEN_READ)
 
     # "branch_name" -> svn_revnum in which branch was last filled.
     # This is used by CVSCommit._pre_commit, to prevent creating a fill
@@ -133,7 +133,7 @@ class PersistenceManager:
     """Record the bidirectional mapping between SVN_REVNUM and
     CVS_REVS and record associated attributes."""
 
-    if self.mode == database.DB_OPEN_READ:
+    if self.mode == DB_OPEN_READ:
       raise RuntimeError, \
           'Write operation attempted on read-only PersistenceManager'
 

@@ -20,7 +20,7 @@
 from boolean import *
 import config
 from artifact_manager import artifact_manager
-import database
+from database import SDatabase
 
 
 class TagsDatabase:
@@ -31,8 +31,7 @@ class TagsDatabase:
   None.)"""
 
   def __init__(self, mode):
-    self.db = database.SDatabase(
-        artifact_manager.get_temp_file(config.TAGS_DB), mode)
+    self.db = SDatabase(artifact_manager.get_temp_file(config.TAGS_DB), mode)
 
   def add(self, item):
     self.db[item] = ''

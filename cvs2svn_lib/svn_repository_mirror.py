@@ -18,18 +18,21 @@
 
 
 from boolean import *
+import config
 from common import clean_symbolic_name
 from common import path_join
 from common import path_split
 from common import OP_ADD
 from common import OP_CHANGE
 from common import OP_DELETE
-import config
 from context import Ctx
 from log import Log
-import key_generator
+from key_generator import KeyGenerator
 from artifact_manager import artifact_manager
-import database
+from database import Database
+from database import SDatabase
+from database import DB_OPEN_NEW
+from database import DB_OPEN_READ
 from tags_database import TagsDatabase
 from symbolings_reader import SymbolingsReader
 from fill_source import FillSource
@@ -82,21 +85,21 @@ class SVNRepositoryMirror:
   def __init__(self):
     """Set up the SVNRepositoryMirror and prepare it for SVNCommits."""
 
-    self.key_generator = key_generator.KeyGenerator()
+    self.key_generator = KeyGenerator()
 
     self.delegates = [ ]
 
     # This corresponds to the 'revisions' table in a Subversion fs.
-    self.revs_db = database.SDatabase(
+    self.revs_db = SDatabase(
         artifact_manager.get_temp_file(config.SVN_MIRROR_REVISIONS_DB),
-        database.DB_OPEN_NEW)
+        DB_OPEN_NEW)
 
     # This corresponds to the 'nodes' table in a Subversion fs.  (We
     # don't need a 'representations' or 'strings' table because we
     # only track metadata, not file contents.)
-    self.nodes_db = database.Database(
+    self.nodes_db = Database(
         artifact_manager.get_temp_file(config.SVN_MIRROR_NODES_DB),
-        database.DB_OPEN_NEW)
+        DB_OPEN_NEW)
 
     # Start at revision 0 without a root node.  It will be created
     # by _open_writable_root_node.
@@ -106,7 +109,7 @@ class SVNRepositoryMirror:
 
     if not Ctx().trunk_only:
       ###PERF IMPT: Suck this into memory.
-      self.tags_db = TagsDatabase(database.DB_OPEN_READ)
+      self.tags_db = TagsDatabase(DB_OPEN_READ)
       self.symbolings_reader = SymbolingsReader()
 
   def _initialize_repository(self, date):

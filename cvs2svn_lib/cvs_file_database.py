@@ -18,7 +18,7 @@
 
 
 from boolean import *
-import database
+from database import PDatabase
 
 
 class CVSFileDatabase:
@@ -29,7 +29,7 @@ class CVSFileDatabase:
     """Initialize an instance, opening database in MODE (like the MODE
     argument to Database or anydbm.open())."""
 
-    self.db = database.PDatabase(filename, mode)
+    self.db = PDatabase(filename, mode)
 
   def log_file(self, cvs_file):
     """Add CVS_FILE, a CVSFile instance, to the database."""

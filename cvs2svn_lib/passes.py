@@ -27,7 +27,6 @@ import sha
 import cvs2svn_rcsparse
 
 from boolean import *
-
 import config
 from context import Ctx
 from common import warning_prefix
@@ -36,7 +35,10 @@ from common import FatalException
 from common import FatalError
 from log import Log
 from artifact_manager import artifact_manager
-import database
+from database import Database
+from database import DB_OPEN_NEW
+from database import DB_OPEN_READ
+from database import DB_OPEN_WRITE
 from cvs_file_database import CVSFileDatabase
 from symbol_database import SymbolDatabase
 from tags_database import TagsDatabase
@@ -364,16 +366,14 @@ class ResyncRevsPass(Pass):
 
   def run(self):
     cvs_file_db = CVSFileDatabase(
-        artifact_manager.get_temp_file(config.CVS_FILES_DB),
-        database.DB_OPEN_READ)
+        artifact_manager.get_temp_file(config.CVS_FILES_DB), DB_OPEN_READ)
     cvs_revs_db = CVSRevisionDatabase(
         cvs_file_db,
-        artifact_manager.get_temp_file(config.CVS_REVS_DB),
-        database.DB_OPEN_WRITE)
+        artifact_manager.get_temp_file(config.CVS_REVS_DB), DB_OPEN_WRITE)
     cvs_revs_resync_db = CVSRevisionDatabase(
         cvs_file_db,
         artifact_manager.get_temp_file(config.CVS_REVS_RESYNC_DB),
-        database.DB_OPEN_NEW)
+        DB_OPEN_NEW)
     symbol_db = SymbolDatabase()
     symbol_db.read()
 
@@ -399,7 +399,7 @@ class ResyncRevsPass(Pass):
       sys.exit(1)
 
     # Create the tags database
-    tags_db = TagsDatabase(database.DB_OPEN_NEW)
+    tags_db = TagsDatabase(DB_OPEN_NEW)
     for tag in symbol_db.tags:
       if tag not in Ctx().forced_branches:
         tags_db.add(tag)
@@ -417,9 +417,9 @@ class ResyncRevsPass(Pass):
     output = open(artifact_manager.get_temp_file(config.CLEAN_REVS_DATAFILE),
                   'w')
 
-    tweaked_timestamps_db = database.Database(
+    tweaked_timestamps_db = Database(
         artifact_manager.get_temp_file(config.TWEAKED_TIMESTAMPS_DB),
-        database.DB_OPEN_NEW)
+        DB_OPEN_NEW)
 
     # process the revisions file, looking for items to clean up
     for line in open(
@@ -561,12 +561,11 @@ class CreateDatabasesPass(Pass):
 
     Log().quiet("Copying CVS revision data from flat file to database...")
     cvs_file_db = CVSFileDatabase(
-        artifact_manager.get_temp_file(config.CVS_FILES_DB),
-        database.DB_OPEN_READ)
+        artifact_manager.get_temp_file(config.CVS_FILES_DB), DB_OPEN_READ)
     cvs_revs_db = CVSRevisionDatabase(
         cvs_file_db,
         artifact_manager.get_temp_file(config.CVS_REVS_RESYNC_DB),
-        database.DB_OPEN_READ)
+        DB_OPEN_READ)
     if not Ctx().trunk_only:
       Log().quiet("Finding last CVS revisions for all symbolic names...")
       last_sym_name_db = LastSymbolicNameDatabase()
@@ -618,12 +617,11 @@ class AggregateRevsPass(Pass):
     Log().quiet("Mapping CVS revisions to Subversion commits...")
 
     cvs_file_db = CVSFileDatabase(
-        artifact_manager.get_temp_file(config.CVS_FILES_DB),
-        database.DB_OPEN_READ)
+        artifact_manager.get_temp_file(config.CVS_FILES_DB), DB_OPEN_READ)
     cvs_revs_db = CVSRevisionDatabase(
         cvs_file_db,
         artifact_manager.get_temp_file(config.CVS_REVS_RESYNC_DB),
-        database.DB_OPEN_READ)
+        DB_OPEN_READ)
     aggregator = CVSRevisionAggregator()
     for line in fileinput.FileInput(
             artifact_manager.get_temp_file(config.SORTED_REVS_DATAFILE)):
@@ -679,9 +677,9 @@ class IndexSymbolsPass(Pass):
       ###PERF This is a fine example of a db that can be in-memory and
       #just flushed to disk when we're done.  Later, it can just be sucked
       #back into memory.
-      offsets_db = database.Database(
+      offsets_db = Database(
           artifact_manager.get_temp_file(config.SYMBOL_OFFSETS_DB),
-          database.DB_OPEN_NEW)
+          DB_OPEN_NEW)
 
       file = open(
           artifact_manager.get_temp_file(
@@ -723,7 +721,7 @@ class OutputPass(Pass):
   def run(self):
     svncounter = 2 # Repository initialization is 1.
     repos = SVNRepositoryMirror()
-    persistence_manager = PersistenceManager(database.DB_OPEN_READ)
+    persistence_manager = PersistenceManager(DB_OPEN_READ)
 
     if Ctx().target:
       if not Ctx().dry_run:

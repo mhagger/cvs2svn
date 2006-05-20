@@ -18,11 +18,13 @@
 
 
 from boolean import *
-
 import config
 from context import Ctx
 from artifact_manager import artifact_manager
-import database
+from database import Database
+from database import SDatabase
+from database import DB_OPEN_NEW
+from database import DB_OPEN_READ
 from openings_closings import SymbolingsLogger
 from persistence_manager import PersistenceManager
 from cvs_commit import CVSCommit
@@ -53,13 +55,12 @@ class CVSRevisionAggregator:
   # in other directories.
 
   def __init__(self):
-    self.metadata_db = database.Database(
-        artifact_manager.get_temp_file(config.METADATA_DB),
-        database.DB_OPEN_READ)
+    self.metadata_db = Database(
+        artifact_manager.get_temp_file(config.METADATA_DB), DB_OPEN_READ)
     if not Ctx().trunk_only:
-      self.last_revs_db = database.Database(
+      self.last_revs_db = Database(
           artifact_manager.get_temp_file(config.SYMBOL_LAST_CVS_REVS_DB),
-          database.DB_OPEN_READ)
+          DB_OPEN_READ)
 
     # Map of CVSRevision digests to arrays of open CVSCommits.  In each such
     # array, every element has direct or indirect dependencies on all the
@@ -96,10 +97,10 @@ class CVSRevisionAggregator:
     self.latest_primary_svn_commit = None
 
     Ctx()._symbolings_logger = SymbolingsLogger()
-    Ctx()._persistence_manager = PersistenceManager(database.DB_OPEN_NEW)
-    Ctx()._default_branches_db = database.SDatabase(
+    Ctx()._persistence_manager = PersistenceManager(DB_OPEN_NEW)
+    Ctx()._default_branches_db = SDatabase(
         artifact_manager.get_temp_file(config.DEFAULT_BRANCHES_DB),
-        database.DB_OPEN_READ)
+        DB_OPEN_READ)
 
   def _get_deps(self, c_rev, deps):
     """Add the CVSCommits that this C_REV depends on to DEPS, which is a

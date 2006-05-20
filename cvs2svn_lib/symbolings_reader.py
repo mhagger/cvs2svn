@@ -21,7 +21,8 @@ from boolean import *
 import config
 from context import Ctx
 from artifact_manager import artifact_manager
-import database
+from database import Database
+from database import DB_OPEN_READ
 from openings_closings import OpeningsClosingsMap
 from symbolic_name_filling_guide import SymbolicNameFillingGuide
 
@@ -42,9 +43,9 @@ class SymbolingsReader:
         'r')
     # The offsets_db is really small, and we need to read and write
     # from it a fair bit, so suck it into memory
-    offsets_db = database.Database(
+    offsets_db = Database(
         artifact_manager.get_temp_file(config.SYMBOL_OFFSETS_DB),
-        database.DB_OPEN_READ)
+        DB_OPEN_READ)
     self.offsets = { }
     for key in offsets_db:
       #print " ZOO:", key, offsets_db[key]

@@ -192,7 +192,7 @@ class CVSCommit:
 
       # Different '.' counts indicate that c_rev is now on a different
       # line of development (and may need a fill)
-      if c_rev.rev.count('.') != c_rev.prev_rev.rev.count('.'):
+      if c_rev.is_first_on_branch():
         svn_revnum = pm.get_svn_revnum(c_rev.prev_rev.unique_key())
         # It should be the case that when we have a file F that
         # is added on branch B (thus, F on trunk is in state

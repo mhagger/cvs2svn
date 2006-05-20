@@ -170,4 +170,8 @@ class CVSRevision(CVSRevisionID):
 
     return False
 
+  def is_first_on_branch(self):
+    return bool(not self.prev_rev
+                or self.rev.count('.') != self.prev_rev.rev.count('.'))
+
 

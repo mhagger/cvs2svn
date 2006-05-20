@@ -18,6 +18,7 @@
 
 
 from __future__ import generators
+from boolean import *
 
 
 class SVNRevisionRange:

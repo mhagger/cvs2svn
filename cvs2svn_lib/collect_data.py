@@ -37,7 +37,6 @@ from artifact_manager import artifact_manager
 from cvs_file import CVSFile
 from cvs_revision import CVSRevision
 from cvs_revision import CVSRevisionID
-from stats_keeper import StatsKeeper
 from key_generator import KeyGenerator
 from database import Database
 from database import SDatabase
@@ -650,7 +649,7 @@ class CollectData:
   class by FileDataCollector instances, one of which is created for
   each file to be parsed."""
 
-  def __init__(self):
+  def __init__(self, stats_keeper):
     self._cvs_file_db = CVSFileDatabase(
         artifact_manager.get_temp_file(config.CVS_FILES_DB), DB_OPEN_NEW)
     self._cvs_revs_db = CVSRevisionDatabase(
@@ -668,6 +667,7 @@ class CollectData:
     self.fatal_errors = []
     self.num_files = 0
     self.symbol_db = SymbolDatabase()
+    self.stats_keeper = stats_keeper
 
     # 1 if we've collected data for at least one file, None otherwise.
     self.found_valid_file = None
@@ -690,7 +690,7 @@ class CollectData:
   def add_cvs_revision(self, c_rev):
     self._cvs_revs_db.log_revision(c_rev)
     self._all_revs.write('%s\n' % (c_rev.unique_key(),))
-    StatsKeeper().record_c_rev(c_rev)
+    self.stats_keeper.record_c_rev(c_rev)
 
   def write_symbol_db(self):
     self.symbol_db.write()

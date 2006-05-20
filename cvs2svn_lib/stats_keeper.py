@@ -27,12 +27,7 @@ from artifact_manager import artifact_manager
 
 
 class StatsKeeper:
-  __shared_state = { }
-
   def __init__(self):
-    self.__dict__ = self.__shared_state
-    if self.__dict__:
-      return
     self.filename = artifact_manager.get_temp_file(config.STATISTICS_FILE)
     # This can get kinda large, so we don't store it in our data dict.
     self.repos_files = { }

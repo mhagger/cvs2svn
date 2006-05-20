@@ -93,8 +93,8 @@ class PassManager:
     index_end = end_pass
 
     artifact_manager.register_temp_file(config.STATISTICS_FILE, self)
-
-    StatsKeeper().set_start_time(time.time())
+    stats_keeper = StatsKeeper()
+    stats_keeper.set_start_time(time.time())
 
     # Inform the artifact manager when artifacts are created and used:
     for the_pass in self.passes:
@@ -111,9 +111,9 @@ class PassManager:
     for i in range(index_start, index_end):
       the_pass = self.passes[i]
       Log().quiet('----- pass %d (%s) -----' % (i + 1, the_pass.name,))
-      the_pass.run()
+      the_pass.run(stats_keeper)
       end_time = time.time()
-      StatsKeeper().log_duration_for_pass(end_time - start_time, i + 1)
+      stats_keeper.log_duration_for_pass(end_time - start_time, i + 1)
       start_time = end_time
       # Dispose of items in Ctx() not intended to live past the end of the
       # pass (identified by exactly one leading underscore)
@@ -121,7 +121,7 @@ class PassManager:
         if (attr.startswith('_') and not attr.startswith('__')
             and not attr.startswith('_Ctx__')):
           delattr(Ctx(), attr)
-      StatsKeeper().set_end_time(time.time())
+      stats_keeper.set_end_time(time.time())
       # Allow the artifact manager to clean up artifacts that are no
       # longer needed:
       artifact_manager.pass_done(the_pass)
@@ -130,8 +130,8 @@ class PassManager:
     for the_pass in self.passes[index_end:]:
       artifact_manager.pass_deferred(the_pass)
 
-    Log().quiet(StatsKeeper())
-    Log().normal(StatsKeeper().timings())
+    Log().quiet(stats_keeper)
+    Log().normal(stats_keeper.timings())
 
     if index_end == self.num_passes:
       # The overall conversion is done:

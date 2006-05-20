@@ -51,7 +51,6 @@ from persistence_manager import PersistenceManager
 from dumpfile_delegate import DumpfileDelegate
 from repository_delegate import RepositoryDelegate
 from stdout_delegate import StdoutDelegate
-from stats_keeper import StatsKeeper
 from collect_data import CollectData
 from collect_data import FileDataCollector
 from process import run_command
@@ -114,8 +113,9 @@ class Pass:
 
     artifact_manager.register_temp_file_needed(basename, self)
 
-  def run(self):
-    """Carry out this step of the conversion."""
+  def run(self, stats_keeper):
+    """Carry out this step of the conversion.
+    STATS_KEEPER is a StatsKeeper instance."""
 
     raise NotImplementedError
 
@@ -133,9 +133,9 @@ class CollectRevsPass(Pass):
     self._register_temp_file(config.CVS_REVS_DB)
     self._register_temp_file(config.ALL_REVS_DATAFILE)
 
-  def run(self):
+  def run(self, stats_keeper):
     Log().quiet("Examining all CVS ',v' files...")
-    cd = CollectData()
+    cd = CollectData(stats_keeper)
 
     def visit_file(baton, dirname, files):
       cd = baton
@@ -191,8 +191,8 @@ class CollectRevsPass(Pass):
           "\n"
           "Exited due to fatal error(s).\n")
 
-    StatsKeeper().reset_c_rev_info()
-    StatsKeeper().archive()
+    stats_keeper.reset_c_rev_info()
+    stats_keeper.archive()
     Log().quiet("Done")
 
 
@@ -347,7 +347,7 @@ class ResyncRevsPass(Pass):
         c_rev.tags.remove(forced_branch)
         c_rev.branches.append(forced_branch)
 
-  def run(self):
+  def run(self, stats_keeper):
     cvs_file_db = CVSFileDatabase(
         artifact_manager.get_temp_file(config.CVS_FILES_DB), DB_OPEN_READ)
     cvs_revs_db = CVSRevisionDatabase(
@@ -522,7 +522,7 @@ class SortRevsPass(Pass):
     self._register_temp_file(config.SORTED_REVS_DATAFILE)
     self._register_temp_file_needed(config.CLEAN_REVS_DATAFILE)
 
-  def run(self):
+  def run(self, stats_keeper):
     Log().quiet("Sorting CVS revisions...")
     sort_file(artifact_manager.get_temp_file(config.CLEAN_REVS_DATAFILE),
               artifact_manager.get_temp_file(config.SORTED_REVS_DATAFILE))
@@ -539,11 +539,11 @@ class CreateDatabasesPass(Pass):
     self._register_temp_file_needed(config.CVS_REVS_RESYNC_DB)
     self._register_temp_file_needed(config.SORTED_REVS_DATAFILE)
 
-  def run(self):
+  def run(self, stats_keeper):
     """If we're not doing a trunk-only conversion, generate the
     LastSymbolicNameDatabase, which contains the last CVSRevision that
     is a source for each tag or branch.  Also record the remaining
-    revisions to StatsKeeper()."""
+    revisions to the StatsKeeper."""
 
     Log().quiet("Copying CVS revision data from flat file to database...")
     cvs_file_db = CVSFileDatabase(
@@ -568,12 +568,12 @@ class CreateDatabasesPass(Pass):
       c_rev_id = line.strip().split()[-1]
       c_rev = cvs_revs_db.get_revision(c_rev_id)
       last_sym_name_db.log_revision(c_rev)
-      StatsKeeper().record_c_rev(c_rev)
+      stats_keeper.record_c_rev(c_rev)
 
-    StatsKeeper().set_stats_reflect_exclude(True)
+    stats_keeper.set_stats_reflect_exclude(True)
 
     last_sym_name_db.create_database()
-    StatsKeeper().archive()
+    stats_keeper.archive()
     Log().quiet("Done")
 
 
@@ -599,7 +599,7 @@ class AggregateRevsPass(Pass):
     self._register_temp_file_needed(config.METADATA_DB)
     self._register_temp_file_needed(config.SORTED_REVS_DATAFILE)
 
-  def run(self):
+  def run(self, stats_keeper):
     Log().quiet("Mapping CVS revisions to Subversion commits...")
 
     cvs_file_db = CVSFileDatabase(
@@ -617,8 +617,8 @@ class AggregateRevsPass(Pass):
         aggregator.process_revision(c_rev)
     aggregator.flush()
 
-    StatsKeeper().set_svn_rev_count(SVNCommit.revnum - 1)
-    StatsKeeper().archive()
+    stats_keeper.set_svn_rev_count(SVNCommit.revnum - 1)
+    stats_keeper.archive()
     Log().quiet("Done")
 
 
@@ -630,7 +630,7 @@ class SortSymbolsPass(Pass):
       self._register_temp_file(config.SYMBOL_OPENINGS_CLOSINGS_SORTED)
     self._register_temp_file_needed(config.SYMBOL_OPENINGS_CLOSINGS)
 
-  def run(self):
+  def run(self, stats_keeper):
     Log().quiet("Sorting symbolic name source revisions...")
 
     if not Ctx().trunk_only:
@@ -649,7 +649,7 @@ class IndexSymbolsPass(Pass):
       self._register_temp_file(config.SYMBOL_OFFSETS_DB)
       self._register_temp_file_needed(config.SYMBOL_OPENINGS_CLOSINGS_SORTED)
 
-  def run(self):
+  def run(self, stats_keeper):
     Log().quiet("Determining offsets for all symbolic names...")
 
     def generate_offsets_for_symbolings():
@@ -704,7 +704,7 @@ class OutputPass(Pass):
       self._register_temp_file_needed(config.SYMBOL_OPENINGS_CLOSINGS_SORTED)
       self._register_temp_file_needed(config.SYMBOL_OFFSETS_DB)
 
-  def run(self):
+  def run(self, stats_keeper):
     svncounter = 2 # Repository initialization is 1.
     repos = SVNRepositoryMirror()
     persistence_manager = PersistenceManager(DB_OPEN_READ)
@@ -718,7 +718,7 @@ class OutputPass(Pass):
         repos.add_delegate(DumpfileDelegate())
       Log().quiet("Starting Subversion Dumpfile.")
 
-    repos.add_delegate(StdoutDelegate(StatsKeeper().svn_rev_count()))
+    repos.add_delegate(StdoutDelegate(stats_keeper.svn_rev_count()))
 
     while 1:
       svn_commit = persistence_manager.get_svn_commit(svncounter)

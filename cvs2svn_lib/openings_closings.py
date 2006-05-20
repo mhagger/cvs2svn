@@ -131,7 +131,8 @@ class SymbolingsLogger:
     for line in fileinput.FileInput(
             artifact_manager.get_temp_file(config.SYMBOL_CLOSINGS_TMP)):
       (name, rev_key) = line.rstrip().split(" ", 1)
-      svn_revnum = Ctx()._persistence_manager.get_svn_revnum(rev_key)
+      rev_id = int(rev_key, 16)
+      svn_revnum = Ctx()._persistence_manager.get_svn_revnum(rev_id)
 
       c_rev = cvs_revs_db.get_revision(rev_key)
       self._log(name, svn_revnum, c_rev.cvs_path, c_rev.branch_name, CLOSING)

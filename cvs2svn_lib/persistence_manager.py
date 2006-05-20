@@ -74,12 +74,12 @@ class PersistenceManager:
     # revision which would have nothing to do.
     self.last_filled = {}
 
-  def get_svn_revnum(self, cvs_rev_unique_key):
-    """Return the Subversion revision number in which
-    CVS_REV_UNIQUE_KEY was committed, or SVN_INVALID_REVNUM if there
-    is no mapping for CVS_REV_UNIQUE_KEY."""
+  def get_svn_revnum(self, cvs_rev_id):
+    """Return the Subversion revision number in which CVS_REV_ID was
+    committed, or SVN_INVALID_REVNUM if there is no mapping for
+    CVS_REV_ID."""
 
-    return int(self.cvs2svn_db.get(cvs_rev_unique_key, SVN_INVALID_REVNUM))
+    return int(self.cvs2svn_db.get('%x' % (cvs_rev_id,), SVN_INVALID_REVNUM))
 
   def get_svn_commit(self, svn_revnum):
     """Return an SVNCommit that corresponds to SVN_REVNUM.

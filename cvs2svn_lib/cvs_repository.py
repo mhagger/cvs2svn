@@ -22,10 +22,9 @@ import re
 
 from boolean import *
 from common import FatalError
-from process import \
-        check_command_runs, \
-        SimplePopen, \
-        CommandFailedException
+from process import check_command_runs
+from process import SimplePopen
+from process import CommandFailedException
 
 
 class CVSRepository:

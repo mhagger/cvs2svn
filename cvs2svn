@@ -42,30 +42,22 @@ except ImportError:
   pass
 
 from cvs2svn_lib.boolean import *
-
 from cvs2svn_lib import config
-
 from cvs2svn_lib import common
-from cvs2svn_lib.common import \
-        warning_prefix, \
-        error_prefix, \
-        FatalException, \
-        FatalError
-
+from cvs2svn_lib.common import warning_prefix
+from cvs2svn_lib.common import error_prefix
+from cvs2svn_lib.common import FatalException
+from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.log import Log
-
-from cvs2svn_lib.process import \
-        CommandFailedException, \
-        check_command_runs
-
+from cvs2svn_lib.process import CommandFailedException
+from cvs2svn_lib.process import check_command_runs
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib import cvs_repository
 from cvs2svn_lib import property_setters
 from cvs2svn_lib.cvs_revision import CVSRevision
 from cvs2svn_lib.project import Project
-from cvs2svn_lib.pass_manager import \
-        PassManager, \
-        InvalidPassError
+from cvs2svn_lib.pass_manager import PassManager
+from cvs2svn_lib.pass_manager import InvalidPassError
 from cvs2svn_lib import passes
 
 

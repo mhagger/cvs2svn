@@ -25,9 +25,8 @@ import marshal
 import cPickle
 
 from boolean import *
-from common import \
-        warning_prefix, \
-        error_prefix
+from common import warning_prefix
+from common import error_prefix
 
 
 # DBM module selection

@@ -22,9 +22,8 @@ import os
 from boolean import *
 from context import Ctx
 import common
-from common import \
-        FatalError, \
-        error_prefix
+from common import error_prefix
+from common import FatalError
 
 
 def verify_paths_disjoint(*paths):

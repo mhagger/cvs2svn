@@ -173,7 +173,4 @@ class CVSRevision(CVSRevisionID):
 
     return False
 
-  def is_first_on_branch(self):
-    return self.first_on_branch
-
 

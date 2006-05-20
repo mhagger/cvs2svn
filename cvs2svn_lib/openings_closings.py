@@ -134,7 +134,7 @@ class SymbolingsLogger:
       rev_id = int(rev_key, 16)
       svn_revnum = Ctx()._persistence_manager.get_svn_revnum(rev_id)
 
-      c_rev = cvs_revs_db.get_revision(rev_key)
+      c_rev = cvs_revs_db.get_revision(rev_id)
       self._log(name, svn_revnum, c_rev.cvs_path, c_rev.branch_name, CLOSING)
 
     self.symbolings.close()

@@ -403,16 +403,16 @@ class ResyncRevsPass(Pass):
     # process the revisions file, looking for items to clean up
     for line in open(
             artifact_manager.get_temp_file(config.ALL_REVS_DATAFILE)):
-      c_rev_key = line.strip()
-      c_rev = cvs_revs_db.get_revision(c_rev_key)
+      c_rev_id = int(line.strip(), 16)
+      c_rev = cvs_revs_db.get_revision(c_rev_id)
 
       if c_rev.prev_id is not None:
-        prev_c_rev = cvs_revs_db.get_revision('%x' % (c_rev.prev_id,))
+        prev_c_rev = cvs_revs_db.get_revision(c_rev.prev_id)
       else:
         prev_c_rev = None
 
       if c_rev.next_id is not None:
-        next_c_rev = cvs_revs_db.get_revision('%x' % (c_rev.next_id,))
+        next_c_rev = cvs_revs_db.get_revision(c_rev.next_id)
       else:
         next_c_rev = None
 
@@ -565,7 +565,7 @@ class CreateDatabasesPass(Pass):
 
     for line in fileinput.FileInput(
             artifact_manager.get_temp_file(config.SORTED_REVS_DATAFILE)):
-      c_rev_id = line.strip().split()[-1]
+      c_rev_id = int(line.strip().split()[-1], 16)
       c_rev = cvs_revs_db.get_revision(c_rev_id)
       last_sym_name_db.log_revision(c_rev)
       stats_keeper.record_c_rev(c_rev)
@@ -611,7 +611,7 @@ class AggregateRevsPass(Pass):
     aggregator = CVSRevisionAggregator()
     for line in fileinput.FileInput(
             artifact_manager.get_temp_file(config.SORTED_REVS_DATAFILE)):
-      c_rev_id = line.strip().split()[-1]
+      c_rev_id = int(line.strip().split()[-1], 16)
       c_rev = cvs_revs_db.get_revision(c_rev_id)
       if not (Ctx().trunk_only and c_rev.branch_name is not None):
         aggregator.process_revision(c_rev)

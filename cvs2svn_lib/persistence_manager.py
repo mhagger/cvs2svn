@@ -96,7 +96,8 @@ class PersistenceManager:
 
     digest = None
     for key in c_rev_keys:
-      c_rev = self.cvs_revisions.get_revision(key)
+      c_rev_id = int(key, 16)
+      c_rev = self.cvs_revisions.get_revision(c_rev_id)
       svn_commit.add_revision(c_rev)
       # Set the author and log message for this commit by using
       # CVSRevision metadata, but only if haven't done so already.

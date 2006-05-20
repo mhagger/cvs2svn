@@ -41,10 +41,10 @@ class CVSRevisionDatabase:
     args[1] = args[1].id
     self.db[c_rev.unique_key()] = args
 
-  def get_revision(self, unique_key):
-    """Return the CVSRevision stored under UNIQUE_KEY."""
+  def get_revision(self, c_rev_id):
+    """Return the CVSRevision stored under C_REV_ID."""
 
-    args = self.db[unique_key]
+    args = self.db['%x' % (c_rev_id,)]
     args[1] = self.cvs_file_db.get_file(args[1])
     return CVSRevision(*args)
 

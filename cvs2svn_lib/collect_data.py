@@ -94,12 +94,12 @@ class _RevisionData:
   state of the prev_rev, we are unable to distinguish between an add
   and a change."""
 
-  def __init__(self, c_rev, timestamp, author, state, branches):
+  def __init__(self, c_rev, rev, timestamp, author, state, branches):
     # The CVSRevisionID instance for this revision.  Note that this
     # item is pre-filled as a CVSRevisionID, then later overwritten by
     # a CVSRevision.
     self.c_rev = c_rev
-    self.rev = self.c_rev.rev
+    self.rev = rev
     self.timestamp = timestamp
     self.author = author
     self.original_timestamp = timestamp
@@ -351,7 +351,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
 
     # Record basic information about the revision:
     self._rev_data[revision] = _RevisionData(
-        c_rev, int(timestamp), author, state, branches)
+        c_rev, revision, int(timestamp), author, state, branches)
 
     # Remember the order that revisions were defined:
     self._rev_order.append(revision)

@@ -242,11 +242,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
   def _get_rev_id(self, revision):
     if revision is None:
       return None
-    rev_id = self._c_revs.get(revision)
-    if rev_id is None:
-      return self._make_rev_id(revision)
-    else:
-      return rev_id.id
+    return self._c_revs.get(revision).id
 
   def set_principal_branch(self, branch):
     """This is a callback method declared in Sink."""

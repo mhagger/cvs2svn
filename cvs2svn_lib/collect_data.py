@@ -346,8 +346,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     """This is a callback method declared in Sink."""
 
     # Create a CVSRevisionID for this revision:
-    c_rev = CVSRevisionID(
-        self.collect_data.key_generator.gen_id(), self.cvs_file)
+    c_rev = CVSRevisionID(self.collect_data.key_generator.gen_id())
 
     # Record basic information about the revision:
     self._rev_data[revision] = _RevisionData(

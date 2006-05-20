@@ -24,14 +24,8 @@ from common import OP_DELETE
 class CVSRevisionID(object):
   """An object that identifies a CVS revision of a file."""
 
-  def __init__(self, id, cvs_file):
+  def __init__(self, id):
     self.id = id
-    self.cvs_file = cvs_file
-
-  def _get_cvs_path(self):
-    return self.cvs_file.cvs_path
-
-  cvs_path = property(_get_cvs_path)
 
   def unique_key(self):
     """Return a string that can be used as a unique key for this revision."""
@@ -88,19 +82,25 @@ class CVSRevision(CVSRevisionID):
     WARNING: Due to the resync process in pass2, prev_timestamp or
     next_timestamp may be incorrect in the c-revs or s-revs files."""
 
-    CVSRevisionID.__init__(self, id, cvs_file)
+    CVSRevisionID.__init__(self, id)
 
+    self.cvs_file = cvs_file
     self.rev = rev
     self.timestamp = timestamp
     self.digest = digest
     self.op = op
-    self.prev_rev = prev_id and CVSRevisionID(prev_id, self.cvs_file)
-    self.next_rev = next_id and CVSRevisionID(next_id, self.cvs_file)
+    self.prev_rev = prev_id and CVSRevisionID(prev_id)
+    self.next_rev = next_id and CVSRevisionID(next_id)
     self.deltatext_exists = deltatext_exists
     self.branch_name = branch_name
     self.first_on_branch = first_on_branch
     self.tags = tags
     self.branches = branches
+
+  def _get_cvs_path(self):
+    return self.cvs_file.cvs_path
+
+  cvs_path = property(_get_cvs_path)
 
   def get_svn_path(self):
     if self.branch_name:

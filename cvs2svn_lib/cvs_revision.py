@@ -27,11 +27,6 @@ class CVSRevisionID(object):
   def __init__(self, id):
     self.id = id
 
-  def unique_key(self):
-    """Return a string that can be used as a unique key for this revision."""
-
-    return '%x' % (self.id,)
-
 
 class CVSRevision(CVSRevisionID):
   """Information about a single CVS revision.

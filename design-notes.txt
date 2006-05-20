@@ -179,9 +179,8 @@ CreateDatabasesPass (formerly called pass4):
 Find and create a database containing the last CVS revision that is a
 source (also referred to as an "opening" revision) for all symbolic
 names.  This will result in a database containing key-value pairs
-whose key is the unique key for a CVSRevision, and whose value is a
-list of symbolic names for which that CVSRevision is the last
-"opening."
+whose key is the id for a CVSRevision, and whose value is a list of
+symbolic names for which that CVSRevision is the last "opening."
 
 The format for this file is:
 

@@ -22,8 +22,7 @@ from database import PDatabase
 
 
 class CVSFileDatabase:
-  """A Database to store CVSRevision objects and retrieve them by their
-  unique_key()."""
+  """A Database to store CVSFile objects and retrieve them by their id."""
 
   def __init__(self, filename, mode):
     """Initialize an instance, opening database in MODE (like the MODE

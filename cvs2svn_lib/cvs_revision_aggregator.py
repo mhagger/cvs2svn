@@ -215,7 +215,7 @@ class CVSRevisionAggregator:
     to those left over from previous passes through the aggregator."""
 
     if not Ctx().trunk_only:
-      for sym in self.last_revs_db.get(c_rev.unique_key(), []):
+      for sym in self.last_revs_db.get('%x' % (c_rev.id,), []):
         self.pending_symbols[sym] = None
 
   def _attempt_to_commit_symbols(self):

@@ -190,7 +190,7 @@ class SVNCommit:
     ret += "   debug description: " + self._description + "\n"
     ret += "   cvs_revs:\n"
     for c_rev in self.cvs_revs:
-      ret += "     " + c_rev.unique_key() + "\n"
+      ret += "     %x\n" % (c_rev.id,)
     return ret
 
   def get_log_msg(self):

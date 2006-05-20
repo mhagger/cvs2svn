@@ -692,7 +692,7 @@ class CollectData:
 
   def add_cvs_revision(self, c_rev):
     self._cvs_revs_db.log_revision(c_rev)
-    self._all_revs.write('%s\n' % (c_rev.unique_key(),))
+    self._all_revs.write('%x\n' % (c_rev.id,))
     self.stats_keeper.record_c_rev(c_rev)
 
   def write_symbol_db(self):

@@ -63,22 +63,22 @@ SVN_MIRROR_NODES_DB = 'cvs2svn-svn-nodes.db'
 # SYMBOL_OPENINGS_CLOSINGS_SORTED
 SYMBOL_OFFSETS_DB = 'cvs2svn-symbolic-name-offsets.db'
 
-# Maps CVSRevision.unique_key()s to lists of symbolic names, where
-# the CVSRevision is the last such that is a source for those symbolic
+# Maps CVSRevision.ids (in hex) to lists of symbolic names, where the
+# CVSRevision is the last such that is a source for those symbolic
 # names.  For example, if branch B's number is 1.3.0.2 in this CVS
 # file, and this file's 1.3 is the latest (by date) revision among
 # *all* CVS files that is a source for branch B, then the
-# CVSRevision.unique_key() corresponding to this file at 1.3 would
-# list at least B in its list.
+# CVSRevision.id corresponding to this file at 1.3 would list at least
+# B in its list.
 SYMBOL_LAST_CVS_REVS_DB = 'cvs2svn-symbol-last-cvs-revs.db'
 
 # Maps CVSFile.id to instance.
 CVS_FILES_DB = 'cvs2svn-cvs-files.db'
 
-# Maps CVSRevision.unique_key() to CVSRevision.
+# Maps CVSRevision.id (in hex) to CVSRevision.
 CVS_REVS_DB = 'cvs2svn-cvs-revs.db'
 
-# Maps CVSRevision.unique_key() to CVSRevision after resynchronization.
+# Maps CVSRevision.id (in hex) to CVSRevision after resynchronization.
 CVS_REVS_RESYNC_DB = 'cvs2svn-cvs-revs-resync.db'
 
 # Lists all symbolic names that are tags.  Keys are strings (symbolic
@@ -97,15 +97,15 @@ TAGS_LIST = 'cvs2svn-tags.txt'
 BRANCHES_LIST = 'cvs2svn-branches.txt'
 
 # These two databases provide a bidirectional mapping between
-# CVSRevision.unique_key()s and Subversion revision numbers.
+# CVSRevision.ids (in hex) and Subversion revision numbers.
 #
-# The first maps CVSRevision.unique_key() to a number; the values are
-# not unique.
+# The first maps CVSRevision.id to a number; the values are not
+# unique.
 #
-# The second maps Subversion revision numbers to tuples (c_rev_keys,
+# The second maps Subversion revision numbers to tuples (c_rev_ids,
 # motivating_revnum, symbolic_name, date).
 #
-# c_rev_keys is a list of CVSRevision.unique_key()s.
+# c_rev_ids is a list of CVSRevision.ids.
 #
 # If the SVNCommit is a default branch synchronization,
 # motivating_revnum is the svn_revnum of the primary SVNCommit that

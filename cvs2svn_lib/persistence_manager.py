@@ -139,13 +139,13 @@ class PersistenceManager:
           'Write operation attempted on read-only PersistenceManager'
 
     for c_rev in cvs_revs:
-      Log().verbose(" ", c_rev.unique_key())
+      Log().verbose(" %x" % (c_rev.id,))
 
-    self.svn2cvs_db[str(svn_revnum)] = ([x.unique_key() for x in cvs_revs],
-                                        motivating_revnum, name, date)
+    self.svn2cvs_db[str(svn_revnum)] = (
+        ['%x' % (x.id,) for x in cvs_revs], motivating_revnum, name, date)
 
     for c_rev in cvs_revs:
-      self.cvs2svn_db[c_rev.unique_key()] = svn_revnum
+      self.cvs2svn_db['%x' % (c_rev.id,)] = svn_revnum
 
     # If it is not a primary commit, then record last_filled.  name is
     # allowed to be None.

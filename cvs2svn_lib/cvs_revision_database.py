@@ -23,8 +23,7 @@ from database import PDatabase
 
 
 class CVSRevisionDatabase:
-  """A Database to store CVSRevision objects and retrieve them by their
-  unique_key()."""
+  """A Database to store CVSRevision objects and retrieve them by their id."""
 
   def __init__(self, cvs_file_db, filename, mode):
     """Initialize an instance, opening database in MODE (like the MODE
@@ -39,7 +38,7 @@ class CVSRevisionDatabase:
 
     args = list(c_rev.__getinitargs__())
     args[1] = args[1].id
-    self.db[c_rev.unique_key()] = args
+    self.db['%x' % c_rev.id] = args
 
   def get_revision(self, c_rev_id):
     """Return the CVSRevision stored under C_REV_ID."""

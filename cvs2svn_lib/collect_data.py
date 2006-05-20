@@ -95,7 +95,8 @@ class _RevisionData:
   state of the prev_rev, we are unable to distinguish between an add
   and a change."""
 
-  def __init__(self, rev, timestamp, author, state, branches):
+  def __init__(self, id, rev, timestamp, author, state, branches):
+    self.id = id
     self.rev = rev
     self.timestamp = timestamp
     self.author = author
@@ -363,6 +364,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     """This is a callback method declared in Sink."""
 
     rev_data = _RevisionData(
+        self._make_rev_id(revision),
         revision, int(timestamp), author, state, branches)
     self._rev_order.append(revision)
     self._rev_data[revision] = rev_data

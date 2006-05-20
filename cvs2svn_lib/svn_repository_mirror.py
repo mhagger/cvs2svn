@@ -17,8 +17,6 @@
 """This module contains the SVNRepositoryMirror class."""
 
 
-from __future__ import generators
-
 from boolean import *
 import common
 import config

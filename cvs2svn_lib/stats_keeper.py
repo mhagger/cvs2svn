@@ -17,8 +17,6 @@
 """This module contains the StatsKeeper class."""
 
 
-from __future__ import generators
-
 import os
 import time
 import marshal

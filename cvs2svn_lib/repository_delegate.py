@@ -17,8 +17,6 @@
 """This module contains class RepositoryDelegate."""
 
 
-from __future__ import generators
-
 import os
 
 from boolean import *

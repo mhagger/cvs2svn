@@ -17,7 +17,6 @@
 """This module contains the SVNRevisionRange class."""
 
 
-from __future__ import generators
 from boolean import *
 
 

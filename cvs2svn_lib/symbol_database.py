@@ -17,8 +17,6 @@
 """This module contains database facilities used by cvs2svn."""
 
 
-from __future__ import generators
-
 from boolean import *
 import config
 from artifact_manager import artifact_manager

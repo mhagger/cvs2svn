@@ -1,4 +1,4 @@
-include verify-cvs2svn *.py cvs2svn.1 dist.sh MANIFEST.in Makefile
+include *.py cvs2svn.1 dist.sh MANIFEST.in Makefile
 include README BUGS COMMITTERS COPYING HACKING design-notes.txt CHANGES
 recursive-include svntest *
 recursive-include test-data *

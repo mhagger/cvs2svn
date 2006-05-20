@@ -55,7 +55,7 @@ class CVSRevisionAggregator:
   # in other directories.
 
   def __init__(self):
-    self.metadata_db = Database(
+    self._metadata_db = Database(
         artifact_manager.get_temp_file(config.METADATA_DB), DB_OPEN_READ)
     if not Ctx().trunk_only:
       self.last_revs_db = Database(
@@ -179,7 +179,7 @@ class CVSRevisionAggregator:
       if not deps.has_key(cvs_commit):
         break
     else:
-      author, log = self.metadata_db[c_rev.digest]
+      author, log = self._metadata_db[c_rev.digest]
       cvs_commit = CVSCommit(c_rev.digest, author, log)
       cvs_commits.append(cvs_commit)
     if dep is not None:

@@ -66,7 +66,7 @@ FileDataCollector.set_revision_info(), which writes a record to
 cvs2svn-cvs-revs.db.
 
 Also, for resync'd revisions, a line like this is written out to
-'cvs2svn-data.resync':
+'cvs2svn-data.resync.txt':
 
    3d6c1329 18a215a05abea1c6c155dcc7283b88ae7ce23502 3d6c1328
 
@@ -91,8 +91,8 @@ When every CVS file is done, CollectRevsPass is complete, and:
    - cvs2svn-data.a-revs.txt contains a list of CVSRevision keys that
      are in cvs2svn-cvs-revs.db, in the order that they were written.
 
-   - cvs2svn-data.resync contains a small amount of resync data, in
-     no particular order.
+   - cvs2svn-data.resync.txt contains a small amount of resync data,
+     in no particular order.
 
 
 ResyncRevsPass (formerly called pass2)

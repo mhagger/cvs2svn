@@ -191,9 +191,13 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     # they were given to us by rcsparse:
     self._rev_order = []
 
-    # A list [ (parent, child) ] of revision number pairs indicating
-    # that child depends on parent.
-    self._dependencies = []
+    # Lists [ (parent, child) ] of revision number pairs indicating
+    # that child depends on parent.  _primary_dependencies are
+    # dependencies along the main line of
+    # development. _branch_dependencies are dependencies of the first
+    # revision on the branch on the sprout revision.
+    self._primary_dependencies = []
+    self._branch_dependencies = []
 
     # This dict is essentially self.prev_rev with the values mapped in
     # the other direction, so following key -> value will yield you
@@ -388,9 +392,9 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     # set.
     if next:
       if trunk_rev.match(revision):
-        self._dependencies.append( (next, revision,) )
+        self._primary_dependencies.append( (next, revision,) )
       else:
-        self._dependencies.append( (revision, next,) )
+        self._primary_dependencies.append( (revision, next,) )
 
     if next:
       if trunk_rev.match(revision):
@@ -402,20 +406,22 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     """Set any branches sprouting from REV_DATA to depend on it."""
 
     for b in rev_data.branches:
-      self._dependencies.append( (rev_data.rev, b) )
+      self._branch_dependencies.append( (rev_data.rev, b) )
 
   def _resolve_dependencies(self):
-    """Store the dependencies in self._dependencies into the rev_data
-    objects."""
+    """Store the dependencies in self._primary_dependencies and
+    self._branch_dependencies into the rev_data objects."""
 
-    for (parent, child,) in self._dependencies:
+    for (parent, child,) in (self._primary_dependencies
+                             + self._branch_dependencies):
       self._rev_data[parent].children.append(child)
       child_data = self._rev_data[child]
       assert child_data.parent is None
       child_data.parent = parent
 
     # Free memory:
-    self._dependencies = None
+    self._primary_dependencies = None
+    self._branch_dependencies = None
 
   def _update_default_branch(self, rev_data):
     """Ratchet up the highest vendor head revision based on REV_DATA,

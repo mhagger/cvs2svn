@@ -95,9 +95,12 @@ class _RevisionData:
   state of the prev_rev, we are unable to distinguish between an add
   and a change."""
 
-  def __init__(self, id, rev, timestamp, author, state, branches):
-    self.id = id
-    self.rev = rev
+  def __init__(self, c_rev, timestamp, author, state, branches):
+    # The CVSRevisionID instance for this revision.  Note that this
+    # item is pre-filled as a CVSRevisionID, then later overwritten by
+    # a CVSRevision.
+    self.c_rev = c_rev
+    self.rev = self.c_rev.rev
     self.timestamp = timestamp
     self.author = author
     self.original_timestamp = timestamp
@@ -183,13 +186,6 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     # with the revision number that it corresponds to.
     self._symbols = []
 
-    # A map { revision -> c_rev } of the CVSRevision instances for all
-    # revisions related to this file.  Note that items in this map
-    # might be pre-filled as CVSRevisionIDs for revisions referred to
-    # by earlier revisions but not yet processed.  As the revisions
-    # are defined, the values are changed into CVSRevision instances.
-    self._c_revs = {}
-
     # { revision : _RevisionData instance }
     self._rev_data = { }
 
@@ -231,18 +227,10 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     # trunk.  This records the date at which 1.2 was committed.
     self.first_non_vendor_revision_date = None
 
-  def _make_rev_id(self, revision):
-    assert revision is not None
-    assert not self._c_revs.has_key(revision)
-    rev_id = CVSRevisionID(
-        self.collect_data.key_generator.gen_id(), self.cvs_file, revision)
-    self._c_revs[revision] = rev_id
-    return rev_id.id
-
   def _get_rev_id(self, revision):
     if revision is None:
       return None
-    return self._c_revs.get(revision).id
+    return self._rev_data[revision].c_rev.id
 
   def set_principal_branch(self, branch):
     """This is a callback method declared in Sink."""
@@ -359,9 +347,11 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
                       branches, next):
     """This is a callback method declared in Sink."""
 
+    c_rev = CVSRevisionID(
+        self.collect_data.key_generator.gen_id(), self.cvs_file, revision)
+
     rev_data = _RevisionData(
-        self._make_rev_id(revision),
-        revision, int(timestamp), author, state, branches)
+        c_rev, int(timestamp), author, state, branches)
     self._rev_order.append(revision)
     self._rev_data[revision] = rev_data
 
@@ -654,7 +644,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
         bool(text),
         self.rev_to_branch_name(revision),
         self.taglist.get(revision, []), self.branchlist.get(revision, []))
-    self._c_revs[revision] = c_rev
+    rev_data.c_rev = c_rev
     self.collect_data.add_cvs_revision(c_rev)
 
     if not self.collect_data.metadata_db.has_key(digest):

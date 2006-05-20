@@ -347,13 +347,16 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
                       branches, next):
     """This is a callback method declared in Sink."""
 
+    # Create a CVSRevisionID for this revision:
     c_rev = CVSRevisionID(
         self.collect_data.key_generator.gen_id(), self.cvs_file, revision)
 
-    rev_data = _RevisionData(
+    # Record basic information about the revision:
+    self._rev_data[revision] = _RevisionData(
         c_rev, int(timestamp), author, state, branches)
+
+    # Remember the order that revisions were defined:
     self._rev_order.append(revision)
-    self._rev_data[revision] = rev_data
 
     # When on trunk, the RCS 'next' revision number points to what
     # humans might consider to be the 'previous' revision number.  For
@@ -369,20 +372,6 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     # That said, we don't *want* RCS's behavior here, so we determine
     # whether we're on trunk or a branch and set the dependencies
     # accordingly.
-    #
-    # One last thing.  Note that if REVISION is a branch revision,
-    # instead of mapping REVISION to NEXT, we instead map NEXT to
-    # REVISION.  Since we loop over all revisions in the file before
-    # doing anything with the data we gather here, this 'reverse
-    # assignment' effectively does the following:
-    #
-    # 1. Gives us no 'prev' value for REVISION (in this
-    # iteration... it may have been set in a previous iteration)
-    #
-    # 2. Sets the 'prev' value for the revision with number NEXT to
-    # REVISION.  So when we come around to the branch revision whose
-    # revision value is NEXT, its 'prev' and 'prev_rev' are already
-    # set.
     if next:
       if trunk_rev.match(revision):
         self._primary_dependencies.append( (next, revision,) )

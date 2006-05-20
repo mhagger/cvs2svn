@@ -17,10 +17,6 @@
 """This module contains the KeyGenerator class."""
 
 
-import sys
-import os
-import marshal
-
 from boolean import *
 
 

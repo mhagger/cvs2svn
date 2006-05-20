@@ -17,8 +17,6 @@
 """This module contains classes to store CVS revisions."""
 
 
-import os
-
 from boolean import *
 import common
 

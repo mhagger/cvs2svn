@@ -119,6 +119,11 @@ class _RevisionData:
     # If the key has no previous revision, then this field is None.
     self.parent = None
 
+    # The revision number of the primary child of this revision (the
+    # child along the same line of development), if any; otherwise,
+    # None.
+    self.primary_child = None
+
     # The revision numbers of any children that depend on this revision:
     self.children = []
 
@@ -198,13 +203,6 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     # revision on the branch on the sprout revision.
     self._primary_dependencies = []
     self._branch_dependencies = []
-
-    # This dict is essentially self.prev_rev with the values mapped in
-    # the other direction, so following key -> value will yield you
-    # the next revision number.
-    #
-    # If the key has no next revision, then the key is not present.
-    self.next_rev = { }
 
     # Hash mapping branch numbers, like '1.7.2', to branch names,
     # like 'Release_1_0_dev'.
@@ -396,12 +394,6 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
       else:
         self._primary_dependencies.append( (revision, next,) )
 
-    if next:
-      if trunk_rev.match(revision):
-        self.next_rev[next] = revision
-      else:
-        self.next_rev[revision] = next
-
   def _set_branch_dependencies(self, rev_data):
     """Set any branches sprouting from REV_DATA to depend on it."""
 
@@ -412,9 +404,20 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     """Store the dependencies in self._primary_dependencies and
     self._branch_dependencies into the rev_data objects."""
 
-    for (parent, child,) in (self._primary_dependencies
-                             + self._branch_dependencies):
-      self._rev_data[parent].children.append(child)
+    for (parent, child,) in self._primary_dependencies:
+      parent_data = self._rev_data[parent]
+      assert parent_data.primary_child is None
+      parent_data.primary_child = child
+      parent_data.children.append(child)
+
+      child_data = self._rev_data[child]
+      assert child_data.parent is None
+      child_data.parent = parent
+
+    for (parent, child,) in self._branch_dependencies:
+      parent_data = self._rev_data[parent]
+      parent_data.children.append(child)
+
       child_data = self._rev_data[child]
       assert child_data.parent is None
       child_data.parent = parent
@@ -630,7 +633,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     else:
       prev_timestamp = prev_rev_data.timestamp
 
-    next_rev = self.next_rev.get(revision)
+    next_rev = rev_data.primary_child
     next_rev_data = self._rev_data.get(next_rev)
     if next_rev_data is None:
       next_timestamp = 0

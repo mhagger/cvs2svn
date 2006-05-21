@@ -31,7 +31,7 @@ class CVSLineOfDevelopment:
     raise NotImplemented
 
 
-class CVSTrunk:
+class CVSTrunk(CVSLineOfDevelopment):
   """Represent the main line of development.
 
   Instances of this class are considered False."""
@@ -46,7 +46,7 @@ class CVSTrunk:
     return Ctx().project.make_trunk_path(cvs_file.cvs_path)
 
 
-class CVSBranch:
+class CVSBranch(CVSLineOfDevelopment):
   """An object that describes a CVS branch."""
 
   def __init__(self, name):

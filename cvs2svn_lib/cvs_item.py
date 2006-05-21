@@ -31,24 +31,7 @@ class CVSRevision(CVSItem):
   """Information about a single CVS revision.
 
   A CVSRevision holds the information known about a single version of
-  a single file.
-
-  ctx is the context to use for instances of CVSRevision, or None.  If
-  ctx is None, the following properties of instantiated CVSRevision
-  class objects will be unavailable (or simply will not work
-  correctly, if at all):
-
-     cvs_path
-     svn_path
-     is_default_branch_revision()
-
-  (Note that this class treats ctx as const, because the caller
-  likely passed in a Borg instance of a Ctx.  The reason this class
-  stores a Ctx instance, instead of just instantiating a Ctx itself,
-  is that this class should be usable outside cvs2svn.)
-  """
-
-  ctx = None
+  a single file."""
 
   def __init__(self,
                id, cvs_file,

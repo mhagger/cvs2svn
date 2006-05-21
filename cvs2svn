@@ -53,7 +53,6 @@ from cvs2svn_lib.process import check_command_runs
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.cvs_repository import CVSRepositoryViaCVS
 from cvs2svn_lib.cvs_repository import CVSRepositoryViaRCS
-from cvs2svn_lib.cvs_item import CVSRevision
 from cvs2svn_lib.project import Project
 from cvs2svn_lib.project import normalize_ttb_path
 from cvs2svn_lib.pass_manager import PassManager
@@ -406,9 +405,6 @@ def main():
           "  then remove the '%s/cvs2svn.lock' subdirectory."
           % (ctx.tmpdir, ctx.tmpdir, ctx.tmpdir, ctx.tmpdir,))
     raise
-
-  # Provide CVSRevision with a context that it can use:
-  CVSRevision.ctx = ctx
 
   try:
     if profiling:

@@ -93,7 +93,7 @@ class SymbolingsLogger:
         self._log(
             name, svn_revnum,
             c_rev.cvs_file,
-            c_rev.cvs_branch.is_branch() and c_rev.cvs_branch.name,
+            c_rev.lod.is_branch() and c_rev.lod.name,
             OPENING)
 
       # If our c_rev has a next_rev, then that's the closing rev for
@@ -136,7 +136,7 @@ class SymbolingsLogger:
       self._log(
           name, svn_revnum,
           c_rev.cvs_file,
-          c_rev.cvs_branch.is_branch() and c_rev.cvs_branch.name,
+          c_rev.lod.is_branch() and c_rev.lod.name,
           CLOSING)
 
     self.symbolings.close()

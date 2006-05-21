@@ -634,9 +634,9 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
 
     cvs_branch_name = self.symbol_data_collector.rev_to_branch_name(revision)
     if cvs_branch_name:
-      cvs_branch = Branch(cvs_branch_name)
+      lod = Branch(cvs_branch_name)
     else:
-      cvs_branch = Trunk()
+      lod = Trunk()
 
     c_rev = CVSRevision(
         self._get_rev_id(revision), self.cvs_file,
@@ -646,7 +646,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
         self._determine_operation(rev_data),
         revision,
         bool(text),
-        cvs_branch,
+        lod,
         self._is_first_on_branch(rev_data),
         self.symbol_data_collector.taglist.get(revision, []),
         self.symbol_data_collector.branchlist.get(revision, []))

@@ -203,11 +203,11 @@ class CVSCommit:
         # been filled before, then fill it now.  Otherwise, no need to
         # fill it.
         if c_rev.op == OP_ADD:
-          return pm.last_filled.get(c_rev.cvs_branch.name, None) is None
+          return pm.last_filled.get(c_rev.lod.name, None) is None
         elif c_rev.op == OP_CHANGE:
-          return svn_revnum > pm.last_filled.get(c_rev.cvs_branch.name, 0)
+          return svn_revnum > pm.last_filled.get(c_rev.lod.name, 0)
         elif c_rev.op == OP_DELETE:
-          return pm.last_filled.get(c_rev.cvs_branch.name, None) is None
+          return pm.last_filled.get(c_rev.lod.name, None) is None
       return False
 
     for c_rev in self.changes + self.deletes:
@@ -216,15 +216,15 @@ class CVSCommit:
       # repository).  If it doesn't exist, we will need to fill the
       # branch.  After the fill, the path on which we're committing
       # will exist.
-      if c_rev.cvs_branch.is_branch() \
-          and c_rev.cvs_branch.name not in accounted_for_sym_names \
-          and c_rev.cvs_branch.name not in self.done_symbols \
+      if c_rev.lod.is_branch() \
+          and c_rev.lod.name not in accounted_for_sym_names \
+          and c_rev.lod.name not in self.done_symbols \
           and fill_needed(c_rev, Ctx()._persistence_manager):
         svn_commit = SVNCommit("pre-commit symbolic name '%s'"
-                               % c_rev.cvs_branch.name)
-        svn_commit.set_symbolic_name(c_rev.cvs_branch.name)
+                               % c_rev.lod.name)
+        svn_commit.set_symbolic_name(c_rev.lod.name)
         self.secondary_commits.append(svn_commit)
-        accounted_for_sym_names.append(c_rev.cvs_branch.name)
+        accounted_for_sym_names.append(c_rev.lod.name)
 
   def _commit(self):
     """Generates the primary SVNCommit that corresponds to this

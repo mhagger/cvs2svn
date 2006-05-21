@@ -294,7 +294,7 @@ class ResyncRevsPass(Pass):
         next_c_rev = None
 
       # Skip this entire revision if it's on an excluded branch
-      if c_rev.cvs_branch.is_branch() and c_rev.cvs_branch.name in excludes:
+      if c_rev.lod.is_branch() and c_rev.lod.name in excludes:
         continue
 
       c_rev.branches = self._get_non_excluded_symbols(c_rev.branches, excludes)
@@ -489,7 +489,7 @@ class AggregateRevsPass(Pass):
             artifact_manager.get_temp_file(config.SORTED_REVS_DATAFILE)):
       c_rev_id = int(line.strip().split()[-1], 16)
       c_rev = cvs_revs_db.get_revision(c_rev_id)
-      if not (Ctx().trunk_only and c_rev.cvs_branch.is_branch()):
+      if not (Ctx().trunk_only and c_rev.lod.is_branch()):
         aggregator.process_revision(c_rev)
     aggregator.flush()
 

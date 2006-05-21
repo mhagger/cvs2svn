@@ -56,7 +56,7 @@ class CVSRevision(CVSRevisionID):
                timestamp, digest,
                prev_id, next_id,
                op, rev, deltatext_exists,
-               cvs_branch, first_on_branch, tags, branches):
+               lod, first_on_branch, tags, branches):
     """Initialize a new CVSRevision object.
 
     Arguments:
@@ -69,7 +69,7 @@ class CVSRevision(CVSRevisionID):
        OP              -->  (char) OP_ADD, OP_CHANGE, or OP_DELETE
        REV             -->  (string) this CVS rev, e.g., '1.3'
        DELTATEXT_EXISTS-->  (bool) true iff non-empty deltatext
-       CVS_BRANCH      -->  (CVSLineOfDevelopment) LOD where this rev occurred
+       LOD             -->  (LineOfDevelopment) LOD where this rev occurred
        FIRST_ON_BRANCH -->  (bool) true iff the first rev on its branch
        TAGS            -->  (list of strings) all tags on this revision
        BRANCHES        -->  (list of strings) all branches rooted in this rev
@@ -87,7 +87,7 @@ class CVSRevision(CVSRevisionID):
     self.prev_id = prev_id
     self.next_id = next_id
     self.deltatext_exists = deltatext_exists
-    self.cvs_branch = cvs_branch
+    self.lod = lod
     self.first_on_branch = first_on_branch
     self.tags = tags
     self.branches = branches
@@ -98,7 +98,7 @@ class CVSRevision(CVSRevisionID):
   cvs_path = property(_get_cvs_path)
 
   def get_svn_path(self):
-    return self.cvs_branch.make_path(self.cvs_file)
+    return self.lod.make_path(self.cvs_file)
 
   svn_path = property(get_svn_path)
 
@@ -115,7 +115,7 @@ class CVSRevision(CVSRevisionID):
         self.op,
         self.rev,
         self.deltatext_exists,
-        self.cvs_branch,
+        self.lod,
         self.first_on_branch,
         self.tags,
         self.branches,)

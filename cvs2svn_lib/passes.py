@@ -24,8 +24,6 @@ import fileinput
 import re
 import sha
 
-import cvs2svn_rcsparse
-
 from boolean import *
 import config
 from context import Ctx

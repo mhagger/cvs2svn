@@ -149,8 +149,8 @@ class _BranchData:
     self.branch_number = branch_number
 
     # The revision number of the revision from which this branch
-    # sprouts.  It will be filled in when established:
-    self.parent = None
+    # sprouts.
+    self.parent = self.branch_number[:self.branch_number.rfind(".")]
 
     # The revision number of the first commit on this branch, if any;
     # otherwise, None.
@@ -248,13 +248,11 @@ class _SymbolDataCollector:
                           self._branch_data[branch_number].name, name))
       return
 
-    self._branch_data[branch_number] = _BranchData(
+    branch_data = _BranchData(
         self.collect_data.key_generator.gen_id(), name, branch_number)
+    self._branch_data[branch_number] = branch_data
 
-    # The branchlist is keyed on the revision number from which the
-    # branch sprouts, so strip off the odd final component.
-    sprout_rev = branch_number[:branch_number.rfind(".")]
-    self.branchlist.setdefault(sprout_rev, []).append(name)
+    self.branchlist.setdefault(branch_data.parent, []).append(name)
     self.collect_data.symbol_db.register_branch_creation(name)
 
   def set_tag_name(self, revision, name):

@@ -173,10 +173,6 @@ class _SymbolDataCollector:
     # odd number of digits.
     self._branch_data = { }
 
-    # Hash mapping branch numbers, like '1.7.2', to branch names,
-    # like 'Release_1_0_dev'.
-    self.branch_names = { }
-
     # Hash mapping revision numbers, like '1.7', to lists of names
     # indicating which branches sprout from that revision, like
     # ['Release_1_0_dev', 'experimental_driver', ...].
@@ -213,8 +209,8 @@ class _SymbolDataCollector:
       self._symbols[name] = None
       self.process_symbol(name, revision)
 
-  def rev_to_branch_name(self, revision):
-    """Return the name of the branch on which REVISION lies.
+  def rev_to_branch_data(self, revision):
+    """Return the branch_data of the branch on which REVISION lies.
     REVISION is a non-branch revision number with an even number of,
     components, for example '1.7.2.1' (never '1.7.2' nor '1.7.0.2').
     For the convenience of callers, REVISION can also be a trunk
@@ -222,7 +218,7 @@ class _SymbolDataCollector:
 
     if trunk_rev.match(revision):
       return None
-    return self.branch_names.get(revision[:revision.rindex(".")])
+    return self._branch_data.get(revision[:revision.rindex(".")])
 
   def set_branch_name(self, branch_number, name):
     """Record that BRANCH_NUMBER is the branch number for branch NAME,
@@ -230,24 +226,23 @@ class _SymbolDataCollector:
     BRANCH_NUMBER is an RCS branch number with an odd number of
     components, for example '1.7.2' (never '1.7.0.2')."""
 
-    if self.branch_names.has_key(branch_number):
+    if self._branch_data.has_key(branch_number):
       sys.stderr.write("%s: in '%s':\n"
                        "   branch '%s' already has name '%s',\n"
                        "   cannot also have name '%s', ignoring the latter\n"
                        % (warning_prefix,
                           self.cvs_file.filename, branch_number,
-                          self.branch_names[branch_number], name))
+                          self._branch_data[branch_number].name, name))
       return
 
-    self.branch_names[branch_number] = name
+    self._branch_data[branch_number] = _BranchData(
+        self.collect_data.key_generator.gen_id(), name, branch_number)
+
     # The branchlist is keyed on the revision number from which the
     # branch sprouts, so strip off the odd final component.
     sprout_rev = branch_number[:branch_number.rfind(".")]
     self.branchlist.setdefault(sprout_rev, []).append(name)
     self.collect_data.symbol_db.register_branch_creation(name)
-
-    self._branch_data[name] = _BranchData(
-        self.collect_data.key_generator.gen_id(), name, branch_number)
 
   def set_tag_name(self, revision, name):
     """Record that tag NAME refers to the specified REVISION."""
@@ -282,20 +277,21 @@ class _SymbolDataCollector:
     name)."""
 
     branch_number = rev[:rev.rindex(".")]
-    if not self.branch_names.has_key(branch_number):
+    if not self._branch_data.has_key(branch_number):
       branch_name = "unlabeled-" + branch_number
       self.set_branch_name(branch_number, branch_name)
 
     # Register the commit on this non-trunk branch
-    branch_name = self.branch_names[branch_number]
-    self.collect_data.symbol_db.register_branch_commit(branch_name)
+    branch_data = self._branch_data[branch_number]
+    self.collect_data.symbol_db.register_branch_commit(branch_data.name)
 
   def register_branch_blockers(self):
     for revision, symbols in self.taglist.items() + self.branchlist.items():
       for symbol in symbols:
-        name = self.rev_to_branch_name(revision)
-        if name is not None:
-          self.collect_data.symbol_db.register_branch_blocker(name, symbol)
+        branch_data = self.rev_to_branch_data(revision)
+        if branch_data is not None:
+          self.collect_data.symbol_db.register_branch_blocker(
+              branch_data.name, symbol)
 
 
 class FileDataCollector(cvs2svn_rcsparse.Sink):
@@ -645,9 +641,9 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     if revision == '1.1' and log != 'Initial revision\n':
       self.cvs_file.default_branch = None
 
-    cvs_branch_name = self.symbol_data_collector.rev_to_branch_name(revision)
-    if cvs_branch_name:
-      lod = Branch(cvs_branch_name)
+    branch_data = self.symbol_data_collector.rev_to_branch_data(revision)
+    if branch_data:
+      lod = Branch(branch_data.name)
     else:
       lod = Trunk()
 

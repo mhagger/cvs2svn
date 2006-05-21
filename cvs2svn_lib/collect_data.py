@@ -128,7 +128,8 @@ class _RevisionData:
     # None.
     self.primary_child = None
 
-    # The revision numbers of any children that depend on this revision:
+    # The revision numbers of any children that depend on this
+    # revision (not including primary_child):
     self.children = []
 
   def adjust_timestamp(self, timestamp):
@@ -448,7 +449,6 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
       parent_data = self._rev_data[parent]
       assert parent_data.primary_child is None
       parent_data.primary_child = child
-      parent_data.children.append(child)
 
       child_data = self._rev_data[child]
       assert child_data.parent is None

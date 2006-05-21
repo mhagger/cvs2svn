@@ -14,7 +14,7 @@
 # history and logs, available at http://cvs2svn.tigris.org/.
 # ====================================================================
 
-"""This module contains classes to store CVS revisions."""
+"""This module contains classes to store CVS atomic items."""
 
 
 from boolean import *

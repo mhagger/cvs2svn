@@ -37,7 +37,7 @@ from artifact_manager import artifact_manager
 from cvs_file import CVSFile
 from line_of_development import Trunk
 from line_of_development import Branch
-from cvs_revision import CVSRevision
+from cvs_item import CVSRevision
 from key_generator import KeyGenerator
 from database import Database
 from database import SDatabase

@@ -182,8 +182,20 @@ class _SymbolDataCollector:
     # apply to the key revision.
     self.taglist = { }
 
+  def _transform_symbol(self, name):
+    """Transform the symbol NAME using the renaming rules specified
+    with --symbol-transform.  Return the transformed symbol name."""
+
+    for (pattern, replacement) in Ctx().symbol_transforms:
+      newname = pattern.sub(replacement, name)
+      if newname != name:
+        Log().warn("   symbol '%s' transformed to '%s'" % (name, newname))
+        name = newname
+
+    return name
+
   def define_symbol(self, name, revision):
-    name = self.transform_symbol(name)
+    name = self._transform_symbol(name)
 
     # Check that the symbol is not already defined, which can easily
     # happen when --symbol-transform is used:
@@ -234,18 +246,6 @@ class _SymbolDataCollector:
 
     self.taglist.setdefault(revision, []).append(name)
     self.collect_data.symbol_db.register_tag_creation(name)
-
-  def transform_symbol(self, name):
-    """Transform the symbol NAME using the renaming rules specified
-    with --symbol-transform.  Return the transformed symbol name."""
-
-    for (pattern, replacement) in Ctx().symbol_transforms:
-      newname = pattern.sub(replacement, name)
-      if newname != name:
-        Log().warn("   symbol '%s' transformed to '%s'" % (name, newname))
-        name = newname
-
-    return name
 
   def process_symbol(self, name, revision):
     """Record a bidirectional mapping between symbolic NAME and REVISION.

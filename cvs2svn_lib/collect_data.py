@@ -35,6 +35,7 @@ from log import Log
 from context import Ctx
 from artifact_manager import artifact_manager
 from cvs_file import CVSFile
+from cvs_branch import CVSBranch
 from cvs_revision import CVSRevision
 from cvs_revision import CVSRevisionID
 from key_generator import KeyGenerator
@@ -630,6 +631,12 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     if revision == '1.1' and log != 'Initial revision\n':
       self.cvs_file.default_branch = None
 
+    cvs_branch_name = self.symbol_data_collector.rev_to_branch_name(revision)
+    if cvs_branch_name:
+      cvs_branch = CVSBranch(self.cvs_file, cvs_branch_name)
+    else:
+      cvs_branch = None
+
     c_rev = CVSRevision(
         self._get_rev_id(revision), self.cvs_file,
         rev_data.timestamp, digest,
@@ -638,7 +645,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
         self._determine_operation(rev_data),
         revision,
         bool(text),
-        self.symbol_data_collector.rev_to_branch_name(revision),
+        cvs_branch,
         self._is_first_on_branch(rev_data),
         self.symbol_data_collector.taglist.get(revision, []),
         self.symbol_data_collector.branchlist.get(revision, []))

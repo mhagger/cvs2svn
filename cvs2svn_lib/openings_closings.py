@@ -90,8 +90,10 @@ class SymbolingsLogger:
     for name in c_rev.tags + c_rev.branches:
       self._note_default_branch_opening(c_rev, name)
       if c_rev.op != OP_DELETE:
-        self._log(name, svn_revnum,
-                  c_rev.cvs_file, c_rev.branch_name, OPENING)
+        self._log(
+            name, svn_revnum,
+            c_rev.cvs_file, c_rev.cvs_branch and c_rev.cvs_branch.name,
+            OPENING)
 
       # If our c_rev has a next_rev, then that's the closing rev for
       # this source revision.  Log it to closings for later processing
@@ -130,7 +132,10 @@ class SymbolingsLogger:
       svn_revnum = Ctx()._persistence_manager.get_svn_revnum(rev_id)
 
       c_rev = cvs_revs_db.get_revision(rev_id)
-      self._log(name, svn_revnum, c_rev.cvs_file, c_rev.branch_name, CLOSING)
+      self._log(
+          name, svn_revnum,
+          c_rev.cvs_file, c_rev.cvs_branch and c_rev.cvs_branch.name,
+          CLOSING)
 
     self.symbolings.close()
 

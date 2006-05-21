@@ -27,7 +27,6 @@ from artifact_manager import artifact_manager
 from database import Database
 from database import DB_OPEN_NEW
 from database import DB_OPEN_READ
-from cvs_file_database import CVSFileDatabase
 from cvs_revision_database import CVSRevisionDatabase
 from tags_database import TagsDatabase
 from svn_commit import SVNCommit
@@ -58,10 +57,7 @@ class PersistenceManager:
         artifact_manager.get_temp_file(config.CVS_REVS_TO_SVN_REVNUMS), mode)
     self.svn_commit_metadata = Database(
         artifact_manager.get_temp_file(config.METADATA_DB), DB_OPEN_READ)
-    self.cvs_files = CVSFileDatabase(
-        artifact_manager.get_temp_file(config.CVS_FILES_DB), DB_OPEN_READ)
     self.cvs_revisions = CVSRevisionDatabase(
-        self.cvs_files,
         artifact_manager.get_temp_file(config.CVS_REVS_RESYNC_DB),
         DB_OPEN_READ)
     ###PERF kff Elsewhere there are comments about sucking the tags db

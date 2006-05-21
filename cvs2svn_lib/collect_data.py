@@ -653,10 +653,7 @@ class CollectData:
   each file to be parsed."""
 
   def __init__(self, stats_keeper):
-    self._cvs_file_db = CVSFileDatabase(
-        artifact_manager.get_temp_file(config.CVS_FILES_DB), DB_OPEN_NEW)
     self._cvs_revs_db = CVSRevisionDatabase(
-        self._cvs_file_db,
         artifact_manager.get_temp_file(config.CVS_REVS_DB), DB_OPEN_NEW)
     self._all_revs = open(
         artifact_manager.get_temp_file(config.ALL_REVS_DATAFILE), 'w')
@@ -688,7 +685,7 @@ class CollectData:
 
     assert cvs_file.id is None
     cvs_file.id = self.file_key_generator.gen_id()
-    self._cvs_file_db.log_file(cvs_file)
+    Ctx()._cvs_file_db.log_file(cvs_file)
 
   def add_cvs_revision(self, c_rev):
     self._cvs_revs_db.log_revision(c_rev)

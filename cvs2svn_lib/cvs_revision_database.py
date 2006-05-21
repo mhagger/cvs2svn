@@ -18,6 +18,7 @@
 
 
 from boolean import *
+from context import Ctx
 from cvs_revision import CVSRevision
 from database import PDatabase
 
@@ -25,12 +26,11 @@ from database import PDatabase
 class CVSRevisionDatabase:
   """A Database to store CVSRevision objects and retrieve them by their id."""
 
-  def __init__(self, cvs_file_db, filename, mode):
+  def __init__(self, filename, mode):
     """Initialize an instance, opening database in MODE (like the MODE
     argument to Database or anydbm.open()).  Use CVS_FILE_DB to look
     up CVSFiles."""
 
-    self.cvs_file_db = cvs_file_db
     self.db = PDatabase(filename, mode)
 
   def log_revision(self, c_rev):
@@ -44,7 +44,7 @@ class CVSRevisionDatabase:
     """Return the CVSRevision stored under C_REV_ID."""
 
     args = self.db['%x' % (c_rev_id,)]
-    args[1] = self.cvs_file_db.get_file(args[1])
+    args[1] = Ctx()._cvs_file_db.get_file(args[1])
     return CVSRevision(*args)
 
 

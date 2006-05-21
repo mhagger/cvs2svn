@@ -18,17 +18,20 @@
 
 
 from boolean import *
+import config
+from artifact_manager import artifact_manager
 from database import PDatabase
 
 
 class CVSFileDatabase:
   """A Database to store CVSFile objects and retrieve them by their id."""
 
-  def __init__(self, filename, mode):
+  def __init__(self, mode):
     """Initialize an instance, opening database in MODE (like the MODE
     argument to Database or anydbm.open())."""
 
-    self.db = PDatabase(filename, mode)
+    self.db = PDatabase(artifact_manager.get_temp_file(config.CVS_FILES_DB),
+                        mode)
 
   def log_file(self, cvs_file):
     """Add CVS_FILE, a CVSFile instance, to the database."""

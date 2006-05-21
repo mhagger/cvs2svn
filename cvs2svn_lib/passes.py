@@ -135,6 +135,7 @@ class CollectRevsPass(Pass):
 
   def run(self, stats_keeper):
     Log().quiet("Examining all CVS ',v' files...")
+    Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_NEW)
     cd = CollectData(stats_keeper)
 
     def visit_file(baton, dirname, files):
@@ -348,13 +349,10 @@ class ResyncRevsPass(Pass):
         c_rev.branches.append(forced_branch)
 
   def run(self, stats_keeper):
-    cvs_file_db = CVSFileDatabase(
-        artifact_manager.get_temp_file(config.CVS_FILES_DB), DB_OPEN_READ)
+    Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
     cvs_revs_db = CVSRevisionDatabase(
-        cvs_file_db,
         artifact_manager.get_temp_file(config.CVS_REVS_DB), DB_OPEN_WRITE)
     cvs_revs_resync_db = CVSRevisionDatabase(
-        cvs_file_db,
         artifact_manager.get_temp_file(config.CVS_REVS_RESYNC_DB),
         DB_OPEN_NEW)
     symbol_db = SymbolDatabase()
@@ -546,10 +544,8 @@ class CreateDatabasesPass(Pass):
     revisions to the StatsKeeper."""
 
     Log().quiet("Copying CVS revision data from flat file to database...")
-    cvs_file_db = CVSFileDatabase(
-        artifact_manager.get_temp_file(config.CVS_FILES_DB), DB_OPEN_READ)
+    Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
     cvs_revs_db = CVSRevisionDatabase(
-        cvs_file_db,
         artifact_manager.get_temp_file(config.CVS_REVS_RESYNC_DB),
         DB_OPEN_READ)
     if not Ctx().trunk_only:
@@ -602,10 +598,8 @@ class AggregateRevsPass(Pass):
   def run(self, stats_keeper):
     Log().quiet("Mapping CVS revisions to Subversion commits...")
 
-    cvs_file_db = CVSFileDatabase(
-        artifact_manager.get_temp_file(config.CVS_FILES_DB), DB_OPEN_READ)
+    Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
     cvs_revs_db = CVSRevisionDatabase(
-        cvs_file_db,
         artifact_manager.get_temp_file(config.CVS_REVS_RESYNC_DB),
         DB_OPEN_READ)
     aggregator = CVSRevisionAggregator()
@@ -705,6 +699,7 @@ class OutputPass(Pass):
       self._register_temp_file_needed(config.SYMBOL_OFFSETS_DB)
 
   def run(self, stats_keeper):
+    Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
     svncounter = 2 # Repository initialization is 1.
     repos = SVNRepositoryMirror()
     persistence_manager = PersistenceManager(DB_OPEN_READ)

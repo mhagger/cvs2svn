@@ -436,7 +436,10 @@ class CreateDatabasesPass(Pass):
         c_rev_id = int(line.strip().split()[-1], 16)
         yield cvs_revs_db.get_revision(c_rev_id)
 
-    if not Ctx().trunk_only:
+    if Ctx().trunk_only:
+      for c_rev in get_cvs_revs():
+        stats_keeper.record_c_rev(c_rev)
+    else:
       Log().quiet("Finding last CVS revisions for all symbolic names...")
       last_sym_name_db = LastSymbolicNameDatabase()
 
@@ -445,10 +448,6 @@ class CreateDatabasesPass(Pass):
         stats_keeper.record_c_rev(c_rev)
 
       last_sym_name_db.create_database()
-
-    else:
-      for c_rev in get_cvs_revs():
-        stats_keeper.record_c_rev(c_rev)
 
     stats_keeper.set_stats_reflect_exclude(True)
 

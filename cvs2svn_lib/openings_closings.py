@@ -92,7 +92,8 @@ class SymbolingsLogger:
       if c_rev.op != OP_DELETE:
         self._log(
             name, svn_revnum,
-            c_rev.cvs_file, c_rev.cvs_branch and c_rev.cvs_branch.name,
+            c_rev.cvs_file,
+            c_rev.cvs_branch.is_branch() and c_rev.cvs_branch.name,
             OPENING)
 
       # If our c_rev has a next_rev, then that's the closing rev for
@@ -134,7 +135,8 @@ class SymbolingsLogger:
       c_rev = cvs_revs_db.get_revision(rev_id)
       self._log(
           name, svn_revnum,
-          c_rev.cvs_file, c_rev.cvs_branch and c_rev.cvs_branch.name,
+          c_rev.cvs_file,
+          c_rev.cvs_branch.is_branch() and c_rev.cvs_branch.name,
           CLOSING)
 
     self.symbolings.close()

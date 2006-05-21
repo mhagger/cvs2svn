@@ -69,7 +69,7 @@ class CVSRevision(CVSRevisionID):
        OP              -->  (char) OP_ADD, OP_CHANGE, or OP_DELETE
        REV             -->  (string) this CVS rev, e.g., '1.3'
        DELTATEXT_EXISTS-->  (bool) true iff non-empty deltatext
-       CVS_BRANCH      -->  (CVSBranch or None) branch where this rev occurred
+       CVS_BRANCH      -->  (CVSLineOfDevelopment) LOD where this rev occurred
        FIRST_ON_BRANCH -->  (bool) true iff the first rev on its branch
        TAGS            -->  (list of strings) all tags on this revision
        BRANCHES        -->  (list of strings) all branches rooted in this rev
@@ -98,11 +98,7 @@ class CVSRevision(CVSRevisionID):
   cvs_path = property(_get_cvs_path)
 
   def get_svn_path(self):
-    if self.cvs_branch:
-      return self.ctx.project.make_branch_path(
-          self.cvs_branch.name, self.cvs_file.cvs_path)
-    else:
-      return self.ctx.project.make_trunk_path(self.cvs_file.cvs_path)
+    return self.cvs_branch.make_path(self.cvs_file)
 
   svn_path = property(get_svn_path)
 

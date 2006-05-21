@@ -19,6 +19,7 @@
 
 from boolean import *
 from context import Ctx
+from cvs_branch import CVSTrunk
 from cvs_branch import CVSBranch
 from cvs_revision import CVSRevision
 from database import PDatabase
@@ -39,7 +40,10 @@ class CVSRevisionDatabase:
 
     args = list(c_rev.__getinitargs__())
     args[1] = args[1].id
-    args[9] = args[9] and args[9].name
+    if args[9].is_branch():
+      args[9] = args[9].name
+    else:
+      args[9] = None
     self.db['%x' % c_rev.id] = args
 
   def get_revision(self, c_rev_id):
@@ -47,7 +51,10 @@ class CVSRevisionDatabase:
 
     args = self.db['%x' % (c_rev_id,)]
     args[1] = Ctx()._cvs_file_db.get_file(args[1])
-    args[9] = args[9] and CVSBranch(args[9])
+    if args[9]:
+      args[9] = CVSBranch(args[9])
+    else:
+      args[9] = CVSTrunk()
     return CVSRevision(*args)
 
 

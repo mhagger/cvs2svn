@@ -35,6 +35,7 @@ from log import Log
 from context import Ctx
 from artifact_manager import artifact_manager
 from cvs_file import CVSFile
+from cvs_branch import CVSTrunk
 from cvs_branch import CVSBranch
 from cvs_revision import CVSRevision
 from cvs_revision import CVSRevisionID
@@ -635,7 +636,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     if cvs_branch_name:
       cvs_branch = CVSBranch(cvs_branch_name)
     else:
-      cvs_branch = None
+      cvs_branch = CVSTrunk()
 
     c_rev = CVSRevision(
         self._get_rev_id(revision), self.cvs_file,

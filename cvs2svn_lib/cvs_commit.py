@@ -216,7 +216,7 @@ class CVSCommit:
       # repository).  If it doesn't exist, we will need to fill the
       # branch.  After the fill, the path on which we're committing
       # will exist.
-      if c_rev.cvs_branch \
+      if c_rev.cvs_branch.is_branch() \
           and c_rev.cvs_branch.name not in accounted_for_sym_names \
           and c_rev.cvs_branch.name not in self.done_symbols \
           and fill_needed(c_rev, Ctx()._persistence_manager):

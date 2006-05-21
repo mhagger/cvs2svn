@@ -18,6 +18,32 @@
 
 
 from boolean import *
+from context import Ctx
+
+
+class CVSLineOfDevelopment:
+  """Base class for CVSTrunk and CVSBranch."""
+
+  def is_branch(self):
+    raise NotImplemented
+
+  def make_path(self, cvs_file):
+    raise NotImplemented
+
+
+class CVSTrunk:
+  """Represent the main line of development.
+
+  Instances of this class are considered False."""
+
+  def __init__(self):
+    pass
+
+  def is_branch(self):
+    return False
+
+  def make_path(self, cvs_file):
+    return Ctx().project.make_trunk_path(cvs_file.cvs_path)
 
 
 class CVSBranch:
@@ -25,5 +51,11 @@ class CVSBranch:
 
   def __init__(self, name):
     self.name = name
+
+  def is_branch(self):
+    return True
+
+  def make_path(self, cvs_file):
+    return Ctx().project.make_branch_path(self.name, cvs_file.cvs_path)
 
 

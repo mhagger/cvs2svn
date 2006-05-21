@@ -17,6 +17,8 @@
 """This module contains database facilities used by cvs2svn."""
 
 
+from __future__ import generators
+
 import sys
 import os
 import time
@@ -421,27 +423,31 @@ class CreateDatabasesPass(Pass):
     revisions to the StatsKeeper."""
 
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
-    cvs_revs_db = CVSRevisionDatabase(
-        artifact_manager.get_temp_file(config.CVS_REVS_RESYNC_DB),
-        DB_OPEN_READ)
+
+    def get_cvs_revs():
+      """Generator that produces the CVSRevisions in
+      SORTED_REVS_DATAFILE order."""
+
+      cvs_revs_db = CVSRevisionDatabase(
+          artifact_manager.get_temp_file(config.CVS_REVS_RESYNC_DB),
+          DB_OPEN_READ)
+      for line in fileinput.FileInput(
+              artifact_manager.get_temp_file(config.SORTED_REVS_DATAFILE)):
+        c_rev_id = int(line.strip().split()[-1], 16)
+        yield cvs_revs_db.get_revision(c_rev_id)
+
     if not Ctx().trunk_only:
       Log().quiet("Finding last CVS revisions for all symbolic names...")
       last_sym_name_db = LastSymbolicNameDatabase()
 
-      for line in fileinput.FileInput(
-              artifact_manager.get_temp_file(config.SORTED_REVS_DATAFILE)):
-        c_rev_id = int(line.strip().split()[-1], 16)
-        c_rev = cvs_revs_db.get_revision(c_rev_id)
+      for c_rev in get_cvs_revs():
         last_sym_name_db.log_revision(c_rev)
         stats_keeper.record_c_rev(c_rev)
 
       last_sym_name_db.create_database()
 
     else:
-      for line in fileinput.FileInput(
-              artifact_manager.get_temp_file(config.SORTED_REVS_DATAFILE)):
-        c_rev_id = int(line.strip().split()[-1], 16)
-        c_rev = cvs_revs_db.get_revision(c_rev_id)
+      for c_rev in get_cvs_revs():
         stats_keeper.record_c_rev(c_rev)
 
     stats_keeper.set_stats_reflect_exclude(True)

@@ -175,7 +175,8 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
 
     # mode is not known yet, so we temporarily set it to None.
     self.cvs_file = CVSFile(
-        None, filename, canonical_filename,
+        self.collect_data.file_key_generator.gen_id(),
+        filename, canonical_filename,
         Ctx().cvs_repository.get_cvs_path(canonical_filename),
         file_in_attic, file_executable, file_size, None
         )
@@ -683,8 +684,6 @@ class CollectData:
     persistent id and store it now.  The way we tell whether it was
     already stored is by whether it already has a non-None id."""
 
-    assert cvs_file.id is None
-    cvs_file.id = self.file_key_generator.gen_id()
     Ctx()._cvs_file_db.log_file(cvs_file)
 
   def add_cvs_revision(self, c_rev):

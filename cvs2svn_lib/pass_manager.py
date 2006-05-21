@@ -121,7 +121,6 @@ class PassManager:
         if (attr.startswith('_') and not attr.startswith('__')
             and not attr.startswith('_Ctx__')):
           delattr(Ctx(), attr)
-      stats_keeper.set_end_time(time.time())
       # Allow the artifact manager to clean up artifacts that are no
       # longer needed:
       artifact_manager.pass_done(the_pass)
@@ -129,6 +128,8 @@ class PassManager:
     # Tell the artifact manager about passes that are being deferred:
     for the_pass in self.passes[index_end:]:
       artifact_manager.pass_deferred(the_pass)
+
+    stats_keeper.set_end_time(time.time())
 
     Log().quiet(stats_keeper)
     Log().normal(stats_keeper.timings())

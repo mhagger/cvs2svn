@@ -157,6 +157,15 @@ class _BranchData:
     self.child = None
 
 
+class _TagData:
+  """Collection area for information about a CVSTag."""
+
+  def __init__(self, id, name, rev):
+    self.id = id
+    self.name = name
+    self.rev = rev
+
+
 class _SymbolDataCollector:
   """Collect information about symbols in a CVSFile."""
 
@@ -172,6 +181,10 @@ class _SymbolDataCollector:
     # Map { branch_number : _BranchData }, where branch_number has an
     # odd number of digits.
     self._branch_data = { }
+
+    # Map { revision : _TagData }, where revision has an even number
+    # of digits.
+    self._tag_data = { }
 
     # Hash mapping revision numbers, like '1.7', to lists of names
     # indicating which branches sprout from that revision, like
@@ -246,6 +259,9 @@ class _SymbolDataCollector:
 
   def set_tag_name(self, revision, name):
     """Record that tag NAME refers to the specified REVISION."""
+
+    self._tag_data[revision] = _TagData(
+        self.collect_data.key_generator.gen_id(), name, revision)
 
     self.taglist.setdefault(revision, []).append(name)
     self.collect_data.symbol_db.register_tag_creation(name)

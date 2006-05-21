@@ -109,8 +109,8 @@ class SymbolingsLogger:
 
     # 8 places gives us 999,999,999 SVN revs.  That *should* be enough.
     self.symbolings.write(
-        '%s %.8d %s %s %s\n'
-        % (name, svn_revnum, type, branch_name or '*', cvs_file.cvs_path))
+        '%s %.8d %s %s %x\n'
+        % (name, svn_revnum, type, branch_name or '*', cvs_file.id))
 
   def close(self):
     """Iterate through the closings file, lookup the svn_revnum for

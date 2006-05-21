@@ -229,14 +229,14 @@ This pass does the following:
 
    The format of each line is:
 
-       SYMBOLIC_NAME SVN_REVNUM TYPE BRANCH_NAME CVS_PATH
+       SYMBOLIC_NAME SVN_REVNUM TYPE BRANCH_NAME CVS_FILE_ID
 
    For example:
 
-       MY_TAG1 234 O * foo/bar/baz.txt,v
-       MY_BRANCH3 245 O * foo/qux/bat.c,v
-       MY_TAG1 241 C MY_BRANCH1 foo/bar/baz.txt,v
-       MY_BRANCH_BLAH 201 O MY_BRANCH1 foo/bar/quux.txt,v
+       MY_TAG1 234 O * 1a7
+       MY_BRANCH3 245 O * 1a9
+       MY_TAG1 241 C MY_BRANCH1 1a7
+       MY_BRANCH_BLAH 201 O MY_BRANCH1 1b3
 
    Here is what the columns mean:
 
@@ -252,7 +252,8 @@ This pass does the following:
    BRANCH_NAME: The (uncleaned) branch name where this opening or
                 closing happened.  '*' denotes the default branch.
 
-   CVS_PATH: The CVS path where this opening or closing happened.
+   CVS_FILE_ID: The ID of the CVS file where this opening or closing
+                happened, in hexadecimal.
 
    See SymbolingsLogger for more details.
 

@@ -77,11 +77,13 @@ class SymbolingsReader:
         line = self.symbolings.readline().rstrip()
         if not line:
           break
-        name, revnum, type, branch_name, cvs_path = line.split(" ", 4)
+        name, revnum, type, branch_name, cvs_file_id = line.split()
+        cvs_file = Ctx()._cvs_file_db.get_file(int(cvs_file_id, 16))
         if branch_name == '*':
-          svn_path = Ctx().project.make_trunk_path(cvs_path)
+          svn_path = Ctx().project.make_trunk_path(cvs_file.cvs_path)
         else:
-          svn_path = Ctx().project.make_branch_path(branch_name, cvs_path)
+          svn_path = Ctx().project.make_branch_path(
+              branch_name, cvs_file.cvs_path)
         revnum = int(revnum)
         if revnum > svn_revnum or name != symbolic_name:
           break

@@ -92,7 +92,7 @@ class SymbolingsLogger:
       self._note_default_branch_opening(c_rev, name)
       if c_rev.op != OP_DELETE:
         self._log(name, svn_revnum,
-                  c_rev.cvs_path, c_rev.branch_name, OPENING)
+                  c_rev.cvs_file, c_rev.branch_name, OPENING)
 
       # If our c_rev has a next_rev, then that's the closing rev for
       # this source revision.  Log it to closings for later processing
@@ -100,10 +100,10 @@ class SymbolingsLogger:
       if c_rev.next_id is not None:
         self.closings.write('%s %x\n' % (name, c_rev.next_id))
 
-  def _log(self, name, svn_revnum, cvs_path, branch_name, type):
+  def _log(self, name, svn_revnum, cvs_file, branch_name, type):
     """Write out a single line to the symbol_openings_closings file
-    representing that SVN_REVNUM of SVN_PATH on BRANCH_NAME is either the
-    opening or closing (TYPE) of NAME (a symbolic name).
+    representing that SVN_REVNUM of SVN_FILE on BRANCH_NAME is either
+    the opening or closing (TYPE) of NAME (a symbolic name).
 
     TYPE should only be one of the following constants: OPENING or
     CLOSING."""
@@ -111,7 +111,7 @@ class SymbolingsLogger:
     # 8 places gives us 999,999,999 SVN revs.  That *should* be enough.
     self.symbolings.write(
         '%s %.8d %s %s %s\n'
-        % (name, svn_revnum, type, branch_name or '*', cvs_path))
+        % (name, svn_revnum, type, branch_name or '*', cvs_file.cvs_path))
 
   def close(self):
     """Iterate through the closings file, lookup the svn_revnum for
@@ -135,7 +135,7 @@ class SymbolingsLogger:
       svn_revnum = Ctx()._persistence_manager.get_svn_revnum(rev_id)
 
       c_rev = cvs_revs_db.get_revision(rev_id)
-      self._log(name, svn_revnum, c_rev.cvs_path, c_rev.branch_name, CLOSING)
+      self._log(name, svn_revnum, c_rev.cvs_file, c_rev.branch_name, CLOSING)
 
     self.symbolings.close()
 
@@ -156,7 +156,7 @@ class SymbolingsLogger:
     if self.open_paths_with_default_branches.has_key(path):
       # log each symbol as a closing
       for name in self.open_paths_with_default_branches[path]:
-        self._log(name, svn_revnum, path, None, CLOSING)
+        self._log(name, svn_revnum, c_rev.cvs_file, None, CLOSING)
       # Remove them from the openings list as we're done with them.
       del self.open_paths_with_default_branches[path]
 

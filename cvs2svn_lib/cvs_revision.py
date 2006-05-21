@@ -21,7 +21,13 @@ from boolean import *
 from common import OP_DELETE
 
 
-class CVSRevision(object):
+class CVSItem(object):
+  def __init__(self, id, cvs_file):
+    self.id = id
+    self.cvs_file = cvs_file
+
+
+class CVSRevision(CVSItem):
   """Information about a single CVS revision.
 
   A CVSRevision holds the information known about a single version of
@@ -70,8 +76,8 @@ class CVSRevision(object):
     WARNING: Due to the resync process in pass2, prev_timestamp or
     next_timestamp may be incorrect in the c-revs or s-revs files."""
 
-    self.id = id
-    self.cvs_file = cvs_file
+    CVSItem.__init__(self, id, cvs_file)
+
     self.rev = rev
     self.timestamp = timestamp
     self.digest = digest
@@ -145,5 +151,60 @@ class CVSRevision(object):
         return True
 
     return False
+
+
+class CVSSymbol(CVSItem):
+  """Represent a symbol on a particular CVSFile.
+
+  This is the base class for CVSBranch and CVSTag."""
+
+  def __init__(self, id, cvs_file, name, rev_id):
+    """Initialize a CVSSymbol object.
+
+    Arguments:
+       ID              -->  (string) unique ID for this item
+       CVS_FILE        -->  (CVSFile) CVSFile affected by this revision
+       NAME            -->  (string) the name of this branch
+       REV_ID          -->  (int) the ID of the revision being tagged"""
+
+    CVSItem.__init__(self, id, cvs_file)
+
+    self.name = name
+    self.rev_id = rev_id
+
+
+class CVSBranch(CVSSymbol):
+  """Represent the creation of a branch in a particular CVSFile."""
+
+  def __init__(self, id, cvs_file, name, branch_number, next_id):
+    """Initialize a CVSBranch.
+
+    Arguments:
+       ID              -->  (string) unique ID for this item
+       CVS_FILE        -->  (CVSFile) CVSFile affected by this revision
+       NAME            -->  (string) the name of this branch
+       BRANCH_NUMBER   -->  (int) the (3-digit) number of this branch
+       NEXT_ID         -->  (int or None) id of first rev on this branch"""
+
+    self.branch_number = branch_number
+    sprout_rev = self.branch_number[:self.branch_number.rfind(".")]
+    CVSSymbol.__init__(self, id, cvs_file, name, sprout_rev)
+    self.next_id = next_id
+
+
+class CVSTag(CVSSymbol):
+  """Represent the creation of a tag on a particular CVSFile."""
+
+  def __init__(self, id, cvs_file, name, rev_id):
+    """Initialize a CVSBranch.
+
+    Arguments:
+       ID              -->  (string) unique ID for this item
+       CVS_FILE        -->  (CVSFile) CVSFile affected by this revision
+       NAME            -->  (string) the name of this branch
+       BRANCH_NUMBER   -->  (int) the (3-digit) number of this branch
+       NEXT_ID         -->  (int or None) id of first rev on this branch"""
+
+    CVSSymbol.__init__(self, id, cvs_file, name, rev_id)
 
 

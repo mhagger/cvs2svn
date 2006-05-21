@@ -16,9 +16,12 @@
 
 """This module contains database facilities used by cvs2svn."""
 
+import sys
 
 from boolean import *
 import config
+from common import error_prefix
+from context import Ctx
 from artifact_manager import artifact_manager
 
 
@@ -133,6 +136,82 @@ class SymbolDatabase:
                            self.branches[branch][0],  # branch count
                            self.branches[branch][1])) # commit count
     return mismatches
+
+  def check_blocked_excludes(self, excludes):
+    """Check whether any excluded branches are blocked.
+
+    A branch can be blocked because it has another, non-excluded
+    symbol that depends on it.  If any blocked excludes are found,
+    output error messages describing the situation.  Return True if
+    any errors were found."""
+
+    blocked_excludes = self.find_blocked_excludes(excludes)
+    if not blocked_excludes:
+      return False
+
+    for branch, blockers in blocked_excludes.items():
+      sys.stderr.write(error_prefix + ": The branch '%s' cannot be "
+                       "excluded because the following symbols depend "
+                       "on it:\n" % (branch))
+      for blocker in blockers:
+        sys.stderr.write("    '%s'\n" % (blocker))
+    sys.stderr.write("\n")
+    return True
+
+  def check_invalid_forced_tags(self, excludes):
+    """Check for commits on any branches that were forced to be tags.
+
+    In that case, they can't be converted into tags.  If any invalid
+    forced tags are found, output error messages describing the
+    problems.  Return True iff any errors are found."""
+
+    invalid_forced_tags = [ ]
+    for forced_tag in Ctx().forced_tags:
+      if excludes.has_key(forced_tag):
+        continue
+      if self.branch_has_commit(forced_tag):
+        invalid_forced_tags.append(forced_tag)
+
+    if not invalid_forced_tags:
+      # No problems found:
+      return False
+
+    sys.stderr.write(error_prefix + ": The following branches cannot be "
+                     "forced to be tags because they have commits:\n")
+    for tag in invalid_forced_tags:
+      sys.stderr.write("    '%s'\n" % (tag))
+    sys.stderr.write("\n")
+
+    return True
+
+  def check_symbol_mismatches(self, excludes):
+    """Check for symbols that are defined as both tags and branches.
+
+    Exclude the symbols in EXCLUDES.  If any are found, output error
+    messages describing the problems.  Return True iff any problems
+    are found."""
+
+    mismatches = self.find_mismatches(excludes)
+
+    def is_not_forced(mismatch):
+      name = mismatch[0]
+      return not (name in Ctx().forced_tags or name in Ctx().forced_branches)
+
+    mismatches = filter(is_not_forced, mismatches)
+    if not mismatches:
+      # No problems found:
+      return False
+
+    sys.stderr.write(error_prefix + ": The following symbols are tags "
+                     "in some files and branches in others.\nUse "
+                     "--force-tag, --force-branch and/or --exclude to "
+                     "resolve the symbols.\n")
+    for name, tag_count, branch_count, commit_count in mismatches:
+      sys.stderr.write("    '%s' is a tag in %d files, a branch in "
+                       "%d files and has commits in %d files.\n"
+                       % (name, tag_count, branch_count, commit_count))
+
+    return True
 
   def read(self):
     """Read the symbol database from files."""

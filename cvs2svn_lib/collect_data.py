@@ -340,7 +340,6 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     """This is a callback method declared in Sink."""
 
     self._process_symbols()
-    self.collect_data.add_cvs_file(self.cvs_file)
 
   def define_revision(self, revision, timestamp, author, state,
                       branches, next):
@@ -635,6 +634,8 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     parent branch in the symbol database.
 
     This is a callback method declared in Sink."""
+
+    self.collect_data.add_cvs_file(self.cvs_file)
 
     for revision, symbols in self.taglist.items() + self.branchlist.items():
       for symbol in symbols:

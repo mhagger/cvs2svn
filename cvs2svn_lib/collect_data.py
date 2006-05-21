@@ -38,7 +38,6 @@ from cvs_file import CVSFile
 from line_of_development import Trunk
 from line_of_development import Branch
 from cvs_revision import CVSRevision
-from cvs_revision import CVSRevisionID
 from key_generator import KeyGenerator
 from database import Database
 from database import SDatabase
@@ -96,11 +95,11 @@ class _RevisionData:
   state of the prev_rev, we are unable to distinguish between an add
   and a change."""
 
-  def __init__(self, c_rev, rev, timestamp, author, state, branches):
-    # The CVSRevisionID instance for this revision.  Note that this
-    # item is pre-filled as a CVSRevisionID, then later overwritten by
-    # a CVSRevision.
-    self.c_rev = c_rev
+  def __init__(self, cvs_rev_id, rev, timestamp, author, state, branches):
+    # The id of this revision:
+    self.cvs_rev_id = cvs_rev_id
+    # The CVSRevision is not yet known.  It will be stored here:
+    self.c_rev = None
     self.rev = rev
     self.timestamp = timestamp
     self.author = author
@@ -360,7 +359,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
   def _get_rev_id(self, revision):
     if revision is None:
       return None
-    return self._rev_data[revision].c_rev.id
+    return self._rev_data[revision].cvs_rev_id
 
   def set_principal_branch(self, branch):
     """This is a callback method declared in Sink."""
@@ -388,12 +387,10 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
                       branches, next):
     """This is a callback method declared in Sink."""
 
-    # Create a CVSRevisionID for this revision:
-    c_rev = CVSRevisionID(self.collect_data.key_generator.gen_id())
-
     # Record basic information about the revision:
     self._rev_data[revision] = _RevisionData(
-        c_rev, revision, int(timestamp), author, state, branches)
+        self.collect_data.key_generator.gen_id(),
+        revision, int(timestamp), author, state, branches)
 
     # Remember the order that revisions were defined:
     self._rev_order.append(revision)

@@ -21,14 +21,7 @@ from boolean import *
 from common import OP_DELETE
 
 
-class CVSRevisionID(object):
-  """An object that identifies a CVS revision of a file."""
-
-  def __init__(self, id):
-    self.id = id
-
-
-class CVSRevision(CVSRevisionID):
+class CVSRevision(object):
   """Information about a single CVS revision.
 
   A CVSRevision holds the information known about a single version of
@@ -77,8 +70,7 @@ class CVSRevision(CVSRevisionID):
     WARNING: Due to the resync process in pass2, prev_timestamp or
     next_timestamp may be incorrect in the c-revs or s-revs files."""
 
-    CVSRevisionID.__init__(self, id)
-
+    self.id = id
     self.cvs_file = cvs_file
     self.rev = rev
     self.timestamp = timestamp

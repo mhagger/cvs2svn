@@ -257,13 +257,15 @@ class _SymbolDataCollector:
 
   def register_branch_commit(self, rev):
     """Register REV, which is a non-trunk revision number, as a commit
-    on the corresponding branch."""
+    on the corresponding branch.
 
-    # Check for unlabeled branches, record them.  We tried to collect
-    # all branch names when we parsed the symbolic name header
-    # earlier, of course, but that didn't catch unlabeled branches.
-    # If a branch is unlabeled, this is our first encounter with it,
-    # so we have to record its data now.
+    Normally we should already know about the branch containing rev,
+    because we collected the branch names and numbers when we parsed
+    the symbolic name header earlier.  But that didn't catch unlabeled
+    branches.  If a branch is unlabeled, we will first encounter it
+    here, so we have to record its data now (with a generated branch
+    name)."""
+
     branch_number = rev[:rev.rindex(".")]
     if not self.branch_names.has_key(branch_number):
       branch_name = "unlabeled-" + branch_number

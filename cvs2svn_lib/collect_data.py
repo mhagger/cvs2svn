@@ -165,8 +165,8 @@ class _SymbolDataCollector:
 
     self.cvs_file = cvs_file
 
-    # A map [ name : ( name, revision) ] of each known symbol in this
-    # file with the revision number that it corresponds to.
+    # A set { name : None } for each known symbol in this file, used
+    # to check for duplicates.
     self._symbols = { }
 
     # Hash mapping branch numbers, like '1.7.2', to branch names,
@@ -206,7 +206,8 @@ class _SymbolDataCollector:
       self.collect_data.fatal_errors.append(err)
 
     else:
-      self._symbols[name] = (name, revision,)
+      self._symbols[name] = None
+      self.process_symbol(name, revision)
 
   def rev_to_branch_name(self, revision):
     """Return the name of the branch on which REVISION lies.
@@ -261,13 +262,6 @@ class _SymbolDataCollector:
       self.set_branch_name(revision, name)
     else:
       self.set_tag_name(revision, name)
-
-  def process_symbols(self):
-    for (name, revision,) in self._symbols.values():
-      self.process_symbol(name, revision)
-
-    # Free memory:
-    self._symbols = None
 
   def register_branch_commit(self, rev):
     """Register REV, which is a non-trunk revision number, as a commit
@@ -397,7 +391,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
   def admin_completed(self):
     """This is a callback method declared in Sink."""
 
-    self.symbol_data_collector.process_symbols()
+    pass
 
   def define_revision(self, revision, timestamp, author, state,
                       branches, next):

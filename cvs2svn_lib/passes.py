@@ -63,7 +63,7 @@ def verify_filename_legal(filename):
   m = ctrl_characters_regexp.search(filename)
   if m:
     raise FatalError(
-        "Character %r in filename %r is not supported by subversion."
+        "Character %r in filename %r is not supported by Subversion."
         % (m.group(), filename,))
 
 

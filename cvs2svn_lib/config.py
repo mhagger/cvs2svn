@@ -128,12 +128,10 @@ PIPE_READ_SIZE = 128 * 1024
 
 # Record the default RCS branches, if any, for CVS filepaths.
 #
-# The keys are CVS filepaths, relative to the top of the repository
-# and with the ",v" stripped off, so they match the cvs paths used in
-# Commit.commit().  The values are vendor branch revisions, such as
-# '1.1.1.1', or '1.1.1.2', or '1.1.1.96'.  The vendor branch revision
-# represents the highest vendor branch revision thought to have ever
-# been head of the default branch.
+# The keys are CVSFile ids.  The values are vendor branch revisions,
+# such as '1.1.1.1', or '1.1.1.2', or '1.1.1.96'.  The vendor branch
+# revision represents the highest vendor branch revision thought to
+# have ever been head of the default branch.
 #
 # The reason we record a specific vendor revision, rather than a
 # default branch number, is that there are two cases to handle:

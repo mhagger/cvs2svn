@@ -145,7 +145,7 @@ class CVSRevision(CVSRevisionID):
     branch revision according to DEFAULT_BRANCHES_DB (see the
     conditions documented there)."""
 
-    val = self.ctx._default_branches_db.get(self.cvs_file.cvs_path, None)
+    val = self.ctx._default_branches_db.get('%x' % self.cvs_file.id, None)
     if val is not None:
       val_last_dot = val.rindex(".")
       our_last_dot = self.rev.rindex(".")

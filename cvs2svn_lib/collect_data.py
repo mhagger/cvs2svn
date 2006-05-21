@@ -417,7 +417,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
           and default_branch_root.count('.') == rev_data.rev.count('.')):
         # This revision is on the default branch, so record that it is
         # the new highest default branch head revision.
-        self.collect_data.default_branches_db[self.cvs_file.cvs_path] = \
+        self.collect_data.default_branches_db['%x' % self.cvs_file.id] = \
             rev_data.rev
     else:
       # No default branch, so make an educated guess.
@@ -433,7 +433,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
           # We're looking at a vendor revision, and it wasn't
           # committed after this file lost its default branch, so bump
           # the maximum trunk vendor revision in the permanent record.
-          self.collect_data.default_branches_db[self.cvs_file.cvs_path] = \
+          self.collect_data.default_branches_db['%x' % self.cvs_file.id] = \
               rev_data.rev
 
   def _register_branch_commit(self, rev):
@@ -608,7 +608,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     # for 1.1 in imports is "Initial revision\n" with no period.
     if revision == '1.1' and log != 'Initial revision\n':
       try:
-        del self.collect_data.default_branches_db[self.cvs_file.cvs_path]
+        del self.collect_data.default_branches_db['%x' % self.cvs_file.id]
       except KeyError:
         pass
 

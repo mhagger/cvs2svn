@@ -39,7 +39,6 @@ from database import DB_OPEN_READ
 from database import DB_OPEN_WRITE
 from cvs_file_database import CVSFileDatabase
 from symbol_database import SymbolDatabase
-from tags_database import TagsDatabase
 from cvs_revision_database import CVSRevisionDatabase
 from last_symbolic_name_database import LastSymbolicNameDatabase
 from svn_commit import SVNCommit
@@ -259,31 +258,11 @@ class ResyncRevsPass(Pass):
     # Convert the list of regexps to a list of strings
     excludes = symbol_db.find_excluded_symbols(Ctx().excludes)
 
-    error_detected = False
-
-    Log().quiet("Checking for blocked exclusions...")
-    if symbol_db.check_blocked_excludes(excludes):
-      error_detected = True
-
-    Log().quiet("Checking for forced tags with commits...")
-    if symbol_db.check_invalid_forced_tags(excludes):
-      error_detected = True
-
-    Log().quiet("Checking for tag/branch mismatches...")
-    if symbol_db.check_symbol_mismatches(excludes):
-      error_detected = True
-
-    # Bail out now if we found errors
-    if error_detected:
+    # Check the symbols for consistency and bail out if there were errors:
+    if symbol_db.check_consistency(excludes):
       sys.exit(1)
 
-    # Create the tags database
-    tags_db = TagsDatabase(DB_OPEN_NEW)
-    for tag in symbol_db.tags:
-      if tag not in Ctx().forced_branches:
-        tags_db.add(tag)
-    for tag in Ctx().forced_tags:
-      tags_db.add(tag)
+    symbol_db.create_tags_database()
 
     Log().quiet("Re-synchronizing CVS revision timestamps...")
 

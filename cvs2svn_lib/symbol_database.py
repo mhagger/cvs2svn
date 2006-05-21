@@ -22,7 +22,10 @@ from boolean import *
 import config
 from common import error_prefix
 from context import Ctx
+from log import Log
 from artifact_manager import artifact_manager
+from database import DB_OPEN_NEW
+from tags_database import TagsDatabase
 
 
 def match_regexp_list(regexp_list, s):
@@ -145,6 +148,8 @@ class SymbolDatabase:
     output error messages describing the situation.  Return True if
     any errors were found."""
 
+    Log().quiet("Checking for blocked exclusions...")
+
     blocked_excludes = self.find_blocked_excludes(excludes)
     if not blocked_excludes:
       return False
@@ -164,6 +169,8 @@ class SymbolDatabase:
     In that case, they can't be converted into tags.  If any invalid
     forced tags are found, output error messages describing the
     problems.  Return True iff any errors are found."""
+
+    Log().quiet("Checking for forced tags with commits...")
 
     invalid_forced_tags = [ ]
     for forced_tag in Ctx().forced_tags:
@@ -191,6 +198,8 @@ class SymbolDatabase:
     messages describing the problems.  Return True iff any problems
     are found."""
 
+    Log().quiet("Checking for tag/branch mismatches...")
+
     mismatches = self.find_mismatches(excludes)
 
     def is_not_forced(mismatch):
@@ -212,6 +221,26 @@ class SymbolDatabase:
                        % (name, tag_count, branch_count, commit_count))
 
     return True
+
+  def check_consistency(self, excludes):
+    """Check the non-excluded symbols for consistency.  Return True
+    iff any problems were detected."""
+
+    # It is important that we not short-circuit here:
+    return (
+      self.check_blocked_excludes(excludes)
+      | self.check_invalid_forced_tags(excludes)
+      | self.check_symbol_mismatches(excludes)
+      )
+
+  def create_tags_database(self):
+    # Create the tags database
+    tags_db = TagsDatabase(DB_OPEN_NEW)
+    for tag in self.tags:
+      if tag not in Ctx().forced_branches:
+        tags_db.add(tag)
+    for tag in Ctx().forced_tags:
+      tags_db.add(tag)
 
   def read(self):
     """Read the symbol database from files."""

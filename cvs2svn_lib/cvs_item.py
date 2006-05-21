@@ -159,7 +159,7 @@ class CVSSymbol(CVSItem):
 class CVSBranch(CVSSymbol):
   """Represent the creation of a branch in a particular CVSFile."""
 
-  def __init__(self, id, cvs_file, name, branch_number, next_id):
+  def __init__(self, id, cvs_file, name, branch_number, rev_id, next_id):
     """Initialize a CVSBranch.
 
     Arguments:
@@ -167,11 +167,11 @@ class CVSBranch(CVSSymbol):
        CVS_FILE        -->  (CVSFile) CVSFile affected by this revision
        NAME            -->  (string) the name of this branch
        BRANCH_NUMBER   -->  (int) the (3-digit) number of this branch
+       REV_ID          -->  (int) id of rev from which this branch sprouts
        NEXT_ID         -->  (int or None) id of first rev on this branch"""
 
+    CVSSymbol.__init__(self, id, cvs_file, name, rev_id)
     self.branch_number = branch_number
-    sprout_rev = self.branch_number[:self.branch_number.rfind(".")]
-    CVSSymbol.__init__(self, id, cvs_file, name, sprout_rev)
     self.next_id = next_id
 
 

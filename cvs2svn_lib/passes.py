@@ -420,7 +420,6 @@ class CreateDatabasesPass(Pass):
     is a source for each tag or branch.  Also record the remaining
     revisions to the StatsKeeper."""
 
-    Log().quiet("Copying CVS revision data from flat file to database...")
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
     cvs_revs_db = CVSRevisionDatabase(
         artifact_manager.get_temp_file(config.CVS_REVS_RESYNC_DB),
@@ -428,25 +427,27 @@ class CreateDatabasesPass(Pass):
     if not Ctx().trunk_only:
       Log().quiet("Finding last CVS revisions for all symbolic names...")
       last_sym_name_db = LastSymbolicNameDatabase()
-    else:
-      # This is to avoid testing Ctx().trunk_only every time around the loop
-      class DummyLSNDB:
-        def noop(*args): pass
-        log_revision = noop
-        create_database = noop
-      last_sym_name_db = DummyLSNDB()
 
-    for line in fileinput.FileInput(
-            artifact_manager.get_temp_file(config.SORTED_REVS_DATAFILE)):
-      c_rev_id = int(line.strip().split()[-1], 16)
-      c_rev = cvs_revs_db.get_revision(c_rev_id)
-      last_sym_name_db.log_revision(c_rev)
-      stats_keeper.record_c_rev(c_rev)
+      for line in fileinput.FileInput(
+              artifact_manager.get_temp_file(config.SORTED_REVS_DATAFILE)):
+        c_rev_id = int(line.strip().split()[-1], 16)
+        c_rev = cvs_revs_db.get_revision(c_rev_id)
+        last_sym_name_db.log_revision(c_rev)
+        stats_keeper.record_c_rev(c_rev)
+
+      last_sym_name_db.create_database()
+
+    else:
+      for line in fileinput.FileInput(
+              artifact_manager.get_temp_file(config.SORTED_REVS_DATAFILE)):
+        c_rev_id = int(line.strip().split()[-1], 16)
+        c_rev = cvs_revs_db.get_revision(c_rev_id)
+        stats_keeper.record_c_rev(c_rev)
 
     stats_keeper.set_stats_reflect_exclude(True)
 
-    last_sym_name_db.create_database()
     stats_keeper.archive()
+
     Log().quiet("Done")
 
 

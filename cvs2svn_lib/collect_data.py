@@ -679,6 +679,32 @@ class CollectData:
     # Key generator to generate unique keys for each CVSRevision object:
     self.key_generator = KeyGenerator()
 
+  def process_file(self, pathname):
+    fdc = FileDataCollector(self, pathname)
+
+    if not fdc.cvs_file.in_attic:
+      # If this file also exists in the attic, it's a fatal error
+      attic_path = os.path.join(
+          os.path.dirname(pathname), 'Attic', os.path.basename(pathname))
+      if os.path.exists(attic_path):
+        err = "%s: A CVS repository cannot contain both %s and %s" \
+              % (error_prefix, pathname, attic_path)
+        sys.stderr.write(err + '\n')
+        self.fatal_errors.append(err)
+
+    try:
+      cvs2svn_rcsparse.parse(open(pathname, 'rb'), fdc)
+    except (cvs2svn_rcsparse.common.RCSParseError, ValueError,
+            RuntimeError):
+      err = "%s: '%s' is not a valid ,v file" \
+            % (error_prefix, pathname)
+      sys.stderr.write(err + '\n')
+      self.fatal_errors.append(err)
+    except:
+      Log().warn("Exception occurred while parsing %s" % pathname)
+      raise
+
+
   def add_cvs_file(self, cvs_file):
     """If CVS_FILE is not already stored to _cvs_revs_db, give it a
     persistent id and store it now.  The way we tell whether it was

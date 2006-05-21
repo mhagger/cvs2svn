@@ -52,7 +52,6 @@ from dumpfile_delegate import DumpfileDelegate
 from repository_delegate import RepositoryDelegate
 from stdout_delegate import StdoutDelegate
 from collect_data import CollectData
-from collect_data import FileDataCollector
 from process import run_command
 
 
@@ -145,30 +144,9 @@ class CollectRevsPass(Pass):
           continue
         cd.found_valid_file = 1
         pathname = os.path.join(dirname, fname)
-
-        fdc = FileDataCollector(cd, pathname)
-
-        if not fdc.cvs_file.in_attic:
-          # If this file also exists in the attic, it's a fatal error
-          attic_path = os.path.join(dirname, 'Attic', fname)
-          if os.path.exists(attic_path):
-            err = "%s: A CVS repository cannot contain both %s and %s" \
-                  % (error_prefix, pathname, attic_path)
-            sys.stderr.write(err + '\n')
-            cd.fatal_errors.append(err)
-
         Log().normal(pathname)
-        try:
-          cvs2svn_rcsparse.parse(open(pathname, 'rb'), fdc)
-        except (cvs2svn_rcsparse.common.RCSParseError, ValueError,
-                RuntimeError):
-          err = "%s: '%s' is not a valid ,v file" \
-                % (error_prefix, pathname)
-          sys.stderr.write(err + '\n')
-          cd.fatal_errors.append(err)
-        except:
-          Log().warn("Exception occurred while parsing %s" % pathname)
-          raise
+
+        cd.process_file(pathname)
 
     os.path.walk(Ctx().project.project_cvs_repos_path, visit_file, cd)
     Log().verbose('Processed', cd.num_files, 'files')

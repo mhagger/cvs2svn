@@ -63,10 +63,10 @@ them similarly; more details below).
 Next, the parser encounters the *real* revision data, which has the
 log messages and file contents.  For each revision, it invokes
 FileDataCollector.set_revision_info(), which writes a record to
-cvs2svn-cvs-revs.db.
+'cvs2svn-cvs-revs.db'.
 
 Also, for resync'd revisions, a line like this is written out to
-'cvs2svn-data.resync.txt':
+'cvs2svn-resync.txt':
 
    3d6c1329 18a215a05abea1c6c155dcc7283b88ae7ce23502 3d6c1328
 
@@ -80,19 +80,23 @@ That's it -- the RCS file is done.
 
 When every CVS file is done, CollectRevsPass is complete, and:
 
-   - cvs2svn-cvs-files.db contains a record of every CVS file.
+   - 'cvs2svn-cvs-files.db' contains a record of every CVS file.
 
-   - cvs2svn-cvs-revs.db contains a summary of every revision to every
-     CVS file, including a reference to the corresponding CVS file
-     record in cvs2svn-cvs-files.db.  The order of the revisions is
-     arbitrary.  In other words, a multi-file commit will be scattered
-     all over the place.
+   - 'cvs2svn-cvs-revs.db' contains a summary of every revision to
+     every CVS file, including a reference to the corresponding CVS
+     file record in 'cvs2svn-cvs-files.db'.  The order of the
+     revisions is arbitrary.  In other words, a multi-file commit will
+     be scattered all over the place.
 
-   - cvs2svn-data.a-revs.txt contains a list of CVSRevision keys that
-     are in cvs2svn-cvs-revs.db, in the order that they were written.
+   - 'cvs2svn-a-revs.txt' contains a list of CVSRevision keys that are
+     in 'cvs2svn-cvs-revs.db', in the order that they were written.
 
-   - cvs2svn-data.resync.txt contains a small amount of resync data,
-     in no particular order.
+   - 'cvs2svn-resync.txt' contains a small amount of resync data, in
+     no particular order.
+
+   - 'cvs2svn-branches.txt' ???
+   - 'cvs2svn-tags' ???
+   - 'cvs2svn-metadata.db' ???
 
 
 ResyncRevsPass (formerly called pass2)
@@ -116,8 +120,9 @@ empty log message, or a log message that just says "Doc tweaks.").  So
 each digest may need to "fan out" to cover multiple commits, but
 without accidentally unifying those commits.
 
-Now we loop over cvs2svn-cvs-revs.db, and for each record write a line
-to 'cvs2svn-data.c-revs.txt'.  Each line of this file looks like this:
+Now we loop over 'cvs2svn-cvs-revs.db', and for each record write a
+line to 'cvs2svn-data.c-revs.txt'.  Each line of this file looks like
+this:
 
    3dc32955 5afe9b4ba41843d8eb52ae7db47a43eaa9573254 12ab
 
@@ -128,7 +133,7 @@ The fields are:
    3.  the integer unique ID for this CVSRevision, as a hexadecimal
        string.
 
-Any CVSRevision records in cvs2svn-cvs-revs.db whose digest matches
+Any CVSRevision records in 'cvs2svn-cvs-revs.db' whose digest matches
 some resync entry and appear to be part of the same commit as one of
 the sublists in that entry, get tweaked.  The tweak is to adjust the
 commit time of the line to the new_time, which is taken from the
@@ -153,6 +158,9 @@ important enough to have a distinctive log message anyway, so does it
 really matter if a couple of them accidentally get unified?  Probably
 not.
 
+'cvs2svn-tags.db' ??? is also created during this pass, for
+undocumented purposes.
+
 
 SortRevsPass (formerly called pass3)
 ============
@@ -160,11 +168,11 @@ SortRevsPass (formerly called pass3)
 This is where we deduce the changesets, that is, the grouping of file
 changes into single commits.
 
-It's very simple -- run 'sort' on cvs2svn-data.c-revs.txt, converting
-it to 'cvs2svn-data.s-revs.txt'.  Because of the way the data is laid
-out, this causes commits with the same digest (that is, the same
-author and log message) to be grouped together.  Poof!  We now have
-the CVS changes grouped by logical commit.
+It's very simple -- run 'sort' on 'cvs2svn-c-revs.txt', converting it
+to 'cvs2svn-s-revs.txt'.  Because of the way the data is laid out,
+this causes commits with the same digest (that is, the same author and
+log message) to be grouped together.  Poof!  We now have the CVS
+changes grouped by logical commit.
 
 In some cases, the changes in a given commit may be interleaved with
 other commits that went on at the same time, because the sort gives
@@ -184,16 +192,16 @@ symbolic names for which that CVSRevision is the last "opening."
 
 The format for this file is:
 
-    cvs-symname-last-revs.db:
+    'cvs2svn-symbol-last-cvs-revs.db':
          Key                      Value
-         CVS Revision             array of Symbolic names
+         CVS Revision ID          array of Symbolic names
 
     For example:
 
-         1.38/foo/bar/baz.txt,v  --> [TAG11, BRANCH38]
-         1.93/foo/qux/bat.c,v    --> [TAG39]
-         1.4/foo/bar/baz.txt,v   --> [BRANCH48, BRANCH37]
-         1.18/foo/bar/quux.txt,v --> [TAG320, TAG1178]
+         5c                      --> ['TAG11', 'BRANCH38']
+         62                      --> ['TAG39']
+         4d                      --> ['BRANCH48', 'BRANCH37']
+         f                       --> ['TAG320', 'TAG1178']
 
 
 AggregateRevsPass (formerly called pass5)
@@ -207,9 +215,9 @@ to a Subversion repository or to a dump file).
 This pass does the following:
 
 1. Creates a database file to map Subversion Revision numbers to their
-   corresponding CVS Revisions (cvs2svn-svn-revnums-to-cvs-revs.db).
+   corresponding CVS Revisions ('cvs2svn-svn-revnums-to-cvs-revs.db').
    Creates another database file to map CVS Revisions to their
-   Subversion Revision numbers (cvs2svn-cvs-revs-to-svn-revnums.db).
+   Subversion Revision numbers ('cvs2svn-cvs-revs-to-svn-revnums.db').
 
 2. When a file is copied to a symbolic name in cvs2svn, there are a
    range of valid Subversion revisions that we can copy the file from.
@@ -217,7 +225,7 @@ This pass does the following:
    called the "Opening", and the first *invalid* Subversion revision
    number encountered after the "Opening" is called the "Closing".  In
    this pass, the SymbolingsLogger class writes one line to
-   cvs2svn-symbolic-names.txt per CVS file, per symbolic name, per
+   'cvs2svn-symbolic-names.txt' per CVS file, per symbolic name, per
    opening or closing.
 
 3. For each CVS Revision in s-revs, we write out a line (for each
@@ -257,25 +265,29 @@ This pass does the following:
 
    See SymbolingsLogger for more details.
 
+4. Creates a file 'cvs2svn-symbolic-names-closings-tmp.txt' ??? for
+   undocumented purposes.
+
 
 SortSymbolsPass (formerly called pass6)
 ===============
 
-This pass merely sorts cvs2svn-symbolic-names.txt into
-cvs2svn-symbolic-names-s.txt.  This orders the file first by symbolic
-name, and second by Subversion revision number, thus grouping all
-openings and closings for each symbolic name together.
+This pass merely sorts 'cvs2svn-symbolic-names.txt' into
+'cvs2svn-symbolic-names-s.txt'.  This orders the file first by
+symbolic name, and second by Subversion revision number, thus grouping
+all openings and closings for each symbolic name together.
 
 
 IndexSymbolsPass (formerly called pass7)
 ================
 
 This pass iterates through all the lines in
-cvs2svn-symbolic-names-s.txt, writing out a database file mapping
-SYMBOLIC_NAME to the file offset in SYMBOL_OPENINGS_CLOSINGS_SORTED
-where SYMBOLIC_NAME is first encountered.  This will allow us to seek
-to the various offsets in the file and sequentially read only the
-openings and closings that we need.
+'cvs2svn-symbolic-names-s.txt', writing out a database file
+('cvs2svn-symbolic-name-offsets.db') mapping SYMBOLIC_NAME to the file
+offset in 'cvs2svn-symbolic-names-s.txt' where SYMBOLIC_NAME is first
+encountered.  This will allow us to seek to the various offsets in the
+file and sequentially read only the openings and closings that we
+need.
 
 
 OutputPass (formerly called pass8)
@@ -299,7 +311,12 @@ dumpfiles representing a single revision are created, loaded into the
 repository, and then removed.
 
 In both modes, the dumpfile revisions are created by walking through
-cvs2svn-data.s-revs.txt.
+'cvs2svn-data.s-revs.txt'.
+
+The databases 'cvs2svn-svn-nodes.db' and 'cvs2svn-svn-revisions.db'
+form a skeletal (metadata only, no content) mirror of the repository
+structure that cvs2svn is creating.  They provide data about previous
+revisions that cvs2svn requires while constructing the dumpstream.
 
 
                   ===============================
@@ -489,3 +506,5 @@ Further design thoughts from Greg Stein <gstein@lyra.org>
   line in the "gnuplot" repository.  Most RCS releases issue warnings
   about that (although they properly handle/skip the lines), and CVS
   ignores RCS newphrases altogether.
+
+# vim:tw=70

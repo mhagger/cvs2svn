@@ -141,7 +141,7 @@ def main():
   # Convenience var, so we don't have to keep instantiating this Borg.
   ctx = Ctx()
 
-  profiling = None
+  profiling = False
   start_pass = 1
   end_pass = pass_manager.num_passes
 
@@ -182,30 +182,30 @@ def main():
         raise InvalidPassError(
             'Ending pass must not come before starting pass.')
     elif (opt == '--help') or (opt == '-h'):
-      ctx.print_help = 1
+      ctx.print_help = True
     elif opt == '--help-passes':
       pass_manager.help_passes()
       sys.exit(0)
     elif opt == '-v':
       Log().log_level = Log.VERBOSE
-      ctx.verbose = 1
+      ctx.verbose = True
     elif opt == '-q':
       Log().log_level = Log.QUIET
-      ctx.quiet = 1
+      ctx.quiet = True
     elif opt == '-s':
       ctx.target = value
     elif opt == '--existing-svnrepos':
-      ctx.existing_svnrepos = 1
+      ctx.existing_svnrepos = True
     elif opt == '--dumpfile':
       ctx.dumpfile = value
     elif opt == '--tmpdir':
       ctx.tmpdir = value
     elif opt == '--use-cvs':
-      ctx.use_cvs = 1
+      ctx.use_cvs = True
     elif opt == '--svnadmin':
       ctx.svnadmin = value
     elif opt == '--trunk-only':
-      ctx.trunk_only = 1
+      ctx.trunk_only = True
     elif opt == '--trunk':
       ctx.trunk_base = normalize_ttb_path(opt, value)
     elif opt == '--branches':
@@ -213,11 +213,11 @@ def main():
     elif opt == '--tags':
       ctx.tags_base = normalize_ttb_path(opt, value)
     elif opt == '--no-prune':
-      ctx.prune = None
+      ctx.prune = False
     elif opt == '--dump-only':
-      ctx.dump_only = 1
+      ctx.dump_only = True
     elif opt == '--dry-run':
-      ctx.dry_run = 1
+      ctx.dry_run = True
     elif opt == '--encoding':
       ctx.encoding.insert(-1, value)
     elif opt == '--force-branch':
@@ -236,20 +236,20 @@ def main():
     elif opt == '--auto-props-ignore-case':
       ctx.auto_props_ignore_case = True
     elif opt == '--eol-from-mime-type':
-      ctx.eol_from_mime_type = 1
+      ctx.eol_from_mime_type = True
     elif opt == '--no-default-eol':
-      ctx.no_default_eol = 1
+      ctx.no_default_eol = True
     elif opt == '--keywords-off':
-      ctx.keywords_off = 1
+      ctx.keywords_off = True
     elif opt == '--username':
       ctx.username = value
     elif opt == '--skip-cleanup':
-      ctx.skip_cleanup = 1
+      ctx.skip_cleanup = True
     elif opt == '--cvs-revnums':
       ctx.svn_property_setters.append(
           property_setters.CVSRevisionNumberSetter())
     elif opt == '--bdb-txn-nosync':
-      ctx.bdb_txn_nosync = 1
+      ctx.bdb_txn_nosync = True
     elif opt == '--fs-type':
       ctx.fs_type = value
     elif opt == '--create':
@@ -257,7 +257,7 @@ def main():
           ': The behaviour produced by the --create option is now the '
           'default,\nand passing the option is deprecated.\n')
     elif opt == '--profile':
-      profiling = 1
+      profiling = True
     elif opt == '--symbol-transform':
       [pattern, replacement] = value.split(":")
       try:

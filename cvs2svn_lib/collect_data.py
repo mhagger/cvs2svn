@@ -35,8 +35,8 @@ from log import Log
 from context import Ctx
 from artifact_manager import artifact_manager
 from cvs_file import CVSFile
-from cvs_branch import CVSTrunk
-from cvs_branch import CVSBranch
+from line_of_development import Trunk
+from line_of_development import Branch
 from cvs_revision import CVSRevision
 from cvs_revision import CVSRevisionID
 from key_generator import KeyGenerator
@@ -634,9 +634,9 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
 
     cvs_branch_name = self.symbol_data_collector.rev_to_branch_name(revision)
     if cvs_branch_name:
-      cvs_branch = CVSBranch(cvs_branch_name)
+      cvs_branch = Branch(cvs_branch_name)
     else:
-      cvs_branch = CVSTrunk()
+      cvs_branch = Trunk()
 
     c_rev = CVSRevision(
         self._get_rev_id(revision), self.cvs_file,

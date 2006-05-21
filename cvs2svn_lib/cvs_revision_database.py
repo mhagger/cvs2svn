@@ -19,8 +19,8 @@
 
 from boolean import *
 from context import Ctx
-from cvs_branch import CVSTrunk
-from cvs_branch import CVSBranch
+from line_of_development import Trunk
+from line_of_development import Branch
 from cvs_revision import CVSRevision
 from database import PDatabase
 
@@ -52,9 +52,9 @@ class CVSRevisionDatabase:
     args = self.db['%x' % (c_rev_id,)]
     args[1] = Ctx()._cvs_file_db.get_file(args[1])
     if args[9]:
-      args[9] = CVSBranch(args[9])
+      args[9] = Branch(args[9])
     else:
-      args[9] = CVSTrunk()
+      args[9] = Trunk()
     return CVSRevision(*args)
 
 

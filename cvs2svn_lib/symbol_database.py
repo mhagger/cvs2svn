@@ -39,8 +39,30 @@ def match_regexp_list(regexp_list, s):
 
 
 class SymbolDatabase:
-  """This database records information on all symbols in the RCS
-  files.  It is created in pass 1 and it is used in pass 2."""
+  """This database records a brief summary of information about all
+  symbols in the RCS files.  It is created in CollectRevsPass (pass1)
+  and it is used in ResyncRevsPass (pass2).
+
+  collect_data._SymbolDataCollector inserts information into instances
+  of this class by by calling its register_*() methods.
+
+  Its main purpose is to assist in the decisions about:
+
+  1. What tags and branches should be processed/excluded
+
+  2. What tags should be forced to be branches and vice versa (this
+     class maintains some statistics to help the user decide)
+
+  3. Are there inconsistencies?
+
+     - A symbol that is sometimes a branch and sometimes a tag
+
+     - A forced branch with commit(s) on it
+
+     - A non-excluded branch depends on an excluded branch
+
+  The data contained in this class can be written to text files
+  (config.TAGS_LITS and config.BRANCHES_LIST) and re-read."""
 
   def __init__(self):
     # A hash that maps tag names to commit counts
@@ -80,7 +102,7 @@ class SymbolDatabase:
 
     self._branch(name)[2][blocker] = None
 
-  def branch_has_commit(self, name):
+  def _branch_has_commit(self, name):
     """Return non-zero if NAME has commits.  Returns 0 if name
     is not a branch or if it has no commits."""
 
@@ -100,7 +122,7 @@ class SymbolDatabase:
         excludes[branch] = None
     return excludes
 
-  def find_branch_exclude_blockers(self, branch, excludes):
+  def _find_branch_exclude_blockers(self, branch, excludes):
     """Find all blockers of BRANCH, excluding the ones in the hash
     EXCLUDES."""
 
@@ -111,7 +133,7 @@ class SymbolDatabase:
           blockers[blocker] = None
     return blockers
 
-  def find_blocked_excludes(self, excludes):
+  def _find_blocked_excludes(self, excludes):
     """Find all branches not in EXCLUDES that have blocking symbols that
     are not themselves excluded.  Return a hash that maps branch names
     to a hash of blockers.  The hash of blockes is used as a set so the
@@ -119,12 +141,12 @@ class SymbolDatabase:
 
     blocked_branches = { }
     for branch in self._branches:
-      blockers = self.find_branch_exclude_blockers(branch, excludes)
+      blockers = self._find_branch_exclude_blockers(branch, excludes)
       if blockers:
         blocked_branches[branch] = blockers
     return blocked_branches
 
-  def find_mismatches(self, excludes=None):
+  def _find_mismatches(self, excludes=None):
     """Find all symbols that are defined as both tags and branches,
     excluding the ones in EXCLUDES.  Returns a list of 4-tuples with
     the symbol name, tag count, branch count and commit count."""
@@ -140,7 +162,7 @@ class SymbolDatabase:
                            self._branches[branch][1])) # commit count
     return mismatches
 
-  def check_blocked_excludes(self, excludes):
+  def _check_blocked_excludes(self, excludes):
     """Check whether any excluded branches are blocked.
 
     A branch can be blocked because it has another, non-excluded
@@ -150,7 +172,7 @@ class SymbolDatabase:
 
     Log().quiet("Checking for blocked exclusions...")
 
-    blocked_excludes = self.find_blocked_excludes(excludes)
+    blocked_excludes = self._find_blocked_excludes(excludes)
     if not blocked_excludes:
       return False
 
@@ -163,7 +185,7 @@ class SymbolDatabase:
     sys.stderr.write("\n")
     return True
 
-  def check_invalid_forced_tags(self, excludes):
+  def _check_invalid_forced_tags(self, excludes):
     """Check for commits on any branches that were forced to be tags.
 
     In that case, they can't be converted into tags.  If any invalid
@@ -176,7 +198,7 @@ class SymbolDatabase:
     for forced_tag in Ctx().forced_tags:
       if excludes.has_key(forced_tag):
         continue
-      if self.branch_has_commit(forced_tag):
+      if self._branch_has_commit(forced_tag):
         invalid_forced_tags.append(forced_tag)
 
     if not invalid_forced_tags:
@@ -191,7 +213,7 @@ class SymbolDatabase:
 
     return True
 
-  def check_symbol_mismatches(self, excludes):
+  def _check_symbol_mismatches(self, excludes):
     """Check for symbols that are defined as both tags and branches.
 
     Exclude the symbols in EXCLUDES.  If any are found, output error
@@ -200,7 +222,7 @@ class SymbolDatabase:
 
     Log().quiet("Checking for tag/branch mismatches...")
 
-    mismatches = self.find_mismatches(excludes)
+    mismatches = self._find_mismatches(excludes)
 
     def is_not_forced(mismatch):
       name = mismatch[0]
@@ -228,9 +250,9 @@ class SymbolDatabase:
 
     # It is important that we not short-circuit here:
     return (
-      self.check_blocked_excludes(excludes)
-      | self.check_invalid_forced_tags(excludes)
-      | self.check_symbol_mismatches(excludes)
+      self._check_blocked_excludes(excludes)
+      | self._check_invalid_forced_tags(excludes)
+      | self._check_symbol_mismatches(excludes)
       )
 
   def create_tags_database(self):

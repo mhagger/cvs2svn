@@ -169,6 +169,10 @@ class _SymbolDataCollector:
     # to check for duplicates.
     self._symbols = { }
 
+    # Map { branch_number : _BranchData }, where branch_number has an
+    # odd number of digits.
+    self._branch_data = { }
+
     # Hash mapping branch numbers, like '1.7.2', to branch names,
     # like 'Release_1_0_dev'.
     self.branch_names = { }
@@ -241,6 +245,9 @@ class _SymbolDataCollector:
     sprout_rev = branch_number[:branch_number.rfind(".")]
     self.branchlist.setdefault(sprout_rev, []).append(name)
     self.collect_data.symbol_db.register_branch_creation(name)
+
+    self._branch_data[name] = _BranchData(
+        self.collect_data.key_generator.gen_id(), name, branch_number)
 
   def set_tag_name(self, revision, name):
     """Record that tag NAME refers to the specified REVISION."""

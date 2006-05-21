@@ -138,6 +138,148 @@ class _RevisionData:
     return self._adjusted
 
 
+class _SymbolDataCollector:
+  """Collect information about symbols in a CVSFile."""
+
+  def __init__(self, collect_data, cvs_file):
+    self.collect_data = collect_data
+
+    self.cvs_file = cvs_file
+
+    # A list [ ( name, revision) ] of each known symbol in this file
+    # with the revision number that it corresponds to.
+    self._symbols = []
+
+    # Hash mapping branch numbers, like '1.7.2', to branch names,
+    # like 'Release_1_0_dev'.
+    self.branch_names = { }
+
+    # Hash mapping revision numbers, like '1.7', to lists of names
+    # indicating which branches sprout from that revision, like
+    # ['Release_1_0_dev', 'experimental_driver', ...].
+    self.branchlist = { }
+
+    # Like self.branchlist, but the values are lists of tag names that
+    # apply to the key revision.
+    self.taglist = { }
+
+  def define_symbol(self, name, revision):
+    self._symbols.append( (name, revision,) )
+
+  def rev_to_branch_name(self, revision):
+    """Return the name of the branch on which REVISION lies.
+    REVISION is a non-branch revision number with an even number of,
+    components, for example '1.7.2.1' (never '1.7.2' nor '1.7.0.2').
+    For the convenience of callers, REVISION can also be a trunk
+    revision such as '1.2', in which case just return None."""
+
+    if trunk_rev.match(revision):
+      return None
+    return self.branch_names.get(revision[:revision.rindex(".")])
+
+  def set_branch_name(self, branch_number, name):
+    """Record that BRANCH_NUMBER is the branch number for branch NAME,
+    and derive and record the revision from which NAME sprouts.
+    BRANCH_NUMBER is an RCS branch number with an odd number of
+    components, for example '1.7.2' (never '1.7.0.2')."""
+
+    if self.branch_names.has_key(branch_number):
+      sys.stderr.write("%s: in '%s':\n"
+                       "   branch '%s' already has name '%s',\n"
+                       "   cannot also have name '%s', ignoring the latter\n"
+                       % (warning_prefix,
+                          self.cvs_file.filename, branch_number,
+                          self.branch_names[branch_number], name))
+      return
+
+    self.branch_names[branch_number] = name
+    # The branchlist is keyed on the revision number from which the
+    # branch sprouts, so strip off the odd final component.
+    sprout_rev = branch_number[:branch_number.rfind(".")]
+    self.branchlist.setdefault(sprout_rev, []).append(name)
+    self.collect_data.symbol_db.register_branch_creation(name)
+
+  def set_tag_name(self, revision, name):
+    """Record that tag NAME refers to the specified REVISION."""
+
+    self.taglist.setdefault(revision, []).append(name)
+    self.collect_data.symbol_db.register_tag_creation(name)
+
+  def transform_symbol(self, name):
+    """Transform the symbol NAME using the renaming rules specified
+    with --symbol-transform.  Return the transformed symbol name."""
+
+    for (pattern, replacement) in Ctx().symbol_transforms:
+      newname = pattern.sub(replacement, name)
+      if newname != name:
+        Log().warn("   symbol '%s' transformed to '%s'" % (name, newname))
+        name = newname
+
+    return name
+
+  def process_symbol(self, name, revision):
+    """Record a bidirectional mapping between symbolic NAME and REVISION.
+    REVISION is an unprocessed revision number from the RCS file's
+    header, for example: '1.7', '1.7.0.2', or '1.1.1' or '1.1.1.1'.
+    This function will determine what kind of symbolic name it is by
+    inspection, and record it in the right places."""
+
+    m = cvs_branch_tag.match(revision)
+    if m:
+      self.set_branch_name(m.group(1) + m.group(2), name)
+    elif rcs_branch_tag.match(revision):
+      self.set_branch_name(revision, name)
+    else:
+      self.set_tag_name(revision, name)
+
+  def process_symbols(self):
+    # A list of all symbols defined for the current file.  Used to
+    # prevent multiple definitions of a symbol, something which can
+    # easily happen when --symbol-transform is used.
+    defined_symbols = { }
+
+    for (name, revision,) in self._symbols:
+      name = self.transform_symbol(name)
+
+      if defined_symbols.has_key(name):
+        err = "%s: Multiple definitions of the symbol '%s' in '%s'" \
+                  % (error_prefix, name, self.cvs_file.filename)
+        sys.stderr.write(err + "\n")
+        self.collect_data.fatal_errors.append(err)
+
+      defined_symbols[name] = None
+
+      self.process_symbol(name, revision)
+
+    # Free memory:
+    self._symbols = None
+
+  def register_branch_commit(self, rev):
+    """Register REV, which is a non-trunk revision number, as a commit
+    on the corresponding branch."""
+
+    # Check for unlabeled branches, record them.  We tried to collect
+    # all branch names when we parsed the symbolic name header
+    # earlier, of course, but that didn't catch unlabeled branches.
+    # If a branch is unlabeled, this is our first encounter with it,
+    # so we have to record its data now.
+    branch_number = rev[:rev.rindex(".")]
+    if not self.branch_names.has_key(branch_number):
+      branch_name = "unlabeled-" + branch_number
+      self.set_branch_name(branch_number, branch_name)
+
+    # Register the commit on this non-trunk branch
+    branch_name = self.branch_names[branch_number]
+    self.collect_data.symbol_db.register_branch_commit(branch_name)
+
+  def register_branch_blockers(self):
+    for revision, symbols in self.taglist.items() + self.branchlist.items():
+      for symbol in symbols:
+        name = self.rev_to_branch_name(revision)
+        if name is not None:
+          self.collect_data.symbol_db.register_branch_blocker(name, symbol)
+
+
 class FileDataCollector(cvs2svn_rcsparse.Sink):
   """Class responsible for collecting RCS data for a particular file.
 
@@ -181,9 +323,9 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
         file_in_attic, file_executable, file_size, None
         )
 
-    # A list [ ( name, revision) ] of each known symbol in this file
-    # with the revision number that it corresponds to.
-    self._symbols = []
+    # A place to store information about the symbols in this file:
+    self.symbol_data_collector = \
+        _SymbolDataCollector(self.collect_data, self.cvs_file)
 
     # { revision : _RevisionData instance }
     self._rev_data = { }
@@ -199,19 +341,6 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     # revision on the branch on the sprout revision.
     self._primary_dependencies = []
     self._branch_dependencies = []
-
-    # Hash mapping branch numbers, like '1.7.2', to branch names,
-    # like 'Release_1_0_dev'.
-    self.branch_names = { }
-
-    # Hash mapping revision numbers, like '1.7', to lists of names
-    # indicating which branches sprout from that revision, like
-    # ['Release_1_0_dev', 'experimental_driver', ...].
-    self.branchlist = { }
-
-    # Like self.branchlist, but the values are lists of tag names that
-    # apply to the key revision.
-    self.taglist = { }
 
     # If set, this is an RCS branch number -- rcsparse calls this the
     # "principal branch", but CVS and RCS refer to it as the "default
@@ -246,100 +375,12 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
 
     This is a callback method declared in Sink."""
 
-    self._symbols.append( (name, revision,) )
-
-  def set_branch_name(self, branch_number, name):
-    """Record that BRANCH_NUMBER is the branch number for branch NAME,
-    and derive and record the revision from which NAME sprouts.
-    BRANCH_NUMBER is an RCS branch number with an odd number of
-    components, for example '1.7.2' (never '1.7.0.2')."""
-
-    if self.branch_names.has_key(branch_number):
-      sys.stderr.write("%s: in '%s':\n"
-                       "   branch '%s' already has name '%s',\n"
-                       "   cannot also have name '%s', ignoring the latter\n"
-                       % (warning_prefix,
-                          self.cvs_file.filename, branch_number,
-                          self.branch_names[branch_number], name))
-      return
-
-    self.branch_names[branch_number] = name
-    # The branchlist is keyed on the revision number from which the
-    # branch sprouts, so strip off the odd final component.
-    sprout_rev = branch_number[:branch_number.rfind(".")]
-    self.branchlist.setdefault(sprout_rev, []).append(name)
-    self.collect_data.symbol_db.register_branch_creation(name)
-
-  def set_tag_name(self, revision, name):
-    """Record that tag NAME refers to the specified REVISION."""
-
-    self.taglist.setdefault(revision, []).append(name)
-    self.collect_data.symbol_db.register_tag_creation(name)
-
-  def rev_to_branch_name(self, revision):
-    """Return the name of the branch on which REVISION lies.
-    REVISION is a non-branch revision number with an even number of,
-    components, for example '1.7.2.1' (never '1.7.2' nor '1.7.0.2').
-    For the convenience of callers, REVISION can also be a trunk
-    revision such as '1.2', in which case just return None."""
-
-    if trunk_rev.match(revision):
-      return None
-    return self.branch_names.get(revision[:revision.rindex(".")])
-
-  def _process_symbol(self, name, revision):
-    """Record a bidirectional mapping between symbolic NAME and REVISION.
-    REVISION is an unprocessed revision number from the RCS file's
-    header, for example: '1.7', '1.7.0.2', or '1.1.1' or '1.1.1.1'.
-    This function will determine what kind of symbolic name it is by
-    inspection, and record it in the right places."""
-
-    m = cvs_branch_tag.match(revision)
-    if m:
-      self.set_branch_name(m.group(1) + m.group(2), name)
-    elif rcs_branch_tag.match(revision):
-      self.set_branch_name(revision, name)
-    else:
-      self.set_tag_name(revision, name)
-
-  def _transform_symbol(self, name):
-    """Transform the symbol NAME using the renaming rules specified
-    with --symbol-transform.  Return the transformed symbol name."""
-
-    for (pattern, replacement) in Ctx().symbol_transforms:
-      newname = pattern.sub(replacement, name)
-      if newname != name:
-        Log().warn("   symbol '%s' transformed to '%s'" % (name, newname))
-        name = newname
-
-    return name
-
-  def _process_symbols(self):
-    # A list of all symbols defined for the current file.  Used to
-    # prevent multiple definitions of a symbol, something which can
-    # easily happen when --symbol-transform is used.
-    defined_symbols = { }
-
-    for (name, revision,) in self._symbols:
-      name = self._transform_symbol(name)
-
-      if defined_symbols.has_key(name):
-        err = "%s: Multiple definitions of the symbol '%s' in '%s'" \
-                  % (error_prefix, name, self.cvs_file.filename)
-        sys.stderr.write(err + "\n")
-        self.collect_data.fatal_errors.append(err)
-
-      defined_symbols[name] = None
-
-      self._process_symbol(name, revision)
-
-    # Free memory:
-    self._symbols = None
+    self.symbol_data_collector.define_symbol(name, revision)
 
   def admin_completed(self):
     """This is a callback method declared in Sink."""
 
-    self._process_symbols()
+    self.symbol_data_collector.process_symbols()
 
   def define_revision(self, revision, timestamp, author, state,
                       branches, next):
@@ -434,24 +475,6 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
           # the maximum trunk vendor revision in the permanent record.
           self.cvs_file.default_branch = rev_data.rev
 
-  def _register_branch_commit(self, rev):
-    """Register REV, which is a non-trunk revision number, as a commit
-    on the corresponding branch."""
-
-    # Check for unlabeled branches, record them.  We tried to collect
-    # all branch names when we parsed the symbolic name header
-    # earlier, of course, but that didn't catch unlabeled branches.
-    # If a branch is unlabeled, this is our first encounter with it,
-    # so we have to record its data now.
-    branch_number = rev[:rev.rindex(".")]
-    if not self.branch_names.has_key(branch_number):
-      branch_name = "unlabeled-" + branch_number
-      self.set_branch_name(branch_number, branch_name)
-
-    # Register the commit on this non-trunk branch
-    branch_name = self.branch_names[branch_number]
-    self.collect_data.symbol_db.register_branch_commit(branch_name)
-
   def _resync_chain(self, rev_data):
     """If the REV_DATA.parent revision exists and it occurred later
     than the REV_DATA revision, then shove the previous revision back
@@ -505,7 +528,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
       self._update_default_branch(rev_data)
 
       if not trunk_rev.match(rev_data.rev):
-        self._register_branch_commit(rev_data.rev)
+        self.symbol_data_collector.register_branch_commit(rev_data.rev)
 
     self._resolve_dependencies()
 
@@ -615,9 +638,10 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
         self._determine_operation(rev_data),
         revision,
         bool(text),
-        self.rev_to_branch_name(revision),
+        self.symbol_data_collector.rev_to_branch_name(revision),
         self._is_first_on_branch(rev_data),
-        self.taglist.get(revision, []), self.branchlist.get(revision, []))
+        self.symbol_data_collector.taglist.get(revision, []),
+        self.symbol_data_collector.branchlist.get(revision, []))
     rev_data.c_rev = c_rev
     self.collect_data.add_cvs_revision(c_rev)
 
@@ -632,11 +656,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
 
     self.collect_data.add_cvs_file(self.cvs_file)
 
-    for revision, symbols in self.taglist.items() + self.branchlist.items():
-      for symbol in symbols:
-        name = self.rev_to_branch_name(revision)
-        if name is not None:
-          self.collect_data.symbol_db.register_branch_blocker(name, symbol)
+    self.symbol_data_collector.register_branch_blockers()
 
     self.collect_data.num_files += 1
 

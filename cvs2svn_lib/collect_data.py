@@ -417,8 +417,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
           and default_branch_root.count('.') == rev_data.rev.count('.')):
         # This revision is on the default branch, so record that it is
         # the new highest default branch head revision.
-        self.collect_data.default_branches_db['%x' % self.cvs_file.id] = \
-            rev_data.rev
+        self.cvs_file.default_branch = rev_data.rev
     else:
       # No default branch, so make an educated guess.
       if rev_data.rev == '1.2':
@@ -433,8 +432,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
           # We're looking at a vendor revision, and it wasn't
           # committed after this file lost its default branch, so bump
           # the maximum trunk vendor revision in the permanent record.
-          self.collect_data.default_branches_db['%x' % self.cvs_file.id] = \
-              rev_data.rev
+          self.cvs_file.default_branch = rev_data.rev
 
   def _register_branch_commit(self, rev):
     """Register REV, which is a non-trunk revision number, as a commit
@@ -607,10 +605,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     # default branches db.  The test is that the log message CVS uses
     # for 1.1 in imports is "Initial revision\n" with no period.
     if revision == '1.1' and log != 'Initial revision\n':
-      try:
-        del self.collect_data.default_branches_db['%x' % self.cvs_file.id]
-      except KeyError:
-        pass
+      self.cvs_file.default_branch = None
 
     c_rev = CVSRevision(
         self._get_rev_id(revision), self.cvs_file,
@@ -661,9 +656,6 @@ class CollectData:
         artifact_manager.get_temp_file(config.ALL_REVS_DATAFILE), 'w')
     self.resync = open(
         artifact_manager.get_temp_file(config.RESYNC_DATAFILE), 'w')
-    self.default_branches_db = SDatabase(
-        artifact_manager.get_temp_file(config.DEFAULT_BRANCHES_DB),
-        DB_OPEN_NEW)
     self.metadata_db = Database(
         artifact_manager.get_temp_file(config.METADATA_DB), DB_OPEN_NEW)
     self.fatal_errors = []

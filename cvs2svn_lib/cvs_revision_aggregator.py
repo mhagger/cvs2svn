@@ -98,9 +98,6 @@ class CVSRevisionAggregator:
 
     Ctx()._symbolings_logger = SymbolingsLogger()
     Ctx()._persistence_manager = PersistenceManager(DB_OPEN_NEW)
-    Ctx()._default_branches_db = SDatabase(
-        artifact_manager.get_temp_file(config.DEFAULT_BRANCHES_DB),
-        DB_OPEN_READ)
 
   def _get_deps(self, c_rev, deps):
     """Add the CVSCommits that this C_REV depends on to DEPS, which is a

@@ -127,30 +127,6 @@ SVN_REVNUMS_TO_CVS_REVS = 'cvs2svn-svn-revnums-to-cvs-revs.db'
 # large enough to be efficient without wasting too much memory.
 PIPE_READ_SIZE = 128 * 1024
 
-# Record the default RCS branches, if any, for CVS filepaths.
-#
-# The keys are CVSFile ids.  The values are vendor branch revisions,
-# such as '1.1.1.1', or '1.1.1.2', or '1.1.1.96'.  The vendor branch
-# revision represents the highest vendor branch revision thought to
-# have ever been head of the default branch.
-#
-# The reason we record a specific vendor revision, rather than a
-# default branch number, is that there are two cases to handle:
-#
-# One case is simple.  The RCS file lists a default branch explicitly
-# in its header, such as '1.1.1'.  In this case, we know that every
-# revision on the vendor branch is to be treated as head of trunk at
-# that point in time.
-#
-# But there's also a degenerate case.  The RCS file does not currently
-# have a default branch, yet we can deduce that for some period in the
-# past it probably *did* have one.  For example, the file has vendor
-# revisions 1.1.1.1 -> 1.1.1.96, all of which are dated before 1.2,
-# and then it has 1.1.1.97 -> 1.1.1.100 dated after 1.2.  In this
-# case, we should record 1.1.1.96 as the last vendor revision to have
-# been the head of the default branch.
-DEFAULT_BRANCHES_DB = 'cvs2svn-default-branches.db'
-
 # Records the author and log message for each changeset.
 # The keys are author+log digests, the same kind used to identify
 # unique revisions in the .revs, etc files.  Each value is a tuple

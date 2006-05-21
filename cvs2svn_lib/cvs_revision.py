@@ -141,11 +141,10 @@ class CVSRevision(CVSRevisionID):
     return False
 
   def is_default_branch_revision(self):
-    """Return True iff SELF.rev of SELF.cvs_file.cvs_path is a default
-    branch revision according to DEFAULT_BRANCHES_DB (see the
-    conditions documented there)."""
+    """Return True iff SELF.rev of SELF.cvs_file is a default branch
+    revision."""
 
-    val = self.ctx._default_branches_db.get('%x' % self.cvs_file.id, None)
+    val = self.cvs_file.default_branch
     if val is not None:
       val_last_dot = val.rindex(".")
       our_last_dot = self.rev.rindex(".")

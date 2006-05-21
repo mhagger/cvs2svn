@@ -124,7 +124,6 @@ class CollectRevsPass(Pass):
     self._register_temp_file(config.TAGS_LIST)
     self._register_temp_file(config.BRANCHES_LIST)
     self._register_temp_file(config.RESYNC_DATAFILE)
-    self._register_temp_file(config.DEFAULT_BRANCHES_DB)
     self._register_temp_file(config.METADATA_DB)
     self._register_temp_file(config.CVS_FILES_DB)
     self._register_temp_file(config.CVS_REVS_DB)
@@ -566,7 +565,6 @@ class AggregateRevsPass(Pass):
     self._register_temp_file_needed(config.CVS_FILES_DB)
     self._register_temp_file_needed(config.CVS_REVS_RESYNC_DB)
     self._register_temp_file_needed(config.TAGS_DB)
-    self._register_temp_file_needed(config.DEFAULT_BRANCHES_DB)
     self._register_temp_file_needed(config.METADATA_DB)
     self._register_temp_file_needed(config.SORTED_REVS_DATAFILE)
 

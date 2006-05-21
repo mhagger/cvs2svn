@@ -165,9 +165,9 @@ class _SymbolDataCollector:
 
     self.cvs_file = cvs_file
 
-    # A list [ ( name, revision) ] of each known symbol in this file
-    # with the revision number that it corresponds to.
-    self._symbols = []
+    # A map [ name : ( name, revision) ] of each known symbol in this
+    # file with the revision number that it corresponds to.
+    self._symbols = { }
 
     # Hash mapping branch numbers, like '1.7.2', to branch names,
     # like 'Release_1_0_dev'.
@@ -183,7 +183,18 @@ class _SymbolDataCollector:
     self.taglist = { }
 
   def define_symbol(self, name, revision):
-    self._symbols.append( (name, revision,) )
+    name = self.transform_symbol(name)
+
+    # Check that the symbol is not already defined, which can easily
+    # happen when --symbol-transform is used:
+    if self._symbols.has_key(name):
+      err = "%s: Multiple definitions of the symbol '%s' in '%s'" \
+                % (error_prefix, name, self.cvs_file.filename)
+      sys.stderr.write(err + "\n")
+      self.collect_data.fatal_errors.append(err)
+
+    else:
+      self._symbols[name] = (name, revision,)
 
   def rev_to_branch_name(self, revision):
     """Return the name of the branch on which REVISION lies.
@@ -252,22 +263,7 @@ class _SymbolDataCollector:
       self.set_tag_name(revision, name)
 
   def process_symbols(self):
-    # A list of all symbols defined for the current file.  Used to
-    # prevent multiple definitions of a symbol, something which can
-    # easily happen when --symbol-transform is used.
-    defined_symbols = { }
-
-    for (name, revision,) in self._symbols:
-      name = self.transform_symbol(name)
-
-      if defined_symbols.has_key(name):
-        err = "%s: Multiple definitions of the symbol '%s' in '%s'" \
-                  % (error_prefix, name, self.cvs_file.filename)
-        sys.stderr.write(err + "\n")
-        self.collect_data.fatal_errors.append(err)
-
-      defined_symbols[name] = None
-
+    for (name, revision,) in self._symbols.values():
       self.process_symbol(name, revision)
 
     # Free memory:

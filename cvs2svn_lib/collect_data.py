@@ -300,12 +300,18 @@ class _SymbolDataCollector:
     self.collect_data.symbol_db.register_branch_commit(branch_data.name)
 
   def register_branch_blockers(self):
-    for revision, symbols in self.taglist.items() + self.branchlist.items():
+    for revision, symbols in self.taglist.items():
       for symbol in symbols:
         branch_data = self.rev_to_branch_data(revision)
         if branch_data is not None:
           self.collect_data.symbol_db.register_branch_blocker(
               branch_data.name, symbol)
+
+    for branch_data_child in self._branch_data.values():
+      branch_data_parent = self.rev_to_branch_data(branch_data_child.parent)
+      if branch_data_parent is not None:
+        self.collect_data.symbol_db.register_branch_blocker(
+            branch_data_parent.name, branch_data_child.name)
 
 
 class FileDataCollector(cvs2svn_rcsparse.Sink):

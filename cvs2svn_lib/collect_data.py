@@ -139,6 +139,23 @@ class _RevisionData:
     return self._adjusted
 
 
+class _BranchData:
+  """Collection area for information about a CVSBranch."""
+
+  def __init__(self, id, name, branch_number):
+    self.id = id
+    self.name = name
+    self.branch_number = branch_number
+
+    # The revision number of the revision from which this branch
+    # sprouts.  It will be filled in when established:
+    self.parent = None
+
+    # The revision number of the first commit on this branch, if any;
+    # otherwise, None.
+    self.child = None
+
+
 class _SymbolDataCollector:
   """Collect information about symbols in a CVSFile."""
 

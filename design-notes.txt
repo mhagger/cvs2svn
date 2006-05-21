@@ -95,7 +95,7 @@ When every CVS file is done, CollectRevsPass is complete, and:
      no particular order.
 
    - 'cvs2svn-branches.txt' ???
-   - 'cvs2svn-tags' ???
+   - 'cvs2svn-tags.txt' ???
    - 'cvs2svn-metadata.db' ???
 
 

@@ -138,8 +138,7 @@ class CollectRevsPass(Pass):
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_NEW)
     cd = CollectData(stats_keeper)
 
-    def visit_file(baton, dirname, files):
-      cd = baton
+    def visit_file(cd, dirname, files):
       for fname in files:
         verify_filename_legal(fname)
         if not fname.endswith(',v'):

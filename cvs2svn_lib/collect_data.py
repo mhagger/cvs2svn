@@ -633,7 +633,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
 
     cvs_branch_name = self.symbol_data_collector.rev_to_branch_name(revision)
     if cvs_branch_name:
-      cvs_branch = CVSBranch(self.cvs_file, cvs_branch_name)
+      cvs_branch = CVSBranch(cvs_branch_name)
     else:
       cvs_branch = None
 

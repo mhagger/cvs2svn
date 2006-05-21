@@ -23,8 +23,7 @@ from boolean import *
 class CVSBranch:
   """An object that describes a CVS branch."""
 
-  def __init__(self, cvs_file, name):
-    self.cvs_file = cvs_file
+  def __init__(self, name):
     self.name = name
 
 

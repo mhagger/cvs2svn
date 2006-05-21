@@ -47,7 +47,7 @@ class CVSRevisionDatabase:
 
     args = self.db['%x' % (c_rev_id,)]
     args[1] = Ctx()._cvs_file_db.get_file(args[1])
-    args[9] = args[9] and CVSBranch(args[1], args[9])
+    args[9] = args[9] and CVSBranch(args[9])
     return CVSRevision(*args)
 
 

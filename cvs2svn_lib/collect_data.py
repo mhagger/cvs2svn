@@ -97,7 +97,7 @@ class _RevisionData:
   state of the prev_rev, we are unable to distinguish between an add
   and a change."""
 
-  def __init__(self, cvs_rev_id, rev, timestamp, author, state, branches):
+  def __init__(self, cvs_rev_id, rev, timestamp, author, state, branch_datas):
     # The id of this revision:
     self.cvs_rev_id = cvs_rev_id
     # The CVSRevision is not yet known.  It will be stored here:
@@ -109,9 +109,12 @@ class _RevisionData:
     self._adjusted = False
     self.state = state
 
+    self._branch_datas = branch_datas
+
     # Numbers of branch first revisions sprouting from this revision,
     # as specified by define_revision():
-    self.branches = branches
+    self.branches = [ branch_data.child
+                      for branch_data in self._branch_datas ]
 
     # The revision number of the parent of this revision along the
     # same line of development, if any.
@@ -330,12 +333,6 @@ class _SymbolDataCollector:
     if not trunk_rev.match(rev_data.rev):
       self.register_branch_commit(rev_data.rev)
 
-    for b in rev_data.branches:
-      branch_number = b[:b.rfind(".")]
-      branch_data = self._get_branch_data(branch_number)
-      assert branch_data.child is None
-      branch_data.child = b
-
   def get_branch_data(self):
     """Return an iterator over all known branch_data."""
 
@@ -444,10 +441,18 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
                       branches, next):
     """This is a callback method declared in Sink."""
 
+    branch_datas = []
+    for branch in branches:
+      branch_number = branch[:branch.rfind('.')]
+      branch_data = self.sdc._get_branch_data(branch_number)
+      assert branch_data.child is None
+      branch_data.child = branch
+      branch_datas.append(branch_data)
+
     # Record basic information about the revision:
     self._rev_data[revision] = _RevisionData(
         self.collect_data.key_generator.gen_id(),
-        revision, int(timestamp), author, state, branches)
+        revision, int(timestamp), author, state, branch_datas)
 
     # Remember the order that revisions were defined:
     self._rev_order.append(revision)

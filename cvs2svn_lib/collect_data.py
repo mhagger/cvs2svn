@@ -197,10 +197,6 @@ class _SymbolDataCollector:
     # apply to the key revision.
     self.taglist = { }
 
-    # Lists [ (parent, child) ] of revision number pairs indicating
-    # that child is the first revision on branch parent.
-    self._branch_dependencies = []
-
   def _transform_symbol(self, name):
     """Transform the symbol NAME using the renaming rules specified
     with --symbol-transform.  Return the transformed symbol name."""
@@ -344,7 +340,6 @@ class _SymbolDataCollector:
       branch_data = self._get_branch_data(branch_number)
       assert branch_data.child is None
       branch_data.child = b
-      self._branch_dependencies.append( (rev_data.rev, b) )
 
   def get_branch_dependencies(self):
     """Generate the tuples (rev, first_branch_rev), where rev is a

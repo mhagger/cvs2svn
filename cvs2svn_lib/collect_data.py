@@ -341,14 +341,10 @@ class _SymbolDataCollector:
       assert branch_data.child is None
       branch_data.child = b
 
-  def get_branch_dependencies(self):
-    """Generate the tuples (rev, first_branch_rev), where rev is a
-    revision number and first_branch_rev is the revision number of the
-    first commit on a branches sprouting from rev."""
+  def get_branch_data(self):
+    """Return an iterator over all known branch_data."""
 
-    for branch_data in self._branch_data.values():
-      if branch_data.child is not None:
-        yield (branch_data.parent, branch_data.child,)
+    return self._branch_data.itervalues()
 
 
 class FileDataCollector(cvs2svn_rcsparse.Sink):
@@ -493,13 +489,14 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
       assert child_data.parent is None
       child_data.parent = parent
 
-    for (parent, child,) in self.sdc.get_branch_dependencies():
-      parent_data = self._rev_data[parent]
-      parent_data.children.append(child)
+    for branch_data in self.sdc.get_branch_data():
+      if branch_data.child is not None:
+        parent_data = self._rev_data[branch_data.parent]
+        parent_data.children.append(branch_data.child)
 
-      child_data = self._rev_data[child]
-      assert child_data.parent is None
-      child_data.parent = parent
+        child_data = self._rev_data[branch_data.child]
+        assert child_data.parent is None
+        child_data.parent = branch_data.parent
 
   def _update_default_branch(self, rev_data):
     """Ratchet up the highest vendor head revision based on REV_DATA,

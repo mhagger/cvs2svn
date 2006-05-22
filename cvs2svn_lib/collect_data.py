@@ -53,8 +53,13 @@ import cvs2svn_rcsparse
 
 OS_SEP_PLUS_ATTIC = os.sep + 'Attic'
 
-cvs_branch_tag = re.compile(r'^((?:[0-9]+\.[0-9]+\.)+)0\.([0-9]+)$')
-rcs_branch_tag = re.compile(r'^(?:[0-9]+\.[0-9]+\.)+[0-9]+$')
+branch_tag_re = re.compile(r'''
+    ^
+    ((?:\d+\.\d+\.)+)   # A nonzero even number of digit groups w/trailing dot
+    (?:0\.)?            # CVS sticks an extra 0 here; RCS does not
+    (\d+)               # And the last digit group
+    $
+    ''', re.VERBOSE)
 
 # This really only matches standard '1.1.1.*'-style vendor revisions.
 # One could conceivably have a file whose default branch is 1.1.3 or
@@ -63,7 +68,7 @@ rcs_branch_tag = re.compile(r'^(?:[0-9]+\.[0-9]+\.)+[0-9]+$')
 # is the only time this regexp gets used), we'd have no basis for
 # assuming that the non-standard vendor branch had ever been the
 # default branch anyway, so we don't want this to match them anyway.
-vendor_revision = re.compile(r'^(1\.1\.1)\.([0-9])+$')
+vendor_revision = re.compile(r'^1\.1\.1\.\d+$')
 
 
 def is_trunk_revision(rev):
@@ -282,11 +287,9 @@ class _SymbolDataCollector:
     This function will determine what kind of symbolic name it is by
     inspection, and record it in the right places."""
 
-    m = cvs_branch_tag.match(revision)
+    m = branch_tag_re.match(revision)
     if m:
       self._add_branch(name, m.group(1) + m.group(2))
-    elif rcs_branch_tag.match(revision):
-      self._add_branch(name, revision)
     else:
       self._add_tag(name, revision)
 
@@ -523,10 +526,10 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         # default branch, so make a note of it.
         self.first_non_vendor_revision_date = rev_data.timestamp
       else:
-        m = vendor_revision.match(rev_data.rev)
-        if m and ((not self.first_non_vendor_revision_date)
-                  or (rev_data.timestamp
-                      < self.first_non_vendor_revision_date)):
+        if vendor_revision.match(rev_data.rev) \
+              and (not self.first_non_vendor_revision_date
+                   or rev_data.timestamp
+                       < self.first_non_vendor_revision_date):
           # We're looking at a vendor revision, and it wasn't
           # committed after this file lost its default branch, so bump
           # the maximum trunk vendor revision in the permanent record.

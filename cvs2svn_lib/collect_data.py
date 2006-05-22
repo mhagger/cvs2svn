@@ -195,7 +195,7 @@ class _SymbolDataCollector:
     # Map { revision : [ tag_data ] }, where revision has an even
     # number of digits, and the value is a list of _TagData objects
     # for tags that apply to that revision.
-    self._tag_data = { }
+    self.tag_datas = { }
 
   def _transform_symbol(self, name):
     """Transform the symbol NAME using the renaming rules specified
@@ -243,7 +243,7 @@ class _SymbolDataCollector:
 
     tag_data = _TagData(
         self.collect_data.key_generator.gen_id(), name, revision)
-    self._tag_data.setdefault(revision, []).append(tag_data)
+    self.tag_datas.setdefault(revision, []).append(tag_data)
     self.collect_data.symbol_db.register_tag_creation(name)
     return tag_data
 
@@ -320,7 +320,7 @@ class _SymbolDataCollector:
       self.collect_data.symbol_db.register_branch_commit(branch_data.name)
 
   def register_branch_blockers(self):
-    for (revision, tag_data_list) in self._tag_data.items():
+    for (revision, tag_data_list) in self.tag_datas.items():
       if is_branch_revision(revision):
         branch_data_parent = self.rev_to_branch_data(revision)
         for tag_data in tag_data_list:
@@ -688,7 +688,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
     tag_names = [
       tag_data.name
-      for tag_data in self.sdc._tag_data.get(rev_data.rev, [])
+      for tag_data in self.sdc.tag_datas.get(rev_data.rev, [])
       ]
 
     c_rev = CVSRevision(

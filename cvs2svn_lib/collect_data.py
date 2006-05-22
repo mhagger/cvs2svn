@@ -192,8 +192,9 @@ class _SymbolDataCollector:
     # odd number of digits.
     self._branch_data = { }
 
-    # Map { revision : _TagData }, where revision has an even number
-    # of digits.
+    # Map { revision : [ tag_data ] }, where revision has an even
+    # number of digits, and the value is a list of _TagData objects
+    # for tags that apply to that revision.
     self._tag_data = { }
 
     # Hash mapping revision numbers, like '1.7', to lists of tag names
@@ -273,7 +274,7 @@ class _SymbolDataCollector:
 
     tag_data = _TagData(
         self.collect_data.key_generator.gen_id(), name, revision)
-    self._tag_data[revision] = tag_data
+    self._tag_data.setdefault(revision, []).append(tag_data)
 
     self.taglist.setdefault(revision, []).append(name)
     self.collect_data.symbol_db.register_tag_creation(name)
@@ -326,15 +327,16 @@ class _SymbolDataCollector:
       self.collect_data.symbol_db.register_branch_commit(branch_data.name)
 
   def register_branch_blockers(self):
-    for tag_data_child in self._tag_data.values():
-      branch_data_parent = self.rev_to_branch_data(tag_data_child.rev)
-      if branch_data_parent is not None:
-        self.collect_data.symbol_db.register_branch_blocker(
-            branch_data_parent.name, tag_data_child.name)
+    for (revision, tag_data_list) in self._tag_data.items():
+      if is_branch_revision(revision):
+        branch_data_parent = self.rev_to_branch_data(revision)
+        for tag_data in tag_data_list:
+          self.collect_data.symbol_db.register_branch_blocker(
+              branch_data_parent.name, tag_data.name)
 
     for branch_data_child in self._branch_data.values():
-      branch_data_parent = self.rev_to_branch_data(branch_data_child.parent)
-      if branch_data_parent is not None:
+      if is_branch_revision(branch_data_child.parent):
+        branch_data_parent = self.rev_to_branch_data(branch_data_child.parent)
         self.collect_data.symbol_db.register_branch_blocker(
             branch_data_parent.name, branch_data_child.name)
 

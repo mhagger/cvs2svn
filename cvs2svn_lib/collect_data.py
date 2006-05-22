@@ -195,6 +195,10 @@ class _SymbolDataCollector:
     # apply to the key revision.
     self.taglist = { }
 
+    # Lists [ (parent, child) ] of revision number pairs indicating
+    # that child is the first revision on branch parent.
+    self._branch_dependencies = []
+
   def _transform_symbol(self, name):
     """Transform the symbol NAME using the renaming rules specified
     with --symbol-transform.  Return the transformed symbol name."""
@@ -312,6 +316,19 @@ class _SymbolDataCollector:
         self.collect_data.symbol_db.register_branch_blocker(
             branch_data_parent.name, branch_data_child.name)
 
+  def record_branch_dependencies(self, rev_data):
+    """Record that any branches sprouting from REV_DATA depend on it."""
+
+    for b in rev_data.branches:
+      self._branch_dependencies.append( (rev_data.rev, b) )
+
+  def get_branch_dependencies(self):
+    """Return a list [ (rev, first_branch_rev) ] of tuples, where rev
+    is a revision number and first_branch_rev is the revision number
+    of the first commit on any branches sprouting from rev."""
+
+    return self._branch_dependencies
+
 
 class FileDataCollector(cvs2svn_rcsparse.Sink):
   """Class responsible for collecting RCS data for a particular file.
@@ -368,12 +385,9 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     self._rev_order = []
 
     # Lists [ (parent, child) ] of revision number pairs indicating
-    # that child depends on parent.  _primary_dependencies are
-    # dependencies along the main line of
-    # development. _branch_dependencies are dependencies of the first
-    # revision on the branch on the sprout revision.
+    # that revision child depends on revision parent along the main
+    # line of development.
     self._primary_dependencies = []
-    self._branch_dependencies = []
 
     # If set, this is an RCS branch number -- rcsparse calls this the
     # "principal branch", but CVS and RCS refer to it as the "default
@@ -447,15 +461,8 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
       else:
         self._primary_dependencies.append( (revision, next,) )
 
-  def _set_branch_dependencies(self, rev_data):
-    """Set any branches sprouting from REV_DATA to depend on it."""
-
-    for b in rev_data.branches:
-      self._branch_dependencies.append( (rev_data.rev, b) )
-
   def _resolve_dependencies(self):
-    """Store the dependencies in self._primary_dependencies and
-    self._branch_dependencies into the rev_data objects."""
+    """Store the primary and branch dependencies into the rev_data objects."""
 
     for (parent, child,) in self._primary_dependencies:
       parent_data = self._rev_data[parent]
@@ -466,17 +473,14 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
       assert child_data.parent is None
       child_data.parent = parent
 
-    for (parent, child,) in self._branch_dependencies:
+    for (parent, child,) \
+            in self.symbol_data_collector.get_branch_dependencies():
       parent_data = self._rev_data[parent]
       parent_data.children.append(child)
 
       child_data = self._rev_data[child]
       assert child_data.parent is None
       child_data.parent = parent
-
-    # Free memory:
-    self._primary_dependencies = None
-    self._branch_dependencies = None
 
   def _update_default_branch(self, rev_data):
     """Ratchet up the highest vendor head revision based on REV_DATA,
@@ -553,7 +557,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     for rev in self._rev_order:
       rev_data = self._rev_data[rev]
 
-      self._set_branch_dependencies(rev_data)
+      self.symbol_data_collector.record_branch_dependencies(rev_data)
 
       self._update_default_branch(rev_data)
 

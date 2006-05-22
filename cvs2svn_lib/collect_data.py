@@ -176,7 +176,7 @@ class _SymbolDataCollector:
 
     # A set { name : None } for each known symbol in this file, used
     # to check for duplicates.
-    self._symbols = { }
+    self._known_symbols = { }
 
     # Map { branch_number : _BranchData }, where branch_number has an
     # odd number of digits.
@@ -212,14 +212,14 @@ class _SymbolDataCollector:
 
     # Check that the symbol is not already defined, which can easily
     # happen when --symbol-transform is used:
-    if self._symbols.has_key(name):
+    if name in self._known_symbols:
       err = "%s: Multiple definitions of the symbol '%s' in '%s'" \
                 % (error_prefix, name, self.cvs_file.filename)
       sys.stderr.write(err + "\n")
       self.collect_data.fatal_errors.append(err)
 
     else:
-      self._symbols[name] = None
+      self._known_symbols[name] = None
       self.process_symbol(name, revision)
 
   def rev_to_branch_data(self, revision):

@@ -72,7 +72,7 @@ class CVSFile(object):
     # after 1.2.  In this case, we should record 1.1.1.96 as the last
     # vendor revision to have been the head of the default branch.
     #
-    # This information is determined by FileDataCollector and stored
+    # This information is determined by _FileDataCollector and stored
     # here.
     self.default_branch = None
 

@@ -17,16 +17,17 @@ to them.
 We walk over the repository, collecting data about the RCS files into
 an instance of CollectData.  Each RCS file is processed with
 rcsparse.parse(), which invokes callbacks from an instance of
-cvs2svn's FileDataCollector class (which is a subclass of
+cvs2svn's _FileDataCollector class (which is a subclass of
 rcsparse.Sink).
 
 For each RCS file, the first thing the parser encounters is the
 administrative header, including the head revision, the principal
 branch, symbolic names, RCS comments, etc.  The main thing that
-happens here is that FileDataCollector.define_tag() is invoked on each
-symbolic name and its attached revision, so all the tags and branches
-of this file get collected.  When this stage is done, the parser
-invokes admin_completed(), which writes the CVSFile to the database.
+happens here is that _FileDataCollector.define_tag() is invoked on
+each symbolic name and its attached revision, so all the tags and
+branches of this file get collected.  When this stage is done, the
+parser invokes admin_completed(), which writes the CVSFile to the
+database.
 
 Next, the parser hits the revision summary section.  That's the part
 of the RCS file that looks like this:
@@ -44,12 +45,12 @@ of the RCS file that looks like this:
 
    [...]
 
-For each revision summary, FileDataCollector.define_revision() is
+For each revision summary, _FileDataCollector.define_revision() is
 invoked, recording that revision's metadata in various variables of
-the FileDataCollector class instance.
+the _FileDataCollector class instance.
 
 After finishing the revision summaries, the parser invokes
-FileDataCollector.tree_completed(), which loops over the revision
+_FileDataCollector.tree_completed(), which loops over the revision
 information stored, determining if there are instances where a higher
 revision was committed "before" a lower one (rare, but it can happen
 when there was clock skew on the repository machine).  If there are
@@ -62,7 +63,7 @@ them similarly; more details below).
 
 Next, the parser encounters the *real* revision data, which has the
 log messages and file contents.  For each revision, it invokes
-FileDataCollector.set_revision_info(), which writes a record to
+_FileDataCollector.set_revision_info(), which writes a record to
 'cvs2svn-cvs-revs.db'.
 
 Also, for resync'd revisions, a line like this is written out to

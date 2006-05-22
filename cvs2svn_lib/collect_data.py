@@ -336,7 +336,7 @@ class _SymbolDataCollector:
     return self._branch_data.itervalues()
 
 
-class FileDataCollector(cvs2svn_rcsparse.Sink):
+class _FileDataCollector(cvs2svn_rcsparse.Sink):
   """Class responsible for collecting RCS data for a particular file.
 
   Any collected data that need to be remembered are stored into the
@@ -724,7 +724,7 @@ class CollectData:
 
   This class manages the databases into which information collected
   from the CVS repository is stored.  The data are stored into this
-  class by FileDataCollector instances, one of which is created for
+  class by _FileDataCollector instances, one of which is created for
   each file to be parsed."""
 
   def __init__(self, stats_keeper):
@@ -751,7 +751,7 @@ class CollectData:
     self.key_generator = KeyGenerator()
 
   def process_file(self, pathname):
-    fdc = FileDataCollector(self, pathname)
+    fdc = _FileDataCollector(self, pathname)
 
     if not fdc.cvs_file.in_attic:
       # If this file also exists in the attic, it's a fatal error

@@ -241,16 +241,19 @@ class _SymbolDataCollector:
     """Record that BRANCH_NUMBER is the branch number for branch NAME,
     and derive and record the revision from which NAME sprouts.
     BRANCH_NUMBER is an RCS branch number with an odd number of
-    components, for example '1.7.2' (never '1.7.0.2')."""
+    components, for example '1.7.2' (never '1.7.0.2').  Return the
+    _BranchData instance (which is usually newly-created)."""
 
-    if self._branch_data.has_key(branch_number):
+    branch_data = self._branch_data.get(branch_number)
+
+    if branch_data is not None:
       sys.stderr.write("%s: in '%s':\n"
                        "   branch '%s' already has name '%s',\n"
                        "   cannot also have name '%s', ignoring the latter\n"
                        % (warning_prefix,
                           self.cvs_file.filename, branch_number,
-                          self._branch_data[branch_number].name, name))
-      return
+                          branch_data.name, name))
+      return branch_data
 
     branch_data = _BranchData(
         self.collect_data.key_generator.gen_id(), name, branch_number)
@@ -258,6 +261,7 @@ class _SymbolDataCollector:
 
     self.branchlist.setdefault(branch_data.parent, []).append(name)
     self.collect_data.symbol_db.register_branch_creation(name)
+    return branch_data
 
   def set_tag_name(self, revision, name):
     """Record that tag NAME refers to the specified REVISION."""
@@ -283,8 +287,11 @@ class _SymbolDataCollector:
     else:
       self.set_tag_name(revision, name)
 
-  def _ensure_branch_known(self, branch_number):
-    """If the specified BRANCH_NUMBER is not already known, record it.
+  def _get_branch_data(self, branch_number):
+    """Return the _BranchData object for the specified BRANCH_NUMBER.
+
+    If BRANCH_NUMBER is not already known, create and record the
+    _BranchData instance then return it.
 
     Normally we should learn about the branches from the branch names
     and numbers parsed from the symbolic name header.  But unlabeled
@@ -292,19 +299,23 @@ class _SymbolDataCollector:
     BRANCH_NUMBER is known.  If not, generate a name for it and create
     a _BranchData record for it now."""
 
-    if not self._branch_data.has_key(branch_number):
+    branch_data = self._branch_data.get(branch_number)
+
+    if branch_data is None:
       branch_name = "unlabeled-" + branch_number
-      self.set_branch_name(branch_number, branch_name)
+      branch_data = self.set_branch_name(branch_number, branch_name)
+
+    return branch_data
 
   def register_branch_commit(self, rev):
     """Register REV, which is a non-trunk revision number, as a commit
     on the corresponding branch."""
 
     branch_number = rev[:rev.rindex(".")]
-    self._ensure_branch_known(branch_number)
+
+    branch_data = self._get_branch_data(branch_number)
 
     # Register the commit on this non-trunk branch
-    branch_data = self._branch_data[branch_number]
     self.collect_data.symbol_db.register_branch_commit(branch_data.name)
 
   def register_branch_blockers(self):
@@ -328,8 +339,7 @@ class _SymbolDataCollector:
 
     for b in rev_data.branches:
       branch_number = b[:b.rfind(".")]
-      self._ensure_branch_known(branch_number)
-      branch_data = self._branch_data[branch_number]
+      branch_data = self._get_branch_data(branch_number)
       assert branch_data.child is None
       branch_data.child = rev_data.rev
       self._branch_dependencies.append( (rev_data.rev, b) )

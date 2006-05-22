@@ -646,10 +646,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     return op
 
   def _is_first_on_branch(self, rev_data):
-    if not rev_data.parent:
-      return True
-    else:
-      return rev_data.rev.count('.') != rev_data.parent.count('.')
+    return not rev_data.parent or rev_data.parent_branch_data is not None
 
   def set_revision_info(self, revision, log, text):
     """This is a callback method declared in Sink."""

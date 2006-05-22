@@ -140,7 +140,7 @@ class _RevisionData:
 
     # The branch numbers of any branches that sprout from this
     # revision:
-    self.children = []
+    self.branch_numbers = []
 
   def adjust_timestamp(self, timestamp):
     self._adjusted = True
@@ -488,7 +488,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       # The branch_data's parent has the branch as a child regardless
       # of whether the branch had any subsequent commits:
       parent_data = self._rev_data[branch_data.parent]
-      parent_data.children.append(branch_data.branch_number)
+      parent_data.branch_numbers.append(branch_data.branch_number)
 
       # If the branch has a child (i.e., something was committed on
       # the branch), then we consider that the child depends on the
@@ -682,8 +682,8 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       lod = Trunk()
 
     branch_names = [
-      self.sdc.branch_datas[child].name
-      for child in rev_data.children
+      self.sdc.branch_datas[branch_number].name
+      for branch_number in rev_data.branch_numbers
       ]
 
     tag_names = [

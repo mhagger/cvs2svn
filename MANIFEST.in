@@ -1,3 +1,6 @@
-include cvs2svn verify-cvs2svn *.py dist.sh
-include Makefile
+include verify-cvs2svn *.py cvs2svn.1 dist.sh MANIFEST.in Makefile
 include README BUGS COMMITTERS COPYING HACKING design-notes.txt CHANGES
+recursive-include svntest *
+recursive-include test-data *
+recursive-include www *
+prune www/tigris-branding www/xhtml1-20020801 www/xhtml1.catalog www/xhtml1.tgz

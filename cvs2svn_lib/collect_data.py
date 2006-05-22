@@ -283,21 +283,25 @@ class _SymbolDataCollector:
     else:
       self.set_tag_name(revision, name)
 
-  def register_branch_commit(self, rev):
-    """Register REV, which is a non-trunk revision number, as a commit
-    on the corresponding branch.
+  def _ensure_branch_known(self, branch_number):
+    """If the specified BRANCH_NUMBER is not already known, record it.
 
-    Normally we should already know about the branch containing rev,
-    because we collected the branch names and numbers when we parsed
-    the symbolic name header earlier.  But that didn't catch unlabeled
-    branches.  If a branch is unlabeled, we will first encounter it
-    here, so we have to record its data now (with a generated branch
-    name)."""
+    Normally we should learn about the branches from the branch names
+    and numbers parsed from the symbolic name header.  But unlabeled
+    branches can slip through that net.  Verify that the specified
+    BRANCH_NUMBER is known.  If not, generate a name for it and create
+    a _BranchData record for it now."""
 
-    branch_number = rev[:rev.rindex(".")]
     if not self._branch_data.has_key(branch_number):
       branch_name = "unlabeled-" + branch_number
       self.set_branch_name(branch_number, branch_name)
+
+  def register_branch_commit(self, rev):
+    """Register REV, which is a non-trunk revision number, as a commit
+    on the corresponding branch."""
+
+    branch_number = rev[:rev.rindex(".")]
+    self._ensure_branch_known(branch_number)
 
     # Register the commit on this non-trunk branch
     branch_data = self._branch_data[branch_number]

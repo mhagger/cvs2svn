@@ -119,6 +119,10 @@ class _RevisionData:
     self._adjusted = False
     self.state = state
 
+    # If this is the first revision on a branch, then this is the
+    # branch_data of that branch; otherwise it is None.
+    self.parent_branch_data = None
+
     # The revision number of the parent of this revision along the
     # same line of development, if any.
     #
@@ -484,10 +488,13 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       parent_data.branches_data.append(branch_data)
 
       # If the branch has a child (i.e., something was committed on
-      # the branch), then we consider that the child depends on the
-      # branch's parent:
+      # the branch), then we store a reference to the branch_data
+      # there, and also define the child's parent to be the branch's
+      # parent:
       if branch_data.child is not None:
         child_data = self._rev_data[branch_data.child]
+        assert child_data.parent_branch_data is None
+        child_data.parent_branch_data = branch_data
         assert child_data.parent is None
         child_data.parent = branch_data.parent
 

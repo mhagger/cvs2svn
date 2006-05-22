@@ -3,4 +3,7 @@ include README BUGS COMMITTERS COPYING HACKING design-notes.txt CHANGES
 recursive-include svntest *
 recursive-include test-data *
 recursive-include www *
-prune www/tigris-branding www/xhtml1-20020801 www/xhtml1.catalog www/xhtml1.tgz
+prune www/tigris-branding
+prune www/xhtml1-20020801
+prune www/xhtml1.catalog
+prune www/xhtml1.tgz

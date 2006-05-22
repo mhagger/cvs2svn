@@ -485,13 +485,14 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
       child_data.parent = parent
 
     for branch_data in self.sdc.get_branch_data():
-      # The branch_data's parent depends on the branch whether or not
-      # the branch had any subsequent commits:
+      # The branch_data's parent has the branch as a child regardless
+      # of whether the branch had any subsequent commits:
       parent_data = self._rev_data[branch_data.parent]
       parent_data.children.append(branch_data.branch_number)
 
       # If the branch has a child (i.e., something was committed on
-      # the branch), then the child depends on the branch's parent:
+      # the branch), then we consider that the child depends on the
+      # branch's parent:
       if branch_data.child is not None:
         child_data = self._rev_data[branch_data.child]
         assert child_data.parent is None

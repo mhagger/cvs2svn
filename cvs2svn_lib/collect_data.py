@@ -197,11 +197,6 @@ class _SymbolDataCollector:
     # for tags that apply to that revision.
     self._tag_data = { }
 
-    # Hash mapping revision numbers, like '1.7', to lists of tag names
-    # that apply to that revision, like ['Release_1_0_dev',
-    # 'experimental_driver', ...].
-    self.taglist = { }
-
   def _transform_symbol(self, name):
     """Transform the symbol NAME using the renaming rules specified
     with --symbol-transform.  Return the transformed symbol name."""
@@ -275,10 +270,7 @@ class _SymbolDataCollector:
     tag_data = _TagData(
         self.collect_data.key_generator.gen_id(), name, revision)
     self._tag_data.setdefault(revision, []).append(tag_data)
-
-    self.taglist.setdefault(revision, []).append(name)
     self.collect_data.symbol_db.register_tag_creation(name)
-
     return tag_data
 
   def process_symbol(self, name, revision):
@@ -698,6 +690,11 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       for child in rev_data.children
       ]
 
+    tag_names = [
+      tag_data.name
+      for tag_data in self.sdc._tag_data.get(rev_data.rev, [])
+      ]
+
     c_rev = CVSRevision(
         self._get_rev_id(revision), self.cvs_file,
         rev_data.timestamp, digest,
@@ -708,8 +705,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         bool(text),
         lod,
         self._is_first_on_branch(rev_data),
-        self.sdc.taglist.get(revision, []),
-        branch_names)
+        tag_names, branch_names)
     rev_data.c_rev = c_rev
     self.collect_data.add_cvs_revision(c_rev)
 

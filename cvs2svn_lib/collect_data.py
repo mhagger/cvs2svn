@@ -148,6 +148,10 @@ class _RevisionData:
     # _FileDataCollector._resolve_dependencies().
     self.branches_data = []
 
+    # The _TagData instances of tags that are connected to this
+    # revision.
+    self.tags_data = []
+
   def adjust_timestamp(self, timestamp):
     self._adjusted = True
     self.timestamp = timestamp
@@ -498,6 +502,12 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         assert child_data.parent is None
         child_data.parent = branch_data.parent
 
+    for tag_data_list in self.sdc.tags_data.values():
+      for tag_data in tag_data_list:
+        # The tag_data's rev has the tag as a child:
+        parent_data = self._rev_data[tag_data.rev]
+        parent_data.tags_data.append(tag_data)
+
   def _update_default_branch(self, rev_data):
     """Ratchet up the highest vendor head revision based on REV_DATA,
     if necessary."""
@@ -684,9 +694,9 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         ]
 
     tag_names = [
-      tag_data.name
-      for tag_data in self.sdc.tags_data.get(rev_data.rev, [])
-      ]
+        tag_data.name
+        for tag_data in rev_data.tags_data
+        ]
 
     c_rev = CVSRevision(
         self._get_rev_id(revision), self.cvs_file,

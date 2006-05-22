@@ -190,7 +190,7 @@ class _SymbolDataCollector:
 
     # Map { branch_number : _BranchData }, where branch_number has an
     # odd number of digits.
-    self._branch_data = { }
+    self.branch_datas = { }
 
     # Map { revision : [ tag_data ] }, where revision has an even
     # number of digits, and the value is a list of _TagData objects
@@ -216,7 +216,7 @@ class _SymbolDataCollector:
     components, for example '1.7.2' (never '1.7.0.2').  Return the
     _BranchData instance (which is usually newly-created)."""
 
-    branch_data = self._branch_data.get(branch_number)
+    branch_data = self.branch_datas.get(branch_number)
 
     if branch_data is not None:
       sys.stderr.write("%s: in '%s':\n"
@@ -229,7 +229,7 @@ class _SymbolDataCollector:
 
     branch_data = _BranchData(
         self.collect_data.key_generator.gen_id(), name, branch_number)
-    self._branch_data[branch_number] = branch_data
+    self.branch_datas[branch_number] = branch_data
 
     self.collect_data.symbol_db.register_branch_creation(name)
     return branch_data
@@ -285,7 +285,7 @@ class _SymbolDataCollector:
 
     if is_trunk_revision(revision):
       return None
-    return self._branch_data.get(revision[:revision.rindex(".")])
+    return self.branch_datas.get(revision[:revision.rindex(".")])
 
   def _get_branch_data(self, branch_number):
     """Return the _BranchData object for the specified BRANCH_NUMBER.
@@ -299,7 +299,7 @@ class _SymbolDataCollector:
     BRANCH_NUMBER is known.  If not, generate a name for it and create
     a _BranchData record for it now."""
 
-    return (self._branch_data.get(branch_number)
+    return (self.branch_datas.get(branch_number)
             or self._add_unlabeled_branch(branch_number))
 
   def register_commit(self, rev_data):
@@ -327,16 +327,11 @@ class _SymbolDataCollector:
           self.collect_data.symbol_db.register_branch_blocker(
               branch_data_parent.name, tag_data.name)
 
-    for branch_data_child in self._branch_data.values():
+    for branch_data_child in self.branch_datas.values():
       if is_branch_revision(branch_data_child.parent):
         branch_data_parent = self.rev_to_branch_data(branch_data_child.parent)
         self.collect_data.symbol_db.register_branch_blocker(
             branch_data_parent.name, branch_data_child.name)
-
-  def get_branch_data(self):
-    """Return an iterator over all known branch_data."""
-
-    return self._branch_data.itervalues()
 
 
 class _FileDataCollector(cvs2svn_rcsparse.Sink):
@@ -489,7 +484,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       assert child_data.parent is None
       child_data.parent = parent
 
-    for branch_data in self.sdc.get_branch_data():
+    for branch_data in self.sdc.branch_datas.values():
       # The branch_data's parent has the branch as a child regardless
       # of whether the branch had any subsequent commits:
       parent_data = self._rev_data[branch_data.parent]
@@ -687,7 +682,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       lod = Trunk()
 
     branch_names = [
-      self.sdc._branch_data[child].name
+      self.sdc.branch_datas[child].name
       for child in rev_data.children
       ]
 

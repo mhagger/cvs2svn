@@ -300,16 +300,22 @@ class _SymbolDataCollector:
     return (self._branch_data.get(branch_number)
             or self._add_unlabeled_branch(branch_number))
 
-  def register_branch_commit(self, rev):
-    """Register REV, which is a non-trunk revision number, as a commit
-    on the corresponding branch."""
+  def register_commit(self, rev_data):
+    """If REV_DATA descrives a non-trunk revision number, then record
+    it as a commit on the corresponding branch.  This has two effects:
+    (1) if the branch was not known previously, this might create the
+    branch as an unlabeled branch. (2) It records the commit in
+    symbol_db, which is used to generate statistics for --force-branch
+    and --force-tag guidance."""
 
-    branch_number = rev[:rev.rindex(".")]
+    rev = rev_data.rev
+    if not trunk_rev.match(rev):
+      branch_number = rev[:rev.rindex(".")]
 
-    branch_data = self._get_branch_data(branch_number)
+      branch_data = self._get_branch_data(branch_number)
 
-    # Register the commit on this non-trunk branch
-    self.collect_data.symbol_db.register_branch_commit(branch_data.name)
+      # Register the commit on this non-trunk branch
+      self.collect_data.symbol_db.register_branch_commit(branch_data.name)
 
   def register_branch_blockers(self):
     for tag_data_child in self._tag_data.values():
@@ -323,12 +329,6 @@ class _SymbolDataCollector:
       if branch_data_parent is not None:
         self.collect_data.symbol_db.register_branch_blocker(
             branch_data_parent.name, branch_data_child.name)
-
-  def record_branch_dependencies(self, rev_data):
-    """Record that any branches sprouting from REV_DATA depend on it."""
-
-    if not trunk_rev.match(rev_data.rev):
-      self.register_branch_commit(rev_data.rev)
 
   def get_branch_data(self):
     """Return an iterator over all known branch_data."""
@@ -574,7 +574,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
 
     for rev in self._rev_order:
       rev_data = self._rev_data[rev]
-      self.sdc.record_branch_dependencies(rev_data)
+      self.sdc.register_commit(rev_data)
       self._update_default_branch(rev_data)
 
     self._resolve_dependencies()

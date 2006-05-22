@@ -395,8 +395,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
         )
 
     # A place to store information about the symbols in this file:
-    self.symbol_data_collector = \
-        _SymbolDataCollector(self.collect_data, self.cvs_file)
+    self.sdc = _SymbolDataCollector(self.collect_data, self.cvs_file)
 
     # { revision : _RevisionData instance }
     self._rev_data = { }
@@ -443,7 +442,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
 
     This is a callback method declared in Sink."""
 
-    self.symbol_data_collector.define_symbol(name, revision)
+    self.sdc.define_symbol(name, revision)
 
   def admin_completed(self):
     """This is a callback method declared in Sink."""
@@ -494,8 +493,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
       assert child_data.parent is None
       child_data.parent = parent
 
-    for (parent, child,) \
-            in self.symbol_data_collector.get_branch_dependencies():
+    for (parent, child,) in self.sdc.get_branch_dependencies():
       parent_data = self._rev_data[parent]
       parent_data.children.append(child)
 
@@ -577,7 +575,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
 
     for rev in self._rev_order:
       rev_data = self._rev_data[rev]
-      self.symbol_data_collector.record_branch_dependencies(rev_data)
+      self.sdc.record_branch_dependencies(rev_data)
       self._update_default_branch(rev_data)
 
     self._resolve_dependencies()
@@ -680,7 +678,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     if revision == '1.1' and log != 'Initial revision\n':
       self.cvs_file.default_branch = None
 
-    branch_data = self.symbol_data_collector.rev_to_branch_data(revision)
+    branch_data = self.sdc.rev_to_branch_data(revision)
     if branch_data:
       lod = Branch(branch_data.name)
     else:
@@ -696,8 +694,8 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
         bool(text),
         lod,
         self._is_first_on_branch(rev_data),
-        self.symbol_data_collector.taglist.get(revision, []),
-        self.symbol_data_collector.branchlist.get(revision, []))
+        self.sdc.taglist.get(revision, []),
+        self.sdc.branchlist.get(revision, []))
     rev_data.c_rev = c_rev
     self.collect_data.add_cvs_revision(c_rev)
 
@@ -712,7 +710,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
 
     self.collect_data.add_cvs_file(self.cvs_file)
 
-    self.symbol_data_collector.register_branch_blockers()
+    self.sdc.register_branch_blockers()
 
     self.collect_data.num_files += 1
 

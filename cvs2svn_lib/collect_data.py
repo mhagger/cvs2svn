@@ -289,7 +289,7 @@ class _SymbolDataCollector:
     return self.branches_data.get(revision[:revision.rindex(".")])
 
   def register_commit(self, rev_data):
-    """If REV_DATA descrives a non-trunk revision number, then record
+    """If REV_DATA describes a non-trunk revision number, then record
     it as a commit on the corresponding branch.  This records the
     commit in symbol_db, which is used to generate statistics for
     --force-branch and --force-tag guidance."""

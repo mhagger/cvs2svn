@@ -985,6 +985,22 @@ def split_time_branch():
     ))
 
 
+def multiple_tags():
+  "multiple tags referring to same revision"
+  conv = ensure_conversion('main')
+  if not os.path.exists(
+      os.path.join(
+          conv.get_wc(), 'tags', 'T_ALL_INITIAL_FILES', 'proj', 'default'
+          )
+      ):
+    raise svntest.Failure
+  if not os.path.exists(
+      os.path.join(
+          conv.get_wc(), 'tags', 'T_ALL_INITIAL_FILES_BUT_ONE', 'proj', 'default'
+          )
+      ):
+    raise svntest.Failure
+
 def bogus_tag():
   "conversion of invalid symbolic names"
   conv = ensure_conversion('bogus-tag')
@@ -2129,6 +2145,7 @@ test_list = [ None,
               ctrl_char_in_filename,
               commit_dependencies,
               show_help_passes,
+              multiple_tags,                        # 70
               ]
 
 if __name__ == '__main__':

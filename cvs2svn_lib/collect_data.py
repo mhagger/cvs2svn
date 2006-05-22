@@ -229,7 +229,7 @@ class _SymbolDataCollector:
       return None
     return self._branch_data.get(revision[:revision.rindex(".")])
 
-  def set_branch_name(self, branch_number, name):
+  def _add_branch(self, name, branch_number):
     """Record that BRANCH_NUMBER is the branch number for branch NAME,
     and derive and record the revision from which NAME sprouts.
     BRANCH_NUMBER is an RCS branch number with an odd number of
@@ -254,14 +254,21 @@ class _SymbolDataCollector:
     self.collect_data.symbol_db.register_branch_creation(name)
     return branch_data
 
-  def set_tag_name(self, revision, name):
+  def _add_unlabeled_branch(self, branch_number):
+    name = "unlabeled-" + branch_number
+    return self._add_branch(name, branch_number)
+
+  def _add_tag(self, name, revision):
     """Record that tag NAME refers to the specified REVISION."""
 
-    self._tag_data[revision] = _TagData(
+    tag_data = _TagData(
         self.collect_data.key_generator.gen_id(), name, revision)
+    self._tag_data[revision] = tag_data
 
     self.taglist.setdefault(revision, []).append(name)
     self.collect_data.symbol_db.register_tag_creation(name)
+
+    return tag_data
 
   def process_symbol(self, name, revision):
     """Record a bidirectional mapping between symbolic NAME and REVISION.
@@ -272,11 +279,11 @@ class _SymbolDataCollector:
 
     m = cvs_branch_tag.match(revision)
     if m:
-      self.set_branch_name(m.group(1) + m.group(2), name)
+      self._add_branch(name, m.group(1) + m.group(2))
     elif rcs_branch_tag.match(revision):
-      self.set_branch_name(revision, name)
+      self._add_branch(name, revision)
     else:
-      self.set_tag_name(revision, name)
+      self._add_tag(name, revision)
 
   def _get_branch_data(self, branch_number):
     """Return the _BranchData object for the specified BRANCH_NUMBER.
@@ -290,13 +297,8 @@ class _SymbolDataCollector:
     BRANCH_NUMBER is known.  If not, generate a name for it and create
     a _BranchData record for it now."""
 
-    branch_data = self._branch_data.get(branch_number)
-
-    if branch_data is None:
-      branch_name = "unlabeled-" + branch_number
-      branch_data = self.set_branch_name(branch_number, branch_name)
-
-    return branch_data
+    return (self._branch_data.get(branch_number)
+            or self._add_unlabeled_branch(branch_number))
 
   def register_branch_commit(self, rev):
     """Register REV, which is a non-trunk revision number, as a commit

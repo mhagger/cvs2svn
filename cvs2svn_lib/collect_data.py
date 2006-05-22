@@ -17,6 +17,8 @@
 """This module contains database facilities used by cvs2svn."""
 
 
+from __future__ import generators
+
 import sys
 import os
 import re
@@ -345,11 +347,13 @@ class _SymbolDataCollector:
       self._branch_dependencies.append( (rev_data.rev, b) )
 
   def get_branch_dependencies(self):
-    """Return a list [ (rev, first_branch_rev) ] of tuples, where rev
-    is a revision number and first_branch_rev is the revision number
-    of the first commit on any branches sprouting from rev."""
+    """Generate the tuples (rev, first_branch_rev), where rev is a
+    revision number and first_branch_rev is the revision number of the
+    first commit on a branches sprouting from rev."""
 
-    return self._branch_dependencies
+    for branch_data in self._branch_data.values():
+      if branch_data.child is not None:
+        yield (branch_data.parent, branch_data.child,)
 
 
 class FileDataCollector(cvs2svn_rcsparse.Sink):

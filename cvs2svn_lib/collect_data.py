@@ -304,17 +304,15 @@ class _SymbolDataCollector:
 
   def register_commit(self, rev_data):
     """If REV_DATA descrives a non-trunk revision number, then record
-    it as a commit on the corresponding branch.  This has two effects:
-    (1) if the branch was not known previously, this might create the
-    branch as an unlabeled branch. (2) It records the commit in
-    symbol_db, which is used to generate statistics for --force-branch
-    and --force-tag guidance."""
+    it as a commit on the corresponding branch.  This records the
+    commit in symbol_db, which is used to generate statistics for
+    --force-branch and --force-tag guidance."""
 
     rev = rev_data.rev
     if is_branch_revision(rev):
       branch_number = rev[:rev.rindex(".")]
 
-      branch_data = self._get_branch_data(branch_number)
+      branch_data = self.branch_datas[branch_number]
 
       # Register the commit on this non-trunk branch
       self.collect_data.symbol_db.register_branch_commit(branch_data.name)

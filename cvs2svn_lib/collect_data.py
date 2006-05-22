@@ -53,7 +53,6 @@ import cvs2svn_rcsparse
 
 OS_SEP_PLUS_ATTIC = os.sep + 'Attic'
 
-trunk_rev = re.compile(r'^[0-9]+\.[0-9]+$')
 cvs_branch_tag = re.compile(r'^((?:[0-9]+\.[0-9]+\.)+)0\.([0-9]+)$')
 rcs_branch_tag = re.compile(r'^(?:[0-9]+\.[0-9]+\.)+[0-9]+$')
 
@@ -67,8 +66,14 @@ rcs_branch_tag = re.compile(r'^(?:[0-9]+\.[0-9]+\.)+[0-9]+$')
 vendor_revision = re.compile(r'^(1\.1\.1)\.([0-9])+$')
 
 
+def is_trunk_revision(rev):
+  """Return True iff REV is a trunk revision."""
+
+  return rev.count('.') == 1
+
+
 def is_branch_revision(rev):
-  """Return True iff this revision is not a trunk revision."""
+  """Return True iff REV is a branch revision."""
 
   return rev.count('.') >= 3
 
@@ -225,7 +230,7 @@ class _SymbolDataCollector:
     For the convenience of callers, REVISION can also be a trunk
     revision such as '1.2', in which case just return None."""
 
-    if trunk_rev.match(revision):
+    if is_trunk_revision(revision):
       return None
     return self._branch_data.get(revision[:revision.rindex(".")])
 
@@ -309,7 +314,7 @@ class _SymbolDataCollector:
     and --force-tag guidance."""
 
     rev = rev_data.rev
-    if not trunk_rev.match(rev):
+    if is_branch_revision(rev):
       branch_number = rev[:rev.rindex(".")]
 
       branch_data = self._get_branch_data(branch_number)
@@ -469,7 +474,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     # whether we're on trunk or a branch and set the dependencies
     # accordingly.
     if next:
-      if trunk_rev.match(revision):
+      if is_trunk_revision(revision):
         self._primary_dependencies.append( (next, revision,) )
       else:
         self._primary_dependencies.append( (revision, next,) )

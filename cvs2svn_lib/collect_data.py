@@ -319,6 +319,9 @@ class _SymbolDataCollector:
   def record_branch_dependencies(self, rev_data):
     """Record that any branches sprouting from REV_DATA depend on it."""
 
+    if not trunk_rev.match(rev_data.rev):
+      self.register_branch_commit(rev_data.rev)
+
     for b in rev_data.branches:
       self._branch_dependencies.append( (rev_data.rev, b) )
 
@@ -556,13 +559,8 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
 
     for rev in self._rev_order:
       rev_data = self._rev_data[rev]
-
       self.symbol_data_collector.record_branch_dependencies(rev_data)
-
       self._update_default_branch(rev_data)
-
-      if not trunk_rev.match(rev_data.rev):
-        self.symbol_data_collector.register_branch_commit(rev_data.rev)
 
     self._resolve_dependencies()
 

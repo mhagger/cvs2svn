@@ -341,7 +341,7 @@ class _SymbolDataCollector:
       branch_number = b[:b.rfind(".")]
       branch_data = self._get_branch_data(branch_number)
       assert branch_data.child is None
-      branch_data.child = rev_data.rev
+      branch_data.child = b
       self._branch_dependencies.append( (rev_data.rev, b) )
 
   def get_branch_dependencies(self):

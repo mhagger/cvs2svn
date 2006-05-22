@@ -188,13 +188,9 @@ class _SymbolDataCollector:
     # of digits.
     self._tag_data = { }
 
-    # Hash mapping revision numbers, like '1.7', to lists of names
-    # indicating which branches sprout from that revision, like
-    # ['Release_1_0_dev', 'experimental_driver', ...].
-    self.branchlist = { }
-
-    # Like self.branchlist, but the values are lists of tag names that
-    # apply to the key revision.
+    # Hash mapping revision numbers, like '1.7', to lists of tag names
+    # that apply to that revision, like ['Release_1_0_dev',
+    # 'experimental_driver', ...].
     self.taglist = { }
 
   def _transform_symbol(self, name):
@@ -257,7 +253,6 @@ class _SymbolDataCollector:
         self.collect_data.key_generator.gen_id(), name, branch_number)
     self._branch_data[branch_number] = branch_data
 
-    self.branchlist.setdefault(branch_data.parent, []).append(name)
     self.collect_data.symbol_db.register_branch_creation(name)
     return branch_data
 
@@ -685,6 +680,11 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
     else:
       lod = Trunk()
 
+    branch_names = [
+      self.sdc._branch_data[child].name
+      for child in rev_data.children
+      ]
+
     c_rev = CVSRevision(
         self._get_rev_id(revision), self.cvs_file,
         rev_data.timestamp, digest,
@@ -696,7 +696,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
         lod,
         self._is_first_on_branch(rev_data),
         self.sdc.taglist.get(revision, []),
-        self.sdc.branchlist.get(revision, []))
+        branch_names)
     rev_data.c_rev = c_rev
     self.collect_data.add_cvs_revision(c_rev)
 

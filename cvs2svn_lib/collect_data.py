@@ -107,7 +107,8 @@ class _RevisionData:
   state of the prev_rev, we are unable to distinguish between an add
   and a change."""
 
-  def __init__(self, cvs_rev_id, rev, timestamp, author, state, branch_datas):
+  def __init__(self, cvs_rev_id, rev, timestamp, author, state,
+               branches_data):
     # The id of this revision:
     self.cvs_rev_id = cvs_rev_id
     # The CVSRevision is not yet known.  It will be stored here:
@@ -119,7 +120,7 @@ class _RevisionData:
     self._adjusted = False
     self.state = state
 
-    self._branch_datas = branch_datas
+    self._branches_data = branches_data
 
     # The revision number of the parent of this revision along the
     # same line of development, if any.
@@ -190,12 +191,12 @@ class _SymbolDataCollector:
 
     # Map { branch_number : _BranchData }, where branch_number has an
     # odd number of digits.
-    self.branch_datas = { }
+    self.branches_data = { }
 
     # Map { revision : [ tag_data ] }, where revision has an even
     # number of digits, and the value is a list of _TagData objects
     # for tags that apply to that revision.
-    self.tag_datas = { }
+    self.tags_data = { }
 
   def _transform_symbol(self, name):
     """Transform the symbol NAME using the renaming rules specified
@@ -216,7 +217,7 @@ class _SymbolDataCollector:
     components, for example '1.7.2' (never '1.7.0.2').  Return the
     _BranchData instance (which is usually newly-created)."""
 
-    branch_data = self.branch_datas.get(branch_number)
+    branch_data = self.branches_data.get(branch_number)
 
     if branch_data is not None:
       sys.stderr.write("%s: in '%s':\n"
@@ -229,7 +230,7 @@ class _SymbolDataCollector:
 
     branch_data = _BranchData(
         self.collect_data.key_generator.gen_id(), name, branch_number)
-    self.branch_datas[branch_number] = branch_data
+    self.branches_data[branch_number] = branch_data
 
     self.collect_data.symbol_db.register_branch_creation(name)
     return branch_data
@@ -243,7 +244,7 @@ class _SymbolDataCollector:
 
     tag_data = _TagData(
         self.collect_data.key_generator.gen_id(), name, revision)
-    self.tag_datas.setdefault(revision, []).append(tag_data)
+    self.tags_data.setdefault(revision, []).append(tag_data)
     self.collect_data.symbol_db.register_tag_creation(name)
     return tag_data
 
@@ -285,7 +286,7 @@ class _SymbolDataCollector:
 
     if is_trunk_revision(revision):
       return None
-    return self.branch_datas.get(revision[:revision.rindex(".")])
+    return self.branches_data.get(revision[:revision.rindex(".")])
 
   def register_commit(self, rev_data):
     """If REV_DATA descrives a non-trunk revision number, then record
@@ -297,20 +298,20 @@ class _SymbolDataCollector:
     if is_branch_revision(rev):
       branch_number = rev[:rev.rindex(".")]
 
-      branch_data = self.branch_datas[branch_number]
+      branch_data = self.branches_data[branch_number]
 
       # Register the commit on this non-trunk branch
       self.collect_data.symbol_db.register_branch_commit(branch_data.name)
 
   def register_branch_blockers(self):
-    for (revision, tag_data_list) in self.tag_datas.items():
+    for (revision, tag_data_list) in self.tags_data.items():
       if is_branch_revision(revision):
         branch_data_parent = self.rev_to_branch_data(revision)
         for tag_data in tag_data_list:
           self.collect_data.symbol_db.register_branch_blocker(
               branch_data_parent.name, tag_data.name)
 
-    for branch_data_child in self.branch_datas.values():
+    for branch_data_child in self.branches_data.values():
       if is_branch_revision(branch_data_child.parent):
         branch_data_parent = self.rev_to_branch_data(branch_data_child.parent)
         self.collect_data.symbol_db.register_branch_blocker(
@@ -419,11 +420,11 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
                       branches, next):
     """This is a callback method declared in Sink."""
 
-    branch_datas = []
+    branches_data = []
     for branch in branches:
       branch_number = branch[:branch.rindex('.')]
 
-      branch_data = self.sdc.branch_datas.get(branch_number)
+      branch_data = self.sdc.branches_data.get(branch_number)
 
       if branch_data is None:
         # Normally we learn about the branches from the branch names
@@ -435,12 +436,12 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
       assert branch_data.child is None
       branch_data.child = branch
-      branch_datas.append(branch_data)
+      branches_data.append(branch_data)
 
     # Record basic information about the revision:
     self._rev_data[revision] = _RevisionData(
         self.collect_data.key_generator.gen_id(),
-        revision, int(timestamp), author, state, branch_datas)
+        revision, int(timestamp), author, state, branches_data)
 
     # Remember the order that revisions were defined:
     self._rev_order.append(revision)
@@ -477,7 +478,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       assert child_data.parent is None
       child_data.parent = parent
 
-    for branch_data in self.sdc.branch_datas.values():
+    for branch_data in self.sdc.branches_data.values():
       # The branch_data's parent has the branch as a child regardless
       # of whether the branch had any subsequent commits:
       parent_data = self._rev_data[branch_data.parent]
@@ -675,13 +676,13 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       lod = Trunk()
 
     branch_names = [
-      self.sdc.branch_datas[branch_number].name
+      self.sdc.branches_data[branch_number].name
       for branch_number in rev_data.branch_numbers
       ]
 
     tag_names = [
       tag_data.name
-      for tag_data in self.sdc.tag_datas.get(rev_data.rev, [])
+      for tag_data in self.sdc.tags_data.get(rev_data.rev, [])
       ]
 
     c_rev = CVSRevision(

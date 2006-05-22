@@ -111,11 +111,6 @@ class _RevisionData:
 
     self._branch_datas = branch_datas
 
-    # Numbers of branch first revisions sprouting from this revision,
-    # as specified by define_revision():
-    self.branches = [ branch_data.child
-                      for branch_data in self._branch_datas ]
-
     # The revision number of the parent of this revision along the
     # same line of development, if any.
     #

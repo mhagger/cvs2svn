@@ -226,8 +226,8 @@ class _SymbolDataCollector:
 
   def rev_to_branch_data(self, revision):
     """Return the branch_data of the branch on which REVISION lies.
-    REVISION is a non-branch revision number with an even number of,
-    components, for example '1.7.2.1' (never '1.7.2' nor '1.7.0.2').
+    REVISION is a branch revision number with an even number of
+    components; for example '1.7.2.1' (never '1.7.2' nor '1.7.0.2').
     For the convenience of callers, REVISION can also be a trunk
     revision such as '1.2', in which case just return None."""
 
@@ -679,8 +679,8 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     if revision == '1.1' and log != 'Initial revision\n':
       self.cvs_file.default_branch = None
 
-    branch_data = self.sdc.rev_to_branch_data(revision)
-    if branch_data:
+    if is_branch_revision(revision):
+      branch_data = self.sdc.rev_to_branch_data(revision)
       lod = Branch(branch_data.name)
     else:
       lod = Trunk()

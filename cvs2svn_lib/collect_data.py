@@ -130,8 +130,8 @@ class _RevisionData:
     # None.
     self.primary_child = None
 
-    # The revision numbers of any children that depend on this
-    # revision (not including primary_child):
+    # The branch numbers of any branches that sprout from this
+    # revision:
     self.children = []
 
   def adjust_timestamp(self, timestamp):
@@ -490,10 +490,14 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
       child_data.parent = parent
 
     for branch_data in self.sdc.get_branch_data():
-      if branch_data.child is not None:
-        parent_data = self._rev_data[branch_data.parent]
-        parent_data.children.append(branch_data.child)
+      # The branch_data's parent depends on the branch whether or not
+      # the branch had any subsequent commits:
+      parent_data = self._rev_data[branch_data.parent]
+      parent_data.children.append(branch_data.branch_number)
 
+      # If the branch has a child (i.e., something was committed on
+      # the branch), then the child depends on the branch's parent:
+      if branch_data.child is not None:
         child_data = self._rev_data[branch_data.child]
         assert child_data.parent is None
         child_data.parent = branch_data.parent

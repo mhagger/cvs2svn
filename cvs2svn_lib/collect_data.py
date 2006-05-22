@@ -150,7 +150,7 @@ class _BranchData:
 
     # The revision number of the revision from which this branch
     # sprouts.
-    self.parent = self.branch_number[:self.branch_number.rfind(".")]
+    self.parent = self.branch_number[:self.branch_number.rindex(".")]
 
     # The revision number of the first commit on this branch, if any;
     # otherwise, None.
@@ -440,7 +440,7 @@ class FileDataCollector(cvs2svn_rcsparse.Sink):
 
     branch_datas = []
     for branch in branches:
-      branch_number = branch[:branch.rfind('.')]
+      branch_number = branch[:branch.rindex('.')]
       branch_data = self.sdc._get_branch_data(branch_number)
       assert branch_data.child is None
       branch_data.child = branch

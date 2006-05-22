@@ -327,6 +327,11 @@ class _SymbolDataCollector:
       self.register_branch_commit(rev_data.rev)
 
     for b in rev_data.branches:
+      branch_number = b[:b.rfind(".")]
+      self._ensure_branch_known(branch_number)
+      branch_data = self._branch_data[branch_number]
+      assert branch_data.child is None
+      branch_data.child = rev_data.rev
       self._branch_dependencies.append( (rev_data.rev, b) )
 
   def get_branch_dependencies(self):

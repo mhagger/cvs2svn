@@ -209,32 +209,6 @@ class _SymbolDataCollector:
 
     return name
 
-  def define_symbol(self, name, revision):
-    name = self._transform_symbol(name)
-
-    # Check that the symbol is not already defined, which can easily
-    # happen when --symbol-transform is used:
-    if name in self._known_symbols:
-      err = "%s: Multiple definitions of the symbol '%s' in '%s'" \
-                % (error_prefix, name, self.cvs_file.filename)
-      sys.stderr.write(err + "\n")
-      self.collect_data.fatal_errors.append(err)
-
-    else:
-      self._known_symbols[name] = None
-      self.process_symbol(name, revision)
-
-  def rev_to_branch_data(self, revision):
-    """Return the branch_data of the branch on which REVISION lies.
-    REVISION is a branch revision number with an even number of
-    components; for example '1.7.2.1' (never '1.7.2' nor '1.7.0.2').
-    For the convenience of callers, REVISION can also be a trunk
-    revision such as '1.2', in which case just return None."""
-
-    if is_trunk_revision(revision):
-      return None
-    return self._branch_data.get(revision[:revision.rindex(".")])
-
   def _add_branch(self, name, branch_number):
     """Record that BRANCH_NUMBER is the branch number for branch NAME,
     and derive and record the revision from which NAME sprouts.
@@ -273,18 +247,45 @@ class _SymbolDataCollector:
     self.collect_data.symbol_db.register_tag_creation(name)
     return tag_data
 
-  def process_symbol(self, name, revision):
-    """Record a bidirectional mapping between symbolic NAME and REVISION.
+  def define_symbol(self, name, revision):
+    """Record a symbol called NAME, which is associated with REVISON.
+
     REVISION is an unprocessed revision number from the RCS file's
     header, for example: '1.7', '1.7.0.2', or '1.1.1' or '1.1.1.1'.
-    This function will determine what kind of symbolic name it is by
-    inspection, and record it in the right places."""
+    NAME is an untransformed branch or tag name.  This function will
+    determine by inspection whether it is a branch or a tag, and
+    record it in the right places."""
 
+    name = self._transform_symbol(name)
+
+    # Check that the symbol is not already defined, which can easily
+    # happen when --symbol-transform is used:
+    if name in self._known_symbols:
+      err = "%s: Multiple definitions of the symbol '%s' in '%s'" \
+                % (error_prefix, name, self.cvs_file.filename)
+      sys.stderr.write(err + "\n")
+      self.collect_data.fatal_errors.append(err)
+      return
+
+    self._known_symbols[name] = None
+
+    # Determine whether it is a branch or tag, then add it:
     m = branch_tag_re.match(revision)
     if m:
       self._add_branch(name, m.group(1) + m.group(2))
     else:
       self._add_tag(name, revision)
+
+  def rev_to_branch_data(self, revision):
+    """Return the branch_data of the branch on which REVISION lies.
+    REVISION is a branch revision number with an even number of
+    components; for example '1.7.2.1' (never '1.7.2' nor '1.7.0.2').
+    For the convenience of callers, REVISION can also be a trunk
+    revision such as '1.2', in which case just return None."""
+
+    if is_trunk_revision(revision):
+      return None
+    return self._branch_data.get(revision[:revision.rindex(".")])
 
   def _get_branch_data(self, branch_number):
     """Return the _BranchData object for the specified BRANCH_NUMBER.

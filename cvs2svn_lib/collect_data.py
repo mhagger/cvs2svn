@@ -137,7 +137,7 @@ class _RevisionData:
     # The revision number of the primary child of this revision (the
     # child along the same line of development), if any; otherwise,
     # None.
-    self.primary_child = None
+    self.child = None
 
     # The branch numbers of any branches that sprout from this
     # revision:
@@ -471,8 +471,8 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
     for (parent, child,) in self._primary_dependencies:
       parent_data = self._rev_data[parent]
-      assert parent_data.primary_child is None
-      parent_data.primary_child = child
+      assert parent_data.child is None
+      parent_data.child = child
 
       child_data = self._rev_data[child]
       assert child_data.parent is None
@@ -689,7 +689,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         self._get_rev_id(revision), self.cvs_file,
         rev_data.timestamp, digest,
         self._get_rev_id(rev_data.parent),
-        self._get_rev_id(rev_data.primary_child),
+        self._get_rev_id(rev_data.child),
         self._determine_operation(rev_data),
         revision,
         bool(text),

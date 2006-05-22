@@ -107,8 +107,7 @@ class _RevisionData:
   state of the prev_rev, we are unable to distinguish between an add
   and a change."""
 
-  def __init__(self, cvs_rev_id, rev, timestamp, author, state,
-               branches_data):
+  def __init__(self, cvs_rev_id, rev, timestamp, author, state):
     # The id of this revision:
     self.cvs_rev_id = cvs_rev_id
     # The CVSRevision is not yet known.  It will be stored here:
@@ -119,8 +118,6 @@ class _RevisionData:
     self.original_timestamp = timestamp
     self._adjusted = False
     self.state = state
-
-    self._branches_data = branches_data
 
     # The revision number of the parent of this revision along the
     # same line of development, if any.
@@ -139,9 +136,13 @@ class _RevisionData:
     # None.
     self.child = None
 
-    # The branch numbers of any branches that sprout from this
-    # revision:
-    self.branch_numbers = []
+    # The _BranchData instances of branches that sprout from this
+    # revision.  It would be inconvenient to initialize it here
+    # because we would have to scan through all branches known by the
+    # _SymbolDataCollector to find the ones having us as the parent.
+    # Instead, this information is filled in by
+    # _FileDataCollector._resolve_dependencies().
+    self.branches_data = []
 
   def adjust_timestamp(self, timestamp):
     self._adjusted = True
@@ -420,7 +421,6 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
                       branches, next):
     """This is a callback method declared in Sink."""
 
-    branches_data = []
     for branch in branches:
       branch_number = branch[:branch.rindex('.')]
 
@@ -436,12 +436,11 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
       assert branch_data.child is None
       branch_data.child = branch
-      branches_data.append(branch_data)
 
     # Record basic information about the revision:
     self._rev_data[revision] = _RevisionData(
         self.collect_data.key_generator.gen_id(),
-        revision, int(timestamp), author, state, branches_data)
+        revision, int(timestamp), author, state)
 
     # Remember the order that revisions were defined:
     self._rev_order.append(revision)
@@ -482,7 +481,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       # The branch_data's parent has the branch as a child regardless
       # of whether the branch had any subsequent commits:
       parent_data = self._rev_data[branch_data.parent]
-      parent_data.branch_numbers.append(branch_data.branch_number)
+      parent_data.branches_data.append(branch_data)
 
       # If the branch has a child (i.e., something was committed on
       # the branch), then we consider that the child depends on the
@@ -676,9 +675,9 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       lod = Trunk()
 
     branch_names = [
-      self.sdc.branches_data[branch_number].name
-      for branch_number in rev_data.branch_numbers
-      ]
+        branch_data.name
+        for branch_data in rev_data.branches_data
+        ]
 
     tag_names = [
       tag_data.name

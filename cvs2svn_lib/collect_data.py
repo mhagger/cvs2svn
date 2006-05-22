@@ -287,21 +287,6 @@ class _SymbolDataCollector:
       return None
     return self.branch_datas.get(revision[:revision.rindex(".")])
 
-  def _get_branch_data(self, branch_number):
-    """Return the _BranchData object for the specified BRANCH_NUMBER.
-
-    If BRANCH_NUMBER is not already known, create and record the
-    _BranchData instance then return it.
-
-    Normally we should learn about the branches from the branch names
-    and numbers parsed from the symbolic name header.  But unlabeled
-    branches can slip through that net.  Verify that the specified
-    BRANCH_NUMBER is known.  If not, generate a name for it and create
-    a _BranchData record for it now."""
-
-    return (self.branch_datas.get(branch_number)
-            or self._add_unlabeled_branch(branch_number))
-
   def register_commit(self, rev_data):
     """If REV_DATA descrives a non-trunk revision number, then record
     it as a commit on the corresponding branch.  This records the
@@ -437,7 +422,17 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     branch_datas = []
     for branch in branches:
       branch_number = branch[:branch.rindex('.')]
-      branch_data = self.sdc._get_branch_data(branch_number)
+
+      branch_data = self.sdc.branch_datas.get(branch_number)
+
+      if branch_data is None:
+        # Normally we learn about the branches from the branch names
+        # and numbers parsed from the symbolic name header.  But this
+        # must have been an unlabeled branch that slipped through the
+        # net.  Generate a name for it and create a _BranchData record
+        # for it now.
+        branch_data = self.sdc._add_unlabeled_branch(branch_number)
+
       assert branch_data.child is None
       branch_data.child = branch
       branch_datas.append(branch_data)

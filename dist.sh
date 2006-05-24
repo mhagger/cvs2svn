@@ -3,7 +3,7 @@ set -e
 
 # Build a cvs2svn distribution.
 
-VERSION=1.3.1-dev
+VERSION=1.3.1
 WC_REV=`svnversion -n .`
 DIST_BASE=cvs2svn-${VERSION}
 DIST_FULL=${DIST_BASE}.tar.gz

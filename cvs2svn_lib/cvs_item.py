@@ -112,19 +112,21 @@ class CVSRevision(CVSItem):
         self.deltatext_exists,
         lod_name,
         self.first_on_branch,
-        self.tags,
-        self.branches,)
+        ' '.join(self.tags),
+        ' '.join(self.branches),)
 
   def __setstate__(self, data):
     (self.id, cvs_file_id, self.timestamp, self.digest,
      self.prev_id, self.next_id, self.op, self.rev,
      self.deltatext_exists, lod_name, self.first_on_branch,
-     self.tags, self.branches) = data
+     tags, branches) = data
     self.cvs_file = Ctx()._cvs_file_db.get_file(cvs_file_id)
     if lod_name is None:
       self.lod = Trunk()
     else:
       self.lod = Branch(lod_name)
+    self.tags = tags.split()
+    self.branches = branches.split()
 
   def opens_symbolic_name(self, name):
     """Return True iff this CVSRevision is the opening CVSRevision for

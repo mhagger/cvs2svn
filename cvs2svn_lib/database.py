@@ -24,9 +24,9 @@ import os
 import marshal
 import cPickle
 
-from boolean import *
-from common import warning_prefix
-from common import error_prefix
+from cvs2svn_lib.boolean import *
+from cvs2svn_lib.common import warning_prefix
+from cvs2svn_lib.common import error_prefix
 
 
 # DBM module selection

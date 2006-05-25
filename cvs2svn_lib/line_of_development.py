@@ -17,8 +17,8 @@
 """This module contains classes to store CVS branches."""
 
 
-from boolean import *
-from context import Ctx
+from cvs2svn_lib.boolean import *
+from cvs2svn_lib.context import Ctx
 
 
 class LineOfDevelopment:

@@ -17,12 +17,12 @@
 """This module contains the CVSCommit class."""
 
 
-from boolean import *
-from common import clean_symbolic_name
-from common import format_date
-from common import warning_prefix
-from context import Ctx
-from log import Log
+from cvs2svn_lib.boolean import *
+from cvs2svn_lib.common import clean_symbolic_name
+from cvs2svn_lib.common import format_date
+from cvs2svn_lib.common import warning_prefix
+from cvs2svn_lib.context import Ctx
+from cvs2svn_lib.log import Log
 
 
 class SVNCommit:

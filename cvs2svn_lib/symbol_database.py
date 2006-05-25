@@ -18,14 +18,14 @@
 
 import sys
 
-from boolean import *
-import config
-from common import error_prefix
-from context import Ctx
-from log import Log
-from artifact_manager import artifact_manager
-from database import DB_OPEN_NEW
-from tags_database import TagsDatabase
+from cvs2svn_lib.boolean import *
+from cvs2svn_lib import config
+from cvs2svn_lib.common import error_prefix
+from cvs2svn_lib.context import Ctx
+from cvs2svn_lib.log import Log
+from cvs2svn_lib.artifact_manager import artifact_manager
+from cvs2svn_lib.database import DB_OPEN_NEW
+from cvs2svn_lib.tags_database import TagsDatabase
 
 
 def match_regexp_list(regexp_list, s):

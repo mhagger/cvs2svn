@@ -23,9 +23,9 @@ import fnmatch
 import fileinput
 import ConfigParser
 
-from boolean import *
-from common import warning_prefix
-from log import Log
+from cvs2svn_lib.boolean import *
+from cvs2svn_lib.common import warning_prefix
+from cvs2svn_lib.log import Log
 
 
 class SVNPropertySetter:

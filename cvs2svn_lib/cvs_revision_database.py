@@ -17,9 +17,9 @@
 """This module contains database facilities used by cvs2svn."""
 
 
-from boolean import *
-from cvs_item import CVSRevision
-from database import PDatabase
+from cvs2svn_lib.boolean import *
+from cvs2svn_lib.cvs_item import CVSRevision
+from cvs2svn_lib.database import PDatabase
 
 
 class CVSRevisionDatabase:

@@ -17,11 +17,11 @@
 """This module contains classes to store CVS atomic items."""
 
 
-from boolean import *
-from common import OP_DELETE
-from context import Ctx
-from line_of_development import Trunk
-from line_of_development import Branch
+from cvs2svn_lib.boolean import *
+from cvs2svn_lib.common import OP_DELETE
+from cvs2svn_lib.context import Ctx
+from cvs2svn_lib.line_of_development import Trunk
+from cvs2svn_lib.line_of_development import Branch
 
 
 class CVSItem(object):

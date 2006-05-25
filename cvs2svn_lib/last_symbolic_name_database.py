@@ -17,12 +17,12 @@
 """This module contains database facilities used by cvs2svn."""
 
 
-from boolean import *
-import config
-from common import OP_DELETE
-from artifact_manager import artifact_manager
-from database import Database
-from database import DB_OPEN_NEW
+from cvs2svn_lib.boolean import *
+from cvs2svn_lib import config
+from cvs2svn_lib.common import OP_DELETE
+from cvs2svn_lib.artifact_manager import artifact_manager
+from cvs2svn_lib.database import Database
+from cvs2svn_lib.database import DB_OPEN_NEW
 
 
 class LastSymbolicNameDatabase:

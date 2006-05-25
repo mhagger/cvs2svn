@@ -19,9 +19,9 @@
 
 import os
 
-from boolean import *
-from context import Ctx
-from log import Log
+from cvs2svn_lib.boolean import *
+from cvs2svn_lib.context import Ctx
+from cvs2svn_lib.log import Log
 
 
 class Artifact:

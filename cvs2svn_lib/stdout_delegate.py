@@ -17,9 +17,9 @@
 """This module contains database facilities used by cvs2svn."""
 
 
-from boolean import *
-from log import Log
-from svn_repository_mirror import SVNRepositoryMirrorDelegate
+from cvs2svn_lib.boolean import *
+from cvs2svn_lib.log import Log
+from cvs2svn_lib.svn_repository_mirror import SVNRepositoryMirrorDelegate
 
 
 class StdoutDelegate(SVNRepositoryMirrorDelegate):

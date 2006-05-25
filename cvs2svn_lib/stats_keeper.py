@@ -21,9 +21,9 @@ import os
 import time
 import marshal
 
-from boolean import *
-import config
-from artifact_manager import artifact_manager
+from cvs2svn_lib.boolean import *
+from cvs2svn_lib import config
+from cvs2svn_lib.artifact_manager import artifact_manager
 
 
 class StatsKeeper:

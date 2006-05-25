@@ -17,14 +17,14 @@
 """This module contains database facilities used by cvs2svn."""
 
 
-from boolean import *
-import config
-from context import Ctx
-from artifact_manager import artifact_manager
-from database import Database
-from database import DB_OPEN_READ
-from openings_closings import OpeningsClosingsMap
-from symbolic_name_filling_guide import SymbolicNameFillingGuide
+from cvs2svn_lib.boolean import *
+from cvs2svn_lib import config
+from cvs2svn_lib.context import Ctx
+from cvs2svn_lib.artifact_manager import artifact_manager
+from cvs2svn_lib.database import Database
+from cvs2svn_lib.database import DB_OPEN_READ
+from cvs2svn_lib.openings_closings import OpeningsClosingsMap
+from cvs2svn_lib.symbolic_name_filling_guide import SymbolicNameFillingGuide
 
 
 class SymbolingsReader:

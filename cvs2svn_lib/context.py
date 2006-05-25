@@ -19,9 +19,9 @@
 
 import os
 
-from boolean import *
-import config
-from log import Log
+from cvs2svn_lib.boolean import *
+from cvs2svn_lib import config
+from cvs2svn_lib.log import Log
 
 
 class Ctx:

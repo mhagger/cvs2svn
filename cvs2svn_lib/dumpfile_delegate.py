@@ -20,13 +20,13 @@
 import os
 import md5
 
-from boolean import *
-import config
-from common import FatalError
-from common import OP_ADD
-from common import OP_CHANGE
-from context import Ctx
-from svn_repository_mirror import SVNRepositoryMirrorDelegate
+from cvs2svn_lib.boolean import *
+from cvs2svn_lib import config
+from cvs2svn_lib.common import FatalError
+from cvs2svn_lib.common import OP_ADD
+from cvs2svn_lib.common import OP_CHANGE
+from cvs2svn_lib.context import Ctx
+from cvs2svn_lib.svn_repository_mirror import SVNRepositoryMirrorDelegate
 
 
 class DumpfileDelegate(SVNRepositoryMirrorDelegate):

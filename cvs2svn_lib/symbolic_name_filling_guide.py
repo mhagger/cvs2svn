@@ -17,14 +17,14 @@
 """This module contains database facilities used by cvs2svn."""
 
 
-from boolean import *
-from common import path_join
-from common import path_split
-from common import FatalError
-from common import SVN_INVALID_REVNUM
-from context import Ctx
-from svn_revision_range import SVNRevisionRange
-from fill_source import FillSource
+from cvs2svn_lib.boolean import *
+from cvs2svn_lib.common import path_join
+from cvs2svn_lib.common import path_split
+from cvs2svn_lib.common import FatalError
+from cvs2svn_lib.common import SVN_INVALID_REVNUM
+from cvs2svn_lib.context import Ctx
+from cvs2svn_lib.svn_revision_range import SVNRevisionRange
+from cvs2svn_lib.fill_source import FillSource
 
 
 class SymbolicNameFillingGuide:

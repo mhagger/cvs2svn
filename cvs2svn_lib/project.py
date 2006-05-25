@@ -19,13 +19,13 @@
 
 import os
 
-from boolean import *
-from context import Ctx
-from common import clean_symbolic_name
-from common import path_join
-from common import path_split
-from common import error_prefix
-from common import FatalError
+from cvs2svn_lib.boolean import *
+from cvs2svn_lib.context import Ctx
+from cvs2svn_lib.common import clean_symbolic_name
+from cvs2svn_lib.common import path_join
+from cvs2svn_lib.common import path_split
+from cvs2svn_lib.common import error_prefix
+from cvs2svn_lib.common import FatalError
 
 
 def verify_paths_disjoint(*paths):

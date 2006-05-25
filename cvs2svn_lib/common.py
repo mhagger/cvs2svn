@@ -19,7 +19,7 @@
 
 import time
 
-from boolean import *
+from cvs2svn_lib.boolean import *
 
 
 SVN_INVALID_REVNUM = -1

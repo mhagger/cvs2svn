@@ -20,11 +20,11 @@
 import os
 import re
 
-from boolean import *
-from common import FatalError
-from process import check_command_runs
-from process import SimplePopen
-from process import CommandFailedException
+from cvs2svn_lib.boolean import *
+from cvs2svn_lib.common import FatalError
+from cvs2svn_lib.process import check_command_runs
+from cvs2svn_lib.process import SimplePopen
+from cvs2svn_lib.process import CommandFailedException
 
 
 class CVSRepository:

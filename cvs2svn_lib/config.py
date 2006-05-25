@@ -17,7 +17,7 @@
 """This module contains various configuration constants used by cvs2svn."""
 
 
-from boolean import *
+from cvs2svn_lib.boolean import *
 
 
 SVN_KEYWORDS_VALUE = 'Author Date Id Revision'

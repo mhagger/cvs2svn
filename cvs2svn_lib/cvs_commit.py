@@ -18,15 +18,15 @@
 
 import time
 
-from boolean import *
-import config
-from common import warning_prefix
-from common import OP_ADD
-from common import OP_CHANGE
-from common import OP_DELETE
-from context import Ctx
-from svn_commit import SVNCommit
-from log import Log
+from cvs2svn_lib.boolean import *
+from cvs2svn_lib import config
+from cvs2svn_lib.common import warning_prefix
+from cvs2svn_lib.common import OP_ADD
+from cvs2svn_lib.common import OP_CHANGE
+from cvs2svn_lib.common import OP_DELETE
+from cvs2svn_lib.context import Ctx
+from cvs2svn_lib.svn_commit import SVNCommit
+from cvs2svn_lib.log import Log
 
 
 class CVSCommit:

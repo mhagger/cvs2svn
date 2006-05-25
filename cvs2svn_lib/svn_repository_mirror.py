@@ -17,28 +17,28 @@
 """This module contains the SVNRepositoryMirror class."""
 
 
-from boolean import *
-import config
-from common import clean_symbolic_name
-from common import path_join
-from common import path_split
-from common import OP_ADD
-from common import OP_CHANGE
-from common import OP_DELETE
-from context import Ctx
-from log import Log
-from key_generator import KeyGenerator
-from artifact_manager import artifact_manager
-from database import Database
-from database import SDatabase
-from database import DB_OPEN_NEW
-from database import DB_OPEN_READ
-from tags_database import TagsDatabase
-from symbolings_reader import SymbolingsReader
-from fill_source import FillSource
-from svn_revision_range import SVNRevisionRange
-from svn_commit_item import SVNCommitItem
-from svn_commit import SVNCommit
+from cvs2svn_lib.boolean import *
+from cvs2svn_lib import config
+from cvs2svn_lib.common import clean_symbolic_name
+from cvs2svn_lib.common import path_join
+from cvs2svn_lib.common import path_split
+from cvs2svn_lib.common import OP_ADD
+from cvs2svn_lib.common import OP_CHANGE
+from cvs2svn_lib.common import OP_DELETE
+from cvs2svn_lib.context import Ctx
+from cvs2svn_lib.log import Log
+from cvs2svn_lib.key_generator import KeyGenerator
+from cvs2svn_lib.artifact_manager import artifact_manager
+from cvs2svn_lib.database import Database
+from cvs2svn_lib.database import SDatabase
+from cvs2svn_lib.database import DB_OPEN_NEW
+from cvs2svn_lib.database import DB_OPEN_READ
+from cvs2svn_lib.tags_database import TagsDatabase
+from cvs2svn_lib.symbolings_reader import SymbolingsReader
+from cvs2svn_lib.fill_source import FillSource
+from cvs2svn_lib.svn_revision_range import SVNRevisionRange
+from cvs2svn_lib.svn_commit_item import SVNCommitItem
+from cvs2svn_lib.svn_commit import SVNCommit
 
 
 class SVNRepositoryMirror:

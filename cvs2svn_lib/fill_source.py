@@ -17,7 +17,7 @@
 """This module contains the FillSource class."""
 
 
-from boolean import *
+from cvs2svn_lib.boolean import *
 
 
 class FillSource:

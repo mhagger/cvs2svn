@@ -26,32 +26,32 @@ import fileinput
 import re
 import sha
 
-from boolean import *
-import config
-from context import Ctx
-from common import warning_prefix
-from common import error_prefix
-from common import FatalException
-from common import FatalError
-from log import Log
-from artifact_manager import artifact_manager
-from database import Database
-from database import DB_OPEN_NEW
-from database import DB_OPEN_READ
-from database import DB_OPEN_WRITE
-from cvs_file_database import CVSFileDatabase
-from symbol_database import SymbolDatabase
-from cvs_revision_database import CVSRevisionDatabase
-from last_symbolic_name_database import LastSymbolicNameDatabase
-from svn_commit import SVNCommit
-from cvs_revision_aggregator import CVSRevisionAggregator
-from svn_repository_mirror import SVNRepositoryMirror
-from persistence_manager import PersistenceManager
-from dumpfile_delegate import DumpfileDelegate
-from repository_delegate import RepositoryDelegate
-from stdout_delegate import StdoutDelegate
-from collect_data import CollectData
-from process import run_command
+from cvs2svn_lib.boolean import *
+from cvs2svn_lib import config
+from cvs2svn_lib.context import Ctx
+from cvs2svn_lib.common import warning_prefix
+from cvs2svn_lib.common import error_prefix
+from cvs2svn_lib.common import FatalException
+from cvs2svn_lib.common import FatalError
+from cvs2svn_lib.log import Log
+from cvs2svn_lib.artifact_manager import artifact_manager
+from cvs2svn_lib.database import Database
+from cvs2svn_lib.database import DB_OPEN_NEW
+from cvs2svn_lib.database import DB_OPEN_READ
+from cvs2svn_lib.database import DB_OPEN_WRITE
+from cvs2svn_lib.cvs_file_database import CVSFileDatabase
+from cvs2svn_lib.symbol_database import SymbolDatabase
+from cvs2svn_lib.cvs_revision_database import CVSRevisionDatabase
+from cvs2svn_lib.last_symbolic_name_database import LastSymbolicNameDatabase
+from cvs2svn_lib.svn_commit import SVNCommit
+from cvs2svn_lib.cvs_revision_aggregator import CVSRevisionAggregator
+from cvs2svn_lib.svn_repository_mirror import SVNRepositoryMirror
+from cvs2svn_lib.persistence_manager import PersistenceManager
+from cvs2svn_lib.dumpfile_delegate import DumpfileDelegate
+from cvs2svn_lib.repository_delegate import RepositoryDelegate
+from cvs2svn_lib.stdout_delegate import StdoutDelegate
+from cvs2svn_lib.collect_data import CollectData
+from cvs2svn_lib.process import run_command
 
 
 ctrl_characters_regexp = re.compile('[\\\x00-\\\x1f\\\x7f]')

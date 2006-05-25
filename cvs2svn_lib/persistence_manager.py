@@ -17,19 +17,19 @@
 """This module contains class PersistenceManager."""
 
 
-from boolean import *
-import config
-from common import clean_symbolic_name
-from common import SVN_INVALID_REVNUM
-from log import Log
-from context import Ctx
-from artifact_manager import artifact_manager
-from database import Database
-from database import DB_OPEN_NEW
-from database import DB_OPEN_READ
-from cvs_revision_database import CVSRevisionDatabase
-from tags_database import TagsDatabase
-from svn_commit import SVNCommit
+from cvs2svn_lib.boolean import *
+from cvs2svn_lib import config
+from cvs2svn_lib.common import clean_symbolic_name
+from cvs2svn_lib.common import SVN_INVALID_REVNUM
+from cvs2svn_lib.log import Log
+from cvs2svn_lib.context import Ctx
+from cvs2svn_lib.artifact_manager import artifact_manager
+from cvs2svn_lib.database import Database
+from cvs2svn_lib.database import DB_OPEN_NEW
+from cvs2svn_lib.database import DB_OPEN_READ
+from cvs2svn_lib.cvs_revision_database import CVSRevisionDatabase
+from cvs2svn_lib.tags_database import TagsDatabase
+from cvs2svn_lib.svn_commit import SVNCommit
 
 
 class PersistenceManager:

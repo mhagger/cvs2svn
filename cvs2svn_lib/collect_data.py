@@ -26,27 +26,27 @@ import time
 import sha
 import stat
 
-from boolean import *
-import config
-from common import warning_prefix
-from common import error_prefix
-from common import OP_ADD
-from common import OP_CHANGE
-from common import OP_DELETE
-from log import Log
-from context import Ctx
-from artifact_manager import artifact_manager
-from cvs_file import CVSFile
-from line_of_development import Trunk
-from line_of_development import Branch
-from cvs_item import CVSRevision
-from key_generator import KeyGenerator
-from database import Database
-from database import SDatabase
-from database import DB_OPEN_NEW
-from cvs_file_database import CVSFileDatabase
-from cvs_revision_database import CVSRevisionDatabase
-from symbol_database import SymbolDatabase
+from cvs2svn_lib.boolean import *
+from cvs2svn_lib import config
+from cvs2svn_lib.common import warning_prefix
+from cvs2svn_lib.common import error_prefix
+from cvs2svn_lib.common import OP_ADD
+from cvs2svn_lib.common import OP_CHANGE
+from cvs2svn_lib.common import OP_DELETE
+from cvs2svn_lib.log import Log
+from cvs2svn_lib.context import Ctx
+from cvs2svn_lib.artifact_manager import artifact_manager
+from cvs2svn_lib.cvs_file import CVSFile
+from cvs2svn_lib.line_of_development import Trunk
+from cvs2svn_lib.line_of_development import Branch
+from cvs2svn_lib.cvs_item import CVSRevision
+from cvs2svn_lib.key_generator import KeyGenerator
+from cvs2svn_lib.database import Database
+from cvs2svn_lib.database import SDatabase
+from cvs2svn_lib.database import DB_OPEN_NEW
+from cvs2svn_lib.cvs_file_database import CVSFileDatabase
+from cvs2svn_lib.cvs_revision_database import CVSRevisionDatabase
+from cvs2svn_lib.symbol_database import SymbolDatabase
 
 import cvs2svn_rcsparse
 

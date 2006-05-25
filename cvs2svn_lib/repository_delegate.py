@@ -19,13 +19,13 @@
 
 import os
 
-from boolean import *
-from common import FatalError
-from context import Ctx
-from log import Log
-from process import SimplePopen
-from process import run_command
-from dumpfile_delegate import DumpfileDelegate
+from cvs2svn_lib.boolean import *
+from cvs2svn_lib.common import FatalError
+from cvs2svn_lib.context import Ctx
+from cvs2svn_lib.log import Log
+from cvs2svn_lib.process import SimplePopen
+from cvs2svn_lib.process import run_command
+from cvs2svn_lib.dumpfile_delegate import DumpfileDelegate
 
 
 class RepositoryDelegate(DumpfileDelegate):

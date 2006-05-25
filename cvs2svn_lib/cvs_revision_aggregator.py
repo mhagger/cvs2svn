@@ -17,18 +17,18 @@
 """This module contains the CVSRevisionAggregator class."""
 
 
-from boolean import *
-import config
-from context import Ctx
-from artifact_manager import artifact_manager
-from database import Database
-from database import SDatabase
-from database import DB_OPEN_NEW
-from database import DB_OPEN_READ
-from openings_closings import SymbolingsLogger
-from persistence_manager import PersistenceManager
-from cvs_commit import CVSCommit
-from svn_commit import SVNCommit
+from cvs2svn_lib.boolean import *
+from cvs2svn_lib import config
+from cvs2svn_lib.context import Ctx
+from cvs2svn_lib.artifact_manager import artifact_manager
+from cvs2svn_lib.database import Database
+from cvs2svn_lib.database import SDatabase
+from cvs2svn_lib.database import DB_OPEN_NEW
+from cvs2svn_lib.database import DB_OPEN_READ
+from cvs2svn_lib.openings_closings import SymbolingsLogger
+from cvs2svn_lib.persistence_manager import PersistenceManager
+from cvs2svn_lib.cvs_commit import CVSCommit
+from cvs2svn_lib.svn_commit import SVNCommit
 
 
 class CVSRevisionAggregator:

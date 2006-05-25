@@ -17,7 +17,7 @@
 """This module contains the KeyGenerator class."""
 
 
-from boolean import *
+from cvs2svn_lib.boolean import *
 
 
 class KeyGenerator:

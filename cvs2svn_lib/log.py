@@ -20,7 +20,7 @@
 import sys
 import time
 
-from boolean import *
+from cvs2svn_lib.boolean import *
 
 
 class Log:

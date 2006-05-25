@@ -20,8 +20,8 @@
 import sys
 import os
 
-from boolean import *
-from common import FatalError
+from cvs2svn_lib.boolean import *
+from cvs2svn_lib.common import FatalError
 
 
 # ============================================================================

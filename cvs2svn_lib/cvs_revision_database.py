@@ -18,9 +18,6 @@
 
 
 from boolean import *
-from context import Ctx
-from line_of_development import Trunk
-from line_of_development import Branch
 from cvs_item import CVSRevision
 from database import PDatabase
 

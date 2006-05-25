@@ -1,21 +1,18 @@
-# -*- Mode: python -*-
+# -*-python-*-
 #
-# Copyright (C) 2000-2002 The ViewCVS Group. All Rights Reserved.
+# Copyright (C) 1999-2006 The ViewCVS Group. All Rights Reserved.
 #
 # By using this file, you agree to the terms and conditions set forth in
-# the LICENSE.html file which can be found at the top level of the ViewCVS
-# distribution or at http://viewcvs.sourceforge.net/license-1.html.
+# the LICENSE.html file which can be found at the top level of the ViewVC
+# distribution or at http://viewvc.org/license-1.html.
 #
-# Contact information:
-#   Greg Stein, PO Box 760, Palo Alto, CA, 94302
-#   gstein@lyra.org, http://viewcvs.sourceforge.net/
+# For more information, visit http://viewvc.org/
 #
 # -----------------------------------------------------------------------
 #
 # compat.py: compatibility functions for operation across Python 1.5.x to 2.2.x
 #
 # -----------------------------------------------------------------------
-#
 
 import urllib
 import string
@@ -24,7 +21,8 @@ import calendar
 import re
 import os
 import rfc822
-
+import tempfile
+import errno
 
 #
 # urllib.urlencode() is new to Python 1.5.2
@@ -121,6 +119,24 @@ except AttributeError:
     seconds = minutes*60 + second
     return seconds
 
+#
+# tempfile.mkdtemp() is new to Python 2.3
+#
+try:
+  mkdtemp = tempfile.mkdtemp
+except AttributeError:
+  def mkdtemp():
+    for i in range(10):
+      dir = tempfile.mktemp()
+      try:
+        os.mkdir(dir, 0700)
+        return dir
+      except OSError, e:
+        if e.errno == errno.EEXIST:
+          continue # try again
+        raise
+
+    raise IOError, (errno.EEXIST, "No usable temporary directory name found")
 
 # 
 # the following stuff is *ONLY* needed for standalone.py.

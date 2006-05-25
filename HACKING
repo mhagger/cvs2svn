@@ -39,3 +39,41 @@ Making releases
   6. Move old releases in the 'Old' folder of the download area.
   7. Create a project announcement on the website.
   8. Send an announcement to announce@cvs2svn.tigris.org.
+
+
+Release announcement templates
+==============================
+
+Here are suggested release announcement templates.  Fill in the substitutions
+as appropriate, and refer to previous announcements for examples.
+
+Web:
+[[[
+cvs2svn $VERSION is now released.
+The MD5 checksum is $CHECKSUM.
+<br />
+$BRIEF_DESCRIPTION
+<br />
+It is available from <a href="$URL"
+>$URL</a>.
+]]]
+
+Email:
+[[[
+Subject: cvs2svn $VERSION released
+To: announce@cvs2svn.tigris.org
+Reply-to: users@cvs2svn.tigris.org
+
+cvs2svn $VERSION is released.
+
+You can get it here:
+$URL
+MD5 checksum: $CHECKSUM
+
+$BRIEF_DESCRIPTION
+
+Please send any bug reports and comments to users@cvs2svn.tigris.org.
+
+$YOUR_NAME, on behalf of the cvs2svn development team
+]]]
+

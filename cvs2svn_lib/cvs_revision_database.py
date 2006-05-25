@@ -26,7 +26,17 @@ from database import PDatabase
 
 
 class CVSRevisionDatabase:
-  """A Database to store CVSRevision objects and retrieve them by their id."""
+  """A Database to store CVSRevision objects and retrieve them by their id.
+
+  Pickling the objects directly would be wasteful because that would
+  store the class name with each object (increasing the DB size by
+  about 30%).  We don't need that overhead because we only pickle
+  objects of a single type.  Therefore we use the __getstate__ and
+  __setstate__ methods described by the pickling protocol, but pickle
+  the state ourselves (i.e., without the class information).  The only
+  trick is that we have to call the __setstate__ method on a
+  newly-created (but not initialized) instance, which we create using
+  CVSRevision.__new__."""
 
   def __init__(self, filename, mode):
     """Initialize an instance, opening database in MODE (like the MODE
@@ -38,23 +48,13 @@ class CVSRevisionDatabase:
   def log_revision(self, c_rev):
     """Add C_REV, a CVSRevision, to the database."""
 
-    args = list(c_rev.__getinitargs__())
-    args[1] = args[1].id
-    if args[9].is_branch():
-      args[9] = args[9].name
-    else:
-      args[9] = None
-    self.db['%x' % c_rev.id] = args
+    self.db['%x' % c_rev.id] = c_rev.__getstate__()
 
   def get_revision(self, c_rev_id):
     """Return the CVSRevision stored under C_REV_ID."""
 
-    args = self.db['%x' % (c_rev_id,)]
-    args[1] = Ctx()._cvs_file_db.get_file(args[1])
-    if args[9]:
-      args[9] = Branch(args[9])
-    else:
-      args[9] = Trunk()
-    return CVSRevision(*args)
+    instance = CVSRevision.__new__(CVSRevision)
+    instance.__setstate__(self.db['%x' % (c_rev_id,)])
+    return instance
 
 

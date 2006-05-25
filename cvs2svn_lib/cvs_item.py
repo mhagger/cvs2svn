@@ -19,12 +19,21 @@
 
 from boolean import *
 from common import OP_DELETE
+from context import Ctx
+from line_of_development import Trunk
+from line_of_development import Branch
 
 
 class CVSItem(object):
   def __init__(self, id, cvs_file):
     self.id = id
     self.cvs_file = cvs_file
+
+  def __getstate__(self):
+    raise NotImplemented
+
+  def __setstate__(self, data):
+    raise NotImplemented
 
 
 class CVSRevision(CVSItem):
@@ -83,23 +92,39 @@ class CVSRevision(CVSItem):
 
   svn_path = property(get_svn_path)
 
-  def __getinitargs__(self):
+  def __getstate__(self):
     """Return the contents of this instance, for pickling.
 
     The presence of this method improves the space efficiency of
     pickling CVSRevision instances."""
 
+    if self.lod.is_branch():
+      lod_name = self.lod.name
+    else:
+      lod_name = None
+
     return (
-        self.id, self.cvs_file,
+        self.id, self.cvs_file.id,
         self.timestamp, self.digest,
         self.prev_id, self.next_id,
         self.op,
         self.rev,
         self.deltatext_exists,
-        self.lod,
+        lod_name,
         self.first_on_branch,
         self.tags,
         self.branches,)
+
+  def __setstate__(self, data):
+    (self.id, cvs_file_id, self.timestamp, self.digest,
+     self.prev_id, self.next_id, self.op, self.rev,
+     self.deltatext_exists, lod_name, self.first_on_branch,
+     self.tags, self.branches) = data
+    self.cvs_file = Ctx()._cvs_file_db.get_file(cvs_file_id)
+    if lod_name is None:
+      self.lod = Trunk()
+    else:
+      self.lod = Branch(lod_name)
 
   def opens_symbolic_name(self, name):
     """Return True iff this CVSRevision is the opening CVSRevision for

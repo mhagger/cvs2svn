@@ -193,13 +193,23 @@ class CVSBranch(CVSSymbol):
        ID              -->  (string) unique ID for this item
        CVS_FILE        -->  (CVSFile) CVSFile affected by this revision
        NAME            -->  (string) the name of this branch
-       BRANCH_NUMBER   -->  (int) the (3-digit) number of this branch
+       BRANCH_NUMBER   -->  (string) the number of this branch (e.g., "1.3.4")
        REV_ID          -->  (int) id of rev from which this branch sprouts
        NEXT_ID         -->  (int or None) id of first rev on this branch"""
 
     CVSSymbol.__init__(self, id, cvs_file, name, rev_id)
     self.branch_number = branch_number
     self.next_id = next_id
+
+  def __getstate__(self):
+    return (
+        self.id, self.cvs_file.id,
+        self.name, self.branch_number, self.rev_id, self.next_id)
+
+  def __setstate__(self, data):
+    (self.id, cvs_file_id,
+     self.name, self.branch_number, self.rev_id, self.next_id) = data
+    self.cvs_file = Ctx()._cvs_file_db.get_file(cvs_file_id)
 
 
 class CVSTag(CVSSymbol):
@@ -212,9 +222,15 @@ class CVSTag(CVSSymbol):
        ID              -->  (string) unique ID for this item
        CVS_FILE        -->  (CVSFile) CVSFile affected by this revision
        NAME            -->  (string) the name of this branch
-       BRANCH_NUMBER   -->  (int) the (3-digit) number of this branch
        NEXT_ID         -->  (int or None) id of first rev on this branch"""
 
     CVSSymbol.__init__(self, id, cvs_file, name, rev_id)
+
+  def __getstate__(self):
+    return (self.id, self.cvs_file.id, self.name, self.rev_id)
+
+  def __setstate__(self, data):
+    (self.id, cvs_file_id, self.name, self.rev_id) = data
+    self.cvs_file = Ctx()._cvs_file_db.get_file(cvs_file_id)
 
 

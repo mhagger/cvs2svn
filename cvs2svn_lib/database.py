@@ -22,6 +22,7 @@ from __future__ import generators
 import sys
 import os
 import marshal
+import cStringIO
 import cPickle
 
 from cvs2svn_lib.boolean import *
@@ -166,12 +167,66 @@ class Database(AbstractDatabase):
 
 
 class PDatabase(AbstractDatabase):
-  """A database that uses the cPickle module to store built-in types."""
+  """A database that uses the cPickle module to store arbitrary objects."""
 
   def __getitem__(self, key):
     return cPickle.loads(self.db[key])
 
   def __setitem__(self, key, value):
     self.db[key] = cPickle.dumps(value, True)
+
+
+class PrimedPDatabase(AbstractDatabase):
+  """A database that uses cPickle module to store arbitrary objects.
+
+  The Pickler and Unpickler are 'primed' by pre-pickling PRIMER, which
+  can be an arbitrary compound object (e.g., a list of objects that
+  are expected to occur frequently in the database entries).  From
+  then on, if objects within individual database entries are
+  recognized from PRIMER, then only their persistent IDs need to be
+  pickled instead of the whole object.
+
+  Concretely, when a new database is created, the pickled version of
+  PRIMER is stored in db['_'], and its memo is remembered as
+  self.memo.  When an existing database is opened for reading or
+  update, db[' '] is unpickled then the memo of the Unpickler is
+  remembered as self.memo.  Then future reads and writes are done with
+  a pickler/unpickler whose memo has been initialized to self.memo."""
+
+  def __init__(self, filename, mode, primer=None):
+    AbstractDatabase.__init__(self, filename, mode)
+
+    if mode == DB_OPEN_NEW:
+      if primer is None:
+        self.memo = {}
+      else:
+        f = cStringIO.StringIO()
+        pickler = cPickle.Pickler(f, True)
+        pickler.dump(primer)
+        self.db['_'] = f.getvalue()
+        self.memo = pickler.memo
+    else:
+      try:
+        s = self.db['_']
+      except KeyError:
+        self.memo = {}
+      else:
+        f = cStringIO.StringIO(s)
+        unpickler = cPickle.Unpickler(f)
+        unpickler.load()
+        self.memo = unpickler.memo
+
+  def __getitem__(self, key):
+    f = cStringIO.StringIO(self.db[key])
+    unpickler = cPickle.Unpickler(f)
+    unpickler.memo = self.memo.copy()
+    return unpickler.load()
+
+  def __setitem__(self, key, value):
+    f = cStringIO.StringIO()
+    pickler = cPickle.Pickler(f, True)
+    pickler.memo = self.memo.copy()
+    pickler.dump(value)
+    self.db[key] = f.getvalue()
 
 

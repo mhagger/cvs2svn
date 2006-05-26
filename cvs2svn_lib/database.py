@@ -173,7 +173,7 @@ class PDatabase(AbstractDatabase):
     return cPickle.loads(self.db[key])
 
   def __setitem__(self, key, value):
-    self.db[key] = cPickle.dumps(value, True)
+    self.db[key] = cPickle.dumps(value, -1)
 
 
 class PrimedPDatabase(AbstractDatabase):
@@ -201,7 +201,7 @@ class PrimedPDatabase(AbstractDatabase):
         self.memo = {}
       else:
         f = cStringIO.StringIO()
-        pickler = cPickle.Pickler(f, True)
+        pickler = cPickle.Pickler(f, -1)
         pickler.dump(primer)
         self.db['_'] = f.getvalue()
         self.memo = pickler.memo
@@ -224,7 +224,7 @@ class PrimedPDatabase(AbstractDatabase):
 
   def __setitem__(self, key, value):
     f = cStringIO.StringIO()
-    pickler = cPickle.Pickler(f, True)
+    pickler = cPickle.Pickler(f, -1)
     pickler.memo = self.memo.copy()
     pickler.dump(value)
     self.db[key] = f.getvalue()

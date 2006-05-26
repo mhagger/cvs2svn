@@ -2,7 +2,8 @@ head	1.2;
 access;
 symbols
 	after:1.2;
-locks; strict;
+locks
+	maxb:1.2; strict;
 comment	@ * @;
 
 

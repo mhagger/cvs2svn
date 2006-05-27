@@ -192,7 +192,8 @@ class CVSBranch(CVSSymbol):
        CVS_FILE        -->  (CVSFile) CVSFile affected by this revision
        NAME            -->  (string) the name of this branch
        BRANCH_NUMBER   -->  (string) the number of this branch (e.g., "1.3.4")
-       REV_ID          -->  (int) id of rev from which this branch sprouts
+       REV_ID          -->  (int) id of CVSRevision from which this branch
+                            sprouts
        NEXT_ID         -->  (int or None) id of first rev on this branch"""
 
     CVSSymbol.__init__(self, id, cvs_file, name, rev_id)
@@ -214,13 +215,13 @@ class CVSTag(CVSSymbol):
   """Represent the creation of a tag on a particular CVSFile."""
 
   def __init__(self, id, cvs_file, name, rev_id):
-    """Initialize a CVSBranch.
+    """Initialize a CVSTag.
 
     Arguments:
        ID              -->  (string) unique ID for this item
        CVS_FILE        -->  (CVSFile) CVSFile affected by this revision
-       NAME            -->  (string) the name of this branch
-       NEXT_ID         -->  (int or None) id of first rev on this branch"""
+       NAME            -->  (string) the name of this tag
+       REV_ID          -->  (int) id of CVSRevision being tagged"""
 
     CVSSymbol.__init__(self, id, cvs_file, name, rev_id)
 

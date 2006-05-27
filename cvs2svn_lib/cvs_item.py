@@ -64,9 +64,7 @@ class CVSRevision(CVSItem):
        FIRST_ON_BRANCH -->  (bool) true iff the first rev on its branch
        TAGS            -->  (list of strings) all tags on this revision
        BRANCHES        -->  (list of strings) all branches rooted in this rev
-
-    WARNING: Due to the resync process in pass2, prev_timestamp or
-    next_timestamp may be incorrect in the c-revs or s-revs files."""
+    """
 
     CVSItem.__init__(self, id, cvs_file)
 

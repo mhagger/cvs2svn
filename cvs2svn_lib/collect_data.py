@@ -159,6 +159,9 @@ class _RevisionData:
   def timestamp_was_adjusted(self):
     return self._adjusted
 
+  def is_first_on_branch(self):
+    return not self.parent or self.parent_branch_data is not None
+
 
 class _BranchData:
   """Collection area for information about a CVSBranch."""
@@ -655,9 +658,6 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
     return op
 
-  def _is_first_on_branch(self, rev_data):
-    return not rev_data.parent or rev_data.parent_branch_data is not None
-
   def set_revision_info(self, revision, log, text):
     """This is a callback method declared in Sink."""
 
@@ -707,7 +707,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         revision,
         bool(text),
         lod,
-        self._is_first_on_branch(rev_data),
+        rev_data.is_first_on_branch(),
         tag_names, branch_names)
     rev_data.c_rev = c_rev
     self.collect_data.add_cvs_revision(c_rev)

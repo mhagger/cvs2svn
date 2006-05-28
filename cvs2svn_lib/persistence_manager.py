@@ -28,6 +28,7 @@ from cvs2svn_lib.database import Database
 from cvs2svn_lib.database import DB_OPEN_NEW
 from cvs2svn_lib.database import DB_OPEN_READ
 from cvs2svn_lib.cvs_item_database import CVSItemDatabase
+from cvs2svn_lib.symbol_database import TagSymbol
 from cvs2svn_lib.symbol_database import SymbolDatabase
 from cvs2svn_lib.metadata_database import MetadataDatabase
 from cvs2svn_lib.svn_commit import SVNCommit
@@ -117,7 +118,8 @@ class PersistenceManager:
             "symbolic name ('%s') to fill."
             % (clean_symbolic_name(name),))
       svn_commit.set_symbolic_name(name)
-      if name in self.symbol_db:
+      symbol = self.symbol_db.get_symbol(name)
+      if isinstance(symbol, TagSymbol):
         svn_commit.is_tag = 1
 
     if motivating_revnum is not None:

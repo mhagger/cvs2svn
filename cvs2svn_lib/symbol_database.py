@@ -20,24 +20,36 @@
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib import config
 from cvs2svn_lib.artifact_manager import artifact_manager
-from cvs2svn_lib.database import SDatabase
+from cvs2svn_lib.database import PDatabase
+
+
+class Symbol:
+  def __init__(self, id, name):
+    self.id = id
+    self.name = name
+
+
+class BranchSymbol(Symbol):
+  pass
+
+
+class TagSymbol(Symbol):
+  pass
 
 
 class SymbolDatabase:
-  """A Database to record symbolic names that are tags.
+  """A Database to record symbolic names (tags and branches).
 
-  Each key is a tag name.  The value has no meaning, and is set to the
-  empty string.  (Since an SDatabase is used, the key cannot be set to
-  None.)"""
+  Records are name -> symbol, where symbol is a Symbol instance."""
 
   def __init__(self, mode):
-    self.db = SDatabase(
+    self.db = PDatabase(
         artifact_manager.get_temp_file(config.SYMBOL_DB), mode)
 
-  def add(self, item):
-    self.db[item] = ''
+  def add(self, symbol):
+    self.db[symbol.name] = symbol
 
-  def __contains__(self, item):
-    return self.db.has_key(item)
+  def get_symbol(self, name):
+    return self.db[name]
 
 

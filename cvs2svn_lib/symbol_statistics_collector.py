@@ -25,6 +25,8 @@ from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.database import DB_OPEN_NEW
+from cvs2svn_lib.symbol_database import BranchSymbol
+from cvs2svn_lib.symbol_database import TagSymbol
 from cvs2svn_lib.symbol_database import SymbolDatabase
 from cvs2svn_lib.key_generator import KeyGenerator
 
@@ -314,11 +316,16 @@ class SymbolStatisticsCollector:
   def create_symbol_database(self):
     # Create the tags database
     symbol_db = SymbolDatabase(DB_OPEN_NEW)
-    for tag in self._tags:
-      if tag not in Ctx().forced_branches:
-        symbol_db.add(tag)
-    for tag in Ctx().forced_tags:
-      symbol_db.add(tag)
+    for symbol in self._tags.values():
+      if symbol.name in Ctx().forced_branches:
+        symbol_db.add(BranchSymbol(symbol.id, symbol.name))
+      else:
+        symbol_db.add(TagSymbol(symbol.id, symbol.name))
+    for symbol in self._branches.values():
+      if symbol.name in Ctx().forced_tags:
+        symbol_db.add(TagSymbol(symbol.id, symbol.name))
+      else:
+        symbol_db.add(BranchSymbol(symbol.id, symbol.name))
 
   def read(self):
     """Read the symbol database from files."""

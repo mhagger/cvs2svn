@@ -61,8 +61,6 @@ class PersistenceManager:
     self._cvs_items_db = CVSItemDatabase(
         artifact_manager.get_temp_file(config.CVS_ITEMS_RESYNC_DB),
         DB_OPEN_READ)
-    ###PERF kff Elsewhere there are comments about sucking the tags db
-    ### into memory.  That seems like a good idea.
     if not Ctx().trunk_only:
       self.symbol_db = SymbolDatabase(DB_OPEN_READ)
 

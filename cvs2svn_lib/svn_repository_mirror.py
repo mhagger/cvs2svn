@@ -109,7 +109,6 @@ class SVNRepositoryMirror:
     self.new_nodes = { }
 
     if not Ctx().trunk_only:
-      ###PERF IMPT: Suck this into memory.
       self.symbol_db = SymbolDatabase(DB_OPEN_READ)
       self.symbolings_reader = SymbolingsReader()
 

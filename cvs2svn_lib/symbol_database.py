@@ -20,6 +20,8 @@
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib import config
 from cvs2svn_lib.artifact_manager import artifact_manager
+from cvs2svn_lib.database import DB_OPEN_READ
+from cvs2svn_lib.database import DB_OPEN_NEW
 from cvs2svn_lib.database import PDatabase
 
 
@@ -37,19 +39,47 @@ class TagSymbol(Symbol):
   pass
 
 
-class SymbolDatabase:
+class _NewSymbolDatabase:
   """A Database to record symbolic names (tags and branches).
 
   Records are name -> symbol, where symbol is a Symbol instance."""
 
-  def __init__(self, mode):
+  def __init__(self):
     self.db = PDatabase(
-        artifact_manager.get_temp_file(config.SYMBOL_DB), mode)
+        artifact_manager.get_temp_file(config.SYMBOL_DB), DB_OPEN_NEW)
 
   def add(self, symbol):
     self.db[symbol.name] = symbol
 
+
+class _OldSymbolDatabase:
+  """Read-only access to symbol database.
+
+  Records are name -> symbol, where symbol is a Symbol instance.  The
+  whole database is read into memory upon construction."""
+
+  def __init__(self):
+    self._names = {}
+    db = PDatabase(
+        artifact_manager.get_temp_file(config.SYMBOL_DB), DB_OPEN_READ)
+    for name in db.keys():
+      symbol = db[name]
+      self._names[name] = symbol
+
   def get_symbol(self, name):
-    return self.db[name]
+    return self._names[name]
+
+
+def SymbolDatabase(mode):
+  """Open the SymbolDatabase in either NEW or READ mode.
+
+  The class of the instance that is returned depends on MODE."""
+
+  if mode == DB_OPEN_NEW:
+    return _NewSymbolDatabase()
+  elif mode == DB_OPEN_READ:
+    return _OldSymbolDatabase()
+  else:
+    raise NotImplemented
 
 

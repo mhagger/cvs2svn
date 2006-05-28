@@ -177,7 +177,7 @@ class ResyncRevsPass(Pass):
   This pass was formerly known as pass2."""
 
   def register_artifacts(self):
-    self._register_temp_file(config.TAGS_DB)
+    self._register_temp_file(config.SYMBOL_DB)
     self._register_temp_file(config.CLEAN_REVS_DATAFILE)
     self._register_temp_file(config.CVS_ITEMS_RESYNC_DB)
     self._register_temp_file_needed(config.TAGS_LIST)
@@ -261,7 +261,7 @@ class ResyncRevsPass(Pass):
     if symbol_stats.check_consistency(excludes):
       sys.exit(1)
 
-    symbol_stats.create_tags_database()
+    symbol_stats.create_symbol_database()
 
     Log().quiet("Re-synchronizing CVS revision timestamps...")
 
@@ -470,7 +470,7 @@ class AggregateRevsPass(Pass):
       self._register_temp_file_needed(config.SYMBOL_LAST_CVS_REVS_DB)
     self._register_temp_file_needed(config.CVS_FILES_DB)
     self._register_temp_file_needed(config.CVS_ITEMS_RESYNC_DB)
-    self._register_temp_file_needed(config.TAGS_DB)
+    self._register_temp_file_needed(config.SYMBOL_DB)
     self._register_temp_file_needed(config.METADATA_DB)
     self._register_temp_file_needed(config.SORTED_REVS_DATAFILE)
 
@@ -569,7 +569,7 @@ class OutputPass(Pass):
     self._register_temp_file(config.SVN_MIRROR_NODES_DB)
     self._register_temp_file_needed(config.CVS_FILES_DB)
     self._register_temp_file_needed(config.CVS_ITEMS_RESYNC_DB)
-    self._register_temp_file_needed(config.TAGS_DB)
+    self._register_temp_file_needed(config.SYMBOL_DB)
     self._register_temp_file_needed(config.METADATA_DB)
     self._register_temp_file_needed(config.SVN_REVNUMS_TO_CVS_REVS)
     self._register_temp_file_needed(config.CVS_REVS_TO_SVN_REVNUMS)

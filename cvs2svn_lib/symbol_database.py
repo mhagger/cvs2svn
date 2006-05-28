@@ -14,7 +14,7 @@
 # history and logs, available at http://cvs2svn.tigris.org/.
 # ====================================================================
 
-"""This module contains the TagsDatabase class."""
+"""This module contains the SymbolDatabase class."""
 
 
 from cvs2svn_lib.boolean import *
@@ -23,7 +23,7 @@ from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.database import SDatabase
 
 
-class TagsDatabase:
+class SymbolDatabase:
   """A Database to record symbolic names that are tags.
 
   Each key is a tag name.  The value has no meaning, and is set to the
@@ -31,7 +31,8 @@ class TagsDatabase:
   None.)"""
 
   def __init__(self, mode):
-    self.db = SDatabase(artifact_manager.get_temp_file(config.TAGS_DB), mode)
+    self.db = SDatabase(
+        artifact_manager.get_temp_file(config.SYMBOL_DB), mode)
 
   def add(self, item):
     self.db[item] = ''

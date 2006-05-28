@@ -33,7 +33,7 @@ from cvs2svn_lib.database import Database
 from cvs2svn_lib.database import SDatabase
 from cvs2svn_lib.database import DB_OPEN_NEW
 from cvs2svn_lib.database import DB_OPEN_READ
-from cvs2svn_lib.tags_database import TagsDatabase
+from cvs2svn_lib.symbol_database import SymbolDatabase
 from cvs2svn_lib.symbolings_reader import SymbolingsReader
 from cvs2svn_lib.fill_source import FillSource
 from cvs2svn_lib.svn_revision_range import SVNRevisionRange
@@ -109,7 +109,7 @@ class SVNRepositoryMirror:
 
     if not Ctx().trunk_only:
       ###PERF IMPT: Suck this into memory.
-      self.tags_db = TagsDatabase(DB_OPEN_READ)
+      self.symbol_db = SymbolDatabase(DB_OPEN_READ)
       self.symbolings_reader = SymbolingsReader()
 
   def _initialize_repository(self, date):
@@ -354,7 +354,7 @@ class SVNRepositoryMirror:
     sources = symbol_fill.get_sources()
 
     if sources:
-      if svn_commit.symbolic_name in self.tags_db:
+      if svn_commit.symbolic_name in self.symbol_db:
         dest_prefix = Ctx().project.get_tag_path(svn_commit.symbolic_name)
       else:
         dest_prefix = Ctx().project.get_branch_path(svn_commit.symbolic_name)

@@ -28,7 +28,7 @@ from cvs2svn_lib.database import Database
 from cvs2svn_lib.database import DB_OPEN_NEW
 from cvs2svn_lib.database import DB_OPEN_READ
 from cvs2svn_lib.cvs_item_database import CVSItemDatabase
-from cvs2svn_lib.tags_database import TagsDatabase
+from cvs2svn_lib.symbol_database import SymbolDatabase
 from cvs2svn_lib.metadata_database import MetadataDatabase
 from cvs2svn_lib.svn_commit import SVNCommit
 
@@ -63,7 +63,7 @@ class PersistenceManager:
     ###PERF kff Elsewhere there are comments about sucking the tags db
     ### into memory.  That seems like a good idea.
     if not Ctx().trunk_only:
-      self.tags_db = TagsDatabase(DB_OPEN_READ)
+      self.symbol_db = SymbolDatabase(DB_OPEN_READ)
 
     # "branch_name" -> svn_revnum in which branch was last filled.
     # This is used by CVSCommit._pre_commit, to prevent creating a fill
@@ -117,7 +117,7 @@ class PersistenceManager:
             "symbolic name ('%s') to fill."
             % (clean_symbolic_name(name),))
       svn_commit.set_symbolic_name(name)
-      if name in self.tags_db:
+      if name in self.symbol_db:
         svn_commit.is_tag = 1
 
     if motivating_revnum is not None:

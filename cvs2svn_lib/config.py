@@ -83,8 +83,8 @@ CVS_ITEMS_DB = 'cvs2svn-cvs-items.db'
 CVS_ITEMS_RESYNC_DB = 'cvs2svn-cvs-items-resync.db'
 
 # Lists all symbolic names that are tags.  Keys are strings (symbolic
-# names), values are ignorable.
-TAGS_DB = 'cvs2svn-tags.db'
+# names); values are ignorable.
+SYMBOL_DB = 'cvs2svn-symbols.db'
 
 # A list all tags.  Each line consists of the tag name and the number
 # of files in which it exists, separated by a space.

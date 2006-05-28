@@ -66,7 +66,7 @@ class _Branch:
       self.blockers[blocker] = None
 
 
-class SymbolDatabase:
+class SymbolStatisticsCollector:
   """This database records a brief summary of information about all
   symbols in the RCS files.  It is created in CollectRevsPass (pass1)
   and it is used in ResyncRevsPass (pass2).

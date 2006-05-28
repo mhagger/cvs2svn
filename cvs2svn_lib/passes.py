@@ -39,7 +39,7 @@ from cvs2svn_lib.database import DB_OPEN_NEW
 from cvs2svn_lib.database import DB_OPEN_READ
 from cvs2svn_lib.database import DB_OPEN_WRITE
 from cvs2svn_lib.cvs_file_database import CVSFileDatabase
-from cvs2svn_lib.symbol_database import SymbolDatabase
+from cvs2svn_lib.symbol_statistics_collector import SymbolStatisticsCollector
 from cvs2svn_lib.cvs_item_database import CVSItemDatabase
 from cvs2svn_lib.last_symbolic_name_database import LastSymbolicNameDatabase
 from cvs2svn_lib.svn_commit import SVNCommit
@@ -148,7 +148,7 @@ class CollectRevsPass(Pass):
     os.path.walk(Ctx().project.project_cvs_repos_path, visit_file, cd)
     Log().verbose('Processed', cd.num_files, 'files')
 
-    cd.write_symbol_db()
+    cd.write_symbol_stats()
 
     if len(cd.fatal_errors) > 0:
       raise FatalException("Pass 1 complete.\n"
@@ -251,17 +251,17 @@ class ResyncRevsPass(Pass):
     cvs_items_resync_db = CVSItemDatabase(
         artifact_manager.get_temp_file(config.CVS_ITEMS_RESYNC_DB),
         DB_OPEN_NEW)
-    symbol_db = SymbolDatabase()
-    symbol_db.read()
+    symbol_stats = SymbolStatisticsCollector()
+    symbol_stats.read()
 
     # Convert the list of regexps to a list of strings
-    excludes = symbol_db.find_excluded_symbols(Ctx().excludes)
+    excludes = symbol_stats.find_excluded_symbols(Ctx().excludes)
 
     # Check the symbols for consistency and bail out if there were errors:
-    if symbol_db.check_consistency(excludes):
+    if symbol_stats.check_consistency(excludes):
       sys.exit(1)
 
-    symbol_db.create_tags_database()
+    symbol_stats.create_tags_database()
 
     Log().quiet("Re-synchronizing CVS revision timestamps...")
 

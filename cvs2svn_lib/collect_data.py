@@ -45,7 +45,7 @@ from cvs2svn_lib.database import SDatabase
 from cvs2svn_lib.database import DB_OPEN_NEW
 from cvs2svn_lib.cvs_file_database import CVSFileDatabase
 from cvs2svn_lib.cvs_item_database import CVSItemDatabase
-from cvs2svn_lib.symbol_database import SymbolDatabase
+from cvs2svn_lib.symbol_statistics_collector import SymbolStatisticsCollector
 from cvs2svn_lib.metadata_database import MetadataDatabase
 
 import cvs2svn_rcsparse
@@ -244,7 +244,7 @@ class _SymbolDataCollector:
         self.collect_data.key_generator.gen_id(), name, branch_number)
     self.branches_data[branch_number] = branch_data
 
-    self.collect_data.symbol_db.register_branch_creation(name)
+    self.collect_data.symbol_stats.register_branch_creation(name)
     return branch_data
 
   def _add_unlabeled_branch(self, branch_number):
@@ -257,7 +257,7 @@ class _SymbolDataCollector:
     tag_data = _TagData(
         self.collect_data.key_generator.gen_id(), name, revision)
     self.tags_data.setdefault(revision, []).append(tag_data)
-    self.collect_data.symbol_db.register_tag_creation(name)
+    self.collect_data.symbol_stats.register_tag_creation(name)
     return tag_data
 
   def define_symbol(self, name, revision):
@@ -303,7 +303,7 @@ class _SymbolDataCollector:
   def register_commit(self, rev_data):
     """If REV_DATA describes a non-trunk revision number, then record
     it as a commit on the corresponding branch.  This records the
-    commit in symbol_db, which is used to generate statistics for
+    commit in symbol_stats, which is used to generate statistics for
     --force-branch and --force-tag guidance."""
 
     rev = rev_data.rev
@@ -313,20 +313,20 @@ class _SymbolDataCollector:
       branch_data = self.branches_data[branch_number]
 
       # Register the commit on this non-trunk branch
-      self.collect_data.symbol_db.register_branch_commit(branch_data.name)
+      self.collect_data.symbol_stats.register_branch_commit(branch_data.name)
 
   def register_branch_blockers(self):
     for (revision, tag_data_list) in self.tags_data.items():
       if is_branch_revision(revision):
         branch_data_parent = self.rev_to_branch_data(revision)
         for tag_data in tag_data_list:
-          self.collect_data.symbol_db.register_branch_blocker(
+          self.collect_data.symbol_stats.register_branch_blocker(
               branch_data_parent.name, tag_data.name)
 
     for branch_data_child in self.branches_data.values():
       if is_branch_revision(branch_data_child.parent):
         branch_data_parent = self.rev_to_branch_data(branch_data_child.parent)
-        self.collect_data.symbol_db.register_branch_blocker(
+        self.collect_data.symbol_stats.register_branch_blocker(
             branch_data_parent.name, branch_data_child.name)
 
 
@@ -745,7 +745,7 @@ class CollectData:
     self.metadata_db = MetadataDatabase(DB_OPEN_NEW)
     self.fatal_errors = []
     self.num_files = 0
-    self.symbol_db = SymbolDatabase()
+    self.symbol_stats = SymbolStatisticsCollector()
     self.stats_keeper = stats_keeper
 
     # 1 if we've collected data for at least one file, None otherwise.
@@ -793,7 +793,7 @@ class CollectData:
     self._all_revs.write('%x\n' % (c_rev.id,))
     self.stats_keeper.record_c_rev(c_rev)
 
-  def write_symbol_db(self):
-    self.symbol_db.write()
+  def write_symbol_stats(self):
+    self.symbol_stats.write()
 
 

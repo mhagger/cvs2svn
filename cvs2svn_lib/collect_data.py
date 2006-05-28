@@ -166,8 +166,9 @@ class _RevisionData:
 class _BranchData:
   """Collection area for information about a CVSBranch."""
 
-  def __init__(self, id, name, branch_number):
+  def __init__(self, id, symbol_id, name, branch_number):
     self.id = id
+    self.symbol_id = symbol_id
     self.name = name
     self.branch_number = branch_number
 
@@ -183,8 +184,9 @@ class _BranchData:
 class _TagData:
   """Collection area for information about a CVSTag."""
 
-  def __init__(self, id, name, rev):
+  def __init__(self, id, symbol_id, name, rev):
     self.id = id
+    self.symbol_id = symbol_id
     self.name = name
     self.rev = rev
 
@@ -240,11 +242,11 @@ class _SymbolDataCollector:
                           branch_data.name, name))
       return branch_data
 
+    symbol_id = self.collect_data.symbol_stats.register_branch_creation(name)
     branch_data = _BranchData(
-        self.collect_data.key_generator.gen_id(), name, branch_number)
+        self.collect_data.key_generator.gen_id(), symbol_id,
+        name, branch_number)
     self.branches_data[branch_number] = branch_data
-
-    self.collect_data.symbol_stats.register_branch_creation(name)
     return branch_data
 
   def _add_unlabeled_branch(self, branch_number):
@@ -254,10 +256,10 @@ class _SymbolDataCollector:
   def _add_tag(self, name, revision):
     """Record that tag NAME refers to the specified REVISION."""
 
+    symbol_id = self.collect_data.symbol_stats.register_tag_creation(name)
     tag_data = _TagData(
-        self.collect_data.key_generator.gen_id(), name, revision)
+        self.collect_data.key_generator.gen_id(), symbol_id, name, revision)
     self.tags_data.setdefault(revision, []).append(tag_data)
-    self.collect_data.symbol_stats.register_tag_creation(name)
     return tag_data
 
   def define_symbol(self, name, revision):

@@ -36,9 +36,6 @@ class TagsDatabase:
   def add(self, item):
     self.db[item] = ''
 
-  def remove(self, item):
-    del self.db[item]
-
   def __contains__(self, item):
     return self.db.has_key(item)
 

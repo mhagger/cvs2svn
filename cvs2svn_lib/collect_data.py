@@ -45,7 +45,7 @@ from cvs2svn_lib.database import Database
 from cvs2svn_lib.database import SDatabase
 from cvs2svn_lib.database import DB_OPEN_NEW
 from cvs2svn_lib.cvs_file_database import CVSFileDatabase
-from cvs2svn_lib.cvs_revision_database import CVSRevisionDatabase
+from cvs2svn_lib.cvs_item_database import CVSItemDatabase
 from cvs2svn_lib.symbol_database import SymbolDatabase
 
 import cvs2svn_rcsparse
@@ -737,8 +737,8 @@ class CollectData:
   each file to be parsed."""
 
   def __init__(self, stats_keeper):
-    self._cvs_revs_db = CVSRevisionDatabase(
-        artifact_manager.get_temp_file(config.CVS_REVS_DB), DB_OPEN_NEW)
+    self._cvs_items_db = CVSItemDatabase(
+        artifact_manager.get_temp_file(config.CVS_ITEMS_DB), DB_OPEN_NEW)
     self._all_revs = open(
         artifact_manager.get_temp_file(config.ALL_REVS_DATAFILE), 'w')
     self.resync = open(
@@ -786,14 +786,12 @@ class CollectData:
 
 
   def add_cvs_file(self, cvs_file):
-    """If CVS_FILE is not already stored to _cvs_revs_db, give it a
-    persistent id and store it now.  The way we tell whether it was
-    already stored is by whether it already has a non-None id."""
+    """Store CVS_FILE to _cvs_file_db under its persistent id."""
 
     Ctx()._cvs_file_db.log_file(cvs_file)
 
   def add_cvs_revision(self, c_rev):
-    self._cvs_revs_db.log_revision(c_rev)
+    self._cvs_items_db.add(c_rev)
     self._all_revs.write('%x\n' % (c_rev.id,))
     self.stats_keeper.record_c_rev(c_rev)
 

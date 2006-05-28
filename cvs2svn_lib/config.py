@@ -77,10 +77,10 @@ SYMBOL_LAST_CVS_REVS_DB = 'cvs2svn-symbol-last-cvs-revs.db'
 CVS_FILES_DB = 'cvs2svn-cvs-files.db'
 
 # Maps CVSRevision.id (in hex) to CVSRevision.
-CVS_REVS_DB = 'cvs2svn-cvs-revs.db'
+CVS_ITEMS_DB = 'cvs2svn-cvs-items.db'
 
 # Maps CVSRevision.id (in hex) to CVSRevision after resynchronization.
-CVS_REVS_RESYNC_DB = 'cvs2svn-cvs-revs-resync.db'
+CVS_ITEMS_RESYNC_DB = 'cvs2svn-cvs-items-resync.db'
 
 # Lists all symbolic names that are tags.  Keys are strings (symbolic
 # names), values are ignorable.

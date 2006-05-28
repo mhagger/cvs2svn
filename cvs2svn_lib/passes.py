@@ -41,7 +41,7 @@ from cvs2svn_lib.database import DB_OPEN_READ
 from cvs2svn_lib.database import DB_OPEN_WRITE
 from cvs2svn_lib.cvs_file_database import CVSFileDatabase
 from cvs2svn_lib.symbol_database import SymbolDatabase
-from cvs2svn_lib.cvs_revision_database import CVSRevisionDatabase
+from cvs2svn_lib.cvs_item_database import CVSItemDatabase
 from cvs2svn_lib.last_symbolic_name_database import LastSymbolicNameDatabase
 from cvs2svn_lib.svn_commit import SVNCommit
 from cvs2svn_lib.cvs_revision_aggregator import CVSRevisionAggregator
@@ -127,7 +127,7 @@ class CollectRevsPass(Pass):
     self._register_temp_file(config.RESYNC_DATAFILE)
     self._register_temp_file(config.METADATA_DB)
     self._register_temp_file(config.CVS_FILES_DB)
-    self._register_temp_file(config.CVS_REVS_DB)
+    self._register_temp_file(config.CVS_ITEMS_DB)
     self._register_temp_file(config.ALL_REVS_DATAFILE)
 
   def run(self, stats_keeper):
@@ -182,12 +182,12 @@ class ResyncRevsPass(Pass):
   def register_artifacts(self):
     self._register_temp_file(config.TAGS_DB)
     self._register_temp_file(config.CLEAN_REVS_DATAFILE)
-    self._register_temp_file(config.CVS_REVS_RESYNC_DB)
+    self._register_temp_file(config.CVS_ITEMS_RESYNC_DB)
     self._register_temp_file_needed(config.TAGS_LIST)
     self._register_temp_file_needed(config.BRANCHES_LIST)
     self._register_temp_file_needed(config.RESYNC_DATAFILE)
     self._register_temp_file_needed(config.CVS_FILES_DB)
-    self._register_temp_file_needed(config.CVS_REVS_DB)
+    self._register_temp_file_needed(config.CVS_ITEMS_DB)
     self._register_temp_file_needed(config.ALL_REVS_DATAFILE)
 
   def _read_resync(self):
@@ -249,10 +249,10 @@ class ResyncRevsPass(Pass):
 
   def run(self, stats_keeper):
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
-    cvs_revs_db = CVSRevisionDatabase(
-        artifact_manager.get_temp_file(config.CVS_REVS_DB), DB_OPEN_WRITE)
-    cvs_revs_resync_db = CVSRevisionDatabase(
-        artifact_manager.get_temp_file(config.CVS_REVS_RESYNC_DB),
+    cvs_items_db = CVSItemDatabase(
+        artifact_manager.get_temp_file(config.CVS_ITEMS_DB), DB_OPEN_WRITE)
+    cvs_items_resync_db = CVSItemDatabase(
+        artifact_manager.get_temp_file(config.CVS_ITEMS_RESYNC_DB),
         DB_OPEN_NEW)
     symbol_db = SymbolDatabase()
     symbol_db.read()
@@ -281,15 +281,15 @@ class ResyncRevsPass(Pass):
     for line in open(
             artifact_manager.get_temp_file(config.ALL_REVS_DATAFILE)):
       c_rev_id = int(line.strip(), 16)
-      c_rev = cvs_revs_db.get_revision(c_rev_id)
+      c_rev = cvs_items_db[c_rev_id]
 
       if c_rev.prev_id is not None:
-        prev_c_rev = cvs_revs_db.get_revision(c_rev.prev_id)
+        prev_c_rev = cvs_items_db[c_rev.prev_id]
       else:
         prev_c_rev = None
 
       if c_rev.next_id is not None:
-        next_c_rev = cvs_revs_db.get_revision(c_rev.next_id)
+        next_c_rev = cvs_items_db[c_rev.next_id]
       else:
         next_c_rev = None
 
@@ -388,7 +388,7 @@ class ResyncRevsPass(Pass):
 
       output.write('%08lx %s %x\n'
                    % (c_rev.timestamp, c_rev.digest, c_rev.id,))
-      cvs_revs_resync_db.log_revision(c_rev)
+      cvs_items_resync_db.add(c_rev)
     Log().quiet("Done")
 
 
@@ -413,7 +413,7 @@ class CreateDatabasesPass(Pass):
     if not Ctx().trunk_only:
       self._register_temp_file(config.SYMBOL_LAST_CVS_REVS_DB)
     self._register_temp_file_needed(config.CVS_FILES_DB)
-    self._register_temp_file_needed(config.CVS_REVS_RESYNC_DB)
+    self._register_temp_file_needed(config.CVS_ITEMS_RESYNC_DB)
     self._register_temp_file_needed(config.SORTED_REVS_DATAFILE)
 
   def run(self, stats_keeper):
@@ -428,13 +428,13 @@ class CreateDatabasesPass(Pass):
       """Generator that produces the CVSRevisions in
       SORTED_REVS_DATAFILE order."""
 
-      cvs_revs_db = CVSRevisionDatabase(
-          artifact_manager.get_temp_file(config.CVS_REVS_RESYNC_DB),
+      cvs_items_db = CVSItemDatabase(
+          artifact_manager.get_temp_file(config.CVS_ITEMS_RESYNC_DB),
           DB_OPEN_READ)
       for line in fileinput.FileInput(
               artifact_manager.get_temp_file(config.SORTED_REVS_DATAFILE)):
         c_rev_id = int(line.strip().split()[-1], 16)
-        yield cvs_revs_db.get_revision(c_rev_id)
+        yield cvs_items_db[c_rev_id]
 
     if Ctx().trunk_only:
       for c_rev in get_cvs_revs():
@@ -472,7 +472,7 @@ class AggregateRevsPass(Pass):
     if not Ctx().trunk_only:
       self._register_temp_file_needed(config.SYMBOL_LAST_CVS_REVS_DB)
     self._register_temp_file_needed(config.CVS_FILES_DB)
-    self._register_temp_file_needed(config.CVS_REVS_RESYNC_DB)
+    self._register_temp_file_needed(config.CVS_ITEMS_RESYNC_DB)
     self._register_temp_file_needed(config.TAGS_DB)
     self._register_temp_file_needed(config.METADATA_DB)
     self._register_temp_file_needed(config.SORTED_REVS_DATAFILE)
@@ -481,14 +481,14 @@ class AggregateRevsPass(Pass):
     Log().quiet("Mapping CVS revisions to Subversion commits...")
 
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
-    cvs_revs_db = CVSRevisionDatabase(
-        artifact_manager.get_temp_file(config.CVS_REVS_RESYNC_DB),
+    cvs_items_db = CVSItemDatabase(
+        artifact_manager.get_temp_file(config.CVS_ITEMS_RESYNC_DB),
         DB_OPEN_READ)
     aggregator = CVSRevisionAggregator()
     for line in fileinput.FileInput(
             artifact_manager.get_temp_file(config.SORTED_REVS_DATAFILE)):
       c_rev_id = int(line.strip().split()[-1], 16)
-      c_rev = cvs_revs_db.get_revision(c_rev_id)
+      c_rev = cvs_items_db[c_rev_id]
       if not (Ctx().trunk_only and c_rev.lod.is_branch()):
         aggregator.process_revision(c_rev)
     aggregator.flush()
@@ -571,7 +571,7 @@ class OutputPass(Pass):
     self._register_temp_file(config.SVN_MIRROR_REVISIONS_DB)
     self._register_temp_file(config.SVN_MIRROR_NODES_DB)
     self._register_temp_file_needed(config.CVS_FILES_DB)
-    self._register_temp_file_needed(config.CVS_REVS_RESYNC_DB)
+    self._register_temp_file_needed(config.CVS_ITEMS_RESYNC_DB)
     self._register_temp_file_needed(config.TAGS_DB)
     self._register_temp_file_needed(config.METADATA_DB)
     self._register_temp_file_needed(config.SVN_REVNUMS_TO_CVS_REVS)

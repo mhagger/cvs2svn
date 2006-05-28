@@ -26,6 +26,7 @@ from cvs2svn_lib.log import Log
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.database import DB_OPEN_NEW
 from cvs2svn_lib.tags_database import TagsDatabase
+from cvs2svn_lib.key_generator import KeyGenerator
 
 
 def match_regexp_list(regexp_list, s):
@@ -39,7 +40,8 @@ def match_regexp_list(regexp_list, s):
 
 
 class _Tag:
-  def __init__(self, name, create_count=0):
+  def __init__(self, id, name, create_count=0):
+    self.id = id
     self.name = name
     self.create_count = create_count
 
@@ -57,7 +59,8 @@ class _Branch:
         the the branch.  The set is stored as a map whose values are
         not used."""
 
-  def __init__(self, name, create_count=0, commit_count=0, blockers=[]):
+  def __init__(self, id, name, create_count=0, commit_count=0, blockers=[]):
+    self.id = id
     self.name = name
     self.create_count = create_count
     self.commit_count = commit_count
@@ -99,14 +102,30 @@ class SymbolStatisticsCollector:
     # A hash that maps branch names to _Branch instances
     self._branches = { }
 
+    # A map { id -> record } for all symbols (branches and tags)
+    self._symbols = { }
+
+    self._key_generator = KeyGenerator(1)
+
+  def get_name(self, id):
+    """Return the name of the symbol with the specified ID.
+
+    Raise KeyError if ID is unknown."""
+
+    return self._symbols[id].name
+
   def register_tag_creation(self, name):
-    """Register the creation of the tag NAME."""
+    """Register the creation of the tag NAME.
+
+    Return the tag record's id."""
 
     tag = self._tags.get(name)
     if tag is None:
-      tag = _Tag(name)
+      tag = _Tag(self._key_generator.gen_id(), name)
       self._tags[name] = tag
+      self._symbols[tag.id] = tag
     tag.create_count += 1
+    return tag.id
 
   def _branch(self, name):
     """Helper function to get a branch node that will create and
@@ -114,14 +133,19 @@ class SymbolStatisticsCollector:
 
     branch = self._branches.get(name)
     if branch is None:
-      branch = _Branch(name)
+      branch = _Branch(self._key_generator.gen_id(), name)
       self._branches[name] = branch
+      self._symbols[branch.id] = branch
     return branch
 
   def register_branch_creation(self, name):
-    """Register the creation of the branch NAME."""
+    """Register the creation of the branch NAME.
 
-    self._branch(name).create_count += 1
+    Return the branch record's id."""
+
+    branch = self._branch(name)
+    branch.create_count += 1
+    return branch.id
 
   def register_branch_commit(self, name):
     """Register a commit on the branch NAME."""
@@ -304,9 +328,12 @@ class SymbolStatisticsCollector:
       line = f.readline()
       if not line:
         break
-      tag, create_count = line.split()
+      id, name, create_count = line.split()
+      id = int(id)
       create_count = int(create_count)
-      self._tags[tag] = _Tag(tag, create_count)
+      tag = _Tag(id, name, create_count)
+      self._tags[name] = tag
+      self._symbols[tag.id] = tag
 
     f = open(artifact_manager.get_temp_file(config.BRANCHES_LIST))
     while 1:
@@ -314,25 +341,29 @@ class SymbolStatisticsCollector:
       if not line:
         break
       words = line.split()
-      [name, create_count, commit_count] = words[:3]
-      blockers = words[3:]
+      [id, name, create_count, commit_count] = words[:4]
+      blockers = words[4:]
+      id = int(id)
       create_count = int(create_count)
       commit_count = int(commit_count)
-      self._branches[name] = _Branch(
-          name, create_count, commit_count, blockers)
+      branch = _Branch(id, name, create_count, commit_count, blockers)
+      self._branches[name] = branch
+      self._symbols[branch.id] = branch
 
   def write(self):
     """Store the symbol database to files."""
 
     f = open(artifact_manager.get_temp_file(config.TAGS_LIST), "w")
     for tag in self._tags.values():
-      f.write("%s %d\n" % (tag.name, tag.create_count))
+      f.write("%d %s %d\n" % (tag.id, tag.name, tag.create_count))
     f.close()
 
     f = open(artifact_manager.get_temp_file(config.BRANCHES_LIST), "w")
     for branch in self._branches.values():
-      f.write("%s %d %d"
-              % (branch.name, branch.create_count, branch.commit_count))
+      f.write(
+          "%d %s %d %d"
+          % (branch.id, branch.name, branch.create_count, branch.commit_count)
+          )
       if branch.blockers:
         f.write(' ')
         f.write(' '.join(branch.blockers.keys()))

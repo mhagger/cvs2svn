@@ -57,7 +57,7 @@ class PersistenceManager:
         artifact_manager.get_temp_file(config.CVS_REVS_TO_SVN_REVNUMS), mode)
     self.svn_commit_metadata = Database(
         artifact_manager.get_temp_file(config.METADATA_DB), DB_OPEN_READ)
-    self.cvs_revisions = CVSRevisionDatabase(
+    self._cvs_revs_db = CVSRevisionDatabase(
         artifact_manager.get_temp_file(config.CVS_REVS_RESYNC_DB),
         DB_OPEN_READ)
     ###PERF kff Elsewhere there are comments about sucking the tags db
@@ -93,7 +93,7 @@ class PersistenceManager:
     digest = None
     for key in c_rev_keys:
       c_rev_id = int(key, 16)
-      c_rev = self.cvs_revisions.get_revision(c_rev_id)
+      c_rev = self._cvs_revs_db.get_revision(c_rev_id)
       svn_commit.add_revision(c_rev)
       # Set the author and log message for this commit by using
       # CVSRevision metadata, but only if haven't done so already.
@@ -113,7 +113,7 @@ class PersistenceManager:
     if name:
       if svn_commit.cvs_revs:
         raise SVNCommit.SVNCommitInternalInconsistencyError(
-            "An SVNCommit cannot have cvs_revisions *and* a corresponding\n"
+            "An SVNCommit cannot have CVSRevisions *and* a corresponding\n"
             "symbolic name ('%s') to fill."
             % (clean_symbolic_name(name),))
       svn_commit.set_symbolic_name(name)

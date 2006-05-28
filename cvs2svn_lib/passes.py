@@ -24,7 +24,6 @@ import os
 import time
 import fileinput
 import re
-import sha
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib import config
@@ -177,8 +176,6 @@ class ResyncRevsPass(Pass):
 
   This pass was formerly known as pass2."""
 
-  DIGEST_END_IDX = 9 + (sha.digestsize * 2)
-
   def register_artifacts(self):
     self._register_temp_file(config.TAGS_DB)
     self._register_temp_file(config.CLEAN_REVS_DATAFILE)
@@ -193,17 +190,17 @@ class ResyncRevsPass(Pass):
   def _read_resync(self):
     """Read RESYNC_DATAFILE and return its contents.
 
-    Return a map that maps a digest to a sequence of lists which
+    Return a map that maps a metadata_id to a sequence of lists which
     specify a lower and upper time bound for matching up the commit:
 
-    { digest -> [[old_time_lower, old_time_upper, new_time], ...] }
+    { metadata_id -> [[old_time_lower, old_time_upper, new_time], ...] }
 
     Each triplet is a list because we will dynamically expand the
     lower/upper bound as we find commits that fall into a particular
-    msg and time range.  We keep a sequence of these for each digest
-    because a number of checkins with the same log message (e.g. an
-    empty log message) could need to be remapped.  The lists of
-    triplets are sorted by old_time_lower.
+    msg and time range.  We keep a sequence of these for each
+    metadata_id because a number of checkins with the same log message
+    (e.g. an empty log message) could need to be remapped.  The lists
+    of triplets are sorted by old_time_lower.
 
     Note that we assume that we can hold the entire resync file in
     memory.  Really large repositories with wacky timestamps could
@@ -216,13 +213,13 @@ class ResyncRevsPass(Pass):
     resync = { }
     for line in fileinput.FileInput(
             artifact_manager.get_temp_file(config.RESYNC_DATAFILE)):
-      [t1, digest, t2] = line.strip().split()
+      [t1, metadata_id, t2] = line.strip().split()
       t1 = int(t1, 16)
-      digest = line[9:self.DIGEST_END_IDX]
+      metadata_id = int(metadata_id, 16)
       t2 = int(t2, 16)
-      resync.setdefault(digest, []).append([t1 - DELTA, t1 + DELTA, t2])
+      resync.setdefault(metadata_id, []).append([t1 - DELTA, t1 + DELTA, t2])
 
-    # For each digest, sort the resync items:
+    # For each metadata_id, sort the resync items:
     for val in resync.values():
       val.sort()
 
@@ -303,9 +300,9 @@ class ResyncRevsPass(Pass):
       self._force_tags(c_rev)
       self._force_branches(c_rev)
 
-      # see if this is "near" any of the resync records we
-      # have recorded for this digest [of the log message].
-      for record in resync.get(c_rev.digest, []):
+      # see if this is "near" any of the resync records we have
+      # recorded for this metadata_id [of the log message].
+      for record in resync.get(c_rev.metadata_id, []):
         if record[2] == c_rev.timestamp:
           # This means that either c_rev is the same revision that
           # caused the resync record to exist, or c_rev is a different
@@ -386,8 +383,8 @@ class ResyncRevsPass(Pass):
           # stop looking for hits
           break
 
-      output.write('%08lx %s %x\n'
-                   % (c_rev.timestamp, c_rev.digest, c_rev.id,))
+      output.write('%08lx %x %x\n'
+                   % (c_rev.timestamp, c_rev.metadata_id, c_rev.id,))
       cvs_items_resync_db.add(c_rev)
     Log().quiet("Done")
 

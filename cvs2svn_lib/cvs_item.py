@@ -44,7 +44,7 @@ class CVSRevision(CVSItem):
 
   def __init__(self,
                id, cvs_file,
-               timestamp, digest,
+               timestamp, metadata_id,
                prev_id, next_id,
                op, rev, deltatext_exists,
                lod, first_on_branch, tags, branches):
@@ -54,7 +54,7 @@ class CVSRevision(CVSItem):
        ID              -->  (string) unique ID for this revision.
        CVS_FILE        -->  (CVSFile) CVSFile affected by this revision
        TIMESTAMP       -->  (int) date stamp for this cvs revision
-       DIGEST          -->  (string) digest of author+logmsg
+       METADATA_ID     -->  (int) id of author+logmsg record in metadata_db
        PREV_ID         -->  (int) id of the previous cvs revision (or None)
        NEXT_ID         -->  (int) id of the next cvs revision (or None)
        OP              -->  (char) OP_ADD, OP_CHANGE, or OP_DELETE
@@ -70,7 +70,7 @@ class CVSRevision(CVSItem):
 
     self.rev = rev
     self.timestamp = timestamp
-    self.digest = digest
+    self.metadata_id = metadata_id
     self.op = op
     self.prev_id = prev_id
     self.next_id = next_id
@@ -103,7 +103,7 @@ class CVSRevision(CVSItem):
 
     return (
         self.id, self.cvs_file.id,
-        self.timestamp, self.digest,
+        self.timestamp, self.metadata_id,
         self.prev_id, self.next_id,
         self.op,
         self.rev,
@@ -114,7 +114,7 @@ class CVSRevision(CVSItem):
         ' '.join(self.branches),)
 
   def __setstate__(self, data):
-    (self.id, cvs_file_id, self.timestamp, self.digest,
+    (self.id, cvs_file_id, self.timestamp, self.metadata_id,
      self.prev_id, self.next_id, self.op, self.rev,
      self.deltatext_exists, lod_name, self.first_on_branch,
      tags, branches) = data

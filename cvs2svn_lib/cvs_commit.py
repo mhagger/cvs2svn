@@ -36,8 +36,8 @@ class CVSCommit:
   generate a Subversion Commit (or Commits) for the set of CVS
   Revisions in the grouping."""
 
-  def __init__(self, digest, author, log):
-    self.digest = digest
+  def __init__(self, metadata_id, author, log):
+    self.metadata_id = metadata_id
     self.author = author
     self.log = log
 
@@ -111,11 +111,13 @@ class CVSCommit:
 
   def __cmp__(self, other):
     # Commits should be sorted by t_max.  If both self and other have
-    # the same t_max, break the tie using t_min, and lastly, digest.
-    # If all those are equal, then compare based on ids, to ensure
-    # that no two instances compare equal.
-    return (cmp(self.t_max, other.t_max) or cmp(self.t_min, other.t_min)
-            or cmp(self.digest, other.digest) or cmp(id(self), id(other)))
+    # the same t_max, break the tie using t_min, and lastly,
+    # metadata_id.  If all those are equal, then compare based on ids,
+    # to ensure that no two instances compare equal.
+    return (cmp(self.t_max, other.t_max)
+            or cmp(self.t_min, other.t_min)
+            or cmp(self.metadata_id, other.metadata_id)
+            or cmp(id(self), id(other)))
 
   def __hash__(self):
     return id(self)
@@ -272,7 +274,7 @@ class CVSCommit:
         cvs_generated_msg = ('file %s was initially added on branch %s.\n'
                              % (c_rev.cvs_file.basename, c_rev.branches[0]))
         author, log_msg = \
-            Ctx()._persistence_manager.svn_commit_metadata[c_rev.digest]
+            Ctx()._persistence_manager.svn_commit_metadata[c_rev.metadata_id]
         if log_msg == cvs_generated_msg:
           continue
 

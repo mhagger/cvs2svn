@@ -29,6 +29,7 @@ from cvs2svn_lib.database import DB_OPEN_NEW
 from cvs2svn_lib.database import DB_OPEN_READ
 from cvs2svn_lib.cvs_item_database import CVSItemDatabase
 from cvs2svn_lib.tags_database import TagsDatabase
+from cvs2svn_lib.metadata_database import MetadataDatabase
 from cvs2svn_lib.svn_commit import SVNCommit
 
 
@@ -55,8 +56,7 @@ class PersistenceManager:
         artifact_manager.get_temp_file(config.SVN_REVNUMS_TO_CVS_REVS), mode)
     self.cvs2svn_db = Database(
         artifact_manager.get_temp_file(config.CVS_REVS_TO_SVN_REVNUMS), mode)
-    self.svn_commit_metadata = Database(
-        artifact_manager.get_temp_file(config.METADATA_DB), DB_OPEN_READ)
+    self.svn_commit_metadata = MetadataDatabase(DB_OPEN_READ)
     self._cvs_items_db = CVSItemDatabase(
         artifact_manager.get_temp_file(config.CVS_ITEMS_RESYNC_DB),
         DB_OPEN_READ)
@@ -90,16 +90,16 @@ class PersistenceManager:
     if c_rev_keys is None:
       return None
 
-    digest = None
+    metadata_id = None
     for key in c_rev_keys:
       c_rev_id = int(key, 16)
       c_rev = self._cvs_items_db[c_rev_id]
       svn_commit.add_revision(c_rev)
       # Set the author and log message for this commit by using
       # CVSRevision metadata, but only if haven't done so already.
-      if digest is None:
-        digest = c_rev.digest
-        author, log_msg = self.svn_commit_metadata[digest]
+      if metadata_id is None:
+        metadata_id = c_rev.metadata_id
+        author, log_msg = self.svn_commit_metadata[metadata_id]
         svn_commit.set_author(author)
         svn_commit.set_log_msg(log_msg)
 

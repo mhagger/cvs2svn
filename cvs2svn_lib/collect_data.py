@@ -23,7 +23,6 @@ import sys
 import os
 import re
 import time
-import sha
 import stat
 
 from cvs2svn_lib.boolean import *
@@ -47,6 +46,7 @@ from cvs2svn_lib.database import DB_OPEN_NEW
 from cvs2svn_lib.cvs_file_database import CVSFileDatabase
 from cvs2svn_lib.cvs_item_database import CVSItemDatabase
 from cvs2svn_lib.symbol_database import SymbolDatabase
+from cvs2svn_lib.metadata_database import MetadataDatabase
 
 import cvs2svn_rcsparse
 
@@ -662,14 +662,16 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     """This is a callback method declared in Sink."""
 
     rev_data = self._rev_data[revision]
-    digest = sha.new(log + '\0' + rev_data.author).hexdigest()
+
+    metadata_id = self.collect_data.metadata_db.get_key(rev_data.author, log)
+
     if rev_data.timestamp_was_adjusted():
       # the timestamp on this revision was changed. log it for later
       # resynchronization of other files's revisions that occurred
       # for this time and log message.
       self.collect_data.resync.write(
-          '%08lx %s %08lx\n'
-          % (rev_data.original_timestamp, digest, rev_data.timestamp))
+          '%08lx %x %08lx\n'
+          % (rev_data.original_timestamp, metadata_id, rev_data.timestamp))
 
     # "...Give back one kadam to honor the Hebrew God whose Ark this is."
     #       -- Imam to Indy and Sallah, in 'Raiders of the Lost Ark'
@@ -700,7 +702,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
     c_rev = CVSRevision(
         self._get_rev_id(revision), self.cvs_file,
-        rev_data.timestamp, digest,
+        rev_data.timestamp, metadata_id,
         self._get_rev_id(rev_data.parent),
         self._get_rev_id(rev_data.child),
         self._determine_operation(rev_data),
@@ -711,9 +713,6 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         tag_names, branch_names)
     rev_data.c_rev = c_rev
     self.collect_data.add_cvs_revision(c_rev)
-
-    if not self.collect_data.metadata_db.has_key(digest):
-      self.collect_data.metadata_db[digest] = (rev_data.author, log)
 
   def parse_completed(self):
     """Walk through all branches and tags and register them with their
@@ -743,8 +742,7 @@ class CollectData:
         artifact_manager.get_temp_file(config.ALL_REVS_DATAFILE), 'w')
     self.resync = open(
         artifact_manager.get_temp_file(config.RESYNC_DATAFILE), 'w')
-    self.metadata_db = Database(
-        artifact_manager.get_temp_file(config.METADATA_DB), DB_OPEN_NEW)
+    self.metadata_db = MetadataDatabase(DB_OPEN_NEW)
     self.fatal_errors = []
     self.num_files = 0
     self.symbol_db = SymbolDatabase()

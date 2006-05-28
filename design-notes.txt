@@ -97,7 +97,22 @@ When every CVS file is done, CollectRevsPass is complete, and:
 
    - 'cvs2svn-branches.txt' ???
    - 'cvs2svn-tags.txt' ???
-   - 'cvs2svn-metadata.db' ???
+
+   - 'cvs2svn-metadata.db' contains information that will help
+     determine what CVSRevisions might have been made together and
+     will therefore be combined into a single SVNCommit.  CVSRevisions
+     that were part of a single CVS commit always have a common author
+     and log message.  This database contains two mappings for each
+     (author, log_msg,) combination:
+
+     digest (40-byte string) -> metadata_id (int)
+
+     metadata_id (int as hex) -> (author, log_msg,) (tuple)
+
+     The digest is used to locate the metadata_id for the metadata
+     record having a specific (author, log_msg,) tuple.  The
+     metadata_id, in turn, is used as a key to locate the actual
+     metadata.  CVSRevision records include the metadata_id.
 
 
 ResyncRevsPass (formerly called pass2)

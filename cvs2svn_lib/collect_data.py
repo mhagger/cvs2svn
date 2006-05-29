@@ -27,6 +27,7 @@ import stat
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib import config
+from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.common import OP_ADD
@@ -727,6 +728,19 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     self.collect_data.num_files += 1
 
 
+ctrl_characters_regexp = re.compile('[\\\x00-\\\x1f\\\x7f]')
+
+def verify_filename_legal(filename):
+  """Verify that FILENAME does not include any control characters.  If
+  it does, raise a FatalError."""
+
+  m = ctrl_characters_regexp.search(filename)
+  if m:
+    raise FatalError(
+        "Character %r in filename %r is not supported by Subversion."
+        % (m.group(), filename,))
+
+
 class CollectData:
   """Repository for data collected by parsing the CVS repository files.
 
@@ -779,6 +793,21 @@ class CollectData:
       Log().warn("Exception occurred while parsing %s" % pathname)
       raise
 
+  def visit_directory(self, dirname, files):
+    for fname in files:
+      verify_filename_legal(fname)
+      if not fname.endswith(',v'):
+        continue
+      self.found_valid_file = 1
+      pathname = os.path.join(dirname, fname)
+      Log().normal(pathname)
+
+      self.process_file(pathname)
+
+  def process_project(self, project):
+    os.path.walk(project.project_cvs_repos_path,
+                 CollectData.visit_directory, self)
+    Log().verbose('Processed', self.num_files, 'files')
 
   def add_cvs_file(self, cvs_file):
     """Store CVS_FILE to _cvs_file_db under its persistent id."""

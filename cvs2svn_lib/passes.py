@@ -53,19 +53,6 @@ from cvs2svn_lib.collect_data import CollectData
 from cvs2svn_lib.process import run_command
 
 
-ctrl_characters_regexp = re.compile('[\\\x00-\\\x1f\\\x7f]')
-
-def verify_filename_legal(filename):
-  """Verify that FILENAME does not include any control characters.  If
-  it does, raise a FatalError."""
-
-  m = ctrl_characters_regexp.search(filename)
-  if m:
-    raise FatalError(
-        "Character %r in filename %r is not supported by Subversion."
-        % (m.group(), filename,))
-
-
 def sort_file(infilename, outfilename):
   """Sort file INFILENAME, storing the results to OUTFILENAME."""
 
@@ -133,21 +120,7 @@ class CollectRevsPass(Pass):
     Log().quiet("Examining all CVS ',v' files...")
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_NEW)
     cd = CollectData(stats_keeper)
-
-    def visit_file(cd, dirname, files):
-      for fname in files:
-        verify_filename_legal(fname)
-        if not fname.endswith(',v'):
-          continue
-        cd.found_valid_file = 1
-        pathname = os.path.join(dirname, fname)
-        Log().normal(pathname)
-
-        cd.process_file(pathname)
-
-    os.path.walk(Ctx().project.project_cvs_repos_path, visit_file, cd)
-    Log().verbose('Processed', cd.num_files, 'files')
-
+    cd.process_project(Ctx().project)
     cd.write_symbol_stats()
 
     if len(cd.fatal_errors) > 0:

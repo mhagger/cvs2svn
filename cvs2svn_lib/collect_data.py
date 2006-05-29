@@ -743,10 +743,18 @@ class _ProjectDataCollector:
   def __init__(self, collect_data, project):
     self.collect_data = collect_data
     self.project = project
+    self.found_valid_file = False
     self.fatal_errors = []
     self.num_files = 0
     os.path.walk(self.project.project_cvs_repos_path,
                  _ProjectDataCollector._visit_directory, self)
+    if not self.fatal_errors and not self.found_valid_file:
+      self.fatal_errors.append(
+          '\n'
+          'No RCS files found under %r!\n'
+          'Are you absolutely certain you are pointing cvs2svn\n'
+          'at a CVS repository?\n'
+          % self.project.project_cvs_repos_path)
 
   def _process_file(self, pathname):
     fdc = _FileDataCollector(self.collect_data, pathname)
@@ -779,7 +787,7 @@ class _ProjectDataCollector:
       verify_filename_legal(fname)
       if not fname.endswith(',v'):
         continue
-      self.collect_data.found_valid_file = 1
+      self.found_valid_file = True
       pathname = os.path.join(dirname, fname)
       Log().normal(pathname)
 
@@ -806,9 +814,6 @@ class CollectData:
     self.num_files = 0
     self.symbol_stats = SymbolStatisticsCollector()
     self.stats_keeper = stats_keeper
-
-    # 1 if we've collected data for at least one file, None otherwise.
-    self.found_valid_file = None
 
     # Key generator to generate unique keys for each CVSRevision object:
     self.key_generator = KeyGenerator()

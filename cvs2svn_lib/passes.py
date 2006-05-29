@@ -130,15 +130,6 @@ class CollectRevsPass(Pass):
                            + "\n".join(cd.fatal_errors) + "\n"
                            + "Exited due to fatal error(s).\n")
 
-    if cd.found_valid_file is None:
-      raise FatalException(
-          "\n"
-          "No RCS files found in your CVS Repository!\n"
-          "Are you absolutely certain you are pointing cvs2svn\n"
-          "at a CVS repository?\n"
-          "\n"
-          "Exited due to fatal error(s).\n")
-
     stats_keeper.reset_c_rev_info()
     stats_keeper.archive()
     Log().quiet("Done")

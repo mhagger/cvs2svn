@@ -369,8 +369,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
     # mode is not known yet, so we temporarily set it to None.
     self.cvs_file = CVSFile(
-        self.collect_data.file_key_generator.gen_id(),
-        filename, Ctx().cvs_repository.get_cvs_path(canonical_filename),
+        None, filename, Ctx().cvs_repository.get_cvs_path(canonical_filename),
         file_in_attic, file_executable, file_size, None
         )
 
@@ -751,9 +750,6 @@ class CollectData:
 
     # 1 if we've collected data for at least one file, None otherwise.
     self.found_valid_file = None
-
-    # Key generator to generate unique keys for each CVSFile object:
-    self.file_key_generator = KeyGenerator(1)
 
     # Key generator to generate unique keys for each CVSRevision object:
     self.key_generator = KeyGenerator()

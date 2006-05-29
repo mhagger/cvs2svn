@@ -109,13 +109,6 @@ class SymbolStatisticsCollector:
 
     self._key_generator = KeyGenerator(1)
 
-  def get_name(self, id):
-    """Return the name of the symbol with the specified ID.
-
-    Raise KeyError if ID is unknown."""
-
-    return self._symbols[id].name
-
   def register_tag_creation(self, name):
     """Register the creation of the tag NAME.
 

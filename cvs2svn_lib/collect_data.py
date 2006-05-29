@@ -725,8 +725,6 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
     self.sdc.register_branch_blockers()
 
-    self.collect_data.num_files += 1
-
 
 ctrl_characters_regexp = re.compile('[\\\x00-\\\x1f\\\x7f]')
 
@@ -739,6 +737,53 @@ def verify_filename_legal(filename):
     raise FatalError(
         "Character %r in filename %r is not supported by Subversion."
         % (m.group(), filename,))
+
+
+class _ProjectDataCollector:
+  def __init__(self, collect_data, project):
+    self.collect_data = collect_data
+    self.project = project
+    self.fatal_errors = []
+    self.num_files = 0
+    os.path.walk(self.project.project_cvs_repos_path,
+                 _ProjectDataCollector._visit_directory, self)
+
+  def _process_file(self, pathname):
+    fdc = _FileDataCollector(self.collect_data, pathname)
+
+    if not fdc.cvs_file.in_attic:
+      # If this file also exists in the attic, it's a fatal error
+      attic_path = os.path.join(
+          os.path.dirname(pathname), 'Attic', os.path.basename(pathname))
+      if os.path.exists(attic_path):
+        err = "%s: A CVS repository cannot contain both %s and %s" \
+              % (error_prefix, pathname, attic_path)
+        sys.stderr.write(err + '\n')
+        self.fatal_errors.append(err)
+
+    try:
+      cvs2svn_rcsparse.parse(open(pathname, 'rb'), fdc)
+    except (cvs2svn_rcsparse.common.RCSParseError, ValueError,
+            RuntimeError):
+      err = "%s: '%s' is not a valid ,v file" \
+            % (error_prefix, pathname)
+      sys.stderr.write(err + '\n')
+      self.fatal_errors.append(err)
+    except:
+      Log().warn("Exception occurred while parsing %s" % pathname)
+      raise
+    self.num_files += 1
+
+  def _visit_directory(self, dirname, files):
+    for fname in files:
+      verify_filename_legal(fname)
+      if not fname.endswith(',v'):
+        continue
+      self.collect_data.found_valid_file = 1
+      pathname = os.path.join(dirname, fname)
+      Log().normal(pathname)
+
+      self._process_file(pathname)
 
 
 class CollectData:
@@ -768,45 +813,10 @@ class CollectData:
     # Key generator to generate unique keys for each CVSRevision object:
     self.key_generator = KeyGenerator()
 
-  def process_file(self, pathname):
-    fdc = _FileDataCollector(self, pathname)
-
-    if not fdc.cvs_file.in_attic:
-      # If this file also exists in the attic, it's a fatal error
-      attic_path = os.path.join(
-          os.path.dirname(pathname), 'Attic', os.path.basename(pathname))
-      if os.path.exists(attic_path):
-        err = "%s: A CVS repository cannot contain both %s and %s" \
-              % (error_prefix, pathname, attic_path)
-        sys.stderr.write(err + '\n')
-        self.fatal_errors.append(err)
-
-    try:
-      cvs2svn_rcsparse.parse(open(pathname, 'rb'), fdc)
-    except (cvs2svn_rcsparse.common.RCSParseError, ValueError,
-            RuntimeError):
-      err = "%s: '%s' is not a valid ,v file" \
-            % (error_prefix, pathname)
-      sys.stderr.write(err + '\n')
-      self.fatal_errors.append(err)
-    except:
-      Log().warn("Exception occurred while parsing %s" % pathname)
-      raise
-
-  def visit_directory(self, dirname, files):
-    for fname in files:
-      verify_filename_legal(fname)
-      if not fname.endswith(',v'):
-        continue
-      self.found_valid_file = 1
-      pathname = os.path.join(dirname, fname)
-      Log().normal(pathname)
-
-      self.process_file(pathname)
-
   def process_project(self, project):
-    os.path.walk(project.project_cvs_repos_path,
-                 CollectData.visit_directory, self)
+    pdc = _ProjectDataCollector(self, project)
+    self.num_files += pdc.num_files
+    self.fatal_errors.extend(pdc.fatal_errors)
     Log().verbose('Processed', self.num_files, 'files')
 
   def add_cvs_file(self, cvs_file):

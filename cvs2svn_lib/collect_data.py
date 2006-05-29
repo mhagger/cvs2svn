@@ -339,13 +339,14 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
   Any collected data that need to be remembered are stored into the
   referenced CollectData instance."""
 
-  def __init__(self, collect_data, filename):
+  def __init__(self, collect_data, project, filename):
     """Create an object that is prepared to receive data for FILENAME.
     FILENAME is the absolute filesystem path to the file in question.
     COLLECT_DATA is used to store the information collected about the
     file."""
 
     self.collect_data = collect_data
+    self.project = project
 
     (dirname, basename,) = os.path.split(filename)
     if dirname.endswith(OS_SEP_PLUS_ATTIC):
@@ -757,7 +758,7 @@ class _ProjectDataCollector:
           % self.project.project_cvs_repos_path)
 
   def _process_file(self, pathname):
-    fdc = _FileDataCollector(self.collect_data, pathname)
+    fdc = _FileDataCollector(self.collect_data, self.project, pathname)
 
     if not fdc.cvs_file.in_attic:
       # If this file also exists in the attic, it's a fatal error

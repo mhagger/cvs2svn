@@ -19,10 +19,13 @@
 import os
 
 from cvs2svn_lib.boolean import *
+from cvs2svn_lib.key_generator import KeyGenerator
 
 
 class CVSFile(object):
   """Represent a CVS file."""
+
+  key_generator = KeyGenerator(1)
 
   def __init__(self, id, filename, cvs_path,
                in_attic, executable, file_size, mode):
@@ -30,7 +33,8 @@ class CVSFile(object):
 
     Arguments:
 
-      ID                 --> (long) unique id for this file
+      ID                 --> (int or None) unique id for this file.  If None,
+                             a new id is generated.
       FILENAME           --> (string) the filesystem path to the CVS file
       CVS_PATH           --> (string) the canonical path within the CVS
                              repository (no 'Attic', no ',v', forward slashes)
@@ -38,6 +42,11 @@ class CVSFile(object):
       EXECUTABLE         --> (bool) True iff RCS file has executable bit set
       FILE_SIZE          --> (long) size of the RCS file in bytes
       MODE               --> (string or None) 'kkv', 'kb', etc."""
+
+    if id is None:
+      self.id = self.key_generator.gen_id()
+    else:
+      self.id = id
 
     self.id = id
     self.filename = filename

@@ -48,7 +48,6 @@ class CVSFile(object):
     else:
       self.id = id
 
-    self.id = id
     self.filename = filename
     self.cvs_path = cvs_path
     self.in_attic = in_attic

@@ -27,6 +27,10 @@
     that <tt>trunk/tags/branches</tt> are inside of
     <tt>foo</tt>?</a></li>
 
+  <li><a href="#atticprob">I get an error "A CVS repository cannot
+    contain both repo/path/file.txt,v and
+    repo/path/Attic/file.txt,v".  What can I do?</a></li>
+
 </ol>
 
 <hr />
@@ -145,6 +149,88 @@ example:
     <tt>svnadmin</tt> with the <tt>--parent-dir</tt> switch.  See the
     answer to <a href="#oneatatime">How can I convert my CVS
     repository one module at a time?</a> for details.</p>
+
+<hr />
+
+<h2>Problems:</h2>
+
+<h3><a name="atticprob" title="#atticprob">I get an error "A CVS
+    repository cannot contain both repo/path/file.txt,v and
+    repo/path/Attic/file.txt,v".  What can I do?</a></h3>
+
+<p>Background: Normally, if you have a file called
+<tt>path/file.txt</tt> in your project, CVS stores its history in a
+file called <tt>repo/path/file.txt,v</tt>.  But if <tt>file.txt</tt>
+is deleted on the main line of development, CVS moves its history file
+to a special <tt>Attic</tt> subdirectory:
+<tt>repo/path/Attic/file.txt,v</tt>.  (If the file is recreated, then
+it is moved back out of the <tt>Attic</tt> subdirectory.)  Your
+repository should never contain both of these files at the same
+time.</p>
+
+<p>This cvs2svn error message thus indicates a mild form of corruption
+in your CVS repository.  The file has two conflicting histories, and
+even CVS does not know the correct history of <tt>path/file.txt</tt>.
+The corruption was probably created by using tools other than CVS to
+backup or manipulate the files in your repository.  With a little work
+you can learn more about the two histories by viewing each of the
+<tt>file.txt,v</tt> files in a text editor.</p>
+
+<p>There are four straightforward approaches to fixing the repository
+corruption, but each has potential disadvantages.  Remember to <b>make
+a backup</b> before starting.  Never run cvs2svn on a live CVS
+repository--always work on a copy of your repository.</p>
+
+<ol>
+  <li>Remove the <tt>Attic</tt> version of the file and restart the
+    conversion.  Sometimes it represents an old version of the file
+    that was deleted long ago, and it won't be missed.  But this
+    completely discards one of the file's histories, probably causing
+    <tt>file.txt</tt> to be missing in older historical revisions.
+    (For what it's worth, this is probably how CVS would behave in
+    this situation.)
+
+    <pre>
+      # You did make a backup, right?
+      $ rm repo/path/Attic/file.txt,v
+    </pre></li>
+
+  <li>Remove the non-<tt>Attic</tt> version of the file and restart
+    the conversion.  This might be appropriate if the
+    non-<tt>Attic</tt> version has less important content than the
+    <tt>Attic</tt> version.  But this completely discards one of the
+    file's histories, probably causing <tt>file.txt</tt> to be missing
+    in recent historical revisions.
+
+    <pre>
+      # You did make a backup, right?
+      $ rm repo/path/file.txt,v
+    </pre></li>
+
+  <li>Rename the <tt>Attic</tt> version of the file and restart the
+    conversion.  This avoids losing history, but it changes the name
+    of the <tt>Attic</tt> version of the file to
+    <tt>file-from-Attic.txt</tt> whenever it appeared, and might
+    thereby cause revisions to be broken.
+
+    <pre>
+      # You did make a backup, right?
+      $ mv repo/path/Attic/file.txt,v repo/path/Attic/file-from-Attic.txt,v
+    </pre></li>
+
+  <li>Rename the non-<tt>Attic</tt> version of the file and restart
+    the conversion.  This avoids losing history, but it changes the
+    name of the non-<tt>Attic</tt> version of the file to
+    <tt>file-not-from-Attic.txt</tt> whenever it appeared, and might
+    thereby cause revisions to be broken.
+
+    <pre>
+      # You did make a backup, right?
+      $ mv repo/path/file.txt,v repo/path/file-not-from-Attic.txt,v
+    </pre></li>
+
+</ol>
+
 
 </div>
 </body>

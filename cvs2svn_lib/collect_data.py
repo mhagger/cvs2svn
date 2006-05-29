@@ -52,8 +52,6 @@ from cvs2svn_lib.metadata_database import MetadataDatabase
 import cvs2svn_rcsparse
 
 
-OS_SEP_PLUS_ATTIC = os.sep + 'Attic'
-
 branch_tag_re = re.compile(r'''
     ^
     ((?:\d+\.\d+\.)+)   # A nonzero even number of digit groups w/trailing dot
@@ -348,32 +346,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     self.collect_data = collect_data
     self.project = project
 
-    (dirname, basename,) = os.path.split(filename)
-    if dirname.endswith(OS_SEP_PLUS_ATTIC):
-      # drop the 'Attic' portion from the filename for the canonical name:
-      canonical_filename = os.path.join(
-          dirname[:-len(OS_SEP_PLUS_ATTIC)], basename)
-      file_in_attic = True
-    else:
-      canonical_filename = filename
-      file_in_attic = False
-
-    # Store file-wide metadata here, in a CVSFile object, instead of
-    # once per revision:
-
-    file_stat = os.stat(filename)
-
-    # The size of our file in bytes
-    file_size = file_stat[stat.ST_SIZE]
-
-    # Whether or not the executable bit is set.
-    file_executable = bool(file_stat[0] & stat.S_IXUSR)
-
-    # mode is not known yet, so we temporarily set it to None.
-    self.cvs_file = CVSFile(
-        None, filename, Ctx().cvs_repository.get_cvs_path(canonical_filename),
-        file_in_attic, file_executable, file_size, None
-        )
+    self.cvs_file = self.project.get_cvs_file(filename)
 
     # A place to store information about the symbols in this file:
     self.sdc = _SymbolDataCollector(self.collect_data, self.cvs_file)

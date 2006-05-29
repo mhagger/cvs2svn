@@ -18,6 +18,7 @@
 
 
 import os
+import stat
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.context import Ctx
@@ -26,6 +27,7 @@ from cvs2svn_lib.common import path_join
 from cvs2svn_lib.common import path_split
 from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.common import FatalError
+from cvs2svn_lib.cvs_file import CVSFile
 
 
 def verify_paths_disjoint(*paths):
@@ -65,6 +67,9 @@ def normalize_ttb_path(opt, path):
   return norm_path
 
 
+OS_SEP_PLUS_ATTIC = os.sep + 'Attic'
+
+
 class Project:
   """A project within a CVS repository."""
 
@@ -91,6 +96,38 @@ class Project:
     self.tags_path = tags_path
     verify_paths_disjoint(self.trunk_path, self.branches_path,
                           self.tags_path)
+
+  def get_cvs_file(self, filename):
+    """Return a CVSFile describing the file with name FILENAME.
+
+    FILENAME must be a *,v file within this project.  The CVSFile is
+    assigned a new unique id.  All of the CVSFile information is
+    filled in except mode (which can only be determined by parsing the
+    file)."""
+
+    (dirname, basename,) = os.path.split(filename)
+    if dirname.endswith(OS_SEP_PLUS_ATTIC):
+      # drop the 'Attic' portion from the filename for the canonical name:
+      canonical_filename = os.path.join(
+          dirname[:-len(OS_SEP_PLUS_ATTIC)], basename)
+      file_in_attic = True
+    else:
+      canonical_filename = filename
+      file_in_attic = False
+
+    file_stat = os.stat(filename)
+
+    # The size of the file in bytes:
+    file_size = file_stat[stat.ST_SIZE]
+
+    # Whether or not the executable bit is set:
+    file_executable = bool(file_stat[0] & stat.S_IXUSR)
+
+    # mode is not known, so we temporarily set it to None.
+    return CVSFile(
+        None, filename, Ctx().cvs_repository.get_cvs_path(canonical_filename),
+        file_in_attic, file_executable, file_size, None
+        )
 
   def is_source(self, svn_path):
     """Return True iff SVN_PATH is a legitimate source for this project.

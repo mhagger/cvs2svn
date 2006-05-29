@@ -43,23 +43,6 @@ class CVSRepository:
         r'^' + re.escape(self.cvs_repos_path)
         + r'(' + re.escape(os.sep) + r'|$)')
 
-  def get_cvs_path(self, fname):
-    """Return the path to FNAME relative to cvs_repos_path, with ',v' removed.
-
-    FNAME is a filesystem name that has to be within
-    self.cvs_repos_path.  Return the filename relative to
-    self.cvs_repos_path, with ',v' striped off if present, and with
-    os.sep converted to '/'."""
-
-    (tail, n) = self.cvs_prefix_re.subn('', fname, 1)
-    if n != 1:
-      raise FatalError(
-          "get_cvs_path: '%s' is not a sub-path of '%s'"
-          % (fname, self.cvs_repos_path,))
-    if tail.endswith(',v'):
-      tail = tail[:-2]
-    return tail.replace(os.sep, '/')
-
   def get_co_pipe(self, c_rev, suppress_keyword_substitution=False):
     """Return a command string, and a pipe from which the file
     contents of C_REV can be read.  C_REV is a CVSRevision.  If

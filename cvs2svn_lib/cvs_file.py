@@ -37,7 +37,7 @@ class CVSFile(object):
                              a new id is generated.
       FILENAME           --> (string) the filesystem path to the CVS file
       CVS_PATH           --> (string) the canonical path within the CVS
-                             repository (no 'Attic', no ',v', forward slashes)
+                             project (no 'Attic', no ',v', forward slashes)
       IN_ATTIC           --> (bool) True iff RCS file is in Attic
       EXECUTABLE         --> (bool) True iff RCS file has executable bit set
       FILE_SIZE          --> (long) size of the RCS file in bytes

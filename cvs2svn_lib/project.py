@@ -17,6 +17,7 @@
 """This module contains database facilities used by cvs2svn."""
 
 
+import re
 import os
 import stat
 
@@ -82,11 +83,15 @@ class Project:
     are the full, normalized directory names in svn for the
     corresponding part of the repository."""
 
-    self.project_cvs_repos_path = project_cvs_repos_path
+    self.project_cvs_repos_path = os.path.normpath(project_cvs_repos_path)
     prefix = Ctx().cvs_repository.cvs_repos_path
     if not self.project_cvs_repos_path.startswith(prefix):
       raise FatalError("Project '%s' must start with '%s'"
                        % (self.project_cvs_repos_path, prefix,))
+    # A regexp matching project_cvs_repos_path plus an optional separator:
+    self.project_prefix_re = re.compile(
+        r'^' + re.escape(self.project_cvs_repos_path)
+        + r'(' + re.escape(os.sep) + r'|$)')
     # The project's main directory as a cvs_path:
     self.project_cvs_path = self.project_cvs_repos_path[len(prefix):]
     if self.project_cvs_path.startswith(os.sep):
@@ -94,8 +99,24 @@ class Project:
     self.trunk_path = trunk_path
     self.branches_path = branches_path
     self.tags_path = tags_path
-    verify_paths_disjoint(self.trunk_path, self.branches_path,
-                          self.tags_path)
+    verify_paths_disjoint(self.trunk_path, self.branches_path, self.tags_path)
+
+  def get_cvs_path(self, filename):
+    """Return the path to FILENAME relative to project_cvs_repos_path.
+
+    FILENAME is a filesystem name that has to be within
+    self.project_cvs_repos_path.  Return the filename relative to
+    self.project_cvs_repos_path, with ',v' striped off if present, and
+    with os.sep converted to '/'."""
+
+    (tail, n) = self.project_prefix_re.subn('', filename, 1)
+    if n != 1:
+      raise FatalError(
+          "get_cvs_path: '%s' is not a sub-path of '%s'"
+          % (filename, self.project_cvs_repos_path,))
+    if tail.endswith(',v'):
+      tail = tail[:-2]
+    return tail.replace(os.sep, '/')
 
   def get_cvs_file(self, filename):
     """Return a CVSFile describing the file with name FILENAME.
@@ -125,7 +146,7 @@ class Project:
 
     # mode is not known, so we temporarily set it to None.
     return CVSFile(
-        None, filename, Ctx().cvs_repository.get_cvs_path(canonical_filename),
+        None, filename, self.get_cvs_path(canonical_filename),
         file_in_attic, file_executable, file_size, None
         )
 

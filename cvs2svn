@@ -319,7 +319,7 @@ def main():
 
   # Create the default project (using ctx.trunk, ctx.branches, and ctx.tags):
   ctx.project = Project(
-      ctx.cvs_repository.cvs_repos_path,
+      ctx.cvs_repository, ctx.cvs_repository.cvs_repos_path,
       ctx.trunk_base, ctx.branches_base, ctx.tags_base)
 
   if ctx.existing_svnrepos and not os.path.isdir(ctx.target):

@@ -22,7 +22,6 @@ import os
 import stat
 
 from cvs2svn_lib.boolean import *
-from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.common import clean_symbolic_name
 from cvs2svn_lib.common import path_join
 from cvs2svn_lib.common import path_split
@@ -74,7 +73,7 @@ OS_SEP_PLUS_ATTIC = os.sep + 'Attic'
 class Project:
   """A project within a CVS repository."""
 
-  def __init__(self, project_cvs_repos_path,
+  def __init__(self, cvs_repository, project_cvs_repos_path,
                trunk_path, branches_path, tags_path):
     """Create a new Project record.
 
@@ -83,8 +82,9 @@ class Project:
     are the full, normalized directory names in svn for the
     corresponding part of the repository."""
 
+    self.cvs_repository = cvs_repository
     self.project_cvs_repos_path = os.path.normpath(project_cvs_repos_path)
-    prefix = Ctx().cvs_repository.cvs_repos_path
+    prefix = self.cvs_repository.cvs_repos_path
     if not self.project_cvs_repos_path.startswith(prefix):
       raise FatalError("Project '%s' must start with '%s'"
                        % (self.project_cvs_repos_path, prefix,))

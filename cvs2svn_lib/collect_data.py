@@ -370,8 +370,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     # mode is not known yet, so we temporarily set it to None.
     self.cvs_file = CVSFile(
         self.collect_data.file_key_generator.gen_id(),
-        filename, canonical_filename,
-        Ctx().cvs_repository.get_cvs_path(canonical_filename),
+        filename, Ctx().cvs_repository.get_cvs_path(canonical_filename),
         file_in_attic, file_executable, file_size, None
         )
 

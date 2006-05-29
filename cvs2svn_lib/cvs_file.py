@@ -24,7 +24,7 @@ from cvs2svn_lib.boolean import *
 class CVSFile(object):
   """Represent a CVS file."""
 
-  def __init__(self, id, filename, canonical_filename, cvs_path,
+  def __init__(self, id, filename, cvs_path,
                in_attic, executable, file_size, mode):
     """Initialize a new CVSFile object.
 
@@ -32,7 +32,6 @@ class CVSFile(object):
 
       ID                 --> (long) unique id for this file
       FILENAME           --> (string) the filesystem path to the CVS file
-      CANONICAL_FILENAME --> (string) FILENAME, with 'Attic' stripped out
       CVS_PATH           --> (string) the canonical path within the CVS
                              repository (no 'Attic', no ',v', forward slashes)
       IN_ATTIC           --> (bool) True iff RCS file is in Attic
@@ -42,7 +41,6 @@ class CVSFile(object):
 
     self.id = id
     self.filename = filename
-    self.canonical_filename = canonical_filename
     self.cvs_path = cvs_path
     self.in_attic = in_attic
     self.executable = executable

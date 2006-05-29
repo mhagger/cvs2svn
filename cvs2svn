@@ -51,8 +51,6 @@ from cvs2svn_lib.log import Log
 from cvs2svn_lib.process import CommandFailedException
 from cvs2svn_lib.process import check_command_runs
 from cvs2svn_lib.context import Ctx
-from cvs2svn_lib.cvs_repository import CVSRepositoryViaCVS
-from cvs2svn_lib.cvs_repository import CVSRepositoryViaRCS
 from cvs2svn_lib.project import Project
 from cvs2svn_lib.project import normalize_ttb_path
 from cvs2svn_lib.pass_manager import PassManager
@@ -282,11 +280,6 @@ def main():
 
   cvsroot = args[0]
 
-  if ctx.use_cvs:
-    ctx.cvs_repository = CVSRepositoryViaCVS(cvsroot)
-  else:
-    ctx.cvs_repository = CVSRepositoryViaRCS(cvsroot)
-
   if (not ctx.target) and (not ctx.dump_only) and (not ctx.dry_run):
     raise FatalError("must pass one of '-s' or '--dump-only'.")
 
@@ -319,8 +312,7 @@ def main():
 
   # Create the default project (using ctx.trunk, ctx.branches, and ctx.tags):
   ctx.project = Project(
-      ctx.cvs_repository, ctx.cvs_repository.cvs_repos_path,
-      ctx.trunk_base, ctx.branches_base, ctx.tags_base)
+      cvsroot, ctx.trunk_base, ctx.branches_base, ctx.tags_base)
 
   if ctx.existing_svnrepos and not os.path.isdir(ctx.target):
     raise FatalError("the svn-repos-path '%s' is not an "

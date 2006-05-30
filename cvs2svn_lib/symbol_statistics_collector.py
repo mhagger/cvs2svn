@@ -42,10 +42,10 @@ def match_regexp_list(regexp_list, s):
 
 
 class _Tag:
-  def __init__(self, id, name, create_count=0):
+  def __init__(self, id, name, tag_create_count=0):
     self.id = id
     self.name = name
-    self.create_count = create_count
+    self.tag_create_count = tag_create_count
 
 
 class _Branch:
@@ -53,22 +53,25 @@ class _Branch:
 
   Members:
 
-    create_count -- the number of files on which this branches is created
+    branch_create_count -- the number of files on which this branches
+        is created
 
-    commit_count -- the number of commits on this branch
+    branch_commit_count -- the number of commits on this branch
 
-    blockers -- a set { symbol : None } of the symbols that depend on
-        the the branch.  The set is stored as a map whose values are
-        not used."""
+    branch_blockers -- a set { symbol : None } of the symbols that
+        depend on the branch.  The set is stored as a map whose values
+        are not used."""
 
-  def __init__(self, id, name, create_count=0, commit_count=0, blockers=[]):
+  def __init__(self, id, name,
+               branch_create_count=0, branch_commit_count=0,
+               branch_blockers=[]):
     self.id = id
     self.name = name
-    self.create_count = create_count
-    self.commit_count = commit_count
-    self.blockers = {}
-    for blocker in blockers:
-      self.blockers[blocker] = None
+    self.branch_create_count = branch_create_count
+    self.branch_commit_count = branch_commit_count
+    self.branch_blockers = {}
+    for blocker in branch_blockers:
+      self.branch_blockers[blocker] = None
 
 
 class SymbolStatisticsCollector:
@@ -119,7 +122,7 @@ class SymbolStatisticsCollector:
       tag = _Tag(self._key_generator.gen_id(), name)
       self._tags[name] = tag
       self._symbols[tag.id] = tag
-    tag.create_count += 1
+    tag.tag_create_count += 1
     return tag.id
 
   def _branch(self, name):
@@ -139,25 +142,25 @@ class SymbolStatisticsCollector:
     Return the branch record's id."""
 
     branch = self._branch(name)
-    branch.create_count += 1
+    branch.branch_create_count += 1
     return branch.id
 
   def register_branch_commit(self, name):
     """Register a commit on the branch NAME."""
 
-    self._branch(name).commit_count += 1
+    self._branch(name).branch_commit_count += 1
 
   def register_branch_blocker(self, name, blocker):
     """Register BLOCKER as a blocker on the branch NAME."""
 
-    self._branch(name).blockers[blocker] = None
+    self._branch(name).branch_blockers[blocker] = None
 
   def _branch_has_commit(self, name):
     """Return True iff NAME has commits.  Returns False if name is not
     a branch or if it has no commits."""
 
     branch = self._branches.get(name)
-    return branch and branch.commit_count > 0
+    return branch and branch.branch_commit_count > 0
 
   def find_excluded_symbols(self, regexp_list):
     """Returns a hash of all symbols that match the regexps in
@@ -177,24 +180,24 @@ class SymbolStatisticsCollector:
     """Find all blockers of BRANCH, excluding the ones in the hash
     EXCLUDES."""
 
-    blockers = { }
+    branch_blockers = { }
     if branch in excludes:
-      for blocker in self._branches[branch].blockers:
+      for blocker in self._branches[branch].branch_blockers:
         if blocker not in excludes:
-          blockers[blocker] = None
-    return blockers
+          branch_blockers[blocker] = None
+    return branch_blockers
 
   def _find_blocked_excludes(self, excludes):
-    """Find all branches not in EXCLUDES that have blocking symbols that
-    are not themselves excluded.  Return a hash that maps branch names
-    to a hash of blockers.  The hash of blockes is used as a set so the
-    values are not used."""
+    """Find all branches not in EXCLUDES that have blocking symbols
+    that are not themselves excluded.  Return a hash that maps branch
+    names to a hash of branch_blockers.  The hash of blockers is used
+    as a set so the values are not used."""
 
     blocked_branches = { }
     for branch in self._branches:
-      blockers = self._find_branch_exclude_blockers(branch, excludes)
-      if blockers:
-        blocked_branches[branch] = blockers
+      branch_blockers = self._find_branch_exclude_blockers(branch, excludes)
+      if branch_blockers:
+        blocked_branches[branch] = branch_blockers
     return blocked_branches
 
   def _find_mismatches(self, excludes=None):
@@ -208,9 +211,9 @@ class SymbolStatisticsCollector:
     for branch in self._branches:
       if branch not in excludes and branch in self._tags:
         mismatches.append((branch,
-                           self._tags[branch].create_count,
-                           self._branches[branch].create_count,
-                           self._branches[branch].commit_count))
+                           self._tags[branch].tag_create_count,
+                           self._branches[branch].branch_create_count,
+                           self._branches[branch].branch_commit_count))
     return mismatches
 
   def _check_blocked_excludes(self, excludes):
@@ -227,11 +230,11 @@ class SymbolStatisticsCollector:
     if not blocked_excludes:
       return False
 
-    for branch, blockers in blocked_excludes.items():
+    for branch, branch_blockers in blocked_excludes.items():
       sys.stderr.write(error_prefix + ": The branch '%s' cannot be "
                        "excluded because the following symbols depend "
                        "on it:\n" % (branch))
-      for blocker in blockers:
+      for blocker in branch_blockers:
         sys.stderr.write("    '%s'\n" % (blocker))
     sys.stderr.write("\n")
     return True
@@ -288,10 +291,10 @@ class SymbolStatisticsCollector:
                      "in some files and branches in others.\nUse "
                      "--force-tag, --force-branch and/or --exclude to "
                      "resolve the symbols.\n")
-    for name, tag_count, branch_count, commit_count in mismatches:
+    for name, tag_count, branch_count, branch_commit_count in mismatches:
       sys.stderr.write("    '%s' is a tag in %d files, a branch in "
                        "%d files and has commits in %d files.\n"
-                       % (name, tag_count, branch_count, commit_count))
+                       % (name, tag_count, branch_count, branch_commit_count))
 
     return True
 
@@ -328,10 +331,10 @@ class SymbolStatisticsCollector:
       line = f.readline()
       if not line:
         break
-      id, name, create_count = line.split()
+      id, name, tag_create_count = line.split()
       id = int(id)
-      create_count = int(create_count)
-      tag = _Tag(id, name, create_count)
+      tag_create_count = int(tag_create_count)
+      tag = _Tag(id, name, tag_create_count)
       self._tags[name] = tag
       self._symbols[tag.id] = tag
 
@@ -341,12 +344,13 @@ class SymbolStatisticsCollector:
       if not line:
         break
       words = line.split()
-      [id, name, create_count, commit_count] = words[:4]
-      blockers = words[4:]
+      [id, name, branch_create_count, branch_commit_count] = words[:4]
+      branch_blockers = words[4:]
       id = int(id)
-      create_count = int(create_count)
-      commit_count = int(commit_count)
-      branch = _Branch(id, name, create_count, commit_count, blockers)
+      branch_create_count = int(branch_create_count)
+      branch_commit_count = int(branch_commit_count)
+      branch = _Branch(
+          id, name, branch_create_count, branch_commit_count, branch_blockers)
       self._branches[name] = branch
       self._symbols[branch.id] = branch
 
@@ -355,18 +359,19 @@ class SymbolStatisticsCollector:
 
     f = open(artifact_manager.get_temp_file(config.TAGS_LIST), "w")
     for tag in self._tags.values():
-      f.write("%d %s %d\n" % (tag.id, tag.name, tag.create_count))
+      f.write("%d %s %d\n" % (tag.id, tag.name, tag.tag_create_count))
     f.close()
 
     f = open(artifact_manager.get_temp_file(config.BRANCHES_LIST), "w")
     for branch in self._branches.values():
       f.write(
           "%d %s %d %d"
-          % (branch.id, branch.name, branch.create_count, branch.commit_count)
+          % (branch.id, branch.name,
+             branch.branch_create_count, branch.branch_commit_count)
           )
-      if branch.blockers:
+      if branch.branch_blockers:
         f.write(' ')
-        f.write(' '.join(branch.blockers.keys()))
+        f.write(' '.join(branch.branch_blockers.keys()))
       f.write('\n')
     f.close()
 

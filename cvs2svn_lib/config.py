@@ -86,16 +86,12 @@ CVS_ITEMS_RESYNC_DB = 'cvs2svn-cvs-items-resync.db'
 # names); values are ignorable.
 SYMBOL_DB = 'cvs2svn-symbols.db'
 
-# A list all tags.  Each line consists of the tag name and the number
-# of files in which it exists, separated by a space.
-TAGS_LIST = 'cvs2svn-tags.txt'
-
-# A list of all branches.  The file is stored as a plain text file
-# to make it easy to look at in an editor.  Each line contains the
-# branch name, the number of files where the branch is created, the
-# commit count, and a list of tags and branches that are defined on
-# revisions in the branch.
-BRANCHES_LIST = 'cvs2svn-branches.txt'
+# A list all symbols.  Each line consists of the symbol name, the
+# number of files in which it was used as a tag, the number of files
+# in which it was used as a branch, the number of commits to such
+# branches, and a list of tags and branches that are defined on
+# revisions in the branch.  The fields are separated by spaces.
+SYMBOL_STATISTICS_LIST = 'cvs2svn-symbol-stats.txt'
 
 # These two databases provide a bidirectional mapping between
 # CVSRevision.ids (in hex) and Subversion revision numbers.

@@ -109,8 +109,7 @@ class CollectRevsPass(Pass):
   """This pass was formerly known as pass1."""
 
   def register_artifacts(self):
-    self._register_temp_file(config.TAGS_LIST)
-    self._register_temp_file(config.BRANCHES_LIST)
+    self._register_temp_file(config.SYMBOL_STATISTICS_LIST)
     self._register_temp_file(config.RESYNC_DATAFILE)
     self._register_temp_file(config.METADATA_DB)
     self._register_temp_file(config.CVS_FILES_DB)
@@ -145,8 +144,7 @@ class ResyncRevsPass(Pass):
     self._register_temp_file(config.SYMBOL_DB)
     self._register_temp_file(config.CLEAN_REVS_DATAFILE)
     self._register_temp_file(config.CVS_ITEMS_RESYNC_DB)
-    self._register_temp_file_needed(config.TAGS_LIST)
-    self._register_temp_file_needed(config.BRANCHES_LIST)
+    self._register_temp_file_needed(config.SYMBOL_STATISTICS_LIST)
     self._register_temp_file_needed(config.RESYNC_DATAFILE)
     self._register_temp_file_needed(config.CVS_FILES_DB)
     self._register_temp_file_needed(config.CVS_ITEMS_DB)

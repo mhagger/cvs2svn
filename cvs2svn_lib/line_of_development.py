@@ -24,9 +24,6 @@ from cvs2svn_lib.context import Ctx
 class LineOfDevelopment:
   """Base class for Trunk and Branch."""
 
-  def is_branch(self):
-    raise NotImplemented
-
   def make_path(self, cvs_file):
     raise NotImplemented
 
@@ -39,9 +36,6 @@ class Trunk(LineOfDevelopment):
   def __init__(self):
     pass
 
-  def is_branch(self):
-    return False
-
   def make_path(self, cvs_file):
     return Ctx().project.make_trunk_path(cvs_file.cvs_path)
 
@@ -51,9 +45,6 @@ class Branch(LineOfDevelopment):
 
   def __init__(self, name):
     self.name = name
-
-  def is_branch(self):
-    return True
 
   def make_path(self, cvs_file):
     return Ctx().project.make_branch_path(self.name, cvs_file.cvs_path)

@@ -27,6 +27,7 @@ from cvs2svn_lib.common import OP_DELETE
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.svn_commit import SVNCommit
 from cvs2svn_lib.log import Log
+from cvs2svn_lib.line_of_development import Branch
 
 
 class CVSCommit:
@@ -218,7 +219,7 @@ class CVSCommit:
       # repository).  If it doesn't exist, we will need to fill the
       # branch.  After the fill, the path on which we're committing
       # will exist.
-      if c_rev.lod.is_branch() \
+      if isinstance(c_rev.lod, Branch) \
           and c_rev.lod.name not in accounted_for_sym_names \
           and c_rev.lod.name not in self.done_symbols \
           and fill_needed(c_rev, Ctx()._persistence_manager):

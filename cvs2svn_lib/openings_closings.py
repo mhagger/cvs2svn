@@ -25,6 +25,7 @@ from cvs2svn_lib.common import OP_DELETE
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.database import DB_OPEN_READ
+from cvs2svn_lib.line_of_development import Branch
 from cvs2svn_lib.cvs_item_database import CVSItemDatabase
 from cvs2svn_lib.svn_revision_range import SVNRevisionRange
 
@@ -93,7 +94,7 @@ class SymbolingsLogger:
         self._log(
             name, svn_revnum,
             c_rev.cvs_file,
-            c_rev.lod.is_branch() and c_rev.lod.name,
+            isinstance(c_rev.lod, Branch) and c_rev.lod.name,
             OPENING)
 
       # If our c_rev has a next_rev, then that's the closing rev for
@@ -136,7 +137,7 @@ class SymbolingsLogger:
       self._log(
           name, svn_revnum,
           c_rev.cvs_file,
-          c_rev.lod.is_branch() and c_rev.lod.name,
+          isinstance(c_rev.lod, Branch) and c_rev.lod.name,
           CLOSING)
 
     self.symbolings.close()

@@ -39,6 +39,7 @@ from cvs2svn_lib.database import DB_OPEN_NEW
 from cvs2svn_lib.database import DB_OPEN_READ
 from cvs2svn_lib.database import DB_OPEN_WRITE
 from cvs2svn_lib.cvs_file_database import CVSFileDatabase
+from cvs2svn_lib.line_of_development import Branch
 from cvs2svn_lib.symbol_statistics_collector import SymbolStatisticsCollector
 from cvs2svn_lib.cvs_item_database import CVSItemDatabase
 from cvs2svn_lib.last_symbolic_name_database import LastSymbolicNameDatabase
@@ -255,7 +256,7 @@ class ResyncRevsPass(Pass):
         next_c_rev = None
 
       # Skip this entire revision if it's on an excluded branch
-      if c_rev.lod.is_branch() and c_rev.lod.name in excludes:
+      if isinstance(c_rev.lod, Branch) and c_rev.lod.name in excludes:
         continue
 
       c_rev.branches = self._get_non_excluded_symbols(c_rev.branches, excludes)
@@ -450,7 +451,7 @@ class AggregateRevsPass(Pass):
             artifact_manager.get_temp_file(config.SORTED_REVS_DATAFILE)):
       c_rev_id = int(line.strip().split()[-1], 16)
       c_rev = cvs_items_db[c_rev_id]
-      if not (Ctx().trunk_only and c_rev.lod.is_branch()):
+      if not (Ctx().trunk_only and isinstance(c_rev.lod, Branch)):
         aggregator.process_revision(c_rev)
     aggregator.flush()
 

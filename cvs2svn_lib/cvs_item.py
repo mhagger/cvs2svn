@@ -96,7 +96,7 @@ class CVSRevision(CVSItem):
     The presence of this method improves the space efficiency of
     pickling CVSRevision instances."""
 
-    if self.lod.is_branch():
+    if isinstance(self.lod, Branch):
       lod_name = self.lod.name
     else:
       lod_name = None

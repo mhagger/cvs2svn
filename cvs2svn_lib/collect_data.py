@@ -621,15 +621,15 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     # This is issue #89.
     cur_num = rev_data.rev
     if is_branch_revision(rev_data.rev) and rev_data.state != 'dead':
-      while 1:
+      while True:
         prev_num = self._rev_data[cur_num].parent
-        if not cur_num or not prev_num:
+        if prev_num is None:
           break
         if (not is_same_line_of_development(cur_num, prev_num)
             and self._rev_data[cur_num].state == 'dead'
             and self._rev_data[prev_num].state != 'dead'):
           op = OP_CHANGE
-        cur_num = self._rev_data[cur_num].parent
+        cur_num = prev_num
 
     return op
 

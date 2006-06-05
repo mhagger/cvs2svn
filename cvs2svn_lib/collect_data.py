@@ -619,17 +619,18 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     # revision from which the branch sprouts.
     #
     # This is issue #89.
-    cur_num = rev_data.rev
     if is_branch_revision(rev_data.rev) and rev_data.state != 'dead':
+      cur_rev_data = rev_data
       while True:
-        prev_num = self._rev_data[cur_num].parent
-        if prev_num is None:
+        if cur_rev_data.parent is None:
           break
-        if (not is_same_line_of_development(cur_num, prev_num)
-            and self._rev_data[cur_num].state == 'dead'
-            and self._rev_data[prev_num].state != 'dead'):
+        prev_rev_data = self._rev_data[cur_rev_data.parent]
+        if (not is_same_line_of_development(cur_rev_data.rev,
+                                            prev_rev_data.rev)
+            and cur_rev_data.state == 'dead'
+            and prev_rev_data.state != 'dead'):
           op = OP_CHANGE
-        cur_num = prev_num
+        cur_rev_data = prev_rev_data
 
     return op
 

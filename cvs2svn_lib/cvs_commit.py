@@ -182,16 +182,16 @@ class CVSCommit:
     # counted.
     accounted_for_sym_names = [ ]
 
-    def fill_needed(c_rev, pm):
+    def fill_needed(c_rev):
       """Return 1 if this is the first commit on a new branch (for
       this file) and we need to fill the branch; else return 0
       (meaning that some other file's first commit on the branch has
       already done the fill for us).
 
       If C_REV.op is OP_ADD, only return 1 if the branch that this
-      commit is on has no last filled revision.
+      commit is on has no last filled revision."""
 
-      PM is a PersistenceManager to query."""
+      pm = Ctx()._persistence_manager
 
       # Different '.' counts indicate that c_rev is now on a different
       # line of development (and may need a fill)
@@ -222,7 +222,7 @@ class CVSCommit:
       if isinstance(c_rev.lod, Branch) \
           and c_rev.lod.name not in accounted_for_sym_names \
           and c_rev.lod.name not in self.done_symbols \
-          and fill_needed(c_rev, Ctx()._persistence_manager):
+          and fill_needed(c_rev):
         svn_commit = SVNCommit("pre-commit symbolic name '%s'"
                                % c_rev.lod.name)
         svn_commit.set_symbolic_name(c_rev.lod.name)

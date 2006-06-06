@@ -135,8 +135,7 @@ class PersistenceManager:
           'Write operation attempted on read-only PersistenceManager'
 
     for c_rev in cvs_revs:
-      Log().verbose(" %x" % (c_rev.id,))
-
+      Log().verbose(' %s %s' % (c_rev.cvs_path, c_rev.rev,))
     self.svn2cvs_db[str(svn_revnum)] = (
         ['%x' % (x.id,) for x in cvs_revs], motivating_revnum, name, date)
 

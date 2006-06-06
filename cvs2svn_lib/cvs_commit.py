@@ -51,11 +51,6 @@ class CVSCommit:
     # other commits.
     self.pending = True
 
-    # Symbolic names for which the last source revision has already
-    # been seen and for which the CVSRevisionAggregator has already
-    # generated a fill SVNCommit.  See self.process_revisions().
-    self.done_symbols = [ ]
-
     # Lists of CVSRevisions
     self.changes = [ ]
     self.deletes = [ ]
@@ -170,8 +165,13 @@ class CVSCommit:
 
     return True
 
-  def _pre_commit(self):
-    """Generate any SVNCommits that must exist before the main commit."""
+  def _pre_commit(self, done_symbols):
+    """Generate any SVNCommits that must exist before the main commit.
+
+    DONE_SYMBOLS is a list of symbolic names for which the last source
+    revision has already been seen and for which the
+    CVSRevisionAggregator has already generated a fill SVNCommit.  See
+    self.process_revisions()."""
 
     # There may be multiple c_revs in this commit that would cause
     # branch B to be filled, but we only want to fill B once.  On the
@@ -219,7 +219,7 @@ class CVSCommit:
       # will exist.
       if isinstance(c_rev.lod, Branch) \
           and c_rev.lod.name not in accounted_for_sym_names \
-          and c_rev.lod.name not in self.done_symbols \
+          and c_rev.lod.name not in done_symbols \
           and fill_needed(c_rev):
         svn_commit = SVNCommit("pre-commit symbolic name '%s'"
                                % c_rev.lod.name)
@@ -328,7 +328,6 @@ class CVSCommit:
     The returned SVNCommit is the commit that motivated any other
     SVNCommits generated in this CVSCommit."""
 
-    self.done_symbols = done_symbols
     seconds = self.t_max - self.t_min + 1
 
     Log().verbose('-' * 60)
@@ -349,7 +348,7 @@ class CVSCommit:
       self._commit()
       return self.motivating_commit
 
-    self._pre_commit()
+    self._pre_commit(done_symbols)
     self._commit()
     self._post_commit()
 

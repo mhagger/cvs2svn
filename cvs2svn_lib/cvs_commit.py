@@ -206,11 +206,11 @@ class CVSCommit:
         # been filled before, then fill it now.  Otherwise, no need to
         # fill it.
         if c_rev.op == OP_ADD:
-          return pm.last_filled.get(c_rev.lod.name, None) is None
+          return c_rev.lod.name not in pm.last_filled
         elif c_rev.op == OP_CHANGE:
           return svn_revnum > pm.last_filled.get(c_rev.lod.name, 0)
         elif c_rev.op == OP_DELETE:
-          return pm.last_filled.get(c_rev.lod.name, None) is None
+          return c_rev.lod.name not in pm.last_filled
       return False
 
     for c_rev in self.changes + self.deletes:

@@ -71,9 +71,9 @@ class CVSCommit:
     # This will be set to the SVNCommit that occurs in self._commit.
     self.motivating_commit = None
 
-    # This is a list of all non-primary commits motivated by the main
-    # commit.  We gather these so that we can set their dates to the
-    # same date as the primary commit.
+    # This is a list of all non-primary SVNCommits motivated by the
+    # main commit.  We gather these so that we can set their dates to
+    # the same date as the primary commit.
     self.secondary_commits = [ ]
 
     # State for handling default branches.
@@ -171,7 +171,7 @@ class CVSCommit:
     return True
 
   def _pre_commit(self):
-    """Generates any SVNCommits that must exist before the main commit."""
+    """Generate any SVNCommits that must exist before the main commit."""
 
     # There may be multiple c_revs in this commit that would cause
     # branch B to be filled, but we only want to fill B once.  On the
@@ -183,24 +183,22 @@ class CVSCommit:
     accounted_for_sym_names = [ ]
 
     def fill_needed(c_rev):
-      """Return 1 if this is the first commit on a new branch (for
-      this file) and we need to fill the branch; else return 0
+      """Return True iff this is the first commit on a new branch (for
+      this file) and we need to fill the branch; else return False
       (meaning that some other file's first commit on the branch has
       already done the fill for us).
 
-      If C_REV.op is OP_ADD, only return 1 if the branch that this
+      If C_REV.op is OP_ADD, only return True if the branch that this
       commit is on has no last filled revision."""
 
       pm = Ctx()._persistence_manager
 
-      # Different '.' counts indicate that c_rev is now on a different
-      # line of development (and may need a fill)
       if c_rev.first_on_branch:
         svn_revnum = pm.get_svn_revnum(c_rev.prev_id)
-        # It should be the case that when we have a file F that
-        # is added on branch B (thus, F on trunk is in state
-        # 'dead'), we generate an SVNCommit to fill B iff the branch
-        # has never been filled before.
+        # It should be the case that when we have a file F that is
+        # added on branch B (thus, F on trunk is in state 'dead'), we
+        # generate an SVNCommit to fill B iff the branch has never
+        # been filled before.
         #
         # If this c_rev.op == OP_ADD, *and* the branch has never
         # been filled before, then fill it now.  Otherwise, no need to

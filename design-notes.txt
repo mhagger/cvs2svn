@@ -69,11 +69,11 @@ _FileDataCollector.set_revision_info(), which writes a record to
 Also, for resync'd revisions, a line like this is written out to
 'cvs2svn-resync.txt':
 
-   3d6c1329 18a215a05abea1c6c155dcc7283b88ae7ce23502 3d6c1328
+   3d6c1329 18a 3d6c1328
 
 The fields are:
 
-   NEW_TIMESTAMP   DIGEST   OLD_TIMESTAMP
+   NEW_TIMESTAMP   METADATA_ID   OLD_TIMESTAMP
 
 (The resync file will be explained later.)
 
@@ -124,36 +124,37 @@ output the information from cvs2svn-cvs-items.db to a new file,
 as the original file, except for some resync'd timestamps.
 
 First, read the whole resync file into a hash table that maps each
-author+log digest to a list of lists.  Each sublist represents one of
-the timestamp adjustments from CollectRevsPass, and looks like this:
+metadata_id to a list of lists.  Each sublist represents one of the
+timestamp adjustments from CollectRevsPass, and looks like this:
 
    [old_time_lower, old_time_upper, new_time]
 
-The reason to map each digest to a list of sublists, instead of to one
-list, is that sometimes you'll get the same digest for unrelated
-commits (for example, the same author commits many times using the
-empty log message, or a log message that just says "Doc tweaks.").  So
-each digest may need to "fan out" to cover multiple commits, but
-without accidentally unifying those commits.
+The reason to map each metadata_id to a list of sublists, instead of
+to one list, is that sometimes you'll get the same metadata for
+unrelated commits (for example, the same author commits many times
+using the empty log message, or a log message that just says "Doc
+tweaks.").  So each metadata_id may need to "fan out" to cover
+multiple commits, but without accidentally unifying those commits.
 
 Now we loop over the CVSRevisions in 'cvs2svn-cvs-items.db', and for
 each record write a line to 'cvs2svn-data.c-revs.txt'.  Each line of
 this file looks like this:
 
-   3dc32955 5afe9b4ba41843d8eb52ae7db47a43eaa9573254 12ab
+   3dc32955 5a 12ab
 
 The fields are:
 
    1.  a fixed-width timestamp
-   2.  a digest of the log message + author
+   2.  the metadata_id of the metadata (log message + author)
+       associated with this CVSRevision, as a hexadecimal string.
    3.  the integer unique ID for this CVSRevision, as a hexadecimal
        string.
 
-Any CVSRevision records in 'cvs2svn-cvs-items.db' whose digest matches
-some resync entry and appear to be part of the same commit as one of
-the sublists in that entry, get tweaked.  The tweak is to adjust the
-commit time of the line to the new_time, which is taken from the
-resync hash and results from the adjustment described in
+Any CVSRevision record in 'cvs2svn-cvs-items.db' whose metadata_id
+matches some resync entry and appears to be part of the same commit as
+one of the sublists in that entry, gets tweaked.  The tweak is to
+adjust the commit time of the line to the new_time, which is taken
+from the resync hash and results from the adjustment described in
 CollectRevsPass.
 
 The way we figure out whether a given line needs to be tweaked is to
@@ -186,15 +187,15 @@ changes into single commits.
 
 It's very simple -- run 'sort' on 'cvs2svn-c-revs.txt', converting it
 to 'cvs2svn-s-revs.txt'.  Because of the way the data is laid out,
-this causes commits with the same digest (that is, the same author and
-log message) to be grouped together.  Poof!  We now have the CVS
-changes grouped by logical commit.
+this causes commits with the same metadata_id (that is, the same
+author and log message) to be grouped together.  Poof!  We now have
+the CVS changes grouped by logical commit.
 
 In some cases, the changes in a given commit may be interleaved with
 other commits that went on at the same time, because the sort gives
-precedence to date before log digest.  However, CreateDatabasesPass
-detects this by seeing that the log digest is different, and
-reseparates the commits.
+precedence to date before metadata_id.  However, CreateDatabasesPass
+detects this by seeing that the metadata_id is different, and
+re-separates the commits.
 
 
 CreateDatabasesPass (formerly called pass4):

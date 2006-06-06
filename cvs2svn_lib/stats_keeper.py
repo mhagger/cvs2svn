@@ -97,10 +97,10 @@ class StatsKeeper:
     return self.data['svn_rev_count']
 
   def archive(self):
-    open(self.filename, 'w').write(marshal.dumps(self.data))
+    open(self.filename, 'wb').write(marshal.dumps(self.data))
 
   def unarchive(self):
-    self.data = marshal.loads(open(self.filename, 'r').read())
+    self.data = marshal.loads(open(self.filename, 'rb').read())
 
   def __str__(self):
     svn_revs_str = ""

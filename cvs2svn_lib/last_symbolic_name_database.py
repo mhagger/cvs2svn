@@ -32,23 +32,29 @@ class LastSymbolicNameDatabase:
   last seen in that revision."""
 
   def __init__(self):
+    # A map { symbol_name : c_rev.id } of the chronologically last
+    # CVSRevision that had symbol_name as a tag or branch.  Once we've
+    # gone through all the revs, symbols.keys() will be a list of all
+    # tags and branches, and their corresponding values will be the id
+    # of the last CVS revision that they were used in.
     self.symbols = {}
 
-  # Once we've gone through all the revs,
-  # symbols.keys() will be a list of all tags and branches, and
-  # their corresponding values will be a key into the last CVS revision
-  # that they were used in.
   def log_revision(self, c_rev):
-    # Gather last CVS Revision for symbolic name info and tag info
+    """Gather last CVS Revision for symbolic name info and tag info."""
+
     for tag in c_rev.tags:
       self.symbols[tag] = c_rev.id
     if c_rev.op is not OP_DELETE:
       for branch in c_rev.branches:
         self.symbols[branch] = c_rev.id
 
-  # Creates an inversion of symbols above--a dictionary of lists (key
-  # = CVS rev id: val = list of symbols that close in that rev.
   def create_database(self):
+    """Create the SYMBOL_LAST_CVS_REVS_DB.
+
+    The database will hold an inversion of symbols above--a map {
+    c_rev.id : [ symbol, ... ] of symbols that close in each
+    CVSRevision."""
+
     symbol_revs_db = Database(
         artifact_manager.get_temp_file(config.SYMBOL_LAST_CVS_REVS_DB),
         DB_OPEN_NEW)

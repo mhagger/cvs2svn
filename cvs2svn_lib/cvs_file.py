@@ -89,4 +89,9 @@ class CVSFile(object):
 
   basename = property(get_basename)
 
+  def __str__(self):
+    """For convenience only.  The format is subject to change at any time."""
+
+    return self.cvs_path
+
 

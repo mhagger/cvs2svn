@@ -160,6 +160,11 @@ class CVSRevision(CVSItem):
 
     return False
 
+  def __str__(self):
+    """For convenience only.  The format is subject to change at any time."""
+
+    return '%s:%s<%d>' % (self.cvs_file, self.rev, self.id,)
+
 
 class CVSSymbol(CVSItem):
   """Represent a symbol on a particular CVSFile.

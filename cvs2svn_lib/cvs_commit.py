@@ -105,6 +105,13 @@ class CVSCommit:
     # "regular" revision.
     self.default_branch_cvs_revisions = [ ]
 
+  def __str__(self):
+    """For convenience only.  The format is subject to change at any time."""
+
+    return 'CVSCommit([%s], [%s])' % (
+        ', '.join([str(change) for change in self.changes]),
+        ', '.join([str(delete) for delete in self.deletes]),)
+
   def __cmp__(self, other):
     # Commits should be sorted by t_max.  If both self and other have
     # the same t_max, break the tie using t_min, and lastly,

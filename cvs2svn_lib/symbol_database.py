@@ -32,11 +32,17 @@ class Symbol:
 
 
 class BranchSymbol(Symbol):
-  pass
+  def __str__(self):
+    """For convenience only.  The format is subject to change at any time."""
+
+    return 'Branch %r <%d>' % (self.name, self.id,)
 
 
 class TagSymbol(Symbol):
-  pass
+  def __str__(self):
+    """For convenience only.  The format is subject to change at any time."""
+
+    return 'Tag %r <%d>' % (self.name, self.id,)
 
 
 class _NewSymbolDatabase:

@@ -39,6 +39,11 @@ class Trunk(LineOfDevelopment):
   def make_path(self, cvs_file):
     return Ctx().project.make_trunk_path(cvs_file.cvs_path)
 
+  def __str__(self):
+    """For convenience only.  The format is subject to change at any time."""
+
+    return 'Trunk'
+
 
 class Branch(LineOfDevelopment):
   """An object that describes a CVS branch."""
@@ -48,5 +53,10 @@ class Branch(LineOfDevelopment):
 
   def make_path(self, cvs_file):
     return Ctx().project.make_branch_path(self.name, cvs_file.cvs_path)
+
+  def __str__(self):
+    """For convenience only.  The format is subject to change at any time."""
+
+    return 'Branch %r' % (self.name,)
 
 

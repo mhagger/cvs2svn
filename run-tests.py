@@ -1799,11 +1799,11 @@ def ignore():
   subdir_props = props_for_path(wc_tree, '/trunk/proj/subdir')
 
   if topdir_props['svn:ignore'] != \
-     '*.idx\n*.aux\n*.dvi\n*.log\nfoo\nbar\nbaz\nqux\n':
+     '*.idx\n*.aux\n*.dvi\n*.log\nfoo\nbar\nbaz\nqux\n\n':
     raise svntest.Failure
 
   if subdir_props['svn:ignore'] != \
-     '*.idx\n*.aux\n*.dvi\n*.log\nfoo\nbar\nbaz\nqux\n':
+     '*.idx\n*.aux\n*.dvi\n*.log\nfoo\nbar\nbaz\nqux\n\n':
     raise svntest.Failure
 
 

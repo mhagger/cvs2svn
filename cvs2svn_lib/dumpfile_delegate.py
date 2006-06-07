@@ -208,6 +208,8 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     if basename == ".cvsignore":
       ignore_vals = generate_ignores(c_rev)
       ignore_contents = '\n'.join(ignore_vals)
+      if ignore_contents:
+        ignore_contents += '\n'
       ignore_contents = ('K 10\nsvn:ignore\nV %d\n%s\n' % \
                          (len(ignore_contents), ignore_contents))
       ignore_contents += 'PROPS-END\n'

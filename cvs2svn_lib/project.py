@@ -106,6 +106,8 @@ class Project:
     self.branches_path = normalize_ttb_path('--branches', branches_path)
     self.tags_path = normalize_ttb_path('--tags', tags_path)
     verify_paths_disjoint(self.trunk_path, self.branches_path, self.tags_path)
+    self._unremovable_paths = [
+        self.trunk_path, self.branches_path, self.tags_path]
 
   def _get_cvs_path(self, filename):
     """Return the path to FILENAME relative to project_cvs_repos_path.
@@ -174,7 +176,7 @@ class Project:
   def is_unremovable(self, svn_path):
     """Return True iff the specified path must not be removed."""
 
-    return svn_path in [self.trunk_path, self.branches_path, self.tags_path]
+    return svn_path in self._unremovable_paths
 
   def get_branch_path(self, branch_name):
     """Return the svnpath for the branch named BRANCH_NAME."""

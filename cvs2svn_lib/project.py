@@ -101,9 +101,10 @@ class Project:
         self.project_cvs_repos_path[len(self.cvs_repository.cvs_repos_path):]
     if self.project_cvs_path.startswith(os.sep):
       self.project_cvs_path = self.project_cvs_path[1:]
-    self.trunk_path = trunk_path
-    self.branches_path = branches_path
-    self.tags_path = tags_path
+
+    self.trunk_path = normalize_ttb_path('--trunk', trunk_path)
+    self.branches_path = normalize_ttb_path('--branches', branches_path)
+    self.tags_path = normalize_ttb_path('--tags', tags_path)
     verify_paths_disjoint(self.trunk_path, self.branches_path, self.tags_path)
 
   def _get_cvs_path(self, filename):

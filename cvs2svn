@@ -52,7 +52,6 @@ from cvs2svn_lib.process import CommandFailedException
 from cvs2svn_lib.process import check_command_runs
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.project import Project
-from cvs2svn_lib.project import normalize_ttb_path
 from cvs2svn_lib.pass_manager import PassManager
 from cvs2svn_lib.pass_manager import InvalidPassError
 from cvs2svn_lib import property_setters
@@ -204,11 +203,11 @@ def main():
     elif opt == '--trunk-only':
       ctx.trunk_only = True
     elif opt == '--trunk':
-      ctx.trunk_base = normalize_ttb_path(opt, value)
+      ctx.trunk_base = value
     elif opt == '--branches':
-      ctx.branches_base = normalize_ttb_path(opt, value)
+      ctx.branches_base = value
     elif opt == '--tags':
-      ctx.tags_base = normalize_ttb_path(opt, value)
+      ctx.tags_base = value
     elif opt == '--no-prune':
       ctx.prune = False
     elif opt == '--dump-only':

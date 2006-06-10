@@ -351,17 +351,17 @@ class CVSCommit:
       Log().warn('%s: grouping spans more than %d seconds'
                  % (warning_prefix, config.COMMIT_THRESHOLD))
 
-    if Ctx().trunk_only: # Only do the primary commit if we're trunk-only
+    if Ctx().trunk_only:
+      # When trunk-only, only do the primary commit:
       self._commit()
-      return self.motivating_commit
+    else:
+      self._pre_commit(done_symbols)
+      self._commit()
+      self._post_commit()
 
-    self._pre_commit(done_symbols)
-    self._commit()
-    self._post_commit()
-
-    for svn_commit in self.secondary_commits:
-      svn_commit.set_date(self.motivating_commit.get_date())
-      svn_commit.flush()
+      for svn_commit in self.secondary_commits:
+        svn_commit.set_date(self.motivating_commit.get_date())
+        svn_commit.flush()
 
     return self.motivating_commit
 

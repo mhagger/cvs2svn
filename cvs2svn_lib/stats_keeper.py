@@ -29,67 +29,66 @@ from cvs2svn_lib.artifact_manager import artifact_manager
 
 class _StatsKeeper:
   def __init__(self):
-    self.data = { 'cvs_revs_count' : 0,
-                  'tags': set(),
-                  'branches' : set(),
-                  'repos_size' : 0,
-                  'repos_file_count' : 0,
-                  'svn_rev_count' : None,
-                  'first_rev_date' : 1L<<32,
-                  'last_rev_date' : 0,
-                  'pass_timings' : { },
-                  'start_time' : 0,
-                  'end_time' : 0,
-                  'stats_reflect_exclude' : False,
-                  }
+    self._cvs_revs_count = 0
+    self._tags = set()
+    self._branches = set()
+    self._repos_size = 0
+    self._repos_file_count = 0
+    self._svn_rev_count = None
+    self._first_rev_date = 1L<<32
+    self._last_rev_date = 0
+    self._pass_timings = { }
+    self._start_time = 0
+    self._end_time = 0
+    self._stats_reflect_exclude = False
     self._repos_files = set()
 
   def log_duration_for_pass(self, duration, pass_num):
-    self.data['pass_timings'][pass_num] = duration
+    self._pass_timings[pass_num] = duration
 
   def set_start_time(self, start):
-    self.data['start_time'] = start
+    self._start_time = start
 
   def set_end_time(self, end):
-    self.data['end_time'] = end
+    self._end_time = end
 
   def set_stats_reflect_exclude(self, value):
-    self.data['stats_reflect_exclude'] = value
+    self._stats_reflect_exclude = value
 
   def reset_c_rev_info(self):
-    self.data['cvs_revs_count'] = 0
-    self.data['tags'] = set()
-    self.data['branches'] = set()
+    self._cvs_revs_count = 0
+    self._tags = set()
+    self._branches = set()
 
   def _record_cvs_file(self, cvs_file):
     # Only add the size if this is the first time we see the file.
     if cvs_file.id not in self._repos_files:
-      self.data['repos_size'] += cvs_file.file_size
+      self._repos_size += cvs_file.file_size
     self._repos_files.add(cvs_file.id)
 
-    self.data['repos_file_count'] = len(self._repos_files)
+    self._repos_file_count = len(self._repos_files)
 
   def record_c_rev(self, c_rev):
-    self.data['cvs_revs_count'] += 1
+    self._cvs_revs_count += 1
 
     for tag in c_rev.tags:
-      self.data['tags'].add(tag)
+      self._tags.add(tag)
     for branch in c_rev.branches:
-      self.data['branches'].add(branch)
+      self._branches.add(branch)
 
-    if c_rev.timestamp < self.data['first_rev_date']:
-      self.data['first_rev_date'] = c_rev.timestamp
+    if c_rev.timestamp < self._first_rev_date:
+      self._first_rev_date = c_rev.timestamp
 
-    if c_rev.timestamp > self.data['last_rev_date']:
-      self.data['last_rev_date'] = c_rev.timestamp
+    if c_rev.timestamp > self._last_rev_date:
+      self._last_rev_date = c_rev.timestamp
 
     self._record_cvs_file(c_rev.cvs_file)
 
   def set_svn_rev_count(self, count):
-    self.data['svn_rev_count'] = count
+    self._svn_rev_count = count
 
   def svn_rev_count(self):
-    return self.data['svn_rev_count']
+    return self._svn_rev_count
 
   def __getstate__(self):
     state = self.__dict__.copy()
@@ -103,12 +102,12 @@ class _StatsKeeper:
 
   def __str__(self):
     svn_revs_str = ""
-    if self.data['svn_rev_count'] is not None:
+    if self._svn_rev_count is not None:
       svn_revs_str = ('Total SVN Commits:      %10s\n'
-                      % self.data['svn_rev_count'])
+                      % self._svn_rev_count)
 
     caveat_str = ''
-    if not self.data['stats_reflect_exclude']:
+    if not self._stats_reflect_exclude:
       caveat_str = (
           '\n'
           '(These are unaltered CVS repository stats and do not\n'
@@ -126,19 +125,19 @@ class _StatsKeeper:
             'Last Revision Date:     %s\n'      \
             '------------------'                \
             '%s'
-            % (self.data['repos_file_count'],
-               self.data['cvs_revs_count'],
-               len(self.data['tags']),
-               len(self.data['branches']),
-               (self.data['repos_size'] / 1024),
+            % (self._repos_file_count,
+               self._cvs_revs_count,
+               len(self._tags),
+               len(self._branches),
+               (self._repos_size / 1024),
                svn_revs_str,
-               time.ctime(self.data['first_rev_date']),
-               time.ctime(self.data['last_rev_date']),
+               time.ctime(self._first_rev_date),
+               time.ctime(self._last_rev_date),
                caveat_str,
                ))
 
   def timings(self):
-    passes = self.data['pass_timings'].keys()
+    passes = self._pass_timings.keys()
     passes.sort()
     output = 'Timings:\n------------------\n'
 
@@ -147,12 +146,12 @@ class _StatsKeeper:
       return "seconds"
 
     for pass_num in passes:
-      duration = int(self.data['pass_timings'][pass_num])
+      duration = int(self._pass_timings[pass_num])
       p_str = ('pass %d:%6d %s\n'
                % (pass_num, duration, desc(duration)))
       output += p_str
 
-    total = int(self.data['end_time'] - self.data['start_time'])
+    total = int(self._end_time - self._start_time)
     output += ('total: %6d %s' % (total, desc(total)))
     return output
 

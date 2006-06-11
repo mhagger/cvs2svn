@@ -57,6 +57,9 @@ except NameError:
       def remove(self, value):
         del self._dict[value]
 
+      def pop(self):
+        return self._dict.popitem()[0]
+
       def __repr__(self):
         return 'Set(%r)' % (self._dict.keys(),)
 

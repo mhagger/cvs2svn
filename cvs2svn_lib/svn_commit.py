@@ -158,8 +158,6 @@ class SVNCommit:
     self.cvs_revs.append(cvs_rev)
 
   def flush(self):
-    Log().normal("Creating Subversion r%d (%s)"
-                 % (self.revnum, self.description))
     Ctx()._persistence_manager.put_svn_commit(self)
 
   def __str__(self):

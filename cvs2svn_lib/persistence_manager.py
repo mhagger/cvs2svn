@@ -129,6 +129,9 @@ class PersistenceManager:
     """Record the bidirectional mapping between SVN_REVNUM and
     CVS_REVS and record associated attributes."""
 
+    Log().normal("Creating Subversion r%d (%s)"
+                 % (svn_commit.revnum, svn_commit.description))
+
     if self.mode == DB_OPEN_READ:
       raise RuntimeError, \
           'Write operation attempted on read-only PersistenceManager'

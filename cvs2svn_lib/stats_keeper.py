@@ -19,7 +19,7 @@
 
 import os
 import time
-import marshal
+import cPickle
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.set_support import *
@@ -37,8 +37,8 @@ class StatsKeeper:
       self.unarchive()
     else:
       self.data = { 'cvs_revs_count' : 0,
-                    'tags': { },
-                    'branches' : { },
+                    'tags': set(),
+                    'branches' : set(),
                     'repos_size' : 0,
                     'repos_file_count' : 0,
                     'svn_rev_count' : None,
@@ -64,8 +64,8 @@ class StatsKeeper:
 
   def reset_c_rev_info(self):
     self.data['cvs_revs_count'] = 0
-    self.data['tags'] = { }
-    self.data['branches'] = { }
+    self.data['tags'] = set()
+    self.data['branches'] = set()
 
   def _record_cvs_file(self, cvs_file):
     # Only add the size if this is the first time we see the file.
@@ -79,9 +79,9 @@ class StatsKeeper:
     self.data['cvs_revs_count'] += 1
 
     for tag in c_rev.tags:
-      self.data['tags'][tag] = None
+      self.data['tags'].add(tag)
     for branch in c_rev.branches:
-      self.data['branches'][branch] = None
+      self.data['branches'].add(branch)
 
     if c_rev.timestamp < self.data['first_rev_date']:
       self.data['first_rev_date'] = c_rev.timestamp
@@ -98,10 +98,10 @@ class StatsKeeper:
     return self.data['svn_rev_count']
 
   def archive(self):
-    open(self.filename, 'wb').write(marshal.dumps(self.data))
+    open(self.filename, 'wb').write(cPickle.dumps(self.data))
 
   def unarchive(self):
-    self.data = marshal.loads(open(self.filename, 'rb').read())
+    self.data = cPickle.loads(open(self.filename, 'rb').read())
 
   def __str__(self):
     svn_revs_str = ""

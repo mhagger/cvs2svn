@@ -14,7 +14,7 @@
 # history and logs, available at http://cvs2svn.tigris.org/.
 # ====================================================================
 
-"""This module contains the StatsKeeper class."""
+"""This module contains the _StatsKeeper class and a factory function."""
 
 
 import os
@@ -27,28 +27,22 @@ from cvs2svn_lib import config
 from cvs2svn_lib.artifact_manager import artifact_manager
 
 
-class StatsKeeper:
+class _StatsKeeper:
   def __init__(self):
-    filename = artifact_manager.get_temp_file(config.STATISTICS_FILE)
-    # This can get kinda large, so we don't store it in our data dict.
+    self.data = { 'cvs_revs_count' : 0,
+                  'tags': set(),
+                  'branches' : set(),
+                  'repos_size' : 0,
+                  'repos_file_count' : 0,
+                  'svn_rev_count' : None,
+                  'first_rev_date' : 1L<<32,
+                  'last_rev_date' : 0,
+                  'pass_timings' : { },
+                  'start_time' : 0,
+                  'end_time' : 0,
+                  'stats_reflect_exclude' : False,
+                  }
     self._repos_files = set()
-
-    if os.path.exists(filename):
-      self.unarchive()
-    else:
-      self.data = { 'cvs_revs_count' : 0,
-                    'tags': set(),
-                    'branches' : set(),
-                    'repos_size' : 0,
-                    'repos_file_count' : 0,
-                    'svn_rev_count' : None,
-                    'first_rev_date' : 1L<<32,
-                    'last_rev_date' : 0,
-                    'pass_timings' : { },
-                    'start_time' : 0,
-                    'end_time' : 0,
-                    'stats_reflect_exclude' : False,
-                    }
 
   def log_duration_for_pass(self, duration, pass_num):
     self.data['pass_timings'][pass_num] = duration
@@ -97,13 +91,15 @@ class StatsKeeper:
   def svn_rev_count(self):
     return self.data['svn_rev_count']
 
+  def __getstate__(self):
+    state = self.__dict__.copy()
+    # This can get kinda large, so we don't store it:
+    state['_repos_files'] = set()
+    return state
+
   def archive(self):
     filename = artifact_manager.get_temp_file(config.STATISTICS_FILE)
-    open(filename, 'wb').write(cPickle.dumps(self.data))
-
-  def unarchive(self):
-    filename = artifact_manager.get_temp_file(config.STATISTICS_FILE)
-    self.data = cPickle.loads(open(filename, 'rb').read())
+    open(filename, 'wb').write(cPickle.dumps(self))
 
   def __str__(self):
     svn_revs_str = ""
@@ -159,5 +155,18 @@ class StatsKeeper:
     total = int(self.data['end_time'] - self.data['start_time'])
     output += ('total: %6d %s' % (total, desc(total)))
     return output
+
+
+def StatsKeeper():
+  """Factory function: Return a _StatsKeeper instance.
+
+  If STATISTICS_FILE exists, read the instance from the file;
+  otherwise, create and return a new instance."""
+
+  filename = artifact_manager.get_temp_file(config.STATISTICS_FILE)
+  if os.path.exists(filename):
+    return cPickle.loads(open(filename, 'rb').read())
+  else:
+    return _StatsKeeper()
 
 

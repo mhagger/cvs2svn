@@ -57,7 +57,7 @@ class SVNCommit:
     REVNUM without CVS_REVS, and then add a revision at a time by
     invoking add_revision()."""
 
-    self._description = description
+    self.description = description
 
     # Revprop metadata for this commit.
     #
@@ -168,7 +168,7 @@ class SVNCommit:
 
   def flush(self):
     Log().normal("Creating Subversion r%d (%s)"
-                 % (self.revnum, self._description))
+                 % (self.revnum, self.description))
     Ctx()._persistence_manager.put_svn_commit(self)
 
   def __str__(self):
@@ -183,7 +183,7 @@ class SVNCommit:
               + "\n")
     else:
       ret += "   NO symbolic name\n"
-    ret += "   debug description: " + self._description + "\n"
+    ret += "   debug description: " + self.description + "\n"
     ret += "   cvs_revs:\n"
     for c_rev in self.cvs_revs:
       ret += "     %x\n" % (c_rev.id,)

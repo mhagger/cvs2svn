@@ -56,6 +56,14 @@ class TempFileArtifact(Artifact):
     os.unlink(self.filename)
 
 
+class ArtifactNotActiveError(Exception):
+  """An artifact was requested when no passes that have registered
+  that they need it are active."""
+
+  def __init__(self, artifact_name):
+    Exception.__init__(self, 'Artifact %s is not currently active')
+
+
 class ArtifactManager:
   """Manager artifacts that are created by one pass but needed by others.
 
@@ -127,9 +135,19 @@ class ArtifactManager:
 
   def get_artifact(self, artifact_name):
     """Return the artifact with the specified name.  If the artifact
-    does not currently exist, raise a KeyError."""
+    does not currently exist, raise a KeyError.  If it is not
+    registered as being needed by one of the active passes, raise an
+    ArtifactNotActiveError."""
 
-    return self._artifacts[artifact_name]
+    artifact = self._artifacts[artifact_name]
+    for active_pass in self._active_passes:
+      if artifact in self._pass_needs[active_pass]:
+        # OK
+        break
+    else:
+      raise ArtifactNotActiveError(artifact_name)
+
+    return artifact
 
   def get_temp_file(self, basename):
     """Return the filename of the temporary file with the specified BASENAME.
@@ -143,7 +161,7 @@ class ArtifactManager:
     """Register that WHICH_PASS needs the artifact named ARTIFACT_NAME.
     An artifact with this name must already have been registered."""
 
-    artifact = self.get_artifact(artifact_name)
+    artifact = self._artifacts[artifact_name]
     artifact._passes_needed[which_pass] = None
     self._pass_needs.setdefault(which_pass, {})[artifact] = None
 

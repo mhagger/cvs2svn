@@ -120,7 +120,7 @@ class SVNRepositoryMirror:
     # Make a 'fake' SVNCommit so we can take advantage of the revprops
     # magic therein
     svn_commit = SVNCommit("Initialization", 1)
-    svn_commit.set_date(date)
+    svn_commit.date = date
     svn_commit.set_log_msg("New repository initialized by cvs2svn.")
 
     self._start_commit(svn_commit)
@@ -517,7 +517,7 @@ class SVNRepositoryMirror:
     the delegates' _start_commit() method."""
 
     if svn_commit.revnum == 2:
-      self._initialize_repository(svn_commit.get_date())
+      self._initialize_repository(svn_commit.date)
 
     self._start_commit(svn_commit)
 

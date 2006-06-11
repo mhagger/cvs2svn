@@ -293,7 +293,7 @@ class CVSCommit:
     # above), so if we have no CVSRevisions, we don't flush the
     # svn_commit to disk and roll back our revnum.
     if len(svn_commit.cvs_revs) > 0:
-      svn_commit.set_date(self.t_max)
+      svn_commit.date = self.t_max
       svn_commit.flush()
     else:
       # We will not be flushing this SVNCommit, so rollback the
@@ -360,7 +360,7 @@ class CVSCommit:
       self._post_commit()
 
       for svn_commit in self.secondary_commits:
-        svn_commit.set_date(self.motivating_commit.get_date())
+        svn_commit.date = self.motivating_commit.date
         svn_commit.flush()
 
     return self.motivating_commit

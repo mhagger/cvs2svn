@@ -245,7 +245,7 @@ class CVSRevisionAggregator:
     for sym in closeable_symbols:
       svn_commit = SVNCommit("closing tag/branch '%s'" % sym)
       svn_commit.set_symbolic_name(sym)
-      svn_commit.set_date(self.latest_primary_svn_commit.get_date())
+      svn_commit.date = self.latest_primary_svn_commit.date
       svn_commit.flush()
       self.done_symbols.append(sym)
       del self.pending_symbols[sym]

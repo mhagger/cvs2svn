@@ -102,7 +102,7 @@ class PersistenceManager:
         svn_commit.set_author(author)
         svn_commit.set_log_msg(log_msg)
 
-    svn_commit.set_date(date)
+    svn_commit.date = date
 
     # If we're doing a trunk-only conversion, we don't need to do any more
     # work.
@@ -138,7 +138,7 @@ class PersistenceManager:
     self.svn2cvs_db[str(svn_commit.revnum)] = (
         ['%x' % (x.id,) for x in svn_commit.cvs_revs],
         svn_commit.motivating_revnum, svn_commit.symbolic_name,
-        svn_commit.get_date())
+        svn_commit.date)
 
     for c_rev in svn_commit.cvs_revs:
       self.cvs2svn_db['%x' % (c_rev.id,)] = svn_commit.revnum

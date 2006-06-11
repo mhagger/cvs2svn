@@ -112,9 +112,8 @@ class ArtifactManager:
     # set of artifacts needed by the pass.
     self._pass_needs = { }
 
-    # A set { pass : None } of passes that are currently being
-    # executed.
-    self._active_passes = { }
+    # A set of passes that are currently being executed.
+    self._active_passes = set()
 
   def register_artifact(self, artifact, which_pass):
     """Register a new ARTIFACT for management by this class.
@@ -208,7 +207,7 @@ class ArtifactManager:
   def pass_started(self, which_pass):
     """WHICH_PASS is starting."""
 
-    self._active_passes[which_pass] = None
+    self._active_passes.add(which_pass)
 
   def pass_continued(self, which_pass):
     """WHICH_PASS, which has already been started, will be continued
@@ -216,14 +215,14 @@ class ArtifactManager:
     be cleaned up at the end of WHICH_PASS without actually cleaning
     them up."""
 
-    del self._active_passes[which_pass]
+    self._active_passes.remove(which_pass)
     self._unregister_artifacts(which_pass)
 
   def pass_done(self, which_pass):
     """WHICH_PASS is done.  Clean up all artifacts that are no longer
     needed."""
 
-    del self._active_passes[which_pass]
+    self._active_passes.remove(which_pass)
     artifacts = self._unregister_artifacts(which_pass)
     if not Ctx().skip_cleanup:
       for artifact in artifacts:

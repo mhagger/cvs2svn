@@ -71,10 +71,8 @@ class SVNCommit:
     self._author = Ctx().username
     self._log_msg = "This log message means an SVNCommit was used too soon."
 
-    # The latest date seen so far, as an integer.  This member is
-    # updated automatically by self.add_revision().  It can also set
-    # externally, but the set value may be overwritten by a later call
-    # to self.add_revision().
+    # The latest date seen so far, as an integer.  This member is set
+    # externally.
     self.date = 0
 
     self.cvs_revs = cvs_revs or []

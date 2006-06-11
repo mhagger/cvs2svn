@@ -20,6 +20,7 @@
 import os
 
 from cvs2svn_lib.boolean import *
+from cvs2svn_lib.set_support import *
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.log import Log
 
@@ -31,9 +32,9 @@ class Artifact:
   def __init__(self, name):
     self.name = name
 
-    # A map { which_pass : None } of passes that need this artifact.
-    # This field is maintained by ArtifactManager.
-    self._passes_needed = { }
+    # A set of passes that need this artifact.  This field is
+    # maintained by ArtifactManager.
+    self._passes_needed = set()
 
   def cleanup(self):
     """This artifact is no longer needed; clean it up."""
@@ -162,7 +163,7 @@ class ArtifactManager:
     An artifact with this name must already have been registered."""
 
     artifact = self._artifacts[artifact_name]
-    artifact._passes_needed[which_pass] = None
+    artifact._passes_needed.add(which_pass)
     self._pass_needs.setdefault(which_pass, {})[artifact] = None
 
   def register_temp_file_needed(self, basename, which_pass):
@@ -186,7 +187,7 @@ class ArtifactManager:
 
     unneeded_artifacts = []
     for artifact in artifacts:
-      del artifact._passes_needed[which_pass]
+      artifact._passes_needed.remove(which_pass)
       if not artifact._passes_needed:
         unneeded_artifacts.append(artifact)
 

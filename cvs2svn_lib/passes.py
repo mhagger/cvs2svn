@@ -542,7 +542,6 @@ class OutputPass(Pass):
 
   def run(self, stats_keeper):
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
-    svncounter = 2 # Repository initialization is 1.
     repos = SVNRepositoryMirror()
     persistence_manager = PersistenceManager(DB_OPEN_READ)
 
@@ -557,12 +556,13 @@ class OutputPass(Pass):
 
     repos.add_delegate(StdoutDelegate(stats_keeper.svn_rev_count()))
 
+    svn_revnum = 2 # Repository initialization is 1.
     while 1:
-      svn_commit = persistence_manager.get_svn_commit(svncounter)
+      svn_commit = persistence_manager.get_svn_commit(svn_revnum)
       if not svn_commit:
         break
       repos.commit(svn_commit)
-      svncounter += 1
+      svn_revnum += 1
 
     repos.finish()
 

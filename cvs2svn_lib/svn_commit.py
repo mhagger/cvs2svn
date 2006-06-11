@@ -70,7 +70,7 @@ class SVNCommit:
     # self.get_revprops() is used to to get them, in dictionary form.
     self._author = Ctx().username
     self._log_msg = "This log message means an SVNCommit was used too soon."
-    self._max_date = 0  # Latest date seen so far.
+    self.max_date = 0  # Latest date seen so far.
 
     self.cvs_revs = cvs_revs or []
     if revnum:
@@ -126,17 +126,17 @@ class SVNCommit:
     if you do, the value may be overwritten by a later call to
     self.add_revision()."""
 
-    self._max_date = date
+    self.max_date = date
 
   def get_date(self):
     """Returns this SVNCommit's date as an integer."""
 
-    return self._max_date
+    return self.max_date
 
   def get_revprops(self):
     """Return the Subversion revprops for this SVNCommit."""
 
-    date = format_date(self._max_date)
+    date = format_date(self.max_date)
     try:
       utf8_author = None
       if self._author is not None:
@@ -171,7 +171,7 @@ class SVNCommit:
                  % (self.revnum, self._description))
     Ctx()._persistence_manager.put_svn_commit(self.revnum,
                                               self.cvs_revs,
-                                              self._max_date,
+                                              self.max_date,
                                               self.symbolic_name,
                                               self.motivating_revnum)
 

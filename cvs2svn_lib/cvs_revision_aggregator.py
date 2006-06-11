@@ -246,7 +246,7 @@ class CVSRevisionAggregator:
       svn_commit = SVNCommit("closing tag/branch '%s'" % sym)
       svn_commit.set_symbolic_name(sym)
       svn_commit.date = self.latest_primary_svn_commit.date
-      svn_commit.flush()
+      Ctx()._persistence_manager.put_svn_commit(svn_commit)
       self.done_symbols.append(sym)
       del self.pending_symbols[sym]
 

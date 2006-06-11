@@ -157,9 +157,6 @@ class SVNCommit:
   def add_revision(self, cvs_rev):
     self.cvs_revs.append(cvs_rev)
 
-  def flush(self):
-    Ctx()._persistence_manager.put_svn_commit(self)
-
   def __str__(self):
     """ Print a human-readable description of this SVNCommit.  This
     description is not intended to be machine-parseable (although

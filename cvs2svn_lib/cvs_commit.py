@@ -294,7 +294,7 @@ class CVSCommit:
     # svn_commit to disk and roll back our revnum.
     if len(svn_commit.cvs_revs) > 0:
       svn_commit.date = self.t_max
-      svn_commit.flush()
+      Ctx()._persistence_manager.put_svn_commit(svn_commit)
     else:
       # We will not be flushing this SVNCommit, so rollback the
       # SVNCommit revision counter.
@@ -361,7 +361,7 @@ class CVSCommit:
 
       for svn_commit in self.secondary_commits:
         svn_commit.date = self.motivating_commit.date
-        svn_commit.flush()
+        Ctx()._persistence_manager.put_svn_commit(svn_commit)
 
     return self.motivating_commit
 

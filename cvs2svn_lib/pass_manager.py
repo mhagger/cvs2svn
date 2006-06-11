@@ -25,6 +25,7 @@ from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.stats_keeper import StatsKeeper
+from cvs2svn_lib.stats_keeper import read_stats_keeper
 from cvs2svn_lib.artifact_manager import artifact_manager
 
 
@@ -102,7 +103,11 @@ class PassManager:
     # STATISTICS_FILE alive:
     artifact_manager.pass_started(self)
 
-    stats_keeper = StatsKeeper()
+    if index_start == 0:
+      stats_keeper = StatsKeeper()
+    else:
+      stats_keeper = read_stats_keeper()
+
     stats_keeper.set_start_time(time.time())
 
     # Tell the artifact manager about passes that are being skipped this run:

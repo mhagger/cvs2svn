@@ -14,7 +14,10 @@
 # history and logs, available at http://cvs2svn.tigris.org/.
 # ====================================================================
 
-"""This module contains the _StatsKeeper class and a factory function."""
+"""This module contains the StatsKeeper class.
+
+A StatsKeeper can pickle itself to STATISTICS_FILE.  This module also
+includes a function to read a StatsKeeper from STATISTICS_FILE."""
 
 
 import os
@@ -27,7 +30,7 @@ from cvs2svn_lib import config
 from cvs2svn_lib.artifact_manager import artifact_manager
 
 
-class _StatsKeeper:
+class StatsKeeper:
   def __init__(self):
     self._cvs_revs_count = 0
     self._tags = set()
@@ -156,16 +159,13 @@ class _StatsKeeper:
     return output
 
 
-def StatsKeeper():
+def read_stats_keeper():
   """Factory function: Return a _StatsKeeper instance.
 
   If STATISTICS_FILE exists, read the instance from the file;
   otherwise, create and return a new instance."""
 
   filename = artifact_manager.get_temp_file(config.STATISTICS_FILE)
-  if os.path.exists(filename):
-    return cPickle.loads(open(filename, 'rb').read())
-  else:
-    return _StatsKeeper()
+  return cPickle.loads(open(filename, 'rb').read())
 
 

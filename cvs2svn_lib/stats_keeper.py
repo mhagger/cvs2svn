@@ -31,7 +31,7 @@ class StatsKeeper:
   def __init__(self):
     self.filename = artifact_manager.get_temp_file(config.STATISTICS_FILE)
     # This can get kinda large, so we don't store it in our data dict.
-    self.repos_files = set()
+    self._repos_files = set()
 
     if os.path.exists(self.filename):
       self.unarchive()
@@ -69,11 +69,11 @@ class StatsKeeper:
 
   def _record_cvs_file(self, cvs_file):
     # Only add the size if this is the first time we see the file.
-    if cvs_file.id not in self.repos_files:
+    if cvs_file.id not in self._repos_files:
       self.data['repos_size'] += cvs_file.file_size
-    self.repos_files.add(cvs_file.id)
+    self._repos_files.add(cvs_file.id)
 
-    self.data['repos_file_count'] = len(self.repos_files)
+    self.data['repos_file_count'] = len(self._repos_files)
 
   def record_c_rev(self, c_rev):
     self.data['cvs_revs_count'] += 1

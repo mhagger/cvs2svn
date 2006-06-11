@@ -194,8 +194,6 @@ class SymbolStatisticsCollector:
     excluding the ones in EXCLUDES.  Returns a list of 4-tuples with
     the symbol name, tag count, branch count and commit count."""
 
-    if excludes is None:
-      excludes = { }
     mismatches = [ ]
     for symbol in self._symbols.values():
       if (symbol.name not in excludes

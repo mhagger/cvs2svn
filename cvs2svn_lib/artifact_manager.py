@@ -109,7 +109,7 @@ class ArtifactManager:
     self._artifacts = { }
 
     # A map { pass : set_of_artifacts }, where set_of_artifacts is a
-    # map { artifact : None } of artifacts needed by the pass.
+    # set of artifacts needed by the pass.
     self._pass_needs = { }
 
     # A set { pass : None } of passes that are currently being
@@ -164,7 +164,10 @@ class ArtifactManager:
 
     artifact = self._artifacts[artifact_name]
     artifact._passes_needed.add(which_pass)
-    self._pass_needs.setdefault(which_pass, {})[artifact] = None
+    if which_pass in self._pass_needs:
+      self._pass_needs[which_pass].add(artifact)
+    else:
+      self._pass_needs[which_pass] = set([artifact,])
 
   def register_temp_file_needed(self, basename, which_pass):
     """Register that the temporary file with base name BASENAME is
@@ -178,7 +181,7 @@ class ArtifactManager:
     Return a list of artifacts that are no longer needed at all."""
 
     try:
-      artifacts = self._pass_needs[which_pass].keys()
+      artifacts = list(self._pass_needs[which_pass])
     except KeyError:
       # No artifacts were needed for that pass:
       return []

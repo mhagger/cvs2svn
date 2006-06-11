@@ -189,7 +189,7 @@ class SymbolStatisticsCollector:
         blocked_branches[symbol] = branch_blockers
     return blocked_branches
 
-  def _find_mismatches(self, excludes=None):
+  def _find_mismatches(self, excludes):
     """Find all symbols that are defined as both tags and branches,
     excluding the ones in EXCLUDES.  Returns a list of 4-tuples with
     the symbol name, tag count, branch count and commit count."""

@@ -72,6 +72,16 @@ class Ctx:
   def get_temp_filename(self, basename):
     return os.path.join(self.tmpdir, basename)
 
+  def clean(self):
+    """Dispose of items in our dictionary that are not intended to
+    live past the end of a pass (identified by exactly one leading
+    underscore)."""
+
+    for attr in self.__dict__.keys():
+      if (attr.startswith('_') and not attr.startswith('__')
+          and not attr.startswith('_Ctx__')):
+        delattr(self, attr)
+
   def to_utf8(self, value, mode='replace'):
     """Encode (as Unicode) VALUE, trying the encodings in self.encoding
     as valid source encodings.  Raise UnicodeError on failure of all

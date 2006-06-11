@@ -125,10 +125,15 @@ class PersistenceManager:
 
     return svn_commit
 
-  def put_svn_commit(self, svn_revnum, cvs_revs,
-                     date, name, motivating_revnum):
+  def put_svn_commit(self, svn_commit):
     """Record the bidirectional mapping between SVN_REVNUM and
     CVS_REVS and record associated attributes."""
+
+    svn_revnum = svn_commit.revnum
+    cvs_revs = svn_commit.cvs_revs
+    date = svn_commit.max_date
+    name = svn_commit.symbolic_name
+    motivating_revnum = svn_commit.motivating_revnum
 
     if self.mode == DB_OPEN_READ:
       raise RuntimeError, \

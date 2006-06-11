@@ -169,11 +169,7 @@ class SVNCommit:
   def flush(self):
     Log().normal("Creating Subversion r%d (%s)"
                  % (self.revnum, self._description))
-    Ctx()._persistence_manager.put_svn_commit(self.revnum,
-                                              self.cvs_revs,
-                                              self.max_date,
-                                              self.symbolic_name,
-                                              self.motivating_revnum)
+    Ctx()._persistence_manager.put_svn_commit(self)
 
   def __str__(self):
     """ Print a human-readable description of this SVNCommit.  This

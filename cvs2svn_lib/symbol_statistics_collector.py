@@ -155,32 +155,29 @@ class SymbolStatisticsCollector:
             and symbol.branch_commit_count > 0)
 
   def find_excluded_symbols(self, regexp_list):
-    """Returns a hash of all symbols that match the regexps in
-    REGEXP_LIST.  The hash is used as a set so the values are
-    not used."""
+    """Return a set of all symbols that match the regexps in REGEXP_LIST."""
 
-    excludes = { }
+    excludes = set()
     for symbol in self._symbols.values():
       if match_regexp_list(regexp_list, symbol.name):
-        excludes[symbol.name] = None
+        excludes.add(symbol.name)
     return excludes
 
   def _find_branch_exclude_blockers(self, symbol, excludes):
-    """Find all blockers of SYMBOL, excluding the ones in the hash
-    EXCLUDES."""
+    """Return the set of all blockers of SYMBOL, excluding the ones in
+    the set EXCLUDES."""
 
-    branch_blockers = { }
+    branch_blockers = set()
     if symbol in excludes:
       for blocker in self._symbols_by_name[symbol].branch_blockers:
         if blocker not in excludes:
-          branch_blockers[blocker] = None
+          branch_blockers.add(blocker)
     return branch_blockers
 
   def _find_blocked_excludes(self, excludes):
     """Find all branches not in EXCLUDES that have blocking symbols
     that are not themselves excluded.  Return a hash that maps branch
-    names to a hash of branch_blockers.  The hash of blockers is used
-    as a set so the values are not used."""
+    names to a set of branch_blockers."""
 
     blocked_branches = { }
     for symbol in self._symbols_by_name:

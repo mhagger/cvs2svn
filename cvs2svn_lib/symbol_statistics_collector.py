@@ -19,6 +19,7 @@
 import sys
 
 from cvs2svn_lib.boolean import *
+from cvs2svn_lib.set_support import *
 from cvs2svn_lib import config
 from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.context import Ctx
@@ -57,9 +58,7 @@ class _Symbol:
 
     branch_commit_count -- the number of commits on this branch
 
-    branch_blockers -- a set { symbol : None } of the symbols that
-        depend on the branch.  The set is stored as a map whose values
-        are not used."""
+    branch_blockers -- a set of the symbols that depend on the branch."""
 
   def __init__(self, id, name, tag_create_count=0,
                branch_create_count=0, branch_commit_count=0,
@@ -69,9 +68,7 @@ class _Symbol:
     self.tag_create_count = tag_create_count
     self.branch_create_count = branch_create_count
     self.branch_commit_count = branch_commit_count
-    self.branch_blockers = {}
-    for blocker in branch_blockers:
-      self.branch_blockers[blocker] = None
+    self.branch_blockers = set(branch_blockers)
 
 
 class SymbolStatisticsCollector:
@@ -146,7 +143,7 @@ class SymbolStatisticsCollector:
   def register_branch_blocker(self, name, blocker):
     """Register BLOCKER as a blocker on the branch NAME."""
 
-    self._get_symbol(name).branch_blockers[blocker] = None
+    self._get_symbol(name).branch_blockers.add(blocker)
 
   def _branch_has_commit(self, name):
     """Return True iff NAME has commits.  Returns False if NAME was
@@ -352,7 +349,7 @@ class SymbolStatisticsCollector:
           )
       if symbol.branch_blockers:
         f.write(' ')
-        f.write(' '.join(symbol.branch_blockers.keys()))
+        f.write(' '.join(list(symbol.branch_blockers)))
       f.write('\n')
     f.close()
 

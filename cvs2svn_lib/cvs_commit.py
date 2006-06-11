@@ -19,6 +19,7 @@
 import time
 
 from cvs2svn_lib.boolean import *
+from cvs2svn_lib.set_support import *
 from cvs2svn_lib import config
 from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.common import OP_ADD
@@ -42,9 +43,8 @@ class CVSCommit:
     self.author = author
     self.log = log
 
-    # Map { CVSCommit : None } of other CVSCommits we depend directly
-    # upon.  To avoid duplicates, this is a hash.
-    self.deps = {}
+    # Set of other CVSCommits we depend directly upon.
+    self._deps = set()
 
     # This field remains True until this CVSCommit is moved from the
     # expired queue to the ready queue.  At that point we stop blocking
@@ -158,17 +158,17 @@ class CVSCommit:
       self.changes.append(c_rev)
 
   def add_dependency(self, dep):
-    self.deps[dep] = None
+    self._deps.add(dep)
 
   def resolve_dependencies(self):
     """Resolve any dependencies that are no longer pending.
     Return True iff this commit has no remaining unresolved dependencies."""
 
-    for dep in self.deps.keys():
+    for dep in list(self._deps):
       if dep.pending:
         return False
       self.t_max = max(self.t_max, dep.t_max + 1)
-      del self.deps[dep]
+      self._deps.remove(dep)
 
     return True
 

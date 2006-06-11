@@ -63,11 +63,7 @@ except NameError:
       def __repr__(self):
         return 'Set(%r)' % (self._dict.keys(),)
 
-      def __getstate__(self):
-        return self._dict.keys()
-
-      def __setstate__(self, state):
-        for value in state:
-          self._dict[value] = None
+      def __getinitargs__(self):
+        return (self._dict.keys(),)
 
 

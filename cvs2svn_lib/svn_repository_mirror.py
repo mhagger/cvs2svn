@@ -129,11 +129,10 @@ class SVNRepositoryMirror:
       self._mkdir(Ctx().project.branches_path)
       self._mkdir(Ctx().project.tags_path)
 
+    self._end_commit()
+
   def _start_commit(self, svn_commit):
     """Start a new commit."""
-
-    if self.youngest > 0:
-      self._end_commit()
 
     self.youngest = svn_commit.revnum
     self.new_root_key = None
@@ -572,6 +571,8 @@ class SVNRepositoryMirror:
         if cvs_rev.op == OP_DELETE:
           self._delete_path(cvs_rev.svn_path, Ctx().prune)
 
+    self._end_commit()
+
   def add_delegate(self, delegate):
     """Adds DELEGATE to self.delegates.
 
@@ -594,7 +595,6 @@ class SVNRepositoryMirror:
   def finish(self):
     """Calls the delegate finish method."""
 
-    self._end_commit()
     self._invoke_delegates('finish')
     self.revs_db = None
     self.nodes_db = None

@@ -112,7 +112,7 @@ class SVNRepositoryMirror:
       self.symbol_db = SymbolDatabase(DB_OPEN_READ)
       self.symbolings_reader = SymbolingsReader()
 
-  def _initialize_repository(self, date):
+  def initialize(self, date):
     """Initialize the repository by creating the directories for
     trunk, tags, and branches.  This method should only be called
     after all delegates are added to the repository mirror."""
@@ -515,9 +515,6 @@ class SVNRepositoryMirror:
     """Add an SVNCommit to the SVNRepository, incrementing the
     Repository revision number, and changing the repository.  Invoke
     the delegates' _start_commit() method."""
-
-    if svn_commit.revnum == 2:
-      self._initialize_repository(svn_commit.date)
 
     self._start_commit(svn_commit)
 

@@ -129,27 +129,23 @@ class PersistenceManager:
     """Record the bidirectional mapping between SVN_REVNUM and
     CVS_REVS and record associated attributes."""
 
-    svn_revnum = svn_commit.revnum
-    cvs_revs = svn_commit.cvs_revs
-    date = svn_commit.max_date
-    name = svn_commit.symbolic_name
-    motivating_revnum = svn_commit.motivating_revnum
-
     if self.mode == DB_OPEN_READ:
       raise RuntimeError, \
           'Write operation attempted on read-only PersistenceManager'
 
-    for c_rev in cvs_revs:
+    for c_rev in svn_commit.cvs_revs:
       Log().verbose(' %s %s' % (c_rev.cvs_path, c_rev.rev,))
-    self.svn2cvs_db[str(svn_revnum)] = (
-        ['%x' % (x.id,) for x in cvs_revs], motivating_revnum, name, date)
+    self.svn2cvs_db[str(svn_commit.revnum)] = (
+        ['%x' % (x.id,) for x in svn_commit.cvs_revs],
+        svn_commit.motivating_revnum, svn_commit.symbolic_name,
+        svn_commit.get_date())
 
-    for c_rev in cvs_revs:
-      self.cvs2svn_db['%x' % (c_rev.id,)] = svn_revnum
+    for c_rev in svn_commit.cvs_revs:
+      self.cvs2svn_db['%x' % (c_rev.id,)] = svn_commit.revnum
 
     # If it is not a primary commit, then record last_filled.  name is
     # allowed to be None.
-    if name or motivating_revnum:
-      self.last_filled[name] = svn_revnum
+    if svn_commit.symbolic_name or svn_commit.motivating_revnum:
+      self.last_filled[svn_commit.symbolic_name] = svn_commit.revnum
 
 

@@ -78,8 +78,14 @@ class ArtifactManager:
   - Call pass_skipped() for any passes that were already executed
     during a previous cvs2svn run.
 
-  - Call pass_done() after a pass is executed, to allow any artifacts
-    that won't be needed anymore to be cleaned up.
+  - Call pass_started() when a pass is about to start execution.
+
+  - If a pass that has been started will be continued during the next
+    program run, then call pass_continued().
+
+  - If a pass that has been started finishes execution, call
+    pass_done(), to allow any artifacts that won't be needed anymore
+    to be cleaned up.
 
   - Call pass_deferred() for any passes that have been deferred to a
     future cvs2svn run.
@@ -96,6 +102,10 @@ class ArtifactManager:
     # A map { pass : set_of_artifacts }, where set_of_artifacts is a
     # map { artifact : None } of artifacts needed by the pass.
     self._pass_needs = { }
+
+    # A set { pass : None } of passes that are currently being
+    # executed.
+    self._active_passes = { }
 
   def register_artifact(self, artifact, which_pass):
     """Register a new ARTIFACT for management by this class.
@@ -174,10 +184,25 @@ class ArtifactManager:
 
     self._unregister_artifacts(which_pass)
 
+  def pass_started(self, which_pass):
+    """WHICH_PASS is starting."""
+
+    self._active_passes[which_pass] = None
+
+  def pass_continued(self, which_pass):
+    """WHICH_PASS, which has already been started, will be continued
+    during the next program run.  Unregister any artifacts that would
+    be cleaned up at the end of WHICH_PASS without actually cleaning
+    them up."""
+
+    del self._active_passes[which_pass]
+    self._unregister_artifacts(which_pass)
+
   def pass_done(self, which_pass):
     """WHICH_PASS is done.  Clean up all artifacts that are no longer
     needed."""
 
+    del self._active_passes[which_pass]
     artifacts = self._unregister_artifacts(which_pass)
     if not Ctx().skip_cleanup:
       for artifact in artifacts:

@@ -93,15 +93,17 @@ class PassManager:
     index_end = end_pass
 
     artifact_manager.register_temp_file(config.STATISTICS_FILE, self)
-    stats_keeper = StatsKeeper()
-    stats_keeper.set_start_time(time.time())
 
     # Inform the artifact manager when artifacts are created and used:
     for the_pass in self.passes:
-      # The statistics object is needed for every pass:
-      artifact_manager.register_temp_file_needed(
-          config.STATISTICS_FILE, the_pass)
       the_pass.register_artifacts()
+
+    # Consider self to be running during the whole conversion, to keep
+    # STATISTICS_FILE alive:
+    artifact_manager.pass_started(self)
+
+    stats_keeper = StatsKeeper()
+    stats_keeper.set_start_time(time.time())
 
     # Tell the artifact manager about passes that are being skipped this run:
     for the_pass in self.passes[0:index_start]:
@@ -111,6 +113,7 @@ class PassManager:
     for i in range(index_start, index_end):
       the_pass = self.passes[i]
       Log().quiet('----- pass %d (%s) -----' % (i + 1, the_pass.name,))
+      artifact_manager.pass_started(the_pass)
       the_pass.run(stats_keeper)
       end_time = time.time()
       stats_keeper.log_duration_for_pass(end_time - start_time, i + 1)
@@ -139,7 +142,7 @@ class PassManager:
       artifact_manager.pass_done(self)
     else:
       # The end is yet to come:
-      artifact_manager.pass_deferred(self)
+      artifact_manager.pass_continued(self)
 
     # Consistency check:
     artifact_manager.check_clean()

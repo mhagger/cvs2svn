@@ -18,6 +18,7 @@
 
 
 from cvs2svn_lib.boolean import *
+from cvs2svn_lib.set_support import *
 from cvs2svn_lib import config
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
@@ -103,18 +104,18 @@ class CVSRevisionAggregator:
     Ctx()._persistence_manager = PersistenceManager(DB_OPEN_NEW)
 
   def _get_deps(self, c_rev, deps):
-    """Add the CVSCommits that this C_REV depends on to DEPS, which is a
-    map { CVSCommit : None }.  The result includes both direct and indirect
-    dependencies, because it is used to determine what CVSCommit we can
-    be added to.  Return the commit C_REV depends on directly, if any;
-    otherwise return None."""
+    """Add the CVSCommits that this C_REV depends on to DEPS, which is
+    a set of CVSCommit objects.  The result includes both direct and
+    indirect dependencies, because it is used to determine what
+    CVSCommit we can be added to.  Return the commit C_REV depends on
+    directly, if any; otherwise return None."""
 
     if c_rev.prev_id is None:
       return None
     dep = self.pending_revs.get(c_rev.prev_id, None)
     if dep is None:
       return None
-    deps[dep] = None
+    deps.add(dep)
     for r in dep.revisions():
       self._get_deps(r, deps)
     return dep
@@ -169,14 +170,14 @@ class CVSRevisionAggregator:
     self._extract_ready_commits(c_rev.timestamp)
 
     # Add this item into the set of still-available commits.
-    deps = {}
+    deps = set()
     dep = self._get_deps(c_rev, deps)
     cvs_commits = self.cvs_commits.setdefault(c_rev.metadata_id, [])
     # This is pretty silly; it will add the revision to the oldest pending
     # commit. It might be wiser to do time range matching to avoid stretching
     # commits more than necessary.
     for cvs_commit in cvs_commits:
-      if not deps.has_key(cvs_commit):
+      if cvs_commit not in deps:
         break
     else:
       author, log = self._metadata_db[c_rev.metadata_id]

@@ -26,6 +26,7 @@ import time
 import stat
 
 from cvs2svn_lib.boolean import *
+from cvs2svn_lib.set_support import *
 from cvs2svn_lib import config
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import warning_prefix
@@ -198,9 +199,9 @@ class _SymbolDataCollector:
 
     self.cvs_file = cvs_file
 
-    # A set { name : None } for each known symbol in this file, used
-    # to check for duplicates.
-    self._known_symbols = { }
+    # A set containing the names of each known symbol in this file,
+    # used to check for duplicates.
+    self._known_symbols = set()
 
     # Map { branch_number : _BranchData }, where branch_number has an
     # odd number of digits.
@@ -281,7 +282,7 @@ class _SymbolDataCollector:
       self.collect_data.fatal_errors.append(err)
       return
 
-    self._known_symbols[name] = None
+    self._known_symbols.add(name)
 
     # Determine whether it is a branch or tag, then add it:
     m = branch_tag_re.match(revision)

@@ -188,7 +188,6 @@ class ArtifactManager:
     for artifact in artifacts:
       del artifact._passes_needed[which_pass]
       if not artifact._passes_needed:
-        del self._artifacts[artifact.name]
         unneeded_artifacts.append(artifact)
 
     return unneeded_artifacts
@@ -239,10 +238,15 @@ class ArtifactManager:
     consistency check, that no artifacts were registered under
     nonexistent passes.)"""
 
-    if self._artifacts:
+    unclean_artifact_names = [
+        artifact.name
+        for artifact in self._artifacts.values()
+        if artifact._passes_needed]
+
+    if unclean_artifact_names:
       Log().warn(
           'INTERNAL: The following artifacts were not cleaned up:\n    %s\n'
-          % ('\n    '.join([artifact.name for artifact in self._artifacts])))
+          % ('\n    '.join(unclean_artifact_names)))
 
 
 # The default ArtifactManager instance:

@@ -29,11 +29,11 @@ from cvs2svn_lib.artifact_manager import artifact_manager
 
 class StatsKeeper:
   def __init__(self):
-    self.filename = artifact_manager.get_temp_file(config.STATISTICS_FILE)
+    filename = artifact_manager.get_temp_file(config.STATISTICS_FILE)
     # This can get kinda large, so we don't store it in our data dict.
     self._repos_files = set()
 
-    if os.path.exists(self.filename):
+    if os.path.exists(filename):
       self.unarchive()
     else:
       self.data = { 'cvs_revs_count' : 0,
@@ -98,10 +98,12 @@ class StatsKeeper:
     return self.data['svn_rev_count']
 
   def archive(self):
-    open(self.filename, 'wb').write(cPickle.dumps(self.data))
+    filename = artifact_manager.get_temp_file(config.STATISTICS_FILE)
+    open(filename, 'wb').write(cPickle.dumps(self.data))
 
   def unarchive(self):
-    self.data = cPickle.loads(open(self.filename, 'rb').read())
+    filename = artifact_manager.get_temp_file(config.STATISTICS_FILE)
+    self.data = cPickle.loads(open(filename, 'rb').read())
 
   def __str__(self):
     svn_revs_str = ""

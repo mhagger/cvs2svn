@@ -191,12 +191,8 @@ class CVSCommit:
 
     def fill_needed(c_rev):
       """Return True iff this is the first commit on a new branch (for
-      this file) and we need to fill the branch; else return False
-      (meaning that some other file's first commit on the branch has
-      already done the fill for us).
-
-      If C_REV.op is OP_ADD, only return True if the branch that this
-      commit is on has no last filled revision."""
+      this file) and we need to fill the branch; else return False.
+      See comments below for the detailed rules."""
 
       pm = Ctx()._persistence_manager
 
@@ -206,23 +202,22 @@ class CVSCommit:
         # added on branch B (thus, F on trunk is in state 'dead'), we
         # generate an SVNCommit to fill B iff the branch has never
         # been filled before.
-        #
-        # If this c_rev.op == OP_ADD, *and* the branch has never
-        # been filled before, then fill it now.  Otherwise, no need to
-        # fill it.
-        #
-        # If this c_rev.op == OP_DELETE, and the previous revision was
-        # also a delete, we don't need to fill it - and there's nothing
-        # to copy to the branch, so we can't anyway.  Other deletes
-        # do need fills.  No one seems to know how to get CVS to
-        # produce the double delete case, but it's been observed.
         if c_rev.op == OP_ADD:
+          # Fill the branch only if it has never been filled before:
           return c_rev.lod.name not in pm.last_filled
         elif c_rev.op == OP_CHANGE:
+          # We need to fill only if the last commit affecting the file
+          # has not been filled yet:
           return prev_svn_revnum > pm.last_filled.get(c_rev.lod.name, 0)
         elif c_rev.op == OP_DELETE:
+          # If the previous revision was also a delete, we don't need
+          # to fill it - and there's nothing to copy to the branch, so
+          # we can't anyway.  No one seems to know how to get CVS to
+          # produce the double delete case, but it's been observed.
           if pm.cvs_items_db[c_rev.prev_id].op == OP_DELETE:
             return False
+          # Other deletes need fills only if the last commit affecting
+          # the file has not been filled yet:
           return prev_svn_revnum > pm.last_filled.get(c_rev.lod.name, 0)
       return False
 

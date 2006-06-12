@@ -194,32 +194,34 @@ class CVSCommit:
       this file) and we need to fill the branch; else return False.
       See comments below for the detailed rules."""
 
-      pm = Ctx()._persistence_manager
+      if not c_rev.first_on_branch:
+        # Only commits that are the first on their branch can force fills:
+        return False
 
-      if c_rev.first_on_branch:
-        prev_svn_revnum = pm.get_svn_revnum(c_rev.prev_id)
-        # It should be the case that when we have a file F that is
-        # added on branch B (thus, F on trunk is in state 'dead'), we
-        # generate an SVNCommit to fill B iff the branch has never
-        # been filled before.
-        if c_rev.op == OP_ADD:
-          # Fill the branch only if it has never been filled before:
-          return c_rev.lod.name not in pm.last_filled
-        elif c_rev.op == OP_CHANGE:
-          # We need to fill only if the last commit affecting the file
-          # has not been filled yet:
-          return prev_svn_revnum > pm.last_filled.get(c_rev.lod.name, 0)
-        elif c_rev.op == OP_DELETE:
-          # If the previous revision was also a delete, we don't need
-          # to fill it - and there's nothing to copy to the branch, so
-          # we can't anyway.  No one seems to know how to get CVS to
-          # produce the double delete case, but it's been observed.
-          if pm.cvs_items_db[c_rev.prev_id].op == OP_DELETE:
-            return False
-          # Other deletes need fills only if the last commit affecting
-          # the file has not been filled yet:
-          return prev_svn_revnum > pm.last_filled.get(c_rev.lod.name, 0)
-      return False
+      pm = Ctx()._persistence_manager
+      prev_svn_revnum = pm.get_svn_revnum(c_rev.prev_id)
+
+      # It should be the case that when we have a file F that is
+      # added on branch B (thus, F on trunk is in state 'dead'), we
+      # generate an SVNCommit to fill B iff the branch has never
+      # been filled before.
+      if c_rev.op == OP_ADD:
+        # Fill the branch only if it has never been filled before:
+        return c_rev.lod.name not in pm.last_filled
+      elif c_rev.op == OP_CHANGE:
+        # We need to fill only if the last commit affecting the file
+        # has not been filled yet:
+        return prev_svn_revnum > pm.last_filled.get(c_rev.lod.name, 0)
+      elif c_rev.op == OP_DELETE:
+        # If the previous revision was also a delete, we don't need
+        # to fill it - and there's nothing to copy to the branch, so
+        # we can't anyway.  No one seems to know how to get CVS to
+        # produce the double delete case, but it's been observed.
+        if pm.cvs_items_db[c_rev.prev_id].op == OP_DELETE:
+          return False
+        # Other deletes need fills only if the last commit affecting
+        # the file has not been filled yet:
+        return prev_svn_revnum > pm.last_filled.get(c_rev.lod.name, 0)
 
     for c_rev in self.changes + self.deletes:
       # If a commit is on a branch, we must ensure that the branch

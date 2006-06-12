@@ -201,7 +201,7 @@ class CVSCommit:
       pm = Ctx()._persistence_manager
 
       if c_rev.first_on_branch:
-        svn_revnum = pm.get_svn_revnum(c_rev.prev_id)
+        prev_svn_revnum = pm.get_svn_revnum(c_rev.prev_id)
         # It should be the case that when we have a file F that is
         # added on branch B (thus, F on trunk is in state 'dead'), we
         # generate an SVNCommit to fill B iff the branch has never
@@ -219,11 +219,11 @@ class CVSCommit:
         if c_rev.op == OP_ADD:
           return c_rev.lod.name not in pm.last_filled
         elif c_rev.op == OP_CHANGE:
-          return svn_revnum > pm.last_filled.get(c_rev.lod.name, 0)
+          return prev_svn_revnum > pm.last_filled.get(c_rev.lod.name, 0)
         elif c_rev.op == OP_DELETE:
           if pm.cvs_items_db[c_rev.prev_id].op == OP_DELETE:
             return False
-          return svn_revnum > pm.last_filled.get(c_rev.lod.name, 0)
+          return prev_svn_revnum > pm.last_filled.get(c_rev.lod.name, 0)
       return False
 
     for c_rev in self.changes + self.deletes:

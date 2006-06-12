@@ -210,12 +210,20 @@ class CVSCommit:
         # If this c_rev.op == OP_ADD, *and* the branch has never
         # been filled before, then fill it now.  Otherwise, no need to
         # fill it.
+        #
+        # If this c_rev.op == OP_DELETE, and the previous revision was
+        # also a delete, we don't need to fill it - and there's nothing
+        # to copy to the branch, so we can't anyway.  Other deletes
+        # do need fills.  No one seems to know how to get CVS to
+        # produce the double delete case, but it's been observed.
         if c_rev.op == OP_ADD:
           return c_rev.lod.name not in pm.last_filled
         elif c_rev.op == OP_CHANGE:
           return svn_revnum > pm.last_filled.get(c_rev.lod.name, 0)
         elif c_rev.op == OP_DELETE:
-          return c_rev.lod.name not in pm.last_filled
+          if pm.cvs_items_db[c_rev.prev_id].op == OP_DELETE:
+            return False
+          return svn_revnum > pm.last_filled.get(c_rev.lod.name, 0)
       return False
 
     for c_rev in self.changes + self.deletes:

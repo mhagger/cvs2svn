@@ -1,0 +1,24 @@
+head	1.1;
+access;
+symbols
+	Branch_4_0:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2006.05.11.02.23.22;	author starksm;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@log1
+@
+text
+@@

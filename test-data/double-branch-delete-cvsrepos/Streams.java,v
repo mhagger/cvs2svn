@@ -1,0 +1,42 @@
+head	1.4;
+access;
+symbols
+	Branch_4_0:1.4.0.18;
+locks; strict;
+comment	@# @;
+
+
+1.4
+date	2002.05.31.03.09.03;	author user57;	state Exp;
+branches
+	1.4.18.1;
+next	;
+
+1.4.18.1
+date	2005.10.29.05.07.47;	author starksm;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@ o turned commented System.out's into gaurded log.trace's
+ o flush output buffer on copyb, as if it was not a buffer already the last
+   bit might be (and usually is) lost.
+@
+text
+@@
+
+
+1.4.18.1
+log
+@Update the LGPL header
+@
+text
+@@
+
+

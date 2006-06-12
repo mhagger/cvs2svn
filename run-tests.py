@@ -2069,6 +2069,29 @@ def commit_dependencies():
     ))
 
 
+def double_branch_delete():
+  "fill branches before modifying files on them"
+  conv = ensure_conversion('double-branch-delete')
+
+  # Test for issue #102.  The file IMarshalledValue.java is branched,
+  # deleted, readded on the branch, and then deleted again.  If the
+  # fill for the file on the branch is postponed until after the
+  # modification, the file will end up live on the branch instead of
+  # dead!  Make sure it happens at the right time.
+
+  conv.logs[6].check(sym_log_msg('Branch_4_0'), (
+    ('/%(branches)s/Branch_4_0/IMarshalledValue.java '
+     '(from /%(trunk)s/IMarshalledValue.java:5)', 'A'),
+    ));
+
+  conv.logs[7].check('file IMarshalledValue.java was added on branch', (
+    ('/%(branches)s/Branch_4_0/IMarshalledValue.java', 'D'),
+    ));
+
+  conv.logs[8].check('JBAS-2436 - Adding LGPL Header2', (
+    ('/%(branches)s/Branch_4_0/IMarshalledValue.java', 'A'),
+    ));
+
 #----------------------------------------------------------------------
 
 ########################################################################
@@ -2146,6 +2169,7 @@ test_list = [ None,
               commit_dependencies,
               show_help_passes,
               multiple_tags,                        # 70
+              double_branch_delete,
               ]
 
 if __name__ == '__main__':

@@ -1,0 +1,66 @@
+head	1.1;
+access;
+symbols
+	Branch_4_0:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2005.12.15.20.18.27;	author csuconic;	state Exp;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.15.20.18.27;	author csuconic;	state dead;
+branches;
+next	1.1.2.3;
+
+1.1.2.3
+date	2005.12.15.20.33.41;	author csuconic;	state Exp;
+branches;
+next	1.1.2.4;
+
+1.1.2.4
+date	2006.03.29.04.16.05;	author csuconic;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@JBAS-2436 - Adding IMarshalledValue to common - required piece for integrating Pluggable Serialization
+@
+text
+@@
+
+
+1.1.2.1
+log
+@file IMarshalledValue.java was added on branch Branch_4_0 on 2005-12-15 20:18:49 +0000
+@
+text
+@@
+
+
+1.1.2.3
+log
+@JBAS-2436 - Adding LGPL Header2
+@
+text
+@@
+
+
+1.1.2.4
+log
+@JBAS-3025 - Removing dependency on commons/IMarshalledValue
+@
+text
+@@
+
+

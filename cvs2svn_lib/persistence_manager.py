@@ -56,9 +56,6 @@ class PersistenceManager:
         artifact_manager.get_temp_file(config.SVN_REVNUMS_TO_CVS_REVS), mode)
     self.cvs2svn_db = Database(
         artifact_manager.get_temp_file(config.CVS_REVS_TO_SVN_REVNUMS), mode)
-    self.cvs_items_db = CVSItemDatabase(
-        artifact_manager.get_temp_file(config.CVS_ITEMS_RESYNC_DB),
-        DB_OPEN_READ)
     if not Ctx().trunk_only:
       self.symbol_db = SymbolDatabase(DB_OPEN_READ)
 
@@ -90,7 +87,7 @@ class PersistenceManager:
     metadata_id = None
     for key in c_rev_keys:
       c_rev_id = int(key, 16)
-      c_rev = self.cvs_items_db[c_rev_id]
+      c_rev = Ctx()._cvs_items_db[c_rev_id]
       svn_commit.add_revision(c_rev)
       # Set the author and log message for this commit by using
       # CVSRevision metadata, but only if haven't done so already.

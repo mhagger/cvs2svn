@@ -217,7 +217,7 @@ class CVSCommit:
         # to fill it - and there's nothing to copy to the branch, so
         # we can't anyway.  No one seems to know how to get CVS to
         # produce the double delete case, but it's been observed.
-        if pm.cvs_items_db[c_rev.prev_id].op == OP_DELETE:
+        if Ctx()._cvs_items_db[c_rev.prev_id].op == OP_DELETE:
           return False
         # Other deletes need fills only if the last commit affecting
         # the file has not been filled yet:

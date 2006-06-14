@@ -443,14 +443,14 @@ class AggregateRevsPass(Pass):
 
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
     Ctx()._metadata_db = MetadataDatabase(DB_OPEN_READ)
-    cvs_items_db = CVSItemDatabase(
+    Ctx()._cvs_items_db = CVSItemDatabase(
         artifact_manager.get_temp_file(config.CVS_ITEMS_RESYNC_DB),
         DB_OPEN_READ)
     aggregator = CVSRevisionAggregator()
     for line in fileinput.FileInput(
             artifact_manager.get_temp_file(config.SORTED_REVS_DATAFILE)):
       c_rev_id = int(line.strip().split()[-1], 16)
-      c_rev = cvs_items_db[c_rev_id]
+      c_rev = Ctx()._cvs_items_db[c_rev_id]
       if not (Ctx().trunk_only and isinstance(c_rev.lod, Branch)):
         aggregator.process_revision(c_rev)
     aggregator.flush()
@@ -545,6 +545,9 @@ class OutputPass(Pass):
   def run(self, stats_keeper):
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
     Ctx()._metadata_db = MetadataDatabase(DB_OPEN_READ)
+    Ctx()._cvs_items_db = CVSItemDatabase(
+        artifact_manager.get_temp_file(config.CVS_ITEMS_RESYNC_DB),
+        DB_OPEN_READ)
     repos = SVNRepositoryMirror()
     persistence_manager = PersistenceManager(DB_OPEN_READ)
 

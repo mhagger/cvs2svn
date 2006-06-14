@@ -243,6 +243,27 @@ class CVSCommit:
     """Generates the primary SVNCommit that corresponds to this
     CVSCommit."""
 
+    def delete_needed(c_rev):
+      """Return True iff the specified delete C_REV is really needed.
+
+      When a file is added on a branch, CVS not only adds the file on
+      the branch, but generates a trunk revision (typically 1.1) for
+      that file in state 'dead'.  We only want to add this revision if
+      the log message is not the standard cvs fabricated log message."""
+
+      if c_rev.prev_id is None:
+        # c_rev.branches may be empty if the originating branch
+        # has been excluded.
+        if not c_rev.branches:
+          return False
+        cvs_generated_msg = ('file %s was initially added on branch %s.\n'
+                             % (c_rev.cvs_file.basename, c_rev.branches[0]))
+        author, log_msg = Ctx()._metadata_db[c_rev.metadata_id]
+        if log_msg == cvs_generated_msg:
+          return False
+
+      return True
+
     # Generate an SVNCommit unconditionally.  Even if the only change
     # in this CVSCommit is a deletion of an already-deleted file (that
     # is, a CVS revision in state 'dead' whose predecessor was also in
@@ -272,25 +293,10 @@ class CVSCommit:
           self.default_branch_cvs_revisions.append(c_rev)
 
     for c_rev in self.deletes:
-      # When a file is added on a branch, CVS not only adds the file
-      # on the branch, but generates a trunk revision (typically
-      # 1.1) for that file in state 'dead'.  We only want to add
-      # this revision if the log message is not the standard cvs
-      # fabricated log message.
-      if c_rev.prev_id is None:
-        # c_rev.branches may be empty if the originating branch
-        # has been excluded.
-        if not c_rev.branches:
-          continue
-        cvs_generated_msg = ('file %s was initially added on branch %s.\n'
-                             % (c_rev.cvs_file.basename, c_rev.branches[0]))
-        author, log_msg = Ctx()._metadata_db[c_rev.metadata_id]
-        if log_msg == cvs_generated_msg:
-          continue
-
-      svn_commit.add_revision(c_rev)
-      if c_rev.is_default_branch_revision():
-        self.default_branch_cvs_revisions.append(c_rev)
+      if delete_needed(c_rev):
+        svn_commit.add_revision(c_rev)
+        if c_rev.is_default_branch_revision():
+          self.default_branch_cvs_revisions.append(c_rev)
 
     # There is a slight chance that we didn't actually register any
     # CVSRevisions with our SVNCommit (see loop over self.deletes

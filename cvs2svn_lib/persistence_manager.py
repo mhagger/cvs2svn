@@ -49,7 +49,7 @@ class PersistenceManager:
     self.mode = mode
     if mode not in (DB_OPEN_NEW, DB_OPEN_READ):
       raise RuntimeError, "Invalid 'mode' argument to PersistenceManager"
-    self.svn2cvs_db = PrimedPDatabase(
+    self.svn_commit_db = PrimedPDatabase(
         artifact_manager.get_temp_file(config.SVN_COMMITS_DB), mode,
         (SVNCommit,))
     self.cvs2svn_db = Database(
@@ -74,7 +74,7 @@ class PersistenceManager:
 
     This method can throw SVNCommitInternalInconsistencyError."""
 
-    return self.svn2cvs_db.get(str(svn_revnum), None)
+    return self.svn_commit_db.get(str(svn_revnum), None)
 
   def put_svn_commit(self, svn_commit):
     """Record the bidirectional mapping between SVN_REVNUM and
@@ -89,7 +89,7 @@ class PersistenceManager:
 
     for c_rev in svn_commit.cvs_revs:
       Log().verbose(' %s %s' % (c_rev.cvs_path, c_rev.rev,))
-    self.svn2cvs_db[str(svn_commit.revnum)] = svn_commit
+    self.svn_commit_db[str(svn_commit.revnum)] = svn_commit
 
     for c_rev in svn_commit.cvs_revs:
       self.cvs2svn_db['%x' % (c_rev.id,)] = svn_commit.revnum

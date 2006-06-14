@@ -99,23 +99,8 @@ SYMBOL_STATISTICS_LIST = 'cvs2svn-symbol-stats.txt'
 # The first maps CVSRevision.id to a number; the values are not
 # unique.
 #
-# The second maps Subversion revision numbers to tuples (c_rev_ids,
-# motivating_revnum, symbolic_name, date).
-#
-# c_rev_ids is a list of CVSRevision.ids.
-#
-# If the SVNCommit is a default branch synchronization,
-# motivating_revnum is the svn_revnum of the primary SVNCommit that
-# motivated it; otherwise it is None.  (NOTE: Secondary commits that
-# fill branches and tags also have a motivating commit, but we do not
-# record it because it is (currently) not needed for anything.)
-# motivating_revnum is used when generating the log message for the
-# commit that synchronizes the default branch with trunk.
-#
-# symbolic_name is the symbolic name associated with the commit (if it
-# filled a symbolic name) or None otherwise.
-#
-# date is the date of the commit.
+# The second maps Subversion revision numbers (as hex strings) to
+# pickled SVNCommit instances.
 CVS_REVS_TO_SVN_REVNUMS = 'cvs2svn-cvs-revs-to-svn-revnums.db'
 SVN_REVNUMS_TO_CVS_REVS = 'cvs2svn-svn-revnums-to-cvs-revs.db'
 

@@ -23,6 +23,7 @@ from cvs2svn_lib.common import format_date
 from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.log import Log
+from cvs2svn_lib.symbol_database import TagSymbol
 
 
 class SVNCommit:
@@ -71,8 +72,9 @@ class SVNCommit:
     self._author = Ctx().username
     self._log_msg = "This log message means an SVNCommit was used too soon."
 
-    # The latest date seen so far, as an integer.  This member is set
-    # externally.
+    # The date of the commit, as an integer.  While the SVNCommit is
+    # being built up, this contains the latest date seen so far.  This
+    # member is set externally.
     self.date = 0
 
     self.cvs_revs = cvs_revs or []
@@ -82,13 +84,19 @@ class SVNCommit:
       self.revnum = SVNCommit.revnum
       SVNCommit.revnum += 1
 
-    # The (uncleaned) symbolic name that is filled in this SVNCommit, if any.
+    # The (uncleaned) symbolic name that is filled in this SVNCommit
+    # (if it filled a symbolic name); otherwise it is None.
     self.symbolic_name = None
 
     # If this commit is a default branch synchronization, this
     # variable represents the subversion revision number of the
     # *primary* commit where the default branch changes actually
-    # happened.  It is None otherwise.
+    # happened.  It is None otherwise.  (NOTE: Secondary commits that
+    # fill branches and tags also have a motivating commit, but we do
+    # not record it because it is (currently) not needed for
+    # anything.)  motivating_revnum is used when generating the log
+    # message for the commit that synchronizes the default branch with
+    # trunk.
     #
     # It is possible for multiple synchronization commits to refer to
     # the same motivating commit revision number, and it is possible
@@ -154,6 +162,51 @@ class SVNCommit:
 
   def add_revision(self, cvs_rev):
     self.cvs_revs.append(cvs_rev)
+
+  def __getstate__(self):
+    return (
+        self.revnum,
+        ['%x' % (x.id,) for x in self.cvs_revs],
+        self.motivating_revnum, self.symbolic_name,
+        self.date)
+
+  def __setstate__(self, state):
+    (revnum, c_rev_keys, motivating_revnum, name, date) = state
+    SVNCommit.__init__(self, "Retrieved from disk", revnum)
+
+    metadata_id = None
+    for key in c_rev_keys:
+      c_rev_id = int(key, 16)
+      c_rev = Ctx()._cvs_items_db[c_rev_id]
+      self.add_revision(c_rev)
+      # Set the author and log message for this commit by using
+      # CVSRevision metadata, but only if haven't done so already.
+      if metadata_id is None:
+        metadata_id = c_rev.metadata_id
+        author, log_msg = Ctx()._metadata_db[metadata_id]
+        self.set_author(author)
+        self.set_log_msg(log_msg)
+
+    self.date = date
+
+    # If we're doing a trunk-only conversion, we don't need to do any more
+    # work.
+    if Ctx().trunk_only:
+      return
+
+    if name:
+      if self.cvs_revs:
+        raise SVNCommit.SVNCommitInternalInconsistencyError(
+            "An SVNCommit cannot have CVSRevisions *and* a corresponding\n"
+            "symbolic name ('%s') to fill."
+            % (clean_symbolic_name(name),))
+      self.set_symbolic_name(name)
+      symbol = Ctx()._symbol_db.get_symbol(name)
+      if isinstance(symbol, TagSymbol):
+        self.is_tag = 1
+
+    if motivating_revnum is not None:
+      self.set_motivating_revnum(motivating_revnum)
 
   def __str__(self):
     """ Print a human-readable description of this SVNCommit.  This

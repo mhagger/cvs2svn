@@ -19,15 +19,14 @@
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib import config
-from cvs2svn_lib.common import clean_symbolic_name
 from cvs2svn_lib.common import SVN_INVALID_REVNUM
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.database import Database
+from cvs2svn_lib.database import PrimedPDatabase
 from cvs2svn_lib.database import DB_OPEN_NEW
 from cvs2svn_lib.database import DB_OPEN_READ
-from cvs2svn_lib.symbol_database import TagSymbol
 from cvs2svn_lib.svn_commit import SVNCommit
 
 
@@ -50,8 +49,9 @@ class PersistenceManager:
     self.mode = mode
     if mode not in (DB_OPEN_NEW, DB_OPEN_READ):
       raise RuntimeError, "Invalid 'mode' argument to PersistenceManager"
-    self.svn2cvs_db = Database(
-        artifact_manager.get_temp_file(config.SVN_REVNUMS_TO_CVS_REVS), mode)
+    self.svn2cvs_db = PrimedPDatabase(
+        artifact_manager.get_temp_file(config.SVN_REVNUMS_TO_CVS_REVS), mode,
+        (SVNCommit,))
     self.cvs2svn_db = Database(
         artifact_manager.get_temp_file(config.CVS_REVS_TO_SVN_REVNUMS), mode)
 
@@ -74,47 +74,7 @@ class PersistenceManager:
 
     This method can throw SVNCommitInternalInconsistencyError."""
 
-    svn_commit = SVNCommit("Retrieved from disk", svn_revnum)
-    (c_rev_keys, motivating_revnum, name, date) = self.svn2cvs_db.get(
-        str(svn_revnum), (None, None, None, None))
-    if c_rev_keys is None:
-      return None
-
-    metadata_id = None
-    for key in c_rev_keys:
-      c_rev_id = int(key, 16)
-      c_rev = Ctx()._cvs_items_db[c_rev_id]
-      svn_commit.add_revision(c_rev)
-      # Set the author and log message for this commit by using
-      # CVSRevision metadata, but only if haven't done so already.
-      if metadata_id is None:
-        metadata_id = c_rev.metadata_id
-        author, log_msg = Ctx()._metadata_db[metadata_id]
-        svn_commit.set_author(author)
-        svn_commit.set_log_msg(log_msg)
-
-    svn_commit.date = date
-
-    # If we're doing a trunk-only conversion, we don't need to do any more
-    # work.
-    if Ctx().trunk_only:
-      return svn_commit
-
-    if name:
-      if svn_commit.cvs_revs:
-        raise SVNCommit.SVNCommitInternalInconsistencyError(
-            "An SVNCommit cannot have CVSRevisions *and* a corresponding\n"
-            "symbolic name ('%s') to fill."
-            % (clean_symbolic_name(name),))
-      svn_commit.set_symbolic_name(name)
-      symbol = Ctx()._symbol_db.get_symbol(name)
-      if isinstance(symbol, TagSymbol):
-        svn_commit.is_tag = 1
-
-    if motivating_revnum is not None:
-      svn_commit.set_motivating_revnum(motivating_revnum)
-
-    return svn_commit
+    return self.svn2cvs_db.get(str(svn_revnum), None)
 
   def put_svn_commit(self, svn_commit):
     """Record the bidirectional mapping between SVN_REVNUM and
@@ -129,10 +89,7 @@ class PersistenceManager:
 
     for c_rev in svn_commit.cvs_revs:
       Log().verbose(' %s %s' % (c_rev.cvs_path, c_rev.rev,))
-    self.svn2cvs_db[str(svn_commit.revnum)] = (
-        ['%x' % (x.id,) for x in svn_commit.cvs_revs],
-        svn_commit.motivating_revnum, svn_commit.symbolic_name,
-        svn_commit.date)
+    self.svn2cvs_db[str(svn_commit.revnum)] = svn_commit
 
     for c_rev in svn_commit.cvs_revs:
       self.cvs2svn_db['%x' % (c_rev.id,)] = svn_commit.revnum

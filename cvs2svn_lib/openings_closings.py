@@ -26,7 +26,6 @@ from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.database import DB_OPEN_READ
 from cvs2svn_lib.line_of_development import Branch
-from cvs2svn_lib.cvs_item_database import CVSItemDatabase
 from cvs2svn_lib.svn_revision_range import SVNRevisionRange
 
 
@@ -121,11 +120,6 @@ class SymbolingsLogger:
     each closing CVSRevision, and write a proper line out to the
     symbolings file."""
 
-    # Use this to get the c_rev of our rev_key
-    cvs_items_db = CVSItemDatabase(
-        artifact_manager.get_temp_file(config.CVS_ITEMS_RESYNC_DB),
-        DB_OPEN_READ)
-
     self.closings.close()
     for line in fileinput.FileInput(
             artifact_manager.get_temp_file(config.SYMBOL_CLOSINGS_TMP)):
@@ -133,7 +127,7 @@ class SymbolingsLogger:
       rev_id = int(rev_key, 16)
       svn_revnum = Ctx()._persistence_manager.get_svn_revnum(rev_id)
 
-      c_rev = cvs_items_db[rev_id]
+      c_rev = Ctx()._cvs_items_db[rev_id]
       self._log(
           name, svn_revnum,
           c_rev.cvs_file,

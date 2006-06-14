@@ -74,7 +74,7 @@ class PersistenceManager:
 
     This method can throw SVNCommitInternalInconsistencyError."""
 
-    return self.svn_commit_db.get(str(svn_revnum), None)
+    return self.svn_commit_db.get('%x' % svn_revnum, None)
 
   def put_svn_commit(self, svn_commit):
     """Record the bidirectional mapping between SVN_REVNUM and
@@ -89,7 +89,7 @@ class PersistenceManager:
 
     for c_rev in svn_commit.cvs_revs:
       Log().verbose(' %s %s' % (c_rev.cvs_path, c_rev.rev,))
-    self.svn_commit_db[str(svn_commit.revnum)] = svn_commit
+    self.svn_commit_db['%x' % svn_commit.revnum] = svn_commit
 
     for c_rev in svn_commit.cvs_revs:
       self.cvs2svn_db['%x' % (c_rev.id,)] = svn_commit.revnum

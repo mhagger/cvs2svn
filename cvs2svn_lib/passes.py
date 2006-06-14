@@ -46,6 +46,7 @@ from cvs2svn_lib.symbol_statistics_collector import SymbolStatisticsCollector
 from cvs2svn_lib.cvs_item_database import CVSItemDatabase
 from cvs2svn_lib.last_symbolic_name_database import LastSymbolicNameDatabase
 from cvs2svn_lib.svn_commit import SVNCommit
+from cvs2svn_lib.openings_closings import SymbolingsLogger
 from cvs2svn_lib.cvs_revision_aggregator import CVSRevisionAggregator
 from cvs2svn_lib.svn_repository_mirror import SVNRepositoryMirror
 from cvs2svn_lib.persistence_manager import PersistenceManager
@@ -447,6 +448,7 @@ class AggregateRevsPass(Pass):
     Ctx()._cvs_items_db = CVSItemDatabase(
         artifact_manager.get_temp_file(config.CVS_ITEMS_RESYNC_DB),
         DB_OPEN_READ)
+    Ctx()._symbolings_logger = SymbolingsLogger()
     if not Ctx().trunk_only:
       Ctx()._symbol_db = SymbolDatabase(DB_OPEN_READ)
     aggregator = CVSRevisionAggregator()

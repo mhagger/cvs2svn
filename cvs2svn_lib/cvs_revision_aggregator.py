@@ -26,7 +26,6 @@ from cvs2svn_lib.database import Database
 from cvs2svn_lib.database import SDatabase
 from cvs2svn_lib.database import DB_OPEN_NEW
 from cvs2svn_lib.database import DB_OPEN_READ
-from cvs2svn_lib.openings_closings import SymbolingsLogger
 from cvs2svn_lib.persistence_manager import PersistenceManager
 from cvs2svn_lib.cvs_commit import CVSCommit
 from cvs2svn_lib.svn_commit import SVNCommit
@@ -97,7 +96,6 @@ class CVSRevisionAggregator:
     # created in self._attempt_to_commit_symbols().
     self.latest_primary_svn_commit = None
 
-    Ctx()._symbolings_logger = SymbolingsLogger()
     Ctx()._persistence_manager = PersistenceManager(DB_OPEN_NEW)
 
   def _get_deps(self, c_rev, deps):

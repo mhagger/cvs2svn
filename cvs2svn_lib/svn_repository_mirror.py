@@ -34,7 +34,6 @@ from cvs2svn_lib.database import SDatabase
 from cvs2svn_lib.database import DB_OPEN_NEW
 from cvs2svn_lib.database import DB_OPEN_READ
 from cvs2svn_lib.symbol_database import TagSymbol
-from cvs2svn_lib.symbol_database import SymbolDatabase
 from cvs2svn_lib.symbolings_reader import SymbolingsReader
 from cvs2svn_lib.fill_source import FillSource
 from cvs2svn_lib.svn_revision_range import SVNRevisionRange
@@ -109,7 +108,6 @@ class SVNRepositoryMirror:
     self.new_nodes = { }
 
     if not Ctx().trunk_only:
-      self.symbol_db = SymbolDatabase(DB_OPEN_READ)
       self.symbolings_reader = SymbolingsReader()
 
   def initialize(self, date):
@@ -353,7 +351,7 @@ class SVNRepositoryMirror:
     sources = symbol_fill.get_sources()
 
     if sources:
-      symbol = self.symbol_db.get_symbol(svn_commit.symbolic_name)
+      symbol = Ctx()._symbol_db.get_symbol(svn_commit.symbolic_name)
       if isinstance(symbol, TagSymbol):
         dest_prefix = Ctx().project.get_tag_path(svn_commit.symbolic_name)
       else:

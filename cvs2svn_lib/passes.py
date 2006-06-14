@@ -40,6 +40,7 @@ from cvs2svn_lib.database import DB_OPEN_READ
 from cvs2svn_lib.database import DB_OPEN_WRITE
 from cvs2svn_lib.cvs_file_database import CVSFileDatabase
 from cvs2svn_lib.metadata_database import MetadataDatabase
+from cvs2svn_lib.symbol_database import SymbolDatabase
 from cvs2svn_lib.line_of_development import Branch
 from cvs2svn_lib.symbol_statistics_collector import SymbolStatisticsCollector
 from cvs2svn_lib.cvs_item_database import CVSItemDatabase
@@ -446,6 +447,8 @@ class AggregateRevsPass(Pass):
     Ctx()._cvs_items_db = CVSItemDatabase(
         artifact_manager.get_temp_file(config.CVS_ITEMS_RESYNC_DB),
         DB_OPEN_READ)
+    if not Ctx().trunk_only:
+      Ctx()._symbol_db = SymbolDatabase(DB_OPEN_READ)
     aggregator = CVSRevisionAggregator()
     for line in fileinput.FileInput(
             artifact_manager.get_temp_file(config.SORTED_REVS_DATAFILE)):
@@ -548,6 +551,8 @@ class OutputPass(Pass):
     Ctx()._cvs_items_db = CVSItemDatabase(
         artifact_manager.get_temp_file(config.CVS_ITEMS_RESYNC_DB),
         DB_OPEN_READ)
+    if not Ctx().trunk_only:
+      Ctx()._symbol_db = SymbolDatabase(DB_OPEN_READ)
     repos = SVNRepositoryMirror()
     persistence_manager = PersistenceManager(DB_OPEN_READ)
 

@@ -50,7 +50,7 @@ class PersistenceManager:
     if mode not in (DB_OPEN_NEW, DB_OPEN_READ):
       raise RuntimeError, "Invalid 'mode' argument to PersistenceManager"
     self.svn2cvs_db = PrimedPDatabase(
-        artifact_manager.get_temp_file(config.SVN_REVNUMS_TO_CVS_REVS), mode,
+        artifact_manager.get_temp_file(config.SVN_COMMITS_DB), mode,
         (SVNCommit,))
     self.cvs2svn_db = Database(
         artifact_manager.get_temp_file(config.CVS_REVS_TO_SVN_REVNUMS), mode)

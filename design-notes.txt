@@ -231,10 +231,10 @@ to a Subversion repository or to a dump file).
 
 This pass does the following:
 
-1. Creates a database file to map Subversion Revision numbers to their
-   corresponding CVS Revisions ('cvs2svn-svn-revnums-to-cvs-revs.db').
-   Creates another database file to map CVS Revisions to their
-   Subversion Revision numbers ('cvs2svn-cvs-revs-to-svn-revnums.db').
+1. Creates a database file to map Subversion revision numbers to
+   SVNCommit instances ('cvs2svn-svn-commits.db').  Creates another
+   database file to map CVS Revisions to their Subversion Revision
+   numbers ('cvs2svn-cvs-revs-to-svn-revnums.db').
 
 2. When a file is copied to a symbolic name in cvs2svn, there are a
    range of valid Subversion revisions that we can copy the file from.

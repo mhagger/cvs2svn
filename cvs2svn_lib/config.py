@@ -102,7 +102,7 @@ SYMBOL_STATISTICS_LIST = 'cvs2svn-symbol-stats.txt'
 # The second maps Subversion revision numbers (as hex strings) to
 # pickled SVNCommit instances.
 CVS_REVS_TO_SVN_REVNUMS = 'cvs2svn-cvs-revs-to-svn-revnums.db'
-SVN_REVNUMS_TO_CVS_REVS = 'cvs2svn-svn-revnums-to-cvs-revs.db'
+SVN_COMMITS_DB = 'cvs2svn-svn-commits.db'
 
 # How many bytes to read at a time from a pipe.  128 kiB should be
 # large enough to be efficient without wasting too much memory.

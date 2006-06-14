@@ -27,7 +27,6 @@ from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.database import Database
 from cvs2svn_lib.database import DB_OPEN_NEW
 from cvs2svn_lib.database import DB_OPEN_READ
-from cvs2svn_lib.cvs_item_database import CVSItemDatabase
 from cvs2svn_lib.symbol_database import TagSymbol
 from cvs2svn_lib.svn_commit import SVNCommit
 

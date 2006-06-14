@@ -284,8 +284,7 @@ class CVSCommit:
           continue
         cvs_generated_msg = ('file %s was initially added on branch %s.\n'
                              % (c_rev.cvs_file.basename, c_rev.branches[0]))
-        author, log_msg = \
-            Ctx()._persistence_manager.svn_commit_metadata[c_rev.metadata_id]
+        author, log_msg = Ctx()._metadata_db[c_rev.metadata_id]
         if log_msg == cvs_generated_msg:
           continue
 

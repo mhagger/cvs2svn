@@ -30,7 +30,6 @@ from cvs2svn_lib.openings_closings import SymbolingsLogger
 from cvs2svn_lib.persistence_manager import PersistenceManager
 from cvs2svn_lib.cvs_commit import CVSCommit
 from cvs2svn_lib.svn_commit import SVNCommit
-from cvs2svn_lib.metadata_database import MetadataDatabase
 
 
 class CVSRevisionAggregator:
@@ -60,7 +59,6 @@ class CVSRevisionAggregator:
   # underway in other directories.
 
   def __init__(self):
-    self._metadata_db = MetadataDatabase(DB_OPEN_READ)
     if not Ctx().trunk_only:
       self.last_revs_db = Database(
           artifact_manager.get_temp_file(config.SYMBOL_LAST_CVS_REVS_DB),
@@ -179,7 +177,7 @@ class CVSRevisionAggregator:
       if cvs_commit not in deps:
         break
     else:
-      author, log = self._metadata_db[c_rev.metadata_id]
+      author, log = Ctx()._metadata_db[c_rev.metadata_id]
       cvs_commit = CVSCommit(c_rev.metadata_id, author, log)
       cvs_commits.append(cvs_commit)
     if dep is not None:

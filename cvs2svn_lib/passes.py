@@ -39,6 +39,7 @@ from cvs2svn_lib.database import DB_OPEN_NEW
 from cvs2svn_lib.database import DB_OPEN_READ
 from cvs2svn_lib.database import DB_OPEN_WRITE
 from cvs2svn_lib.cvs_file_database import CVSFileDatabase
+from cvs2svn_lib.metadata_database import MetadataDatabase
 from cvs2svn_lib.line_of_development import Branch
 from cvs2svn_lib.symbol_statistics_collector import SymbolStatisticsCollector
 from cvs2svn_lib.cvs_item_database import CVSItemDatabase
@@ -441,6 +442,7 @@ class AggregateRevsPass(Pass):
     Log().quiet("Mapping CVS revisions to Subversion commits...")
 
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
+    Ctx()._metadata_db = MetadataDatabase(DB_OPEN_READ)
     cvs_items_db = CVSItemDatabase(
         artifact_manager.get_temp_file(config.CVS_ITEMS_RESYNC_DB),
         DB_OPEN_READ)
@@ -542,6 +544,7 @@ class OutputPass(Pass):
 
   def run(self, stats_keeper):
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
+    Ctx()._metadata_db = MetadataDatabase(DB_OPEN_READ)
     repos = SVNRepositoryMirror()
     persistence_manager = PersistenceManager(DB_OPEN_READ)
 

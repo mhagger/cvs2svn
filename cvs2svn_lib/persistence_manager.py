@@ -30,7 +30,6 @@ from cvs2svn_lib.database import DB_OPEN_READ
 from cvs2svn_lib.cvs_item_database import CVSItemDatabase
 from cvs2svn_lib.symbol_database import TagSymbol
 from cvs2svn_lib.symbol_database import SymbolDatabase
-from cvs2svn_lib.metadata_database import MetadataDatabase
 from cvs2svn_lib.svn_commit import SVNCommit
 
 
@@ -57,7 +56,6 @@ class PersistenceManager:
         artifact_manager.get_temp_file(config.SVN_REVNUMS_TO_CVS_REVS), mode)
     self.cvs2svn_db = Database(
         artifact_manager.get_temp_file(config.CVS_REVS_TO_SVN_REVNUMS), mode)
-    self.svn_commit_metadata = MetadataDatabase(DB_OPEN_READ)
     self.cvs_items_db = CVSItemDatabase(
         artifact_manager.get_temp_file(config.CVS_ITEMS_RESYNC_DB),
         DB_OPEN_READ)
@@ -98,7 +96,7 @@ class PersistenceManager:
       # CVSRevision metadata, but only if haven't done so already.
       if metadata_id is None:
         metadata_id = c_rev.metadata_id
-        author, log_msg = self.svn_commit_metadata[metadata_id]
+        author, log_msg = Ctx()._metadata_db[metadata_id]
         svn_commit.set_author(author)
         svn_commit.set_log_msg(log_msg)
 

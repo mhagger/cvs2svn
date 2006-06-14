@@ -28,7 +28,7 @@ from cvs2svn_lib.database import DB_OPEN_NEW
 from cvs2svn_lib.database import DB_OPEN_READ
 from cvs2svn_lib.persistence_manager import PersistenceManager
 from cvs2svn_lib.cvs_commit import CVSCommit
-from cvs2svn_lib.svn_commit import SVNCommit
+from cvs2svn_lib.svn_commit import SVNSymbolCloseCommit
 
 
 class CVSRevisionAggregator:
@@ -239,10 +239,8 @@ class CVSRevisionAggregator:
     # that our tests will get the same results on all platforms.
     closeable_symbols.sort()
     for sym in closeable_symbols:
-      svn_commit = SVNCommit("closing tag/branch '%s'" % sym)
-      svn_commit.set_symbolic_name(sym)
-      svn_commit.date = self.latest_primary_svn_commit.date
-      Ctx()._persistence_manager.put_svn_commit(svn_commit)
+      Ctx()._persistence_manager.put_svn_commit(
+          SVNSymbolCloseCommit(sym, self.latest_primary_svn_commit.date))
       self.done_symbols.append(sym)
       self._pending_symbols.remove(sym)
 

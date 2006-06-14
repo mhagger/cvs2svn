@@ -266,3 +266,38 @@ class SVNCommit:
     return msg
 
 
+class SVNInitialProjectCommit(SVNCommit):
+  def __init__(self, date):
+    SVNCommit.__init__(self, 'Initialization', 1)
+    self.date = date
+    self.set_log_msg('New repository initialized by cvs2svn.')
+
+
+class SVNPrimaryCommit(SVNCommit):
+  def __init__(self, c_revs):
+    SVNCommit.__init__(self, 'commit')
+    for c_rev in c_revs:
+      self.add_revision(c_rev)
+
+
+class SVNPreCommit(SVNCommit):
+  def __init__(self, name):
+    SVNCommit.__init__(self, 'pre-commit symbolic name %r' % name)
+    self.set_symbolic_name(name)
+
+
+class SVNPostCommit(SVNCommit):
+  def __init__(self, motivating_revnum, c_revs):
+    SVNCommit.__init__(self, 'post-commit default branch(es)')
+    self.set_motivating_revnum(motivating_revnum)
+    for c_rev in c_revs:
+      self.add_revision(c_rev)
+
+
+class SVNSymbolCloseCommit(SVNCommit):
+  def __init__(self, name, date):
+    SVNCommit.__init__(self, 'closing tag/branch %r' % name)
+    self.set_symbolic_name(name)
+    self.date = date
+
+

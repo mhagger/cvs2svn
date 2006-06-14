@@ -38,7 +38,7 @@ from cvs2svn_lib.symbolings_reader import SymbolingsReader
 from cvs2svn_lib.fill_source import FillSource
 from cvs2svn_lib.svn_revision_range import SVNRevisionRange
 from cvs2svn_lib.svn_commit_item import SVNCommitItem
-from cvs2svn_lib.svn_commit import SVNCommit
+from cvs2svn_lib.svn_commit import SVNInitialProjectCommit
 
 
 class SVNRepositoryMirror:
@@ -117,9 +117,7 @@ class SVNRepositoryMirror:
 
     # Make a 'fake' SVNCommit so we can take advantage of the revprops
     # magic therein
-    svn_commit = SVNCommit("Initialization", 1)
-    svn_commit.date = date
-    svn_commit.set_log_msg("New repository initialized by cvs2svn.")
+    svn_commit = SVNInitialProjectCommit(date)
 
     self._start_commit(svn_commit)
     self._mkdir(Ctx().project.trunk_path)

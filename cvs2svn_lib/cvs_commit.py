@@ -27,6 +27,9 @@ from cvs2svn_lib.common import OP_CHANGE
 from cvs2svn_lib.common import OP_DELETE
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.svn_commit import SVNCommit
+from cvs2svn_lib.svn_commit import SVNPrimaryCommit
+from cvs2svn_lib.svn_commit import SVNPreCommit
+from cvs2svn_lib.svn_commit import SVNPostCommit
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.line_of_development import Branch
 
@@ -233,10 +236,7 @@ class CVSCommit:
           and c_rev.lod.name not in accounted_for_sym_names \
           and c_rev.lod.name not in done_symbols \
           and fill_needed(c_rev):
-        svn_commit = SVNCommit("pre-commit symbolic name '%s'"
-                               % c_rev.lod.name)
-        svn_commit.set_symbolic_name(c_rev.lod.name)
-        self.secondary_commits.append(svn_commit)
+        self.secondary_commits.append(SVNPreCommit(c_rev.lod.name))
         accounted_for_sym_names.append(c_rev.lod.name)
 
   def _commit(self):
@@ -270,11 +270,14 @@ class CVSCommit:
     # state 'dead'), the conversion will still generate a Subversion
     # revision containing the log message for the second dead
     # revision, because we don't want to lose that information.
-    svn_commit = SVNCommit("commit")
+    needed_deletes = [ c_rev
+                       for c_rev in self.deletes
+                       if delete_needed(c_rev)
+                       ]
+    svn_commit = SVNPrimaryCommit(self.changes + needed_deletes)
     self.motivating_commit = svn_commit
 
     for c_rev in self.changes:
-      svn_commit.add_revision(c_rev)
       # Only make a change if we need to:
       if c_rev.rev == "1.1.1.1" and not c_rev.deltatext_exists:
         # When 1.1.1.1 has an empty deltatext, the explanation is
@@ -292,17 +295,15 @@ class CVSCommit:
         if c_rev.is_default_branch_revision():
           self.default_branch_cvs_revisions.append(c_rev)
 
-    for c_rev in self.deletes:
-      if delete_needed(c_rev):
-        svn_commit.add_revision(c_rev)
-        if c_rev.is_default_branch_revision():
-          self.default_branch_cvs_revisions.append(c_rev)
+    for c_rev in needed_deletes:
+      if c_rev.is_default_branch_revision():
+        self.default_branch_cvs_revisions.append(c_rev)
 
     # There is a slight chance that we didn't actually register any
     # CVSRevisions with our SVNCommit (see loop over self.deletes
     # above), so if we have no CVSRevisions, we don't flush the
     # svn_commit to disk and roll back our revnum.
-    if len(svn_commit.cvs_revs) > 0:
+    if svn_commit.cvs_revs:
       svn_commit.date = self.t_max
       Ctx()._persistence_manager.put_svn_commit(svn_commit)
     else:
@@ -327,10 +328,9 @@ class CVSCommit:
     # Only generate a commit if we have default branch revs
     if len(self.default_branch_cvs_revisions):
       # Generate an SVNCommit for all of our default branch c_revs.
-      svn_commit = SVNCommit("post-commit default branch(es)")
-      svn_commit.set_motivating_revnum(self.motivating_commit.revnum)
+      svn_commit = SVNPostCommit(self.motivating_commit.revnum,
+                                 self.default_branch_cvs_revisions)
       for c_rev in self.default_branch_cvs_revisions:
-        svn_commit.add_revision(c_rev)
         Ctx()._symbolings_logger.log_default_branch_closing(
             c_rev, svn_commit.revnum)
       self.secondary_commits.append(svn_commit)

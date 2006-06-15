@@ -113,9 +113,12 @@ class SVNCommit:
       Log().warn("  author: '%s'" % self._author)
       Log().warn("  log:    '%s'" % self._get_log_msg().rstrip())
       Log().warn("  date:   '%s'" % date)
-      Log().warn("(subversion rev %s)  Related files:" % self.revnum)
-      for c_rev in self.cvs_revs:
-        Log().warn(" ", c_rev.cvs_file.filename)
+      if isinstance(self, SVNRevisionCommit):
+        Log().warn("(subversion rev %s)  Related files:" % self.revnum)
+        for c_rev in self.cvs_revs:
+          Log().warn(" ", c_rev.cvs_file.filename)
+      else:
+        Log().warn("(subversion rev %s)" % self.revnum)
 
       Log().warn(
           "Consider rerunning with one or more '--encoding' parameters.\n")

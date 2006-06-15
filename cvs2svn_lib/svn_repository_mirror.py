@@ -58,7 +58,7 @@ class SVNRepositoryMirror:
   revision that is being contructed is kept in memory in the new_nodes
   hash which is cheap to access.
 
-  You must invoke _start_commit between SVNCommits.
+  You must invoke start_commit() between SVNCommits.
 
   *** WARNING *** All path arguments to methods in this class CANNOT
       have leading or trailing slashes."""
@@ -119,15 +119,15 @@ class SVNRepositoryMirror:
     # magic therein
     svn_commit = SVNInitialProjectCommit(date)
 
-    self._start_commit(svn_commit)
-    self._mkdir(Ctx().project.trunk_path)
+    self.start_commit(svn_commit)
+    self.mkdir(Ctx().project.trunk_path)
     if not Ctx().trunk_only:
-      self._mkdir(Ctx().project.branches_path)
-      self._mkdir(Ctx().project.tags_path)
+      self.mkdir(Ctx().project.branches_path)
+      self.mkdir(Ctx().project.tags_path)
 
-    self._end_commit()
+    self.end_commit()
 
-  def _start_commit(self, svn_commit):
+  def start_commit(self, svn_commit):
     """Start a new commit."""
 
     self.youngest = svn_commit.revnum
@@ -136,7 +136,7 @@ class SVNRepositoryMirror:
 
     self._invoke_delegates('start_commit', svn_commit)
 
-  def _end_commit(self):
+  def end_commit(self):
     """Called at the end of each commit.  This method copies the newly
     created nodes to the on-disk nodes db."""
 
@@ -237,7 +237,7 @@ class SVNRepositoryMirror:
 
     return this_key, this_contents
 
-  def _path_exists(self, path):
+  def path_exists(self, path):
     """If PATH exists in self.youngest of the svn repository mirror,
     return true, else return None.
 
@@ -255,7 +255,7 @@ class SVNRepositoryMirror:
       self._invoke_delegates('delete_path',
                              path_join(parent_path, component))
 
-  def _delete_path(self, svn_path, should_prune=False):
+  def delete_path(self, svn_path, should_prune=False):
     """Delete PATH from the tree.  If SHOULD_PRUNE is true, then delete
     all ancestor directories that are made empty when SVN_PATH is deleted.
     In other words, SHOULD_PRUNE is like the -P option to 'cvs checkout'.
@@ -282,15 +282,15 @@ class SVNRepositoryMirror:
       # drawback is that we issue a delete for each path and not just
       # a single delete for the topmost directory pruned.
       if should_prune and len(parent_contents) == 0:
-        self._delete_path(parent_path, True)
+        self.delete_path(parent_path, True)
 
-  def _mkdir(self, path):
+  def mkdir(self, path):
     """Create PATH in the repository mirror at the youngest revision."""
 
     self._open_writable_node(path, True)
     self._invoke_delegates('mkdir', path)
 
-  def _change_path(self, cvs_rev):
+  def change_path(self, cvs_rev):
     """Register a change in self.youngest for the CVS_REV's svn_path
     in the repository mirror."""
 
@@ -299,13 +299,13 @@ class SVNRepositoryMirror:
     # content change does not cause any path changes.
     self._invoke_delegates('change_path', SVNCommitItem(cvs_rev, False))
 
-  def _add_path(self, cvs_rev):
+  def add_path(self, cvs_rev):
     """Add the CVS_REV's svn_path to the repository mirror."""
 
     self._open_writable_node(cvs_rev.svn_path, True)
     self._invoke_delegates('add_path', SVNCommitItem(cvs_rev, True))
 
-  def _copy_path(self, src_path, dest_path, src_revnum):
+  def copy_path(self, src_path, dest_path, src_revnum):
     """Copy SRC_PATH at subversion revision number SRC_REVNUM to
     DEST_PATH. In the youngest revision of the repository, DEST_PATH's
     parent *must* exist, but DEST_PATH *cannot* exist.
@@ -334,7 +334,7 @@ class SVNRepositoryMirror:
     # destination.  This is a cheap copy, remember!  :-)
     return src_key, src_contents
 
-  def _fill_symbolic_name(self, symbolic_name):
+  def fill_symbolic_name(self, symbolic_name):
     """Performs all copies necessary to create as much of the the tag
     or branch SVN_COMMIT.symbolic_name as possible given the current
     revision of the repository mirror.
@@ -361,7 +361,7 @@ class SVNRepositoryMirror:
       # We can only get here for a branch whose first commit is an add
       # (as opposed to a copy).
       dest_path = Ctx().project.get_branch_path(symbol_fill.name)
-      if not self._path_exists(dest_path):
+      if not self.path_exists(dest_path):
         # If our symbol_fill was empty, that means that our first
         # commit on the branch was to a file added on the branch, and
         # that this is our first fill of that branch.
@@ -371,15 +371,14 @@ class SVNRepositoryMirror:
         # ...we create the branch by copying trunk from the our
         # current revision number minus 1
         source_path = Ctx().project.trunk_path
-        entries = self._copy_path(source_path, dest_path,
-                                  self.youngest - 1)[1]
+        entries = self.copy_path(source_path, dest_path, self.youngest - 1)[1]
         # Now since we've just copied trunk to a branch that's
         # *supposed* to be empty, we delete any entries in the
         # copied directory.
         for entry in entries:
           del_path = dest_path + '/' + entry
           # Delete but don't prune.
-          self._delete_path(del_path)
+          self.delete_path(del_path)
       else:
         msg = "Error filling branch '" \
               + clean_symbolic_name(symbol_fill.name) + "'.\n"
@@ -440,12 +439,12 @@ class SVNRepositoryMirror:
                        copy_source.revnum != preferred_revnum):
       # We are about to replace the destination, so we need to remove
       # it before we perform the copy.
-      self._delete_path(dest_path)
+      self.delete_path(dest_path)
       do_copy = 1
 
     if do_copy:
-      dest_key, dest_entries = self._copy_path(src_path, dest_path,
-                                               copy_source.revnum)
+      dest_key, dest_entries = self.copy_path(src_path, dest_path,
+                                              copy_source.revnum)
       prune_ok = 1
     else:
       dest_entries = self._get_node(dest_key)
@@ -484,7 +483,7 @@ class SVNRepositoryMirror:
                  src_entries[src_key], path_join(path, src_key),
                  copy_source.prefix, sources[0].revnum, prune_ok)
 
-  def _synchronize_default_branch(self, svn_commit):
+  def synchronize_default_branch(self, svn_commit):
     """Propagate any changes that happened on a non-trunk default
     branch to the trunk of the repository.  See
     CVSCommit._post_commit() for details on why this is necessary."""
@@ -492,15 +491,15 @@ class SVNRepositoryMirror:
     for cvs_rev in svn_commit.cvs_revs:
       svn_trunk_path = Ctx().project.make_trunk_path(cvs_rev.cvs_path)
       if cvs_rev.op == OP_ADD or cvs_rev.op == OP_CHANGE:
-        if self._path_exists(svn_trunk_path):
+        if self.path_exists(svn_trunk_path):
           # Delete the path on trunk...
-          self._delete_path(svn_trunk_path)
+          self.delete_path(svn_trunk_path)
         # ...and copy over from branch
-        self._copy_path(cvs_rev.svn_path, svn_trunk_path,
-                        svn_commit.motivating_revnum)
+        self.copy_path(cvs_rev.svn_path, svn_trunk_path,
+                       svn_commit.motivating_revnum)
       elif cvs_rev.op == OP_DELETE:
         # delete trunk path
-        self._delete_path(svn_trunk_path)
+        self.delete_path(svn_trunk_path)
       else:
         msg = ("Unknown CVSRevision operation '%s' in default branch sync."
                % cvs_rev.op)
@@ -509,18 +508,18 @@ class SVNRepositoryMirror:
   def commit(self, svn_commit):
     """Add an SVNCommit to the SVNRepository, incrementing the
     Repository revision number, and changing the repository.  Invoke
-    the delegates' _start_commit() method."""
+    the delegates' start_commit() method."""
 
-    self._start_commit(svn_commit)
+    self.start_commit(svn_commit)
 
     if svn_commit.symbolic_name:
       Log().verbose("Filling symbolic name:",
                     clean_symbolic_name(svn_commit.symbolic_name))
-      self._fill_symbolic_name(svn_commit.symbolic_name)
+      self.fill_symbolic_name(svn_commit.symbolic_name)
     elif svn_commit.motivating_revnum:
       Log().verbose("Synchronizing default_branch motivated by %d"
                     % svn_commit.motivating_revnum)
-      self._synchronize_default_branch(svn_commit)
+      self.synchronize_default_branch(svn_commit)
     else: # This actually commits CVSRevisions
       if len(svn_commit.cvs_revs) > 1: plural = "s"
       else: plural = ""
@@ -528,17 +527,17 @@ class SVNRepositoryMirror:
                     % (len(svn_commit.cvs_revs), plural))
       for cvs_rev in svn_commit.cvs_revs:
         # See comment in CVSCommit._commit() for what this is all
-        # about.  Note that although asking self._path_exists() is
+        # about.  Note that although asking self.path_exists() is
         # somewhat expensive, we only do it if the first two (cheap)
         # tests succeed first.
         if (cvs_rev.rev == "1.1.1.1"
             and not cvs_rev.deltatext_exists
-            and self._path_exists(cvs_rev.svn_path)):
+            and self.path_exists(cvs_rev.svn_path)):
           # This change can be omitted.
           pass
         else:
           if cvs_rev.op == OP_ADD:
-            self._add_path(cvs_rev)
+            self.add_path(cvs_rev)
           elif cvs_rev.op == OP_CHANGE:
             # Fix for Issue #74:
             #
@@ -559,15 +558,15 @@ class SVNRepositoryMirror:
             # Soooo... we just check the path, and if it doesn't
             # exist, we do an add... if the path does exist, it's
             # business as usual.
-            if not self._path_exists(cvs_rev.svn_path):
-              self._add_path(cvs_rev)
+            if not self.path_exists(cvs_rev.svn_path):
+              self.add_path(cvs_rev)
             else:
-              self._change_path(cvs_rev)
+              self.change_path(cvs_rev)
 
         if cvs_rev.op == OP_DELETE:
-          self._delete_path(cvs_rev.svn_path, Ctx().prune)
+          self.delete_path(cvs_rev.svn_path, Ctx().prune)
 
-    self._end_commit()
+    self.end_commit()
 
   def add_delegate(self, delegate):
     """Adds DELEGATE to self.delegates.

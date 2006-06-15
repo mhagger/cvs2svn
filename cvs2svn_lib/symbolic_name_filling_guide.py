@@ -29,7 +29,7 @@ from cvs2svn_lib.fill_source import FillSource
 
 class SymbolicNameFillingGuide:
   """A node tree representing the source paths to be copied to fill
-  self.symbolic_name in the current SVNCommit.
+  self.name in the current SVNCommit.
 
   self._node_tree is the root of the directory tree, in the form {
   path_component : subnode }.  Leaf nodes are instances of

@@ -70,9 +70,6 @@ class RepositoryDelegate(DumpfileDelegate):
     # artifact_manager.
     DumpfileDelegate.__init__(self, Ctx().get_temp_filename(Ctx().dumpfile))
 
-    # This is 1 if a commit is in progress, otherwise None.
-    self._commit_in_progress = None
-
     self.dumpfile = open(self.dumpfile_path, 'w+b')
     self.loader_pipe = SimplePopen([ self.svnadmin, 'load', '-q',
                                      self.target ], True)
@@ -84,14 +81,20 @@ class RepositoryDelegate(DumpfileDelegate):
                        "loading the dumpfile:\n"
                        + self.loader_pipe.stderr.read())
 
-  def _feed_pipe(self):
-    """Feed the revision stored in the dumpfile to the svnadmin
-    load pipe."""
+  def start_commit(self, revnum, revprops):
+    """Start a new commit."""
+
+    DumpfileDelegate.start_commit(self, revnum, revprops)
+
+  def end_commit(self):
+    """Feed the revision stored in the dumpfile to the svnadmin load pipe."""
+
+    DumpfileDelegate.end_commit(self)
 
     self.dumpfile.seek(0)
-    while 1:
+    while True:
       data = self.dumpfile.read(128*1024) # Chunk size is arbitrary
-      if not len(data):
+      if not data:
         break
       try:
         self.loader_pipe.stdin.write(data)
@@ -99,26 +102,12 @@ class RepositoryDelegate(DumpfileDelegate):
         raise FatalError("svnadmin failed with the following output "
                          "while loading the dumpfile:\n"
                          + self.loader_pipe.stderr.read())
-
-  def start_commit(self, revnum, revprops):
-    """Start a new commit.  If a commit is already in progress, close
-    the dumpfile, load it into the svn repository, open a new
-    dumpfile, and write the header into it."""
-
-    if self._commit_in_progress:
-      self._feed_pipe()
     self.dumpfile.seek(0)
     self.dumpfile.truncate()
-    DumpfileDelegate.start_commit(self, revnum, revprops)
-    self._commit_in_progress = 1
-
-  def end_commit(self):
-    DumpfileDelegate.end_commit(self)
 
   def finish(self):
-    """Loads the last commit into the repository."""
+    """Clean up."""
 
-    self._feed_pipe()
     self.dumpfile.close()
     self.loader_pipe.stdin.close()
     error_output = self.loader_pipe.stderr.read()

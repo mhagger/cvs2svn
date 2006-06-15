@@ -95,12 +95,11 @@ class PersistenceManager:
       raise RuntimeError, \
           'Write operation attempted on read-only PersistenceManager'
 
-    for c_rev in svn_commit.cvs_revs:
-      Log().verbose(' %s %s' % (c_rev.cvs_path, c_rev.rev,))
     self.svn_commit_db['%x' % svn_commit.revnum] = svn_commit
 
     for c_rev in svn_commit.cvs_revs:
-      self.cvs2svn_db['%x' % (c_rev.id,)] = svn_commit.revnum
+      Log().verbose(' %s %s' % (c_rev.cvs_path, c_rev.rev,))
+      self.cvs2svn_db['%x' % c_rev.id] = svn_commit.revnum
 
     # If it is a symbol commit, then record last_filled.
     if isinstance(svn_commit, SVNSymbolCommit):

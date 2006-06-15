@@ -268,10 +268,125 @@ class SVNCommit:
           'branches.\n' % self.motivating_revnum
     return msg
 
-  def synchronize_default_branch(self, repos):
-    """Propagate any changes that happened on a non-trunk default
-    branch to the trunk of the repository.  See
-    CVSCommit._post_commit() for details on why this is necessary."""
+
+class SVNInitialProjectCommit(SVNCommit):
+  def __init__(self, date):
+    SVNCommit.__init__(self, 'Initialization', 1)
+    self.date = date
+    self._set_log_msg('New repository initialized by cvs2svn.')
+
+  def commit(self, repos):
+    repos.start_commit(self)
+    repos.mkdir(Ctx().project.trunk_path)
+    if not Ctx().trunk_only:
+      repos.mkdir(Ctx().project.branches_path)
+      repos.mkdir(Ctx().project.tags_path)
+
+    repos.end_commit()
+
+
+class SVNPrimaryCommit(SVNCommit):
+  def __init__(self, c_revs):
+    SVNCommit.__init__(self, 'commit')
+    for c_rev in c_revs:
+      self._add_revision(c_rev)
+
+  def commit(self, repos):
+    """Commit SELF to REPOS, which is a SVNRepositoryMirror."""
+
+    repos.start_commit(self)
+
+    # This actually commits CVSRevisions
+    if len(self.cvs_revs) > 1:
+      plural = "s"
+    else:
+      plural = ""
+    Log().verbose("Committing %d CVSRevision%s"
+                  % (len(self.cvs_revs), plural))
+    for cvs_rev in self.cvs_revs:
+      # See comment in CVSCommit._commit() for what this is all
+      # about.  Note that although asking repos.path_exists() is
+      # somewhat expensive, we only do it if the first two (cheap)
+      # tests succeed first.
+      if (cvs_rev.rev == "1.1.1.1"
+          and not cvs_rev.deltatext_exists
+          and repos.path_exists(cvs_rev.svn_path)):
+        # This change can be omitted.
+        pass
+      else:
+        if cvs_rev.op == OP_ADD:
+          repos.add_path(cvs_rev)
+        elif cvs_rev.op == OP_CHANGE:
+          # Fix for Issue #74:
+          #
+          # Here's the scenario.  You have file FOO that is imported
+          # on a non-trunk vendor branch.  So in r1.1 and r1.1.1.1,
+          # the file exists.
+          #
+          # Moving forward in time, FOO is deleted on the default
+          # branch (r1.1.1.2).  cvs2svn determines that this delete
+          # also needs to happen on trunk, so FOO is deleted on
+          # trunk.
+          #
+          # Along come r1.2, whose op is OP_CHANGE (because r1.1 is
+          # not 'dead', we assume it's a change).  However, since
+          # our trunk file has been deleted, svnadmin blows up--you
+          # can't change a file that doesn't exist!
+          #
+          # Soooo... we just check the path, and if it doesn't
+          # exist, we do an add... if the path does exist, it's
+          # business as usual.
+          if not repos.path_exists(cvs_rev.svn_path):
+            repos.add_path(cvs_rev)
+          else:
+            repos.change_path(cvs_rev)
+
+      if cvs_rev.op == OP_DELETE:
+        repos.delete_path(cvs_rev.svn_path, Ctx().prune)
+
+    repos.end_commit()
+
+
+class SVNSymbolCommit(SVNCommit):
+  def __init__(self, description, name):
+    SVNCommit.__init__(self, description)
+    self._set_symbolic_name(name)
+
+  def commit(self, repos):
+    """Commit SELF to REPOS, which is a SVNRepositoryMirror."""
+
+    repos.start_commit(self)
+
+    Log().verbose("Filling symbolic name:",
+                  clean_symbolic_name(self.symbolic_name))
+    repos.fill_symbolic_name(self.symbolic_name)
+
+    repos.end_commit()
+
+
+class SVNPreCommit(SVNSymbolCommit):
+  def __init__(self, name):
+    SVNSymbolCommit.__init__(self, 'pre-commit symbolic name %r' % name, name)
+
+
+class SVNPostCommit(SVNCommit):
+  def __init__(self, motivating_revnum, c_revs):
+    SVNCommit.__init__(self, 'post-commit default branch(es)')
+    self._set_motivating_revnum(motivating_revnum)
+    for c_rev in c_revs:
+      self._add_revision(c_rev)
+
+  def commit(self, repos):
+    """Commit SELF to REPOS, which is a SVNRepositoryMirror.
+
+    Propagate any changes that happened on a non-trunk default branch
+    to the trunk of the repository.  See CVSCommit._post_commit() for
+    details on why this is necessary."""
+
+    repos.start_commit(self)
+
+    Log().verbose("Synchronizing default_branch motivated by %d"
+                  % self.motivating_revnum)
 
     for cvs_rev in self.cvs_revs:
       svn_trunk_path = Ctx().project.make_trunk_path(cvs_rev.cvs_path)
@@ -290,98 +405,7 @@ class SVNCommit:
                % cvs_rev.op)
         raise repos.SVNRepositoryMirrorUnexpectedOperationError, msg
 
-  def commit(self, repos):
-    """Commit SELF to REPOS, which is a SVNRepositoryMirror."""
-
-    repos.start_commit(self)
-
-    if self.symbolic_name:
-      Log().verbose("Filling symbolic name:",
-                    clean_symbolic_name(self.symbolic_name))
-      repos.fill_symbolic_name(self.symbolic_name)
-    elif self.motivating_revnum:
-      Log().verbose("Synchronizing default_branch motivated by %d"
-                    % self.motivating_revnum)
-      self.synchronize_default_branch(repos)
-    else: # This actually commits CVSRevisions
-      if len(self.cvs_revs) > 1: plural = "s"
-      else: plural = ""
-      Log().verbose("Committing %d CVSRevision%s"
-                    % (len(self.cvs_revs), plural))
-      for cvs_rev in self.cvs_revs:
-        # See comment in CVSCommit._commit() for what this is all
-        # about.  Note that although asking repos.path_exists() is
-        # somewhat expensive, we only do it if the first two (cheap)
-        # tests succeed first.
-        if (cvs_rev.rev == "1.1.1.1"
-            and not cvs_rev.deltatext_exists
-            and repos.path_exists(cvs_rev.svn_path)):
-          # This change can be omitted.
-          pass
-        else:
-          if cvs_rev.op == OP_ADD:
-            repos.add_path(cvs_rev)
-          elif cvs_rev.op == OP_CHANGE:
-            # Fix for Issue #74:
-            #
-            # Here's the scenario.  You have file FOO that is imported
-            # on a non-trunk vendor branch.  So in r1.1 and r1.1.1.1,
-            # the file exists.
-            #
-            # Moving forward in time, FOO is deleted on the default
-            # branch (r1.1.1.2).  cvs2svn determines that this delete
-            # also needs to happen on trunk, so FOO is deleted on
-            # trunk.
-            #
-            # Along come r1.2, whose op is OP_CHANGE (because r1.1 is
-            # not 'dead', we assume it's a change).  However, since
-            # our trunk file has been deleted, svnadmin blows up--you
-            # can't change a file that doesn't exist!
-            #
-            # Soooo... we just check the path, and if it doesn't
-            # exist, we do an add... if the path does exist, it's
-            # business as usual.
-            if not repos.path_exists(cvs_rev.svn_path):
-              repos.add_path(cvs_rev)
-            else:
-              repos.change_path(cvs_rev)
-
-        if cvs_rev.op == OP_DELETE:
-          repos.delete_path(cvs_rev.svn_path, Ctx().prune)
-
     repos.end_commit()
-
-
-class SVNInitialProjectCommit(SVNCommit):
-  def __init__(self, date):
-    SVNCommit.__init__(self, 'Initialization', 1)
-    self.date = date
-    self._set_log_msg('New repository initialized by cvs2svn.')
-
-
-class SVNPrimaryCommit(SVNCommit):
-  def __init__(self, c_revs):
-    SVNCommit.__init__(self, 'commit')
-    for c_rev in c_revs:
-      self._add_revision(c_rev)
-
-
-class SVNSymbolCommit(SVNCommit):
-  def __init__(self, description, name):
-    SVNCommit.__init__(self, description)
-    self._set_symbolic_name(name)
-
-class SVNPreCommit(SVNSymbolCommit):
-  def __init__(self, name):
-    SVNSymbolCommit.__init__(self, 'pre-commit symbolic name %r' % name, name)
-
-
-class SVNPostCommit(SVNCommit):
-  def __init__(self, motivating_revnum, c_revs):
-    SVNCommit.__init__(self, 'post-commit default branch(es)')
-    self._set_motivating_revnum(motivating_revnum)
-    for c_rev in c_revs:
-      self._add_revision(c_rev)
 
 
 class SVNSymbolCloseCommit(SVNSymbolCommit):

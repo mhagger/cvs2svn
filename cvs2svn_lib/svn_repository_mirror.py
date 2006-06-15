@@ -112,17 +112,8 @@ class SVNRepositoryMirror:
     trunk, tags, and branches.  This method should only be called
     after all delegates are added to the repository mirror."""
 
-    # Make a 'fake' SVNCommit so we can take advantage of the revprops
-    # magic therein
-    svn_commit = SVNInitialProjectCommit(date)
-
-    self.start_commit(svn_commit)
-    self.mkdir(Ctx().project.trunk_path)
-    if not Ctx().trunk_only:
-      self.mkdir(Ctx().project.branches_path)
-      self.mkdir(Ctx().project.tags_path)
-
-    self.end_commit()
+    # Create and immediately commit an SVNInitialProjectCommit:
+    SVNInitialProjectCommit(date).commit(self)
 
   def start_commit(self, svn_commit):
     """Start a new commit."""

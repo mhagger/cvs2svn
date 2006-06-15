@@ -178,11 +178,10 @@ class OpeningsClosingsMap:
   def register(self, svn_path, svn_revnum, type):
     """Register an opening or closing revision for this symbolic name.
     SVN_PATH is the source path that needs to be copied into
-    self.symbolic_name, and SVN_REVNUM is either the first svn
-    revision number that we can copy from (our opening), or the last
-    (not inclusive) svn revision number that we can copy from (our
-    closing).  TYPE indicates whether this path is an opening or a a
-    closing.
+    self.name, and SVN_REVNUM is either the first svn revision number
+    that we can copy from (our opening), or the last (not inclusive)
+    svn revision number that we can copy from (our closing).  TYPE
+    indicates whether this path is an opening or a a closing.
 
     The opening for a given SVN_PATH must be passed before the closing
     for it to have any effect... any closing encountered before a

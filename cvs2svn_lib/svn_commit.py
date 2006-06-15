@@ -284,11 +284,6 @@ class SVNPrimaryCommit(SVNCommit, SVNRevisionCommit):
 
     self.date = date
 
-    # If we're doing a trunk-only conversion, we don't need to do any more
-    # work.
-    if Ctx().trunk_only:
-      return
-
 
 class SVNSymbolCommit(SVNCommit):
   def __init__(self, description, name, revnum=None):
@@ -330,19 +325,12 @@ class SVNSymbolCommit(SVNCommit):
 
   def __setstate__(self, state):
     (revnum, name, date) = state
-    SVNCommit.__init__(self, "Retrieved from disk", revnum)
+    SVNSymbolCommit.__init__(self, "Retrieved from disk", name, revnum)
 
-    metadata_id = None
     self.date = date
 
-    # If we're doing a trunk-only conversion, we don't need to do any more
-    # work.
-    if Ctx().trunk_only:
-      return
-
-    if name:
-      self.symbolic_name = name
-      symbol = Ctx()._symbol_db.get_symbol(name)
+    if not Ctx().trunk_only:
+      symbol = Ctx()._symbol_db.get_symbol(self.symbolic_name)
       if isinstance(symbol, TagSymbol):
         self.is_tag = 1
 
@@ -441,10 +429,8 @@ class SVNPostCommit(SVNCommit, SVNRevisionCommit):
 
     # If we're doing a trunk-only conversion, we don't need to do any more
     # work.
-    if Ctx().trunk_only:
-      return
-
-    self._motivating_revnum = motivating_revnum
+    if not Ctx().trunk_only:
+      self._motivating_revnum = motivating_revnum
 
 
 class SVNSymbolCloseCommit(SVNSymbolCommit):

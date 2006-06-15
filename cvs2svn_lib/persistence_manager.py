@@ -30,6 +30,7 @@ from cvs2svn_lib.database import DB_OPEN_READ
 from cvs2svn_lib.svn_commit import SVNInitialProjectCommit
 from cvs2svn_lib.svn_commit import SVNCommit
 from cvs2svn_lib.svn_commit import SVNPrimaryCommit
+from cvs2svn_lib.svn_commit import SVNSymbolCommit
 from cvs2svn_lib.svn_commit import SVNPreCommit
 from cvs2svn_lib.svn_commit import SVNPostCommit
 from cvs2svn_lib.svn_commit import SVNSymbolCloseCommit
@@ -56,7 +57,7 @@ class PersistenceManager:
       raise RuntimeError, "Invalid 'mode' argument to PersistenceManager"
     self.svn_commit_db = PrimedPDatabase(
         artifact_manager.get_temp_file(config.SVN_COMMITS_DB), mode,
-        (SVNInitialProjectCommit, SVNPrimaryCommit,
+        (SVNInitialProjectCommit, SVNPrimaryCommit, SVNSymbolCommit,
          SVNPreCommit, SVNPostCommit, SVNSymbolCloseCommit,))
     self.cvs2svn_db = Database(
         artifact_manager.get_temp_file(config.CVS_REVS_TO_SVN_REVNUMS), mode)

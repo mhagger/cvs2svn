@@ -366,10 +366,14 @@ class SVNPrimaryCommit(SVNCommit):
       self._add_revision(c_rev)
 
 
-class SVNPreCommit(SVNCommit):
-  def __init__(self, name):
-    SVNCommit.__init__(self, 'pre-commit symbolic name %r' % name)
+class SVNSymbolCommit(SVNCommit):
+  def __init__(self, description, name):
+    SVNCommit.__init__(self, description)
     self._set_symbolic_name(name)
+
+class SVNPreCommit(SVNSymbolCommit):
+  def __init__(self, name):
+    SVNSymbolCommit.__init__(self, 'pre-commit symbolic name %r' % name, name)
 
 
 class SVNPostCommit(SVNCommit):
@@ -380,10 +384,9 @@ class SVNPostCommit(SVNCommit):
       self._add_revision(c_rev)
 
 
-class SVNSymbolCloseCommit(SVNCommit):
+class SVNSymbolCloseCommit(SVNSymbolCommit):
   def __init__(self, name, date):
-    SVNCommit.__init__(self, 'closing tag/branch %r' % name)
-    self._set_symbolic_name(name)
+    SVNSymbolCommit.__init__(self, 'closing tag/branch %r' % name, name)
     self.date = date
 
 

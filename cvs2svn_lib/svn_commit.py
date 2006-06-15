@@ -267,8 +267,7 @@ class SVNPrimaryCommit(SVNCommit, SVNRevisionCommit):
     repos.end_commit()
 
   def __getstate__(self):
-    return (
-        self.revnum, self.date, SVNRevisionCommit.__getstate__(self),)
+    return (self.revnum, self.date, SVNRevisionCommit.__getstate__(self),)
 
   def __setstate__(self, state):
     (revnum, date, rev_state,) = state
@@ -416,11 +415,7 @@ class SVNPostCommit(SVNCommit, SVNRevisionCommit):
     SVNRevisionCommit.__setstate__(self, rev_state)
 
     self.date = date
-
-    # If we're doing a trunk-only conversion, we don't need to do any more
-    # work.
-    if not Ctx().trunk_only:
-      self._motivating_revnum = motivating_revnum
+    self._motivating_revnum = motivating_revnum
 
 
 class SVNSymbolCloseCommit(SVNSymbolCommit):

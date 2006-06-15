@@ -66,12 +66,6 @@ class SVNRepositoryMirror:
 
     pass
 
-  class SVNRepositoryMirrorUnexpectedOperationError(Exception):
-    """Exception raised if a CVSRevision is found to have an unexpected
-    operation (OP) value."""
-
-    pass
-
   class SVNRepositoryMirrorInvalidFillOperationError(Exception):
     """Exception raised if an empty SymbolicNameFillingGuide is returned
     during a fill where the branch in question already exists."""

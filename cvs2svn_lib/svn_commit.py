@@ -392,15 +392,12 @@ class SVNPostCommit(SVNCommit, SVNRevisionCommit):
           # Delete the path on trunk...
           repos.delete_path(svn_trunk_path)
         # ...and copy over from branch
-        repos.copy_path(cvs_rev.svn_path, svn_trunk_path,
-                        self._motivating_revnum)
-      elif cvs_rev.op == OP_DELETE:
+        repos.copy_path(
+            cvs_rev.svn_path, svn_trunk_path, self._motivating_revnum)
+      else:
+        assert cvs_rev.op == OP_DELETE
         # delete trunk path
         repos.delete_path(svn_trunk_path)
-      else:
-        msg = ("Unknown CVSRevision operation '%s' in default branch sync."
-               % cvs_rev.op)
-        raise repos.SVNRepositoryMirrorUnexpectedOperationError, msg
 
     repos.end_commit()
 

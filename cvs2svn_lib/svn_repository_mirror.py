@@ -35,7 +35,6 @@ from cvs2svn_lib.symbolings_reader import SymbolingsReader
 from cvs2svn_lib.fill_source import FillSource
 from cvs2svn_lib.svn_revision_range import SVNRevisionRange
 from cvs2svn_lib.svn_commit_item import SVNCommitItem
-from cvs2svn_lib.svn_commit import SVNInitialProjectCommit
 
 
 class SVNRepositoryMirror:
@@ -106,14 +105,6 @@ class SVNRepositoryMirror:
 
     if not Ctx().trunk_only:
       self.symbolings_reader = SymbolingsReader()
-
-  def initialize(self, date):
-    """Initialize the repository by creating the directories for
-    trunk, tags, and branches.  This method should only be called
-    after all delegates are added to the repository mirror."""
-
-    # Create and immediately commit an SVNInitialProjectCommit:
-    SVNInitialProjectCommit(date).commit(self)
 
   def start_commit(self, svn_commit):
     """Start a new commit."""

@@ -49,6 +49,7 @@ from cvs2svn_lib.svn_commit import SVNCommit
 from cvs2svn_lib.openings_closings import SymbolingsLogger
 from cvs2svn_lib.cvs_revision_aggregator import CVSRevisionAggregator
 from cvs2svn_lib.svn_repository_mirror import SVNRepositoryMirror
+from cvs2svn_lib.svn_commit import SVNInitialProjectCommit
 from cvs2svn_lib.persistence_manager import PersistenceManager
 from cvs2svn_lib.dumpfile_delegate import DumpfileDelegate
 from cvs2svn_lib.repository_delegate import RepositoryDelegate
@@ -574,7 +575,10 @@ class OutputPass(Pass):
     # Peek at the first revision to find the date to use to initialize
     # the repository:
     svn_commit = persistence_manager.get_svn_commit(svn_revnum)
-    repos.initialize(svn_commit.date)
+
+    # Initialize the repository by creating the directories for trunk,
+    # tags, and branches.
+    SVNInitialProjectCommit(svn_commit.date).commit(repos)
 
     while 1:
       svn_commit = persistence_manager.get_svn_commit(svn_revnum)

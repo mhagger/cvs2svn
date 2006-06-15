@@ -141,9 +141,6 @@ class SVNCommit:
     else:
       ret += "   NO symbolic name\n"
     ret += "   debug description: " + self.description + "\n"
-    ret += "   cvs_revs:\n"
-    for c_rev in self.cvs_revs:
-      ret += "     %x\n" % (c_rev.id,)
     return ret
 
 
@@ -160,6 +157,17 @@ class SVNRevisionCommit(SVNCommit):
 
   def _add_revision(self, cvs_rev):
     self.cvs_revs.append(cvs_rev)
+
+  def __str__(self):
+    """Return the revision part of a description of this SVNCommit.
+
+    Derived classes should append the output of this method to the
+    output of SVNCommit.__str__()."""
+
+    ret = "   cvs_revs:\n"
+    for c_rev in self.cvs_revs:
+      ret += "     %x\n" % (c_rev.id,)
+    return ret
 
 
 class SVNInitialProjectCommit(SVNCommit):
@@ -186,6 +194,9 @@ class SVNPrimaryCommit(SVNCommit, SVNRevisionCommit):
   def __init__(self, c_revs):
     SVNCommit.__init__(self, 'commit')
     SVNRevisionCommit.__init__(self, c_revs)
+
+  def __str__(self):
+    return SVNCommit.__str__(self) + SVNRevisionCommit.__str__(self)
 
   def _get_log_msg(self):
     """Returns the actual log message for this commit."""
@@ -366,6 +377,9 @@ class SVNPostCommit(SVNCommit, SVNRevisionCommit):
     # for a single synchronization commit to contain CVSRevisions on
     # multiple different default branches.
     self._motivating_revnum = motivating_revnum
+
+  def __str__(self):
+    return SVNCommit.__str__(self) + SVNRevisionCommit.__str__(self)
 
   def _get_log_msg(self):
     """Return a manufactured log message for this commit."""

@@ -391,7 +391,7 @@ class LF_EOL_Filter:
         buf = buf[:-1]
       buf = buf.replace('\r\n', '\n')
       buf = buf.replace('\r', '\n')
-      if len(buf) > 0 or self.eof:
+      if buf or self.eof:
         return buf
 
 

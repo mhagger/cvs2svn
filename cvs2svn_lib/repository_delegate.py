@@ -112,6 +112,9 @@ class RepositoryDelegate(DumpfileDelegate):
     DumpfileDelegate.start_commit(self, revnum, revprops)
     self._commit_in_progress = 1
 
+  def end_commit(self):
+    DumpfileDelegate.end_commit(self)
+
   def finish(self):
     """Loads the last commit into the repository."""
 

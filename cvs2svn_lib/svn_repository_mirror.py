@@ -129,6 +129,8 @@ class SVNRepositoryMirror:
       for key, value in self.new_nodes.items():
         self.nodes_db[key] = value
 
+    self._invoke_delegates('end_commit')
+
   def _get_node(self, key):
     """Returns the node contents for KEY which may refer to either
     self.nodes_db or self.new_nodes."""
@@ -506,6 +508,11 @@ class SVNRepositoryMirrorDelegate:
     """Perform any actions needed to start an SVN commit with revision
     number REVNUM and revision properties REVPROPS; see subclass
     implementation for details."""
+
+    raise NotImplementedError
+
+  def end_commit(self):
+    """This method is called at the end of each SVN commit."""
 
     raise NotImplementedError
 

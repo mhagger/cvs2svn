@@ -132,6 +132,9 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     self.dumpfile.write(all_prop_strings)
     self.dumpfile.write('\n')
 
+  def end_commit(self):
+    pass
+
   def mkdir(self, path):
     """Emit the creation of directory PATH."""
 

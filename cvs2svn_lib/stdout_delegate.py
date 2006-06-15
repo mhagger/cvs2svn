@@ -39,6 +39,9 @@ class StdoutDelegate(SVNRepositoryMirrorDelegate):
     Log().verbose("=" * 60)
     Log().normal("Starting Subversion r%d / %d" % (revnum, self.total_revs))
 
+  def end_commit(self):
+    pass
+
   def mkdir(self, path):
     """Print a line stating that we are creating directory PATH."""
 

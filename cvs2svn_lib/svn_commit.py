@@ -90,11 +90,12 @@ class SVNCommit:
     """Return the Subversion revprops for this SVNCommit."""
 
     date = format_date(self.date)
+    log_msg = self._get_log_msg()
     try:
       utf8_author = None
       if self._author is not None:
         utf8_author = Ctx().to_utf8(self._author)
-      utf8_log = Ctx().to_utf8(self._get_log_msg())
+      utf8_log = Ctx().to_utf8(log_msg)
       return { 'svn:author' : utf8_author,
                'svn:log'    : utf8_log,
                'svn:date'   : date }
@@ -102,7 +103,7 @@ class SVNCommit:
       Log().warn('%s: problem encoding author or log message:'
                  % warning_prefix)
       Log().warn("  author: '%s'" % self._author)
-      Log().warn("  log:    '%s'" % self._get_log_msg().rstrip())
+      Log().warn("  log:    '%s'" % log_msg.rstrip())
       Log().warn("  date:   '%s'" % date)
       if isinstance(self, SVNRevisionCommit):
         Log().warn("(subversion rev %s)  Related files:" % self.revnum)
@@ -116,7 +117,7 @@ class SVNCommit:
       # It's better to fall back to the original (unknown encoding) data
       # than to either 1) quit or 2) record nothing at all.
       return { 'svn:author' : self._author,
-               'svn:log'    : self._get_log_msg(),
+               'svn:log'    : log_msg,
                'svn:date'   : date }
 
   def __str__(self):
@@ -284,19 +285,15 @@ class SVNSymbolCommit(SVNCommit):
     # The (uncleaned) symbolic name that is filled in this SVNCommit.
     self.symbolic_name = name
 
-    # True iff self.symbolic_name is a tag.  This member is only set
-    # when the instance is read from PersistenceManager.
-    self.is_tag = False
-
   def _get_log_msg(self):
-    """Return a manufactured log message for this commit.
+    """Return a manufactured log message for this commit."""
 
-    If self.is_tag is true, write the log message as though for a tag,
-    else write it as though for a branch."""
-
-    type = 'branch'
-    if self.is_tag:
+    # Determine whether  self.symbolic_name is a tag.
+    symbol = Ctx()._symbol_db.get_symbol(self.symbolic_name)
+    if isinstance(symbol, TagSymbol):
       type = 'tag'
+    else:
+      type = 'branch'
 
     # In Python 2.2.3, we could use textwrap.fill().  Oh well :-).
     space_or_newline = ' '
@@ -326,10 +323,6 @@ class SVNSymbolCommit(SVNCommit):
     SVNSymbolCommit.__init__(self, "Retrieved from disk", name, revnum)
 
     self.date = date
-
-    if not Ctx().trunk_only:
-      symbol = Ctx()._symbol_db.get_symbol(self.symbolic_name)
-      self.is_tag = isinstance(symbol, TagSymbol)
 
   def __str__(self):
     """ Print a human-readable description of this SVNCommit.

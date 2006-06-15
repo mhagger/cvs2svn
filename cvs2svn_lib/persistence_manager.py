@@ -27,8 +27,9 @@ from cvs2svn_lib.database import Database
 from cvs2svn_lib.database import PrimedPDatabase
 from cvs2svn_lib.database import DB_OPEN_NEW
 from cvs2svn_lib.database import DB_OPEN_READ
-from cvs2svn_lib.svn_commit import SVNInitialProjectCommit
 from cvs2svn_lib.svn_commit import SVNCommit
+from cvs2svn_lib.svn_commit import SVNRevisionCommit
+from cvs2svn_lib.svn_commit import SVNInitialProjectCommit
 from cvs2svn_lib.svn_commit import SVNPrimaryCommit
 from cvs2svn_lib.svn_commit import SVNSymbolCommit
 from cvs2svn_lib.svn_commit import SVNPreCommit
@@ -97,9 +98,10 @@ class PersistenceManager:
 
     self.svn_commit_db['%x' % svn_commit.revnum] = svn_commit
 
-    for c_rev in svn_commit.cvs_revs:
-      Log().verbose(' %s %s' % (c_rev.cvs_path, c_rev.rev,))
-      self.cvs2svn_db['%x' % c_rev.id] = svn_commit.revnum
+    if isinstance(svn_commit, SVNRevisionCommit):
+      for c_rev in svn_commit.cvs_revs:
+        Log().verbose(' %s %s' % (c_rev.cvs_path, c_rev.rev,))
+        self.cvs2svn_db['%x' % c_rev.id] = svn_commit.revnum
 
     # If it is a symbol commit, then record last_filled.
     if isinstance(svn_commit, SVNSymbolCommit):

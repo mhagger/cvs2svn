@@ -51,7 +51,7 @@ class SVNCommit:
 
     pass
 
-  def __init__(self, description="", revnum=None, cvs_revs=None):
+  def __init__(self, description="", revnum=None):
     """Instantiate an SVNCommit.  DESCRIPTION is for debugging only.
     If REVNUM, the SVNCommit will correspond to that revision number;
     and if CVS_REVS, then they must be the exact set of CVSRevisions for
@@ -80,7 +80,7 @@ class SVNCommit:
     # member is set externally.
     self.date = 0
 
-    self.cvs_revs = cvs_revs or []
+    self.cvs_revs = []
     if revnum:
       self.revnum = revnum
     else:

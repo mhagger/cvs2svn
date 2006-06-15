@@ -334,7 +334,7 @@ class SVNRepositoryMirror:
     # destination.  This is a cheap copy, remember!  :-)
     return src_key, src_contents
 
-  def _fill_symbolic_name(self, svn_commit):
+  def _fill_symbolic_name(self, symbolic_name):
     """Performs all copies necessary to create as much of the the tag
     or branch SVN_COMMIT.symbolic_name as possible given the current
     revision of the repository mirror.
@@ -344,16 +344,16 @@ class SVNRepositoryMirror:
     under it."""
 
     symbol_fill = self.symbolings_reader.filling_guide_for_symbol(
-        svn_commit.symbolic_name, self.youngest)
+        symbolic_name, self.youngest)
     # Get the list of sources for the symbolic name.
     sources = symbol_fill.get_sources()
 
     if sources:
-      symbol = Ctx()._symbol_db.get_symbol(svn_commit.symbolic_name)
+      symbol = Ctx()._symbol_db.get_symbol(symbolic_name)
       if isinstance(symbol, TagSymbol):
-        dest_prefix = Ctx().project.get_tag_path(svn_commit.symbolic_name)
+        dest_prefix = Ctx().project.get_tag_path(symbolic_name)
       else:
-        dest_prefix = Ctx().project.get_branch_path(svn_commit.symbolic_name)
+        dest_prefix = Ctx().project.get_branch_path(symbolic_name)
 
       dest_key = self._open_writable_node(dest_prefix, False)[0]
       self._fill(symbol_fill, dest_prefix, dest_key, sources)
@@ -372,7 +372,7 @@ class SVNRepositoryMirror:
         # current revision number minus 1
         source_path = Ctx().project.trunk_path
         entries = self._copy_path(source_path, dest_path,
-                                  svn_commit.revnum - 1)[1]
+                                  self.youngest - 1)[1]
         # Now since we've just copied trunk to a branch that's
         # *supposed* to be empty, we delete any entries in the
         # copied directory.
@@ -516,7 +516,7 @@ class SVNRepositoryMirror:
     if svn_commit.symbolic_name:
       Log().verbose("Filling symbolic name:",
                     clean_symbolic_name(svn_commit.symbolic_name))
-      self._fill_symbolic_name(svn_commit)
+      self._fill_symbolic_name(svn_commit.symbolic_name)
     elif svn_commit.motivating_revnum:
       Log().verbose("Synchronizing default_branch motivated by %d"
                     % svn_commit.motivating_revnum)

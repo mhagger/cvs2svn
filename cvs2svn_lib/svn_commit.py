@@ -71,7 +71,7 @@ class SVNCommit:
     # They are private because their values should be returned encoded
     # in UTF8, but callers aren't required to set them in UTF8.
     # Therefore, accessor methods are used to set them, and
-    # self.get_revprops() is used to to get them, in dictionary form.
+    # self._get_revprops() is used to to get them, in dictionary form.
     self._author = Ctx().username
     self._log_msg = "This log message means an SVNCommit was used too soon."
 
@@ -86,7 +86,7 @@ class SVNCommit:
       self.revnum = SVNCommit.revnum
       SVNCommit.revnum += 1
 
-  def get_revprops(self):
+  def _get_revprops(self):
     """Return the Subversion revprops for this SVNCommit."""
 
     date = format_date(self.date)
@@ -189,7 +189,7 @@ class SVNInitialProjectCommit(SVNCommit):
     return 'New repository initialized by cvs2svn.'
 
   def commit(self, repos):
-    repos.start_commit(self)
+    repos.start_commit(self.revnum, self._get_revprops())
     repos.mkdir(Ctx().project.trunk_path)
     if not Ctx().trunk_only:
       repos.mkdir(Ctx().project.branches_path)
@@ -214,7 +214,7 @@ class SVNPrimaryCommit(SVNCommit, SVNRevisionCommit):
   def commit(self, repos):
     """Commit SELF to REPOS, which is a SVNRepositoryMirror."""
 
-    repos.start_commit(self)
+    repos.start_commit(self.revnum, self._get_revprops())
 
     # This actually commits CVSRevisions
     if len(self.cvs_revs) > 1:
@@ -306,7 +306,7 @@ class SVNSymbolCommit(SVNCommit):
   def commit(self, repos):
     """Commit SELF to REPOS, which is a SVNRepositoryMirror."""
 
-    repos.start_commit(self)
+    repos.start_commit(self.revnum, self._get_revprops())
 
     Log().verbose("Filling symbolic name:",
                   clean_symbolic_name(self.symbolic_name))
@@ -380,7 +380,7 @@ class SVNPostCommit(SVNCommit, SVNRevisionCommit):
     to the trunk of the repository.  See CVSCommit._post_commit() for
     details on why this is necessary."""
 
-    repos.start_commit(self)
+    repos.start_commit(self.revnum, self._get_revprops())
 
     Log().verbose("Synchronizing default_branch motivated by %d"
                   % self._motivating_revnum)

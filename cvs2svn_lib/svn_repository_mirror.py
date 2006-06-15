@@ -106,14 +106,14 @@ class SVNRepositoryMirror:
     if not Ctx().trunk_only:
       self.symbolings_reader = SymbolingsReader()
 
-  def start_commit(self, svn_commit):
+  def start_commit(self, revnum, revprops):
     """Start a new commit."""
 
-    self.youngest = svn_commit.revnum
+    self.youngest = revnum
     self.new_root_key = None
     self.new_nodes = { }
 
-    self._invoke_delegates('start_commit', svn_commit)
+    self._invoke_delegates('start_commit', revnum, revprops)
 
   def end_commit(self):
     """Called at the end of each commit.  This method copies the newly
@@ -502,9 +502,10 @@ class SVNRepositoryMirrorDelegate:
   to the Subversion repository that it is creating.
   """
 
-  def start_commit(self, svn_commit):
-    """Perform any actions needed to start SVNCommit SVN_COMMIT;
-    see subclass implementation for details."""
+  def start_commit(self, revnum, revprops):
+    """Perform any actions needed to start an SVN commit with revision
+    number REVNUM and revision properties REVPROPS; see subclass
+    implementation for details."""
 
     raise NotImplementedError
 

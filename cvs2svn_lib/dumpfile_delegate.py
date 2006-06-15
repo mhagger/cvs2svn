@@ -75,10 +75,10 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
 
     return 'K %d\n%s\nV %d\n%s\n' % (len(name), name, len(value), value)
 
-  def start_commit(self, svn_commit):
+  def start_commit(self, revnum, revprops):
     """Emit the start of SVN_COMMIT (an SVNCommit)."""
 
-    self.revision = svn_commit.revnum
+    self.revision = revnum
 
     # The start of a new commit typically looks like this:
     #
@@ -111,18 +111,18 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     # are always the same for revisions.
 
     # Calculate the output needed for the property definitions.
-    props = svn_commit.get_revprops()
-    prop_names = props.keys()
+    prop_names = revprops.keys()
     prop_names.sort()
     prop_strings = []
     for propname in prop_names:
-      if props[propname] is not None:
-        prop_strings.append(self._string_for_prop(propname, props[propname]))
+      if revprops[propname] is not None:
+        prop_strings.append(
+            self._string_for_prop(propname, revprops[propname]))
 
     all_prop_strings = ''.join(prop_strings) + 'PROPS-END\n'
     total_len = len(all_prop_strings)
 
-    # Print the revision header and props
+    # Print the revision header and revprops
     self.dumpfile.write('Revision-number: %d\n'
                         'Prop-content-length: %d\n'
                         'Content-length: %d\n'

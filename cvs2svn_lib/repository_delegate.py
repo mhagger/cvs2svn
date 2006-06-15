@@ -100,7 +100,7 @@ class RepositoryDelegate(DumpfileDelegate):
                          "while loading the dumpfile:\n"
                          + self.loader_pipe.stderr.read())
 
-  def start_commit(self, svn_commit):
+  def start_commit(self, revnum, revprops):
     """Start a new commit.  If a commit is already in progress, close
     the dumpfile, load it into the svn repository, open a new
     dumpfile, and write the header into it."""
@@ -109,7 +109,7 @@ class RepositoryDelegate(DumpfileDelegate):
       self._feed_pipe()
     self.dumpfile.seek(0)
     self.dumpfile.truncate()
-    DumpfileDelegate.start_commit(self, svn_commit)
+    DumpfileDelegate.start_commit(self, revnum, revprops)
     self._commit_in_progress = 1
 
   def finish(self):

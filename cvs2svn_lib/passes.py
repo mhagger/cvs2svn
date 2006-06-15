@@ -22,7 +22,6 @@ from __future__ import generators
 import sys
 import os
 import time
-import fileinput
 import re
 
 from cvs2svn_lib.boolean import *
@@ -178,8 +177,7 @@ class ResyncRevsPass(Pass):
     DELTA = config.COMMIT_THRESHOLD/2
 
     resync = { }
-    for line in fileinput.FileInput(
-            artifact_manager.get_temp_file(config.RESYNC_DATAFILE)):
+    for line in file(artifact_manager.get_temp_file(config.RESYNC_DATAFILE)):
       [t1, metadata_id, t2] = line.strip().split()
       t1 = int(t1, 16)
       metadata_id = int(metadata_id, 16)
@@ -395,7 +393,7 @@ class CreateDatabasesPass(Pass):
       cvs_items_db = CVSItemDatabase(
           artifact_manager.get_temp_file(config.CVS_ITEMS_RESYNC_DB),
           DB_OPEN_READ)
-      for line in fileinput.FileInput(
+      for line in file(
               artifact_manager.get_temp_file(config.SORTED_REVS_DATAFILE)):
         c_rev_id = int(line.strip().split()[-1], 16)
         yield cvs_items_db[c_rev_id]
@@ -453,7 +451,7 @@ class AggregateRevsPass(Pass):
     if not Ctx().trunk_only:
       Ctx()._symbol_db = SymbolDatabase(DB_OPEN_READ)
     aggregator = CVSRevisionAggregator()
-    for line in fileinput.FileInput(
+    for line in file(
             artifact_manager.get_temp_file(config.SORTED_REVS_DATAFILE)):
       c_rev_id = int(line.strip().split()[-1], 16)
       c_rev = Ctx()._cvs_items_db[c_rev_id]

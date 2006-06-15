@@ -20,7 +20,6 @@
 import sys
 import os
 import fnmatch
-import fileinput
 import ConfigParser
 
 from cvs2svn_lib.boolean import *
@@ -67,7 +66,7 @@ class MimeMapper(SVNPropertySetter):
   def __init__(self, mime_types_file):
     self.mappings = { }
 
-    for line in fileinput.input(mime_types_file):
+    for line in file(mime_types_file):
       if line.startswith("#"):
         continue
 

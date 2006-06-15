@@ -17,8 +17,6 @@
 """This module contains database facilities used by cvs2svn."""
 
 
-import fileinput
-
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib import config
 from cvs2svn_lib.common import OP_DELETE
@@ -121,7 +119,7 @@ class SymbolingsLogger:
     symbolings file."""
 
     self.closings.close()
-    for line in fileinput.FileInput(
+    for line in file(
             artifact_manager.get_temp_file(config.SYMBOL_CLOSINGS_TMP)):
       (name, rev_key) = line.rstrip().split(" ", 1)
       rev_id = int(rev_key, 16)

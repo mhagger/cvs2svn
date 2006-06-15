@@ -86,14 +86,6 @@ class SVNCommit:
       self.revnum = SVNCommit.revnum
       SVNCommit.revnum += 1
 
-    # The (uncleaned) symbolic name that is filled in this SVNCommit
-    # (if it filled a symbolic name); otherwise it is None.
-    self.symbolic_name = None
-
-    # is_tag is true only if this commit is a fill of a symbolic name
-    # that is a tag, None in all other cases.
-    self.is_tag = None
-
   def get_revprops(self):
     """Return the Subversion revprops for this SVNCommit."""
 
@@ -288,7 +280,13 @@ class SVNPrimaryCommit(SVNCommit, SVNRevisionCommit):
 class SVNSymbolCommit(SVNCommit):
   def __init__(self, description, name, revnum=None):
     SVNCommit.__init__(self, description, revnum)
+
+    # The (uncleaned) symbolic name that is filled in this SVNCommit.
     self.symbolic_name = name
+
+    # True iff self.symbolic_name is a tag.  This member is only set
+    # when the instance is read from PersistenceManager.
+    self.is_tag = False
 
   def _get_log_msg(self):
     """Return a manufactured log message for this commit.
@@ -331,8 +329,7 @@ class SVNSymbolCommit(SVNCommit):
 
     if not Ctx().trunk_only:
       symbol = Ctx()._symbol_db.get_symbol(self.symbolic_name)
-      if isinstance(symbol, TagSymbol):
-        self.is_tag = 1
+      self.is_tag = isinstance(symbol, TagSymbol)
 
   def __str__(self):
     """ Print a human-readable description of this SVNCommit.

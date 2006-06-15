@@ -51,7 +51,7 @@ class SVNCommit:
 
     pass
 
-  def __init__(self, description="", revnum=None):
+  def __init__(self, description, revnum=None):
     """Instantiate an SVNCommit.  DESCRIPTION is for debugging only.
     If REVNUM, the SVNCommit will correspond to that revision number;
     and if CVS_REVS, then they must be the exact set of CVSRevisions for
@@ -186,8 +186,8 @@ class SVNRevisionCommit(SVNCommit):
 
 
 class SVNInitialProjectCommit(SVNCommit):
-  def __init__(self, date):
-    SVNCommit.__init__(self, 'Initialization', 1)
+  def __init__(self, date, revnum=None):
+    SVNCommit.__init__(self, 'Initialization', revnum)
     self.date = date
 
   def _get_log_msg(self):
@@ -206,8 +206,8 @@ class SVNInitialProjectCommit(SVNCommit):
 
 
 class SVNPrimaryCommit(SVNCommit, SVNRevisionCommit):
-  def __init__(self, c_revs):
-    SVNCommit.__init__(self, 'commit')
+  def __init__(self, c_revs, revnum=None):
+    SVNCommit.__init__(self, 'commit', revnum)
     SVNRevisionCommit.__init__(self, c_revs)
 
   def __str__(self):
@@ -291,8 +291,8 @@ class SVNPrimaryCommit(SVNCommit, SVNRevisionCommit):
 
 
 class SVNSymbolCommit(SVNCommit):
-  def __init__(self, description, name):
-    SVNCommit.__init__(self, description)
+  def __init__(self, description, name, revnum=None):
+    SVNCommit.__init__(self, description, revnum)
     self.symbolic_name = name
 
   def _get_log_msg(self):
@@ -360,13 +360,14 @@ class SVNSymbolCommit(SVNCommit):
 
 
 class SVNPreCommit(SVNSymbolCommit):
-  def __init__(self, name):
-    SVNSymbolCommit.__init__(self, 'pre-commit symbolic name %r' % name, name)
+  def __init__(self, name, revnum=None):
+    SVNSymbolCommit.__init__(
+        self, 'pre-commit symbolic name %r' % name, name, revnum)
 
 
 class SVNPostCommit(SVNCommit, SVNRevisionCommit):
-  def __init__(self, motivating_revnum, c_revs):
-    SVNCommit.__init__(self, 'post-commit default branch(es)')
+  def __init__(self, motivating_revnum, c_revs, revnum=None):
+    SVNCommit.__init__(self, 'post-commit default branch(es)', revnum)
     SVNRevisionCommit.__init__(self, c_revs)
 
     # The subversion revision number of the *primary* commit where the
@@ -447,8 +448,9 @@ class SVNPostCommit(SVNCommit, SVNRevisionCommit):
 
 
 class SVNSymbolCloseCommit(SVNSymbolCommit):
-  def __init__(self, name, date):
-    SVNSymbolCommit.__init__(self, 'closing tag/branch %r' % name, name)
+  def __init__(self, name, date, revnum=None):
+    SVNSymbolCommit.__init__(
+        self, 'closing tag/branch %r' % name, name, revnum)
     self.date = date
 
 

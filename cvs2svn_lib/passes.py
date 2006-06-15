@@ -578,7 +578,7 @@ class OutputPass(Pass):
 
     # Initialize the repository by creating the directories for trunk,
     # tags, and branches.
-    SVNInitialProjectCommit(svn_commit.date).commit(repos)
+    SVNInitialProjectCommit(svn_commit.date, 1).commit(repos)
 
     while 1:
       svn_commit = persistence_manager.get_svn_commit(svn_revnum)

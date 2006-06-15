@@ -126,7 +126,7 @@ class CollectRevsPass(Pass):
     cd.process_project(Ctx().project)
     cd.write_symbol_stats()
 
-    if len(cd.fatal_errors) > 0:
+    if cd.fatal_errors:
       raise FatalException("Pass 1 complete.\n"
                            + "=" * 75 + "\n"
                            + "Error summary:\n"

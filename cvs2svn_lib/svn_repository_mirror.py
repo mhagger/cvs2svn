@@ -315,8 +315,8 @@ class SVNRepositoryMirror:
 
   def fill_symbolic_name(self, symbolic_name):
     """Performs all copies necessary to create as much of the the tag
-    or branch SVN_COMMIT.symbolic_name as possible given the current
-    revision of the repository mirror.
+    or branch SYMBOLIC_NAME as possible given the current revision of
+    the repository mirror.
 
     The symbolic name is guaranteed to exist in the Subversion
     repository by the end of this call, even if there are no paths

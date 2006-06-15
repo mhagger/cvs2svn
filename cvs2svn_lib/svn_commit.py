@@ -144,49 +144,6 @@ class SVNCommit:
   def _add_revision(self, cvs_rev):
     self.cvs_revs.append(cvs_rev)
 
-  def __getstate__(self):
-    return (
-        self.revnum,
-        ['%x' % (x.id,) for x in self.cvs_revs],
-        self.motivating_revnum, self.symbolic_name,
-        self.date)
-
-  def __setstate__(self, state):
-    (revnum, c_rev_keys, motivating_revnum, name, date) = state
-    SVNCommit.__init__(self, "Retrieved from disk", revnum)
-
-    metadata_id = None
-    for key in c_rev_keys:
-      c_rev_id = int(key, 16)
-      c_rev = Ctx()._cvs_items_db[c_rev_id]
-      self._add_revision(c_rev)
-      # Set the author and log message for this commit by using
-      # CVSRevision metadata, but only if haven't done so already.
-      if metadata_id is None:
-        metadata_id = c_rev.metadata_id
-        self._author, self._log_msg = Ctx()._metadata_db[metadata_id]
-
-    self.date = date
-
-    # If we're doing a trunk-only conversion, we don't need to do any more
-    # work.
-    if Ctx().trunk_only:
-      return
-
-    if name:
-      if self.cvs_revs:
-        raise SVNCommit.SVNCommitInternalInconsistencyError(
-            "An SVNCommit cannot have CVSRevisions *and* a corresponding\n"
-            "symbolic name ('%s') to fill."
-            % (clean_symbolic_name(name),))
-      self.symbolic_name = name
-      symbol = Ctx()._symbol_db.get_symbol(name)
-      if isinstance(symbol, TagSymbol):
-        self.is_tag = 1
-
-    if motivating_revnum is not None:
-      self.motivating_revnum = motivating_revnum
-
   def __str__(self):
     """ Print a human-readable description of this SVNCommit.  This
     description is not intended to be machine-parseable (although
@@ -292,6 +249,49 @@ class SVNPrimaryCommit(SVNCommit):
 
     repos.end_commit()
 
+  def __getstate__(self):
+    return (
+        self.revnum,
+        ['%x' % (x.id,) for x in self.cvs_revs],
+        self.motivating_revnum, self.symbolic_name,
+        self.date)
+
+  def __setstate__(self, state):
+    (revnum, c_rev_keys, motivating_revnum, name, date) = state
+    SVNCommit.__init__(self, "Retrieved from disk", revnum)
+
+    metadata_id = None
+    for key in c_rev_keys:
+      c_rev_id = int(key, 16)
+      c_rev = Ctx()._cvs_items_db[c_rev_id]
+      self._add_revision(c_rev)
+      # Set the author and log message for this commit by using
+      # CVSRevision metadata, but only if haven't done so already.
+      if metadata_id is None:
+        metadata_id = c_rev.metadata_id
+        self._author, self._log_msg = Ctx()._metadata_db[metadata_id]
+
+    self.date = date
+
+    # If we're doing a trunk-only conversion, we don't need to do any more
+    # work.
+    if Ctx().trunk_only:
+      return
+
+    if name:
+      if self.cvs_revs:
+        raise SVNCommit.SVNCommitInternalInconsistencyError(
+            "An SVNCommit cannot have CVSRevisions *and* a corresponding\n"
+            "symbolic name ('%s') to fill."
+            % (clean_symbolic_name(name),))
+      self.symbolic_name = name
+      symbol = Ctx()._symbol_db.get_symbol(name)
+      if isinstance(symbol, TagSymbol):
+        self.is_tag = 1
+
+    if motivating_revnum is not None:
+      self.motivating_revnum = motivating_revnum
+
 
 class SVNSymbolCommit(SVNCommit):
   def __init__(self, description, name):
@@ -327,6 +327,49 @@ class SVNSymbolCommit(SVNCommit):
     repos.fill_symbolic_name(self.symbolic_name)
 
     repos.end_commit()
+
+  def __getstate__(self):
+    return (
+        self.revnum,
+        ['%x' % (x.id,) for x in self.cvs_revs],
+        self.motivating_revnum, self.symbolic_name,
+        self.date)
+
+  def __setstate__(self, state):
+    (revnum, c_rev_keys, motivating_revnum, name, date) = state
+    SVNCommit.__init__(self, "Retrieved from disk", revnum)
+
+    metadata_id = None
+    for key in c_rev_keys:
+      c_rev_id = int(key, 16)
+      c_rev = Ctx()._cvs_items_db[c_rev_id]
+      self._add_revision(c_rev)
+      # Set the author and log message for this commit by using
+      # CVSRevision metadata, but only if haven't done so already.
+      if metadata_id is None:
+        metadata_id = c_rev.metadata_id
+        self._author, self._log_msg = Ctx()._metadata_db[metadata_id]
+
+    self.date = date
+
+    # If we're doing a trunk-only conversion, we don't need to do any more
+    # work.
+    if Ctx().trunk_only:
+      return
+
+    if name:
+      if self.cvs_revs:
+        raise SVNCommit.SVNCommitInternalInconsistencyError(
+            "An SVNCommit cannot have CVSRevisions *and* a corresponding\n"
+            "symbolic name ('%s') to fill."
+            % (clean_symbolic_name(name),))
+      self.symbolic_name = name
+      symbol = Ctx()._symbol_db.get_symbol(name)
+      if isinstance(symbol, TagSymbol):
+        self.is_tag = 1
+
+    if motivating_revnum is not None:
+      self.motivating_revnum = motivating_revnum
 
 
 class SVNPreCommit(SVNSymbolCommit):
@@ -380,6 +423,49 @@ class SVNPostCommit(SVNCommit):
         raise repos.SVNRepositoryMirrorUnexpectedOperationError, msg
 
     repos.end_commit()
+
+  def __getstate__(self):
+    return (
+        self.revnum,
+        ['%x' % (x.id,) for x in self.cvs_revs],
+        self.motivating_revnum, self.symbolic_name,
+        self.date)
+
+  def __setstate__(self, state):
+    (revnum, c_rev_keys, motivating_revnum, name, date) = state
+    SVNCommit.__init__(self, "Retrieved from disk", revnum)
+
+    metadata_id = None
+    for key in c_rev_keys:
+      c_rev_id = int(key, 16)
+      c_rev = Ctx()._cvs_items_db[c_rev_id]
+      self._add_revision(c_rev)
+      # Set the author and log message for this commit by using
+      # CVSRevision metadata, but only if haven't done so already.
+      if metadata_id is None:
+        metadata_id = c_rev.metadata_id
+        self._author, self._log_msg = Ctx()._metadata_db[metadata_id]
+
+    self.date = date
+
+    # If we're doing a trunk-only conversion, we don't need to do any more
+    # work.
+    if Ctx().trunk_only:
+      return
+
+    if name:
+      if self.cvs_revs:
+        raise SVNCommit.SVNCommitInternalInconsistencyError(
+            "An SVNCommit cannot have CVSRevisions *and* a corresponding\n"
+            "symbolic name ('%s') to fill."
+            % (clean_symbolic_name(name),))
+      self.symbolic_name = name
+      symbol = Ctx()._symbol_db.get_symbol(name)
+      if isinstance(symbol, TagSymbol):
+        self.is_tag = 1
+
+    if motivating_revnum is not None:
+      self.motivating_revnum = motivating_revnum
 
 
 class SVNSymbolCloseCommit(SVNSymbolCommit):

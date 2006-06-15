@@ -134,10 +134,6 @@ class SVNCommit:
 
     ret = "SVNCommit #: " + str(self.revnum) + "\n"
     ret += "   debug description: " + self.description + "\n"
-    if self.symbolic_name:
-      ret += ("   symbolic name: "
-              + clean_symbolic_name(self.symbolic_name)
-              + "\n")
     return ret
 
 
@@ -361,6 +357,18 @@ class SVNSymbolCommit(SVNCommit):
       symbol = Ctx()._symbol_db.get_symbol(name)
       if isinstance(symbol, TagSymbol):
         self.is_tag = 1
+
+  def __str__(self):
+    """ Print a human-readable description of this SVNCommit.
+
+    This description is not intended to be machine-parseable."""
+
+    ret = SVNCommit.__str__(self)
+    if self.symbolic_name:
+      ret += ("   symbolic name: "
+              + clean_symbolic_name(self.symbolic_name)
+              + "\n")
+    return ret
 
 
 class SVNPreCommit(SVNSymbolCommit):

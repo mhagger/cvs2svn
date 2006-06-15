@@ -158,6 +158,30 @@ class SVNRevisionCommit(SVNCommit):
   def _add_revision(self, cvs_rev):
     self.cvs_revs.append(cvs_rev)
 
+  def __getstate__(self):
+    """Return the part of the state represented by this mixin."""
+
+    return ['%x' % (x.id,) for x in self.cvs_revs]
+
+  def __setstate__(self, state):
+    """Restore the part of the state represented by this mixin."""
+
+    c_rev_keys = state
+
+    c_revs = []
+    for key in c_rev_keys:
+      c_rev_id = int(key, 16)
+      c_rev = Ctx()._cvs_items_db[c_rev_id]
+      c_revs.append(c_rev)
+
+    SVNRevisionCommit.__init__(self, c_revs)
+
+    # Set the author and log message for this commit from the first
+    # cvs revision.
+    if self.cvs_revs:
+      metadata_id = self.cvs_revs[0].metadata_id
+      self._author, self._log_msg = Ctx()._metadata_db[metadata_id]
+
   def __str__(self):
     """Return the revision part of a description of this SVNCommit.
 
@@ -260,23 +284,13 @@ class SVNPrimaryCommit(SVNCommit, SVNRevisionCommit):
 
   def __getstate__(self):
     return (
-        self.revnum, ['%x' % (x.id,) for x in self.cvs_revs],
-        self.symbolic_name, self.date)
+        self.revnum, self.symbolic_name, self.date,
+        SVNRevisionCommit.__getstate__(self),)
 
   def __setstate__(self, state):
-    (revnum, c_rev_keys, name, date) = state
+    (revnum, name, date, rev_state,) = state
     SVNCommit.__init__(self, "Retrieved from disk", revnum)
-
-    metadata_id = None
-    for key in c_rev_keys:
-      c_rev_id = int(key, 16)
-      c_rev = Ctx()._cvs_items_db[c_rev_id]
-      self._add_revision(c_rev)
-      # Set the author and log message for this commit by using
-      # CVSRevision metadata, but only if haven't done so already.
-      if metadata_id is None:
-        metadata_id = c_rev.metadata_id
-        self._author, self._log_msg = Ctx()._metadata_db[metadata_id]
+    SVNRevisionCommit.__setstate__(self, rev_state)
 
     self.date = date
 
@@ -423,24 +437,13 @@ class SVNPostCommit(SVNCommit, SVNRevisionCommit):
 
   def __getstate__(self):
     return (
-        self.revnum, ['%x' % (x.id,) for x in self.cvs_revs],
-        self._motivating_revnum, self.symbolic_name,
-        self.date)
+        self.revnum, self._motivating_revnum, self.symbolic_name, self.date,
+        SVNRevisionCommit.__getstate__(self),)
 
   def __setstate__(self, state):
-    (revnum, c_rev_keys, motivating_revnum, name, date) = state
+    (revnum, motivating_revnum, name, date, rev_state,) = state
     SVNCommit.__init__(self, "Retrieved from disk", revnum)
-
-    metadata_id = None
-    for key in c_rev_keys:
-      c_rev_id = int(key, 16)
-      c_rev = Ctx()._cvs_items_db[c_rev_id]
-      self._add_revision(c_rev)
-      # Set the author and log message for this commit by using
-      # CVSRevision metadata, but only if haven't done so already.
-      if metadata_id is None:
-        metadata_id = c_rev.metadata_id
-        self._author, self._log_msg = Ctx()._metadata_db[metadata_id]
+    SVNRevisionCommit.__setstate__(self, rev_state)
 
     self.date = date
 

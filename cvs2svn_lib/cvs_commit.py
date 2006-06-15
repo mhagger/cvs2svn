@@ -326,7 +326,7 @@ class CVSCommit:
     first need to delete the existing trunk there."""
 
     # Only generate a commit if we have default branch revs
-    if len(self.default_branch_cvs_revisions):
+    if self.default_branch_cvs_revisions:
       # Generate an SVNCommit for all of our default branch c_revs.
       svn_commit = SVNPostCommit(self.motivating_commit.revnum,
                                  self.default_branch_cvs_revisions)

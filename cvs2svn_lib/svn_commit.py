@@ -80,7 +80,6 @@ class SVNCommit:
     # member is set externally.
     self.date = 0
 
-    self.cvs_revs = []
     if revnum:
       self.revnum = revnum
     else:
@@ -152,11 +151,9 @@ class SVNRevisionCommit(SVNCommit):
 
     Derived classes must also call the SVNCommit constructor explicitly."""
 
+    self.cvs_revs = []
     for c_rev in c_revs:
-      self._add_revision(c_rev)
-
-  def _add_revision(self, cvs_rev):
-    self.cvs_revs.append(cvs_rev)
+      self.cvs_revs.append(c_rev)
 
   def __getstate__(self):
     """Return the part of the state represented by this mixin."""

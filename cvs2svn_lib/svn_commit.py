@@ -275,11 +275,10 @@ class SVNPrimaryCommit(SVNCommit, SVNRevisionCommit):
 
   def __getstate__(self):
     return (
-        self.revnum, self.symbolic_name, self.date,
-        SVNRevisionCommit.__getstate__(self),)
+        self.revnum, self.date, SVNRevisionCommit.__getstate__(self),)
 
   def __setstate__(self, state):
-    (revnum, name, date, rev_state,) = state
+    (revnum, date, rev_state,) = state
     SVNCommit.__init__(self, "Retrieved from disk", revnum)
     SVNRevisionCommit.__setstate__(self, rev_state)
 
@@ -289,17 +288,6 @@ class SVNPrimaryCommit(SVNCommit, SVNRevisionCommit):
     # work.
     if Ctx().trunk_only:
       return
-
-    if name:
-      if self.cvs_revs:
-        raise SVNCommit.SVNCommitInternalInconsistencyError(
-            "An SVNCommit cannot have CVSRevisions *and* a corresponding\n"
-            "symbolic name ('%s') to fill."
-            % (clean_symbolic_name(name),))
-      self.symbolic_name = name
-      symbol = Ctx()._symbol_db.get_symbol(name)
-      if isinstance(symbol, TagSymbol):
-        self.is_tag = 1
 
 
 class SVNSymbolCommit(SVNCommit):
@@ -440,11 +428,11 @@ class SVNPostCommit(SVNCommit, SVNRevisionCommit):
 
   def __getstate__(self):
     return (
-        self.revnum, self._motivating_revnum, self.symbolic_name, self.date,
+        self.revnum, self._motivating_revnum, self.date,
         SVNRevisionCommit.__getstate__(self),)
 
   def __setstate__(self, state):
-    (revnum, motivating_revnum, name, date, rev_state,) = state
+    (revnum, motivating_revnum, date, rev_state,) = state
     SVNCommit.__init__(self, "Retrieved from disk", revnum)
     SVNRevisionCommit.__setstate__(self, rev_state)
 
@@ -454,17 +442,6 @@ class SVNPostCommit(SVNCommit, SVNRevisionCommit):
     # work.
     if Ctx().trunk_only:
       return
-
-    if name:
-      if self.cvs_revs:
-        raise SVNCommit.SVNCommitInternalInconsistencyError(
-            "An SVNCommit cannot have CVSRevisions *and* a corresponding\n"
-            "symbolic name ('%s') to fill."
-            % (clean_symbolic_name(name),))
-      self.symbolic_name = name
-      symbol = Ctx()._symbol_db.get_symbol(name)
-      if isinstance(symbol, TagSymbol):
-        self.is_tag = 1
 
     self._motivating_revnum = motivating_revnum
 

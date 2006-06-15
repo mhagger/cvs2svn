@@ -63,8 +63,9 @@ class PersistenceManager:
         artifact_manager.get_temp_file(config.CVS_REVS_TO_SVN_REVNUMS), mode)
 
     # "branch_name" -> svn_revnum in which branch was last filled.
-    # This is used by CVSCommit._pre_commit, to prevent creating a fill
-    # revision which would have nothing to do.
+    # This is used by CVSCommit._pre_commit, to prevent creating a
+    # fill revision which would have nothing to do.  The record with
+    # index None reflects the svn revision of the last SVNPostCommit.
     self.last_filled = {}
 
   def get_svn_revnum(self, cvs_rev_id):
@@ -101,9 +102,10 @@ class PersistenceManager:
     for c_rev in svn_commit.cvs_revs:
       self.cvs2svn_db['%x' % (c_rev.id,)] = svn_commit.revnum
 
-    # If it is not a primary commit, then record last_filled.  name is
-    # allowed to be None.
-    if svn_commit.symbolic_name or svn_commit.motivating_revnum:
+    # If it is a symbol commit, then record last_filled.
+    if isinstance(svn_commit, SVNSymbolCommit):
       self.last_filled[svn_commit.symbolic_name] = svn_commit.revnum
+    elif isinstance(svn_commit, SVNPostCommit):
+      self.last_filled[None] = svn_commit.revnum
 
 

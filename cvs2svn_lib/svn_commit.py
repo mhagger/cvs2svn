@@ -111,28 +111,6 @@ class SVNCommit:
     # that is a tag, None in all other cases.
     self.is_tag = None
 
-  def _set_symbolic_name(self, symbolic_name):
-    """Set self.symbolic_name to SYMBOLIC_NAME."""
-
-    self.symbolic_name = symbolic_name
-
-  def _set_motivating_revnum(self, revnum):
-    """Set self.motivating_revnum to REVNUM."""
-
-    self.motivating_revnum = revnum
-
-  def _set_author(self, author):
-    """Set this SVNCommit's author to AUTHOR (a locally-encoded string).
-    This is the only way to set an SVNCommit's author."""
-
-    self._author = author
-
-  def _set_log_msg(self, msg):
-    """Set this SVNCommit's log message to MSG (a locally-encoded string).
-    This is the only way to set an SVNCommit's log message."""
-
-    self._log_msg = msg
-
   def get_revprops(self):
     """Return the Subversion revprops for this SVNCommit."""
 
@@ -186,9 +164,7 @@ class SVNCommit:
       # CVSRevision metadata, but only if haven't done so already.
       if metadata_id is None:
         metadata_id = c_rev.metadata_id
-        author, log_msg = Ctx()._metadata_db[metadata_id]
-        self._set_author(author)
-        self._set_log_msg(log_msg)
+        self._author, self._log_msg = Ctx()._metadata_db[metadata_id]
 
     self.date = date
 
@@ -203,13 +179,13 @@ class SVNCommit:
             "An SVNCommit cannot have CVSRevisions *and* a corresponding\n"
             "symbolic name ('%s') to fill."
             % (clean_symbolic_name(name),))
-      self._set_symbolic_name(name)
+      self.symbolic_name = name
       symbol = Ctx()._symbol_db.get_symbol(name)
       if isinstance(symbol, TagSymbol):
         self.is_tag = 1
 
     if motivating_revnum is not None:
-      self._set_motivating_revnum(motivating_revnum)
+      self.motivating_revnum = motivating_revnum
 
   def __str__(self):
     """ Print a human-readable description of this SVNCommit.  This
@@ -273,7 +249,7 @@ class SVNInitialProjectCommit(SVNCommit):
   def __init__(self, date):
     SVNCommit.__init__(self, 'Initialization', 1)
     self.date = date
-    self._set_log_msg('New repository initialized by cvs2svn.')
+    self._log_msg = 'New repository initialized by cvs2svn.'
 
   def commit(self, repos):
     repos.start_commit(self)
@@ -350,7 +326,7 @@ class SVNPrimaryCommit(SVNCommit):
 class SVNSymbolCommit(SVNCommit):
   def __init__(self, description, name):
     SVNCommit.__init__(self, description)
-    self._set_symbolic_name(name)
+    self.symbolic_name = name
 
   def commit(self, repos):
     """Commit SELF to REPOS, which is a SVNRepositoryMirror."""
@@ -372,7 +348,7 @@ class SVNPreCommit(SVNSymbolCommit):
 class SVNPostCommit(SVNCommit):
   def __init__(self, motivating_revnum, c_revs):
     SVNCommit.__init__(self, 'post-commit default branch(es)')
-    self._set_motivating_revnum(motivating_revnum)
+    self.motivating_revnum = motivating_revnum
     for c_rev in c_revs:
       self._add_revision(c_rev)
 

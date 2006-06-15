@@ -580,7 +580,7 @@ class OutputPass(Pass):
       svn_commit = persistence_manager.get_svn_commit(svn_revnum)
       if not svn_commit:
         break
-      repos.commit(svn_commit)
+      svn_commit.commit(repos)
       svn_revnum += 1
 
     repos.finish()

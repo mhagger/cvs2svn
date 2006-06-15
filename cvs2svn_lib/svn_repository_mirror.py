@@ -22,9 +22,6 @@ from cvs2svn_lib import config
 from cvs2svn_lib.common import clean_symbolic_name
 from cvs2svn_lib.common import path_join
 from cvs2svn_lib.common import path_split
-from cvs2svn_lib.common import OP_ADD
-from cvs2svn_lib.common import OP_CHANGE
-from cvs2svn_lib.common import OP_DELETE
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.key_generator import KeyGenerator
@@ -482,91 +479,6 @@ class SVNRepositoryMirror:
       self._fill(symbol_fill, dest_prefix, next_dest_key,
                  src_entries[src_key], path_join(path, src_key),
                  copy_source.prefix, sources[0].revnum, prune_ok)
-
-  def synchronize_default_branch(self, svn_commit):
-    """Propagate any changes that happened on a non-trunk default
-    branch to the trunk of the repository.  See
-    CVSCommit._post_commit() for details on why this is necessary."""
-
-    for cvs_rev in svn_commit.cvs_revs:
-      svn_trunk_path = Ctx().project.make_trunk_path(cvs_rev.cvs_path)
-      if cvs_rev.op == OP_ADD or cvs_rev.op == OP_CHANGE:
-        if self.path_exists(svn_trunk_path):
-          # Delete the path on trunk...
-          self.delete_path(svn_trunk_path)
-        # ...and copy over from branch
-        self.copy_path(cvs_rev.svn_path, svn_trunk_path,
-                       svn_commit.motivating_revnum)
-      elif cvs_rev.op == OP_DELETE:
-        # delete trunk path
-        self.delete_path(svn_trunk_path)
-      else:
-        msg = ("Unknown CVSRevision operation '%s' in default branch sync."
-               % cvs_rev.op)
-        raise self.SVNRepositoryMirrorUnexpectedOperationError, msg
-
-  def commit(self, svn_commit):
-    """Add an SVNCommit to the SVNRepository, incrementing the
-    Repository revision number, and changing the repository.  Invoke
-    the delegates' start_commit() method."""
-
-    self.start_commit(svn_commit)
-
-    if svn_commit.symbolic_name:
-      Log().verbose("Filling symbolic name:",
-                    clean_symbolic_name(svn_commit.symbolic_name))
-      self.fill_symbolic_name(svn_commit.symbolic_name)
-    elif svn_commit.motivating_revnum:
-      Log().verbose("Synchronizing default_branch motivated by %d"
-                    % svn_commit.motivating_revnum)
-      self.synchronize_default_branch(svn_commit)
-    else: # This actually commits CVSRevisions
-      if len(svn_commit.cvs_revs) > 1: plural = "s"
-      else: plural = ""
-      Log().verbose("Committing %d CVSRevision%s"
-                    % (len(svn_commit.cvs_revs), plural))
-      for cvs_rev in svn_commit.cvs_revs:
-        # See comment in CVSCommit._commit() for what this is all
-        # about.  Note that although asking self.path_exists() is
-        # somewhat expensive, we only do it if the first two (cheap)
-        # tests succeed first.
-        if (cvs_rev.rev == "1.1.1.1"
-            and not cvs_rev.deltatext_exists
-            and self.path_exists(cvs_rev.svn_path)):
-          # This change can be omitted.
-          pass
-        else:
-          if cvs_rev.op == OP_ADD:
-            self.add_path(cvs_rev)
-          elif cvs_rev.op == OP_CHANGE:
-            # Fix for Issue #74:
-            #
-            # Here's the scenario.  You have file FOO that is imported
-            # on a non-trunk vendor branch.  So in r1.1 and r1.1.1.1,
-            # the file exists.
-            #
-            # Moving forward in time, FOO is deleted on the default
-            # branch (r1.1.1.2).  cvs2svn determines that this delete
-            # also needs to happen on trunk, so FOO is deleted on
-            # trunk.
-            #
-            # Along come r1.2, whose op is OP_CHANGE (because r1.1 is
-            # not 'dead', we assume it's a change).  However, since
-            # our trunk file has been deleted, svnadmin blows up--you
-            # can't change a file that doesn't exist!
-            #
-            # Soooo... we just check the path, and if it doesn't
-            # exist, we do an add... if the path does exist, it's
-            # business as usual.
-            if not self.path_exists(cvs_rev.svn_path):
-              self.add_path(cvs_rev)
-            else:
-              self.change_path(cvs_rev)
-
-        if cvs_rev.op == OP_DELETE:
-          self.delete_path(cvs_rev.svn_path, Ctx().prune)
-
-    self.end_commit()
 
   def add_delegate(self, delegate):
     """Adds DELEGATE to self.delegates.

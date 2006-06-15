@@ -128,18 +128,16 @@ class SVNCommit:
                'svn:date'   : date }
 
   def __str__(self):
-    """ Print a human-readable description of this SVNCommit.  This
-    description is not intended to be machine-parseable (although
-    we're not going to stop you if you try!)"""
+    """ Print a human-readable description of this SVNCommit.
+
+    This description is not intended to be machine-parseable."""
 
     ret = "SVNCommit #: " + str(self.revnum) + "\n"
+    ret += "   debug description: " + self.description + "\n"
     if self.symbolic_name:
       ret += ("   symbolic name: "
               + clean_symbolic_name(self.symbolic_name)
               + "\n")
-    else:
-      ret += "   NO symbolic name\n"
-    ret += "   debug description: " + self.description + "\n"
     return ret
 
 

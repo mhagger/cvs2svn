@@ -190,25 +190,6 @@ class ResyncRevsPass(Pass):
 
     return resync
 
-  def _get_non_excluded_symbols(self, symbols, excludes):
-    return [ symbol
-             for symbol in symbols
-             if symbol not in excludes ]
-
-  def _force_tags(self, c_rev):
-    """Convert all branches in C_REV that are forced to be tags."""
-    for forced_tag in Ctx().forced_tags:
-      if forced_tag in c_rev.branches:
-        c_rev.branches.remove(forced_tag)
-        c_rev.tags.append(forced_tag)
-
-  def _force_branches(self, c_rev):
-    """Convert all tags in C_REV that are forced to be branches."""
-    for forced_branch in Ctx().forced_branches:
-      if forced_branch in c_rev.tags:
-        c_rev.tags.remove(forced_branch)
-        c_rev.branches.append(forced_branch)
-
   def run(self, stats_keeper):
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
     cvs_items_db = CVSItemDatabase(
@@ -228,6 +209,8 @@ class ResyncRevsPass(Pass):
 
     symbol_stats.create_symbol_database(excludes)
 
+    symbol_db = SymbolDatabase(DB_OPEN_READ)
+
     Log().quiet("Re-synchronizing CVS revision timestamps...")
 
     # We may have recorded some changes in revisions' timestamp.  We need to
@@ -246,7 +229,7 @@ class ResyncRevsPass(Pass):
       c_rev = cvs_items_db[c_rev_id]
 
       # Skip this entire revision if it's on an excluded branch
-      if isinstance(c_rev.lod, Branch) and c_rev.lod.name in excludes:
+      if isinstance(c_rev.lod, Branch) and c_rev.lod.name not in symbol_db:
         continue
 
       if c_rev.prev_id is not None:
@@ -259,11 +242,8 @@ class ResyncRevsPass(Pass):
       else:
         next_c_rev = None
 
-      c_rev.branches = self._get_non_excluded_symbols(c_rev.branches, excludes)
-      c_rev.tags = self._get_non_excluded_symbols(c_rev.tags, excludes)
-
-      self._force_tags(c_rev)
-      self._force_branches(c_rev)
+      (c_rev.branches, c_rev.tags) = symbol_db.collate_symbols(
+          c_rev.branches + c_rev.tags)
 
       # see if this is "near" any of the resync records we have
       # recorded for this metadata_id [of the log message].

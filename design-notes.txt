@@ -176,10 +176,10 @@ really matter if a couple of them accidentally get unified?  Probably
 not.
 
 This pass also creates 'cvs2svn-symbols.db', which is a database
-mapping symbol names to TagSymbol or BranchSymbol instances (these
-classes are defined in cvs2svn_lib/symbol_database.py).  Currently, it
-is only used to keep track of which symbols should be processed as
-tags and which as branches.
+mapping symbol names to TagSymbol or BranchSymbol instances for
+symbols that will be included in the conversion.  Currently, it is
+only used to keep track of which symbols should be processed, and
+which are branches vs. tags.
 
 
 SortRevsPass (formerly called pass3)

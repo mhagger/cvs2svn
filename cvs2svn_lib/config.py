@@ -82,8 +82,10 @@ CVS_ITEMS_DB = 'cvs2svn-cvs-items.db'
 # Maps CVSRevision.id (in hex) to CVSRevision after resynchronization.
 CVS_ITEMS_RESYNC_DB = 'cvs2svn-cvs-items-resync.db'
 
-# Lists all symbolic names that are tags.  Keys are strings (symbolic
-# names); values are ignorable.
+# A record of all symbolic names that will be processed in the
+# conversion.  Keys are strings (symbolic names); values are either
+# BranchSymbol or TagSymbol instances depending on whether the symbol
+# should be converted as a branch or a tag.
 SYMBOL_DB = 'cvs2svn-symbols.db'
 
 # A list all symbols.  Each line consists of the symbol name, the

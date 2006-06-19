@@ -129,6 +129,19 @@ When every CVS file is done, CollectRevsPass is complete, and:
      metadata.  CVSRevision records include the metadata_id.
 
 
+CollateSymbolsPass
+==================
+
+Use the symbol statistics collected in CollectRevsPass and any
+command-line options to determine which symbols should be treated as
+branches, which as tags, and which symbols should be excluded from the
+conversion altogether.
+
+Create 'cvs2svn-symbols.db', which is a database mapping symbol names
+to TagSymbol or BranchSymbol instances for each symbol that will be
+included in the conversion.
+
+
 ResyncRevsPass (formerly called pass2)
 ==============
 
@@ -188,12 +201,6 @@ important -- after all, we're talking about commits that weren't
 important enough to have a distinctive log message anyway, so does it
 really matter if a couple of them accidentally get unified?  Probably
 not.
-
-This pass also creates 'cvs2svn-symbols.db', which is a database
-mapping symbol names to TagSymbol or BranchSymbol instances for
-symbols that will be included in the conversion.  Currently, it is
-only used to keep track of which symbols should be processed, and
-which are branches vs. tags.
 
 
 SortRevsPass (formerly called pass3)

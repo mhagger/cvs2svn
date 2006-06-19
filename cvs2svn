@@ -60,6 +60,7 @@ from cvs2svn_lib import passes
 
 pass_manager = PassManager([
   passes.CollectRevsPass(),
+  passes.CollateSymbolsPass(),
   passes.ResyncRevsPass(),
   passes.SortRevsPass(),
   passes.CreateDatabasesPass(),

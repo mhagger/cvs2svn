@@ -138,16 +138,38 @@ class CollectRevsPass(Pass):
     Log().quiet("Done")
 
 
+class CollateSymbolsPass(Pass):
+  """Divide symbols into branches, tags, and excludes."""
+
+  def register_artifacts(self):
+    self._register_temp_file(config.SYMBOL_DB)
+    self._register_temp_file_needed(config.SYMBOL_STATISTICS_LIST)
+
+  def run(self, stats_keeper):
+    symbol_stats = SymbolStatisticsCollector()
+    symbol_stats.read()
+
+    # Convert the list of regexps to a list of strings
+    excludes = symbol_stats.find_excluded_symbols(Ctx().excludes)
+
+    # Check the symbols for consistency and bail out if there were errors:
+    if symbol_stats.check_consistency(excludes):
+      sys.exit(1)
+
+    symbol_stats.create_symbol_database(excludes)
+
+    Log().quiet("Done")
+
+
 class ResyncRevsPass(Pass):
   """Clean up the revision information.
 
   This pass was formerly known as pass2."""
 
   def register_artifacts(self):
-    self._register_temp_file(config.SYMBOL_DB)
     self._register_temp_file(config.CLEAN_REVS_DATAFILE)
     self._register_temp_file(config.CVS_ITEMS_RESYNC_DB)
-    self._register_temp_file_needed(config.SYMBOL_STATISTICS_LIST)
+    self._register_temp_file_needed(config.SYMBOL_DB)
     self._register_temp_file_needed(config.RESYNC_DATAFILE)
     self._register_temp_file_needed(config.CVS_FILES_DB)
     self._register_temp_file_needed(config.CVS_ITEMS_DB)
@@ -192,22 +214,12 @@ class ResyncRevsPass(Pass):
 
   def run(self, stats_keeper):
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
+    symbol_db = SymbolDatabase(DB_OPEN_READ)
     cvs_items_db = CVSItemDatabase(
         artifact_manager.get_temp_file(config.CVS_ITEMS_DB), DB_OPEN_WRITE)
     cvs_items_resync_db = CVSItemDatabase(
         artifact_manager.get_temp_file(config.CVS_ITEMS_RESYNC_DB),
         DB_OPEN_NEW)
-    symbol_stats = SymbolStatisticsCollector()
-    symbol_stats.read()
-
-    # Convert the list of regexps to a list of strings
-    excludes = symbol_stats.find_excluded_symbols(Ctx().excludes)
-
-    # Check the symbols for consistency and bail out if there were errors:
-    if symbol_stats.check_consistency(excludes):
-      sys.exit(1)
-
-    symbol_stats.create_symbol_database(excludes)
 
     symbol_db = SymbolDatabase(DB_OPEN_READ)
 

@@ -461,7 +461,7 @@ class Conversion:
       try:
         args.extend( [ '--bdb-txn-nosync', '-s', self._svnrepos, cvsrepos ] )
         if passbypass:
-          for p in range(1, 9):
+          for p in range(1, 10):
             run_cvs2svn(error_re, '-p', str(p), *args)
         else:
           run_cvs2svn(error_re, *args)

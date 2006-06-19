@@ -296,11 +296,17 @@ class SymbolStatisticsCollector:
       | self._check_symbol_mismatches(excludes)
       )
 
-  def create_symbol_database(self):
-    # Create the tags database
+  def create_symbol_database(self, excludes):
+    """Create the tags database.
+
+    Record each known symbol, except those in EXCLUDES."""
+
     symbol_db = SymbolDatabase(DB_OPEN_NEW)
     for symbol in self._symbols.values():
-      if symbol.name in Ctx().forced_branches:
+      if symbol.name in excludes:
+        # Don't write it to the database at all.
+        pass
+      elif symbol.name in Ctx().forced_branches:
         symbol_db.add(BranchSymbol(symbol.id, symbol.name))
       elif symbol.name in Ctx().forced_tags:
         symbol_db.add(TagSymbol(symbol.id, symbol.name))

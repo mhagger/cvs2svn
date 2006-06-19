@@ -226,7 +226,7 @@ class ResyncRevsPass(Pass):
     if symbol_stats.check_consistency(excludes):
       sys.exit(1)
 
-    symbol_stats.create_symbol_database()
+    symbol_stats.create_symbol_database(excludes)
 
     Log().quiet("Re-synchronizing CVS revision timestamps...")
 

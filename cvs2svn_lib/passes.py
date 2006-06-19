@@ -147,7 +147,6 @@ class CollateSymbolsPass(Pass):
 
   def run(self, stats_keeper):
     symbol_stats = SymbolStatistics()
-    symbol_stats.read()
 
     # Convert the list of regexps to a list of strings
     excludes = symbol_stats.find_excluded_symbols(Ctx().excludes)

@@ -187,6 +187,8 @@ class SymbolStatistics:
   (config.SYMBOL_STATISTICS_LIST)."""
 
   def __init__(self):
+    """Read the symbol database from the SYMBOL_STATISTICS_LIST file."""
+
     # A hash that maps symbol names to _Symbol instances
     self._symbols_by_name = { }
 
@@ -194,6 +196,25 @@ class SymbolStatistics:
     self._symbols = { }
 
     self._key_generator = KeyGenerator(1)
+
+    f = open(artifact_manager.get_temp_file(config.SYMBOL_STATISTICS_LIST))
+    while 1:
+      line = f.readline()
+      if not line:
+        break
+      words = line.split()
+      [id, name, tag_create_count,
+       branch_create_count, branch_commit_count] = words[:5]
+      branch_blockers = words[5:]
+      id = int(id)
+      tag_create_count = int(tag_create_count)
+      branch_create_count = int(branch_create_count)
+      branch_commit_count = int(branch_commit_count)
+      symbol = _Symbol(
+          id, name, tag_create_count,
+          branch_create_count, branch_commit_count, branch_blockers)
+      self._symbols_by_name[name] = symbol
+      self._symbols[symbol.id] = symbol
 
   def find_excluded_symbols(self, regexp_list):
     """Return a set of all symbols that match the regexps in REGEXP_LIST."""
@@ -355,27 +376,5 @@ class SymbolStatistics:
         symbol_db.add(BranchSymbol(symbol.id, symbol.name))
       else:
         symbol_db.add(TagSymbol(symbol.id, symbol.name))
-
-  def read(self):
-    """Read the symbol database from files."""
-
-    f = open(artifact_manager.get_temp_file(config.SYMBOL_STATISTICS_LIST))
-    while 1:
-      line = f.readline()
-      if not line:
-        break
-      words = line.split()
-      [id, name, tag_create_count,
-       branch_create_count, branch_commit_count] = words[:5]
-      branch_blockers = words[5:]
-      id = int(id)
-      tag_create_count = int(tag_create_count)
-      branch_create_count = int(branch_create_count)
-      branch_commit_count = int(branch_commit_count)
-      symbol = _Symbol(
-          id, name, tag_create_count,
-          branch_create_count, branch_commit_count, branch_blockers)
-      self._symbols_by_name[name] = symbol
-      self._symbols[symbol.id] = symbol
 
 

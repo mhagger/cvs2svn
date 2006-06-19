@@ -73,7 +73,34 @@ class _OldSymbolDatabase:
       self._names[name] = symbol
 
   def get_symbol(self, name):
-    return self._names[name]
+    """Return the symbol instance with name NAME.
+
+    Return None if there is no such instance (for example, if NAME is
+    being excluded from the conversion)."""
+
+    return self._names.get(name)
+
+  def __contains__(self, name):
+    return name in self._names
+
+  def collate_symbols(self, names):
+    """Given an iterable of symbol, divide them into branches and tags.
+
+    Return a tuple of two lists (branches, tags), containing the
+    symbols that should be converted as branches and tags
+    respectively.  Symbols that we do not know about are not included
+    in either output list."""
+
+    branches = []
+    tags = []
+    for name in names:
+      symbol = self.get_symbol(name)
+      if isinstance(symbol, BranchSymbol):
+        branches.append(name)
+      elif isinstance(symbol, TagSymbol):
+        tags.append(name)
+
+    return (branches, tags,)
 
 
 def SymbolDatabase(mode):

@@ -41,7 +41,7 @@ from cvs2svn_lib.cvs_file_database import CVSFileDatabase
 from cvs2svn_lib.metadata_database import MetadataDatabase
 from cvs2svn_lib.symbol_database import SymbolDatabase
 from cvs2svn_lib.line_of_development import Branch
-from cvs2svn_lib.symbol_statistics_collector import SymbolStatisticsCollector
+from cvs2svn_lib.symbol_statistics_collector import SymbolStatistics
 from cvs2svn_lib.cvs_item_database import CVSItemDatabase
 from cvs2svn_lib.last_symbolic_name_database import LastSymbolicNameDatabase
 from cvs2svn_lib.svn_commit import SVNCommit
@@ -146,7 +146,7 @@ class CollateSymbolsPass(Pass):
     self._register_temp_file_needed(config.SYMBOL_STATISTICS_LIST)
 
   def run(self, stats_keeper):
-    symbol_stats = SymbolStatisticsCollector()
+    symbol_stats = SymbolStatistics()
     symbol_stats.read()
 
     # Convert the list of regexps to a list of strings

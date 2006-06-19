@@ -72,30 +72,21 @@ class _Symbol:
 
 
 class SymbolStatisticsCollector:
-  """This database records a brief summary of information about all
-  symbols in the RCS files.  It is created in CollectRevsPass (pass1)
-  and it is used in ResyncRevsPass (pass2).
+  """Collect statistics about symbols.
+
+  Record a brief summary of information about each symbol in the RCS
+  files into a database.  The database is created in CollectRevsPass
+  and it is used in CollateSymbolsPass (via the SymbolStatistics
+  class).
 
   collect_data._SymbolDataCollector inserts information into instances
   of this class by by calling its register_*() methods.
 
-  Its main purpose is to assist in the decisions about:
+  Its main purpose is to assist in the decisions about which symbols
+  can be treated as branches and tags and which may be excluded.
 
-  1. What tags and branches should be processed/excluded
-
-  2. What tags should be forced to be branches and vice versa (this
-     class maintains some statistics to help the user decide)
-
-  3. Are there inconsistencies?
-
-     - A symbol that is sometimes a branch and sometimes a tag
-
-     - A forced branch with commit(s) on it
-
-     - A non-excluded branch depends on an excluded branch
-
-  The data contained in this class can be written to and read from a
-  text file (config.SYMBOL_STATISTICS_LIST)."""
+  The data collected by this class can be written to a text file
+  (config.SYMBOL_STATISTICS_LIST)."""
 
   def __init__(self):
     # A hash that maps symbol names to _Symbol instances
@@ -153,6 +144,56 @@ class SymbolStatisticsCollector:
     return (symbol
             and symbol.branch_create_count > 0
             and symbol.branch_commit_count > 0)
+
+  def write(self):
+    """Store the symbol database to file."""
+
+    f = open(artifact_manager.get_temp_file(config.SYMBOL_STATISTICS_LIST),
+             "w")
+    for symbol in self._symbols.values():
+      f.write(
+          "%d %s %d %d %d"
+          % (symbol.id, symbol.name, symbol.tag_create_count,
+             symbol.branch_create_count, symbol.branch_commit_count)
+          )
+      if symbol.branch_blockers:
+        f.write(' ')
+        f.write(' '.join(list(symbol.branch_blockers)))
+      f.write('\n')
+    f.close()
+
+
+class SymbolStatistics:
+  """Read and handle symbol statistics.
+
+  The symbol statistics are read from a database created by
+  SymbolStatisticsCollector.  This class has methods to process the
+  statistics information and help with decisions about:
+
+  1. What tags and branches should be processed/excluded
+
+  2. What tags should be forced to be branches and vice versa (this
+     class maintains some statistics to help the user decide)
+
+  3. Are there inconsistencies?
+
+     - A symbol that is sometimes a branch and sometimes a tag
+
+     - A forced branch with commit(s) on it
+
+     - A non-excluded branch depends on an excluded branch
+
+  The data in this class is read from a text file
+  (config.SYMBOL_STATISTICS_LIST)."""
+
+  def __init__(self):
+    # A hash that maps symbol names to _Symbol instances
+    self._symbols_by_name = { }
+
+    # A map { id -> record } for all symbols (branches and tags)
+    self._symbols = { }
+
+    self._key_generator = KeyGenerator(1)
 
   def find_excluded_symbols(self, regexp_list):
     """Return a set of all symbols that match the regexps in REGEXP_LIST."""
@@ -336,22 +377,5 @@ class SymbolStatisticsCollector:
           branch_create_count, branch_commit_count, branch_blockers)
       self._symbols_by_name[name] = symbol
       self._symbols[symbol.id] = symbol
-
-  def write(self):
-    """Store the symbol database to file."""
-
-    f = open(artifact_manager.get_temp_file(config.SYMBOL_STATISTICS_LIST),
-             "w")
-    for symbol in self._symbols.values():
-      f.write(
-          "%d %s %d %d %d"
-          % (symbol.id, symbol.name, symbol.tag_create_count,
-             symbol.branch_create_count, symbol.branch_commit_count)
-          )
-      if symbol.branch_blockers:
-        f.write(' ')
-        f.write(' '.join(list(symbol.branch_blockers)))
-      f.write('\n')
-    f.close()
 
 

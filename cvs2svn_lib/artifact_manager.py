@@ -62,7 +62,8 @@ class ArtifactNotActiveError(Exception):
   that they need it are active."""
 
   def __init__(self, artifact_name):
-    Exception.__init__(self, 'Artifact %s is not currently active')
+    Exception.__init__(
+        self, 'Artifact %s is not currently active' % artifact_name)
 
 
 class ArtifactManager:

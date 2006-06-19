@@ -175,8 +175,11 @@ important enough to have a distinctive log message anyway, so does it
 really matter if a couple of them accidentally get unified?  Probably
 not.
 
-'cvs2svn-tags.db' ??? is also created during this pass, for
-undocumented purposes.
+This pass also creates 'cvs2svn-symbols.db', which is a database
+mapping symbol names to TagSymbol or BranchSymbol instances (these
+classes are defined in cvs2svn_lib/symbol_database.py).  Currently, it
+is only used to keep track of which symbols should be processed as
+tags and which as branches.
 
 
 SortRevsPass (formerly called pass3)

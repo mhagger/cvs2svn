@@ -245,6 +245,10 @@ class ResyncRevsPass(Pass):
       c_rev_id = int(line.strip(), 16)
       c_rev = cvs_items_db[c_rev_id]
 
+      # Skip this entire revision if it's on an excluded branch
+      if isinstance(c_rev.lod, Branch) and c_rev.lod.name in excludes:
+        continue
+
       if c_rev.prev_id is not None:
         prev_c_rev = cvs_items_db[c_rev.prev_id]
       else:
@@ -254,10 +258,6 @@ class ResyncRevsPass(Pass):
         next_c_rev = cvs_items_db[c_rev.next_id]
       else:
         next_c_rev = None
-
-      # Skip this entire revision if it's on an excluded branch
-      if isinstance(c_rev.lod, Branch) and c_rev.lod.name in excludes:
-        continue
 
       c_rev.branches = self._get_non_excluded_symbols(c_rev.branches, excludes)
       c_rev.tags = self._get_non_excluded_symbols(c_rev.tags, excludes)

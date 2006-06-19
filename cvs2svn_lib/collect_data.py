@@ -47,7 +47,7 @@ from cvs2svn_lib.database import SDatabase
 from cvs2svn_lib.database import DB_OPEN_NEW
 from cvs2svn_lib.cvs_file_database import CVSFileDatabase
 from cvs2svn_lib.cvs_item_database import CVSItemDatabase
-from cvs2svn_lib.symbol_statistics_collector import SymbolStatisticsCollector
+from cvs2svn_lib.symbol_statistics import SymbolStatisticsCollector
 from cvs2svn_lib.metadata_database import MetadataDatabase
 
 import cvs2svn_rcsparse

@@ -41,7 +41,7 @@ from cvs2svn_lib.cvs_file_database import CVSFileDatabase
 from cvs2svn_lib.metadata_database import MetadataDatabase
 from cvs2svn_lib.symbol_database import SymbolDatabase
 from cvs2svn_lib.line_of_development import Branch
-from cvs2svn_lib.symbol_statistics_collector import SymbolStatistics
+from cvs2svn_lib.symbol_statistics import SymbolStatistics
 from cvs2svn_lib.cvs_item_database import CVSItemDatabase
 from cvs2svn_lib.last_symbolic_name_database import LastSymbolicNameDatabase
 from cvs2svn_lib.svn_commit import SVNCommit

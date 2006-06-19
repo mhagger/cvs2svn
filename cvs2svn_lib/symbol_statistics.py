@@ -14,7 +14,7 @@
 # history and logs, available at http://cvs2svn.tigris.org/.
 # ====================================================================
 
-"""This module contains a class that gathers statistics about symbols."""
+"""This module gathers and processes statistics about CVS symbols."""
 
 import sys
 

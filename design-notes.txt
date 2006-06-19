@@ -95,8 +95,22 @@ When every CVS file is done, CollectRevsPass is complete, and:
    - 'cvs2svn-resync.txt' contains a small amount of resync data, in
      no particular order.
 
-   - 'cvs2svn-branches.txt' ???
-   - 'cvs2svn-tags.txt' ???
+   - 'cvs2svn-symbol-stats.txt' contains one line for each symbol that
+     was seen in the CVS repository.  The fields are:
+
+         ID NAME TAG_COUNT BRANCH_COUNT BRANCH_COMMIT_COUNT BLOCKERS
+
+     where ID is a unique number identifying this symbol, NAME is the
+     symbol name, TAG_COUNT and BRANCH_COUNT are the number of CVS
+     files on which this symbol was used as a tag or branch
+     respectively, and BRANCH_COMMIT_COUNT is the number of files for
+     which commits were made on a branch with the given name.
+     BLOCKERS is a space-separated list of tags and branches that were
+     defined on branches named NAME (a branch cannot be excluded if it
+     has any blockers that are not also being excluded).  These data
+     are used to look for inconsistencies in the use of symbols under
+     CVS and to decide which symbols can be excluded or forced to be
+     branches and/or tags.
 
    - 'cvs2svn-metadata.db' contains information that will help
      determine what CVSRevisions might have been made together and

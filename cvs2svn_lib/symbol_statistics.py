@@ -197,11 +197,8 @@ class SymbolStatistics:
 
     self._key_generator = KeyGenerator(1)
 
-    f = open(artifact_manager.get_temp_file(config.SYMBOL_STATISTICS_LIST))
-    while 1:
-      line = f.readline()
-      if not line:
-        break
+    for line in open(artifact_manager.get_temp_file(
+          config.SYMBOL_STATISTICS_LIST)):
       words = line.split()
       [id, name, tag_create_count,
        branch_create_count, branch_commit_count] = words[:5]

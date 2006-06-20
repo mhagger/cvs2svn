@@ -152,7 +152,7 @@ class SymbolStatisticsCollector:
              "w")
     for symbol in self._symbols.values():
       f.write(
-          "%d %s %d %d %d"
+          "%x %s %d %d %d"
           % (symbol.id, symbol.name, symbol.tag_create_count,
              symbol.branch_create_count, symbol.branch_commit_count)
           )
@@ -203,7 +203,7 @@ class SymbolStatistics:
       [id, name, tag_create_count,
        branch_create_count, branch_commit_count] = words[:5]
       branch_blockers = words[5:]
-      id = int(id)
+      id = int(id, 16)
       tag_create_count = int(tag_create_count)
       branch_create_count = int(branch_create_count)
       branch_commit_count = int(branch_commit_count)

@@ -205,15 +205,6 @@ class SymbolStatistics:
       self._stats_by_name[name] = stats
       self._stats[stats.id] = stats
 
-  def find_excluded_symbols(self, regexp_list):
-    """Return a set of all symbols that match the regexps in REGEXP_LIST."""
-
-    excludes = set()
-    for stats in self._stats.values():
-      if match_regexp_list(regexp_list, stats.name):
-        excludes.add(stats.name)
-    return excludes
-
   def _find_branch_exclude_blockers(self, symbol, excludes):
     """Return the set of all blockers of SYMBOL, excluding the ones in
     the set EXCLUDES."""
@@ -354,6 +345,31 @@ class SymbolStatistics:
       | self._check_invalid_forced_tags(excludes)
       | self._check_symbol_mismatches(excludes)
       )
+
+  def get_symbols(self, regexp_list):
+    """Return a map { name : Symbol } of symbols to convert."""
+
+    excludes = self.find_excluded_symbols(Ctx().excludes)
+    symbols = {}
+    for stats in self._stats.values():
+      if match_regexp_list(regexp_list, stats.name):
+        # Don't write it to the database at all.
+        pass
+      elif stats.name in Ctx().forced_branches:
+        symbols[stats.name] = BranchSymbol(stats.id, stats.name)
+      elif stats.name in Ctx().forced_tags:
+        symbols[stats.name] = TagSymbol(stats.id, stats.name)
+      elif stats.branch_create_count > 0:
+        symbols[stats.name] = BranchSymbol(stats.id, stats.name)
+      else:
+        symbols[stats.name] = TagSymbol(stats.id, stats.name)
+    return symbols
+
+  def find_excluded_symbols(self, symbols):
+    """Return a set of all known symbol names that are not in SYMBOLS."""
+
+    return set([stat.name for stat in self._stats.values()
+                if stat.name not in symbols])
 
   def create_symbol_database(self, excludes):
     """Create the tags database.

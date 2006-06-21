@@ -239,18 +239,15 @@ class SymbolStatistics:
 
   def _find_mismatches(self, excludes):
     """Find all symbols that are defined as both tags and branches,
-    excluding the ones in EXCLUDES.  Returns a list of 4-tuples with
-    the symbol name, tag count, branch count and commit count."""
+    excluding the ones in EXCLUDES.  Returns a set of _Stats objects,
+    one for each mismatch."""
 
-    mismatches = [ ]
+    mismatches = set()
     for stats in self._stats.values():
       if (stats.name not in excludes
           and stats.tag_create_count > 0
           and stats.branch_create_count > 0):
-        mismatches.append((stats.name,
-                           stats.tag_create_count,
-                           stats.branch_create_count,
-                           stats.branch_commit_count))
+        mismatches.add(stats)
     return mismatches
 
   def _check_blocked_excludes(self, excludes):
@@ -325,7 +322,7 @@ class SymbolStatistics:
     mismatches = self._find_mismatches(excludes)
 
     def is_not_forced(mismatch):
-      name = mismatch[0]
+      name = mismatch.name
       return not (name in Ctx().forced_tags or name in Ctx().forced_branches)
 
     mismatches = filter(is_not_forced, mismatches)
@@ -338,10 +335,12 @@ class SymbolStatistics:
         "branches in others.\n"
         "Use --force-tag, --force-branch and/or --exclude to resolve the "
         "symbols.\n")
-    for name, tag_count, branch_count, branch_commit_count in mismatches:
-      sys.stderr.write("    '%s' is a tag in %d files, a branch in "
-                       "%d files and has commits in %d files.\n"
-                       % (name, tag_count, branch_count, branch_commit_count))
+    for stats in mismatches:
+      sys.stderr.write(
+          "    '%s' is a tag in %d files, a branch in "
+          "%d files and has commits in %d files.\n"
+          % (stats.name, stats.tag_create_count,
+             stats.branch_create_count, stats.branch_commit_count))
 
     return True
 

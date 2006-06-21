@@ -228,15 +228,15 @@ class SymbolStatistics:
         blocked_branches[symbol] = branch_blockers
     return blocked_branches
 
-  def _find_mismatches(self, excludes):
-    """Find all symbols that are defined as both tags and branches,
-    excluding the ones in EXCLUDES.  Returns a set of _Stats objects,
-    one for each mismatch."""
+  def _find_mismatches(self, symbols):
+    """Find all symbols in SYMBOLS that are defined as both tags and branches.
+
+    Returns a set of _Stats objects, one for each mismatch."""
 
     mismatches = set()
-    for stats in self._stats.values():
-      if (stats.name not in excludes
-          and stats.tag_create_count > 0
+    for symbol in symbols.values():
+      stats = self._stats_by_name[symbol.name]
+      if (stats.tag_create_count > 0
           and stats.branch_create_count > 0):
         mismatches.add(stats)
     return mismatches
@@ -301,16 +301,16 @@ class SymbolStatistics:
 
     return True
 
-  def _check_symbol_mismatches(self, excludes):
+  def _check_symbol_mismatches(self, symbols):
     """Check for symbols that are defined as both tags and branches.
 
-    Exclude the symbols in EXCLUDES.  If any are found, output error
-    messages describing the problems.  Return True iff any problems
-    are found."""
+    Consider the symbols in SYMBOLS.  If any mismatches are found,
+    output error messages describing the problems.  Return True iff
+    any problems are found."""
 
     Log().quiet("Checking for tag/branch mismatches...")
 
-    mismatches = self._find_mismatches(excludes)
+    mismatches = self._find_mismatches(symbols)
 
     def is_not_forced(mismatch):
       name = mismatch.name
@@ -346,7 +346,7 @@ class SymbolStatistics:
     return (
       self._check_blocked_excludes(excludes)
       | self._check_invalid_forced_tags(excludes)
-      | self._check_symbol_mismatches(excludes)
+      | self._check_symbol_mismatches(symbols)
       )
 
   def get_symbols(self, regexp_list):

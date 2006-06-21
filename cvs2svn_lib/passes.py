@@ -157,7 +157,7 @@ class CollateSymbolsPass(Pass):
     if symbol_stats.check_consistency(excludes):
       sys.exit(1)
 
-    symbol_stats.create_symbol_database(excludes)
+    symbol_stats.create_symbol_database(symbols)
 
     Log().quiet("Done")
 

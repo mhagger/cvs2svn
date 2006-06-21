@@ -371,23 +371,13 @@ class SymbolStatistics:
     return set([stat.name for stat in self._stats.values()
                 if stat.name not in symbols])
 
-  def create_symbol_database(self, excludes):
+  def create_symbol_database(self, symbols):
     """Create the tags database.
 
-    Record each known symbol, except those in EXCLUDES."""
+    Record each symbol that is listed in SYMBOLS."""
 
     symbol_db = SymbolDatabase(DB_OPEN_NEW)
-    for stats in self._stats.values():
-      if stats.name in excludes:
-        # Don't write it to the database at all.
-        pass
-      elif stats.name in Ctx().forced_branches:
-        symbol_db.add(BranchSymbol(stats.id, stats.name))
-      elif stats.name in Ctx().forced_tags:
-        symbol_db.add(TagSymbol(stats.id, stats.name))
-      elif stats.branch_create_count > 0:
-        symbol_db.add(BranchSymbol(stats.id, stats.name))
-      else:
-        symbol_db.add(TagSymbol(stats.id, stats.name))
+    for symbol in symbols.values():
+      symbol_db.add(symbol)
 
 

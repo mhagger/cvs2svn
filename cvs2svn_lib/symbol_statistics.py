@@ -335,9 +335,12 @@ class SymbolStatistics:
 
     return True
 
-  def check_consistency(self, excludes):
+  def check_consistency(self, symbols):
     """Check the non-excluded symbols for consistency.  Return True
     iff any problems were detected."""
+
+    # Get the list of excluded symbol names:
+    excludes = self.find_excluded_symbols(symbols)
 
     # It is important that we not short-circuit here:
     return (

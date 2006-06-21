@@ -136,15 +136,6 @@ class SymbolStatisticsCollector:
 
     self._get_symbol(name).branch_blockers.add(blocker)
 
-  def _branch_has_commit(self, name):
-    """Return True iff NAME has commits.  Returns False if NAME was
-    never seen as a branch or if it has no commits."""
-
-    symbol = self._symbols_by_name.get(name)
-    return (symbol
-            and symbol.branch_create_count > 0
-            and symbol.branch_commit_count > 0)
-
   def write(self):
     """Store the symbol database to file."""
 
@@ -283,6 +274,15 @@ class SymbolStatistics:
         sys.stderr.write("    '%s'\n" % (blocker))
     sys.stderr.write("\n")
     return True
+
+  def _branch_has_commit(self, name):
+    """Return True iff NAME has commits.  Returns False if NAME was
+    never seen as a branch or if it has no commits."""
+
+    symbol = self._symbols_by_name.get(name)
+    return (symbol
+            and symbol.branch_create_count > 0
+            and symbol.branch_commit_count > 0)
 
   def _check_invalid_forced_tags(self, excludes):
     """Check for commits on any branches that were forced to be tags.

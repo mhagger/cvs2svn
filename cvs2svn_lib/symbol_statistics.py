@@ -204,6 +204,13 @@ class SymbolStatistics:
       self._stats_by_name[name] = stats
       self._stats[stats.id] = stats
 
+  def get_stats(self, name):
+    """Return the _Stats object for the symbol named NAME.
+
+    Raise KeyError if no such name exists."""
+
+    return self._stats_by_name[name]
+
   def __iter__(self):
     return self._stats.itervalues()
 
@@ -231,7 +238,7 @@ class SymbolStatistics:
 
     mismatches = set()
     for symbol in symbols.values():
-      stats = self._stats_by_name[symbol.name]
+      stats = self.get_stats(symbol.name)
       if (stats.tag_create_count > 0
           and stats.branch_create_count > 0):
         mismatches.add(stats)
@@ -272,7 +279,7 @@ class SymbolStatistics:
     invalid_tags = [ ]
     for symbol in symbols.values():
       if isinstance(symbol, TagSymbol):
-        stats = self._stats_by_name[symbol.name]
+        stats = self.get_stats(symbol.name)
         if stats.branch_commit_count > 0:
           invalid_tags.append(stats.name)
 

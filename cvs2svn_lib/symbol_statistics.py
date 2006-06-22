@@ -216,10 +216,13 @@ class SymbolStatistics:
           branch_blockers.add(blocker)
     return branch_blockers
 
-  def _find_blocked_excludes(self, excludes):
+  def _find_blocked_excludes(self, symbols):
     """Find all branches not in EXCLUDES that have blocking symbols
     that are not themselves excluded.  Return a hash that maps branch
     names to a set of branch_blockers."""
+
+    # Get the list of excluded symbol names:
+    excludes = self.find_excluded_symbols(symbols)
 
     blocked_branches = { }
     for symbol in self._stats_by_name:
@@ -241,7 +244,7 @@ class SymbolStatistics:
         mismatches.add(stats)
     return mismatches
 
-  def _check_blocked_excludes(self, excludes):
+  def _check_blocked_excludes(self, symbols):
     """Check whether any excluded branches are blocked.
 
     A branch can be blocked because it has another, non-excluded
@@ -251,7 +254,7 @@ class SymbolStatistics:
 
     Log().quiet("Checking for blocked exclusions...")
 
-    blocked_excludes = self._find_blocked_excludes(excludes)
+    blocked_excludes = self._find_blocked_excludes(symbols)
     if not blocked_excludes:
       return False
 
@@ -330,12 +333,9 @@ class SymbolStatistics:
     """Check the non-excluded symbols for consistency.  Return True
     iff any problems were detected."""
 
-    # Get the list of excluded symbol names:
-    excludes = self.find_excluded_symbols(symbols)
-
     # It is important that we not short-circuit here:
     return (
-      self._check_blocked_excludes(excludes)
+      self._check_blocked_excludes(symbols)
       | self._check_invalid_tags(symbols)
       | self._check_symbol_mismatches(symbols)
       )

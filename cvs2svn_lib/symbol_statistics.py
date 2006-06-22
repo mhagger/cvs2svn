@@ -28,7 +28,6 @@ from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.database import DB_OPEN_NEW
 from cvs2svn_lib.symbol_database import BranchSymbol
 from cvs2svn_lib.symbol_database import TagSymbol
-from cvs2svn_lib.symbol_database import SymbolDatabase
 from cvs2svn_lib.key_generator import KeyGenerator
 
 

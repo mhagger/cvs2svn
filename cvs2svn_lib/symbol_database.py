@@ -45,19 +45,6 @@ class TagSymbol(Symbol):
     return 'Tag %r <%d>' % (self.name, self.id,)
 
 
-class _NewSymbolDatabase:
-  """A Database to record symbolic names (tags and branches).
-
-  Records are name -> symbol, where symbol is a Symbol instance."""
-
-  def __init__(self):
-    self.db = PDatabase(
-        artifact_manager.get_temp_file(config.SYMBOL_DB), DB_OPEN_NEW)
-
-  def add(self, symbol):
-    self.db[symbol.name] = symbol
-
-
 class _OldSymbolDatabase:
   """Read-only access to symbol database.
 
@@ -108,9 +95,7 @@ def SymbolDatabase(mode):
 
   The class of the instance that is returned depends on MODE."""
 
-  if mode == DB_OPEN_NEW:
-    return _NewSymbolDatabase()
-  elif mode == DB_OPEN_READ:
+  if mode == DB_OPEN_READ:
     return _OldSymbolDatabase()
   else:
     raise NotImplemented
@@ -122,8 +107,9 @@ def create_symbol_database(symbols):
   Record each symbol that is listed in SYMBOLS, which is an iterable
   containing Symbol objects."""
 
-  symbol_db = _NewSymbolDatabase()
+  db = PDatabase(artifact_manager.get_temp_file(config.SYMBOL_DB),
+                 DB_OPEN_NEW)
   for symbol in symbols:
-    symbol_db.add(symbol)
+    db[symbol.name] = symbol
 
 

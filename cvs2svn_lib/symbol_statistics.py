@@ -333,17 +333,38 @@ class SymbolStatistics:
       | self._check_symbol_mismatches(symbols)
       )
 
-  def get_symbols(self, regexp_list):
-    """Return a map { name : Symbol } of symbols to convert."""
+
+class SymbolStrategy:
+  """A strategy class, used to decide how to handle each symbol."""
+
+  def __init__(self, excludes, forced_branches, forced_tags):
+    """Initialize an instance.
+
+    EXCLUDES is a list of regexps matching the names of symbols that
+    should be excluded from the conversion.  FORCED_BRANCHES and
+    FORCED_TAGS are lists of symbol names that should be converted as
+    branches or tags, respectively.  Symbols not covered by one of
+    these special cases must be unambiguous tags or branches."""
+
+    self.excludes = excludes
+    self.forced_branches = forced_branches
+    self.forced_tags = forced_tags
+
+  def get_symbols(self, symbol_stats):
+    """Return a map { name : Symbol } of symbols to convert.
+
+    The values of the map are either BranchSymbol or TagSymbol
+    objects, indicating how the symbol should be converted.  Symbols
+    to be excluded should be left out of the output."""
 
     symbols = {}
-    for stats in self:
-      if match_regexp_list(regexp_list, stats.name):
+    for stats in symbol_stats:
+      if match_regexp_list(self.excludes, stats.name):
         # Don't write it to the database at all.
         pass
-      elif stats.name in Ctx().forced_branches:
+      elif stats.name in self.forced_branches:
         symbols[stats.name] = BranchSymbol(stats.id, stats.name)
-      elif stats.name in Ctx().forced_tags:
+      elif stats.name in self.forced_tags:
         symbols[stats.name] = TagSymbol(stats.id, stats.name)
       elif stats.branch_create_count > 0:
         symbols[stats.name] = BranchSymbol(stats.id, stats.name)

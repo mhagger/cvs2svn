@@ -43,6 +43,7 @@ from cvs2svn_lib.symbol_database import SymbolDatabase
 from cvs2svn_lib.symbol_database import create_symbol_database
 from cvs2svn_lib.line_of_development import Branch
 from cvs2svn_lib.symbol_statistics import SymbolStatistics
+from cvs2svn_lib.symbol_statistics import SymbolStrategy
 from cvs2svn_lib.cvs_item_database import CVSItemDatabase
 from cvs2svn_lib.last_symbolic_name_database import LastSymbolicNameDatabase
 from cvs2svn_lib.svn_commit import SVNCommit
@@ -149,7 +150,10 @@ class CollateSymbolsPass(Pass):
   def run(self, stats_keeper):
     symbol_stats = SymbolStatistics()
 
-    symbols = symbol_stats.get_symbols(Ctx().excludes)
+    symbol_strategy = SymbolStrategy(
+        Ctx().excludes, Ctx().forced_branches, Ctx().forced_tags)
+
+    symbols = symbol_strategy.get_symbols(symbol_stats)
 
     # Check the symbols for consistency and bail out if there were errors:
     if symbol_stats.check_consistency(symbols):

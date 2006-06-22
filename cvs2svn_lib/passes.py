@@ -40,6 +40,7 @@ from cvs2svn_lib.database import DB_OPEN_WRITE
 from cvs2svn_lib.cvs_file_database import CVSFileDatabase
 from cvs2svn_lib.metadata_database import MetadataDatabase
 from cvs2svn_lib.symbol_database import SymbolDatabase
+from cvs2svn_lib.symbol_database import create_symbol_database
 from cvs2svn_lib.line_of_development import Branch
 from cvs2svn_lib.symbol_statistics import SymbolStatistics
 from cvs2svn_lib.cvs_item_database import CVSItemDatabase
@@ -154,7 +155,7 @@ class CollateSymbolsPass(Pass):
     if symbol_stats.check_consistency(symbols):
       sys.exit(1)
 
-    symbol_stats.create_symbol_database(symbols)
+    create_symbol_database(symbols.values())
 
     Log().quiet("Done")
 

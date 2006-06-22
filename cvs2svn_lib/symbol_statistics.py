@@ -349,13 +349,4 @@ class SymbolStatistics:
         symbols[stats.name] = TagSymbol(stats.id, stats.name)
     return symbols
 
-  def create_symbol_database(self, symbols):
-    """Create the tags database.
-
-    Record each symbol that is listed in SYMBOLS."""
-
-    symbol_db = SymbolDatabase(DB_OPEN_NEW)
-    for symbol in symbols.values():
-      symbol_db.add(symbol)
-
 

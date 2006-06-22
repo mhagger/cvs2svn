@@ -116,3 +116,14 @@ def SymbolDatabase(mode):
     raise NotImplemented
 
 
+def create_symbol_database(symbols):
+  """Create and fill a symbol database.
+
+  Record each symbol that is listed in SYMBOLS, which is an iterable
+  containing Symbol objects."""
+
+  symbol_db = _NewSymbolDatabase()
+  for symbol in symbols:
+    symbol_db.add(symbol)
+
+

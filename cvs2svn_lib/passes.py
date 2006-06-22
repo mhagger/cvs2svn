@@ -213,14 +213,12 @@ class ResyncRevsPass(Pass):
 
   def run(self, stats_keeper):
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
-    symbol_db = SymbolDatabase(DB_OPEN_READ)
+    symbol_db = SymbolDatabase()
     cvs_items_db = CVSItemDatabase(
         artifact_manager.get_temp_file(config.CVS_ITEMS_DB), DB_OPEN_WRITE)
     cvs_items_resync_db = CVSItemDatabase(
         artifact_manager.get_temp_file(config.CVS_ITEMS_RESYNC_DB),
         DB_OPEN_NEW)
-
-    symbol_db = SymbolDatabase(DB_OPEN_READ)
 
     Log().quiet("Re-synchronizing CVS revision timestamps...")
 
@@ -440,7 +438,7 @@ class AggregateRevsPass(Pass):
         DB_OPEN_READ)
     Ctx()._symbolings_logger = SymbolingsLogger()
     if not Ctx().trunk_only:
-      Ctx()._symbol_db = SymbolDatabase(DB_OPEN_READ)
+      Ctx()._symbol_db = SymbolDatabase()
     aggregator = CVSRevisionAggregator()
     for line in file(
             artifact_manager.get_temp_file(config.SORTED_REVS_DATAFILE)):
@@ -544,7 +542,7 @@ class OutputPass(Pass):
         artifact_manager.get_temp_file(config.CVS_ITEMS_RESYNC_DB),
         DB_OPEN_READ)
     if not Ctx().trunk_only:
-      Ctx()._symbol_db = SymbolDatabase(DB_OPEN_READ)
+      Ctx()._symbol_db = SymbolDatabase()
     repos = SVNRepositoryMirror()
     persistence_manager = PersistenceManager(DB_OPEN_READ)
 

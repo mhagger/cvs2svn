@@ -45,7 +45,7 @@ class TagSymbol(Symbol):
     return 'Tag %r <%d>' % (self.name, self.id,)
 
 
-class _OldSymbolDatabase:
+class SymbolDatabase:
   """Read-only access to symbol database.
 
   Records are name -> symbol, where symbol is a Symbol instance.  The
@@ -88,17 +88,6 @@ class _OldSymbolDatabase:
         tags.append(name)
 
     return (branches, tags,)
-
-
-def SymbolDatabase(mode):
-  """Open the SymbolDatabase in either NEW or READ mode.
-
-  The class of the instance that is returned depends on MODE."""
-
-  if mode == DB_OPEN_READ:
-    return _OldSymbolDatabase()
-  else:
-    raise NotImplemented
 
 
 def create_symbol_database(symbols):

@@ -296,6 +296,24 @@ class SymbolStatistics:
 class SymbolStrategy:
   """A strategy class, used to decide how to handle each symbol."""
 
+  def get_symbols(self, symbol_stats):
+    """Return a map { name : Symbol } of symbols to convert.
+
+    The values of the map are either BranchSymbol or TagSymbol
+    objects, indicating how the symbol should be converted.  Symbols
+    to be excluded should be left out of the output.  Return None if
+    there was an error."""
+
+    raise NotImplementedError
+
+
+class StrictSymbolStrategy:
+  """A strategy class implementing the old, strict strategy.
+
+  Any symbols that were sometimes used for branches, sometimes for
+  tags, have to be resolved explicitly by the user via the --exclude,
+  --force-branch, and --force-tags options."""
+
   def __init__(self, excludes, forced_branches, forced_tags):
     """Initialize an instance.
 
@@ -357,13 +375,6 @@ class SymbolStrategy:
     return True
 
   def get_symbols(self, symbol_stats):
-    """Return a map { name : Symbol } of symbols to convert.
-
-    The values of the map are either BranchSymbol or TagSymbol
-    objects, indicating how the symbol should be converted.  Symbols
-    to be excluded should be left out of the output.  Return None if
-    there was an error."""
-
     symbols = {}
     for stats in symbol_stats:
       if match_regexp_list(self.excludes, stats.name):

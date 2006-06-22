@@ -156,7 +156,7 @@ class CollateSymbolsPass(Pass):
     symbols = symbol_strategy.get_symbols(symbol_stats)
 
     # Check the symbols for consistency and bail out if there were errors:
-    if symbol_stats.check_consistency(symbols):
+    if symbols is None or symbol_stats.check_consistency(symbols):
       sys.exit(1)
 
     create_symbol_database(symbols.values())

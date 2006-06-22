@@ -231,19 +231,6 @@ class SymbolStatistics:
           blocked_branches[stats.name] = set(blockers)
     return blocked_branches
 
-  def _find_mismatches(self, symbols):
-    """Find all symbols in SYMBOLS that are defined as both tags and branches.
-
-    Returns a set of _Stats objects, one for each mismatch."""
-
-    mismatches = set()
-    for symbol in symbols.values():
-      stats = self.get_stats(symbol.name)
-      if (stats.tag_create_count > 0
-          and stats.branch_create_count > 0):
-        mismatches.add(stats)
-    return mismatches
-
   def _check_blocked_excludes(self, symbols):
     """Check whether any excluded branches are blocked.
 
@@ -295,7 +282,47 @@ class SymbolStatistics:
 
     return True
 
-  def _check_symbol_mismatches(self, symbols):
+  def check_consistency(self, symbols):
+    """Check the non-excluded symbols for consistency.  Return True
+    iff any problems were detected."""
+
+    # It is important that we not short-circuit here:
+    return (
+      self._check_blocked_excludes(symbols)
+      | self._check_invalid_tags(symbols)
+      )
+
+
+class SymbolStrategy:
+  """A strategy class, used to decide how to handle each symbol."""
+
+  def __init__(self, excludes, forced_branches, forced_tags):
+    """Initialize an instance.
+
+    EXCLUDES is a list of regexps matching the names of symbols that
+    should be excluded from the conversion.  FORCED_BRANCHES and
+    FORCED_TAGS are lists of symbol names that should be converted as
+    branches or tags, respectively.  Symbols not covered by one of
+    these special cases must be unambiguous tags or branches."""
+
+    self.excludes = excludes
+    self.forced_branches = forced_branches
+    self.forced_tags = forced_tags
+
+  def _find_mismatches(self, symbol_stats, symbols):
+    """Find all symbols in SYMBOLS that are defined as both tags and branches.
+
+    Returns a set of _Stats objects, one for each mismatch."""
+
+    mismatches = set()
+    for symbol in symbols.values():
+      stats = symbol_stats.get_stats(symbol.name)
+      if (stats.tag_create_count > 0
+          and stats.branch_create_count > 0):
+        mismatches.add(stats)
+    return mismatches
+
+  def _check_symbol_mismatches(self, symbol_stats, symbols):
     """Check for symbols that are defined as both tags and branches.
 
     Consider the symbols in SYMBOLS.  If any mismatches are found,
@@ -304,11 +331,11 @@ class SymbolStatistics:
 
     Log().quiet("Checking for tag/branch mismatches...")
 
-    mismatches = self._find_mismatches(symbols)
+    mismatches = self._find_mismatches(symbol_stats, symbols)
 
     def is_not_forced(mismatch):
       name = mismatch.name
-      return not (name in Ctx().forced_tags or name in Ctx().forced_branches)
+      return not (name in self.forced_tags or name in self.forced_branches)
 
     mismatches = filter(is_not_forced, mismatches)
     if not mismatches:
@@ -329,40 +356,13 @@ class SymbolStatistics:
 
     return True
 
-  def check_consistency(self, symbols):
-    """Check the non-excluded symbols for consistency.  Return True
-    iff any problems were detected."""
-
-    # It is important that we not short-circuit here:
-    return (
-      self._check_blocked_excludes(symbols)
-      | self._check_invalid_tags(symbols)
-      | self._check_symbol_mismatches(symbols)
-      )
-
-
-class SymbolStrategy:
-  """A strategy class, used to decide how to handle each symbol."""
-
-  def __init__(self, excludes, forced_branches, forced_tags):
-    """Initialize an instance.
-
-    EXCLUDES is a list of regexps matching the names of symbols that
-    should be excluded from the conversion.  FORCED_BRANCHES and
-    FORCED_TAGS are lists of symbol names that should be converted as
-    branches or tags, respectively.  Symbols not covered by one of
-    these special cases must be unambiguous tags or branches."""
-
-    self.excludes = excludes
-    self.forced_branches = forced_branches
-    self.forced_tags = forced_tags
-
   def get_symbols(self, symbol_stats):
     """Return a map { name : Symbol } of symbols to convert.
 
     The values of the map are either BranchSymbol or TagSymbol
     objects, indicating how the symbol should be converted.  Symbols
-    to be excluded should be left out of the output."""
+    to be excluded should be left out of the output.  Return None if
+    there was an error."""
 
     symbols = {}
     for stats in symbol_stats:
@@ -377,6 +377,10 @@ class SymbolStrategy:
         symbols[stats.name] = BranchSymbol(stats.id, stats.name)
       else:
         symbols[stats.name] = TagSymbol(stats.id, stats.name)
+
+    if self._check_symbol_mismatches(symbol_stats, symbols):
+      return None
+
     return symbols
 
 

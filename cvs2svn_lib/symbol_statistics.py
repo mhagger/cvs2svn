@@ -205,30 +205,21 @@ class SymbolStatistics:
       self._stats_by_name[name] = stats
       self._stats[stats.id] = stats
 
-  def _find_branch_exclude_blockers(self, symbol, excludes):
-    """Return the set of all blockers of SYMBOL, excluding the ones in
-    the set EXCLUDES."""
-
-    branch_blockers = set()
-    if symbol in excludes:
-      for blocker in self._stats_by_name[symbol].branch_blockers:
-        if blocker not in excludes:
-          branch_blockers.add(blocker)
-    return branch_blockers
-
   def _find_blocked_excludes(self, symbols):
-    """Find all branches not in EXCLUDES that have blocking symbols
-    that are not themselves excluded.  Return a hash that maps branch
-    names to a set of branch_blockers."""
+    """Find all excluded symbols that are blocked by non-excluded symbols.
 
-    # Get the list of excluded symbol names:
-    excludes = self.find_excluded_symbols(symbols)
+    Non-excluded symbols are by definition the symbols contained in
+    SYMBOLS, which is a map { name : Symbol }.  Return a map { name :
+    blocker_names } containing any problems found, where blocker_names
+    is a set containing the names of blocking symbols."""
 
-    blocked_branches = { }
-    for symbol in self._stats_by_name:
-      branch_blockers = self._find_branch_exclude_blockers(symbol, excludes)
-      if branch_blockers:
-        blocked_branches[symbol] = branch_blockers
+    blocked_branches = {}
+    for stats in self._stats.values():
+      if stats.name not in symbols:
+        blockers = [ blocker for blocker in stats.branch_blockers
+                     if blocker in symbols ]
+        if blockers:
+          blocked_branches[stats.name] = set(blockers)
     return blocked_branches
 
   def _find_mismatches(self, symbols):
@@ -357,12 +348,6 @@ class SymbolStatistics:
       else:
         symbols[stats.name] = TagSymbol(stats.id, stats.name)
     return symbols
-
-  def find_excluded_symbols(self, symbols):
-    """Return a set of all known symbol names that are not in SYMBOLS."""
-
-    return set([stat.name for stat in self._stats.values()
-                if stat.name not in symbols])
 
   def create_symbol_database(self, symbols):
     """Create the tags database.

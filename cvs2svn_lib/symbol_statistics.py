@@ -343,7 +343,6 @@ class SymbolStatistics:
   def get_symbols(self, regexp_list):
     """Return a map { name : Symbol } of symbols to convert."""
 
-    excludes = self.find_excluded_symbols(Ctx().excludes)
     symbols = {}
     for stats in self._stats.values():
       if match_regexp_list(regexp_list, stats.name):

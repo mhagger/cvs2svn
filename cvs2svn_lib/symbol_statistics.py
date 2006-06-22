@@ -204,6 +204,9 @@ class SymbolStatistics:
       self._stats_by_name[name] = stats
       self._stats[stats.id] = stats
 
+  def __iter__(self):
+    return self._stats.itervalues()
+
   def _find_blocked_excludes(self, symbols):
     """Find all excluded symbols that are blocked by non-excluded symbols.
 
@@ -213,7 +216,7 @@ class SymbolStatistics:
     is a set containing the names of blocking symbols."""
 
     blocked_branches = {}
-    for stats in self._stats.values():
+    for stats in self:
       if stats.name not in symbols:
         blockers = [ blocker for blocker in stats.branch_blockers
                      if blocker in symbols ]
@@ -334,7 +337,7 @@ class SymbolStatistics:
     """Return a map { name : Symbol } of symbols to convert."""
 
     symbols = {}
-    for stats in self._stats.values():
+    for stats in self:
       if match_regexp_list(regexp_list, stats.name):
         # Don't write it to the database at all.
         pass

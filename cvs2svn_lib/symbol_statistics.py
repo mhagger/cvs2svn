@@ -264,38 +264,29 @@ class SymbolStatistics:
     sys.stderr.write("\n")
     return True
 
-  def _branch_has_commit(self, name):
-    """Return True iff NAME has commits.  Returns False if NAME was
-    never seen as a branch or if it has no commits."""
+  def _check_invalid_tags(self, symbols):
+    """Check for commits on any symbols that are to be converted as tags.
 
-    stats = self._stats_by_name.get(name)
-    return (stats
-            and stats.branch_create_count > 0
-            and stats.branch_commit_count > 0)
-
-  def _check_invalid_forced_tags(self, excludes):
-    """Check for commits on any branches that were forced to be tags.
-
-    In that case, they can't be converted into tags.  If any invalid
-    forced tags are found, output error messages describing the
-    problems.  Return True iff any errors are found."""
+    In that case, they can't be converted as tags.  If any invalid
+    tags are found, output error messages describing the problems.
+    Return True iff any errors are found."""
 
     Log().quiet("Checking for forced tags with commits...")
 
-    invalid_forced_tags = [ ]
-    for forced_tag in Ctx().forced_tags:
-      if forced_tag in excludes:
-        continue
-      if self._branch_has_commit(forced_tag):
-        invalid_forced_tags.append(forced_tag)
+    invalid_tags = [ ]
+    for symbol in symbols.values():
+      if isinstance(symbol, TagSymbol):
+        stats = self._stats_by_name[symbol.name]
+        if stats.branch_commit_count > 0:
+          invalid_tags.append(stats.name)
 
-    if not invalid_forced_tags:
+    if not invalid_tags:
       # No problems found:
       return False
 
     sys.stderr.write(error_prefix + ": The following branches cannot be "
                      "forced to be tags because they have commits:\n")
-    for tag in invalid_forced_tags:
+    for tag in invalid_tags:
       sys.stderr.write("    '%s'\n" % (tag))
     sys.stderr.write("\n")
 
@@ -345,7 +336,7 @@ class SymbolStatistics:
     # It is important that we not short-circuit here:
     return (
       self._check_blocked_excludes(excludes)
-      | self._check_invalid_forced_tags(excludes)
+      | self._check_invalid_tags(symbols)
       | self._check_symbol_mismatches(symbols)
       )
 

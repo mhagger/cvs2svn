@@ -505,6 +505,14 @@ class Conversion:
       self._wc_tree = svntest.tree.build_tree_from_wc(self.get_wc(), 1)
     return self._wc_tree
 
+  def path_exists(self, *args):
+    """Return True if the specified path exists within the repository.
+
+    (The strings in ARGS are first joined into a path using
+    os.path.join().)"""
+
+    return os.path.exists(os.path.join(self.get_wc(), *args))
+
   def check_props(self, keys, checks):
     """Helper function for checking lots of properties.  For a list of
     files in the conversion, check that the values of the properties
@@ -636,8 +644,7 @@ def attr_exec():
 def space_fname():
   "conversion of filename with a space"
   conv = ensure_conversion('main')
-  if not os.path.exists(
-      os.path.join(conv.get_wc(), 'trunk', 'single-files', 'space fname')):
+  if not conv.path_exists('trunk', 'single-files', 'space fname'):
     raise svntest.Failure
 
 
@@ -988,17 +995,10 @@ def split_time_branch():
 def multiple_tags():
   "multiple tags referring to same revision"
   conv = ensure_conversion('main')
-  if not os.path.exists(
-      os.path.join(
-          conv.get_wc(), 'tags', 'T_ALL_INITIAL_FILES', 'proj', 'default'
-          )
-      ):
+  if not conv.path_exists('tags', 'T_ALL_INITIAL_FILES', 'proj', 'default'):
     raise svntest.Failure
-  if not os.path.exists(
-      os.path.join(
-          conv.get_wc(), 'tags', 'T_ALL_INITIAL_FILES_BUT_ONE', 'proj', 'default'
-          )
-      ):
+  if not conv.path_exists(
+        'tags', 'T_ALL_INITIAL_FILES_BUT_ONE', 'proj', 'default'):
     raise svntest.Failure
 
 def bogus_tag():
@@ -1177,14 +1177,11 @@ def branch_delete_first(**kw):
   branches = kw.get('branches', 'branches')
 
   # 'file' was deleted from branch-1 and branch-2, but not branch-3
-  if os.path.exists(
-        os.path.join(conv.get_wc(), branches, 'branch-1', 'file')):
+  if conv.path_exists(branches, 'branch-1', 'file'):
     raise svntest.Failure
-  if os.path.exists(
-        os.path.join(conv.get_wc(), branches, 'branch-2', 'file')):
+  if conv.path_exists(branches, 'branch-2', 'file'):
     raise svntest.Failure
-  if not os.path.exists(
-        os.path.join(conv.get_wc(), branches, 'branch-3', 'file')):
+  if not conv.path_exists(branches, 'branch-3', 'file'):
     raise svntest.Failure
 
 

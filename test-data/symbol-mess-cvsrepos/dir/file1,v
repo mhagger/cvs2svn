@@ -1,0 +1,131 @@
+head	1.1;
+access;
+symbols
+	BLOCKED_BY_UNNAMED:1.1.0.12
+	BLOCKING_COMMIT:1.1.10.1.0.2
+	BLOCKED_BY_COMMIT:1.1.0.10
+	BLOCKING_BRANCH:1.1.8.1.0.2
+	BLOCKED_BY_BRANCH:1.1.0.8
+	MOSTLY_BRANCH:1.1.0.6
+	MOSTLY_TAG:1.1
+	BRANCH_WITH_COMMIT:1.1.0.4
+	BRANCH:1.1.0.2
+	TAG:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2006.06.24.23.20.28;	author mhagger;	state Exp;
+branches
+	1.1.4.1
+	1.1.8.1
+	1.1.10.1
+	1.1.12.1;
+next	;
+
+1.1.4.1
+date	2006.06.24.23.20.29;	author mhagger;	state Exp;
+branches;
+next	;
+
+1.1.8.1
+date	2006.06.24.23.20.31;	author mhagger;	state Exp;
+branches;
+next	;
+
+1.1.10.1
+date	2006.06.24.23.20.33;	author mhagger;	state Exp;
+branches
+	1.1.10.1.2.1;
+next	;
+
+1.1.10.1.2.1
+date	2006.06.24.23.20.34;	author mhagger;	state Exp;
+branches;
+next	;
+
+1.1.12.1
+date	2006.06.24.23.20.36;	author mhagger;	state Exp;
+branches
+	1.1.12.1.2.1;
+next	;
+
+1.1.12.1.2.1
+date	2006.06.24.23.20.37;	author mhagger;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Adding files on trunk
+@
+text
+@line1
+@
+
+
+1.1.12.1
+log
+@Establish branch BLOCKED_BY_UNNAMED
+@
+text
+@a1 1
+line2
+@
+
+
+1.1.12.1.2.1
+log
+@Committing blocking commit on TEMP
+@
+text
+@a2 1
+line3
+@
+
+
+1.1.10.1
+log
+@Establish branch BLOCKED_BY_COMMIT
+@
+text
+@a1 1
+line2
+@
+
+
+1.1.10.1.2.1
+log
+@Committing blocking commit on BLOCKING_COMMIT
+@
+text
+@a2 1
+line3
+@
+
+
+1.1.8.1
+log
+@Establish branch BLOCKED_BY_BRANCH
+@
+text
+@a1 1
+line2
+@
+
+
+1.1.4.1
+log
+@Commit on branch BRANCH_WITH_COMMIT
+@
+text
+@a1 1
+line2
+@
+

@@ -1,0 +1,34 @@
+head	1.1;
+access;
+symbols
+	BLOCKED_BY_UNNAMED:1.1.0.16
+	BLOCKING_COMMIT:1.1.0.14
+	BLOCKED_BY_COMMIT:1.1.0.12
+	BLOCKING_BRANCH:1.1.0.10
+	BLOCKED_BY_BRANCH:1.1.0.8
+	MOSTLY_BRANCH:1.1.0.6
+	MOSTLY_TAG:1.1
+	BRANCH_WITH_COMMIT:1.1.0.4
+	BRANCH:1.1.0.2
+	TAG:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2006.06.24.23.20.28;	author mhagger;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Adding files on trunk
+@
+text
+@line1
+@

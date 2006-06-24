@@ -2092,6 +2092,75 @@ def double_branch_delete():
     ('/%(branches)s/Branch_4_0/IMarshalledValue.java', 'A'),
     ));
 
+
+def symbol_mismatches():
+  "error for conflicting tag/branch"
+
+  try:
+    ensure_conversion('symbol-mess')
+    raise MissingErrorException
+  except svntest.Failure:
+    pass
+
+
+def force_symbols():
+  "force symbols to be tags/branches"
+
+  conv = ensure_conversion(
+      'symbol-mess',
+      args=['--force-branch=MOSTLY_BRANCH', '--force-tag=MOSTLY_TAG'])
+  if conv.path_exists('tags', 'BRANCH') \
+     or not conv.path_exists('branches', 'BRANCH'):
+     raise svntest.Failure
+  if not conv.path_exists('tags', 'TAG') \
+     or conv.path_exists('branches', 'TAG'):
+     raise svntest.Failure
+  if conv.path_exists('tags', 'MOSTLY_BRANCH') \
+     or not conv.path_exists('branches', 'MOSTLY_BRANCH'):
+     raise svntest.Failure
+  if not conv.path_exists('tags', 'MOSTLY_TAG') \
+     or conv.path_exists('branches', 'MOSTLY_TAG'):
+     raise svntest.Failure
+
+
+def commit_blocks_tags():
+  "commit prevents forced tag"
+
+  basic_args = ['--force-branch=MOSTLY_BRANCH', '--force-tag=MOSTLY_TAG']
+  try:
+    ensure_conversion(
+        'symbol-mess',
+        args=(basic_args + ['--force-tag=BRANCH_WITH_COMMIT']))
+    raise MissingErrorException
+  except svntest.Failure:
+    pass
+
+
+def blocked_excludes():
+  "error for blocked excludes"
+
+  basic_args = ['--force-branch=MOSTLY_BRANCH', '--force-tag=MOSTLY_TAG']
+  for blocker in ['BRANCH', 'COMMIT', 'UNNAMED']:
+    try:
+      ensure_conversion(
+          'symbol-mess',
+          args=(basic_args + ['--exclude=BLOCKED_BY_%s' % blocker]))
+      raise MissingErrorException
+    except svntest.Failure:
+      pass
+
+
+def unblock_blocked_excludes():
+  "excluding blocker removes blockage"
+
+  basic_args = ['--force-branch=MOSTLY_BRANCH', '--force-tag=MOSTLY_TAG']
+  for blocker in ['BRANCH', 'COMMIT']:
+    ensure_conversion(
+        'symbol-mess',
+        args=(basic_args + ['--exclude=BLOCKED_BY_%s' % blocker,
+                            '--exclude=BLOCKING_%s' % blocker]))
+
+
 #----------------------------------------------------------------------
 
 ########################################################################
@@ -2170,6 +2239,11 @@ test_list = [ None,
               show_help_passes,
               multiple_tags,                        # 70
               double_branch_delete,
+              symbol_mismatches,
+              force_symbols,
+              commit_blocks_tags,
+              blocked_excludes,
+              unblock_blocked_excludes,
               ]
 
 if __name__ == '__main__':

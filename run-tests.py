@@ -487,9 +487,15 @@ class Conversion:
         return self.logs[i]
     raise ValueError("Tag %s not found in logs" % tagname)
 
-  def get_wc(self):
-    """Return the path to the svn working copy.  If it has not been
-    created yet, create it now."""
+  def get_wc(self, *args):
+    """Return the path to the svn working copy, or a path within the WC.
+
+    If a working copy has not been created yet, create it now.
+
+    If ARGS are specified, then they should be strings that form
+    fragments of a path within the WC.  They are joined using
+    os.path.join() and appended to the WC path."""
+
     if self._wc_path is None:
       saved_wd = os.getcwd()
       try:
@@ -498,7 +504,7 @@ class Conversion:
         self._wc_path = os.path.join(tmp_dir, self._wc)
       finally:
         os.chdir(saved_wd)
-    return self._wc_path
+    return os.path.join(self._wc_path, *args)
 
   def get_wc_tree(self):
     if self._wc_tree is None:
@@ -511,7 +517,7 @@ class Conversion:
     (The strings in ARGS are first joined into a path using
     os.path.join().)"""
 
-    return os.path.exists(os.path.join(self.get_wc(), *args))
+    return os.path.exists(self.get_wc(*args))
 
   def check_props(self, keys, checks):
     """Helper function for checking lots of properties.  For a list of
@@ -635,8 +641,7 @@ def attr_exec():
   if sys.platform == 'win32':
     raise svntest.Skip
   conv = ensure_conversion('main')
-  st = os.stat(
-      os.path.join(conv.get_wc(), 'trunk', 'single-files', 'attr-exec'))
+  st = os.stat(conv.get_wc('trunk', 'single-files', 'attr-exec'))
   if not st[0] & stat.S_IXUSR:
     raise svntest.Failure
 
@@ -1127,8 +1132,8 @@ def tagged_branch_and_trunk(**kw):
 
   tags = kw.get('tags', 'tags')
 
-  a_path = os.path.join(conv.get_wc(), tags, 'some-tag', 'a.txt')
-  b_path = os.path.join(conv.get_wc(), tags, 'some-tag', 'b.txt')
+  a_path = conv.get_wc(tags, 'some-tag', 'a.txt')
+  b_path = conv.get_wc(tags, 'some-tag', 'b.txt')
   if not (os.path.exists(a_path) and os.path.exists(b_path)):
     raise svntest.Failure
   if (open(a_path, 'r').read().find('1.24') == -1) \
@@ -1809,10 +1814,8 @@ def requires_cvs():
   # See issues 4, 11, 29 for the bugs whose regression we're testing for.
   conv = ensure_conversion('requires-cvs', args=["--use-cvs"])
 
-  atsign_contents = file(
-      os.path.join(conv.get_wc(), "trunk", "atsign-add")).read()
-  cl_contents = file(
-      os.path.join(conv.get_wc(), "trunk", "client_lock.idl")).read()
+  atsign_contents = file(conv.get_wc("trunk", "atsign-add")).read()
+  cl_contents = file(conv.get_wc("trunk", "client_lock.idl")).read()
 
   if atsign_contents[-1:] == "@":
     raise svntest.Failure

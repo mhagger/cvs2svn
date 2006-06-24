@@ -43,7 +43,7 @@ from cvs2svn_lib.symbol_database import SymbolDatabase
 from cvs2svn_lib.symbol_database import create_symbol_database
 from cvs2svn_lib.line_of_development import Branch
 from cvs2svn_lib.symbol_statistics import SymbolStatistics
-from cvs2svn_lib.symbol_statistics import StrictSymbolStrategy
+from cvs2svn_lib.symbol_strategy import StrictSymbolStrategy
 from cvs2svn_lib.cvs_item_database import CVSItemDatabase
 from cvs2svn_lib.last_symbolic_name_database import LastSymbolicNameDatabase
 from cvs2svn_lib.svn_commit import SVNCommit

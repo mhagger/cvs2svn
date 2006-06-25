@@ -57,6 +57,13 @@ class _Stats:
     self.branch_commit_count = branch_commit_count
     self.branch_blockers = set(branch_blockers)
 
+  def __str__(self):
+    return (
+        '%r is a tag in %d files, a branch in '
+        '%d files and has commits in %d files'
+        % (self.name, self.tag_create_count,
+           self.branch_create_count, self.branch_commit_count))
+
 
 class SymbolStatisticsCollector:
   """Collect statistics about symbols.

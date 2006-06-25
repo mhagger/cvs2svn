@@ -62,9 +62,10 @@ class StrictSymbolStrategy:
 
     EXCLUDES is a list of regexps matching the names of symbols that
     should be excluded from the conversion.  FORCED_BRANCHES and
-    FORCED_TAGS are lists of symbol names that should be converted as
-    branches or tags, respectively.  Symbols not covered by one of
-    these special cases must be unambiguous tags or branches."""
+    FORCED_TAGS are lists of regexps matching symbols that should be
+    converted as branches or tags, respectively.  Symbols not covered
+    by one of these special cases must be unambiguous tags or
+    branches."""
 
     self.excludes = excludes
     self.forced_branches = forced_branches
@@ -95,8 +96,9 @@ class StrictSymbolStrategy:
     mismatches = self._find_mismatches(symbol_stats, symbols)
 
     def is_not_forced(mismatch):
-      name = mismatch.name
-      return not (name in self.forced_tags or name in self.forced_branches)
+      return not (
+          match_regexp_list(self.forced_tags, mismatch.name)
+          or match_regexp_list(self.forced_branches, mismatch.name))
 
     mismatches = filter(is_not_forced, mismatches)
     if not mismatches:
@@ -123,9 +125,9 @@ class StrictSymbolStrategy:
       if match_regexp_list(self.excludes, stats.name):
         # Don't write it to the database at all.
         pass
-      elif stats.name in self.forced_branches:
+      elif match_regexp_list(self.forced_branches, stats.name):
         symbols[stats.name] = BranchSymbol(stats.id, stats.name)
-      elif stats.name in self.forced_tags:
+      elif match_regexp_list(self.forced_tags, stats.name):
         symbols[stats.name] = TagSymbol(stats.id, stats.name)
       elif stats.branch_create_count > 0:
         symbols[stats.name] = BranchSymbol(stats.id, stats.name)

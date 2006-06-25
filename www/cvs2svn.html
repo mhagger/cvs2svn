@@ -487,14 +487,14 @@ cvs2svn --symbol-transform='([0-9])-(.*):release-\1.\2' -q -s SVN RCS
   </tr>
 
   <tr>
-    <td align="right"><tt>--force-branch=NAME</tt></td>
-    <td>Force NAME to be a branch.</td>
+    <td align="right"><tt>--force-branch=REGEXP</tt></td>
+    <td>Force symbols matching REGEXP to be branches.</td>
   </tr>
 
   <tr>
     <td align="right"><tt>--force-tag=NAME</tt></td>
-    <td>Force NAME to be a tag.  This will cause an error if NAME has
-      commits on it.</td>
+    <td>Force symbols matching REGEXP to be tags.  This will cause an
+      error if such a symbol has commits on it.</td>
   </tr>
 
   <tr>

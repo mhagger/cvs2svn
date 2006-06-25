@@ -101,8 +101,8 @@ USAGE: %(progname)s [-v] [-s svn-repos-path] [-p pass] cvs-repos-path
                        Multiple of these options may be passed, where they
                        will be treated as an ordered list of encodings to
                        attempt (with "ascii" as a hardcoded last resort)
-  --force-branch=NAME  force NAME to be a branch
-  --force-tag=NAME     force NAME to be a tag
+  --force-branch=REGEXP force symbols matching REGEXP to be branches
+  --force-tag=REGEXP   force symbols matching REGEXP to be tags
   --exclude=REGEXP     exclude branches and tags matching REGEXP
   --symbol-transform=P:S transform symbol names from P to S where P and S
                        use Python regexp and reference syntax respectively
@@ -218,9 +218,9 @@ def main():
     elif opt == '--encoding':
       ctx.encoding.insert(-1, value)
     elif opt == '--force-branch':
-      ctx.forced_branches.append(value)
+      ctx.forced_branches.append(re.compile('^' + value + '$'))
     elif opt == '--force-tag':
-      ctx.forced_tags.append(value)
+      ctx.forced_tags.append(re.compile('^' + value + '$'))
     elif opt == '--exclude':
       try:
         ctx.excludes.append(re.compile('^' + value + '$'))

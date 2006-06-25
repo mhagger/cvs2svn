@@ -161,16 +161,12 @@ class StrictSymbolStrategy:
 
     if mismatches:
       sys.stderr.write(
-          error_prefix + ": The following symbols are tags in some files and "
-          "branches in others.\n"
+          error_prefix + ": It is not clear how the following symbols "
+          "should be converted.\n"
           "Use --force-tag, --force-branch and/or --exclude to resolve the "
-          "symbols.\n")
+          "ambiguity.\n")
       for stats in mismatches:
-        sys.stderr.write(
-            "    '%s' is a tag in %d files, a branch in "
-            "%d files and has commits in %d files.\n"
-            % (stats.name, stats.tag_create_count,
-               stats.branch_create_count, stats.branch_commit_count))
+        sys.stderr.write("    %s\n" % stats)
       return None
     else:
       return symbols

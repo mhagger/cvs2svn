@@ -120,14 +120,17 @@ class StrictSymbolStrategy:
     # how symbols should be converted.
     self._rules = []
 
+  def add_rule(self, rule):
+    self._rules.append(rule)
+
   def add_exclude(self, pattern):
-    self._rules.append(RegexpStrategyRule(pattern, ExcludeSymbol))
+    self.add_rule(RegexpStrategyRule(pattern, ExcludeSymbol))
 
   def add_forced_branch(self, pattern):
-    self._rules.append(RegexpStrategyRule(pattern, BranchSymbol))
+    self.add_rule(RegexpStrategyRule(pattern, BranchSymbol))
 
   def add_forced_tag(self, pattern):
-    self._rules.append(RegexpStrategyRule(pattern, TagSymbol))
+    self.add_rule(RegexpStrategyRule(pattern, TagSymbol))
 
   def _get_symbol(self, stats):
     for rule in self._rules:

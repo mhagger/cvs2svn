@@ -1,9 +1,32 @@
+Version 1.4.x (not yet released)
+--------------------------------
+
+ New features:
+ * Support multicomponent --trunk, --tags, and --branches paths (issue #7).
+ * New --auto-props option allows file properties to be set via file.
+ * --force-branch and --force-tag options now accept regular expressions.
+
+ Bugs fixed:
+ * Fix issue #93: Tags with forbidden characters converted to branches.
+ * Fix issue #102: Branch file, deleted in CVS, is present in SVN.
+
+ Improvements and output changes:
+ * Print informative warning message if a required program is missing.
+ * Output an error if any CVS filenames contain control characters.
+ * Clean up temporary files even for pass-by-pass conversions.
+ * Improve handling of commit dependencies and multibranch commits.
+
+ Miscellaneous:
+ * cvs2svn now requires Python version 2.2 or later.
+ * cvs2svn has been broken up into many smaller python modules for clarity.
+
+
 Version 1.3.1 (24 May 2006)
 ---------------------------
 
  Bugs fixed:
  * Fix issue #67: malfunction caused by RCS branches rooted at revision 1.0.
- 
+
 
 Version 1.3.0 (18 August 2005)
 ------------------------------

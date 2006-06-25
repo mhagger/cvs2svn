@@ -83,6 +83,24 @@ class RegexpStrategyRule(StrategyRule):
       return None
 
 
+class UnambiguousUsageRule(StrategyRule):
+  """If a symbol is used unambiguously as a tag/branch, convert it as such."""
+
+  def get_symbol(self, stats):
+    is_tag = stats.tag_create_count > 0
+    is_branch = stats.branch_create_count > 0
+    if is_tag and is_branch:
+      # Can't decide
+      return None
+    elif is_branch:
+      return BranchSymbol(stats.id, stats.name)
+    elif is_tag:
+      return TagSymbol(stats.id, stats.name)
+    else:
+      # The symbol didn't appear at all:
+      return None
+
+
 class SymbolStrategy:
   """A strategy class, used to decide how to convert CVS symbols."""
 
@@ -151,16 +169,8 @@ class StrictSymbolStrategy:
       elif symbol is not None:
         symbols[stats.name] = symbol
       else:
-        # None of the rules covered this symbol; if the situation is
-        # unambiguous, then decide here:
-        is_tag = stats.tag_create_count > 0
-        is_branch = stats.branch_create_count > 0
-        if is_tag and is_branch:
-          mismatches.append(stats)
-        elif is_branch:
-          symbols[stats.name] = BranchSymbol(stats.id, stats.name)
-        else:
-          symbols[stats.name] = TagSymbol(stats.id, stats.name)
+        # None of the rules covered this symbol.
+        mismatches.append(stats)
 
     if mismatches:
       sys.stderr.write(

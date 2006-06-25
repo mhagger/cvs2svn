@@ -55,6 +55,7 @@ from cvs2svn_lib.project import Project
 from cvs2svn_lib.pass_manager import PassManager
 from cvs2svn_lib.pass_manager import InvalidPassError
 from cvs2svn_lib.symbol_strategy import StrictSymbolStrategy
+from cvs2svn_lib.symbol_strategy import UnambiguousUsageRule
 from cvs2svn_lib import property_setters
 from cvs2svn_lib import passes
 
@@ -333,6 +334,8 @@ def main():
           '%s\n'
           'svnadmin could not be executed.  Please ensure that it is\n'
           'installed and/or use the --svnadmin option.' % (e,))
+
+  ctx.symbol_strategy.add_rule(UnambiguousUsageRule())
 
   ctx.svn_property_setters.append(
       property_setters.ExecutablePropertySetter())

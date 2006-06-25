@@ -27,18 +27,64 @@ from cvs2svn_lib.symbol_database import BranchSymbol
 from cvs2svn_lib.symbol_database import TagSymbol
 
 
-def match_regexp_list(regexp_list, s):
-  """Test whether string S matches any of the compiled regexps in
-  REGEXP_LIST."""
+class ExcludeSymbol:
+  """An indication that a symbol should be excluded from the conversion."""
 
-  for regexp in regexp_list:
-    if regexp.match(s):
-      return True
-  return False
+  def __init__(self, id, name):
+    self.id = id
+    self.name = name
+
+
+class StrategyRule:
+  """A single rule that might determine how to convert a symbol."""
+
+  def get_symbol(self, stats):
+    """Return an object describing what to do with the symbol in STATS.
+
+    If this rule applies to the symbol whose statistics are collected
+    in STATS, then return an object of type BranchSymbol, TagSymbol,
+    or ExcludeSymbol as appropriate.  If this rule doesn't apply,
+    return None."""
+
+    raise NotImplementedError
+
+
+class RegexpStrategyRule(StrategyRule):
+  """A Strategy rule that bases its decisions on regexp matches.
+
+  If self.regexp matches a symbol name, return self.action(id, name);
+  otherwise, return None."""
+
+  def __init__(self, pattern, action):
+    """Initialize a RegexpStrategyRule.
+
+    PATTERN is a string that will be treated as a regexp pattern.
+    PATTERN must match a full symbol name for the rule to apply (i.e.,
+    it is anchored at the beginning and end of the symbol name).
+
+    ACTION is the class representing how the symbol should be
+    converted.  It should be one of the classes BranchSymbol,
+    TagSymbol, or ExcludeSymbol.
+
+    If PATTERN matches a symbol name, then get_symbol() returns
+    ACTION(name, id); otherwise it returns None."""
+
+    try:
+      self.regexp = re.compile('^' + pattern + '$')
+    except re.error, e:
+      raise FatalError("'%s' is not a valid regexp." % (value,))
+
+    self.action = action
+
+  def get_symbol(self, stats):
+    if self.regexp.match(stats.name):
+      return self.action(stats.id, stats.name)
+    else:
+      return None
 
 
 class SymbolStrategy:
-  """A strategy class, used to decide how to handle each symbol."""
+  """A strategy class, used to decide how to convert CVS symbols."""
 
   def get_symbols(self, symbol_stats):
     """Return a map { name : Symbol } of symbols to convert.
@@ -54,52 +100,56 @@ class SymbolStrategy:
 class StrictSymbolStrategy:
   """A strategy class implementing the old, strict strategy.
 
-  Any symbols that were sometimes used for branches, sometimes for
-  tags, have to be resolved explicitly by the user via the --exclude,
-  --force-branch, and --force-tags options."""
+  To determine how a symbol is to be converted, first the
+  StrategyRules in self._rules are checked.  The first rule that
+  applies determines how the symbol is to be converted.  If no rule
+  applies but the symbol was used unambiguously (only as a branch or
+  only as a tag), then it is converted accordingly.  It is an error if
+  there are any symbols that are not covered by the rules and are used
+  ambiguously.
+
+  The user can specify explicit rules on the command line via the
+  --exclude, --force-branch, and --force-tag options.  These cause
+  respectively add_exclude(), add_forced_branch(), or add_forced_tag()
+  to be called, which adds a corresponding rule to self._rules."""
 
   def __init__(self):
     """Initialize an instance."""
 
-    # A list of regexps matching the names of symbols that should be
-    # excluded from the conversion.
-    self.excludes = []
-
-    # A list of regexps matching symbols that should be converted as
-    # branches.
-    self.forced_branches = []
-
-    # A list of regexps matching symbols that should be converted as
-    # tags.
-    self.forced_tags = []
-
-  def _compile_re(self, pattern):
-    try:
-      return re.compile('^' + pattern + '$')
-    except re.error, e:
-      raise FatalError("'%s' is not a valid regexp." % (value,))
+    # A list of StrategyRule objects, applied in order to determine
+    # how symbols should be converted.
+    self._rules = []
 
   def add_exclude(self, pattern):
-    self.excludes.append(self._compile_re(pattern))
+    self._rules.append(RegexpStrategyRule(pattern, ExcludeSymbol))
 
   def add_forced_branch(self, pattern):
-    self.forced_branches.append(self._compile_re(pattern))
+    self._rules.append(RegexpStrategyRule(pattern, BranchSymbol))
 
   def add_forced_tag(self, pattern):
-    self.forced_tags.append(self._compile_re(pattern))
+    self._rules.append(RegexpStrategyRule(pattern, TagSymbol))
+
+  def _get_symbol(self, stats):
+    for rule in self._rules:
+      symbol = rule.get_symbol(stats)
+      if symbol is not None:
+        return symbol
+    else:
+      return None
 
   def get_symbols(self, symbol_stats):
     symbols = {}
     mismatches = []
     for stats in symbol_stats:
-      if match_regexp_list(self.excludes, stats.name):
+      symbol = self._get_symbol(stats)
+      if isinstance(symbol, ExcludeSymbol):
         # Don't write it to the database at all.
         pass
-      elif match_regexp_list(self.forced_branches, stats.name):
-        symbols[stats.name] = BranchSymbol(stats.id, stats.name)
-      elif match_regexp_list(self.forced_tags, stats.name):
-        symbols[stats.name] = TagSymbol(stats.id, stats.name)
+      elif symbol is not None:
+        symbols[stats.name] = symbol
       else:
+        # None of the rules covered this symbol; if the situation is
+        # unambiguous, then decide here:
         is_tag = stats.tag_create_count > 0
         is_branch = stats.branch_create_count > 0
         if is_tag and is_branch:

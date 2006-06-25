@@ -63,9 +63,7 @@ class Ctx:
     self.skip_cleanup = False
     self.bdb_txn_nosync = False
     self.fs_type = None
-    self.forced_branches = []
-    self.forced_tags = []
-    self.excludes = []
+    self.symbol_strategy = None
     self.symbol_transforms = []
     self.svn_property_setters = []
 

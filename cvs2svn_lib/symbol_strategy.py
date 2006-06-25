@@ -17,6 +17,7 @@
 """SymbolStrategy classes determine how to convert symbols."""
 
 import sys
+import re
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.set_support import *
@@ -57,19 +58,35 @@ class StrictSymbolStrategy:
   tags, have to be resolved explicitly by the user via the --exclude,
   --force-branch, and --force-tags options."""
 
-  def __init__(self, excludes, forced_branches, forced_tags):
-    """Initialize an instance.
+  def __init__(self):
+    """Initialize an instance."""
 
-    EXCLUDES is a list of regexps matching the names of symbols that
-    should be excluded from the conversion.  FORCED_BRANCHES and
-    FORCED_TAGS are lists of regexps matching symbols that should be
-    converted as branches or tags, respectively.  Symbols not covered
-    by one of these special cases must be unambiguous tags or
-    branches."""
+    # A list of regexps matching the names of symbols that should be
+    # excluded from the conversion.
+    self.excludes = []
 
-    self.excludes = excludes
-    self.forced_branches = forced_branches
-    self.forced_tags = forced_tags
+    # A list of regexps matching symbols that should be converted as
+    # branches.
+    self.forced_branches = []
+
+    # A list of regexps matching symbols that should be converted as
+    # tags.
+    self.forced_tags = []
+
+  def _compile_re(self, pattern):
+    try:
+      return re.compile('^' + pattern + '$')
+    except re.error, e:
+      raise FatalError("'%s' is not a valid regexp." % (value,))
+
+  def add_exclude(self, pattern):
+    self.excludes.append(self._compile_re(pattern))
+
+  def add_forced_branch(self, pattern):
+    self.forced_branches.append(self._compile_re(pattern))
+
+  def add_forced_tag(self, pattern):
+    self.forced_tags.append(self._compile_re(pattern))
 
   def _find_mismatches(self, symbol_stats, symbols):
     """Find all symbols in SYMBOLS that are defined as both tags and branches.

@@ -54,6 +54,7 @@ from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.project import Project
 from cvs2svn_lib.pass_manager import PassManager
 from cvs2svn_lib.pass_manager import InvalidPassError
+from cvs2svn_lib.symbol_strategy import StrictSymbolStrategy
 from cvs2svn_lib import property_setters
 from cvs2svn_lib import passes
 
@@ -137,6 +138,7 @@ def usage():
 def main():
   # Convenience var, so we don't have to keep instantiating this Borg.
   ctx = Ctx()
+  ctx.symbol_strategy = StrictSymbolStrategy()
 
   profiling = False
   start_pass = 1
@@ -218,14 +220,11 @@ def main():
     elif opt == '--encoding':
       ctx.encoding.insert(-1, value)
     elif opt == '--force-branch':
-      ctx.forced_branches.append(re.compile('^' + value + '$'))
+      ctx.symbol_strategy.add_forced_branch(value)
     elif opt == '--force-tag':
-      ctx.forced_tags.append(re.compile('^' + value + '$'))
+      ctx.symbol_strategy.add_forced_tag(value)
     elif opt == '--exclude':
-      try:
-        ctx.excludes.append(re.compile('^' + value + '$'))
-      except re.error, e:
-        raise FatalError("'%s' is not a valid regexp." % (value,))
+      ctx.symbol_strategy.add_exclude(value)
     elif opt == '--mime-types':
       ctx.mime_types_file = value
     elif opt == '--auto-props':

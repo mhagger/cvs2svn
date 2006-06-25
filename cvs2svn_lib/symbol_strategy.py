@@ -88,56 +88,9 @@ class StrictSymbolStrategy:
   def add_forced_tag(self, pattern):
     self.forced_tags.append(self._compile_re(pattern))
 
-  def _find_mismatches(self, symbol_stats, symbols):
-    """Find all symbols in SYMBOLS that are defined as both tags and branches.
-
-    Returns a set of _Stats objects, one for each mismatch."""
-
-    mismatches = set()
-    for symbol in symbols.values():
-      stats = symbol_stats.get_stats(symbol.name)
-      if (stats.tag_create_count > 0
-          and stats.branch_create_count > 0):
-        mismatches.add(stats)
-    return mismatches
-
-  def _check_symbol_mismatches(self, symbol_stats, symbols):
-    """Check for symbols that are defined as both tags and branches.
-
-    Consider the symbols in SYMBOLS.  If any mismatches are found,
-    output error messages describing the problems.  Return True iff
-    any problems are found."""
-
-    Log().quiet("Checking for tag/branch mismatches...")
-
-    mismatches = self._find_mismatches(symbol_stats, symbols)
-
-    def is_not_forced(mismatch):
-      return not (
-          match_regexp_list(self.forced_tags, mismatch.name)
-          or match_regexp_list(self.forced_branches, mismatch.name))
-
-    mismatches = filter(is_not_forced, mismatches)
-    if not mismatches:
-      # No problems found:
-      return False
-
-    sys.stderr.write(
-        error_prefix + ": The following symbols are tags in some files and "
-        "branches in others.\n"
-        "Use --force-tag, --force-branch and/or --exclude to resolve the "
-        "symbols.\n")
-    for stats in mismatches:
-      sys.stderr.write(
-          "    '%s' is a tag in %d files, a branch in "
-          "%d files and has commits in %d files.\n"
-          % (stats.name, stats.tag_create_count,
-             stats.branch_create_count, stats.branch_commit_count))
-
-    return True
-
   def get_symbols(self, symbol_stats):
     symbols = {}
+    mismatches = []
     for stats in symbol_stats:
       if match_regexp_list(self.excludes, stats.name):
         # Don't write it to the database at all.
@@ -146,14 +99,30 @@ class StrictSymbolStrategy:
         symbols[stats.name] = BranchSymbol(stats.id, stats.name)
       elif match_regexp_list(self.forced_tags, stats.name):
         symbols[stats.name] = TagSymbol(stats.id, stats.name)
-      elif stats.branch_create_count > 0:
-        symbols[stats.name] = BranchSymbol(stats.id, stats.name)
       else:
-        symbols[stats.name] = TagSymbol(stats.id, stats.name)
+        is_tag = stats.tag_create_count > 0
+        is_branch = stats.branch_create_count > 0
+        if is_tag and is_branch:
+          mismatches.append(stats)
+        elif is_branch:
+          symbols[stats.name] = BranchSymbol(stats.id, stats.name)
+        else:
+          symbols[stats.name] = TagSymbol(stats.id, stats.name)
 
-    if self._check_symbol_mismatches(symbol_stats, symbols):
+    if mismatches:
+      sys.stderr.write(
+          error_prefix + ": The following symbols are tags in some files and "
+          "branches in others.\n"
+          "Use --force-tag, --force-branch and/or --exclude to resolve the "
+          "symbols.\n")
+      for stats in mismatches:
+        sys.stderr.write(
+            "    '%s' is a tag in %d files, a branch in "
+            "%d files and has commits in %d files.\n"
+            % (stats.name, stats.tag_create_count,
+               stats.branch_create_count, stats.branch_commit_count))
       return None
-
-    return symbols
+    else:
+      return symbols
 
 

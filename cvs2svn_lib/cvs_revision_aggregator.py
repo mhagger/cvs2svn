@@ -98,23 +98,31 @@ class CVSRevisionAggregator:
 
     Ctx()._persistence_manager = PersistenceManager(DB_OPEN_NEW)
 
-  def _get_deps(self, c_rev, deps):
-    """Add the CVSCommits that this C_REV depends on to DEPS, which is
-    a set of CVSCommit objects.  The result includes both direct and
-    indirect dependencies, because it is used to determine what
-    CVSCommit we can be added to.  Return the commit C_REV depends on
-    directly, if any; otherwise return None."""
+  def _get_deps(self, c_rev):
+    """Return the dependencies of C_REV.
 
-    if c_rev.prev_id is None:
-      return None
-    dep = self.pending_revs.get(c_rev.prev_id, None)
-    if dep is None:
-      return None
-    if dep not in deps:
-      deps.add(dep)
+    Return the tuple (MAIN_DEP, DEPS), where MAIN_DEP is the main
+    CVSCommit on which C_REV depends (or None if there is no main
+    dependency) and DEPS is the complete set of CVSCommit objects that
+    C_REV depends on directly or indirectly.  (The result includes
+    both direct and indirect dependencies because it is used to
+    determine what CVSCommit C_REV can be added to.)"""
+
+    main_dep = self.pending_revs.get(c_rev.prev_id)
+    if main_dep is None:
+      return (None, set(),)
+    deps = set([main_dep])
+    # CVSCommits whose revisions' dependencies still have to be examined:
+    todo = set([main_dep])
+    while todo:
+      dep = todo.pop()
       for r in dep.revisions():
-        self._get_deps(r, deps)
-    return dep
+        dep2 = self.pending_revs.get(r.prev_id)
+        if dep2 is not None and dep2 not in deps:
+          deps.add(dep2)
+          todo.add(dep2)
+
+    return (main_dep, deps,)
 
   def _extract_ready_commits(self, timestamp=None):
     """Extract any active commits that expire by TIMESTAMP from
@@ -166,8 +174,7 @@ class CVSRevisionAggregator:
     self._extract_ready_commits(c_rev.timestamp)
 
     # Add this item into the set of still-available commits.
-    deps = set()
-    dep = self._get_deps(c_rev, deps)
+    (dep, deps) = self._get_deps(c_rev)
     cvs_commits = self.cvs_commits.setdefault(c_rev.metadata_id, [])
     # This is pretty silly; it will add the revision to the oldest pending
     # commit. It might be wiser to do time range matching to avoid stretching

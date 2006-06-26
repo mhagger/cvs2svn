@@ -504,6 +504,30 @@ cvs2svn --symbol-transform='([0-9])-(.*):release-\1.\2' -q -s SVN RCS
   </tr>
 
   <tr>
+    <td align="right"><tt>--symbol-default=OPT</tt></td>
+    <td>Specify how to convert ambiguous symbols (i.e., those that
+      appear in the CVS archive as both branches and tags).
+      <tt>OPT</tt> is one of the following:<ul>
+        <li>"<tt>branch</tt>": Treat every ambiguous symbol as
+          a branch.</li>
+
+        <li>"<tt>tag</tt>": Treat every ambiguous symbols as a
+          tag.</li>
+
+        <li>"<tt>heuristic</tt>": Decide how to treat each
+          ambiguous symbol based on whether it was used more often as
+          a branch or tag in CVS.</li>
+
+        <li>"<tt>strict</tt>": No default; every ambiguous
+          symbol has to be resolved manually using
+          <tt>--force-branch</tt>, <tt>--force-tag</tt>, or
+          <tt>--exclude</tt>.  (This is the default behavior.)</li>
+
+      </ul>
+    </td>
+  </tr>
+
+  <tr>
     <td align="right"><tt>--username=NAME</tt></td>
     <td>Use NAME as the author for cvs2svn-synthesized commits (the
       default value is no author at all.</td>

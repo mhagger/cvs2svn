@@ -59,6 +59,10 @@ from cvs2svn_lib.symbol_strategy import ForceBranchRegexpStrategyRule
 from cvs2svn_lib.symbol_strategy import ForceTagRegexpStrategyRule
 from cvs2svn_lib.symbol_strategy import ExcludeRegexpStrategyRule
 from cvs2svn_lib.symbol_strategy import UnambiguousUsageRule
+from cvs2svn_lib.symbol_strategy import BranchIfCommitsRule
+from cvs2svn_lib.symbol_strategy import HeuristicStrategyRule
+from cvs2svn_lib.symbol_strategy import AllBranchRule
+from cvs2svn_lib.symbol_strategy import AllTagRule
 from cvs2svn_lib import property_setters
 from cvs2svn_lib import passes
 
@@ -109,6 +113,8 @@ USAGE: %(progname)s [-v] [-s svn-repos-path] [-p pass] cvs-repos-path
   --force-branch=REGEXP force symbols matching REGEXP to be branches
   --force-tag=REGEXP   force symbols matching REGEXP to be tags
   --exclude=REGEXP     exclude branches and tags matching REGEXP
+  --symbol-default=OPT choose how ambiguous symbols are converted.  OPT is
+                       "branch", "tag", or "heuristic", or "strict" (default)
   --symbol-transform=P:S transform symbol names from P to S where P and S
                        use Python regexp and reference syntax respectively
   --username=NAME      username for cvs2svn-synthesized commits
@@ -154,6 +160,7 @@ def main():
                                  "username=", "existing-svnrepos",
                                  "branches=", "tags=", "encoding=",
                                  "force-branch=", "force-tag=", "exclude=",
+                                 "symbol-default=",
                                  "use-cvs", "mime-types=",
                                  "auto-props=", "auto-props-ignore-case",
                                  "eol-from-mime-type", "no-default-eol",
@@ -229,6 +236,11 @@ def main():
       ctx.symbol_strategy.add_rule(ForceTagRegexpStrategyRule(value))
     elif opt == '--exclude':
       ctx.symbol_strategy.add_rule(ExcludeRegexpStrategyRule(value))
+    elif opt == '--symbol-default':
+      if value not in ['branch', 'tag', 'heuristic', 'strict']:
+        raise FatalError(
+            '%r is not a valid option for --symbol_default.' % (value,))
+      ctx.symbol_strategy_default = value
     elif opt == '--mime-types':
       ctx.mime_types_file = value
     elif opt == '--auto-props':
@@ -339,6 +351,17 @@ def main():
           'installed and/or use the --svnadmin option.' % (e,))
 
   ctx.symbol_strategy.add_rule(UnambiguousUsageRule())
+  if ctx.symbol_strategy_default == 'strict':
+    pass
+  elif ctx.symbol_strategy_default == 'branch':
+    ctx.symbol_strategy.add_rule(AllBranchRule())
+  elif ctx.symbol_strategy_default == 'tag':
+    ctx.symbol_strategy.add_rule(AllTagRule())
+  elif ctx.symbol_strategy_default == 'heuristic':
+    ctx.symbol_strategy.add_rule(BranchIfCommitsRule())
+    ctx.symbol_strategy.add_rule(HeuristicStrategyRule())
+  else:
+    assert False
 
   ctx.svn_property_setters.append(
       property_setters.ExecutablePropertySetter())

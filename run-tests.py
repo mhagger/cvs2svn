@@ -2175,6 +2175,45 @@ def regexp_force_symbols():
      raise svntest.Failure
 
 
+def heuristic_symbol_default():
+  "test 'heuristic' symbol default"
+
+  conv = ensure_conversion(
+      'symbol-mess', args=['--symbol-default=heuristic'])
+  if conv.path_exists('tags', 'MOSTLY_BRANCH') \
+     or not conv.path_exists('branches', 'MOSTLY_BRANCH'):
+     raise svntest.Failure
+  if not conv.path_exists('tags', 'MOSTLY_TAG') \
+     or conv.path_exists('branches', 'MOSTLY_TAG'):
+     raise svntest.Failure
+
+
+def branch_symbol_default():
+  "test 'branch' symbol default"
+
+  conv = ensure_conversion(
+      'symbol-mess', args=['--symbol-default=branch'])
+  if conv.path_exists('tags', 'MOSTLY_BRANCH') \
+     or not conv.path_exists('branches', 'MOSTLY_BRANCH'):
+     raise svntest.Failure
+  if conv.path_exists('tags', 'MOSTLY_TAG') \
+     or not conv.path_exists('branches', 'MOSTLY_TAG'):
+     raise svntest.Failure
+
+
+def tag_symbol_default():
+  "test 'tag' symbol default"
+
+  conv = ensure_conversion(
+      'symbol-mess', args=['--symbol-default=tag'])
+  if not conv.path_exists('tags', 'MOSTLY_BRANCH') \
+     or conv.path_exists('branches', 'MOSTLY_BRANCH'):
+     raise svntest.Failure
+  if not conv.path_exists('tags', 'MOSTLY_TAG') \
+     or conv.path_exists('branches', 'MOSTLY_TAG'):
+     raise svntest.Failure
+
+
 #----------------------------------------------------------------------
 
 ########################################################################
@@ -2259,6 +2298,9 @@ test_list = [ None,
               blocked_excludes,
               unblock_blocked_excludes,
               regexp_force_symbols,
+              heuristic_symbol_default,
+              branch_symbol_default,
+              tag_symbol_default,                   # 80
               ]
 
 if __name__ == '__main__':

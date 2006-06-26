@@ -100,6 +100,16 @@ Force symbols matching \fIregexp\fR to be tags.
 \fB--exclude\fR=\fIregexp\fR
 Exclude branches and tags matching \fIregexp\fR.
 .TP
+\fB--symbol-default\fR=\fIopt\fR
+Specify how to convert ambiguous symbols (those that appear in the CVS
+archive as both branches and tags).  \fIopt\fR must be `branch' (treat
+every ambiguous symbol as a branch), `tag' (treat every ambiguous
+symbol as a tag), `heuristic' (decide how to treat each ambiguous
+symbol based on whether it was used more often as a branch/tag in
+CVS), or `strict' (no default; every ambiguous symbol has to be
+resolved manually using \fB--force-branch\fR, \fB--force-tag\fR,
+or \fB--exclude\fR).
+.TP
 \fB--symbol-transform\fR=\fIP\fR:\fIS\fR
 Transform symbol names from \fIP\fR to \fIS\fR where \fIP\fR and \fIS\fR
 use Python regexp and reference syntax respectively. You may specify any

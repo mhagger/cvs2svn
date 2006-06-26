@@ -122,6 +122,54 @@ class UnambiguousUsageRule(StrategyRule):
       return None
 
 
+class BranchIfCommitsRule(StrategyRule):
+  """If there was ever a commit on the symbol, convert it as a branch."""
+
+  def get_symbol(self, stats):
+    if stats.branch_commit_count > 0:
+      return BranchSymbol(stats.id, stats.name)
+    else:
+      return None
+
+
+class HeuristicStrategyRule(StrategyRule):
+  """Convert symbol based on how often it was used as a branch/tag.
+
+  Whichever happened more often determines how the symbol is
+  converted."""
+
+  def get_symbol(self, stats):
+    if stats.tag_create_count >= stats.branch_create_count:
+      return TagSymbol(stats.id, stats.name)
+    else:
+      return BranchSymbol(stats.id, stats.name)
+
+
+class AllBranchRule(StrategyRule):
+  """Convert all symbols as branches.
+
+  Usually this rule will appear after a list of more careful rules
+  (including a general rule like UnambiguousUsageRule) and will
+  therefore only apply to the symbols not handled earlier."""
+
+  def get_symbol(self, stats):
+    return BranchSymbol(stats.id, stats.name)
+
+
+class AllTagRule(StrategyRule):
+  """Convert all symbols as tags.
+
+  We don't worry about conflicts here; they will be caught later by
+  SymbolStatistics.check_consistency().
+
+  Usually this rule will appear after a list of more careful rules
+  (including a general rule like UnambiguousUsageRule) and will
+  therefore only apply to the symbols not handled earlier."""
+
+  def get_symbol(self, stats):
+    return TagSymbol(stats.id, stats.name)
+
+
 class SymbolStrategy:
   """A strategy class, used to decide how to convert CVS symbols."""
 

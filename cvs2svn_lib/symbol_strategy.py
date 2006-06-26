@@ -49,14 +49,14 @@ class StrategyRule:
     raise NotImplementedError
 
 
-class RegexpStrategyRule(StrategyRule):
+class _RegexpStrategyRule(StrategyRule):
   """A Strategy rule that bases its decisions on regexp matches.
 
   If self.regexp matches a symbol name, return self.action(id, name);
   otherwise, return None."""
 
   def __init__(self, pattern, action):
-    """Initialize a RegexpStrategyRule.
+    """Initialize a _RegexpStrategyRule.
 
     PATTERN is a string that will be treated as a regexp pattern.
     PATTERN must match a full symbol name for the rule to apply (i.e.,
@@ -81,6 +81,27 @@ class RegexpStrategyRule(StrategyRule):
       return self.action(stats.id, stats.name)
     else:
       return None
+
+
+class ForceBranchRegexpStrategyRule(_RegexpStrategyRule):
+  """Force symbols matching pattern to be branches."""
+
+  def __init__(self, pattern):
+    _RegexpStrategyRule.__init__(self, pattern, BranchSymbol)
+
+
+class ForceTagRegexpStrategyRule(_RegexpStrategyRule):
+  """Force symbols matching pattern to be tags."""
+
+  def __init__(self, pattern):
+    _RegexpStrategyRule.__init__(self, pattern, TagSymbol)
+
+
+class ExcludeRegexpStrategyRule(_RegexpStrategyRule):
+  """Exclude symbols matching pattern."""
+
+  def __init__(self, pattern):
+    _RegexpStrategyRule.__init__(self, pattern, ExcludeSymbol)
 
 
 class UnambiguousUsageRule(StrategyRule):
@@ -142,13 +163,13 @@ class StrictSymbolStrategy:
     self._rules.append(rule)
 
   def add_exclude(self, pattern):
-    self.add_rule(RegexpStrategyRule(pattern, ExcludeSymbol))
+    self.add_rule(ExcludeRegexpStrategyRule(pattern))
 
   def add_forced_branch(self, pattern):
-    self.add_rule(RegexpStrategyRule(pattern, BranchSymbol))
+    self.add_rule(ForceBranchRegexpStrategyRule(pattern))
 
   def add_forced_tag(self, pattern):
-    self.add_rule(RegexpStrategyRule(pattern, TagSymbol))
+    self.add_rule(ForceTagRegexpStrategyRule(pattern))
 
   def _get_symbol(self, stats):
     for rule in self._rules:

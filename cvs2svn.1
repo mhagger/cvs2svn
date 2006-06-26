@@ -16,7 +16,11 @@ repository, including such information as date of commit and id of the
 committer.
 .TP
 \fB--help\fR, \fB-h\fR
-Print out usage message and exit with success.
+Print the usage message and exit with success.
+.TP
+\fB--help-passes\fR
+Print the numbers and names of the conversion passes and exit with
+success.
 .TP
 \fB--version\fR
 Print the version number.
@@ -27,39 +31,45 @@ Quiet, print less information while running.
 \fB-v\fR
 Verbose, print more information while running.
 .TP
-\fB-s\fR=\fIpath\fR
+\fB-s\fR \fIpath\fR
 Load CVS repository into the Subversion repository located at PATH. If there
 is no Subversion repository at \fIpath\fR, create a new one.
 .TP
-\fB-p\fR \fIstart\fR[:\fIend\fR]
-Start the program at pass \fIstart\fR and stop it at pass \fIstop\fR, both
-may range from 1 (the default) to 8. For this to work the earlier passes
-must have been completed before on the same CVS repository, and the
-generated data files must be in the current directory. Also, \fIstop\fR can
-be omitted, in this case only the pass specified in \fIstart\fR will be
-executed.
+\fB-p\fR \fIpass\fR
+Execute only pass \fIpass\fR of the conversion.  \fIpass\fR can be
+specified by name or by number (see \fB--help-passes\fR).
+.TP
+\fB-p\fR [\fIstart\fR]:[\fIend\fR]
+Execute passes \fIstart\fR through \fIend\fR of the conversion
+(inclusive).  \fIstart\fR and \fIend\fR can be specified by name or by
+number (see \fB--help-passes\fR).  If \fIstart\fR or \fIend\fR is
+missing, it defaults to the first or last pass, respectively.  For
+this to work the earlier passes must have been completed before on the
+same CVS repository, and the generated data files must be in the
+temporary directory (see \fB--tmpdir\fR).
 .TP
 \fB--existing-svnrepos\fR
-Load into existing SVN repository, instead of creating one. Please note that
-you must own the repository, or at least be in the group which owns it, and
-have group writeable files/directories.
+Load into existing SVN repository, instead of creating a new
+repository.  Please note that you need write permission for the
+repository files.
 .TP
 \fB--dump-only\fR
-Just produce a dumpfile, don't commit to a repos.
+Just produce a dumpfile; don't commit to a repos.
 .TP
 \fB--dumpfile\fR=\fIpath\fR
-Set the \fIpath\fR and optionaly name of the dumpfile. The default is
+Set the \fIpath\fR and optionaly name of the dumpfile.  The default is
 \fIcvs2svn-dump\fR in the current directory.
 .TP
 \fB--tmpdir\fR=\fIpath\fR
-Set the \fIpath\fR to use for temporary data. Default is the current directory.
-.TP
-\fB--profile\fR
-Profile with 'hotshot' (into file \fIcvs2svn.hotshot\fR).
+Set the \fIpath\fR to use for temporary data.  Default is the current
+directory.
 .TP
 \fB--dry-run\fR
 Do not create a repository or a dumpfile; just print the details of what
 cvs2svn would do if it were really converting your repository.
+.TP
+\fB--profile\fR
+Profile with 'hotshot' (into file \fIcvs2svn.hotshot\fR).
 .TP
 \fB--use-cvs\fR
 Use CVS instead of RCS 'co' to extract data (only use this if having
@@ -72,16 +82,16 @@ Path to the the \fIsvnadmin\fR program.
 Convert only trunk commits, not tags nor branches.
 .TP
 \fB--trunk\fR=\fIpath\fR
-Put the trunk (main branch) into the subdirectory \fIpath\fR of the
-Subversion repository (default is \fItrunk\fR).
+Set the top-level path to use for trunk in the Subversion repository.
+The default is \fItrunk\fR.
 .TP
 \fB--branches\fR=\fIpath\fR
-Put branch copies under the subdirectory \fIpath\fR of the Subversion
-repository (default is \fIbranches\fR).
+Set the top-level path to use for branches in the Subversion
+repository.  The default is \fIbranches\fR.
 .TP
 \fB--tags\fR=\fIpath\fR
-Put tag copies under the subdirectory \fIpath\fR of the Subversion
-repository (default is \fItags\fR).
+Set the top-level path to use for tags in the Subversion repository.
+The default is \fItags\fR.
 .TP
 \fB--no-prune\fR
 When all files are deleted from a directory in the Subversion repository,
@@ -89,16 +99,19 @@ don't delete the empty directory (the default is to delete any empty
 directories.
 .TP
 \fB--encoding\fR=\fIencoding\fR
-Set \fIencoding\fR of log messages in CVS repos (default is ascii).
+Use \fIencoding\fR as the encoding of log messages in the CVS
+repository (default is ascii).  If this option is specified multiple
+times, then the encodings will be tried in order.
 .TP
 \fB--force-branch\fR=\fIregexp\fR
-Force symbols matching \fIregexp\fR to be branches.
+Force symbols whose names match \fIregexp\fR to be branches.
 .TP
 \fB--force-tag\fR=\fIregexp\fR
-Force symbols matching \fIregexp\fR to be tags.
+Force symbols whose names match \fIregexp\fR to be tags.
 .TP
 \fB--exclude\fR=\fIregexp\fR
-Exclude branches and tags matching \fIregexp\fR.
+Exclude branches and tags whose names match \fIregexp\fR from the
+conversion.
 .TP
 \fB--symbol-default\fR=\fIopt\fR
 Specify how to convert ambiguous symbols (those that appear in the CVS
@@ -110,11 +123,12 @@ CVS), or `strict' (no default; every ambiguous symbol has to be
 resolved manually using \fB--force-branch\fR, \fB--force-tag\fR,
 or \fB--exclude\fR).
 .TP
-\fB--symbol-transform\fR=\fIP\fR:\fIS\fR
-Transform symbol names from \fIP\fR to \fIS\fR where \fIP\fR and \fIS\fR
-use Python regexp and reference syntax respectively. You may specify any
-number of these options; they will be applied left to right in the order
-given on the command line.
+\fB--symbol-transform\fR=\fIpattern\fR:\fIreplacement\fR
+Transform RCS/CVS symbol names before entering them into Subversion.
+\fIpattern\fR is a Python regexp pattern and \fIreplacement\fR is a
+replacement using Python's regexp reference syntax.  You may specify any
+number of these options; they will be applied in the order given on
+the command line.
 .br
 This option can be useful if you're converting a repository in which the
 developer used directory-wide symbol names like 1_0, 1_1 and 2_1 as a
@@ -124,39 +138,65 @@ encourages this practice).
 \fB--username\fR=\fIname\fR
 Set the default username to \fIname\fR when cvs2svn doesn't have a username
 from the CVS repository to work with.  This happens when a branch or tag is
-created. The default name is "\fIunknown\fR".
+created.  The default is to use no author at all for such commits.
 .TP
 \fB--skip-cleanup\fR
-Prevent the deletion of intermediate files.
+Prevent the deletion of temporary files.
 .TP
 \fB--bdb-txn-nosync\fR
-Pass \fI--bdb-txn-nosync\fR to "svnadmin create".
+Pass \fI--bdb-txn-nosync\fR to "svnadmin create" when creating a new
+repository.
 .TP
 \fB--fs-type\fR
-Pass \fI--fs-type\fR=\fItype\fR to "svnadmin create".
+Pass \fI--fs-type\fR=\fItype\fR to "svnadmin create" when creating a
+new repository.
 .TP
 \fB--cvs-revnums\fR
-Record CVS revision numbers as file properties.  (Note that unless it
-is removed explicitly, the last CVS revision number will remain
-associated with the file even after the file is changed within
-Subversion.)
+Record CVS revision numbers as file properties in the Subversion
+repository.  (Note that unless it is removed explicitly, the last CVS
+revision number will remain associated with the file even after the
+file is changed within Subversion.)
 .TP
 \fB--mime-types\fR=\fIfile\fR
-Specify an apache-style mime.types \fIfile\fR for setting svn:mime-type .
-On \fIDebian GNU/Linux\fR systems, you can have one at \fI/etc/mime.types\fR
-by installing the \fImime-support\fR package.
+Specify an apache-style mime.types \fIfile\fR for setting
+svn:mime-type.
+.TP
+\fB--auto-props\fR=\fIfile\fR
+Specify a file in the format of Subversion's config file, whose
+[auto-props] section can be used to set arbitrary properties on files
+in the Subversion repository based on their filenames.  (The
+[auto-props] section header must be present; other sections of the
+config file, including the enable-auto-props setting, are ignored.)
+Filenames are matched to the filename patterns case-sensitively unless
+the --auto-props-ignore-case option is specified.
+.TP
+\fB--auto-props-ignore-case\fR
+Ignore case when pattern-matching auto-props patterns.
 .TP
 \fB--eol-from-mime-type\fR
-Set svn:eol-style by mime type if known.
+For files that don't have the kb expansion mode but have a known mime
+type, set the eol-style based on the mime type.  For such files, set
+svn:eol-style to "native" if the mime type begins with "text/", and
+leave it unset (i.e., no EOL translation) otherwise.  Files with
+unknown mime types are not affected by this option.  This option has
+no effect unless the \fB--mime-types\fR option is also specified.
 .TP
 \fB--no-default-eol\fR
-Don't set svn:eol-style for non-binary files with undetermined types.
+Files that don't have the kb expansion mode and (if
+\fB--eol-from-mime-type\fR is set) unknown mime type usually have
+their svn:eol-style property to "native".  If this option is
+specified, such files are left with no eol-style (i.e., no EOL
+translation).
 .TP
 \fB--keywords-off\fR
-Don't set svn:keywords on any files (cvs2svn sets svn:keywords to
-"author date id" on non-binary files by default).
+By default, cvs2svn sets svn:keywords on CVS files to "author id date"
+if the mode of the RCS file in question is either kv, kvl or not
+kb.  If you use the --keywords-off switch, cvs2svn will not set
+svn:keywords for any file.  While this will not touch the keywords in
+the contents of your files, Subversion will not expand them.
 .SH FILES
-The current directory is used as scratch space for data files of the form
+The current directory (or the directory specified by \fB--tmpdir\fR)
+is used as scratch space for data files of the form
 \fIcvs2svn-data.*\fR and a dumpfile named \fIcvs2svn-dump\fR.
 .SH AUTHORS
 Main authors are:

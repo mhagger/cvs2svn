@@ -352,19 +352,27 @@ directories) before running your conversion.
 
   <tr>
     <td align="right"><tt>--existing-svnrepos</tt></td>
-    <td>Only load the converted CVS repository into an existing
-      Subversion repository.</td>
+    <td>Load the converted CVS repository into an existing Subversion
+    repository, instead of creating a new repository.</td>
+  </tr>
+
+  <tr>
+    <td align="right"><tt>--dump-only</tt></td>
+    <td>Convert the CVS repository to a Subversion dumpfile instead of
+      a Subversion repository (useful for importing a CVS Repository
+      into an existing Subversion repository).</td>
   </tr>
 
   <tr>
     <td align="right"><tt>--dumpfile=PATH</tt></td>
-    <td>Convert the CVS repository into a Subversion dumpfile at PATH.</td>
+    <td>Set the PATH of the dumpfile. The default is
+    <tt>cvs2svn-dump</tt> in the current directory.</td>
   </tr>
 
   <tr>
     <td align="right"><tt>--tmpdir=PATH</tt></td>
     <td>Use the directory PATH for all of cvs2svn's temporary data
-      (which can be a <i>lot</i> of data.  The default value is the
+      (which can be a <i>lot</i> of data).  The default value is the
       current working directory.</td>
   </tr>
 
@@ -439,45 +447,10 @@ directories) before running your conversion.
   </tr>
 
   <tr>
-    <td align="right"><tt>--symbol-transform=PAT:SUB</tt></td>
-    <td><p>Transform RCS/CVS symbol names before entering them into
-      Subversion. The PATtern and SUBstitution use Python regexp and reference
-      syntax. You may specify any number of these options; they will be
-      applied left to right in the order given on the command line.</p>
-
-      <p>This option can be useful if you're converting a repository in
-      which the developer used directory-wide symbol names like 1_0, 1_1
-      and 2_1 as a kludgy form of release tagging (the C-x v s command
-      in Emacs VC mode encourages this practice).  A command like</p>
-
-<pre>
-cvs2svn --symbol-transform='([0-9])-(.*):release-\1.\2' -q -s SVN RCS
-</pre>
-
-      <p>will transform a local CVS repository into a local SVN repository,
-      performing the following sort of mappings of RCS symbolic names to
-      SVN tags:</p>
-
-<pre>
-1-0 &rarr; release-1.0
-1-1 &rarr; release-1.1
-2-0 &rarr; release-2.0
-</pre>
-    </td>
-  </tr>
-
-  <tr>
     <td align="right"><tt>--no-prune</tt></td>
     <td>When all files are deleted from a directory in the Subversion
       repository, don't delete the empty directory (the default is to
       delete any empty directories.</td>
-  </tr>
-
-  <tr>
-    <td align="right"><tt>--dump-only</tt></td>
-    <td>Convert the CVS repository to a Subversion dumpfile instead of
-      a Subversion repository (useful for importing a CVS Repository
-      into an existing Subversion repository).</td>
   </tr>
 
   <tr>
@@ -488,19 +461,19 @@ cvs2svn --symbol-transform='([0-9])-(.*):release-\1.\2' -q -s SVN RCS
 
   <tr>
     <td align="right"><tt>--force-branch=REGEXP</tt></td>
-    <td>Force symbols matching REGEXP to be branches.</td>
+    <td>Force symbols whose names match REGEXP to be branches.</td>
   </tr>
 
   <tr>
     <td align="right"><tt>--force-tag=REGEXP</tt></td>
-    <td>Force symbols matching REGEXP to be tags.  This will cause an
-      error if such a symbol has commits on it.</td>
+    <td>Force symbols whose names match REGEXP to be tags.  This will
+      cause an error if such a symbol has commits on it.</td>
   </tr>
 
   <tr>
     <td align="right"><tt>--exclude=REGEXP</tt></td>
-    <td>Exclude branches and tags matching REGEXP from
-      conversion.</td>
+    <td>Exclude branches and tags whose names match REGEXP from
+      the conversion.</td>
   </tr>
 
   <tr>
@@ -524,6 +497,35 @@ cvs2svn --symbol-transform='([0-9])-(.*):release-\1.\2' -q -s SVN RCS
           <tt>--exclude</tt>.  (This is the default behavior.)</li>
 
       </ul>
+    </td>
+  </tr>
+
+  <tr>
+    <td align="right"><tt>--symbol-transform=PAT:SUB</tt></td>
+    <td><p>Transform RCS/CVS symbol names before entering them into
+      Subversion.  PAT is a Python regexp pattern and SUB is a
+      replacement pattern using Python's reference syntax.  You may
+      specify any number of these options; they will be
+      applied in the order given on the command line.</p>
+
+      <p>This option can be useful if you're converting a repository in
+      which the developer used directory-wide symbol names like 1_0, 1_1
+      and 2_1 as a kludgy form of release tagging (the C-x v s command
+      in Emacs VC mode encourages this practice).  A command like</p>
+
+<pre>
+cvs2svn --symbol-transform='([0-9])-(.*):release-\1.\2' -q -s SVN RCS
+</pre>
+
+      <p>will transform a local CVS repository into a local SVN repository,
+      performing the following sort of mappings of RCS symbolic names to
+      SVN tags:</p>
+
+<pre>
+1-0 &rarr; release-1.0
+1-1 &rarr; release-1.1
+2-0 &rarr; release-2.0
+</pre>
     </td>
   </tr>
 
@@ -554,7 +556,7 @@ cvs2svn --symbol-transform='([0-9])-(.*):release-\1.\2' -q -s SVN RCS
   <tr>
     <td align="right"><tt>--cvs-revnums</tt></td>
     <td>Record CVS revision numbers as file properties in the
-      Subversion repository/dumpfile.  (Note that unless it is removed
+      Subversion repository.  (Note that unless it is removed
       explicitly, the last CVS revision number will remain associated
       with the file even after the file is changed within
       Subversion.)</td>

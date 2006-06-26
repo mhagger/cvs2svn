@@ -92,11 +92,12 @@ USAGE: %(progname)s [-v] [-s svn-repos-path] [-p pass] cvs-repos-path
   -p [START]:[END]     execute passes START through END, inclusive
                        (PASS, START, and END can be pass names or numbers)
   --existing-svnrepos  load into existing SVN repository
-  --dumpfile=PATH      name of intermediate svn dumpfile
+  --dump-only          just produce a dumpfile; don't commit to a repos
+  --dumpfile=PATH      name dumpfile to output
   --tmpdir=PATH        directory to use for tmp data (default to cwd)
-  --profile            profile with 'hotshot' (into file cvs2svn.hotshot)
   --dry-run            do not create a repository or a dumpfile;
                        just print what would happen.
+  --profile            profile with 'hotshot' (into file cvs2svn.hotshot)
   --use-cvs            use CVS instead of RCS 'co' to extract data
                        (only use this if having problems with RCS)
   --svnadmin=PATH      path to the svnadmin program
@@ -105,7 +106,6 @@ USAGE: %(progname)s [-v] [-s svn-repos-path] [-p pass] cvs-repos-path
   --branches=PATH      path for branches (default: %(branches_base)s)
   --tags=PATH          path for tags (default: %(tags_base)s)
   --no-prune           don't prune empty directories
-  --dump-only          just produce a dumpfile, don't commit to a repos
   --encoding=ENC       encoding of paths and log messages in CVS repos
                        Multiple of these options may be passed, where they
                        will be treated as an ordered list of encodings to
@@ -122,11 +122,11 @@ USAGE: %(progname)s [-v] [-s svn-repos-path] [-p pass] cvs-repos-path
   --bdb-txn-nosync     pass --bdb-txn-nosync to "svnadmin create"
   --fs-type=TYPE       pass --fs-type=TYPE to "svnadmin create"
   --cvs-revnums        record CVS revision numbers as file properties
+  --mime-types=FILE    specify an apache-style mime.types file for
+                       setting svn:mime-type
   --auto-props=FILE    set file properties from the auto-props section
                        of a file in svn config format
   --auto-props-ignore-case Ignore case when matching auto-props patterns
-  --mime-types=FILE    specify an apache-style mime.types file for
-                       setting svn:mime-type
   --eol-from-mime-type set svn:eol-style from mime type if known
   --no-default-eol     don't set svn:eol-style to 'native' for
                        non-binary files with undetermined mime types

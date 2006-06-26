@@ -162,15 +162,6 @@ class StrictSymbolStrategy:
   def add_rule(self, rule):
     self._rules.append(rule)
 
-  def add_exclude(self, pattern):
-    self.add_rule(ExcludeRegexpStrategyRule(pattern))
-
-  def add_forced_branch(self, pattern):
-    self.add_rule(ForceBranchRegexpStrategyRule(pattern))
-
-  def add_forced_tag(self, pattern):
-    self.add_rule(ForceTagRegexpStrategyRule(pattern))
-
   def _get_symbol(self, stats):
     for rule in self._rules:
       symbol = rule.get_symbol(stats)

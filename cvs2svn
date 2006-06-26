@@ -55,6 +55,9 @@ from cvs2svn_lib.project import Project
 from cvs2svn_lib.pass_manager import PassManager
 from cvs2svn_lib.pass_manager import InvalidPassError
 from cvs2svn_lib.symbol_strategy import StrictSymbolStrategy
+from cvs2svn_lib.symbol_strategy import ForceBranchRegexpStrategyRule
+from cvs2svn_lib.symbol_strategy import ForceTagRegexpStrategyRule
+from cvs2svn_lib.symbol_strategy import ExcludeRegexpStrategyRule
 from cvs2svn_lib.symbol_strategy import UnambiguousUsageRule
 from cvs2svn_lib import property_setters
 from cvs2svn_lib import passes
@@ -221,11 +224,11 @@ def main():
     elif opt == '--encoding':
       ctx.encoding.insert(-1, value)
     elif opt == '--force-branch':
-      ctx.symbol_strategy.add_forced_branch(value)
+      ctx.symbol_strategy.add_rule(ForceBranchRegexpStrategyRule(value))
     elif opt == '--force-tag':
-      ctx.symbol_strategy.add_forced_tag(value)
+      ctx.symbol_strategy.add_rule(ForceTagRegexpStrategyRule(value))
     elif opt == '--exclude':
-      ctx.symbol_strategy.add_exclude(value)
+      ctx.symbol_strategy.add_rule(ExcludeRegexpStrategyRule(value))
     elif opt == '--mime-types':
       ctx.mime_types_file = value
     elif opt == '--auto-props':

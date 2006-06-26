@@ -110,9 +110,10 @@ class CVSRevisionAggregator:
     dep = self.pending_revs.get(c_rev.prev_id, None)
     if dep is None:
       return None
-    deps.add(dep)
-    for r in dep.revisions():
-      self._get_deps(r, deps)
+    if dep not in deps:
+      deps.add(dep)
+      for r in dep.revisions():
+        self._get_deps(r, deps)
     return dep
 
   def _extract_ready_commits(self, timestamp=None):

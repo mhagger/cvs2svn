@@ -109,7 +109,7 @@ class UnambiguousUsageRule(StrategyRule):
 
   def get_symbol(self, stats):
     is_tag = stats.tag_create_count > 0
-    is_branch = stats.branch_create_count > 0
+    is_branch = stats.branch_create_count > 0 or stats.branch_commit_count > 0
     if is_tag and is_branch:
       # Can't decide
       return None

@@ -2161,6 +2161,26 @@ def unblock_blocked_excludes():
                             '--exclude=BLOCKING_%s' % blocker]))
 
 
+def regexp_force_symbols():
+  "force symbols via regular expressions"
+
+  conv = ensure_conversion(
+      'symbol-mess',
+      args=['--force-branch=MOST.*_BRANCH', '--force-tag=MOST.*_TAG'])
+  if conv.path_exists('tags', 'BRANCH') \
+     or not conv.path_exists('branches', 'BRANCH'):
+     raise svntest.Failure
+  if not conv.path_exists('tags', 'TAG') \
+     or conv.path_exists('branches', 'TAG'):
+     raise svntest.Failure
+  if conv.path_exists('tags', 'MOSTLY_BRANCH') \
+     or not conv.path_exists('branches', 'MOSTLY_BRANCH'):
+     raise svntest.Failure
+  if not conv.path_exists('tags', 'MOSTLY_TAG') \
+     or conv.path_exists('branches', 'MOSTLY_TAG'):
+     raise svntest.Failure
+
+
 #----------------------------------------------------------------------
 
 ########################################################################
@@ -2244,6 +2264,7 @@ test_list = [ None,
               commit_blocks_tags,
               blocked_excludes,
               unblock_blocked_excludes,
+              regexp_force_symbols,
               ]
 
 if __name__ == '__main__':

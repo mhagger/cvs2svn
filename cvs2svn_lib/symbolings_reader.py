@@ -67,7 +67,7 @@ class SymbolingsReader:
 
     # It's possible to have a branch start with a file that was added
     # on a branch
-    if self.offsets.has_key(symbolic_name):
+    if symbolic_name in self.offsets:
       # set our read offset for self.symbolings to the offset for
       # symbolic_name
       self.symbolings.seek(self.offsets[symbolic_name])

@@ -77,7 +77,7 @@ class MimeMapper(SVNPropertySetter):
         continue
       type = extensions.pop(0)
       for ext in extensions:
-        if self.mappings.has_key(ext) and self.mappings[ext] != type:
+        if ext in self.mappings and self.mappings[ext] != type:
           sys.stderr.write("%s: ambiguous MIME mapping for *.%s (%s or %s)\n"
                            % (warning_prefix, ext, self.mappings[ext], type))
         self.mappings[ext] = type
@@ -170,7 +170,7 @@ class AutoPropsPropertySetter(SVNPropertySetter):
     for pattern in self.patterns:
       if pattern.match(basename):
         for (key,value) in pattern.propdict.items():
-          if propdict.has_key(key):
+          if key in propdict:
             if propdict[key] != value:
               Log().warn(
                   "Contradictory values set for property '%s' for file %s."
@@ -183,7 +183,7 @@ class AutoPropsPropertySetter(SVNPropertySetter):
   def set_properties(self, s_item):
     propdict = self.get_propdict(s_item.c_rev.cvs_path)
     for (k,v) in propdict.items():
-      if s_item.svn_props.has_key(k):
+      if k in s_item.svn_props:
         if s_item.svn_props[k] != v:
           Log().warn(
               "Property '%s' already set to %r for file %s; "
@@ -198,7 +198,7 @@ class BinaryFileDefaultMimeTypeSetter(SVNPropertySetter):
   set, set it to 'application/octet-stream'."""
 
   def set_properties(self, s_item):
-    if not s_item.svn_props.has_key('svn:mime-type') \
+    if 'svn:mime-type' not in s_item.svn_props \
            and s_item.c_rev.cvs_file.mode == 'b':
       s_item.svn_props['svn:mime-type'] = 'application/octet-stream'
 
@@ -212,7 +212,7 @@ class EOLStyleFromMimeTypeSetter(SVNPropertySetter):
   force it to remain unset.  See also issue #39."""
 
   def set_properties(self, s_item):
-    if not s_item.svn_props.has_key('svn:eol-style') \
+    if 'svn:eol-style' not in s_item.svn_props \
        and s_item.svn_props.get('svn:mime-type', None) is not None:
       if s_item.svn_props['svn:mime-type'].startswith("text/"):
         s_item.svn_props['svn:eol-style'] = 'native'
@@ -229,7 +229,7 @@ class DefaultEOLStyleSetter(SVNPropertySetter):
     self.value = value
 
   def set_properties(self, s_item):
-    if not s_item.svn_props.has_key('svn:eol-style'):
+    if 'svn:eol-style' not in s_item.svn_props:
       s_item.svn_props['svn:eol-style'] = self.value
 
 
@@ -244,7 +244,7 @@ class KeywordsPropertySetter(SVNPropertySetter):
     self.value = value
 
   def set_properties(self, s_item):
-    if not s_item.svn_props.has_key('svn:keywords') \
+    if 'svn:keywords' not in s_item.svn_props \
            and s_item.c_rev.cvs_file.mode in [None, 'kv', 'kvl']:
       s_item.svn_props['svn:keywords'] = self.value
 

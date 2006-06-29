@@ -129,7 +129,7 @@ class SVNRepositoryMirror:
     """Returns the node contents for KEY which may refer to either
     self.nodes_db or self.new_nodes."""
 
-    if self.new_nodes.has_key(key):
+    if key in self.new_nodes:
       return self.new_nodes[key]
     else:
       return self.nodes_db[key]
@@ -225,7 +225,7 @@ class SVNRepositoryMirror:
     contents PARENT_CONTENTS.  Do nothing if COMPONENT does not exist
     in PARENT_CONTENTS."""
 
-    if parent_contents.has_key(component):
+    if component in parent_contents:
       del parent_contents[component]
       self._invoke_delegates('delete_path',
                              path_join(parent_path, component))
@@ -297,7 +297,7 @@ class SVNRepositoryMirror:
     dest_parent_key, dest_parent_contents = \
                    self._open_writable_node(dest_parent, False)
 
-    if dest_parent_contents.has_key(dest_basename):
+    if dest_basename in dest_parent_contents:
       msg = "Attempt to add path '%s' to repository mirror " % dest_path
       msg += "when it already exists in the mirror."
       raise self.SVNRepositoryMirrorPathExistsError, msg
@@ -439,10 +439,10 @@ class SVNRepositoryMirror:
       # Delete the entries in DEST_ENTRIES that are not in src_entries.
       delete_list = [ ]
       for entry in dest_entries:
-        if not src_entries.has_key(entry):
+        if entry not in src_entries:
           delete_list.append(entry)
       if delete_list:
-        if not self.new_nodes.has_key(dest_key):
+        if dest_key not in self.new_nodes:
           dest_key, dest_entries = self._open_writable_node(dest_path, True)
         # Sort the delete list to get "diffable" dumpfiles.
         delete_list.sort()

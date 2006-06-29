@@ -592,7 +592,7 @@ def ensure_conversion(name, error_re=None, passbypass=None,
 
   conv_id = make_conversion_id(name, args, passbypass)
 
-  if not already_converted.has_key(conv_id):
+  if conv_id not in already_converted:
     try:
       # Run the conversion and store the result for the rest of this
       # session:

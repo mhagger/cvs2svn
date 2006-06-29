@@ -68,7 +68,7 @@ class SymbolicNameFillingGuide:
     # Walk down the path, one node at a time.
     node = self._node_tree
     for component in svn_path.split('/'):
-      if node.has_key(component):
+      if component in node:
         node = node[component]
       else:
         old_node = node

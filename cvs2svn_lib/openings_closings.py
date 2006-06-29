@@ -148,7 +148,7 @@ class SymbolingsLogger:
     with SVN_REVNUM as the closing revision number."""
 
     path = c_rev.cvs_path
-    if self.open_paths_with_default_branches.has_key(path):
+    if path in self.open_paths_with_default_branches:
       # log each symbol as a closing
       for name in self.open_paths_with_default_branches[path]:
         self._log(name, svn_revnum, c_rev.cvs_file, None, CLOSING)
@@ -193,7 +193,7 @@ class OpeningsClosingsMap:
       self.things[svn_path] = SVNRevisionRange(svn_revnum)
     # Only log a closing if we've already registered the opening for that
     # path.
-    elif type == CLOSING and self.things.has_key(svn_path):
+    elif type == CLOSING and svn_path in self.things:
       self.things[svn_path].add_closing(svn_revnum)
 
   def is_empty(self):

@@ -44,6 +44,10 @@
     contain both repo/path/file.txt,v and
     repo/path/Attic/file.txt,v".  What can I do?</a></li>
 
+  <li><a href="#rcsmissing">Using cvs2svn 1.3.x, I get an error "The
+    command '['co', '-q', '-x,v', '-p1.1', '-kk',
+    '/home/cvsroot/myfile,v']' failed" in pass 8.</a></li>
+
 </ol>
 
 <hr />
@@ -301,6 +305,18 @@ repository--always work on a copy of your repository.</p>
 
 </ol>
 
+
+<h3><a name="rcsmissing" title="#installrcs">Using cvs2svn 1.3.x, I
+    get an error "The command '['co', '-q', '-x,v', '-p1.1', '-kk',
+    '/home/cvsroot/myfile,v']' failed" in pass 8.</a></h3>
+
+<p>By default, cvs2svn uses the "co" program from RCS to read the
+contents of files in your archive.  (See the <a
+href="cvs2svn.html#reqs">requirements</a> section of the
+documentation.)  The solution to this problem is either to install
+RCS, or to ensure that CVS is installed and use cvs2svn's
+<a href="cvs2svn.html#use-cvs"><tt>--use-cvs</tt></a> option.
+</p>
 
 </div>
 </body>

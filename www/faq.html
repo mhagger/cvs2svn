@@ -305,6 +305,15 @@ repository--always work on a copy of your repository.</p>
 
 </ol>
 
+<p>If you run cvs2svn on a case-insensitive operating system, it is
+possible to get this error even if the filename of the file in
+Attic has different case than the one out of the Attic.  This could
+happen, for example, if the CVS repository was served from a
+case-sensitive operating system at some time.  A workaround for this
+problem is to copy the CVS repository to a case-sensitive operating
+system and convert it there.
+</p>
+
 
 <h3><a name="rcsmissing" title="#installrcs">Using cvs2svn 1.3.x, I
     get an error "The command '['co', '-q', '-x,v', '-p1.1', '-kk',

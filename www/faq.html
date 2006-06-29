@@ -64,7 +64,7 @@ example:
 <ol>
   <li>If the svn repository doesn't already exist, create it:
     <pre>
-      svnadmin create file:///path/to/svnrepos
+      svnadmin create /path/to/svnrepos
     </pre></li>
 
   <li>Remember to <b>Make a backup</b> before starting.  Never run
@@ -92,7 +92,7 @@ example:
 
       # Use "svnadmin load" to load the dumpfile.
       $ cd ~/svndump
-      $ svnadmin --parent-dir projectA load /path/to/svnrepo &lt; cvs2svn-dump
+      $ svnadmin --parent-dir projectA load /path/to/svnrepos &lt; cvs2svn-dump
     </pre></li>
 
   <li>Repeat steps 3 and 4 for each module you want to convert.</li>

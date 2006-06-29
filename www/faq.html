@@ -21,7 +21,14 @@
 
 <ol>
 
-  <li><a href="#oneatatime">How can I convert my CVS repository one module at a time?</a></li>
+  <li><a href="#oneatatime">How can I convert my CVS repository one
+    module at a time?</a></li>
+
+  <li><a href="#partialconversion">How can I convert part of a CVS
+    repository?</a></li>
+
+  <li><a href="#onetoone">How can I convert separate projects in my
+    CVS repository into a single Subversion repository?</a></li>
 
   <li><a href="#inverted">How can I convert project <tt>foo</tt> so
     that <tt>trunk/tags/branches</tt> are inside of
@@ -43,22 +50,79 @@
 
 <h2>How-to:</h2>
 
-<h3><a name="oneatatime" title="#oneatatime">How can I convert my CVS repository one module at a time?</a></h3>
+<h3><a name="oneatatime" title="#oneatatime">How can I convert my CVS
+repository one module at a time?</a></h3>
 
 <p>If you need to convert certain CVS modules (in one large
-repository) to Subversion
-<b>now</b> and other modules <b>later</b>, you may want to convert
-your repository one module at a time.  This situation is typically
-encountered in large organizations where each project has a separate
-lifecycle and schedule, and a one-step conversion process is not
-practical.
+repository) to Subversion <b>now</b> and other modules <b>later</b>,
+you may want to convert your repository one module at a time.  This
+situation is typically encountered in large organizations where each
+project has a separate lifecycle and schedule, and a one-step
+conversion process is not practical.
 </p>
 
-<p>To incrementally migrate modules contained within a CVS repository
-to Subversion you will need to use cvs2svn to create a "dumpfile".
-Then, using <tt>svnadmin</tt> you will load the dumpfile into a
-project directory created within the Subversion repository.  For
-example:
+<p>First you have to decide whether you want to put your converted
+projects into a single Subversion repositories or multiple ones.  This
+decision mostly depends on the degree of coupling between the projects
+and is beyond the scope of this FAQ.  See <a
+href="http://svnbook.red-bean.com/en/1.2/svn.reposadmin.projects.html#svn.reposadmin.projects.chooselayout">the
+Subversion book</a> for a discussion of repository organization.
+</p>
+
+<p>If you decide to convert your projects into separate Subversion
+repositories, then please follow the instructions in <a
+href="#partialconversion">How can I convert part of a CVS
+repository?</a> once for each repository.
+
+<p>If you decide to put more than one CVS project into a single
+Subversion repository, then please follow the instructions in <a
+href="#onetoone">How can I convert separate projects in my CVS
+repository into a single Subversion repository?</a>.
+</p>
+
+
+<h3><a name="partialconversion" title="#partialconversion">How can I
+convert part of a CVS repository?</a></h3>
+
+<p>This is easy: simply run cvs2svn normally, passing it the path of
+the project subdirectory within the CVS repository.  Since cvs2svn
+ignores any files outside of the path it is given, other projects
+within the CVS repository will be excluded from the conversion.
+</p>
+
+<p>Example: You have a CVS repository at path <tt>/path/cvsrepo</tt>
+with projects in subdirectories <tt>/path/cvsrepo/foo</tt> and
+<tt>/path/cvsrepo/bar</tt>, and you want to create a new Subversion
+repository at <tt>/path/foo-svn</tt> that includes only the
+<tt>foo</tt> project:
+
+<pre>
+    $ cvs2svn -s /path/foo-svn /path/cvsrepo/foo
+</pre>
+
+</p>
+
+
+<h3><a name="onetoone" title="#onetoone">How can I convert separate
+projects in my CVS repository into a single Subversion
+repository?</a></h3>
+
+<p>To convert multiple projects from a single CVS repository into a
+single Subversion repository, then you have to use cvs2svn once for
+each project, storing the output into a "dumpfile".  Then you use
+<tt>svnadmin</tt> to load each dumpfile, one after the other, into a
+project directory created within the Subversion repository.
+</p>
+
+<p><b>NOTE:</b> importing projects one at a time
+into a single Subversion repository will likely break date-based range
+commands (e.g. <tt>svn diff -r {2002-02-17:2002-03-18}</tt>) since
+Subversion does a binary search through the repository to look for
+dates.  While this is not the end of the world, it can be a minor
+inconvenience.
+</p>
+
+<p>Example:
 </p>
 
 <ol>
@@ -100,8 +164,8 @@ example:
 </ol>
 
 
-<h3><a name="inverted" title="#inverted">How can I convert project <tt>foo</tt> so
-    that <tt>trunk/tags/branches</tt> are inside of
+<h3><a name="inverted" title="#inverted">How can I convert project
+    <tt>foo</tt> so that <tt>trunk/tags/branches</tt> are inside of
     <tt>foo</tt>?</a></h3>
 
   <p>Given a CVS repository with the layout:</p>

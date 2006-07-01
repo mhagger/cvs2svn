@@ -52,12 +52,12 @@ class SymbolDatabase:
   whole database is read into memory upon construction."""
 
   def __init__(self):
-    self._names = {}
+    self._symbols_by_name = {}
     db = PDatabase(
         artifact_manager.get_temp_file(config.SYMBOL_DB), DB_OPEN_READ)
     for name in db.keys():
       symbol = db[name]
-      self._names[name] = symbol
+      self._symbols_by_name[name] = symbol
 
   def get_symbol(self, name):
     """Return the symbol instance with name NAME.
@@ -65,10 +65,10 @@ class SymbolDatabase:
     Return None if there is no such instance (for example, if NAME is
     being excluded from the conversion)."""
 
-    return self._names.get(name)
+    return self._symbols_by_name.get(name)
 
   def __contains__(self, name):
-    return name in self._names
+    return name in self._symbols_by_name
 
   def collate_symbols(self, names):
     """Given an iterable of symbol, divide them into branches and tags.

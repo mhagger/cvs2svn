@@ -177,21 +177,13 @@ class SymbolStrategy:
     raise NotImplementedError
 
 
-class StrictSymbolStrategy:
-  """A strategy class implementing the old, strict strategy.
+class RuleBasedSymbolStrategy:
+  """A strategy that uses StrategyRules to decide what to do with a symbol.
 
-  To determine how a symbol is to be converted, first the
-  StrategyRules in self._rules are checked.  The first rule that
-  applies determines how the symbol is to be converted.  If no rule
-  applies but the symbol was used unambiguously (only as a branch or
-  only as a tag), then it is converted accordingly.  It is an error if
-  there are any symbols that are not covered by the rules and are used
-  ambiguously.
-
-  The user can specify explicit rules on the command line via the
-  --exclude, --force-branch, and --force-tag options.  These cause
-  respectively add_exclude(), add_forced_branch(), or add_forced_tag()
-  to be called, which adds a corresponding rule to self._rules."""
+  To determine how a symbol is to be converted, first check the
+  StrategyRules in self._rules.  The first rule that applies
+  determines how the symbol is to be converted.  It is an error if
+  there are any symbols that are not covered by the rules."""
 
   def __init__(self):
     """Initialize an instance."""

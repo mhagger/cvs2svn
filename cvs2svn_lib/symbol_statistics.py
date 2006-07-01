@@ -283,7 +283,8 @@ class SymbolStatistics:
     SYMBOLS is an iterable of Symbol objects indicating how each name
     is to be converted.  Return True iff any problems were detected."""
 
-    # Create a map { symbol_name : Symbol }:
+    # Create a map { symbol_name : Symbol } including only
+    # non-excluded symbols:
     symbols_by_name = {}
     for symbol in symbols:
       if not isinstance(symbol, ExcludedSymbol):

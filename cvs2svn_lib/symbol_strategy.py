@@ -25,14 +25,7 @@ from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.symbol_database import BranchSymbol
 from cvs2svn_lib.symbol_database import TagSymbol
-
-
-class ExcludeSymbol:
-  """An indication that a symbol should be excluded from the conversion."""
-
-  def __init__(self, id, name):
-    self.id = id
-    self.name = name
+from cvs2svn_lib.symbol_database import ExcludedSymbol
 
 
 class StrategyRule:
@@ -43,7 +36,7 @@ class StrategyRule:
 
     If this rule applies to the symbol whose statistics are collected
     in STATS, then return an object of type BranchSymbol, TagSymbol,
-    or ExcludeSymbol as appropriate.  If this rule doesn't apply,
+    or ExcludedSymbol as appropriate.  If this rule doesn't apply,
     return None."""
 
     raise NotImplementedError
@@ -64,7 +57,7 @@ class _RegexpStrategyRule(StrategyRule):
 
     ACTION is the class representing how the symbol should be
     converted.  It should be one of the classes BranchSymbol,
-    TagSymbol, or ExcludeSymbol.
+    TagSymbol, or ExcludedSymbol.
 
     If PATTERN matches a symbol name, then get_symbol() returns
     ACTION(name, id); otherwise it returns None."""
@@ -101,7 +94,7 @@ class ExcludeRegexpStrategyRule(_RegexpStrategyRule):
   """Exclude symbols matching pattern."""
 
   def __init__(self, pattern):
-    _RegexpStrategyRule.__init__(self, pattern, ExcludeSymbol)
+    _RegexpStrategyRule.__init__(self, pattern, ExcludedSymbol)
 
 
 class UnambiguousUsageRule(StrategyRule):
@@ -223,7 +216,7 @@ class StrictSymbolStrategy:
     mismatches = []
     for stats in symbol_stats:
       symbol = self._get_symbol(stats)
-      if isinstance(symbol, ExcludeSymbol):
+      if isinstance(symbol, ExcludedSymbol):
         # Don't write it to the database at all.
         pass
       elif symbol is not None:

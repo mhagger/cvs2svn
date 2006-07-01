@@ -45,6 +45,13 @@ class TagSymbol(Symbol):
     return 'Tag %r <%x>' % (self.name, self.id,)
 
 
+class ExcludedSymbol(Symbol):
+  def __str__(self):
+    """For convenience only.  The format is subject to change at any time."""
+
+    return 'ExcludedSymbol %r <%x>' % (self.name, self.id,)
+
+
 class SymbolDatabase:
   """Read-only access to symbol database.
 

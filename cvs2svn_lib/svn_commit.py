@@ -26,6 +26,7 @@ from cvs2svn_lib.common import OP_CHANGE
 from cvs2svn_lib.common import OP_DELETE
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.log import Log
+from cvs2svn_lib.symbol_database import BranchSymbol
 from cvs2svn_lib.symbol_database import TagSymbol
 
 
@@ -292,6 +293,7 @@ class SVNSymbolCommit(SVNCommit):
     if isinstance(symbol, TagSymbol):
       type = 'tag'
     else:
+      assert isinstance(symbol, BranchSymbol)
       type = 'branch'
 
     # In Python 2.2.3, we could use textwrap.fill().  Oh well :-).

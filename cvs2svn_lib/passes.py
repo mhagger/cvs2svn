@@ -39,6 +39,7 @@ from cvs2svn_lib.database import DB_OPEN_READ
 from cvs2svn_lib.database import DB_OPEN_WRITE
 from cvs2svn_lib.cvs_file_database import CVSFileDatabase
 from cvs2svn_lib.metadata_database import MetadataDatabase
+from cvs2svn_lib.symbol_database import ExcludedSymbol
 from cvs2svn_lib.symbol_database import SymbolDatabase
 from cvs2svn_lib.symbol_database import create_symbol_database
 from cvs2svn_lib.line_of_development import Branch
@@ -238,8 +239,10 @@ class ResyncRevsPass(Pass):
       c_rev = cvs_items_db[c_rev_id]
 
       # Skip this entire revision if it's on an excluded branch
-      if isinstance(c_rev.lod, Branch) and c_rev.lod.name not in symbol_db:
-        continue
+      if isinstance(c_rev.lod, Branch):
+        symbol = symbol_db.get_symbol(c_rev.lod.name)
+        if isinstance(symbol, ExcludedSymbol):
+          continue
 
       if c_rev.prev_id is not None:
         prev_c_rev = cvs_items_db[c_rev.prev_id]

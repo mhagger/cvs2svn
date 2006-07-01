@@ -30,6 +30,7 @@ from cvs2svn_lib.database import Database
 from cvs2svn_lib.database import SDatabase
 from cvs2svn_lib.database import DB_OPEN_NEW
 from cvs2svn_lib.database import DB_OPEN_READ
+from cvs2svn_lib.symbol_database import BranchSymbol
 from cvs2svn_lib.symbol_database import TagSymbol
 from cvs2svn_lib.symbolings_reader import SymbolingsReader
 from cvs2svn_lib.fill_source import FillSource
@@ -328,6 +329,7 @@ class SVNRepositoryMirror:
       if isinstance(symbol, TagSymbol):
         dest_prefix = Ctx().project.get_tag_path(symbolic_name)
       else:
+        assert isinstance(symbol, BranchSymbol)
         dest_prefix = Ctx().project.get_branch_path(symbolic_name)
 
       dest_key = self._open_writable_node(dest_prefix, False)[0]

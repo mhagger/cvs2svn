@@ -35,14 +35,14 @@ class BranchSymbol(Symbol):
   def __str__(self):
     """For convenience only.  The format is subject to change at any time."""
 
-    return 'Branch %r <%d>' % (self.name, self.id,)
+    return 'Branch %r <%x>' % (self.name, self.id,)
 
 
 class TagSymbol(Symbol):
   def __str__(self):
     """For convenience only.  The format is subject to change at any time."""
 
-    return 'Tag %r <%d>' % (self.name, self.id,)
+    return 'Tag %r <%x>' % (self.name, self.id,)
 
 
 class SymbolDatabase:

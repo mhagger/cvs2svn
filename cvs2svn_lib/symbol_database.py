@@ -129,6 +129,7 @@ def create_symbol_database(symbols):
   db = PDatabase(artifact_manager.get_temp_file(config.SYMBOL_DB),
                  DB_OPEN_NEW)
   for symbol in symbols:
-    db[symbol.name] = symbol
+    if not isinstance(symbol, ExcludedSymbol):
+      db[symbol.name] = symbol
 
 

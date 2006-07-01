@@ -169,10 +169,9 @@ class SymbolStrategy:
   def get_symbols(self, symbol_stats):
     """Return an iterable of symbols to convert.
 
-    The values returned by the iterable are either BranchSymbol or
-    TagSymbol objects, indicating how the symbol should be converted.
-    Symbols to be excluded should be left out of the output.  Return
-    None if there was an error."""
+    The values returned by the iterable are BranchSymbol, TagSymbol,
+    or ExcludedSymbol objects, indicating how the symbol should be
+    converted.  Return None if there was an error."""
 
     raise NotImplementedError
 
@@ -208,10 +207,7 @@ class RuleBasedSymbolStrategy:
     mismatches = []
     for stats in symbol_stats:
       symbol = self._get_symbol(stats)
-      if isinstance(symbol, ExcludedSymbol):
-        # Don't write it to the database at all.
-        pass
-      elif symbol is not None:
+      if symbol is not None:
         symbols.append(symbol)
       else:
         # None of the rules covered this symbol.

@@ -25,6 +25,7 @@ from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.symbol_database import TagSymbol
+from cvs2svn_lib.symbol_database import ExcludedSymbol
 from cvs2svn_lib.key_generator import KeyGenerator
 
 
@@ -285,7 +286,8 @@ class SymbolStatistics:
     # Create a map { symbol_name : Symbol }:
     symbols_by_name = {}
     for symbol in symbols:
-      symbols_by_name[symbol.name] = symbol
+      if not isinstance(symbol, ExcludedSymbol):
+        symbols_by_name[symbol.name] = symbol
 
     # It is important that we not short-circuit here:
     return (

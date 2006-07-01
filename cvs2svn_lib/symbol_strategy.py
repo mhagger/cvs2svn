@@ -167,12 +167,12 @@ class SymbolStrategy:
   """A strategy class, used to decide how to convert CVS symbols."""
 
   def get_symbols(self, symbol_stats):
-    """Return a map { name : Symbol } of symbols to convert.
+    """Return an iterable of symbols to convert.
 
-    The values of the map are either BranchSymbol or TagSymbol
-    objects, indicating how the symbol should be converted.  Symbols
-    to be excluded should be left out of the output.  Return None if
-    there was an error."""
+    The values returned by the iterable are either BranchSymbol or
+    TagSymbol objects, indicating how the symbol should be converted.
+    Symbols to be excluded should be left out of the output.  Return
+    None if there was an error."""
 
     raise NotImplementedError
 
@@ -204,7 +204,7 @@ class RuleBasedSymbolStrategy:
       return None
 
   def get_symbols(self, symbol_stats):
-    symbols = {}
+    symbols = []
     mismatches = []
     for stats in symbol_stats:
       symbol = self._get_symbol(stats)
@@ -212,7 +212,7 @@ class RuleBasedSymbolStrategy:
         # Don't write it to the database at all.
         pass
       elif symbol is not None:
-        symbols[stats.name] = symbol
+        symbols.append(symbol)
       else:
         # None of the rules covered this symbol.
         mismatches.append(stats)

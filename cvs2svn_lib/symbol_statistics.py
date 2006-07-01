@@ -277,13 +277,20 @@ class SymbolStatistics:
     return True
 
   def check_consistency(self, symbols):
-    """Check the non-excluded symbols for consistency.  Return True
-    iff any problems were detected."""
+    """Check the plan for how to convert symbols for consistency.
+
+    SYMBOLS is an iterable of Symbol objects indicating how each name
+    is to be converted.  Return True iff any problems were detected."""
+
+    # Create a map { symbol_name : Symbol }:
+    symbols_by_name = {}
+    for symbol in symbols:
+      symbols_by_name[symbol.name] = symbol
 
     # It is important that we not short-circuit here:
     return (
-      self._check_blocked_excludes(symbols)
-      | self._check_invalid_tags(symbols)
+      self._check_blocked_excludes(symbols_by_name)
+      | self._check_invalid_tags(symbols_by_name)
       )
 
 

@@ -29,7 +29,7 @@ from cvs2svn_lib.key_generator import KeyGenerator
 
 
 class _Stats:
-  """A summary of information about a branch.
+  """A summary of information about a symbol (tag or branch).
 
   Members:
     id -- a unique id (integer)

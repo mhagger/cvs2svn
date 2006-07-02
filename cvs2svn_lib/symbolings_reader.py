@@ -46,10 +46,11 @@ class SymbolingsReader:
     offsets_db = Database(
         artifact_manager.get_temp_file(config.SYMBOL_OFFSETS_DB),
         DB_OPEN_READ)
+    # A map from symbol_id to offset.
     self.offsets = { }
     for key in offsets_db:
-      #print " ZOO:", key, offsets_db[key]
-      self.offsets[key] = offsets_db[key]
+      symbol_id = int(key, 16)
+      self.offsets[symbol_id] = offsets_db[key]
 
   def filling_guide_for_symbol(self, symbolic_name, svn_revnum):
     """Given SYMBOLIC_NAME and SVN_REVNUM, return a new
@@ -67,11 +68,11 @@ class SymbolingsReader:
 
     # It's possible to have a branch start with a file that was added
     # on a branch
-    if symbolic_name in self.offsets:
-      symbol_id = Ctx()._symbol_db.get_id(symbolic_name)
+    symbol_id = Ctx()._symbol_db.get_id(symbolic_name)
+    if symbol_id in self.offsets:
       # set our read offset for self.symbolings to the offset for
       # symbolic_name
-      self.symbolings.seek(self.offsets[symbolic_name])
+      self.symbolings.seek(self.offsets[symbol_id])
 
       while 1:
         fpos = self.symbolings.tell()
@@ -96,7 +97,7 @@ class SymbolingsReader:
       # for the beginning of the line we just read if we used anything
       # we read.
       if not openings_closings_map.is_empty():
-        self.offsets[symbolic_name] = fpos
+        self.offsets[symbol_id] = fpos
 
     return SymbolicNameFillingGuide(openings_closings_map)
 

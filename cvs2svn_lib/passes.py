@@ -525,7 +525,7 @@ class IndexSymbolsPass(Pass):
           sym = Ctx()._symbol_db.get_name(id)
           Log().verbose(' ', sym)
           old_id = id
-          offsets_db[sym] = fpos
+          offsets_db['%x' % id] = fpos
 
     if not Ctx().trunk_only:
       Ctx()._symbol_db = SymbolDatabase()

@@ -60,8 +60,8 @@ SYMBOL_CLOSINGS_TMP = 'cvs2svn-symbolic-names-closings-tmp.txt'
 SVN_MIRROR_REVISIONS_DB = 'cvs2svn-svn-revisions.db'
 SVN_MIRROR_NODES_DB = 'cvs2svn-svn-nodes.db'
 
-# Offsets pointing to the beginning of each SYMBOLIC_NAME in
-# SYMBOL_OPENINGS_CLOSINGS_SORTED
+# Offsets pointing to the beginning of each SYMBOL_ID in
+# SYMBOL_OPENINGS_CLOSINGS_SORTED.
 SYMBOL_OFFSETS_DB = 'cvs2svn-symbolic-name-offsets.db'
 
 # Maps CVSRevision.ids (in hex) to lists of symbolic names, where the

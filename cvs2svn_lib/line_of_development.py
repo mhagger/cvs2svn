@@ -48,7 +48,8 @@ class Trunk(LineOfDevelopment):
 class Branch(LineOfDevelopment):
   """An object that describes a CVS branch."""
 
-  def __init__(self, name):
+  def __init__(self, id, name):
+    self.id = id
     self.name = name
 
   def make_path(self, cvs_file):
@@ -57,6 +58,6 @@ class Branch(LineOfDevelopment):
   def __str__(self):
     """For convenience only.  The format is subject to change at any time."""
 
-    return 'Branch %r' % (self.name,)
+    return 'Branch %r <%x>' % (self.name, self.id,)
 
 

@@ -97,9 +97,9 @@ class CVSRevision(CVSItem):
     pickling CVSRevision instances."""
 
     if isinstance(self.lod, Branch):
-      lod_name = self.lod.name
+      lod_id = self.lod.id
     else:
-      lod_name = None
+      lod_id = None
 
     return (
         self.id, self.cvs_file.id,
@@ -108,7 +108,7 @@ class CVSRevision(CVSItem):
         self.op,
         self.rev,
         self.deltatext_exists,
-        lod_name,
+        lod_id,
         self.first_on_branch,
         ' '.join(self.tags),
         ' '.join(self.branches),)
@@ -116,13 +116,13 @@ class CVSRevision(CVSItem):
   def __setstate__(self, data):
     (self.id, cvs_file_id, self.timestamp, self.metadata_id,
      self.prev_id, self.next_id, self.op, self.rev,
-     self.deltatext_exists, lod_name, self.first_on_branch,
+     self.deltatext_exists, lod_id, self.first_on_branch,
      tags, branches) = data
     self.cvs_file = Ctx()._cvs_file_db.get_file(cvs_file_id)
-    if lod_name is None:
+    if lod_id is None:
       self.lod = Trunk()
     else:
-      self.lod = Branch(lod_name)
+      self.lod = Branch(lod_id, Ctx()._symbol_db.get_name(lod_id))
     self.tags = tags.split()
     self.branches = branches.split()
 

@@ -215,6 +215,7 @@ class ResyncRevsPass(Pass):
   def run(self, stats_keeper):
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
     symbol_db = SymbolDatabase()
+    Ctx()._symbol_db = symbol_db
     cvs_items_db = CVSItemDatabase(
         artifact_manager.get_temp_file(config.CVS_ITEMS_DB), DB_OPEN_WRITE)
     cvs_items_resync_db = CVSItemDatabase(
@@ -367,6 +368,7 @@ class CreateDatabasesPass(Pass):
     if not Ctx().trunk_only:
       self._register_temp_file(config.SYMBOL_LAST_CVS_REVS_DB)
     self._register_temp_file_needed(config.CVS_FILES_DB)
+    self._register_temp_file_needed(config.SYMBOL_DB)
     self._register_temp_file_needed(config.CVS_ITEMS_RESYNC_DB)
     self._register_temp_file_needed(config.SORTED_REVS_DATAFILE)
 
@@ -377,6 +379,7 @@ class CreateDatabasesPass(Pass):
     revisions to the StatsKeeper."""
 
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
+    Ctx()._symbol_db = SymbolDatabase()
 
     def get_cvs_revs():
       """Generator that produces the CVSRevisions in
@@ -435,13 +438,12 @@ class AggregateRevsPass(Pass):
     Log().quiet("Mapping CVS revisions to Subversion commits...")
 
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
+    Ctx()._symbol_db = SymbolDatabase()
     Ctx()._metadata_db = MetadataDatabase(DB_OPEN_READ)
     Ctx()._cvs_items_db = CVSItemDatabase(
         artifact_manager.get_temp_file(config.CVS_ITEMS_RESYNC_DB),
         DB_OPEN_READ)
     Ctx()._symbolings_logger = SymbolingsLogger()
-    if not Ctx().trunk_only:
-      Ctx()._symbol_db = SymbolDatabase()
     aggregator = CVSRevisionAggregator()
     for line in file(
             artifact_manager.get_temp_file(config.SORTED_REVS_DATAFILE)):

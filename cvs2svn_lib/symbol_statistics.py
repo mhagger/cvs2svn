@@ -103,6 +103,9 @@ class SymbolStatisticsCollector:
       self._stats[stats.id] = stats
       return stats
 
+  def get_id(self, name):
+    return self._get_stats(name).id
+
   def register_tag_creation(self, name):
     """Register the creation of the tag NAME.
 

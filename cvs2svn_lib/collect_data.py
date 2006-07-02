@@ -669,13 +669,13 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     else:
       lod = Trunk()
 
-    branch_names = [
-        branch_data.name
+    branch_ids = [
+        branch_data.symbol_id
         for branch_data in rev_data.branches_data
         ]
 
-    tag_names = [
-        tag_data.name
+    tag_ids = [
+        tag_data.symbol_id
         for tag_data in rev_data.tags_data
         ]
 
@@ -689,7 +689,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         bool(text),
         lod,
         rev_data.is_first_on_branch(),
-        tag_names, branch_names)
+        tag_ids, branch_ids)
     rev_data.c_rev = c_rev
     self.collect_data.add_cvs_revision(c_rev)
 

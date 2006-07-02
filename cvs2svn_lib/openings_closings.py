@@ -85,7 +85,8 @@ class SymbolingsLogger:
     None, a closing.  The opening uses SVN_REVNUM, but the closing (if
     any) will have its revnum determined later."""
 
-    for name in c_rev.tags + c_rev.branches:
+    for id in c_rev.tag_ids + c_rev.branch_ids:
+      name = Ctx()._symbol_db.get_name(id)
       self._note_default_branch_opening(c_rev, name)
       if c_rev.op != OP_DELETE:
         self._log(

@@ -33,8 +33,10 @@ from cvs2svn_lib.artifact_manager import artifact_manager
 class StatsKeeper:
   def __init__(self):
     self._cvs_revs_count = 0
-    self._tags = set()
-    self._branches = set()
+    # A set of tag_ids seen:
+    self._tag_ids = set()
+    # A set of branch_ids seen:
+    self._branch_ids = set()
     self._repos_size = 0
     self._repos_file_count = 0
     self._svn_rev_count = None
@@ -60,8 +62,8 @@ class StatsKeeper:
 
   def reset_c_rev_info(self):
     self._cvs_revs_count = 0
-    self._tags = set()
-    self._branches = set()
+    self._tag_ids = set()
+    self._branch_ids = set()
 
   def _record_cvs_file(self, cvs_file):
     # Only add the size if this is the first time we see the file.
@@ -74,10 +76,10 @@ class StatsKeeper:
   def record_c_rev(self, c_rev):
     self._cvs_revs_count += 1
 
-    for tag in c_rev.tags:
-      self._tags.add(tag)
-    for branch in c_rev.branches:
-      self._branches.add(branch)
+    for tag_id in c_rev.tag_ids:
+      self._tag_ids.add(tag_id)
+    for branch_id in c_rev.branch_ids:
+      self._branch_ids.add(branch_id)
 
     if c_rev.timestamp < self._first_rev_date:
       self._first_rev_date = c_rev.timestamp
@@ -130,8 +132,8 @@ class StatsKeeper:
             '%s'
             % (self._repos_file_count,
                self._cvs_revs_count,
-               len(self._tags),
-               len(self._branches),
+               len(self._tag_ids),
+               len(self._branch_ids),
                (self._repos_size / 1024),
                svn_revs_str,
                time.ctime(self._first_rev_date),

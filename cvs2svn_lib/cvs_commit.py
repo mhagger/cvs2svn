@@ -252,12 +252,13 @@ class CVSCommit:
       the log message is not the standard cvs fabricated log message."""
 
       if c_rev.prev_id is None:
-        # c_rev.branches may be empty if the originating branch
+        # c_rev.branch_ids may be empty if the originating branch
         # has been excluded.
-        if not c_rev.branches:
+        if not c_rev.branch_ids:
           return False
-        cvs_generated_msg = ('file %s was initially added on branch %s.\n'
-                             % (c_rev.cvs_file.basename, c_rev.branches[0]))
+        cvs_generated_msg = 'file %s was initially added on branch %s.\n' % (
+            c_rev.cvs_file.basename,
+            Ctx()._symbol_db.get_name(c_rev.branch_ids[0]),)
         author, log_msg = Ctx()._metadata_db[c_rev.metadata_id]
         if log_msg == cvs_generated_msg:
           return False

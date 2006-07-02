@@ -255,8 +255,13 @@ class ResyncRevsPass(Pass):
       else:
         next_c_rev = None
 
-      (c_rev.branches, c_rev.tags) = symbol_db.collate_symbols(
-          c_rev.branches + c_rev.tags)
+      symbol_names = [Ctx()._symbol_db.get_name(symbol_id)
+          for symbol_id in (c_rev.branch_ids + c_rev.tag_ids)]
+
+      (branches, tags) = symbol_db.collate_symbols(symbol_names)
+
+      c_rev.branch_ids = [Ctx()._symbol_db.get_id(name) for name in branches]
+      c_rev.tag_ids = [Ctx()._symbol_db.get_id(name) for name in tags]
 
       # see if this is "near" any of the resync records we have
       # recorded for this metadata_id [of the log message].

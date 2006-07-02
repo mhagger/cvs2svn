@@ -38,12 +38,13 @@ STATISTICS_FILE = 'cvs2svn-statistics'
 # filesystem paths that are the opening and closing source revisions
 # for copies to tags and branches.  The format is as follows:
 #
-# SYMBOL_ID SVN_REVNUM TYPE CVS_FILE_ID
+# SYMBOL_ID SVN_REVNUM TYPE BRANCH_NAME CVS_FILE_ID
 #
 # Where type is either OPENING or CLOSING.  The SYMBOL_ID and
 # SVN_REVNUM are the primary and secondary sorting criteria for
-# creating SYMBOL_OPENINGS_CLOSINGS_SORTED.  CVS_FILE_ID is the id of
-# the corresponding CVSFile (in hex).
+# creating SYMBOL_OPENINGS_CLOSINGS_SORTED.  BRANCH_NAME is the branch
+# name where this opening or closing happened.  CVS_FILE_ID is the id
+# of the corresponding CVSFile (in hex).
 SYMBOL_OPENINGS_CLOSINGS = 'cvs2svn-symbolic-names.txt'
 # A sorted version of the above file.
 SYMBOL_OPENINGS_CLOSINGS_SORTED = 'cvs2svn-symbolic-names-s.txt'

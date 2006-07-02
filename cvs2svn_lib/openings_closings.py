@@ -89,7 +89,7 @@ class SymbolingsLogger:
       self._note_default_branch_opening(c_rev, symbol_id)
       if c_rev.op != OP_DELETE:
         self._log(
-            symbol_name, svn_revnum,
+            symbol_id, svn_revnum,
             c_rev.cvs_file,
             isinstance(c_rev.lod, Branch) and c_rev.lod.name,
             OPENING)
@@ -100,7 +100,7 @@ class SymbolingsLogger:
       if c_rev.next_id is not None:
         self.closings.write('%s %x\n' % (symbol_name, c_rev.next_id))
 
-  def _log(self, name, svn_revnum, cvs_file, branch_name, type):
+  def _log(self, symbol_id, svn_revnum, cvs_file, branch_name, type):
     """Write out a single line to the symbol_openings_closings file
     representing that SVN_REVNUM of SVN_FILE on BRANCH_NAME is either
     the opening or closing (TYPE) of NAME (a symbolic name).
@@ -108,10 +108,11 @@ class SymbolingsLogger:
     TYPE should only be one of the following constants: OPENING or
     CLOSING."""
 
+    symbol_name = Ctx()._symbol_db.get_name(symbol_id)
     # 8 places gives us 999,999,999 SVN revs.  That *should* be enough.
     self.symbolings.write(
         '%s %.8d %s %s %x\n'
-        % (name, svn_revnum, type, branch_name or '*', cvs_file.id))
+        % (symbol_name, svn_revnum, type, branch_name or '*', cvs_file.id))
 
   def close(self):
     """Iterate through the closings file, lookup the svn_revnum for
@@ -121,13 +122,14 @@ class SymbolingsLogger:
     self.closings.close()
     for line in file(
             artifact_manager.get_temp_file(config.SYMBOL_CLOSINGS_TMP)):
-      (name, rev_key) = line.rstrip().split(" ", 1)
+      (symbol_name, rev_key) = line.rstrip().split(" ", 1)
+      symbol_id = Ctx()._symbol_db.get_id(symbol_name)
       rev_id = int(rev_key, 16)
       svn_revnum = Ctx()._persistence_manager.get_svn_revnum(rev_id)
 
       c_rev = Ctx()._cvs_items_db[rev_id]
       self._log(
-          name, svn_revnum,
+          symbol_id, svn_revnum,
           c_rev.cvs_file,
           isinstance(c_rev.lod, Branch) and c_rev.lod.name,
           CLOSING)
@@ -151,8 +153,7 @@ class SymbolingsLogger:
     if path in self._open_paths_with_default_branches:
       # log each symbol as a closing
       for symbol_id in self._open_paths_with_default_branches[path]:
-        symbol_name = Ctx()._symbol_db.get_name(symbol_id)
-        self._log(symbol_name, svn_revnum, c_rev.cvs_file, None, CLOSING)
+        self._log(symbol_id, svn_revnum, c_rev.cvs_file, None, CLOSING)
       # Remove them from the openings list as we're done with them.
       del self._open_paths_with_default_branches[path]
 

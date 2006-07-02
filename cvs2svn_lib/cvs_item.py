@@ -127,14 +127,13 @@ class CVSRevision(CVSItem):
     self.tag_ids = [int(s, 16) for s in tag_ids.split()]
     self.branch_ids = [int(s, 16) for s in branch_ids.split()]
 
-  def opens_symbolic_name(self, name):
+  def opens_symbol(self, symbol_id):
     """Return True iff this CVSRevision is the opening CVSRevision for
     NAME (for this RCS file)."""
 
-    id = Ctx()._symbol_db.get_id(name)
-    if id in self.tag_ids:
+    if symbol_id in self.tag_ids:
       return True
-    if id in self.branch_ids:
+    if symbol_id in self.branch_ids:
       # If this c_rev opens a branch and our op is OP_DELETE, then
       # that means that the file that this c_rev belongs to was
       # created on the branch, so for all intents and purposes, this

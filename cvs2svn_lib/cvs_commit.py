@@ -131,12 +131,12 @@ class CVSCommit:
   def revisions(self):
     return self.changes + self.deletes
 
-  def opens_symbolic_name(self, name):
+  def opens_symbol(self, symbol_id):
     """Return True if any CVSRevision in this commit is on a tag or a
     branch or is the origin of a tag or branch."""
 
     for c_rev in self.revisions():
-      if c_rev.opens_symbolic_name(name):
+      if c_rev.opens_symbol(symbol_id):
         return True
     return False
 

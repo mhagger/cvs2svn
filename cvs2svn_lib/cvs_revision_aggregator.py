@@ -234,12 +234,13 @@ class CVSRevisionAggregator:
     pending_commits = self.expired_queue + self.ready_queue
     for commits in self.cvs_commits.itervalues():
       pending_commits.extend(commits)
-    for sym in self._pending_symbols:
+    for symbol_name in self._pending_symbols:
+      symbol_id = Ctx()._symbol_db.get_id(symbol_name)
       for cvs_commit in pending_commits:
-        if cvs_commit.opens_symbolic_name(sym):
+        if cvs_commit.opens_symbol(symbol_id):
           break
       else:
-        closeable_symbols.append(sym)
+        closeable_symbols.append(symbol_name)
 
     # Sort the closeable symbols so that we will always process the
     # symbols in the same order, regardless of the order in which the

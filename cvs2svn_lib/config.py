@@ -83,10 +83,8 @@ CVS_ITEMS_DB = 'cvs2svn-cvs-items.db'
 CVS_ITEMS_RESYNC_DB = 'cvs2svn-cvs-items-resync.db'
 
 # A record of all symbolic names that will be processed in the
-# conversion.  Keys are strings (symbolic names); values are either
-# BranchSymbol or TagSymbol instances depending on whether the symbol
-# should be converted as a branch or a tag.
-SYMBOL_DB = 'cvs2svn-symbols.db'
+# conversion.  This file contains a pickled list of Symbol objects.
+SYMBOL_DB = 'cvs2svn-symbols.dat'
 
 # A list all symbols.  Each line consists of a unique integer id (in
 # hexdecimal), the symbol name, the number of files in which it was

@@ -17,12 +17,11 @@
 """This module contains the SymbolDatabase class."""
 
 
+import cPickle
+
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib import config
 from cvs2svn_lib.artifact_manager import artifact_manager
-from cvs2svn_lib.database import DB_OPEN_READ
-from cvs2svn_lib.database import DB_OPEN_NEW
-from cvs2svn_lib.database import PDatabase
 
 
 class Symbol:
@@ -66,12 +65,12 @@ class SymbolDatabase:
     # A map { name : Symbol }
     self._symbols_by_name = {}
 
-    db = PDatabase(
-        artifact_manager.get_temp_file(config.SYMBOL_DB), DB_OPEN_READ)
-    for name in db.keys():
-      symbol = db[name]
+    f = open(artifact_manager.get_temp_file(config.SYMBOL_DB), 'rb')
+    symbols = cPickle.load(f)
+    f.close()
+    for symbol in symbols:
       self._symbols[symbol.id] = symbol
-      self._symbols_by_name[name] = symbol
+      self._symbols_by_name[symbol.name] = symbol
 
   def get_symbol(self, name):
     """Return the symbol instance with name NAME.
@@ -126,9 +125,7 @@ def create_symbol_database(symbols):
   Record each symbol that is listed in SYMBOLS, which is an iterable
   containing Symbol objects."""
 
-  db = PDatabase(artifact_manager.get_temp_file(config.SYMBOL_DB),
-                 DB_OPEN_NEW)
-  for symbol in symbols:
-    db[symbol.name] = symbol
-
+  f = open(artifact_manager.get_temp_file(config.SYMBOL_DB), 'wb')
+  cPickle.dump(symbols, f, -1)
+  f.close()
 

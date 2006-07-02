@@ -137,9 +137,9 @@ command-line options to determine which symbols should be treated as
 branches, which as tags, and which symbols should be excluded from the
 conversion altogether.
 
-Create 'cvs2svn-symbols.db', which is a database mapping symbol names
-to TagSymbol or BranchSymbol instances for each symbol that will be
-included in the conversion.
+Create 'cvs2svn-symbols.dat', which contains a pickle of a list of
+BranchSymbol, TagSymbol, and ExcludedSymbol objects indicating how
+each symbol should be processed in the conversion.
 
 
 ResyncRevsPass (formerly called pass2)

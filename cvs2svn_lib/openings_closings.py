@@ -108,11 +108,10 @@ class SymbolingsLogger:
     TYPE should only be one of the following constants: OPENING or
     CLOSING."""
 
-    symbol_name = Ctx()._symbol_db.get_name(symbol_id)
     # 8 places gives us 999,999,999 SVN revs.  That *should* be enough.
     self.symbolings.write(
-        '%s %.8d %s %s %x\n'
-        % (symbol_name, svn_revnum, type, branch_name or '*', cvs_file.id))
+        '%x %.8d %s %s %x\n'
+        % (symbol_id, svn_revnum, type, branch_name or '*', cvs_file.id))
 
   def close(self):
     """Iterate through the closings file, lookup the svn_revnum for

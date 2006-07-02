@@ -68,6 +68,7 @@ class SymbolingsReader:
     # It's possible to have a branch start with a file that was added
     # on a branch
     if symbolic_name in self.offsets:
+      symbol_id = Ctx()._symbol_db.get_id(symbolic_name)
       # set our read offset for self.symbolings to the offset for
       # symbolic_name
       self.symbolings.seek(self.offsets[symbolic_name])
@@ -77,15 +78,17 @@ class SymbolingsReader:
         line = self.symbolings.readline().rstrip()
         if not line:
           break
-        name, revnum, type, branch_name, cvs_file_id = line.split()
-        cvs_file = Ctx()._cvs_file_db.get_file(int(cvs_file_id, 16))
+        id, revnum, type, branch_name, cvs_file_id = line.split()
+        id = int(id, 16)
+        cvs_file_id = int(cvs_file_id, 16)
+        cvs_file = Ctx()._cvs_file_db.get_file(cvs_file_id)
         if branch_name == '*':
           svn_path = Ctx().project.make_trunk_path(cvs_file.cvs_path)
         else:
           svn_path = Ctx().project.make_branch_path(
               branch_name, cvs_file.cvs_path)
         revnum = int(revnum)
-        if revnum > svn_revnum or name != symbolic_name:
+        if revnum > svn_revnum or id != symbol_id:
           break
         openings_closings_map.register(svn_path, revnum, type)
 

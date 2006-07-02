@@ -488,6 +488,7 @@ class IndexSymbolsPass(Pass):
   def register_artifacts(self):
     if not Ctx().trunk_only:
       self._register_temp_file(config.SYMBOL_OFFSETS_DB)
+      self._register_temp_file_needed(config.SYMBOL_DB)
       self._register_temp_file_needed(config.SYMBOL_OPENINGS_CLOSINGS_SORTED)
 
   def run(self, stats_keeper):
@@ -512,19 +513,22 @@ class IndexSymbolsPass(Pass):
           artifact_manager.get_temp_file(
               config.SYMBOL_OPENINGS_CLOSINGS_SORTED),
           'r')
-      old_sym = ""
-      while 1:
+      old_id = None
+      while True:
         fpos = file.tell()
         line = file.readline()
         if not line:
           break
-        sym, svn_revnum, cvs_rev_key = line.split(" ", 2)
-        if sym != old_sym:
-          Log().verbose(" ", sym)
-          old_sym = sym
+        id, svn_revnum, cvs_rev_key = line.split(" ", 2)
+        id = int(id, 16)
+        if id != old_id:
+          sym = Ctx()._symbol_db.get_name(id)
+          Log().verbose(' ', sym)
+          old_id = id
           offsets_db[sym] = fpos
 
     if not Ctx().trunk_only:
+      Ctx()._symbol_db = SymbolDatabase()
       generate_offsets_for_symbolings()
     Log().quiet("Done.")
 

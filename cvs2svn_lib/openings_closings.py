@@ -85,7 +85,6 @@ class SymbolingsLogger:
     any) will have its revnum determined later."""
 
     for symbol_id in c_rev.tag_ids + c_rev.branch_ids:
-      symbol_name = Ctx()._symbol_db.get_name(symbol_id)
       self._note_default_branch_opening(c_rev, symbol_id)
       if isinstance(c_rev.lod, Branch):
         branch_id = c_rev.lod.id
@@ -98,7 +97,7 @@ class SymbolingsLogger:
       # this source revision.  Log it to closings for later processing
       # since we don't know the svn_revnum yet.
       if c_rev.next_id is not None:
-        self.closings.write('%s %x\n' % (symbol_name, c_rev.next_id))
+        self.closings.write('%x %x\n' % (symbol_id, c_rev.next_id))
 
   def _log(self, symbol_id, svn_revnum, cvs_file, branch_id, type):
     """Log an opening or closing to self.symbolings.
@@ -130,8 +129,8 @@ class SymbolingsLogger:
     self.closings.close()
     for line in file(
             artifact_manager.get_temp_file(config.SYMBOL_CLOSINGS_TMP)):
-      (symbol_name, rev_key) = line.rstrip().split(" ", 1)
-      symbol_id = Ctx()._symbol_db.get_id(symbol_name)
+      (symbol_id, rev_key) = line.rstrip().split(" ", 1)
+      symbol_id = int(symbol_id, 16)
       rev_id = int(rev_key, 16)
       svn_revnum = Ctx()._persistence_manager.get_svn_revnum(rev_id)
 

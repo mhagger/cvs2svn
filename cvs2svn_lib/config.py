@@ -50,7 +50,7 @@ SYMBOL_OPENINGS_CLOSINGS = 'cvs2svn-symbolic-names.txt'
 # A sorted version of the above file.
 SYMBOL_OPENINGS_CLOSINGS_SORTED = 'cvs2svn-symbolic-names-s.txt'
 
-# This file is a temporary file for storing symbolic_name -> closing
+# This file is a temporary file for storing symbol_id -> closing
 # CVSRevision until the end of our pass where we can look up the
 # corresponding SVNRevNum for the closing revs and write these out to
 # the SYMBOL_OPENINGS_CLOSINGS.

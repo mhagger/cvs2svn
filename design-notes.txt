@@ -305,8 +305,11 @@ This pass does the following:
 
    See SymbolingsLogger for more details.
 
-4. Creates a file 'cvs2svn-symbolic-names-closings-tmp.txt' ??? for
-   undocumented purposes.
+4. Creates a file 'cvs2svn-symbolic-names-closings-tmp.txt', which is
+   a temporary file for storing (symbol_id, closing CVSRevision) until
+   the end of the pass, when it is used to look up the corresponding
+   SVN revision number for the closing revs and write these out to
+   SYMBOL_OPENINGS_CLOSINGS.
 
 
 SortSymbolsPass (formerly called pass6)

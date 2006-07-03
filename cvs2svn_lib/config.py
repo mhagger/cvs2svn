@@ -43,8 +43,9 @@ STATISTICS_FILE = 'cvs2svn-statistics'
 # Where type is either OPENING or CLOSING.  The SYMBOL_ID and
 # SVN_REVNUM are the primary and secondary sorting criteria for
 # creating SYMBOL_OPENINGS_CLOSINGS_SORTED.  BRANCH_ID is the symbol
-# id of the branch where this opening or closing happened (in hex).
-# CVS_FILE_ID is the id of the corresponding CVSFile (in hex).
+# id of the branch where this opening or closing happened (in hex), or
+# '*' for the default branch.  CVS_FILE_ID is the id of the
+# corresponding CVSFile (in hex).
 SYMBOL_OPENINGS_CLOSINGS = 'cvs2svn-symbolic-names.txt'
 # A sorted version of the above file.
 SYMBOL_OPENINGS_CLOSINGS_SORTED = 'cvs2svn-symbolic-names-s.txt'

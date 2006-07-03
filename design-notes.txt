@@ -278,14 +278,14 @@ This pass does the following:
 
    The format of each line is:
 
-       SYMBOL_ID SVN_REVNUM TYPE BRANCH_NAME CVS_FILE_ID
+       SYMBOL_ID SVN_REVNUM TYPE BRANCH_ID CVS_FILE_ID
 
    For example:
 
        1c 234 O * 1a7
        34 245 O * 1a9
-       18a 241 C MY_BRANCH1 1a7
-       122 201 O MY_BRANCH1 1b3
+       18a 241 C 34 1a7
+       122 201 O 7e 1b3
 
    Here is what the columns mean:
 
@@ -297,8 +297,8 @@ This pass does the following:
 
    TYPE: "O" for Openings and "C" for Closings.
 
-   BRANCH_NAME: The (uncleaned) branch name where this opening or
-                closing happened.  '*' denotes the default branch.
+   BRANCH_ID: The id of the branch where this opening or closing
+              happened.  '*' denotes the default branch.
 
    CVS_FILE_ID: The ID of the CVS file where this opening or closing
                 happened, in hexadecimal.

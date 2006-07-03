@@ -519,7 +519,7 @@ class IndexSymbolsPass(Pass):
         line = file.readline()
         if not line:
           break
-        id, svn_revnum, cvs_rev_key = line.split(" ", 2)
+        id, svn_revnum, ignored = line.split(" ", 2)
         id = int(id, 16)
         if id != old_id:
           sym = Ctx()._symbol_db.get_name(id)

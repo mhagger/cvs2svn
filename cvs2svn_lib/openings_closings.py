@@ -87,12 +87,12 @@ class SymbolingsLogger:
     for symbol_id in c_rev.tag_ids + c_rev.branch_ids:
       symbol_name = Ctx()._symbol_db.get_name(symbol_id)
       self._note_default_branch_opening(c_rev, symbol_id)
+      if isinstance(c_rev.lod, Branch):
+        branch_id = c_rev.lod.id
+      else:
+        branch_id = None
       if c_rev.op != OP_DELETE:
-        self._log(
-            symbol_id, svn_revnum,
-            c_rev.cvs_file,
-            isinstance(c_rev.lod, Branch) and c_rev.lod.name,
-            OPENING)
+        self._log(symbol_id, svn_revnum, c_rev.cvs_file, branch_id, OPENING)
 
       # If our c_rev has a next_rev, then that's the closing rev for
       # this source revision.  Log it to closings for later processing
@@ -100,18 +100,23 @@ class SymbolingsLogger:
       if c_rev.next_id is not None:
         self.closings.write('%s %x\n' % (symbol_name, c_rev.next_id))
 
-  def _log(self, symbol_id, svn_revnum, cvs_file, branch_name, type):
-    """Write out a single line to the symbol_openings_closings file
-    representing that SVN_REVNUM of SVN_FILE on BRANCH_NAME is either
+  def _log(self, symbol_id, svn_revnum, cvs_file, branch_id, type):
+    """Log an opening or closing to self.symbolings.
+
+    Write out a single line to the symbol_openings_closings file
+    representing that SVN_REVNUM of SVN_FILE on BRANCH_ID is either
     the opening or closing (TYPE) of NAME (a symbolic name).
 
-    TYPE should only be one of the following constants: OPENING or
-    CLOSING."""
+    TYPE should be one of the following constants: OPENING or CLOSING.
 
-    if branch_name:
-      branch_id = '%x' % Ctx()._symbol_db.get_id(branch_name)
-    else:
+    BRANCH_ID is the symbol id of the branch on which the opening or
+    closing occurred, or None if the opening/closing occurred on the
+    default branch."""
+
+    if branch_id is None:
       branch_id = '*'
+    else:
+      branch_id = '%x' % branch_id
     # 8 places gives us 999,999,999 SVN revs.  That *should* be enough.
     self.symbolings.write(
         '%x %.8d %s %s %x\n'
@@ -131,11 +136,11 @@ class SymbolingsLogger:
       svn_revnum = Ctx()._persistence_manager.get_svn_revnum(rev_id)
 
       c_rev = Ctx()._cvs_items_db[rev_id]
-      self._log(
-          symbol_id, svn_revnum,
-          c_rev.cvs_file,
-          isinstance(c_rev.lod, Branch) and c_rev.lod.name,
-          CLOSING)
+      if isinstance(c_rev.lod, Branch):
+        branch_id = c_rev.lod.id
+      else:
+        branch_id = None
+      self._log(symbol_id, svn_revnum, c_rev.cvs_file, branch_id, CLOSING)
 
     self.symbolings.close()
 

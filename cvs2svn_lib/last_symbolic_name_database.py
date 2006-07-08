@@ -38,16 +38,16 @@ class LastSymbolicNameDatabase:
     # gone through all the revs, symbols.keys() will be a list of all
     # tag and branch symbol_ids, and their corresponding values will
     # be the id of the last CVS revision that they were used in.
-    self.symbols = {}
+    self._symbols = {}
 
   def log_revision(self, c_rev):
     """Gather last CVS Revision for symbolic name info and tag info."""
 
     for tag_id in c_rev.tag_ids:
-      self.symbols[tag_id] = c_rev.id
+      self._symbols[tag_id] = c_rev.id
     if c_rev.op is not OP_DELETE:
       for branch_id in c_rev.branch_ids:
-        self.symbols[branch_id] = c_rev.id
+        self._symbols[branch_id] = c_rev.id
 
   def create_database(self):
     """Create the SYMBOL_LAST_CVS_REVS_DB.
@@ -59,7 +59,7 @@ class LastSymbolicNameDatabase:
     symbol_revs_db = Database(
         artifact_manager.get_temp_file(config.SYMBOL_LAST_CVS_REVS_DB),
         DB_OPEN_NEW)
-    for symbol_id, rev_id in self.symbols.items():
+    for symbol_id, rev_id in self._symbols.items():
       symbol_name = Ctx()._symbol_db.get_name(symbol_id)
       rev_key = '%x' % (rev_id,)
       ary = symbol_revs_db.get(rev_key, [])

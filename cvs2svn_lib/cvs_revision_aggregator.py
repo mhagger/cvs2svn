@@ -227,9 +227,10 @@ class CVSRevisionAggregator:
     that doesn't have an opening CVSRevision in either
     self.cvs_commits, self.expired_queue or self.ready_queue."""
 
-    # Make a list of all symbol_ids from self._pending_symbols that do
-    # not have *source* CVSRevisions in the pending commit queues
-    # (self.expired_queue or self.ready_queue):
+    # Make a list of tuples (symbol_name, symbol_id) for all symbols
+    # from self._pending_symbols that do not have *source*
+    # CVSRevisions in the pending commit queues (self.expired_queue or
+    # self.ready_queue):
     closeable_symbols = []
     pending_commits = self.expired_queue + self.ready_queue
     for commits in self.cvs_commits.itervalues():

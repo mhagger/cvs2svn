@@ -80,8 +80,8 @@ class CVSRevisionAggregator:
     # had to be adjusted to make it later than its dependencies.)
     self.ready_queue = [ ]
 
-    # A set of symbolic names for which the last source CVSRevision
-    # has already been processed but which haven't been closed yet.
+    # A set of symbol ids for which the last source CVSRevision has
+    # already been processed but which haven't been closed yet.
     self._pending_symbols = set()
 
     # A list of closed symbols.  That is, we've already encountered
@@ -220,38 +220,38 @@ class CVSRevisionAggregator:
 
     if not Ctx().trunk_only:
       for symbol_id in self.last_revs_db.get('%x' % (c_rev.id,), []):
-        symbol_name = Ctx()._symbol_db.get_name(symbol_id)
-        self._pending_symbols.add(symbol_name)
+        self._pending_symbols.add(symbol_id)
 
   def _attempt_to_commit_symbols(self):
     """Generate one SVNCommit for each symbol in self._pending_symbols
     that doesn't have an opening CVSRevision in either
     self.cvs_commits, self.expired_queue or self.ready_queue."""
 
-    # Make a list of all symbols from self._pending_symbols that do not
-    # have *source* CVSRevisions in the pending commit queues
+    # Make a list of all symbol_ids from self._pending_symbols that do
+    # not have *source* CVSRevisions in the pending commit queues
     # (self.expired_queue or self.ready_queue):
     closeable_symbols = []
     pending_commits = self.expired_queue + self.ready_queue
     for commits in self.cvs_commits.itervalues():
       pending_commits.extend(commits)
-    for symbol_name in self._pending_symbols:
-      symbol_id = Ctx()._symbol_db.get_id(symbol_name)
+    for symbol_id in self._pending_symbols:
       for cvs_commit in pending_commits:
         if cvs_commit.opens_symbol(symbol_id):
           break
       else:
-        closeable_symbols.append(symbol_name)
+        symbol_name = Ctx()._symbol_db.get_name(symbol_id)
+        closeable_symbols.append( (symbol_name, symbol_id,) )
 
     # Sort the closeable symbols so that we will always process the
     # symbols in the same order, regardless of the order in which the
     # dict hashing algorithm hands them back to us.  We do this so
     # that our tests will get the same results on all platforms.
     closeable_symbols.sort()
-    for sym in closeable_symbols:
+    for (symbol_name, symbol_id,) in closeable_symbols:
       Ctx()._persistence_manager.put_svn_commit(
-          SVNSymbolCloseCommit(sym, self.latest_primary_svn_commit.date))
-      self.done_symbols.append(sym)
-      self._pending_symbols.remove(sym)
+          SVNSymbolCloseCommit(
+              symbol_name, self.latest_primary_svn_commit.date))
+      self.done_symbols.append(symbol_name)
+      self._pending_symbols.remove(symbol_id)
 
 

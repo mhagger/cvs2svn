@@ -70,8 +70,8 @@ class SymbolingsReader:
     # on a branch
     symbol_id = Ctx()._symbol_db.get_id(symbolic_name)
     if symbol_id in self.offsets:
-      # set our read offset for self.symbolings to the offset for
-      # symbolic_name
+      # Set our read offset for self.symbolings to the offset for this
+      # symbol:
       self.symbolings.seek(self.offsets[symbol_id])
 
       while 1:

@@ -84,11 +84,11 @@ class CVSRevisionAggregator:
     # already been processed but which haven't been closed yet.
     self._pending_symbols = set()
 
-    # A list of closed symbols.  That is, we've already encountered
-    # the last CVSRevision that is a source for that symbol, the final
+    # A set of closed symbols.  That is, we've already encountered the
+    # last CVSRevision that is a source for that symbol, the final
     # fill for this symbol has been done, and we never need to fill it
     # again.
-    self._done_symbols = [ ]
+    self._done_symbols = set()
 
     # This variable holds the most recently created primary svn_commit
     # object.  CVSRevisionAggregator maintains this variable merely
@@ -252,7 +252,7 @@ class CVSRevisionAggregator:
       Ctx()._persistence_manager.put_svn_commit(
           SVNSymbolCloseCommit(
               symbol_name, self.latest_primary_svn_commit.date))
-      self._done_symbols.append(symbol_name)
+      self._done_symbols.add(symbol_name)
       self._pending_symbols.remove(symbol_id)
 
 

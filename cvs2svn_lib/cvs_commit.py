@@ -178,7 +178,7 @@ class CVSCommit:
   def _pre_commit(self, done_symbols):
     """Generate any SVNCommits that must exist before the main commit.
 
-    DONE_SYMBOLS is a list of symbolic names for which the last source
+    DONE_SYMBOLS is a set of symbolic names for which the last source
     revision has already been seen and for which the
     CVSRevisionAggregator has already generated a fill SVNCommit.  See
     self.process_revisions()."""

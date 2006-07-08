@@ -88,7 +88,7 @@ class CVSRevisionAggregator:
     # the last CVSRevision that is a source for that symbol, the final
     # fill for this symbol has been done, and we never need to fill it
     # again.
-    self.done_symbols = [ ]
+    self._done_symbols = [ ]
 
     # This variable holds the most recently created primary svn_commit
     # object.  CVSRevisionAggregator maintains this variable merely
@@ -165,7 +165,7 @@ class CVSRevisionAggregator:
               (timestamp is None or self.ready_queue[0].t_max < timestamp):
       cvs_commit = self.ready_queue.pop(0)
       self.latest_primary_svn_commit = \
-          cvs_commit.process_revisions(self.done_symbols)
+          cvs_commit.process_revisions(self._done_symbols)
       self._attempt_to_commit_symbols()
 
   def process_revision(self, c_rev):
@@ -252,7 +252,7 @@ class CVSRevisionAggregator:
       Ctx()._persistence_manager.put_svn_commit(
           SVNSymbolCloseCommit(
               symbol_name, self.latest_primary_svn_commit.date))
-      self.done_symbols.append(symbol_name)
+      self._done_symbols.append(symbol_name)
       self._pending_symbols.remove(symbol_id)
 
 

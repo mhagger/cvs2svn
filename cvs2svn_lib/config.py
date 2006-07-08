@@ -66,13 +66,13 @@ SVN_MIRROR_NODES_DB = 'cvs2svn-svn-nodes.db'
 # SYMBOL_OPENINGS_CLOSINGS_SORTED.
 SYMBOL_OFFSETS_DB = 'cvs2svn-symbolic-name-offsets.db'
 
-# Maps CVSRevision.ids (in hex) to lists of symbolic names, where the
-# CVSRevision is the last such that is a source for those symbolic
-# names.  For example, if branch B's number is 1.3.0.2 in this CVS
-# file, and this file's 1.3 is the latest (by date) revision among
-# *all* CVS files that is a source for branch B, then the
-# CVSRevision.id corresponding to this file at 1.3 would list at least
-# B in its list.
+# Maps CVSRevision.ids (in hex) to lists of symbol ids, where the
+# CVSRevision is the last such that is a source for those symbols.
+# For example, if branch B's number is 1.3.0.2 in this CVS file, and
+# this file's 1.3 is the latest (by date) revision among *all* CVS
+# files that is a source for branch B, then the CVSRevision.id
+# corresponding to this file at 1.3 would list at least the symbol id
+# for branch B in its list.
 SYMBOL_LAST_CVS_REVS_DB = 'cvs2svn-symbol-last-cvs-revs.db'
 
 # Maps CVSFile.id to instance.

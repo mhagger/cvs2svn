@@ -60,10 +60,9 @@ class LastSymbolicNameDatabase:
         artifact_manager.get_temp_file(config.SYMBOL_LAST_CVS_REVS_DB),
         DB_OPEN_NEW)
     for symbol_id, rev_id in self._symbols.items():
-      symbol_name = Ctx()._symbol_db.get_name(symbol_id)
       rev_key = '%x' % (rev_id,)
       ary = symbol_revs_db.get(rev_key, [])
-      ary.append(symbol_name)
+      ary.append(symbol_id)
       symbol_revs_db[rev_key] = ary
 
 

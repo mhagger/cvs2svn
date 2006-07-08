@@ -219,8 +219,9 @@ class CVSRevisionAggregator:
     to those left over from previous passes through the aggregator."""
 
     if not Ctx().trunk_only:
-      for sym in self.last_revs_db.get('%x' % (c_rev.id,), []):
-        self._pending_symbols.add(sym)
+      for symbol_id in self.last_revs_db.get('%x' % (c_rev.id,), []):
+        symbol_name = Ctx()._symbol_db.get_name(symbol_id)
+        self._pending_symbols.add(symbol_name)
 
   def _attempt_to_commit_symbols(self):
     """Generate one SVNCommit for each symbol in self._pending_symbols

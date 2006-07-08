@@ -226,23 +226,23 @@ CreateDatabasesPass (formerly called pass4):
 ===================
 
 Find and create a database containing the last CVS revision that is a
-source (also referred to as an "opening" revision) for all symbolic
-names.  This will result in a database containing key-value pairs
-whose key is the id for a CVSRevision, and whose value is a list of
-symbolic names for which that CVSRevision is the last "opening."
+source (also referred to as an "opening" revision) for each symbol.
+This will result in a database containing key-value pairs whose key is
+the id for a CVSRevision, and whose value is a list of symbol ids for
+which that CVSRevision is the last "opening."
 
 The format for this file is:
 
     'cvs2svn-symbol-last-cvs-revs.db':
          Key                      Value
-         CVS Revision ID          array of Symbolic names
+         CVS Revision ID          array of symbol ids
 
     For example:
 
-         5c                      --> ['TAG11', 'BRANCH38']
-         62                      --> ['TAG39']
-         4d                      --> ['BRANCH48', 'BRANCH37']
-         f                       --> ['TAG320', 'TAG1178']
+         5c                      --> [3, 8]
+         62                      --> [15]
+         4d                      --> [29, 5]
+         f                       --> [18, 12]
 
 
 AggregateRevsPass (formerly called pass5)

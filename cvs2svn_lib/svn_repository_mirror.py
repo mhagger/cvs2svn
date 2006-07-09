@@ -309,27 +309,26 @@ class SVNRepositoryMirror:
     # destination.  This is a cheap copy, remember!  :-)
     return src_key, src_contents
 
-  def fill_symbolic_name(self, symbolic_name):
+  def fill_symbol(self, symbol):
     """Performs all copies necessary to create as much of the the tag
-    or branch SYMBOLIC_NAME as possible given the current revision of
-    the repository mirror.
+    or branch SYMBOL as possible given the current revision of the
+    repository mirror.  SYMBOL is an instance of Symbol.
 
     The symbolic name is guaranteed to exist in the Subversion
     repository by the end of this call, even if there are no paths
     under it."""
 
-    symbol = Ctx()._symbol_db.get_symbol_by_name(symbolic_name)
     symbol_fill = self.symbolings_reader.filling_guide_for_symbol(
-        symbolic_name, self.youngest)
+        symbol.name, self.youngest)
     # Get the list of sources for the symbolic name.
     sources = symbol_fill.get_sources()
 
     if sources:
       if isinstance(symbol, TagSymbol):
-        dest_prefix = Ctx().project.get_tag_path(symbolic_name)
+        dest_prefix = Ctx().project.get_tag_path(symbol.name)
       else:
         assert isinstance(symbol, BranchSymbol)
-        dest_prefix = Ctx().project.get_branch_path(symbolic_name)
+        dest_prefix = Ctx().project.get_branch_path(symbol.name)
 
       dest_key = self._open_writable_node(dest_prefix, False)[0]
       self._fill(symbol_fill, dest_prefix, dest_key, sources)

@@ -310,7 +310,7 @@ class SVNSymbolCommit(SVNCommit):
     symbol = Ctx()._symbol_db.get_symbol_by_name(self.symbolic_name)
     repos.start_commit(self.revnum, self._get_revprops())
     Log().verbose("Filling symbolic name:", symbol.get_clean_name())
-    repos.fill_symbolic_name(self.symbolic_name)
+    repos.fill_symbol(symbol)
 
     repos.end_commit()
 

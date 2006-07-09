@@ -19,7 +19,6 @@
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib import config
-from cvs2svn_lib.common import clean_symbolic_name
 from cvs2svn_lib.common import path_join
 from cvs2svn_lib.common import path_split
 from cvs2svn_lib.context import Ctx
@@ -319,13 +318,13 @@ class SVNRepositoryMirror:
     repository by the end of this call, even if there are no paths
     under it."""
 
+    symbol = Ctx()._symbol_db.get_symbol_by_name(symbolic_name)
     symbol_fill = self.symbolings_reader.filling_guide_for_symbol(
         symbolic_name, self.youngest)
     # Get the list of sources for the symbolic name.
     sources = symbol_fill.get_sources()
 
     if sources:
-      symbol = Ctx()._symbol_db.get_symbol_by_name(symbolic_name)
       if isinstance(symbol, TagSymbol):
         dest_prefix = Ctx().project.get_tag_path(symbolic_name)
       else:
@@ -357,8 +356,7 @@ class SVNRepositoryMirror:
           # Delete but don't prune.
           self.delete_path(del_path)
       else:
-        msg = "Error filling branch '" \
-              + clean_symbolic_name(symbol_fill.name) + "'.\n"
+        msg = "Error filling branch '" + symbol.get_clean_name() + "'.\n"
         msg += "Received an empty SymbolicNameFillingGuide and\n"
         msg += "attempted to create a branch that already exists."
         raise self.SVNRepositoryMirrorInvalidFillOperationError, msg

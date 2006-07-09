@@ -81,17 +81,6 @@ def path_split(path):
     return (path[:pos], path[pos+1:],)
 
 
-# Since the unofficial set also includes [/\] we need to translate those
-# into ones that don't conflict with Subversion limitations.
-def clean_symbolic_name(name):
-  """Return symbolic name NAME, translating characters that Subversion
-  does not allow in a pathname."""
-
-  name = name.replace('/','++')
-  name = name.replace('\\','--')
-  return name
-
-
 def format_date(date):
   """Return an svn-compatible date string for DATE (seconds since epoch).
 

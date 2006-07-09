@@ -18,7 +18,6 @@
 
 
 from cvs2svn_lib.boolean import *
-from cvs2svn_lib.common import clean_symbolic_name
 from cvs2svn_lib.common import format_date
 from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.common import OP_ADD
@@ -288,7 +287,7 @@ class SVNSymbolCommit(SVNCommit):
   def _get_log_msg(self):
     """Return a manufactured log message for this commit."""
 
-    # Determine whether  self.symbolic_name is a tag.
+    # Determine whether self.symbolic_name is a tag.
     symbol = Ctx()._symbol_db.get_symbol_by_name(self.symbolic_name)
     if isinstance(symbol, TagSymbol):
       type = 'tag'
@@ -298,7 +297,7 @@ class SVNSymbolCommit(SVNCommit):
 
     # In Python 2.2.3, we could use textwrap.fill().  Oh well :-).
     space_or_newline = ' '
-    cleaned_symbolic_name = clean_symbolic_name(self.symbolic_name)
+    cleaned_symbolic_name = symbol.get_clean_name()
     if len(cleaned_symbolic_name) >= 13:
       space_or_newline = '\n'
 
@@ -308,10 +307,9 @@ class SVNSymbolCommit(SVNCommit):
   def commit(self, repos):
     """Commit SELF to REPOS, which is a SVNRepositoryMirror."""
 
+    symbol = Ctx()._symbol_db.get_symbol_by_name(self.symbolic_name)
     repos.start_commit(self.revnum, self._get_revprops())
-
-    Log().verbose("Filling symbolic name:",
-                  clean_symbolic_name(self.symbolic_name))
+    Log().verbose("Filling symbolic name:", symbol.get_clean_name())
     repos.fill_symbolic_name(self.symbolic_name)
 
     repos.end_commit()
@@ -332,9 +330,8 @@ class SVNSymbolCommit(SVNCommit):
 
     ret = SVNCommit.__str__(self)
     if self.symbolic_name:
-      ret += ("   symbolic name: "
-              + clean_symbolic_name(self.symbolic_name)
-              + "\n")
+      symbol = Ctx()._symbol_db.get_symbol_by_name(self.symbolic_name)
+      ret += ("   symbolic name: " + symbol.get_clean_name() + "\n")
     return ret
 
 

@@ -23,7 +23,6 @@ import stat
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.context import Ctx
-from cvs2svn_lib.common import clean_symbolic_name
 from cvs2svn_lib.common import path_join
 from cvs2svn_lib.common import path_split
 from cvs2svn_lib.common import error_prefix
@@ -181,12 +180,14 @@ class Project:
   def get_branch_path(self, branch_name):
     """Return the svnpath for the branch named BRANCH_NAME."""
 
-    return path_join(self.branches_path, clean_symbolic_name(branch_name))
+    symbol = Ctx()._symbol_db.get_symbol_by_name(branch_name)
+    return path_join(self.branches_path, symbol.get_clean_name())
 
   def get_tag_path(self, tag_name):
     """Return the svnpath for the tag named TAG_NAME."""
 
-    return path_join(self.tags_path, clean_symbolic_name(tag_name))
+    symbol = Ctx()._symbol_db.get_symbol_by_name(tag_name)
+    return path_join(self.tags_path, symbol.get_clean_name())
 
   def _relative_name(self, cvs_path):
     """Convert CVS_PATH into a name relative to this project's root directory.

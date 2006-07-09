@@ -105,8 +105,7 @@ class PersistenceManager:
 
     # If it is a symbol commit, then record last_filled.
     if isinstance(svn_commit, SVNSymbolCommit):
-      symbol_id = Ctx()._symbol_db.get_id(svn_commit.symbolic_name)
-      self.last_filled[symbol_id] = svn_commit.revnum
+      self.last_filled[svn_commit.symbol.id] = svn_commit.revnum
     elif isinstance(svn_commit, SVNPostCommit):
       self.last_filled[None] = svn_commit.revnum
 

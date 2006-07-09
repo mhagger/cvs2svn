@@ -236,7 +236,8 @@ class CVSCommit:
           and c_rev.lod.name not in accounted_for_sym_names \
           and c_rev.lod.id not in done_symbols \
           and fill_needed(c_rev):
-        self.secondary_commits.append(SVNPreCommit(c_rev.lod.name))
+        symbol = Ctx()._symbol_db.get_symbol(c_rev.lod.id)
+        self.secondary_commits.append(SVNPreCommit(symbol))
         accounted_for_sym_names.append(c_rev.lod.name)
 
   def _commit(self):

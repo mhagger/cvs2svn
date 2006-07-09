@@ -278,26 +278,25 @@ class SVNPrimaryCommit(SVNCommit, SVNRevisionCommit):
 
 
 class SVNSymbolCommit(SVNCommit):
-  def __init__(self, description, name, revnum=None):
+  def __init__(self, description, symbol, revnum=None):
     SVNCommit.__init__(self, description, revnum)
 
     # The (uncleaned) symbolic name that is filled in this SVNCommit.
-    self.symbolic_name = name
+    self.symbol = symbol
 
   def _get_log_msg(self):
     """Return a manufactured log message for this commit."""
 
-    # Determine whether self.symbolic_name is a tag.
-    symbol = Ctx()._symbol_db.get_symbol_by_name(self.symbolic_name)
-    if isinstance(symbol, TagSymbol):
+    # Determine whether self.symbol is a tag.
+    if isinstance(self.symbol, TagSymbol):
       type = 'tag'
     else:
-      assert isinstance(symbol, BranchSymbol)
+      assert isinstance(self.symbol, BranchSymbol)
       type = 'branch'
 
     # In Python 2.2.3, we could use textwrap.fill().  Oh well :-).
     space_or_newline = ' '
-    cleaned_symbolic_name = symbol.get_clean_name()
+    cleaned_symbolic_name = self.symbol.get_clean_name()
     if len(cleaned_symbolic_name) >= 13:
       space_or_newline = '\n'
 
@@ -307,19 +306,19 @@ class SVNSymbolCommit(SVNCommit):
   def commit(self, repos):
     """Commit SELF to REPOS, which is a SVNRepositoryMirror."""
 
-    symbol = Ctx()._symbol_db.get_symbol_by_name(self.symbolic_name)
     repos.start_commit(self.revnum, self._get_revprops())
-    Log().verbose("Filling symbolic name:", symbol.get_clean_name())
-    repos.fill_symbol(symbol)
+    Log().verbose("Filling symbolic name:", self.symbol.get_clean_name())
+    repos.fill_symbol(self.symbol)
 
     repos.end_commit()
 
   def __getstate__(self):
-    return (self.revnum, self.symbolic_name, self.date)
+    return (self.revnum, self.symbol.id, self.date)
 
   def __setstate__(self, state):
-    (revnum, name, date) = state
-    SVNSymbolCommit.__init__(self, "Retrieved from disk", name, revnum)
+    (revnum, symbol_id, date) = state
+    symbol = Ctx()._symbol_db.get_symbol(symbol_id)
+    SVNSymbolCommit.__init__(self, "Retrieved from disk", symbol, revnum)
 
     self.date = date
 
@@ -328,16 +327,15 @@ class SVNSymbolCommit(SVNCommit):
 
     This description is not intended to be machine-parseable."""
 
-    symbol = Ctx()._symbol_db.get_symbol_by_name(self.symbolic_name)
     return (
         SVNCommit.__str__(self)
-        + "   symbolic name: %s\n" % symbol.get_clean_name())
+        + "   symbolic name: %s\n" % self.symbol.get_clean_name())
 
 
 class SVNPreCommit(SVNSymbolCommit):
-  def __init__(self, name, revnum=None):
+  def __init__(self, symbol, revnum=None):
     SVNSymbolCommit.__init__(
-        self, 'pre-commit symbolic name %r' % name, name, revnum)
+        self, 'pre-commit symbolic name %r' % symbol.name, symbol, revnum)
 
 
 class SVNPostCommit(SVNCommit, SVNRevisionCommit):
@@ -414,9 +412,9 @@ class SVNPostCommit(SVNCommit, SVNRevisionCommit):
 
 
 class SVNSymbolCloseCommit(SVNSymbolCommit):
-  def __init__(self, name, date, revnum=None):
+  def __init__(self, symbol, date, revnum=None):
     SVNSymbolCommit.__init__(
-        self, 'closing tag/branch %r' % name, name, revnum)
+        self, 'closing tag/branch %r' % symbol.name, symbol, revnum)
     self.date = date
 
 

@@ -188,9 +188,9 @@ class CVSCommit:
     # other hand, there might be multiple branches committed on in
     # this commit.  Whatever the case, we should count exactly one
     # commit per branch, because we only fill a branch once per
-    # CVSCommit.  This list tracks which branches we've already
+    # CVSCommit.  This list tracks which branch_ids we've already
     # counted.
-    accounted_for_sym_names = [ ]
+    accounted_for_symbol_ids = set()
 
     def fill_needed(c_rev):
       """Return True iff this is the first commit on a new branch (for
@@ -233,12 +233,12 @@ class CVSCommit:
       # branch.  After the fill, the path on which we're committing
       # will exist.
       if isinstance(c_rev.lod, Branch) \
-          and c_rev.lod.name not in accounted_for_sym_names \
+          and c_rev.lod.id not in accounted_for_symbol_ids \
           and c_rev.lod.id not in done_symbols \
           and fill_needed(c_rev):
         symbol = Ctx()._symbol_db.get_symbol(c_rev.lod.id)
         self.secondary_commits.append(SVNPreCommit(symbol))
-        accounted_for_sym_names.append(c_rev.lod.name)
+        accounted_for_symbol_ids.add(c_rev.lod.id)
 
   def _commit(self):
     """Generates the primary SVNCommit that corresponds to this

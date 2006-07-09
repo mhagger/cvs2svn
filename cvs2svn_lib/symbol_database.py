@@ -72,6 +72,13 @@ class SymbolDatabase:
       self._symbols[symbol.id] = symbol
       self._symbols_by_name[symbol.name] = symbol
 
+  def get_symbol(self, id):
+    """Return the symbol instance with id ID.
+
+    Raise KeyError if the symbol is not known."""
+
+    return self._symbols[id]
+
   def get_symbol_by_name(self, name):
     """Return the symbol instance with name NAME.
 

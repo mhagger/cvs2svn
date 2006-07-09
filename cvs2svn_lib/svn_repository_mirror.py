@@ -325,7 +325,7 @@ class SVNRepositoryMirror:
     sources = symbol_fill.get_sources()
 
     if sources:
-      symbol = Ctx()._symbol_db.get_symbol(symbolic_name)
+      symbol = Ctx()._symbol_db.get_symbol_by_name(symbolic_name)
       if isinstance(symbol, TagSymbol):
         dest_prefix = Ctx().project.get_tag_path(symbolic_name)
       else:

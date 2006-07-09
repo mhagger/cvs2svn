@@ -72,7 +72,7 @@ class SymbolDatabase:
       self._symbols[symbol.id] = symbol
       self._symbols_by_name[symbol.name] = symbol
 
-  def get_symbol(self, name):
+  def get_symbol_by_name(self, name):
     """Return the symbol instance with name NAME.
 
     Return None if there is no such instance (for example, if NAME is
@@ -110,7 +110,7 @@ class SymbolDatabase:
     branches = []
     tags = []
     for name in names:
-      symbol = self.get_symbol(name)
+      symbol = self.get_symbol_by_name(name)
       if isinstance(symbol, BranchSymbol):
         branches.append(name)
       elif isinstance(symbol, TagSymbol):

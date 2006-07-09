@@ -289,7 +289,7 @@ class SVNSymbolCommit(SVNCommit):
     """Return a manufactured log message for this commit."""
 
     # Determine whether  self.symbolic_name is a tag.
-    symbol = Ctx()._symbol_db.get_symbol(self.symbolic_name)
+    symbol = Ctx()._symbol_db.get_symbol_by_name(self.symbolic_name)
     if isinstance(symbol, TagSymbol):
       type = 'tag'
     else:

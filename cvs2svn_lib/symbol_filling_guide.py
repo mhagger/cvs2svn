@@ -27,7 +27,7 @@ from cvs2svn_lib.svn_revision_range import SVNRevisionRange
 from cvs2svn_lib.fill_source import FillSource
 
 
-class SymbolicNameFillingGuide:
+class SymbolFillingGuide:
   """A node tree representing the source paths to be copied to fill
   self.name in the current SVNCommit.
 
@@ -46,7 +46,7 @@ class SymbolicNameFillingGuide:
   actions to "patch up" the subtrees."""
 
   def __init__(self, openings_closings_map):
-    """Initializes a SymbolicNameFillingGuide for SYMBOLIC_NAME and
+    """Initializes a SymbolFillingGuide for OPENINGS_CLOSINGS_MAP and
     store into it the openings and closings from
     OPENINGS_CLOSINGS_MAP."""
 

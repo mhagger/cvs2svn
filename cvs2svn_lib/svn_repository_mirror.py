@@ -67,7 +67,7 @@ class SVNRepositoryMirror:
     pass
 
   class SVNRepositoryMirrorInvalidFillOperationError(Exception):
-    """Exception raised if an empty SymbolicNameFillingGuide is returned
+    """Exception raised if an empty SymbolFillingGuide is returned
     during a fill where the branch in question already exists."""
 
     pass
@@ -356,7 +356,7 @@ class SVNRepositoryMirror:
           self.delete_path(del_path)
       else:
         msg = "Error filling branch '" + symbol.get_clean_name() + "'.\n"
-        msg += "Received an empty SymbolicNameFillingGuide and\n"
+        msg += "Received an empty SymbolFillingGuide and\n"
         msg += "attempted to create a branch that already exists."
         raise self.SVNRepositoryMirrorInvalidFillOperationError, msg
 

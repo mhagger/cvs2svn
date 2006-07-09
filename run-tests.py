@@ -1658,7 +1658,7 @@ def file_in_attic_too():
     pass
 
 def symbolic_name_filling_guide():
-  "reveal a big bug in our SymbolicNameFillingGuide"
+  "reveal a big bug in our SymbolFillingGuide"
   # This will fail if the bug is present
   conv = ensure_conversion('symbolic-name-overfill')
 

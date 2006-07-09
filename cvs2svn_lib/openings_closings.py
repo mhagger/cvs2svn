@@ -171,7 +171,7 @@ class OpeningsClosingsMap:
 
   The user should call self.register() for the openings and closings,
   then self.get_node_tree() to retrieve the information as a
-  SymbolicNameFillingGuide."""
+  SymbolFillingGuide."""
 
   def __init__(self, symbol):
     """Initialize OpeningsClosingsMap and prepare it for receiving

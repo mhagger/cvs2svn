@@ -24,7 +24,7 @@ from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.database import Database
 from cvs2svn_lib.database import DB_OPEN_READ
 from cvs2svn_lib.openings_closings import OpeningsClosingsMap
-from cvs2svn_lib.symbolic_name_filling_guide import SymbolicNameFillingGuide
+from cvs2svn_lib.symbol_filling_guide import SymbolFillingGuide
 
 
 class SymbolingsReader:
@@ -53,13 +53,12 @@ class SymbolingsReader:
       self.offsets[symbol_id] = offsets_db[key]
 
   def filling_guide_for_symbol(self, symbol, svn_revnum):
-    """Given SYMBOL and SVN_REVNUM, return a new
-    SymbolicNameFillingGuide object.
+    """Given SYMBOL and SVN_REVNUM, return a new SymbolFillingGuide object.
 
     SYMBOL is a Symbol instance.  Note that if we encounter an opening
     rev in this fill, but the corresponding closing rev takes place
     later than SVN_REVNUM, the closing will not be passed to
-    SymbolicNameFillingGuide in this fill (and will be discarded when
+    SymbolFillingGuide in this fill (and will be discarded when
     encountered in a later fill).  This is perfectly fine, because we
     can still do a valid fill without the closing--we always try to
     fill what we can as soon as we can."""
@@ -99,6 +98,6 @@ class SymbolingsReader:
       if not openings_closings_map.is_empty():
         self.offsets[symbol.id] = fpos
 
-    return SymbolicNameFillingGuide(openings_closings_map)
+    return SymbolFillingGuide(openings_closings_map)
 
 

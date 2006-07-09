@@ -72,7 +72,7 @@ class SymbolingsReader:
       # symbol:
       self.symbolings.seek(self.offsets[symbol.id])
 
-      while 1:
+      while True:
         fpos = self.symbolings.tell()
         line = self.symbolings.readline().rstrip()
         if not line:

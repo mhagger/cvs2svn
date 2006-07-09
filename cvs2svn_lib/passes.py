@@ -577,7 +577,7 @@ class OutputPass(Pass):
     # tags, and branches.
     SVNInitialProjectCommit(svn_commit.date, 1).commit(repos)
 
-    while 1:
+    while True:
       svn_commit = persistence_manager.get_svn_commit(svn_revnum)
       if not svn_commit:
         break

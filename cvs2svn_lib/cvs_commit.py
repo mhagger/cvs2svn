@@ -210,11 +210,11 @@ class CVSCommit:
       # been filled before.
       if c_rev.op == OP_ADD:
         # Fill the branch only if it has never been filled before:
-        return c_rev.lod.name not in pm.last_filled
+        return c_rev.lod.id not in pm.last_filled
       elif c_rev.op == OP_CHANGE:
         # We need to fill only if the last commit affecting the file
         # has not been filled yet:
-        return prev_svn_revnum > pm.last_filled.get(c_rev.lod.name, 0)
+        return prev_svn_revnum > pm.last_filled.get(c_rev.lod.id, 0)
       elif c_rev.op == OP_DELETE:
         # If the previous revision was also a delete, we don't need
         # to fill it - and there's nothing to copy to the branch, so
@@ -224,7 +224,7 @@ class CVSCommit:
           return False
         # Other deletes need fills only if the last commit affecting
         # the file has not been filled yet:
-        return prev_svn_revnum > pm.last_filled.get(c_rev.lod.name, 0)
+        return prev_svn_revnum > pm.last_filled.get(c_rev.lod.id, 0)
 
     for c_rev in self.changes + self.deletes:
       # If a commit is on a branch, we must ensure that the branch

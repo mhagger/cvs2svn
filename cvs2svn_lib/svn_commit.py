@@ -328,11 +328,10 @@ class SVNSymbolCommit(SVNCommit):
 
     This description is not intended to be machine-parseable."""
 
-    ret = SVNCommit.__str__(self)
-    if self.symbolic_name:
-      symbol = Ctx()._symbol_db.get_symbol_by_name(self.symbolic_name)
-      ret += ("   symbolic name: " + symbol.get_clean_name() + "\n")
-    return ret
+    symbol = Ctx()._symbol_db.get_symbol_by_name(self.symbolic_name)
+    return (
+        SVNCommit.__str__(self)
+        + "   symbolic name: %s\n" % symbol.get_clean_name())
 
 
 class SVNPreCommit(SVNSymbolCommit):

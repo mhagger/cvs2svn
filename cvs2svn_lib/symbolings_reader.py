@@ -16,6 +16,7 @@
 
 """This module contains database facilities used by cvs2svn."""
 
+import cPickle
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib import config
@@ -43,14 +44,11 @@ class SymbolingsReader:
         'r')
     # The offsets_db is really small, and we need to read and write
     # from it a fair bit, so suck it into memory
-    offsets_db = Database(
-        artifact_manager.get_temp_file(config.SYMBOL_OFFSETS_DB),
-        DB_OPEN_READ)
+    offsets_db = file(
+        artifact_manager.get_temp_file(config.SYMBOL_OFFSETS_DB), 'rb')
     # A map from symbol_id to offset.
-    self.offsets = { }
-    for key in offsets_db:
-      symbol_id = int(key, 16)
-      self.offsets[symbol_id] = offsets_db[key]
+    self.offsets = cPickle.load(offsets_db)
+    offsets_db.close()
 
   def filling_guide_for_symbol(self, symbol, svn_revnum):
     """Given SYMBOL and SVN_REVNUM, return a new SymbolFillingGuide object.

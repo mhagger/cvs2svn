@@ -62,9 +62,10 @@ SYMBOL_CLOSINGS_TMP = 'cvs2svn-symbolic-names-closings-tmp.txt'
 SVN_MIRROR_REVISIONS_DB = 'cvs2svn-svn-revisions.db'
 SVN_MIRROR_NODES_DB = 'cvs2svn-svn-nodes.db'
 
-# Offsets pointing to the beginning of each SYMBOL_ID in
-# SYMBOL_OPENINGS_CLOSINGS_SORTED.
-SYMBOL_OFFSETS_DB = 'cvs2svn-symbolic-name-offsets.db'
+# Offsets pointing to the beginning of each symbol's records in
+# SYMBOL_OPENINGS_CLOSINGS_SORTED.  This file contains a pickled map
+# from symbol_id to file offset.
+SYMBOL_OFFSETS_DB = 'cvs2svn-symbol-offsets.dat'
 
 # Maps CVSRevision.ids (in hex) to lists of symbol ids, where the
 # CVSRevision is the last such that is a source for those symbols.

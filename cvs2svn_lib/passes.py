@@ -23,6 +23,7 @@ import sys
 import os
 import time
 import re
+import cPickle
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib import config
@@ -496,21 +497,16 @@ class IndexSymbolsPass(Pass):
     seek to the various offsets in the file and sequentially read only
     the openings and closings that we need."""
 
-    ###PERF This is a fine example of a db that can be in-memory and
-    #just flushed to disk when we're done.  Later, it can just be sucked
-    #back into memory.
-    offsets_db = Database(
-        artifact_manager.get_temp_file(config.SYMBOL_OFFSETS_DB),
-        DB_OPEN_NEW)
+    offsets = {}
 
-    file = open(
+    f = open(
         artifact_manager.get_temp_file(
             config.SYMBOL_OPENINGS_CLOSINGS_SORTED),
         'r')
     old_id = None
     while True:
-      fpos = file.tell()
-      line = file.readline()
+      fpos = f.tell()
+      line = f.readline()
       if not line:
         break
       id, svn_revnum, ignored = line.split(" ", 2)
@@ -518,7 +514,12 @@ class IndexSymbolsPass(Pass):
       if id != old_id:
         Log().verbose(' ', Ctx()._symbol_db.get_name(id))
         old_id = id
-        offsets_db['%x' % id] = fpos
+        offsets[id] = fpos
+
+    offsets_db = file(
+        artifact_manager.get_temp_file(config.SYMBOL_OFFSETS_DB), 'wb')
+    cPickle.dump(offsets, offsets_db, -1)
+    offsets_db.close()
 
   def run(self, stats_keeper):
     Log().quiet("Determining offsets for all symbolic names...")

@@ -64,7 +64,7 @@ class SymbolingsReader:
     can still do a valid fill without the closing--we always try to
     fill what we can as soon as we can."""
 
-    openings_closings_map = OpeningsClosingsMap(symbol.name)
+    openings_closings_map = OpeningsClosingsMap(symbol)
 
     # It's possible to have a branch start with a file that was added
     # on a branch

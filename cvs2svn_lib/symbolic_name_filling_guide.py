@@ -50,7 +50,7 @@ class SymbolicNameFillingGuide:
     store into it the openings and closings from
     OPENINGS_CLOSINGS_MAP."""
 
-    self.name = openings_closings_map.name
+    self.name = openings_closings_map.symbol.name
 
     # The dictionary that holds our node tree as a map { node_key :
     # node }.

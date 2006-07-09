@@ -166,18 +166,18 @@ class SymbolingsLogger:
 
 
 class OpeningsClosingsMap:
-  """A dictionary of openings and closings for a symbolic name in the
-  current SVNCommit.
+  """A dictionary of openings and closings for a symbol in the current
+  SVNCommit.
 
   The user should call self.register() for the openings and closings,
   then self.get_node_tree() to retrieve the information as a
   SymbolicNameFillingGuide."""
 
-  def __init__(self, symbolic_name):
+  def __init__(self, symbol):
     """Initialize OpeningsClosingsMap and prepare it for receiving
     openings and closings."""
 
-    self.name = symbolic_name
+    self.symbol = symbol
 
     # A dictionary of SVN_PATHS to SVNRevisionRange objects.
     self.things = { }
@@ -185,10 +185,11 @@ class OpeningsClosingsMap:
   def register(self, svn_path, svn_revnum, type):
     """Register an opening or closing revision for this symbolic name.
     SVN_PATH is the source path that needs to be copied into
-    self.name, and SVN_REVNUM is either the first svn revision number
-    that we can copy from (our opening), or the last (not inclusive)
-    svn revision number that we can copy from (our closing).  TYPE
-    indicates whether this path is an opening or a a closing.
+    self.symbol, and SVN_REVNUM is either the first svn revision
+    number that we can copy from (our opening), or the last (not
+    inclusive) svn revision number that we can copy from (our
+    closing).  TYPE indicates whether this path is an opening or a a
+    closing.
 
     The opening for a given SVN_PATH must be passed before the closing
     for it to have any effect... any closing encountered before a

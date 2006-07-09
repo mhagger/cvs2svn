@@ -213,8 +213,7 @@ class SVNRepositoryMirror:
     return this_key, this_contents
 
   def path_exists(self, path):
-    """If PATH exists in self.youngest of the svn repository mirror,
-    return true, else return None.
+    """Return True iff PATH exists in self.youngest of the repository mirror.
 
     PATH must not start with '/'."""
 

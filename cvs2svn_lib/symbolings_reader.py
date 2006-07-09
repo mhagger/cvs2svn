@@ -52,27 +52,26 @@ class SymbolingsReader:
       symbol_id = int(key, 16)
       self.offsets[symbol_id] = offsets_db[key]
 
-  def filling_guide_for_symbol(self, symbolic_name, svn_revnum):
-    """Given SYMBOLIC_NAME and SVN_REVNUM, return a new
+  def filling_guide_for_symbol(self, symbol, svn_revnum):
+    """Given SYMBOL and SVN_REVNUM, return a new
     SymbolicNameFillingGuide object.
 
-    Note that if we encounter an opening rev in this fill, but the
-    corresponding closing rev takes place later than SVN_REVNUM, the
-    closing will not be passed to SymbolicNameFillingGuide in this
-    fill (and will be discarded when encountered in a later fill).
-    This is perfectly fine, because we can still do a valid fill
-    without the closing--we always try to fill what we can as soon as
-    we can."""
+    SYMBOL is a Symbol instance.  Note that if we encounter an opening
+    rev in this fill, but the corresponding closing rev takes place
+    later than SVN_REVNUM, the closing will not be passed to
+    SymbolicNameFillingGuide in this fill (and will be discarded when
+    encountered in a later fill).  This is perfectly fine, because we
+    can still do a valid fill without the closing--we always try to
+    fill what we can as soon as we can."""
 
-    openings_closings_map = OpeningsClosingsMap(symbolic_name)
+    openings_closings_map = OpeningsClosingsMap(symbol.name)
 
     # It's possible to have a branch start with a file that was added
     # on a branch
-    symbol_id = Ctx()._symbol_db.get_id(symbolic_name)
-    if symbol_id in self.offsets:
+    if symbol.id in self.offsets:
       # Set our read offset for self.symbolings to the offset for this
       # symbol:
-      self.symbolings.seek(self.offsets[symbol_id])
+      self.symbolings.seek(self.offsets[symbol.id])
 
       while 1:
         fpos = self.symbolings.tell()
@@ -90,7 +89,7 @@ class SymbolingsReader:
           svn_path = Ctx().project.make_branch_path(
               Ctx()._symbol_db.get_name(branch_id), cvs_file.cvs_path)
         revnum = int(revnum)
-        if revnum > svn_revnum or id != symbol_id:
+        if revnum > svn_revnum or id != symbol.id:
           break
         openings_closings_map.register(svn_path, revnum, type)
 
@@ -98,7 +97,7 @@ class SymbolingsReader:
       # for the beginning of the line we just read if we used anything
       # we read.
       if not openings_closings_map.is_empty():
-        self.offsets[symbol_id] = fpos
+        self.offsets[symbol.id] = fpos
 
     return SymbolicNameFillingGuide(openings_closings_map)
 

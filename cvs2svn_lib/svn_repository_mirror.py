@@ -319,7 +319,7 @@ class SVNRepositoryMirror:
     under it."""
 
     symbol_fill = self.symbolings_reader.filling_guide_for_symbol(
-        symbol.name, self.youngest)
+        symbol, self.youngest)
     # Get the list of sources for the symbolic name.
     sources = symbol_fill.get_sources()
 

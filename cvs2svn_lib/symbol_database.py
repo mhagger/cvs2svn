@@ -101,11 +101,6 @@ class SymbolDatabase:
 
     return self._symbols[id].name
 
-  def __contains__(self, name):
-    """Return True iff NAME is a symbol being included in the conversion."""
-
-    return name in self._symbols_by_name
-
   def collate_symbols(self, names):
     """Given an iterable of symbol, divide them into branches and tags.
 

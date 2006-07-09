@@ -375,6 +375,17 @@ class CreateDatabasesPass(Pass):
     self._register_temp_file_needed(config.CVS_ITEMS_RESYNC_DB)
     self._register_temp_file_needed(config.SORTED_REVS_DATAFILE)
 
+  def get_cvs_revs(self):
+    """Generator the CVSRevisions in SORTED_REVS_DATAFILE order."""
+
+    cvs_items_db = CVSItemDatabase(
+        artifact_manager.get_temp_file(config.CVS_ITEMS_RESYNC_DB),
+        DB_OPEN_READ)
+    for line in file(
+            artifact_manager.get_temp_file(config.SORTED_REVS_DATAFILE)):
+      c_rev_id = int(line.strip().split()[-1], 16)
+      yield cvs_items_db[c_rev_id]
+
   def run(self, stats_keeper):
     """If we're not doing a trunk-only conversion, generate the
     LastSymbolicNameDatabase, which contains the last CVSRevision that
@@ -384,26 +395,14 @@ class CreateDatabasesPass(Pass):
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
     Ctx()._symbol_db = SymbolDatabase()
 
-    def get_cvs_revs():
-      """Generator that produces the CVSRevisions in
-      SORTED_REVS_DATAFILE order."""
-
-      cvs_items_db = CVSItemDatabase(
-          artifact_manager.get_temp_file(config.CVS_ITEMS_RESYNC_DB),
-          DB_OPEN_READ)
-      for line in file(
-              artifact_manager.get_temp_file(config.SORTED_REVS_DATAFILE)):
-        c_rev_id = int(line.strip().split()[-1], 16)
-        yield cvs_items_db[c_rev_id]
-
     if Ctx().trunk_only:
-      for c_rev in get_cvs_revs():
+      for c_rev in self.get_cvs_revs():
         stats_keeper.record_c_rev(c_rev)
     else:
       Log().quiet("Finding last CVS revisions for all symbolic names...")
       last_sym_name_db = LastSymbolicNameDatabase()
 
-      for c_rev in get_cvs_revs():
+      for c_rev in self.get_cvs_revs():
         last_sym_name_db.log_revision(c_rev)
         stats_keeper.record_c_rev(c_rev)
 
@@ -489,44 +488,44 @@ class IndexSymbolsPass(Pass):
       self._register_temp_file_needed(config.SYMBOL_DB)
       self._register_temp_file_needed(config.SYMBOL_OPENINGS_CLOSINGS_SORTED)
 
+  def generate_offsets_for_symbolings(self):
+    """This function iterates through all the lines in
+    SYMBOL_OPENINGS_CLOSINGS_SORTED, writing out a file mapping
+    SYMBOLIC_NAME to the file offset in SYMBOL_OPENINGS_CLOSINGS_SORTED
+    where SYMBOLIC_NAME is first encountered.  This will allow us to
+    seek to the various offsets in the file and sequentially read only
+    the openings and closings that we need."""
+
+    ###PERF This is a fine example of a db that can be in-memory and
+    #just flushed to disk when we're done.  Later, it can just be sucked
+    #back into memory.
+    offsets_db = Database(
+        artifact_manager.get_temp_file(config.SYMBOL_OFFSETS_DB),
+        DB_OPEN_NEW)
+
+    file = open(
+        artifact_manager.get_temp_file(
+            config.SYMBOL_OPENINGS_CLOSINGS_SORTED),
+        'r')
+    old_id = None
+    while True:
+      fpos = file.tell()
+      line = file.readline()
+      if not line:
+        break
+      id, svn_revnum, ignored = line.split(" ", 2)
+      id = int(id, 16)
+      if id != old_id:
+        Log().verbose(' ', Ctx()._symbol_db.get_name(id))
+        old_id = id
+        offsets_db['%x' % id] = fpos
+
   def run(self, stats_keeper):
     Log().quiet("Determining offsets for all symbolic names...")
 
-    def generate_offsets_for_symbolings():
-      """This function iterates through all the lines in
-      SYMBOL_OPENINGS_CLOSINGS_SORTED, writing out a file mapping
-      SYMBOLIC_NAME to the file offset in SYMBOL_OPENINGS_CLOSINGS_SORTED
-      where SYMBOLIC_NAME is first encountered.  This will allow us to
-      seek to the various offsets in the file and sequentially read only
-      the openings and closings that we need."""
-
-      ###PERF This is a fine example of a db that can be in-memory and
-      #just flushed to disk when we're done.  Later, it can just be sucked
-      #back into memory.
-      offsets_db = Database(
-          artifact_manager.get_temp_file(config.SYMBOL_OFFSETS_DB),
-          DB_OPEN_NEW)
-
-      file = open(
-          artifact_manager.get_temp_file(
-              config.SYMBOL_OPENINGS_CLOSINGS_SORTED),
-          'r')
-      old_id = None
-      while True:
-        fpos = file.tell()
-        line = file.readline()
-        if not line:
-          break
-        id, svn_revnum, ignored = line.split(" ", 2)
-        id = int(id, 16)
-        if id != old_id:
-          Log().verbose(' ', Ctx()._symbol_db.get_name(id))
-          old_id = id
-          offsets_db['%x' % id] = fpos
-
     if not Ctx().trunk_only:
       Ctx()._symbol_db = SymbolDatabase()
-      generate_offsets_for_symbolings()
+      self.generate_offsets_for_symbolings()
     Log().quiet("Done.")
 
 

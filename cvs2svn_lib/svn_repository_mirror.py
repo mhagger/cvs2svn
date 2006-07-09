@@ -335,7 +335,7 @@ class SVNRepositoryMirror:
     else:
       # We can only get here for a branch whose first commit is an add
       # (as opposed to a copy).
-      dest_path = Ctx().project.get_branch_path(symbol_fill.name)
+      dest_path = Ctx().project.get_branch_path(symbol_fill.symbol.name)
       if not self.path_exists(dest_path):
         # If our symbol_fill was empty, that means that our first
         # commit on the branch was to a file added on the branch, and

@@ -50,7 +50,7 @@ class SymbolFillingGuide:
     store into it the openings and closings from
     OPENINGS_CLOSINGS_MAP."""
 
-    self.name = openings_closings_map.symbol.name
+    self.symbol = openings_closings_map.symbol
 
     # The dictionary that holds our node tree as a map { node_key :
     # node }.
@@ -172,7 +172,7 @@ class SymbolFillingGuide:
     if revnum == SVN_INVALID_REVNUM:
       raise FatalError(
           "failed to find a revision to copy from when copying %s"
-          % self.name)
+          % self.symbol.name)
     return revnum, max_score
 
   def _list_revnums(self, node):

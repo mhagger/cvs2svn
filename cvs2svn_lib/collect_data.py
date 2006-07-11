@@ -148,6 +148,10 @@ class _RevisionData:
     # _FileDataCollector._resolve_dependencies().
     self.branches_data = []
 
+    # The _BranchData instances of branches that are closed by this
+    # revision.
+    self.closed_branches_data = []
+
     # The _TagData instances of tags that are connected to this
     # revision.
     self.tags_data = []
@@ -470,6 +474,10 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       parent_data = self._rev_data[branch_data.parent]
       parent_data.branches_data.append(branch_data)
 
+      if not Ctx().trunk_only and parent_data.child is not None:
+        closing_data = self._rev_data[parent_data.child]
+        closing_data.closed_branches_data.append(branch_data)
+
       # If the branch has a child (i.e., something was committed on
       # the branch), then we store a reference to the branch_data
       # there, and also define the child's parent to be the branch's
@@ -486,6 +494,10 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         # The tag_data's rev has the tag as a child:
         parent_data = self._rev_data[tag_data.rev]
         parent_data.tags_data.append(tag_data)
+
+        if not Ctx().trunk_only and parent_data.child is not None:
+          closing_data = self._rev_data[parent_data.child]
+          closing_data.closed_branches_data.append(tag_data)
 
   def _update_default_branch(self, rev_data):
     """Ratchet up the highest vendor head revision based on REV_DATA,
@@ -679,6 +691,11 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         for tag_data in rev_data.tags_data
         ]
 
+    closed_branch_ids = [
+        closed_branch_data.symbol_id
+        for closed_branch_data in rev_data.closed_branches_data
+        ]
+
     c_rev = CVSRevision(
         self._get_rev_id(revision), self.cvs_file,
         rev_data.timestamp, metadata_id,
@@ -689,7 +706,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         bool(text),
         lod,
         rev_data.is_first_on_branch(),
-        tag_ids, branch_ids)
+        tag_ids, branch_ids, closed_branch_ids)
     rev_data.c_rev = c_rev
     self.collect_data.add_cvs_revision(c_rev)
 

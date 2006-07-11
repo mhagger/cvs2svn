@@ -47,7 +47,8 @@ class CVSRevision(CVSItem):
                timestamp, metadata_id,
                prev_id, next_id,
                op, rev, deltatext_exists,
-               lod, first_on_branch, tag_ids, branch_ids):
+               lod, first_on_branch,
+               tag_ids, branch_ids, closed_branch_ids):
     """Initialize a new CVSRevision object.
 
     Arguments:
@@ -65,6 +66,8 @@ class CVSRevision(CVSItem):
        TAG_IDS         -->  (list of int) ids of all tags on this revision
        BRANCH_IDS      -->  (list of int) ids of all branches rooted in this
                             revision
+       CLOSED_BRANCH_IDS --> (list of int) ids of all branches closed by
+                             this revision
     """
 
     CVSItem.__init__(self, id, cvs_file)
@@ -80,6 +83,7 @@ class CVSRevision(CVSItem):
     self.first_on_branch = first_on_branch
     self.tag_ids = tag_ids
     self.branch_ids = branch_ids
+    self.closed_branch_ids = closed_branch_ids
 
   def _get_cvs_path(self):
     return self.cvs_file.cvs_path
@@ -111,14 +115,15 @@ class CVSRevision(CVSItem):
         self.deltatext_exists,
         lod_id,
         self.first_on_branch,
-        ' '.join(['%x' % tag_id for tag_id in self.tag_ids]),
-        ' '.join(['%x' % branch_id for branch_id in self.branch_ids]),)
+        ' '.join(['%x' % id for id in self.tag_ids]),
+        ' '.join(['%x' % id for id in self.branch_ids]),
+        ' '.join(['%x' % id for id in self.closed_branch_ids]),)
 
   def __setstate__(self, data):
     (self.id, cvs_file_id, self.timestamp, self.metadata_id,
      self.prev_id, self.next_id, self.op, self.rev,
      self.deltatext_exists, lod_id, self.first_on_branch,
-     tag_ids, branch_ids) = data
+     tag_ids, branch_ids, closed_branch_ids) = data
     self.cvs_file = Ctx()._cvs_file_db.get_file(cvs_file_id)
     if lod_id is None:
       self.lod = Trunk()
@@ -126,6 +131,7 @@ class CVSRevision(CVSItem):
       self.lod = Branch(lod_id, Ctx()._symbol_db.get_name(lod_id))
     self.tag_ids = [int(s, 16) for s in tag_ids.split()]
     self.branch_ids = [int(s, 16) for s in branch_ids.split()]
+    self.closed_branch_ids = [int(s, 16) for s in closed_branch_ids.split()]
 
   def opens_symbol(self, symbol_id):
     """Return True iff this CVSRevision is the opening CVSRevision for

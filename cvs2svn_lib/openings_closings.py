@@ -89,7 +89,7 @@ class SymbolingsLogger:
       if c_rev.op != OP_DELETE:
         self._log(symbol_id, svn_revnum, c_rev.cvs_file, branch_id, OPENING)
 
-    for symbol_id in c_rev.closed_branch_ids:
+    for symbol_id in c_rev.closed_symbol_ids:
       self._log(symbol_id, svn_revnum, c_rev.cvs_file, branch_id, CLOSING)
 
   def _log(self, symbol_id, svn_revnum, cvs_file, branch_id, type):

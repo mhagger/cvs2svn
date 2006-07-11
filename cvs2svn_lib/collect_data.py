@@ -148,8 +148,8 @@ class _RevisionData:
     # _FileDataCollector._resolve_dependencies().
     self.branches_data = []
 
-    # The _BranchData/_TagData instances of symbols that are closed by
-    # this revision.
+    # The _SymbolData instances of symbols that are closed by this
+    # revision.
     self.closed_symbols_data = []
 
     # The _TagData instances of tags that are connected to this
@@ -167,13 +167,20 @@ class _RevisionData:
     return not self.parent or self.parent_branch_data is not None
 
 
-class _BranchData:
-  """Collection area for information about a CVSBranch."""
+class _SymbolData:
+  """Collection area for information about a CVS symbol (branch or tag)."""
 
-  def __init__(self, id, symbol_id, name, branch_number):
+  def __init__(self, id, symbol_id, name):
     self.id = id
     self.symbol_id = symbol_id
     self.name = name
+
+
+class _BranchData(_SymbolData):
+  """Collection area for information about a CVSBranch."""
+
+  def __init__(self, id, symbol_id, name, branch_number):
+    _SymbolData.__init__(self, id, symbol_id, name)
     self.branch_number = branch_number
 
     # The revision number of the revision from which this branch
@@ -185,13 +192,11 @@ class _BranchData:
     self.child = None
 
 
-class _TagData:
+class _TagData(_SymbolData):
   """Collection area for information about a CVSTag."""
 
   def __init__(self, id, symbol_id, name, rev):
-    self.id = id
-    self.symbol_id = symbol_id
-    self.name = name
+    _SymbolData.__init__(self, id, symbol_id, name)
     self.rev = rev
 
 

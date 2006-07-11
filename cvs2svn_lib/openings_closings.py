@@ -33,8 +33,7 @@ CLOSING = 'C'
 
 
 class SymbolingsLogger:
-  """Manage the file that contains lines for symbol openings and
-  closings.
+  """Manage the file that contains lines for symbol openings and closings.
 
   This data will later be used to determine valid SVNRevision ranges
   from which a file can be copied when creating a branch or tag in
@@ -71,8 +70,6 @@ class SymbolingsLogger:
   def __init__(self):
     self.symbolings = open(
         artifact_manager.get_temp_file(config.SYMBOL_OPENINGS_CLOSINGS), 'w')
-    self.closings = open(
-        artifact_manager.get_temp_file(config.SYMBOL_CLOSINGS_TMP), 'w')
 
     # This keys of this dictionary are *source* cvs_paths for which
     # we've encountered an 'opening' on the default branch.  The
@@ -80,24 +77,20 @@ class SymbolingsLogger:
     self._open_paths_with_default_branches = { }
 
   def log_revision(self, c_rev, svn_revnum):
-    """Log any openings found in C_REV, and if C_REV.next_id is not
-    None, a closing.  The opening uses SVN_REVNUM, but the closing (if
-    any) will have its revnum determined later."""
+    """Log any openings and closings found in C_REV."""
+
+    if isinstance(c_rev.lod, Branch):
+      branch_id = c_rev.lod.id
+    else:
+      branch_id = None
 
     for symbol_id in c_rev.tag_ids + c_rev.branch_ids:
       self._note_default_branch_opening(c_rev, symbol_id)
-      if isinstance(c_rev.lod, Branch):
-        branch_id = c_rev.lod.id
-      else:
-        branch_id = None
       if c_rev.op != OP_DELETE:
         self._log(symbol_id, svn_revnum, c_rev.cvs_file, branch_id, OPENING)
 
-      # If our c_rev has a next_rev, then that's the closing rev for
-      # this source revision.  Log it to closings for later processing
-      # since we don't know the svn_revnum yet.
-      if c_rev.next_id is not None:
-        self.closings.write('%x %x\n' % (symbol_id, c_rev.next_id))
+    for symbol_id in c_rev.closed_branch_ids:
+      self._log(symbol_id, svn_revnum, c_rev.cvs_file, branch_id, CLOSING)
 
   def _log(self, symbol_id, svn_revnum, cvs_file, branch_id, type):
     """Log an opening or closing to self.symbolings.
@@ -122,25 +115,6 @@ class SymbolingsLogger:
         % (symbol_id, svn_revnum, type, branch_id, cvs_file.id))
 
   def close(self):
-    """Iterate through the closings file, lookup the svn_revnum for
-    each closing CVSRevision, and write a proper line out to the
-    symbolings file."""
-
-    self.closings.close()
-    for line in file(
-            artifact_manager.get_temp_file(config.SYMBOL_CLOSINGS_TMP)):
-      (symbol_id, rev_key) = line.rstrip().split(" ", 1)
-      symbol_id = int(symbol_id, 16)
-      rev_id = int(rev_key, 16)
-      svn_revnum = Ctx()._persistence_manager.get_svn_revnum(rev_id)
-
-      c_rev = Ctx()._cvs_items_db[rev_id]
-      if isinstance(c_rev.lod, Branch):
-        branch_id = c_rev.lod.id
-      else:
-        branch_id = None
-      self._log(symbol_id, svn_revnum, c_rev.cvs_file, branch_id, CLOSING)
-
     self.symbolings.close()
 
   def _note_default_branch_opening(self, c_rev, symbol_id):

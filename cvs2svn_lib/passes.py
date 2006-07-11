@@ -426,7 +426,6 @@ class AggregateRevsPass(Pass):
 
   def register_artifacts(self):
     self._register_temp_file(config.SYMBOL_OPENINGS_CLOSINGS)
-    self._register_temp_file(config.SYMBOL_CLOSINGS_TMP)
     self._register_temp_file(config.SVN_COMMITS_DB)
     self._register_temp_file(config.CVS_REVS_TO_SVN_REVNUMS)
     if not Ctx().trunk_only:

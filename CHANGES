@@ -6,6 +6,7 @@ Version 1.4.x (not yet released)
  * New --auto-props option allows file properties to be set via file.
  * --force-branch and --force-tag options now accept regular expressions.
  * Add --symbol-default option.
+ * Support multiple, ordered --encoding options.
 
  Bugs fixed:
  * Fix issue #93: Tags with forbidden characters converted to branches.

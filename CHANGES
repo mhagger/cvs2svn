@@ -17,6 +17,7 @@ Version 1.4.x (not yet released)
  * Output an error if any CVS filenames contain control characters.
  * Clean up temporary files even for pass-by-pass conversions.
  * Improve handling of commit dependencies and multibranch commits.
+ * Implemented issue #50 (performance change).
 
  Miscellaneous:
  * cvs2svn now requires Python version 2.2 or later.

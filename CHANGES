@@ -18,6 +18,7 @@ Version 1.4.x (not yet released)
  * Clean up temporary files even for pass-by-pass conversions.
  * Improve handling of commit dependencies and multibranch commits.
  * Implemented issue #50 (performance change).
+ * Reduced the amount of temporary disk space needed during the conversion.
 
  Miscellaneous:
  * cvs2svn now requires Python version 2.2 or later.

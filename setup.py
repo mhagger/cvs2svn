@@ -7,15 +7,10 @@ from distutils.core import setup
 assert sys.hexversion >= 0x02020000, "Install Python 2.2 or greater"
 
 def get_version():
-  "Return the version number listed in dist.sh, or None if can't find one."
-  f = open('dist.sh')
-  while 1:
-    line = f.readline().strip()
-    if line is None:
-      break
-    if line.find("VERSION=") == 0:
-      return line[8:]
-  return None
+  "Return the version number listed in cvs2svn."
+  d = {}
+  execfile('cvs2svn', d)
+  return d['VERSION']
 
 setup(
     # Metadata.

@@ -32,11 +32,11 @@ Making releases
    1. If this is an A.B.0 release, make a branch:
         svn copy http://cvs2svn.tigris.org/svn/cvs2svn/trunk \
           http://cvs2svn.tigris.org/svn/cvs2svn/branches/A.B.x
-      and then increment the -dev VERSION in dist.sh on trunk.
+      and then increment the -dev VERSION in cvs2svn on trunk.
    2. Switch to a branch working copy.
-   3. Set VERSION in dist.sh, and then run:
+   3. Set VERSION in cvs2svn and then run:
         svn copy . http://cvs2svn.tigris.org/svn/cvs2svn/tags/A.B.C
-   4. Increment the -dev VERSION in dist.sh on the A.B.x branch.
+   4. Increment the -dev VERSION in cvs2svn on the A.B.x branch.
    5. Switch to the tag.
    6. Run:
         ./dist.sh

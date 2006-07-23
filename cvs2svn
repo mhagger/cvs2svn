@@ -15,7 +15,7 @@
 # history and logs, available at http://cvs2svn.tigris.org/.
 # ====================================================================
 
-VERSION = 'r' + "$LastChangedRevision$"[22:-2]
+VERSION = '1.4.0-dev'
 
 import sys
 

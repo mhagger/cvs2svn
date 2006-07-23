@@ -56,31 +56,36 @@ as appropriate, and refer to previous announcements for examples.
 
 Web:
 [[[
-cvs2svn $VERSION is now released.
-The MD5 checksum is $CHECKSUM.
+cvs2svn VERSION is now released.
 <br />
-$BRIEF_DESCRIPTION
+The MD5 checksum is CHECKSUM
 <br />
-It is available from <a href="$URL"
->$URL</a>.
+For more information see <a
+href="http://cvs2svn.tigris.org/source/browse/cvs2svn/tags/VERSION/CHANGES?view=markup"
+>CHANGES</a>.
+<br />
+Download: <a
+href="http://cvs2svn.tigris.org/files/documents/1462/NNNNN/cvs2svn-VERSION.tar.gz"
+>cvs2svn-VERSION.tar.gz</a>.
 ]]]
 
 Email:
 [[[
-Subject: cvs2svn $VERSION released
+Subject: cvs2svn VERSION released
 To: announce@cvs2svn.tigris.org
 Reply-to: users@cvs2svn.tigris.org
 
-cvs2svn $VERSION is released.
+cvs2svn VERSION is now released.
+
+The MD5 checksum is CHECKSUM.
+
+For more information see:
+http://cvs2svn.tigris.org/source/browse/cvs2svn/tags/VERSION/CHANGES?view=markup
 
 You can get it here:
-$URL
-MD5 checksum: $CHECKSUM
-
-$BRIEF_DESCRIPTION
+http://cvs2svn.tigris.org/files/documents/1462/NNNNN/cvs2svn-VERSION.tar.gz
 
 Please send any bug reports and comments to users@cvs2svn.tigris.org.
 
-$YOUR_NAME, on behalf of the cvs2svn development team
+YOUR_NAME, on behalf of the cvs2svn development team.
 ]]]
-

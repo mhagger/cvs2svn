@@ -1,0 +1,56 @@
+head	1.1;
+access;
+symbols
+	orinoco_0_13d:1.1.1.2
+	orinoco_0_13c:1.1.1.1
+	David:1.1.1;
+locks; strict;
+comment	@ * @;
+expand	@o@;
+
+
+1.1
+date	2003.07.08.20.56.26;	author proski;	state Exp;
+branches
+	1.1.1.1;
+next	;
+
+1.1.1.1
+date	2003.07.08.20.56.26;	author proski;	state Exp;
+branches;
+next	1.1.1.2;
+
+1.1.1.2
+date	2003.07.08.20.56.50;	author proski;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@@
+
+
+1.1.1.1
+log
+@Version 0.13c
+@
+text
+@@
+
+
+1.1.1.2
+log
+@Version 0.13d
+@
+text
+@@
+
+

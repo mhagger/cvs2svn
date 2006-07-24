@@ -1,0 +1,41 @@
+head	1.1;
+access;
+symbols
+	David:1.1.1;
+locks; strict;
+comment	@# @;
+expand	@o@;
+
+
+1.1
+date	2003.07.08.20.57.54;	author proski;	state Exp;
+branches
+	1.1.1.1;
+next	;
+
+1.1.1.1
+date	2003.07.08.20.57.54;	author proski;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@@
+
+
+1.1.1.1
+log
+@Version 0.13e
+@
+text
+@@
+
+

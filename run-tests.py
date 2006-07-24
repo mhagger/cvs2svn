@@ -2214,6 +2214,12 @@ def tag_symbol_default():
      raise svntest.Failure
 
 
+def issue_99():
+  "test problem from issue 99"
+
+  conv = ensure_conversion('issue-99')
+
+
 #----------------------------------------------------------------------
 
 ########################################################################
@@ -2301,6 +2307,7 @@ test_list = [ None,
               heuristic_symbol_default,
               branch_symbol_default,
               tag_symbol_default,                   # 80
+              XFail(issue_99),
               ]
 
 if __name__ == '__main__':

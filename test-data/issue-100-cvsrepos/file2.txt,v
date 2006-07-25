@@ -1,0 +1,92 @@
+head	1.2;
+access;
+symbols
+	vendor:1.1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2005.02.17.01.59.23;	author ianr;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2003.02.04.22.27.56;	author ianr;	state Exp;
+branches
+	1.1.1.1;
+next	;
+
+1.1.1.1
+date	2003.02.04.22.27.56;	author ianr;	state Exp;
+branches;
+next	1.1.1.2;
+
+1.1.1.2
+date	2004.11.28.11.21.29;	author ianr;	state Exp;
+branches;
+next	1.1.1.3;
+
+1.1.1.3
+date	2003.02.04.22.27.56;	author ianr;	state Exp;
+branches;
+next	1.1.1.4;
+
+1.1.1.4
+date	2005.02.28.05.08.33;	author ianr;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@log 1
+@
+text
+@@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@@
+
+
+1.1.1.1
+log
+@import 1
+@
+text
+@@
+
+
+1.1.1.2
+log
+@duplicated log message
+@
+text
+@@
+
+
+1.1.1.3
+log
+@revert
+@
+text
+@@
+
+
+1.1.1.4
+log
+@duplicated log message
+@
+text
+@@
+
+

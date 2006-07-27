@@ -297,9 +297,9 @@ class SVNRepositoryMirror:
                    self._open_writable_node(dest_parent, False)
 
     if dest_basename in dest_parent_contents:
-      msg = "Attempt to add path '%s' to repository mirror " % dest_path
-      msg += "when it already exists in the mirror."
-      raise self.SVNRepositoryMirrorPathExistsError, msg
+      raise self.SVNRepositoryMirrorPathExistsError(
+        "Attempt to add path '%s' to repository mirror "
+        "when it already exists in the mirror." % dest_path)
 
     dest_parent_contents[dest_basename] = src_key
     self._invoke_delegates('copy_path', src_path, dest_path, src_revnum)
@@ -354,10 +354,12 @@ class SVNRepositoryMirror:
           # Delete but don't prune.
           self.delete_path(del_path)
       else:
-        msg = "Error filling branch '" + symbol.get_clean_name() + "'.\n"
-        msg += "Received an empty SymbolFillingGuide and\n"
-        msg += "attempted to create a branch that already exists."
-        raise self.SVNRepositoryMirrorInvalidFillOperationError, msg
+        raise self.SVNRepositoryMirrorInvalidFillOperationError(
+          "Error filling branch '%s'.\n"
+          "Received an empty SymbolFillingGuide and\n"
+          "attempted to create a branch that already exists."
+          % symbol.get_clean_name()
+          )
 
   def _fill(self, symbol_fill, dest_prefix, dest_key, sources,
             path = None, parent_source_prefix = None,

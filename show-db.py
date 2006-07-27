@@ -56,36 +56,36 @@ def main():
       print "SymbolicNameTracker state database"
       print_node_tree(db)
     elif o == "-R":
-      db = anydbm.open("cvs2svn-revisions.db", 'r')
+      db = anydbm.open("cvs2svn-svn-revisions.db", 'r')
       print "RepositoryMirror revisions table"
       k = map(lambda x: int(x), db.keys())
       k.sort()
       for i in k:
         print "%6d: %s" % (i, db[str(i)])
     elif o == "-N":
-      db = anydbm.open("cvs2svn-nodes.db", 'r')
+      db = anydbm.open("cvs2svn-svn-nodes.db", 'r')
       print "RepositoryMirror nodes table"
       k = db.keys()
       k.sort()
       for i in k:
         print "%6s: %s" % (i, marshal.loads(db[i]))
     elif o == "-y":
-      db = anydbm.open("cvs2svn-symroots.db", 'r')
+      db = anydbm.open("cvs2svn-svn-revisions.db", 'r')
       print "RepositoryMirror symroots table"
-      k = db.keys()
+      k = [int(i) for i in db.keys()]
       k.sort()
       for i in k:
-        print "%s: %s" % (i, marshal.loads(db[i]))
+        print "%s: %s" % (i, db[str(i)])
     elif o == "-r":
       try:
         revnum = int(a)
       except ValueError:
         sys.stderr.write('Option -r requires a valid revision number\n')
         sys.exit(1)
-      db = anydbm.open("cvs2svn-revisions.db", 'r')
-      key = marshal.loads(db[str(revnum)])
+      db = anydbm.open("cvs2svn-svn-revisions.db", 'r')
+      key = db[str(revnum)]
       db.close()
-      db = anydbm.open("cvs2svn-nodes.db", 'r')
+      db = anydbm.open("cvs2svn-svn-nodes.db", 'r')
       print_node_tree(db, key, "Revision %d" % revnum)
     else:
       usage()

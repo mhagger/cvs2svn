@@ -32,7 +32,7 @@ RESYNC_DATAFILE = 'cvs2svn-resync.txt'
 # This file contains a marshalled copy of all the statistics that we
 # gather throughout the various runs of cvs2svn.  The data stored as a
 # marshalled dictionary.
-STATISTICS_FILE = 'cvs2svn-statistics'
+STATISTICS_FILE = 'cvs2svn-statistics.pck'
 
 # This text file contains records (1 per line) that describe svn
 # filesystem paths that are the opening and closing source revisions
@@ -59,7 +59,7 @@ SVN_MIRROR_NODES_DB = 'cvs2svn-svn-nodes.db'
 # Offsets pointing to the beginning of each symbol's records in
 # SYMBOL_OPENINGS_CLOSINGS_SORTED.  This file contains a pickled map
 # from symbol_id to file offset.
-SYMBOL_OFFSETS_DB = 'cvs2svn-symbol-offsets.dat'
+SYMBOL_OFFSETS_DB = 'cvs2svn-symbol-offsets.pck'
 
 # Maps CVSRevision.ids (in hex) to lists of symbol ids, where the
 # CVSRevision is the last such that is a source for those symbols.
@@ -81,7 +81,7 @@ CVS_ITEMS_RESYNC_DB = 'cvs2svn-cvs-items-resync.db'
 
 # A record of all symbolic names that will be processed in the
 # conversion.  This file contains a pickled list of Symbol objects.
-SYMBOL_DB = 'cvs2svn-symbols.dat'
+SYMBOL_DB = 'cvs2svn-symbols.pck'
 
 # A list all symbols.  Each line consists of a unique integer id (in
 # hexdecimal), the symbol name, the number of files in which it was

@@ -137,7 +137,7 @@ command-line options to determine which symbols should be treated as
 branches, which as tags, and which symbols should be excluded from the
 conversion altogether.
 
-Create 'cvs2svn-symbols.dat', which contains a pickle of a list of
+Create 'cvs2svn-symbols.pck', which contains a pickle of a list of
 BranchSymbol, TagSymbol, and ExcludedSymbol objects indicating how
 each symbol should be processed in the conversion.
 

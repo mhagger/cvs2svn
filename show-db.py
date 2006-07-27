@@ -5,6 +5,8 @@ import marshal
 import sys
 import os
 import getopt
+import cPickle as pickle
+from cStringIO import StringIO
 
 
 def usage():
@@ -15,11 +17,17 @@ def usage():
       'in a structured human-readable way.\n'
       '\n'
       'OPTION is one of:\n'
-      '  -s      SymbolicNameTracker state database\n'
-      '  -R      RepositoryMirror revisions table\n'
-      '  -N      RepositoryMirror nodes table\n'
-      '  -y      RepositoryMirror symroots table\n'
-      '  -r rev  RepositoryMirror node tree for specific revision\n'
+      '  -R      SVNRepositoryMirror revisions table\n'
+      '  -N      SVNRepositoryMirror nodes table\n'
+      '  -r rev  SVNRepositoryMirror node tree for specific revision\n'
+      '  -m      MetadataDatabase\n'
+      '  -l      LastSymbolicNameDatabase\n'
+      '  -f      CVSFileDatabase\n'
+      '  -c      PersistenceManager SVNCommit table\n'
+      '  -C      PersistenceManager cvs-revs-to-svn-revnums table\n'
+      '  -i      CVSItemDatabase (normal)\n'
+      '  -I      CVSItemDatabase (resync)\n'
+      '  -p file Show the given file, assuming it contains a pickle.\n'
       '\n'
       'DIRECTORY is the directory containing the temporary database files.\n'
       'If omitted, the current directory is assumed.\n')
@@ -36,9 +44,65 @@ def print_node_tree(db, key="0", name="<rootnode>", prefix=""):
       print_node_tree(db, entry[1], entry[0], prefix + "  ")
 
 
+def show_int2str_db(fname):
+  db = anydbm.open(fname, 'r')
+  k = map(int, db.keys())
+  k.sort()
+  for i in k:
+    print "%6d: %s" % (i, db[str(i)])
+
+def show_str2marshal_db(fname):
+  db = anydbm.open(fname, 'r')
+  k = db.keys()
+  k.sort()
+  for i in k:
+    print "%6s: %s" % (i, marshal.loads(db[i]))
+
+def show_str2pickle_db(fname):
+  db = anydbm.open(fname, 'r')
+  k = db.keys()
+  k.sort()
+  for i in k:
+    o = pickle.loads(db[i])
+    print    "%6s: %r" % (i, o)
+    print "        %s" % (o,)
+
+def show_str2ppickle_db(fname):
+  db = anydbm.open(fname, 'r')
+  k = db.keys()
+  k.remove('_')
+  k.sort()
+  u1 = pickle.Unpickler(StringIO(db['_']))
+  s_ = u1.load()
+  for i in k:
+    u2 = pickle.Unpickler(StringIO(db[i]))
+    u2.memo = u1.memo.copy()
+    o = u2.load()
+    print    "%6s: %r" % (i, o)
+    print "        %s" % (o,)
+
+def prime_ctx():
+  from cvs2svn_lib.symbol_database import SymbolDatabase
+  from cvs2svn_lib.cvs_file_database import CVSFileDatabase
+  from cvs2svn_lib.database import DB_OPEN_READ
+  from cvs2svn_lib.artifact_manager import artifact_manager
+  from cvs2svn_lib.context import Ctx
+  artifact_manager.register_temp_file("cvs2svn-symbols.pck", None)
+  artifact_manager.register_temp_file("cvs2svn-cvs-files.db", None)
+  from cvs2svn_lib.cvs_item_database import CVSItemDatabase
+  from cvs2svn_lib.metadata_database import MetadataDatabase
+  from cvs2svn_lib import config
+  artifact_manager.register_temp_file("cvs2svn-metadata.db", None)
+  artifact_manager.pass_started(None)
+  Ctx()._symbol_db = SymbolDatabase()
+  Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
+  Ctx()._cvs_items_db = CVSItemDatabase(config.CVS_ITEMS_RESYNC_DB,
+      DB_OPEN_READ)
+  Ctx()._metadata_db = MetadataDatabase(DB_OPEN_READ)
+
 def main():
   try:
-    opts, args = getopt.getopt(sys.argv[1:], "sRNyr:")
+    opts, args = getopt.getopt(sys.argv[1:], "RNr:mlfcCiIp:")
   except getopt.GetoptError:
     usage()
 
@@ -48,34 +112,11 @@ def main():
   if len(args) == 1:
     os.chdir(args[0])
 
-  db = None
-
   for o, a in opts:
-    if o == "-s":
-      db = anydbm.open("cvs2svn-sym-names.db", 'r')
-      print "SymbolicNameTracker state database"
-      print_node_tree(db)
-    elif o == "-R":
-      db = anydbm.open("cvs2svn-svn-revisions.db", 'r')
-      print "RepositoryMirror revisions table"
-      k = map(lambda x: int(x), db.keys())
-      k.sort()
-      for i in k:
-        print "%6d: %s" % (i, db[str(i)])
+    if o == "-R":
+      show_int2str_db("cvs2svn-svn-revisions.db")
     elif o == "-N":
-      db = anydbm.open("cvs2svn-svn-nodes.db", 'r')
-      print "RepositoryMirror nodes table"
-      k = db.keys()
-      k.sort()
-      for i in k:
-        print "%6s: %s" % (i, marshal.loads(db[i]))
-    elif o == "-y":
-      db = anydbm.open("cvs2svn-svn-revisions.db", 'r')
-      print "RepositoryMirror symroots table"
-      k = [int(i) for i in db.keys()]
-      k.sort()
-      for i in k:
-        print "%s: %s" % (i, db[str(i)])
+      show_str2marshal_db("cvs2svn-svn-nodes.db")
     elif o == "-r":
       try:
         revnum = int(a)
@@ -87,13 +128,31 @@ def main():
       db.close()
       db = anydbm.open("cvs2svn-svn-nodes.db", 'r')
       print_node_tree(db, key, "Revision %d" % revnum)
+    elif o == "-m":
+      show_str2marshal_db("cvs2svn-metadata.db")
+    elif o == "-l":
+      show_str2marshal_db("cvs2svn-symbol-last-cvs-revs.db")
+    elif o == "-f":
+      show_str2pickle_db("cvs2svn-cvs-files.db")
+    elif o == "-c":
+      prime_ctx()
+      show_str2ppickle_db("cvs2svn-svn-commits.db")
+    elif o == "-C":
+      show_str2marshal_db("cvs2svn-cvs-revs-to-svn-revnums.db")
+    elif o == "-i":
+      prime_ctx()
+      show_str2ppickle_db("cvs2svn-cvs-items.db")
+    elif o == "-I":
+      prime_ctx()
+      show_str2ppickle_db("cvs2svn-cvs-items-resync.db")
+    elif o == "-p":
+      obj = pickle.load(open(a))
+      print repr(obj)
+      print obj
     else:
       usage()
       sys.exit(2)
 
-  db.close()
-
 
 if __name__ == '__main__':
   main()
-

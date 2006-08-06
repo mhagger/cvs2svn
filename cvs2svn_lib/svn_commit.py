@@ -224,45 +224,45 @@ class SVNPrimaryCommit(SVNCommit, SVNRevisionCommit):
     Log().verbose("Committing %d CVSRevision%s"
                   % (len(self.cvs_revs), plural))
     for cvs_rev in self.cvs_revs:
-      # See comment in CVSCommit._commit() for what this is all
-      # about.  Note that although asking repos.path_exists() is
-      # somewhat expensive, we only do it if the first two (cheap)
-      # tests succeed first.
-      if (cvs_rev.rev == "1.1.1.1"
-          and not cvs_rev.deltatext_exists
-          and repos.path_exists(cvs_rev.svn_path)):
-        # This change can be omitted.
-        pass
-      else:
-        if cvs_rev.op == OP_ADD:
-          repos.add_path(cvs_rev)
-        elif cvs_rev.op == OP_CHANGE:
-          # Fix for Issue #74:
-          #
-          # Here's the scenario.  You have file FOO that is imported
-          # on a non-trunk vendor branch.  So in r1.1 and r1.1.1.1,
-          # the file exists.
-          #
-          # Moving forward in time, FOO is deleted on the default
-          # branch (r1.1.1.2).  cvs2svn determines that this delete
-          # also needs to happen on trunk, so FOO is deleted on
-          # trunk.
-          #
-          # Along come r1.2, whose op is OP_CHANGE (because r1.1 is
-          # not 'dead', we assume it's a change).  However, since
-          # our trunk file has been deleted, svnadmin blows up--you
-          # can't change a file that doesn't exist!
-          #
-          # Soooo... we just check the path, and if it doesn't
-          # exist, we do an add... if the path does exist, it's
-          # business as usual.
-          if not repos.path_exists(cvs_rev.svn_path):
-            repos.add_path(cvs_rev)
-          else:
-            repos.change_path(cvs_rev)
-
       if cvs_rev.op == OP_DELETE:
         repos.delete_path(cvs_rev.svn_path, Ctx().prune)
+
+      elif (cvs_rev.rev == "1.1.1.1"
+          and not cvs_rev.deltatext_exists
+          and repos.path_exists(cvs_rev.svn_path)):
+        # This change can be omitted.  See comment in
+        # CVSCommit._commit() for what this is all about.  Note that
+        # although asking repos.path_exists() is somewhat expensive,
+        # we only do it if the first two (cheap) tests succeed first.
+        pass
+
+      elif cvs_rev.op == OP_ADD:
+        repos.add_path(cvs_rev)
+
+      elif cvs_rev.op == OP_CHANGE:
+        # Fix for Issue #74:
+        #
+        # Here's the scenario.  You have file FOO that is imported
+        # on a non-trunk vendor branch.  So in r1.1 and r1.1.1.1,
+        # the file exists.
+        #
+        # Moving forward in time, FOO is deleted on the default
+        # branch (r1.1.1.2).  cvs2svn determines that this delete
+        # also needs to happen on trunk, so FOO is deleted on
+        # trunk.
+        #
+        # Along come r1.2, whose op is OP_CHANGE (because r1.1 is
+        # not 'dead', we assume it's a change).  However, since
+        # our trunk file has been deleted, svnadmin blows up--you
+        # can't change a file that doesn't exist!
+        #
+        # Soooo... we just check the path, and if it doesn't
+        # exist, we do an add... if the path does exist, it's
+        # business as usual.
+        if not repos.path_exists(cvs_rev.svn_path):
+          repos.add_path(cvs_rev)
+        else:
+          repos.change_path(cvs_rev)
 
     repos.end_commit()
 

@@ -386,6 +386,30 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     # setter method is still 'set_principal_branch'.
     self.default_branch = None
 
+    # The default RCS branch, if any, for this CVS file.
+    #
+    # The value is None or a vendor branch revision, such as
+    # '1.1.1.1', or '1.1.1.2', or '1.1.1.96'.  The vendor branch
+    # revision represents the highest vendor branch revision thought
+    # to have ever been head of the default branch.
+    #
+    # The reason we record a specific vendor revision, rather than a
+    # default branch number, is that there are two cases to handle:
+    #
+    # One case is simple.  The RCS file lists a default branch
+    # explicitly in its header, such as '1.1.1'.  In this case, we
+    # know that every revision on the vendor branch is to be treated
+    # as head of trunk at that point in time.
+    #
+    # But there's also a degenerate case.  The RCS file does not
+    # currently have a default branch, yet we can deduce that for some
+    # period in the past it probably *did* have one.  For example, the
+    # file has vendor revisions 1.1.1.1 -> 1.1.1.96, all of which are
+    # dated before 1.2, and then it has 1.1.1.97 -> 1.1.1.100 dated
+    # after 1.2.  In this case, we should record 1.1.1.96 as the last
+    # vendor revision to have been the head of the default branch.
+    self.cvs_file_default_branch = None
+
     # If the RCS file doesn't have a default branch anymore, but does
     # have vendor revisions, then we make an educated guess that those
     # revisions *were* the head of the default branch up until the
@@ -528,7 +552,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
           and default_branch_root.count('.') == rev_data.rev.count('.')):
         # This revision is on the default branch, so record that it is
         # the new highest default branch head revision.
-        self.cvs_file.default_branch = rev_data.rev
+        self.cvs_file_default_branch = rev_data.rev
     else:
       # No default branch, so make an educated guess.
       if rev_data.rev == '1.2':
@@ -543,7 +567,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
           # We're looking at a vendor revision, and it wasn't
           # committed after this file lost its default branch, so bump
           # the maximum trunk vendor revision in the permanent record.
-          self.cvs_file.default_branch = rev_data.rev
+          self.cvs_file_default_branch = rev_data.rev
 
   def _resync_chain(self, rev_data):
     """If the REV_DATA.parent revision exists and it occurred later
@@ -683,14 +707,14 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     # default branches db.  The test is that the log message CVS uses
     # for 1.1 in imports is "Initial revision\n" with no period.
     if revision == '1.1' and log != 'Initial revision\n':
-      self.cvs_file.default_branch = None
+      self.cvs_file_default_branch = None
 
     self._revision_data.append(rev_data)
 
   def _is_default_branch_revision(self, rev_data):
     """Return True iff REV_DATA.rev is a default branch revision."""
 
-    val = self.cvs_file.default_branch
+    val = self.cvs_file_default_branch
     if val is not None:
       val_last_dot = val.rindex(".")
       our_last_dot = rev_data.rev.rindex(".")

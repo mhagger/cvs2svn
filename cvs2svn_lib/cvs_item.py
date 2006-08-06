@@ -47,7 +47,7 @@ class CVSRevision(CVSItem):
                timestamp, metadata_id,
                prev_id, next_id,
                op, rev, deltatext_exists,
-               lod, first_on_branch,
+               lod, first_on_branch, default_branch_revision,
                tag_ids, branch_ids, closed_symbol_ids):
     """Initialize a new CVSRevision object.
 
@@ -63,6 +63,8 @@ class CVSRevision(CVSItem):
        DELTATEXT_EXISTS-->  (bool) true iff non-empty deltatext
        LOD             -->  (LineOfDevelopment) LOD where this rev occurred
        FIRST_ON_BRANCH -->  (bool) true iff the first rev on its branch
+       DEFAULT_BRANCH_REVISION --> (bool) true iff this is a default branch
+                                   revision
        TAG_IDS         -->  (list of int) ids of all tags on this revision
        BRANCH_IDS      -->  (list of int) ids of all branches rooted in this
                             revision
@@ -81,6 +83,7 @@ class CVSRevision(CVSItem):
     self.deltatext_exists = deltatext_exists
     self.lod = lod
     self.first_on_branch = first_on_branch
+    self.default_branch_revision = default_branch_revision
     self.tag_ids = tag_ids
     self.branch_ids = branch_ids
     self.closed_symbol_ids = closed_symbol_ids
@@ -115,6 +118,7 @@ class CVSRevision(CVSItem):
         self.deltatext_exists,
         lod_id,
         self.first_on_branch,
+        self.default_branch_revision,
         ' '.join(['%x' % id for id in self.tag_ids]),
         ' '.join(['%x' % id for id in self.branch_ids]),
         ' '.join(['%x' % id for id in self.closed_symbol_ids]),)
@@ -122,7 +126,8 @@ class CVSRevision(CVSItem):
   def __setstate__(self, data):
     (self.id, cvs_file_id, self.timestamp, self.metadata_id,
      self.prev_id, self.next_id, self.op, self.rev,
-     self.deltatext_exists, lod_id, self.first_on_branch,
+     self.deltatext_exists,
+     lod_id, self.first_on_branch, self.default_branch_revision,
      tag_ids, branch_ids, closed_symbol_ids) = data
     self.cvs_file = Ctx()._cvs_file_db.get_file(cvs_file_id)
     if lod_id is None:
@@ -153,19 +158,7 @@ class CVSRevision(CVSItem):
     """Return True iff SELF.rev of SELF.cvs_file is a default branch
     revision."""
 
-    val = self.cvs_file.default_branch
-    if val is not None:
-      val_last_dot = val.rindex(".")
-      our_last_dot = self.rev.rindex(".")
-      default_branch = val[:val_last_dot]
-      our_branch = self.rev[:our_last_dot]
-      default_rev_component = int(val[val_last_dot + 1:])
-      our_rev_component = int(self.rev[our_last_dot + 1:])
-      if (default_branch == our_branch
-          and our_rev_component <= default_rev_component):
-        return True
-
-    return False
+    return self.default_branch_revision
 
   def __str__(self):
     """For convenience only.  The format is subject to change at any time."""

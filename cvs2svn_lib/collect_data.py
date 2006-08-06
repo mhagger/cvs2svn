@@ -687,6 +687,23 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
     self._revision_data.append(rev_data)
 
+  def _is_default_branch_revision(self, rev_data):
+    """Return True iff REV_DATA.rev is a default branch revision."""
+
+    val = self.cvs_file.default_branch
+    if val is not None:
+      val_last_dot = val.rindex(".")
+      our_last_dot = rev_data.rev.rindex(".")
+      default_branch = val[:val_last_dot]
+      our_branch = rev_data.rev[:our_last_dot]
+      default_rev_component = int(val[val_last_dot + 1:])
+      our_rev_component = int(rev_data.rev[our_last_dot + 1:])
+      if (default_branch == our_branch
+          and our_rev_component <= default_rev_component):
+        return True
+
+    return False
+
   def _process_revision_data(self, rev_data):
     if rev_data.timestamp_was_adjusted():
       # the timestamp on this revision was changed. log it for later
@@ -730,6 +747,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         rev_data.deltatext_exists,
         lod,
         rev_data.is_first_on_branch(),
+        self._is_default_branch_revision(rev_data),
         tag_ids, branch_ids, closed_symbol_ids)
     rev_data.c_rev = c_rev
     self.collect_data.add_cvs_revision(c_rev)

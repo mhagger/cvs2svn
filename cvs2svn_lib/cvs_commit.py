@@ -293,11 +293,11 @@ class CVSCommit:
         # conditions above are strict enough.)
         pass
       else:
-        if c_rev.is_default_branch_revision():
+        if c_rev.default_branch_revision:
           self.default_branch_cvs_revisions.append(c_rev)
 
     for c_rev in needed_deletes:
-      if c_rev.is_default_branch_revision():
+      if c_rev.default_branch_revision:
         self.default_branch_cvs_revisions.append(c_rev)
 
     # There is a slight chance that we didn't actually register any

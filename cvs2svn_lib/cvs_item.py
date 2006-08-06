@@ -154,12 +154,6 @@ class CVSRevision(CVSItem):
         return True
     return False
 
-  def is_default_branch_revision(self):
-    """Return True iff SELF.rev of SELF.cvs_file is a default branch
-    revision."""
-
-    return self.default_branch_revision
-
   def __str__(self):
     """For convenience only.  The format is subject to change at any time."""
 

@@ -45,7 +45,7 @@ class LastSymbolicNameDatabase:
 
     for tag_id in c_rev.tag_ids:
       self._symbols[tag_id] = c_rev.id
-    if c_rev.op is not OP_DELETE:
+    if c_rev.op != OP_DELETE:
       for branch_id in c_rev.branch_ids:
         self._symbols[branch_id] = c_rev.id
 

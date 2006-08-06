@@ -156,6 +156,13 @@ class _RevisionData:
     # revision.
     self.tags_data = []
 
+    # The id of the metadata record associated with this revision.
+    self.metadata_id = None
+
+    # A boolean value indicating whether deltatext was associated with
+    # this revision.
+    self.deltatext_exists = None
+
   def adjust_timestamp(self, timestamp):
     self._adjusted = True
     self.timestamp = timestamp
@@ -385,6 +392,13 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     # commit of 1.2, at which point the file's default branch became
     # trunk.  This records the date at which 1.2 was committed.
     self.first_non_vendor_revision_date = None
+
+    # A list of rev_data for each revision, in the order that the
+    # corresponding set_revision_info() callback was called.  This
+    # information is collected while the file is being parsed then
+    # processed in _process_revision_data(), which is called by
+    # parse_completed().
+    self._revision_data = []
 
   def _get_rev_id(self, revision):
     if revision is None:
@@ -656,16 +670,9 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     """This is a callback method declared in Sink."""
 
     rev_data = self._rev_data[revision]
-
-    metadata_id = self.collect_data.metadata_db.get_key(rev_data.author, log)
-
-    if rev_data.timestamp_was_adjusted():
-      # the timestamp on this revision was changed. log it for later
-      # resynchronization of other files's revisions that occurred
-      # for this time and log message.
-      self.collect_data.resync.write(
-          '%08lx %x %08lx\n'
-          % (rev_data.original_timestamp, metadata_id, rev_data.timestamp))
+    rev_data.metadata_id = self.collect_data.metadata_db.get_key(
+        rev_data.author, log)
+    rev_data.deltatext_exists = bool(text)
 
     # "...Give back one kadam to honor the Hebrew God whose Ark this is."
     #       -- Imam to Indy and Sallah, in 'Raiders of the Lost Ark'
@@ -678,8 +685,20 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     if revision == '1.1' and log != 'Initial revision\n':
       self.cvs_file.default_branch = None
 
-    if is_branch_revision(revision):
-      branch_data = self.sdc.rev_to_branch_data(revision)
+    self._revision_data.append(rev_data)
+
+  def _process_revision_data(self, rev_data):
+    if rev_data.timestamp_was_adjusted():
+      # the timestamp on this revision was changed. log it for later
+      # resynchronization of other files's revisions that occurred
+      # for this time and log message.
+      self.collect_data.resync.write(
+          '%08lx %x %08lx\n'
+          % (rev_data.original_timestamp, rev_data.metadata_id,
+             rev_data.timestamp))
+
+    if is_branch_revision(rev_data.rev):
+      branch_data = self.sdc.rev_to_branch_data(rev_data.rev)
       lod = Branch(
           self.collect_data.symbol_stats.get_id(branch_data.name),
           branch_data.name)
@@ -702,13 +721,13 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         ]
 
     c_rev = CVSRevision(
-        self._get_rev_id(revision), self.cvs_file,
-        rev_data.timestamp, metadata_id,
+        self._get_rev_id(rev_data.rev), self.cvs_file,
+        rev_data.timestamp, rev_data.metadata_id,
         self._get_rev_id(rev_data.parent),
         self._get_rev_id(rev_data.child),
         self._determine_operation(rev_data),
-        revision,
-        bool(text),
+        rev_data.rev,
+        rev_data.deltatext_exists,
         lod,
         rev_data.is_first_on_branch(),
         tag_ids, branch_ids, closed_symbol_ids)
@@ -716,10 +735,17 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     self.collect_data.add_cvs_revision(c_rev)
 
   def parse_completed(self):
-    """Walk through all branches and tags and register them with their
-    parent branch in the symbol database.
+    """Finish the processing of this file.
+
+    - Create CVSRevisions for all rev_data seen.
+
+    - Walk through all branches and tags and register them with their
+      parent branch in the symbol database.
 
     This is a callback method declared in Sink."""
+
+    for rev_data in self._revision_data:
+      self._process_revision_data(rev_data)
 
     self.collect_data.add_cvs_file(self.cvs_file)
 

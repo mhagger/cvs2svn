@@ -187,11 +187,18 @@ class PrimedPDatabase(AbstractDatabase):
   pickled instead of the whole object.
 
   Concretely, when a new database is created, the pickled version of
-  PRIMER is stored in db['_'], and its memo is remembered as
-  self.memo.  When an existing database is opened for reading or
-  update, db[' '] is unpickled then the memo of the Unpickler is
-  remembered as self.memo.  Then future reads and writes are done with
-  a pickler/unpickler whose memo has been initialized to self.memo."""
+  PRIMER is stored in db[self.primer_key], and its memo is remembered
+  as self.memo.  When an existing database is opened for reading or
+  update, db[self.primer_key] is unpickled then the memo of the
+  Unpickler is remembered as self.memo.  Then future reads and writes
+  are done with a pickler/unpickler whose memo has been initialized to
+  self.memo.
+
+  Since the database entry with key self.primer_key is used to store
+  the memo, self.primer_key may not be used as a key for normal
+  entries."""
+
+  primer_key = '_'
 
   def __init__(self, filename, mode, primer=None):
     AbstractDatabase.__init__(self, filename, mode)
@@ -203,11 +210,11 @@ class PrimedPDatabase(AbstractDatabase):
         f = cStringIO.StringIO()
         pickler = cPickle.Pickler(f, -1)
         pickler.dump(primer)
-        self.db['_'] = f.getvalue()
+        self.db[self.primer_key] = f.getvalue()
         self.memo = pickler.memo
     else:
       try:
-        s = self.db['_']
+        s = self.db[self.primer_key]
       except KeyError:
         self.memo = {}
       else:

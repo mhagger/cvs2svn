@@ -326,8 +326,9 @@ def main():
                      % ctx.fs_type)
 
   # Create the default project (using ctx.trunk, ctx.branches, and ctx.tags):
-  ctx.project = Project(
-      cvsroot, ctx.trunk_base, ctx.branches_base, ctx.tags_base)
+  ctx.add_project(Project(
+      len(ctx.projects),
+      cvsroot, ctx.trunk_base, ctx.branches_base, ctx.tags_base))
 
   if ctx.existing_svnrepos and not os.path.isdir(ctx.target):
     raise FatalError("the svn-repos-path '%s' is not an "

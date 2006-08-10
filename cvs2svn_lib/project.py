@@ -153,7 +153,7 @@ class Project:
 
     # mode is not known, so we temporarily set it to None.
     return CVSFile(
-        None, filename, self._get_cvs_path(canonical_filename),
+        None, self, filename, self._get_cvs_path(canonical_filename),
         file_in_attic, file_executable, file_size, None
         )
 

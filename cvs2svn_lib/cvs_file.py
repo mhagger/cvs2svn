@@ -27,7 +27,7 @@ class CVSFile(object):
 
   key_generator = KeyGenerator(1)
 
-  def __init__(self, id, filename, cvs_path,
+  def __init__(self, id, project, filename, cvs_path,
                in_attic, executable, file_size, mode):
     """Initialize a new CVSFile object.
 
@@ -35,6 +35,7 @@ class CVSFile(object):
 
       ID                 --> (int or None) unique id for this file.  If None,
                              a new id is generated.
+      PROJECT            --> (Project) the project containing this file
       FILENAME           --> (string) the filesystem path to the CVS file
       CVS_PATH           --> (string) the canonical path within the CVS
                              project (no 'Attic', no ',v', forward slashes)
@@ -48,6 +49,7 @@ class CVSFile(object):
     else:
       self.id = id
 
+    self.project = project
     self.filename = filename
     self.cvs_path = cvs_path
     self.in_attic = in_attic

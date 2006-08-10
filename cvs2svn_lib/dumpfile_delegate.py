@@ -232,7 +232,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     # If the file has keywords, we must prevent CVS/RCS from expanding
     # the keywords because they must be unexpanded in the repository,
     # or Subversion will get confused.
-    pipe_cmd, pipe = Ctx().project.cvs_repository.get_co_pipe(
+    pipe_cmd, pipe = c_rev.cvs_file.project.cvs_repository.get_co_pipe(
         c_rev, suppress_keyword_substitution=s_item.has_keywords)
 
     self.dumpfile.write('Node-path: %s\n'
@@ -339,7 +339,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
 
 def generate_ignores(c_rev):
   # Read in props
-  pipe_cmd, pipe = Ctx().project.cvs_repository.get_co_pipe(c_rev)
+  pipe_cmd, pipe = c_rev.cvs_file.project.cvs_repository.get_co_pipe(c_rev)
   buf = pipe.stdout.read(config.PIPE_READ_SIZE)
   raw_ignore_val = ""
   while buf:

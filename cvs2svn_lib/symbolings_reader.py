@@ -80,10 +80,10 @@ class SymbolingsReader:
         cvs_file_id = int(cvs_file_id, 16)
         cvs_file = Ctx()._cvs_file_db.get_file(cvs_file_id)
         if branch_id == '*':
-          svn_path = Ctx().project.make_trunk_path(cvs_file.cvs_path)
+          svn_path = cvs_file.project.make_trunk_path(cvs_file.cvs_path)
         else:
           branch_id = int(branch_id, 16)
-          svn_path = Ctx().project.make_branch_path(
+          svn_path = cvs_file.project.make_branch_path(
               Ctx()._symbol_db.get_name(branch_id), cvs_file.cvs_path)
         revnum = int(revnum)
         if revnum > svn_revnum or id != symbol.id:

@@ -20,6 +20,7 @@ import os
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.key_generator import KeyGenerator
+from cvs2svn_lib.context import Ctx
 
 
 class CVSFile(object):
@@ -56,6 +57,15 @@ class CVSFile(object):
     self.executable = executable
     self.file_size = file_size
     self.mode = mode
+
+  def __getstate__(self):
+    return (self.id, self.project.id, self.filename, self.cvs_path,
+            self.in_attic, self.executable, self.file_size, self.mode,)
+
+  def __setstate__(self, state):
+    (self.id, project_id, self.filename, self.cvs_path,
+     self.in_attic, self.executable, self.file_size, self.mode,) = state
+    self.project = Ctx().projects[project_id]
 
   def get_basename(self):
     """Return the last path component of self.filename, minus the ',v'."""

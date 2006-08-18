@@ -2229,6 +2229,12 @@ def issue_100():
     raise svntest.Failure
 
 
+def issue_106():
+  "test problem from issue 106"
+
+  conv = ensure_conversion('issue-106')
+
+
 #----------------------------------------------------------------------
 
 ########################################################################
@@ -2318,6 +2324,7 @@ test_list = [ None,
               tag_symbol_default,                   # 80
               XFail(issue_99),
               XFail(issue_100),
+              XFail(issue_106),
               ]
 
 if __name__ == '__main__':

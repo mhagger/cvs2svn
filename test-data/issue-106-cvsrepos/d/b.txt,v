@@ -1,0 +1,41 @@
+head	1.1;
+branch	1.1.15;
+access;
+symbols
+	branch:1.1.15;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2002.12.13.08.29.37;	author joeschmo;	state Exp;
+branches
+	1.1.15.1;
+next	;
+
+1.1.15.1
+date	2002.12.13.08.29.37;	author joeschmo;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@@
+
+
+1.1.15.1
+log
+@b.txt 1.1.15.1
+@
+text
+@@
+
+

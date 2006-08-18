@@ -57,6 +57,23 @@ class FatalError(FatalException):
     FatalException.__init__(self, '%s: %s\n' % (error_prefix, msg,))
 
 
+class CommandError(FatalError):
+  """A FatalError caused by a failed command invocation.
+
+  The error message includes the command name, exit code, and output."""
+
+  def __init__(self, command, exit_status, error_output):
+    self.command = command
+    self.exit_status = exit_status
+    self.error_output = error_output
+    FatalError.__init__(
+        self,
+        'The command %r failed with exit status=%s\n'
+        'and the following output:\n'
+        '%s'
+        % (self.command, self.exit_status, self.error_output.rstrip()))
+
+
 def path_join(*components):
   """Join two or more pathname COMPONENTS, inserting '/' as needed.
   Empty component are skipped."""

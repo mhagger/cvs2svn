@@ -335,7 +335,7 @@ class ResyncRevsPass(Pass):
           record[1] = max(record[1],
                           c_rev.timestamp + config.COMMIT_THRESHOLD/2)
 
-          msg = "PASS2 RESYNC: '%s' (%s): old time='%s' delta=%ds" \
+          msg = "PASS3 RESYNC: '%s' (%s): old time='%s' delta=%ds" \
                 % (c_rev.cvs_path, c_rev.rev, time.ctime(c_rev.timestamp),
                    new_timestamp - c_rev.timestamp)
           Log().verbose(msg)

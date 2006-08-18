@@ -62,16 +62,22 @@ class CommandError(FatalError):
 
   The error message includes the command name, exit code, and output."""
 
-  def __init__(self, command, exit_status, error_output):
+  def __init__(self, command, exit_status, error_output=''):
     self.command = command
     self.exit_status = exit_status
     self.error_output = error_output
-    FatalError.__init__(
-        self,
-        'The command %r failed with exit status=%s\n'
-        'and the following output:\n'
-        '%s'
-        % (self.command, self.exit_status, self.error_output.rstrip()))
+    if error_output.rstrip():
+      FatalError.__init__(
+          self,
+          'The command %r failed with exit status=%s\n'
+          'and the following output:\n'
+          '%s'
+          % (self.command, self.exit_status, self.error_output.rstrip()))
+    else:
+      FatalError.__init__(
+          self,
+          'The command %r failed with exit status=%s and no output'
+          % (self.command, self.exit_status))
 
 
 def path_join(*components):

@@ -20,6 +20,7 @@
 import os
 
 from cvs2svn_lib.boolean import *
+from cvs2svn_lib.common import CommandError
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.log import Log
@@ -113,9 +114,7 @@ class RepositoryDelegate(DumpfileDelegate):
     error_output = self.loader_pipe.stderr.read()
     exit_status = self.loader_pipe.wait()
     if exit_status:
-      raise FatalError('svnadmin load failed with exit status: %s\n'
-                       'and the following output:\n'
-                       '%s' % (exit_status, error_output,))
+      raise CommandError('svnadmin load', exit_status, error_output)
     os.remove(self.dumpfile_path)
 
     # If this is a BDB repository, and we created the repository, and

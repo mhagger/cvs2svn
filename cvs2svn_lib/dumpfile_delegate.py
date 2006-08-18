@@ -22,6 +22,7 @@ import md5
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib import config
+from cvs2svn_lib.common import CommandError
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import OP_ADD
 from cvs2svn_lib.common import OP_CHANGE
@@ -274,9 +275,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     error_output = pipe.stderr.read()
     exit_status = pipe.wait()
     if exit_status:
-      raise FatalError("The command '%s' failed with exit status: %s\n"
-                       "and the following output:\n"
-                       "%s" % (pipe_cmd, exit_status, error_output))
+      raise CommandError(pipe_cmd, exit_status, error_output)
 
     # Go back to patch up the length and checksum headers:
     self.dumpfile.seek(pos, 0)
@@ -349,9 +348,7 @@ def generate_ignores(c_rev):
   error_output = pipe.stderr.read()
   exit_status = pipe.wait()
   if exit_status:
-    raise FatalError("The command '%s' failed with exit status: %s\n"
-                     "and the following output:\n"
-                     "%s" % (pipe_cmd, exit_status, error_output))
+    raise CommandError(pipe_cmd, exit_status, error_output)
 
   # Tweak props: First, convert any spaces to newlines...
   raw_ignore_val = '\n'.join(raw_ignore_val.split())

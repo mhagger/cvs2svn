@@ -70,8 +70,8 @@ class _RegexpStrategyRule(StrategyRule):
     self.action = action
 
   def get_symbol(self, stats):
-    if self.regexp.match(stats.name):
-      return self.action(stats.id, stats.name)
+    if self.regexp.match(stats.symbol.name):
+      return self.action(stats.symbol.id, stats.symbol.name)
     else:
       return None
 
@@ -107,9 +107,9 @@ class UnambiguousUsageRule(StrategyRule):
       # Can't decide
       return None
     elif is_branch:
-      return BranchSymbol(stats.id, stats.name)
+      return BranchSymbol(stats.symbol.id, stats.symbol.name)
     elif is_tag:
-      return TagSymbol(stats.id, stats.name)
+      return TagSymbol(stats.symbol.id, stats.symbol.name)
     else:
       # The symbol didn't appear at all:
       return None
@@ -120,7 +120,7 @@ class BranchIfCommitsRule(StrategyRule):
 
   def get_symbol(self, stats):
     if stats.branch_commit_count > 0:
-      return BranchSymbol(stats.id, stats.name)
+      return BranchSymbol(stats.symbol.id, stats.symbol.name)
     else:
       return None
 
@@ -133,9 +133,9 @@ class HeuristicStrategyRule(StrategyRule):
 
   def get_symbol(self, stats):
     if stats.tag_create_count >= stats.branch_create_count:
-      return TagSymbol(stats.id, stats.name)
+      return TagSymbol(stats.symbol.id, stats.symbol.name)
     else:
-      return BranchSymbol(stats.id, stats.name)
+      return BranchSymbol(stats.symbol.id, stats.symbol.name)
 
 
 class AllBranchRule(StrategyRule):
@@ -146,7 +146,7 @@ class AllBranchRule(StrategyRule):
   therefore only apply to the symbols not handled earlier."""
 
   def get_symbol(self, stats):
-    return BranchSymbol(stats.id, stats.name)
+    return BranchSymbol(stats.symbol.id, stats.symbol.name)
 
 
 class AllTagRule(StrategyRule):
@@ -160,7 +160,7 @@ class AllTagRule(StrategyRule):
   therefore only apply to the symbols not handled earlier."""
 
   def get_symbol(self, stats):
-    return TagSymbol(stats.id, stats.name)
+    return TagSymbol(stats.symbol.id, stats.symbol.name)
 
 
 class SymbolStrategy:

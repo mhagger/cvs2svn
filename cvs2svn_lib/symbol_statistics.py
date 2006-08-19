@@ -24,6 +24,7 @@ from cvs2svn_lib import config
 from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.artifact_manager import artifact_manager
+from cvs2svn_lib.symbol_database import Symbol
 from cvs2svn_lib.symbol_database import TagSymbol
 from cvs2svn_lib.symbol_database import ExcludedSymbol
 
@@ -47,11 +48,10 @@ class _Stats:
     branch_blockers -- the names of any symbols that depend on the
         branch."""
 
-  def __init__(self, id, name, tag_create_count=0,
+  def __init__(self, symbol, tag_create_count=0,
                branch_create_count=0, branch_commit_count=0,
                branch_blockers=[]):
-    self.id = id
-    self.name = name
+    self.symbol = symbol
     self.tag_create_count = tag_create_count
     self.branch_create_count = branch_create_count
     self.branch_commit_count = branch_commit_count
@@ -61,7 +61,7 @@ class _Stats:
     return (
         '%r is a tag in %d files, a branch in '
         '%d files and has commits in %d files'
-        % (self.name, self.tag_create_count,
+        % (self.symbol.name, self.tag_create_count,
            self.branch_create_count, self.branch_commit_count))
 
 
@@ -94,7 +94,7 @@ class SymbolStatisticsCollector:
     try:
       return self._stats[symbol]
     except KeyError:
-      stats = _Stats(symbol.id, symbol.name)
+      stats = _Stats(symbol)
       self._stats[symbol] = stats
       return stats
 
@@ -126,7 +126,7 @@ class SymbolStatisticsCollector:
     for stats in self._stats.values():
       f.write(
           "%x %s %d %d %d"
-          % (stats.id, stats.name, stats.tag_create_count,
+          % (stats.symbol.id, stats.symbol.name, stats.tag_create_count,
              stats.branch_create_count, stats.branch_commit_count)
           )
       if stats.branch_blockers:
@@ -179,10 +179,10 @@ class SymbolStatistics:
       branch_create_count = int(branch_create_count)
       branch_commit_count = int(branch_commit_count)
       stats = _Stats(
-          id, name, tag_create_count,
+          Symbol(id, name), tag_create_count,
           branch_create_count, branch_commit_count, branch_blockers)
-      self._stats_by_name[name] = stats
-      self._stats[stats.id] = stats
+      self._stats_by_name[stats.symbol.name] = stats
+      self._stats[stats.symbol.id] = stats
 
   def get_stats(self, name):
     """Return the _Stats object for the symbol named NAME.
@@ -204,11 +204,11 @@ class SymbolStatistics:
 
     blocked_branches = {}
     for stats in self:
-      if stats.name not in symbols:
+      if stats.symbol.name not in symbols:
         blockers = [ blocker for blocker in stats.branch_blockers
                      if blocker in symbols ]
         if blockers:
-          blocked_branches[stats.name] = set(blockers)
+          blocked_branches[stats.symbol.name] = set(blockers)
     return blocked_branches
 
   def _check_blocked_excludes(self, symbols):
@@ -248,7 +248,7 @@ class SymbolStatistics:
       if isinstance(symbol, TagSymbol):
         stats = self.get_stats(symbol.name)
         if stats.branch_commit_count > 0:
-          invalid_tags.append(stats.name)
+          invalid_tags.append(stats.symbol.name)
 
     if not invalid_tags:
       # No problems found:

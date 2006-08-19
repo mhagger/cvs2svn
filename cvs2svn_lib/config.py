@@ -83,13 +83,9 @@ CVS_ITEMS_RESYNC_DB = 'cvs2svn-cvs-items-resync.db'
 # conversion.  This file contains a pickled list of Symbol objects.
 SYMBOL_DB = 'cvs2svn-symbols.pck'
 
-# A list all symbols.  Each line consists of a unique integer id (in
-# hexdecimal), the symbol name, the number of files in which it was
-# used as a tag, the number of files in which it was used as a branch,
-# the number of commits to such branches, and a list of tags and
-# branches that are defined on revisions in the branch.  The fields
-# are separated by spaces.
-SYMBOL_STATISTICS_LIST = 'cvs2svn-symbol-stats.txt'
+# A pickled list of the statistics for all symbols.  Each entry in the
+# list is an instance of cvs2svn_lib.symbol_statistics._Stats.
+SYMBOL_STATISTICS_LIST = 'cvs2svn-symbol-stats.pck'
 
 # These two databases provide a bidirectional mapping between
 # CVSRevision.ids (in hex) and Subversion revision numbers.

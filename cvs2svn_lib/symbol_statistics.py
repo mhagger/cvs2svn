@@ -17,6 +17,7 @@
 """This module gathers and processes statistics about CVS symbols."""
 
 import sys
+import cPickle
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.set_support import *
@@ -117,20 +118,11 @@ class SymbolStatisticsCollector:
     self._get_stats(symbol).branch_blockers.add(blocker.name)
 
   def write(self):
-    """Store the stats database to file."""
+    """Store the stats database to the SYMBOL_STATISTICS_LIST file."""
 
     f = open(artifact_manager.get_temp_file(config.SYMBOL_STATISTICS_LIST),
-             "w")
-    for stats in self._stats.values():
-      f.write(
-          "%x %s %d %d %d"
-          % (stats.symbol.id, stats.symbol.name, stats.tag_create_count,
-             stats.branch_create_count, stats.branch_commit_count)
-          )
-      if stats.branch_blockers:
-        f.write(' ')
-        f.write(' '.join(list(stats.branch_blockers)))
-      f.write('\n')
+             'wb')
+    cPickle.dump(self._stats.values(), f, -1)
     f.close()
 
 
@@ -154,7 +146,7 @@ class SymbolStatistics:
 
      - A non-excluded branch depends on an excluded branch
 
-  The data in this class is read from a text file
+  The data in this class is read from a pickle file
   (config.SYMBOL_STATISTICS_LIST)."""
 
   def __init__(self):
@@ -166,19 +158,11 @@ class SymbolStatistics:
     # A map { Symbol -> _Stats } for all symbols (branches and tags)
     self._stats = { }
 
-    for line in open(artifact_manager.get_temp_file(
-          config.SYMBOL_STATISTICS_LIST)):
-      words = line.split()
-      [id, name, tag_create_count,
-       branch_create_count, branch_commit_count] = words[:5]
-      branch_blockers = words[5:]
-      symbol = Symbol(int(id, 16), name)
-      tag_create_count = int(tag_create_count)
-      branch_create_count = int(branch_create_count)
-      branch_commit_count = int(branch_commit_count)
-      stats = _Stats(
-          symbol, tag_create_count,
-          branch_create_count, branch_commit_count, branch_blockers)
+    stats_list = cPickle.load(open(artifact_manager.get_temp_file(
+        config.SYMBOL_STATISTICS_LIST), 'rb'))
+
+    for stats in stats_list:
+      symbol = stats.symbol
       self._stats_by_name[symbol.name] = stats
       self._stats[symbol] = stats
 

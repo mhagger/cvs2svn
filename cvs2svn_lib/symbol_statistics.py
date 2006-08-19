@@ -184,8 +184,6 @@ class SymbolStatistics:
     # A map { id -> record } for all symbols (branches and tags)
     self._stats = { }
 
-    self._key_generator = KeyGenerator(1)
-
     for line in open(artifact_manager.get_temp_file(
           config.SYMBOL_STATISTICS_LIST)):
       words = line.split()

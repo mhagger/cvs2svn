@@ -44,8 +44,8 @@ class _Stats:
 
     branch_commit_count -- the number of commits on this branch
 
-    branch_blockers -- the names of any symbols that depend on the
-        branch."""
+    branch_blockers -- a set of Symbol instances for any symbols that
+        sprout from a branch with this name."""
 
   def __init__(self, symbol):
     self.symbol = symbol
@@ -113,7 +113,7 @@ class SymbolStatisticsCollector:
   def register_branch_blocker(self, symbol, blocker):
     """Register BLOCKER as a blocker on the branch SYMBOL."""
 
-    self._get_stats(symbol).branch_blockers.add(blocker.name)
+    self._get_stats(symbol).branch_blockers.add(blocker)
 
   def write(self):
     """Store the stats database to the SYMBOL_STATISTICS_LIST file."""
@@ -185,8 +185,8 @@ class SymbolStatistics:
     blocked_branches = {}
     for stats in self:
       if stats.symbol.name not in symbols:
-        blockers = [ blocker for blocker in stats.branch_blockers
-                     if blocker in symbols ]
+        blockers = [ blocker.name for blocker in stats.branch_blockers
+                     if blocker.name in symbols ]
         if blockers:
           blocked_branches[stats.symbol.name] = set(blockers)
     return blocked_branches

@@ -47,14 +47,12 @@ class _Stats:
     branch_blockers -- the names of any symbols that depend on the
         branch."""
 
-  def __init__(self, symbol, tag_create_count=0,
-               branch_create_count=0, branch_commit_count=0,
-               branch_blockers=[]):
+  def __init__(self, symbol):
     self.symbol = symbol
-    self.tag_create_count = tag_create_count
-    self.branch_create_count = branch_create_count
-    self.branch_commit_count = branch_commit_count
-    self.branch_blockers = set(branch_blockers)
+    self.tag_create_count = 0
+    self.branch_create_count = 0
+    self.branch_commit_count = 0
+    self.branch_blockers = set()
 
   def __str__(self):
     return (

@@ -29,6 +29,12 @@ class Symbol:
     self.id = id
     self.name = name
 
+  def __cmp__(self, other):
+    return cmp(self.id, other.id)
+
+  def __hash__(self):
+    return self.id
+
   def get_clean_name(self):
     """Return self.name, translating characters that Subversion does
     not allow in a pathname.

@@ -26,7 +26,6 @@ from cvs2svn_lib.log import Log
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.symbol_database import TagSymbol
 from cvs2svn_lib.symbol_database import ExcludedSymbol
-from cvs2svn_lib.key_generator import KeyGenerator
 
 
 class _Stats:
@@ -84,55 +83,40 @@ class SymbolStatisticsCollector:
   (config.SYMBOL_STATISTICS_LIST)."""
 
   def __init__(self):
-    # A hash that maps symbol names to _Stats instances
-    self._stats_by_name = { }
-
-    # A map { id -> record } for all symbols (branches and tags)
+    # A map { symbol -> record } for all symbols (branches and tags)
     self._stats = { }
 
-    self._key_generator = KeyGenerator(1)
+  def _get_stats(self, symbol):
+    """Return the _Stats record for SYMBOL.
 
-  def _get_stats(self, name):
-    """Return the _Stats record for NAME, creating a new one if necessary."""
+    Create a new one if necessary."""
 
     try:
-      return self._stats_by_name[name]
+      return self._stats[symbol]
     except KeyError:
-      stats = _Stats(self._key_generator.gen_id(), name)
-      self._stats_by_name[name] = stats
-      self._stats[stats.id] = stats
+      stats = _Stats(symbol.id, symbol.name)
+      self._stats[symbol] = stats
       return stats
 
-  def get_id(self, name):
-    return self._get_stats(name).id
+  def register_tag_creation(self, symbol):
+    """Register the creation of the tag SYMBOL."""
 
-  def register_tag_creation(self, name):
-    """Register the creation of the tag NAME.
+    self._get_stats(symbol).tag_create_count += 1
 
-    Return the tag record's id."""
+  def register_branch_creation(self, symbol):
+    """Register the creation of the branch SYMBOL."""
 
-    stats = self._get_stats(name)
-    stats.tag_create_count += 1
-    return stats.id
+    self._get_stats(symbol).branch_create_count += 1
 
-  def register_branch_creation(self, name):
-    """Register the creation of the branch NAME.
+  def register_branch_commit(self, symbol):
+    """Register a commit on the branch SYMBOL."""
 
-    Return the branch record's id."""
+    self._get_stats(symbol).branch_commit_count += 1
 
-    stats = self._get_stats(name)
-    stats.branch_create_count += 1
-    return stats.id
+  def register_branch_blocker(self, symbol, blocker):
+    """Register BLOCKER as a blocker on the branch SYMBOL."""
 
-  def register_branch_commit(self, name):
-    """Register a commit on the branch NAME."""
-
-    self._get_stats(name).branch_commit_count += 1
-
-  def register_branch_blocker(self, name, blocker):
-    """Register BLOCKER as a blocker on the branch NAME."""
-
-    self._get_stats(name).branch_blockers.add(blocker)
+    self._get_stats(symbol).branch_blockers.add(blocker.name)
 
   def write(self):
     """Store the stats database to file."""

@@ -47,6 +47,7 @@ from cvs2svn_lib.database import SDatabase
 from cvs2svn_lib.database import DB_OPEN_NEW
 from cvs2svn_lib.cvs_file_database import CVSFileDatabase
 from cvs2svn_lib.cvs_item_database import CVSItemDatabase
+from cvs2svn_lib.symbol_database import Symbol
 from cvs2svn_lib.symbol_statistics import SymbolStatisticsCollector
 from cvs2svn_lib.metadata_database import MetadataDatabase
 
@@ -258,9 +259,10 @@ class _SymbolDataCollector:
                           branch_data.name, name))
       return branch_data
 
-    symbol_id = self.collect_data.symbol_stats.register_branch_creation(name)
+    symbol = self.collect_data.get_symbol(name)
+    self.collect_data.symbol_stats.register_branch_creation(symbol)
     branch_data = _BranchData(
-        self.collect_data.key_generator.gen_id(), symbol_id,
+        self.collect_data.key_generator.gen_id(), symbol.id,
         name, branch_number)
     self.branches_data[branch_number] = branch_data
     return branch_data
@@ -272,9 +274,10 @@ class _SymbolDataCollector:
   def _add_tag(self, name, revision):
     """Record that tag NAME refers to the specified REVISION."""
 
-    symbol_id = self.collect_data.symbol_stats.register_tag_creation(name)
+    symbol = self.collect_data.get_symbol(name)
+    self.collect_data.symbol_stats.register_tag_creation(symbol)
     tag_data = _TagData(
-        self.collect_data.key_generator.gen_id(), symbol_id, name, revision)
+        self.collect_data.key_generator.gen_id(), symbol.id, name, revision)
     self.tags_data.setdefault(revision, []).append(tag_data)
     return tag_data
 
@@ -331,21 +334,26 @@ class _SymbolDataCollector:
       branch_data = self.branches_data[branch_number]
 
       # Register the commit on this non-trunk branch
-      self.collect_data.symbol_stats.register_branch_commit(branch_data.name)
+      symbol = self.collect_data.get_symbol(branch_data.name)
+      self.collect_data.symbol_stats.register_branch_commit(symbol)
 
   def register_branch_blockers(self):
     for (revision, tag_data_list) in self.tags_data.items():
       if is_branch_revision(revision):
         branch_data_parent = self.rev_to_branch_data(revision)
+        parent_symbol = self.collect_data.get_symbol(branch_data_parent.name)
         for tag_data in tag_data_list:
+          tag_symbol = self.collect_data.get_symbol(tag_data.name)
           self.collect_data.symbol_stats.register_branch_blocker(
-              branch_data_parent.name, tag_data.name)
+              parent_symbol, tag_symbol)
 
     for branch_data_child in self.branches_data.values():
+      branch_symbol = self.collect_data.get_symbol(branch_data_child.name)
       if is_branch_revision(branch_data_child.parent):
         branch_data_parent = self.rev_to_branch_data(branch_data_child.parent)
+        parent_symbol = self.collect_data.get_symbol(branch_data_parent.name)
         self.collect_data.symbol_stats.register_branch_blocker(
-            branch_data_parent.name, branch_data_child.name)
+            parent_symbol, branch_symbol)
 
 
 class _FileDataCollector(cvs2svn_rcsparse.Sink):
@@ -741,7 +749,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     if is_branch_revision(rev_data.rev):
       branch_data = self.sdc.rev_to_branch_data(rev_data.rev)
       lod = Branch(
-          self.collect_data.symbol_stats.get_id(branch_data.name),
+          self.collect_data.get_symbol(branch_data.name).id,
           branch_data.name)
     else:
       lod = Trunk()
@@ -885,6 +893,23 @@ class CollectData:
 
     # Key generator to generate unique keys for each CVSRevision object:
     self.key_generator = KeyGenerator()
+
+    self.symbol_key_generator = KeyGenerator(1)
+
+    # A map { name -> Symbol } for all known symbols.
+    self.symbols = {}
+
+  def get_symbol(self, name):
+    """Return the Symbol object for the symbol with the specified name.
+
+    If such a symbol does not yet exist, allocate a new symbol_id,
+    create a Symbol instance, store it in self.symbols, and return it."""
+
+    symbol = self.symbols.get(name)
+    if symbol is None:
+      symbol = Symbol(self.symbol_key_generator.gen_id(), name)
+      self.symbols[name] = symbol
+    return symbol
 
   def process_project(self, project):
     pdc = _ProjectDataCollector(self, project)

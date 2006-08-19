@@ -59,9 +59,9 @@ class _Stats:
 
   def __str__(self):
     return (
-        '%r is a tag in %d files, a branch in '
+        '\'%s\' is a tag in %d files, a branch in '
         '%d files and has commits in %d files'
-        % (self.symbol.name, self.tag_create_count,
+        % (self.symbol, self.tag_create_count,
            self.branch_create_count, self.branch_commit_count))
 
 

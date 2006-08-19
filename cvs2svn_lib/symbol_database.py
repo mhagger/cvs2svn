@@ -35,6 +35,12 @@ class Symbol:
   def __hash__(self):
     return self.id
 
+  def __str__(self):
+    return self.name
+
+  def __repr__(self):
+    return '%s <%x>' % (self, self.id,)
+
   def get_clean_name(self):
     """Return self.name, translating characters that Subversion does
     not allow in a pathname.
@@ -53,21 +59,21 @@ class BranchSymbol(Symbol):
   def __str__(self):
     """For convenience only.  The format is subject to change at any time."""
 
-    return 'Branch %r <%x>' % (self.name, self.id,)
+    return 'Branch %r' % (self.name,)
 
 
 class TagSymbol(Symbol):
   def __str__(self):
     """For convenience only.  The format is subject to change at any time."""
 
-    return 'Tag %r <%x>' % (self.name, self.id,)
+    return 'Tag %r' % (self.name,)
 
 
 class ExcludedSymbol(Symbol):
   def __str__(self):
     """For convenience only.  The format is subject to change at any time."""
 
-    return 'ExcludedSymbol %r <%x>' % (self.name, self.id,)
+    return 'ExcludedSymbol %r' % (self.name, self.id,)
 
 
 class SymbolDatabase:

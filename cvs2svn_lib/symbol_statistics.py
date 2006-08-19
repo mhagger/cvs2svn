@@ -165,7 +165,7 @@ class SymbolStatistics:
     # A hash that maps symbol names to _Stats instances
     self._stats_by_name = { }
 
-    # A map { id -> record } for all symbols (branches and tags)
+    # A map { Symbol -> _Stats } for all symbols (branches and tags)
     self._stats = { }
 
     for line in open(artifact_manager.get_temp_file(
@@ -174,15 +174,15 @@ class SymbolStatistics:
       [id, name, tag_create_count,
        branch_create_count, branch_commit_count] = words[:5]
       branch_blockers = words[5:]
-      id = int(id, 16)
+      symbol = Symbol(int(id, 16), name)
       tag_create_count = int(tag_create_count)
       branch_create_count = int(branch_create_count)
       branch_commit_count = int(branch_commit_count)
       stats = _Stats(
-          Symbol(id, name), tag_create_count,
+          symbol, tag_create_count,
           branch_create_count, branch_commit_count, branch_blockers)
-      self._stats_by_name[stats.symbol.name] = stats
-      self._stats[stats.symbol.id] = stats
+      self._stats_by_name[symbol.name] = stats
+      self._stats[symbol] = stats
 
   def get_stats(self, name):
     """Return the _Stats object for the symbol named NAME.

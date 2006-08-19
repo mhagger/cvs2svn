@@ -33,9 +33,7 @@ class _Stats:
   """A summary of information about a symbol (tag or branch).
 
   Members:
-    id -- a unique id (integer)
-
-    name -- the name of the symbol
+    symbol -- the Symbol instance of the symbol being described
 
     tag_create_count -- the number of files on which this symbol
         appears as a tag

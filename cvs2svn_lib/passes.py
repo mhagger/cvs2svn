@@ -128,7 +128,8 @@ class CollectRevsPass(Pass):
     Log().quiet("Examining all CVS ',v' files...")
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_NEW)
     cd = CollectData(stats_keeper)
-    cd.process_project(Ctx().project)
+    for project in Ctx().projects:
+      cd.process_project(project)
     cd.write_symbol_stats()
 
     if cd.fatal_errors:

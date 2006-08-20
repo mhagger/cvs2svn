@@ -20,6 +20,8 @@
 import time
 
 from cvs2svn_lib.boolean import *
+from cvs2svn_lib.context import Ctx
+from cvs2svn_lib.log import Log
 
 
 SVN_INVALID_REVNUM = -1
@@ -110,5 +112,21 @@ def format_date(date):
   A Subversion date looks like '2002-09-29T14:44:59.000000Z'."""
 
   return time.strftime("%Y-%m-%dT%H:%M:%S.000000Z", time.gmtime(date))
+
+
+def to_utf8(value, mode='replace'):
+  """Encode (as Unicode) VALUE, trying the encodings in Ctx().encoding
+  as valid source encodings.  Raise UnicodeError on failure of all
+  source encodings."""
+
+  ### FIXME: The 'replace' default mode should be an option,
+  ### like --encoding is.
+  for encoding in Ctx().encoding:
+    try:
+      return unicode(value, encoding, mode).encode('utf8')
+    except UnicodeError:
+      Log().verbose("Encoding '%s' failed for string '%s'"
+                    % (encoding, value))
+  raise UnicodeError
 
 

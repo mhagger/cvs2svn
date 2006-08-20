@@ -21,7 +21,6 @@ import os
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib import config
-from cvs2svn_lib.log import Log
 
 
 class Ctx:
@@ -87,21 +86,5 @@ class Ctx:
       if (attr.startswith('_') and not attr.startswith('__')
           and not attr.startswith('_Ctx__')):
         delattr(self, attr)
-
-  def to_utf8(self, value, mode='replace'):
-    """Encode (as Unicode) VALUE, trying the encodings in self.encoding
-    as valid source encodings.  Raise UnicodeError on failure of all
-    source encodings."""
-
-    ### FIXME: The 'replace' default mode should be an option,
-    ### like --encoding is.
-    for encoding in self.encoding:
-      try:
-        return unicode(value, encoding, mode).encode('utf8')
-      except UnicodeError:
-        Log().verbose("Encoding '%s' failed for string '%s'"
-                      % (encoding, value))
-    raise UnicodeError
-
 
 

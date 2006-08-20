@@ -26,6 +26,7 @@ from cvs2svn_lib.common import CommandError
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import OP_ADD
 from cvs2svn_lib.common import OP_CHANGE
+from cvs2svn_lib.common import to_utf8
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.svn_repository_mirror import SVNRepositoryMirrorDelegate
 
@@ -63,7 +64,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
       try:
         # Log messages can be converted with the 'replace' strategy,
         # but we can't afford any lossiness here.
-        pieces[i] = Ctx().to_utf8(pieces[i], 'strict')
+        pieces[i] = to_utf8(pieces[i], 'strict')
       except UnicodeError:
         raise FatalError(
             "Unable to convert a path '%s' to internal encoding.\n"

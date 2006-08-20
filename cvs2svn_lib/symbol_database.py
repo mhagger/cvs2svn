@@ -111,14 +111,6 @@ class SymbolDatabase:
 
     return self._symbols[id]
 
-  def get_symbol_by_name(self, name):
-    """Return the symbol instance with name NAME.
-
-    Return None if there is no such instance (for example, if NAME is
-    being excluded from the conversion)."""
-
-    return self._symbols_by_name.get(name)
-
   def get_id(self, name):
     """Return the id of the symbol with the specified NAME.
 

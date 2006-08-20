@@ -55,21 +55,28 @@ class Symbol:
     return name
 
 
-class BranchSymbol(Symbol):
+class TypedSymbol(Symbol):
+  """A Symbol whose type (branch, tag, or excluded) has been decided."""
+
+  def __init__(self, symbol):
+    Symbol.__init__(self, symbol.id, symbol.name)
+
+
+class BranchSymbol(TypedSymbol):
   def __str__(self):
     """For convenience only.  The format is subject to change at any time."""
 
     return 'Branch %r' % (self.name,)
 
 
-class TagSymbol(Symbol):
+class TagSymbol(TypedSymbol):
   def __str__(self):
     """For convenience only.  The format is subject to change at any time."""
 
     return 'Tag %r' % (self.name,)
 
 
-class ExcludedSymbol(Symbol):
+class ExcludedSymbol(TypedSymbol):
   def __str__(self):
     """For convenience only.  The format is subject to change at any time."""
 
@@ -80,14 +87,14 @@ class SymbolDatabase:
   """Read-only access to symbol database.
 
   The primary lookup mechanism is name -> symbol, where symbol is a
-  Symbol instance.  The whole database is read into memory upon
+  TypedSymbol instance.  The whole database is read into memory upon
   construction."""
 
   def __init__(self):
-    # A map { id : Symbol }
+    # A map { id : TypedSymbol }
     self._symbols = {}
 
-    # A map { name : Symbol }
+    # A map { name : TypedSymbol }
     self._symbols_by_name = {}
 
     f = open(artifact_manager.get_temp_file(config.SYMBOL_DB), 'rb')
@@ -130,9 +137,9 @@ class SymbolDatabase:
     """Given an iterable of symbol ids, divide them into branches and tags.
 
     Return a tuple of two lists (branches, tags), containing the
-    Symbol objects of symbols that should be converted as branches and
-    tags respectively.  Symbols that we do not know about are not
-    included in either output list."""
+    TypedSymbol objects of symbols that should be converted as
+    branches and tags respectively.  Symbols that we do not know about
+    are not included in either output list."""
 
     branches = []
     tags = []
@@ -150,7 +157,7 @@ def create_symbol_database(symbols):
   """Create and fill a symbol database.
 
   Record each symbol that is listed in SYMBOLS, which is an iterable
-  containing Symbol objects."""
+  containing TypedSymbol objects."""
 
   f = open(artifact_manager.get_temp_file(config.SYMBOL_DB), 'wb')
   cPickle.dump(symbols, f, -1)

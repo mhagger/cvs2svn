@@ -322,7 +322,7 @@ class SVNRepositoryMirror:
   def fill_symbol(self, symbol):
     """Performs all copies necessary to create as much of the the tag
     or branch SYMBOL as possible given the current revision of the
-    repository mirror.  SYMBOL is an instance of Symbol.
+    repository mirror.  SYMBOL is an instance of TypedSymbol.
 
     The symbolic name is guaranteed to exist in the Subversion
     repository by the end of this call, even if there are no paths

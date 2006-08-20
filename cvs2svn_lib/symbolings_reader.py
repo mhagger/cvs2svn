@@ -53,9 +53,9 @@ class SymbolingsReader:
   def filling_guide_for_symbol(self, symbol, svn_revnum):
     """Given SYMBOL and SVN_REVNUM, return a new SymbolFillingGuide object.
 
-    SYMBOL is a Symbol instance.  Note that if we encounter an opening
-    rev in this fill, but the corresponding closing rev takes place
-    later than SVN_REVNUM, the closing will not be passed to
+    SYMBOL is a TypedSymbol instance.  Note that if we encounter an
+    opening rev in this fill, but the corresponding closing rev takes
+    place later than SVN_REVNUM, the closing will not be passed to
     SymbolFillingGuide in this fill (and will be discarded when
     encountered in a later fill).  This is perfectly fine, because we
     can still do a valid fill without the closing--we always try to

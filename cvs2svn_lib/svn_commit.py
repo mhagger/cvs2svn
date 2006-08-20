@@ -281,7 +281,7 @@ class SVNSymbolCommit(SVNCommit):
   def __init__(self, description, symbol, revnum=None):
     SVNCommit.__init__(self, description, revnum)
 
-    # The (uncleaned) symbolic name that is filled in this SVNCommit.
+    # The TypedSymbol that is filled in this SVNCommit.
     self.symbol = symbol
 
   def _get_log_msg(self):

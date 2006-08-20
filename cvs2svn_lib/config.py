@@ -80,7 +80,8 @@ CVS_ITEMS_DB = 'cvs2svn-cvs-items.db'
 CVS_ITEMS_RESYNC_DB = 'cvs2svn-cvs-items-resync.db'
 
 # A record of all symbolic names that will be processed in the
-# conversion.  This file contains a pickled list of Symbol objects.
+# conversion.  This file contains a pickled list of TypedSymbol
+# objects.
 SYMBOL_DB = 'cvs2svn-symbols.pck'
 
 # A pickled list of the statistics for all symbols.  Each entry in the

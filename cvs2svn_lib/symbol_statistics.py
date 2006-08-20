@@ -245,8 +245,9 @@ class SymbolStatistics:
   def check_consistency(self, symbols):
     """Check the plan for how to convert symbols for consistency.
 
-    SYMBOLS is an iterable of Symbol objects indicating how each name
-    is to be converted.  Return True iff any problems were detected."""
+    SYMBOLS is an iterable of TypedSymbol objects indicating how each
+    symbol is to be converted.  Return True iff any problems were
+    detected."""
 
     # Create a map { symbol_name : Symbol } including only
     # non-excluded symbols:

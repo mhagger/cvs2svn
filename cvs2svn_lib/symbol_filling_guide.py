@@ -203,12 +203,11 @@ class SymbolFillingGuide:
     search at path START_SVN_PATH, which is node START_NODE.  This is
     a helper method, called by get_sources() (see)."""
 
-    project = Ctx().project
     if isinstance(start_node, SVNRevisionRange):
       # This implies that a change was found outside of the
       # legitimate sources.  This should never happen.
       raise
-    elif project.is_source(start_svn_path):
+    elif self.symbol.project.is_source(start_svn_path):
       # This is a legitimate source.  Add it to list.
       return [ FillSource(start_svn_path, start_node) ]
     else:

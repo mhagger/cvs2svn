@@ -47,7 +47,6 @@ class Ctx:
     self.tags_base = "tags"
     self.branches_base = "branches"
     self.encoding = ["ascii"]
-    self.mime_types_file = None
     self.auto_props_file = None
     self.auto_props_ignore_case = False
     self.no_default_eol = False

@@ -155,6 +155,7 @@ def main():
   end_pass = pass_manager.num_passes
   quiet = 0
   verbose = 0
+  mime_types_file = None
 
   try:
     opts, args = my_getopt(sys.argv[1:], 'hvqs:p:', [
@@ -265,7 +266,7 @@ def main():
       ctx.svn_property_setters.append(
           property_setters.CVSRevisionNumberSetter())
     elif opt == '--mime-types':
-      ctx.mime_types_file = value
+      mime_types_file = value
     elif opt == '--auto-props':
       ctx.auto_props_file = value
     elif opt == '--auto-props-ignore-case':
@@ -388,9 +389,9 @@ def main():
   ctx.svn_property_setters.append(
       property_setters.BinaryFileEOLStyleSetter())
 
-  if ctx.mime_types_file:
+  if mime_types_file:
     ctx.svn_property_setters.append(
-        property_setters.MimeMapper(ctx.mime_types_file))
+        property_setters.MimeMapper(mime_types_file))
 
   if ctx.auto_props_file:
     ctx.svn_property_setters.append(

@@ -179,17 +179,15 @@ class Project:
 
     return svn_path in self._unremovable_paths
 
-  def get_branch_path(self, branch_name):
-    """Return the svnpath for the branch named BRANCH_NAME."""
+  def get_branch_path(self, branch_symbol):
+    """Return the svnpath for BRANCH_SYMBOL."""
 
-    symbol = Ctx()._symbol_db.get_symbol_by_name(branch_name)
-    return path_join(self.branches_path, symbol.get_clean_name())
+    return path_join(self.branches_path, branch_symbol.get_clean_name())
 
-  def get_tag_path(self, tag_name):
-    """Return the svnpath for the tag named TAG_NAME."""
+  def get_tag_path(self, tag_symbol):
+    """Return the svnpath for TAG_SYMBOL."""
 
-    symbol = Ctx()._symbol_db.get_symbol_by_name(tag_name)
-    return path_join(self.tags_path, symbol.get_clean_name())
+    return path_join(self.tags_path, tag_symbol.get_clean_name())
 
   def _relative_name(self, cvs_path):
     """Convert CVS_PATH into a name relative to this project's root directory.
@@ -213,10 +211,10 @@ class Project:
 
     return path_join(self.trunk_path, self._relative_name(cvs_path))
 
-  def make_branch_path(self, branch_name, cvs_path):
-    """Return the svn path for CVS_PATH on branch BRANCH_NAME."""
+  def make_branch_path(self, branch_symbol, cvs_path):
+    """Return the svn path for CVS_PATH on branch BRANCH_SYMBOL."""
 
-    return path_join(self.get_branch_path(branch_name),
+    return path_join(self.get_branch_path(branch_symbol),
                      self._relative_name(cvs_path))
 
 

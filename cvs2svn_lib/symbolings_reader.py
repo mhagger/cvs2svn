@@ -84,7 +84,7 @@ class SymbolingsReader:
         else:
           branch_id = int(branch_id, 16)
           svn_path = cvs_file.project.make_branch_path(
-              Ctx()._symbol_db.get_name(branch_id), cvs_file.cvs_path)
+              Ctx()._symbol_db.get_symbol(branch_id), cvs_file.cvs_path)
         revnum = int(revnum)
         if revnum > svn_revnum or id != symbol.id:
           break

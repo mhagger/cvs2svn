@@ -133,7 +133,7 @@ class CVSRevision(CVSItem):
     if lod_id is None:
       self.lod = Trunk()
     else:
-      self.lod = Branch(lod_id, Ctx()._symbol_db.get_name(lod_id))
+      self.lod = Branch(Ctx()._symbol_db.get_symbol(lod_id))
     self.tag_ids = [int(s, 16) for s in tag_ids.split()]
     self.branch_ids = [int(s, 16) for s in branch_ids.split()]
     self.closed_symbol_ids = [int(s, 16) for s in closed_symbol_ids.split()]

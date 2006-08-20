@@ -335,17 +335,17 @@ class SVNRepositoryMirror:
 
     if sources:
       if isinstance(symbol, TagSymbol):
-        dest_prefix = Ctx().project.get_tag_path(symbol.name)
+        dest_prefix = Ctx().project.get_tag_path(symbol)
       else:
         assert isinstance(symbol, BranchSymbol)
-        dest_prefix = Ctx().project.get_branch_path(symbol.name)
+        dest_prefix = Ctx().project.get_branch_path(symbol)
 
       dest_key = self._open_writable_node(dest_prefix, False)[0]
       self._fill(symbol_fill, dest_prefix, dest_key, sources)
     else:
       # We can only get here for a branch whose first commit is an add
       # (as opposed to a copy).
-      dest_path = Ctx().project.get_branch_path(symbol_fill.symbol.name)
+      dest_path = Ctx().project.get_branch_path(symbol_fill.symbol)
       if not self.path_exists(dest_path):
         # If our symbol_fill was empty, that means that our first
         # commit on the branch was to a file added on the branch, and

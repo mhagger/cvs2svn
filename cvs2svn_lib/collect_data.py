@@ -210,10 +210,11 @@ class _TagData(_SymbolData):
 class _SymbolDataCollector:
   """Collect information about symbols in a CVSFile."""
 
-  def __init__(self, collect_data, cvs_file):
-    self.collect_data = collect_data
-
+  def __init__(self, file_data_collector, cvs_file):
+    self.file_data_collector = file_data_collector
     self.cvs_file = cvs_file
+
+    self.collect_data = self.file_data_collector.collect_data
 
     # A set containing the names of each known symbol in this file,
     # used to check for duplicates.
@@ -368,7 +369,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     self.project = self.cvs_file.project
 
     # A place to store information about the symbols in this file:
-    self.sdc = _SymbolDataCollector(self.collect_data, self.cvs_file)
+    self.sdc = _SymbolDataCollector(self, self.cvs_file)
 
     # { revision : _RevisionData instance }
     self._rev_data = { }
@@ -792,6 +793,9 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     self.collect_data.add_cvs_file(self.cvs_file)
 
     self.sdc.register_branch_blockers()
+
+    # Break a circular linkage, allowing self and sdc to be freed.
+    del self.sdc
 
 
 ctrl_characters_regexp = re.compile('[\\\x00-\\\x1f\\\x7f]')

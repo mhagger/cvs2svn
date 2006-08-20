@@ -86,7 +86,7 @@ class ExcludedSymbol(TypedSymbol):
 class SymbolDatabase:
   """Read-only access to symbol database.
 
-  The primary lookup mechanism is name -> symbol, where symbol is a
+  This class allows lookups id -> symbol, where symbol is a
   TypedSymbol instance.  The whole database is read into memory upon
   construction."""
 

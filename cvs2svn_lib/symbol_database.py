@@ -94,15 +94,11 @@ class SymbolDatabase:
     # A map { id : TypedSymbol }
     self._symbols = {}
 
-    # A map { name : TypedSymbol }
-    self._symbols_by_name = {}
-
     f = open(artifact_manager.get_temp_file(config.SYMBOL_DB), 'rb')
     symbols = cPickle.load(f)
     f.close()
     for symbol in symbols:
       self._symbols[symbol.id] = symbol
-      self._symbols_by_name[symbol.name] = symbol
 
   def get_symbol(self, id):
     """Return the symbol instance with id ID.
@@ -110,13 +106,6 @@ class SymbolDatabase:
     Raise KeyError if the symbol is not known."""
 
     return self._symbols[id]
-
-  def get_id(self, name):
-    """Return the id of the symbol with the specified NAME.
-
-    Raise a KeyError if there is no such symbol."""
-
-    return self._symbols_by_name[name].id
 
   def get_name(self, id):
     """Return the name of the symbol with the specified ID.

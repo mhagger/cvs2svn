@@ -67,18 +67,12 @@ class Ctx:
     self.symbol_strategy_default = 'strict'
     self.symbol_transforms = []
     self.svn_property_setters = []
-    self.project = None
     # A list of Project instances for all projects being converted.
     self.projects = []
 
   def add_project(self, project):
-    """Add a project to be converted.
+    """Add a project to be converted."""
 
-    Currently, only one project is supported (i.e., this method must
-    be called exactly once)."""
-
-    assert self.project is None
-    self.project = project
     self.projects.append(project)
 
   def get_temp_filename(self, basename):

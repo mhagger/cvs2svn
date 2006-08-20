@@ -178,17 +178,16 @@ class _RevisionData:
 class _SymbolData:
   """Collection area for information about a CVS symbol (branch or tag)."""
 
-  def __init__(self, id, symbol_id, name):
+  def __init__(self, id, symbol):
     self.id = id
-    self.symbol_id = symbol_id
-    self.name = name
+    self.symbol = symbol
 
 
 class _BranchData(_SymbolData):
   """Collection area for information about a CVSBranch."""
 
-  def __init__(self, id, symbol_id, name, branch_number):
-    _SymbolData.__init__(self, id, symbol_id, name)
+  def __init__(self, id, symbol, branch_number):
+    _SymbolData.__init__(self, id, symbol)
     self.branch_number = branch_number
 
     # The revision number of the revision from which this branch
@@ -203,8 +202,8 @@ class _BranchData(_SymbolData):
 class _TagData(_SymbolData):
   """Collection area for information about a CVSTag."""
 
-  def __init__(self, id, symbol_id, name, rev):
-    _SymbolData.__init__(self, id, symbol_id, name)
+  def __init__(self, id, symbol, rev):
+    _SymbolData.__init__(self, id, symbol)
     self.rev = rev
 
 
@@ -256,14 +255,13 @@ class _SymbolDataCollector:
                        "   cannot also have name '%s', ignoring the latter\n"
                        % (warning_prefix,
                           self.cvs_file.filename, branch_number,
-                          branch_data.name, name))
+                          branch_data.symbol.name, name))
       return branch_data
 
     symbol = self.collect_data.get_symbol(name)
     self.collect_data.symbol_stats.register_branch_creation(symbol)
     branch_data = _BranchData(
-        self.collect_data.key_generator.gen_id(), symbol.id,
-        name, branch_number)
+        self.collect_data.key_generator.gen_id(), symbol, branch_number)
     self.branches_data[branch_number] = branch_data
     return branch_data
 
@@ -277,7 +275,7 @@ class _SymbolDataCollector:
     symbol = self.collect_data.get_symbol(name)
     self.collect_data.symbol_stats.register_tag_creation(symbol)
     tag_data = _TagData(
-        self.collect_data.key_generator.gen_id(), symbol.id, name, revision)
+        self.collect_data.key_generator.gen_id(), symbol, revision)
     self.tags_data.setdefault(revision, []).append(tag_data)
     return tag_data
 
@@ -334,26 +332,22 @@ class _SymbolDataCollector:
       branch_data = self.branches_data[branch_number]
 
       # Register the commit on this non-trunk branch
-      symbol = self.collect_data.get_symbol(branch_data.name)
-      self.collect_data.symbol_stats.register_branch_commit(symbol)
+      self.collect_data.symbol_stats.register_branch_commit(
+          branch_data.symbol)
 
   def register_branch_blockers(self):
     for (revision, tag_data_list) in self.tags_data.items():
       if is_branch_revision(revision):
         branch_data_parent = self.rev_to_branch_data(revision)
-        parent_symbol = self.collect_data.get_symbol(branch_data_parent.name)
         for tag_data in tag_data_list:
-          tag_symbol = self.collect_data.get_symbol(tag_data.name)
           self.collect_data.symbol_stats.register_branch_blocker(
-              parent_symbol, tag_symbol)
+              branch_data_parent.symbol, tag_data.symbol)
 
     for branch_data_child in self.branches_data.values():
-      branch_symbol = self.collect_data.get_symbol(branch_data_child.name)
       if is_branch_revision(branch_data_child.parent):
         branch_data_parent = self.rev_to_branch_data(branch_data_child.parent)
-        parent_symbol = self.collect_data.get_symbol(branch_data_parent.name)
         self.collect_data.symbol_stats.register_branch_blocker(
-            parent_symbol, branch_symbol)
+            branch_data_parent.symbol, branch_data_child.symbol)
 
 
 class _FileDataCollector(cvs2svn_rcsparse.Sink):
@@ -748,22 +742,22 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
     if is_branch_revision(rev_data.rev):
       branch_data = self.sdc.rev_to_branch_data(rev_data.rev)
-      lod = Branch(self.collect_data.get_symbol(branch_data.name))
+      lod = Branch(branch_data.symbol)
     else:
       lod = Trunk()
 
     branch_ids = [
-        branch_data.symbol_id
+        branch_data.symbol.id
         for branch_data in rev_data.branches_data
         ]
 
     tag_ids = [
-        tag_data.symbol_id
+        tag_data.symbol.id
         for tag_data in rev_data.tags_data
         ]
 
     closed_symbol_ids = [
-        closed_symbol_data.symbol_id
+        closed_symbol_data.symbol.id
         for closed_symbol_data in rev_data.closed_symbols_data
         ]
 

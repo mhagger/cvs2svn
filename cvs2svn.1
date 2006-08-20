@@ -25,11 +25,12 @@ success.
 \fB--version\fR
 Print the version number.
 .TP
-\fB-q\fR
-Quiet, print less information while running.
+\fB--verbose\fR, \fB-v\fR
+Print more information while running.
 .TP
-\fB-v\fR
-Verbose, print more information while running.
+\fB--quiet\fR, \fB-q\fR
+Print less information while running.  This option may be specified
+twice to suppress all non-error output.
 .TP
 \fB-s\fR \fIpath\fR
 Load CVS repository into the Subversion repository located at PATH. If there
@@ -60,16 +61,9 @@ Just produce a dumpfile; don't commit to a repos.
 Set the \fIpath\fR and optionaly name of the dumpfile.  The default is
 \fIcvs2svn-dump\fR in the current directory.
 .TP
-\fB--tmpdir\fR=\fIpath\fR
-Set the \fIpath\fR to use for temporary data.  Default is the current
-directory.
-.TP
 \fB--dry-run\fR
 Do not create a repository or a dumpfile; just print the details of what
 cvs2svn would do if it were really converting your repository.
-.TP
-\fB--profile\fR
-Profile with 'hotshot' (into file \fIcvs2svn.hotshot\fR).
 .TP
 \fB--use-cvs\fR
 Use CVS instead of RCS 'co' to extract data (only use this if having
@@ -140,16 +134,13 @@ Set the default username to \fIname\fR when cvs2svn doesn't have a username
 from the CVS repository to work with.  This happens when a branch or tag is
 created.  The default is to use no author at all for such commits.
 .TP
-\fB--skip-cleanup\fR
-Prevent the deletion of temporary files.
+\fB--fs-type\fR
+Pass \fI--fs-type\fR=\fItype\fR to "svnadmin create" when creating a
+new repository.
 .TP
 \fB--bdb-txn-nosync\fR
 Pass \fI--bdb-txn-nosync\fR to "svnadmin create" when creating a new
 repository.
-.TP
-\fB--fs-type\fR
-Pass \fI--fs-type\fR=\fItype\fR to "svnadmin create" when creating a
-new repository.
 .TP
 \fB--cvs-revnums\fR
 Record CVS revision numbers as file properties in the Subversion
@@ -194,6 +185,16 @@ if the mode of the RCS file in question is either kv, kvl or not
 kb.  If you use the --keywords-off switch, cvs2svn will not set
 svn:keywords for any file.  While this will not touch the keywords in
 the contents of your files, Subversion will not expand them.
+.TP
+\fB--tmpdir\fR=\fIpath\fR
+Set the \fIpath\fR to use for temporary data.  Default is the current
+directory.
+.TP
+\fB--skip-cleanup\fR
+Prevent the deletion of temporary files.
+.TP
+\fB--profile\fR
+Profile with 'hotshot' (into file \fIcvs2svn.hotshot\fR).
 .SH FILES
 The current directory (or the directory specified by \fB--tmpdir\fR)
 is used as scratch space for data files of the form

@@ -303,7 +303,7 @@ directories) before running your conversion.
   </tr>
 
   <tr>
-    <td align="right"><tt>--help, -h</tt></td>
+    <td align="right"><tt>--help</tt>, <tt>-h</tt></td>
     <td>Print the usage message and exit with success.</td>
   </tr>
 
@@ -319,15 +319,16 @@ directories) before running your conversion.
   </tr>
 
   <tr>
-    <td align="right"><tt>-q</tt></td>
-    <td>Tell cvs2svn to operate in quiet mode, printing little more
-      than pass starts and stops to STDOUT.</td>
+    <td align="right"><tt>--verbose</tt>, <tt>-v</tt></td>
+    <td>Tell cvs2svn to print <i>tons</i> of information about what
+      it's doing to STDOUT.</td>
   </tr>
 
   <tr>
-    <td align="right"><tt>-v</tt></td>
-    <td>Tell cvs2svn to print <i>tons</i> of information about what
-      it's doing to STDOUT.</td>
+    <td align="right"><tt>--quiet</tt>, <tt>-q</tt></td>
+    <td>Tell cvs2svn to operate in quiet mode, printing little more
+      than pass starts and stops to STDOUT.  This option may be
+      specified twice to suppress all non-error output.</td>
   </tr>
 
   <tr>
@@ -371,23 +372,10 @@ directories) before running your conversion.
   </tr>
 
   <tr>
-    <td align="right"><tt>--tmpdir=PATH</tt></td>
-    <td>Use the directory PATH for all of cvs2svn's temporary data
-      (which can be a <i>lot</i> of data).  The default value is the
-      current working directory.</td>
-  </tr>
-
-  <tr>
     <td align="right"><tt>--dry-run</tt></td>
     <td>Do not create a repository or a dumpfile; just print the details
       of what cvs2svn would do if it were really converting your
       repository.</td>
-  </tr>
-
-  <tr>
-    <td align="right"><tt>--profile</tt></td>
-    <td>Dump Python <a href="http://docs.python.org/lib/module-hotshot.html"
-        >Hotshot</a> profiling data to the file <tt>cvs2svn.hotshot</tt>.</td>
   </tr>
 
   <tr>
@@ -537,20 +525,14 @@ cvs2svn --symbol-transform='([0-9])-(.*):release-\1.\2' -q -s SVN RCS
   </tr>
 
   <tr>
-    <td align="right"><tt>--skip-cleanup</tt></td>
-    <td>Prevent the deletion of the temporary files that cvs2svn
-      creates in the process of conversion.</td>
+    <td align="right"><tt>--fs-type=TYPE</tt></td>
+    <td>Pass the <tt>--fs-type=TYPE</tt> option to "svnadmin
+      create" when creating a new repository.</td>
   </tr>
 
   <tr>
     <td align="right"><tt>--bdb-txn-nosync</tt></td>
     <td>Pass the <tt>--bdb-txn-nosync</tt> switch to "svnadmin
-      create" when creating a new repository.</td>
-  </tr>
-
-  <tr>
-    <td align="right"><tt>--fs-type=TYPE</tt></td>
-    <td>Pass the <tt>--fs-type=TYPE</tt> option to "svnadmin
       create" when creating a new repository.</td>
   </tr>
 
@@ -617,6 +599,25 @@ cvs2svn --symbol-transform='([0-9])-(.*):release-\1.\2' -q -s SVN RCS
       <tt>svn:keywords</tt> for any file.  While this will not touch
       the keywords in the contents of your files, Subversion will not
       expand them.</td>
+  </tr>
+
+  <tr>
+    <td align="right"><tt>--tmpdir=PATH</tt></td>
+    <td>Use the directory PATH for all of cvs2svn's temporary data
+      (which can be a <i>lot</i> of data).  The default value is the
+      current working directory.</td>
+  </tr>
+
+  <tr>
+    <td align="right"><tt>--skip-cleanup</tt></td>
+    <td>Prevent the deletion of the temporary files that cvs2svn
+      creates in the process of conversion.</td>
+  </tr>
+
+  <tr>
+    <td align="right"><tt>--profile</tt></td>
+    <td>Dump Python <a href="http://docs.python.org/lib/module-hotshot.html"
+        >Hotshot</a> profiling data to the file <tt>cvs2svn.hotshot</tt>.</td>
   </tr>
 
 </table>

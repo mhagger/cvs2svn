@@ -85,8 +85,8 @@ USAGE: %(progname)s [-v] [-s svn-repos-path] [-p pass] cvs-repos-path
   --help, -h           print this usage message and exit with success
   --help-passes        list the available passes and their numbers
   --version            print the version number
-  -q                   quiet
-  -v                   verbose
+  --verbose, -v        verbose
+  --quiet, -q          quiet
   -s PATH              path for SVN repos
   -p PASS              execute only specified PASS
   -p [START]:[END]     execute passes START through END, inclusive
@@ -94,10 +94,8 @@ USAGE: %(progname)s [-v] [-s svn-repos-path] [-p pass] cvs-repos-path
   --existing-svnrepos  load into existing SVN repository
   --dump-only          just produce a dumpfile; don't commit to a repos
   --dumpfile=PATH      name dumpfile to output
-  --tmpdir=PATH        directory to use for tmp data (default to cwd)
   --dry-run            do not create a repository or a dumpfile;
                        just print what would happen.
-  --profile            profile with 'hotshot' (into file cvs2svn.hotshot)
   --use-cvs            use CVS instead of RCS 'co' to extract data
                        (only use this if having problems with RCS)
   --svnadmin=PATH      path to the svnadmin program
@@ -118,9 +116,8 @@ USAGE: %(progname)s [-v] [-s svn-repos-path] [-p pass] cvs-repos-path
   --symbol-transform=P:S transform symbol names from P to S where P and S
                        use Python regexp and reference syntax respectively
   --username=NAME      username for cvs2svn-synthesized commits
-  --skip-cleanup       prevent the deletion of intermediate files
-  --bdb-txn-nosync     pass --bdb-txn-nosync to "svnadmin create"
   --fs-type=TYPE       pass --fs-type=TYPE to "svnadmin create"
+  --bdb-txn-nosync     pass --bdb-txn-nosync to "svnadmin create"
   --cvs-revnums        record CVS revision numbers as file properties
   --mime-types=FILE    specify an apache-style mime.types file for
                        setting svn:mime-type
@@ -133,6 +130,9 @@ USAGE: %(progname)s [-v] [-s svn-repos-path] [-p pass] cvs-repos-path
   --keywords-off       don't set svn:keywords on any files (by default,
                        cvs2svn sets svn:keywords on non-binary files to
                        "%(svn_keywords_value)s")
+  --tmpdir=PATH        directory to use for tmp data (default to cwd)
+  --skip-cleanup       prevent the deletion of intermediate files
+  --profile            profile with 'hotshot' (into file cvs2svn.hotshot)
 """
 
 def usage():
@@ -157,30 +157,50 @@ def main():
   verbose = 0
 
   try:
-    opts, args = my_getopt(sys.argv[1:], 'p:s:qvh',
-                               [ "help", "help-passes", "create", "trunk=",
-                                 "username=", "existing-svnrepos",
-                                 "branches=", "tags=", "encoding=",
-                                 "force-branch=", "force-tag=", "exclude=",
-                                 "symbol-default=",
-                                 "use-cvs", "mime-types=",
-                                 "auto-props=", "auto-props-ignore-case",
-                                 "eol-from-mime-type", "no-default-eol",
-                                 "trunk-only", "no-prune", "dry-run",
-                                 "dump-only", "dumpfile=", "tmpdir=",
-                                 "svnadmin=", "skip-cleanup", "cvs-revnums",
-                                 "bdb-txn-nosync", "fs-type=",
-                                 "version", "profile",
-                                 "keywords-off", "symbol-transform="])
+    opts, args = my_getopt(sys.argv[1:], 'hvqs:p:', [
+        "help", "help-passes", "version",
+        "verbose", "quiet",
+        "existing-svnrepos", "dump-only", "dumpfile=", "dry-run",
+        "use-cvs",
+        "svnadmin=",
+        "trunk-only",
+        "trunk=", "branches=", "tags=",
+        "no-prune",
+        "encoding=",
+        "force-branch=", "force-tag=", "exclude=", "symbol-default=",
+        "symbol-transform=",
+        "username=",
+        "fs-type=", "bdb-txn-nosync",
+        "cvs-revnums",
+        "mime-types=",
+        "auto-props=", "auto-props-ignore-case",
+        "eol-from-mime-type", "no-default-eol",
+        "keywords-off",
+        "tmpdir=",
+        "skip-cleanup",
+        "profile",
+        "create",
+        ])
   except getopt.GetoptError, e:
     sys.stderr.write(error_prefix + ': ' + str(e) + '\n\n')
     usage()
     sys.exit(1)
 
   for opt, value in opts:
-    if opt == '--version':
+    if opt in ['--help', '-h']:
+      ctx.print_help = True
+    elif opt == '--help-passes':
+      pass_manager.help_passes()
+      sys.exit(0)
+    elif opt == '--version':
         print '%s version %s' % (os.path.basename(sys.argv[0]), VERSION)
         sys.exit(0)
+    elif opt in ['--verbose', '-v']:
+      verbose += 1
+    elif opt in ['--quiet', '-q']:
+      quiet += 1
+    elif opt == '-s':
+      ctx.target = value
     elif opt == '-p':
       if value.find(':') >= 0:
         start_pass, end_pass = value.split(':')
@@ -193,23 +213,14 @@ def main():
       if not start_pass <= end_pass:
         raise InvalidPassError(
             'Ending pass must not come before starting pass.')
-    elif (opt == '--help') or (opt == '-h'):
-      ctx.print_help = True
-    elif opt == '--help-passes':
-      pass_manager.help_passes()
-      sys.exit(0)
-    elif opt == '-v':
-      verbose += 1
-    elif opt == '-q':
-      quiet += 1
-    elif opt == '-s':
-      ctx.target = value
     elif opt == '--existing-svnrepos':
       ctx.existing_svnrepos = True
+    elif opt == '--dump-only':
+      ctx.dump_only = True
     elif opt == '--dumpfile':
       ctx.dumpfile = value
-    elif opt == '--tmpdir':
-      ctx.tmpdir = value
+    elif opt == '--dry-run':
+      ctx.dry_run = True
     elif opt == '--use-cvs':
       ctx.use_cvs = True
     elif opt == '--svnadmin':
@@ -224,10 +235,6 @@ def main():
       ctx.tags_base = value
     elif opt == '--no-prune':
       ctx.prune = False
-    elif opt == '--dump-only':
-      ctx.dump_only = True
-    elif opt == '--dry-run':
-      ctx.dry_run = True
     elif opt == '--encoding':
       ctx.encoding.insert(-1, value)
     elif opt == '--force-branch':
@@ -241,6 +248,22 @@ def main():
         raise FatalError(
             '%r is not a valid option for --symbol_default.' % (value,))
       ctx.symbol_strategy_default = value
+    elif opt == '--symbol-transform':
+      [pattern, replacement] = value.split(":")
+      try:
+        pattern = re.compile(pattern)
+      except re.error, e:
+        raise FatalError("'%s' is not a valid regexp." % (pattern,))
+      ctx.symbol_transforms.append((pattern, replacement,))
+    elif opt == '--username':
+      ctx.username = value
+    elif opt == '--fs-type':
+      ctx.fs_type = value
+    elif opt == '--bdb-txn-nosync':
+      ctx.bdb_txn_nosync = True
+    elif opt == '--cvs-revnums':
+      ctx.svn_property_setters.append(
+          property_setters.CVSRevisionNumberSetter())
     elif opt == '--mime-types':
       ctx.mime_types_file = value
     elif opt == '--auto-props':
@@ -253,30 +276,16 @@ def main():
       ctx.no_default_eol = True
     elif opt == '--keywords-off':
       ctx.keywords_off = True
-    elif opt == '--username':
-      ctx.username = value
+    elif opt == '--tmpdir':
+      ctx.tmpdir = value
     elif opt == '--skip-cleanup':
       ctx.skip_cleanup = True
-    elif opt == '--cvs-revnums':
-      ctx.svn_property_setters.append(
-          property_setters.CVSRevisionNumberSetter())
-    elif opt == '--bdb-txn-nosync':
-      ctx.bdb_txn_nosync = True
-    elif opt == '--fs-type':
-      ctx.fs_type = value
+    elif opt == '--profile':
+      profiling = True
     elif opt == '--create':
       sys.stderr.write(warning_prefix +
           ': The behaviour produced by the --create option is now the '
           'default,\nand passing the option is deprecated.\n')
-    elif opt == '--profile':
-      profiling = True
-    elif opt == '--symbol-transform':
-      [pattern, replacement] = value.split(":")
-      try:
-        pattern = re.compile(pattern)
-      except re.error, e:
-        raise FatalError("'%s' is not a valid regexp." % (pattern,))
-      ctx.symbol_transforms.append((pattern, replacement,))
 
   if ctx.print_help:
     usage()

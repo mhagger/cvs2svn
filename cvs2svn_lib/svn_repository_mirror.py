@@ -358,7 +358,7 @@ class SVNRepositoryMirror:
         #
         # ...we create the branch by copying trunk from the our
         # current revision number minus 1
-        source_path = Ctx().project.trunk_path
+        source_path = symbol.project.trunk_path
         entries = self.copy_path(source_path, dest_path, self.youngest - 1)[1]
         # Now since we've just copied trunk to a branch that's
         # *supposed* to be empty, we delete any entries in the

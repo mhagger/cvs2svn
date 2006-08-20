@@ -511,7 +511,7 @@ class IndexSymbolsPass(Pass):
       id, svn_revnum, ignored = line.split(" ", 2)
       id = int(id, 16)
       if id != old_id:
-        Log().verbose(' ', Ctx()._symbol_db.get_name(id))
+        Log().verbose(' ', Ctx()._symbol_db.get_symbol(id).name)
         old_id = id
         offsets[id] = fpos
 

@@ -107,13 +107,6 @@ class SymbolDatabase:
 
     return self._symbols[id]
 
-  def get_name(self, id):
-    """Return the name of the symbol with the specified ID.
-
-    Raise a KeyError if there is no such symbol."""
-
-    return self._symbols[id].name
-
   def collate_symbols(self, ids):
     """Given an iterable of symbol ids, divide them into branches and tags.
 

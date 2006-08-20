@@ -261,7 +261,7 @@ class CVSCommit:
         return False
       cvs_generated_msg = 'file %s was initially added on branch %s.\n' % (
           c_rev.cvs_file.basename,
-          Ctx()._symbol_db.get_name(c_rev.branch_ids[0]),)
+          Ctx()._symbol_db.get_symbol(c_rev.branch_ids[0]).name,)
       author, log_msg = Ctx()._metadata_db[c_rev.metadata_id]
       return log_msg != cvs_generated_msg
 

@@ -387,7 +387,8 @@ class SVNPostCommit(SVNCommit, SVNRevisionCommit):
                   % self._motivating_revnum)
 
     for cvs_rev in self.cvs_revs:
-      svn_trunk_path = Ctx().project.make_trunk_path(cvs_rev.cvs_path)
+      svn_trunk_path = cvs_rev.cvs_file.project.make_trunk_path(
+          cvs_rev.cvs_path)
       if cvs_rev.op == OP_ADD or cvs_rev.op == OP_CHANGE:
         if repos.path_exists(svn_trunk_path):
           # Delete the path on trunk...

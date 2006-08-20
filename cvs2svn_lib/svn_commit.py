@@ -189,11 +189,16 @@ class SVNInitialProjectCommit(SVNCommit):
     return 'New repository initialized by cvs2svn.'
 
   def commit(self, repos):
+    # FIXME: It would be nicer to create a project's TTB directories
+    # only after the first commit to the project.
+
     repos.start_commit(self.revnum, self._get_revprops())
-    repos.mkdir(Ctx().project.trunk_path)
-    if not Ctx().trunk_only:
-      repos.mkdir(Ctx().project.branches_path)
-      repos.mkdir(Ctx().project.tags_path)
+
+    for project in Ctx().projects:
+      repos.mkdir(project.trunk_path)
+      if not Ctx().trunk_only:
+        repos.mkdir(project.branches_path)
+        repos.mkdir(project.tags_path)
 
     repos.end_commit()
 

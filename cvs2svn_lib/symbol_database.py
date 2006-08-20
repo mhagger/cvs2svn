@@ -24,65 +24,6 @@ from cvs2svn_lib import config
 from cvs2svn_lib.artifact_manager import artifact_manager
 
 
-class Symbol:
-  def __init__(self, id, name):
-    self.id = id
-    self.name = name
-
-  def __cmp__(self, other):
-    return cmp(self.id, other.id)
-
-  def __hash__(self):
-    return self.id
-
-  def __str__(self):
-    return self.name
-
-  def __repr__(self):
-    return '%s <%x>' % (self, self.id,)
-
-  def get_clean_name(self):
-    """Return self.name, translating characters that Subversion does
-    not allow in a pathname.
-
-    Since the unofficial set also includes [/\] we need to translate
-    those into ones that don't conflict with Subversion
-    limitations."""
-
-    name = self.name
-    name = name.replace('/','++')
-    name = name.replace('\\','--')
-    return name
-
-
-class TypedSymbol(Symbol):
-  """A Symbol whose type (branch, tag, or excluded) has been decided."""
-
-  def __init__(self, symbol):
-    Symbol.__init__(self, symbol.id, symbol.name)
-
-
-class BranchSymbol(TypedSymbol):
-  def __str__(self):
-    """For convenience only.  The format is subject to change at any time."""
-
-    return 'Branch %r' % (self.name,)
-
-
-class TagSymbol(TypedSymbol):
-  def __str__(self):
-    """For convenience only.  The format is subject to change at any time."""
-
-    return 'Tag %r' % (self.name,)
-
-
-class ExcludedSymbol(TypedSymbol):
-  def __str__(self):
-    """For convenience only.  The format is subject to change at any time."""
-
-    return 'ExcludedSymbol %r' % (self.name, self.id,)
-
-
 class SymbolDatabase:
   """Read-only access to symbol database.
 

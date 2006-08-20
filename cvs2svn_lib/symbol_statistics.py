@@ -25,9 +25,9 @@ from cvs2svn_lib import config
 from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.artifact_manager import artifact_manager
-from cvs2svn_lib.symbol_database import Symbol
-from cvs2svn_lib.symbol_database import TagSymbol
-from cvs2svn_lib.symbol_database import ExcludedSymbol
+from cvs2svn_lib.symbol import Symbol
+from cvs2svn_lib.symbol import TagSymbol
+from cvs2svn_lib.symbol import ExcludedSymbol
 
 
 class _Stats:

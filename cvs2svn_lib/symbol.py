@@ -1,0 +1,81 @@
+# (Be in -*- python -*- mode.)
+#
+# ====================================================================
+# Copyright (c) 2000-2006 CollabNet.  All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.  The terms
+# are also available at http://subversion.tigris.org/license-1.html.
+# If newer versions of this license are posted there, you may use a
+# newer version instead, at your option.
+#
+# This software consists of voluntary contributions made by many
+# individuals.  For exact contribution history, see the revision
+# history and logs, available at http://cvs2svn.tigris.org/.
+# ====================================================================
+
+"""This module contains classes to represent symbols."""
+
+
+from cvs2svn_lib.boolean import *
+
+
+class Symbol:
+  def __init__(self, id, name):
+    self.id = id
+    self.name = name
+
+  def __cmp__(self, other):
+    return cmp(self.id, other.id)
+
+  def __hash__(self):
+    return self.id
+
+  def __str__(self):
+    return self.name
+
+  def __repr__(self):
+    return '%s <%x>' % (self, self.id,)
+
+  def get_clean_name(self):
+    """Return self.name, translating characters that Subversion does
+    not allow in a pathname.
+
+    Since the unofficial set also includes [/\] we need to translate
+    those into ones that don't conflict with Subversion
+    limitations."""
+
+    name = self.name
+    name = name.replace('/','++')
+    name = name.replace('\\','--')
+    return name
+
+
+class TypedSymbol(Symbol):
+  """A Symbol whose type (branch, tag, or excluded) has been decided."""
+
+  def __init__(self, symbol):
+    Symbol.__init__(self, symbol.id, symbol.name)
+
+
+class BranchSymbol(TypedSymbol):
+  def __str__(self):
+    """For convenience only.  The format is subject to change at any time."""
+
+    return 'Branch %r' % (self.name,)
+
+
+class TagSymbol(TypedSymbol):
+  def __str__(self):
+    """For convenience only.  The format is subject to change at any time."""
+
+    return 'Tag %r' % (self.name,)
+
+
+class ExcludedSymbol(TypedSymbol):
+  def __str__(self):
+    """For convenience only.  The format is subject to change at any time."""
+
+    return 'ExcludedSymbol %r' % (self.name, self.id,)
+
+

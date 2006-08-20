@@ -40,9 +40,9 @@ from cvs2svn_lib.database import DB_OPEN_READ
 from cvs2svn_lib.database import DB_OPEN_WRITE
 from cvs2svn_lib.cvs_file_database import CVSFileDatabase
 from cvs2svn_lib.metadata_database import MetadataDatabase
-from cvs2svn_lib.symbol_database import BranchSymbol
-from cvs2svn_lib.symbol_database import TagSymbol
-from cvs2svn_lib.symbol_database import ExcludedSymbol
+from cvs2svn_lib.symbol import BranchSymbol
+from cvs2svn_lib.symbol import TagSymbol
+from cvs2svn_lib.symbol import ExcludedSymbol
 from cvs2svn_lib.symbol_database import SymbolDatabase
 from cvs2svn_lib.symbol_database import create_symbol_database
 from cvs2svn_lib.line_of_development import Branch

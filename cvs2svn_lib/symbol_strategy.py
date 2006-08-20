@@ -23,9 +23,9 @@ from cvs2svn_lib.boolean import *
 from cvs2svn_lib.set_support import *
 from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.log import Log
-from cvs2svn_lib.symbol_database import BranchSymbol
-from cvs2svn_lib.symbol_database import TagSymbol
-from cvs2svn_lib.symbol_database import ExcludedSymbol
+from cvs2svn_lib.symbol import BranchSymbol
+from cvs2svn_lib.symbol import TagSymbol
+from cvs2svn_lib.symbol import ExcludedSymbol
 
 
 class StrategyRule:

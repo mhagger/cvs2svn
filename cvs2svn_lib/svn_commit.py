@@ -25,8 +25,8 @@ from cvs2svn_lib.common import OP_CHANGE
 from cvs2svn_lib.common import OP_DELETE
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.log import Log
-from cvs2svn_lib.symbol_database import BranchSymbol
-from cvs2svn_lib.symbol_database import TagSymbol
+from cvs2svn_lib.symbol import BranchSymbol
+from cvs2svn_lib.symbol import TagSymbol
 
 
 class SVNCommit:

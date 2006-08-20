@@ -29,8 +29,8 @@ from cvs2svn_lib.database import Database
 from cvs2svn_lib.database import SDatabase
 from cvs2svn_lib.database import DB_OPEN_NEW
 from cvs2svn_lib.database import DB_OPEN_READ
-from cvs2svn_lib.symbol_database import BranchSymbol
-from cvs2svn_lib.symbol_database import TagSymbol
+from cvs2svn_lib.symbol import BranchSymbol
+from cvs2svn_lib.symbol import TagSymbol
 from cvs2svn_lib.symbolings_reader import SymbolingsReader
 from cvs2svn_lib.fill_source import FillSource
 from cvs2svn_lib.svn_revision_range import SVNRevisionRange

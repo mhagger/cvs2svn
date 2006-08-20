@@ -110,6 +110,12 @@ class Project:
     self._unremovable_paths = [
         self.trunk_path, self.branches_path, self.tags_path]
 
+  def __cmp__(self, other):
+    return cmp(self.id, other.id)
+
+  def __hash__(self):
+    return self.id
+
   def _get_cvs_path(self, filename):
     """Return the path to FILENAME relative to project_cvs_repos_path.
 

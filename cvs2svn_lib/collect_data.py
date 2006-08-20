@@ -258,7 +258,7 @@ class _SymbolDataCollector:
                           branch_data.symbol.name, name))
       return branch_data
 
-    symbol = self.collect_data.get_symbol(name)
+    symbol = self.collect_data.get_symbol(self.cvs_file.project, name)
     self.collect_data.symbol_stats.register_branch_creation(symbol)
     branch_data = _BranchData(
         self.collect_data.key_generator.gen_id(), symbol, branch_number)
@@ -272,7 +272,7 @@ class _SymbolDataCollector:
   def _add_tag(self, name, revision):
     """Record that tag NAME refers to the specified REVISION."""
 
-    symbol = self.collect_data.get_symbol(name)
+    symbol = self.collect_data.get_symbol(self.cvs_file.project, name)
     self.collect_data.symbol_stats.register_tag_creation(symbol)
     tag_data = _TagData(
         self.collect_data.key_generator.gen_id(), symbol, revision)
@@ -888,19 +888,19 @@ class CollectData:
 
     self.symbol_key_generator = KeyGenerator(1)
 
-    # A map { name -> Symbol } for all known symbols.
+    # A map { (project,name) -> Symbol } for all known symbols.
     self.symbols = {}
 
-  def get_symbol(self, name):
+  def get_symbol(self, project, name):
     """Return the Symbol object for the symbol with the specified name.
 
     If such a symbol does not yet exist, allocate a new symbol_id,
     create a Symbol instance, store it in self.symbols, and return it."""
 
-    symbol = self.symbols.get(name)
+    symbol = self.symbols.get( (project, name,) )
     if symbol is None:
-      symbol = Symbol(self.symbol_key_generator.gen_id(), name)
-      self.symbols[name] = symbol
+      symbol = Symbol(self.symbol_key_generator.gen_id(), project, name)
+      self.symbols[project, name] = symbol
     return symbol
 
   def process_project(self, project):

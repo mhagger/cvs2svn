@@ -18,18 +18,20 @@
 
 
 from cvs2svn_lib.boolean import *
+from cvs2svn_lib.context import Ctx
 
 
 class Symbol:
-  def __init__(self, id, name):
+  def __init__(self, id, project, name):
     self.id = id
+    self.project = project
     self.name = name
 
   def __cmp__(self, other):
-    return cmp(self.id, other.id)
+    return cmp(self.project, other.project) or cmp(self.id, other.id)
 
   def __hash__(self):
-    return self.id
+    return hash( (self.project, self.id,) )
 
   def __str__(self):
     return self.name
@@ -38,10 +40,11 @@ class Symbol:
     return '%s <%x>' % (self, self.id,)
 
   def __getstate__(self):
-    return (self.id, self.name,)
+    return (self.id, self.project.id, self.name,)
 
   def __setstate__(self, state):
-    (self.id, self.name,) = state
+    (self.id, project_id, self.name,) = state
+    self.project = Ctx().projects[project_id]
 
   def get_clean_name(self):
     """Return self.name, translating characters that Subversion does
@@ -61,7 +64,7 @@ class TypedSymbol(Symbol):
   """A Symbol whose type (branch, tag, or excluded) has been decided."""
 
   def __init__(self, symbol):
-    Symbol.__init__(self, symbol.id, symbol.name)
+    Symbol.__init__(self, symbol.id, symbol.project, symbol.name)
 
 
 class BranchSymbol(TypedSymbol):

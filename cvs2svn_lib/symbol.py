@@ -37,6 +37,12 @@ class Symbol:
   def __repr__(self):
     return '%s <%x>' % (self, self.id,)
 
+  def __getstate__(self):
+    return (self.id, self.name,)
+
+  def __setstate__(self, state):
+    (self.id, self.name,) = state
+
   def get_clean_name(self):
     """Return self.name, translating characters that Subversion does
     not allow in a pathname.

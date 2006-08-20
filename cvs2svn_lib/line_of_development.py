@@ -29,9 +29,7 @@ class LineOfDevelopment:
 
 
 class Trunk(LineOfDevelopment):
-  """Represent the main line of development.
-
-  Instances of this class are considered False."""
+  """Represent the main line of development."""
 
   def __init__(self):
     pass

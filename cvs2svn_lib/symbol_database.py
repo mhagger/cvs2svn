@@ -107,25 +107,6 @@ class SymbolDatabase:
 
     return self._symbols[id]
 
-  def collate_symbols(self, ids):
-    """Given an iterable of symbol ids, divide them into branches and tags.
-
-    Return a tuple of two lists (branches, tags), containing the
-    TypedSymbol objects of symbols that should be converted as
-    branches and tags respectively.  Symbols that we do not know about
-    are not included in either output list."""
-
-    branches = []
-    tags = []
-    for id in ids:
-      symbol = self.get_symbol(id)
-      if isinstance(symbol, BranchSymbol):
-        branches.append(symbol)
-      elif isinstance(symbol, TagSymbol):
-        tags.append(symbol)
-
-    return (branches, tags,)
-
 
 def create_symbol_database(symbols):
   """Create and fill a symbol database.

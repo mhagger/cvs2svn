@@ -40,6 +40,8 @@ from cvs2svn_lib.database import DB_OPEN_READ
 from cvs2svn_lib.database import DB_OPEN_WRITE
 from cvs2svn_lib.cvs_file_database import CVSFileDatabase
 from cvs2svn_lib.metadata_database import MetadataDatabase
+from cvs2svn_lib.symbol_database import BranchSymbol
+from cvs2svn_lib.symbol_database import TagSymbol
 from cvs2svn_lib.symbol_database import ExcludedSymbol
 from cvs2svn_lib.symbol_database import SymbolDatabase
 from cvs2svn_lib.symbol_database import create_symbol_database
@@ -213,10 +215,24 @@ class ResyncRevsPass(Pass):
 
     return resync
 
+  def update_symbols(self, c_rev):
+    """Update c_rev.branch_ids and c_rev.tag_ids based on self.symbol_db."""
+
+    branch_ids = []
+    tag_ids = []
+    for id in c_rev.branch_ids + c_rev.tag_ids:
+      symbol = self.symbol_db.get_symbol(id)
+      if isinstance(symbol, BranchSymbol):
+        branch_ids.append(symbol.id)
+      elif isinstance(symbol, TagSymbol):
+        tag_ids.append(symbol.id)
+    c_rev.branch_ids = branch_ids
+    c_rev.tag_ids = tag_ids
+
   def run(self, stats_keeper):
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
-    symbol_db = SymbolDatabase()
-    Ctx()._symbol_db = symbol_db
+    self.symbol_db = SymbolDatabase()
+    Ctx()._symbol_db = self.symbol_db
     cvs_items_db = CVSItemDatabase(
         artifact_manager.get_temp_file(config.CVS_ITEMS_DB), DB_OPEN_WRITE)
     cvs_items_resync_db = CVSItemDatabase(
@@ -242,7 +258,7 @@ class ResyncRevsPass(Pass):
 
       # Skip this entire revision if it's on an excluded branch
       if isinstance(c_rev.lod, Branch):
-        symbol = symbol_db.get_symbol(c_rev.lod.id)
+        symbol = self.symbol_db.get_symbol(c_rev.lod.id)
         if isinstance(symbol, ExcludedSymbol):
           continue
 
@@ -256,11 +272,7 @@ class ResyncRevsPass(Pass):
       else:
         next_c_rev = None
 
-      (branches, tags) = symbol_db.collate_symbols(
-          c_rev.branch_ids + c_rev.tag_ids)
-
-      c_rev.branch_ids = [symbol.id for symbol in branches]
-      c_rev.tag_ids = [symbol.id for symbol in tags]
+      self.update_symbols(c_rev)
 
       # see if this is "near" any of the resync records we have
       # recorded for this metadata_id [of the log message].

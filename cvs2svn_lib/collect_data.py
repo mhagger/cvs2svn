@@ -214,6 +214,8 @@ class _SymbolDataCollector:
     self.file_data_collector = file_data_collector
     self.cvs_file = cvs_file
 
+    self.project_data_collector = \
+        self.file_data_collector.project_data_collector
     self.collect_data = self.file_data_collector.collect_data
 
     # A set containing the names of each known symbol in this file,
@@ -259,7 +261,7 @@ class _SymbolDataCollector:
                           branch_data.symbol.name, name))
       return branch_data
 
-    symbol = self.collect_data.get_symbol(self.cvs_file.project, name)
+    symbol = self.project_data_collector.get_symbol(name)
     self.collect_data.symbol_stats.register_branch_creation(symbol)
     branch_data = _BranchData(
         self.collect_data.key_generator.gen_id(), symbol, branch_number)
@@ -273,7 +275,7 @@ class _SymbolDataCollector:
   def _add_tag(self, name, revision):
     """Record that tag NAME refers to the specified REVISION."""
 
-    symbol = self.collect_data.get_symbol(self.cvs_file.project, name)
+    symbol = self.project_data_collector.get_symbol(name)
     self.collect_data.symbol_stats.register_tag_creation(symbol)
     tag_data = _TagData(
         self.collect_data.key_generator.gen_id(), symbol, revision)
@@ -818,6 +820,10 @@ class _ProjectDataCollector:
     self.found_valid_file = False
     self.fatal_errors = []
     self.num_files = 0
+
+    # A map { name -> Symbol } for all known symbols in this project.
+    self.symbols = {}
+
     os.path.walk(self.project.project_cvs_repos_path,
                  _ProjectDataCollector._visit_directory, self)
     if not self.fatal_errors and not self.found_valid_file:
@@ -827,6 +833,20 @@ class _ProjectDataCollector:
           'Are you absolutely certain you are pointing cvs2svn\n'
           'at a CVS repository?\n'
           % self.project.project_cvs_repos_path)
+
+  def get_symbol(self, name):
+    """Return the Symbol object for the symbol named NAME in this project.
+
+    If such a symbol does not yet exist, allocate a new symbol_id,
+    create a Symbol instance, store it in self.symbols, and return it."""
+
+    symbol = self.symbols.get(name)
+    if symbol is None:
+      symbol = Symbol(
+          self.collect_data.symbol_key_generator.gen_id(),
+          self.project, name)
+      self.symbols[name] = symbol
+    return symbol
 
   def _process_file(self, pathname):
     fdc = _FileDataCollector(self, self.project.get_cvs_file(pathname))
@@ -891,21 +911,6 @@ class CollectData:
     self.key_generator = KeyGenerator()
 
     self.symbol_key_generator = KeyGenerator(1)
-
-    # A map { (project,name) -> Symbol } for all known symbols.
-    self.symbols = {}
-
-  def get_symbol(self, project, name):
-    """Return the Symbol object for the symbol with the specified name.
-
-    If such a symbol does not yet exist, allocate a new symbol_id,
-    create a Symbol instance, store it in self.symbols, and return it."""
-
-    symbol = self.symbols.get( (project, name,) )
-    if symbol is None:
-      symbol = Symbol(self.symbol_key_generator.gen_id(), project, name)
-      self.symbols[project, name] = symbol
-    return symbol
 
   def process_project(self, project):
     pdc = _ProjectDataCollector(self, project)

@@ -210,13 +210,12 @@ class _TagData(_SymbolData):
 class _SymbolDataCollector:
   """Collect information about symbols in a CVSFile."""
 
-  def __init__(self, file_data_collector, cvs_file):
-    self.file_data_collector = file_data_collector
+  def __init__(self, fdc, cvs_file):
+    self.fdc = fdc
     self.cvs_file = cvs_file
 
-    self.project_data_collector = \
-        self.file_data_collector.project_data_collector
-    self.collect_data = self.file_data_collector.collect_data
+    self.pdc = self.fdc.pdc
+    self.collect_data = self.fdc.collect_data
 
     # A set containing the names of each known symbol in this file,
     # used to check for duplicates.
@@ -261,7 +260,7 @@ class _SymbolDataCollector:
                           branch_data.symbol.name, name))
       return branch_data
 
-    symbol = self.project_data_collector.get_symbol(name)
+    symbol = self.pdc.get_symbol(name)
     self.collect_data.symbol_stats.register_branch_creation(symbol)
     branch_data = _BranchData(
         self.collect_data.key_generator.gen_id(), symbol, branch_number)
@@ -275,7 +274,7 @@ class _SymbolDataCollector:
   def _add_tag(self, name, revision):
     """Record that tag NAME refers to the specified REVISION."""
 
-    symbol = self.project_data_collector.get_symbol(name)
+    symbol = self.pdc.get_symbol(name)
     self.collect_data.symbol_stats.register_tag_creation(symbol)
     tag_data = _TagData(
         self.collect_data.key_generator.gen_id(), symbol, revision)
@@ -359,15 +358,15 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
   Any collected data that need to be remembered are stored into the
   referenced CollectData instance."""
 
-  def __init__(self, project_data_collector, cvs_file):
+  def __init__(self, pdc, cvs_file):
     """Create an object that is prepared to receive data for CVS_FILE.
     CVS_FILE is a CVSFile instance.  COLLECT_DATA is used to store the
     information collected about the file."""
 
-    self.project_data_collector = project_data_collector
+    self.pdc = pdc
     self.cvs_file = cvs_file
 
-    self.collect_data = self.project_data_collector.collect_data
+    self.collect_data = self.pdc.collect_data
     self.project = self.cvs_file.project
 
     # A place to store information about the symbols in this file:

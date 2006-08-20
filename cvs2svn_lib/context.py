@@ -38,8 +38,6 @@ class Ctx:
     self.target = None
     self.dumpfile = config.DUMPFILE
     self.tmpdir = '.'
-    self.verbose = False
-    self.quiet = False
     self.prune = True
     self.existing_svnrepos = False
     self.dump_only = False

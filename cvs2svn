@@ -153,6 +153,8 @@ def main():
   profiling = False
   start_pass = 1
   end_pass = pass_manager.num_passes
+  quiet = 0
+  verbose = 0
 
   try:
     opts, args = my_getopt(sys.argv[1:], 'p:s:qvh',
@@ -197,11 +199,9 @@ def main():
       pass_manager.help_passes()
       sys.exit(0)
     elif opt == '-v':
-      Log().log_level = Log.VERBOSE
-      ctx.verbose = True
+      verbose += 1
     elif opt == '-q':
-      Log().log_level = Log.QUIET
-      ctx.quiet = True
+      quiet += 1
     elif opt == '-s':
       ctx.target = value
     elif opt == '--existing-svnrepos':
@@ -315,8 +315,8 @@ def main():
   not_both(ctx.dump_only, '--dump-only',
            ctx.bdb_txn_nosync, '--bdb-txn-nosync')
 
-  not_both(ctx.quiet, '-q',
-           ctx.verbose, '-v')
+  not_both(quiet, '-q',
+           verbose, '-v')
 
   not_both(ctx.fs_type, '--fs-type',
            ctx.existing_svnrepos, '--existing-svnrepos')
@@ -324,6 +324,15 @@ def main():
   if ctx.fs_type and ctx.fs_type != 'bdb' and ctx.bdb_txn_nosync:
     raise FatalError("cannot pass --bdb-txn-nosync with --fs-type=%s."
                      % ctx.fs_type)
+
+  if verbose:
+    Log().log_level = Log.VERBOSE
+  elif quiet == 1:
+    Log().log_level = Log.QUIET
+  elif quiet >= 2:
+    Log().log_level = Log.WARN
+  else:
+    Log().log_level = Log.NORMAL
 
   # Create the default project (using ctx.trunk, ctx.branches, and ctx.tags):
   ctx.add_project(Project(

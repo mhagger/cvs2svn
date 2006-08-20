@@ -156,6 +156,8 @@ def main():
   quiet = 0
   verbose = 0
   mime_types_file = None
+  auto_props_file = None
+  auto_props_ignore_case = False
 
   try:
     opts, args = my_getopt(sys.argv[1:], 'hvqs:p:', [
@@ -268,9 +270,9 @@ def main():
     elif opt == '--mime-types':
       mime_types_file = value
     elif opt == '--auto-props':
-      ctx.auto_props_file = value
+      auto_props_file = value
     elif opt == '--auto-props-ignore-case':
-      ctx.auto_props_ignore_case = True
+      auto_props_ignore_case = True
     elif opt == '--eol-from-mime-type':
       ctx.eol_from_mime_type = True
     elif opt == '--no-default-eol':
@@ -393,10 +395,10 @@ def main():
     ctx.svn_property_setters.append(
         property_setters.MimeMapper(mime_types_file))
 
-  if ctx.auto_props_file:
+  if auto_props_file:
     ctx.svn_property_setters.append(
         property_setters.AutoPropsPropertySetter(
-            ctx.auto_props_file, ctx.auto_props_ignore_case))
+            auto_props_file, auto_props_ignore_case))
 
   ctx.svn_property_setters.append(
       property_setters.BinaryFileDefaultMimeTypeSetter())

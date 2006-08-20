@@ -24,8 +24,10 @@ from cvs2svn_lib.boolean import *
 
 
 class Log:
-  """A Simple logging facility.  Each line will be timestamped is
-  self.use_timestamps is TRUE.  This class is a Borg, see
+  """A Simple logging facility.
+
+  Each line will be timestamped if self.use_timestamps is True.  This
+  class is a Borg, see
   http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/66531."""
 
   # These constants represent the log levels that this class supports:
@@ -41,8 +43,8 @@ class Log:
     if self.__dict__:
       return
     self.log_level = Log.NORMAL
-    # Set this to true if you want to see timestamps on each line output.
-    self.use_timestamps = None
+    # Set this to True if you want to see timestamps on each line output.
+    self.use_timestamps = False
     self.logger = sys.stdout
 
   def _timestamp(self):

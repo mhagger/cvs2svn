@@ -153,11 +153,17 @@ def main():
   profiling = False
   start_pass = 1
   end_pass = pass_manager.num_passes
+
+  print_help = False
   quiet = 0
   verbose = 0
+  symbol_strategy_default = 'strict'
   mime_types_file = None
   auto_props_file = None
   auto_props_ignore_case = False
+  eol_from_mime_type = False
+  no_default_eol = False
+  keywords_off = False
 
   try:
     opts, args = my_getopt(sys.argv[1:], 'hvqs:p:', [
@@ -191,7 +197,7 @@ def main():
 
   for opt, value in opts:
     if opt in ['--help', '-h']:
-      ctx.print_help = True
+      print_help = True
     elif opt == '--help-passes':
       pass_manager.help_passes()
       sys.exit(0)
@@ -250,7 +256,7 @@ def main():
       if value not in ['branch', 'tag', 'heuristic', 'strict']:
         raise FatalError(
             '%r is not a valid option for --symbol_default.' % (value,))
-      ctx.symbol_strategy_default = value
+      symbol_strategy_default = value
     elif opt == '--symbol-transform':
       [pattern, replacement] = value.split(":")
       try:
@@ -274,11 +280,11 @@ def main():
     elif opt == '--auto-props-ignore-case':
       auto_props_ignore_case = True
     elif opt == '--eol-from-mime-type':
-      ctx.eol_from_mime_type = True
+      eol_from_mime_type = True
     elif opt == '--no-default-eol':
-      ctx.no_default_eol = True
+      no_default_eol = True
     elif opt == '--keywords-off':
-      ctx.keywords_off = True
+      keywords_off = True
     elif opt == '--tmpdir':
       ctx.tmpdir = value
     elif opt == '--skip-cleanup':
@@ -290,7 +296,7 @@ def main():
           ': The behaviour produced by the --create option is now the '
           'default,\nand passing the option is deprecated.\n')
 
-  if ctx.print_help:
+  if print_help:
     usage()
     sys.exit(0)
 
@@ -373,13 +379,13 @@ def main():
           'installed and/or use the --svnadmin option.' % (e,))
 
   ctx.symbol_strategy.add_rule(UnambiguousUsageRule())
-  if ctx.symbol_strategy_default == 'strict':
+  if symbol_strategy_default == 'strict':
     pass
-  elif ctx.symbol_strategy_default == 'branch':
+  elif symbol_strategy_default == 'branch':
     ctx.symbol_strategy.add_rule(AllBranchRule())
-  elif ctx.symbol_strategy_default == 'tag':
+  elif symbol_strategy_default == 'tag':
     ctx.symbol_strategy.add_rule(AllTagRule())
-  elif ctx.symbol_strategy_default == 'heuristic':
+  elif symbol_strategy_default == 'heuristic':
     ctx.symbol_strategy.add_rule(BranchIfCommitsRule())
     ctx.symbol_strategy.add_rule(HeuristicStrategyRule())
   else:
@@ -403,18 +409,18 @@ def main():
   ctx.svn_property_setters.append(
       property_setters.BinaryFileDefaultMimeTypeSetter())
 
-  if ctx.eol_from_mime_type:
+  if eol_from_mime_type:
     ctx.svn_property_setters.append(
         property_setters.EOLStyleFromMimeTypeSetter())
 
-  if ctx.no_default_eol:
+  if no_default_eol:
     ctx.svn_property_setters.append(
         property_setters.DefaultEOLStyleSetter(None))
   else:
     ctx.svn_property_setters.append(
         property_setters.DefaultEOLStyleSetter('native'))
 
-  if not ctx.keywords_off:
+  if not keywords_off:
     ctx.svn_property_setters.append(
         property_setters.KeywordsPropertySetter(config.SVN_KEYWORDS_VALUE))
 

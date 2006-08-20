@@ -36,31 +36,26 @@ class Ctx:
       return
     # Else, initialize to defaults.
     self.target = None
-    self.dumpfile = config.DUMPFILE
-    self.tmpdir = '.'
-    self.prune = True
     self.existing_svnrepos = False
     self.dump_only = False
+    self.dumpfile = config.DUMPFILE
     self.dry_run = False
-    self.trunk_only = False
-    self.trunk_base = "trunk"
-    self.tags_base = "tags"
-    self.branches_base = "branches"
-    self.encoding = ["ascii"]
-    self.no_default_eol = False
-    self.eol_from_mime_type = False
-    self.keywords_off = False
     self.use_cvs = False
     self.svnadmin = "svnadmin"
-    self.username = None
-    self.print_help = False
-    self.skip_cleanup = False
-    self.bdb_txn_nosync = False
-    self.fs_type = None
+    self.trunk_only = False
+    self.trunk_base = "trunk"
+    self.branches_base = "branches"
+    self.tags_base = "tags"
+    self.prune = True
+    self.encoding = ["ascii"]
     self.symbol_strategy = None
-    self.symbol_strategy_default = 'strict'
     self.symbol_transforms = []
+    self.username = None
+    self.fs_type = None
+    self.bdb_txn_nosync = False
     self.svn_property_setters = []
+    self.tmpdir = '.'
+    self.skip_cleanup = False
     # A list of Project instances for all projects being converted.
     self.projects = []
 

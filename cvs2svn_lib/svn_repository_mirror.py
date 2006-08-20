@@ -242,11 +242,14 @@ class SVNRepositoryMirror:
     In other words, SHOULD_PRUNE is like the -P option to 'cvs checkout'.
 
     NOTE: This function ignores requests to delete the root directory
-    or any directory for which Ctx().project.is_unremovable() returns
-    True, either directly or by pruning."""
+    or any directory for which any project's is_unremovable() method
+    returns True, either directly or by pruning."""
 
-    if svn_path == '' or Ctx().project.is_unremovable(svn_path):
+    if svn_path == '':
       return
+    for project in Ctx().projects:
+      if project.is_unremovable(svn_path):
+        return
 
     (parent_path, entry,) = path_split(svn_path)
     if parent_path:

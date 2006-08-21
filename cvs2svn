@@ -145,14 +145,22 @@ def usage():
       })
 
 
+class RunOptions:
+  """A place to store meta-options that are used to start the conversion."""
+
+  def __init__(self, pass_manager):
+    self.pass_manager = pass_manager
+    self.start_pass = 1
+    self.end_pass = pass_manager.num_passes
+    self.profiling = False
+
+
 def main():
   # Convenience var, so we don't have to keep instantiating this Borg.
   ctx = Ctx()
   ctx.symbol_strategy = RuleBasedSymbolStrategy()
 
-  profiling = False
-  start_pass = 1
-  end_pass = pass_manager.num_passes
+  run_options = RunOptions(pass_manager)
 
   print_help = False
   quiet = 0
@@ -213,13 +221,15 @@ def main():
     elif opt == '-p':
       if value.find(':') >= 0:
         start_pass, end_pass = value.split(':')
-        start_pass = pass_manager.get_pass_number(start_pass, 1)
-        end_pass = pass_manager.get_pass_number(end_pass,
-                                                pass_manager.num_passes)
+        run_options.start_pass = \
+            pass_manager.get_pass_number(start_pass, 1)
+        run_options.end_pass = \
+            pass_manager.get_pass_number(end_pass, pass_manager.num_passes)
       else:
-        end_pass = start_pass = pass_manager.get_pass_number(value)
+        run_options.end_pass = run_options.start_pass = \
+            pass_manager.get_pass_number(value)
 
-      if not start_pass <= end_pass:
+      if not run_options.start_pass <= run_options.end_pass:
         raise InvalidPassError(
             'Ending pass must not come before starting pass.')
     elif opt == '--existing-svnrepos':
@@ -290,7 +300,7 @@ def main():
     elif opt == '--skip-cleanup':
       ctx.skip_cleanup = True
     elif opt == '--profile':
-      profiling = True
+      run_options.profiling = True
     elif opt == '--create':
       sys.stderr.write(warning_prefix +
           ': The behaviour produced by the --create option is now the '
@@ -455,13 +465,14 @@ def main():
     raise
 
   try:
-    if profiling:
+    if run_options.profiling:
       import hotshot
       prof = hotshot.Profile('cvs2svn.hotshot')
-      prof.runcall(pass_manager.run, start_pass, end_pass)
+      prof.runcall(
+          pass_manager.run, run_options.start_pass, run_options.end_pass)
       prof.close()
     else:
-      pass_manager.run(start_pass, end_pass)
+      pass_manager.run(run_options.start_pass, run_options.end_pass)
   finally:
     try: os.rmdir(os.path.join(ctx.tmpdir, 'cvs2svn.lock'))
     except: pass

@@ -1,0 +1,4 @@
+Local Variables:
+dired-omit-files-p: t
+dired-omit-extensions: (".pyc" ".pyo")
+End:

@@ -1,0 +1,238 @@
+# (Be in -*- python -*- mode.)
+#
+# ====================================================================
+# Copyright (c) 2006 CollabNet.  All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.  The terms
+# are also available at http://subversion.tigris.org/license-1.html.
+# If newer versions of this license are posted there, you may use a
+# newer version instead, at your option.
+#
+# This software consists of voluntary contributions made by many
+# individuals.  For exact contribution history, see the revision
+# history and logs, available at http://cvs2svn.tigris.org/.
+# ====================================================================
+
+# To choose the level of logging output, uncomment one of the
+# following lines:
+#Log().log_level = Log.WARN
+#Log().log_level = Log.QUIET
+Log().log_level = Log.NORMAL
+#Log().log_level = Log.VERBOSE
+
+# The name of the SVN repository to which the output of the conversion
+# should be stored:
+ctx.target = 'svnrepo'
+
+# Change the following option to True if the SVN repository in
+# ctx.target already exists:
+ctx.existing_svnrepos = False
+
+# Change the following option to True if cvs2svn should only create a
+# dumpfile of the converted repository without loading the information
+# into an SVN repository:
+ctx.dump_only = False
+
+# The name of the dumpfile can be specified as follows:
+ctx.dumpfile = 'cvs2svn-dump'
+
+# Set the following option to True if cvs2svn should not generate
+# *any* output:
+ctx.dry_run = False
+
+# Change the following if cvs2svn should use "cvs" to read file
+# versions out of *,v files.  (The default is to use "co", which is
+# part of RCS, and is much faster):
+ctx.use_cvs = False
+
+# Set the name (and optionally the path) of the "svnadmin" executable:
+ctx.svnadmin = 'svnadmin'
+
+# Change the following line to True if the conversion should only
+# include the trunk of the repository (i.e., all branches and tags
+# should be ignored):
+ctx.trunk_only = False
+
+# Change the following line to True if cvs2svn should delete a
+# directory once the last file has been deleted from it:
+ctx.prune = False
+
+# A list of encodings that should be tried to convert filenames,
+# author names, log messages, etc. to UTF8:
+ctx.encoding = [
+    #'latin1',
+    'ascii',
+    ]
+
+# Add lines to the following list to specify that symbols matching a
+# regular expression should be renamed:
+ctx.symbol_transforms = [
+  #(re.compile(r'release-(\d+)_(\d+)'), r'release-\1.\2'),
+  #(re.compile(r'release-(\d+)_(\d+)_(\d+)'), r'release-\1.\2.\3'),
+  ]
+
+# The basic strategy for converting symbols (this should usually be
+# left unchanged).  A CVS symbol might be used as a tag in one file
+# and as a branch in another file.  The purpose of ctx.symbol_strategy
+# is to determine whether to convert a particular symbol as a tag or
+# as a branch.
+
+# A RuleBasedSymbolStrategy decides about each symbol based on a list
+# of rules.  Rules can be added to this object.  The rules are tried
+# one by one in order; the first rule that matches a given symbol is
+# used.  It is a fatal error if no rule matches a symbol.
+ctx.symbol_strategy = RuleBasedSymbolStrategy()
+
+# To force all symbols matching a regular expression to be converted
+# as branches, add rules like the following:
+#ctx.symbol_strategy.add_rule(ForceBranchRegexpStrategyRule('branch.*'))
+
+# To force all symbols matching a regular expression to be converted
+# as tags, add rules like the following:
+#ctx.symbol_strategy.add_rule(ForceTagRegexpStrategyRule('tag.*'))
+
+# To force all symbols matching a regular expression to be excluded
+# from the conversion, add rules like the following:
+#ctx.symbol_strategy.add_rule(ExcludeRegexpStrategyRule('unknown-.*'))
+
+# Usually you want this rule, to convert unambiguous symbols (symbols
+# that were only ever used as tags or only ever used as branches in
+# CVS) the same way they were used in CVS:
+ctx.symbol_strategy.add_rule(UnambiguousUsageRule())
+
+# If there was ever a commit on a symbol, then it cannot be converted
+# as a tag.  Uncomment the following line to convert such symbols
+# automatically as branches:
+#ctx.symbol_strategy.add_rule(BranchIfCommitsRule())
+
+# Last in the list can be a catch-all rule that is used for symbols
+# that were not matched by any of the more specific rules above.
+# Include at most one of these lines.  If none of these are included,
+# then the presence of any ambiguous symbols (that haven't been
+# disambiguated above) is an error:
+
+# Convert all ambiguous symbols as branches:
+#ctx.symbol_strategy.add_rule(AllBranchRule())
+# Convert all ambiguous symbols as tags:
+#ctx.symbol_strategy.add_rule(AllTagRule())
+# Convert ambiguous symbols based on whether they were used more
+# often as branches or tags:
+#ctx.symbol_strategy.add_rule(HeuristicStrategyRule())
+
+# Specify a username to be used for commits generated by cvs2svn.  If this options is set to None then no username will be used for such commits:
+ctx.username = None
+#ctx.username = 'cvs2svn'
+
+# Uncomment the following line to pass a --fs-type option to
+# "svnadmin create":
+#ctx.fs_type = 'fsfs'
+
+# Uncomment the following option to pass --bdb-txn-nosync to
+# "svnadmin create":
+#ctx.bdb_txn_nosync = True
+
+# ctx.svn_property_setters contains a list of rules used to set the
+# svn properties on files in the converted archive.  For each file,
+# the rules are tried one by one.  Any rule can add or suppress one or
+# more svn properties.  Typically the rules will not overwrite
+# properties set by a previous rule (though they are free to do so).
+ctx.svn_property_setters = [
+  # Set the svn:executable flag on any files that are marked in CVS as
+  # being executable:
+  property_setters.ExecutablePropertySetter(),
+
+  # Omit the svn:eol-style property from any files that are listed as
+  # binary in CVS:
+  property_setters.BinaryFileEOLStyleSetter(),
+
+  # To read mime types from a file, uncomment the following line and
+  # specify a filename:
+  #property_setters.MimeMapper('/etc/mime.types'),
+
+  # To read auto-props rules from a file, uncomment the following line
+  # and specify a filename.  The boolean argument specifies whether
+  # case should be ignored when matching filenames to the filename
+  # patterns found in the auto-props file:
+  #property_setters.AutoPropsPropertySetter(
+  #    '/home/username/.subversion/config',
+  #    False,
+  #    ),
+
+  # If the file is binary and its svn:mime-type property is not yet
+  # set, set svn:mime-type to 'application/octet-stream'.
+  property_setters.BinaryFileDefaultMimeTypeSetter(),
+
+  # To try to determine the eol-style from the mime type, uncomment
+  # the following line:
+  #property_setters.EOLStyleFromMimeTypeSetter(),
+
+  # Choose one of the following lines to set the default svn:eol-style
+  # if none of the above rules applied.  The argument is the
+  # svn:eol-style that should be applied, or None if no svn:eol-style
+  # should be set.
+  #property_setters.DefaultEOLStyleSetter(None)
+  property_setters.DefaultEOLStyleSetter('native'),
+
+  # If svn:keywords has not been set yet, set it based on the file's
+  # CVS mode:
+  property_setters.KeywordsPropertySetter(config.SVN_KEYWORDS_VALUE),
+
+  # Uncomment the following line to include the original CVS revision
+  # numbers as file properties in the SVN archive:
+  #property_setters.CVSRevisionNumberSetter(),
+
+  ]
+
+# The directory to use for temporary files:
+ctx.tmpdir = '.'
+
+# To skip the cleanup of temporary files, uncomment the following
+# option:
+#ctx.skip_cleanup = True
+
+# Now use stanzas like the following to define CVS projects that
+# should be converted.  The arguments are:
+#
+# - A unique id (this should be an integer that counts up starting
+#   from 0).
+#
+# - The filesystem path of the project within the CVS repository.
+#
+# - The path that should be used for the "trunk" directory of this
+#   project within the SVN repository.
+#
+# - The path that should be used for the "branches" directory of this
+#   project within the SVN repository.
+#
+# - The path that should be used for the "tags" directory of this
+#   project within the SVN repository.
+
+# Create the default project (using ctx.trunk, ctx.branches, and ctx.tags):
+#ctx.add_project(
+#    Project(
+#        0,
+#        'my/cvsrepo/mainproj',
+#        'trunk',
+#        'branches',
+#        'tags',
+#        )
+#    )
+
+# Add a second project, to be stored to projA/trunk, projA/branches,
+# and projA/tags:
+#ctx.add_project(
+#    Project(
+#        1,
+#        'my/cvsrepo/projA',
+#        'projA/trunk',
+#        'projA/branches',
+#        'projA/tags',
+#        )
+#    )
+
+# Change this option to True to turn on profiling of cvs2svn (for
+# debugging purposes):
+run_options.profiling = False
+
+

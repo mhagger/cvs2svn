@@ -35,6 +35,11 @@ class Ctx:
     if self.__dict__:
       return
     # Else, initialize to defaults.
+    self.set_defaults()
+
+  def set_defaults(self):
+    """Set all parameters to their default values."""
+
     self.target = None
     self.existing_svnrepos = False
     self.dump_only = False

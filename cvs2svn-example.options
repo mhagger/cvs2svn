@@ -14,6 +14,42 @@
 # history and logs, available at http://cvs2svn.tigris.org/.
 # ====================================================================
 
+# An options file like this can be used to configure cvs2svn.  The
+# file is in Python syntax, but you don't need to know Python to
+# modify it.  But if you *do* know Python, then you will be happy to
+# know that you can use arbitary Python constructs to do fancy
+# configuration tricks.
+
+# Two identifiers will have been defined before this file is executed,
+# and can be used freely within this file:
+#
+#     ctx -- a Ctx object (see cvs2svn_lib/context.py), which holds
+#         many configuration options
+#
+#     run_options -- an instance of the OptionsFileRunOptions class
+#         (see cvs2svn_lib/run_options.py), which holds some variables
+#         governing how cvs2svn is run
+
+
+# Import some modules that are used in setting the options:
+import re
+
+from cvs2svn_lib.boolean import *
+from cvs2svn_lib import config
+from cvs2svn_lib.log import Log
+from cvs2svn_lib.project import Project
+from cvs2svn_lib.symbol_strategy import RuleBasedSymbolStrategy
+from cvs2svn_lib.symbol_strategy import ForceBranchRegexpStrategyRule
+from cvs2svn_lib.symbol_strategy import ForceTagRegexpStrategyRule
+from cvs2svn_lib.symbol_strategy import ExcludeRegexpStrategyRule
+from cvs2svn_lib.symbol_strategy import UnambiguousUsageRule
+from cvs2svn_lib.symbol_strategy import BranchIfCommitsRule
+from cvs2svn_lib.symbol_strategy import HeuristicStrategyRule
+from cvs2svn_lib.symbol_strategy import AllBranchRule
+from cvs2svn_lib.symbol_strategy import AllTagRule
+from cvs2svn_lib import property_setters
+
+
 # To choose the level of logging output, uncomment one of the
 # following lines:
 #Log().log_level = Log.WARN

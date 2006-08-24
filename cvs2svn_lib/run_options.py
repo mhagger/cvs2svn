@@ -418,7 +418,7 @@ class OptionsFileRunOptions(RunOptions):
 
     RunOptions.__init__(self, pass_manager)
 
-    g = globals().copy()
+    g = {}
     l = {
       'ctx' : Ctx(),
       'run_options' : self,

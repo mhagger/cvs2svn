@@ -439,6 +439,22 @@ class CommandLineRunOptions(RunOptions):
           property_setters.KeywordsPropertySetter(config.SVN_KEYWORDS_VALUE))
 
 
+class OptionsFileRunOptions(RunOptions):
+  def __init__(self, pass_manager, options_filename):
+    """Read options from the file named OPTIONS_FILENAME.
+
+    Store the run options to SELF."""
+
+    RunOptions.__init__(self, pass_manager)
+
+    g = globals().copy()
+    l = {
+      'ctx' : Ctx(),
+      'run_options' : self,
+      }
+    execfile(options_filename, g, l)
+
+
 def main():
   run_options = CommandLineRunOptions(pass_manager)
 

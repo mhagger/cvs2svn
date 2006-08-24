@@ -40,6 +40,7 @@ from cvs2svn_lib.common import FatalException
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.run_options import CommandLineRunOptions
 from cvs2svn_lib.run_options import OptionsFileRunOptions
+from cvs2svn_lib.run_options import OptionsOptionSpecifiedException
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.pass_manager import PassManager
 from cvs2svn_lib import passes
@@ -59,10 +60,15 @@ pass_manager = PassManager([
 
 
 def main():
-  run_options = CommandLineRunOptions(pass_manager)
-
   # Convenience var, so we don't have to keep instantiating this Borg.
   ctx = Ctx()
+
+  try:
+    run_options = CommandLineRunOptions(pass_manager)
+  except OptionsOptionSpecifiedException, e:
+    # Reset any options set by the CommandLineRunOptions class:
+    ctx.set_defaults()
+    run_options = OptionsFileRunOptions(pass_manager, e.options_file)
 
   # Make sure the tmp directory exists.  Note that we don't check if
   # it's empty -- we want to be able to use, for example, "." to hold

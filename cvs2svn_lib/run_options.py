@@ -116,6 +116,13 @@ def usage():
       })
 
 
+class OptionsOptionSpecifiedException(getopt.GetoptError):
+  """The --options option was found by CommandLineRunOptions."""
+
+  def __init__(self, options_file):
+    self.options_file = options_file
+
+
 class RunOptions:
   """A place to store meta-options that are used to start the conversion."""
 
@@ -171,6 +178,7 @@ class CommandLineRunOptions(RunOptions):
           "skip-cleanup",
           "profile",
           "create",
+          "options=",
           ])
     except getopt.GetoptError, e:
       sys.stderr.write(error_prefix + ': ' + str(e) + '\n\n')
@@ -275,6 +283,8 @@ class CommandLineRunOptions(RunOptions):
         ctx.skip_cleanup = True
       elif opt == '--profile':
         self.profiling = True
+      elif opt == '--options':
+        raise OptionsOptionSpecifiedException(value)
       elif opt == '--create':
         sys.stderr.write(warning_prefix +
             ': The behaviour produced by the --create option is now the '

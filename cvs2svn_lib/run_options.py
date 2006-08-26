@@ -127,31 +127,15 @@ class RunOptions:
   """A place to store meta-options that are used to start the conversion."""
 
   def __init__(self, pass_manager):
+    """Process the command-line options, storing run options to SELF."""
+
     self.pass_manager = pass_manager
     self.start_pass = 1
     self.end_pass = pass_manager.num_passes
     self.profiling = False
 
-
-class CommandLineRunOptions(RunOptions):
-  def __init__(self, pass_manager):
-    """Process the command-line options, storing run options to SELF."""
-
-    RunOptions.__init__(self, pass_manager)
-
-    quiet = 0
-    verbose = 0
-    symbol_strategy_default = 'strict'
-    mime_types_file = None
-    auto_props_file = None
-    auto_props_ignore_case = False
-    eol_from_mime_type = False
-    no_default_eol = False
-    keywords_off = False
-
     # Convenience var, so we don't have to keep instantiating this Borg.
     ctx = Ctx()
-    ctx.symbol_strategy = RuleBasedSymbolStrategy()
 
     try:
       self.opts, self.args = my_getopt(sys.argv[1:], 'hvqs:p:', [
@@ -195,6 +179,33 @@ class CommandLineRunOptions(RunOptions):
     elif self.get_options('--version'):
       print '%s version %s' % (os.path.basename(sys.argv[0]), ctx.VERSION)
       sys.exit(0)
+
+    # Next look for any --options options, process them, and remove
+    # them from the list, as they affect the processing of other
+    # options:
+    options_file_found = False
+
+    for (opt, value) in self.get_options('--options'):
+      self.process_options_file(value)
+      options_file_found = True
+
+    # FIXME: For now, do not process any other options if --options is
+    # specified.  In the future, all options' validity should be
+    # checked and some options should be allowed.
+    if options_file_found:
+      return
+
+    quiet = 0
+    verbose = 0
+    symbol_strategy_default = 'strict'
+    mime_types_file = None
+    auto_props_file = None
+    auto_props_ignore_case = False
+    eol_from_mime_type = False
+    no_default_eol = False
+    keywords_off = False
+
+    ctx.symbol_strategy = RuleBasedSymbolStrategy()
 
     for opt, value in self.opts:
       if opt in ['--verbose', '-v']:
@@ -436,14 +447,10 @@ class CommandLineRunOptions(RunOptions):
         i += 1
     return retval
 
-
-class OptionsFileRunOptions(RunOptions):
-  def __init__(self, pass_manager, options_filename):
+  def process_options_file(self, options_filename):
     """Read options from the file named OPTIONS_FILENAME.
 
     Store the run options to SELF."""
-
-    RunOptions.__init__(self, pass_manager)
 
     g = {}
     l = {

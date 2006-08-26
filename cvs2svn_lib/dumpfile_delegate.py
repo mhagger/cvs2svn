@@ -27,7 +27,6 @@ from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import OP_ADD
 from cvs2svn_lib.common import OP_CHANGE
 from cvs2svn_lib.common import to_utf8
-from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.svn_repository_mirror import SVNRepositoryMirrorDelegate
 
 

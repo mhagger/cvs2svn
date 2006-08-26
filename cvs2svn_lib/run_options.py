@@ -199,6 +199,9 @@ class RunOptions:
       else:
         self.end_pass = self.start_pass = pass_manager.get_pass_number(value)
 
+    if self.get_options('--profile'):
+      self.profiling = True
+
     # FIXME: For now, do not process any other options if --options is
     # specified.  In the future, all options' validity should be
     # checked and some options should be allowed.
@@ -285,8 +288,6 @@ class RunOptions:
         ctx.tmpdir = value
       elif opt == '--skip-cleanup':
         ctx.skip_cleanup = True
-      elif opt == '--profile':
-        self.profiling = True
       elif opt == '--create':
         sys.stderr.write(warning_prefix +
             ': The behaviour produced by the --create option is now the '

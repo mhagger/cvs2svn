@@ -139,7 +139,6 @@ class CommandLineRunOptions(RunOptions):
 
     RunOptions.__init__(self, pass_manager)
 
-    print_help = False
     quiet = 0
     verbose = 0
     symbol_strategy_default = 'strict'
@@ -155,7 +154,7 @@ class CommandLineRunOptions(RunOptions):
     ctx.symbol_strategy = RuleBasedSymbolStrategy()
 
     try:
-      opts, args = my_getopt(sys.argv[1:], 'hvqs:p:', [
+      self.opts, self.args = my_getopt(sys.argv[1:], 'hvqs:p:', [
           "help", "help-passes", "version",
           "verbose", "quiet",
           "existing-svnrepos", "dump-only", "dumpfile=", "dry-run",
@@ -185,16 +184,20 @@ class CommandLineRunOptions(RunOptions):
       usage()
       sys.exit(1)
 
-    for opt, value in opts:
-      if opt in ['--help', '-h']:
-        print_help = True
-      elif opt == '--help-passes':
-        pass_manager.help_passes()
-        sys.exit(0)
-      elif opt == '--version':
-          print '%s version %s' % (os.path.basename(sys.argv[0]), ctx.VERSION)
-          sys.exit(0)
-      elif opt in ['--verbose', '-v']:
+    # First look for any 'help'-type options, as they just cause the
+    # program to print help and ignore any other options:
+    if self.get_options('-h', '--help'):
+      usage()
+      sys.exit(0)
+    elif self.get_options('--help-passes'):
+      pass_manager.help_passes()
+      sys.exit(0)
+    elif self.get_options('--version'):
+      print '%s version %s' % (os.path.basename(sys.argv[0]), ctx.VERSION)
+      sys.exit(0)
+
+    for opt, value in self.opts:
+      if opt in ['--verbose', '-v']:
         verbose += 1
       elif opt in ['--quiet', '-q']:
         quiet += 1
@@ -290,22 +293,18 @@ class CommandLineRunOptions(RunOptions):
             ': The behaviour produced by the --create option is now the '
             'default,\nand passing the option is deprecated.\n')
 
-    if print_help:
-      usage()
-      sys.exit(0)
-
     # Consistency check for options and arguments.
-    if len(args) == 0:
+    if len(self.args) == 0:
       usage()
       sys.exit(1)
 
-    if len(args) > 1:
+    if len(self.args) > 1:
       sys.stderr.write(error_prefix +
                        ": must pass only one CVS repository.\n")
       usage()
       sys.exit(1)
 
-    cvsroot = args[0]
+    cvsroot = self.args[0]
 
     if (not ctx.target) and (not ctx.dump_only) and (not ctx.dry_run):
       raise FatalError("must pass one of '-s' or '--dump-only'.")
@@ -418,6 +417,24 @@ class CommandLineRunOptions(RunOptions):
     if not keywords_off:
       ctx.svn_property_setters.append(
           property_setters.KeywordsPropertySetter(config.SVN_KEYWORDS_VALUE))
+
+  def get_options(self, *names):
+    """Return a list of (option,value) pairs for options in NAMES.
+
+    Return a list containing any (opt, value) pairs from self.opts
+    where opt is in NAMES.  The matching options are removed from
+    self.opts."""
+
+    retval = []
+    i = 0
+    while i < len(self.opts):
+      (opt, value) = self.opts[i]
+      if opt in names:
+        del self.opts[i]
+        retval.append( (opt, value) )
+      else:
+        i += 1
+    return retval
 
 
 class OptionsFileRunOptions(RunOptions):

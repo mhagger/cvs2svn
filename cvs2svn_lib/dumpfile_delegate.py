@@ -34,14 +34,11 @@ from cvs2svn_lib.svn_repository_mirror import SVNRepositoryMirrorDelegate
 class DumpfileDelegate(SVNRepositoryMirrorDelegate):
   """Create a Subversion dumpfile."""
 
-  def __init__(self, dumpfile_path=None):
+  def __init__(self, dumpfile_path):
     """Return a new DumpfileDelegate instance, attached to a dumpfile
-    DUMPFILE_PATH (Ctx().dumpfile, if None), using Ctx().encoding."""
+    DUMPFILE_PATH, using Ctx().encoding."""
 
-    if dumpfile_path:
-      self.dumpfile_path = dumpfile_path
-    else:
-      self.dumpfile_path = Ctx().dumpfile
+    self.dumpfile_path = dumpfile_path
 
     self.dumpfile = open(self.dumpfile_path, 'wb')
     self._write_dumpfile_header(self.dumpfile)

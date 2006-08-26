@@ -31,8 +31,8 @@ class Log:
   http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/66531."""
 
   # These constants represent the log levels that this class supports.
-  # The options-processing code relies on them being consecutive
-  # integers:
+  # The increase_verbosity() and decrease_verbosity() methods rely on
+  # these constants being consecutive integers:
   WARN = -1
   QUIET = 0
   NORMAL = 1
@@ -48,6 +48,12 @@ class Log:
     # Set this to True if you want to see timestamps on each line output.
     self.use_timestamps = False
     self.logger = sys.stdout
+
+  def increase_verbosity(self):
+    self.log_level = min(self.log_level + 1, self.VERBOSE)
+
+  def decrease_verbosity(self):
+    self.log_level = max(self.log_level - 1, self.WARN)
 
   def _timestamp(self):
     """Output a detailed timestamp at the beginning of each line output."""

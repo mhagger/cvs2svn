@@ -184,10 +184,10 @@ class RunOptions:
 
     # Adjust level of verbosity:
     for (opt, value) in self.get_options('--verbose', '-v'):
-      Log().log_level = min(Log.log_level + 1, Log.VERBOSE)
+      Log().increase_verbosity()
 
     for (opt, value) in self.get_options('--quiet', '-q'):
-      Log().log_level = max(Log.log_level - 1, Log.WARN)
+      Log().decrease_verbosity()
 
     # FIXME: For now, do not process any other options if --options is
     # specified.  In the future, all options' validity should be

@@ -55,8 +55,6 @@ from cvs2svn_lib.cvs_revision_aggregator import CVSRevisionAggregator
 from cvs2svn_lib.svn_repository_mirror import SVNRepositoryMirror
 from cvs2svn_lib.svn_commit import SVNInitialProjectCommit
 from cvs2svn_lib.persistence_manager import PersistenceManager
-from cvs2svn_lib.dumpfile_delegate import DumpfileDelegate
-from cvs2svn_lib.repository_delegate import RepositoryDelegate
 from cvs2svn_lib.stdout_delegate import StdoutDelegate
 from cvs2svn_lib.collect_data import CollectData
 from cvs2svn_lib.process import run_command
@@ -569,10 +567,7 @@ class OutputPass(Pass):
     repos = SVNRepositoryMirror()
     persistence_manager = PersistenceManager(DB_OPEN_READ)
 
-    if Ctx().target:
-      RepositoryDelegate().start(repos)
-    else:
-      DumpfileDelegate().start(repos)
+    Ctx().output_option.setup(repos)
 
     repos.add_delegate(StdoutDelegate(stats_keeper.svn_rev_count()))
 

@@ -40,6 +40,7 @@ class Ctx:
   def set_defaults(self):
     """Set all parameters to their default values."""
 
+    self.output_option = None
     self.target = None
     self.existing_svnrepos = False
     self.dump_only = False

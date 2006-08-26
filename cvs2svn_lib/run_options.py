@@ -34,9 +34,10 @@ from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.log import Log
-from cvs2svn_lib.process import CommandFailedException
-from cvs2svn_lib.process import check_command_runs
 from cvs2svn_lib.context import Ctx
+from cvs2svn_lib.output_options import DumpfileOutputOption
+from cvs2svn_lib.output_options import NewRepositoryOutputOption
+from cvs2svn_lib.output_options import ExistingRepositoryOutputOption
 from cvs2svn_lib.project import Project
 from cvs2svn_lib.pass_manager import InvalidPassError
 from cvs2svn_lib.symbol_strategy import RuleBasedSymbolStrategy
@@ -337,32 +338,21 @@ class RunOptions:
       raise FatalError("cannot pass --bdb-txn-nosync with --fs-type=%s."
                        % ctx.fs_type)
 
+    if ctx.target:
+      if ctx.existing_svnrepos:
+        ctx.output_option = ExistingRepositoryOutputOption(ctx.target)
+      else:
+        ctx.output_option = NewRepositoryOutputOption(ctx.target)
+    else:
+      ctx.output_option = DumpfileOutputOption(ctx.dumpfile)
+
+    ctx.output_option.check()
+
     # Create the default project (using ctx.trunk, ctx.branches, and
     # ctx.tags):
     ctx.add_project(Project(
         len(ctx.projects),
         cvsroot, ctx.trunk_base, ctx.branches_base, ctx.tags_base))
-
-    if ctx.existing_svnrepos and not os.path.isdir(ctx.target):
-      raise FatalError("the svn-repos-path '%s' is not an "
-                       "existing directory." % ctx.target)
-
-    if not ctx.dump_only and not ctx.existing_svnrepos \
-       and (not ctx.dry_run) and os.path.exists(ctx.target):
-      raise FatalError("the svn-repos-path '%s' exists.\n"
-                       "Remove it, or pass '--existing-svnrepos'."
-                       % ctx.target)
-
-    if ctx.target and not ctx.dry_run:
-      # Verify that svnadmin can be executed.  The 'help' subcommand
-      # should be harmless.
-      try:
-        check_command_runs([ctx.svnadmin, 'help'], 'svnadmin')
-      except CommandFailedException, e:
-        raise FatalError(
-            '%s\n'
-            'svnadmin could not be executed.  Please ensure that it is\n'
-            'installed and/or use the --svnadmin option.' % (e,))
 
     ctx.symbol_strategy.add_rule(UnambiguousUsageRule())
     if symbol_strategy_default == 'strict':

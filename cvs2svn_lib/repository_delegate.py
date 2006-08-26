@@ -82,11 +82,6 @@ class RepositoryDelegate(DumpfileDelegate):
                        "loading the dumpfile:\n"
                        + self.loader_pipe.stderr.read())
 
-  def start(self, repos):
-    Log().quiet("Starting Subversion Repository.")
-    if not Ctx().dry_run:
-      repos.add_delegate(self)
-
   def start_commit(self, revnum, revprops):
     """Start a new commit."""
 

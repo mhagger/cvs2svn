@@ -30,7 +30,9 @@ class Log:
   class is a Borg, see
   http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/66531."""
 
-  # These constants represent the log levels that this class supports:
+  # These constants represent the log levels that this class supports.
+  # The options-processing code relies on them being consecutive
+  # integers:
   WARN = -1
   QUIET = 0
   NORMAL = 1

@@ -182,14 +182,19 @@ class RunOptions:
       self.process_options_file(value)
       options_file_found = True
 
+    # Adjust level of verbosity:
+    for (opt, value) in self.get_options('--verbose', '-v'):
+      Log().log_level = min(Log.log_level + 1, Log.VERBOSE)
+
+    for (opt, value) in self.get_options('--quiet', '-q'):
+      Log().log_level = max(Log.log_level - 1, Log.WARN)
+
     # FIXME: For now, do not process any other options if --options is
     # specified.  In the future, all options' validity should be
     # checked and some options should be allowed.
     if options_file_found:
       return
 
-    quiet = 0
-    verbose = 0
     symbol_strategy_default = 'strict'
     mime_types_file = None
     auto_props_file = None
@@ -201,11 +206,7 @@ class RunOptions:
     ctx.symbol_strategy = RuleBasedSymbolStrategy()
 
     for opt, value in self.opts:
-      if opt in ['--verbose', '-v']:
-        verbose += 1
-      elif opt in ['--quiet', '-q']:
-        quiet += 1
-      elif opt == '-s':
+      if opt == '-s':
         ctx.target = value
       elif opt == '-p':
         if value.find(':') >= 0:
@@ -328,24 +329,12 @@ class RunOptions:
     not_both(ctx.dump_only, '--dump-only',
              ctx.bdb_txn_nosync, '--bdb-txn-nosync')
 
-    not_both(quiet, '-q',
-             verbose, '-v')
-
     not_both(ctx.fs_type, '--fs-type',
              ctx.existing_svnrepos, '--existing-svnrepos')
 
     if ctx.fs_type and ctx.fs_type != 'bdb' and ctx.bdb_txn_nosync:
       raise FatalError("cannot pass --bdb-txn-nosync with --fs-type=%s."
                        % ctx.fs_type)
-
-    if verbose:
-      Log().log_level = Log.VERBOSE
-    elif quiet == 1:
-      Log().log_level = Log.QUIET
-    elif quiet >= 2:
-      Log().log_level = Log.WARN
-    else:
-      Log().log_level = Log.NORMAL
 
     # Create the default project (using ctx.trunk, ctx.branches, and
     # ctx.tags):

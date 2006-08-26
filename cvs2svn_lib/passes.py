@@ -570,13 +570,9 @@ class OutputPass(Pass):
     persistence_manager = PersistenceManager(DB_OPEN_READ)
 
     if Ctx().target:
-      if not Ctx().dry_run:
-        repos.add_delegate(RepositoryDelegate())
-      Log().quiet("Starting Subversion Repository.")
+      RepositoryDelegate().start(repos)
     else:
-      if not Ctx().dry_run:
-        repos.add_delegate(DumpfileDelegate())
-      Log().quiet("Starting Subversion Dumpfile.")
+      DumpfileDelegate().start(repos)
 
     repos.add_delegate(StdoutDelegate(stats_keeper.svn_rev_count()))
 

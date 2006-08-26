@@ -46,6 +46,11 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     self.dumpfile = open(self.dumpfile_path, 'wb')
     self._write_dumpfile_header(self.dumpfile)
 
+  def start(self, repos):
+    Log().quiet("Starting Subversion Dumpfile.")
+    if not Ctx().dry_run:
+      repos.add_delegate(self)
+
   def _write_dumpfile_header(self, dumpfile):
     # Initialize the dumpfile with the standard headers.
     #

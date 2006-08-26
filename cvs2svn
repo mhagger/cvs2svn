@@ -39,7 +39,6 @@ from cvs2svn_lib.boolean import *
 from cvs2svn_lib.common import FatalException
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.run_options import RunOptions
-from cvs2svn_lib.run_options import OptionsOptionSpecifiedException
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.pass_manager import PassManager
 from cvs2svn_lib import passes

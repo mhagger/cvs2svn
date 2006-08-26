@@ -189,6 +189,16 @@ class RunOptions:
     for (opt, value) in self.get_options('--quiet', '-q'):
       Log().decrease_verbosity()
 
+    for (opt, value) in self.get_options('-p'):
+      if value.find(':') >= 0:
+        start_pass, end_pass = value.split(':')
+        self.start_pass = \
+            pass_manager.get_pass_number(start_pass, 1)
+        self.end_pass = \
+            pass_manager.get_pass_number(end_pass, pass_manager.num_passes)
+      else:
+        self.end_pass = self.start_pass = pass_manager.get_pass_number(value)
+
     # FIXME: For now, do not process any other options if --options is
     # specified.  In the future, all options' validity should be
     # checked and some options should be allowed.
@@ -208,20 +218,6 @@ class RunOptions:
     for opt, value in self.opts:
       if opt == '-s':
         ctx.target = value
-      elif opt == '-p':
-        if value.find(':') >= 0:
-          start_pass, end_pass = value.split(':')
-          self.start_pass = \
-              pass_manager.get_pass_number(start_pass, 1)
-          self.end_pass = \
-              pass_manager.get_pass_number(end_pass, pass_manager.num_passes)
-        else:
-          self.end_pass = self.start_pass = \
-              pass_manager.get_pass_number(value)
-
-        if not self.start_pass <= self.end_pass:
-          raise InvalidPassError(
-              'Ending pass must not come before starting pass.')
       elif opt == '--existing-svnrepos':
         ctx.existing_svnrepos = True
       elif opt == '--dump-only':
@@ -308,6 +304,10 @@ class RunOptions:
       sys.exit(1)
 
     cvsroot = self.args[0]
+
+    if not self.start_pass <= self.end_pass:
+      raise InvalidPassError(
+          'Ending pass must not come before starting pass.')
 
     if (not ctx.target) and (not ctx.dump_only) and (not ctx.dry_run):
       raise FatalError("must pass one of '-s' or '--dump-only'.")

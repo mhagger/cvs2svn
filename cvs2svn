@@ -46,6 +46,8 @@ from cvs2svn_lib.pass_manager import PassManager
 from cvs2svn_lib import passes
 
 
+Ctx().VERSION = VERSION
+
 pass_manager = PassManager([
   passes.CollectRevsPass(),
   passes.CollateSymbolsPass(),

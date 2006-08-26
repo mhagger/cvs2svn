@@ -192,7 +192,7 @@ class CommandLineRunOptions(RunOptions):
         pass_manager.help_passes()
         sys.exit(0)
       elif opt == '--version':
-          print '%s version %s' % (os.path.basename(sys.argv[0]), VERSION)
+          print '%s version %s' % (os.path.basename(sys.argv[0]), ctx.VERSION)
           sys.exit(0)
       elif opt in ['--verbose', '-v']:
         verbose += 1

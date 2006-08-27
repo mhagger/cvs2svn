@@ -135,9 +135,6 @@ class RunOptions:
     self.end_pass = pass_manager.num_passes
     self.profiling = False
 
-    # Convenience var, so we don't have to keep instantiating this Borg.
-    ctx = Ctx()
-
     try:
       self.opts, self.args = my_getopt(sys.argv[1:], 'hvqs:p:', [
           "help", "help-passes", "version",
@@ -178,7 +175,7 @@ class RunOptions:
       pass_manager.help_passes()
       sys.exit(0)
     elif self.get_options('--version'):
-      print '%s version %s' % (os.path.basename(sys.argv[0]), ctx.VERSION)
+      print '%s version %s' % (os.path.basename(sys.argv[0]), Ctx().VERSION)
       sys.exit(0)
 
     # Next look for any --options options, process them, and remove
@@ -215,7 +212,14 @@ class RunOptions:
       # been consumed above.  It is an error if any other options or
       # arguments are left:
       self.verify_options_consumed()
-      return
+    else:
+      self.process_remaining_options()
+
+  def process_remaining_options(self):
+    """Process the options that are not compatible with --options."""
+
+    # Convenience var, so we don't have to keep instantiating this Borg.
+    ctx = Ctx()
 
     target = None
     existing_svnrepos = False

@@ -20,7 +20,6 @@ A StatsKeeper can pickle itself to STATISTICS_FILE.  This module also
 includes a function to read a StatsKeeper from STATISTICS_FILE."""
 
 
-import os
 import time
 import cPickle
 

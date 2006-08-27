@@ -23,7 +23,6 @@ import sys
 import os
 import re
 import time
-import stat
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.set_support import *

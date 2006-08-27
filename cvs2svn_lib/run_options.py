@@ -179,27 +179,7 @@ class RunOptions:
       self.process_options_file(value)
       options_file_found = True
 
-    # Adjust level of verbosity:
-    for (opt, value) in self.get_options('--verbose', '-v'):
-      Log().increase_verbosity()
-
-    for (opt, value) in self.get_options('--quiet', '-q'):
-      Log().decrease_verbosity()
-
-    for (opt, value) in self.get_options('-p'):
-      if value.find(':') >= 0:
-        start_pass, end_pass = value.split(':')
-        self.start_pass = self.pass_manager.get_pass_number(
-            start_pass, 1)
-        self.end_pass = self.pass_manager.get_pass_number(
-            end_pass, self.pass_manager.num_passes)
-      else:
-        self.end_pass = \
-            self.start_pass = \
-            self.pass_manager.get_pass_number(value)
-
-    if self.get_options('--profile'):
-      self.profiling = True
+    self.process_common_options()
 
     if options_file_found:
       # All of the options that are compatible with --options have
@@ -221,6 +201,31 @@ class RunOptions:
     elif self.get_options('--version'):
       print '%s version %s' % (os.path.basename(sys.argv[0]), Ctx().VERSION)
       sys.exit(0)
+
+  def process_common_options(self):
+    """Process the options that are compatible with --options."""
+
+    # Adjust level of verbosity:
+    for (opt, value) in self.get_options('--verbose', '-v'):
+      Log().increase_verbosity()
+
+    for (opt, value) in self.get_options('--quiet', '-q'):
+      Log().decrease_verbosity()
+
+    for (opt, value) in self.get_options('-p'):
+      if value.find(':') >= 0:
+        start_pass, end_pass = value.split(':')
+        self.start_pass = self.pass_manager.get_pass_number(
+            start_pass, 1)
+        self.end_pass = self.pass_manager.get_pass_number(
+            end_pass, self.pass_manager.num_passes)
+      else:
+        self.end_pass = \
+            self.start_pass = \
+            self.pass_manager.get_pass_number(value)
+
+    if self.get_options('--profile'):
+      self.profiling = True
 
   def process_remaining_options(self):
     """Process the options that are not compatible with --options."""

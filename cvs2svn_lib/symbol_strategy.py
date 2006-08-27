@@ -21,6 +21,7 @@ import re
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.set_support import *
+from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.symbol import BranchSymbol
@@ -64,8 +65,8 @@ class _RegexpStrategyRule(StrategyRule):
 
     try:
       self.regexp = re.compile('^' + pattern + '$')
-    except re.error, e:
-      raise FatalError("'%s' is not a valid regexp." % (value,))
+    except re.error:
+      raise FatalError("%r is not a valid regexp." % (pattern,))
 
     self.action = action
 

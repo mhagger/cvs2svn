@@ -211,6 +211,8 @@ class RunOptions:
 
     target = None
     existing_svnrepos = False
+    fs_type = None
+    bdb_txn_nosync = False
     dump_only = False
     dumpfile = None
     symbol_strategy_default = 'strict'
@@ -271,9 +273,9 @@ class RunOptions:
       elif opt == '--username':
         ctx.username = value
       elif opt == '--fs-type':
-        ctx.fs_type = value
+        fs_type = value
       elif opt == '--bdb-txn-nosync':
-        ctx.bdb_txn_nosync = True
+        bdb_txn_nosync = True
       elif opt == '--cvs-revnums':
         ctx.svn_property_setters.append(
             property_setters.CVSRevisionNumberSetter())
@@ -332,24 +334,25 @@ class RunOptions:
     not_both(dump_only, '--dump-only',
              existing_svnrepos, '--existing-svnrepos')
 
-    not_both(ctx.bdb_txn_nosync, '--bdb-txn-nosync',
+    not_both(bdb_txn_nosync, '--bdb-txn-nosync',
              existing_svnrepos, '--existing-svnrepos')
 
     not_both(dump_only, '--dump-only',
-             ctx.bdb_txn_nosync, '--bdb-txn-nosync')
+             bdb_txn_nosync, '--bdb-txn-nosync')
 
-    not_both(ctx.fs_type, '--fs-type',
+    not_both(fs_type, '--fs-type',
              existing_svnrepos, '--existing-svnrepos')
 
-    if ctx.fs_type and ctx.fs_type != 'bdb' and ctx.bdb_txn_nosync:
+    if fs_type and fs_type != 'bdb' and bdb_txn_nosync:
       raise FatalError("cannot pass --bdb-txn-nosync with --fs-type=%s."
-                       % ctx.fs_type)
+                       % fs_type)
 
     if target:
       if existing_svnrepos:
         ctx.output_option = ExistingRepositoryOutputOption(target)
       else:
-        ctx.output_option = NewRepositoryOutputOption(target)
+        ctx.output_option = NewRepositoryOutputOption(
+            target, fs_type=fs_type, bdb_txn_nosync=bdb_txn_nosync)
     else:
       if dumpfile is None:
         dumpfile = config.DUMPFILE

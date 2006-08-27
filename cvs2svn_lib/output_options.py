@@ -101,8 +101,10 @@ class RepositoryOutputOption(OutputOption):
 class NewRepositoryOutputOption(RepositoryOutputOption):
   """Output the result of the conversion into a new SVN repository."""
 
-  def __init__(self, target):
+  def __init__(self, target, fs_type=None, bdb_txn_nosync=None):
     RepositoryOutputOption.__init__(self, target)
+    self.fs_type = fs_type
+    self.bdb_txn_nosync = bdb_txn_nosync
 
   def check(self):
     RepositoryOutputOption.check(self)
@@ -116,14 +118,14 @@ class NewRepositoryOutputOption(RepositoryOutputOption):
     if Ctx().dry_run:
       # Do not actually create repository:
       pass
-    elif not Ctx().fs_type:
+    elif not self.fs_type:
       # User didn't say what kind repository (bdb, fsfs, etc).
       # We still pass --bdb-txn-nosync.  It's a no-op if the default
       # repository type doesn't support it, but we definitely want
       # it if BDB is the default.
       run_command('%s create %s "%s"'
                   % (Ctx().svnadmin, "--bdb-txn-nosync", self.target))
-    elif Ctx().fs_type == 'bdb':
+    elif self.fs_type == 'bdb':
       # User explicitly specified bdb.
       #
       # Since this is a BDB repository, pass --bdb-txn-nosync,
@@ -138,7 +140,7 @@ class NewRepositoryOutputOption(RepositoryOutputOption):
     else:
       # User specified something other than bdb.
       run_command('%s create %s "%s"'
-                  % (Ctx().svnadmin, "--fs-type=%s" % Ctx().fs_type,
+                  % (Ctx().svnadmin, "--fs-type=%s" % self.fs_type,
                      self.target))
 
     RepositoryOutputOption.setup(self, repos)
@@ -156,13 +158,13 @@ class NewRepositoryOutputOption(RepositoryOutputOption):
     #
     # We determine if this is a BDB repository by looking for the
     # DB_CONFIG file, which doesn't exist in FSFS, rather than by
-    # checking Ctx().fs_type.  That way this code will Do The Right
+    # checking self.fs_type.  That way this code will Do The Right
     # Thing in all circumstances.
     db_config = os.path.join(self.target, "db/DB_CONFIG")
     if Ctx().dry_run:
       # Do not change repository:
       pass
-    elif not Ctx().bdb_txn_nosync and os.path.exists(db_config):
+    elif not self.bdb_txn_nosync and os.path.exists(db_config):
       no_sync = 'set_flags DB_TXN_NOSYNC\n'
 
       contents = open(db_config, 'r').readlines()

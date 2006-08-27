@@ -52,8 +52,6 @@ class Ctx:
     self.symbol_strategy = None
     self.symbol_transforms = []
     self.username = None
-    self.fs_type = None
-    self.bdb_txn_nosync = False
     self.svn_property_setters = []
     self.tmpdir = '.'
     self.skip_cleanup = False

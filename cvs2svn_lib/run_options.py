@@ -35,9 +35,9 @@ from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
-from cvs2svn_lib.output_options import DumpfileOutputOption
-from cvs2svn_lib.output_options import NewRepositoryOutputOption
-from cvs2svn_lib.output_options import ExistingRepositoryOutputOption
+from cvs2svn_lib.output_option import DumpfileOutputOption
+from cvs2svn_lib.output_option import NewRepositoryOutputOption
+from cvs2svn_lib.output_option import ExistingRepositoryOutputOption
 from cvs2svn_lib.project import Project
 from cvs2svn_lib.pass_manager import InvalidPassError
 from cvs2svn_lib.symbol_strategy import RuleBasedSymbolStrategy

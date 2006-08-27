@@ -38,9 +38,9 @@ from cvs2svn_lib.boolean import *
 from cvs2svn_lib import config
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.project import Project
-from cvs2svn_lib.output_options import DumpfileOutputOption
-from cvs2svn_lib.output_options import NewRepositoryOutputOption
-from cvs2svn_lib.output_options import ExistingRepositoryOutputOption
+from cvs2svn_lib.output_option import DumpfileOutputOption
+from cvs2svn_lib.output_option import NewRepositoryOutputOption
+from cvs2svn_lib.output_option import ExistingRepositoryOutputOption
 from cvs2svn_lib.symbol_strategy import RuleBasedSymbolStrategy
 from cvs2svn_lib.symbol_strategy import ForceBranchRegexpStrategyRule
 from cvs2svn_lib.symbol_strategy import ForceTagRegexpStrategyRule

@@ -33,9 +33,9 @@ class RepositoryDelegate(DumpfileDelegate):
   """Creates a new Subversion Repository.  DumpfileDelegate does all
   of the heavy lifting."""
 
-  def __init__(self):
+  def __init__(self, target):
     self.svnadmin = Ctx().svnadmin
-    self.target = Ctx().target
+    self.target = target
 
     # Since the output of this run is a repository, not a dumpfile,
     # the temporary dumpfiles we create should go in the tmpdir.  But

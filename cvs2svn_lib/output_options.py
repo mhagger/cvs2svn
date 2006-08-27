@@ -144,7 +144,7 @@ class NewRepositoryOutputOption(RepositoryOutputOption):
     RepositoryOutputOption.setup(self, repos)
     Log().quiet("Starting Subversion Repository.")
     if not Ctx().dry_run:
-      repos.add_delegate(RepositoryDelegate())
+      repos.add_delegate(RepositoryDelegate(self.target))
 
   def cleanup(self):
     RepositoryOutputOption.cleanup(self)
@@ -187,7 +187,7 @@ class ExistingRepositoryOutputOption(RepositoryOutputOption):
     RepositoryOutputOption.setup(self, repos)
     Log().quiet("Starting Subversion Repository.")
     if not Ctx().dry_run:
-      repos.add_delegate(RepositoryDelegate())
+      repos.add_delegate(RepositoryDelegate(self.target))
 
   def cleanup(self):
     RepositoryOutputOption.cleanup(self)

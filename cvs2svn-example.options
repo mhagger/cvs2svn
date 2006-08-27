@@ -39,18 +39,26 @@ from cvs2svn_lib import config
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.project import Project
 from cvs2svn_lib.output_option import DumpfileOutputOption
-from cvs2svn_lib.output_option import NewRepositoryOutputOption
 from cvs2svn_lib.output_option import ExistingRepositoryOutputOption
-from cvs2svn_lib.symbol_strategy import RuleBasedSymbolStrategy
-from cvs2svn_lib.symbol_strategy import ForceBranchRegexpStrategyRule
-from cvs2svn_lib.symbol_strategy import ForceTagRegexpStrategyRule
-from cvs2svn_lib.symbol_strategy import ExcludeRegexpStrategyRule
-from cvs2svn_lib.symbol_strategy import UnambiguousUsageRule
-from cvs2svn_lib.symbol_strategy import BranchIfCommitsRule
-from cvs2svn_lib.symbol_strategy import HeuristicStrategyRule
+from cvs2svn_lib.output_option import NewRepositoryOutputOption
 from cvs2svn_lib.symbol_strategy import AllBranchRule
 from cvs2svn_lib.symbol_strategy import AllTagRule
-from cvs2svn_lib import property_setters
+from cvs2svn_lib.symbol_strategy import BranchIfCommitsRule
+from cvs2svn_lib.symbol_strategy import ExcludeRegexpStrategyRule
+from cvs2svn_lib.symbol_strategy import ForceBranchRegexpStrategyRule
+from cvs2svn_lib.symbol_strategy import ForceTagRegexpStrategyRule
+from cvs2svn_lib.symbol_strategy import HeuristicStrategyRule
+from cvs2svn_lib.symbol_strategy import RuleBasedSymbolStrategy
+from cvs2svn_lib.symbol_strategy import UnambiguousUsageRule
+from cvs2svn_lib.property_setters import AutoPropsPropertySetter
+from cvs2svn_lib.property_setters import BinaryFileDefaultMimeTypeSetter
+from cvs2svn_lib.property_setters import BinaryFileEOLStyleSetter
+from cvs2svn_lib.property_setters import CVSRevisionNumberSetter
+from cvs2svn_lib.property_setters import DefaultEOLStyleSetter
+from cvs2svn_lib.property_setters import EOLStyleFromMimeTypeSetter
+from cvs2svn_lib.property_setters import ExecutablePropertySetter
+from cvs2svn_lib.property_setters import KeywordsPropertySetter
+from cvs2svn_lib.property_setters import MimeMapper
 
 
 # To choose the level of logging output, uncomment one of the
@@ -189,47 +197,47 @@ ctx.username = None
 ctx.svn_property_setters = [
   # Set the svn:executable flag on any files that are marked in CVS as
   # being executable:
-  property_setters.ExecutablePropertySetter(),
+  ExecutablePropertySetter(),
 
   # Omit the svn:eol-style property from any files that are listed as
   # binary in CVS:
-  property_setters.BinaryFileEOLStyleSetter(),
+  BinaryFileEOLStyleSetter(),
 
   # To read mime types from a file, uncomment the following line and
   # specify a filename:
-  #property_setters.MimeMapper('/etc/mime.types'),
+  #MimeMapper('/etc/mime.types'),
 
   # To read auto-props rules from a file, uncomment the following line
   # and specify a filename.  The boolean argument specifies whether
   # case should be ignored when matching filenames to the filename
   # patterns found in the auto-props file:
-  #property_setters.AutoPropsPropertySetter(
+  #AutoPropsPropertySetter(
   #    '/home/username/.subversion/config',
   #    False,
   #    ),
 
   # If the file is binary and its svn:mime-type property is not yet
   # set, set svn:mime-type to 'application/octet-stream'.
-  property_setters.BinaryFileDefaultMimeTypeSetter(),
+  BinaryFileDefaultMimeTypeSetter(),
 
   # To try to determine the eol-style from the mime type, uncomment
   # the following line:
-  #property_setters.EOLStyleFromMimeTypeSetter(),
+  #EOLStyleFromMimeTypeSetter(),
 
   # Choose one of the following lines to set the default svn:eol-style
   # if none of the above rules applied.  The argument is the
   # svn:eol-style that should be applied, or None if no svn:eol-style
   # should be set.
-  #property_setters.DefaultEOLStyleSetter(None)
-  property_setters.DefaultEOLStyleSetter('native'),
+  #DefaultEOLStyleSetter(None)
+  DefaultEOLStyleSetter('native'),
 
   # If svn:keywords has not been set yet, set it based on the file's
   # CVS mode:
-  property_setters.KeywordsPropertySetter(config.SVN_KEYWORDS_VALUE),
+  KeywordsPropertySetter(config.SVN_KEYWORDS_VALUE),
 
   # Uncomment the following line to include the original CVS revision
   # numbers as file properties in the SVN archive:
-  #property_setters.CVSRevisionNumberSetter(),
+  #CVSRevisionNumberSetter(),
 
   ]
 

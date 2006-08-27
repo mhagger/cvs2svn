@@ -85,6 +85,6 @@ class ExcludedSymbol(TypedSymbol):
   def __str__(self):
     """For convenience only.  The format is subject to change at any time."""
 
-    return 'ExcludedSymbol %r' % (self.name, self.id,)
+    return 'ExcludedSymbol %r' % (self.name,)
 
 

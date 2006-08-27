@@ -590,4 +590,6 @@ class OutputPass(Pass):
 
     repos.finish()
 
+    Ctx().output_option.cleanup()
+
 

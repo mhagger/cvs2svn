@@ -36,34 +36,6 @@ class RepositoryDelegate(DumpfileDelegate):
   def __init__(self):
     self.svnadmin = Ctx().svnadmin
     self.target = Ctx().target
-    if not Ctx().existing_svnrepos:
-      Log().normal("Creating new repository '%s'" % (self.target))
-      if not Ctx().fs_type:
-        # User didn't say what kind repository (bdb, fsfs, etc).
-        # We still pass --bdb-txn-nosync.  It's a no-op if the default
-        # repository type doesn't support it, but we definitely want
-        # it if BDB is the default.
-        run_command('%s create %s "%s"' % (self.svnadmin,
-                                           "--bdb-txn-nosync",
-                                           self.target))
-      elif Ctx().fs_type == 'bdb':
-        # User explicitly specified bdb.
-        #
-        # Since this is a BDB repository, pass --bdb-txn-nosync,
-        # because it gives us a 4-5x speed boost (if cvs2svn is
-        # creating the repository, cvs2svn should be the only program
-        # accessing the svn repository (until cvs is done, at least)).
-        # But we'll turn no-sync off in self.finish(), unless
-        # instructed otherwise.
-        run_command('%s create %s %s "%s"' % (self.svnadmin,
-                                              "--fs-type=bdb",
-                                              "--bdb-txn-nosync",
-                                              self.target))
-      else:
-        # User specified something other than bdb.
-        run_command('%s create %s "%s"' % (self.svnadmin,
-                                           "--fs-type=%s" % Ctx().fs_type,
-                                           self.target))
 
     # Since the output of this run is a repository, not a dumpfile,
     # the temporary dumpfiles we create should go in the tmpdir.  But
@@ -116,24 +88,5 @@ class RepositoryDelegate(DumpfileDelegate):
     if exit_status:
       raise CommandError('svnadmin load', exit_status, error_output)
     os.remove(self.dumpfile_path)
-
-    # If this is a BDB repository, and we created the repository, and
-    # --bdb-no-sync wasn't passed, then comment out the DB_TXN_NOSYNC
-    # line in the DB_CONFIG file, because txn syncing should be on by
-    # default in BDB repositories.
-    #
-    # We determine if this is a BDB repository by looking for the
-    # DB_CONFIG file, which doesn't exist in FSFS, rather than by
-    # checking Ctx().fs_type.  That way this code will Do The Right
-    # Thing in all circumstances.
-    db_config = os.path.join(self.target, "db/DB_CONFIG")
-    if (not Ctx().existing_svnrepos and not Ctx().bdb_txn_nosync
-        and os.path.exists(db_config)):
-      no_sync = 'set_flags DB_TXN_NOSYNC\n'
-
-      contents = open(db_config, 'r').readlines()
-      index = contents.index(no_sync)
-      contents[index] = '# ' + no_sync
-      contents = open(db_config, 'w').writelines(contents)
 
 

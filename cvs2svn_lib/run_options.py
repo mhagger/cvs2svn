@@ -40,16 +40,24 @@ from cvs2svn_lib.output_option import NewRepositoryOutputOption
 from cvs2svn_lib.output_option import ExistingRepositoryOutputOption
 from cvs2svn_lib.project import Project
 from cvs2svn_lib.pass_manager import InvalidPassError
-from cvs2svn_lib.symbol_strategy import RuleBasedSymbolStrategy
-from cvs2svn_lib.symbol_strategy import ForceBranchRegexpStrategyRule
-from cvs2svn_lib.symbol_strategy import ForceTagRegexpStrategyRule
-from cvs2svn_lib.symbol_strategy import ExcludeRegexpStrategyRule
-from cvs2svn_lib.symbol_strategy import UnambiguousUsageRule
-from cvs2svn_lib.symbol_strategy import BranchIfCommitsRule
-from cvs2svn_lib.symbol_strategy import HeuristicStrategyRule
 from cvs2svn_lib.symbol_strategy import AllBranchRule
 from cvs2svn_lib.symbol_strategy import AllTagRule
-from cvs2svn_lib import property_setters
+from cvs2svn_lib.symbol_strategy import BranchIfCommitsRule
+from cvs2svn_lib.symbol_strategy import ExcludeRegexpStrategyRule
+from cvs2svn_lib.symbol_strategy import ForceBranchRegexpStrategyRule
+from cvs2svn_lib.symbol_strategy import ForceTagRegexpStrategyRule
+from cvs2svn_lib.symbol_strategy import HeuristicStrategyRule
+from cvs2svn_lib.symbol_strategy import RuleBasedSymbolStrategy
+from cvs2svn_lib.symbol_strategy import UnambiguousUsageRule
+from cvs2svn_lib.property_setters import AutoPropsPropertySetter
+from cvs2svn_lib.property_setters import BinaryFileDefaultMimeTypeSetter
+from cvs2svn_lib.property_setters import BinaryFileEOLStyleSetter
+from cvs2svn_lib.property_setters import CVSRevisionNumberSetter
+from cvs2svn_lib.property_setters import DefaultEOLStyleSetter
+from cvs2svn_lib.property_setters import EOLStyleFromMimeTypeSetter
+from cvs2svn_lib.property_setters import ExecutablePropertySetter
+from cvs2svn_lib.property_setters import KeywordsPropertySetter
+from cvs2svn_lib.property_setters import MimeMapper
 
 
 usage_message_template = """\
@@ -275,8 +283,7 @@ class RunOptions:
       elif opt == '--bdb-txn-nosync':
         bdb_txn_nosync = True
       elif opt == '--cvs-revnums':
-        ctx.svn_property_setters.append(
-            property_setters.CVSRevisionNumberSetter())
+        ctx.svn_property_setters.append(CVSRevisionNumberSetter())
       elif opt == '--mime-types':
         mime_types_file = value
       elif opt == '--auto-props':
@@ -383,38 +390,30 @@ class RunOptions:
     else:
       assert False
 
-    ctx.svn_property_setters.append(
-        property_setters.ExecutablePropertySetter())
+    ctx.svn_property_setters.append(ExecutablePropertySetter())
 
-    ctx.svn_property_setters.append(
-        property_setters.BinaryFileEOLStyleSetter())
+    ctx.svn_property_setters.append(BinaryFileEOLStyleSetter())
 
     if mime_types_file:
-      ctx.svn_property_setters.append(
-          property_setters.MimeMapper(mime_types_file))
+      ctx.svn_property_setters.append(MimeMapper(mime_types_file))
 
     if auto_props_file:
-      ctx.svn_property_setters.append(
-          property_setters.AutoPropsPropertySetter(
-              auto_props_file, auto_props_ignore_case))
+      ctx.svn_property_setters.append(AutoPropsPropertySetter(
+          auto_props_file, auto_props_ignore_case))
 
-    ctx.svn_property_setters.append(
-        property_setters.BinaryFileDefaultMimeTypeSetter())
+    ctx.svn_property_setters.append(BinaryFileDefaultMimeTypeSetter())
 
     if eol_from_mime_type:
-      ctx.svn_property_setters.append(
-          property_setters.EOLStyleFromMimeTypeSetter())
+      ctx.svn_property_setters.append(EOLStyleFromMimeTypeSetter())
 
     if no_default_eol:
-      ctx.svn_property_setters.append(
-          property_setters.DefaultEOLStyleSetter(None))
+      ctx.svn_property_setters.append(DefaultEOLStyleSetter(None))
     else:
-      ctx.svn_property_setters.append(
-          property_setters.DefaultEOLStyleSetter('native'))
+      ctx.svn_property_setters.append(DefaultEOLStyleSetter('native'))
 
     if not keywords_off:
       ctx.svn_property_setters.append(
-          property_setters.KeywordsPropertySetter(config.SVN_KEYWORDS_VALUE))
+          KeywordsPropertySetter(config.SVN_KEYWORDS_VALUE))
 
   def get_options(self, *names):
     """Return a list of (option,value) pairs for options in NAMES.

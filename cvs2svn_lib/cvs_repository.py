@@ -22,6 +22,7 @@ import re
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.common import FatalError
+from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.process import check_command_runs
 from cvs2svn_lib.process import SimplePopen
 from cvs2svn_lib.process import CommandFailedException
@@ -63,14 +64,14 @@ class CVSRepositoryViaRCS(CVSRepository):
   def __init__(self, cvs_repos_path):
     CVSRepository.__init__(self, cvs_repos_path)
     try:
-      check_command_runs([ 'co', '-V' ], 'co')
+      check_command_runs([ Ctx().co_executable, '-V' ], 'co')
     except CommandFailedException, e:
       raise FatalError('%s\n'
                        'Please check that co is installed and in your PATH\n'
                        '(it is a part of the RCS software).' % (e,))
 
   def get_co_pipe(self, c_rev, suppress_keyword_substitution=False):
-    pipe_cmd = [ 'co', '-q', '-x,v', '-p' + c_rev.rev ]
+    pipe_cmd = [ Ctx().co_executable, '-q', '-x,v', '-p' + c_rev.rev ]
     if suppress_keyword_substitution:
       pipe_cmd.append('-kk')
     pipe_cmd.append(c_rev.cvs_file.filename)
@@ -114,7 +115,8 @@ class CVSRepositoryViaCVS(CVSRepository):
 
     def cvs_ok(global_arguments):
       check_command_runs(
-          [ 'cvs' ] + global_arguments + [ '--version' ], 'cvs')
+          [ Ctx().cvs_executable ] + global_arguments + [ '--version' ],
+          'cvs')
 
     self.global_arguments = [ "-q", "-R" ]
     try:
@@ -129,7 +131,7 @@ class CVSRepositoryViaCVS(CVSRepository):
             'Please check that cvs is installed and in your PATH.' % (e,))
 
   def get_co_pipe(self, c_rev, suppress_keyword_substitution=False):
-    pipe_cmd = [ 'cvs' ] + self.global_arguments + \
+    pipe_cmd = [ Ctx().cvs_executable ] + self.global_arguments + \
                [ 'co', '-r' + c_rev.rev, '-p' ]
     if suppress_keyword_substitution:
       pipe_cmd.append('-kk')

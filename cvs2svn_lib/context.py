@@ -43,7 +43,10 @@ class Ctx:
     self.output_option = None
     self.dry_run = False
     self.use_cvs = False
-    self.svnadmin_executable = 'svnadmin'
+    self.svnadmin_executable = config.SVNADMIN_EXECUTABLE
+    self.co_executable = config.CO_EXECUTABLE
+    self.cvs_executable = config.CVS_EXECUTABLE
+    self.sort_executable = config.SORT_EXECUTABLE
     self.trunk_only = False
     self.prune = True
     self.encoding = ["ascii"]

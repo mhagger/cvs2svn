@@ -72,8 +72,9 @@ def sort_file(infilename, outfilename):
     # case insensitive and cannot be used, and since it does not
     # understand the -T option and dies if we try to use it, there is
     # no risk that we use that sort by accident.
-    run_command('sort -T %s %s > %s'
-                % (Ctx().tmpdir, infilename, outfilename))
+    run_command('%s -T %s %s > %s'
+                % (Ctx().sort_executable, Ctx().tmpdir,
+                   infilename, outfilename))
   finally:
     if lc_all_tmp is None:
       del os.environ['LC_ALL']

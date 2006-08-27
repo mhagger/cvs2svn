@@ -28,6 +28,11 @@ DEFAULT_TRUNK_BASE = 'trunk'
 DEFAULT_BRANCHES_BASE = 'branches'
 DEFAULT_TAGS_BASE = 'tags'
 
+SVNADMIN_EXECUTABLE = 'svnadmin'
+CO_EXECUTABLE = 'co'
+CVS_EXECUTABLE = 'cvs'
+SORT_EXECUTABLE = 'sort'
+
 # These files are related to the cleaning and sorting of CVS revisions,
 # for commit grouping.  See design-notes.txt for details.
 ALL_REVS_DATAFILE = 'cvs2svn-a-revs.txt'

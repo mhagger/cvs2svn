@@ -26,7 +26,6 @@ from cvs2svn_lib.config import DUMPFILE
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.process import SimplePopen
-from cvs2svn_lib.process import run_command
 from cvs2svn_lib.dumpfile_delegate import DumpfileDelegate
 
 

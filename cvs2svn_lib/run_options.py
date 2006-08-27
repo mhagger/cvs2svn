@@ -132,7 +132,7 @@ class RunOptions:
 
     self.pass_manager = pass_manager
     self.start_pass = 1
-    self.end_pass = pass_manager.num_passes
+    self.end_pass = self.pass_manager.num_passes
     self.profiling = False
 
     try:
@@ -168,15 +168,7 @@ class RunOptions:
 
     # First look for any 'help'-type options, as they just cause the
     # program to print help and ignore any other options:
-    if self.get_options('-h', '--help'):
-      usage()
-      sys.exit(0)
-    elif self.get_options('--help-passes'):
-      pass_manager.help_passes()
-      sys.exit(0)
-    elif self.get_options('--version'):
-      print '%s version %s' % (os.path.basename(sys.argv[0]), Ctx().VERSION)
-      sys.exit(0)
+    self.process_help_options()
 
     # Next look for any --options options, process them, and remove
     # them from the list, as they affect the processing of other
@@ -197,12 +189,14 @@ class RunOptions:
     for (opt, value) in self.get_options('-p'):
       if value.find(':') >= 0:
         start_pass, end_pass = value.split(':')
-        self.start_pass = \
-            pass_manager.get_pass_number(start_pass, 1)
-        self.end_pass = \
-            pass_manager.get_pass_number(end_pass, pass_manager.num_passes)
+        self.start_pass = self.pass_manager.get_pass_number(
+            start_pass, 1)
+        self.end_pass = self.pass_manager.get_pass_number(
+            end_pass, self.pass_manager.num_passes)
       else:
-        self.end_pass = self.start_pass = pass_manager.get_pass_number(value)
+        self.end_pass = \
+            self.start_pass = \
+            self.pass_manager.get_pass_number(value)
 
     if self.get_options('--profile'):
       self.profiling = True
@@ -214,6 +208,19 @@ class RunOptions:
       self.verify_options_consumed()
     else:
       self.process_remaining_options()
+
+  def process_help_options(self):
+    """Process any help-type options."""
+
+    if self.get_options('-h', '--help'):
+      usage()
+      sys.exit(0)
+    elif self.get_options('--help-passes'):
+      self.pass_manager.help_passes()
+      sys.exit(0)
+    elif self.get_options('--version'):
+      print '%s version %s' % (os.path.basename(sys.argv[0]), Ctx().VERSION)
+      sys.exit(0)
 
   def process_remaining_options(self):
     """Process the options that are not compatible with --options."""

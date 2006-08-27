@@ -87,6 +87,11 @@ class SVNCommit:
       self.revnum = SVNCommit.revnum
       SVNCommit.revnum += 1
 
+  def _get_log_msg(self):
+    """Return a log message for this commit."""
+
+    raise NotImplementedError()
+
   def _get_revprops(self):
     """Return the Subversion revprops for this SVNCommit."""
 
@@ -185,8 +190,6 @@ class SVNInitialProjectCommit(SVNCommit):
     self.date = date
 
   def _get_log_msg(self):
-    """Return a log message for this commit."""
-
     return 'New repository initialized by cvs2svn.'
 
   def commit(self, repos):
@@ -213,7 +216,7 @@ class SVNPrimaryCommit(SVNCommit, SVNRevisionCommit):
     return SVNCommit.__str__(self) + SVNRevisionCommit.__str__(self)
 
   def _get_log_msg(self):
-    """Returns the actual log message for this commit."""
+    """Return the actual log message for this commit."""
 
     return self._log_msg
 

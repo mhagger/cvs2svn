@@ -221,7 +221,7 @@ ctx.svn_property_setters = [
   ]
 
 # The directory to use for temporary files:
-ctx.tmpdir = '.'
+ctx.tmpdir = 'tmp'
 
 # To skip the cleanup of temporary files, uncomment the following
 # option:
@@ -245,15 +245,15 @@ ctx.tmpdir = '.'
 #   project within the SVN repository.
 
 # Create the default project (using ctx.trunk, ctx.branches, and ctx.tags):
-#ctx.add_project(
-#    Project(
-#        0,
-#        'my/cvsrepo/mainproj',
-#        'trunk',
-#        'branches',
-#        'tags',
-#        )
-#    )
+ctx.add_project(
+    Project(
+        0,
+        'test-data/main-cvsrepos',
+        'trunk',
+        'branches',
+        'tags',
+        )
+    )
 
 # Add a second project, to be stored to projA/trunk, projA/branches,
 # and projA/tags:

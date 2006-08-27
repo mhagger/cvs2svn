@@ -337,16 +337,14 @@ svn-nums-to-cvs-revs.db and, starting with Subversion revision 2
 out all the commits to either a Subversion repository or to a
 dumpfile.
 
-In --dump-only mode, the result of this pass is a Subversion
-repository dumpfile (suitable for input to 'svnadmin load').  The
-dumpfile is the data's last static stage: last chance to check over
-the data, run it through svndumpfilter, move the dumpfile to another
-machine, etc.
+In --dumpfile mode, the result of this pass is a Subversion repository
+dumpfile (suitable for input to 'svnadmin load').  The dumpfile is the
+data's last static stage: last chance to check over the data, run it
+through svndumpfilter, move the dumpfile to another machine, etc.
 
-However, when not in --dump-only mode, no full dumpfile is created for
-subsequent load into a Subversion repository.  Instead, miniature
-dumpfiles representing a single revision are created, loaded into the
-repository, and then removed.
+When not in --dumpfile mode, no full dumpfile is created.  Instead,
+miniature dumpfiles representing a single revision are created, loaded
+into the repository, and then removed.
 
 In both modes, the dumpfile revisions are created by walking through
 'cvs2svn-data.s-revs.txt'.

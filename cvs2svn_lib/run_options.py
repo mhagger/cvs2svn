@@ -202,10 +202,11 @@ class RunOptions:
     if self.get_options('--profile'):
       self.profiling = True
 
-    # FIXME: For now, do not process any other options if --options is
-    # specified.  In the future, all options' validity should be
-    # checked and some options should be allowed.
     if options_file_found:
+      # All of the options that are compatible with --options have
+      # been consumed above.  It is an error if any other options or
+      # arguments are left:
+      self.verify_options_consumed()
       return
 
     target = None
@@ -432,6 +433,30 @@ class RunOptions:
       else:
         i += 1
     return retval
+
+  def verify_options_consumed(self):
+    """Verify that all command line options and arguments have been used.
+
+    The --options option was specified, and all options that are
+    compatible with that option have already been consumed.  Verify
+    that there are no remaining (i.e., incompatible) options or
+    arguments."""
+
+    if self.opts or self.args:
+      if self.opts:
+        sys.stderr.write(
+            '%s: The following options cannot be used in combination with '
+            'the --options\n'
+            'option:\n'
+            '    %s\n'
+            % (error_prefix,
+               '\n    '.join([opt for (opt,value) in self.opts])))
+      if self.args:
+        sys.stderr.write(
+            '%s: No cvs-repos-path arguments are allowed with the --options '
+            'option.\n'
+            % (error_prefix,))
+      sys.exit(1)
 
   def process_options_file(self, options_filename):
     """Read options from the file named OPTIONS_FILENAME.

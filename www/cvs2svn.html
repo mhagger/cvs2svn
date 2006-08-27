@@ -400,13 +400,6 @@ directories) before running your conversion.
   </tr>
 
   <tr>
-    <td align="right"><tt>--svnadmin=PATH</tt></td>
-    <td>If the svnadmin program is not on your $PATH you should
-      specify the absolute path to <tt>svnadmin</tt> with this
-      switch.</td>
-  </tr>
-
-  <tr>
     <td align="right"><tt>--trunk-only</tt></td>
     <td>Convert only the main line of development from the CVS
       repository (commonly referred to in Subversion parlance as
@@ -614,6 +607,33 @@ cvs2svn --symbol-transform='([0-9])-(.*):release-\1.\2' -q -s SVN RCS
     <td align="right"><tt>--profile</tt></td>
     <td>Dump Python <a href="http://docs.python.org/lib/module-hotshot.html"
         >Hotshot</a> profiling data to the file <tt>cvs2svn.hotshot</tt>.</td>
+  </tr>
+
+  <tr>
+    <td align="right"><tt>--svnadmin=PATH</tt></td>
+    <td>If the svnadmin program is not in your $PATH you should
+      specify its absolute path with this switch.</td>
+  </tr>
+
+  <tr>
+    <td align="right"><tt>--co=PATH</tt></td>
+    <td>If the co program (a part of RCS) is not in your $PATH you should
+      specify its absolute path with this switch.  (co is needed if
+      <tt>--use-cvs</tt> is not specified.)</td>
+  </tr>
+
+  <tr>
+    <td align="right"><tt>--cvs=PATH</tt></td>
+    <td>If the cvs program is not in your $PATH you should
+      specify its absolute path with this switch.  (cvs is needed if
+      <tt>--use-cvs</tt> is specified.)</td>
+  </tr>
+
+  <tr>
+    <td align="right"><tt>--sort=PATH</tt></td>
+    <td>If the GNU sort program is not in your $PATH you should
+      specify its absolute path with this switch.  cvs2svn requires
+      GNU sort; Windows <tt>sort.exe</tt> is <b>not</b> adequate.</td>
   </tr>
 
 </table>

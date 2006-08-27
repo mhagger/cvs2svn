@@ -66,9 +66,6 @@ cvs2svn would do if it were really converting your repository.
 Use CVS instead of RCS 'co' to extract data (only use this if having
 problems with RCS, as CVS is much slower).
 .TP
-\fB--svnadmin\fR=\fIpath\fR
-Path to the the \fIsvnadmin\fR program.
-.TP
 \fB--trunk-only\fR
 Convert only trunk commits, not tags nor branches.
 .TP
@@ -192,6 +189,20 @@ Prevent the deletion of temporary files.
 .TP
 \fB--profile\fR
 Profile with 'hotshot' (into file \fIcvs2svn.hotshot\fR).
+.TP
+\fB--svnadmin\fR=\fIpath\fR
+Path to the \fIsvnadmin\fR program.
+.TP
+\fB--co\fR=\fIpath\fR
+Path to the \fIco\fR program.  (\fIco\fR is needed if
+\fB--use-cvs\fR is not specified.)
+.TP
+\fB--cvs\fR=\fIpath\fR
+Path to the \fIcvs\fR program.  (\fIcvs\fR is needed if
+\fB--use-cvs\fR is specified.)
+.TP
+\fB--sort\fR=\fIpath\fR
+Path to the GNU \fIsort\fR program.  (cvs2svn requires GNU sort.)
 .SH FILES
 The current directory (or the directory specified by \fB--tmpdir\fR)
 is used as scratch space for data files of the form

@@ -111,8 +111,13 @@ ctx.dry_run = False
 # part of RCS, and is much faster):
 ctx.use_cvs = False
 
-# Set the name (and optionally the path) of the "svnadmin" executable:
+# Set the name (and optionally the path) of some executables required
+# by cvs2svn.  'co' is needed by default; 'cvs' is needed if
+# ctx.use_cvs is set to True:
 ctx.svnadmin_executable = 'svnadmin'
+ctx.co_executable = 'co'
+ctx.cvs_executable = 'cvs'
+ctx.sort_executable = 'sort'
 
 # Change the following line to True if the conversion should only
 # include the trunk of the repository (i.e., all branches and tags

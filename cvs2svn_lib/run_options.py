@@ -77,7 +77,6 @@ USAGE: %(progname)s [-v] [-s svn-repos-path] [-p pass] cvs-repos-path
                        just print what would happen.
   --use-cvs            use CVS instead of RCS 'co' to extract data
                        (only use this if having problems with RCS)
-  --svnadmin=PATH      path to the svnadmin program
   --trunk-only         convert only trunk commits, not tags nor branches
   --trunk=PATH         path for trunk (default: %(trunk_base)s)
   --branches=PATH      path for branches (default: %(branches_base)s)
@@ -112,6 +111,10 @@ USAGE: %(progname)s [-v] [-s svn-repos-path] [-p pass] cvs-repos-path
   --tmpdir=PATH        directory to use for tmp data (default to cwd)
   --skip-cleanup       prevent the deletion of intermediate files
   --profile            profile with 'hotshot' (into file cvs2svn.hotshot)
+  --svnadmin=PATH      path to the "svnadmin" program
+  --co=PATH            path to the "co" program (required if not --use-cvs)
+  --cvs=PATH           path to the "cvs" program (required if --use-cvs)
+  --sort=PATH          path to the GNU "sort" program
 """
 
 def usage():
@@ -141,7 +144,6 @@ class RunOptions:
           "verbose", "quiet",
           "existing-svnrepos", "dumpfile=", "dry-run",
           "use-cvs",
-          "svnadmin=",
           "trunk-only",
           "trunk=", "branches=", "tags=",
           "no-prune",
@@ -158,6 +160,7 @@ class RunOptions:
           "tmpdir=",
           "skip-cleanup",
           "profile",
+          "svnadmin=", "co=", "cvs=", "sort=",
           "dump-only", "create",
           "options=",
           ])
@@ -270,8 +273,6 @@ class RunOptions:
         dumpfile = value
       elif opt == '--use-cvs':
         ctx.use_cvs = True
-      elif opt == '--svnadmin':
-        ctx.svnadmin_executable = value
       elif opt == '--trunk-only':
         ctx.trunk_only = True
       elif opt == '--trunk':
@@ -326,6 +327,14 @@ class RunOptions:
         ctx.tmpdir = value
       elif opt == '--skip-cleanup':
         ctx.skip_cleanup = True
+      elif opt == '--svnadmin':
+        ctx.svnadmin_executable = value
+      elif opt == '--co':
+        ctx.co_executable = value
+      elif opt == '--cvs':
+        ctx.cvs_executable = value
+      elif opt == '--sort':
+        ctx.sort_executable = value
       elif opt == '--dump-only':
         dump_only = True
         sys.stderr.write(warning_prefix +

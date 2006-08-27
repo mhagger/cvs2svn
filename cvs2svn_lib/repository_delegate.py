@@ -22,6 +22,7 @@ import os
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.common import CommandError
 from cvs2svn_lib.common import FatalError
+from cvs2svn_lib.config import DUMPFILE
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.process import SimplePopen
@@ -41,7 +42,7 @@ class RepositoryDelegate(DumpfileDelegate):
     # the temporary dumpfiles we create should go in the tmpdir.  But
     # since we delete it ourselves, we don't want to use
     # artifact_manager.
-    DumpfileDelegate.__init__(self, Ctx().get_temp_filename(Ctx().dumpfile))
+    DumpfileDelegate.__init__(self, Ctx().get_temp_filename(DUMPFILE))
 
     self.dumpfile = open(self.dumpfile_path, 'w+b')
     self.loader_pipe = SimplePopen([ self.svnadmin, 'load', '-q',

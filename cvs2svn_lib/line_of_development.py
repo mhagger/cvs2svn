@@ -25,7 +25,7 @@ class LineOfDevelopment:
   """Base class for Trunk and Branch."""
 
   def make_path(self, cvs_file):
-    raise NotImplemented
+    raise NotImplementedError()
 
 
 class Trunk(LineOfDevelopment):

@@ -30,10 +30,10 @@ class CVSItem(object):
     self.cvs_file = cvs_file
 
   def __getstate__(self):
-    raise NotImplemented
+    raise NotImplementedError()
 
   def __setstate__(self, data):
-    raise NotImplemented
+    raise NotImplementedError()
 
 
 class CVSRevision(CVSItem):

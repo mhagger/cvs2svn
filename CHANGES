@@ -1,6 +1,12 @@
 Version 1.5.x (not yet released)
 --------------------------------
 
+ New features:
+ * --co, --cvs, and --sort options to specify the paths to executables.
+
+ Bugs fixed:
+ * Fix issue #104: Allow path to "sort" executable to be specified.
+
  Miscellaneous:
  * Deprecate the --dump-only option (it is now implied by --dumpfile).
 

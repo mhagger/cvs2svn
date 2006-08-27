@@ -117,9 +117,9 @@ USAGE: %(progname)s [-v] [-s svn-repos-path] [-p pass] cvs-repos-path
 def usage():
   sys.stdout.write(usage_message_template % {
       'progname' : os.path.basename(sys.argv[0]),
-      'trunk_base' : Ctx().trunk_base,
-      'branches_base' : Ctx().branches_base,
-      'tags_base' : Ctx().tags_base,
+      'trunk_base' : config.DEFAULT_TRUNK_BASE,
+      'branches_base' : config.DEFAULT_BRANCHES_BASE,
+      'tags_base' : config.DEFAULT_TAGS_BASE,
       'svn_keywords_value' : config.SVN_KEYWORDS_VALUE,
       })
 
@@ -255,6 +255,9 @@ class RunOptions:
     eol_from_mime_type = False
     no_default_eol = False
     keywords_off = False
+    trunk_base = config.DEFAULT_TRUNK_BASE
+    branches_base = config.DEFAULT_BRANCHES_BASE
+    tags_base = config.DEFAULT_TAGS_BASE
 
     ctx.symbol_strategy = RuleBasedSymbolStrategy()
 
@@ -272,11 +275,11 @@ class RunOptions:
       elif opt == '--trunk-only':
         ctx.trunk_only = True
       elif opt == '--trunk':
-        ctx.trunk_base = value
+        trunk_base = value
       elif opt == '--branches':
-        ctx.branches_base = value
+        branches_base = value
       elif opt == '--tags':
-        ctx.tags_base = value
+        tags_base = value
       elif opt == '--no-prune':
         ctx.prune = False
       elif opt == '--encoding':
@@ -388,8 +391,7 @@ class RunOptions:
     # Create the default project (using ctx.trunk, ctx.branches, and
     # ctx.tags):
     ctx.add_project(Project(
-        len(ctx.projects),
-        cvsroot, ctx.trunk_base, ctx.branches_base, ctx.tags_base))
+        len(ctx.projects), cvsroot, trunk_base, branches_base, tags_base))
 
     ctx.symbol_strategy.add_rule(UnambiguousUsageRule())
     if symbol_strategy_default == 'strict':

@@ -45,9 +45,6 @@ class Ctx:
     self.use_cvs = False
     self.svnadmin = "svnadmin"
     self.trunk_only = False
-    self.trunk_base = config.DEFAULT_TRUNK_BASE
-    self.branches_base = config.DEFAULT_BRANCHES_BASE
-    self.tags_base = config.DEFAULT_TAGS_BASE
     self.prune = True
     self.encoding = ["ascii"]
     self.symbol_strategy = None

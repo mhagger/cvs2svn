@@ -8,7 +8,7 @@ cvs2svn \- convert a cvs repository into a subversion repository
 [\fIOPTION\fR]... \fI-s svn-repos-path cvs-repos-path\fR
 .br
 .B cvs2svn
-[\fIOPTION\fR]... \fI--dump-only cvs-repos-path\fR
+[\fIOPTION\fR]... \fI--dumpfile=path cvs-repos-path\fR
 .SH DESCRIPTION
 Create a new Subversion repository based on the version history stored in a
 CVS repository. Each CVS commit will be mirrored in the Subversion
@@ -54,12 +54,9 @@ Load into existing SVN repository, instead of creating a new
 repository.  Please note that you need write permission for the
 repository files.
 .TP
-\fB--dump-only\fR
-Just produce a dumpfile; don't commit to a repos.
-.TP
 \fB--dumpfile\fR=\fIpath\fR
-Set the \fIpath\fR and optionaly name of the dumpfile.  The default is
-\fIcvs2svn-dump\fR in the current directory.
+Just produce a dumpfile; don't commit to an SVN repository.  Use
+\fIpath\fR as the name of the dumpfile.
 .TP
 \fB--dry-run\fR
 Do not create a repository or a dumpfile; just print the details of what

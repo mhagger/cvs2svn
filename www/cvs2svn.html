@@ -298,7 +298,8 @@ directories) before running your conversion.
 
   <tr>
     <td colspan="2">
-      <tt>USAGE: cvs2svn [-s svn-repos-path|--dump-only] cvs-repos-path</tt>
+      <tt>USAGE: cvs2svn [-s svn-repos-path|--dumpfile=PATH]
+      cvs-repos-path</tt>
     </td>
   </tr>
 
@@ -359,16 +360,11 @@ directories) before running your conversion.
   </tr>
 
   <tr>
-    <td align="right"><tt>--dump-only</tt></td>
-    <td>Convert the CVS repository to a Subversion dumpfile instead of
-      a Subversion repository (useful for importing a CVS Repository
-      into an existing Subversion repository).</td>
-  </tr>
-
-  <tr>
     <td align="right"><tt>--dumpfile=PATH</tt></td>
-    <td>Set the PATH of the dumpfile. The default is
-    <tt>cvs2svn-dump</tt> in the current directory.</td>
+    <td>Output the converted CVS repository into a Subversion dumpfile
+      instead of a Subversion repository (useful for importing a CVS
+      Repository into an existing Subversion repository).  PATH is the
+      filename in which to store the dumpfile.</td>
   </tr>
 
   <tr>
@@ -646,7 +642,7 @@ and omitting all branches and tags from the CVS repository, do</p>
 a CVS repository, run it like this:</p>
 
 <pre>
-   $ cvs2svn --dump-only --dumpfile DUMPFILE CVSREPOS
+   $ cvs2svn --dumpfile DUMPFILE CVSREPOS
 </pre>
 
 <p>As it works, cvs2svn will create many temporary files in the

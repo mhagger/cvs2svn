@@ -64,8 +64,7 @@ USAGE: %(progname)s [-v] [-s svn-repos-path] [-p pass] cvs-repos-path
   -p [START]:[END]     execute passes START through END, inclusive
                        (PASS, START, and END can be pass names or numbers)
   --existing-svnrepos  load into existing SVN repository
-  --dump-only          just produce a dumpfile; don't commit to a repos
-  --dumpfile=PATH      name dumpfile to output
+  --dumpfile=PATH      just produce a dumpfile; don't commit to a repos
   --dry-run            do not create a repository or a dumpfile;
                        just print what would happen.
   --use-cvs            use CVS instead of RCS 'co' to extract data
@@ -135,7 +134,7 @@ class RunOptions:
       self.opts, self.args = my_getopt(sys.argv[1:], 'hvqs:p:', [
           "help", "help-passes", "version",
           "verbose", "quiet",
-          "existing-svnrepos", "dump-only", "dumpfile=", "dry-run",
+          "existing-svnrepos", "dumpfile=", "dry-run",
           "use-cvs",
           "svnadmin=",
           "trunk-only",
@@ -154,7 +153,7 @@ class RunOptions:
           "tmpdir=",
           "skip-cleanup",
           "profile",
-          "create",
+          "dump-only", "create",
           "options=",
           ])
     except getopt.GetoptError, e:
@@ -230,8 +229,6 @@ class RunOptions:
         target = value
       elif opt == '--existing-svnrepos':
         existing_svnrepos = True
-      elif opt == '--dump-only':
-        dump_only = True
       elif opt == '--dumpfile':
         dumpfile = value
       elif opt == '--dry-run':
@@ -295,6 +292,11 @@ class RunOptions:
         ctx.tmpdir = value
       elif opt == '--skip-cleanup':
         ctx.skip_cleanup = True
+      elif opt == '--dump-only':
+        dump_only = True
+        sys.stderr.write(warning_prefix +
+            ': The --dump-only option is deprecated (it is implied\n'
+            'by --dumpfile).\n')
       elif opt == '--create':
         sys.stderr.write(warning_prefix +
             ': The behaviour produced by the --create option is now the '
@@ -317,8 +319,11 @@ class RunOptions:
       raise InvalidPassError(
           'Ending pass must not come before starting pass.')
 
-    if (not target) and (not dump_only) and (not ctx.dry_run):
-      raise FatalError("must pass one of '-s' or '--dump-only'.")
+    if dump_only and not dumpfile:
+      raise FatalError("'--dump-only' requires '--dumpfile' to be specified.")
+
+    if (not target) and (not dumpfile) and (not ctx.dry_run):
+      raise FatalError("must pass one of '-s' or '--dumpfile'.")
 
     def not_both(opt1val, opt1name, opt2val, opt2name):
       if opt1val and opt2val:
@@ -326,18 +331,18 @@ class RunOptions:
                          % (opt1name, opt2name,))
 
     not_both(target, '-s',
-             dump_only, '--dump-only')
+             dumpfile, '--dumpfile')
 
     not_both(target, '-s',
              dumpfile, '--dumpfile')
 
-    not_both(dump_only, '--dump-only',
+    not_both(dumpfile, '--dumpfile',
              existing_svnrepos, '--existing-svnrepos')
 
     not_both(bdb_txn_nosync, '--bdb-txn-nosync',
              existing_svnrepos, '--existing-svnrepos')
 
-    not_both(dump_only, '--dump-only',
+    not_both(dumpfile, '--dumpfile',
              bdb_txn_nosync, '--bdb-txn-nosync')
 
     not_both(fs_type, '--fs-type',
@@ -354,8 +359,6 @@ class RunOptions:
         ctx.output_option = NewRepositoryOutputOption(
             target, fs_type=fs_type, bdb_txn_nosync=bdb_txn_nosync)
     else:
-      if dumpfile is None:
-        dumpfile = config.DUMPFILE
       ctx.output_option = DumpfileOutputOption(dumpfile)
 
     ctx.output_option.check()

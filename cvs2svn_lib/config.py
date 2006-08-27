@@ -22,6 +22,12 @@ from cvs2svn_lib.boolean import *
 
 SVN_KEYWORDS_VALUE = 'Author Date Id Revision'
 
+# The default names for the trunk/branches/tags directory for each
+# project:
+DEFAULT_TRUNK_BASE = 'trunk'
+DEFAULT_BRANCHES_BASE = 'branches'
+DEFAULT_TAGS_BASE = 'tags'
+
 # These files are related to the cleaning and sorting of CVS revisions,
 # for commit grouping.  See design-notes.txt for details.
 ALL_REVS_DATAFILE = 'cvs2svn-a-revs.txt'

@@ -358,9 +358,6 @@ class RunOptions:
     not_both(target, '-s',
              dumpfile, '--dumpfile')
 
-    not_both(target, '-s',
-             dumpfile, '--dumpfile')
-
     not_both(dumpfile, '--dumpfile',
              existing_svnrepos, '--existing-svnrepos')
 

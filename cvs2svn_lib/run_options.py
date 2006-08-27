@@ -209,6 +209,10 @@ class RunOptions:
     if options_file_found:
       return
 
+    target = None
+    existing_svnrepos = False
+    dump_only = False
+    dumpfile = config.DUMPFILE
     symbol_strategy_default = 'strict'
     mime_types_file = None
     auto_props_file = None
@@ -221,13 +225,13 @@ class RunOptions:
 
     for opt, value in self.opts:
       if opt == '-s':
-        ctx.target = value
+        target = value
       elif opt == '--existing-svnrepos':
-        ctx.existing_svnrepos = True
+        existing_svnrepos = True
       elif opt == '--dump-only':
-        ctx.dump_only = True
+        dump_only = True
       elif opt == '--dumpfile':
-        ctx.dumpfile = value
+        dumpfile = value
       elif opt == '--dry-run':
         ctx.dry_run = True
       elif opt == '--use-cvs':
@@ -311,7 +315,7 @@ class RunOptions:
       raise InvalidPassError(
           'Ending pass must not come before starting pass.')
 
-    if (not ctx.target) and (not ctx.dump_only) and (not ctx.dry_run):
+    if (not target) and (not dump_only) and (not ctx.dry_run):
       raise FatalError("must pass one of '-s' or '--dump-only'.")
 
     def not_both(opt1val, opt1name, opt2val, opt2name):
@@ -319,32 +323,32 @@ class RunOptions:
         raise FatalError("cannot pass both '%s' and '%s'."
                          % (opt1name, opt2name,))
 
-    not_both(ctx.target, '-s',
-             ctx.dump_only, '--dump-only')
+    not_both(target, '-s',
+             dump_only, '--dump-only')
 
-    not_both(ctx.dump_only, '--dump-only',
-             ctx.existing_svnrepos, '--existing-svnrepos')
+    not_both(dump_only, '--dump-only',
+             existing_svnrepos, '--existing-svnrepos')
 
     not_both(ctx.bdb_txn_nosync, '--bdb-txn-nosync',
-             ctx.existing_svnrepos, '--existing-svnrepos')
+             existing_svnrepos, '--existing-svnrepos')
 
-    not_both(ctx.dump_only, '--dump-only',
+    not_both(dump_only, '--dump-only',
              ctx.bdb_txn_nosync, '--bdb-txn-nosync')
 
     not_both(ctx.fs_type, '--fs-type',
-             ctx.existing_svnrepos, '--existing-svnrepos')
+             existing_svnrepos, '--existing-svnrepos')
 
     if ctx.fs_type and ctx.fs_type != 'bdb' and ctx.bdb_txn_nosync:
       raise FatalError("cannot pass --bdb-txn-nosync with --fs-type=%s."
                        % ctx.fs_type)
 
-    if ctx.target:
-      if ctx.existing_svnrepos:
-        ctx.output_option = ExistingRepositoryOutputOption(ctx.target)
+    if target:
+      if existing_svnrepos:
+        ctx.output_option = ExistingRepositoryOutputOption(target)
       else:
-        ctx.output_option = NewRepositoryOutputOption(ctx.target)
+        ctx.output_option = NewRepositoryOutputOption(target)
     else:
-      ctx.output_option = DumpfileOutputOption(ctx.dumpfile)
+      ctx.output_option = DumpfileOutputOption(dumpfile)
 
     ctx.output_option.check()
 

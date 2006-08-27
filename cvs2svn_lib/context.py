@@ -20,7 +20,6 @@
 import os
 
 from cvs2svn_lib.boolean import *
-from cvs2svn_lib import config
 
 
 class Ctx:
@@ -41,10 +40,6 @@ class Ctx:
     """Set all parameters to their default values."""
 
     self.output_option = None
-    self.target = None
-    self.existing_svnrepos = False
-    self.dump_only = False
-    self.dumpfile = config.DUMPFILE
     self.dry_run = False
     self.use_cvs = False
     self.svnadmin = "svnadmin"

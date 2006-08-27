@@ -224,6 +224,9 @@ class RunOptions:
             self.start_pass = \
             self.pass_manager.get_pass_number(value)
 
+    if self.get_options('--dry-run'):
+      Ctx().dry_run = True
+
     if self.get_options('--profile'):
       self.profiling = True
 
@@ -256,8 +259,6 @@ class RunOptions:
         existing_svnrepos = True
       elif opt == '--dumpfile':
         dumpfile = value
-      elif opt == '--dry-run':
-        ctx.dry_run = True
       elif opt == '--use-cvs':
         ctx.use_cvs = True
       elif opt == '--svnadmin':

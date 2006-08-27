@@ -22,7 +22,6 @@ from __future__ import generators
 import sys
 import os
 import time
-import re
 import cPickle
 
 from cvs2svn_lib.boolean import *

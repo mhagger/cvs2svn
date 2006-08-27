@@ -212,7 +212,7 @@ class RunOptions:
     target = None
     existing_svnrepos = False
     dump_only = False
-    dumpfile = config.DUMPFILE
+    dumpfile = None
     symbol_strategy_default = 'strict'
     mime_types_file = None
     auto_props_file = None
@@ -326,6 +326,9 @@ class RunOptions:
     not_both(target, '-s',
              dump_only, '--dump-only')
 
+    not_both(target, '-s',
+             dumpfile, '--dumpfile')
+
     not_both(dump_only, '--dump-only',
              existing_svnrepos, '--existing-svnrepos')
 
@@ -348,6 +351,8 @@ class RunOptions:
       else:
         ctx.output_option = NewRepositoryOutputOption(target)
     else:
+      if dumpfile is None:
+        dumpfile = config.DUMPFILE
       ctx.output_option = DumpfileOutputOption(dumpfile)
 
     ctx.output_option.check()

@@ -44,7 +44,7 @@ class RepositoryDelegate(DumpfileDelegate):
     DumpfileDelegate.__init__(self, Ctx().get_temp_filename(DUMPFILE))
 
     self.dumpfile = open(self.dumpfile_path, 'w+b')
-    self.loader_pipe = SimplePopen([ Ctx().svnadmin, 'load', '-q',
+    self.loader_pipe = SimplePopen([ Ctx().svnadmin_executable, 'load', '-q',
                                      self.target ], True)
     self.loader_pipe.stdout.close()
     try:

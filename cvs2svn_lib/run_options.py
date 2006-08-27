@@ -271,7 +271,7 @@ class RunOptions:
       elif opt == '--use-cvs':
         ctx.use_cvs = True
       elif opt == '--svnadmin':
-        ctx.svnadmin = value
+        ctx.svnadmin_executable = value
       elif opt == '--trunk-only':
         ctx.trunk_only = True
       elif opt == '--trunk':

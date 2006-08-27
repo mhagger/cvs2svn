@@ -112,7 +112,7 @@ ctx.dry_run = False
 ctx.use_cvs = False
 
 # Set the name (and optionally the path) of the "svnadmin" executable:
-ctx.svnadmin = 'svnadmin'
+ctx.svnadmin_executable = 'svnadmin'
 
 # Change the following line to True if the conversion should only
 # include the trunk of the repository (i.e., all branches and tags

@@ -43,7 +43,7 @@ class Ctx:
     self.output_option = None
     self.dry_run = False
     self.use_cvs = False
-    self.svnadmin = "svnadmin"
+    self.svnadmin_executable = 'svnadmin'
     self.trunk_only = False
     self.prune = True
     self.encoding = ["ascii"]

@@ -84,7 +84,7 @@ class RepositoryOutputOption(OutputOption):
       # Verify that svnadmin can be executed.  The 'help' subcommand
       # should be harmless.
       try:
-        check_command_runs([Ctx().svnadmin, 'help'], 'svnadmin')
+        check_command_runs([Ctx().svnadmin_executable, 'help'], 'svnadmin')
       except CommandFailedException, e:
         raise FatalError(
             '%s\n'
@@ -124,7 +124,8 @@ class NewRepositoryOutputOption(RepositoryOutputOption):
       # repository type doesn't support it, but we definitely want
       # it if BDB is the default.
       run_command('%s create %s "%s"'
-                  % (Ctx().svnadmin, "--bdb-txn-nosync", self.target))
+                  % (Ctx().svnadmin_executable, "--bdb-txn-nosync",
+                     self.target))
     elif self.fs_type == 'bdb':
       # User explicitly specified bdb.
       #
@@ -135,12 +136,14 @@ class NewRepositoryOutputOption(RepositoryOutputOption):
       # But we'll turn no-sync off in self.finish(), unless
       # instructed otherwise.
       run_command('%s create %s %s "%s"'
-                  % (Ctx().svnadmin, "--fs-type=bdb", "--bdb-txn-nosync",
+                  % (Ctx().svnadmin_executable,
+                     "--fs-type=bdb", "--bdb-txn-nosync",
                      self.target))
     else:
       # User specified something other than bdb.
       run_command('%s create %s "%s"'
-                  % (Ctx().svnadmin, "--fs-type=%s" % self.fs_type,
+                  % (Ctx().svnadmin_executable,
+                     "--fs-type=%s" % self.fs_type,
                      self.target))
 
     RepositoryOutputOption.setup(self, repos)

@@ -174,11 +174,12 @@ class RunOptions:
     # them from the list, as they affect the processing of other
     # options:
     options_file_found = False
-
     for (opt, value) in self.get_options('--options'):
       self.process_options_file(value)
       options_file_found = True
 
+    # Now process options that can be used either with or without
+    # --options:
     self.process_common_options()
 
     if options_file_found:
@@ -187,7 +188,12 @@ class RunOptions:
       # arguments are left:
       self.verify_options_consumed()
     else:
+      # --options was not specified.  So we can process other options
+      # that are not compatible with --options.
       self.process_remaining_options()
+
+    # Check for problems with the options:
+    self.check_options()
 
   def process_help_options(self):
     """Process any help-type options."""
@@ -340,10 +346,6 @@ class RunOptions:
 
     cvsroot = self.args[0]
 
-    if not self.start_pass <= self.end_pass:
-      raise InvalidPassError(
-          'Ending pass must not come before starting pass.')
-
     if dump_only and not dumpfile:
       raise FatalError("'--dump-only' requires '--dumpfile' to be specified.")
 
@@ -382,8 +384,6 @@ class RunOptions:
             target, fs_type=fs_type, bdb_txn_nosync=bdb_txn_nosync)
     else:
       ctx.output_option = DumpfileOutputOption(dumpfile)
-
-    ctx.output_option.check()
 
     # Create the default project (using ctx.trunk, ctx.branches, and
     # ctx.tags):
@@ -428,6 +428,27 @@ class RunOptions:
     if not keywords_off:
       ctx.svn_property_setters.append(
           KeywordsPropertySetter(config.SVN_KEYWORDS_VALUE))
+
+  def check_options(self):
+    """Check the the run options are OK.
+
+    This should only be called after all options have been processed."""
+
+    # Convenience var, so we don't have to keep instantiating this Borg.
+    ctx = Ctx()
+
+    if not self.start_pass <= self.end_pass:
+      raise InvalidPassError(
+          'Ending pass must not come before starting pass.')
+
+    if not ctx.dry_run and ctx.output_option is None:
+      raise FatalError('No output option specified.')
+
+    if ctx.output_option is not None:
+      ctx.output_option.check()
+
+    if not ctx.projects:
+      raise FatalError('No project specified.')
 
   def get_options(self, *names):
     """Return a list of (option,value) pairs for options in NAMES.

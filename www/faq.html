@@ -34,6 +34,8 @@
     that <tt>trunk/tags/branches</tt> are inside of
     <tt>foo</tt>?</a></li>
 
+  <li><a href="#cvsnt">How can I convert a CVSNT repository?</a></li>
+
 </ol>
 
 <p><strong>Problems:</strong></p>
@@ -224,6 +226,39 @@ inconvenience.
     <tt>svnadmin</tt> with the <tt>--parent-dir</tt> switch.  See the
     answer to <a href="#oneatatime">How can I convert my CVS
     repository one module at a time?</a> for details.</p>
+
+<h3><a name="cvsnt" title="#cvsnt">How can I convert a CVSNT
+    repository?</a></h3>
+
+  <p><a href="http://www.cvsnt.org/">CVSNT</a> is a version control
+    system that started out by adding support for running CVS under
+    Windows NT.  Since then it has made numerous extensions to the RCS
+    file format, to the point where CVS compatibility does not imply
+    CVSNT compatibility with any degree of certainty.</p>
+
+  <p>cvs2svn <em>might</em> happen to successfully convert a CVSNT
+    repository, especially if the repository has never had any
+    CVSNT-only features used on it, but <b>this use is not supported
+    and should not be expected to work</b>.</p>
+
+  <p>If you want to experiment with converting a CVSNT repository,
+    then please consider the following suggestions:</p>
+
+  <ul>
+    <li>Use cvs2svn's <tt>--use-cvs</tt> option.</li>
+
+    <li>Use CVSNT's version of the <tt>cvs</tt> executable (i.e.,
+      ensure that the first <tt>cvs</tt> program in your $PATH is the
+      one that came with CVSNT).</li>
+
+    <li>Carefully check the result of the conversion before you rely
+      on it, <em>even if the conversion completed without any
+      errors or warnings</em>.</li>
+
+  </ul>
+
+  <p>Patches to support the conversion of CVSNT repositories would, of
+    course, be welcome.</p>
 
 <hr />
 

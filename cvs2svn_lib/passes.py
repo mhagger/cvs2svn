@@ -466,6 +466,8 @@ class AggregateRevsPass(Pass):
       if not (Ctx().trunk_only and isinstance(c_rev.lod, Branch)):
         aggregator.process_revision(c_rev)
     aggregator.flush()
+    if not Ctx().trunk_only:
+      Ctx()._symbolings_logger.close()
 
     stats_keeper.set_svn_rev_count(SVNCommit.revnum - 1)
     stats_keeper.archive()

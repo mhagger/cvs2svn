@@ -207,9 +207,6 @@ class CVSRevisionAggregator:
     self._extract_ready_commits()
     self._commit_ready_commits()
 
-    if not Ctx().trunk_only:
-      Ctx()._symbolings_logger.close()
-
   def _add_pending_symbols(self, c_rev):
     """Add to self._pending_symbols any symbols from C_REV for which
     C_REV is the last CVSRevision.

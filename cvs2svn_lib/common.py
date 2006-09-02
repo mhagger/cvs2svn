@@ -124,8 +124,7 @@ def to_utf8(value, fallback_mode='replace'):
     try:
       return unicode(value, encoding).encode('utf8')
     except ValueError:
-      Log().verbose("Encoding '%s' failed for string '%s'"
-                    % (encoding, value))
+      Log().verbose("Encoding %r failed for string %r" % (encoding, value))
   ### FIXME: The last fallback method should be controled by option.
   if (fallback_mode != 'strict'):
     return unicode(value, Ctx().encoding[0], fallback_mode).encode('utf8')

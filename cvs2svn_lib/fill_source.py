@@ -18,15 +18,17 @@
 
 
 from cvs2svn_lib.boolean import *
+from cvs2svn_lib.context import Ctx
 
 
 class FillSource:
   """Representation of a fill source used by the symbol filler in
   SVNRepositoryMirror."""
 
-  def __init__(self, prefix, node):
+  def __init__(self, project, prefix, node):
     """Create an unscored fill source with a prefix and a key."""
 
+    self.project = project
     self.prefix = prefix
     self.node = node
     self.score = None
@@ -40,10 +42,16 @@ class FillSource:
 
   def __cmp__(self, other):
     """Comparison operator used to sort FillSources in descending
-    score order."""
+    score order.  If the scores are the same, prefer trunk,
+    or alphabetical order by path - these cases are mostly
+    useful to stabilize testsuite results."""
 
     if self.score is None or other.score is None:
       raise TypeError, 'Tried to compare unscored FillSource'
-    return cmp(other.score, self.score)
+
+    return cmp(other.score, self.score) \
+           or cmp(other.prefix == self.project.trunk_path,
+                  self.prefix == self.project.trunk_path) \
+           or cmp(self.prefix, other.prefix)
 
 

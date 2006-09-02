@@ -447,7 +447,7 @@ class SVNRepositoryMirror:
         continue
       for entry, node in source.node.items():
         src_entries.setdefault(entry, []).append(
-            FillSource(source.prefix, node))
+            FillSource(source.project, source.prefix, node))
 
     if prune_ok:
       # Delete the entries in DEST_ENTRIES that are not in src_entries.

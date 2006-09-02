@@ -209,7 +209,7 @@ class SymbolFillingGuide:
       raise
     elif self.symbol.project.is_source(start_svn_path):
       # This is a legitimate source.  Add it to list.
-      return [ FillSource(start_svn_path, start_node) ]
+      return [ FillSource(self.symbol.project, start_svn_path, start_node) ]
     else:
       # This is a directory that is not a legitimate source.  (That's
       # OK because it hasn't changed directly.)  But directories

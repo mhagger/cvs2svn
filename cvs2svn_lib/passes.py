@@ -436,10 +436,10 @@ class AggregateRevsPass(Pass):
   This pass was formerly known as pass5."""
 
   def register_artifacts(self):
-    self._register_temp_file(config.SYMBOL_OPENINGS_CLOSINGS)
     self._register_temp_file(config.SVN_COMMITS_DB)
     self._register_temp_file(config.CVS_REVS_TO_SVN_REVNUMS)
     if not Ctx().trunk_only:
+      self._register_temp_file(config.SYMBOL_OPENINGS_CLOSINGS)
       self._register_temp_file_needed(config.SYMBOL_LAST_CVS_REVS_DB)
     self._register_temp_file_needed(config.CVS_FILES_DB)
     self._register_temp_file_needed(config.CVS_ITEMS_RESYNC_DB)
@@ -456,7 +456,8 @@ class AggregateRevsPass(Pass):
     Ctx()._cvs_items_db = CVSItemDatabase(
         artifact_manager.get_temp_file(config.CVS_ITEMS_RESYNC_DB),
         DB_OPEN_READ)
-    Ctx()._symbolings_logger = SymbolingsLogger()
+    if not Ctx().trunk_only:
+      Ctx()._symbolings_logger = SymbolingsLogger()
     aggregator = CVSRevisionAggregator()
     for line in file(
             artifact_manager.get_temp_file(config.SORTED_REVS_DATAFILE)):
@@ -477,7 +478,7 @@ class SortSymbolsPass(Pass):
   def register_artifacts(self):
     if not Ctx().trunk_only:
       self._register_temp_file(config.SYMBOL_OPENINGS_CLOSINGS_SORTED)
-    self._register_temp_file_needed(config.SYMBOL_OPENINGS_CLOSINGS)
+      self._register_temp_file_needed(config.SYMBOL_OPENINGS_CLOSINGS)
 
   def run(self, stats_keeper):
     Log().quiet("Sorting symbolic name source revisions...")

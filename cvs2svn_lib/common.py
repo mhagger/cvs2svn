@@ -114,19 +114,22 @@ def format_date(date):
   return time.strftime("%Y-%m-%dT%H:%M:%S.000000Z", time.gmtime(date))
 
 
-def to_utf8(value, mode='replace'):
+def to_utf8(value, fallback_mode='replace'):
   """Encode (as Unicode) VALUE, trying the encodings in Ctx().encoding
-  as valid source encodings.  Raise UnicodeError on failure of all
-  source encodings."""
+  as valid source encodings.  If all of the encodings fail, then
+  encode using the first encoding with FALLBACK_MODE (unless
+  FALLBACK_MODE=='strict', in which case raise a UnicodeError)."""
 
-  ### FIXME: The 'replace' default mode should be an option,
-  ### like --encoding is.
   for encoding in Ctx().encoding:
     try:
-      return unicode(value, encoding, mode).encode('utf8')
-    except UnicodeError:
+      return unicode(value, encoding).encode('utf8')
+    except ValueError:
       Log().verbose("Encoding '%s' failed for string '%s'"
                     % (encoding, value))
-  raise UnicodeError
+  ### FIXME: The last fallback method should be controled by option.
+  if (fallback_mode != 'strict'):
+    return unicode(value, Ctx().encoding[0], fallback_mode).encode('utf8')
+  else:
+    raise UnicodeError
 
 

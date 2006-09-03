@@ -229,18 +229,6 @@ class _SymbolDataCollector:
     # for tags that apply to that revision.
     self.tags_data = { }
 
-  def _transform_symbol(self, name):
-    """Transform the symbol NAME using the renaming rules specified
-    with --symbol-transform.  Return the transformed symbol name."""
-
-    for (pattern, replacement) in Ctx().symbol_transforms:
-      newname = pattern.sub(replacement, name)
-      if newname != name:
-        Log().warn("   symbol '%s' transformed to '%s'" % (name, newname))
-        name = newname
-
-    return name
-
   def _add_branch(self, name, branch_number):
     """Record that BRANCH_NUMBER is the branch number for branch NAME,
     and derive and record the revision from which NAME sprouts.
@@ -289,7 +277,7 @@ class _SymbolDataCollector:
     determine by inspection whether it is a branch or a tag, and
     record it in the right places."""
 
-    name = self._transform_symbol(name)
+    name = self.cvs_file.project.transform_symbol(name)
 
     # Check that the symbol is not already defined, which can easily
     # happen when --symbol-transform is used:

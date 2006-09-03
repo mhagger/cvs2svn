@@ -27,6 +27,7 @@ from cvs2svn_lib.common import path_join
 from cvs2svn_lib.common import path_split
 from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.common import FatalError
+from cvs2svn_lib.log import Log
 from cvs2svn_lib.cvs_repository import CVSRepositoryViaCVS
 from cvs2svn_lib.cvs_repository import CVSRepositoryViaRCS
 from cvs2svn_lib.cvs_file import CVSFile
@@ -222,5 +223,17 @@ class Project:
 
     return path_join(self.get_branch_path(branch_symbol),
                      self._relative_name(cvs_path))
+
+  def transform_symbol(self, name):
+    """Transform the symbol NAME using the renaming rules specified
+    with --symbol-transform.  Return the transformed symbol name."""
+
+    for (pattern, replacement) in Ctx().symbol_transforms:
+      newname = pattern.sub(replacement, name)
+      if newname != name:
+        Log().warn("   symbol '%s' transformed to '%s'" % (name, newname))
+        name = newname
+
+    return name
 
 

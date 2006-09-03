@@ -402,7 +402,7 @@ class RunOptions:
     # Create the default project (using ctx.trunk, ctx.branches, and
     # ctx.tags):
     ctx.add_project(Project(
-        len(ctx.projects), cvsroot, trunk_base, branches_base, tags_base,
+        cvsroot, trunk_base, branches_base, tags_base,
         symbol_transforms=symbol_transforms))
 
     ctx.symbol_strategy.add_rule(UnambiguousUsageRule())

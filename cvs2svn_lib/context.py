@@ -61,6 +61,8 @@ class Ctx:
   def add_project(self, project):
     """Add a project to be converted."""
 
+    assert project.id is None
+    project.id = len(self.projects)
     self.projects.append(project)
 
   def get_temp_filename(self, basename):

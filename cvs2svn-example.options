@@ -249,9 +249,6 @@ ctx.tmpdir = 'tmp'
 # Now use stanzas like the following to define CVS projects that
 # should be converted.  The arguments are:
 #
-# - A unique id (this should be an integer that counts up starting
-#   from 0).
-#
 # - The filesystem path of the project within the CVS repository.
 #
 # - The path that should be used for the "trunk" directory of this
@@ -278,7 +275,6 @@ ctx.tmpdir = 'tmp'
 # Create the default project (using ctx.trunk, ctx.branches, and ctx.tags):
 ctx.add_project(
     Project(
-        0,
         'test-data/main-cvsrepos',
         'trunk',
         'branches',
@@ -294,7 +290,6 @@ ctx.add_project(
 # and projA/tags:
 #ctx.add_project(
 #    Project(
-#        1,
 #        'my/cvsrepo/projA',
 #        'projA/trunk',
 #        'projA/branches',

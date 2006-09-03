@@ -76,16 +76,15 @@ OS_SEP_PLUS_ATTIC = os.sep + 'Attic'
 class Project:
   """A project within a CVS repository."""
 
-  def __init__(self, id, project_cvs_repos_path,
+  def __init__(self, project_cvs_repos_path,
                trunk_path, branches_path, tags_path,
                symbol_transforms):
     """Create a new Project record.
 
-    ID is a unique id for this project, also used as its index in
-    Ctx().projects.  PROJECT_CVS_REPOS_PATH is the main CVS directory
-    for this project (within the filesystem).  TRUNK_PATH,
-    BRANCHES_PATH, and TAGS_PATH are the full, normalized directory
-    names in svn for the corresponding part of the repository.
+    PROJECT_CVS_REPOS_PATH is the main CVS directory for this project
+    (within the filesystem).  TRUNK_PATH, BRANCHES_PATH, and TAGS_PATH
+    are the full, normalized directory names in svn for the
+    corresponding part of the repository.
 
     SYMBOL_TRANSFORMS is a list of (pattern, replacement) tuples,
     where each pattern is a regular expression that is matched against
@@ -93,7 +92,9 @@ class Project:
     used if the regexp matches.  The replacement can include
     substitution patterns (e.g., r'\1' or r'\g<name>')."""
 
-    self.id = id
+    # A unique id for this project, also used as its index in
+    # Ctx().projects.  This field is filled in by Ctx.add_project().
+    self.id = None
     self.project_cvs_repos_path = os.path.normpath(project_cvs_repos_path)
 
     if Ctx().use_cvs:

@@ -1,0 +1,13 @@
+# (Be in -*- python -*- mode.)
+
+# As a partial check that the example options file is functional, we
+# use it as the basis for this test.  We only need to overwrite the
+# output option to get the output repository in the location expected
+# by the test infrastructure.
+
+execfile('cvs2svn-example.options')
+
+ctx.output_option = NewRepositoryOutputOption(
+    'tmp/main--options=cvs2svn.options-svnrepos',
+    )
+

@@ -372,7 +372,7 @@ def sym_log_msg(symbolic_name, is_tag=None):
   return log
 
 
-def make_conversion_id(name, args, passbypass):
+def make_conversion_id(name, args, passbypass, options_file=None):
   """Create an identifying tag for a conversion.
 
   The return value can also be used as part of a filesystem path.
@@ -383,6 +383,9 @@ def make_conversion_id(name, args, passbypass):
 
   PASSBYPASS is a boolean indicating whether the conversion is to be
   run one pass at a time.
+
+  If OPTIONS_FILE is specified, it is an options file that will be
+  used for the conversion.
 
   The 1-to-1 mapping between cvs2svn command parameters and
   conversion_ids allows us to avoid running the same conversion more
@@ -399,10 +402,13 @@ def make_conversion_id(name, args, passbypass):
     sanitized_arg = arg
     for a, b in _win32_fname_mapping.items():
       sanitized_arg = sanitized_arg.replace(a, b)
-    conv_id = conv_id + sanitized_arg
+    conv_id += sanitized_arg
 
   if passbypass:
-    conv_id = conv_id + '-passbypass'
+    conv_id += '-passbypass'
+
+  if options_file is not None:
+    conv_id += '--options=%s' % options_file
 
   return conv_id
 
@@ -435,7 +441,8 @@ class Conversion:
 
     _svnrepos -- the basename of the svn repository (within tmp_dir)."""
 
-  def __init__(self, conv_id, name, error_re, passbypass, symbols, args):
+  def __init__(self, conv_id, name, error_re, passbypass, symbols, args,
+               options_file=None):
     self.conv_id = conv_id
     self.name = name
     self.symbols = symbols
@@ -453,12 +460,20 @@ class Conversion:
     erase(self.repos)
     erase(self._wc)
 
-    args.extend([
-        '--tmpdir=%s' % tmp_dir,
-        '--bdb-txn-nosync',
-        '-s', self.repos,
-        cvsrepos,
-        ])
+    if options_file is None:
+      self.options_file = None
+      args.extend([
+          '--tmpdir=%s' % tmp_dir,
+          '--bdb-txn-nosync',
+          '-s', self.repos,
+          cvsrepos,
+          ])
+    else:
+      self.options_file = os.path.join(cvsrepos, options_file)
+      args.extend([
+          '--options=%s' % self.options_file,
+          ])
+
     try:
       if passbypass:
         for p in range(1, 10):
@@ -537,7 +552,8 @@ class Conversion:
 already_converted = { }
 
 def ensure_conversion(name, error_re=None, passbypass=None,
-                      trunk=None, branches=None, tags=None, args=None):
+                      trunk=None, branches=None, tags=None,
+                      args=None, options_file=None):
   """Convert CVS repository NAME to Subversion, but only if it has not
   been converted before by this invocation of this script.  If it has
   been converted before, return the Conversion object from the
@@ -561,7 +577,11 @@ def ensure_conversion(name, error_re=None, passbypass=None,
   being one option, e.g., '--trunk-only'.  If the option takes an
   argument, include it directly, e.g., '--mime-types=PATH'.  Arguments
   are passed to cvs2svn in the order that they appear in ARGS.
-  """
+
+  If OPTIONS_FILE is specified, then it should be the name of a file
+  within the main directory of the cvs repository associated with this
+  test.  It is passed to cvs2svn using the --options option (which
+  suppresses some other options that are incompatible with --options)."""
 
   if args is None:
     args = []
@@ -583,7 +603,7 @@ def ensure_conversion(name, error_re=None, passbypass=None,
   else:
     args.append('--tags=%s' % (tags,))
 
-  conv_id = make_conversion_id(name, args, passbypass)
+  conv_id = make_conversion_id(name, args, passbypass, options_file)
 
   if conv_id not in already_converted:
     try:
@@ -592,7 +612,7 @@ def ensure_conversion(name, error_re=None, passbypass=None,
       already_converted[conv_id] = Conversion(
           conv_id, name, error_re, passbypass,
           {'trunk' : trunk, 'branches' : branches, 'tags' : tags},
-          args)
+          args, options_file)
     except svntest.Failure:
       # Remember the failure so that a future attempt to run this conversion
       # does not bother to retry, but fails immediately.
@@ -2227,6 +2247,12 @@ def issue_106():
   conv = ensure_conversion('issue-106')
 
 
+def options_option():
+  "use of the --options option"
+
+  conv = ensure_conversion('main', options_file='cvs2svn.options')
+
+
 #----------------------------------------------------------------------
 
 ########################################################################
@@ -2317,6 +2343,7 @@ test_list = [ None,
               XFail(issue_99),
               XFail(issue_100),
               XFail(issue_106),
+              options_option,
               ]
 
 if __name__ == '__main__':

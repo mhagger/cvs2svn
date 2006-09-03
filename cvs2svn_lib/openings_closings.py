@@ -109,9 +109,8 @@ class SymbolingsLogger:
       branch_id = '*'
     else:
       branch_id = '%x' % branch_id
-    # 8 places gives us 999,999,999 SVN revs.  That *should* be enough.
     self.symbolings.write(
-        '%x %.8d %s %s %x\n'
+        '%x %d %s %s %x\n'
         % (symbol_id, svn_revnum, type, branch_id, cvs_file.id))
 
   def close(self):

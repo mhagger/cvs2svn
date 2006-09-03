@@ -59,7 +59,7 @@ from cvs2svn_lib.collect_data import CollectData
 from cvs2svn_lib.process import run_command
 
 
-def sort_file(infilename, outfilename):
+def sort_file(infilename, outfilename, options=''):
   """Sort file INFILENAME, storing the results to OUTFILENAME."""
 
   # GNU sort will sort our dates differently (incorrectly!) if our
@@ -72,8 +72,8 @@ def sort_file(infilename, outfilename):
     # case insensitive and cannot be used, and since it does not
     # understand the -T option and dies if we try to use it, there is
     # no risk that we use that sort by accident.
-    run_command('%s -T %s %s > %s'
-                % (Ctx().sort_executable, Ctx().tmpdir,
+    run_command('%s -T %s %s %s > %s'
+                % (Ctx().sort_executable, Ctx().tmpdir, options,
                    infilename, outfilename))
   finally:
     if lc_all_tmp is None:
@@ -489,7 +489,8 @@ class SortSymbolsPass(Pass):
       sort_file(
           artifact_manager.get_temp_file(config.SYMBOL_OPENINGS_CLOSINGS),
           artifact_manager.get_temp_file(
-              config.SYMBOL_OPENINGS_CLOSINGS_SORTED))
+              config.SYMBOL_OPENINGS_CLOSINGS_SORTED),
+          options='-k1,1 -k2,2n -k3')
     Log().quiet("Done")
 
 

@@ -281,10 +281,10 @@ This pass does the following:
 
    For example:
 
-       1c 00000234 O * 1a7
-       34 00000245 O * 1a9
-       18a 00000241 C 34 1a7
-       122 00000201 O 7e 1b3
+       1c 234 O * 1a7
+       34 245 O * 1a9
+       18a 241 C 34 1a7
+       122 201 O 7e 1b3
 
    Here is what the columns mean:
 
@@ -292,9 +292,7 @@ This pass does the following:
               CVS Revision (there can be multiples per CVS rev).
 
    SVN_REVNUM: The Subversion revision number that is the opening or
-               closing for this SYMBOLIC_NAME.  This number is written
-               with a fixed number of digits so that the file sorts
-               correctly.
+               closing for this SYMBOLIC_NAME.
 
    TYPE: "O" for Openings and "C" for Closings.
 

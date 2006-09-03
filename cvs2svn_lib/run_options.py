@@ -67,6 +67,7 @@ USAGE: %(progname)s [-v] [-s svn-repos-path] [-p pass] cvs-repos-path
   --version            print the version number
   --verbose, -v        verbose
   --quiet, -q          quiet
+  --options=PATH       read the conversion options from the specified path
   -s PATH              path for SVN repos
   -p PASS              execute only specified PASS
   -p [START]:[END]     execute passes START through END, inclusive

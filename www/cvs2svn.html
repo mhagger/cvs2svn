@@ -286,6 +286,57 @@ directories) before running your conversion.
 
 <hr />
 
+<h1>Command line vs. options file</h1>
+<a name="cmd-vs-options"></a>
+
+<p>Starting with cvs2svn version 1.5, there are two ways to specify
+the options that define a conversion: via the cvs2svn command line, or
+via an options file.  The command line is useful for simple
+conversions, but the options file method is recommended for nontrivial
+conversions as it gives the user more flexibility.</p>
+
+<h2>Command line method</h2>
+<a name="cmd-line-method"></a>
+
+<p>A command-line conversion allows the use of all of the command line
+options listed <a href="#cmd-ref">below</a> (except for
+<tt>--options</tt>).  This method allows almost all of the built-in
+conversion options to be selected, with the primary limitation that it
+does not support multiproject conversions.  However, it may require a
+<em>long</em> command line to specify all of the options for a
+complicated conversion.</p>
+
+<h2>Options file method</h2>
+<a name="options-file-method"></a>
+
+<p>The options file method allows full control of the conversion
+process, including multiproject conversions.  It also allows expert
+users to customize the conversion even more radically by writing
+Python code.  Finally, the options file used in the conversion can be
+retained as permanent record of the options used in a conversion.</p>
+
+<p>To use the options file method, you need to create a file defining
+all of the options that are to be used for the conversion.  A
+heavily-commented sample options file,
+<tt>cvs2svn-example.options</tt>, is included in the cvs2svn
+distribution.  The easiest way to create your own options file is to
+make a copy of the sample file and modify it as directed by the
+comments in the file.</p>
+
+<p>To start a conversion using an options file, invoke cvs2svn like
+this:</p>
+
+<pre>
+   $ cvs2svn --options=OPTIONSFILE
+</pre>
+
+<p>Only the following options are allowed in combination with
+<tt>--options</tt>: <tt>-h/--help</tt>, <tt>--help-passes</tt>,
+<tt>--version</tt>, <tt>-v/--verbose</tt>, <tt>-q/--quiet</tt>,
+<tt>-p</tt>, <tt>--dry-run</tt>, and <tt>--profile</tt>.</p>
+
+<hr />
+
 <h1>Command line reference</h1>
 <a name="cmd-ref"></a>
 
@@ -294,8 +345,9 @@ directories) before running your conversion.
 
   <tr>
     <td colspan="2">
-      <tt>USAGE: cvs2svn [-s svn-repos-path|--dumpfile=PATH]
-      cvs-repos-path</tt>
+      USAGE:<br/>
+      <tt>cvs2svn [-s svn-repos-path|--dumpfile=PATH] cvs-repos-path</tt><br/>
+      <tt>cvs2svn --options=PATH</tt><br/>
     </td>
   </tr>
 
@@ -326,6 +378,13 @@ directories) before running your conversion.
     <td>Tell cvs2svn to operate in quiet mode, printing little more
       than pass starts and stops to STDOUT.  This option may be
       specified twice to suppress all non-error output.</td>
+  </tr>
+
+  <tr>
+    <td align="right"><tt>--options=PATH</tt></td>
+    <td>Read the conversion options from the specified file.  See
+      section <a href="#options-file-method">options file method</a>
+      for more information.</td>
   </tr>
 
   <tr>
@@ -661,12 +720,19 @@ a CVS repository, run it like this:</p>
    $ cvs2svn --dumpfile DUMPFILE CVSREPOS
 </pre>
 
+<p>To use an options file to define all of the conversion parameters,
+specify <tt>--options</tt>:</p>
+
+<pre>
+   $ cvs2svn --options OPTIONSFILE
+</pre>
+
 <p>As it works, cvs2svn will create many temporary files in the
-current directory.  This is normal.  If the entire conversion is
-successful, however, those tempfiles will be automatically removed.
-If the conversion is not successful, or if you specify the
-'--skip-cleanup' option, cvs2svn will leave the temporary files behind
-for possible debugging.</p>
+current directory (or the directory specified with <tt>--tmpdir</tt>).
+This is normal.  If the entire conversion is successful, however,
+those tempfiles will be automatically removed.  If the conversion is
+not successful, or if you specify the '--skip-cleanup' option, cvs2svn
+will leave the temporary files behind for possible debugging.</p>
 
 </div>
 </body>

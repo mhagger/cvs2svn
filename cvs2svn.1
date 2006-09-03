@@ -32,6 +32,14 @@ Print more information while running.
 Print less information while running.  This option may be specified
 twice to suppress all non-error output.
 .TP
+\fB--options\fR=\fIpath\fR
+Read the conversion options from \fIpath\fR instead of from the
+command line.  See the documentation for more information.  Only the
+following options are allowed in combination with \fB--options\fR:
+\fB-h\fR/\fB--help\fR, \fB--help-passes\fR, \fB--version\fR,
+\fB-v\fR/\fB--verbose\fR, \fB-q\fR/\fB--quiet\fR, \fB-p\fR,
+\fB--dry-run\fR, and \fB--profile\fR.
+.TP
 \fB-s\fR \fIpath\fR
 Load CVS repository into the Subversion repository located at PATH. If there
 is no Subversion repository at \fIpath\fR, create a new one.

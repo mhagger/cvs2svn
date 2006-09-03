@@ -114,91 +114,19 @@ repository at <tt>/path/foo-svn</tt> that includes only the
 projects in my CVS repository into a single Subversion
 repository?</a></h3>
 
-<p>To convert multiple projects from a single CVS repository into a
-single Subversion repository, then you have to use cvs2svn once for
-each project, storing the output into a "dumpfile".  Then you use
-<tt>svnadmin</tt> to load each dumpfile, one after the other, into a
-project directory created within the Subversion repository.
-</p>
-
-<p><b>NOTE:</b> importing projects one at a time
-into a single Subversion repository will likely break date-based range
-commands (e.g. <tt>svn diff -r {2002-02-17:2002-03-18}</tt>) since
-Subversion does a binary search through the repository to look for
-dates.  While this is not the end of the world, it can be a minor
-inconvenience.
-</p>
-
-<p>Example:
-</p>
-
-<ol>
-  <li>If the svn repository doesn't already exist, create it:
-    <pre>
-      svnadmin create /path/to/svnrepos
-    </pre></li>
-
-  <li>Remember to <b>Make a backup</b> before starting.  Never run
-    cvs2svn on a live CVS repository--always work on a copy of your
-    repository.</li>
-
-  <li>Run cvs2svn against one of the modules you want converted:
-    <pre>
-      # Copy the CVS modules into a temporary cvs repository.
-      # This is not absolutely necessary, but it's for safety's sake.
-      $ mkdir ~/newcvsrepo
-      $ mkdir ~/newcvsrepo/CVSROOT # needed by cvs2svn --use-cvs
-      $ cp -r /oldcvsrepo/projectA ~/newcvsrepo
-
-      # Create a dumpfile containing the new CVS repository contents
-      $ mkdir ~/svndump; cd ~/svndump
-      $ cvs2svn --dump-only ~/newcvsrepo/projectA
-    </pre></li>
-
-
-  <li>Import the dump into the Subversion repository:
-    <pre>
-      # Make a directory for the project.
-      $ svn mkdir file:///path/to/svnrepos/projectA -m "Added projectA directory."
-
-      # Use "svnadmin load" to load the dumpfile.
-      $ cd ~/svndump
-      $ svnadmin --parent-dir projectA load /path/to/svnrepos &lt; cvs2svn-dump
-    </pre></li>
-
-  <li>Repeat steps 3 and 4 for each module you want to convert.</li>
-
-</ol>
-
-
-<h3><a name="inverted" title="#inverted">How can I convert project
-    <tt>foo</tt> so that <tt>trunk/tags/branches</tt> are inside of
-    <tt>foo</tt>?</a></h3>
-
-  <p>Given a CVS repository with the layout:</p>
+<p>As of version 1.5, cvs2svn supports multiproject conversions
+provided you use the <a
+href="cvs2svn.html#options-file-method">options file method</a> to
+start the conversion.  In your options file, you simply call
+<tt>ctx.add_project()</tt> once for each sub-project in your
+repository.  For example, if your CVS repository has the layout:</p>
 
 <pre>
   /project_a
   /project_b
 </pre>
 
-  <p>cvs2svn will produce a Subversion repository with the following
-    layout:</p>
-
-<pre>
-   trunk/
-      project_a/
-         ...
-      project_b/
-         ...
-   tags/
-      ...
-   branches/
-      ...
-</pre>
-
-  <p>However, you may want your Subversion repository to be laid out
-    like this:</p>
+  <p>and you want your Subversion repository to be laid out like this:</p>
 
 <pre>
    project_a/
@@ -217,15 +145,65 @@ inconvenience.
          ...
 </pre>
 
-  <p>Currently, cvs2svn does not support converting a repository in
-    this manner (see <a
-    href="http://cvs2svn.tigris.org/issues/show_bug.cgi?id=86">Issue
-    #86</a> for details), however, there is a workaround.  You can
-    convert your repository one project (or module) at a time and load
-    the individual dumpfiles into your Subversion repository using
-    <tt>svnadmin</tt> with the <tt>--parent-dir</tt> switch.  See the
-    answer to <a href="#oneatatime">How can I convert my CVS
-    repository one module at a time?</a> for details.</p>
+<p>then you need to have a section like this in your options file:</p>
+
+<pre>
+ctx.add_project(
+    Project(
+        'my/cvsrepo/project_a',
+        'project_a/trunk',
+        'project_a/branches',
+        'project_a/tags',
+        symbol_transforms=[
+            #...whatever...
+            ],
+        )
+    )
+ctx.add_project(
+    Project(
+        'my/cvsrepo/project_b',
+        'project_b/trunk',
+        'project_b/branches',
+        'project_b/tags',
+        symbol_transforms=[
+            #...whatever...
+            ],
+        )
+    )
+</pre>
+
+<h3><a name="inverted" title="#inverted">How can I convert project
+    <tt>foo</tt> so that <tt>trunk/tags/branches</tt> are inside of
+    <tt>foo</tt>?</a></h3>
+
+  <p>If <tt>foo</tt> is the only project that you want to convert,
+    then either run cvs2svn like this:</p>
+
+<pre>
+   $ cvs2svn --trunk=foo/trunk --branches=foo/branches --tags=foo/tags CVSREPO/foo
+</pre>
+
+  <p>or use an options file that defines a project like this:</p>
+
+<pre>
+ctx.add_project(
+    Project(
+        'my/cvsrepo/foo',
+        'foo/trunk',
+        'foo/branches',
+        'foo/tags',
+        symbol_transforms=[
+            #...whatever...
+            ],
+        )
+    )
+</pre>
+
+  <p>If <tt>foo</tt> is not the only project that you want to convert,
+    then you need to do a multiproject conversion; see <a
+    href="#onetoone">How can I convert separate projects in my CVS
+    repository into a single Subversion repository?</a> for more
+    information.</p>
 
 <h3><a name="cvsnt" title="#cvsnt">How can I convert a CVSNT
     repository?</a></h3>

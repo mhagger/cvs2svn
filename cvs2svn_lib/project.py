@@ -77,14 +77,21 @@ class Project:
   """A project within a CVS repository."""
 
   def __init__(self, id, project_cvs_repos_path,
-               trunk_path, branches_path, tags_path):
+               trunk_path, branches_path, tags_path,
+               symbol_transforms):
     """Create a new Project record.
 
     ID is a unique id for this project, also used as its index in
     Ctx().projects.  PROJECT_CVS_REPOS_PATH is the main CVS directory
     for this project (within the filesystem).  TRUNK_PATH,
     BRANCHES_PATH, and TAGS_PATH are the full, normalized directory
-    names in svn for the corresponding part of the repository."""
+    names in svn for the corresponding part of the repository.
+
+    SYMBOL_TRANSFORMS is a list of (pattern, replacement) tuples,
+    where each pattern is a regular expression that is matched against
+    symbol names and replacement is replacement text that should be
+    used if the regexp matches.  The replacement can include
+    substitution patterns (e.g., r'\1' or r'\g<name>')."""
 
     self.id = id
     self.project_cvs_repos_path = os.path.normpath(project_cvs_repos_path)
@@ -110,6 +117,12 @@ class Project:
     verify_paths_disjoint(self.trunk_path, self.branches_path, self.tags_path)
     self._unremovable_paths = [
         self.trunk_path, self.branches_path, self.tags_path]
+
+    # A list of transformation rules (regexp, replacement) applied to
+    # symbol names in this project.
+    self.symbol_transforms = [
+        (re.compile(pattern), replacement,)
+        for (pattern, replacement,) in symbol_transforms]
 
   def __cmp__(self, other):
     return cmp(self.id, other.id)
@@ -228,7 +241,7 @@ class Project:
     """Transform the symbol NAME using the renaming rules specified
     with --symbol-transform.  Return the transformed symbol name."""
 
-    for (pattern, replacement) in Ctx().symbol_transforms:
+    for (pattern, replacement) in self.symbol_transforms:
       newname = pattern.sub(replacement, name)
       if newname != name:
         Log().warn("   symbol '%s' transformed to '%s'" % (name, newname))

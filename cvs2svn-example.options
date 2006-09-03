@@ -135,13 +135,6 @@ ctx.encoding = [
     'ascii',
     ]
 
-# Add lines to the following list to specify that symbols matching a
-# regular expression should be renamed:
-ctx.symbol_transforms = [
-  #(re.compile(r'release-(\d+)_(\d+)'), r'release-\1.\2'),
-  #(re.compile(r'release-(\d+)_(\d+)_(\d+)'), r'release-\1.\2.\3'),
-  ]
-
 # The basic strategy for converting symbols (this should usually be
 # left unchanged).  A CVS symbol might be used as a tag in one file
 # and as a branch in another file.  The purpose of ctx.symbol_strategy
@@ -269,6 +262,18 @@ ctx.tmpdir = 'tmp'
 #
 # - The path that should be used for the "tags" directory of this
 #   project within the SVN repository.
+#
+# - A list of symbol transformations that can be used to rename
+#   symbols in this project.  Each entry is a tuple (pattern,
+#   replacement), where pattern is a Python regular expression pattern
+#   and replacement is the text that should replace the pattern.  Each
+#   pattern is matched against each symbol name.  If the pattern
+#   matches, then it is replaced with the corresponding replacement
+#   text.  The replacement can include substitution patterns (e.g.,
+#   r'\1' or r'\g<name>').  Typically you will want to use raw strings
+#   (strings with a preceding 'r', like shown in the examples) for the
+#   regexp and its replacement to avoid backslash substitution within
+#   those strings."""
 
 # Create the default project (using ctx.trunk, ctx.branches, and ctx.tags):
 ctx.add_project(
@@ -278,6 +283,10 @@ ctx.add_project(
         'trunk',
         'branches',
         'tags',
+        symbol_transforms=[
+            #(r'^release-(\d+)_(\d+)$', r'release-\1.\2'),
+            #(r'^release-(\d+)_(\d+)_(\d+)$', r'release-\1.\2.\3'),
+            ],
         )
     )
 
@@ -290,6 +299,10 @@ ctx.add_project(
 #        'projA/trunk',
 #        'projA/branches',
 #        'projA/tags',
+#        symbol_transforms=[
+#            #(r'^release-(\d+)_(\d+)$', r'release-\1.\2'),
+#            #(r'^release-(\d+)_(\d+)_(\d+)$', r'release-\1.\2.\3'),
+#            ],
 #        )
 #    )
 

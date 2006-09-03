@@ -51,7 +51,6 @@ class Ctx:
     self.prune = True
     self.encoding = ["ascii"]
     self.symbol_strategy = None
-    self.symbol_transforms = []
     self.username = None
     self.svn_property_setters = []
     self.tmpdir = '.'

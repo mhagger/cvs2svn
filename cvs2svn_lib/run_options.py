@@ -261,6 +261,7 @@ class RunOptions:
     trunk_base = config.DEFAULT_TRUNK_BASE
     branches_base = config.DEFAULT_BRANCHES_BASE
     tags_base = config.DEFAULT_TAGS_BASE
+    symbol_transforms = []
 
     ctx.symbol_strategy = RuleBasedSymbolStrategy()
 
@@ -299,10 +300,11 @@ class RunOptions:
       elif opt == '--symbol-transform':
         [pattern, replacement] = value.split(":")
         try:
-          pattern = re.compile(pattern)
+          # Verify that the pattern is valid:
+          re.compile(pattern)
         except re.error, e:
           raise FatalError("'%s' is not a valid regexp." % (pattern,))
-        ctx.symbol_transforms.append((pattern, replacement,))
+        symbol_transforms.append((pattern, replacement,))
       elif opt == '--username':
         ctx.username = value
       elif opt == '--fs-type':
@@ -400,7 +402,8 @@ class RunOptions:
     # Create the default project (using ctx.trunk, ctx.branches, and
     # ctx.tags):
     ctx.add_project(Project(
-        len(ctx.projects), cvsroot, trunk_base, branches_base, tags_base))
+        len(ctx.projects), cvsroot, trunk_base, branches_base, tags_base,
+        symbol_transforms=symbol_transforms))
 
     ctx.symbol_strategy.add_rule(UnambiguousUsageRule())
     if symbol_strategy_default == 'strict':

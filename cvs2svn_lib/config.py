@@ -114,10 +114,10 @@ SVN_COMMITS_DB = 'cvs2svn-svn-commits.db'
 # large enough to be efficient without wasting too much memory.
 PIPE_READ_SIZE = 128 * 1024
 
-# Records the author and log message for each changeset.
-# The keys are author+log digests, the same kind used to identify
-# unique revisions in the .revs, etc files.  Each value is a tuple
-# of two elements: '(author logmessage)'.
+# Records the author and log message for each changeset.  The keys are
+# (project, author, log) digests, the same kind used to identify
+# unique revisions in the .revs, etc files.  Each value is a tuple of
+# three elements: (projet.id, author, logmessage)'.
 METADATA_DB = "cvs2svn-metadata.db"
 
 # If this run's output is a repository, then (in the tmpdir) we use

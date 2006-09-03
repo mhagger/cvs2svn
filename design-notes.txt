@@ -119,15 +119,17 @@ When every CVS file is done, CollectRevsPass is complete, and:
      determine what CVSRevisions might have been made together and
      will therefore be combined into a single SVNCommit.  CVSRevisions
      that were part of a single CVS commit always have a common author
-     and log message.  This database contains two mappings for each
-     (author, log_msg,) combination:
+     and log message.  Moreover, we avoid combining CVS revisions from
+     separate projects into the same SVN commit.  This database
+     contains two mappings for each (project_id, author, log_msg,)
+     combination:
 
      digest (40-byte string) -> metadata_id (int)
 
-     metadata_id (int as hex) -> (author, log_msg,) (tuple)
+     metadata_id (int as hex) -> (project_id, author, log_msg,) (tuple)
 
      The digest is used to locate the metadata_id for the metadata
-     record having a specific (author, log_msg,) tuple.  The
+     record having a specific (project, author, log_msg,) tuple.  The
      metadata_id, in turn, is used as a key to locate the actual
      metadata.  CVSRevision records include the metadata_id.
 
@@ -175,7 +177,7 @@ this file looks like this:
 The fields are:
 
    1.  a fixed-width timestamp
-   2.  the metadata_id of the metadata (log message + author)
+   2.  the metadata_id of the metadata (project, log message, author)
        associated with this CVSRevision, as a hexadecimal string.
    3.  the integer unique ID for this CVSRevision, as a hexadecimal
        string.
@@ -215,8 +217,8 @@ changes into single commits.
 It's very simple -- run 'sort' on 'cvs2svn-c-revs.txt', converting it
 to 'cvs2svn-s-revs.txt'.  Because of the way the data is laid out,
 this causes commits with the same metadata_id (that is, the same
-author and log message) to be grouped together.  Poof!  We now have
-the CVS changes grouped by logical commit.
+project, author, and log message) to be grouped together.  Poof!  We
+now have the CVS changes grouped by logical commit.
 
 In some cases, the changes in a given commit may be interleaved with
 other commits that went on at the same time, because the sort gives

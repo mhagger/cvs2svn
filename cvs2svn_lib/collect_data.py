@@ -698,7 +698,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
     rev_data = self._rev_data[revision]
     rev_data.metadata_id = self.collect_data.metadata_db.get_key(
-        rev_data.author, log)
+        self.project, rev_data.author, log)
     rev_data.deltatext_exists = bool(text)
 
     # "...Give back one kadam to honor the Hebrew God whose Ark this is."

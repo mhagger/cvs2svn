@@ -50,13 +50,14 @@ class MetadataDatabase:
     self.db = Database(artifact_manager.get_temp_file(config.METADATA_DB),
                        mode)
 
-  def get_key(self, author, log_msg):
-      """Return the id for the record for (AUTHOR, LOG_MSG,).
+  def get_key(self, project, author, log_msg):
+      """Return the id for the record for (PROJECT, AUTHOR, LOG_MSG,).
 
       If there is no such record, create one and return its
       newly-generated id."""
 
-      digest = sha.new(author + '\0' + log_msg).hexdigest()
+      digest = sha.new(
+          '%x\0%s\0%s' % (project.id, author, log_msg)).hexdigest()
       try:
           # See if it is already known:
           return self.db[digest]
@@ -64,13 +65,13 @@ class MetadataDatabase:
           pass
 
       id = self.key_generator.gen_id()
-      self.db['%x' % id] = (author, log_msg,)
+      self.db['%x' % id] = (project.id, author, log_msg,)
       self.db[digest] = id
       return id
 
   def __getitem__(self, id):
     """Return (author, log_msg,) for ID."""
 
-    return self.db['%x' % (id,)]
+    return self.db['%x' % (id,)][1:]
 
 

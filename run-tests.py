@@ -442,42 +442,40 @@ class Conversion:
     if not os.path.isdir(tmp_dir):
       os.mkdir(tmp_dir)
 
-    cvsrepos = os.path.join('..', test_data_dir, '%s-cvsrepos' % self.name)
+    cvsrepos = os.path.join(test_data_dir, '%s-cvsrepos' % self.name)
 
-    saved_wd = os.getcwd()
+    self.repos = os.path.join(tmp_dir, '%s-svnrepos' % self.conv_id)
+    self._wc = os.path.join(tmp_dir, '%s-wc' % self.conv_id)
+    self._wc_path = None
+    self._wc_tree = None
+
+    # Clean up from any previous invocations of this script.
+    erase(self.repos)
+    erase(self._wc)
+
+    args.extend([
+        '--tmpdir=%s' % tmp_dir,
+        '--bdb-txn-nosync',
+        '-s', self.repos,
+        cvsrepos,
+        ])
     try:
-      os.chdir(tmp_dir)
+      if passbypass:
+        for p in range(1, 10):
+          run_cvs2svn(error_re, '-p', str(p), *args)
+      else:
+        run_cvs2svn(error_re, *args)
+    except RunProgramException:
+      raise svntest.Failure
+    except MissingErrorException:
+      raise svntest.Failure("Test failed because no error matched '%s'"
+                            % error_re)
 
-      self._svnrepos = '%s-svnrepos' % self.conv_id
-      self.repos = os.path.join(tmp_dir, self._svnrepos)
-      self._wc = '%s-wc' % self.conv_id
-      self._wc_path = None
-      self._wc_tree = None
+    if not os.path.isdir(self.repos):
+      raise svntest.Failure("Repository not created: '%s'"
+                            % os.path.join(os.getcwd(), self.repos))
 
-      # Clean up from any previous invocations of this script.
-      erase(self._svnrepos)
-      erase(self._wc)
-
-      try:
-        args.extend( [ '--bdb-txn-nosync', '-s', self._svnrepos, cvsrepos ] )
-        if passbypass:
-          for p in range(1, 10):
-            run_cvs2svn(error_re, '-p', str(p), *args)
-        else:
-          run_cvs2svn(error_re, *args)
-      except RunProgramException:
-        raise svntest.Failure
-      except MissingErrorException:
-        raise svntest.Failure("Test failed because no error matched '%s'"
-                              % error_re)
-
-      if not os.path.isdir(self._svnrepos):
-        raise svntest.Failure("Repository not created: '%s'"
-                              % os.path.join(os.getcwd(), self._svnrepos))
-
-      self.logs = parse_log(self._svnrepos, self.symbols)
-    finally:
-      os.chdir(saved_wd)
+    self.logs = parse_log(self.repos, self.symbols)
 
   def find_tag_log(self, tagname):
     """Search LOGS for a log message containing 'TAGNAME' and return the
@@ -497,13 +495,8 @@ class Conversion:
     os.path.join() and appended to the WC path."""
 
     if self._wc_path is None:
-      saved_wd = os.getcwd()
-      try:
-        os.chdir(tmp_dir)
-        run_svn('co', repos_to_url(self._svnrepos), self._wc)
-        self._wc_path = os.path.join(tmp_dir, self._wc)
-      finally:
-        os.chdir(saved_wd)
+      run_svn('co', repos_to_url(self.repos), self._wc)
+      self._wc_path = self._wc
     return os.path.join(self._wc_path, *args)
 
   def get_wc_tree(self):
@@ -1693,8 +1686,7 @@ def eol_mime():
   ### near ensure_conversion().  Note that it is a convention of this
   ### test suite for a mime.types file to be located in the top level
   ### of the CVS repository to which it applies.
-  mime_path = os.path.join('..', test_data_dir, 'eol-mime-cvsrepos',
-      'mime.types')
+  mime_path = os.path.join(test_data_dir, 'eol-mime-cvsrepos', 'mime.types')
 
   # We do four conversions.  Each time, we pass --mime-types=FILE with
   # the same FILE, but vary --no-default-eol and --eol-from-mime-type.
@@ -1948,7 +1940,7 @@ def auto_props_ignore_case():
   "test auto-props (case-insensitive)"
   ### TODO: It's a bit klugey to construct this path here.  See also
   ### the comment in eol_mime().
-  auto_props_path = os.path.join('..', test_data_dir, 'eol-mime-cvsrepos',
+  auto_props_path = os.path.join(test_data_dir, 'eol-mime-cvsrepos',
       'auto-props')
 
   # The files are as follows:
@@ -1983,7 +1975,7 @@ def auto_props_ignore_case():
 def auto_props():
   "test auto-props (case-sensitive)"
   # See auto_props for comments.
-  auto_props_path = os.path.join('..', test_data_dir, 'eol-mime-cvsrepos',
+  auto_props_path = os.path.join(test_data_dir, 'eol-mime-cvsrepos',
       'auto-props')
 
   conv = ensure_conversion(

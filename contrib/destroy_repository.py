@@ -74,6 +74,7 @@ from __future__ import generators
 
 import sys
 import os
+import shutil
 import traceback
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(sys.argv[0])))
@@ -207,17 +208,17 @@ class FileDestroyer:
                 quoted = chunk_generator.next()
             except StopIteration, e:
                 # No problem--this is a legitimate end-of-file:
-                return
+                break
 
             # Now allow the contents of unquoted to affect the processing
             # of quoted:
 
-            if quoted.endswith('\ntext\n'):
-                unquoted = ''
+            if unquoted.endswith('\ntext\n'):
+                quoted = ''
 
             # Now write the (possibly altered) quoted string:
             f.write('@')
-            f.write(unquoted)
+            f.write(quoted)
             f.write('@')
 
         f.close()

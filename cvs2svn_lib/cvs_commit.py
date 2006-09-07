@@ -259,6 +259,8 @@ class CVSCommit:
       # has been excluded.
       if not c_rev.branch_ids:
         return False
+      # FIXME: This message will not match if the RCS file was renamed
+      # manually after it was created.
       cvs_generated_msg = 'file %s was initially added on branch %s.\n' % (
           c_rev.cvs_file.basename,
           Ctx()._symbol_db.get_symbol(c_rev.branch_ids[0]).name,)

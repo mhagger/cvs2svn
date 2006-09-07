@@ -36,6 +36,7 @@ bug is still present, and fail if the bug is absent."""
 
 import sys
 import os
+import shutil
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(sys.argv[0])))
 
@@ -150,14 +151,14 @@ class DeleteDirectoryModification(Modification):
 
     def modify(self):
         self.tempfile = get_tmp_filename()
-        command('mv', self.path, self.tempfile)
+        shutil.move(self.path, self.tempfile)
 
     def revert(self):
-        command('mv', self.tempfile, self.path)
+        shutil.move(self.tempfile, self.path)
         self.tempfile = None
 
     def commit(self):
-        command('rm', '-r', '-f', self.tempfile)
+        shutil.rmtree(self.tempfile)
         self.tempfile = None
 
     def output(self, f, prefix=''):
@@ -173,14 +174,14 @@ class DeleteFileModification(Modification):
 
     def modify(self):
         self.tempfile = get_tmp_filename()
-        command('mv', self.path, self.tempfile)
+        shutil.move(self.path, self.tempfile)
 
     def revert(self):
-        command('mv', self.tempfile, self.path)
+        shutil.move(self.tempfile, self.path)
         self.tempfile = None
 
     def commit(self):
-        command('rm', '-f', self.tempfile)
+        os.remove(self.tempfile)
         self.tempfile = None
 
     def output(self, f, prefix=''):

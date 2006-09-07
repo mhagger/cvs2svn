@@ -79,16 +79,23 @@ def destroy_file(filename):
 
     i = 1
     while i < len(chunks):
+        # chunks[i] is the first part of a quoted string.  If the next
+        # chunk is empty, that means that two '@' came in a row, in
+        # which case we delete the empty chunk and merge chunks[i]
+        # with chunks[i + 2]:
+        chunks_to_merge = [chunks[i]]
+        n = i
+        while n + 2 < len(chunks) and chunks[n + 1] == '':
+            chunks_to_merge.append(chunks[n + 2])
+            n += 2
+
+        if n != i:
+            chunks[i:n+1] = ['@@'.join(chunks_to_merge)]
+
         if chunks[i - 1].endswith('text\n'):
             chunks[i] = ''
-            i += 1
-            # If the next chunk is empty, that means that two '@' came
-            # in a row, in which case we delete the empty chunk and
-            # the one after it.
-            while i + 2 < len(chunks) and chunks[i] == '':
-                del chunks[i:i+2]
-        else:
-            i += 1
+
+        i += 2
 
     open(filename, 'wb').write('@'.join(chunks))
 

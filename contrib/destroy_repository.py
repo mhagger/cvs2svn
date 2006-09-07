@@ -183,74 +183,77 @@ def read_merged_chunks(filename):
             )
 
 
-def destroy_file(filename):
-    chunk_generator = read_merged_chunks(filename)
+class FileDestroyer:
+    def __init__(self):
+        pass
 
-    tmp_filename = get_tmp_filename()
-    f = open(tmp_filename, 'wb')
+    def destroy_file(self, filename):
+        chunk_generator = read_merged_chunks(filename)
 
-    while True:
-        try:
-            unquoted = chunk_generator.next()
-        except StopIteration, e:
-            # This shouldn't happen--read_merged_chunks promises to yield
-            # an odd number of chunks.
-            raise RuntimeError('RCS file has invalid quoting structure')
+        tmp_filename = get_tmp_filename()
+        f = open(tmp_filename, 'wb')
 
-        f.write(unquoted)
+        while True:
+            try:
+                unquoted = chunk_generator.next()
+            except StopIteration, e:
+                # This shouldn't happen--read_merged_chunks promises to yield
+                # an odd number of chunks.
+                raise RuntimeError('RCS file has invalid quoting structure')
 
-        try:
-            quoted = chunk_generator.next()
-        except StopIteration, e:
-            # No problem--this is a legitimate end-of-file:
-            return
+            f.write(unquoted)
 
-        # Now allow the contents of unquoted to affect the processing
-        # of quoted:
+            try:
+                quoted = chunk_generator.next()
+            except StopIteration, e:
+                # No problem--this is a legitimate end-of-file:
+                return
 
-        if quoted.endswith('\ntext\n'):
-            unquoted = ''
+            # Now allow the contents of unquoted to affect the processing
+            # of quoted:
 
-        # Now write the (possibly altered) quoted string:
-        f.write('@')
-        f.write(unquoted)
-        f.write('@')
+            if quoted.endswith('\ntext\n'):
+                unquoted = ''
 
-    f.close()
+            # Now write the (possibly altered) quoted string:
+            f.write('@')
+            f.write(unquoted)
+            f.write('@')
 
-    # Replace the original file with the new one:
-    os.remove(filename)
-    shutil.move(tmp_filename, filename)
+        f.close()
 
+        # Replace the original file with the new one:
+        os.remove(filename)
+        shutil.move(tmp_filename, filename)
 
-def visit(arg, dirname, names):
-    for name in names:
-        path = os.path.join(dirname, name)
-        if os.path.isfile(path) and path.endswith(',v'):
-            sys.stderr.write('Destroying %s...' % path)
-            destroy_file(path)
-            sys.stderr.write('done.\n')
-        elif os.path.isdir(path):
-            # Subdirectories are traversed automatically
-            pass
-        else:
-            sys.stderr.write('File %s is being ignored.\n' % path)
+    def visit(self, dirname, names):
+        for name in names:
+            path = os.path.join(dirname, name)
+            if os.path.isfile(path) and path.endswith(',v'):
+                sys.stderr.write('Destroying %s...' % path)
+                self.destroy_file(path)
+                sys.stderr.write('done.\n')
+            elif os.path.isdir(path):
+                # Subdirectories are traversed automatically
+                pass
+            else:
+                sys.stderr.write('File %s is being ignored.\n' % path)
 
-
-def destroy_dir(path):
-    os.path.walk(path, visit, None)
+    def destroy_dir(self, path):
+        os.path.walk(path, FileDestroyer.visit, self)
 
 
 if __name__ == '__main__':
     if not os.path.isdir(tmpdir):
         os.makedirs(tmpdir)
 
+    file_destroyer = FileDestroyer()
 
     for path in sys.argv[1:]:
         if os.path.isfile(path) and path.endswith(',v'):
-            destroy_file(path)
+            file_destroyer.destroy_file(path)
         elif os.path.isdir(path):
-            destroy_dir(path)
+            file_destroyer.destroy_dir(path)
         else:
             sys.stderr.write('File %s is being ignored.\n' % path)
 

@@ -195,19 +195,27 @@ def try_modification_combinations(mods):
 
     Return True if any modifications were successful."""
 
-    if not mods:
-        return False
-    elif len(mods) == 1:
-        return mods[0].try_mod()
-    elif CompoundModification(mods).try_mod():
-        # All modifications, together, worked.
-        return True
-    else:
-        # We can't do all of them at once.  Try doing subsets of each
-        # half of the list:
-        n = len(mods) // 2
-        return try_modification_combinations(mods[:n]) \
-               | try_modification_combinations(mods[n:])
+    # A list of lists of modifications that should still be tried:
+    todo = [mods]
+
+    retval = False
+
+    while todo:
+        mods = todo.pop(0)
+        if not mods:
+            continue
+        elif len(mods) == 1:
+            retval = retval | mods[0].try_mod()
+        elif CompoundModification(mods).try_mod():
+            # All modifications, together, worked.
+            retval = True
+        else:
+            # We can't do all of them at once.  Try doing subsets of each
+            # half of the list:
+            n = len(mods) // 2
+            todo.extend([mods[:n], mods[n:]])
+
+    return retval
 
 
 def get_dirs(path):

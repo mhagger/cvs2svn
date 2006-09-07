@@ -137,6 +137,66 @@ class WriteRCSFileSink(cvs2svn_rcsparse.Sink):
         pass
 
 
+class FilterSink(cvs2svn_rcsparse.Sink):
+    """A Sink that passes callbacks through to another sink.
+
+    This is intended for use as a base class for other filter classes
+    that modify the data before passing it through."""
+
+    def __init__(self, sink):
+        """Create a Sink object that will write its output into SINK.
+
+        SINK should be a cvs2svn_rcsparse.Sink."""
+
+        self.sink = sink
+
+    def set_head_revision(self, revision):
+        self.sink.set_head_revision(revision)
+
+    def set_principal_branch(self, branch_name):
+        self.sink.set_principal_branch(branch_name)
+
+    def set_access(self, accessors):
+        self.sink.set_access(accessors)
+
+    def define_tag(self, name, revision):
+        self.sink.define_tag(name, revision)
+
+    def set_locker(self, revision, locker):
+        self.sink.set_locker(revision, locker)
+
+    def set_locking(self, mode):
+        self.sink.set_locking(mode)
+
+    def set_comment(self, comment):
+        self.sink.set_comment(comment)
+
+    def set_expansion(self, mode):
+        self.sink.set_expansion(mode)
+
+    def admin_completed(self):
+        self.sink.admin_completed()
+
+    def define_revision(
+        self, revision, timestamp, author, state, branches, next
+        ):
+        self.sink.define_revision(
+            revision, timestamp, author, state, branches, next
+            )
+
+    def tree_completed(self):
+        self.sink.tree_completed()
+
+    def set_description(self, description):
+        self.sink.set_description(description)
+
+    def set_revision_info(self, revision, log, text):
+        self.sink.set_revision_info(revision, log, text)
+
+    def parse_completed(self):
+        self.sink.parse_completed()
+
+
 if __name__ == '__main__':
     if sys.argv[1:]:
         for path in sys.argv[1:]:

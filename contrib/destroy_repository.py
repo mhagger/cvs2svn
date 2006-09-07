@@ -75,6 +75,7 @@ from __future__ import generators
 import sys
 import os
 import shutil
+import re
 import traceback
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(sys.argv[0])))
@@ -185,8 +186,33 @@ def read_merged_chunks(filename):
 
 
 class FileDestroyer:
+    # If a log messages matches any of these regular expressions, it
+    # is passed through untouched.
+    untouchable_log_res = [
+        re.compile(r'^Initial revision\n$'),
+        re.compile(r'^file .+ was initially added on branch .+\.\n$'),
+        re.compile(r'^\*\*\* empty log message \*\*\*\n$'),
+        re.compile(r'^initial checkin$'),
+        ]
+
     def __init__(self):
-        pass
+        self.log_key_generator = KeyGenerator(1)
+
+        # A map from old log messages to new ones.
+        self.log_map = {}
+
+    def is_untouchable(self, log):
+        for untouchable_log_re in self.untouchable_log_res:
+            if untouchable_log_re.search(log):
+                return True
+        return False
+
+    def get_log_substitution(self, log):
+        new_log = self.log_map.get(log)
+        if new_log == None:
+            new_log = 'log %d' % self.log_key_generator.gen_id()
+            self.log_map[log] = new_log
+        return new_log
 
     def destroy_file(self, filename):
         chunk_generator = read_merged_chunks(filename)
@@ -215,6 +241,11 @@ class FileDestroyer:
 
             if unquoted.endswith('\ntext\n'):
                 quoted = ''
+            elif unquoted.endswith('\ndesc\n'):
+                quoted = ''
+            elif unquoted.endswith('\nlog\n') \
+                     and not self.is_untouchable(quoted):
+                quoted = self.get_log_substitution(quoted)
 
             # Now write the (possibly altered) quoted string:
             f.write('@')

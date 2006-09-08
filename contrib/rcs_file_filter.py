@@ -100,7 +100,10 @@ class WriteRCSFileSink(cvs2svn_rcsparse.Sink):
         self.f.write('locks')
         for (revision, locker) in self.lockers:
             self.f.write('\n\t%s:%s' % (locker, revision))
-        self.f.write('; %s;\n' % self.locking)
+        self.f.write(';')
+        if self.locking is not None:
+            self.f.write(' %s;' % self.locking)
+        self.f.write('\n')
         if self.comment is not None:
             self.f.write('comment\t%s;\n' % at_quote(self.comment))
         if self.expansion is not None:

@@ -185,7 +185,7 @@ def read_merged_chunks(filename):
             )
 
 
-class FileDestroyer:
+class LogSubstituter:
     # If a log messages matches any of these regular expressions, it
     # is passed through untouched.
     untouchable_log_res = [
@@ -213,6 +213,14 @@ class FileDestroyer:
             new_log = 'log %d' % self.log_key_generator.gen_id()
             self.log_map[log] = new_log
         return new_log
+
+
+class FileDestroyer:
+    def __init__(self):
+        self.log_substituter = LogSubstituter()
+
+        # A map from old log messages to new ones.
+        self.log_map = {}
 
     def destroy_file(self, filename):
         chunk_generator = read_merged_chunks(filename)
@@ -244,8 +252,8 @@ class FileDestroyer:
             elif unquoted.endswith('\ndesc\n'):
                 quoted = ''
             elif unquoted.endswith('\nlog\n') \
-                     and not self.is_untouchable(quoted):
-                quoted = self.get_log_substitution(quoted)
+                     and not self.log_substituter.is_untouchable(quoted):
+                quoted = self.log_substituter.get_log_substitution(quoted)
 
             # Now write the (possibly altered) quoted string:
             f.write('@')

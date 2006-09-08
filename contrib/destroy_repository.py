@@ -222,9 +222,6 @@ class FileDestroyer:
     def __init__(self):
         self.log_substituter = LogSubstituter()
 
-        # A map from old log messages to new ones.
-        self.log_map = {}
-
     def destroy_file(self, filename):
         chunk_generator = read_merged_chunks(filename)
 

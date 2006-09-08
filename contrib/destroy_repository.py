@@ -201,18 +201,21 @@ class LogSubstituter:
         # A map from old log messages to new ones.
         self.log_map = {}
 
-    def is_untouchable(self, log):
+    def _is_untouchable(self, log):
         for untouchable_log_re in self.untouchable_log_res:
             if untouchable_log_re.search(log):
                 return True
         return False
 
     def get_log_substitution(self, log):
-        new_log = self.log_map.get(log)
-        if new_log == None:
-            new_log = 'log %d' % self.log_key_generator.gen_id()
-            self.log_map[log] = new_log
-        return new_log
+        if self._is_untouchable(log):
+            return log
+        else:
+            new_log = self.log_map.get(log)
+            if new_log == None:
+                new_log = 'log %d' % self.log_key_generator.gen_id()
+                self.log_map[log] = new_log
+            return new_log
 
 
 class FileDestroyer:
@@ -251,8 +254,7 @@ class FileDestroyer:
                 quoted = ''
             elif unquoted.endswith('\ndesc\n'):
                 quoted = ''
-            elif unquoted.endswith('\nlog\n') \
-                     and not self.log_substituter.is_untouchable(quoted):
+            elif unquoted.endswith('\nlog\n'):
                 quoted = self.log_substituter.get_log_substitution(quoted)
 
             # Now write the (possibly altered) quoted string:

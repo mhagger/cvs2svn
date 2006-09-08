@@ -24,6 +24,14 @@
 
 Usage: destroy_repository.py PATH ...
 
+This script attempts to strip the file text, log messages, and author
+names out of RCS files.  (This is useful to make test cases smaller
+and to remove much of the proprietary information that is stored in a
+repository.)  Note that this script does NOT obliterate other
+information that might also be considered proprietary: file names,
+commit dates, etc.  In fact, it's not guaranteed even to obliterate
+all of the file text, or to do anything else for that matter.
+
 Each PATH that is a *,v file will be stripped.
 
 Each PATH that is a directory will be traversed and all of its *,v
@@ -57,16 +65,8 @@ CVS repository, you should:
    that you used, the exact command line that you used to start the
    conversion, and the options file if you used one.
 
-The 'destroyed' copy has a couple of advantages:
-
-* It is much smaller than the original.
-
-* Some of the proprietary information that might have been in the file
-  texts of the original repository has been deleted.  Note that this
-  script does NOT obliterate other information that might also be
-  considered proprietary: log messages, file names, author names,
-  commit dates, etc.  In fact, it's not guaranteed even to obliterate
-  all of the file text, or to do anything else for that matter.
+Please also consider using shrink_test_case.py to localize the problem
+even further.
 
 """
 
@@ -137,10 +137,20 @@ class LogSubstituter(Substituter):
 
 
 class DestroyerFilterSink(FilterSink):
-    def __init__(self, log_substituter, sink):
+    def __init__(self, author_substituter, log_substituter, sink):
         FilterSink.__init__(self, sink)
 
+        self.author_substituter = author_substituter
         self.log_substituter = log_substituter
+
+    def define_revision(
+        self, revision, timestamp, author, state, branches, next
+        ):
+        FilterSink.define_revision(
+            self, revision, timestamp,
+            self.author_substituter.get_substitution(author),
+            state, branches, next
+            )
 
     def set_description(self, description):
         FilterSink.set_description(self, '')
@@ -154,6 +164,7 @@ class DestroyerFilterSink(FilterSink):
 class FileDestroyer:
     def __init__(self):
         self.log_substituter = LogSubstituter()
+        self.author_substituter = Substituter('author%d')
 
     def destroy_file(self, filename):
         tmp_filename = get_tmp_filename()
@@ -161,6 +172,7 @@ class FileDestroyer:
         cvs2svn_rcsparse.parse(
             open(filename, 'rb'),
             DestroyerFilterSink(
+                self.author_substituter,
                 self.log_substituter,
                 WriteRCSFileSink(f),
                 )

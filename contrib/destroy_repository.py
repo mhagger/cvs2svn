@@ -94,7 +94,23 @@ def get_tmp_filename():
     return os.path.join(tmpdir, 'f%07d.tmp' % file_key_generator.gen_id())
 
 
-class LogSubstituter:
+class Substituter:
+    def __init__(self, template):
+        self.template = template
+        self.key_generator = KeyGenerator(1)
+
+        # A map from old values to new ones.
+        self.substitutions = {}
+
+    def get_substitution(self, s):
+        r = self.substitutions.get(s)
+        if r == None:
+            r = self.template % self.key_generator.gen_id()
+            self.substitutions[s] = r
+        return r
+
+
+class LogSubstituter(Substituter):
     # If a log messages matches any of these regular expressions, it
     # is passed through untouched.
     untouchable_log_res = [
@@ -105,10 +121,7 @@ class LogSubstituter:
         ]
 
     def __init__(self):
-        self.log_key_generator = KeyGenerator(1)
-
-        # A map from old log messages to new ones.
-        self.log_map = {}
+        Substituter.__init__(self, 'log %d')
 
     def _is_untouchable(self, log):
         for untouchable_log_re in self.untouchable_log_res:
@@ -116,15 +129,11 @@ class LogSubstituter:
                 return True
         return False
 
-    def get_log_substitution(self, log):
+    def get_substitution(self, log):
         if self._is_untouchable(log):
             return log
         else:
-            new_log = self.log_map.get(log)
-            if new_log == None:
-                new_log = 'log %d' % self.log_key_generator.gen_id()
-                self.log_map[log] = new_log
-            return new_log
+            return Substituter.get_substitution(self, log)
 
 
 class DestroyerFilterSink(FilterSink):
@@ -138,7 +147,7 @@ class DestroyerFilterSink(FilterSink):
 
     def set_revision_info(self, revision, log, text):
         FilterSink.set_revision_info(
-            self, revision, self.log_substituter.get_log_substitution(log), ''
+            self, revision, self.log_substituter.get_substitution(log), ''
             )
 
 

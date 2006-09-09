@@ -52,6 +52,18 @@
 
 </ol>
 
+<p><strong>Getting help:</strong></p>
+
+<ol>
+
+  <li><a href="#gettinghelp">How do I get help?</a></li>
+
+  <li><a href="#reportingbugs">How do I report a bug?</a></li>
+
+  <li><a href="#testcase">How can I produce a useful test case?</a></li>
+
+</ol>
+
 <hr />
 
 <h2>How-to:</h2>
@@ -340,6 +352,240 @@ documentation.)  The solution to this problem is either to install
 RCS, or to ensure that CVS is installed and use cvs2svn's
 <a href="cvs2svn.html#use-cvs"><tt>--use-cvs</tt></a> option.
 </p>
+
+<h2>Getting help:</h2>
+
+<h3><a name="gettinghelp" title="#gettinghelp">How do I get
+help?</a></h3>
+
+<p>There are several sources of help for cvs2svn:</p>
+
+<ul>
+
+  <li>The <a href="cvs2svn.html">user manual</a> not only describes
+  how to run cvs2svn, but also discusses some limitations, pitfalls,
+  and conversion strategies.  Please note that the <a
+  href="http://cvs2svn.tigris.org/cvs2svn.html">online manual</a>
+  describes the latest "bleeding edge" trunk version of the software,
+  which may be different than the version that you are using.</li>
+
+  <li>The <a href="faq.html">frequently asked questions (FAQ) list</a>
+  is the document that you are now reading.  Please make sure you've
+  scanned through the list of topics to see if your question is
+  already answered.</li>
+
+  <li>The <a
+  href="http://cvs2svn.tigris.org/servlets/ProjectMailingListList">mailing
+  list archives</a>.  Maybe your question has
+  been discussed on either the <tt>user@cvs2svn.tigris.org</tt> or
+  <tt>dev@cvs2svn.tigris.org</tt> mailing list.</li>
+
+  <li>If you need help with running cvs2svn or problems converting
+  your repository, the <a
+  href="mailto:users@cvs2svn.tigris.org"><tt>users@cvs2svn.tigris.org</tt></a>
+  mailing list is the first place to send inquiries.  Please <a
+  href="http://cvs2svn.tigris.org/servlets/ProjectMailingListList">subscribe</a>
+  to the list so that you can follow ensuing discussions.</li>
+
+  <li>You can also ask questions on IRC at <a
+  href="irc://irc.freenode.net/"><tt>irc.freenode.net</tt></a>,
+  channel <tt>#cvs2svn</tt>.</li>
+
+  <li>If you think you have found a bug, please refer to <a
+  href="#reportingbugs">"How do I report a bug?"</a></li>
+
+</ul>
+
+<h3><a name="reportingbugs" title="#reportingbugs">How do I report a
+bug?</a></h3>
+
+<p>cvs2svn is an open source project that is largely developed and
+supported by volunteers in their free time.  Therefore please try to
+help out by reporting bugs in a way that will enable us to help you
+efficiently.</p>
+
+<p>The first question is whether the problem you are experiencing is
+caused by a cvs2svn bug at all.  A large fraction of reported "bugs"
+are caused by problems with the user's CVS repository, especially <a
+href="#cvsnt">trying to convert a CVSNT repository with cvs2svn</a>.
+Please also double-check the <a href="cvs2svn.html">manual</a> to be
+sure that you are using the command-line options correctly.</p>
+
+<p>A good way to locate potential repository corruption is to use the
+<tt>shrink_test_case.py</tt> script (which is located in the
+<tt>contrib</tt> directory of the cvs2svn source tree.  This script
+tries to find the minimum subset of files in your repository that
+still shows the same problem.  <b>Warning: Only apply this script to a
+backup copy of your repository, as it destroys the repository that it
+operates on!</b> Often this script can narrow the problem down to a
+single file which, as often as not, is corrupt in some way.  Even if
+the problem is not in your repository, the shrunk-down test case will
+be useful for reporting the bug.  Please see <a href="#testcase">"How
+can I produce a useful test case?"</a> and the comments at the top of
+<tt>shrink_test_case.py</tt> for information about how to use this
+script.</p>
+
+<p>Assuming that you still think you have found a bug, the next step
+is to investigate whether the bug is already known.  Please look
+through the <a
+href="http://cvs2svn.tigris.org/issue_tracker.html">issue tracker</a>
+for bugs that sound familiar.  If the bug is already known, then there
+is no need to report it (though possibly you could contribute a <a
+href="#testcase">useful test case</a> or a workaround).</p>
+
+<p>If your bug seems new, then the best thing to do is report it via
+email to the <a
+href="http://cvs2svn.tigris.org/servlets/ProjectMailingListList">dev@cvs2svn.tigris.org</a>
+mailing list.  Be sure to include the following information in your
+message:</p>
+
+<ol>
+
+  <li><em>Exactly what version</em> of cvs2svn are you using?  If you
+  are not using an official release, please tell us what branch and
+  revision number from the <a
+  href="http://cvs2svn.tigris.org/svn/cvs2svn/">svn archive</a> you
+  are using.  If you have modified cvs2svn, please tell us exactly
+  what you have changed.</li>
+
+  <li>What platform are you using (Linux, BSD, Windows, etc.)?</li>
+
+  <li>What is the <em>exact command line</em> that you used to start
+  the conversion?  If you used the <tt>--options</tt> option, please
+  attach a copy of the options file that you used.</li>
+
+  <li>What happened when you ran the program?  Why do you think the
+  behavior was wrong?  Include transcripts and/or error output if
+  available.</li>
+
+  <li>If at all possible, include a test case repository that we can
+  use to reproduce the problem.  See <a href="#testcase">"How can I
+  produce a useful test case?"</a> for more information.  In most
+  cases, if we cannot reproduce the problem, there is nothing we can
+  do to help you.</li>
+
+</ol>
+
+
+<h3><a name="testcase" title="#testcase">How can I produce a useful
+test case?</a></h3>
+
+<p>If you need to <a href="#reportingbugs">report a bug</a>, it is
+extremely helpful if you can include a test repository with your bug
+report.  In most cases, if we cannot reproduce the problem, there is
+nothing we can do to help you.  This section describes ways to
+overcome the most common problems that people have in producing a
+useful test case.  When you have a reasonable-sized test case (say
+under 1 MB--the smaller the better), you can just tar it up and attach
+it to the email in which you report the bug.</p>
+
+<h4>If the repository is too big and/or contains proprietary information</h4>
+
+<p>You don't want to send us your proprietary information, and we
+don't want to receive it either.  Short of open-sourcing your
+software, here is a way to strip out most of the proprietary
+information and simultaneously reduce the size of the archive
+tremendously.</p>
+
+<p>The <tt>destroy_repository.py</tt> script tries to delete as much
+information as possible out of your repository while still preserving
+its basic structure (and therefore hopefully any cvs2svn bugs).
+Specifically, it tries to delete all file descriptions and text
+content, all nontrivial log messages, and all author names.  (It does
+not affect the directory and file names or the number and dates of
+revisions to those files.)</p>
+
+<ol>
+
+  <li>This procedure will <b>destroy the repository</b> that it is
+  applied to, so be sure to <b>make a backup copy of your
+  repository and work with the backup!</b></li>
+
+  <li>Make sure you have the <tt>destroy_repository.py</tt> script.
+  If you don't already have it, you should <a
+  href="http://cvs2svn.tigris.org/servlets/ProjectSource">download the
+  source code</a> for cvs2svn (there is no need to install it).  The
+  script is located in the <tt>contrib</tt> subdirectory.</li>
+
+  <li>Run <tt>destroy_repository.py</tt> by typing <pre>
+# You did make a backup, right?
+/path/to/config/destroy_repository.py /path/to/copy/of/repo
+</pre></li>
+
+  <li>Verify that the "destroyed" archive does not include any
+  information that you consider proprietary.  Your data security is
+  ultimately your responsibility, and we make no guarantees that the
+  <tt>destroy_repository.py</tt> script works correctly.  You can open
+  the *,v files using a text editor to see what they contain.</li>
+
+  <li>Try converting the "destroyed" repository using cvs2svn, and
+  ensure that the bug still exists.  Take a note of the exact cvs2svn
+  command line that you used and include it along with a tarball of
+  the "destroyed" repository with your bug report.</li>
+
+</ol>
+
+
+<h4>The repository is still too large</h4>
+
+<p>This step is a tiny bit more work, so if your repository is already
+small enough to send you can skip this step.  But this step helps
+narrow down the problem (maybe even point you to a corrupt file in
+your repository!) so it is still recommended.</p>
+
+<p>The <tt>shrink_test_case.py</tt> script tries to delete as many
+files and directories from your repository as possible while
+preserving the cvs2svn bug.  To use this command, you need to write a
+little test script that tries to convert your repository and checks
+whether the bug is still present.  The script should exit successfully
+(e.g., "<tt>exit 0</tt>") if the bug is still <em>present</em>, and
+fail (e.g., "<tt>exit 1</tt>") if the bug has <em>disappeared</em>.
+The form of the test script depends on the bug that you saw, but it
+can be as simple as something like this:</p>
+
+<pre>
+#! /bin/sh
+
+cvs2svn --dry-run /path/to/copy/of/repo 2>&amp;1 | grep -q 'KeyError'
+</pre>
+
+<p>If the bug is more subtle, then the test script obviously needs to
+be more involved.</p>
+
+<p>Once the test script is ready, you can shrink your repository via
+the following steps:</p>
+
+<ol>
+
+  <li>This procedure will <b>destroy the repository</b> that it is
+  applied to, so be sure to <b>make a backup copy of your
+  repository and work with the backup!</b></li>
+
+  <li>Make sure you have the <tt>shrink_test_case.py</tt> script.
+  If you don't already have it, you should <a
+  href="http://cvs2svn.tigris.org/servlets/ProjectSource">download the
+  source code</a> for cvs2svn (there is no need to install it).  The
+  script is located in the <tt>contrib</tt> subdirectory.</li>
+
+  <li>Run <tt>shrink_test_case.py</tt> by typing <pre>
+# You did make a backup, right?
+/path/to/config/shrink_test_case.py /path/to/copy/of/repo testscript.sh
+</pre>, where <tt>testscript.sh</tt> is the name of the test script
+  described above.  This script will execute <tt>testscript.sh</tt>
+  many times, each time using a subset of the original repository.</li>
+
+  <li>If the shrunken repository only consists of one or two files,
+  look inside the files with a text editor to see whether they are
+  corrupted in any obvious way.  (Many so-called cvs2svn "bugs" are
+  actually the result of a corrupt CVS repository.)</li>
+
+  <li>Try converting the "shrunk" repository using cvs2svn, to make
+  sure that the original bug still exists.  Take a note of the exact
+  cvs2svn command line that you used, and include it along with a
+  tarball of the "destroyed" repository with your bug report.</li>
+
+</ol>
+
 
 </div>
 </body>

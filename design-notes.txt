@@ -155,9 +155,10 @@ ResyncRevsPass (formerly called pass2)
 ==============
 
 This is where the resync file is used.  The goal of this pass is to
-output the information from cvs2svn-cvs-items.db to a new file,
-'cvs2svn-cvs-items-resync.db' (clean revs).  It has the same content
-as the original file, except for some resync'd timestamps.
+output the information from 'cvs2svn-cvs-items.db' to a new file,
+'cvs2svn-cvs-items-resync.db' (resynched items).  It has the same
+content as the original file, except that the timestamps of some
+CVSRevisions have been resynced.
 
 First, read the whole resync file into a hash table that maps each
 metadata_id to a list of lists.  Each sublist represents one of the
@@ -173,8 +174,8 @@ tweaks.").  So each metadata_id may need to "fan out" to cover
 multiple commits, but without accidentally unifying those commits.
 
 Now we loop over the CVSRevisions in 'cvs2svn-cvs-items.db', and for
-each record write a line to 'cvs2svn-data.c-revs.txt'.  Each line of
-this file looks like this:
+each record write a line to 'cvs2svn-c-revs.txt'.  Each line of this
+file looks like this:
 
    3dc32955 5a 12ab
 
@@ -221,8 +222,9 @@ changes into single commits.
 It's very simple -- run 'sort' on 'cvs2svn-c-revs.txt', converting it
 to 'cvs2svn-s-revs.txt'.  Because of the way the data is laid out,
 this causes commits with the same metadata_id (that is, the same
-project, author, and log message) to be grouped together.  Poof!  We
-now have the CVS changes grouped by logical commit.
+author, log message, and optionally the same project) to be grouped
+together.  Poof!  We now have the CVS changes grouped by logical
+commit.
 
 In some cases, the changes in a given commit may be interleaved with
 other commits that went on at the same time, because the sort gives

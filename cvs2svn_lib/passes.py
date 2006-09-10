@@ -28,12 +28,9 @@ from cvs2svn_lib.boolean import *
 from cvs2svn_lib import config
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.common import warning_prefix
-from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.common import FatalException
-from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.artifact_manager import artifact_manager
-from cvs2svn_lib.database import Database
 from cvs2svn_lib.database import DB_OPEN_NEW
 from cvs2svn_lib.database import DB_OPEN_READ
 from cvs2svn_lib.database import DB_OPEN_WRITE

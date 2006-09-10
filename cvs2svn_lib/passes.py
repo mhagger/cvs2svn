@@ -257,7 +257,7 @@ class ResyncRevsPass(Pass):
 
       # Skip this entire revision if it's on an excluded branch
       if isinstance(c_rev.lod, Branch):
-        symbol = self.symbol_db.get_symbol(c_rev.lod.id)
+        symbol = self.symbol_db.get_symbol(c_rev.lod.symbol.id)
         if isinstance(symbol, ExcludedSymbol):
           continue
 

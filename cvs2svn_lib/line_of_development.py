@@ -48,8 +48,6 @@ class Branch(LineOfDevelopment):
 
   def __init__(self, symbol):
     self.symbol = symbol
-    self.id = symbol.id
-    self.name = symbol.name
 
   def make_path(self, cvs_file):
     return cvs_file.project.make_branch_path(self.symbol, cvs_file.cvs_path)
@@ -57,6 +55,6 @@ class Branch(LineOfDevelopment):
   def __str__(self):
     """For convenience only.  The format is subject to change at any time."""
 
-    return 'Branch %r <%x>' % (self.name, self.id,)
+    return 'Branch %r <%x>' % (self.symbol.name, self.symbol.id,)
 
 

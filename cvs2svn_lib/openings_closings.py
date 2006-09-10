@@ -80,7 +80,7 @@ class SymbolingsLogger:
     """Log any openings and closings found in C_REV."""
 
     if isinstance(c_rev.lod, Branch):
-      branch_id = c_rev.lod.id
+      branch_id = c_rev.lod.symbol.id
     else:
       branch_id = None
 

@@ -105,7 +105,7 @@ class CVSRevision(CVSItem):
     pickling CVSRevision instances."""
 
     if isinstance(self.lod, Branch):
-      lod_id = self.lod.id
+      lod_id = self.lod.symbol.id
     else:
       lod_id = None
 

@@ -76,21 +76,21 @@ class SymbolingsLogger:
     # values are the ids of symbols that this path has opened.
     self._open_paths_with_default_branches = { }
 
-  def log_revision(self, c_rev, svn_revnum):
-    """Log any openings and closings found in C_REV."""
+  def log_revision(self, cvs_rev, svn_revnum):
+    """Log any openings and closings found in CVS_REV."""
 
-    if isinstance(c_rev.lod, Branch):
-      branch_id = c_rev.lod.symbol.id
+    if isinstance(cvs_rev.lod, Branch):
+      branch_id = cvs_rev.lod.symbol.id
     else:
       branch_id = None
 
-    for symbol_id in c_rev.tag_ids + c_rev.branch_ids:
-      self._note_default_branch_opening(c_rev, symbol_id)
-      if c_rev.op != OP_DELETE:
-        self._log(symbol_id, svn_revnum, c_rev.cvs_file, branch_id, OPENING)
+    for symbol_id in cvs_rev.tag_ids + cvs_rev.branch_ids:
+      self._note_default_branch_opening(cvs_rev, symbol_id)
+      if cvs_rev.op != OP_DELETE:
+        self._log(symbol_id, svn_revnum, cvs_rev.cvs_file, branch_id, OPENING)
 
-    for symbol_id in c_rev.closed_symbol_ids:
-      self._log(symbol_id, svn_revnum, c_rev.cvs_file, branch_id, CLOSING)
+    for symbol_id in cvs_rev.closed_symbol_ids:
+      self._log(symbol_id, svn_revnum, cvs_rev.cvs_file, branch_id, CLOSING)
 
   def _log(self, symbol_id, svn_revnum, cvs_file, branch_id, type):
     """Log an opening or closing to self.symbolings.
@@ -116,24 +116,24 @@ class SymbolingsLogger:
   def close(self):
     self.symbolings.close()
 
-  def _note_default_branch_opening(self, c_rev, symbol_id):
-    """If C_REV is a default branch revision, log C_REV.cvs_path as an
-    opening for SYMBOLIC_NAME."""
+  def _note_default_branch_opening(self, cvs_rev, symbol_id):
+    """If CVS_REV is a default branch revision, log CVS_REV.cvs_path
+    as an opening for SYMBOLIC_NAME."""
 
     self._open_paths_with_default_branches.setdefault(
-        c_rev.cvs_path, []).append(symbol_id)
+        cvs_rev.cvs_path, []).append(symbol_id)
 
-  def log_default_branch_closing(self, c_rev, svn_revnum):
+  def log_default_branch_closing(self, cvs_rev, svn_revnum):
     """If self._open_paths_with_default_branches contains
-    C_REV.cvs_path, then call log each symbol in
-    self._open_paths_with_default_branches[C_REV.cvs_path] as a closing
-    with SVN_REVNUM as the closing revision number."""
+    CVS_REV.cvs_path, then call log each symbol in
+    self._open_paths_with_default_branches[CVS_REV.cvs_path] as a
+    closing with SVN_REVNUM as the closing revision number."""
 
-    path = c_rev.cvs_path
+    path = cvs_rev.cvs_path
     if path in self._open_paths_with_default_branches:
       # log each symbol as a closing
       for symbol_id in self._open_paths_with_default_branches[path]:
-        self._log(symbol_id, svn_revnum, c_rev.cvs_file, None, CLOSING)
+        self._log(symbol_id, svn_revnum, cvs_rev.cvs_file, None, CLOSING)
       # Remove them from the openings list as we're done with them.
       del self._open_paths_with_default_branches[path]
 

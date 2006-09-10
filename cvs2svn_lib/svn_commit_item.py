@@ -25,7 +25,7 @@ class SVNCommitItem:
   """A wrapper class for CVSRevision objects upon which
   Subversion-related data (such as properties) may be hung."""
 
-  def __init__(self, c_rev, svn_props_changed):
+  def __init__(self, cvs_rev, svn_props_changed):
     """Initialize instance and record the properties for this file.
     SVN_PROPS_CHANGED indicates whether the svn: properties are known
     to have changed since the last revision.
@@ -34,7 +34,7 @@ class SVNCommitItem:
     Ctx().svn_property_setters, then we read a couple of the
     properties back out for our own purposes."""
 
-    self.c_rev = c_rev
+    self.cvs_rev = cvs_rev
     # Did the svn properties change for this file (i.e., do they have
     # to be written to the dumpfile?)
     self.svn_props_changed = svn_props_changed

@@ -59,7 +59,7 @@ class StatsKeeper:
   def set_stats_reflect_exclude(self, value):
     self._stats_reflect_exclude = value
 
-  def reset_c_rev_info(self):
+  def reset_cvs_rev_info(self):
     self._cvs_revs_count = 0
     self._tag_ids = set()
     self._branch_ids = set()
@@ -72,21 +72,21 @@ class StatsKeeper:
 
     self._repos_file_count = len(self._repos_files)
 
-  def record_c_rev(self, c_rev):
+  def record_cvs_rev(self, cvs_rev):
     self._cvs_revs_count += 1
 
-    for tag_id in c_rev.tag_ids:
+    for tag_id in cvs_rev.tag_ids:
       self._tag_ids.add(tag_id)
-    for branch_id in c_rev.branch_ids:
+    for branch_id in cvs_rev.branch_ids:
       self._branch_ids.add(branch_id)
 
-    if c_rev.timestamp < self._first_rev_date:
-      self._first_rev_date = c_rev.timestamp
+    if cvs_rev.timestamp < self._first_rev_date:
+      self._first_rev_date = cvs_rev.timestamp
 
-    if c_rev.timestamp > self._last_rev_date:
-      self._last_rev_date = c_rev.timestamp
+    if cvs_rev.timestamp > self._last_rev_date:
+      self._last_rev_date = cvs_rev.timestamp
 
-    self._record_cvs_file(c_rev.cvs_file)
+    self._record_cvs_file(cvs_rev.cvs_file)
 
   def set_svn_rev_count(self, count):
     self._svn_rev_count = count

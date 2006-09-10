@@ -47,23 +47,23 @@ def do_it():
     if not line:
       break
 
-    c_rev_key = line.strip()
-    c_rev = cvs_items_db[c_rev_key]
+    cvs_rev_key = line.strip()
+    cvs_rev = cvs_items_db[cvs_rev_key]
 
     # Handle tags
-    num_tags = len(c_rev.tags)
+    num_tags = len(cvs_rev.tags)
     max_tags = (num_tags > max_tags) \
                and num_tags or max_tags
     total_tags = total_tags + num_tags
-    for tag in c_rev.tags:
+    for tag in cvs_rev.tags:
       tags[tag] = None
 
     # Handle branches
-    num_branches = len(c_rev.branches)
+    num_branches = len(cvs_rev.branches)
     max_branches = (num_branches > max_branches) \
                    and num_branches or max_branches
     total_branches = total_branches + num_branches
-    for branch in c_rev.branches:
+    for branch in cvs_rev.branches:
       branches[branch] = None
 
   symbols = {}

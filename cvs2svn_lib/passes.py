@@ -133,7 +133,7 @@ class CollectRevsPass(Pass):
                            + "\n".join(cd.fatal_errors) + "\n"
                            + "Exited due to fatal error(s).\n")
 
-    stats_keeper.reset_c_rev_info()
+    stats_keeper.reset_cvs_rev_info()
     stats_keeper.archive()
     Log().quiet("Done")
 
@@ -173,19 +173,19 @@ class ResyncRevsPass(Pass):
     self._register_temp_file_needed(config.CVS_ITEMS_DB)
     self._register_temp_file_needed(config.ALL_REVS_DATAFILE)
 
-  def update_symbols(self, c_rev):
-    """Update c_rev.branch_ids and c_rev.tag_ids based on self.symbol_db."""
+  def update_symbols(self, cvs_rev):
+    """Update CVS_REV.branch_ids and tag_ids based on self.symbol_db."""
 
     branch_ids = []
     tag_ids = []
-    for id in c_rev.branch_ids + c_rev.tag_ids:
+    for id in cvs_rev.branch_ids + cvs_rev.tag_ids:
       symbol = self.symbol_db.get_symbol(id)
       if isinstance(symbol, BranchSymbol):
         branch_ids.append(symbol.id)
       elif isinstance(symbol, TagSymbol):
         tag_ids.append(symbol.id)
-    c_rev.branch_ids = branch_ids
-    c_rev.tag_ids = tag_ids
+    cvs_rev.branch_ids = branch_ids
+    cvs_rev.tag_ids = tag_ids
 
   def run(self, stats_keeper):
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
@@ -208,20 +208,20 @@ class ResyncRevsPass(Pass):
     # Process the revisions file, looking for items to clean up
     for line in open(
             artifact_manager.get_temp_file(config.ALL_REVS_DATAFILE)):
-      c_rev_id = int(line.strip(), 16)
-      c_rev = cvs_items_db[c_rev_id]
+      cvs_rev_id = int(line.strip(), 16)
+      cvs_rev = cvs_items_db[cvs_rev_id]
 
       # Skip this entire revision if it's on an excluded branch
-      if isinstance(c_rev.lod, Branch):
-        symbol = self.symbol_db.get_symbol(c_rev.lod.symbol.id)
+      if isinstance(cvs_rev.lod, Branch):
+        symbol = self.symbol_db.get_symbol(cvs_rev.lod.symbol.id)
         if isinstance(symbol, ExcludedSymbol):
           continue
 
-      self.update_symbols(c_rev)
+      self.update_symbols(cvs_rev)
 
-      resynchronizer.resynchronize(c_rev)
+      resynchronizer.resynchronize(cvs_rev)
 
-      cvs_items_resync_db.add(c_rev)
+      cvs_items_resync_db.add(cvs_rev)
 
     Log().quiet("Done")
 
@@ -259,8 +259,8 @@ class CreateDatabasesPass(Pass):
         DB_OPEN_READ)
     for line in file(
             artifact_manager.get_temp_file(config.SORTED_REVS_DATAFILE)):
-      c_rev_id = int(line.strip().split()[-1], 16)
-      yield cvs_items_db[c_rev_id]
+      cvs_rev_id = int(line.strip().split()[-1], 16)
+      yield cvs_items_db[cvs_rev_id]
 
   def run(self, stats_keeper):
     """If we're not doing a trunk-only conversion, generate the
@@ -272,15 +272,15 @@ class CreateDatabasesPass(Pass):
     Ctx()._symbol_db = SymbolDatabase()
 
     if Ctx().trunk_only:
-      for c_rev in self.get_cvs_revs():
-        stats_keeper.record_c_rev(c_rev)
+      for cvs_rev in self.get_cvs_revs():
+        stats_keeper.record_cvs_rev(cvs_rev)
     else:
       Log().quiet("Finding last CVS revisions for all symbolic names...")
       last_sym_name_db = LastSymbolicNameDatabase()
 
-      for c_rev in self.get_cvs_revs():
-        last_sym_name_db.log_revision(c_rev)
-        stats_keeper.record_c_rev(c_rev)
+      for cvs_rev in self.get_cvs_revs():
+        last_sym_name_db.log_revision(cvs_rev)
+        stats_keeper.record_cvs_rev(cvs_rev)
 
       last_sym_name_db.create_database()
 
@@ -325,10 +325,10 @@ class AggregateRevsPass(Pass):
     aggregator = CVSRevisionAggregator()
     for line in file(
             artifact_manager.get_temp_file(config.SORTED_REVS_DATAFILE)):
-      c_rev_id = int(line.strip().split()[-1], 16)
-      c_rev = Ctx()._cvs_items_db[c_rev_id]
-      if not (Ctx().trunk_only and isinstance(c_rev.lod, Branch)):
-        aggregator.process_revision(c_rev)
+      cvs_rev_id = int(line.strip().split()[-1], 16)
+      cvs_rev = Ctx()._cvs_items_db[cvs_rev_id]
+      if not (Ctx().trunk_only and isinstance(cvs_rev.lod, Branch)):
+        aggregator.process_revision(cvs_rev)
     aggregator.flush()
     if not Ctx().trunk_only:
       Ctx()._symbolings_logger.close()

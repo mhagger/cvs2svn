@@ -99,9 +99,9 @@ class PersistenceManager:
     self.svn_commit_db['%x' % svn_commit.revnum] = svn_commit
 
     if isinstance(svn_commit, SVNRevisionCommit):
-      for c_rev in svn_commit.cvs_revs:
-        Log().verbose(' %s %s' % (c_rev.cvs_path, c_rev.rev,))
-        self.cvs2svn_db['%x' % c_rev.id] = svn_commit.revnum
+      for cvs_rev in svn_commit.cvs_revs:
+        Log().verbose(' %s %s' % (cvs_rev.cvs_path, cvs_rev.rev,))
+        self.cvs2svn_db['%x' % cvs_rev.id] = svn_commit.revnum
 
     # If it is a symbol commit, then record last_filled.
     if isinstance(svn_commit, SVNSymbolCommit):

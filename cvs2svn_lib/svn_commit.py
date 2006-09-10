@@ -113,8 +113,8 @@ class SVNCommit:
       Log().warn("  date:   '%s'" % date)
       if isinstance(self, SVNRevisionCommit):
         Log().warn("(subversion rev %s)  Related files:" % self.revnum)
-        for c_rev in self.cvs_revs:
-          Log().warn(" ", c_rev.cvs_file.filename)
+        for cvs_rev in self.cvs_revs:
+          Log().warn(" ", cvs_rev.cvs_file.filename)
       else:
         Log().warn("(subversion rev %s)" % self.revnum)
 
@@ -139,14 +139,14 @@ class SVNCommit:
 class SVNRevisionCommit(SVNCommit):
   """A mixin for a SVNCommit that includes actual CVS revisions."""
 
-  def __init__(self, c_revs):
+  def __init__(self, cvs_revs):
     """Initialize the cvs_revs member.
 
     Derived classes must also call the SVNCommit constructor explicitly."""
 
     self.cvs_revs = []
-    for c_rev in c_revs:
-      self.cvs_revs.append(c_rev)
+    for cvs_rev in cvs_revs:
+      self.cvs_revs.append(cvs_rev)
 
   def __getstate__(self):
     """Return the part of the state represented by this mixin."""
@@ -156,15 +156,15 @@ class SVNRevisionCommit(SVNCommit):
   def __setstate__(self, state):
     """Restore the part of the state represented by this mixin."""
 
-    c_rev_keys = state
+    cvs_rev_keys = state
 
-    c_revs = []
-    for key in c_rev_keys:
-      c_rev_id = int(key, 16)
-      c_rev = Ctx()._cvs_items_db[c_rev_id]
-      c_revs.append(c_rev)
+    cvs_revs = []
+    for key in cvs_rev_keys:
+      cvs_rev_id = int(key, 16)
+      cvs_rev = Ctx()._cvs_items_db[cvs_rev_id]
+      cvs_revs.append(cvs_rev)
 
-    SVNRevisionCommit.__init__(self, c_revs)
+    SVNRevisionCommit.__init__(self, cvs_revs)
 
     # Set the author and log message for this commit from the first
     # cvs revision.
@@ -179,8 +179,8 @@ class SVNRevisionCommit(SVNCommit):
     output of SVNCommit.__str__()."""
 
     ret = "   cvs_revs:\n"
-    for c_rev in self.cvs_revs:
-      ret += "     %x\n" % (c_rev.id,)
+    for cvs_rev in self.cvs_revs:
+      ret += "     %x\n" % (cvs_rev.id,)
     return ret
 
 
@@ -208,9 +208,9 @@ class SVNInitialProjectCommit(SVNCommit):
 
 
 class SVNPrimaryCommit(SVNCommit, SVNRevisionCommit):
-  def __init__(self, c_revs, revnum=None):
+  def __init__(self, cvs_revs, revnum=None):
     SVNCommit.__init__(self, 'commit', revnum)
-    SVNRevisionCommit.__init__(self, c_revs)
+    SVNRevisionCommit.__init__(self, cvs_revs)
 
   def __str__(self):
     return SVNCommit.__str__(self) + SVNRevisionCommit.__str__(self)
@@ -348,9 +348,9 @@ class SVNPreCommit(SVNSymbolCommit):
 
 
 class SVNPostCommit(SVNCommit, SVNRevisionCommit):
-  def __init__(self, motivating_revnum, c_revs, revnum=None):
+  def __init__(self, motivating_revnum, cvs_revs, revnum=None):
     SVNCommit.__init__(self, 'post-commit default branch(es)', revnum)
-    SVNRevisionCommit.__init__(self, c_revs)
+    SVNRevisionCommit.__init__(self, cvs_revs)
 
     # The subversion revision number of the *primary* commit where the
     # default branch changes actually happened.  (NOTE: Secondary

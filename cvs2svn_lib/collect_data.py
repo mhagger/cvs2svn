@@ -111,7 +111,7 @@ class _RevisionData:
     # The id of this revision:
     self.cvs_rev_id = cvs_rev_id
     # The CVSRevision is not yet known.  It will be stored here:
-    self.c_rev = None
+    self.cvs_rev = None
     self.rev = rev
     self.timestamp = timestamp
     self.author = author
@@ -750,7 +750,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         for closed_symbol_data in rev_data.closed_symbols_data
         ]
 
-    c_rev = CVSRevision(
+    cvs_rev = CVSRevision(
         self._get_rev_id(rev_data.rev), self.cvs_file,
         rev_data.timestamp, rev_data.metadata_id,
         self._get_rev_id(rev_data.parent),
@@ -762,8 +762,8 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         rev_data.is_first_on_branch(),
         self._is_default_branch_revision(rev_data),
         tag_ids, branch_ids, closed_symbol_ids)
-    rev_data.c_rev = c_rev
-    self.collect_data.add_cvs_revision(c_rev)
+    rev_data.cvs_rev = cvs_rev
+    self.collect_data.add_cvs_revision(cvs_rev)
 
   def parse_completed(self):
     """Finish the processing of this file.
@@ -909,10 +909,10 @@ class CollectData:
 
     Ctx()._cvs_file_db.log_file(cvs_file)
 
-  def add_cvs_revision(self, c_rev):
-    self._cvs_items_db.add(c_rev)
-    self._all_revs.write('%x\n' % (c_rev.id,))
-    self.stats_keeper.record_c_rev(c_rev)
+  def add_cvs_revision(self, cvs_rev):
+    self._cvs_items_db.add(cvs_rev)
+    self._all_revs.write('%x\n' % (cvs_rev.id,))
+    self.stats_keeper.record_cvs_rev(cvs_rev)
 
   def write_symbol_stats(self):
     self.symbol_stats.write()

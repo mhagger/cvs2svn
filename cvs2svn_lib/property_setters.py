@@ -40,15 +40,15 @@ class CVSRevisionNumberSetter(SVNPropertySetter):
   """Set the cvs2svn:cvs-rev property to the CVS revision number."""
 
   def set_properties(self, s_item):
-    s_item.svn_props['cvs2svn:cvs-rev'] = s_item.c_rev.rev
+    s_item.svn_props['cvs2svn:cvs-rev'] = s_item.cvs_rev.rev
     s_item.svn_props_changed = True
 
 
 class ExecutablePropertySetter(SVNPropertySetter):
-  """Set the svn:executable property based on c_rev.cvs_file.executable."""
+  """Set the svn:executable property based on cvs_rev.cvs_file.executable."""
 
   def set_properties(self, s_item):
-    if s_item.c_rev.cvs_file.executable:
+    if s_item.cvs_rev.cvs_file.executable:
       s_item.svn_props['svn:executable'] = '*'
 
 
@@ -56,7 +56,7 @@ class BinaryFileEOLStyleSetter(SVNPropertySetter):
   """Set the eol-style for binary files to None."""
 
   def set_properties(self, s_item):
-    if s_item.c_rev.cvs_file.mode == 'b':
+    if s_item.cvs_rev.cvs_file.mode == 'b':
       s_item.svn_props['svn:eol-style'] = None
 
 
@@ -84,7 +84,7 @@ class MimeMapper(SVNPropertySetter):
 
   def set_properties(self, s_item):
     basename, extension = os.path.splitext(
-        os.path.basename(s_item.c_rev.cvs_path)
+        os.path.basename(s_item.cvs_rev.cvs_path)
         )
 
     # Extension includes the dot, so strip it (will leave extension
@@ -181,14 +181,14 @@ class AutoPropsPropertySetter(SVNPropertySetter):
     return propdict
 
   def set_properties(self, s_item):
-    propdict = self.get_propdict(s_item.c_rev.cvs_path)
+    propdict = self.get_propdict(s_item.cvs_rev.cvs_path)
     for (k,v) in propdict.items():
       if k in s_item.svn_props:
         if s_item.svn_props[k] != v:
           Log().warn(
               "Property '%s' already set to %r for file %s; "
               "auto-props value (%r) ignored."
-              % (k, s_item.svn_props[k], s_item.c_rev.cvs_path, v,))
+              % (k, s_item.svn_props[k], s_item.cvs_rev.cvs_path, v,))
       else:
         s_item.svn_props[k] = v
 
@@ -199,7 +199,7 @@ class BinaryFileDefaultMimeTypeSetter(SVNPropertySetter):
 
   def set_properties(self, s_item):
     if 'svn:mime-type' not in s_item.svn_props \
-           and s_item.c_rev.cvs_file.mode == 'b':
+           and s_item.cvs_rev.cvs_file.mode == 'b':
       s_item.svn_props['svn:mime-type'] = 'application/octet-stream'
 
 
@@ -245,7 +245,7 @@ class KeywordsPropertySetter(SVNPropertySetter):
 
   def set_properties(self, s_item):
     if 'svn:keywords' not in s_item.svn_props \
-           and s_item.c_rev.cvs_file.mode in [None, 'kv', 'kvl']:
+           and s_item.cvs_rev.cvs_file.mode in [None, 'kv', 'kvl']:
       s_item.svn_props['svn:keywords'] = self.value
 
 

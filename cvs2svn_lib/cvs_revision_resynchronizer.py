@@ -74,49 +74,50 @@ class CVSRevisionResynchronizer:
 
     return resync
 
-  def resynchronize(self, c_rev):
-    if c_rev.prev_id is not None:
-      prev_c_rev = self.cvs_items_db[c_rev.prev_id]
+  def resynchronize(self, cvs_rev):
+    if cvs_rev.prev_id is not None:
+      prev_cvs_rev = self.cvs_items_db[cvs_rev.prev_id]
     else:
-      prev_c_rev = None
+      prev_cvs_rev = None
 
-    if c_rev.next_id is not None:
-      next_c_rev = self.cvs_items_db[c_rev.next_id]
+    if cvs_rev.next_id is not None:
+      next_cvs_rev = self.cvs_items_db[cvs_rev.next_id]
     else:
-      next_c_rev = None
+      next_cvs_rev = None
 
-    # see if this is "near" any of the resync records we have
-    # recorded for this metadata_id [of the log message].
-    for record in self.resync.get(c_rev.metadata_id, []):
-      if record[2] == c_rev.timestamp:
-        # This means that either c_rev is the same revision that
-        # caused the resync record to exist, or c_rev is a different
+    # see if this is "near" any of the resync records we have recorded
+    # for this metadata_id [of the log message].
+    for record in self.resync.get(cvs_rev.metadata_id, []):
+      if record[2] == cvs_rev.timestamp:
+        # This means that either cvs_rev is the same revision that
+        # caused the resync record to exist, or cvs_rev is a different
         # CVS revision that happens to have the same timestamp.  In
         # either case, we don't have to do anything, so we...
         continue
 
-      if record[0] <= c_rev.timestamp <= record[1]:
-        # bingo!  We probably want to remap the time on this c_rev,
+      if record[0] <= cvs_rev.timestamp <= record[1]:
+        # bingo!  We probably want to remap the time on this cvs_rev,
         # unless the remapping would be useless because the new time
         # would fall outside the COMMIT_THRESHOLD window for this
         # commit group.
         new_timestamp = record[2]
-        # If the new timestamp is earlier than that of our previous revision
-        if prev_c_rev and new_timestamp < prev_c_rev.timestamp:
+        # If the new timestamp is earlier than that of our previous
+        # revision
+        if prev_cvs_rev and new_timestamp < prev_cvs_rev.timestamp:
           Log().warn(
               "%s: Attempt to set timestamp of revision %s on file %s"
               " to time %s, which is before previous the time of"
               " revision %s (%s):"
-              % (warning_prefix, c_rev.rev, c_rev.cvs_path, new_timestamp,
-                 prev_c_rev.rev, prev_c_rev.timestamp))
+              % (warning_prefix, cvs_rev.rev, cvs_rev.cvs_path, new_timestamp,
+                 prev_cvs_rev.rev, prev_cvs_rev.timestamp))
 
-          # If resyncing our rev to prev_c_rev.timestamp + 1 will place
-          # the timestamp of c_rev within COMMIT_THRESHOLD of the
-          # attempted resync time, then sync back to prev_c_rev.timestamp
-          # + 1...
-          if ((prev_c_rev.timestamp + 1) - new_timestamp) \
+          # If resyncing our rev to prev_cvs_rev.timestamp + 1 will
+          # place the timestamp of cvs_rev within COMMIT_THRESHOLD of
+          # the attempted resync time, then sync back to
+          # prev_cvs_rev.timestamp + 1...
+          if ((prev_cvs_rev.timestamp + 1) - new_timestamp) \
                  < config.COMMIT_THRESHOLD:
-            new_timestamp = prev_c_rev.timestamp + 1
+            new_timestamp = prev_cvs_rev.timestamp + 1
             Log().warn("%s: Time set to %s"
                        % (warning_prefix, new_timestamp))
           else:
@@ -124,21 +125,21 @@ class CVSRevisionResynchronizer:
             continue
 
         # If the new timestamp is later than that of our next revision
-        elif next_c_rev and new_timestamp > next_c_rev.timestamp:
+        elif next_cvs_rev and new_timestamp > next_cvs_rev.timestamp:
           Log().warn(
               "%s: Attempt to set timestamp of revision %s on file %s"
               " to time %s, which is after time of next"
               " revision %s (%s):"
-              % (warning_prefix, c_rev.rev, c_rev.cvs_path, new_timestamp,
-                 next_c_rev.rev, next_c_rev.timestamp))
+              % (warning_prefix, cvs_rev.rev, cvs_rev.cvs_path, new_timestamp,
+                 next_cvs_rev.rev, next_cvs_rev.timestamp))
 
-          # If resyncing our rev to next_c_rev.timestamp - 1 will place
-          # the timestamp of c_rev within COMMIT_THRESHOLD of the
+          # If resyncing our rev to next_cvs_rev.timestamp - 1 will place
+          # the timestamp of cvs_rev within COMMIT_THRESHOLD of the
           # attempted resync time, then sync forward to
-          # next_c_rev.timestamp - 1...
-          if (new_timestamp - (next_c_rev.timestamp - 1)) \
+          # next_cvs_rev.timestamp - 1...
+          if (new_timestamp - (next_cvs_rev.timestamp - 1)) \
                  < config.COMMIT_THRESHOLD:
-            new_timestamp = next_c_rev.timestamp - 1
+            new_timestamp = next_cvs_rev.timestamp - 1
             Log().warn("%s: Time set to %s"
                        % (warning_prefix, new_timestamp))
           else:
@@ -147,28 +148,29 @@ class CVSRevisionResynchronizer:
 
         # Fix for Issue #71: Avoid resyncing two consecutive revisions
         # to the same timestamp.
-        elif (prev_c_rev and new_timestamp == prev_c_rev.timestamp
-              or next_c_rev and new_timestamp == next_c_rev.timestamp):
+        elif (prev_cvs_rev and new_timestamp == prev_cvs_rev.timestamp
+              or next_cvs_rev and new_timestamp == next_cvs_rev.timestamp):
           continue
 
         # adjust the time range. we want the COMMIT_THRESHOLD from the
         # bounds of the earlier/latest commit in this group.
         record[0] = min(record[0],
-                        c_rev.timestamp - config.COMMIT_THRESHOLD/2)
+                        cvs_rev.timestamp - config.COMMIT_THRESHOLD/2)
         record[1] = max(record[1],
-                        c_rev.timestamp + config.COMMIT_THRESHOLD/2)
+                        cvs_rev.timestamp + config.COMMIT_THRESHOLD/2)
 
         msg = "PASS3 RESYNC: '%s' (%s): old time='%s' delta=%ds" \
-              % (c_rev.cvs_path, c_rev.rev, time.ctime(c_rev.timestamp),
-                 new_timestamp - c_rev.timestamp)
+              % (cvs_rev.cvs_path, cvs_rev.rev, time.ctime(cvs_rev.timestamp),
+                 new_timestamp - cvs_rev.timestamp)
         Log().verbose(msg)
 
-        c_rev.timestamp = new_timestamp
+        cvs_rev.timestamp = new_timestamp
 
         # stop looking for hits
         break
 
     self.output.write(
-        '%08lx %x %x\n' % (c_rev.timestamp, c_rev.metadata_id, c_rev.id,))
+        '%08lx %x %x\n'
+        % (cvs_rev.timestamp, cvs_rev.metadata_id, cvs_rev.id,))
 
 

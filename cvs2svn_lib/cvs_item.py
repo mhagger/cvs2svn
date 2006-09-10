@@ -145,11 +145,11 @@ class CVSRevision(CVSItem):
     if symbol_id in self.tag_ids:
       return True
     if symbol_id in self.branch_ids:
-      # If this c_rev opens a branch and our op is OP_DELETE, then
-      # that means that the file that this c_rev belongs to was
+      # If this cvs_rev opens a branch and our op is OP_DELETE, then
+      # that means that the file that this cvs_rev belongs to was
       # created on the branch, so for all intents and purposes, this
-      # c_rev is *technically* not an opening.  See Issue #62 for more
-      # information.
+      # cvs_rev is *technically* not an opening.  See Issue #62 for
+      # more information.
       if self.op != OP_DELETE:
         return True
     return False

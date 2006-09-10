@@ -44,9 +44,9 @@ class CVSRepository:
         r'^' + re.escape(self.cvs_repos_path)
         + r'(' + re.escape(os.sep) + r'|$)')
 
-  def get_co_pipe(self, c_rev, suppress_keyword_substitution=False):
+  def get_co_pipe(self, cvs_rev, suppress_keyword_substitution=False):
     """Return a command string, and a pipe from which the file
-    contents of C_REV can be read.  C_REV is a CVSRevision.  If
+    contents of CVS_REV can be read.  CVS_REV is a CVSRevision.  If
     SUPPRESS_KEYWORD_SUBSTITUTION is True, then suppress the
     substitution of RCS/CVS keywords in the output.  Standard output
     of the pipe returns the text of that CVS Revision.
@@ -70,11 +70,11 @@ class CVSRepositoryViaRCS(CVSRepository):
                        'Please check that co is installed and in your PATH\n'
                        '(it is a part of the RCS software).' % (e,))
 
-  def get_co_pipe(self, c_rev, suppress_keyword_substitution=False):
-    pipe_cmd = [ Ctx().co_executable, '-q', '-x,v', '-p' + c_rev.rev ]
+  def get_co_pipe(self, cvs_rev, suppress_keyword_substitution=False):
+    pipe_cmd = [ Ctx().co_executable, '-q', '-x,v', '-p' + cvs_rev.rev ]
     if suppress_keyword_substitution:
       pipe_cmd.append('-kk')
-    pipe_cmd.append(c_rev.cvs_file.filename)
+    pipe_cmd.append(cvs_rev.cvs_file.filename)
     pipe = SimplePopen(pipe_cmd, True)
     pipe.stdin.close()
     return ' '.join(pipe_cmd), pipe
@@ -130,12 +130,12 @@ class CVSRepositoryViaCVS(CVSRepository):
             '%s\n'
             'Please check that cvs is installed and in your PATH.' % (e,))
 
-  def get_co_pipe(self, c_rev, suppress_keyword_substitution=False):
+  def get_co_pipe(self, cvs_rev, suppress_keyword_substitution=False):
     pipe_cmd = [ Ctx().cvs_executable ] + self.global_arguments + \
-               [ 'co', '-r' + c_rev.rev, '-p' ]
+               [ 'co', '-r' + cvs_rev.rev, '-p' ]
     if suppress_keyword_substitution:
       pipe_cmd.append('-kk')
-    pipe_cmd.append(self.cvs_module + c_rev.cvs_path)
+    pipe_cmd.append(self.cvs_module + cvs_rev.cvs_path)
     pipe = SimplePopen(pipe_cmd, True)
     pipe.stdin.close()
     return ' '.join(pipe_cmd), pipe

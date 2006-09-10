@@ -102,7 +102,7 @@ class CVSCommit:
     # revisions.  Therefore, we generate the above-described new
     # revision unconditionally.
     #
-    # This is a list of c_revs, and a c_rev is appended for each
+    # This is a list of cvs_revs, and a cvs_rev is appended for each
     # default branch commit that will need to be copied to trunk (or
     # deleted from trunk) in some generated revision following the
     # "regular" revision.
@@ -135,12 +135,12 @@ class CVSCommit:
     """Return True if any CVSRevision in this commit is on a tag or a
     branch or is the origin of a tag or branch."""
 
-    for c_rev in self.revisions():
-      if c_rev.opens_symbol(symbol_id):
+    for cvs_rev in self.revisions():
+      if cvs_rev.opens_symbol(symbol_id):
         return True
     return False
 
-  def add_revision(self, c_rev):
+  def add_revision(self, cvs_rev):
     # Record the time range of this commit.
     #
     # ### ISSUE: It's possible, though unlikely, that the time range
@@ -149,16 +149,16 @@ class CVSCommit:
     # problem, and anyway deciding where to break it up would be a
     # judgement call.  For now, we just print a warning in commit() if
     # this happens.
-    if c_rev.timestamp < self.t_min:
-      self.t_min = c_rev.timestamp
-    if c_rev.timestamp > self.t_max:
-      self.t_max = c_rev.timestamp
+    if cvs_rev.timestamp < self.t_min:
+      self.t_min = cvs_rev.timestamp
+    if cvs_rev.timestamp > self.t_max:
+      self.t_max = cvs_rev.timestamp
 
-    if c_rev.op == OP_DELETE:
-      self.deletes.append(c_rev)
+    if cvs_rev.op == OP_DELETE:
+      self.deletes.append(cvs_rev)
     else:
       # OP_CHANGE or OP_ADD
-      self.changes.append(c_rev)
+      self.changes.append(cvs_rev)
 
   def add_dependency(self, dep):
     self._deps.add(dep)
@@ -183,7 +183,7 @@ class CVSCommit:
     CVSRevisionAggregator has already generated a fill SVNCommit.  See
     self.process_revisions()."""
 
-    # There may be multiple c_revs in this commit that would cause
+    # There may be multiple cvs_revs in this commit that would cause
     # branch B to be filled, but we only want to fill B once.  On the
     # other hand, there might be multiple branches committed on in
     # this commit.  Whatever the case, we should count exactly one
@@ -192,79 +192,79 @@ class CVSCommit:
     # counted.
     accounted_for_symbol_ids = set()
 
-    def fill_needed(c_rev):
+    def fill_needed(cvs_rev):
       """Return True iff this is the first commit on a new branch (for
       this file) and we need to fill the branch; else return False.
       See comments below for the detailed rules."""
 
-      if not c_rev.first_on_branch:
+      if not cvs_rev.first_on_branch:
         # Only commits that are the first on their branch can force fills:
         return False
 
       pm = Ctx()._persistence_manager
-      prev_svn_revnum = pm.get_svn_revnum(c_rev.prev_id)
+      prev_svn_revnum = pm.get_svn_revnum(cvs_rev.prev_id)
 
       # It should be the case that when we have a file F that is
       # added on branch B (thus, F on trunk is in state 'dead'), we
       # generate an SVNCommit to fill B iff the branch has never
       # been filled before.
-      if c_rev.op == OP_ADD:
+      if cvs_rev.op == OP_ADD:
         # Fill the branch only if it has never been filled before:
-        return c_rev.lod.symbol.id not in pm.last_filled
-      elif c_rev.op == OP_CHANGE:
+        return cvs_rev.lod.symbol.id not in pm.last_filled
+      elif cvs_rev.op == OP_CHANGE:
         # We need to fill only if the last commit affecting the file
         # has not been filled yet:
-        return prev_svn_revnum > pm.last_filled.get(c_rev.lod.symbol.id, 0)
-      elif c_rev.op == OP_DELETE:
+        return prev_svn_revnum > pm.last_filled.get(cvs_rev.lod.symbol.id, 0)
+      elif cvs_rev.op == OP_DELETE:
         # If the previous revision was also a delete, we don't need
         # to fill it - and there's nothing to copy to the branch, so
         # we can't anyway.  No one seems to know how to get CVS to
         # produce the double delete case, but it's been observed.
-        if Ctx()._cvs_items_db[c_rev.prev_id].op == OP_DELETE:
+        if Ctx()._cvs_items_db[cvs_rev.prev_id].op == OP_DELETE:
           return False
         # Other deletes need fills only if the last commit affecting
         # the file has not been filled yet:
-        return prev_svn_revnum > pm.last_filled.get(c_rev.lod.symbol.id, 0)
+        return prev_svn_revnum > pm.last_filled.get(cvs_rev.lod.symbol.id, 0)
 
-    for c_rev in self.changes + self.deletes:
+    for cvs_rev in self.changes + self.deletes:
       # If a commit is on a branch, we must ensure that the branch
       # path being committed exists (in HEAD of the Subversion
       # repository).  If it doesn't exist, we will need to fill the
       # branch.  After the fill, the path on which we're committing
       # will exist.
-      if isinstance(c_rev.lod, Branch) \
-          and c_rev.lod.symbol.id not in accounted_for_symbol_ids \
-          and c_rev.lod.symbol.id not in done_symbols \
-          and fill_needed(c_rev):
-        symbol = Ctx()._symbol_db.get_symbol(c_rev.lod.symbol.id)
+      if isinstance(cvs_rev.lod, Branch) \
+          and cvs_rev.lod.symbol.id not in accounted_for_symbol_ids \
+          and cvs_rev.lod.symbol.id not in done_symbols \
+          and fill_needed(cvs_rev):
+        symbol = Ctx()._symbol_db.get_symbol(cvs_rev.lod.symbol.id)
         self.secondary_commits.append(SVNPreCommit(symbol))
-        accounted_for_symbol_ids.add(c_rev.lod.symbol.id)
+        accounted_for_symbol_ids.add(cvs_rev.lod.symbol.id)
 
   def _commit(self):
     """Generates the primary SVNCommit that corresponds to this
     CVSCommit."""
 
-    def delete_needed(c_rev):
-      """Return True iff the specified delete C_REV is really needed.
+    def delete_needed(cvs_rev):
+      """Return True iff the specified delete CVS_REV is really needed.
 
       When a file is added on a branch, CVS not only adds the file on
       the branch, but generates a trunk revision (typically 1.1) for
       that file in state 'dead'.  We only want to add this revision if
       the log message is not the standard cvs fabricated log message."""
 
-      if c_rev.prev_id is not None:
+      if cvs_rev.prev_id is not None:
         return True
 
-      # c_rev.branch_ids may be empty if the originating branch
+      # cvs_rev.branch_ids may be empty if the originating branch
       # has been excluded.
-      if not c_rev.branch_ids:
+      if not cvs_rev.branch_ids:
         return False
       # FIXME: This message will not match if the RCS file was renamed
       # manually after it was created.
       cvs_generated_msg = 'file %s was initially added on branch %s.\n' % (
-          c_rev.cvs_file.basename,
-          Ctx()._symbol_db.get_symbol(c_rev.branch_ids[0]).name,)
-      author, log_msg = Ctx()._metadata_db[c_rev.metadata_id]
+          cvs_rev.cvs_file.basename,
+          Ctx()._symbol_db.get_symbol(cvs_rev.branch_ids[0]).name,)
+      author, log_msg = Ctx()._metadata_db[cvs_rev.metadata_id]
       return log_msg != cvs_generated_msg
 
     # Generate an SVNCommit unconditionally.  Even if the only change
@@ -273,16 +273,16 @@ class CVSCommit:
     # state 'dead'), the conversion will still generate a Subversion
     # revision containing the log message for the second dead
     # revision, because we don't want to lose that information.
-    needed_deletes = [ c_rev
-                       for c_rev in self.deletes
-                       if delete_needed(c_rev)
+    needed_deletes = [ cvs_rev
+                       for cvs_rev in self.deletes
+                       if delete_needed(cvs_rev)
                        ]
     svn_commit = SVNPrimaryCommit(self.changes + needed_deletes)
     self.motivating_commit = svn_commit
 
-    for c_rev in self.changes:
+    for cvs_rev in self.changes:
       # Only make a change if we need to:
-      if c_rev.rev == "1.1.1.1" and not c_rev.deltatext_exists:
+      if cvs_rev.rev == "1.1.1.1" and not cvs_rev.deltatext_exists:
         # When 1.1.1.1 has an empty deltatext, the explanation is
         # almost always that we're looking at an imported file whose
         # 1.1 and 1.1.1.1 are identical.  On such imports, CVS creates
@@ -295,12 +295,12 @@ class CVSCommit:
         # conditions above are strict enough.)
         pass
       else:
-        if c_rev.default_branch_revision:
-          self.default_branch_cvs_revisions.append(c_rev)
+        if cvs_rev.default_branch_revision:
+          self.default_branch_cvs_revisions.append(cvs_rev)
 
-    for c_rev in needed_deletes:
-      if c_rev.default_branch_revision:
-        self.default_branch_cvs_revisions.append(c_rev)
+    for cvs_rev in needed_deletes:
+      if cvs_rev.default_branch_revision:
+        self.default_branch_cvs_revisions.append(cvs_rev)
 
     # There is a slight chance that we didn't actually register any
     # CVSRevisions with our SVNCommit (see loop over self.deletes
@@ -315,8 +315,8 @@ class CVSCommit:
       SVNCommit.revnum -= 1
 
     if not Ctx().trunk_only:
-      for c_rev in self.revisions():
-        Ctx()._symbolings_logger.log_revision(c_rev, svn_commit.revnum)
+      for cvs_rev in self.revisions():
+        Ctx()._symbolings_logger.log_revision(cvs_rev, svn_commit.revnum)
 
   def _post_commit(self):
     """Generates any SVNCommits that we can perform now that _commit
@@ -330,12 +330,12 @@ class CVSCommit:
 
     # Only generate a commit if we have default branch revs
     if self.default_branch_cvs_revisions:
-      # Generate an SVNCommit for all of our default branch c_revs.
+      # Generate an SVNCommit for all of our default branch cvs_revs.
       svn_commit = SVNPostCommit(self.motivating_commit.revnum,
                                  self.default_branch_cvs_revisions)
-      for c_rev in self.default_branch_cvs_revisions:
+      for cvs_rev in self.default_branch_cvs_revisions:
         Ctx()._symbolings_logger.log_default_branch_closing(
-            c_rev, svn_commit.revnum)
+            cvs_rev, svn_commit.revnum)
       self.secondary_commits.append(svn_commit)
 
   def process_revisions(self, done_symbols):

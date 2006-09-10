@@ -156,7 +156,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
                        % (op,))
 
     # Convenience variables
-    c_rev = s_item.c_rev
+    cvs_rev = s_item.cvs_rev
 
     # The property handling here takes advantage of an undocumented
     # but IMHO consistent feature of the Subversion dumpfile-loading
@@ -205,9 +205,9 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
       props_header = ''
 
     # treat .cvsignore as a directory property
-    dir_path, basename = os.path.split(c_rev.svn_path)
+    dir_path, basename = os.path.split(cvs_rev.svn_path)
     if basename == ".cvsignore":
-      ignore_vals = generate_ignores(c_rev)
+      ignore_vals = generate_ignores(cvs_rev)
       ignore_contents = '\n'.join(ignore_vals)
       if ignore_contents:
         ignore_contents += '\n'
@@ -230,15 +230,15 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     # If the file has keywords, we must prevent CVS/RCS from expanding
     # the keywords because they must be unexpanded in the repository,
     # or Subversion will get confused.
-    pipe_cmd, pipe = c_rev.cvs_file.project.cvs_repository.get_co_pipe(
-        c_rev, suppress_keyword_substitution=s_item.has_keywords)
+    pipe_cmd, pipe = cvs_rev.cvs_file.project.cvs_repository.get_co_pipe(
+        cvs_rev, suppress_keyword_substitution=s_item.has_keywords)
 
     self.dumpfile.write('Node-path: %s\n'
                         'Node-kind: file\n'
                         'Node-action: %s\n'
                         '%s'  # no property header if no props
                         'Text-content-length: '
-                        % (self._utf8_path(c_rev.svn_path),
+                        % (self._utf8_path(cvs_rev.svn_path),
                            action, props_header))
 
     pos = self.dumpfile.tell()
@@ -333,9 +333,10 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     self.dumpfile.close()
 
 
-def generate_ignores(c_rev):
+def generate_ignores(cvs_rev):
   # Read in props
-  pipe_cmd, pipe = c_rev.cvs_file.project.cvs_repository.get_co_pipe(c_rev)
+  pipe_cmd, pipe = \
+      cvs_rev.cvs_file.project.cvs_repository.get_co_pipe(cvs_rev)
   buf = pipe.stdout.read(config.PIPE_READ_SIZE)
   raw_ignore_val = ""
   while buf:

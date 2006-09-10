@@ -23,14 +23,16 @@ on that repository.  NOTE: You have to run the conversion pass yourself!
 import sys, os, os.path
 
 from cvs2svn_lib.database import DB_OPEN_READ
-from cvs2svn_lib.config import CVS_FILES_DB, CVS_ITEMS_DB, ALL_REVS_DATAFILE
+from cvs2svn_lib.config import CVS_FILES_DB
+from cvs2svn_lib.config import CVS_ITEMS_DB
+from cvs2svn_lib.config import CVS_ITEMS_ALL_DATAFILE
 from cvs2svn_lib.cvs_file_database import CVSFileDatabase
 from cvs2svn_lib.cvs_item_database import CVSItemDatabase
 
 def do_it():
   cvs_files_db = CVSFileDatabase(CVS_FILES_DB, DB_OPEN_READ)
   cvs_items_db = CVSItemDatabase(cvs_files_db, CVS_ITEMS_DB, DB_OPEN_READ)
-  fp = open(ALL_REVS_DATAFILE, 'r')
+  fp = open(CVS_ITEMS_ALL_DATAFILE, 'r')
 
   tags = { }
   branches = { }

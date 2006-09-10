@@ -41,6 +41,7 @@ from cvs2svn_lib.symbol_database import SymbolDatabase
 from cvs2svn_lib.symbol_database import create_symbol_database
 from cvs2svn_lib.line_of_development import Branch
 from cvs2svn_lib.symbol_statistics import SymbolStatistics
+from cvs2svn_lib.cvs_item import CVSRevision
 from cvs2svn_lib.cvs_item_database import CVSItemDatabase
 from cvs2svn_lib.cvs_revision_resynchronizer import CVSRevisionResynchronizer
 from cvs2svn_lib.last_symbolic_name_database import LastSymbolicNameDatabase
@@ -116,7 +117,7 @@ class CollectRevsPass(Pass):
     self._register_temp_file(config.METADATA_DB)
     self._register_temp_file(config.CVS_FILES_DB)
     self._register_temp_file(config.CVS_ITEMS_DB)
-    self._register_temp_file(config.ALL_REVS_DATAFILE)
+    self._register_temp_file(config.CVS_ITEMS_ALL_DATAFILE)
 
   def run(self, stats_keeper):
     Log().quiet("Examining all CVS ',v' files...")
@@ -165,13 +166,13 @@ class ResyncRevsPass(Pass):
   This pass was formerly known as pass2."""
 
   def register_artifacts(self):
-    self._register_temp_file(config.CLEAN_REVS_DATAFILE)
+    self._register_temp_file(config.CVS_REVS_RESYNC_DATAFILE)
     self._register_temp_file(config.CVS_ITEMS_RESYNC_DB)
     self._register_temp_file_needed(config.SYMBOL_DB)
     self._register_temp_file_needed(config.RESYNC_DATAFILE)
     self._register_temp_file_needed(config.CVS_FILES_DB)
     self._register_temp_file_needed(config.CVS_ITEMS_DB)
-    self._register_temp_file_needed(config.ALL_REVS_DATAFILE)
+    self._register_temp_file_needed(config.CVS_ITEMS_ALL_DATAFILE)
 
   def update_symbols(self, cvs_rev):
     """Update CVS_REV.branch_ids and tag_ids based on self.symbol_db."""
@@ -207,21 +208,22 @@ class ResyncRevsPass(Pass):
 
     # Process the revisions file, looking for items to clean up
     for line in open(
-            artifact_manager.get_temp_file(config.ALL_REVS_DATAFILE)):
-      cvs_rev_id = int(line.strip(), 16)
-      cvs_rev = cvs_items_db[cvs_rev_id]
+            artifact_manager.get_temp_file(config.CVS_ITEMS_ALL_DATAFILE)):
+      cvs_item_id = int(line.strip(), 16)
+      cvs_item = cvs_items_db[cvs_item_id]
 
-      # Skip this entire revision if it's on an excluded branch
-      if isinstance(cvs_rev.lod, Branch):
-        symbol = self.symbol_db.get_symbol(cvs_rev.lod.symbol.id)
-        if isinstance(symbol, ExcludedSymbol):
-          continue
+      if isinstance(cvs_item, CVSRevision):
+        # Skip this entire revision if it's on an excluded branch
+        if isinstance(cvs_item.lod, Branch):
+          symbol = self.symbol_db.get_symbol(cvs_item.lod.symbol.id)
+          if isinstance(symbol, ExcludedSymbol):
+            continue
 
-      self.update_symbols(cvs_rev)
+        self.update_symbols(cvs_item)
 
-      resynchronizer.resynchronize(cvs_rev)
+        resynchronizer.resynchronize(cvs_item)
 
-      cvs_items_resync_db.add(cvs_rev)
+      cvs_items_resync_db.add(cvs_item)
 
     Log().quiet("Done")
 
@@ -230,13 +232,13 @@ class SortRevsPass(Pass):
   """This pass was formerly known as pass3."""
 
   def register_artifacts(self):
-    self._register_temp_file(config.SORTED_REVS_DATAFILE)
-    self._register_temp_file_needed(config.CLEAN_REVS_DATAFILE)
+    self._register_temp_file(config.CVS_REVS_SORTED_DATAFILE)
+    self._register_temp_file_needed(config.CVS_REVS_RESYNC_DATAFILE)
 
   def run(self, stats_keeper):
     Log().quiet("Sorting CVS revisions...")
-    sort_file(artifact_manager.get_temp_file(config.CLEAN_REVS_DATAFILE),
-              artifact_manager.get_temp_file(config.SORTED_REVS_DATAFILE))
+    sort_file(artifact_manager.get_temp_file(config.CVS_REVS_RESYNC_DATAFILE),
+              artifact_manager.get_temp_file(config.CVS_REVS_SORTED_DATAFILE))
     Log().quiet("Done")
 
 
@@ -249,16 +251,16 @@ class CreateDatabasesPass(Pass):
     self._register_temp_file_needed(config.CVS_FILES_DB)
     self._register_temp_file_needed(config.SYMBOL_DB)
     self._register_temp_file_needed(config.CVS_ITEMS_RESYNC_DB)
-    self._register_temp_file_needed(config.SORTED_REVS_DATAFILE)
+    self._register_temp_file_needed(config.CVS_REVS_SORTED_DATAFILE)
 
   def get_cvs_revs(self):
-    """Generator the CVSRevisions in SORTED_REVS_DATAFILE order."""
+    """Generator the CVSRevisions in CVS_REVS_SORTED_DATAFILE order."""
 
     cvs_items_db = CVSItemDatabase(
         artifact_manager.get_temp_file(config.CVS_ITEMS_RESYNC_DB),
         DB_OPEN_READ)
     for line in file(
-            artifact_manager.get_temp_file(config.SORTED_REVS_DATAFILE)):
+            artifact_manager.get_temp_file(config.CVS_REVS_SORTED_DATAFILE)):
       cvs_rev_id = int(line.strip().split()[-1], 16)
       yield cvs_items_db[cvs_rev_id]
 
@@ -309,7 +311,7 @@ class AggregateRevsPass(Pass):
     self._register_temp_file_needed(config.CVS_ITEMS_RESYNC_DB)
     self._register_temp_file_needed(config.SYMBOL_DB)
     self._register_temp_file_needed(config.METADATA_DB)
-    self._register_temp_file_needed(config.SORTED_REVS_DATAFILE)
+    self._register_temp_file_needed(config.CVS_REVS_SORTED_DATAFILE)
 
   def run(self, stats_keeper):
     Log().quiet("Mapping CVS revisions to Subversion commits...")
@@ -324,7 +326,7 @@ class AggregateRevsPass(Pass):
       Ctx()._symbolings_logger = SymbolingsLogger()
     aggregator = CVSRevisionAggregator()
     for line in file(
-            artifact_manager.get_temp_file(config.SORTED_REVS_DATAFILE)):
+            artifact_manager.get_temp_file(config.CVS_REVS_SORTED_DATAFILE)):
       cvs_rev_id = int(line.strip().split()[-1], 16)
       cvs_rev = Ctx()._cvs_items_db[cvs_rev_id]
       if not (Ctx().trunk_only and isinstance(cvs_rev.lod, Branch)):

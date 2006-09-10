@@ -763,7 +763,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         self._is_default_branch_revision(rev_data),
         tag_ids, branch_ids, closed_symbol_ids)
     rev_data.cvs_rev = cvs_rev
-    self.collect_data.add_cvs_revision(cvs_rev)
+    self.collect_data.add_cvs_item(cvs_rev)
 
   def parse_completed(self):
     """Finish the processing of this file.
@@ -884,7 +884,7 @@ class CollectData:
     self._cvs_items_db = CVSItemDatabase(
         artifact_manager.get_temp_file(config.CVS_ITEMS_DB), DB_OPEN_NEW)
     self._all_revs = open(
-        artifact_manager.get_temp_file(config.ALL_REVS_DATAFILE), 'w')
+        artifact_manager.get_temp_file(config.CVS_ITEMS_ALL_DATAFILE), 'w')
     self.resync = open(
         artifact_manager.get_temp_file(config.RESYNC_DATAFILE), 'w')
     self.metadata_db = MetadataDatabase(DB_OPEN_NEW)
@@ -909,10 +909,11 @@ class CollectData:
 
     Ctx()._cvs_file_db.log_file(cvs_file)
 
-  def add_cvs_revision(self, cvs_rev):
-    self._cvs_items_db.add(cvs_rev)
-    self._all_revs.write('%x\n' % (cvs_rev.id,))
-    self.stats_keeper.record_cvs_rev(cvs_rev)
+  def add_cvs_item(self, cvs_item):
+    self._cvs_items_db.add(cvs_item)
+    self._all_revs.write('%x\n' % (cvs_item.id,))
+    if isinstance(cvs_item, CVSRevision):
+      self.stats_keeper.record_cvs_rev(cvs_item)
 
   def write_symbol_stats(self):
     self.symbol_stats.write()

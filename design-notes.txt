@@ -89,7 +89,7 @@ When every CVS file is done, CollectRevsPass is complete, and:
      revisions is arbitrary.  In other words, a multi-file commit will
      be scattered all over the place.
 
-   - 'cvs2svn-a-revs.txt' contains a list of CVSRevision keys that are
+   - 'cvs2svn-items-all.txt' contains a list of CVSItem keys that are
      in 'cvs2svn-cvs-items.db', in the order that they were written.
 
    - 'cvs2svn-resync.txt' contains a small amount of resync data, in
@@ -174,8 +174,8 @@ tweaks.").  So each metadata_id may need to "fan out" to cover
 multiple commits, but without accidentally unifying those commits.
 
 Now we loop over the CVSRevisions in 'cvs2svn-cvs-items.db', and for
-each record write a line to 'cvs2svn-c-revs.txt'.  Each line of this
-file looks like this:
+each CVSRevision write a line to 'cvs2svn-revs-resync.txt'.  Each line
+of this file looks like this:
 
    3dc32955 5a 12ab
 
@@ -219,12 +219,12 @@ SortRevsPass (formerly called pass3)
 This is where we deduce the changesets, that is, the grouping of file
 changes into single commits.
 
-It's very simple -- run 'sort' on 'cvs2svn-c-revs.txt', converting it
-to 'cvs2svn-s-revs.txt'.  Because of the way the data is laid out,
-this causes commits with the same metadata_id (that is, the same
-author, log message, and optionally the same project) to be grouped
-together.  Poof!  We now have the CVS changes grouped by logical
-commit.
+It's very simple -- run 'sort' on 'cvs2svn-revs-resync.txt',
+converting it to 'cvs2svn-revs-resync-s.txt'.  Because of the way the
+data is laid out, this causes commits with the same metadata_id (that
+is, the same author, log message, and optionally the same project) to
+be grouped together.  Poof!  We now have the CVS changes grouped by
+logical commit.
 
 In some cases, the changes in a given commit may be interleaved with
 other commits that went on at the same time, because the sort gives

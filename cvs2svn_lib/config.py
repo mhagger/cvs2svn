@@ -35,9 +35,9 @@ SORT_EXECUTABLE = 'sort'
 
 # These files are related to the cleaning and sorting of CVS revisions,
 # for commit grouping.  See design-notes.txt for details.
-ALL_REVS_DATAFILE = 'cvs2svn-a-revs.txt'
-CLEAN_REVS_DATAFILE = 'cvs2svn-c-revs.txt'
-SORTED_REVS_DATAFILE = 'cvs2svn-s-revs.txt'
+CVS_ITEMS_ALL_DATAFILE = 'cvs2svn-items-all.txt'
+CVS_REVS_RESYNC_DATAFILE = 'cvs2svn-revs-resync.txt'
+CVS_REVS_SORTED_DATAFILE = 'cvs2svn-revs-resync-s.txt'
 RESYNC_DATAFILE = 'cvs2svn-resync.txt'
 
 # This file contains a marshalled copy of all the statistics that we

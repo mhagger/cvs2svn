@@ -35,7 +35,7 @@ class CVSRevisionResynchronizer:
     self.resync = self._read_resync()
 
     self.output = open(
-        artifact_manager.get_temp_file(config.CLEAN_REVS_DATAFILE), 'w')
+        artifact_manager.get_temp_file(config.CVS_REVS_RESYNC_DATAFILE), 'w')
 
   def _read_resync(self):
     """Read RESYNC_DATAFILE and return its contents.

@@ -20,7 +20,8 @@
 import sha
 
 from cvs2svn_lib.boolean import *
-import config
+from cvs2svn_lib import config
+from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.database import Database
 from cvs2svn_lib.key_generator import KeyGenerator
@@ -33,11 +34,13 @@ class MetadataDatabase:
 
       digest -> id
 
-      hex(id) -> (author, log_msg,)
+      hex(id) -> (project.id, author, log_msg,)
 
-  Digest is the digest of the string (author + '\0' + log_msg), and is
-  used to locate matching records efficiently.  id is a unique id for
-  each record (as a hex string ('%x' % id) when used as a key).
+  Digest is the digest of the string (project.id + '\0' + author +
+  '\0' + log_msg) (or, if Ctx().cross_project_commits is True, (author
+  + '\0' + log_msg)), and is used to locate matching records
+  efficiently.  id is a unique id for each record (as a hex string
+  ('%x' % id) when used as a key).
 
   """
 
@@ -56,8 +59,12 @@ class MetadataDatabase:
       If there is no such record, create one and return its
       newly-generated id."""
 
-      digest = sha.new(
-          '%x\0%s\0%s' % (project.id, author, log_msg)).hexdigest()
+      if Ctx().cross_project_commits:
+        s = '%s\0%s' % (author, log_msg)
+      else:
+        s = '%x\0%s\0%s' % (project.id, author, log_msg)
+
+      digest = sha.new(s).hexdigest()
       try:
           # See if it is already known:
           return self.db[digest]

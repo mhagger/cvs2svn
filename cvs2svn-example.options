@@ -246,6 +246,10 @@ ctx.tmpdir = 'tmp'
 # option:
 #ctx.skip_cleanup = True
 
+# To prevent CVS commits from different projects from being merged
+# into single SVN commits, change this option to False:
+ctx.cross_project_commits = True
+
 # Now use stanzas like the following to define CVS projects that
 # should be converted.  The arguments are:
 #

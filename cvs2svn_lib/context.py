@@ -57,6 +57,7 @@ class Ctx:
     self.skip_cleanup = False
     # A list of Project instances for all projects being converted.
     self.projects = []
+    self.cross_project_commits = True
 
   def add_project(self, project):
     """Add a project to be converted."""

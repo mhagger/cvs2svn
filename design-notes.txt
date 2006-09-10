@@ -116,22 +116,26 @@ When every CVS file is done, CollectRevsPass is complete, and:
      tags.
 
    - 'cvs2svn-metadata.db' contains information that will help
-     determine what CVSRevisions might have been made together and
-     will therefore be combined into a single SVNCommit.  CVSRevisions
-     that were part of a single CVS commit always have a common author
-     and log message.  Moreover, we avoid combining CVS revisions from
-     separate projects into the same SVN commit.  This database
-     contains two mappings for each (project_id, author, log_msg,)
-     combination:
+     determine what CVSRevisions are allowed to be combined into a
+     single SVNCommit.  This class maps each CVSRevision to an SHA
+     digest that is constructed so that CVSRevisions that can be
+     combined are all mapped to the same digest.
+
+     CVSRevisions that were part of a single CVS commit always have a
+     common author and log message, therefore these fields are always
+     included in the digest.  Moreover, if ctx.cross_project_commits
+     is False, we avoid combining CVS revisions from separate projects
+     by including the project.id in the digest.  This database
+     contains two mappings for each digest:
 
      digest (40-byte string) -> metadata_id (int)
 
      metadata_id (int as hex) -> (project_id, author, log_msg,) (tuple)
 
-     The digest is used to locate the metadata_id for the metadata
-     record having a specific (project, author, log_msg,) tuple.  The
-     metadata_id, in turn, is used as a key to locate the actual
-     metadata.  CVSRevision records include the metadata_id.
+     The first mapping is used to locate the metadata_id for the
+     metadata record having a specific digest, and the second is used
+     as a key to locate the actual metadata.  CVSRevision records
+     include the metadata_id.
 
 
 CollateSymbolsPass

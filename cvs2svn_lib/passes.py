@@ -21,13 +21,11 @@ from __future__ import generators
 
 import sys
 import os
-import time
 import cPickle
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib import config
 from cvs2svn_lib.context import Ctx
-from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.common import FatalException
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.artifact_manager import artifact_manager
@@ -44,6 +42,7 @@ from cvs2svn_lib.symbol_database import create_symbol_database
 from cvs2svn_lib.line_of_development import Branch
 from cvs2svn_lib.symbol_statistics import SymbolStatistics
 from cvs2svn_lib.cvs_item_database import CVSItemDatabase
+from cvs2svn_lib.cvs_revision_resynchronizer import CVSRevisionResynchronizer
 from cvs2svn_lib.last_symbolic_name_database import LastSymbolicNameDatabase
 from cvs2svn_lib.svn_commit import SVNCommit
 from cvs2svn_lib.openings_closings import SymbolingsLogger
@@ -174,43 +173,6 @@ class ResyncRevsPass(Pass):
     self._register_temp_file_needed(config.CVS_ITEMS_DB)
     self._register_temp_file_needed(config.ALL_REVS_DATAFILE)
 
-  def _read_resync(self):
-    """Read RESYNC_DATAFILE and return its contents.
-
-    Return a map that maps a metadata_id to a sequence of lists which
-    specify a lower and upper time bound for matching up the commit:
-
-    { metadata_id -> [[old_time_lower, old_time_upper, new_time], ...] }
-
-    Each triplet is a list because we will dynamically expand the
-    lower/upper bound as we find commits that fall into a particular
-    msg and time range.  We keep a sequence of these for each
-    metadata_id because a number of checkins with the same log message
-    (e.g. an empty log message) could need to be remapped.  The lists
-    of triplets are sorted by old_time_lower.
-
-    Note that we assume that we can hold the entire resync file in
-    memory.  Really large repositories with wacky timestamps could
-    bust this assumption.  Should that ever happen, then it is
-    possible to split the resync file into pieces and make multiple
-    passes, using each piece."""
-
-    DELTA = config.COMMIT_THRESHOLD/2
-
-    resync = { }
-    for line in file(artifact_manager.get_temp_file(config.RESYNC_DATAFILE)):
-      [t1, metadata_id, t2] = line.strip().split()
-      t1 = int(t1, 16)
-      metadata_id = int(metadata_id, 16)
-      t2 = int(t2, 16)
-      resync.setdefault(metadata_id, []).append([t1 - DELTA, t1 + DELTA, t2])
-
-    # For each metadata_id, sort the resync items:
-    for val in resync.values():
-      val.sort()
-
-    return resync
-
   def update_symbols(self, c_rev):
     """Update c_rev.branch_ids and c_rev.tag_ids based on self.symbol_db."""
 
@@ -237,16 +199,13 @@ class ResyncRevsPass(Pass):
 
     Log().quiet("Re-synchronizing CVS revision timestamps...")
 
+    resynchronizer = CVSRevisionResynchronizer(cvs_items_db)
+
     # We may have recorded some changes in revisions' timestamp.  We need to
     # scan for any other files which may have had the same log message and
     # occurred at "the same time" and change their timestamps, too.
 
-    resync = self._read_resync()
-
-    output = open(artifact_manager.get_temp_file(config.CLEAN_REVS_DATAFILE),
-                  'w')
-
-    # process the revisions file, looking for items to clean up
+    # Process the revisions file, looking for items to clean up
     for line in open(
             artifact_manager.get_temp_file(config.ALL_REVS_DATAFILE)):
       c_rev_id = int(line.strip(), 16)
@@ -258,104 +217,12 @@ class ResyncRevsPass(Pass):
         if isinstance(symbol, ExcludedSymbol):
           continue
 
-      if c_rev.prev_id is not None:
-        prev_c_rev = cvs_items_db[c_rev.prev_id]
-      else:
-        prev_c_rev = None
-
-      if c_rev.next_id is not None:
-        next_c_rev = cvs_items_db[c_rev.next_id]
-      else:
-        next_c_rev = None
-
       self.update_symbols(c_rev)
 
-      # see if this is "near" any of the resync records we have
-      # recorded for this metadata_id [of the log message].
-      for record in resync.get(c_rev.metadata_id, []):
-        if record[2] == c_rev.timestamp:
-          # This means that either c_rev is the same revision that
-          # caused the resync record to exist, or c_rev is a different
-          # CVS revision that happens to have the same timestamp.  In
-          # either case, we don't have to do anything, so we...
-          continue
+      resynchronizer.resynchronize(c_rev)
 
-        if record[0] <= c_rev.timestamp <= record[1]:
-          # bingo!  We probably want to remap the time on this c_rev,
-          # unless the remapping would be useless because the new time
-          # would fall outside the COMMIT_THRESHOLD window for this
-          # commit group.
-          new_timestamp = record[2]
-          # If the new timestamp is earlier than that of our previous revision
-          if prev_c_rev and new_timestamp < prev_c_rev.timestamp:
-            Log().warn(
-                "%s: Attempt to set timestamp of revision %s on file %s"
-                " to time %s, which is before previous the time of"
-                " revision %s (%s):"
-                % (warning_prefix, c_rev.rev, c_rev.cvs_path, new_timestamp,
-                   prev_c_rev.rev, prev_c_rev.timestamp))
-
-            # If resyncing our rev to prev_c_rev.timestamp + 1 will place
-            # the timestamp of c_rev within COMMIT_THRESHOLD of the
-            # attempted resync time, then sync back to prev_c_rev.timestamp
-            # + 1...
-            if ((prev_c_rev.timestamp + 1) - new_timestamp) \
-                   < config.COMMIT_THRESHOLD:
-              new_timestamp = prev_c_rev.timestamp + 1
-              Log().warn("%s: Time set to %s"
-                         % (warning_prefix, new_timestamp))
-            else:
-              Log().warn("%s: Timestamp left untouched" % warning_prefix)
-              continue
-
-          # If the new timestamp is later than that of our next revision
-          elif next_c_rev and new_timestamp > next_c_rev.timestamp:
-            Log().warn(
-                "%s: Attempt to set timestamp of revision %s on file %s"
-                " to time %s, which is after time of next"
-                " revision %s (%s):"
-                % (warning_prefix, c_rev.rev, c_rev.cvs_path, new_timestamp,
-                   next_c_rev.rev, next_c_rev.timestamp))
-
-            # If resyncing our rev to next_c_rev.timestamp - 1 will place
-            # the timestamp of c_rev within COMMIT_THRESHOLD of the
-            # attempted resync time, then sync forward to
-            # next_c_rev.timestamp - 1...
-            if (new_timestamp - (next_c_rev.timestamp - 1)) \
-                   < config.COMMIT_THRESHOLD:
-              new_timestamp = next_c_rev.timestamp - 1
-              Log().warn("%s: Time set to %s"
-                         % (warning_prefix, new_timestamp))
-            else:
-              Log().warn("%s: Timestamp left untouched" % warning_prefix)
-              continue
-
-          # Fix for Issue #71: Avoid resyncing two consecutive revisions
-          # to the same timestamp.
-          elif (prev_c_rev and new_timestamp == prev_c_rev.timestamp
-                or next_c_rev and new_timestamp == next_c_rev.timestamp):
-            continue
-
-          # adjust the time range. we want the COMMIT_THRESHOLD from the
-          # bounds of the earlier/latest commit in this group.
-          record[0] = min(record[0],
-                          c_rev.timestamp - config.COMMIT_THRESHOLD/2)
-          record[1] = max(record[1],
-                          c_rev.timestamp + config.COMMIT_THRESHOLD/2)
-
-          msg = "PASS3 RESYNC: '%s' (%s): old time='%s' delta=%ds" \
-                % (c_rev.cvs_path, c_rev.rev, time.ctime(c_rev.timestamp),
-                   new_timestamp - c_rev.timestamp)
-          Log().verbose(msg)
-
-          c_rev.timestamp = new_timestamp
-
-          # stop looking for hits
-          break
-
-      output.write('%08lx %x %x\n'
-                   % (c_rev.timestamp, c_rev.metadata_id, c_rev.id,))
       cvs_items_resync_db.add(c_rev)
+
     Log().quiet("Done")
 
 

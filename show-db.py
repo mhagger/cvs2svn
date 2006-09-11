@@ -81,6 +81,17 @@ def show_str2ppickle_db(fname):
     print    "%6s: %r" % (i, o)
     print "        %s" % (o,)
 
+
+class ProjectList:
+  """A mock project-list that can be assigned to Ctx().projects."""
+
+  def __init__(self):
+    self.projects = {}
+
+  def __getitem__(self, i):
+    return self.projects.setdefault(i, 'Project%d' % i)
+
+
 def prime_ctx():
   from cvs2svn_lib.symbol_database import SymbolDatabase
   from cvs2svn_lib.cvs_file_database import CVSFileDatabase
@@ -94,6 +105,8 @@ def prime_ctx():
   from cvs2svn_lib import config
   artifact_manager.register_temp_file("cvs2svn-metadata.db", None)
   artifact_manager.pass_started(None)
+
+  Ctx().projects = ProjectList()
   Ctx()._symbol_db = SymbolDatabase()
   Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
   Ctx()._cvs_items_db = CVSItemDatabase(config.CVS_ITEMS_RESYNC_DB,

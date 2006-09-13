@@ -81,6 +81,25 @@ def show_str2ppickle_db(fname):
     print    "%6s: %r" % (i, o)
     print "        %s" % (o,)
 
+def show_cvsitemstore(fname):
+  f = open(fname, 'rb')
+
+  u1 = pickle.Unpickler(f)
+  u1.load()
+
+  while True:
+    u2 = pickle.Unpickler(f)
+    u2.memo = u1.memo.copy()
+    try:
+      items = u2.load()
+    except EOFError:
+      break
+    items.sort(key=lambda i: i.id)
+    for item in items:
+      print    "%6s: %r" % (item.id, item)
+      print "        %s" % (item,)
+
+
 
 class ProjectList:
   """A mock project-list that can be assigned to Ctx().projects."""
@@ -154,7 +173,7 @@ def main():
       show_str2marshal_db("cvs2svn-cvs-revs-to-svn-revnums.db")
     elif o == "-i":
       prime_ctx()
-      show_str2ppickle_db("cvs2svn-cvs-items.db")
+      show_cvsitemstore("cvs2svn-cvs-items.pck")
     elif o == "-I":
       prime_ctx()
       show_str2ppickle_db("cvs2svn-cvs-items-resync.db")

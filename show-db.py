@@ -71,9 +71,9 @@ def show_str2ppickle_db(fname):
   db = anydbm.open(fname, 'r')
   k = db.keys()
   k.remove('_')
-  k.sort()
+  k.sort(key=lambda s: int(s, 16))
   u1 = pickle.Unpickler(StringIO(db['_']))
-  s_ = u1.load()
+  u1.load()
   for i in k:
     u2 = pickle.Unpickler(StringIO(db[i]))
     u2.memo = u1.memo.copy()

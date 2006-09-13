@@ -17,11 +17,103 @@
 """This module contains a database that can store arbitrary CVSItems."""
 
 
+import cPickle
+
 from cvs2svn_lib.boolean import *
+from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.database import PrimedPDatabase
 from cvs2svn_lib.cvs_item import CVSRevision
 from cvs2svn_lib.cvs_item import CVSBranch
 from cvs2svn_lib.cvs_item import CVSTag
+
+
+class NewCVSItemStore:
+  """A file of sequential CVSItems, grouped by CVSFile.
+
+  The file consists of a sequence of pickles.  The first one is a
+  'primer' as described in PrimedPDatabase.  Subsequent ones are
+  pickled lists of CVSItems, each list containing all of the CVSItems
+  for a single file.
+
+  We don't use a single pickler for all items because the memo would
+  grow too large."""
+
+  def __init__(self, filename):
+    """Initialize an instance, creating the file and writing the primer."""
+
+    self.f = open(filename, 'wb')
+
+    primer = (CVSRevision, CVSBranch, CVSTag,)
+    pickler = cPickle.Pickler(self.f, -1)
+    pickler.dump(primer)
+    self.memo = pickler.memo
+
+    self.current_file_id = None
+    self.current_file_items = []
+
+  def _flush(self):
+    """Write the current items to disk."""
+
+    if self.current_file_items:
+      pickler = cPickle.Pickler(self.f, -1)
+      pickler.memo = self.memo.copy()
+      pickler.dump(self.current_file_items)
+      self.current_file_id = None
+      self.current_file_items = []
+
+  def add(self, cvs_item):
+    """Write cvs_item into the database."""
+
+    if cvs_item.cvs_file.id != self.current_file_id:
+      self._flush()
+      self.current_file_id = cvs_item.cvs_file.id
+    self.current_file_items.append(cvs_item)
+
+  def close(self):
+    self._flush()
+    self.f.close()
+
+
+class OldCVSItemStore:
+  """Read a file created by NewCVSItemStore.
+
+  The file must be read sequentially, except that it is possible to
+  read old CVSItems from the current CVSFile."""
+
+  def __init__(self, filename):
+    self.f = open(filename, 'rb')
+
+    # Read the memo from the first pickle:
+    unpickler = cPickle.Unpickler(self.f)
+    unpickler.load()
+    self.memo = unpickler.memo
+
+    self.current_file_items = []
+    self.current_file_map = {}
+
+  def _read_file_chunk(self):
+    unpickler = cPickle.Unpickler(self.f)
+    unpickler.memo = self.memo.copy()
+    self.current_file_items = unpickler.load()
+    self.current_file_map = {}
+    for item in self.current_file_items:
+      self.current_file_map[item.id] = item
+
+  def __iter__(self):
+    while True:
+      try:
+        self._read_file_chunk()
+      except EOFError:
+        return
+      for item in self.current_file_items:
+        yield item
+
+  def __getitem__(self, id):
+    try:
+      return self.current_file_map[id]
+    except KeyError:
+      raise FatalError(
+          'Key %r not found within items currently accessible.' % (id,))
 
 
 class CVSItemDatabase:

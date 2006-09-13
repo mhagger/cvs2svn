@@ -42,6 +42,8 @@ from cvs2svn_lib.symbol_database import create_symbol_database
 from cvs2svn_lib.line_of_development import Branch
 from cvs2svn_lib.symbol_statistics import SymbolStatistics
 from cvs2svn_lib.cvs_item import CVSRevision
+from cvs2svn_lib.cvs_item_database import NewCVSItemStore
+from cvs2svn_lib.cvs_item_database import OldCVSItemStore
 from cvs2svn_lib.cvs_item_database import CVSItemDatabase
 from cvs2svn_lib.cvs_revision_resynchronizer import CVSRevisionResynchronizer
 from cvs2svn_lib.last_symbolic_name_database import LastSymbolicNameDatabase
@@ -116,8 +118,7 @@ class CollectRevsPass(Pass):
     self._register_temp_file(config.RESYNC_DATAFILE)
     self._register_temp_file(config.METADATA_DB)
     self._register_temp_file(config.CVS_FILES_DB)
-    self._register_temp_file(config.CVS_ITEMS_DB)
-    self._register_temp_file(config.CVS_ITEMS_ALL_DATAFILE)
+    self._register_temp_file(config.CVS_ITEMS_STORE)
 
   def run(self, stats_keeper):
     Log().quiet("Examining all CVS ',v' files...")
@@ -125,7 +126,7 @@ class CollectRevsPass(Pass):
     cd = CollectData(stats_keeper)
     for project in Ctx().projects:
       cd.process_project(project)
-    cd.write_symbol_stats()
+    cd.flush()
 
     if cd.fatal_errors:
       raise FatalException("Pass 1 complete.\n"
@@ -171,8 +172,7 @@ class ResyncRevsPass(Pass):
     self._register_temp_file_needed(config.SYMBOL_DB)
     self._register_temp_file_needed(config.RESYNC_DATAFILE)
     self._register_temp_file_needed(config.CVS_FILES_DB)
-    self._register_temp_file_needed(config.CVS_ITEMS_DB)
-    self._register_temp_file_needed(config.CVS_ITEMS_ALL_DATAFILE)
+    self._register_temp_file_needed(config.CVS_ITEMS_STORE)
 
   def update_symbols(self, cvs_rev):
     """Update CVS_REV.branch_ids and tag_ids based on self.symbol_db."""
@@ -192,26 +192,22 @@ class ResyncRevsPass(Pass):
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
     self.symbol_db = SymbolDatabase()
     Ctx()._symbol_db = self.symbol_db
-    cvs_items_db = CVSItemDatabase(
-        artifact_manager.get_temp_file(config.CVS_ITEMS_DB), DB_OPEN_WRITE)
+    cvs_item_store = OldCVSItemStore(
+        artifact_manager.get_temp_file(config.CVS_ITEMS_STORE))
     cvs_items_resync_db = CVSItemDatabase(
         artifact_manager.get_temp_file(config.CVS_ITEMS_RESYNC_DB),
         DB_OPEN_NEW)
 
     Log().quiet("Re-synchronizing CVS revision timestamps...")
 
-    resynchronizer = CVSRevisionResynchronizer(cvs_items_db)
+    resynchronizer = CVSRevisionResynchronizer(cvs_item_store)
 
     # We may have recorded some changes in revisions' timestamp.  We need to
     # scan for any other files which may have had the same log message and
     # occurred at "the same time" and change their timestamps, too.
 
     # Process the revisions file, looking for items to clean up
-    for line in open(
-            artifact_manager.get_temp_file(config.CVS_ITEMS_ALL_DATAFILE)):
-      cvs_item_id = int(line.strip(), 16)
-      cvs_item = cvs_items_db[cvs_item_id]
-
+    for cvs_item in cvs_item_store:
       if isinstance(cvs_item, CVSRevision):
         # Skip this entire revision if it's on an excluded branch
         if isinstance(cvs_item.lod, Branch):

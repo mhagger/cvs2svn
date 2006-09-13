@@ -10,9 +10,9 @@ CollectRevsPass (formerly called pass1)
 
 The goal of this pass is to write a summary of each CVS file as a
 pickled CVSFile to 'cvs2svn-cvs-files.db', and a summary of each CVS
-file revision as a pickled CVSRevision to 'cvs2svn-cvs-items.db'.  In
-each case, items are assigned an arbitrary key that is used to refer
-to them.
+file's revisions as a list of pickled CVSRevisions to
+'cvs2svn-cvs-items.pck'.  In each case, items are assigned an
+arbitrary key that is used to refer to them.
 
 We walk over the repository, collecting data about the RCS files into
 an instance of CollectData.  Each RCS file is processed with
@@ -64,7 +64,7 @@ them similarly; more details below).
 Next, the parser encounters the *real* revision data, which has the
 log messages and file contents.  For each revision, it invokes
 _FileDataCollector.set_revision_info(), which writes a record to
-'cvs2svn-cvs-items.db'.
+'cvs2svn-cvs-items.pck'.
 
 Also, for resync'd revisions, a line like this is written out to
 'cvs2svn-resync.txt':
@@ -83,14 +83,11 @@ When every CVS file is done, CollectRevsPass is complete, and:
 
    - 'cvs2svn-cvs-files.db' contains a record of every CVS file.
 
-   - 'cvs2svn-cvs-items.db' contains a summary of every revision to
+   - 'cvs2svn-cvs-items.pck' contains a summary of every revision to
      every CVS file, including a reference to the corresponding CVS
-     file record in 'cvs2svn-cvs-files.db'.  The order of the
-     revisions is arbitrary.  In other words, a multi-file commit will
+     file record in 'cvs2svn-cvs-files.db'.  The revisions are sorted
+     in groups, one per CVSFile.  But a multi-file commit will still
      be scattered all over the place.
-
-   - 'cvs2svn-items-all.txt' contains a list of CVSItem keys that are
-     in 'cvs2svn-cvs-items.db', in the order that they were written.
 
    - 'cvs2svn-resync.txt' contains a small amount of resync data, in
      no particular order.
@@ -155,7 +152,7 @@ ResyncRevsPass (formerly called pass2)
 ==============
 
 This is where the resync file is used.  The goal of this pass is to
-output the information from 'cvs2svn-cvs-items.db' to a new file,
+output the information from 'cvs2svn-cvs-items.pck to a new file,
 'cvs2svn-cvs-items-resync.db' (resynched items).  It has the same
 content as the original file, except that the timestamps of some
 CVSRevisions have been resynced.
@@ -173,7 +170,7 @@ using the empty log message, or a log message that just says "Doc
 tweaks.").  So each metadata_id may need to "fan out" to cover
 multiple commits, but without accidentally unifying those commits.
 
-Now we loop over the CVSRevisions in 'cvs2svn-cvs-items.db', and for
+Now we loop over the CVSRevisions in 'cvs2svn-cvs-items.pck, and for
 each CVSRevision write a line to 'cvs2svn-revs-resync.txt'.  Each line
 of this file looks like this:
 
@@ -187,7 +184,7 @@ The fields are:
    3.  the integer unique ID for this CVSRevision, as a hexadecimal
        string.
 
-Any CVSRevision record in 'cvs2svn-cvs-items.db' whose metadata_id
+Any CVSRevision record in 'cvs2svn-cvs-items.pck' whose metadata_id
 matches some resync entry and appears to be part of the same commit as
 one of the sublists in that entry, gets tweaked.  The tweak is to
 adjust the commit time of the line to the new_time, which is taken

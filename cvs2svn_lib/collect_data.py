@@ -45,7 +45,7 @@ from cvs2svn_lib.database import Database
 from cvs2svn_lib.database import SDatabase
 from cvs2svn_lib.database import DB_OPEN_NEW
 from cvs2svn_lib.cvs_file_database import CVSFileDatabase
-from cvs2svn_lib.cvs_item_database import CVSItemDatabase
+from cvs2svn_lib.cvs_item_database import NewCVSItemStore
 from cvs2svn_lib.symbol import Symbol
 from cvs2svn_lib.symbol_statistics import SymbolStatisticsCollector
 from cvs2svn_lib.metadata_database import MetadataDatabase
@@ -881,10 +881,8 @@ class CollectData:
   each file to be parsed."""
 
   def __init__(self, stats_keeper):
-    self._cvs_items_db = CVSItemDatabase(
-        artifact_manager.get_temp_file(config.CVS_ITEMS_DB), DB_OPEN_NEW)
-    self._all_revs = open(
-        artifact_manager.get_temp_file(config.CVS_ITEMS_ALL_DATAFILE), 'w')
+    self._cvs_item_store = NewCVSItemStore(
+        artifact_manager.get_temp_file(config.CVS_ITEMS_STORE))
     self.resync = open(
         artifact_manager.get_temp_file(config.RESYNC_DATAFILE), 'w')
     self.metadata_db = MetadataDatabase(DB_OPEN_NEW)
@@ -910,12 +908,12 @@ class CollectData:
     Ctx()._cvs_file_db.log_file(cvs_file)
 
   def add_cvs_item(self, cvs_item):
-    self._cvs_items_db.add(cvs_item)
-    self._all_revs.write('%x\n' % (cvs_item.id,))
+    self._cvs_item_store.add(cvs_item)
     if isinstance(cvs_item, CVSRevision):
       self.stats_keeper.record_cvs_rev(cvs_item)
 
-  def write_symbol_stats(self):
+  def flush(self):
+    self._cvs_item_store.close()
     self.symbol_stats.write()
 
 

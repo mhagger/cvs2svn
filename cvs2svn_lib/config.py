@@ -35,7 +35,6 @@ SORT_EXECUTABLE = 'sort'
 
 # These files are related to the cleaning and sorting of CVS revisions,
 # for commit grouping.  See design-notes.txt for details.
-CVS_ITEMS_ALL_DATAFILE = 'cvs2svn-items-all.txt'
 CVS_REVS_RESYNC_DATAFILE = 'cvs2svn-revs-resync.txt'
 CVS_REVS_SORTED_DATAFILE = 'cvs2svn-revs-resync-s.txt'
 RESYNC_DATAFILE = 'cvs2svn-resync.txt'
@@ -84,8 +83,9 @@ SYMBOL_LAST_CVS_REVS_DB = 'cvs2svn-symbol-last-cvs-revs.db'
 # Maps CVSFile.id to instance.
 CVS_FILES_DB = 'cvs2svn-cvs-files.db'
 
-# Maps CVSRevision.id (in hex) to CVSRevision.
-CVS_ITEMS_DB = 'cvs2svn-cvs-items.db'
+# A series of pickles.  The first is a primer.  Each subsequent pickle
+# is lists of all CVSItems applying to a CVSFile.
+CVS_ITEMS_STORE = 'cvs2svn-cvs-items.pck'
 
 # Maps CVSRevision.id (in hex) to CVSRevision after resynchronization.
 CVS_ITEMS_RESYNC_DB = 'cvs2svn-cvs-items-resync.db'

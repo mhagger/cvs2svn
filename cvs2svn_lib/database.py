@@ -28,6 +28,9 @@ import cPickle
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.common import error_prefix
+from cvs2svn_lib.primed_pickle import get_memos
+from cvs2svn_lib.primed_pickle import PrimedPickler
+from cvs2svn_lib.primed_pickle import PrimedUnpickler
 
 
 # DBM module selection
@@ -180,19 +183,19 @@ class PrimedPDatabase(AbstractDatabase):
   """A database that uses cPickle module to store arbitrary objects.
 
   The Pickler and Unpickler are 'primed' by pre-pickling PRIMER, which
-  can be an arbitrary compound object (e.g., a list of objects that
-  are expected to occur frequently in the database entries).  From
-  then on, if objects within individual database entries are
-  recognized from PRIMER, then only their persistent IDs need to be
-  pickled instead of the whole object.
+  can be an arbitrary object (e.g., a list of objects that are
+  expected to occur frequently in the database entries).  From then
+  on, if objects within individual database entries are recognized
+  from PRIMER, then only their persistent IDs need to be pickled
+  instead of the whole object.
 
-  Concretely, when a new database is created, the pickled version of
-  PRIMER is stored in db[self.primer_key], and its memo is remembered
-  as self.memo.  When an existing database is opened for reading or
-  update, db[self.primer_key] is unpickled then the memo of the
-  Unpickler is remembered as self.memo.  Then future reads and writes
-  are done with a pickler/unpickler whose memo has been initialized to
-  self.memo.
+  Concretely, when a new database is created, the pickler memo and
+  unpickler memo for PRIMER are computed, pickled, and stored in
+  db[self.primer_key] as a tuple.  When an existing database is opened
+  for reading or update, the pickler and unpickler memos are read from
+  db[self.primer_key].  In either case, these memos are used to
+  initialize a PrimedPickler and PrimedUnpickler, which are used for
+  future write and read accesses respectively.
 
   Since the database entry with key self.primer_key is used to store
   the memo, self.primer_key may not be used as a key for normal
@@ -200,40 +203,23 @@ class PrimedPDatabase(AbstractDatabase):
 
   primer_key = '_'
 
-  def __init__(self, filename, mode, primer=None):
+  def __init__(self, filename, mode, primer):
     AbstractDatabase.__init__(self, filename, mode)
 
     if mode == DB_OPEN_NEW:
-      if primer is None:
-        self.memo = {}
-      else:
-        f = cStringIO.StringIO()
-        pickler = cPickle.Pickler(f, -1)
-        pickler.dump(primer)
-        self.db[self.primer_key] = f.getvalue()
-        self.memo = pickler.memo
+      pickler_memo, unpickler_memo = get_memos(primer)
+      self.db[self.primer_key] = \
+          cPickle.dumps((pickler_memo, unpickler_memo,))
     else:
-      try:
-        s = self.db[self.primer_key]
-      except KeyError:
-        self.memo = {}
-      else:
-        f = cStringIO.StringIO(s)
-        unpickler = cPickle.Unpickler(f)
-        unpickler.load()
-        self.memo = unpickler.memo
+      (pickler_memo, unpickler_memo,) = \
+          cPickle.loads(self.db[self.primer_key])
+    self.primed_pickler = PrimedPickler(pickler_memo)
+    self.primed_unpickler = PrimedUnpickler(unpickler_memo)
 
   def __getitem__(self, key):
-    f = cStringIO.StringIO(self.db[key])
-    unpickler = cPickle.Unpickler(f)
-    unpickler.memo = self.memo.copy()
-    return unpickler.load()
+    return self.primed_unpickler.loads(self.db[key])
 
   def __setitem__(self, key, value):
-    f = cStringIO.StringIO()
-    pickler = cPickle.Pickler(f, -1)
-    pickler.memo = self.memo.copy()
-    pickler.dump(value)
-    self.db[key] = f.getvalue()
+    self.db[key] = self.primed_pickler.dumps(value)
 
 

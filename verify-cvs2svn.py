@@ -35,6 +35,7 @@ import sys
 import getopt
 import popen2
 import shutil
+import re
 
 
 # CVS and Subversion command line client commands
@@ -164,6 +165,19 @@ class SvnRepos:
     return self.branch_list
 
 
+def transform_symbol(ctx, name):
+  """Transform the symbol NAME using the renaming rules specified
+  with --symbol-transform.  Return the transformed symbol name."""
+
+  for (pattern, replacement) in ctx.symbol_transforms:
+    newname = pattern.sub(replacement, name)
+    if newname != name:
+      print "   symbol '%s' transformed to '%s'" % (name, newname)
+      name = newname
+
+  return name
+
+
 def file_compare(base1, base2, run_diff, rel_path):
   """Compare the contents of two files.  The paths are specified as two
   base paths BASE1 and BASE2, and a path REL_PATH that is relative to the
@@ -236,8 +250,13 @@ def verify_contents_single(cvsrepos, svnrepos, kind, label, ctx):
   cvs_export_dir = os.path.join(ctx.tempdir, 'cvs-export-' + itemname)
   svn_export_dir = os.path.join(ctx.tempdir, 'svn-export-' + itemname)
 
+  if label:
+    cvslabel = transform_symbol(ctx, label)
+  else:
+    cvslabel = None
+
   try:
-    cvsrepos.export(cvs_export_dir, label)
+    cvsrepos.export(cvs_export_dir, cvslabel)
     if kind == 'trunk':
       svnrepos.export_trunk(svn_export_dir)
     elif kind == 'tag':
@@ -309,15 +328,19 @@ def main(argv):
     print '  --tag=TAG        verify contents of the tag TAG only'
     print '  --tempdir=PATH   path to store temporary files'
     print '  --trunk          verify contents of trunk only'
+    print '  --symbol-transform=P:S transform symbol names from P to S ' \
+          'like cvs2svn,'
+    print '                   except transforms SVN symbol to CVS symbol'
 
   def error(msg):
     """Print an error to sys.stderr."""
     sys.stderr.write('Error: ' + str(msg) + '\n')
 
   try:
-    opts, args = getopt.getopt(argv[1:], 'h',
-                               [ 'branch=', 'diff', 'help', 'tag=', 'tempdir=',
-                                 'trunk', 'skip-cleanup' ])
+    opts, args = getopt.getopt(
+        argv[1:], 'h',
+        [ 'branch=', 'diff', 'help', 'tag=', 'tempdir=',
+          'trunk', 'skip-cleanup', 'symbol-transform=' ])
   except getopt.GetoptError, e:
     error(e)
     usage()
@@ -328,6 +351,7 @@ def main(argv):
   ctx.run_diff = 0
   ctx.tempdir = ''
   ctx.skip_cleanup = 0
+  ctx.symbol_transforms = []
 
   verify_branch = None
   verify_tag = None
@@ -349,6 +373,13 @@ def main(argv):
       verify_trunk = 1
     elif (opt == '--skip-cleanup'):
       ctx.skip_cleanup = 1
+    elif opt == '--symbol-transform':
+      [pattern, replacement] = value.split(":")
+      try:
+        pattern = re.compile(pattern)
+      except re.error, e:
+        raise FatalError("'%s' is not a valid regexp." % (pattern,))
+      ctx.symbol_transforms.append((pattern, replacement,))
 
   # Consistency check for options and arguments.
   if len(args) != 2:

@@ -25,15 +25,18 @@ from cvs2svn_lib.database import PrimedPDatabase
 from cvs2svn_lib.cvs_item import CVSRevision
 from cvs2svn_lib.cvs_item import CVSBranch
 from cvs2svn_lib.cvs_item import CVSTag
+from cvs2svn_lib.primed_pickle import get_memos
+from cvs2svn_lib.primed_pickle import PrimedPickler
+from cvs2svn_lib.primed_pickle import PrimedUnpickler
 
 
 class NewCVSItemStore:
   """A file of sequential CVSItems, grouped by CVSFile.
 
-  The file consists of a sequence of pickles.  The first one is a
-  'primer' as described in PrimedPDatabase.  Subsequent ones are
-  pickled lists of CVSItems, each list containing all of the CVSItems
-  for a single file.
+  The file consists of a sequence of pickles.  The zeroth one is an
+  'unpickler_memo' as described in the primed_pickle module.
+  Subsequent ones are pickled lists of CVSItems, each list containing
+  all of the CVSItems for a single file.
 
   We don't use a single pickler for all items because the memo would
   grow too large."""
@@ -44,9 +47,9 @@ class NewCVSItemStore:
     self.f = open(filename, 'wb')
 
     primer = (CVSRevision, CVSBranch, CVSTag,)
-    pickler = cPickle.Pickler(self.f, -1)
-    pickler.dump(primer)
-    self.memo = pickler.memo
+    (pickler_memo, unpickler_memo,) = get_memos(primer)
+    self.pickler = PrimedPickler(pickler_memo)
+    cPickle.dump(unpickler_memo, self.f, -1)
 
     self.current_file_id = None
     self.current_file_items = []
@@ -55,9 +58,7 @@ class NewCVSItemStore:
     """Write the current items to disk."""
 
     if self.current_file_items:
-      pickler = cPickle.Pickler(self.f, -1)
-      pickler.memo = self.memo.copy()
-      pickler.dump(self.current_file_items)
+      self.pickler.dumpf(self.f, self.current_file_items)
       self.current_file_id = None
       self.current_file_items = []
 
@@ -84,17 +85,14 @@ class OldCVSItemStore:
     self.f = open(filename, 'rb')
 
     # Read the memo from the first pickle:
-    unpickler = cPickle.Unpickler(self.f)
-    unpickler.load()
-    self.memo = unpickler.memo
+    unpickler_memo = cPickle.load(self.f)
+    self.unpickler = PrimedUnpickler(unpickler_memo)
 
     self.current_file_items = []
     self.current_file_map = {}
 
   def _read_file_chunk(self):
-    unpickler = cPickle.Unpickler(self.f)
-    unpickler.memo = self.memo.copy()
-    self.current_file_items = unpickler.load()
+    self.current_file_items = self.unpickler.loadf(self.f)
     self.current_file_map = {}
     for item in self.current_file_items:
       self.current_file_map[item.id] = item

@@ -26,7 +26,12 @@ The two classes in this module are abstract.  Deriving classes have to
 specify how to pack records into strings and unpack strings into
 records y overwriting the pack()/unpack() methods.  Arbitrary records
 can be written as long as they can be converted to fixed-length
-strings."""
+strings.
+
+Note that these classes do not keep track of which records have been
+written, aside from keeping track of the highest record number that
+was ever written.  If an unwritten record is read, then the unpack()
+method will be passes a string containing only NUL characters."""
 
 
 from __future__ import generators
@@ -90,9 +95,7 @@ class OldRecordTable:
 
   def __iter__(self):
     for i in xrange(0, self.limit):
-      v = self[i]
-      if v != 0:
-        yield v
+      yield self[i]
 
   def close(self):
     self.f.close()

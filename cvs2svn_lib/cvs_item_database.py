@@ -173,8 +173,6 @@ class OldIndexTable(OldRecordTable):
 
   def unpack(self, s):
     (v,) = struct.unpack(INDEX_FORMAT, s + self.PAD)
-    if v == 0:
-      raise KeyError()
     return v
 
 
@@ -197,7 +195,8 @@ class OldIndexedCVSItemStore:
 
   def __iter__(self):
     for offset in self.index_table:
-      yield self._fetch(offset)
+      if offset != 0:
+        yield self._fetch(offset)
 
   def __getitem__(self, id):
     offset = self.index_table[id]

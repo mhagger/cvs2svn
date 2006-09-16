@@ -97,11 +97,12 @@ class NewIndexTable(NewRecordTable):
 class NewIndexedCVSItemStore:
   """A file of CVSItems that is written sequentially.
 
-  The file consists of a sequence of pickles.  The zeroth one is an
-  'unpickler_memo' as described in the primed_pickle module.
-  Subsequent ones are pickled CVSItems.  The offset of each CVSItem in
-  the file is stored to an index table so that the data can later be
-  retrieved randomly (via OldIndexedCVSItemStore)."""
+  The file consists of a sequence of pickles.  The zeroth one is a
+  tuple (pickler_memo, unpickler_memo) as described in the
+  primed_pickle module.  Subsequent ones are pickled CVSItems.  The
+  offset of each CVSItem in the file is stored to an index table so
+  that the data can later be retrieved randomly (via
+  OldIndexedCVSItemStore)."""
 
   def __init__(self, filename, index_filename):
     """Initialize an instance, creating the files and writing the primer."""
@@ -112,7 +113,7 @@ class NewIndexedCVSItemStore:
     primer = (CVSRevision, CVSBranch, CVSTag,)
     (pickler_memo, unpickler_memo,) = get_memos(primer)
     self.pickler = PrimedPickler(pickler_memo)
-    cPickle.dump(unpickler_memo, self.f, -1)
+    cPickle.dump((pickler_memo, unpickler_memo,), self.f, -1)
 
   def add(self, cvs_item):
     """Write cvs_item into the database."""
@@ -187,7 +188,7 @@ class OldIndexedCVSItemStore:
     self.index_table = OldIndexTable(index_filename)
 
     # Read the memo from the first pickle:
-    unpickler_memo = cPickle.load(self.f)
+    (pickler_memo, unpickler_memo,) = cPickle.load(self.f)
     self.unpickler = PrimedUnpickler(unpickler_memo)
 
   def _fetch(self, offset):

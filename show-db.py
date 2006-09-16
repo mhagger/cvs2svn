@@ -103,14 +103,14 @@ def show_cvsitemstore(fname):
 def show_resynccvsitemstore(fname):
   f = open(fname, 'rb')
 
-  u1 = pickle.Unpickler(f)
-  memo = u1.load()
+  u = pickle.Unpickler(f)
+  (pickler_memo, unpickler_memo,) = u.load()
 
   while True:
-    u2 = pickle.Unpickler(f)
-    u2.memo = memo.copy()
+    u = pickle.Unpickler(f)
+    u.memo = unpickler_memo.copy()
     try:
-      item = u2.load()
+      item = u.load()
     except EOFError:
       break
     print    "%6s: %r" % (item.id, item)

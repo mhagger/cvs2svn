@@ -87,8 +87,11 @@ CVS_FILES_DB = 'cvs2svn-cvs-files.db'
 # is lists of all CVSItems applying to a CVSFile.
 CVS_ITEMS_STORE = 'cvs2svn-cvs-items.pck'
 
-# Maps CVSRevision.id (in hex) to CVSRevision after resynchronization.
-CVS_ITEMS_RESYNC_DB = 'cvs2svn-cvs-items-resync.db'
+# Maps CVSItem.id (in hex) to CVSRevision after resynchronization.
+# The index file contains id->offset, and the second contains the
+# pickled CVSItems at the specified offsets.
+CVS_ITEMS_RESYNC_INDEX_TABLE = 'cvs2svn-cvs-items-resync-index.dat'
+CVS_ITEMS_RESYNC_STORE = 'cvs2svn-cvs-items-resync.pck'
 
 # A record of all symbolic names that will be processed in the
 # conversion.  This file contains a pickled list of TypedSymbol

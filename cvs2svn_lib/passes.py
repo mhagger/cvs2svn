@@ -43,8 +43,9 @@ from cvs2svn_lib.line_of_development import Branch
 from cvs2svn_lib.symbol_statistics import SymbolStatistics
 from cvs2svn_lib.cvs_item import CVSRevision
 from cvs2svn_lib.cvs_item_database import NewCVSItemStore
+from cvs2svn_lib.cvs_item_database import NewIndexedCVSItemStore
 from cvs2svn_lib.cvs_item_database import OldCVSItemStore
-from cvs2svn_lib.cvs_item_database import CVSItemDatabase
+from cvs2svn_lib.cvs_item_database import OldIndexedCVSItemStore
 from cvs2svn_lib.cvs_revision_resynchronizer import CVSRevisionResynchronizer
 from cvs2svn_lib.last_symbolic_name_database import LastSymbolicNameDatabase
 from cvs2svn_lib.svn_commit import SVNCommit
@@ -168,7 +169,8 @@ class ResyncRevsPass(Pass):
 
   def register_artifacts(self):
     self._register_temp_file(config.CVS_REVS_RESYNC_DATAFILE)
-    self._register_temp_file(config.CVS_ITEMS_RESYNC_DB)
+    self._register_temp_file(config.CVS_ITEMS_RESYNC_STORE)
+    self._register_temp_file(config.CVS_ITEMS_RESYNC_INDEX_TABLE)
     self._register_temp_file_needed(config.SYMBOL_DB)
     self._register_temp_file_needed(config.RESYNC_DATAFILE)
     self._register_temp_file_needed(config.CVS_FILES_DB)
@@ -194,9 +196,9 @@ class ResyncRevsPass(Pass):
     Ctx()._symbol_db = self.symbol_db
     cvs_item_store = OldCVSItemStore(
         artifact_manager.get_temp_file(config.CVS_ITEMS_STORE))
-    cvs_items_resync_db = CVSItemDatabase(
-        artifact_manager.get_temp_file(config.CVS_ITEMS_RESYNC_DB),
-        DB_OPEN_NEW)
+    cvs_items_resync_db = NewIndexedCVSItemStore(
+        artifact_manager.get_temp_file(config.CVS_ITEMS_RESYNC_STORE),
+        artifact_manager.get_temp_file(config.CVS_ITEMS_RESYNC_INDEX_TABLE))
 
     Log().quiet("Re-synchronizing CVS revision timestamps...")
 
@@ -220,6 +222,8 @@ class ResyncRevsPass(Pass):
         resynchronizer.resynchronize(cvs_item)
 
       cvs_items_resync_db.add(cvs_item)
+
+    cvs_items_resync_db.close()
 
     Log().quiet("Done")
 
@@ -246,19 +250,21 @@ class CreateDatabasesPass(Pass):
       self._register_temp_file(config.SYMBOL_LAST_CVS_REVS_DB)
     self._register_temp_file_needed(config.CVS_FILES_DB)
     self._register_temp_file_needed(config.SYMBOL_DB)
-    self._register_temp_file_needed(config.CVS_ITEMS_RESYNC_DB)
+    self._register_temp_file_needed(config.CVS_ITEMS_RESYNC_STORE)
+    self._register_temp_file_needed(config.CVS_ITEMS_RESYNC_INDEX_TABLE)
     self._register_temp_file_needed(config.CVS_REVS_SORTED_DATAFILE)
 
   def get_cvs_revs(self):
     """Generator the CVSRevisions in CVS_REVS_SORTED_DATAFILE order."""
 
-    cvs_items_db = CVSItemDatabase(
-        artifact_manager.get_temp_file(config.CVS_ITEMS_RESYNC_DB),
-        DB_OPEN_READ)
+    cvs_items_db = OldIndexedCVSItemStore(
+        artifact_manager.get_temp_file(config.CVS_ITEMS_RESYNC_STORE),
+        artifact_manager.get_temp_file(config.CVS_ITEMS_RESYNC_INDEX_TABLE))
     for line in file(
             artifact_manager.get_temp_file(config.CVS_REVS_SORTED_DATAFILE)):
       cvs_rev_id = int(line.strip().split()[-1], 16)
       yield cvs_items_db[cvs_rev_id]
+    cvs_items_db.close()
 
   def run(self, stats_keeper):
     """If we're not doing a trunk-only conversion, generate the
@@ -304,7 +310,8 @@ class AggregateRevsPass(Pass):
       self._register_temp_file(config.SYMBOL_OPENINGS_CLOSINGS)
       self._register_temp_file_needed(config.SYMBOL_LAST_CVS_REVS_DB)
     self._register_temp_file_needed(config.CVS_FILES_DB)
-    self._register_temp_file_needed(config.CVS_ITEMS_RESYNC_DB)
+    self._register_temp_file_needed(config.CVS_ITEMS_RESYNC_STORE)
+    self._register_temp_file_needed(config.CVS_ITEMS_RESYNC_INDEX_TABLE)
     self._register_temp_file_needed(config.SYMBOL_DB)
     self._register_temp_file_needed(config.METADATA_DB)
     self._register_temp_file_needed(config.CVS_REVS_SORTED_DATAFILE)
@@ -315,9 +322,9 @@ class AggregateRevsPass(Pass):
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
     Ctx()._symbol_db = SymbolDatabase()
     Ctx()._metadata_db = MetadataDatabase(DB_OPEN_READ)
-    Ctx()._cvs_items_db = CVSItemDatabase(
-        artifact_manager.get_temp_file(config.CVS_ITEMS_RESYNC_DB),
-        DB_OPEN_READ)
+    Ctx()._cvs_items_db = OldIndexedCVSItemStore(
+        artifact_manager.get_temp_file(config.CVS_ITEMS_RESYNC_STORE),
+        artifact_manager.get_temp_file(config.CVS_ITEMS_RESYNC_INDEX_TABLE))
     if not Ctx().trunk_only:
       Ctx()._symbolings_logger = SymbolingsLogger()
     aggregator = CVSRevisionAggregator()
@@ -330,7 +337,7 @@ class AggregateRevsPass(Pass):
     aggregator.flush()
     if not Ctx().trunk_only:
       Ctx()._symbolings_logger.close()
-
+    Ctx()._cvs_items_db.close()
     stats_keeper.set_svn_rev_count(SVNCommit.revnum - 1)
     stats_keeper.archive()
     Log().quiet("Done")
@@ -413,7 +420,8 @@ class OutputPass(Pass):
     self._register_temp_file(config.SVN_MIRROR_REVISIONS_DB)
     self._register_temp_file(config.SVN_MIRROR_NODES_DB)
     self._register_temp_file_needed(config.CVS_FILES_DB)
-    self._register_temp_file_needed(config.CVS_ITEMS_RESYNC_DB)
+    self._register_temp_file_needed(config.CVS_ITEMS_RESYNC_STORE)
+    self._register_temp_file_needed(config.CVS_ITEMS_RESYNC_INDEX_TABLE)
     self._register_temp_file_needed(config.SYMBOL_DB)
     self._register_temp_file_needed(config.METADATA_DB)
     self._register_temp_file_needed(config.SVN_COMMITS_DB)
@@ -425,9 +433,9 @@ class OutputPass(Pass):
   def run(self, stats_keeper):
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
     Ctx()._metadata_db = MetadataDatabase(DB_OPEN_READ)
-    Ctx()._cvs_items_db = CVSItemDatabase(
-        artifact_manager.get_temp_file(config.CVS_ITEMS_RESYNC_DB),
-        DB_OPEN_READ)
+    Ctx()._cvs_items_db = OldIndexedCVSItemStore(
+        artifact_manager.get_temp_file(config.CVS_ITEMS_RESYNC_STORE),
+        artifact_manager.get_temp_file(config.CVS_ITEMS_RESYNC_INDEX_TABLE))
     if not Ctx().trunk_only:
       Ctx()._symbol_db = SymbolDatabase()
     repos = SVNRepositoryMirror()
@@ -457,5 +465,7 @@ class OutputPass(Pass):
     repos.finish()
 
     Ctx().output_option.cleanup()
+
+    Ctx()._cvs_items_db.close()
 
 

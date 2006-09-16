@@ -153,9 +153,10 @@ ResyncRevsPass (formerly called pass2)
 
 This is where the resync file is used.  The goal of this pass is to
 output the information from 'cvs2svn-cvs-items.pck to a new file,
-'cvs2svn-cvs-items-resync.db' (resynched items).  It has the same
-content as the original file, except that the timestamps of some
-CVSRevisions have been resynced.
+'cvs2svn-cvs-items-resync.pck' (resynched items) with its
+corresponding index file, 'cvs2svn-cvs-items-resync-index.dat'.  It
+has the same content as the original file, except that the timestamps
+of some CVSRevisions have been resynced.
 
 First, read the whole resync file into a hash table that maps each
 metadata_id to a list of lists.  Each sublist represents one of the

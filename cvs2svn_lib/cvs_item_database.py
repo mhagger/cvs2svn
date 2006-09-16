@@ -17,17 +17,21 @@
 """This module contains a database that can store arbitrary CVSItems."""
 
 
+from __future__ import generators
+
+import struct
 import cPickle
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.common import FatalError
-from cvs2svn_lib.database import PrimedPDatabase
 from cvs2svn_lib.cvs_item import CVSRevision
 from cvs2svn_lib.cvs_item import CVSBranch
 from cvs2svn_lib.cvs_item import CVSTag
 from cvs2svn_lib.primed_pickle import get_memos
 from cvs2svn_lib.primed_pickle import PrimedPickler
 from cvs2svn_lib.primed_pickle import PrimedUnpickler
+from cvs2svn_lib.record_table import NewRecordTable
+from cvs2svn_lib.record_table import OldRecordTable
 
 
 class NewCVSItemStore:
@@ -75,6 +79,52 @@ class NewCVSItemStore:
     self.f.close()
 
 
+# Convert file offsets to 8-bit little-endian unsigned longs...
+INDEX_FORMAT = '<Q'
+# ...but then truncate to 5 bytes.  (This is big enough to represent a
+# terabyte.)
+INDEX_FORMAT_LEN = 5
+
+
+class NewIndexTable(NewRecordTable):
+  def __init__(self, filename):
+    NewRecordTable.__init__(self, filename, INDEX_FORMAT_LEN)
+
+  def pack(self, v):
+    return struct.pack(INDEX_FORMAT, v)[:INDEX_FORMAT_LEN]
+
+
+class NewIndexedCVSItemStore:
+  """A file of CVSItems that is written sequentially.
+
+  The file consists of a sequence of pickles.  The zeroth one is an
+  'unpickler_memo' as described in the primed_pickle module.
+  Subsequent ones are pickled CVSItems.  The offset of each CVSItem in
+  the file is stored to an index table so that the data can later be
+  retrieved randomly (via OldIndexedCVSItemStore)."""
+
+  def __init__(self, filename, index_filename):
+    """Initialize an instance, creating the files and writing the primer."""
+
+    self.f = open(filename, 'wb')
+    self.index_table = NewIndexTable(index_filename)
+
+    primer = (CVSRevision, CVSBranch, CVSTag,)
+    (pickler_memo, unpickler_memo,) = get_memos(primer)
+    self.pickler = PrimedPickler(pickler_memo)
+    cPickle.dump(unpickler_memo, self.f, -1)
+
+  def add(self, cvs_item):
+    """Write cvs_item into the database."""
+
+    self.index_table[cvs_item.id] = self.f.tell()
+    self.pickler.dumpf(self.f, cvs_item)
+
+  def close(self):
+    self.index_table.close()
+    self.f.close()
+
+
 class OldCVSItemStore:
   """Read a file created by NewCVSItemStore.
 
@@ -114,25 +164,48 @@ class OldCVSItemStore:
           'Key %r not found within items currently accessible.' % (id,))
 
 
-class CVSItemDatabase:
-  """A Database to store CVSItem objects and retrieve them by their id."""
+class OldIndexTable(OldRecordTable):
+  PAD = '\0' * (struct.calcsize(INDEX_FORMAT) - INDEX_FORMAT_LEN)
 
-  def __init__(self, filename, mode):
-    """Initialize an instance, opening database in MODE (like the MODE
-    argument to Database or anydbm.open()).  Use CVS_FILE_DB to look
-    up CVSFiles."""
+  def __init__(self, filename):
+    OldRecordTable.__init__(self, filename, INDEX_FORMAT_LEN)
 
-    self.db = PrimedPDatabase(
-        filename, mode, (CVSRevision, CVSBranch, CVSTag,))
+  def unpack(self, s):
+    (v,) = struct.unpack(INDEX_FORMAT, s + self.PAD)
+    if v == 0:
+      raise KeyError()
+    return v
 
-  def add(self, cvs_item):
-    """Add CVS_ITEM, a CVSItem, to the database."""
 
-    self.db['%x' % cvs_item.id] = cvs_item
+class OldIndexedCVSItemStore:
+  """Read a pair of files created by NewIndexedCVSItemStore.
+
+  The file can be read randomly but it cannot be written to."""
+
+  def __init__(self, filename, index_filename):
+    self.f = open(filename, 'rb')
+    self.index_table = OldIndexTable(index_filename)
+
+    # Read the memo from the first pickle:
+    unpickler_memo = cPickle.load(self.f)
+    self.unpickler = PrimedUnpickler(unpickler_memo)
+
+  def _fetch(self, offset):
+    self.f.seek(offset)
+    return self.unpickler.loadf(self.f)
+
+  def __iter__(self):
+    for offset in self.index_table:
+      yield self._fetch(offset)
 
   def __getitem__(self, id):
-    """Return the CVSItem stored under ID."""
+    offset = self.index_table[id]
+    if offset == 0:
+      raise KeyError()
+    return self._fetch(offset)
 
-    return self.db['%x' % (id,)]
+  def close(self):
+    self.f.close()
+    self.index_table.close()
 
 

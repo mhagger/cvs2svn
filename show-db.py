@@ -85,11 +85,11 @@ def show_cvsitemstore(fname):
   f = open(fname, 'rb')
 
   u1 = pickle.Unpickler(f)
-  u1.load()
+  memo = u1.load()
 
   while True:
     u2 = pickle.Unpickler(f)
-    u2.memo = u1.memo.copy()
+    u2.memo = memo.copy()
     try:
       items = u2.load()
     except EOFError:
@@ -98,6 +98,23 @@ def show_cvsitemstore(fname):
     for item in items:
       print    "%6s: %r" % (item.id, item)
       print "        %s" % (item,)
+
+
+def show_resynccvsitemstore(fname):
+  f = open(fname, 'rb')
+
+  u1 = pickle.Unpickler(f)
+  memo = u1.load()
+
+  while True:
+    u2 = pickle.Unpickler(f)
+    u2.memo = memo.copy()
+    try:
+      item = u2.load()
+    except EOFError:
+      break
+    print    "%6s: %r" % (item.id, item)
+    print "        %s" % (item,)
 
 
 
@@ -119,7 +136,7 @@ def prime_ctx():
   from cvs2svn_lib.context import Ctx
   artifact_manager.register_temp_file("cvs2svn-symbols.pck", None)
   artifact_manager.register_temp_file("cvs2svn-cvs-files.db", None)
-  from cvs2svn_lib.cvs_item_database import CVSItemDatabase
+  from cvs2svn_lib.cvs_item_database import OldIndexedCVSItemStore
   from cvs2svn_lib.metadata_database import MetadataDatabase
   from cvs2svn_lib import config
   artifact_manager.register_temp_file("cvs2svn-metadata.db", None)
@@ -128,8 +145,8 @@ def prime_ctx():
   Ctx().projects = ProjectList()
   Ctx()._symbol_db = SymbolDatabase()
   Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
-  Ctx()._cvs_items_db = CVSItemDatabase(config.CVS_ITEMS_RESYNC_DB,
-      DB_OPEN_READ)
+  Ctx()._cvs_items_db = OldIndexedCVSItemStore(
+      config.CVS_ITEMS_RESYNC_STORE, config.CVS_ITEMS_RESYNC_INDEX_TABLE)
   Ctx()._metadata_db = MetadataDatabase(DB_OPEN_READ)
 
 def main():
@@ -176,7 +193,7 @@ def main():
       show_cvsitemstore("cvs2svn-cvs-items.pck")
     elif o == "-I":
       prime_ctx()
-      show_str2ppickle_db("cvs2svn-cvs-items-resync.db")
+      show_resynccvsitemstore("cvs2svn-cvs-items-resync.pck")
     elif o == "-p":
       obj = pickle.load(open(a))
       print repr(obj)

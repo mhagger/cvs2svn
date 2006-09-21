@@ -23,15 +23,15 @@
 !! applied to!                                                      !!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-Usage: shrink_test_case.py CVSREPO COMMAND
+Usage: shrink_test_case.py CVSREPO TEST_COMMAND
 
 This script is meant to be used to shrink the size of a CVS repository
 that is to be used as a test case for cvs2svn.  It tries to throw out
 parts of the repository while preserving the bug.
 
-CVSREPO should be the path of a copy of a CVS archive.  COMMAND is a
-command that should run successfully (i.e., with exit code '0') if the
-bug is still present, and fail if the bug is absent."""
+CVSREPO should be the path of a copy of a CVS archive.  TEST_COMMAND
+is a command that should run successfully (i.e., with exit code '0')
+if the bug is still present, and fail if the bug is absent."""
 
 
 import sys
@@ -270,7 +270,17 @@ if not os.path.isdir(tmpdir):
 
 
 # Verify that test_command succeeds with the original repository:
-command(*test_command)
+try:
+    command(*test_command)
+except CommandFailedException, e:
+    sys.stderr.write(
+        'ERROR!  The test command failed with the original repository.\n'
+        'The test command should be designed so that it succeeds\n'
+        '(indicating that the bug is still present) with the original\n'
+        'repository, and fails only after the bug disappears.\n'
+        'Please fix your test command and start again.\n'
+        )
+    sys.exit(1)
 
 try_delete_subdirs(cvsrepo)
 try_delete_files(cvsrepo)

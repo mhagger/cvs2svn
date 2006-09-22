@@ -28,6 +28,13 @@ Making releases
    C. Run the testsuite, check everything is OK.
    D. Trial-run ./dist.sh, check the output is sane.
 
+ Notes for specific releases:
+   1. When 1.5.0 is released, please update the text in
+      www/cvs2svn.html#cmd-vs-options to indicate that 1.5 *is*
+      available now: s/will be/is/ and remove reference to having to
+      use trunk to get the feature.  Also remove this note from this
+      file.
+
  Creating the release:
    1. If this is an A.B.0 release, make a branch:
         svn copy http://cvs2svn.tigris.org/svn/cvs2svn/trunk \

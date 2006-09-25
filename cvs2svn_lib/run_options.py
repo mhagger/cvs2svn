@@ -49,6 +49,7 @@ from cvs2svn_lib.symbol_strategy import ForceTagRegexpStrategyRule
 from cvs2svn_lib.symbol_strategy import HeuristicStrategyRule
 from cvs2svn_lib.symbol_strategy import RuleBasedSymbolStrategy
 from cvs2svn_lib.symbol_strategy import UnambiguousUsageRule
+from cvs2svn_lib.symbol_transform import SymbolTransform
 from cvs2svn_lib.property_setters import AutoPropsPropertySetter
 from cvs2svn_lib.property_setters import BinaryFileDefaultMimeTypeSetter
 from cvs2svn_lib.property_setters import BinaryFileEOLStyleSetter
@@ -301,11 +302,10 @@ class RunOptions:
       elif opt == '--symbol-transform':
         [pattern, replacement] = value.split(":")
         try:
-          # Verify that the pattern is valid:
-          re.compile(pattern)
+          symbol_transforms.append(
+              RegexpSymbolTransform(pattern, replacement))
         except re.error, e:
           raise FatalError("'%s' is not a valid regexp." % (pattern,))
-        symbol_transforms.append((pattern, replacement,))
       elif opt == '--username':
         ctx.username = value
       elif opt == '--fs-type':

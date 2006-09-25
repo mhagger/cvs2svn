@@ -50,6 +50,7 @@ from cvs2svn_lib.symbol_strategy import ForceTagRegexpStrategyRule
 from cvs2svn_lib.symbol_strategy import HeuristicStrategyRule
 from cvs2svn_lib.symbol_strategy import RuleBasedSymbolStrategy
 from cvs2svn_lib.symbol_strategy import UnambiguousUsageRule
+from cvs2svn_lib.symbol_transform import RegexpSymbolTransform
 from cvs2svn_lib.property_setters import AutoPropsPropertySetter
 from cvs2svn_lib.property_setters import BinaryFileDefaultMimeTypeSetter
 from cvs2svn_lib.property_setters import BinaryFileEOLStyleSetter
@@ -284,8 +285,10 @@ ctx.add_project(
         'branches',
         'tags',
         symbol_transforms=[
-            #(r'^release-(\d+)_(\d+)$', r'release-\1.\2'),
-            #(r'^release-(\d+)_(\d+)_(\d+)$', r'release-\1.\2.\3'),
+            #RegexpSymbolTransform(r'^release-(\d+)_(\d+)$',
+            #                      r'release-\1.\2'),
+            #RegexpSymbolTransform(r'^release-(\d+)_(\d+)_(\d+)$',
+            #                      r'release-\1.\2.\3'),
             ],
         )
     )
@@ -299,8 +302,10 @@ ctx.add_project(
 #        'projA/branches',
 #        'projA/tags',
 #        symbol_transforms=[
-#            #(r'^release-(\d+)_(\d+)$', r'release-\1.\2'),
-#            #(r'^release-(\d+)_(\d+)_(\d+)$', r'release-\1.\2.\3'),
+#            #RegexpSymbolTransform(r'^release-(\d+)_(\d+)$',
+#            #                      r'release-\1.\2'),
+#            #RegexpSymbolTransform(r'^release-(\d+)_(\d+)_(\d+)$',
+#            #                      r'release-\1.\2.\3'),
 #            ],
 #        )
 #    )

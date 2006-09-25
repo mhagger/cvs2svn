@@ -31,6 +31,7 @@ from cvs2svn_lib.log import Log
 from cvs2svn_lib.cvs_repository import CVSRepositoryViaCVS
 from cvs2svn_lib.cvs_repository import CVSRepositoryViaRCS
 from cvs2svn_lib.cvs_file import CVSFile
+from cvs2svn_lib.symbol_transform import RegexpSymbolTransform
 
 
 def verify_paths_disjoint(*paths):
@@ -122,7 +123,7 @@ class Project:
     # A list of transformation rules (regexp, replacement) applied to
     # symbol names in this project.
     self.symbol_transforms = [
-        (re.compile(pattern), replacement,)
+        RegexpSymbolTransform(pattern, replacement)
         for (pattern, replacement,) in symbol_transforms]
 
   def __cmp__(self, other):
@@ -238,12 +239,12 @@ class Project:
     return path_join(self.get_branch_path(branch_symbol),
                      self._relative_name(cvs_path))
 
-  def transform_symbol(self, name):
+  def transform_symbol(self, cvs_file, name):
     """Transform the symbol NAME using the renaming rules specified
     with --symbol-transform.  Return the transformed symbol name."""
 
-    for (pattern, replacement) in self.symbol_transforms:
-      newname = pattern.sub(replacement, name)
+    for symbol_transform in self.symbol_transforms:
+      newname = symbol_transform.transform(cvs_file, name)
       if newname != name:
         Log().warn("   symbol '%s' transformed to '%s'" % (name, newname))
         name = newname

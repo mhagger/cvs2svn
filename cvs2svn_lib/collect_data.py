@@ -277,7 +277,7 @@ class _SymbolDataCollector:
     determine by inspection whether it is a branch or a tag, and
     record it in the right places."""
 
-    name = self.cvs_file.project.transform_symbol(name)
+    name = self.cvs_file.project.transform_symbol(self.cvs_file, name)
 
     # Check that the symbol is not already defined, which can easily
     # happen when --symbol-transform is used:

@@ -79,7 +79,7 @@ class Project:
 
   def __init__(self, project_cvs_repos_path,
                trunk_path, branches_path, tags_path,
-               symbol_transforms):
+               symbol_transforms=None):
     """Create a new Project record.
 
     PROJECT_CVS_REPOS_PATH is the main CVS directory for this project
@@ -122,9 +122,12 @@ class Project:
 
     # A list of transformation rules (regexp, replacement) applied to
     # symbol names in this project.
-    self.symbol_transforms = [
-        RegexpSymbolTransform(pattern, replacement)
-        for (pattern, replacement,) in symbol_transforms]
+    if symbol_transforms is None:
+      self.symbol_transforms = []
+    else:
+      self.symbol_transforms = [
+          RegexpSymbolTransform(pattern, replacement)
+          for (pattern, replacement,) in symbol_transforms]
 
   def __cmp__(self, other):
     return cmp(self.id, other.id)

@@ -34,6 +34,10 @@
     that <tt>trunk/tags/branches</tt> are inside of
     <tt>foo</tt>?</a></li>
 
+  <li><a href="#path-symbol-transforms">I want a single project but
+    tag-rewriting rules that vary by subdirectory.  Can this be
+    done?</a></li>
+
   <li><a href="#cvsnt">How can I convert a CVSNT repository?</a></li>
 
 </ol>
@@ -216,6 +220,80 @@ ctx.add_project(
     href="#onetoone">How can I convert separate projects in my CVS
     repository into a single Subversion repository?</a> for more
     information.</p>
+
+
+<h3><a name="path-symbol-transforms" title="#path-symbol-transforms">I
+  want a single project but tag-rewriting rules that vary by
+  subdirectory.  Can this be done?</a></h3>
+
+  <p>This is an example of how the cvs2svn conversion can be
+    customized using Python.</p>
+
+  <p>Suppose you want to write symbol transform rules that are more
+    complicated than "replace REGEXP with PATTERN".  This can easily
+    be done by adding just a little bit of Python code to your <a
+    href="cvs2svn.html#options-file-method">options file</a>.  (Note
+    that this feature was added after the 1.4 release.)</p>
+
+  <p>When a symbol is encountered, cvs2svn iterates through the list
+    of <tt>SymbolTransform</tt> objects defined for the project.  For
+    each one, it calls <tt>symbol_transform.transform(cvs_file,
+    symbol_name)</tt>.  That method can return any legal symbol name,
+    which will be used in the conversion instead of the original
+    name.</p>
+
+  <p>To use this feature, you will have to use an <a
+    href="cvs2svn.html#options-file-method">options file</a> to start
+    the conversion.  You then write a new SymbolTransform class that
+    inherits from RegexpSymbolTransform but checks the path before
+    deciding whether to transform the symbol.  Add the following to
+    your options file:</p>
+
+<pre>
+from cvs2svn_lib.symbol_transform import RegexpSymbolTransform
+
+class MySymbolTransform(RegexpSymbolTransform):
+    def __init__(self, path, pattern, replacement):
+        """Transform only symbols that occur within the specified PATH."""
+
+        self.path = path
+        RegexpSymbolTransform.__init__(self, pattern, replacement)
+
+    def transform(self, cvs_file, symbol_name):
+        # Is the file is within the path we are interested in?
+        if cvs_file.cvs_path.startswith(path + '/'):
+            # Yes -> Allow RegexpSymbolTransform to transform the symbol:
+            return RegexpSymbolTransform.transform(
+                    self, cvs_file, symbol_name)
+        else:
+            # No -> Return the symbol unchanged:
+            return symbol_name
+
+# Note that we use a Python loop to fill the list of symbol_transforms:
+symbol_transforms = []
+for subdir in ['project1', 'project2', 'project3']:
+    symbol_transforms.append(
+        MySymbolTransform(
+            subdir,
+            r'^release-(\d+)_(\d+)$',
+            r'%s-release-\1.\2' % subdir))
+
+# Now register the project, using our own symbol transforms:
+ctx.add_project(
+    Project(
+        'your_cvs_path',
+        'trunk',
+        'branches',
+        'tags',
+        symbol_transforms=symbol_transforms))
+</pre>
+
+  <p>This example causes any symbol under "project1" that looks like
+    "release-3_12" to be transformed into a symbol named
+    "project1-release-3.12", whereas if the same symbol appears under
+    "project2" it will be transformed into
+    "project1-release-3.12".</p>
+
 
 <h3><a name="cvsnt" title="#cvsnt">How can I convert a CVSNT
     repository?</a></h3>

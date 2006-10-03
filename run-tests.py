@@ -2226,6 +2226,27 @@ def tag_symbol_default():
      raise svntest.Failure
 
 
+def symbol_transform():
+  "test --symbol-transform"
+
+  conv = ensure_conversion(
+      'symbol-mess',
+      args=[
+          '--symbol-default=heuristic',
+          '--symbol-transform=^BRANCH:branch',
+          '--symbol-transform=^TAG:tag',
+          '--symbol-transform=^MOSTLY_(BRANCH|TAG):MOSTLY.\\1',
+          ])
+  if not conv.path_exists('branches', 'branch'):
+     raise svntest.Failure
+  if not conv.path_exists('tags', 'tag'):
+     raise svntest.Failure
+  if not conv.path_exists('branches', 'MOSTLY.BRANCH'):
+     raise svntest.Failure
+  if not conv.path_exists('tags', 'MOSTLY.TAG'):
+     raise svntest.Failure
+
+
 def issue_99():
   "test problem from issue 99"
 
@@ -2340,6 +2361,7 @@ test_list = [ None,
               heuristic_symbol_default,
               branch_symbol_default,
               tag_symbol_default,                   # 80
+              symbol_transform,
               XFail(issue_99),
               XFail(issue_100),
               XFail(issue_106),

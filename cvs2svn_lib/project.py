@@ -31,7 +31,6 @@ from cvs2svn_lib.log import Log
 from cvs2svn_lib.cvs_repository import CVSRepositoryViaCVS
 from cvs2svn_lib.cvs_repository import CVSRepositoryViaRCS
 from cvs2svn_lib.cvs_file import CVSFile
-from cvs2svn_lib.symbol_transform import RegexpSymbolTransform
 
 
 def verify_paths_disjoint(*paths):

@@ -473,8 +473,8 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       else:
         self._primary_dependencies.append( (revision, next,) )
 
-  def _resolve_dependencies(self):
-    """Store the primary and branch dependencies into the rev_data objects."""
+  def _resolve_primary_dependencies(self):
+    """Resolve the dependencies listed in self._primary_dependencies."""
 
     for (parent, child,) in self._primary_dependencies:
       parent_data = self._rev_data[parent]
@@ -484,6 +484,9 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       child_data = self._rev_data[child]
       assert child_data.parent is None
       child_data.parent = parent
+
+  def _resolve_branch_dependencies(self):
+    """Resolve dependencies involving branches."""
 
     for branch_data in self.sdc.branches_data.values():
       # The branch_data's parent has the branch as a child regardless
@@ -507,6 +510,9 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         child_data.parent = branch_data.parent
         parent_data.branches_revs_data.append(branch_data.child)
 
+  def _resolve_tag_dependencies(self):
+    """Resolve dependencies involving tags."""
+
     for tag_data_list in self.sdc.tags_data.values():
       for tag_data in tag_data_list:
         # The tag_data's rev has the tag as a child:
@@ -517,8 +523,11 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
           closing_data = self._rev_data[parent_data.child]
           closing_data.closed_symbols_data.append(tag_data)
 
-    # Determine self.root_rev based on the fact that it is the only
-    # revision without a parent:
+  def _determine_root_rev(self):
+    """Determine self.root_rev.
+
+    We use the fact that it is the only revision without a parent."""
+
     for rev_data in self._rev_data.values():
       if rev_data.parent is None:
         assert self._root_rev is None
@@ -534,7 +543,10 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       rev_data = self._rev_data[rev]
       self.sdc.register_commit(rev_data)
 
-    self._resolve_dependencies()
+    self._resolve_primary_dependencies()
+    self._resolve_branch_dependencies()
+    self._resolve_tag_dependencies()
+    self._determine_root_rev()
 
   def _determine_operation(self, rev_data):
     # How to tell if a CVSRevision is an add, a change, or a deletion:

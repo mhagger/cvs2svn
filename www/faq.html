@@ -130,9 +130,8 @@ repository at <tt>/path/foo-svn</tt> that includes only the
 projects in my CVS repository into a single Subversion
 repository?</a></h3>
 
-<p>As of version 1.5, cvs2svn supports multiproject conversions
-provided you use the <a
-href="cvs2svn.html#options-file-method">options file method</a> to
+<p>cvs2svn supports multiproject conversions, but you have to use the
+<a href="cvs2svn.html#options-file-method">options file method</a> to
 start the conversion.  In your options file, you simply call
 <tt>ctx.add_project()</tt> once for each sub-project in your
 repository.  For example, if your CVS repository has the layout:</p>
@@ -232,8 +231,7 @@ ctx.add_project(
   <p>Suppose you want to write symbol transform rules that are more
     complicated than "replace REGEXP with PATTERN".  This can easily
     be done by adding just a little bit of Python code to your <a
-    href="cvs2svn.html#options-file-method">options file</a>.  (Note
-    that this feature was added after the 1.4 release.)</p>
+    href="cvs2svn.html#options-file-method">options file</a>.</p>
 
   <p>When a symbol is encountered, cvs2svn iterates through the list
     of <tt>SymbolTransform</tt> objects defined for the project.  For

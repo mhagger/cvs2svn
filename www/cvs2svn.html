@@ -487,8 +487,19 @@ this:</p>
 
   <tr>
     <td align="right"><tt>--encoding=ENC</tt></td>
-    <td>Use ENC as the encoding of log messages in CVS repos (default:
-      ascii)</td>
+    <td>Use ENC as the encoding for filenames, log messages, and
+      author names in the CVS repos.  This option may be specified
+      multiple times, in which case the encodings are tried in order
+      until one succeeds.  Default: ascii.</td>
+  </tr>
+
+  <tr>
+    <td align="right"><tt>--fallback-encoding=ENC</tt></td>
+    <td>If all of the encodings specified with <tt>--encoding</tt>
+      fail, then fall back to using ENC in lossy 'replace' mode.  Use
+      of this option may cause information to be lost, but at least it
+      allows the conversion to run to completion.  Default:
+      disabled.</td>
   </tr>
 
   <tr>

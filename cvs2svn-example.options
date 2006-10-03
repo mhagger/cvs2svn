@@ -129,12 +129,22 @@ ctx.trunk_only = False
 # directory once the last file has been deleted from it:
 ctx.prune = False
 
-# A list of encodings that should be tried to convert filenames,
-# author names, log messages, etc. to UTF8:
+# A list of encodings that should be tried when converting filenames,
+# author names, log messages, etc. to UTF8.  The encoders are tried in
+# order in 'strict' mode until one of them succeeds.  If none
+# succeeds, then ctx.fallback_encoding is used in lossy 'replace' mode
+# (if it is configured):
 ctx.encoding = [
     #'latin1',
     'ascii',
     ]
+
+# The encoding to use if all of the encodings listed in ctx.encoding
+# fail.  This encoding is used in 'replace' mode, which always
+# succeeds but can cause information loss.  To enable this feature,
+# set the following value to the name of the desired encoding (e.g.,
+# 'ascii').
+ctx.fallback_encoding = None
 
 # The basic strategy for converting symbols (this should usually be
 # left unchanged).  A CVS symbol might be used as a tag in one file

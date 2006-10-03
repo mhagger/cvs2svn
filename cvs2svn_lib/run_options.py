@@ -84,10 +84,10 @@ USAGE: %(progname)s [-v] [-s svn-repos-path] [-p pass] cvs-repos-path
   --branches=PATH      path for branches (default: %(branches_base)s)
   --tags=PATH          path for tags (default: %(tags_base)s)
   --no-prune           don't prune empty directories
-  --encoding=ENC       encoding of paths and log messages in CVS repos
-                       Multiple of these options may be passed, where they
-                       will be treated as an ordered list of encodings to
-                       attempt (with "ascii" as a hardcoded last resort)
+  --encoding=ENC       encoding for paths and log messages in CVS repos.
+                       If option is specified multiple times, the encoders
+                       will be tried in order until one succeeds.
+  --fallback-encoding=ENC If all --encodings fail, use lossy encoding with ENC
   --force-branch=REGEXP force symbols matching REGEXP to be branches
   --force-tag=REGEXP   force symbols matching REGEXP to be tags
   --exclude=REGEXP     exclude branches and tags matching REGEXP
@@ -288,6 +288,8 @@ class RunOptions:
         ctx.prune = False
       elif opt == '--encoding':
         ctx.encoding.insert(-1, value)
+      elif opt == '--fallback-encoding':
+        ctx.fallback_encoding = value
       elif opt == '--force-branch':
         ctx.symbol_strategy.add_rule(ForceBranchRegexpStrategyRule(value))
       elif opt == '--force-tag':

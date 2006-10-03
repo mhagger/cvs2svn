@@ -50,6 +50,7 @@ class Ctx:
     self.trunk_only = False
     self.prune = True
     self.encoding = ["ascii"]
+    self.fallback_encoding = None
     self.symbol_strategy = None
     self.username = None
     self.svn_property_setters = []

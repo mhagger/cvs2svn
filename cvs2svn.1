@@ -95,9 +95,16 @@ don't delete the empty directory (the default is to delete any empty
 directories.
 .TP
 \fB--encoding\fR=\fIencoding\fR
-Use \fIencoding\fR as the encoding of log messages in the CVS
-repository (default is ascii).  If this option is specified multiple
-times, then the encodings will be tried in order.
+Use \fIencoding\fR as the encoding for filenames, log messages, and
+author names in the CVS repos.  This option may be specified
+multiple times, in which case the encodings are tried in order
+until one succeeds.  Default: ascii.
+.TP
+\fB--fallback-encoding\fR=\fIencoding\fR
+If all of the encodings specified with \fB--encoding\fR fail, then
+fall back to using \fIencoding\fR in lossy 'replace' mode.  Use of
+this option may cause information to be lost, but at least it allows
+the conversion to run to completion.  Default: disabled.
 .TP
 \fB--force-branch\fR=\fIregexp\fR
 Force symbols whose names match \fIregexp\fR to be branches.

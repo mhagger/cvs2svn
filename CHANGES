@@ -10,6 +10,7 @@ Version 1.5.x (not yet released)
  * Fix issue #86: Support multiple project roots per repository.
  * Fix issue #104: Allow path to "sort" executable to be specified.
  * Fix issue #8: Allow multiple --encoding options.
+ * Fix issue #109: Improve handling of fallback encodings.
 
  Improvements and output changes:
  * Further reduce conversion time and temporary space requirements.

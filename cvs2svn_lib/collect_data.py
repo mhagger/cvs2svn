@@ -491,37 +491,65 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     for branch_data in self.sdc.branches_data.values():
       # The branch_data's parent has the branch as a child regardless
       # of whether the branch had any subsequent commits:
-      parent_data = self._rev_data[branch_data.parent]
-      parent_data.branches_data.append(branch_data)
+      try:
+        parent_data = self._rev_data[branch_data.parent]
+      except KeyError:
+        Log().warn(
+            'In %r:\n'
+            '    branch %r references non-existing revision %s\n'
+            '    and will be ignored.'
+            % (self.cvs_file.filename, branch_data.symbol.name,
+               branch_data.parent,))
+        del self.sdc.branches_data[branch_data.branch_number]
+      else:
+        parent_data.branches_data.append(branch_data)
 
-      if not Ctx().trunk_only and parent_data.child is not None:
-        closing_data = self._rev_data[parent_data.child]
-        closing_data.closed_symbols_data.append(branch_data)
+        if not Ctx().trunk_only and parent_data.child is not None:
+          closing_data = self._rev_data[parent_data.child]
+          closing_data.closed_symbols_data.append(branch_data)
 
-      # If the branch has a child (i.e., something was committed on
-      # the branch), then we store a reference to the branch_data
-      # there, define the child's parent to be the branch's parent,
-      # and list the child in the branch parent's branches_revs_data:
-      if branch_data.child is not None:
-        child_data = self._rev_data[branch_data.child]
-        assert child_data.parent_branch_data is None
-        child_data.parent_branch_data = branch_data
-        assert child_data.parent is None
-        child_data.parent = branch_data.parent
-        parent_data.branches_revs_data.append(branch_data.child)
+        # If the branch has a child (i.e., something was committed on
+        # the branch), then we store a reference to the branch_data
+        # there, define the child's parent to be the branch's parent,
+        # and list the child in the branch parent's branches_revs_data:
+        if branch_data.child is not None:
+          child_data = self._rev_data[branch_data.child]
+          assert child_data.parent_branch_data is None
+          child_data.parent_branch_data = branch_data
+          assert child_data.parent is None
+          child_data.parent = branch_data.parent
+          parent_data.branches_revs_data.append(branch_data.child)
 
   def _resolve_tag_dependencies(self):
     """Resolve dependencies involving tags."""
 
-    for tag_data_list in self.sdc.tags_data.values():
-      for tag_data in tag_data_list:
-        # The tag_data's rev has the tag as a child:
-        parent_data = self._rev_data[tag_data.rev]
-        parent_data.tags_data.append(tag_data)
+    for (rev, tag_data_list) in self.sdc.tags_data.items():
+      try:
+        parent_data = self._rev_data[rev]
+      except KeyError:
+        Log().warn(
+            'In %r:\n'
+            '    the following tag(s) reference non-existing revision %s\n'
+            '    and will be ignored:\n'
+            '    %s' % (
+                self.cvs_file.filename, rev,
+                ', '.join([repr(tag_data.symbol.name)
+                           for tag_data in tag_data_list]),))
+        del self.sdc.tags_data[rev]
+      else:
+        if Ctx().trunk_only or parent_data.child is None:
+          closed_symbols_data = None
+        else:
+          closed_symbols_data = \
+              self._rev_data[parent_data.child].closed_symbols_data
 
-        if not Ctx().trunk_only and parent_data.child is not None:
-          closing_data = self._rev_data[parent_data.child]
-          closing_data.closed_symbols_data.append(tag_data)
+        for tag_data in tag_data_list:
+          assert tag_data.rev == rev
+          # The tag_data's rev has the tag as a child:
+          parent_data.tags_data.append(tag_data)
+
+          if closed_symbols_data is not None:
+            closed_symbols_data.append(tag_data)
 
   def _determine_root_rev(self):
     """Determine self.root_rev.

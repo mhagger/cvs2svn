@@ -2386,7 +2386,7 @@ test_list = [ None,
               issue_100,
               issue_106,
               options_option,
-              XFail(tag_with_no_revision),
+              tag_with_no_revision,
               ]
 
 if __name__ == '__main__':

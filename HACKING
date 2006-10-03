@@ -35,7 +35,7 @@ Making releases
         svn copy http://cvs2svn.tigris.org/svn/cvs2svn/trunk \
           http://cvs2svn.tigris.org/svn/cvs2svn/branches/A.B.x
       and then increment the -dev VERSION in cvs2svn on trunk.
-   2. Set the release date in CHANGES on trunk.
+   2. Set the release number and date in CHANGES on trunk.
    3. Switch to a branch working copy.
    4. Merge CHANGES to the release branch.
    5. Set VERSION in cvs2svn and then run:

@@ -1,5 +1,5 @@
-Version 1.5.x (not yet released)
---------------------------------
+Version 1.5.0 (03 October 2006)
+-------------------------------
 
  New features:
  * Support multiproject conversions (each gets its own trunk, tags, branches).

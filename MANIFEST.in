@@ -1,5 +1,6 @@
 include *.py cvs2svn.1 dist.sh MANIFEST.in Makefile
 include README BUGS COMMITTERS COPYING HACKING design-notes.txt CHANGES
+include cvs2svn-example.options
 recursive-include svntest *
 recursive-include test-data *
 recursive-include www *

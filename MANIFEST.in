@@ -3,6 +3,7 @@ include README BUGS COMMITTERS COPYING HACKING design-notes.txt CHANGES
 recursive-include svntest *
 recursive-include test-data *
 recursive-include www *
+recursive-include contrib *.py
 prune www/tigris-branding
 prune www/xhtml1-20020801
 prune www/xhtml1.catalog

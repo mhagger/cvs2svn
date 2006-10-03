@@ -19,6 +19,7 @@ fi
 
 # Clean up anything that might have been left from a previous run.
 rm -rf dist MANIFEST ${DIST_FULL}
+make clean
 
 # Build the dist, Python's way.
 ./setup.py sdist

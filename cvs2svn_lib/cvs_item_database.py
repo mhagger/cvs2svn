@@ -23,6 +23,9 @@ import struct
 import cPickle
 
 from cvs2svn_lib.boolean import *
+from cvs2svn_lib.common import DB_OPEN_NEW
+from cvs2svn_lib.common import DB_OPEN_READ
+from cvs2svn_lib.common import DB_OPEN_WRITE
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.cvs_item import CVSRevision
 from cvs2svn_lib.cvs_item import CVSBranch
@@ -30,8 +33,7 @@ from cvs2svn_lib.cvs_item import CVSTag
 from cvs2svn_lib.primed_pickle import get_memos
 from cvs2svn_lib.primed_pickle import PrimedPickler
 from cvs2svn_lib.primed_pickle import PrimedUnpickler
-from cvs2svn_lib.record_table import NewRecordTable
-from cvs2svn_lib.record_table import OldRecordTable
+from cvs2svn_lib.database import IndexedStore
 
 
 class NewCVSItemStore:
@@ -79,53 +81,6 @@ class NewCVSItemStore:
     self.f.close()
 
 
-# Convert file offsets to 8-bit little-endian unsigned longs...
-INDEX_FORMAT = '<Q'
-# ...but then truncate to 5 bytes.  (This is big enough to represent a
-# terabyte.)
-INDEX_FORMAT_LEN = 5
-
-
-class NewIndexTable(NewRecordTable):
-  def __init__(self, filename):
-    NewRecordTable.__init__(self, filename, INDEX_FORMAT_LEN)
-
-  def pack(self, v):
-    return struct.pack(INDEX_FORMAT, v)[:INDEX_FORMAT_LEN]
-
-
-class NewIndexedCVSItemStore:
-  """A file of CVSItems that is written sequentially.
-
-  The file consists of a sequence of pickles.  The zeroth one is a
-  tuple (pickler_memo, unpickler_memo) as described in the
-  primed_pickle module.  Subsequent ones are pickled CVSItems.  The
-  offset of each CVSItem in the file is stored to an index table so
-  that the data can later be retrieved randomly (via
-  OldIndexedCVSItemStore)."""
-
-  def __init__(self, filename, index_filename):
-    """Initialize an instance, creating the files and writing the primer."""
-
-    self.f = open(filename, 'wb')
-    self.index_table = NewIndexTable(index_filename)
-
-    primer = (CVSRevision, CVSBranch, CVSTag,)
-    (pickler_memo, unpickler_memo,) = get_memos(primer)
-    self.pickler = PrimedPickler(pickler_memo)
-    cPickle.dump((pickler_memo, unpickler_memo,), self.f, -1)
-
-  def add(self, cvs_item):
-    """Write cvs_item into the database."""
-
-    self.index_table[cvs_item.id] = self.f.tell()
-    self.pickler.dumpf(self.f, cvs_item)
-
-  def close(self):
-    self.index_table.close()
-    self.f.close()
-
-
 class OldCVSItemStore:
   """Read a file created by NewCVSItemStore.
 
@@ -157,6 +112,18 @@ class OldCVSItemStore:
       for item in self.current_file_items:
         yield item
 
+  def iter_file_item_maps(self):
+    """Iterate through the items, one file at a time.
+
+    Each time yield a map { id : CVSItem } for one CVSFile."""
+
+    while True:
+      try:
+        self._read_file_chunk()
+      except EOFError:
+        return
+      yield self.current_file_map.copy()
+
   def __getitem__(self, id):
     try:
       return self.current_file_map[id]
@@ -165,47 +132,8 @@ class OldCVSItemStore:
           'Key %r not found within items currently accessible.' % (id,))
 
 
-class OldIndexTable(OldRecordTable):
-  PAD = '\0' * (struct.calcsize(INDEX_FORMAT) - INDEX_FORMAT_LEN)
-
-  def __init__(self, filename):
-    OldRecordTable.__init__(self, filename, INDEX_FORMAT_LEN)
-
-  def unpack(self, s):
-    (v,) = struct.unpack(INDEX_FORMAT, s + self.PAD)
-    return v
-
-
-class OldIndexedCVSItemStore:
-  """Read a pair of files created by NewIndexedCVSItemStore.
-
-  The file can be read randomly but it cannot be written to."""
-
-  def __init__(self, filename, index_filename):
-    self.f = open(filename, 'rb')
-    self.index_table = OldIndexTable(index_filename)
-
-    # Read the memo from the first pickle:
-    (pickler_memo, unpickler_memo,) = cPickle.load(self.f)
-    self.unpickler = PrimedUnpickler(unpickler_memo)
-
-  def _fetch(self, offset):
-    self.f.seek(offset)
-    return self.unpickler.loadf(self.f)
-
-  def __iter__(self):
-    for offset in self.index_table:
-      if offset != 0:
-        yield self._fetch(offset)
-
-  def __getitem__(self, id):
-    offset = self.index_table[id]
-    if offset == 0:
-      raise KeyError()
-    return self._fetch(offset)
-
-  def close(self):
-    self.f.close()
-    self.index_table.close()
+def IndexedCVSItemStore(filename, index_filename, mode):
+  return IndexedStore(
+      filename, index_filename, mode, (CVSRevision, CVSBranch, CVSTag,))
 
 

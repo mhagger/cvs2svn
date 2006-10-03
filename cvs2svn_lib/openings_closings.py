@@ -19,10 +19,10 @@
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib import config
+from cvs2svn_lib.common import DB_OPEN_READ
 from cvs2svn_lib.common import OP_DELETE
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
-from cvs2svn_lib.database import DB_OPEN_READ
 from cvs2svn_lib.line_of_development import Branch
 from cvs2svn_lib.svn_revision_range import SVNRevisionRange
 
@@ -84,10 +84,11 @@ class SymbolingsLogger:
     else:
       branch_id = None
 
-    for symbol_id in cvs_rev.tag_ids + cvs_rev.branch_ids:
-      self._note_default_branch_opening(cvs_rev, symbol_id)
+    for id in cvs_rev.tag_ids + cvs_rev.branch_ids:
+      symbol = Ctx()._cvs_items_db[id].symbol
+      self._note_default_branch_opening(cvs_rev, symbol.id)
       if cvs_rev.op != OP_DELETE:
-        self._log(symbol_id, svn_revnum, cvs_rev.cvs_file, branch_id, OPENING)
+        self._log(symbol.id, svn_revnum, cvs_rev.cvs_file, branch_id, OPENING)
 
     for symbol_id in cvs_rev.closed_symbol_ids:
       self._log(symbol_id, svn_revnum, cvs_rev.cvs_file, branch_id, CLOSING)

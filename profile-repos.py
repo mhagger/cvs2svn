@@ -22,7 +22,7 @@ on that repository.  NOTE: You have to run the conversion pass yourself!
 
 import sys, os, os.path
 
-from cvs2svn_lib.database import DB_OPEN_READ
+from cvs2svn_lib.common import DB_OPEN_READ
 from cvs2svn_lib.config import CVS_FILES_DB
 from cvs2svn_lib.config import CVS_ITEMS_DB
 from cvs2svn_lib.config import CVS_ITEMS_ALL_DATAFILE

@@ -539,6 +539,13 @@ this:</p>
   </tr>
 
   <tr>
+    <td align="right"><tt>--no-cross-branch-commits</tt></td>
+    <td>Prevent the creation of SVN commits that affect multiple
+      branches or trunk and a branch.  Instead, break such changesets
+      into multiple commits, one per branch.</td>
+  </tr>
+
+  <tr>
     <td align="right"><tt>--symbol-transform=PAT:SUB</tt></td>
     <td><p>Transform RCS/CVS symbol names before entering them into
       Subversion.  PAT is a Python regexp pattern and SUB is a

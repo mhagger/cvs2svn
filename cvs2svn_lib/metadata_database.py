@@ -36,11 +36,10 @@ class MetadataDatabase:
 
       hex(id) -> (project.id, author, log_msg,)
 
-  Digest is the digest of the string (project.id + '\0' + author +
-  '\0' + log_msg) (or, if Ctx().cross_project_commits is True, (author
-  + '\0' + log_msg)), and is used to locate matching records
-  efficiently.  id is a unique id for each record (as a hex string
-  ('%x' % id) when used as a key).
+  Digest is the digest of a string containing author, log_message, and
+  possible project_id and/or branch_name, and is used to locate
+  matching records efficiently.  id is a unique id for each record (as
+  a hex string ('%x' % id) when used as a key).
 
   """
 
@@ -53,18 +52,22 @@ class MetadataDatabase:
     self.db = Database(artifact_manager.get_temp_file(config.METADATA_DB),
                        mode)
 
-  def get_key(self, project, author, log_msg):
-      """Return the id for the record for (PROJECT, AUTHOR, LOG_MSG,).
+  def get_key(self, project, branch_name, author, log_msg):
+      """Return the id for the specified metadata.
 
+      Locate the record for a commit with the specified (PROJECT,
+      BRANCH_NAME, AUTHOR, LOG_MSG).  (Depending on policy, not all of
+      these items are necessarily used when creating the unique id.)
       If there is no such record, create one and return its
       newly-generated id."""
 
-      if Ctx().cross_project_commits:
-        s = '%s\0%s' % (author, log_msg)
-      else:
-        s = '%x\0%s\0%s' % (project.id, author, log_msg)
+      key = [author, log_msg]
+      if not Ctx().cross_project_commits:
+        key += '%x' % project.id
+      if not Ctx().cross_branch_commits:
+        key += branch_name or ''
 
-      digest = sha.new(s).hexdigest()
+      digest = sha.new('\0'.join(key)).hexdigest()
       try:
           # See if it is already known:
           return self.db[digest]

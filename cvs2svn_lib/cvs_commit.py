@@ -41,30 +41,15 @@ class CVSCommit:
   generate a Subversion Commit (or Commits) for the set of CVS
   Revisions in the grouping."""
 
-  def __init__(self, metadata_id, author, log):
+  def __init__(self, metadata_id, author, log, timestamp):
     self.metadata_id = metadata_id
     self.author = author
     self.log = log
-
-    # Set of other CVSCommits we depend directly upon.
-    self._deps = set()
-
-    # This field remains True until this CVSCommit is moved from the
-    # expired queue to the ready queue.  At that point we stop blocking
-    # other commits.
-    self.pending = True
+    self.timestamp = timestamp
 
     # Lists of CVSRevisions
     self.changes = [ ]
     self.deletes = [ ]
-
-    # Start out with a t_min higher than any incoming time T, and a
-    # t_max lower than any incoming T.  This way the first T will
-    # push t_min down to T, and t_max up to T, naturally (without any
-    # special-casing), and successive times will then ratchet them
-    # outward as appropriate.
-    self.t_min = 1L<<32
-    self.t_max = 0
 
     # This will be set to the SVNCommit that occurs in self._commit.
     self.motivating_commit = None
@@ -120,8 +105,7 @@ class CVSCommit:
     # the same t_max, break the tie using t_min, and lastly,
     # metadata_id.  If all those are equal, then compare based on ids,
     # to ensure that no two instances compare equal.
-    return (cmp(self.t_max, other.t_max)
-            or cmp(self.t_min, other.t_min)
+    return (cmp(self.timestamp, other.timestamp)
             or cmp(self.metadata_id, other.metadata_id)
             or cmp(id(self), id(other)))
 
@@ -141,46 +125,18 @@ class CVSCommit:
     return False
 
   def add_revision(self, cvs_rev):
-    # Record the time range of this commit.
-    #
-    # ### ISSUE: It's possible, though unlikely, that the time range
-    # of a commit could get gradually expanded to be arbitrarily
-    # longer than COMMIT_THRESHOLD.  I'm not sure this is a huge
-    # problem, and anyway deciding where to break it up would be a
-    # judgement call.  For now, we just print a warning in commit() if
-    # this happens.
-    if cvs_rev.timestamp < self.t_min:
-      self.t_min = cvs_rev.timestamp
-    if cvs_rev.timestamp > self.t_max:
-      self.t_max = cvs_rev.timestamp
-
     if cvs_rev.op == OP_DELETE:
       self.deletes.append(cvs_rev)
     else:
       # OP_CHANGE or OP_ADD
       self.changes.append(cvs_rev)
 
-  def add_dependency(self, dep):
-    self._deps.add(dep)
-
-  def resolve_dependencies(self):
-    """Resolve any dependencies that are no longer pending.
-    Return True iff this commit has no remaining unresolved dependencies."""
-
-    for dep in list(self._deps):
-      if dep.pending:
-        return False
-      self.t_max = max(self.t_max, dep.t_max + 1)
-      self._deps.remove(dep)
-
-    return True
-
   def _pre_commit(self, done_symbols):
     """Generate any SVNCommits that must exist before the main commit.
 
-    DONE_SYMBOLS is a set of symbol ids for which the last source
+    DONE_SYMBOLS is a set of symbols for which the last source
     revision has already been seen and for which the
-    CVSRevisionAggregator has already generated a fill SVNCommit.  See
+    CVSRevisionCreator has already generated a fill SVNCommit.  See
     self.process_revisions()."""
 
     # There may be multiple cvs_revs in this commit that would cause
@@ -188,16 +144,16 @@ class CVSCommit:
     # other hand, there might be multiple branches committed on in
     # this commit.  Whatever the case, we should count exactly one
     # commit per branch, because we only fill a branch once per
-    # CVSCommit.  This list tracks which branch_ids we've already
+    # CVSCommit.  This list tracks which symbols we've already
     # counted.
-    accounted_for_symbol_ids = set()
+    accounted_for_symbols = set()
 
     def fill_needed(cvs_rev):
       """Return True iff this is the first commit on a new branch (for
       this file) and we need to fill the branch; else return False.
       See comments below for the detailed rules."""
 
-      if not cvs_rev.first_on_branch:
+      if cvs_rev.first_on_branch_id is None:
         # Only commits that are the first on their branch can force fills:
         return False
 
@@ -233,12 +189,12 @@ class CVSCommit:
       # branch.  After the fill, the path on which we're committing
       # will exist.
       if isinstance(cvs_rev.lod, Branch) \
-          and cvs_rev.lod.symbol.id not in accounted_for_symbol_ids \
-          and cvs_rev.lod.symbol.id not in done_symbols \
+          and cvs_rev.lod.symbol not in accounted_for_symbols \
+          and cvs_rev.lod.symbol not in done_symbols \
           and fill_needed(cvs_rev):
-        symbol = Ctx()._symbol_db.get_symbol(cvs_rev.lod.symbol.id)
+        symbol = cvs_rev.lod.symbol
         self.secondary_commits.append(SVNPreCommit(symbol))
-        accounted_for_symbol_ids.add(cvs_rev.lod.symbol.id)
+        accounted_for_symbols.add(symbol)
 
   def _commit(self):
     """Generates the primary SVNCommit that corresponds to this
@@ -255,15 +211,15 @@ class CVSCommit:
       if cvs_rev.prev_id is not None:
         return True
 
-      # cvs_rev.branch_ids may be empty if the originating branch
-      # has been excluded.
+      # cvs_rev.branch_ids may be empty if the originating branch has
+      # been excluded.
       if not cvs_rev.branch_ids:
         return False
       # FIXME: This message will not match if the RCS file was renamed
       # manually after it was created.
       cvs_generated_msg = 'file %s was initially added on branch %s.\n' % (
           cvs_rev.cvs_file.basename,
-          Ctx()._symbol_db.get_symbol(cvs_rev.branch_ids[0]).name,)
+          Ctx()._cvs_items_db[cvs_rev.branch_ids[0]].symbol.name,)
       author, log_msg = Ctx()._metadata_db[cvs_rev.metadata_id]
       return log_msg != cvs_generated_msg
 
@@ -302,12 +258,13 @@ class CVSCommit:
       if cvs_rev.default_branch_revision:
         self.default_branch_cvs_revisions.append(cvs_rev)
 
+    svn_commit.date = self.timestamp
+
     # There is a slight chance that we didn't actually register any
     # CVSRevisions with our SVNCommit (see loop over self.deletes
     # above), so if we have no CVSRevisions, we don't flush the
     # svn_commit to disk and roll back our revnum.
     if svn_commit.cvs_revs:
-      svn_commit.date = self.t_max
       Ctx()._persistence_manager.put_svn_commit(svn_commit)
     else:
       # We will not be flushing this SVNCommit, so rollback the
@@ -342,27 +299,11 @@ class CVSCommit:
     """Process all the CVSRevisions that this instance has, creating
     one or more SVNCommits in the process.  Generate fill SVNCommits
     only for symbols not in DONE_SYMBOLS (avoids unnecessary
-    fills).
-
-    Return the primary SVNCommit that corresponds to this CVSCommit.
-    The returned SVNCommit is the commit that motivated any other
-    SVNCommits generated in this CVSCommit."""
-
-    seconds = self.t_max - self.t_min + 1
+    fills)."""
 
     Log().verbose('-' * 60)
     Log().verbose('CVS Revision grouping:')
-    if seconds == 1:
-      Log().verbose('  Start time: %s (duration: 1 second)'
-                    % time.ctime(self.t_max))
-    else:
-      Log().verbose('  Start time: %s' % time.ctime(self.t_min))
-      Log().verbose('  End time:   %s (duration: %d seconds)'
-                    % (time.ctime(self.t_max), seconds))
-
-    if seconds > config.COMMIT_THRESHOLD + 1:
-      Log().warn('%s: grouping spans more than %d seconds'
-                 % (warning_prefix, config.COMMIT_THRESHOLD))
+    Log().verbose('  Time: %s' % time.ctime(self.timestamp))
 
     if Ctx().trunk_only:
       # When trunk-only, only do the primary commit:
@@ -375,7 +316,5 @@ class CVSCommit:
       for svn_commit in self.secondary_commits:
         svn_commit.date = self.motivating_commit.date
         Ctx()._persistence_manager.put_svn_commit(svn_commit)
-
-    return self.motivating_commit
 
 

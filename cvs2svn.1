@@ -126,6 +126,11 @@ CVS), or `strict' (no default; every ambiguous symbol has to be
 resolved manually using \fB--force-branch\fR, \fB--force-tag\fR,
 or \fB--exclude\fR).
 .TP
+\fB--no-cross-branch-commits\fR
+Prevent the creation of SVN commits that affect multiple branches or
+trunk and a branch.  Instead, break such changesets into multiple
+commits, one per branch.
+.TP
 \fB--symbol-transform\fR=\fIpattern\fR:\fIreplacement\fR
 Transform RCS/CVS symbol names before entering them into Subversion.
 \fIpattern\fR is a Python regexp pattern and \fIreplacement\fR is a

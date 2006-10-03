@@ -26,6 +26,9 @@ install:
 check:
 	${PYTHON} ./run-tests.py
 
+pycheck:
+	pychecker cvs2svn_lib/*.py
+
 clean:
 	rm -rf cvs2svn-*.tar.gz build tmp
 	for d in . cvs2svn_lib cvs2svn_rcsparse svntest ; \

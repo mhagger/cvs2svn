@@ -24,6 +24,12 @@ from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.log import Log
 
 
+# Always use these constants for opening databases.
+DB_OPEN_READ = 'r'
+DB_OPEN_WRITE = 'w'
+DB_OPEN_NEW = 'n'
+
+
 SVN_INVALID_REVNUM = -1
 
 

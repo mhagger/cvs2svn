@@ -33,11 +33,37 @@ CO_EXECUTABLE = 'co'
 CVS_EXECUTABLE = 'cvs'
 SORT_EXECUTABLE = 'sort'
 
-# These files are related to the cleaning and sorting of CVS revisions,
-# for commit grouping.  See design-notes.txt for details.
-CVS_REVS_RESYNC_DATAFILE = 'cvs2svn-revs-resync.txt'
-CVS_REVS_SORTED_DATAFILE = 'cvs2svn-revs-resync-s.txt'
-RESYNC_DATAFILE = 'cvs2svn-resync.txt'
+# The first file contains enough information about each CVSRevision to
+# deduce preliminary Changesets.  The second file is a sorted version
+# of the first.
+CVS_REVS_SUMMARY_DATAFILE = 'cvs2svn-revs-summary.txt'
+CVS_REVS_SUMMARY_SORTED_DATAFILE = 'cvs2svn-revs-summary-s.txt'
+
+# The first file contains enough information about each CVSSymbol to
+# deduce preliminary Changesets.  The second file is a sorted version
+# of the first.
+CVS_SYMBOLS_SUMMARY_DATAFILE = 'cvs2svn-symbols-summary.txt'
+CVS_SYMBOLS_SUMMARY_SORTED_DATAFILE = 'cvs2svn-symbols-summary-s.txt'
+
+# A mapping from CVSItem id to Changeset id.
+CVS_ITEM_TO_CHANGESET = 'cvs2svn-cvs-item-to-changeset.dat'
+
+# A mapping from CVSItem id to Changeset id, after the
+# RevisionChangeset loops have been broken.
+CVS_ITEM_TO_CHANGESET_REVBROKEN = \
+    'cvs2svn-cvs-item-to-changeset-revbroken.dat'
+
+# A mapping from id to Changeset.
+CHANGESETS_DB = 'cvs2svn-changesets.db'
+
+# A mapping from id to Changeset, after the RevisionChangeset loops
+# have been broken.
+CHANGESETS_REVBROKEN_DB = 'cvs2svn-changesets-revbroken.db'
+
+# The RevisionChangesets in commit order.  Each line contains the
+# changeset id and timestamp of one changeset, in hexadecimal, in the
+# order that the changesets should be committed to svn.
+CHANGESETS_SORTED_DATAFILE = 'cvs2svn-changesets-s.txt'
 
 # This file contains a marshalled copy of all the statistics that we
 # gather throughout the various runs of cvs2svn.  The data stored as a
@@ -87,11 +113,13 @@ CVS_FILES_DB = 'cvs2svn-cvs-files.db'
 # is lists of all CVSItems applying to a CVSFile.
 CVS_ITEMS_STORE = 'cvs2svn-cvs-items.pck'
 
-# Maps CVSItem.id (in hex) to CVSRevision after resynchronization.
-# The index file contains id->offset, and the second contains the
-# pickled CVSItems at the specified offsets.
-CVS_ITEMS_RESYNC_INDEX_TABLE = 'cvs2svn-cvs-items-resync-index.dat'
-CVS_ITEMS_RESYNC_STORE = 'cvs2svn-cvs-items-resync.pck'
+# A database of filtered CVSItems.  Excluded symbols have been
+# discarded (and the dependencies of the remaining CVSItems fixed up).
+# These two files are used within an IndexedCVSItemStore; the first is
+# a map id-> offset, and the second contains the pickled CVSItems at
+# the specified offsets.
+CVS_ITEMS_FILTERED_INDEX_TABLE = 'cvs2svn-cvs-items-filtered-index.pck'
+CVS_ITEMS_FILTERED_STORE = 'cvs2svn-cvs-items-filtered.pck'
 
 # A record of all symbolic names that will be processed in the
 # conversion.  This file contains a pickled list of TypedSymbol

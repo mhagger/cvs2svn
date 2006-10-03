@@ -26,8 +26,13 @@ import cStringIO
 import cPickle
 
 from cvs2svn_lib.boolean import *
+from cvs2svn_lib.common import DB_OPEN_READ
+from cvs2svn_lib.common import DB_OPEN_WRITE
+from cvs2svn_lib.common import DB_OPEN_NEW
 from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.common import error_prefix
+from cvs2svn_lib.record_table import FileOffsetPacker
+from cvs2svn_lib.record_table import RecordTable
 from cvs2svn_lib.primed_pickle import get_memos
 from cvs2svn_lib.primed_pickle import PrimedPickler
 from cvs2svn_lib.primed_pickle import PrimedUnpickler
@@ -70,12 +75,6 @@ if hasattr(anydbm._defaultmod, 'bsddb') \
     anydbm._defaultmod = gdbm
 
 
-# Always use these constants for opening databases.
-DB_OPEN_READ = 'r'
-DB_OPEN_WRITE = 'w'
-DB_OPEN_NEW = 'n'
-
-
 class AbstractDatabase:
   """An abstract base class for anydbm-based databases."""
 
@@ -104,7 +103,7 @@ class AbstractDatabase:
     # *values*, because our derived classes define __getitem__ and
     # __setitem__ to override the storage of values, and grabbing
     # methods directly from the dbm object would bypass this.
-    for meth_name in ('__delitem__', 'keys',
+    for meth_name in ('__delitem__',
         '__iter__', 'has_key', '__contains__', 'iterkeys', 'clear'):
       meth_ref = getattr(self.db, meth_name, None)
       if meth_ref:
@@ -114,6 +113,9 @@ class AbstractDatabase:
     # gdbm defines a __delitem__ method, but it cannot be assigned.  So
     # this method provides a fallback definition via explicit delegation:
     del self.db[key]
+
+  def keys(self):
+    return self.db.keys()
 
   def __iter__(self):
     for key in self.keys():
@@ -147,6 +149,9 @@ class AbstractDatabase:
       return self[key]
     except KeyError:
       return default
+
+  def close(self):
+    self.db.close()
 
 
 class SDatabase(AbstractDatabase):
@@ -221,5 +226,95 @@ class PrimedPDatabase(AbstractDatabase):
 
   def __setitem__(self, key, value):
     self.db[key] = self.primed_pickler.dumps(value)
+
+  def keys(self):
+    retval = self.db.keys()
+    retval.remove(self.primer_key)
+    return retval
+
+
+class IndexedStore:
+  """A file of items that is written sequentially and read randomly.
+
+  The items are indexed by item.id, which must consist of small
+  positive integers, as a RecordTable is used to store the index ->
+  fileoffset map and fileoffset=0 is used to represent an empty
+  record.
+
+  The main file consists of a sequence of pickles.  The zeroth one is
+  a tuple (pickler_memo, unpickler_memo) as described in the
+  primed_pickle module.  Subsequent ones are pickled items.  The
+  offset of each item in the file is stored to an index table so that
+  the data can later be retrieved randomly.
+
+  Objects are always stored to the end of the file.  If an item is
+  deleted or overwritten, the fact is recorded in the index_table but
+  the space in the pickle file is not garbage collected.  This has the
+  advantage that one can create a modified version of a database that
+  shares the main pickle file with an old version by copying the index
+  file.  But it has the disadvantage that space is wasted whenever
+  items are written multiple times."""
+
+  def __init__(self, filename, index_filename, mode, primer=None):
+    """Initialize an IndexedStore, writing the primer if necessary.
+
+    PRIMER is only used if MODE is DB_OPEN_NEW; otherwise the primer
+    is read from the file."""
+
+    self.mode = mode
+    if self.mode == DB_OPEN_NEW:
+      self.f = open(filename, 'wb+')
+    elif self.mode == DB_OPEN_WRITE:
+      self.f = open(filename, 'rb+')
+    elif self.mode == DB_OPEN_READ:
+      self.f = open(filename, 'rb')
+    else:
+      raise RuntimeError('Invalid mode %r' % self.mode)
+
+    self.index_table = RecordTable(
+        index_filename, self.mode, FileOffsetPacker())
+
+    if self.mode == DB_OPEN_NEW:
+      (pickler_memo, unpickler_memo,) = get_memos(primer)
+      cPickle.dump((pickler_memo, unpickler_memo,), self.f, -1)
+    else:
+      # Read the memo from the first pickle:
+      (pickler_memo, unpickler_memo,) = cPickle.load(self.f)
+
+    self.pickler = PrimedPickler(pickler_memo)
+    self.unpickler = PrimedUnpickler(unpickler_memo)
+
+  def add(self, item):
+    """Write ITEM into the database indexed by ITEM.id."""
+
+    # Make sure we're at the end of the file:
+    self.f.seek(0, 2)
+    self.index_table[item.id] = self.f.tell()
+    self.pickler.dumpf(self.f, item)
+
+  def _fetch(self, offset):
+    self.f.seek(offset)
+    return self.unpickler.loadf(self.f)
+
+  def __iter__(self):
+    for offset in self.index_table:
+      if offset != 0:
+        yield self._fetch(offset)
+
+  def __getitem__(self, id):
+    offset = self.index_table[id]
+    if offset == 0:
+      raise KeyError()
+    return self._fetch(offset)
+
+  def __delitem__(self, id):
+    offset = self.index_table[id]
+    if offset == 0:
+      raise KeyError()
+    self.index_table[id] = 0
+
+  def close(self):
+    self.index_table.close()
+    self.f.close()
 
 

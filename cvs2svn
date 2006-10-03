@@ -36,6 +36,7 @@ except ImportError:
   pass
 
 from cvs2svn_lib.boolean import *
+from cvs2svn_lib import config
 from cvs2svn_lib.common import FatalException
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.run_options import RunOptions
@@ -49,10 +50,16 @@ Ctx().VERSION = VERSION
 pass_manager = PassManager([
   passes.CollectRevsPass(),
   passes.CollateSymbolsPass(),
-  passes.ResyncRevsPass(),
-  passes.SortRevsPass(),
+  #passes.CheckDependenciesPass(config.CVS_ITEMS_STORE),
+  passes.FilterSymbolsPass(),
+  #passes.CheckDependenciesPass(config.CVS_ITEMS_FILTERED_STORE),
+  passes.SortRevisionSummaryPass(),
+  passes.SortSymbolSummaryPass(),
+  passes.InitializeChangesetsPass(),
+  passes.BreakCVSRevisionChangesetLoopsPass(),
+  passes.TopologicalSortPass(),
   passes.CreateDatabasesPass(),
-  passes.AggregateRevsPass(),
+  passes.CreateRevsPass(),
   passes.SortSymbolsPass(),
   passes.IndexSymbolsPass(),
   passes.OutputPass(),

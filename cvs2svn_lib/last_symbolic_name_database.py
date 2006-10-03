@@ -19,11 +19,11 @@
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib import config
+from cvs2svn_lib.common import DB_OPEN_NEW
 from cvs2svn_lib.common import OP_DELETE
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.database import Database
-from cvs2svn_lib.database import DB_OPEN_NEW
 
 
 class LastSymbolicNameDatabase:
@@ -33,21 +33,27 @@ class LastSymbolicNameDatabase:
   last seen in that revision."""
 
   def __init__(self):
-    # A map { symbol_id : cvs_rev.id } of the chronologically last
+    # A map { symbol_id : cvs_rev } of the chronologically last
     # CVSRevision that had the symbol as a tag or branch.  Once we've
     # gone through all the revs, symbols.keys() will be a list of all
     # tag and branch symbol_ids, and their corresponding values will
-    # be the id of the last CVS revision that they were used in.
+    # be the last CVS revision that the symbol was used in.
     self._symbols = {}
 
   def log_revision(self, cvs_rev):
     """Gather last CVS Revision for symbolic name info and tag info."""
 
     for tag_id in cvs_rev.tag_ids:
-      self._symbols[tag_id] = cvs_rev.id
+      cvs_tag = Ctx()._cvs_items_db[tag_id]
+      old_cvs_rev = self._symbols.get(cvs_tag.symbol.id)
+      if old_cvs_rev is None or old_cvs_rev.timestamp < cvs_rev.timestamp:
+        self._symbols[cvs_tag.symbol.id] = cvs_rev
     if cvs_rev.op != OP_DELETE:
       for branch_id in cvs_rev.branch_ids:
-        self._symbols[branch_id] = cvs_rev.id
+        cvs_branch = Ctx()._cvs_items_db[branch_id]
+        old_cvs_rev = self._symbols.get(cvs_branch.symbol.id)
+        if old_cvs_rev is None or old_cvs_rev.timestamp < cvs_rev.timestamp:
+          self._symbols[cvs_branch.symbol.id] = cvs_rev
 
   def create_database(self):
     """Create the SYMBOL_LAST_CVS_REVS_DB.
@@ -59,8 +65,8 @@ class LastSymbolicNameDatabase:
     symbol_revs_db = Database(
         artifact_manager.get_temp_file(config.SYMBOL_LAST_CVS_REVS_DB),
         DB_OPEN_NEW)
-    for symbol_id, rev_id in self._symbols.items():
-      rev_key = '%x' % (rev_id,)
+    for symbol_id, cvs_rev in self._symbols.items():
+      rev_key = '%x' % (cvs_rev.id,)
       ary = symbol_revs_db.get(rev_key, [])
       ary.append(symbol_id)
       symbol_revs_db[rev_key] = ary

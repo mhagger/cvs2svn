@@ -21,17 +21,20 @@ from __future__ import generators
 
 import sys
 import os
+import shutil
 import cPickle
 
 from cvs2svn_lib.boolean import *
+from cvs2svn_lib.set_support import *
 from cvs2svn_lib import config
 from cvs2svn_lib.context import Ctx
+from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import FatalException
+from cvs2svn_lib.common import DB_OPEN_NEW
+from cvs2svn_lib.common import DB_OPEN_READ
+from cvs2svn_lib.common import DB_OPEN_WRITE
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.artifact_manager import artifact_manager
-from cvs2svn_lib.database import DB_OPEN_NEW
-from cvs2svn_lib.database import DB_OPEN_READ
-from cvs2svn_lib.database import DB_OPEN_WRITE
 from cvs2svn_lib.cvs_file_database import CVSFileDatabase
 from cvs2svn_lib.metadata_database import MetadataDatabase
 from cvs2svn_lib.symbol import BranchSymbol
@@ -42,15 +45,23 @@ from cvs2svn_lib.symbol_database import create_symbol_database
 from cvs2svn_lib.line_of_development import Branch
 from cvs2svn_lib.symbol_statistics import SymbolStatistics
 from cvs2svn_lib.cvs_item import CVSRevision
+from cvs2svn_lib.cvs_item import CVSSymbol
+from cvs2svn_lib.cvs_item import CVSBranch
+from cvs2svn_lib.cvs_item import CVSTag
 from cvs2svn_lib.cvs_item_database import NewCVSItemStore
-from cvs2svn_lib.cvs_item_database import NewIndexedCVSItemStore
 from cvs2svn_lib.cvs_item_database import OldCVSItemStore
-from cvs2svn_lib.cvs_item_database import OldIndexedCVSItemStore
-from cvs2svn_lib.cvs_revision_resynchronizer import CVSRevisionResynchronizer
+from cvs2svn_lib.cvs_item_database import IndexedCVSItemStore
+from cvs2svn_lib.key_generator import KeyGenerator
+from cvs2svn_lib.changeset import RevisionChangeset
+from cvs2svn_lib.changeset import SymbolChangeset
+from cvs2svn_lib.changeset_graph import ChangesetGraph
+from cvs2svn_lib.changeset_graph_link import ChangesetGraphLink
+from cvs2svn_lib.changeset_database import ChangesetDatabase
+from cvs2svn_lib.changeset_database import CVSItemToChangesetTable
 from cvs2svn_lib.last_symbolic_name_database import LastSymbolicNameDatabase
 from cvs2svn_lib.svn_commit import SVNCommit
 from cvs2svn_lib.openings_closings import SymbolingsLogger
-from cvs2svn_lib.cvs_revision_aggregator import CVSRevisionAggregator
+from cvs2svn_lib.cvs_revision_creator import CVSRevisionCreator
 from cvs2svn_lib.svn_repository_mirror import SVNRepositoryMirror
 from cvs2svn_lib.svn_commit import SVNInitialProjectCommit
 from cvs2svn_lib.persistence_manager import PersistenceManager
@@ -82,7 +93,7 @@ def sort_file(infilename, outfilename, options=''):
       os.environ['LC_ALL'] = lc_all_tmp
 
 
-class Pass:
+class Pass(object):
   """Base class for one step of the conversion."""
 
   def __init__(self):
@@ -116,7 +127,6 @@ class CollectRevsPass(Pass):
 
   def register_artifacts(self):
     self._register_temp_file(config.SYMBOL_STATISTICS_LIST)
-    self._register_temp_file(config.RESYNC_DATAFILE)
     self._register_temp_file(config.METADATA_DB)
     self._register_temp_file(config.CVS_FILES_DB)
     self._register_temp_file(config.CVS_ITEMS_STORE)
@@ -162,83 +172,579 @@ class CollateSymbolsPass(Pass):
     Log().quiet("Done")
 
 
-class ResyncRevsPass(Pass):
-  """Clean up the revision information.
+class CheckDependenciesPass(Pass):
+  """Check that the dependencies are self-consistent."""
 
-  This pass was formerly known as pass2."""
+  def __init__(self, cvs_items_store_file):
+    Pass.__init__(self)
+    self.cvs_items_store_file = cvs_items_store_file
 
   def register_artifacts(self):
-    self._register_temp_file(config.CVS_REVS_RESYNC_DATAFILE)
-    self._register_temp_file(config.CVS_ITEMS_RESYNC_STORE)
-    self._register_temp_file(config.CVS_ITEMS_RESYNC_INDEX_TABLE)
     self._register_temp_file_needed(config.SYMBOL_DB)
-    self._register_temp_file_needed(config.RESYNC_DATAFILE)
     self._register_temp_file_needed(config.CVS_FILES_DB)
-    self._register_temp_file_needed(config.CVS_ITEMS_STORE)
-
-  def update_symbols(self, cvs_rev):
-    """Update CVS_REV.branch_ids and tag_ids based on self.symbol_db."""
-
-    branch_ids = []
-    tag_ids = []
-    for id in cvs_rev.branch_ids + cvs_rev.tag_ids:
-      symbol = self.symbol_db.get_symbol(id)
-      if isinstance(symbol, BranchSymbol):
-        branch_ids.append(symbol.id)
-      elif isinstance(symbol, TagSymbol):
-        tag_ids.append(symbol.id)
-    cvs_rev.branch_ids = branch_ids
-    cvs_rev.tag_ids = tag_ids
+    self._register_temp_file_needed(self.cvs_items_store_file)
 
   def run(self, stats_keeper):
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
     self.symbol_db = SymbolDatabase()
     Ctx()._symbol_db = self.symbol_db
     cvs_item_store = OldCVSItemStore(
-        artifact_manager.get_temp_file(config.CVS_ITEMS_STORE))
-    cvs_items_resync_db = NewIndexedCVSItemStore(
-        artifact_manager.get_temp_file(config.CVS_ITEMS_RESYNC_STORE),
-        artifact_manager.get_temp_file(config.CVS_ITEMS_RESYNC_INDEX_TABLE))
+        artifact_manager.get_temp_file(self.cvs_items_store_file))
 
-    Log().quiet("Re-synchronizing CVS revision timestamps...")
+    Log().quiet("Checking dependency consistency...")
 
-    resynchronizer = CVSRevisionResynchronizer(cvs_item_store)
-
-    # We may have recorded some changes in revisions' timestamp.  We need to
-    # scan for any other files which may have had the same log message and
-    # occurred at "the same time" and change their timestamps, too.
-
-    # Process the revisions file, looking for items to clean up
+    fatal_errors = []
     for cvs_item in cvs_item_store:
-      if isinstance(cvs_item, CVSRevision):
-        # Skip this entire revision if it's on an excluded branch
-        if isinstance(cvs_item.lod, Branch):
-          symbol = self.symbol_db.get_symbol(cvs_item.lod.symbol.id)
-          if isinstance(symbol, ExcludedSymbol):
-            continue
+      # Check that the pred_ids and succ_ids are mutually consistent:
+      for pred_id in cvs_item.get_pred_ids():
+        pred = cvs_item_store[pred_id]
+        if not cvs_item.id in pred.get_succ_ids():
+          fatal_errors.append(
+              '%s lists pred=%s, but not vice versa.' % (cvs_item, pred,))
 
-        self.update_symbols(cvs_item)
+      for succ_id in cvs_item.get_succ_ids():
+        succ = cvs_item_store[succ_id]
+        if not cvs_item.id in succ.get_pred_ids():
+          fatal_errors.append(
+              '%s lists succ=%s, but not vice versa.' % (cvs_item, succ,))
 
-        resynchronizer.resynchronize(cvs_item)
-
-      cvs_items_resync_db.add(cvs_item)
-
-    cvs_items_resync_db.close()
+    if fatal_errors:
+      raise FatalException("Dependencies inconsistent:\n"
+                           + "\n".join(fatal_errors) + "\n"
+                           + "Exited due to fatal error(s).\n")
 
     Log().quiet("Done")
 
 
-class SortRevsPass(Pass):
-  """This pass was formerly known as pass3."""
+class FilterSymbolsPass(Pass):
+  """Delete any branches/tags that are to be excluded.
+
+  Also delete revisions on excluded branches, and delete other
+  references to the excluded symbols."""
 
   def register_artifacts(self):
-    self._register_temp_file(config.CVS_REVS_SORTED_DATAFILE)
-    self._register_temp_file_needed(config.CVS_REVS_RESYNC_DATAFILE)
+    self._register_temp_file(config.CVS_ITEMS_FILTERED_STORE)
+    self._register_temp_file(config.CVS_ITEMS_FILTERED_INDEX_TABLE)
+    self._register_temp_file(config.CVS_REVS_SUMMARY_DATAFILE)
+    self._register_temp_file(config.CVS_SYMBOLS_SUMMARY_DATAFILE)
+    self._register_temp_file_needed(config.SYMBOL_DB)
+    self._register_temp_file_needed(config.CVS_FILES_DB)
+    self._register_temp_file_needed(config.CVS_ITEMS_STORE)
+
+  def filter_excluded_symbols(self, file_item_map):
+    """Delete any excluded symbols and references to them."""
+
+    for cvs_item in file_item_map.values():
+      if isinstance(cvs_item, CVSRevision):
+        # Skip this entire revision if it's on an excluded branch
+        if isinstance(cvs_item.lod, Branch):
+          symbol = cvs_item.lod.symbol
+          if isinstance(symbol, ExcludedSymbol):
+            # Delete this item.
+            del file_item_map[cvs_item.id]
+            # There are only two other possible references to this
+            # item from CVSRevisions outside of the to-be-deleted
+            # branch:
+
+            # Is if this is the first commit on the branch, it is
+            # listed in the branch_commit_ids of the CVSRevision from
+            # which the branch sprouted.
+            if cvs_item.first_on_branch_id is not None:
+              prev = file_item_map.get(cvs_item.prev_id)
+              if prev is not None:
+                prev.branch_commit_ids.remove(cvs_item.id)
+
+            # If it is the last default revision on a non-trunk
+            # default branch followed by a 1.2 revision, then the 1.2
+            # revision depends on this one.
+            if cvs_item.default_branch_next_id is not None:
+              next = file_item_map.get(cvs_item.default_branch_next_id)
+              if next is not None:
+                assert next.default_branch_prev_id == cvs_item.id
+                next.default_branch_prev_id = None
+      elif isinstance(cvs_item, CVSSymbol):
+        # Skip this symbol if it is to be excluded
+        symbol = cvs_item.symbol
+        if isinstance(symbol, ExcludedSymbol):
+          del file_item_map[cvs_item.id]
+          # A CVSSymbol is the successor of the CVSRevision that it
+          # springs from.  If that revision still exists, delete
+          # this symbol from its branch_ids:
+          cvs_revision = file_item_map.get(cvs_item.rev_id)
+          if cvs_revision is None:
+            # It has already been deleted; do nothing:
+            pass
+          elif isinstance(cvs_item, CVSBranch):
+            cvs_revision.branch_ids.remove(cvs_item.id)
+          elif isinstance(cvs_item, CVSTag):
+            cvs_revision.tag_ids.remove(cvs_item.id)
+      else:
+        raise RuntimeError('Unknown cvs item type')
+
+  def mutate_symbols(self, file_item_map):
+    """Force symbols to be tags/branches based on self.symbol_db."""
+
+    for cvs_item in file_item_map.values():
+      if isinstance(cvs_item, CVSRevision):
+        # This CVSRevision may be affected by the mutation of any
+        # CVSSymbols that it references, but there is nothing to do
+        # here directly.
+        pass
+      elif isinstance(cvs_item, CVSSymbol):
+        symbol = cvs_item.symbol
+        if isinstance(cvs_item, CVSBranch) and isinstance(symbol, TagSymbol):
+          # Mutate the branch into a tag.
+          if cvs_item.next_id is not None:
+            # This shouldn't happen because it was checked in
+            # CollateSymbolsPass:
+            raise FatalError('Attempt to exclude a branch with commits.')
+          cvs_item = CVSTag(
+              cvs_item.id, cvs_item.cvs_file, cvs_item.symbol,
+              cvs_item.rev_id)
+          file_item_map[cvs_item.id] = cvs_item
+          cvs_revision = file_item_map[cvs_item.rev_id]
+          cvs_revision.branch_ids.remove(cvs_item.id)
+          cvs_revision.tag_ids.append(cvs_item.id)
+        elif isinstance(cvs_item, CVSTag) \
+               and isinstance(symbol, BranchSymbol):
+          # Mutate the tag into a branch.
+          cvs_item = CVSBranch(
+              cvs_item.id, cvs_item.cvs_file, cvs_item.symbol,
+              None, cvs_item.rev_id, None)
+          file_item_map[cvs_item.id] = cvs_item
+          cvs_revision = file_item_map[cvs_item.rev_id]
+          cvs_revision.tag_ids.remove(cvs_item.id)
+          cvs_revision.branch_ids.append(cvs_item.id)
+      else:
+        raise RuntimeError('Unknown cvs item type')
 
   def run(self, stats_keeper):
-    Log().quiet("Sorting CVS revisions...")
-    sort_file(artifact_manager.get_temp_file(config.CVS_REVS_RESYNC_DATAFILE),
-              artifact_manager.get_temp_file(config.CVS_REVS_SORTED_DATAFILE))
+    Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
+    Ctx()._symbol_db = SymbolDatabase()
+    self.cvs_item_store = OldCVSItemStore(
+        artifact_manager.get_temp_file(config.CVS_ITEMS_STORE))
+    cvs_items_db = IndexedCVSItemStore(
+        artifact_manager.get_temp_file(config.CVS_ITEMS_FILTERED_STORE),
+        artifact_manager.get_temp_file(config.CVS_ITEMS_FILTERED_INDEX_TABLE),
+        DB_OPEN_NEW)
+    revs_summary_file = open(
+        artifact_manager.get_temp_file(config.CVS_REVS_SUMMARY_DATAFILE),
+        'w')
+    symbols_summary_file = open(
+        artifact_manager.get_temp_file(config.CVS_SYMBOLS_SUMMARY_DATAFILE),
+        'w')
+
+    Log().quiet("Filtering out excluded symbols and summarizing items...")
+
+    # Process the cvs items store one file at a time:
+    for file_item_map in self.cvs_item_store.iter_file_item_maps():
+      self.filter_excluded_symbols(file_item_map)
+      self.mutate_symbols(file_item_map)
+
+      # Store whatever is left to the new file:
+      for cvs_item in file_item_map.values():
+        cvs_items_db.add(cvs_item)
+
+        if isinstance(cvs_item, CVSRevision):
+          revs_summary_file.write(
+              '%x %08x %x\n'
+              % (cvs_item.metadata_id, cvs_item.timestamp, cvs_item.id,))
+        elif isinstance(cvs_item, CVSSymbol):
+          symbols_summary_file.write(
+              '%x %x\n' % (cvs_item.symbol.id, cvs_item.id,))
+
+    cvs_items_db.close()
+    revs_summary_file.close()
+    symbols_summary_file.close()
+
+    Log().quiet("Done")
+
+
+class SortRevisionSummaryPass(Pass):
+  """Sort the revision summary file."""
+
+  def register_artifacts(self):
+    self._register_temp_file(config.CVS_REVS_SUMMARY_SORTED_DATAFILE)
+    self._register_temp_file_needed(config.CVS_REVS_SUMMARY_DATAFILE)
+
+  def run(self, stats_keeper):
+    Log().quiet("Sorting CVS revision summaries...")
+    sort_file(
+        artifact_manager.get_temp_file(config.CVS_REVS_SUMMARY_DATAFILE),
+        artifact_manager.get_temp_file(
+            config.CVS_REVS_SUMMARY_SORTED_DATAFILE))
+    Log().quiet("Done")
+
+
+class SortSymbolSummaryPass(Pass):
+  """Sort the symbol summary file."""
+
+  def register_artifacts(self):
+    self._register_temp_file(config.CVS_SYMBOLS_SUMMARY_SORTED_DATAFILE)
+    self._register_temp_file_needed(config.CVS_SYMBOLS_SUMMARY_DATAFILE)
+
+  def run(self, stats_keeper):
+    Log().quiet("Sorting CVS symbol summaries...")
+    sort_file(
+        artifact_manager.get_temp_file(config.CVS_SYMBOLS_SUMMARY_DATAFILE),
+        artifact_manager.get_temp_file(
+            config.CVS_SYMBOLS_SUMMARY_SORTED_DATAFILE))
+    Log().quiet("Done")
+
+
+class InitializeChangesetsPass(Pass):
+  """Create preliminary CommitSets."""
+
+  def register_artifacts(self):
+    self._register_temp_file(config.CVS_ITEM_TO_CHANGESET)
+    self._register_temp_file(config.CHANGESETS_DB)
+    self._register_temp_file_needed(config.SYMBOL_DB)
+    self._register_temp_file_needed(config.CVS_FILES_DB)
+    self._register_temp_file_needed(config.CVS_ITEMS_FILTERED_STORE)
+    self._register_temp_file_needed(config.CVS_ITEMS_FILTERED_INDEX_TABLE)
+    self._register_temp_file_needed(config.CVS_REVS_SUMMARY_SORTED_DATAFILE)
+    self._register_temp_file_needed(
+        config.CVS_SYMBOLS_SUMMARY_SORTED_DATAFILE)
+
+  def get_revision_changesets(self):
+    """Generate revision changesets, one at a time."""
+
+    # Create changesets for CVSRevisions:
+    old_metadata_id = None
+    old_timestamp = None
+    changeset = []
+    for l in open(
+        artifact_manager.get_temp_file(
+            config.CVS_REVS_SUMMARY_SORTED_DATAFILE), 'r'):
+      [metadata_id, timestamp, cvs_item_id] = \
+          [int(s, 16) for s in l.strip().split()]
+      if metadata_id != old_metadata_id \
+         or timestamp > old_timestamp + config.COMMIT_THRESHOLD:
+        # Start a new changeset.  First finish up the old changeset,
+        # if any:
+        if changeset:
+          yield RevisionChangeset(
+              self.changeset_key_generator.gen_id(), changeset)
+          changeset = []
+        old_metadata_id = metadata_id
+      changeset.append(cvs_item_id)
+      old_timestamp = timestamp
+
+    # Finish up the last changeset, if any:
+    if changeset:
+      yield RevisionChangeset(
+          self.changeset_key_generator.gen_id(), changeset)
+
+  def get_symbol_changesets(self):
+    """Generate symbol changesets, one at a time."""
+
+    old_symbol_id = None
+    changeset = []
+    for l in open(
+        artifact_manager.get_temp_file(
+            config.CVS_SYMBOLS_SUMMARY_SORTED_DATAFILE), 'r'):
+      [symbol_id, cvs_item_id] = [int(s, 16) for s in l.strip().split()]
+      if symbol_id != old_symbol_id:
+        # Start a new changeset.  First finish up the old changeset,
+        # if any:
+        if changeset:
+          yield SymbolChangeset(
+              self.changeset_key_generator.gen_id(), changeset)
+          changeset = []
+        old_symbol_id = symbol_id
+      changeset.append(cvs_item_id)
+
+    # Finish up the last changeset, if any:
+    if changeset:
+      yield SymbolChangeset(self.changeset_key_generator.gen_id(), changeset)
+
+  def compare_items(a, b):
+      return (
+          cmp(a.timestamp, b.timestamp)
+          or cmp(a.cvs_file.cvs_path, b.cvs_file.cvs_path)
+          or cmp([int(x) for x in a.rev.split('.')],
+                 [int(x) for x in b.rev.split('.')])
+          or cmp(a.id, b.id))
+
+  compare_items = staticmethod(compare_items)
+
+  def break_internal_dependencies(self, changeset):
+    """Split up CHANGESET if necessary to break internal dependencies.
+
+    Return a list containing the resulting changesets.  Iff CHANGESET
+    did not have to be split, then the return value will contain a
+    single value, namely the original CHANGESET."""
+
+    cvs_items = changeset.get_cvs_items()
+    # We only look for succ dependencies, since by doing so we
+    # automatically cover pred dependencies as well.  First create a
+    # list of tuples (pred, succ) of id pairs for CVSItems that depend
+    # on each other.
+    dependencies = []
+    for cvs_item in cvs_items:
+      for next_id in cvs_item.get_succ_ids():
+        if next_id in changeset.cvs_item_ids:
+          Log().verbose(
+              'Found an internal dependency: %x -> %x' \
+              % (cvs_item.id, next_id,)) # @@@
+          dependencies.append((cvs_item.id, next_id,))
+    if dependencies:
+      # Sort the cvs_items in a defined order (chronological to the
+      # extent that the timestamps are correct and unique).
+      cvs_items = list(cvs_items)
+      cvs_items.sort(self.compare_items)
+      indexes = {}
+      for i in range(len(cvs_items)):
+        indexes[cvs_items[i].id] = i
+      # How many internal dependencies would be broken by breaking the
+      # Changeset after a particular index?
+      breaks = [0] * len(cvs_items)
+      for (pred, succ,) in dependencies:
+        pred_index = indexes[pred]
+        succ_index = indexes[succ]
+        breaks[min(pred_index, succ_index)] += 1
+        breaks[max(pred_index, succ_index)] -= 1
+      best_i = None
+      best_count = -1
+      best_time = 0
+      for i in range(1, len(breaks)):
+        breaks[i] += breaks[i - 1]
+      for i in range(0, len(breaks) - 1):
+        Log().verbose('%x: %d' % (cvs_items[i].id, breaks[i],)) # @@@
+        if breaks[i] > best_count:
+          best_i = i
+          best_count = breaks[i]
+          best_time = cvs_items[i + 1].timestamp - cvs_items[i].timestamp
+        elif breaks[i] == best_count \
+             and cvs_items[i + 1].timestamp - cvs_items[i].timestamp \
+                 < best_time:
+          best_i = i
+          best_count = breaks[i]
+          best_time = cvs_items[i + 1].timestamp - cvs_items[i].timestamp
+      Log().verbose('%x: %d' % (cvs_items[-1].id, breaks[-1],)) # @@@
+      # Reuse the old changeset.id for the first of the split changesets.
+      return (
+          self.break_internal_dependencies(
+              RevisionChangeset(
+                  changeset.id,
+                  [cvs_item.id for cvs_item in cvs_items[:best_i + 1]]))
+          + self.break_internal_dependencies(
+              RevisionChangeset(
+                  self.changeset_key_generator.gen_id(),
+                  [cvs_item.id for cvs_item in cvs_items[best_i + 1:]])))
+    else:
+      return [changeset]
+
+  def store_changeset(self, changeset):
+    for cvs_item_id in changeset.cvs_item_ids:
+      self.cvs_item_to_changeset_id[cvs_item_id] = changeset.id
+    self.changesets_db.store(changeset)
+
+  def run(self, stats_keeper):
+    Log().quiet("Creating preliminary commit sets...")
+
+    Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
+    self.symbol_db = SymbolDatabase()
+    Ctx()._symbol_db = self.symbol_db
+    Ctx()._cvs_items_db = IndexedCVSItemStore(
+        artifact_manager.get_temp_file(config.CVS_ITEMS_FILTERED_STORE),
+        artifact_manager.get_temp_file(config.CVS_ITEMS_FILTERED_INDEX_TABLE),
+        DB_OPEN_READ)
+
+    self.cvs_item_to_changeset_id = CVSItemToChangesetTable(
+        artifact_manager.get_temp_file(config.CVS_ITEM_TO_CHANGESET),
+        DB_OPEN_NEW)
+    self.changesets_db = ChangesetDatabase(
+        artifact_manager.get_temp_file(config.CHANGESETS_DB), DB_OPEN_NEW)
+    self.changeset_key_generator = KeyGenerator(1)
+
+    for changeset in self.get_revision_changesets():
+      for split_changeset in self.break_internal_dependencies(changeset):
+        Log().verbose(repr(changeset))
+        self.store_changeset(split_changeset)
+
+    for changeset in self.get_symbol_changesets():
+      Log().verbose(repr(changeset))
+      self.store_changeset(changeset)
+
+    self.cvs_item_to_changeset_id.close()
+    self.changesets_db.close()
+
+    Log().quiet("Done")
+
+
+class BreakCVSRevisionChangesetLoopsPass(Pass):
+  """Break up any dependency loops involving only RevisionChangesets."""
+
+  def register_artifacts(self):
+    self._register_temp_file(config.CHANGESETS_REVBROKEN_DB)
+    self._register_temp_file(config.CVS_ITEM_TO_CHANGESET_REVBROKEN)
+    self._register_temp_file_needed(config.SYMBOL_DB)
+    self._register_temp_file_needed(config.CVS_FILES_DB)
+    self._register_temp_file_needed(config.CVS_ITEMS_FILTERED_STORE)
+    self._register_temp_file_needed(config.CVS_ITEMS_FILTERED_INDEX_TABLE)
+    self._register_temp_file_needed(config.CVS_ITEM_TO_CHANGESET)
+    self._register_temp_file_needed(config.CHANGESETS_DB)
+
+  def break_cycle(self, cycle):
+    """Break up one or more changesets in CYCLE to help break the cycle.
+
+    CYCLE is a list of Changesets where
+
+        cycle[i] depends on cycle[i - 1]
+
+    Break up one or more changesets in CYCLE to make progress towards
+    breaking the cycle.  Update self.changeset_graph accordingly.
+
+    It is not guaranteed that the cycle will be broken by one call to
+    this routine, but at least some progress must be made."""
+
+    Log().verbose('Breaking cycle: %s' % ' -> '.join([
+        '%x' % node.id for node in (cycle + [cycle[0]])]))
+
+    best_i = None
+    best_link = None
+    for i in range(len(cycle)):
+      # It's OK if this index wraps to -1:
+      link = ChangesetGraphLink(
+          cycle[i - 1], cycle[i], cycle[i + 1 - len(cycle)])
+
+      if best_i is None or link < best_link:
+        best_i = i
+        best_link = link
+    Log().verbose('Breaking index=%d (%s)' % (best_i, best_link,)) # @@@
+
+    new_changesets = best_link.break_changeset(self.changeset_key_generator)
+
+    del self.changeset_graph[best_link.changeset.id]
+    del self.changesets_db[best_link.changeset.id]
+
+    for changeset in new_changesets:
+      self.changeset_graph.add_changeset(changeset)
+      self.changesets_db.store(changeset)
+      for item_id in changeset.cvs_item_ids:
+        self.cvs_item_to_changeset_id[item_id] = changeset.id
+
+  def run(self, stats_keeper):
+    Log().quiet("Breaking CVSRevision dependency loops...")
+
+    Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
+    Ctx()._symbol_db = SymbolDatabase()
+    Ctx()._cvs_items_db = IndexedCVSItemStore(
+        artifact_manager.get_temp_file(config.CVS_ITEMS_FILTERED_STORE),
+        artifact_manager.get_temp_file(config.CVS_ITEMS_FILTERED_INDEX_TABLE),
+        DB_OPEN_READ)
+
+    shutil.copyfile(
+        artifact_manager.get_temp_file(
+            config.CVS_ITEM_TO_CHANGESET),
+        artifact_manager.get_temp_file(
+            config.CVS_ITEM_TO_CHANGESET_REVBROKEN))
+    self.cvs_item_to_changeset_id = CVSItemToChangesetTable(
+        artifact_manager.get_temp_file(
+            config.CVS_ITEM_TO_CHANGESET_REVBROKEN),
+        DB_OPEN_WRITE)
+    Ctx()._cvs_item_to_changeset_id = self.cvs_item_to_changeset_id
+
+    old_changesets_db = ChangesetDatabase(
+        artifact_manager.get_temp_file(config.CHANGESETS_DB), DB_OPEN_READ)
+    Ctx()._changesets_db = old_changesets_db
+    self.changesets_db = ChangesetDatabase(
+        artifact_manager.get_temp_file(
+            config.CHANGESETS_REVBROKEN_DB), DB_OPEN_NEW)
+
+    changeset_ids = old_changesets_db.keys()
+    changeset_ids.sort()
+
+    self.changeset_graph = ChangesetGraph()
+
+    for changeset_id in changeset_ids:
+      changeset = old_changesets_db[changeset_id]
+      print repr(changeset) # @@@
+      self.changesets_db.store(changeset)
+      if isinstance(changeset, RevisionChangeset):
+        self.changeset_graph.add_changeset(changeset)
+
+    self.changeset_key_generator = KeyGenerator(changeset_ids[-1] + 1)
+    del changeset_ids
+
+    old_changesets_db.close()
+    del old_changesets_db
+
+    Ctx()._changesets_db = self.changesets_db
+
+    print repr(self.changeset_graph) # @@@
+
+    while True:
+      cycle = self.changeset_graph.find_cycle()
+      if cycle is None:
+        break
+      else:
+        self.break_cycle(cycle)
+
+    self.cvs_item_to_changeset_id.close()
+    self.changesets_db.close()
+
+    Log().quiet("Done")
+
+
+class TopologicalSortPass(Pass):
+  """Sort changesets into commit order."""
+
+  def register_artifacts(self):
+    self._register_temp_file(config.CHANGESETS_SORTED_DATAFILE)
+    self._register_temp_file_needed(config.SYMBOL_DB)
+    self._register_temp_file_needed(config.CVS_FILES_DB)
+    self._register_temp_file_needed(config.CVS_ITEMS_FILTERED_STORE)
+    self._register_temp_file_needed(config.CVS_ITEMS_FILTERED_INDEX_TABLE)
+    self._register_temp_file_needed(config.CHANGESETS_REVBROKEN_DB)
+    self._register_temp_file_needed(config.CVS_ITEM_TO_CHANGESET_REVBROKEN)
+
+  def run(self, stats_keeper):
+    Log().quiet("Generating CVSRevisions in commit order...")
+
+    Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
+    Ctx()._symbol_db = SymbolDatabase()
+    Ctx()._cvs_items_db = IndexedCVSItemStore(
+        artifact_manager.get_temp_file(config.CVS_ITEMS_FILTERED_STORE),
+        artifact_manager.get_temp_file(config.CVS_ITEMS_FILTERED_INDEX_TABLE),
+        DB_OPEN_READ)
+
+    changesets_db = ChangesetDatabase(
+        artifact_manager.get_temp_file(
+            config.CHANGESETS_REVBROKEN_DB), DB_OPEN_READ)
+    Ctx()._changesets_db = changesets_db
+
+    Ctx()._cvs_item_to_changeset_id = CVSItemToChangesetTable(
+        artifact_manager.get_temp_file(
+            config.CVS_ITEM_TO_CHANGESET_REVBROKEN),
+        DB_OPEN_READ)
+
+    changeset_ids = changesets_db.keys()
+
+    changeset_graph = ChangesetGraph()
+
+    for changeset_id in changeset_ids:
+      changeset = changesets_db[changeset_id]
+      if isinstance(changeset, RevisionChangeset):
+        changeset_graph.add_changeset(changeset)
+
+    del changeset_ids
+
+    sorted_changesets = open(
+        artifact_manager.get_temp_file(config.CHANGESETS_SORTED_DATAFILE), 'w')
+
+    # Ensure a monotonically-increasing timestamp series by keeping
+    # track of the previous timestamp and ensuring that the following
+    # one is larger.
+    timestamp = 0
+
+    for (changeset_id, time_range) in changeset_graph.remove_nopred_nodes():
+      timestamp = max(time_range.t_max, timestamp + 1)
+      sorted_changesets.write('%x %08x\n' % (changeset_id, timestamp,))
+
+    sorted_changesets.close()
+
     Log().quiet("Done")
 
 
@@ -250,43 +756,57 @@ class CreateDatabasesPass(Pass):
       self._register_temp_file(config.SYMBOL_LAST_CVS_REVS_DB)
     self._register_temp_file_needed(config.CVS_FILES_DB)
     self._register_temp_file_needed(config.SYMBOL_DB)
-    self._register_temp_file_needed(config.CVS_ITEMS_RESYNC_STORE)
-    self._register_temp_file_needed(config.CVS_ITEMS_RESYNC_INDEX_TABLE)
-    self._register_temp_file_needed(config.CVS_REVS_SORTED_DATAFILE)
+    self._register_temp_file_needed(config.CVS_ITEMS_FILTERED_STORE)
+    self._register_temp_file_needed(config.CVS_ITEMS_FILTERED_INDEX_TABLE)
+    self._register_temp_file_needed(config.CHANGESETS_REVBROKEN_DB)
+    self._register_temp_file_needed(config.CHANGESETS_SORTED_DATAFILE)
 
-  def get_cvs_revs(self):
-    """Generator the CVSRevisions in CVS_REVS_SORTED_DATAFILE order."""
+  def get_changesets(self):
+    """Generate (changeset,timestamp,) tuples in commit order."""
 
-    cvs_items_db = OldIndexedCVSItemStore(
-        artifact_manager.get_temp_file(config.CVS_ITEMS_RESYNC_STORE),
-        artifact_manager.get_temp_file(config.CVS_ITEMS_RESYNC_INDEX_TABLE))
+    changesets_db = ChangesetDatabase(
+        artifact_manager.get_temp_file(
+            config.CHANGESETS_REVBROKEN_DB), DB_OPEN_READ)
+
     for line in file(
-            artifact_manager.get_temp_file(config.CVS_REVS_SORTED_DATAFILE)):
-      cvs_rev_id = int(line.strip().split()[-1], 16)
-      yield cvs_items_db[cvs_rev_id]
-    cvs_items_db.close()
+            artifact_manager.get_temp_file(
+                config.CHANGESETS_SORTED_DATAFILE)):
+      [changeset_id, timestamp] = [int(s, 16) for s in line.strip().split()]
+      yield (changesets_db[changeset_id], timestamp)
+
+  def get_cvs_items(self):
+    """Generate cvs_items in commit order."""
+
+    for (changeset, timestamp,) in self.get_changesets():
+      for cvs_item in changeset.get_cvs_items():
+        # A kludge to keep consistent timestamps: @@@
+        cvs_item.timestamp = timestamp
+        yield cvs_item
 
   def run(self, stats_keeper):
-    """If we're not doing a trunk-only conversion, generate the
-    LastSymbolicNameDatabase, which contains the last CVSRevision that
-    is a source for each tag or branch.  Also record the remaining
-    revisions to the StatsKeeper."""
-
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
     Ctx()._symbol_db = SymbolDatabase()
+    Ctx()._cvs_items_db = IndexedCVSItemStore(
+        artifact_manager.get_temp_file(config.CVS_ITEMS_FILTERED_STORE),
+        artifact_manager.get_temp_file(config.CVS_ITEMS_FILTERED_INDEX_TABLE),
+        DB_OPEN_READ)
 
     if Ctx().trunk_only:
-      for cvs_rev in self.get_cvs_revs():
-        stats_keeper.record_cvs_rev(cvs_rev)
+      Log().quiet("Recording updated statistics...")
+      for cvs_item in self.get_cvs_items():
+        stats_keeper.record_cvs_item(cvs_item)
     else:
       Log().quiet("Finding last CVS revisions for all symbolic names...")
       last_sym_name_db = LastSymbolicNameDatabase()
 
-      for cvs_rev in self.get_cvs_revs():
-        last_sym_name_db.log_revision(cvs_rev)
-        stats_keeper.record_cvs_rev(cvs_rev)
+      for cvs_item in self.get_cvs_items():
+        stats_keeper.record_cvs_item(cvs_item)
+        if isinstance(cvs_item, CVSRevision):
+          last_sym_name_db.log_revision(cvs_item)
 
       last_sym_name_db.create_database()
+
+    Ctx()._cvs_items_db.close()
 
     stats_keeper.set_stats_reflect_exclude(True)
 
@@ -295,7 +815,7 @@ class CreateDatabasesPass(Pass):
     Log().quiet("Done")
 
 
-class AggregateRevsPass(Pass):
+class CreateRevsPass(Pass):
   """Generate the SVNCommit <-> CVSRevision mapping databases.
   CVSCommit._commit also calls SymbolingsLogger to register
   CVSRevisions that represent an opening or closing for a path on a
@@ -310,11 +830,25 @@ class AggregateRevsPass(Pass):
       self._register_temp_file(config.SYMBOL_OPENINGS_CLOSINGS)
       self._register_temp_file_needed(config.SYMBOL_LAST_CVS_REVS_DB)
     self._register_temp_file_needed(config.CVS_FILES_DB)
-    self._register_temp_file_needed(config.CVS_ITEMS_RESYNC_STORE)
-    self._register_temp_file_needed(config.CVS_ITEMS_RESYNC_INDEX_TABLE)
+    self._register_temp_file_needed(config.CVS_ITEMS_FILTERED_STORE)
+    self._register_temp_file_needed(config.CVS_ITEMS_FILTERED_INDEX_TABLE)
     self._register_temp_file_needed(config.SYMBOL_DB)
     self._register_temp_file_needed(config.METADATA_DB)
-    self._register_temp_file_needed(config.CVS_REVS_SORTED_DATAFILE)
+    self._register_temp_file_needed(config.CHANGESETS_REVBROKEN_DB)
+    self._register_temp_file_needed(config.CHANGESETS_SORTED_DATAFILE)
+
+  def get_changesets(self):
+    """Generate (changeset,timestamp,) tuples in commit order."""
+
+    changesets_db = ChangesetDatabase(
+        artifact_manager.get_temp_file(
+            config.CHANGESETS_REVBROKEN_DB), DB_OPEN_READ)
+
+    for line in file(
+            artifact_manager.get_temp_file(
+                config.CHANGESETS_SORTED_DATAFILE)):
+      [changeset_id, timestamp] = [int(s, 16) for s in line.strip().split()]
+      yield (changesets_db[changeset_id], timestamp)
 
   def run(self, stats_keeper):
     Log().quiet("Mapping CVS revisions to Subversion commits...")
@@ -322,19 +856,19 @@ class AggregateRevsPass(Pass):
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
     Ctx()._symbol_db = SymbolDatabase()
     Ctx()._metadata_db = MetadataDatabase(DB_OPEN_READ)
-    Ctx()._cvs_items_db = OldIndexedCVSItemStore(
-        artifact_manager.get_temp_file(config.CVS_ITEMS_RESYNC_STORE),
-        artifact_manager.get_temp_file(config.CVS_ITEMS_RESYNC_INDEX_TABLE))
+    Ctx()._cvs_items_db = IndexedCVSItemStore(
+        artifact_manager.get_temp_file(config.CVS_ITEMS_FILTERED_STORE),
+        artifact_manager.get_temp_file(config.CVS_ITEMS_FILTERED_INDEX_TABLE),
+        DB_OPEN_READ)
+    Ctx()._persistence_manager = PersistenceManager(DB_OPEN_NEW)
+
     if not Ctx().trunk_only:
       Ctx()._symbolings_logger = SymbolingsLogger()
-    aggregator = CVSRevisionAggregator()
-    for line in file(
-            artifact_manager.get_temp_file(config.CVS_REVS_SORTED_DATAFILE)):
-      cvs_rev_id = int(line.strip().split()[-1], 16)
-      cvs_rev = Ctx()._cvs_items_db[cvs_rev_id]
-      if not (Ctx().trunk_only and isinstance(cvs_rev.lod, Branch)):
-        aggregator.process_revision(cvs_rev)
-    aggregator.flush()
+
+    creator = CVSRevisionCreator()
+    for (changeset, timestamp) in self.get_changesets():
+      creator.process_changeset(changeset, timestamp)
+
     if not Ctx().trunk_only:
       Ctx()._symbolings_logger.close()
     Ctx()._cvs_items_db.close()
@@ -420,8 +954,8 @@ class OutputPass(Pass):
     self._register_temp_file(config.SVN_MIRROR_REVISIONS_DB)
     self._register_temp_file(config.SVN_MIRROR_NODES_DB)
     self._register_temp_file_needed(config.CVS_FILES_DB)
-    self._register_temp_file_needed(config.CVS_ITEMS_RESYNC_STORE)
-    self._register_temp_file_needed(config.CVS_ITEMS_RESYNC_INDEX_TABLE)
+    self._register_temp_file_needed(config.CVS_ITEMS_FILTERED_STORE)
+    self._register_temp_file_needed(config.CVS_ITEMS_FILTERED_INDEX_TABLE)
     self._register_temp_file_needed(config.SYMBOL_DB)
     self._register_temp_file_needed(config.METADATA_DB)
     self._register_temp_file_needed(config.SVN_COMMITS_DB)
@@ -433,9 +967,10 @@ class OutputPass(Pass):
   def run(self, stats_keeper):
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
     Ctx()._metadata_db = MetadataDatabase(DB_OPEN_READ)
-    Ctx()._cvs_items_db = OldIndexedCVSItemStore(
-        artifact_manager.get_temp_file(config.CVS_ITEMS_RESYNC_STORE),
-        artifact_manager.get_temp_file(config.CVS_ITEMS_RESYNC_INDEX_TABLE))
+    Ctx()._cvs_items_db = IndexedCVSItemStore(
+        artifact_manager.get_temp_file(config.CVS_ITEMS_FILTERED_STORE),
+        artifact_manager.get_temp_file(config.CVS_ITEMS_FILTERED_INDEX_TABLE),
+        DB_OPEN_READ)
     if not Ctx().trunk_only:
       Ctx()._symbol_db = SymbolDatabase()
     repos = SVNRepositoryMirror()

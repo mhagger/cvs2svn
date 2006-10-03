@@ -1,23 +1,84 @@
                          How cvs2svn Works
                          =================
 
-A cvs2svn run consists of eight passes.  Each pass saves the data it
-produces to files on disk, so that a) we don't hold huge amounts of
-state in memory, and b) the conversion process is resumable.
+                       Theory and requirements
+                       ------ --- ------------
+
+There are two main problem converting a CVS repository to SVN:
+
+- CVS does not record enough information to determine what actually
+  happened to a repository.  For example, CVS does not record:
+
+  - Which file modifications were part of the same commit
+
+  - The timestamp of tag and branch creations
+
+  - Exactly which revision was the base of a branch (there is
+    ambiguity between x.y, x.y.2.0, x.y.4.0, etc.)
+
+  - When the default branch was changed (for example, from a vendor
+    branch back to trunk).
+
+- The timestamps in a CVS archive are not reliable.  It can easily
+  happen that timestamps are not even monotonic, and large errors (for
+  example due to a failing server clock battery) are not unusual.
+
+The absolutely crucial, sine qua non requirement of a conversion is
+that the dependency relationships within a file be honored, mainly:
+
+- A revision depends on its predecessor
+
+- A branch creation depends on the revision from which it branched,
+  and commits on the branch depend on the branch creation
+
+- A tag creation depends on the revision being tagged
+
+These dependencies are reliably defined in the CVS repository, and
+they trump all others, so they are the scaffolding of the conversion.
+
+Moreover, it is highly desirable that the timestamps of the SVN
+commits be monotonically increasing.
+
+Within these constraints we also want the results of the conversion to
+resemble the history of the CVS repository as closely as possible.
+For example, the set of file changes grouped together in an SVN commit
+should be the same as the files changed within the corresponding CVS
+commit, insofar as that can be achieved in a manner that is consistent
+with the dependency requirements.  And the SVN commit timestamps
+should recreate the time of the CVS commit as far as possible without
+violating the monotonicity requirement.
+
+The basic idea of the conversion is this: create the largest
+conceivable changesets, then split up changesets as necessary to break
+any cycles in the graph of changeset dependencies.  When all cycles
+have been removed, then do a topological sort of the changesets (with
+ambiguities resolved using CVS timestamps) to determine a
+self-consistent changeset commit order.
+
+The quality of the conversion (not in terms of correctness, but in
+terms of minimizing the number of svn commits) is mostly determined by
+the cleverness of the heuristics used to split up cycles.
+
+
+                            Implementation
+                            --------------
+
+A cvs2svn run consists of a number of passes.  Each pass saves the
+data it produces to files on disk, so that a) we don't hold huge
+amounts of state in memory, and b) the conversion process is
+resumable.
 
 CollectRevsPass (formerly called pass1)
 ===============
 
-The goal of this pass is to write a summary of each CVS file as a
-pickled CVSFile to 'cvs2svn-cvs-files.db', and a summary of each CVS
-file's revisions as a list of pickled CVSRevisions to
-'cvs2svn-cvs-items.pck'.  In each case, items are assigned an
-arbitrary key that is used to refer to them.
+The goal of this pass is to collect from the CVS files all of the data
+that will be required for the conversion (except for the actual
+contents of the files, which are read in OutputPass).
 
-We walk over the repository, collecting data about the RCS files into
-an instance of CollectData.  Each RCS file is processed with
-rcsparse.parse(), which invokes callbacks from an instance of
-cvs2svn's _FileDataCollector class (which is a subclass of
+To collect this data, we walk over the repository, collecting data
+about the RCS files into an instance of CollectData.  Each RCS file is
+processed with rcsparse.parse(), which invokes callbacks from an
+instance of cvs2svn's _FileDataCollector class (which is a subclass of
 rcsparse.Sink).
 
 For each RCS file, the first thing the parser encounters is the
@@ -25,23 +86,21 @@ administrative header, including the head revision, the principal
 branch, symbolic names, RCS comments, etc.  The main thing that
 happens here is that _FileDataCollector.define_tag() is invoked on
 each symbolic name and its attached revision, so all the tags and
-branches of this file get collected.  When this stage is done, the
-parser invokes admin_completed(), which writes the CVSFile to the
-database.
+branches of this file get collected.
 
 Next, the parser hits the revision summary section.  That's the part
 of the RCS file that looks like this:
 
    1.6
-   date	2002.06.12.04.54.12;	author captnmark;	state Exp;
+   date 2002.06.12.04.54.12;    author captnmark;       state Exp;
    branches
-   	1.6.2.1;
-   next	1.5;
+        1.6.2.1;
+   next 1.5;
 
    1.5
-   date	2002.05.28.18.02.11;	author captnmark;	state Exp;
+   date 2002.05.28.18.02.11;    author captnmark;       state Exp;
    branches;
-   next	1.4;
+   next 1.4;
 
    [...]
 
@@ -49,54 +108,22 @@ For each revision summary, _FileDataCollector.define_revision() is
 invoked, recording that revision's metadata in various variables of
 the _FileDataCollector class instance.
 
-After finishing the revision summaries, the parser invokes
-_FileDataCollector.tree_completed(), which loops over the revision
-information stored, determining if there are instances where a higher
-revision was committed "before" a lower one (rare, but it can happen
-when there was clock skew on the repository machine).  If there are
-any, it "resyncs" the timestamp of the earlier rev to be just before
-that of the later rev, but saves the original timestamp in
-self._rev_data[blah].original_timestamp, so we can later write out a
-record to the resync file indicating that an adjustment was made (this
-makes it possible to catch the other parts of this commit and resync
-them similarly; more details below).
-
 Next, the parser encounters the *real* revision data, which has the
 log messages and file contents.  For each revision, it invokes
 _FileDataCollector.set_revision_info(), which writes a record to
 'cvs2svn-cvs-items.pck'.
 
-Also, for resync'd revisions, a line like this is written out to
-'cvs2svn-resync.txt':
-
-   3d6c1329 18a 3d6c1328
-
-The fields are:
-
-   NEW_TIMESTAMP   METADATA_ID   OLD_TIMESTAMP
-
-(The resync file will be explained later.)
-
 That's it -- the RCS file is done.
 
 When every CVS file is done, CollectRevsPass is complete, and:
 
-   - 'cvs2svn-cvs-files.db' contains a record of every CVS file.
+   - The basic information about each file (filename, path, etc) is
+     written as a pickled CVSFile instance to 'cvs2svn-cvs-files.db'.
 
-   - 'cvs2svn-cvs-items.pck' contains a summary of every revision to
-     every CVS file, including a reference to the corresponding CVS
-     file record in 'cvs2svn-cvs-files.db'.  The revisions are sorted
-     in groups, one per CVSFile.  But a multi-file commit will still
-     be scattered all over the place.
-
-   - 'cvs2svn-resync.txt' contains a small amount of resync data, in
-     no particular order.
-
-   - 'cvs2svn-symbol-stats.pck' contains a pickled list of symbol
-     statistics entries (instances of
-     cvs2svn_lib.symbol_statistics._Stats) for each symbol that was
-     seen in the CVS repository.  This includes the following
-     information:
+   - Information about each symbol seen, along with statistics like
+     how often it was used as a branch or tag, is written as a pickled
+     symbol_statistics._Stat object to 'cvs2svn-symbol-stats.pck'.
+     This includes the following information:
 
          ID NAME TAG_COUNT BRANCH_COUNT BRANCH_COMMIT_COUNT BLOCKERS
 
@@ -112,18 +139,40 @@ When every CVS file is done, CollectRevsPass is complete, and:
      which symbols can be excluded or forced to be branches and/or
      tags.
 
-   - 'cvs2svn-metadata.db' contains information that will help
-     determine what CVSRevisions are allowed to be combined into a
-     single SVNCommit.  This class maps each CVSRevision to an SHA
-     digest that is constructed so that CVSRevisions that can be
-     combined are all mapped to the same digest.
+     For a multiproject conversion, distinct symbol records (and IDs)
+     are created for symbols in separate projects, even if they have
+     the same name.  This is to prevent symbols in separate projects
+     from being filled at the same time.
 
-     CVSRevisions that were part of a single CVS commit always have a
-     common author and log message, therefore these fields are always
-     included in the digest.  Moreover, if ctx.cross_project_commits
-     is False, we avoid combining CVS revisions from separate projects
-     by including the project.id in the digest.  This database
-     contains two mappings for each digest:
+   - Information about each revision, branch, and tag of each file is
+     recorded as a pickled CVSItem (CVSRevision, CVSBranch, or CVSTag)
+     to 'cvs2svn-cvs-items.pck'.  The revisions are sorted in groups,
+     one per CVSFile.  But a multi-file commit will still be scattered
+     all over the place.
+
+   - Selected metadata for each CVS revision, including the author and
+     log message, is written to 'cvs2svn-metadata.db'.  The purpose is
+     twofold: first, to save space by not having to save this
+     information multiple times, and second because CVS revisions that
+     have the same metadata are candidates to be combined into an SVN
+     changeset.
+
+     First, an SHA digest is created for each set of metadata.  The
+     digest is constructed so that CVSRevisions that can be combined
+     are all mapped to the same digest.  CVSRevisions that were part
+     of a single CVS commit always have a common author and log
+     message, therefore these fields are always included in the
+     digest.  Moreover:
+
+     - if ctx.cross_project_commits is False, we avoid combining CVS
+       revisions from separate projects by including the project.id in
+       the digest.
+
+     - if ctx.cross_branch_commits is False, we avoid combining CVS
+       revisions from different branches by including the branch name
+       in the digest.
+
+     This database contains two mappings for each digest:
 
      digest (40-byte string) -> metadata_id (int)
 
@@ -134,101 +183,188 @@ When every CVS file is done, CollectRevsPass is complete, and:
      as a key to locate the actual metadata.  CVSRevision records
      include the metadata_id.
 
+During this run, each file, symbol, CVSItem, and metadata record is
+assigned an arbitrary unique ID that is used throughout the conversion
+to refer to it.
+
 
 CollateSymbolsPass
 ==================
 
-Use the symbol statistics collected in CollectRevsPass and any
-command-line options to determine which symbols should be treated as
-branches, which as tags, and which symbols should be excluded from the
+Use the symbol statistics collected in CollectRevsPass and any runtime
+options to determine which symbols should be treated as branches,
+which as tags, and which symbols should be excluded from the
 conversion altogether.
 
 Create 'cvs2svn-symbols.pck', which contains a pickle of a list of
-BranchSymbol, TagSymbol, and ExcludedSymbol objects indicating how
-each symbol should be processed in the conversion.
+TypedSymbol (BranchSymbol, TagSymbol, or ExcludedSymbol) instances
+indicating how each symbol should be processed in the conversion.  The
+IDs used for a TypedSymbol is the same as the ID allocated to the
+corresponding symbol in CollectRevsPass, so references in CVSItems do
+not have to be updated.
 
 
-ResyncRevsPass (formerly called pass2)
-==============
+FilterSymbolsPass
+=================
 
-This is where the resync file is used.  The goal of this pass is to
-output the information from 'cvs2svn-cvs-items.pck to a new file,
-'cvs2svn-cvs-items-resync.pck' (resynched items) with its
-corresponding index file, 'cvs2svn-cvs-items-resync-index.dat'.  It
-has the same content as the original file, except that the timestamps
-of some CVSRevisions have been resynced.
+This pass works through the CVSItems stored in
+'cvs2svn-cvs-items.pck', processing all of the items from each file
+as a group.  It does the following things:
 
-First, read the whole resync file into a hash table that maps each
-metadata_id to a list of lists.  Each sublist represents one of the
-timestamp adjustments from CollectRevsPass, and looks like this:
+   - Exclude any symbols that CollateSymbolsPass determined should be
+     excluded, and any revisions on such branches.  Also delete
+     references from other CVSItems to those that are being deleted.
 
-   [old_time_lower, old_time_upper, new_time]
+   - Transform any branches to tags or vice versa, also depending on
+     the results of CollateSymbolsPass, and fix up the references from
+     other CVSItems.
 
-The reason to map each metadata_id to a list of sublists, instead of
-to one list, is that sometimes you'll get the same metadata for
-unrelated commits (for example, the same author commits many times
-using the empty log message, or a log message that just says "Doc
-tweaks.").  So each metadata_id may need to "fan out" to cover
-multiple commits, but without accidentally unifying those commits.
+   - Write the surviving CVSItems to the indexed store in files
+     'cvs2svn-cvs-items-filtered-index.pck' and
+     'cvs2svn-cvs-items-filtered.pck'.
 
-Now we loop over the CVSRevisions in 'cvs2svn-cvs-items.pck, and for
-each CVSRevision write a line to 'cvs2svn-revs-resync.txt'.  Each line
-of this file looks like this:
+   - Write a summary of each surviving CVSRevision to
+     'cvs2svn-revs-summary.txt'.  Each line of the file has the format
 
-   3dc32955 5a 12ab
+         METADATA_ID TIMESTAMP CVS_REVISION_ID
 
-The fields are:
+     where TIMESTAMP is a fixed-width timestamp.  These summaries will
+     be sorted in SortItemSummaryPass then used by
+     InitializeChangesetsPass to create first-draft changesets.
 
-   1.  a fixed-width timestamp
-   2.  the metadata_id of the metadata (project, log message, author)
-       associated with this CVSRevision, as a hexadecimal string.
-   3.  the integer unique ID for this CVSRevision, as a hexadecimal
-       string.
+   - Write a summary of CVSSymbols to 'cvs2svn-symbols-summary.txt'.
+     Each line of the file has the format
 
-Any CVSRevision record in 'cvs2svn-cvs-items.pck' whose metadata_id
-matches some resync entry and appears to be part of the same commit as
-one of the sublists in that entry, gets tweaked.  The tweak is to
-adjust the commit time of the line to the new_time, which is taken
-from the resync hash and results from the adjustment described in
-CollectRevsPass.
+         SYMBOL_ID CVS_SYMBOL_ID
 
-The way we figure out whether a given line needs to be tweaked is to
-loop over all the sublists, seeing if this commit's original time
-falls within the old<-->new time range for the current sublist.  If it
-does, we tweak the line before writing it out, and then conditionally
-adjust the sublist's range to account for the timestamp we just
-adjusted (since it could be an outlier).  Note that this could, in
-theory, result in separate commits being accidentally unified, since
-we might gradually adjust the two sides of the range such that they are
-eventually more than COMMIT_THRESHOLD seconds apart.  However, this is
-really a case of CVS not recording enough information to disambiguate
-the commits; we'd know we have a time range that exceeds the
-COMMIT_THRESHOLD, but we wouldn't necessarily know where to divide it
-up.  We could try some clever heuristic, but for now it's not
-important -- after all, we're talking about commits that weren't
-important enough to have a distinctive log message anyway, so does it
-really matter if a couple of them accidentally get unified?  Probably
-not.
+     Actually, this file is not used by the current code.
 
 
-SortRevsPass (formerly called pass3)
-============
+SortRevisionSummaryPass
+=======================
 
-This is where we deduce the changesets, that is, the grouping of file
-changes into single commits.
+Sort the revision summary written by FilterSymbolsPass, creating
+'cvs2svn-revs-summary-s.txt'.  The sort groups items that might be
+added to the same changeset together and, within a group, sorts
+revisions by timestamp.  This step makes it easy for
+InitializeChangesetsPass to read the initial draft of changesets
+straight from the file.
 
-It's very simple -- run 'sort' on 'cvs2svn-revs-resync.txt',
-converting it to 'cvs2svn-revs-resync-s.txt'.  Because of the way the
-data is laid out, this causes commits with the same metadata_id (that
-is, the same author, log message, and optionally the same project) to
-be grouped together.  Poof!  We now have the CVS changes grouped by
-logical commit.
 
-In some cases, the changes in a given commit may be interleaved with
-other commits that went on at the same time, because the sort gives
-precedence to date before metadata_id.  However, CreateDatabasesPass
-detects this by seeing that the metadata_id is different, and
-re-separates the commits.
+SortSymbolSummaryPass
+=====================
+
+Sort the symbol summary written by FilterSymbolsPass, creating
+'cvs2svn-symbols-summary-s.txt'.  The sort groups together symbol
+items that might be added to the same changeset.  The output of this
+pass is not used by the current code.
+
+
+InitializeChangesetsPass
+========================
+
+This pass creates first-draft changesets, splitting them using
+COMMIT_THRESHOLD and breaking up any revision changesets that have
+internal dependencies.
+
+The raw material for creating revision changesets is
+'cvs2svn-revs-summary-s.txt', which already has CVSRevisions sorted in
+such a way that potential changesets are grouped together and sorted
+by date.  The contents of this file are read line by line, and the
+corresponding CVSRevisions are accumulated into a changeset.  Whenever
+the metadata_id changes, or whenever there is a time gap of more than
+COMMIT_THRESHOLD (currently set to 5 minutes) between CVSRevisions,
+then a new changeset is started.
+
+At this point a revision changeset can have internal dependencies if
+two commits were made to the same file with the same log message
+within COMMIT_THRESHOLD of each other.  The next job of this pass is
+to split up changesets in such a way to break such internal
+dependencies.  This is done by sorting the CVSRevisions within a
+changeset by timestamp, then choosing the split point that breaks the
+most internal dependencies.  This procedure is continued recursively
+until there are no more dependencies internal to a single changeset.
+
+Analogously, the CVSSymbol items from 'cvs2svn-symbols-summary-s.txt'
+are grouped into symbol changesets.  (Symbol changesets cannot have
+internal dependencies, so there is no need to break them up at this
+stage.)
+
+The result of this pass is two files:
+
+   - 'cvs2svn-cvs-item-to-changeset.dat', which maps CVSItem ids to
+     the id of the changeset containing the item, and
+
+   - 'cvs2svn-changesets.db', which contains the changeset objects
+     themselves, indexed by changeset id.
+
+
+BreakCVSRevisionChangesetLoopsPass
+==================================
+
+There can still be cycles in the graph of changesets caused by:
+
+   - Interleaved commits.  Since CVS commits are not atomic, it can
+     happen that two commits are in progress at the same time and each
+     alters the same two files, but in different orders.  These should
+     be small cycles involving only a few changesets.  To resolve
+     these cycles, one or more of the blobs have to be split up
+     (eventually becoming separate svn commits).
+
+   - Cycles involving a changeset formed by the accidental combination
+     of unrelated items within a short period of time with the same
+     digest.  These should also be be small cycles involving only a
+     few changesets.
+
+   - Split creation of branches.  The same branch tag can be added to
+     different files at completely different times.  It is possible
+     that the revision that is tagged later depends on a changeset
+     that involves a file on the branch that was created earlier.
+     These cycles can be large, but they always involve a symbol
+     changeset.  To resolve these cycles, the symbol changeset should
+     be split up into two blobs.
+
+The job of this pass is to break up cycles of the first two types
+(those involving only CVSRevisions).
+
+This pass works by building up the graph of revision changesets and
+their dependencies in memory, then attempting a topological sort of
+the changesets.  Whenever the sort stalls, that implies the existence
+of a cycle, one of which can easily be determined.  This cycle is broken
+up through the use of heuristics that try to determine an "efficient"
+way of splitting one or more of the changesets that are involved.
+
+The new changesets are written to
+'cvs2svn-cvs-item-to-changeset-revbroken.dat' and
+'cvs2svn-changesets-revbroken.db', which are in the same format as the
+files produced by InitializeChangesetsPass.
+
+
+TopologicalSortPass
+===================
+
+Given that BreakCVSRevisionChangesetLoopsPass has broken up any
+dependency cycles among the revision changesets, it is by definition
+possible to order the changesets in such a way that all of a
+changeset's dependencies are committed before the changeset itself.
+(This is called a topological sort.)  This pass does so by again
+building up the graph of changesets in memory, then at each step
+picking a changeset that has no remaining dependencies and removing it
+from the graph.  Whenever more than one dependency-free changeset is
+available, the one with the earliest timestamp is chosen.  As
+changesets are processed, the timestamp sequence is ensured to be
+monotonic by the simple expedient of adjusting retrograde timestamps
+to be later than their predecessor.
+
+This pass writes a line to 'cvs2svn-changesets-s.txt' for each
+changeset, in the order that the changesets should be committed.  Each
+lines contains
+
+    CHANGESET_ID TIMESTAMP
+
+where CHANGESET_ID is the id of the changeset and TIMESTAMP is the
+timstamp that should be assigned to it when it is committed.  Both
+values are written in hexadecimal.
 
 
 CreateDatabasesPass (formerly called pass4):
@@ -254,8 +390,8 @@ The format for this file is:
          f                       --> [18, 12]
 
 
-AggregateRevsPass (formerly called pass5)
-=================
+CreateRevsPass (formerly called pass5)
+==============
 
 Primarily, this pass gathers CVS revisions into Subversion revisions
 (a Subversion revision is comprised of one or more CVS revisions)

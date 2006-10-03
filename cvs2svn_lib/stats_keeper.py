@@ -27,11 +27,16 @@ from cvs2svn_lib.boolean import *
 from cvs2svn_lib.set_support import *
 from cvs2svn_lib import config
 from cvs2svn_lib.artifact_manager import artifact_manager
+from cvs2svn_lib.cvs_item import CVSRevision
+from cvs2svn_lib.cvs_item import CVSBranch
+from cvs2svn_lib.cvs_item import CVSTag
 
 
 class StatsKeeper:
   def __init__(self):
     self._cvs_revs_count = 0
+    self._cvs_branches_count = 0
+    self._cvs_tags_count = 0
     # A set of tag_ids seen:
     self._tag_ids = set()
     # A set of branch_ids seen:
@@ -47,8 +52,8 @@ class StatsKeeper:
     self._stats_reflect_exclude = False
     self._repos_files = set()
 
-  def log_duration_for_pass(self, duration, pass_num):
-    self._pass_timings[pass_num] = duration
+  def log_duration_for_pass(self, duration, pass_num, pass_name):
+    self._pass_timings[pass_num] = (pass_name, duration,)
 
   def set_start_time(self, start):
     self._start_time = start
@@ -61,6 +66,8 @@ class StatsKeeper:
 
   def reset_cvs_rev_info(self):
     self._cvs_revs_count = 0
+    self._cvs_branches_count = 0
+    self._cvs_tags_count = 0
     self._tag_ids = set()
     self._branch_ids = set()
 
@@ -72,13 +79,8 @@ class StatsKeeper:
 
     self._repos_file_count = len(self._repos_files)
 
-  def record_cvs_rev(self, cvs_rev):
+  def _record_cvs_rev(self, cvs_rev):
     self._cvs_revs_count += 1
-
-    for tag_id in cvs_rev.tag_ids:
-      self._tag_ids.add(tag_id)
-    for branch_id in cvs_rev.branch_ids:
-      self._branch_ids.add(branch_id)
 
     if cvs_rev.timestamp < self._first_rev_date:
       self._first_rev_date = cvs_rev.timestamp
@@ -87,6 +89,24 @@ class StatsKeeper:
       self._last_rev_date = cvs_rev.timestamp
 
     self._record_cvs_file(cvs_rev.cvs_file)
+
+  def _record_cvs_branch(self, cvs_branch):
+    self._cvs_branches_count += 1
+    self._branch_ids.add(cvs_branch.symbol.id)
+
+  def _record_cvs_tag(self, cvs_tag):
+    self._cvs_tags_count += 1
+    self._tag_ids.add(cvs_tag.symbol.id)
+
+  def record_cvs_item(self, cvs_item):
+    if isinstance(cvs_item, CVSRevision):
+      self._record_cvs_rev(cvs_item)
+    elif isinstance(cvs_item, CVSBranch):
+      self._record_cvs_branch(cvs_item)
+    elif isinstance(cvs_item, CVSTag):
+      self._record_cvs_tag(cvs_item)
+    else:
+      raise RuntimeError('Unknown CVSItem type')
 
   def set_svn_rev_count(self, count):
     self._svn_rev_count = count
@@ -121,6 +141,8 @@ class StatsKeeper:
             '------------------\n'              \
             'Total CVS Files:        %10i\n'    \
             'Total CVS Revisions:    %10i\n'    \
+            'Total CVS Branches:     %10i\n'    \
+            'Total CVS Tags:         %10i\n'    \
             'Total Unique Tags:      %10i\n'    \
             'Total Unique Branches:  %10i\n'    \
             'CVS Repos Size in KB:   %10i\n'    \
@@ -131,6 +153,8 @@ class StatsKeeper:
             '%s'
             % (self._repos_file_count,
                self._cvs_revs_count,
+               self._cvs_branches_count,
+               self._cvs_tags_count,
                len(self._tag_ids),
                len(self._branch_ids),
                (self._repos_size / 1024),
@@ -143,20 +167,22 @@ class StatsKeeper:
   def timings(self):
     passes = self._pass_timings.keys()
     passes.sort()
-    output = 'Timings:\n------------------\n'
+    output = 'Timings (seconds):\n------------------\n'
 
-    def desc(val):
-      if val == 1: return "second"
-      return "seconds"
+    total = self._end_time - self._start_time
+
+    # Output times with up to 3 decimal places:
+    decimals = max(0, 4 - len('%d' % int(total)))
+    length = len(('%%.%df' % decimals) % total)
+    format = '%%%d.%df' % (length, decimals,)
 
     for pass_num in passes:
-      duration = int(self._pass_timings[pass_num])
-      p_str = ('pass %d:%6d %s\n'
-               % (pass_num, duration, desc(duration)))
+      (pass_name, duration,) = self._pass_timings[pass_num]
+      p_str = ((format + '   pass%-2d   %s\n')
+               % (duration, pass_num, pass_name,))
       output += p_str
 
-    total = int(self._end_time - self._start_time)
-    output += ('total: %6d %s' % (total, desc(total)))
+    output += ((format + '   total') % total)
     return output
 
 

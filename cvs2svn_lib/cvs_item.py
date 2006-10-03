@@ -18,6 +18,7 @@
 
 
 from cvs2svn_lib.boolean import *
+from cvs2svn_lib.set_support import *
 from cvs2svn_lib.common import OP_DELETE
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.line_of_development import Trunk
@@ -29,10 +30,32 @@ class CVSItem(object):
     self.id = id
     self.cvs_file = cvs_file
 
+  def __cmp__(self, other):
+    return cmp(self.id, other.id)
+
+  def __hash__(self):
+    return self.id
+
   def __getstate__(self):
     raise NotImplementedError()
 
   def __setstate__(self, data):
+    raise NotImplementedError()
+
+  def get_pred_ids(self):
+    """Return the CVSItem.ids of direct predecessors of SELF.
+
+    A predecessor is defined to be a CVSItem that has to have been
+    committed before this one."""
+
+    raise NotImplementedError()
+
+  def get_succ_ids(self):
+    """Return the CVSItem.ids of direct successors of SELF.
+
+    A direct successor is defined to be a CVSItem that has this one as
+    a direct predecessor."""
+
     raise NotImplementedError()
 
 
@@ -47,8 +70,10 @@ class CVSRevision(CVSItem):
                timestamp, metadata_id,
                prev_id, next_id,
                op, rev, deltatext_exists,
-               lod, first_on_branch, default_branch_revision,
-               tag_ids, branch_ids, closed_symbol_ids):
+               lod, first_on_branch_id, default_branch_revision,
+               default_branch_prev_id, default_branch_next_id,
+               tag_ids, branch_ids, branch_commit_ids,
+               closed_symbol_ids):
     """Initialize a new CVSRevision object.
 
     Arguments:
@@ -62,12 +87,20 @@ class CVSRevision(CVSItem):
        REV             -->  (string) this CVS rev, e.g., '1.3'
        DELTATEXT_EXISTS-->  (bool) true iff non-empty deltatext
        LOD             -->  (LineOfDevelopment) LOD where this rev occurred
-       FIRST_ON_BRANCH -->  (bool) true iff the first rev on its branch
+       FIRST_ON_BRANCH_ID -->  (int or None) if the first rev on its branch,
+                               the branch_id of that branch; else, None
        DEFAULT_BRANCH_REVISION --> (bool) true iff this is a default branch
                                    revision
-       TAG_IDS         -->  (list of int) ids of all tags on this revision
-       BRANCH_IDS      -->  (list of int) ids of all branches rooted in this
-                            revision
+       DEFAULT_BRANCH_PREV_ID --> (int or None) Iff 1.2 revision after end of
+                            default branch, id of last rev on default branch
+       DEFAULT_BRANCH_NEXT_ID --> (int or None) Iff last rev on default branch
+                                  preceding 1.2 rev, id of 1.2 rev
+       TAG_IDS         -->  (list of int) ids of CVSSymbols on this revision
+                            that should be treated as tags
+       BRANCH_IDS      -->  (list of int) ids of all CVSSymbols rooted in this
+                            revision that should be treated as branches
+       BRANCH_COMMIT_IDS --> (list of int) ids of commits on branches rooted
+                             in this revision
        CLOSED_SYMBOL_IDS --> (list of int) ids of all symbols closed by
                              this revision
     """
@@ -82,10 +115,13 @@ class CVSRevision(CVSItem):
     self.next_id = next_id
     self.deltatext_exists = deltatext_exists
     self.lod = lod
-    self.first_on_branch = first_on_branch
+    self.first_on_branch_id = first_on_branch_id
     self.default_branch_revision = default_branch_revision
+    self.default_branch_prev_id = default_branch_prev_id
+    self.default_branch_next_id = default_branch_next_id
     self.tag_ids = tag_ids
     self.branch_ids = branch_ids
+    self.branch_commit_ids = branch_commit_ids
     self.closed_symbol_ids = closed_symbol_ids
 
   def _get_cvs_path(self):
@@ -117,42 +153,74 @@ class CVSRevision(CVSItem):
         self.rev,
         self.deltatext_exists,
         lod_id,
-        self.first_on_branch,
+        self.first_on_branch_id,
         self.default_branch_revision,
-        ' '.join(['%x' % id for id in self.tag_ids]),
-        ' '.join(['%x' % id for id in self.branch_ids]),
-        ' '.join(['%x' % id for id in self.closed_symbol_ids]),)
+        self.default_branch_prev_id, self.default_branch_next_id,
+        self.tag_ids, self.branch_ids, self.branch_commit_ids,
+        self.closed_symbol_ids,
+        )
 
   def __setstate__(self, data):
-    (self.id, cvs_file_id, self.timestamp, self.metadata_id,
-     self.prev_id, self.next_id, self.op, self.rev,
+    (self.id, cvs_file_id,
+     self.timestamp, self.metadata_id,
+     self.prev_id, self.next_id,
+     self.op,
+     self.rev,
      self.deltatext_exists,
-     lod_id, self.first_on_branch, self.default_branch_revision,
-     tag_ids, branch_ids, closed_symbol_ids) = data
+     lod_id,
+     self.first_on_branch_id,
+     self.default_branch_revision,
+     self.default_branch_prev_id, self.default_branch_next_id,
+     self.tag_ids, self.branch_ids, self.branch_commit_ids,
+     self.closed_symbol_ids) = data
     self.cvs_file = Ctx()._cvs_file_db.get_file(cvs_file_id)
     if lod_id is None:
       self.lod = Trunk()
     else:
       self.lod = Branch(Ctx()._symbol_db.get_symbol(lod_id))
-    self.tag_ids = [int(s, 16) for s in tag_ids.split()]
-    self.branch_ids = [int(s, 16) for s in branch_ids.split()]
-    self.closed_symbol_ids = [int(s, 16) for s in closed_symbol_ids.split()]
 
   def opens_symbol(self, symbol_id):
     """Return True iff this CVSRevision is the opening CVSRevision for
     SYMBOL_ID (for this RCS file)."""
 
-    if symbol_id in self.tag_ids:
-      return True
-    if symbol_id in self.branch_ids:
-      # If this cvs_rev opens a branch and our op is OP_DELETE, then
-      # that means that the file that this cvs_rev belongs to was
-      # created on the branch, so for all intents and purposes, this
-      # cvs_rev is *technically* not an opening.  See Issue #62 for
-      # more information.
-      if self.op != OP_DELETE:
+    # FIXME: All these DB reads are going to be expensive!
+    for tag_id in self.tag_ids:
+      cvs_tag = Ctx()._cvs_items_db[tag_id]
+      if symbol_id == cvs_tag.symbol.id:
         return True
+    # If this cvs_rev opens a branch and our op is OP_DELETE, then
+    # that means that the file that this cvs_rev belongs to was
+    # created on the branch, so for all intents and purposes, this
+    # cvs_rev is *technically* not an opening.  See Issue #62 for
+    # more information.
+    if self.op != OP_DELETE:
+      for branch_id in self.branch_ids:
+        cvs_branch = Ctx()._cvs_items_db[branch_id]
+        if symbol_id == cvs_branch.symbol.id:
+          return True
     return False
+
+  def get_pred_ids(self):
+    retval = set()
+    if self.first_on_branch_id is not None:
+      retval.add(self.first_on_branch_id)
+    if self.prev_id is not None:
+      retval.add(self.prev_id)
+    if self.default_branch_prev_id is not None:
+      retval.add(self.default_branch_prev_id)
+    return retval
+
+  def get_succ_ids(self):
+    retval = set()
+    if self.next_id is not None:
+      retval.add(self.next_id)
+    if self.default_branch_next_id is not None:
+      retval.add(self.default_branch_next_id)
+    for id in self.branch_ids + self.tag_ids:
+      retval.add(id)
+    for id in self.branch_commit_ids:
+      retval.add(id)
+    return retval
 
   def __str__(self):
     """For convenience only.  The format is subject to change at any time."""
@@ -191,6 +259,7 @@ class CVSBranch(CVSSymbol):
        CVS_FILE        -->  (CVSFile) CVSFile affected by this revision
        SYMBOL          -->  (Symbol) the corresponding symbol
        BRANCH_NUMBER   -->  (string) the number of this branch (e.g., "1.3.4")
+                            or None if this is a converted tag
        REV_ID          -->  (int) id of CVSRevision from which this branch
                             sprouts
        NEXT_ID         -->  (int or None) id of first rev on this branch"""
@@ -210,6 +279,20 @@ class CVSBranch(CVSSymbol):
     self.cvs_file = Ctx()._cvs_file_db.get_file(cvs_file_id)
     self.symbol = Ctx()._symbol_db.get_symbol(symbol_id)
 
+  def get_pred_ids(self):
+    return set([self.rev_id])
+
+  def get_succ_ids(self):
+    retval = set()
+    if self.next_id is not None:
+      retval.add(self.next_id)
+    return retval
+
+  def __str__(self):
+    """For convenience only.  The format is subject to change at any time."""
+
+    return '%s Branch \'%s\' <%x>' % (self.cvs_file, self.symbol, self.id,)
+
 
 class CVSTag(CVSSymbol):
   """Represent the creation of a tag on a particular CVSFile."""
@@ -223,7 +306,7 @@ class CVSTag(CVSSymbol):
        SYMBOL          -->  (Symbol) the corresponding symbol
        REV_ID          -->  (int) id of CVSRevision being tagged"""
 
-    CVSSymbol.__init__(self, id, cvs_file, symbol_id, rev_id)
+    CVSSymbol.__init__(self, id, cvs_file, symbol, rev_id)
 
   def __getstate__(self):
     return (self.id, self.cvs_file.id, self.symbol.id, self.rev_id)
@@ -232,5 +315,16 @@ class CVSTag(CVSSymbol):
     (self.id, cvs_file_id, symbol_id, self.rev_id) = data
     self.cvs_file = Ctx()._cvs_file_db.get_file(cvs_file_id)
     self.symbol = Ctx()._symbol_db.get_symbol(symbol_id)
+
+  def get_pred_ids(self):
+    return set([self.rev_id])
+
+  def get_succ_ids(self):
+    return set()
+
+  def __str__(self):
+    """For convenience only.  The format is subject to change at any time."""
+
+    return '%s Tag \'%s\' <%x>' % (self.cvs_file, self.symbol, self.id,)
 
 

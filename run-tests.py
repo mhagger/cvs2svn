@@ -441,6 +441,20 @@ class Conversion:
 
     _svnrepos -- the basename of the svn repository (within tmp_dir)."""
 
+  # The number of the last cvs2svn pass (determined lazily by
+  # get_last_pass()).
+  last_pass = None
+
+  def get_last_pass(cls):
+    """Return the number of cvs2svn's last pass."""
+
+    if cls.last_pass is None:
+      out = run_cvs2svn(None, '--help-passes')
+      cls.last_pass = int(out[-1].split()[0])
+    return cls.last_pass
+
+  get_last_pass = classmethod(get_last_pass)
+
   def __init__(self, conv_id, name, error_re, passbypass, symbols, args,
                options_file=None):
     self.conv_id = conv_id
@@ -476,7 +490,7 @@ class Conversion:
 
     try:
       if passbypass:
-        for p in range(1, 10):
+        for p in range(1, self.get_last_pass() + 1):
           run_cvs2svn(error_re, '-p', str(p), *args)
       else:
         run_cvs2svn(error_re, *args)
@@ -1600,9 +1614,9 @@ def no_spurious_svn_commits():
             + 'branch xiphophorus,\nand this log message was tweaked', ())
 
   # Check spurious commit that could be created in
-  # CVSRevisionAggregator.attempt_to_commit_symbols
-  #   (We shouldn't consider a CVSRevision whose op is OP_DEAD as a
-  #   candidate for the LastSymbolicNameDatabase.
+  # CVSRevisionCreator._commit_symbols().  (We shouldn't consider a
+  # CVSRevision whose op is OP_DEAD as a candidate for the
+  # LastSymbolicNameDatabase.)
   conv.logs[20].check('This file was also added on branch xiphophorus,', (
     ('/%(branches)s/xiphophorus/added-on-branch2.txt', 'A'),
     ))
@@ -2362,9 +2376,9 @@ test_list = [ None,
               branch_symbol_default,
               tag_symbol_default,                   # 80
               symbol_transform,
-              XFail(issue_99),
-              XFail(issue_100),
-              XFail(issue_106),
+              issue_99,
+              issue_100,
+              issue_106,
               options_option,
               ]
 

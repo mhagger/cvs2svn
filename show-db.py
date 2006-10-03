@@ -129,9 +129,9 @@ class ProjectList:
 
 
 def prime_ctx():
+  from cvs2svn_lib.common import DB_OPEN_READ
   from cvs2svn_lib.symbol_database import SymbolDatabase
   from cvs2svn_lib.cvs_file_database import CVSFileDatabase
-  from cvs2svn_lib.database import DB_OPEN_READ
   from cvs2svn_lib.artifact_manager import artifact_manager
   from cvs2svn_lib.context import Ctx
   artifact_manager.register_temp_file("cvs2svn-symbols.pck", None)

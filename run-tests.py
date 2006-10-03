@@ -2288,6 +2288,12 @@ def options_option():
   conv = ensure_conversion('main', options_file='cvs2svn.options')
 
 
+def tag_with_no_revision():
+  "tag defined but revision is deleted"
+
+  conv = ensure_conversion('tag-with-no-revision')
+
+
 #----------------------------------------------------------------------
 
 ########################################################################
@@ -2380,6 +2386,7 @@ test_list = [ None,
               issue_100,
               issue_106,
               options_option,
+              XFail(tag_with_no_revision),
               ]
 
 if __name__ == '__main__':

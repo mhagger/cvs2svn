@@ -1,0 +1,3 @@
+This repository is corrupt in a way that appears rather common among
+our users.  It contains a tag and a branch that refer to revision
+1.1.2.1, but revision 1.1.2.1 does not exist.

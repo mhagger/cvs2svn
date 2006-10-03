@@ -2,13 +2,22 @@ Version 1.5.x (not yet released)
 --------------------------------
 
  New features:
+ * Support multiproject conversions (each gets its own trunk, tags, branches).
+ * New --output option to allow run-time options to be defined via a file.
  * --co, --cvs, and --sort options to specify the paths to executables.
 
  Bugs fixed:
+ * Fix issue #86: Support multiple project roots per repository.
  * Fix issue #104: Allow path to "sort" executable to be specified.
+ * Fix issue #8: Allow multiple --encoding options.
+
+ Improvements and output changes:
+ * Further reduce conversion time and temporary space requirements.
 
  Miscellaneous:
  * Deprecate the --dump-only option (it is now implied by --dumpfile).
+ * Add scripts to help isolate conversion problems and shrink test cases.
+ * Add a script to search for illegal filenames in a CVS repository.
 
 
 Version 1.4.0 (27 August 2006)

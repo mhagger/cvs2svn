@@ -3,7 +3,7 @@ Version 1.5.0 (03 October 2006)
 
  New features:
  * Support multiproject conversions (each gets its own trunk, tags, branches).
- * New --output option to allow run-time options to be defined via a file.
+ * New --options option to allow run-time options to be defined via a file.
  * --co, --cvs, and --sort options to specify the paths to executables.
  * Add new --fallback-encoding option.
 

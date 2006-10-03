@@ -38,19 +38,30 @@ Making releases
    2. Set the release number and date in CHANGES on trunk.
    3. Switch to a branch working copy.
    4. Merge CHANGES to the release branch.
-   5. Set VERSION in cvs2svn and then run:
-        svn copy . http://cvs2svn.tigris.org/svn/cvs2svn/tags/A.B.C
-   6. Increment the -dev VERSION in cvs2svn on the A.B.x branch.
-   7. Switch to the tag.
-   8. Run:
+   5. Make a trial distribution and see that the unit tests run:
         ./dist.sh
+        tar -xzf cvs2svn-A.B.C.tar.gz
+        cd cvs2svn-A.B.C
+        ./run-tests.py
+        cd ..
+        rm -rf cvs2svn-A.B.C
+   6. Set VERSION in cvs2svn and then run:
+        svn copy . http://cvs2svn.tigris.org/svn/cvs2svn/tags/A.B.C
+   7. Increment the -dev VERSION in cvs2svn on the A.B.x branch.
+   8. Switch to the tag.
+   9. Run:
+        ./dist.sh
+  10. Create a detached signature for the tar file:
+        gpg --detach-sign -a cvs2svn-A.B.C.tar.gz
 
  Publishing the release:
-   9. Upload tarball to website download area.
-  10. Move old releases into the 'Old' folder of the download area.
-  11. Create a project announcement on the website.
-  12. Send an announcement to announce@cvs2svn.tigris.org.
-  13. Update the topic on #cvs2svn.
+   1. Upload tarball and signature to website download area.
+   2. Move old releases into the 'Old' folder of the download area.
+   3. Create a project announcement on the website.
+   4. Send an announcement to announce@cvs2svn.tigris.org.
+      (users@cvs2svn.tigris.org is subscribed to announce, so there is
+      no need to send to both lists.)
+   5. Update the topic on #cvs2svn.
 
 
 Release announcement templates
@@ -82,13 +93,15 @@ Reply-to: users@cvs2svn.tigris.org
 
 cvs2svn VERSION is now released.
 
-The MD5 checksum is CHECKSUM.
+BRIEF_SUMMARY_OF_VERSION_HIGHLIGHTS
 
 For more information see:
 http://cvs2svn.tigris.org/source/browse/cvs2svn/tags/VERSION/CHANGES?view=markup
 
 You can get it here:
 http://cvs2svn.tigris.org/files/documents/1462/NNNNN/cvs2svn-VERSION.tar.gz
+
+The MD5 checksum is CHECKSUM.
 
 Please send any bug reports and comments to users@cvs2svn.tigris.org.
 

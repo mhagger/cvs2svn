@@ -62,13 +62,15 @@ class LastSymbolicNameDatabase:
     cvs_rev.id : [ symbol, ... ] of symbols that close in each
     CVSRevision."""
 
+    symbol_revs = {}
+    for symbol_id, cvs_rev in self._symbols.iteritems():
+      symbol_revs.setdefault(cvs_rev.id, []).append(symbol_id)
+
     symbol_revs_db = Database(
         artifact_manager.get_temp_file(config.SYMBOL_LAST_CVS_REVS_DB),
         DB_OPEN_NEW)
-    for symbol_id, cvs_rev in self._symbols.items():
-      rev_key = '%x' % (cvs_rev.id,)
-      ary = symbol_revs_db.get(rev_key, [])
-      ary.append(symbol_id)
-      symbol_revs_db[rev_key] = ary
+    for (cvs_rev_id, symbol_ids) in symbol_revs.iteritems():
+      symbol_revs_db['%x' % cvs_rev_id] = symbol_ids
+    symbol_revs_db.close()
 
 

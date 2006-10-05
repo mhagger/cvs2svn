@@ -23,6 +23,7 @@ from cvs2svn_lib.common import DB_OPEN_NEW
 from cvs2svn_lib.common import OP_DELETE
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
+from cvs2svn_lib.cvs_item import CVSRevision
 from cvs2svn_lib.database import Database
 
 
@@ -41,7 +42,7 @@ class LastSymbolicNameDatabase:
     # that the symbol was used in.
     self._symbols = {}
 
-  def log_revision(self, cvs_rev):
+  def _log_revision(self, cvs_rev):
     """Gather last CVS Revision for symbolic name info and tag info."""
 
     for tag_id in cvs_rev.tag_ids:
@@ -51,6 +52,13 @@ class LastSymbolicNameDatabase:
       for branch_id in cvs_rev.branch_ids:
         cvs_branch = Ctx()._cvs_items_db[branch_id]
         self._symbols[cvs_branch.symbol.id] = cvs_rev.id
+
+  def log_changeset(self, changeset):
+    """Log all of the CVSRevisions in the changeset."""
+
+    for cvs_item in changeset.get_cvs_items():
+      if isinstance(cvs_item, CVSRevision):
+        self._log_revision(cvs_item)
 
   def create_database(self):
     """Create the SYMBOL_LAST_CVS_REVS_DB.

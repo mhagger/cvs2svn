@@ -180,7 +180,7 @@ def main():
     elif o == "-m":
       show_str2marshal_db("cvs2svn-metadata.db")
     elif o == "-l":
-      show_str2marshal_db("cvs2svn-symbol-last-cvs-revs.db")
+      show_str2marshal_db("cvs2svn-symbol-last-changesets.db")
     elif o == "-f":
       show_str2pickle_db("cvs2svn-cvs-files.db")
     elif o == "-c":

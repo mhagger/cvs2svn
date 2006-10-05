@@ -97,14 +97,14 @@ SVN_MIRROR_NODES_DB = 'cvs2svn-svn-nodes.db'
 # from symbol_id to file offset.
 SYMBOL_OFFSETS_DB = 'cvs2svn-symbol-offsets.pck'
 
-# Maps CVSRevision.ids (in hex) to lists of symbol ids, where the
-# CVSRevision is the last such that is a source for those symbols.
-# For example, if branch B's number is 1.3.0.2 in this CVS file, and
-# this file's 1.3 is the latest (by date) revision among *all* CVS
-# files that is a source for branch B, then the CVSRevision.id
-# corresponding to this file at 1.3 would list at least the symbol id
-# for branch B in its list.
-SYMBOL_LAST_CVS_REVS_DB = 'cvs2svn-symbol-last-cvs-revs.db'
+# Maps changeset_ids (in hex) to lists of symbol ids, where the
+# changeset is the last such that is a source for those symbols.  For
+# example, if branch B's number is 1.3.0.2 in this CVS file, and this
+# file's 1.3 is the latest (by date) revision among *all* CVS files
+# that is a source for branch B, then the changeset.id for the
+# changeset holding this file at 1.3 would list the symbol id for
+# branch B in its list.
+SYMBOL_LAST_CHANGESETS_DB = 'cvs2svn-symbol-last-changesets.db'
 
 # Maps CVSFile.id to instance.
 CVS_FILES_DB = 'cvs2svn-cvs-files.db'

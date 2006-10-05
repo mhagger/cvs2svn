@@ -37,8 +37,8 @@ class CVSRevisionCreator:
 
   def __init__(self):
     if not Ctx().trunk_only:
-      self.last_revs_db = Database(
-          artifact_manager.get_temp_file(config.SYMBOL_LAST_CVS_REVS_DB),
+      self._last_changesets_db = Database(
+          artifact_manager.get_temp_file(config.SYMBOL_LAST_CHANGESETS_DB),
           DB_OPEN_READ)
 
     # A set containing the closed symbols.  That is, we've already
@@ -79,23 +79,23 @@ class CVSRevisionCreator:
     author, log = Ctx()._metadata_db[metadata_id]
     cvs_commit = CVSCommit(metadata_id, author, log, timestamp)
 
-    # A set of symbols for which the last source CVSRevision has been
-    # processed and is therefore ready to be closed.
-    symbols = set()
-
     for cvs_rev in cvs_revs:
       if Ctx().trunk_only and isinstance(cvs_rev.lod, Branch):
         continue
 
       cvs_commit.add_revision(cvs_rev)
 
-      # Add to symbols any symbols from CVS_REV for which CVS_REV is
-      # the last CVSRevision.
-      if not Ctx().trunk_only:
-        for symbol_id in self.last_revs_db.get('%x' % (cvs_rev.id,), []):
-          symbols.add(Ctx()._symbol_db.get_symbol(symbol_id))
-
     cvs_commit.process_revisions(self._done_symbols)
-    self._commit_symbols(symbols, timestamp)
+
+    # Commit any symbols for which changeset is the last one that
+    # affects the symbol.
+    if not Ctx().trunk_only:
+      symbols = set()
+
+      for symbol_id in \
+            self._last_changesets_db.get('%x' % (changeset.id,), []):
+        symbols.add(Ctx()._symbol_db.get_symbol(symbol_id))
+
+      self._commit_symbols(symbols, timestamp)
 
 

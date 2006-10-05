@@ -753,7 +753,7 @@ class CreateDatabasesPass(Pass):
 
   def register_artifacts(self):
     if not Ctx().trunk_only:
-      self._register_temp_file(config.SYMBOL_LAST_CVS_REVS_DB)
+      self._register_temp_file(config.SYMBOL_LAST_CHANGESETS_DB)
     self._register_temp_file_needed(config.CVS_FILES_DB)
     self._register_temp_file_needed(config.SYMBOL_DB)
     self._register_temp_file_needed(config.CVS_ITEMS_FILTERED_STORE)
@@ -826,7 +826,7 @@ class CreateRevsPass(Pass):
     self._register_temp_file(config.CVS_REVS_TO_SVN_REVNUMS)
     if not Ctx().trunk_only:
       self._register_temp_file(config.SYMBOL_OPENINGS_CLOSINGS)
-      self._register_temp_file_needed(config.SYMBOL_LAST_CVS_REVS_DB)
+      self._register_temp_file_needed(config.SYMBOL_LAST_CHANGESETS_DB)
     self._register_temp_file_needed(config.CVS_FILES_DB)
     self._register_temp_file_needed(config.CVS_ITEMS_FILTERED_STORE)
     self._register_temp_file_needed(config.CVS_ITEMS_FILTERED_INDEX_TABLE)

@@ -370,17 +370,17 @@ values are written in hexadecimal.
 CreateDatabasesPass (formerly called pass4):
 ===================
 
-Find and create a database containing the last CVS revision that is a
-source (also referred to as an "opening" revision) for each symbol.
-This will result in a database containing key-value pairs whose key is
-the id for a CVSRevision, and whose value is a list of symbol ids for
-which that CVSRevision is the last "opening."
+Find and create a database containing the last changeset that is a
+source for each symbol.  This will result in a database containing
+key-value pairs whose key is the id of a Changeset, and whose value is
+a list of symbol ids for which a CVSRevision in that Changeset is the
+last "opening."
 
 The format for this file is:
 
-    'cvs2svn-symbol-last-cvs-revs.db':
-         Key                      Value
-         CVS Revision ID          array of symbol ids
+    'cvs2svn-symbol-last-changesets.db':
+         Key                     Value
+         Changeset ID            array of symbol ids
 
     For example:
 

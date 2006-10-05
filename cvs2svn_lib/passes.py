@@ -800,7 +800,7 @@ class CreateDatabasesPass(Pass):
       for (cvs_item, timestamp) in self.get_cvs_items():
         stats_keeper.record_cvs_item(cvs_item)
         if isinstance(cvs_item, CVSRevision):
-          last_sym_name_db.log_revision(cvs_item, timestamp)
+          last_sym_name_db.log_revision(cvs_item)
 
       last_sym_name_db.create_database()
 

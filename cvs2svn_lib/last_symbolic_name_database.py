@@ -33,30 +33,24 @@ class LastSymbolicNameDatabase:
   last seen in that revision."""
 
   def __init__(self):
-    # A map { symbol_id : (cvs_rev_id, timestamp) } of the id of the
+    # A map { symbol_id : cvs_rev_id } of the id of the
     # chronologically last CVSRevision that had the symbol as a tag or
     # branch.  Once we've gone through all the revs, symbols.keys()
     # will be a list of all tag and branch symbol_ids, and their
     # corresponding values will be the id of the last CVS revision
-    # that the symbol was used in and the corresponding timestamp.
+    # that the symbol was used in.
     self._symbols = {}
 
-  def log_revision(self, cvs_rev, timestamp):
+  def log_revision(self, cvs_rev):
     """Gather last CVS Revision for symbolic name info and tag info."""
 
     for tag_id in cvs_rev.tag_ids:
       cvs_tag = Ctx()._cvs_items_db[tag_id]
-      (old_cvs_rev_id, old_timestamp) = \
-          self._symbols.get(cvs_tag.symbol.id, (None, None))
-      if old_cvs_rev_id is None or old_timestamp < timestamp:
-        self._symbols[cvs_tag.symbol.id] = (cvs_rev.id, timestamp)
+      self._symbols[cvs_tag.symbol.id] = cvs_rev.id
     if cvs_rev.op != OP_DELETE:
       for branch_id in cvs_rev.branch_ids:
         cvs_branch = Ctx()._cvs_items_db[branch_id]
-        (old_cvs_rev_id, old_timestamp) = \
-            self._symbols.get(cvs_branch.symbol.id, (None, None))
-        if old_cvs_rev_id is None or old_timestamp < timestamp:
-          self._symbols[cvs_branch.symbol.id] = (cvs_rev.id, timestamp)
+        self._symbols[cvs_branch.symbol.id] = cvs_rev.id
 
   def create_database(self):
     """Create the SYMBOL_LAST_CVS_REVS_DB.
@@ -66,7 +60,7 @@ class LastSymbolicNameDatabase:
     CVSRevision."""
 
     symbol_revs = {}
-    for symbol_id, (cvs_rev_id, timestamp) in self._symbols.iteritems():
+    for symbol_id, cvs_rev_id in self._symbols.iteritems():
       symbol_revs.setdefault(cvs_rev_id, []).append(symbol_id)
 
     symbol_revs_db = Database(

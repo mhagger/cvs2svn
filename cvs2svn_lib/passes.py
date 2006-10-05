@@ -762,7 +762,7 @@ class CreateDatabasesPass(Pass):
     self._register_temp_file_needed(config.CHANGESETS_SORTED_DATAFILE)
 
   def get_changesets(self):
-    """Generate (changeset,timestamp,) tuples in commit order."""
+    """Generate changesets in commit order."""
 
     changesets_db = ChangesetDatabase(
         artifact_manager.get_temp_file(
@@ -772,12 +772,12 @@ class CreateDatabasesPass(Pass):
             artifact_manager.get_temp_file(
                 config.CHANGESETS_SORTED_DATAFILE)):
       [changeset_id, timestamp] = [int(s, 16) for s in line.strip().split()]
-      yield (changesets_db[changeset_id], timestamp)
+      yield changesets_db[changeset_id]
 
   def get_cvs_items(self):
     """Generate CVSItems in commit order."""
 
-    for (changeset, timestamp,) in self.get_changesets():
+    for changeset in self.get_changesets():
       for cvs_item in changeset.get_cvs_items():
         yield cvs_item
 

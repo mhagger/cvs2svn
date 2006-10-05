@@ -774,13 +774,6 @@ class CreateDatabasesPass(Pass):
       [changeset_id, timestamp] = [int(s, 16) for s in line.strip().split()]
       yield changesets_db[changeset_id]
 
-  def get_cvs_items(self):
-    """Generate CVSItems in commit order."""
-
-    for changeset in self.get_changesets():
-      for cvs_item in changeset.get_cvs_items():
-        yield cvs_item
-
   def run(self, stats_keeper):
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
     Ctx()._symbol_db = SymbolDatabase()
@@ -791,8 +784,9 @@ class CreateDatabasesPass(Pass):
 
     if Ctx().trunk_only:
       Log().quiet("Recording updated statistics...")
-      for cvs_item in self.get_cvs_items():
-        stats_keeper.record_cvs_item(cvs_item)
+      for changeset in self.get_changesets():
+        for cvs_item in changeset.get_cvs_items():
+          stats_keeper.record_cvs_item(cvs_item)
     else:
       Log().quiet("Finding last CVS revisions for all symbolic names...")
       last_sym_name_db = LastSymbolicNameDatabase()

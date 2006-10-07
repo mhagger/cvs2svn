@@ -822,7 +822,8 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
     self.sdc.register_branch_blockers()
 
-    # Break a circular linkage, allowing self and sdc to be freed.
+    # Break a circular reference loop, allowing the memory for self
+    # and sdc to be freed.
     del self.sdc
 
 

@@ -115,15 +115,13 @@ class _RevisionData:
     self.parent_branch_data = None
 
     # The revision number of the parent of this revision along the
-    # same line of development, if any.
-    #
-    # For the first revision R on a branch, we consider the revision
-    # from which R sprouted to be the 'previous'.
+    # same line of development, if any.  For the first revision R on a
+    # branch, we consider the revision from which R sprouted to be the
+    # 'parent'.  If this is the root revision in the file's revision
+    # tree, then this field is None.
     #
     # Note that this revision can't be determined arithmetically (due
-    # to cvsadmin -o, which is why this is necessary).
-    #
-    # If the key has no previous revision, then this field is None.
+    # to cvsadmin -o), which is why this field is necessary.
     self.parent = None
 
     # The revision number of the primary child of this revision (the

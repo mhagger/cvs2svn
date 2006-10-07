@@ -27,7 +27,7 @@ from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.key_generator import KeyGenerator
 from cvs2svn_lib.artifact_manager import artifact_manager
-from cvs2svn_lib.database import Database
+from cvs2svn_lib.database import IndexedDatabase
 from cvs2svn_lib.record_table import StructPacker
 from cvs2svn_lib.record_table import RecordTable
 from cvs2svn_lib.symbol import BranchSymbol
@@ -46,12 +46,12 @@ class SVNRepositoryMirror:
   set delegates.
 
   The structure of the repository is kept in two databases and one
-  hash.  The revs_db database maps revisions to root node keys, and
-  the nodes_db database maps node keys to nodes.  A node is a hash
-  from directory names to keys.  Both the revs_db and the nodes_db are
-  stored on disk and each access is expensive.
+  hash.  The _svn_revs_root_nodes database maps revisions to root node
+  keys, and the _nodes_db database maps node keys to nodes.  A node is
+  a hash from directory names to keys.  Both the _svn_revs_root_nodes
+  and the _nodes_db are stored on disk and each access is expensive.
 
-  The nodes_db database only has the keys for old revisions.  The
+  The _nodes_db database only has the keys for old revisions.  The
   revision that is being contructed is kept in memory in the new_nodes
   hash which is cheap to access.
 
@@ -95,8 +95,9 @@ class SVNRepositoryMirror:
     # This corresponds to the 'nodes' table in a Subversion fs.  (We
     # don't need a 'representations' or 'strings' table because we
     # only track metadata, not file contents.)
-    self.nodes_db = Database(
-        artifact_manager.get_temp_file(config.SVN_MIRROR_NODES_DB),
+    self._nodes_db = IndexedDatabase(
+        artifact_manager.get_temp_file(config.SVN_MIRROR_NODES_STORE),
+        artifact_manager.get_temp_file(config.SVN_MIRROR_NODES_INDEX_TABLE),
         DB_OPEN_NEW)
 
     # Start at revision 0 without a root node.  It will be created
@@ -128,20 +129,20 @@ class SVNRepositoryMirror:
           self._svn_revs_root_nodes[self.youngest - 1]
     else:
       self._svn_revs_root_nodes[self.youngest] = self.new_root_key
-      # Copy the new nodes to the nodes_db
+      # Copy the new nodes to the _nodes_db
       for key, value in self.new_nodes.items():
-        self.nodes_db[key] = value
+        self._nodes_db[key] = value
 
     self._invoke_delegates('end_commit')
 
   def _get_node(self, key):
     """Returns the node contents for KEY which may refer to either
-    self.nodes_db or self.new_nodes."""
+    self._nodes_db or self.new_nodes."""
 
     if key in self.new_nodes:
       return self.new_nodes[key]
     else:
-      return self.nodes_db[key]
+      return self._nodes_db[key]
 
   def _open_readonly_node(self, path, revnum):
     """Open a readonly node for PATH at revision REVNUM.  Returns the
@@ -175,9 +176,9 @@ class SVNRepositoryMirror:
     if self.youngest < 2:
       new_contents = { }
     else:
-      new_contents = self.nodes_db[
+      new_contents = self._nodes_db[
           self._svn_revs_root_nodes[self.youngest - 1]]
-    self.new_root_key = self.key_generator.gen_key()
+    self.new_root_key = self.key_generator.gen_id()
     self.new_nodes = { self.new_root_key: new_contents }
 
     return self.new_root_key, new_contents
@@ -199,15 +200,15 @@ class SVNRepositoryMirror:
         # The component exists.
         this_contents = self.new_nodes.get(this_key, None)
         if this_contents is None:
-          # Suck the node from the nodes_db, but update the key
-          this_contents = self.nodes_db[this_key]
-          this_key = self.key_generator.gen_key()
+          # Suck the node from the _nodes_db, but update the key
+          this_contents = self._nodes_db[this_key]
+          this_key = self.key_generator.gen_id()
           self.new_nodes[this_key] = this_contents
           parent_contents[component] = this_key
       elif create:
         # The component does not exists, so we create it.
         this_contents = { }
-        this_key = self.key_generator.gen_key()
+        this_key = self.key_generator.gen_id()
         self.new_nodes[this_key] = this_contents
         parent_contents[component] = this_key
         if i < len(components) - 1:
@@ -387,7 +388,7 @@ class SVNRepositoryMirror:
     DEST_PREFIX is the prefix of the destination directory, e.g.
     '/tags/my_tag' or '/branches/my_branch', and SOURCES is a list of
     FillSource classes that are candidates to be copied to the
-    destination.  DEST_KEY is the key in self.nodes_db to the
+    destination.  DEST_KEY is the key in self._nodes_db to the
     destination, or None if the destination does not yet exist.
 
     PATH is the path relative to DEST_PREFIX.  If PATH is None, we
@@ -499,7 +500,7 @@ class SVNRepositoryMirror:
 
     self._invoke_delegates('finish')
     self._svn_revs_root_nodes = None
-    self.nodes_db = None
+    self._nodes_db = None
 
 
 class SVNRepositoryMirrorDelegate:

@@ -944,7 +944,8 @@ class OutputPass(Pass):
 
   def register_artifacts(self):
     self._register_temp_file(config.SVN_MIRROR_REVISIONS_TABLE)
-    self._register_temp_file(config.SVN_MIRROR_NODES_DB)
+    self._register_temp_file(config.SVN_MIRROR_NODES_INDEX_TABLE)
+    self._register_temp_file(config.SVN_MIRROR_NODES_STORE)
     self._register_temp_file_needed(config.CVS_FILES_DB)
     self._register_temp_file_needed(config.CVS_ITEMS_FILTERED_STORE)
     self._register_temp_file_needed(config.CVS_ITEMS_FILTERED_INDEX_TABLE)

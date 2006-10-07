@@ -86,11 +86,11 @@ SYMBOL_OPENINGS_CLOSINGS = 'cvs2svn-symbolic-names.txt'
 # A sorted version of the above file.
 SYMBOL_OPENINGS_CLOSINGS_SORTED = 'cvs2svn-symbolic-names-s.txt'
 
-# Skeleton version of an svn filesystem.
-# (These supersede and will eventually replace the two above.)
-# See class SVNRepositoryMirror for how these work.
+# Skeleton version of an svn filesystem.  See class
+# SVNRepositoryMirror for how these work.
 SVN_MIRROR_REVISIONS_TABLE = 'cvs2svn-svn-revisions.dat'
-SVN_MIRROR_NODES_DB = 'cvs2svn-svn-nodes.db'
+SVN_MIRROR_NODES_INDEX_TABLE = 'cvs2svn-svn-nodes-index.dat'
+SVN_MIRROR_NODES_STORE = 'cvs2svn-svn-nodes.pck'
 
 # Offsets pointing to the beginning of each symbol's records in
 # SYMBOL_OPENINGS_CLOSINGS_SORTED.  This file contains a pickled map

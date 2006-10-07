@@ -103,12 +103,6 @@ class Project:
     self.project_prefix_re = re.compile(
         r'^' + re.escape(self.project_cvs_repos_path)
         + r'(' + re.escape(os.sep) + r'|$)')
-    # The project's main directory as a cvs_path:
-    self.project_cvs_path = \
-        self.project_cvs_repos_path[len(self.cvs_repository.cvs_repos_path):]
-    if self.project_cvs_path.startswith(os.sep):
-      self.project_cvs_path = self.project_cvs_path[1:]
-
     self.trunk_path = normalize_ttb_path('--trunk', trunk_path)
     self.branches_path = normalize_ttb_path('--branches', branches_path)
     self.tags_path = normalize_ttb_path('--tags', tags_path)
@@ -211,17 +205,12 @@ class Project:
   def _relative_name(self, cvs_path):
     """Convert CVS_PATH into a name relative to this project's root directory.
 
-    CVS_PATH has to begin (textually) with self.project_cvs_path.
-    Remove prefix and optional '/'."""
+    Remove optional leading '/'."""
 
-    if not cvs_path.startswith(self.project_cvs_path):
-      raise FatalError(
-          "_relative_name: '%s' is not a sub-path of '%s'"
-          % (cvs_path, self.project_cvs_path,))
-    l = len(self.project_cvs_path)
-    if cvs_path[l] == os.sep:
-      l += 1
-    return cvs_path[l:]
+    if cvs_path[0] == os.sep:
+      return cvs_path[1:]
+    else:
+      return cvs_path
 
   def make_trunk_path(self, cvs_path):
     """Return the trunk path for CVS_PATH.

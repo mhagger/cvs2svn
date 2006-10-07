@@ -202,28 +202,17 @@ class Project:
 
     return path_join(self.tags_path, tag_symbol.get_clean_name())
 
-  def _relative_name(self, cvs_path):
-    """Convert CVS_PATH into a name relative to this project's root directory.
-
-    Remove optional leading '/'."""
-
-    if cvs_path[0] == os.sep:
-      return cvs_path[1:]
-    else:
-      return cvs_path
-
   def make_trunk_path(self, cvs_path):
     """Return the trunk path for CVS_PATH.
 
     Return the svn path for this file on trunk."""
 
-    return path_join(self.trunk_path, self._relative_name(cvs_path))
+    return path_join(self.trunk_path, cvs_path)
 
   def make_branch_path(self, branch_symbol, cvs_path):
     """Return the svn path for CVS_PATH on branch BRANCH_SYMBOL."""
 
-    return path_join(self.get_branch_path(branch_symbol),
-                     self._relative_name(cvs_path))
+    return path_join(self.get_branch_path(branch_symbol), cvs_path)
 
   def transform_symbol(self, cvs_file, name):
     """Transform the symbol NAME using the renaming rules specified

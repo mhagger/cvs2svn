@@ -200,6 +200,12 @@ class RecordTable:
         raise KeyError(i)
       return self.packer.unpack(s)
 
+  def get(self, i, default=None):
+    try:
+      return self[i]
+    except KeyError:
+      return default
+
   def __iter__(self):
     """Yield the values in the map in key order.
 

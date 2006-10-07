@@ -47,6 +47,7 @@ class Branch(LineOfDevelopment):
   """An object that describes a CVS branch."""
 
   def __init__(self, symbol):
+    # The Symbol instance representing the name of the branch.
     self.symbol = symbol
 
   def make_path(self, cvs_file):

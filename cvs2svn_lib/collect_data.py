@@ -183,7 +183,14 @@ class _SymbolData:
   """Collection area for information about a CVS symbol (branch or tag)."""
 
   def __init__(self, id, symbol):
+    """Initialize an object for SYMBOL."""
+
+    # The unique id that will be used for this particular symbol in
+    # this particular file.  This same id will be used for the CVSItem
+    # that is derived from this instance.
     self.id = id
+
+    # An instance of Symbol.
     self.symbol = symbol
 
 
@@ -192,14 +199,16 @@ class _BranchData(_SymbolData):
 
   def __init__(self, id, symbol, branch_number):
     _SymbolData.__init__(self, id, symbol)
+
+    # The branch number (e.g., '1.5.2') of this branch.
     self.branch_number = branch_number
 
     # The revision number of the revision from which this branch
-    # sprouts.
+    # sprouts (e.g., '1.5').
     self.parent = self.branch_number[:self.branch_number.rindex(".")]
 
-    # The revision number of the first commit on this branch, if any;
-    # otherwise, None.
+    # The revision number of the first commit on this branch, if any
+    # (e.g., '1.5.2.1'); otherwise, None.
     self.child = None
 
 
@@ -208,6 +217,8 @@ class _TagData(_SymbolData):
 
   def __init__(self, id, symbol, rev):
     _SymbolData.__init__(self, id, symbol)
+
+    # The revision number being tagged (e.g., '1.5.2.3').
     self.rev = rev
 
 

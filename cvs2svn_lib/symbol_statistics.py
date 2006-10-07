@@ -83,10 +83,10 @@ class SymbolStatisticsCollector:
     # A map { symbol -> record } for all symbols (branches and tags)
     self._stats = { }
 
-  def _get_stats(self, symbol):
+  def __getitem__(self, symbol):
     """Return the _Stats record for SYMBOL.
 
-    Create a new one if necessary."""
+    Create and register a new one if necessary."""
 
     try:
       return self._stats[symbol]
@@ -98,22 +98,22 @@ class SymbolStatisticsCollector:
   def register_tag_creation(self, symbol):
     """Register the creation of the tag SYMBOL."""
 
-    self._get_stats(symbol).tag_create_count += 1
+    self[symbol].tag_create_count += 1
 
   def register_branch_creation(self, symbol):
     """Register the creation of the branch SYMBOL."""
 
-    self._get_stats(symbol).branch_create_count += 1
+    self[symbol].branch_create_count += 1
 
   def register_branch_commit(self, symbol):
     """Register a commit on the branch SYMBOL."""
 
-    self._get_stats(symbol).branch_commit_count += 1
+    self[symbol].branch_commit_count += 1
 
   def register_branch_blocker(self, symbol, blocker):
     """Register BLOCKER as a blocker on the branch SYMBOL."""
 
-    self._get_stats(symbol).branch_blockers.add(blocker)
+    self[symbol].branch_blockers.add(blocker)
 
   def write(self):
     """Store the stats database to the SYMBOL_STATISTICS_LIST file."""

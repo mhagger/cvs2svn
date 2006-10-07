@@ -51,8 +51,8 @@ class PipeStream:
       raise CommandError(self.pipe_cmd, exit_status, error_output)
 
 
-class CVSRepository:
-  """A CVS repository from which data can be extracted."""
+class RevisionReader:
+  """An object that can read the contents of CVSRevisions."""
 
   def __init__(self, cvs_repos_path):
     """CVS_REPOS_PATH is the top of the CVS repository (at least as
@@ -78,11 +78,11 @@ class CVSRepository:
     raise NotImplementedError
 
 
-class CVSRepositoryViaRCS(CVSRepository):
-  """A CVSRepository accessed via RCS."""
+class RCSRevisionReader(RevisionReader):
+  """A RevisionReader that reads the contents via RCS."""
 
   def __init__(self, cvs_repos_path):
-    CVSRepository.__init__(self, cvs_repos_path)
+    RevisionReader.__init__(self, cvs_repos_path)
     try:
       check_command_runs([ Ctx().co_executable, '-V' ], 'co')
     except CommandFailedException, e:
@@ -98,11 +98,11 @@ class CVSRepositoryViaRCS(CVSRepository):
     return PipeStream(pipe_cmd)
 
 
-class CVSRepositoryViaCVS(CVSRepository):
-  """A CVSRepository accessed via CVS."""
+class CVSRevisionReader(RevisionReader):
+  """A RevisionReader that reads the contents via CVS."""
 
   def __init__(self, cvs_repos_path):
-    CVSRepository.__init__(self, cvs_repos_path)
+    RevisionReader.__init__(self, cvs_repos_path)
     # Ascend above the specified root if necessary, to find the
     # cvs_repository_root (a directory containing a CVSROOT directory)
     # and the cvs_module (the path of the conversion root within the

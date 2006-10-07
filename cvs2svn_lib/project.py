@@ -28,8 +28,8 @@ from cvs2svn_lib.common import path_split
 from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.log import Log
-from cvs2svn_lib.cvs_repository import CVSRepositoryViaCVS
-from cvs2svn_lib.cvs_repository import CVSRepositoryViaRCS
+from cvs2svn_lib.revision_reader import CVSRevisionReader
+from cvs2svn_lib.revision_reader import RCSRevisionReader
 from cvs2svn_lib.cvs_file import CVSFile
 
 
@@ -95,9 +95,9 @@ class Project:
     self.project_cvs_repos_path = os.path.normpath(project_cvs_repos_path)
 
     if Ctx().use_cvs:
-      self.cvs_repository = CVSRepositoryViaCVS(self.project_cvs_repos_path)
+      self.revision_reader = CVSRevisionReader(self.project_cvs_repos_path)
     else:
-      self.cvs_repository = CVSRepositoryViaRCS(self.project_cvs_repos_path)
+      self.revision_reader = RCSRevisionReader(self.project_cvs_repos_path)
 
     # A regexp matching project_cvs_repos_path plus an optional separator:
     self.project_prefix_re = re.compile(

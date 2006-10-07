@@ -146,6 +146,7 @@ class CollectRevsPass(Pass):
                            + "\n".join(cd.fatal_errors) + "\n"
                            + "Exited due to fatal error(s).\n")
 
+    Ctx()._cvs_file_db.close()
     stats_keeper.reset_cvs_rev_info()
     stats_keeper.archive()
     Log().quiet("Done")

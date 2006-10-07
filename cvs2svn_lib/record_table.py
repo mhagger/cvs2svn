@@ -142,6 +142,8 @@ class RecordTable:
   def __setitem__(self, i, v):
     if self.mode == DB_OPEN_READ:
       raise RecordTableAccessError()
+    if i < 0:
+      raise KeyError()
     self._cache[i] = v
     if len(self._cache) >= self._max_memory_cache:
       self.flush()

@@ -28,7 +28,8 @@ from cvs2svn_lib.log import Log
 from cvs2svn_lib.key_generator import KeyGenerator
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.database import Database
-from cvs2svn_lib.database import SDatabase
+from cvs2svn_lib.record_table import StructPacker
+from cvs2svn_lib.record_table import RecordTable
 from cvs2svn_lib.symbol import BranchSymbol
 from cvs2svn_lib.symbol import TagSymbol
 from cvs2svn_lib.symbolings_reader import SymbolingsReader
@@ -86,10 +87,10 @@ class SVNRepositoryMirror:
 
     self.delegates = [ ]
 
-    # This corresponds to the 'revisions' table in a Subversion fs.
-    self.revs_db = SDatabase(
-        artifact_manager.get_temp_file(config.SVN_MIRROR_REVISIONS_DB),
-        DB_OPEN_NEW)
+    # A map from SVN revision number to root node number:
+    self._svn_revs_root_nodes = RecordTable(
+        artifact_manager.get_temp_file(config.SVN_MIRROR_REVISIONS_TABLE),
+        DB_OPEN_NEW, StructPacker('=I'))
 
     # This corresponds to the 'nodes' table in a Subversion fs.  (We
     # don't need a 'representations' or 'strings' table because we
@@ -123,9 +124,10 @@ class SVNRepositoryMirror:
     if self.new_root_key is None:
       # No changes were made in this revision, so we make the root node
       # of the new revision be the same as the last one.
-      self.revs_db[str(self.youngest)] = self.revs_db[str(self.youngest - 1)]
+      self._svn_revs_root_nodes[self.youngest] = \
+          self._svn_revs_root_nodes[self.youngest - 1]
     else:
-      self.revs_db[str(self.youngest)] = self.new_root_key
+      self._svn_revs_root_nodes[self.youngest] = self.new_root_key
       # Copy the new nodes to the nodes_db
       for key, value in self.new_nodes.items():
         self.nodes_db[key] = value
@@ -148,11 +150,11 @@ class SVNRepositoryMirror:
     # Get the root key
     if revnum == self.youngest:
       if self.new_root_key is None:
-        node_key = self.revs_db[str(self.youngest - 1)]
+        node_key = self._svn_revs_root_nodes[self.youngest - 1]
       else:
         node_key = self.new_root_key
     else:
-      node_key = self.revs_db[str(revnum)]
+      node_key = self._svn_revs_root_nodes[revnum]
 
     for component in path.split('/'):
       node_contents = self._get_node(node_key)
@@ -173,7 +175,8 @@ class SVNRepositoryMirror:
     if self.youngest < 2:
       new_contents = { }
     else:
-      new_contents = self.nodes_db[self.revs_db[str(self.youngest - 1)]]
+      new_contents = self.nodes_db[
+          self._svn_revs_root_nodes[self.youngest - 1]]
     self.new_root_key = self.key_generator.gen_key()
     self.new_nodes = { self.new_root_key: new_contents }
 
@@ -495,7 +498,7 @@ class SVNRepositoryMirror:
     """Calls the delegate finish method."""
 
     self._invoke_delegates('finish')
-    self.revs_db = None
+    self._svn_revs_root_nodes = None
     self.nodes_db = None
 
 

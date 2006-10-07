@@ -943,7 +943,7 @@ class OutputPass(Pass):
   """This pass was formerly known as pass8."""
 
   def register_artifacts(self):
-    self._register_temp_file(config.SVN_MIRROR_REVISIONS_DB)
+    self._register_temp_file(config.SVN_MIRROR_REVISIONS_TABLE)
     self._register_temp_file(config.SVN_MIRROR_NODES_DB)
     self._register_temp_file_needed(config.CVS_FILES_DB)
     self._register_temp_file_needed(config.CVS_ITEMS_FILTERED_STORE)

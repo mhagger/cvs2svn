@@ -89,7 +89,7 @@ SYMBOL_OPENINGS_CLOSINGS_SORTED = 'cvs2svn-symbolic-names-s.txt'
 # Skeleton version of an svn filesystem.
 # (These supersede and will eventually replace the two above.)
 # See class SVNRepositoryMirror for how these work.
-SVN_MIRROR_REVISIONS_DB = 'cvs2svn-svn-revisions.db'
+SVN_MIRROR_REVISIONS_TABLE = 'cvs2svn-svn-revisions.dat'
 SVN_MIRROR_NODES_DB = 'cvs2svn-svn-nodes.db'
 
 # Offsets pointing to the beginning of each symbol's records in

@@ -28,7 +28,7 @@ from cvs2svn_lib.log import Log
 from cvs2svn_lib.key_generator import KeyGenerator
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.database import IndexedDatabase
-from cvs2svn_lib.record_table import StructPacker
+from cvs2svn_lib.record_table import UnsignedIntegerPacker
 from cvs2svn_lib.record_table import RecordTable
 from cvs2svn_lib.symbol import BranchSymbol
 from cvs2svn_lib.symbol import TagSymbol
@@ -90,7 +90,7 @@ class SVNRepositoryMirror:
     # A map from SVN revision number to root node number:
     self._svn_revs_root_nodes = RecordTable(
         artifact_manager.get_temp_file(config.SVN_MIRROR_REVISIONS_TABLE),
-        DB_OPEN_NEW, StructPacker('=I'))
+        DB_OPEN_NEW, UnsignedIntegerPacker())
 
     # This corresponds to the 'nodes' table in a Subversion fs.  (We
     # don't need a 'representations' or 'strings' table because we

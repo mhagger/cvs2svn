@@ -73,6 +73,11 @@ class StructPacker(Packer):
     return struct.unpack(self.format, v)[0]
 
 
+class UnsignedIntegerPacker(StructPacker):
+  def __init__(self):
+    StructPacker.__init__(self, '=I')
+
+
 class FileOffsetPacker(Packer):
   """A packer suitable for file offsets.
 

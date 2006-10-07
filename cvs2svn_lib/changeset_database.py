@@ -27,16 +27,13 @@ from cvs2svn_lib.common import DB_OPEN_READ
 from cvs2svn_lib.changeset import Changeset
 from cvs2svn_lib.changeset import RevisionChangeset
 from cvs2svn_lib.changeset import SymbolChangeset
-from cvs2svn_lib.record_table import StructPacker
+from cvs2svn_lib.record_table import UnsignedIntegerPacker
 from cvs2svn_lib.record_table import RecordTable
 from cvs2svn_lib.database import PrimedPDatabase
 
 
-CHANGESET_ID_FORMAT = '=I'
-
-
 def CVSItemToChangesetTable(filename, mode):
-  return RecordTable(filename, mode, StructPacker(CHANGESET_ID_FORMAT))
+  return RecordTable(filename, mode, UnsignedIntegerPacker())
 
 
 class ChangesetDatabase:

@@ -95,9 +95,9 @@ class Project:
     self.project_cvs_repos_path = os.path.normpath(project_cvs_repos_path)
 
     if Ctx().use_cvs:
-      self.revision_reader = CVSRevisionReader(self.project_cvs_repos_path)
+      self.revision_reader = CVSRevisionReader(self)
     else:
-      self.revision_reader = RCSRevisionReader(self.project_cvs_repos_path)
+      self.revision_reader = RCSRevisionReader(self)
 
     # A regexp matching project_cvs_repos_path plus an optional separator:
     self.project_prefix_re = re.compile(

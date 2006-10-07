@@ -94,6 +94,11 @@ class UnsignedIntegerPacker(StructPacker):
     StructPacker.__init__(self, '=I', empty_value)
 
 
+class SignedIntegerPacker(StructPacker):
+  def __init__(self, empty_value=0):
+    StructPacker.__init__(self, '=i', empty_value)
+
+
 class FileOffsetPacker(Packer):
   """A packer suitable for file offsets.
 

@@ -125,8 +125,6 @@ class CVSRevisionReader(RevisionReader):
 
       self.cvs_module = module_component + "/" + self.cvs_module
 
-    os.environ['CVSROOT'] = self.cvs_repository_root
-
     def cvs_ok(global_arguments):
       check_command_runs(
           [ Ctx().cvs_executable ] + global_arguments + [ '--version' ],
@@ -146,7 +144,8 @@ class CVSRevisionReader(RevisionReader):
 
   def get_content_stream(self, cvs_rev, suppress_keyword_substitution=False):
     pipe_cmd = [ Ctx().cvs_executable ] + self.global_arguments + \
-               [ 'co', '-r' + cvs_rev.rev, '-p' ]
+               [ '-d', self.cvs_repository_root,
+                 'co', '-r' + cvs_rev.rev, '-p' ]
     if suppress_keyword_substitution:
       pipe_cmd.append('-kk')
     pipe_cmd.append(self.cvs_module + cvs_rev.cvs_path)

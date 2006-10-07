@@ -29,12 +29,13 @@ from cvs2svn_lib.process import SimplePopen
 from cvs2svn_lib.process import CommandFailedException
 
 
-class Stream:
-  """A readable file-like object from which revision contents can be read."""
+class PipeStream:
+  """A file-like object from which revision contents can be read."""
 
-  def __init__(self, pipe_command, pipe):
-    self.pipe_command = pipe_command
-    self.pipe = pipe
+  def __init__(self, pipe_command):
+    self.pipe_command = ' '.join(pipe_command)
+    self.pipe = SimplePopen(pipe_command, True)
+    self.pipe.stdin.close()
 
   def read(self, size=None):
     if size is None:
@@ -67,7 +68,8 @@ class CVSRepository:
         + r'(' + re.escape(os.sep) + r'|$)')
 
   def get_content_stream(self, cvs_rev, suppress_keyword_substitution=False):
-    """Return a Stream object from which the contents of cvs_rev can be read.
+    """Return a file-like object from which the contents of CVS_REV
+    can be read.
 
     CVS_REV is a CVSRevision.  If SUPPRESS_KEYWORD_SUBSTITUTION is
     True, then suppress the substitution of RCS/CVS keywords in the
@@ -93,9 +95,7 @@ class CVSRepositoryViaRCS(CVSRepository):
     if suppress_keyword_substitution:
       pipe_cmd.append('-kk')
     pipe_cmd.append(cvs_rev.cvs_file.filename)
-    pipe = SimplePopen(pipe_cmd, True)
-    pipe.stdin.close()
-    return Stream(' '.join(pipe_cmd), pipe)
+    return PipeStream(pipe_cmd)
 
 
 class CVSRepositoryViaCVS(CVSRepository):
@@ -154,8 +154,6 @@ class CVSRepositoryViaCVS(CVSRepository):
     if suppress_keyword_substitution:
       pipe_cmd.append('-kk')
     pipe_cmd.append(self.cvs_module + cvs_rev.cvs_path)
-    pipe = SimplePopen(pipe_cmd, True)
-    pipe.stdin.close()
-    return Stream(' '.join(pipe_cmd), pipe)
+    return PipeStream(pipe_cmd)
 
 

@@ -223,30 +223,31 @@ class PrimedPDatabase(AbstractDatabase):
     return retval
 
 
-class IndexedStore:
-  """A file of items that is written sequentially and read randomly.
+class IndexedDatabase:
+  """A file of objects that are written sequentially and read randomly.
 
-  The items are indexed by item.id, which must consist of small
-  positive integers, as a RecordTable is used to store the index ->
-  fileoffset map and fileoffset=0 is used to represent an empty
-  record.
+  The objects are indexed by small non-negative integers, and a
+  RecordTable is used to store the index -> fileoffset map.
+  fileoffset=0 is used to represent an empty record.  (An offset of 0
+  cannot occur for a legitimate record because the pickle memos are
+  written there.)
 
   The main file consists of a sequence of pickles.  The zeroth one is
   a tuple (pickler_memo, unpickler_memo) as described in the
-  primed_pickle module.  Subsequent ones are pickled items.  The
-  offset of each item in the file is stored to an index table so that
-  the data can later be retrieved randomly.
+  primed_pickle module.  Subsequent ones are pickled objects.  The
+  offset of each object in the file is stored to an index table so
+  that the data can later be retrieved randomly.
 
-  Objects are always stored to the end of the file.  If an item is
+  Objects are always stored to the end of the file.  If an object is
   deleted or overwritten, the fact is recorded in the index_table but
   the space in the pickle file is not garbage collected.  This has the
   advantage that one can create a modified version of a database that
   shares the main pickle file with an old version by copying the index
   file.  But it has the disadvantage that space is wasted whenever
-  items are written multiple times."""
+  objects are written multiple times."""
 
   def __init__(self, filename, index_filename, mode, primer=None):
-    """Initialize an IndexedStore, writing the primer if necessary.
+    """Initialize an IndexedDatabase, writing the primer if necessary.
 
     PRIMER is only used if MODE is DB_OPEN_NEW; otherwise the primer
     is read from the file."""
@@ -274,12 +275,12 @@ class IndexedStore:
     self.pickler = PrimedPickler(pickler_memo)
     self.unpickler = PrimedUnpickler(unpickler_memo)
 
-  def add(self, item):
-    """Write ITEM into the database indexed by ITEM.id."""
+  def __setitem__(self, index, item):
+    """Write ITEM into the database indexed by INDEX."""
 
     # Make sure we're at the end of the file:
     self.f.seek(0, 2)
-    self.index_table[item.id] = self.f.tell()
+    self.index_table[index] = self.f.tell()
     self.pickler.dumpf(self.f, item)
 
   def _fetch(self, offset):
@@ -291,20 +292,34 @@ class IndexedStore:
       if offset != 0:
         yield self._fetch(offset)
 
-  def __getitem__(self, id):
-    offset = self.index_table[id]
+  def __getitem__(self, index):
+    offset = self.index_table[index]
     if offset == 0:
       raise KeyError()
     return self._fetch(offset)
 
-  def __delitem__(self, id):
-    offset = self.index_table[id]
+  def __delitem__(self, index):
+    offset = self.index_table[index]
     if offset == 0:
       raise KeyError()
-    self.index_table[id] = 0
+    self.index_table[index] = 0
 
   def close(self):
     self.index_table.close()
     self.f.close()
+
+
+class IndexedStore(IndexedDatabase):
+  """A file of items that is written sequentially and read randomly.
+
+  This is just like IndexedDatabase, except that it has an additional
+  add() method which assumes that the object to be written to the
+  database has an 'id' member, which is used as its database index.
+  See IndexedDatabase for more information."""
+
+  def add(self, item):
+    """Write ITEM into the database indexed by ITEM.id."""
+
+    self[item.id] = item
 
 

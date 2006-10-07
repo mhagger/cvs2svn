@@ -22,10 +22,32 @@ import re
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.common import FatalError
+from cvs2svn_lib.common import CommandError
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.process import check_command_runs
 from cvs2svn_lib.process import SimplePopen
 from cvs2svn_lib.process import CommandFailedException
+
+
+class Stream:
+  """A readable file-like object from which revision contents can be read."""
+
+  def __init__(self, pipe_command, pipe):
+    self.pipe_command = pipe_command
+    self.pipe = pipe
+
+  def read(self, size=None):
+    if size is None:
+      return self.pipe.stdout.read()
+    else:
+      return self.pipe.stdout.read(size)
+
+  def close(self):
+    self.pipe.stdout.close()
+    error_output = self.pipe.stderr.read()
+    exit_status = self.pipe.wait()
+    if exit_status:
+      raise CommandError(self.pipe_cmd, exit_status, error_output)
 
 
 class CVSRepository:
@@ -44,16 +66,12 @@ class CVSRepository:
         r'^' + re.escape(self.cvs_repos_path)
         + r'(' + re.escape(os.sep) + r'|$)')
 
-  def get_co_pipe(self, cvs_rev, suppress_keyword_substitution=False):
-    """Return a command string, and a pipe from which the file
-    contents of CVS_REV can be read.  CVS_REV is a CVSRevision.  If
-    SUPPRESS_KEYWORD_SUBSTITUTION is True, then suppress the
-    substitution of RCS/CVS keywords in the output.  Standard output
-    of the pipe returns the text of that CVS Revision.
+  def get_content_stream(self, cvs_rev, suppress_keyword_substitution=False):
+    """Return a Stream object from which the contents of cvs_rev can be read.
 
-    The command string that is returned is provided for use in error
-    messages; it is not escaped in such a way that it could
-    necessarily be executed."""
+    CVS_REV is a CVSRevision.  If SUPPRESS_KEYWORD_SUBSTITUTION is
+    True, then suppress the substitution of RCS/CVS keywords in the
+    output."""
 
     raise NotImplementedError
 
@@ -70,14 +88,14 @@ class CVSRepositoryViaRCS(CVSRepository):
                        'Please check that co is installed and in your PATH\n'
                        '(it is a part of the RCS software).' % (e,))
 
-  def get_co_pipe(self, cvs_rev, suppress_keyword_substitution=False):
+  def get_content_stream(self, cvs_rev, suppress_keyword_substitution=False):
     pipe_cmd = [ Ctx().co_executable, '-q', '-x,v', '-p' + cvs_rev.rev ]
     if suppress_keyword_substitution:
       pipe_cmd.append('-kk')
     pipe_cmd.append(cvs_rev.cvs_file.filename)
     pipe = SimplePopen(pipe_cmd, True)
     pipe.stdin.close()
-    return ' '.join(pipe_cmd), pipe
+    return Stream(' '.join(pipe_cmd), pipe)
 
 
 class CVSRepositoryViaCVS(CVSRepository):
@@ -130,7 +148,7 @@ class CVSRepositoryViaCVS(CVSRepository):
             '%s\n'
             'Please check that cvs is installed and in your PATH.' % (e,))
 
-  def get_co_pipe(self, cvs_rev, suppress_keyword_substitution=False):
+  def get_content_stream(self, cvs_rev, suppress_keyword_substitution=False):
     pipe_cmd = [ Ctx().cvs_executable ] + self.global_arguments + \
                [ 'co', '-r' + cvs_rev.rev, '-p' ]
     if suppress_keyword_substitution:
@@ -138,6 +156,6 @@ class CVSRepositoryViaCVS(CVSRepository):
     pipe_cmd.append(self.cvs_module + cvs_rev.cvs_path)
     pipe = SimplePopen(pipe_cmd, True)
     pipe.stdin.close()
-    return ' '.join(pipe_cmd), pipe
+    return Stream(' '.join(pipe_cmd), pipe)
 
 

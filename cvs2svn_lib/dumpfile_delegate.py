@@ -230,7 +230,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     # If the file has keywords, we must prevent CVS/RCS from expanding
     # the keywords because they must be unexpanded in the repository,
     # or Subversion will get confused.
-    pipe_cmd, pipe = cvs_rev.cvs_file.project.cvs_repository.get_co_pipe(
+    stream = cvs_rev.cvs_file.project.cvs_repository.get_content_stream(
         cvs_rev, suppress_keyword_substitution=s_item.has_keywords)
 
     self.dumpfile.write('Node-path: %s\n'
@@ -253,9 +253,9 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
 
     # Insert a filter to convert all EOLs to LFs if neccessary
     if s_item.needs_eol_filter:
-      data_reader = LF_EOL_Filter(pipe.stdout)
+      data_reader = LF_EOL_Filter(stream)
     else:
-      data_reader = pipe.stdout
+      data_reader = stream
 
     # Insert the rev contents, calculating length and checksum as we go.
     checksum = md5.new()
@@ -268,11 +268,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
       length += len(buf)
       self.dumpfile.write(buf)
 
-    pipe.stdout.close()
-    error_output = pipe.stderr.read()
-    exit_status = pipe.wait()
-    if exit_status:
-      raise CommandError(pipe_cmd, exit_status, error_output)
+    stream.close()
 
     # Go back to patch up the length and checksum headers:
     self.dumpfile.seek(pos, 0)
@@ -335,18 +331,13 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
 
 def generate_ignores(cvs_rev):
   # Read in props
-  pipe_cmd, pipe = \
-      cvs_rev.cvs_file.project.cvs_repository.get_co_pipe(cvs_rev)
-  buf = pipe.stdout.read(config.PIPE_READ_SIZE)
+  stream = cvs_rev.cvs_file.project.cvs_repository.get_content_stream(cvs_rev)
+  buf = stream.read(config.PIPE_READ_SIZE)
   raw_ignore_val = ""
   while buf:
     raw_ignore_val += buf
-    buf = pipe.stdout.read(config.PIPE_READ_SIZE)
-  pipe.stdout.close()
-  error_output = pipe.stderr.read()
-  exit_status = pipe.wait()
-  if exit_status:
-    raise CommandError(pipe_cmd, exit_status, error_output)
+    buf = stream.read(config.PIPE_READ_SIZE)
+  stream.close()
 
   # Tweak props: First, convert any spaces to newlines...
   raw_ignore_val = '\n'.join(raw_ignore_val.split())

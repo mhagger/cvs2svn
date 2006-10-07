@@ -27,7 +27,6 @@ from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.line_of_development import Branch
 from cvs2svn_lib.database import Database
-from cvs2svn_lib.database import SDatabase
 from cvs2svn_lib.cvs_commit import CVSCommit
 from cvs2svn_lib.svn_commit import SVNSymbolCloseCommit
 

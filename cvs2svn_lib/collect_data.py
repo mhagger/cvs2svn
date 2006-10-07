@@ -45,7 +45,6 @@ from cvs2svn_lib.cvs_item import CVSBranch
 from cvs2svn_lib.cvs_item import CVSTag
 from cvs2svn_lib.key_generator import KeyGenerator
 from cvs2svn_lib.database import Database
-from cvs2svn_lib.database import SDatabase
 from cvs2svn_lib.cvs_file_database import CVSFileDatabase
 from cvs2svn_lib.cvs_item_database import NewCVSItemStore
 from cvs2svn_lib.symbol import Symbol

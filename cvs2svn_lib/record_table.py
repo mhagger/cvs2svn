@@ -120,15 +120,15 @@ class RecordTable:
       raise RuntimeError('Invalid mode %r' % self.mode)
     self.packer = packer
     # Number of items that can be stored in the write cache:
-    self.max_memory_cache = 128 * 1024 / self.packer.record_len
-    # Write cache.  Up to self.max_memory_cache items can be stored
+    self._max_memory_cache = 128 * 1024 / self.packer.record_len
+    # Write cache.  Up to self._max_memory_cache items can be stored
     # here.  When the cache fills up, it is written to disk in one go
     # and then cleared.
-    self.cache = {}
-    self.limit = os.path.getsize(filename) // self.packer.record_len
+    self._cache = {}
+    self._limit = os.path.getsize(filename) // self.packer.record_len
 
   def flush(self):
-    pairs = self.cache.items()
+    pairs = self._cache.items()
     pairs.sort()
     old_i = None
     f = self.f
@@ -137,20 +137,20 @@ class RecordTable:
         f.seek(i * self.packer.record_len)
       f.write(self.packer.pack(v))
       old_i = i + 1
-    self.cache.clear()
+    self._cache.clear()
 
   def __setitem__(self, i, v):
     if self.mode == DB_OPEN_READ:
       raise RecordTableAccessError()
-    self.cache[i] = v
-    if len(self.cache) >= self.max_memory_cache:
+    self._cache[i] = v
+    if len(self._cache) >= self._max_memory_cache:
       self.flush()
-    self.limit = max(self.limit, i + 1)
+    self._limit = max(self._limit, i + 1)
 
   def __getitem__(self, i):
-    if not 0 <= i < self.limit:
+    if not 0 <= i < self._limit:
       raise KeyError(i)
-    retval = self.cache.get(i)
+    retval = self._cache.get(i)
     if retval is not None:
       return retval
     else:
@@ -159,7 +159,7 @@ class RecordTable:
       return self.packer.unpack(s)
 
   def __iter__(self):
-    for i in xrange(0, self.limit):
+    for i in xrange(0, self._limit):
       yield self[i]
 
   def close(self):

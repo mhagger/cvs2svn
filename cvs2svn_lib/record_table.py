@@ -148,12 +148,11 @@ class RecordTable:
     self._limit = max(self._limit, i + 1)
 
   def __getitem__(self, i):
-    if not 0 <= i < self._limit:
-      raise KeyError(i)
-    retval = self._cache.get(i)
-    if retval is not None:
-      return retval
-    else:
+    try:
+      return self._cache[i]
+    except KeyError:
+      if not 0 <= i < self._limit:
+        raise KeyError(i)
       self.f.seek(i * self.packer.record_len)
       s = self.f.read(self.packer.record_len)
       return self.packer.unpack(s)

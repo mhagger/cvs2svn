@@ -253,7 +253,7 @@ class _SymbolDataCollector:
       return branch_data
 
     symbol = self.pdc.get_symbol(name)
-    self.collect_data.symbol_stats.register_branch_creation(symbol)
+    self.collect_data.symbol_stats[symbol].register_branch_creation()
     branch_data = _BranchData(
         self.collect_data.key_generator.gen_id(), symbol, branch_number)
     self.branches_data[branch_number] = branch_data
@@ -267,7 +267,7 @@ class _SymbolDataCollector:
     """Record that tag NAME refers to the specified REVISION."""
 
     symbol = self.pdc.get_symbol(name)
-    self.collect_data.symbol_stats.register_tag_creation(symbol)
+    self.collect_data.symbol_stats[symbol].register_tag_creation()
     tag_data = _TagData(
         self.collect_data.key_generator.gen_id(), symbol, revision)
     self.tags_data.setdefault(revision, []).append(tag_data)
@@ -326,22 +326,22 @@ class _SymbolDataCollector:
       branch_data = self.branches_data[branch_number]
 
       # Register the commit on this non-trunk branch
-      self.collect_data.symbol_stats.register_branch_commit(
-          branch_data.symbol)
+      self.collect_data.symbol_stats[branch_data.symbol] \
+          .register_branch_commit()
 
   def register_branch_blockers(self):
     for (revision, tag_data_list) in self.tags_data.items():
       if is_branch_revision(revision):
         branch_data_parent = self.rev_to_branch_data(revision)
         for tag_data in tag_data_list:
-          self.collect_data.symbol_stats.register_branch_blocker(
-              branch_data_parent.symbol, tag_data.symbol)
+          self.collect_data.symbol_stats[branch_data_parent.symbol] \
+              .register_branch_blocker(tag_data.symbol)
 
     for branch_data_child in self.branches_data.values():
       if is_branch_revision(branch_data_child.parent):
         branch_data_parent = self.rev_to_branch_data(branch_data_child.parent)
-        self.collect_data.symbol_stats.register_branch_blocker(
-            branch_data_parent.symbol, branch_data_child.symbol)
+        self.collect_data.symbol_stats[branch_data_parent.symbol] \
+            .register_branch_blocker(branch_data_child.symbol)
 
 
 class _FileDataCollector(cvs2svn_rcsparse.Sink):

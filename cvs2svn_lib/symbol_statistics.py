@@ -54,6 +54,26 @@ class _Stats:
     self.branch_commit_count = 0
     self.branch_blockers = set()
 
+  def register_tag_creation(self):
+    """Register the creation of this symbol as a tag."""
+
+    self.tag_create_count += 1
+
+  def register_branch_creation(self):
+    """Register the creation of this symbol as a branch."""
+
+    self.branch_create_count += 1
+
+  def register_branch_commit(self):
+    """Register a commit on this symbol as a branch."""
+
+    self.branch_commit_count += 1
+
+  def register_branch_blocker(self, blocker):
+    """Register BLOCKER as a blocker of this symbol as a branch."""
+
+    self.branch_blockers.add(blocker)
+
   def __str__(self):
     return (
         '\'%s\' is a tag in %d files, a branch in '
@@ -94,26 +114,6 @@ class SymbolStatisticsCollector:
       stats = _Stats(symbol)
       self._stats[symbol] = stats
       return stats
-
-  def register_tag_creation(self, symbol):
-    """Register the creation of the tag SYMBOL."""
-
-    self[symbol].tag_create_count += 1
-
-  def register_branch_creation(self, symbol):
-    """Register the creation of the branch SYMBOL."""
-
-    self[symbol].branch_create_count += 1
-
-  def register_branch_commit(self, symbol):
-    """Register a commit on the branch SYMBOL."""
-
-    self[symbol].branch_commit_count += 1
-
-  def register_branch_blocker(self, symbol, blocker):
-    """Register BLOCKER as a blocker on the branch SYMBOL."""
-
-    self[symbol].branch_blockers.add(blocker)
 
   def write(self):
     """Store the stats database to the SYMBOL_STATISTICS_LIST file."""

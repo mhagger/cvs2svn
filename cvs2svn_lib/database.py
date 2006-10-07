@@ -289,19 +289,14 @@ class IndexedDatabase:
 
   def __iter__(self):
     for offset in self.index_table:
-      if offset != 0:
-        yield self._fetch(offset)
+      yield self._fetch(offset)
 
   def __getitem__(self, index):
     offset = self.index_table[index]
-    if offset == 0:
-      raise KeyError()
     return self._fetch(offset)
 
   def __delitem__(self, index):
     offset = self.index_table[index]
-    if offset == 0:
-      raise KeyError()
     self.index_table[index] = 0
 
   def close(self):

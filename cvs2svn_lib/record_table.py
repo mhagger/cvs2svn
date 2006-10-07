@@ -29,9 +29,8 @@ strings into records by overwriting the pack() and unpack() methods
 respectively.
 
 Note that these classes keep track of gaps in the records that have
-been written by filling them with packer.empty_value.  But the packer
-is responsible for raising KeyError (if desired) when empty_value is
-unpacked."""
+been written by filling them with packer.empty_value.  If a record is
+read which contains packer.empty_value, then a KeyError is raised."""
 
 
 from __future__ import generators
@@ -44,6 +43,11 @@ from cvs2svn_lib.boolean import *
 from cvs2svn_lib.common import DB_OPEN_READ
 from cvs2svn_lib.common import DB_OPEN_WRITE
 from cvs2svn_lib.common import DB_OPEN_NEW
+
+
+# A unique value that can be used to stand for "unset" without
+# preventing the use of None.
+_unset = object()
 
 
 class Packer(object):
@@ -68,9 +72,15 @@ class Packer(object):
 
 
 class StructPacker(Packer):
-  def __init__(self, format):
+  def __init__(self, format, empty_value=_unset):
     self.format = format
-    Packer.__init__(self, struct.calcsize(self.format))
+    if empty_value is not _unset:
+      empty_value = self.pack(empty_value)
+    else:
+      empty_value = None
+
+    Packer.__init__(self, struct.calcsize(self.format),
+                    empty_value=empty_value)
 
   def pack(self, v):
     return struct.pack(self.format, v)
@@ -80,8 +90,8 @@ class StructPacker(Packer):
 
 
 class UnsignedIntegerPacker(StructPacker):
-  def __init__(self):
-    StructPacker.__init__(self, '=I')
+  def __init__(self, empty_value=0):
+    StructPacker.__init__(self, '=I', empty_value)
 
 
 class FileOffsetPacker(Packer):
@@ -174,6 +184,11 @@ class RecordTable:
     self._limit = max(self._limit, i + 1)
 
   def __getitem__(self, i):
+    """Return the item for index I.
+
+    Raise KeyError if that item has never been set (or if it was set
+    to self.packer.emtpy_value)."""
+
     try:
       return self._cache[i]
     except KeyError:
@@ -181,11 +196,20 @@ class RecordTable:
         raise KeyError(i)
       self.f.seek(i * self.packer.record_len)
       s = self.f.read(self.packer.record_len)
+      if s == self.packer.empty_value:
+        raise KeyError(i)
       return self.packer.unpack(s)
 
   def __iter__(self):
+    """Yield the values in the map in key order.
+
+    Skip over values that haven't been defined."""
+
     for i in xrange(0, self._limit):
-      yield self[i]
+      try:
+        yield self[i]
+      except KeyError:
+        pass
 
   def close(self):
     self.flush()

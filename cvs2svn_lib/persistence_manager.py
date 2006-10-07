@@ -25,7 +25,8 @@ from cvs2svn_lib.common import SVN_INVALID_REVNUM
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
-from cvs2svn_lib.database import Database
+from cvs2svn_lib.record_table import SignedIntegerPacker
+from cvs2svn_lib.record_table import RecordTable
 from cvs2svn_lib.database import PrimedPDatabase
 from cvs2svn_lib.svn_commit import SVNCommit
 from cvs2svn_lib.svn_commit import SVNRevisionCommit
@@ -60,8 +61,9 @@ class PersistenceManager:
         artifact_manager.get_temp_file(config.SVN_COMMITS_DB), mode,
         (SVNInitialProjectCommit, SVNPrimaryCommit, SVNSymbolCommit,
          SVNPreCommit, SVNPostCommit, SVNSymbolCloseCommit,))
-    self.cvs2svn_db = Database(
-        artifact_manager.get_temp_file(config.CVS_REVS_TO_SVN_REVNUMS), mode)
+    self.cvs2svn_db = RecordTable(
+        artifact_manager.get_temp_file(config.CVS_REVS_TO_SVN_REVNUMS),
+        mode, SignedIntegerPacker(SVN_INVALID_REVNUM))
 
     # branch_id -> svn_revnum in which branch was last filled.  This
     # is used by CVSCommit._pre_commit, to prevent creating a fill
@@ -74,7 +76,7 @@ class PersistenceManager:
     committed, or SVN_INVALID_REVNUM if there is no mapping for
     CVS_REV_ID."""
 
-    return int(self.cvs2svn_db.get('%x' % (cvs_rev_id,), SVN_INVALID_REVNUM))
+    return self.cvs2svn_db.get(cvs_rev_id, SVN_INVALID_REVNUM)
 
   def get_svn_commit(self, svn_revnum):
     """Return an SVNCommit that corresponds to SVN_REVNUM.
@@ -101,7 +103,7 @@ class PersistenceManager:
     if isinstance(svn_commit, SVNRevisionCommit):
       for cvs_rev in svn_commit.cvs_revs:
         Log().verbose(' %s %s' % (cvs_rev.cvs_path, cvs_rev.rev,))
-        self.cvs2svn_db['%x' % cvs_rev.id] = svn_commit.revnum
+        self.cvs2svn_db[cvs_rev.id] = svn_commit.revnum
 
     # If it is a symbol commit, then record last_filled.
     if isinstance(svn_commit, SVNSymbolCommit):

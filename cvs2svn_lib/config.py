@@ -133,12 +133,13 @@ SYMBOL_STATISTICS_LIST = 'cvs2svn-symbol-stats.pck'
 # These two databases provide a bidirectional mapping between
 # CVSRevision.ids (in hex) and Subversion revision numbers.
 #
-# The first maps CVSRevision.id to a number; the values are not
-# unique.
+# The first maps CVSRevision.id to the SVN revision number of which it
+# is a part (more than one CVSRevision can map to the same SVN
+# revision number).
 #
 # The second maps Subversion revision numbers (as hex strings) to
 # pickled SVNCommit instances.
-CVS_REVS_TO_SVN_REVNUMS = 'cvs2svn-cvs-revs-to-svn-revnums.db'
+CVS_REVS_TO_SVN_REVNUMS = 'cvs2svn-cvs-revs-to-svn-revnums.dat'
 SVN_COMMITS_DB = 'cvs2svn-svn-commits.db'
 
 # How many bytes to read at a time from a pipe.  128 kiB should be

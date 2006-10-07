@@ -125,7 +125,12 @@ class RecordTable:
     # here.  When the cache fills up, it is written to disk in one go
     # and then cleared.
     self._cache = {}
+
+    # The index just beyond the last record ever written:
     self._limit = os.path.getsize(filename) // self.packer.record_len
+
+    # The index just beyond the last record ever written to disk:
+    self._limit_written = self._limit
 
   def flush(self):
     pairs = self._cache.items()
@@ -137,6 +142,7 @@ class RecordTable:
         f.seek(i * self.packer.record_len)
       f.write(self.packer.pack(v))
       old_i = i + 1
+    self._limit_written = max(self._limit_written, old_i)
     self._cache.clear()
 
   def __setitem__(self, i, v):
@@ -153,7 +159,7 @@ class RecordTable:
     try:
       return self._cache[i]
     except KeyError:
-      if not 0 <= i < self._limit:
+      if not 0 <= i < self._limit_written:
         raise KeyError(i)
       self.f.seek(i * self.packer.record_len)
       s = self.f.read(self.packer.record_len)

@@ -18,7 +18,6 @@
 
 
 import os
-import re
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.common import FatalError
@@ -63,9 +62,6 @@ class RevisionReader:
                        "existing directory." % cvs_repos_path)
 
     self.cvs_repos_path = os.path.normpath(cvs_repos_path)
-    self.cvs_prefix_re = re.compile(
-        r'^' + re.escape(self.cvs_repos_path)
-        + r'(' + re.escape(os.sep) + r'|$)')
 
   def get_content_stream(self, cvs_rev, suppress_keyword_substitution=False):
     """Return a file-like object from which the contents of CVS_REV

@@ -28,16 +28,16 @@ classes have to specify how to pack records into strings and unpack
 strings into records by overwriting the pack() and unpack() methods
 respectively.
 
-Note that these classes do not keep track of which records have been
-written, aside from keeping track of the highest record number that
-was ever written.  If a record that was never written is read, then
-the unpack() method will be passes a string containing only NUL
-characters."""
+Note that these classes keep track of gaps in the records that have
+been written by filling them with packer.empty_value.  But the packer
+is responsible for raising KeyError (if desired) when empty_value is
+unpacked."""
 
 
 from __future__ import generators
 
 import os
+import types
 import struct
 
 from cvs2svn_lib.boolean import *
@@ -47,8 +47,14 @@ from cvs2svn_lib.common import DB_OPEN_NEW
 
 
 class Packer(object):
-  def __init__(self, record_len):
+  def __init__(self, record_len, empty_value=None):
     self.record_len = record_len
+    if empty_value is None:
+      self.empty_value = '\0' * self.record_len
+    else:
+      assert type(empty_value) is types.StringType
+      assert len(empty_value) == self.record_len
+      self.empty_value = empty_value
 
   def pack(self, v):
     """Pack record V into a string of length self.record_len."""
@@ -138,11 +144,23 @@ class RecordTable:
     old_i = None
     f = self.f
     for (i, v) in pairs:
-      if i != old_i:
+      if i == old_i:
+        # No seeking needed
+        pass
+      elif i <= self._limit_written:
+        # Just jump there:
         f.seek(i * self.packer.record_len)
+      else:
+        # Jump to the end of the file then write _empty_values until
+        # we reach the correct location:
+        f.seek(self._limit_written * self.packer.record_len)
+        while self._limit_written < i:
+          f.write(self.packer.empty_value)
+          self._limit_written += 1
       f.write(self.packer.pack(v))
       old_i = i + 1
-    self._limit_written = max(self._limit_written, old_i)
+      self._limit_written = max(self._limit_written, old_i)
+    self.f.flush()
     self._cache.clear()
 
   def __setitem__(self, i, v):

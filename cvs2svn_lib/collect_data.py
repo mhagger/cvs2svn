@@ -141,9 +141,9 @@ class _RevisionData:
     self.branches_data = []
 
     # The revision numbers of the first commits on any branches on
-    # which commits occurred.  This dependency is kept explicitly so
-    # that a revision-only topological sort would miss the dependency
-    # that exists via branches_data.
+    # which commits occurred.  This dependency is kept explicitly
+    # because otherwise a revision-only topological sort would miss
+    # the dependency that exists via branches_data.
     self.branches_revs_data = []
 
     # The _SymbolData instances of symbols that are closed by this

@@ -20,6 +20,35 @@
 class RevisionRecorder:
   """An object that can record text and deltas from CVS files."""
 
+  def __init__(self):
+    """Initialize the RevisionRecorder.
+
+    Please note that a RevisionRecorder is instantiated in every
+    program run, even if the data-collection pass will not be
+    executed.  (This is to allow it to register the artifacts that it
+    produces.)  Therefore, the __init__() method should not do much,
+    and more substantial preparation for use (like actually creating
+    the artifacts) should be done in start()."""
+
+    pass
+
+  def register_artifacts(self, which_pass):
+    """Register artifacts that will be needed during data recording.
+
+    WHICH_PASS is the pass that will call our callbacks, so it should
+    be used to do the registering (e.g., call
+    WHICH_PASS.register_temp_file() and/or
+    WHICH_PASS.register_temp_file_needed())."""
+
+    raise NotImplementedError()
+
+  def start(self):
+    """Data will soon start being collected.
+
+    Any non-idempotent initialization should be done here."""
+
+    raise NotImplementedError()
+
   def start_file(self, cvs_file):
     """Prepare to receive data for the specified file.
 
@@ -36,8 +65,13 @@ class RevisionRecorder:
 
     raise NotImplementedError()
 
-  def finish_file(self):
-    """The current file is finished; clean up."""
+  def finish_file(self, revisions_data, root_rev):
+    """The current file is finished; finish and clean up.
+
+    REVISIONS_DATA is a map { rev : _RevisionData } containing
+    _RevisionData instances for all revisions in this file.  ROOT_REV
+    is the revision number of the revision that is the root of the
+    dependency tree (usually '1.1')."""
 
     raise NotImplementedError()
 
@@ -50,13 +84,19 @@ class RevisionRecorder:
 class NullRevisionRecorder(RevisionRecorder):
   """A do-nothing variety of RevisionRecorder."""
 
+  def register_artifacts(self, which_pass):
+    pass
+
+  def start(self):
+    pass
+
   def start_file(self, cvs_file):
     pass
 
   def record_text(self, revision_data, log, text):
     return None
 
-  def finish_file(self):
+  def finish_file(self, revisions_data, root_rev):
     pass
 
   def finish(self):
@@ -65,6 +105,14 @@ class NullRevisionRecorder(RevisionRecorder):
 
 class FullTextRevisionRecorder(RevisionRecorder):
   """A RevisionRecorder that reconstructs the full text internally."""
+
+  def register_artifacts(self, which_pass):
+    # TODO: Implement
+    raise NotImplementedError()
+
+  def start(self):
+    # TODO: Implement
+    raise NotImplementedError()
 
   def start_file(self, cvs_file):
     # TODO: Implement
@@ -77,7 +125,7 @@ class FullTextRevisionRecorder(RevisionRecorder):
     raise NotImplementedError()
     #return self.record_full_text(revision_data, log, full_text)
 
-  def finish_file(self):
+  def finish_file(self, revisions_data, root_rev):
     # TODO: Implement
     raise NotImplementedError()
 

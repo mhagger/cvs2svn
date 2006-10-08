@@ -92,16 +92,20 @@ class Project(object):
     # A unique id for this project, also used as its index in
     # Ctx().projects.  This field is filled in by Ctx.add_project().
     self.id = None
+
     self.project_cvs_repos_path = os.path.normpath(project_cvs_repos_path)
+    if not os.path.isdir(self.project_cvs_repos_path):
+      raise FatalError("The specified CVS repository path '%s' is not an "
+                       "existing directory." % self.project_cvs_repos_path)
 
     self.cvs_repository_root, self.cvs_module = \
         self.determine_repository_root(
             os.path.abspath(self.project_cvs_repos_path))
 
     if Ctx().use_cvs:
-      self.revision_reader = CVSRevisionReader(self)
+      self.revision_reader = CVSRevisionReader()
     else:
-      self.revision_reader = RCSRevisionReader(self)
+      self.revision_reader = RCSRevisionReader()
 
     # A regexp matching project_cvs_repos_path plus an optional separator:
     self.project_prefix_re = re.compile(

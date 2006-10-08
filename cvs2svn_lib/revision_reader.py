@@ -53,16 +53,6 @@ class PipeStream(object):
 class RevisionReader(object):
   """An object that can read the contents of CVSRevisions."""
 
-  def __init__(self, project):
-    """CVS_REPOS_PATH is the top of the CVS repository (at least as
-    far as this run is concerned)."""
-
-    if not os.path.isdir(project.project_cvs_repos_path):
-      raise FatalError("The specified CVS repository path '%s' is not an "
-                       "existing directory." % project.project_cvs_repos_path)
-
-    self.cvs_repos_path = os.path.normpath(project.project_cvs_repos_path)
-
   def get_content_stream(self, cvs_rev, suppress_keyword_substitution=False):
     """Return a file-like object from which the contents of CVS_REV
     can be read.
@@ -77,8 +67,7 @@ class RevisionReader(object):
 class RCSRevisionReader(RevisionReader):
   """A RevisionReader that reads the contents via RCS."""
 
-  def __init__(self, project):
-    RevisionReader.__init__(self, project)
+  def __init__(self):
     try:
       check_command_runs([ Ctx().co_executable, '-V' ], 'co')
     except CommandFailedException, e:
@@ -97,9 +86,7 @@ class RCSRevisionReader(RevisionReader):
 class CVSRevisionReader(RevisionReader):
   """A RevisionReader that reads the contents via CVS."""
 
-  def __init__(self, project):
-    RevisionReader.__init__(self, project)
-
+  def __init__(self):
     def cvs_ok(global_arguments):
       check_command_runs(
           [ Ctx().cvs_executable ] + global_arguments + [ '--version' ],

@@ -27,7 +27,7 @@ from cvs2svn_lib.boolean import *
 class Serializer:
   """An object able to serialize/deserialize some class of objects."""
 
-  def create_pickler(self, f):
+  def _create_dumper(self, f):
     """Return a new serializer."""
 
     raise NotImplementedError()
@@ -35,16 +35,16 @@ class Serializer:
   def dumpf(self, f, object):
     """Serialize OBJECT to file-like object F."""
 
-    self.create_pickler(f).dump(object)
+    self._create_dumper(f).dump(object)
 
   def dumps(self, object):
     """Return a string containing OBJECT in serialized form."""
 
     f = cStringIO.StringIO()
-    self.create_pickler(f).dump(object)
+    self._create_dumper(f).dump(object)
     return f.getvalue()
 
-  def create_unpickler(self, f):
+  def _create_loader(self, f):
     """Return a new deserializer."""
 
     raise NotImplementedError()
@@ -52,12 +52,12 @@ class Serializer:
   def loadf(self, f):
     """Return the next object deserialized from file-like object F."""
 
-    return self.create_unpickler(f).load()
+    return self._create_loader(f).load()
 
   def loads(self, s):
     """Return the object deserialized from string S."""
 
-    return self.create_unpickler(cStringIO.StringIO(s)).load()
+    return self._create_loader(cStringIO.StringIO(s)).load()
 
 
 class PrimedPickleSerializer(Serializer):
@@ -82,14 +82,14 @@ class PrimedPickleSerializer(Serializer):
     unpickler.load()
     self.unpickler_memo = unpickler.memo
 
-  def create_pickler(self, f):
+  def _create_dumper(self, f):
     """Return a new pickler with an initialized memo."""
 
     pickler = cPickle.Pickler(f, -1)
     pickler.memo = self.pickler_memo.copy()
     return pickler
 
-  def create_unpickler(self, f):
+  def _create_loader(self, f):
     """Return a new unpickler with an initialized memo."""
 
     unpickler = cPickle.Unpickler(f)

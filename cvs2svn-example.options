@@ -41,6 +41,8 @@ from cvs2svn_lib.project import Project
 from cvs2svn_lib.output_option import DumpfileOutputOption
 from cvs2svn_lib.output_option import ExistingRepositoryOutputOption
 from cvs2svn_lib.output_option import NewRepositoryOutputOption
+from cvs2svn_lib.revision_reader import RCSRevisionReader
+from cvs2svn_lib.revision_reader import CVSRevisionReader
 from cvs2svn_lib.symbol_strategy import AllBranchRule
 from cvs2svn_lib.symbol_strategy import AllTagRule
 from cvs2svn_lib.symbol_strategy import BranchIfCommitsRule
@@ -107,10 +109,11 @@ ctx.output_option = NewRepositoryOutputOption(
 # can be set to True to suppress cvs2svn output altogether:
 ctx.dry_run = False
 
-# Change the following if cvs2svn should use "cvs" to read file
-# versions out of *,v files.  (The default is to use "co", which is
-# part of RCS, and is much faster):
-ctx.use_cvs = False
+# Change the following to CVSRevisionReader() if cvs2svn should use
+# "cvs" to read file versions out of *,v files.  (The default is to
+# use "co", which is part of RCS, and is much faster):
+ctx.revision_reader = RCSRevisionReader()
+#ctx.revision_reader = CVSRevisionReader()
 
 # Set the name (and optionally the path) of some executables required
 # by cvs2svn.  'co' is needed by default; 'cvs' is needed if

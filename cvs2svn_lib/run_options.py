@@ -40,6 +40,8 @@ from cvs2svn_lib.output_option import NewRepositoryOutputOption
 from cvs2svn_lib.output_option import ExistingRepositoryOutputOption
 from cvs2svn_lib.project import Project
 from cvs2svn_lib.pass_manager import InvalidPassError
+from cvs2svn_lib.revision_reader import RCSRevisionReader
+from cvs2svn_lib.revision_reader import CVSRevisionReader
 from cvs2svn_lib.symbol_strategy import AllBranchRule
 from cvs2svn_lib.symbol_strategy import AllTagRule
 from cvs2svn_lib.symbol_strategy import BranchIfCommitsRule
@@ -255,6 +257,7 @@ class RunOptions:
     bdb_txn_nosync = False
     dump_only = False
     dumpfile = None
+    use_cvs = False
     symbol_strategy_default = 'strict'
     mime_types_file = None
     auto_props_file = None
@@ -277,7 +280,7 @@ class RunOptions:
       elif opt == '--dumpfile':
         dumpfile = value
       elif opt == '--use-cvs':
-        ctx.use_cvs = True
+        use_cvs = True
       elif opt == '--trunk-only':
         ctx.trunk_only = True
       elif opt == '--trunk':
@@ -405,6 +408,11 @@ class RunOptions:
             target, fs_type=fs_type, bdb_txn_nosync=bdb_txn_nosync)
     else:
       ctx.output_option = DumpfileOutputOption(dumpfile)
+
+    if use_cvs:
+      ctx.revision_reader = CVSRevisionReader()
+    else:
+      ctx.revision_reader = RCSRevisionReader()
 
     # Create the default project (using ctx.trunk, ctx.branches, and
     # ctx.tags):

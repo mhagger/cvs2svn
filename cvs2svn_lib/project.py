@@ -28,8 +28,6 @@ from cvs2svn_lib.common import path_split
 from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.log import Log
-from cvs2svn_lib.revision_reader import CVSRevisionReader
-from cvs2svn_lib.revision_reader import RCSRevisionReader
 from cvs2svn_lib.cvs_file import CVSFile
 
 
@@ -101,11 +99,6 @@ class Project(object):
     self.cvs_repository_root, self.cvs_module = \
         self.determine_repository_root(
             os.path.abspath(self.project_cvs_repos_path))
-
-    if Ctx().use_cvs:
-      self.revision_reader = CVSRevisionReader()
-    else:
-      self.revision_reader = RCSRevisionReader()
 
     # A regexp matching project_cvs_repos_path plus an optional separator:
     self.project_prefix_re = re.compile(

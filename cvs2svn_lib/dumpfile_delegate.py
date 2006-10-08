@@ -27,6 +27,7 @@ from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import OP_ADD
 from cvs2svn_lib.common import OP_CHANGE
 from cvs2svn_lib.common import to_utf8
+from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.svn_repository_mirror import SVNRepositoryMirrorDelegate
 
 
@@ -230,7 +231,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     # If the file has keywords, we must prevent CVS/RCS from expanding
     # the keywords because they must be unexpanded in the repository,
     # or Subversion will get confused.
-    stream = cvs_rev.cvs_file.project.revision_reader.get_content_stream(
+    stream = Ctx().revision_reader.get_content_stream(
         cvs_rev, suppress_keyword_substitution=s_item.has_keywords)
 
     self.dumpfile.write('Node-path: %s\n'
@@ -331,8 +332,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
 
 def generate_ignores(cvs_rev):
   # Read in props
-  stream = cvs_rev.cvs_file.project.revision_reader.get_content_stream(
-      cvs_rev)
+  stream = Ctx().revision_reader.get_content_stream(cvs_rev)
   buf = stream.read(config.PIPE_READ_SIZE)
   raw_ignore_val = ""
   while buf:

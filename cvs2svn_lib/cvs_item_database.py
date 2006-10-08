@@ -30,17 +30,15 @@ from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.cvs_item import CVSRevision
 from cvs2svn_lib.cvs_item import CVSBranch
 from cvs2svn_lib.cvs_item import CVSTag
-from cvs2svn_lib.primed_pickle import get_memos
-from cvs2svn_lib.primed_pickle import PrimedPickler
-from cvs2svn_lib.primed_pickle import PrimedUnpickler
+from cvs2svn_lib.primed_pickle import get_primed_pickler_pair
 from cvs2svn_lib.database import IndexedStore
 
 
 class NewCVSItemStore:
   """A file of sequential CVSItems, grouped by CVSFile.
 
-  The file consists of a sequence of pickles.  The zeroth one is an
-  'unpickler_memo' as described in the primed_pickle module.
+  The file consists of a sequence of pickles.  The zeroth one is a
+  (pickler, unpickler) pair as described in the primed_pickle module.
   Subsequent ones are pickled lists of CVSItems, each list containing
   all of the CVSItems for a single file.
 
@@ -53,9 +51,8 @@ class NewCVSItemStore:
     self.f = open(filename, 'wb')
 
     primer = (CVSRevision, CVSBranch, CVSTag,)
-    (pickler_memo, unpickler_memo,) = get_memos(primer)
-    self.pickler = PrimedPickler(pickler_memo)
-    cPickle.dump(unpickler_memo, self.f, -1)
+    (self.pickler, unpickler) = get_primed_pickler_pair(primer)
+    cPickle.dump((self.pickler, unpickler), self.f, -1)
 
     self.current_file_id = None
     self.current_file_items = []
@@ -91,8 +88,7 @@ class OldCVSItemStore:
     self.f = open(filename, 'rb')
 
     # Read the memo from the first pickle:
-    unpickler_memo = cPickle.load(self.f)
-    self.unpickler = PrimedUnpickler(unpickler_memo)
+    (pickler, self.unpickler) = cPickle.load(self.f)
 
     self.current_file_items = []
     self.current_file_map = {}

@@ -33,9 +33,7 @@ from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.record_table import FileOffsetPacker
 from cvs2svn_lib.record_table import RecordTable
-from cvs2svn_lib.primed_pickle import get_memos
-from cvs2svn_lib.primed_pickle import PrimedPickler
-from cvs2svn_lib.primed_pickle import PrimedUnpickler
+from cvs2svn_lib.primed_pickle import get_primed_pickler_pair
 
 
 # DBM module selection
@@ -186,30 +184,29 @@ class PrimedPDatabase(AbstractDatabase):
 
   Concretely, when a new database is created, the pickler memo and
   unpickler memo for PRIMER are computed, pickled, and stored in
-  db[self.primer_key] as a tuple.  When an existing database is opened
-  for reading or update, the pickler and unpickler memos are read from
-  db[self.primer_key].  In either case, these memos are used to
-  initialize a PrimedPickler and PrimedUnpickler, which are used for
-  future write and read accesses respectively.
+  db[self.pickler_pair_key] as a tuple.  When an existing database is
+  opened for reading or update, the pickler and unpickler memos are
+  read from db[self.pickler_pair_key].  In either case, these memos
+  are used to initialize a PrimedPickler and PrimedUnpickler, which
+  are used for future write and read accesses respectively.
 
-  Since the database entry with key self.primer_key is used to store
-  the memo, self.primer_key may not be used as a key for normal
-  entries."""
+  Since the database entry with key self.pickler_pair_key is used to
+  store the memo, self.pickler_pair_key may not be used as a key for
+  normal entries."""
 
-  primer_key = '_'
+  pickler_pair_key = '_'
 
   def __init__(self, filename, mode, primer):
     AbstractDatabase.__init__(self, filename, mode)
 
     if mode == DB_OPEN_NEW:
-      pickler_memo, unpickler_memo = get_memos(primer)
-      self.db[self.primer_key] = \
-          cPickle.dumps((pickler_memo, unpickler_memo,))
+      (self.primed_pickler, self.primed_unpickler) = \
+          get_primed_pickler_pair(primer)
+      self.db[self.pickler_pair_key] = \
+          cPickle.dumps((self.primed_pickler, self.primed_unpickler))
     else:
-      (pickler_memo, unpickler_memo,) = \
-          cPickle.loads(self.db[self.primer_key])
-    self.primed_pickler = PrimedPickler(pickler_memo)
-    self.primed_unpickler = PrimedUnpickler(unpickler_memo)
+      (self.primed_pickler, self.primed_unpickler) = \
+          cPickle.loads(self.db[self.pickler_pair_key])
 
   def __getitem__(self, key):
     return self.primed_unpickler.loads(self.db[key])
@@ -219,7 +216,7 @@ class PrimedPDatabase(AbstractDatabase):
 
   def keys(self):
     retval = self.db.keys()
-    retval.remove(self.primer_key)
+    retval.remove(self.pickler_pair_key)
     return retval
 
 
@@ -229,14 +226,14 @@ class IndexedDatabase:
   The objects are indexed by small non-negative integers, and a
   RecordTable is used to store the index -> fileoffset map.
   fileoffset=0 is used to represent an empty record.  (An offset of 0
-  cannot occur for a legitimate record because the pickle memos are
-  written there.)
+  cannot occur for a legitimate record because the pickler/unpickler
+  are written there.)
 
   The main file consists of a sequence of pickles.  The zeroth one is
-  a tuple (pickler_memo, unpickler_memo) as described in the
-  primed_pickle module.  Subsequent ones are pickled objects.  The
-  offset of each object in the file is stored to an index table so
-  that the data can later be retrieved randomly.
+  a tuple (pickler, unpickler) as described in the primed_pickle
+  module.  Subsequent ones are pickled objects.  The offset of each
+  object in the file is stored to an index table so that the data can
+  later be retrieved randomly.
 
   Objects are always stored to the end of the file.  If an object is
   deleted or overwritten, the fact is recorded in the index_table but
@@ -266,14 +263,11 @@ class IndexedDatabase:
         index_filename, self.mode, FileOffsetPacker())
 
     if self.mode == DB_OPEN_NEW:
-      (pickler_memo, unpickler_memo,) = get_memos(primer)
-      cPickle.dump((pickler_memo, unpickler_memo,), self.f, -1)
+      (self.pickler, self.unpickler) = get_primed_pickler_pair(primer)
+      cPickle.dump((self.pickler, self.unpickler,), self.f, -1)
     else:
       # Read the memo from the first pickle:
-      (pickler_memo, unpickler_memo,) = cPickle.load(self.f)
-
-    self.pickler = PrimedPickler(pickler_memo)
-    self.unpickler = PrimedUnpickler(unpickler_memo)
+      (self.pickler, self.unpickler,) = cPickle.load(self.f)
 
   def __setitem__(self, index, item):
     """Write ITEM into the database indexed by INDEX."""

@@ -24,20 +24,19 @@ import cPickle
 from cvs2svn_lib.boolean import *
 
 
-def get_memos(primer):
-  """Return a tuple (pickler_memo, unpickler_memo,) for primer.
+def get_primed_pickler_pair(primer):
+  """Return a tuple (PrimedPickler, PrimedUnpickler) for primer.
 
-  These memos can be used to create picklers and unpicklers,
-  respectively, that are 'pre-trained' to recognize the objects that
-  are in PRIMER.  Note that the memos needed for pickling and
-  unpickling are different."""
+  These picklers and unpicklers are 'pre-trained' to recognize the
+  objects that are in PRIMER.  (Note that the memos needed for
+  pickling and unpickling are different.)"""
 
   f = cStringIO.StringIO()
   pickler = cPickle.Pickler(f, -1)
   pickler.dump(primer)
   unpickler = cPickle.Unpickler(cStringIO.StringIO(f.getvalue()))
   unpickler.load()
-  return pickler.memo, unpickler.memo
+  return PrimedPickler(pickler.memo), PrimedUnpickler(unpickler.memo)
 
 
 class PrimedPickler:

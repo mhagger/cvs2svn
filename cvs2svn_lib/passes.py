@@ -130,11 +130,13 @@ class CollectRevsPass(Pass):
     self._register_temp_file(config.METADATA_DB)
     self._register_temp_file(config.CVS_FILES_DB)
     self._register_temp_file(config.CVS_ITEMS_STORE)
+    Ctx().revision_reader.get_revision_recorder().register_artifacts(self)
 
   def run(self, stats_keeper):
     Log().quiet("Examining all CVS ',v' files...")
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_NEW)
-    cd = CollectData(stats_keeper)
+    cd = CollectData(
+        Ctx().revision_reader.get_revision_recorder(), stats_keeper)
     for project in Ctx().projects:
       cd.process_project(project)
     cd.flush()

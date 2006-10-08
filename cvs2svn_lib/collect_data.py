@@ -405,6 +405,8 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     # parse_completed().
     self._revision_data = []
 
+    self.collect_data.revision_recorder.start_file(self.cvs_file)
+
   def _get_rev_id(self, revision):
     if revision is None:
       return None
@@ -656,6 +658,8 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
     self._revision_data.append(rev_data)
 
+    self.collect_data.revision_recorder.record_text(rev_data, log, text)
+
   def _process_default_branch_revisions(self):
     """Process any non-trunk default branch revisions.
 
@@ -819,6 +823,9 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
     self.sdc.register_branch_blockers()
 
+    self.collect_data.revision_recorder.finish_file(
+        self._rev_data, self._root_rev)
+
     # Break a circular reference loop, allowing the memory for self
     # and sdc to be freed.
     del self.sdc
@@ -918,7 +925,8 @@ class CollectData:
   class by _FileDataCollector instances, one of which is created for
   each file to be parsed."""
 
-  def __init__(self, stats_keeper):
+  def __init__(self, revision_recorder, stats_keeper):
+    self.revision_recorder = revision_recorder
     self._cvs_item_store = NewCVSItemStore(
         artifact_manager.get_temp_file(config.CVS_ITEMS_STORE))
     self.metadata_db = MetadataDatabase(DB_OPEN_NEW)
@@ -931,6 +939,8 @@ class CollectData:
     self.key_generator = KeyGenerator()
 
     self.symbol_key_generator = KeyGenerator(1)
+
+    self.revision_recorder.start()
 
   def process_project(self, project):
     pdc = _ProjectDataCollector(self, project)
@@ -948,6 +958,7 @@ class CollectData:
     self.stats_keeper.record_cvs_item(cvs_item)
 
   def flush(self):
+    self.revision_recorder.finish()
     self._cvs_item_store.close()
     self.symbol_stats.write()
 

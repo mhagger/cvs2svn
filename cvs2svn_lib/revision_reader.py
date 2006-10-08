@@ -26,6 +26,7 @@ from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.process import check_command_runs
 from cvs2svn_lib.process import SimplePopen
 from cvs2svn_lib.process import CommandFailedException
+from cvs2svn_lib.revision_recorder import NullRevisionRecorder
 
 
 class PipeStream(object):
@@ -53,6 +54,16 @@ class PipeStream(object):
 class RevisionReader(object):
   """An object that can read the contents of CVSRevisions."""
 
+  def get_revision_recorder(self):
+    """Return a RevisionRecorder instance that can gather revision info.
+
+    The object returned by this method will be passed to CollectData,
+    and its callback methods called as the CVS files are parsed.  If
+    no data collection is necessary, this method can return an
+    instance of NullRevisionRecorder."""
+
+    raise NotImplementedError
+
   def get_content_stream(self, cvs_rev, suppress_keyword_substitution=False):
     """Return a file-like object from which the contents of CVS_REV
     can be read.
@@ -74,6 +85,9 @@ class RCSRevisionReader(RevisionReader):
       raise FatalError('%s\n'
                        'Please check that co is installed and in your PATH\n'
                        '(it is a part of the RCS software).' % (e,))
+
+  def get_revision_recorder(self):
+    return NullRevisionRecorder()
 
   def get_content_stream(self, cvs_rev, suppress_keyword_substitution=False):
     pipe_cmd = [ Ctx().co_executable, '-q', '-x,v', '-p' + cvs_rev.rev ]
@@ -103,6 +117,9 @@ class CVSRevisionReader(RevisionReader):
         raise FatalError(
             '%s\n'
             'Please check that cvs is installed and in your PATH.' % (e,))
+
+  def get_revision_recorder(self):
+    return NullRevisionRecorder()
 
   def get_content_stream(self, cvs_rev, suppress_keyword_substitution=False):
     project = cvs_rev.cvs_file.project

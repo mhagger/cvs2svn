@@ -19,6 +19,7 @@
 from __future__ import generators
 
 import cStringIO
+import marshal
 import cPickle
 
 from cvs2svn_lib.boolean import *
@@ -46,6 +47,26 @@ class Serializer:
     """Return the object deserialized from string S."""
 
     raise NotImplementedError()
+
+
+class MarshalSerializer(Serializer):
+  """This class uses the marshal module to serialize/deserialize.
+
+  This means that it shares the limitations of the marshal module,
+  namely only being able to serialize a few simple python data types
+  without reference loops."""
+
+  def dumpf(self, f, object):
+    marshal.dump(object, f)
+
+  def dumps(self, object):
+    return marshal.dumps(object)
+
+  def loadf(self, f):
+    return marshal.load(f)
+
+  def loads(self, s):
+    return marshal.loads(s)
 
 
 class PrimedPickleSerializer(Serializer):

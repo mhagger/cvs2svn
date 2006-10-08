@@ -30,7 +30,7 @@ from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.cvs_item import CVSRevision
 from cvs2svn_lib.cvs_item import CVSBranch
 from cvs2svn_lib.cvs_item import CVSTag
-from cvs2svn_lib.primed_pickle import get_primed_pickler_pair
+from cvs2svn_lib.serializer import PrimedPickleSerializer
 from cvs2svn_lib.database import IndexedStore
 
 
@@ -51,8 +51,8 @@ class NewCVSItemStore:
     self.f = open(filename, 'wb')
 
     primer = (CVSRevision, CVSBranch, CVSTag,)
-    (self.pickler, unpickler) = get_primed_pickler_pair(primer)
-    cPickle.dump((self.pickler, unpickler), self.f, -1)
+    self.serializer = PrimedPickleSerializer(primer)
+    cPickle.dump(self.serializer, self.f, -1)
 
     self.current_file_id = None
     self.current_file_items = []
@@ -61,7 +61,7 @@ class NewCVSItemStore:
     """Write the current items to disk."""
 
     if self.current_file_items:
-      self.pickler.dumpf(self.f, self.current_file_items)
+      self.serializer.dumpf(self.f, self.current_file_items)
       self.current_file_id = None
       self.current_file_items = []
 
@@ -88,13 +88,13 @@ class OldCVSItemStore:
     self.f = open(filename, 'rb')
 
     # Read the memo from the first pickle:
-    (pickler, self.unpickler) = cPickle.load(self.f)
+    self.serializer = cPickle.load(self.f)
 
     self.current_file_items = []
     self.current_file_map = {}
 
   def _read_file_chunk(self):
-    self.current_file_items = self.unpickler.loadf(self.f)
+    self.current_file_items = self.serializer.loadf(self.f)
     self.current_file_map = {}
     for item in self.current_file_items:
       self.current_file_map[item.id] = item

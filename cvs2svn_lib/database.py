@@ -33,7 +33,7 @@ from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.record_table import FileOffsetPacker
 from cvs2svn_lib.record_table import RecordTable
-from cvs2svn_lib.primed_pickle import get_primed_pickler_pair
+from cvs2svn_lib.serializer import PrimedPickleSerializer
 
 
 # DBM module selection
@@ -200,19 +200,16 @@ class PrimedPDatabase(AbstractDatabase):
     AbstractDatabase.__init__(self, filename, mode)
 
     if mode == DB_OPEN_NEW:
-      (self.primed_pickler, self.primed_unpickler) = \
-          get_primed_pickler_pair(primer)
-      self.db[self.pickler_pair_key] = \
-          cPickle.dumps((self.primed_pickler, self.primed_unpickler))
+      self.serializer = PrimedPickleSerializer(primer)
+      self.db[self.pickler_pair_key] = cPickle.dumps(self.serializer)
     else:
-      (self.primed_pickler, self.primed_unpickler) = \
-          cPickle.loads(self.db[self.pickler_pair_key])
+      self.serializer = cPickle.loads(self.db[self.pickler_pair_key])
 
   def __getitem__(self, key):
-    return self.primed_unpickler.loads(self.db[key])
+    return self.serializer.loads(self.db[key])
 
   def __setitem__(self, key, value):
-    self.db[key] = self.primed_pickler.dumps(value)
+    self.db[key] = self.serializer.dumps(value)
 
   def keys(self):
     retval = self.db.keys()
@@ -263,11 +260,11 @@ class IndexedDatabase:
         index_filename, self.mode, FileOffsetPacker())
 
     if self.mode == DB_OPEN_NEW:
-      (self.pickler, self.unpickler) = get_primed_pickler_pair(primer)
-      cPickle.dump((self.pickler, self.unpickler,), self.f, -1)
+      self.serializer = PrimedPickleSerializer(primer)
+      cPickle.dump(self.serializer, self.f, -1)
     else:
       # Read the memo from the first pickle:
-      (self.pickler, self.unpickler,) = cPickle.load(self.f)
+      self.serializer = cPickle.load(self.f)
 
   def __setitem__(self, index, item):
     """Write ITEM into the database indexed by INDEX."""
@@ -275,11 +272,11 @@ class IndexedDatabase:
     # Make sure we're at the end of the file:
     self.f.seek(0, 2)
     self.index_table[index] = self.f.tell()
-    self.pickler.dumpf(self.f, item)
+    self.serializer.dumpf(self.f, item)
 
   def _fetch(self, offset):
     self.f.seek(offset)
-    return self.unpickler.loadf(self.f)
+    return self.serializer.loadf(self.f)
 
   def __iter__(self):
     for offset in self.index_table:

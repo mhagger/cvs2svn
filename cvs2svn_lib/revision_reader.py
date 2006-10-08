@@ -100,10 +100,6 @@ class CVSRevisionReader(RevisionReader):
   def __init__(self, project):
     RevisionReader.__init__(self, project)
 
-    self.cvs_repository_root, self.cvs_module = \
-        self.determine_repository_root(
-            os.path.abspath(project.project_cvs_repos_path))
-
     def cvs_ok(global_arguments):
       check_command_runs(
           [ Ctx().cvs_executable ] + global_arguments + [ '--version' ],
@@ -121,46 +117,14 @@ class CVSRevisionReader(RevisionReader):
             '%s\n'
             'Please check that cvs is installed and in your PATH.' % (e,))
 
-  def determine_repository_root(path):
-    """Ascend above the specified PATH if necessary to find the
-    cvs_repository_root (a directory containing a CVSROOT directory)
-    and the cvs_module (the path of the conversion root within the cvs
-    repository).  Return the root path and the module path of this
-    project relative to the root.
-
-    NB: cvs_module must be seperated by '/', *not* by os.sep."""
-
-    def is_cvs_repository_root(path):
-      return os.path.isdir(os.path.join(path, 'CVSROOT'))
-
-    original_path = path
-    cvs_module = ''
-    while not is_cvs_repository_root(path):
-      # Step up one directory:
-      prev_path = path
-      path, module_component = os.path.split(path)
-      if path == prev_path:
-        # Hit the root (of the drive, on Windows) without finding a
-        # CVSROOT dir.
-        raise FatalError(
-            "the path '%s' is not a CVS repository, nor a path "
-            "within a CVS repository.  A CVS repository contains "
-            "a CVSROOT directory within its root directory."
-            % (original_path,))
-
-      cvs_module = module_component + "/" + cvs_module
-
-    return path, cvs_module
-
-  determine_repository_root = staticmethod(determine_repository_root)
-
   def get_content_stream(self, cvs_rev, suppress_keyword_substitution=False):
+    project = cvs_rev.cvs_file.project
     pipe_cmd = [ Ctx().cvs_executable ] + self.global_arguments + \
-               [ '-d', self.cvs_repository_root,
+               [ '-d', project.cvs_repository_root,
                  'co', '-r' + cvs_rev.rev, '-p' ]
     if suppress_keyword_substitution:
       pipe_cmd.append('-kk')
-    pipe_cmd.append(self.cvs_module + cvs_rev.cvs_path)
+    pipe_cmd.append(project.cvs_module + cvs_rev.cvs_path)
     return PipeStream(pipe_cmd)
 
 

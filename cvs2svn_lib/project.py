@@ -73,7 +73,7 @@ def normalize_ttb_path(opt, path):
 OS_SEP_PLUS_ATTIC = os.sep + 'Attic'
 
 
-class Project:
+class Project(object):
   """A project within a CVS repository."""
 
   def __init__(self, project_cvs_repos_path,
@@ -93,6 +93,10 @@ class Project:
     # Ctx().projects.  This field is filled in by Ctx.add_project().
     self.id = None
     self.project_cvs_repos_path = os.path.normpath(project_cvs_repos_path)
+
+    self.cvs_repository_root, self.cvs_module = \
+        self.determine_repository_root(
+            os.path.abspath(self.project_cvs_repos_path))
 
     if Ctx().use_cvs:
       self.revision_reader = CVSRevisionReader(self)
@@ -122,6 +126,39 @@ class Project:
 
   def __hash__(self):
     return self.id
+
+  def determine_repository_root(path):
+    """Ascend above the specified PATH if necessary to find the
+    cvs_repository_root (a directory containing a CVSROOT directory)
+    and the cvs_module (the path of the conversion root within the cvs
+    repository).  Return the root path and the module path of this
+    project relative to the root.
+
+    NB: cvs_module must be seperated by '/', *not* by os.sep."""
+
+    def is_cvs_repository_root(path):
+      return os.path.isdir(os.path.join(path, 'CVSROOT'))
+
+    original_path = path
+    cvs_module = ''
+    while not is_cvs_repository_root(path):
+      # Step up one directory:
+      prev_path = path
+      path, module_component = os.path.split(path)
+      if path == prev_path:
+        # Hit the root (of the drive, on Windows) without finding a
+        # CVSROOT dir.
+        raise FatalError(
+            "the path '%s' is not a CVS repository, nor a path "
+            "within a CVS repository.  A CVS repository contains "
+            "a CVSROOT directory within its root directory."
+            % (original_path,))
+
+      cvs_module = module_component + "/" + cvs_module
+
+    return path, cvs_module
+
+  determine_repository_root = staticmethod(determine_repository_root)
 
   def _get_cvs_path(self, filename):
     """Return the path to FILENAME relative to project_cvs_repos_path.

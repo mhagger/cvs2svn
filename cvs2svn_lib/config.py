@@ -106,11 +106,12 @@ SYMBOL_OFFSETS_DB = 'cvs2svn-symbol-offsets.pck'
 # branch B in its list.
 SYMBOL_LAST_CHANGESETS_DB = 'cvs2svn-symbol-last-changesets.db'
 
-# Maps CVSFile.id to instance.
-CVS_FILES_DB = 'cvs2svn-cvs-files.db'
+# Pickled map of CVSFile.id to instance.
+CVS_FILES_DB = 'cvs2svn-cvs-files.pck'
 
-# A series of pickles.  The first is a primer.  Each subsequent pickle
-# is lists of all CVSItems applying to a CVSFile.
+# A series of records.  The first is a pickled serializer.  Each
+# subsequent record is a serialized list of all CVSItems applying to a
+# CVSFile.
 CVS_ITEMS_STORE = 'cvs2svn-cvs-items.pck'
 
 # A database of filtered CVSItems.  Excluded symbols have been

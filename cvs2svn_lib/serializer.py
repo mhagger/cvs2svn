@@ -27,37 +27,25 @@ from cvs2svn_lib.boolean import *
 class Serializer:
   """An object able to serialize/deserialize some class of objects."""
 
-  def _create_dumper(self, f):
-    """Return a new serializer."""
-
-    raise NotImplementedError()
-
   def dumpf(self, f, object):
     """Serialize OBJECT to file-like object F."""
 
-    self._create_dumper(f).dump(object)
+    raise NotImplementedError()
 
   def dumps(self, object):
     """Return a string containing OBJECT in serialized form."""
-
-    f = cStringIO.StringIO()
-    self._create_dumper(f).dump(object)
-    return f.getvalue()
-
-  def _create_loader(self, f):
-    """Return a new deserializer."""
 
     raise NotImplementedError()
 
   def loadf(self, f):
     """Return the next object deserialized from file-like object F."""
 
-    return self._create_loader(f).load()
+    raise NotImplementedError()
 
   def loads(self, s):
     """Return the object deserialized from string S."""
 
-    return self._create_loader(cStringIO.StringIO(s)).load()
+    raise NotImplementedError()
 
 
 class PrimedPickleSerializer(Serializer):
@@ -82,18 +70,30 @@ class PrimedPickleSerializer(Serializer):
     unpickler.load()
     self.unpickler_memo = unpickler.memo
 
-  def _create_dumper(self, f):
-    """Return a new pickler with an initialized memo."""
+  def dumpf(self, f, object):
+    """Serialize OBJECT to file-like object F."""
 
     pickler = cPickle.Pickler(f, -1)
     pickler.memo = self.pickler_memo.copy()
-    return pickler
+    pickler.dump(object)
 
-  def _create_loader(self, f):
-    """Return a new unpickler with an initialized memo."""
+  def dumps(self, object):
+    """Return a string containing OBJECT in serialized form."""
+
+    f = cStringIO.StringIO()
+    self.dumpf(f, object)
+    return f.getvalue()
+
+  def loadf(self, f):
+    """Return the next object deserialized from file-like object F."""
 
     unpickler = cPickle.Unpickler(f)
     unpickler.memo = self.unpickler_memo.copy()
-    return unpickler
+    return unpickler.load()
+
+  def loads(self, s):
+    """Return the object deserialized from string S."""
+
+    return self.loadf(cStringIO.StringIO(s))
 
 

@@ -27,6 +27,7 @@ from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.key_generator import KeyGenerator
 from cvs2svn_lib.artifact_manager import artifact_manager
+from cvs2svn_lib.serializer import MarshalSerializer
 from cvs2svn_lib.database import IndexedDatabase
 from cvs2svn_lib.record_table import UnsignedIntegerPacker
 from cvs2svn_lib.record_table import RecordTable
@@ -98,7 +99,7 @@ class SVNRepositoryMirror:
     self._nodes_db = IndexedDatabase(
         artifact_manager.get_temp_file(config.SVN_MIRROR_NODES_STORE),
         artifact_manager.get_temp_file(config.SVN_MIRROR_NODES_INDEX_TABLE),
-        DB_OPEN_NEW)
+        DB_OPEN_NEW, serializer=MarshalSerializer())
 
     # Start at revision 0 without a root node.  It will be created
     # by _open_writable_root_node.

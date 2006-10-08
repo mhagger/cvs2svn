@@ -223,28 +223,28 @@ class IndexedDatabase:
   The objects are indexed by small non-negative integers, and a
   RecordTable is used to store the index -> fileoffset map.
   fileoffset=0 is used to represent an empty record.  (An offset of 0
-  cannot occur for a legitimate record because the pickler/unpickler
-  are written there.)
+  cannot occur for a legitimate record because the serializer is
+  written there.)
 
-  The main file consists of a sequence of pickles.  The zeroth one is
-  a tuple (pickler, unpickler) as described in the primed_pickle
-  module.  Subsequent ones are pickled objects.  The offset of each
-  object in the file is stored to an index table so that the data can
-  later be retrieved randomly.
+  The main file consists of a sequence of pickles (or other serialized
+  data format).  The zeroth record is a pickled Serializer.
+  Subsequent ones are objects serialized using the serializer.  The
+  offset of each object in the file is stored to an index table so
+  that the data can later be retrieved randomly.
 
   Objects are always stored to the end of the file.  If an object is
   deleted or overwritten, the fact is recorded in the index_table but
   the space in the pickle file is not garbage collected.  This has the
   advantage that one can create a modified version of a database that
-  shares the main pickle file with an old version by copying the index
+  shares the main data file with an old version by copying the index
   file.  But it has the disadvantage that space is wasted whenever
   objects are written multiple times."""
 
-  def __init__(self, filename, index_filename, mode, primer=None):
-    """Initialize an IndexedDatabase, writing the primer if necessary.
+  def __init__(self, filename, index_filename, mode, serializer=None):
+    """Initialize an IndexedDatabase, writing the serializer if necessary.
 
-    PRIMER is only used if MODE is DB_OPEN_NEW; otherwise the primer
-    is read from the file."""
+    SERIALIZER is only used if MODE is DB_OPEN_NEW; otherwise the
+    serializer is read from the file."""
 
     self.mode = mode
     if self.mode == DB_OPEN_NEW:
@@ -260,7 +260,8 @@ class IndexedDatabase:
         index_filename, self.mode, FileOffsetPacker())
 
     if self.mode == DB_OPEN_NEW:
-      self.serializer = PrimedPickleSerializer(primer)
+      assert serializer is not None
+      self.serializer = serializer
       cPickle.dump(self.serializer, self.f, -1)
     else:
       # Read the memo from the first pickle:

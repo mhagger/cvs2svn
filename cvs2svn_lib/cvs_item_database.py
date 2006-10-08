@@ -130,6 +130,7 @@ class OldCVSItemStore:
 
 def IndexedCVSItemStore(filename, index_filename, mode):
   return IndexedStore(
-      filename, index_filename, mode, (CVSRevision, CVSBranch, CVSTag,))
+      filename, index_filename, mode,
+      PrimedPickleSerializer((CVSRevision, CVSBranch, CVSTag,)))
 
 

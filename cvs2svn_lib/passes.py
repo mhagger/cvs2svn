@@ -487,9 +487,6 @@ class InitializeChangesetsPass(Pass):
     for cvs_item in cvs_items:
       for next_id in cvs_item.get_succ_ids():
         if next_id in changeset.cvs_item_ids:
-          Log().verbose(
-              'Found an internal dependency: %x -> %x' \
-              % (cvs_item.id, next_id,)) # @@@
           dependencies.append((cvs_item.id, next_id,))
     if dependencies:
       # Sort the cvs_items in a defined order (chronological to the
@@ -513,7 +510,6 @@ class InitializeChangesetsPass(Pass):
       for i in range(1, len(breaks)):
         breaks[i] += breaks[i - 1]
       for i in range(0, len(breaks) - 1):
-        Log().verbose('%x: %d' % (cvs_items[i].id, breaks[i],)) # @@@
         if breaks[i] > best_count:
           best_i = i
           best_count = breaks[i]
@@ -524,7 +520,6 @@ class InitializeChangesetsPass(Pass):
           best_i = i
           best_count = breaks[i]
           best_time = cvs_items[i + 1].timestamp - cvs_items[i].timestamp
-      Log().verbose('%x: %d' % (cvs_items[-1].id, breaks[-1],)) # @@@
       # Reuse the old changeset.id for the first of the split changesets.
       return (
           self.break_internal_dependencies(
@@ -615,7 +610,6 @@ class BreakCVSRevisionChangesetLoopsPass(Pass):
       if best_i is None or link < best_link:
         best_i = i
         best_link = link
-    Log().verbose('Breaking index=%d (%s)' % (best_i, best_link,)) # @@@
 
     new_changesets = best_link.break_changeset(self.changeset_key_generator)
 
@@ -663,7 +657,6 @@ class BreakCVSRevisionChangesetLoopsPass(Pass):
 
     for changeset_id in changeset_ids:
       changeset = old_changesets_db[changeset_id]
-      print repr(changeset) # @@@
       self.changesets_db.store(changeset)
       if isinstance(changeset, RevisionChangeset):
         self.changeset_graph.add_changeset(changeset)
@@ -675,8 +668,6 @@ class BreakCVSRevisionChangesetLoopsPass(Pass):
     del old_changesets_db
 
     Ctx()._changesets_db = self.changesets_db
-
-    print repr(self.changeset_graph) # @@@
 
     while True:
       cycle = self.changeset_graph.find_cycle()

@@ -58,7 +58,7 @@ class SVNRepositoryMirror:
 
   You must invoke start_commit() between SVNCommits.
 
-  *** WARNING *** All path arguments to methods in this class CANNOT
+  *** WARNING *** Path arguments to methods in this class MUST NOT
       have leading or trailing slashes."""
 
   class SVNRepositoryMirrorParentMissingError(Exception):
@@ -185,8 +185,9 @@ class SVNRepositoryMirror:
     return self.new_root_key, new_contents
 
   def _open_writable_node(self, svn_path, create):
-    """Open a writable node for the path SVN_PATH, creating SVN_PATH
-    and any missing directories if CREATE is True."""
+    """Open a writable node for the path SVN_PATH.
+
+    Iff CREATE is True, create SVN_PATH and any missing directories."""
 
     parent_key, parent_contents = self._open_writable_root_node()
 
@@ -207,7 +208,7 @@ class SVNRepositoryMirror:
           self.new_nodes[this_key] = this_contents
           parent_contents[component] = this_key
       elif create:
-        # The component does not exists, so we create it.
+        # The component does not exist, so we create it.
         this_contents = { }
         this_key = self.key_generator.gen_id()
         self.new_nodes[this_key] = this_contents
@@ -215,7 +216,7 @@ class SVNRepositoryMirror:
         if i < len(components) - 1:
           self._invoke_delegates('mkdir', path_so_far)
       else:
-        # The component does not exists and we are not instructed to
+        # The component does not exist and we are not instructed to
         # create it, so we give up.
         return None, None
 
@@ -238,8 +239,7 @@ class SVNRepositoryMirror:
 
     if component in parent_contents:
       del parent_contents[component]
-      self._invoke_delegates('delete_path',
-                             path_join(parent_path, component))
+      self._invoke_delegates('delete_path', path_join(parent_path, component))
 
   def delete_path(self, svn_path, should_prune=False):
     """Delete PATH from the tree.  If SHOULD_PRUNE is true, then delete
@@ -295,30 +295,31 @@ class SVNRepositoryMirror:
     self._invoke_delegates('add_path', SVNCommitItem(cvs_rev, True))
 
   def copy_path(self, src_path, dest_path, src_revnum):
-    """Copy SRC_PATH at subversion revision number SRC_REVNUM to
-    DEST_PATH. In the youngest revision of the repository, DEST_PATH's
-    parent *must* exist, but DEST_PATH *cannot* exist.
+    """Copy SRC_PATH at subversion revision number SRC_REVNUM to DEST_PATH.
+
+    In the youngest revision of the repository, DEST_PATH's parent
+    *must* exist, but DEST_PATH *must not* exist.
 
     Return the node key and the contents of the new node at DEST_PATH
     as a dictionary."""
 
-    # get the contents of the node of our src_path
+    # Get the contents of the node of our src_path
     src_key = self._open_readonly_node(src_path, src_revnum)
     src_contents = self._get_node(src_key)
 
     # Get the parent path and the base path of the dest_path
     (dest_parent, dest_basename,) = path_split(dest_path)
     dest_parent_key, dest_parent_contents = \
-                   self._open_writable_node(dest_parent, False)
+        self._open_writable_node(dest_parent, False)
 
     if dest_parent_key is None:
       raise self.SVNRepositoryMirrorParentMissingError(
-        "Attempt to add path '%s' to repository mirror, "
-        "but its parent directory doesn't exist in the mirror." % dest_path)
+          "Attempt to add path '%s' to repository mirror, "
+          "but its parent directory doesn't exist in the mirror." % dest_path)
     elif dest_basename in dest_parent_contents:
       raise self.SVNRepositoryMirrorPathExistsError(
-        "Attempt to add path '%s' to repository mirror "
-        "when it already exists in the mirror." % dest_path)
+          "Attempt to add path '%s' to repository mirror "
+          "when it already exists in the mirror." % dest_path)
 
     dest_parent_contents[dest_basename] = src_key
     self._invoke_delegates('copy_path', src_path, dest_path, src_revnum)
@@ -328,7 +329,7 @@ class SVNRepositoryMirror:
     return src_key, src_contents
 
   def fill_symbol(self, symbol):
-    """Performs all copies necessary to create as much of the the tag
+    """Perform all copies necessary to create as much of the the tag
     or branch SYMBOL as possible given the current revision of the
     repository mirror.  SYMBOL is an instance of TypedSymbol.
 
@@ -374,11 +375,11 @@ class SVNRepositoryMirror:
           self.delete_path(del_path)
       else:
         raise self.SVNRepositoryMirrorInvalidFillOperationError(
-          "Error filling branch '%s'.\n"
-          "Received an empty SymbolFillingGuide and\n"
-          "attempted to create a branch that already exists."
-          % symbol.get_clean_name()
-          )
+            "Error filling branch '%s'.\n"
+            "Received an empty SymbolFillingGuide and\n"
+            "attempted to create a branch that already exists."
+            % symbol.get_clean_name()
+            )
 
   def _fill(self, symbol_fill, dest_prefix, dest_key, sources,
             path = None, parent_source_prefix = None,
@@ -412,8 +413,8 @@ class SVNRepositoryMirror:
 
     # Calculate scores and revnums for all sources
     for source in sources:
-      src_revnum, score = symbol_fill.get_best_revnum(source.node,
-                                                      preferred_revnum)
+      src_revnum, score = \
+          symbol_fill.get_best_revnum(source.node, preferred_revnum)
       source.set_score(score, src_revnum)
 
     # Sort the sources in descending score order so that we will make
@@ -429,16 +430,17 @@ class SVNRepositoryMirror:
     do_copy = 0
     if dest_key is None:
       do_copy = 1
-    elif prune_ok and (parent_source_prefix != copy_source.prefix or
-                       copy_source.revnum != preferred_revnum):
+    elif prune_ok and (
+          parent_source_prefix != copy_source.prefix
+          or copy_source.revnum != preferred_revnum):
       # We are about to replace the destination, so we need to remove
       # it before we perform the copy.
       self.delete_path(dest_path)
       do_copy = 1
 
     if do_copy:
-      dest_key, dest_entries = self.copy_path(src_path, dest_path,
-                                              copy_source.revnum)
+      dest_key, dest_entries = \
+          self.copy_path(src_path, dest_path, copy_source.revnum)
       prune_ok = 1
     else:
       dest_entries = self._get_node(dest_key)

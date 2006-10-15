@@ -1,0 +1,23 @@
+head	1.1;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2006.10.15.13.12.43;	author mhagger;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Add random file and .cvsignore
+@
+text
+@@

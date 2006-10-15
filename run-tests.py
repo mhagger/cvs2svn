@@ -2294,6 +2294,20 @@ def tag_with_no_revision():
   conv = ensure_conversion('tag-with-no-revision')
 
 
+def delete_cvsignore():
+  "svn:ignore should vanish when .cvsignore does"
+
+  # This is issue #81.
+
+  conv = ensure_conversion('delete-cvsignore')
+
+  wc_tree = conv.get_wc_tree()
+  props = props_for_path(wc_tree, 'trunk/proj')
+
+  if props.has_key('svn:ignore'):
+    raise svntest.Failure()
+
+
 #----------------------------------------------------------------------
 
 ########################################################################
@@ -2387,6 +2401,7 @@ test_list = [ None,
               issue_106,
               options_option,
               tag_with_no_revision,
+              XFail(delete_cvsignore),
               ]
 
 if __name__ == '__main__':

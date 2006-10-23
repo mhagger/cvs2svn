@@ -897,13 +897,14 @@ class _ProjectDataCollector:
   def _process_file(self, pathname):
     fdc = _FileDataCollector(self, self.project.get_cvs_file(pathname))
 
-    if not fdc.cvs_file.in_attic:
-      # If this file also exists in the attic, it's a fatal error
-      attic_path = os.path.join(
-          os.path.dirname(pathname), 'Attic', os.path.basename(pathname))
-      if os.path.exists(attic_path):
+    if fdc.cvs_file.in_attic:
+      # If this file also exists outside of the attic, it's a fatal error
+      non_attic_path = os.path.join(
+          os.path.dirname(os.path.dirname(pathname)),
+          os.path.basename(pathname))
+      if os.path.exists(non_attic_path):
         err = "%s: A CVS repository cannot contain both %s and %s" \
-              % (error_prefix, pathname, attic_path)
+              % (error_prefix, non_attic_path, pathname)
         sys.stderr.write(err + '\n')
         self.fatal_errors.append(err)
 

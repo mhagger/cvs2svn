@@ -176,7 +176,9 @@ class Project(object):
 
     FILENAME is the filesystem path to a '*,v' file."""
 
-    return os.path.basename(os.path.dirname(filename)) == 'Attic'
+    dirname = os.path.dirname(filename)
+    (dirname2, basename2,) = os.path.split(dirname)
+    return basename2 == 'Attic' and self.project_prefix_re.match(dirname2)
 
   def get_cvs_file(self, filename):
     """Return a CVSFile describing the file with name FILENAME.

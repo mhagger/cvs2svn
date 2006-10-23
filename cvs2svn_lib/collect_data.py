@@ -895,9 +895,9 @@ class _ProjectDataCollector:
     return symbol
 
   def _process_file(self, pathname):
-    fdc = _FileDataCollector(self, self.project.get_cvs_file(pathname))
+    cvs_file = self.project.get_cvs_file(pathname)
 
-    if self.project.is_file_in_attic(fdc.cvs_file.filename):
+    if self.project.is_file_in_attic(cvs_file.filename):
       # If this file also exists outside of the attic, it's a fatal error
       non_attic_path = os.path.join(
           os.path.dirname(os.path.dirname(pathname)),
@@ -909,11 +909,10 @@ class _ProjectDataCollector:
         self.fatal_errors.append(err)
 
     try:
-      cvs2svn_rcsparse.parse(open(pathname, 'rb'), fdc)
-    except (cvs2svn_rcsparse.common.RCSParseError, ValueError,
-            RuntimeError):
-      err = "%s: '%s' is not a valid ,v file" \
-            % (error_prefix, pathname)
+      cvs2svn_rcsparse.parse(
+          open(pathname, 'rb'), _FileDataCollector(self, cvs_file))
+    except (cvs2svn_rcsparse.common.RCSParseError, ValueError, RuntimeError):
+      err = "%s: %r is not a valid ,v file" % (error_prefix, pathname)
       sys.stderr.write(err + '\n')
       self.fatal_errors.append(err)
     except:

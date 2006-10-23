@@ -897,7 +897,7 @@ class _ProjectDataCollector:
   def _process_file(self, pathname):
     fdc = _FileDataCollector(self, self.project.get_cvs_file(pathname))
 
-    if fdc.cvs_file.in_attic:
+    if self.project.is_file_in_attic(fdc.cvs_file.filename):
       # If this file also exists outside of the attic, it's a fatal error
       non_attic_path = os.path.join(
           os.path.dirname(os.path.dirname(pathname)),

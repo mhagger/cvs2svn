@@ -190,10 +190,8 @@ class Project(object):
       (dirname, basename,) = os.path.split(filename)
       # drop the 'Attic' portion from the filename for the canonical name:
       canonical_filename = os.path.join(os.path.dirname(dirname), basename)
-      file_in_attic = True
     else:
       canonical_filename = filename
-      file_in_attic = False
 
     file_stat = os.stat(filename)
 
@@ -206,7 +204,7 @@ class Project(object):
     # mode is not known, so we temporarily set it to None.
     return CVSFile(
         None, self, filename, self._get_cvs_path(canonical_filename),
-        file_in_attic, file_executable, file_size, None
+        file_executable, file_size, None
         )
 
   def is_source(self, svn_path):

@@ -65,7 +65,8 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
       except UnicodeError:
         raise FatalError(
             "Unable to convert a path '%s' to internal encoding.\n"
-            "Consider rerunning with one or more '--encoding' parameters."
+            "Consider rerunning with one or more '--encoding' parameters or\n"
+            "with '--fallback-encoding'."
             % (path,))
     return '/'.join(pieces)
 

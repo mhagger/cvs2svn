@@ -119,7 +119,8 @@ class SVNCommit:
         Log().warn("(subversion rev %s)" % self.revnum)
 
       Log().warn(
-          "Consider rerunning with one or more '--encoding' parameters.\n")
+          "Consider rerunning with one or more '--encoding' parameters or\n"
+          "with '--fallback-encoding'.\n")
       # It's better to fall back to the original (unknown encoding) data
       # than to either 1) quit or 2) record nothing at all.
       return { 'svn:author' : self._author,

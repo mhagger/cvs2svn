@@ -68,9 +68,6 @@ def normalize_ttb_path(opt, path):
   return norm_path
 
 
-OS_SEP_PLUS_ATTIC = os.sep + 'Attic'
-
-
 class Project(object):
   """A project within a CVS repository."""
 
@@ -174,6 +171,13 @@ class Project(object):
       tail = tail[:-2]
     return tail.replace(os.sep, '/')
 
+  def is_file_in_attic(self, filename):
+    """Return True iff FILENAME is in an Attic subdirectory.
+
+    FILENAME is the filesystem path to a '*,v' file."""
+
+    return os.path.basename(os.path.dirname(filename)) == 'Attic'
+
   def get_cvs_file(self, filename):
     """Return a CVSFile describing the file with name FILENAME.
 
@@ -182,11 +186,10 @@ class Project(object):
     filled in except mode (which can only be determined by parsing the
     file)."""
 
-    (dirname, basename,) = os.path.split(filename)
-    if dirname.endswith(OS_SEP_PLUS_ATTIC):
+    if self.is_file_in_attic(filename):
+      (dirname, basename,) = os.path.split(filename)
       # drop the 'Attic' portion from the filename for the canonical name:
-      canonical_filename = os.path.join(
-          dirname[:-len(OS_SEP_PLUS_ATTIC)], basename)
+      canonical_filename = os.path.join(os.path.dirname(dirname), basename)
       file_in_attic = True
     else:
       canonical_filename = filename

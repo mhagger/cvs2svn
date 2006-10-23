@@ -1676,13 +1676,21 @@ def branch_from_default_branch():
      '(from /%(branches)s/upstream/proj/file.txt:5)', 'R'),
     ))
 
+
 def file_in_attic_too():
   "die if a file exists in and out of the attic"
   try:
-    ensure_conversion('file-in-attic-too')
+    ensure_conversion(
+        'file-in-attic-too',
+        error_re=(
+            r'A CVS repository cannot contain both '
+            r'(.*)' + re.escape(os.sep) + r'(.*) '
+            + r'and '
+            r'\1' + re.escape(os.sep) + r'Attic' + re.escape(os.sep) + r'\2'))
     raise MissingErrorException
   except svntest.Failure:
     pass
+
 
 def symbolic_name_filling_guide():
   "reveal a big bug in our SymbolFillingGuide"

@@ -899,8 +899,7 @@ class _ProjectDataCollector:
     try:
       cvs_file = self.project.get_cvs_file(pathname)
     except FileInAndOutOfAtticException, e:
-      err = "%s: A CVS repository cannot contain both %s and %s" \
-            % (error_prefix, e.non_attic_path, e.attic_path)
+      err = "%s: %s" % (error_prefix, e)
       sys.stderr.write(err + '\n')
       self.fatal_errors.append(err)
       return

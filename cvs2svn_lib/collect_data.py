@@ -37,6 +37,7 @@ from cvs2svn_lib.common import OP_DELETE
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
+from cvs2svn_lib.project import FileInAndOutOfAtticException
 from cvs2svn_lib.cvs_file import CVSFile
 from cvs2svn_lib.line_of_development import Trunk
 from cvs2svn_lib.line_of_development import Branch
@@ -895,18 +896,14 @@ class _ProjectDataCollector:
     return symbol
 
   def _process_file(self, pathname):
-    cvs_file = self.project.get_cvs_file(pathname)
-
-    if self.project.is_file_in_attic(cvs_file.filename):
-      # If this file also exists outside of the attic, it's a fatal error
-      non_attic_path = os.path.join(
-          os.path.dirname(os.path.dirname(pathname)),
-          os.path.basename(pathname))
-      if os.path.exists(non_attic_path):
-        err = "%s: A CVS repository cannot contain both %s and %s" \
-              % (error_prefix, non_attic_path, pathname)
-        sys.stderr.write(err + '\n')
-        self.fatal_errors.append(err)
+    try:
+      cvs_file = self.project.get_cvs_file(pathname)
+    except FileInAndOutOfAtticException, e:
+      err = "%s: A CVS repository cannot contain both %s and %s" \
+            % (error_prefix, e.non_attic_path, e.attic_path)
+      sys.stderr.write(err + '\n')
+      self.fatal_errors.append(err)
+      return
 
     try:
       cvs2svn_rcsparse.parse(

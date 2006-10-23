@@ -68,6 +68,17 @@ def normalize_ttb_path(opt, path):
   return norm_path
 
 
+class FileInAndOutOfAtticException(Exception):
+  def __init__(self, non_attic_path, attic_path):
+    Exception.__init__(
+        self,
+        "A CVS repository cannot contain both %s and %s"
+        % (non_attic_path, attic_path))
+
+    self.non_attic_path = non_attic_path
+    self.attic_path = attic_path
+
+
 class Project(object):
   """A project within a CVS repository."""
 
@@ -186,12 +197,20 @@ class Project(object):
     FILENAME must be a *,v file within this project.  The CVSFile is
     assigned a new unique id.  All of the CVSFile information is
     filled in except mode (which can only be determined by parsing the
-    file)."""
+    file).
+
+    Raise FileInAndOutOfAtticException if the file is in Attic, and a
+    file with the same filename appears outside of Attic."""
 
     if self.is_file_in_attic(filename):
       (dirname, basename,) = os.path.split(filename)
+      # If this file also exists outside of the attic, it's a fatal error
+      non_attic_filename = os.path.join(os.path.dirname(dirname), basename)
+      if os.path.exists(non_attic_filename):
+        raise FileInAndOutOfAtticException(non_attic_filename, filename)
+
       # drop the 'Attic' portion from the filename for the canonical name:
-      canonical_filename = os.path.join(os.path.dirname(dirname), basename)
+      canonical_filename = non_attic_filename
     else:
       canonical_filename = filename
 

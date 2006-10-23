@@ -1,0 +1,63 @@
+head	1.3;
+access;
+symbols
+	uves_2_0_0:1.3
+	UVES-1_3_0-beta1a:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2003.06.30.12.59.08;	author amodigli;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2003.06.30.12.54.52;	author amodigli;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2002.02.11.17.59.51;	author amodigli;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@uves-2.0.0-rep
+@
+text
+@      COMMON /QC_LOG/MID_S_N_CENT,OBJ_POS_CENT,
+     +               FWHM,N_CURR_ORD     !to not pass a parameter to G_PROF
+@
+
+
+1.2
+log
+@uves-2.0.0
+@
+text
+@@
+
+
+1.1
+log
+@1st release
+@
+text
+@@
+
+
+1.1
+log
+@Created
+@
+text
+@      COMMON /QC_LOG/MID_S_N_CENT,OBJ_POS_CENT,
+     +               FWHM,N_CURR_ORD     !to not pass a parameter to G_PROF
+@

@@ -2308,6 +2308,15 @@ def delete_cvsignore():
     raise svntest.Failure()
 
 
+def repeated_deltatext():
+  "ignore repeated deltatext blocks with warning"
+
+  conv = ensure_conversion(
+      'repeated-deltatext',
+      error_re=(r'.*Deltatext block for revision 1.1 appeared twice'),
+      )
+
+
 #----------------------------------------------------------------------
 
 ########################################################################
@@ -2402,6 +2411,7 @@ test_list = [ None,
               options_option,
               tag_with_no_revision,
               XFail(delete_cvsignore),
+              repeated_deltatext,
               ]
 
 if __name__ == '__main__':

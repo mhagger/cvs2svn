@@ -638,6 +638,21 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
     rev_data = self._rev_data[revision]
 
+    if rev_data.metadata_id is not None:
+      # Users have reported problems with repositories in which the
+      # deltatext block for revision 1.1 appears twice.  It is not
+      # known whether this results from a CVS/RCS bug, or from botched
+      # hand-editing of the repository.  In any case, empirically, cvs
+      # and rcs both use the first version when checking out data, so
+      # that's what we will do.  (For the record: "cvs log" fails on
+      # such a file; "rlog" prints the log message from the first
+      # block and ignores the second one.)
+      sys.stderr.write("%s: in '%s':\n"
+                       "   Deltatext block for revision %s appeared twice; "
+                       "ignoring the second occurrence.\n"
+                       % (warning_prefix, self.cvs_file.filename, revision,))
+      return
+
     branch_symbol = self.sdc.rev_to_branch_data(revision)
     if branch_symbol == None:
       branch_name = None

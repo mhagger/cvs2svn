@@ -131,6 +131,11 @@ Prevent the creation of SVN commits that affect multiple branches or
 trunk and a branch.  Instead, break such changesets into multiple
 commits, one per branch.
 .TP
+\fB--retain-conflicting-attic-files\fR
+If a file appears both inside an outside of the CVS attic, retain the
+attic version in an SVN subdirectory called `Attic'.  (Normally this
+situation is treated as a fatal error.)
+.TP
 \fB--symbol-transform\fR=\fIpattern\fR:\fIreplacement\fR
 Transform RCS/CVS symbol names before entering them into Subversion.
 \fIpattern\fR is a Python regexp pattern and \fIreplacement\fR is a

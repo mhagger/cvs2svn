@@ -1692,6 +1692,16 @@ def file_in_attic_too():
     pass
 
 
+def retain_file_in_attic_too():
+  "test --retain-conflicting-attic-files option"
+  conv = ensure_conversion(
+      'file-in-attic-too', args=['--retain-conflicting-attic-files'])
+  if not conv.path_exists('trunk', 'file.txt'):
+    raise svntest.Failure
+  if not conv.path_exists('trunk', 'Attic', 'file.txt'):
+    raise svntest.Failure
+
+
 def symbolic_name_filling_guide():
   "reveal a big bug in our SymbolFillingGuide"
   # This will fail if the bug is present
@@ -2371,7 +2381,8 @@ test_list = [ None,
               resync_bug,
               branch_from_default_branch,
               file_in_attic_too,
-              symbolic_name_filling_guide,          # 40
+              retain_file_in_attic_too,             # 40
+              symbolic_name_filling_guide,
               eol_mime,
               keywords,
               ignore,
@@ -2380,8 +2391,8 @@ test_list = [ None,
               questionable_tag_names,
               revision_reorder_bug,
               exclude,
-              vendor_branch_delete_add,
-              resync_pass2_pull_forward,            # 50
+              vendor_branch_delete_add,             # 50
+              resync_pass2_pull_forward,
               native_eol,
               double_fill,
               resync_pass2_push_backward,
@@ -2390,8 +2401,8 @@ test_list = [ None,
               nested_ttb_directories,
               prune_with_care_variants,
               simple_tags_variants,
-              phoenix_branch_variants,
-              no_trunk_prune_variants,              # 60
+              phoenix_branch_variants,              # 60
+              no_trunk_prune_variants,
               tagged_branch_and_trunk_variants,
               branch_delete_first_variants,
               empty_trunk_variants,
@@ -2400,8 +2411,8 @@ test_list = [ None,
               auto_props,
               ctrl_char_in_filename,
               commit_dependencies,
-              show_help_passes,
-              multiple_tags,                        # 70
+              show_help_passes,                     # 70
+              multiple_tags,
               double_branch_delete,
               symbol_mismatches,
               force_symbols,
@@ -2410,8 +2421,8 @@ test_list = [ None,
               unblock_blocked_excludes,
               regexp_force_symbols,
               heuristic_symbol_default,
-              branch_symbol_default,
-              tag_symbol_default,                   # 80
+              branch_symbol_default,                # 80
+              tag_symbol_default,
               symbol_transform,
               issue_99,
               issue_100,

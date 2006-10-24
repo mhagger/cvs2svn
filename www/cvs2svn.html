@@ -546,6 +546,13 @@ this:</p>
   </tr>
 
   <tr>
+    <td align="right"><tt>--retain-conflicting-attic-files</tt></td>
+    <td>If a file appears both inside an outside of the CVS attic,
+      retain the attic version in an SVN subdirectory called `Attic'.
+      (Normally this situation is treated as a fatal error.)</td>
+  </tr>
+
+  <tr>
     <td align="right"><tt>--symbol-transform=PAT:SUB</tt></td>
     <td><p>Transform RCS/CVS symbol names before entering them into
       Subversion.  PAT is a Python regexp pattern and SUB is a

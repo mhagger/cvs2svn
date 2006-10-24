@@ -358,6 +358,15 @@ a backup</b> before starting.  Never run cvs2svn on a live CVS
 repository--always work on a copy of your repository.</p>
 
 <ol>
+  <li>Restart the conversion with the
+    <tt>--retain-conflicting-attic-files</tt> option.  This causes the
+    non-attic and attic versions of the file to be converted
+    separately, with the <tt>Attic</tt> version stored to a new
+    subdirectory as <tt>path/Attic/file.txt</tt>.  This approach
+    avoids losing any history, but by moving the <tt>Attic</tt>
+    version of the file to a different subdirectory it might cause
+    historical revisions to be broken.</li>
+
   <li>Remove the <tt>Attic</tt> version of the file and restart the
     conversion.  Sometimes it represents an old version of the file
     that was deleted long ago, and it won't be missed.  But this
@@ -381,17 +390,6 @@ repository--always work on a copy of your repository.</p>
     <pre>
       # You did make a backup, right?
       $ rm repo/path/file.txt,v
-    </pre></li>
-
-  <li>Rename the <tt>Attic</tt> version of the file and restart the
-    conversion.  This avoids losing history, but it changes the name
-    of the <tt>Attic</tt> version of the file to
-    <tt>file-from-Attic.txt</tt> whenever it appeared, and might
-    thereby cause revisions to be broken.
-
-    <pre>
-      # You did make a backup, right?
-      $ mv repo/path/Attic/file.txt,v repo/path/Attic/file-from-Attic.txt,v
     </pre></li>
 
   <li>Rename the non-<tt>Attic</tt> version of the file and restart

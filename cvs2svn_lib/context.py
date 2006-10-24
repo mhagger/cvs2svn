@@ -60,6 +60,7 @@ class Ctx:
     self.projects = []
     self.cross_project_commits = True
     self.cross_branch_commits = True
+    self.retain_conflicting_attic_files = False
 
   def add_project(self, project):
     """Add a project to be converted."""

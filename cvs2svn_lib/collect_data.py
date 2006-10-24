@@ -899,10 +899,17 @@ class _ProjectDataCollector:
     try:
       cvs_file = self.project.get_cvs_file(pathname)
     except FileInAndOutOfAtticException, e:
-      err = "%s: %s" % (error_prefix, e)
-      sys.stderr.write(err + '\n')
-      self.fatal_errors.append(err)
-      return
+      if Ctx().retain_conflicting_attic_files:
+        sys.stdout.write(
+            "%s: %s;\n"
+            "   storing the latter into 'Attic' subdirectory.\n"
+            % (warning_prefix, e))
+        cvs_file = self.project.get_cvs_file(pathname, leave_in_attic=True)
+      else:
+        err = "%s: %s" % (error_prefix, e)
+        sys.stderr.write(err + '\n')
+        self.fatal_errors.append(err)
+        return
 
     try:
       cvs2svn_rcsparse.parse(

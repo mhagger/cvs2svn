@@ -96,6 +96,9 @@ USAGE: %(progname)s [-v] [-s svn-repos-path] [-p pass] cvs-repos-path
   --symbol-default=OPT choose how ambiguous symbols are converted.  OPT is
                        "branch", "tag", or "heuristic", or "strict" (default)
   --no-cross-branch-commits Prevent the creation of cross-branch commits
+  --retain-conflicting-attic-files if a file appears both in and out of the
+                       CVS Attic, then leave the attic version in a SVN
+                       directory called "Attic".
   --symbol-transform=P:S transform symbol names from P to S where P and S
                        use Python regexp and reference syntax respectively
   --username=NAME      username for cvs2svn-synthesized commits
@@ -155,6 +158,7 @@ class RunOptions:
           "encoding=",
           "force-branch=", "force-tag=", "exclude=", "symbol-default=",
           "no-cross-branch-commits",
+          "retain-conflicting-attic-files",
           "symbol-transform=",
           "username=",
           "fs-type=", "bdb-txn-nosync",
@@ -308,6 +312,8 @@ class RunOptions:
         symbol_strategy_default = value
       elif opt == '--no-cross-branch-commits':
         ctx.cross_branch_commits = False
+      elif opt == '--retain-conflicting-attic-files':
+        ctx.retain_conflicting_attic_files = True
       elif opt == '--symbol-transform':
         [pattern, replacement] = value.split(":")
         try:

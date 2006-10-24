@@ -191,7 +191,7 @@ class Project(object):
     (dirname2, basename2,) = os.path.split(dirname)
     return basename2 == 'Attic' and self.project_prefix_re.match(dirname2)
 
-  def get_cvs_file(self, filename):
+  def get_cvs_file(self, filename, leave_in_attic=False):
     """Return a CVSFile describing the file with name FILENAME.
 
     FILENAME must be a *,v file within this project.  The CVSFile is
@@ -199,10 +199,14 @@ class Project(object):
     filled in except mode (which can only be determined by parsing the
     file).
 
-    Raise FileInAndOutOfAtticException if the file is in Attic, and a
-    file with the same filename appears outside of Attic."""
+    If LEAVE_IN_ATTIC is True, then leave the 'Attic' component in the
+    filename.  Otherwise, raise FileInAndOutOfAtticException if the
+    file is in Attic, and a file with the same filename appears
+    outside of Attic."""
 
-    if self.is_file_in_attic(filename):
+    if leave_in_attic or not self.is_file_in_attic(filename):
+      canonical_filename = filename
+    else:
       (dirname, basename,) = os.path.split(filename)
       # If this file also exists outside of the attic, it's a fatal error
       non_attic_filename = os.path.join(os.path.dirname(dirname), basename)
@@ -211,8 +215,6 @@ class Project(object):
 
       # drop the 'Attic' portion from the filename for the canonical name:
       canonical_filename = non_attic_filename
-    else:
-      canonical_filename = filename
 
     file_stat = os.stat(filename)
 

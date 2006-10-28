@@ -76,7 +76,7 @@ class RevisionRecorder:
     raise NotImplementedError()
 
   def finish(self):
-    """Finish up any cleanup related to the previous file."""
+    """All recording is done; clean up."""
 
     raise NotImplementedError()
 

@@ -28,7 +28,6 @@ from cvs2svn_lib.boolean import *
 from cvs2svn_lib.set_support import *
 from cvs2svn_lib import config
 from cvs2svn_lib.context import Ctx
-from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import FatalException
 from cvs2svn_lib.common import DB_OPEN_NEW
 from cvs2svn_lib.common import DB_OPEN_READ
@@ -37,17 +36,11 @@ from cvs2svn_lib.log import Log
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.cvs_file_database import CVSFileDatabase
 from cvs2svn_lib.metadata_database import MetadataDatabase
-from cvs2svn_lib.symbol import BranchSymbol
-from cvs2svn_lib.symbol import TagSymbol
-from cvs2svn_lib.symbol import ExcludedSymbol
 from cvs2svn_lib.symbol_database import SymbolDatabase
 from cvs2svn_lib.symbol_database import create_symbol_database
-from cvs2svn_lib.line_of_development import Branch
 from cvs2svn_lib.symbol_statistics import SymbolStatistics
 from cvs2svn_lib.cvs_item import CVSRevision
 from cvs2svn_lib.cvs_item import CVSSymbol
-from cvs2svn_lib.cvs_item import CVSBranch
-from cvs2svn_lib.cvs_item import CVSTag
 from cvs2svn_lib.cvs_item_database import NewCVSItemStore
 from cvs2svn_lib.cvs_item_database import OldCVSItemStore
 from cvs2svn_lib.cvs_item_database import IndexedCVSItemStore
@@ -234,93 +227,6 @@ class FilterSymbolsPass(Pass):
     self._register_temp_file_needed(config.CVS_FILES_DB)
     self._register_temp_file_needed(config.CVS_ITEMS_STORE)
 
-  def filter_excluded_symbols(self, cvs_file_items):
-    """Delete any excluded symbols and references to them."""
-
-    for cvs_item in cvs_file_items.values():
-      if isinstance(cvs_item, CVSRevision):
-        # Skip this entire revision if it's on an excluded branch
-        if isinstance(cvs_item.lod, Branch):
-          symbol = cvs_item.lod.symbol
-          if isinstance(symbol, ExcludedSymbol):
-            # Delete this item.
-            del cvs_file_items[cvs_item.id]
-            # There are only two other possible references to this
-            # item from CVSRevisions outside of the to-be-deleted
-            # branch:
-
-            # Is if this is the first commit on the branch, it is
-            # listed in the branch_commit_ids of the CVSRevision from
-            # which the branch sprouted.
-            if cvs_item.first_on_branch_id is not None:
-              prev = cvs_file_items.get(cvs_item.prev_id)
-              if prev is not None:
-                prev.branch_commit_ids.remove(cvs_item.id)
-
-            # If it is the last default revision on a non-trunk
-            # default branch followed by a 1.2 revision, then the 1.2
-            # revision depends on this one.
-            if cvs_item.default_branch_next_id is not None:
-              next = cvs_file_items.get(cvs_item.default_branch_next_id)
-              if next is not None:
-                assert next.default_branch_prev_id == cvs_item.id
-                next.default_branch_prev_id = None
-      elif isinstance(cvs_item, CVSSymbol):
-        # Skip this symbol if it is to be excluded
-        symbol = cvs_item.symbol
-        if isinstance(symbol, ExcludedSymbol):
-          del cvs_file_items[cvs_item.id]
-          # A CVSSymbol is the successor of the CVSRevision that it
-          # springs from.  If that revision still exists, delete
-          # this symbol from its branch_ids:
-          cvs_revision = cvs_file_items.get(cvs_item.rev_id)
-          if cvs_revision is None:
-            # It has already been deleted; do nothing:
-            pass
-          elif isinstance(cvs_item, CVSBranch):
-            cvs_revision.branch_ids.remove(cvs_item.id)
-          elif isinstance(cvs_item, CVSTag):
-            cvs_revision.tag_ids.remove(cvs_item.id)
-      else:
-        raise RuntimeError('Unknown cvs item type')
-
-  def mutate_symbols(self, cvs_file_items):
-    """Force symbols to be tags/branches based on self.symbol_db."""
-
-    for cvs_item in cvs_file_items.values():
-      if isinstance(cvs_item, CVSRevision):
-        # This CVSRevision may be affected by the mutation of any
-        # CVSSymbols that it references, but there is nothing to do
-        # here directly.
-        pass
-      elif isinstance(cvs_item, CVSSymbol):
-        symbol = cvs_item.symbol
-        if isinstance(cvs_item, CVSBranch) and isinstance(symbol, TagSymbol):
-          # Mutate the branch into a tag.
-          if cvs_item.next_id is not None:
-            # This shouldn't happen because it was checked in
-            # CollateSymbolsPass:
-            raise FatalError('Attempt to exclude a branch with commits.')
-          cvs_item = CVSTag(
-              cvs_item.id, cvs_item.cvs_file, cvs_item.symbol,
-              cvs_item.rev_id)
-          cvs_file_items[cvs_item.id] = cvs_item
-          cvs_revision = cvs_file_items[cvs_item.rev_id]
-          cvs_revision.branch_ids.remove(cvs_item.id)
-          cvs_revision.tag_ids.append(cvs_item.id)
-        elif isinstance(cvs_item, CVSTag) \
-               and isinstance(symbol, BranchSymbol):
-          # Mutate the tag into a branch.
-          cvs_item = CVSBranch(
-              cvs_item.id, cvs_item.cvs_file, cvs_item.symbol,
-              None, cvs_item.rev_id, None)
-          cvs_file_items[cvs_item.id] = cvs_item
-          cvs_revision = cvs_file_items[cvs_item.rev_id]
-          cvs_revision.tag_ids.remove(cvs_item.id)
-          cvs_revision.branch_ids.append(cvs_item.id)
-      else:
-        raise RuntimeError('Unknown cvs item type')
-
   def run(self, stats_keeper):
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
     Ctx()._symbol_db = SymbolDatabase()
@@ -341,8 +247,8 @@ class FilterSymbolsPass(Pass):
 
     # Process the cvs items store one file at a time:
     for cvs_file_items in self.cvs_item_store.iter_cvs_file_items():
-      self.filter_excluded_symbols(cvs_file_items)
-      self.mutate_symbols(cvs_file_items)
+      cvs_file_items.filter_excluded_symbols()
+      cvs_file_items.mutate_symbols()
 
       # Store whatever is left to the new file:
       for cvs_item in cvs_file_items.values():

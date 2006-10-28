@@ -30,6 +30,7 @@ from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.cvs_item import CVSRevision
 from cvs2svn_lib.cvs_item import CVSBranch
 from cvs2svn_lib.cvs_item import CVSTag
+from cvs2svn_lib.cvs_file_items import CVSFileItems
 from cvs2svn_lib.serializer import PrimedPickleSerializer
 from cvs2svn_lib.database import IndexedStore
 
@@ -90,14 +91,16 @@ class OldCVSItemStore:
     # Read the memo from the first pickle:
     self.serializer = cPickle.load(self.f)
 
+    # A list of the CVSItems from the current file, in the order that
+    # they were read.
     self.current_file_items = []
-    self.current_file_map = {}
+
+    # The CVSFileItems instance for the current file.
+    self.cvs_file_items = None
 
   def _read_file_chunk(self):
     self.current_file_items = self.serializer.loadf(self.f)
-    self.current_file_map = {}
-    for item in self.current_file_items:
-      self.current_file_map[item.id] = item
+    self.cvs_file_items = CVSFileItems(self.current_file_items)
 
   def __iter__(self):
     while True:
@@ -108,21 +111,21 @@ class OldCVSItemStore:
       for item in self.current_file_items:
         yield item
 
-  def iter_file_item_maps(self):
-    """Iterate through the items, one file at a time.
+  def iter_cvs_file_items(self):
+    """Iterate through the CVSFileItems instances, one file at a time.
 
-    Each time yield a map { id : CVSItem } for one CVSFile."""
+    Each time yield a CVSFileItems instance for one CVSFile."""
 
     while True:
       try:
         self._read_file_chunk()
       except EOFError:
         return
-      yield self.current_file_map.copy()
+      yield self.cvs_file_items.copy()
 
   def __getitem__(self, id):
     try:
-      return self.current_file_map[id]
+      return self.cvs_file_items[id]
     except KeyError:
       raise FatalError(
           'Key %r not found within items currently accessible.' % (id,))

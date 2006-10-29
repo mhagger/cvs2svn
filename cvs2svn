@@ -50,9 +50,11 @@ Ctx().VERSION = VERSION
 pass_manager = PassManager([
   passes.CollectRevsPass(),
   passes.CollateSymbolsPass(),
-  #passes.CheckDependenciesPass(config.CVS_ITEMS_STORE),
+  #passes.CheckItemStoreDependenciesPass(config.CVS_ITEMS_STORE),
   passes.FilterSymbolsPass(),
-  #passes.CheckDependenciesPass(config.CVS_ITEMS_FILTERED_STORE),
+  #passes.CheckIndexedItemStoreDependenciesPass(
+  #    config.CVS_ITEMS_FILTERED_STORE,
+  #    config.CVS_ITEMS_FILTERED_INDEX_TABLE),
   passes.SortRevisionSummaryPass(),
   passes.SortSymbolSummaryPass(),
   passes.InitializeChangesetsPass(),

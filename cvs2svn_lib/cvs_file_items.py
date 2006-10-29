@@ -17,6 +17,8 @@
 """This module contains a class to manage the CVSItems related to one file."""
 
 
+from __future__ import generators
+
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.symbol import BranchSymbol
@@ -73,55 +75,99 @@ class CVSFileItems(object):
   def copy(self):
     return CVSFileItems(self.values())
 
+  def iter_lods(self, cvs_branch_id=None):
+    """Iterate over LinesOfDevelopment in this file, in depth-first order.
+
+    For each LOD, yield tuples (CVSBranch, [CVSRevision], [CVSBranch],
+    [CVSTag]).  CVSBranch is the branch being described, or None for
+    trunk.  The remaining elements are lists of CVSRevisions,
+    CVSBranches, and CVSTags based in this branch.
+
+    If cvs_branch_id is specified, it should be the id of a CVSBranch
+    item, which will be used as the starting point of the traversal
+    (i.e., only the specified branch and its sub-branches will be
+    traversed).  Otherwise the traversal will start at the root node."""
+
+    if cvs_branch_id is None:
+      cvs_branch = None
+      id = self.root_id
+    else:
+      cvs_branch = self[cvs_branch_id]
+      id = cvs_branch.next_id
+
+    cvs_revisions = []
+    cvs_branches = []
+    cvs_tags = []
+
+    while id is not None:
+      cvs_rev = self[id]
+      cvs_revisions.append(cvs_rev)
+
+      for branch_id in cvs_rev.branch_ids[:]:
+        # Recurse into the branch:
+        for lod_info in self.iter_lods(branch_id):
+          yield lod_info
+        try:
+          cvs_branches.append(self[branch_id])
+        except KeyError:
+          # Branch must have been deleted; just ignore it.
+          pass
+      for tag_id in cvs_rev.tag_ids:
+        cvs_tags.append(self[tag_id])
+
+      id = cvs_rev.next_id
+
+    yield (cvs_branch, cvs_revisions, cvs_branches, cvs_tags)
+
   def filter_excluded_symbols(self):
     """Delete any excluded symbols and references to them."""
 
-    for cvs_item in self.values():
-      if isinstance(cvs_item, CVSRevision):
-        # Skip this entire revision if it's on an excluded branch
-        if isinstance(cvs_item.lod, Branch):
-          symbol = cvs_item.lod.symbol
-          if isinstance(symbol, ExcludedSymbol):
-            # Delete this item.
-            del self[cvs_item.id]
-            # There are only two other possible references to this
-            # item from CVSRevisions outside of the to-be-deleted
-            # branch:
+    for (cvs_branch, cvs_revisions, cvs_branches, cvs_tags) \
+            in self.iter_lods():
+      # Delete any excluded tags:
+      for cvs_tag in cvs_tags[:]:
+        if isinstance(cvs_tag.symbol, ExcludedSymbol):
+          del self[cvs_tag.id]
 
-            # Is if this is the first commit on the branch, it is
-            # listed in the branch_commit_ids of the CVSRevision from
-            # which the branch sprouted.
-            if cvs_item.first_on_branch_id is not None:
-              prev = self.get(cvs_item.prev_id)
-              if prev is not None:
-                prev.branch_commit_ids.remove(cvs_item.id)
+          # A CVSTag is the successor of the CVSRevision that it
+          # sprouts from.  Delete this tag from that revision's
+          # tag_ids:
+          self[cvs_tag.rev_id].tag_ids.remove(cvs_tag.id)
 
-            # If it is the last default revision on a non-trunk
+          cvs_tags.remove(cvs_tag)
+
+      # Delete the whole branch if it is to be excluded:
+      if cvs_branch is None:
+        continue
+
+      if isinstance(cvs_branch.symbol, ExcludedSymbol):
+        # A symbol can only be excluded if no other symbols spring
+        # from it.  This was already checked in CollateSymbolsPass, so
+        # these conditions should already be satisfied.
+        assert not cvs_branches
+        assert not cvs_tags
+
+        del self[cvs_branch.id]
+
+        if cvs_revisions:
+          # The first CVSRevision on a branch has to be detached from
+          # the revision from which the branch sprang:
+          cvs_rev = cvs_revisions[0]
+          self[cvs_rev.prev_id].branch_commit_ids.remove(cvs_rev.id)
+          for cvs_rev in cvs_revisions:
+            del self[cvs_rev.id]
+            # If cvs_rev is the last default revision on a non-trunk
             # default branch followed by a 1.2 revision, then the 1.2
             # revision depends on this one.
-            if cvs_item.default_branch_next_id is not None:
-              next = self.get(cvs_item.default_branch_next_id)
-              if next is not None:
-                assert next.default_branch_prev_id == cvs_item.id
-                next.default_branch_prev_id = None
-      elif isinstance(cvs_item, CVSSymbol):
-        # Skip this symbol if it is to be excluded
-        symbol = cvs_item.symbol
-        if isinstance(symbol, ExcludedSymbol):
-          del self[cvs_item.id]
-          # A CVSSymbol is the successor of the CVSRevision that it
-          # springs from.  If that revision still exists, delete
-          # this symbol from its branch_ids:
-          cvs_revision = self.get(cvs_item.rev_id)
-          if cvs_revision is None:
-            # It has already been deleted; do nothing:
-            pass
-          elif isinstance(cvs_item, CVSBranch):
-            cvs_revision.branch_ids.remove(cvs_item.id)
-          elif isinstance(cvs_item, CVSTag):
-            cvs_revision.tag_ids.remove(cvs_item.id)
-      else:
-        raise RuntimeError('Unknown cvs item type')
+            if cvs_rev.default_branch_next_id is not None:
+              next = self[cvs_rev.default_branch_next_id]
+              assert next.default_branch_prev_id == cvs_rev.id
+              next.default_branch_prev_id = None
+
+        # A CVSBranch is the successor of the CVSRevision that it
+        # sprouts from.  Delete this branch from that revision's
+        # branch_ids:
+        self[cvs_branch.rev_id].branch_ids.remove(cvs_branch.id)
 
   def mutate_symbols(self):
     """Force symbols to be tags/branches based on self.symbol_db."""

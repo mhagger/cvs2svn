@@ -27,6 +27,7 @@ from cvs2svn_lib.process import check_command_runs
 from cvs2svn_lib.process import SimplePopen
 from cvs2svn_lib.process import CommandFailedException
 from cvs2svn_lib.revision_recorder import NullRevisionRecorder
+from cvs2svn_lib.revision_excluder import NullRevisionExcluder
 
 
 class PipeStream(object):
@@ -64,6 +65,16 @@ class RevisionReader(object):
 
     raise NotImplementedError
 
+  def get_revision_excluder(self):
+    """Return a RevisionExcluder instance to collect exclusion info.
+
+    The object returned by this method will have its callback methods
+    called as branches are excluded.  If such information is not
+    needed, this method can return an instance of
+    NullRevisionExcluder."""
+
+    raise NotImplementedError
+
   def get_content_stream(self, cvs_rev, suppress_keyword_substitution=False):
     """Return a file-like object from which the contents of CVS_REV
     can be read.
@@ -88,6 +99,9 @@ class RCSRevisionReader(RevisionReader):
 
   def get_revision_recorder(self):
     return NullRevisionRecorder()
+
+  def get_revision_excluder(self):
+    return NullRevisionExcluder()
 
   def get_content_stream(self, cvs_rev, suppress_keyword_substitution=False):
     pipe_cmd = [ Ctx().co_executable, '-q', '-x,v', '-p' + cvs_rev.rev ]
@@ -120,6 +134,9 @@ class CVSRevisionReader(RevisionReader):
 
   def get_revision_recorder(self):
     return NullRevisionRecorder()
+
+  def get_revision_excluder(self):
+    return NullRevisionExcluder()
 
   def get_content_stream(self, cvs_rev, suppress_keyword_substitution=False):
     project = cvs_rev.cvs_file.project

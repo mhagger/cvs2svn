@@ -280,6 +280,7 @@ class FilterSymbolsPass(Pass):
     self._register_temp_file_needed(config.SYMBOL_DB)
     self._register_temp_file_needed(config.CVS_FILES_DB)
     self._register_temp_file_needed(config.CVS_ITEMS_STORE)
+    Ctx().revision_reader.get_revision_excluder().register_artifacts(self)
 
   def run(self, stats_keeper):
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
@@ -297,11 +298,14 @@ class FilterSymbolsPass(Pass):
         artifact_manager.get_temp_file(config.CVS_SYMBOLS_SUMMARY_DATAFILE),
         'w')
 
+    revision_excluder = Ctx().revision_reader.get_revision_excluder()
+
     Log().quiet("Filtering out excluded symbols and summarizing items...")
 
+    revision_excluder.start()
     # Process the cvs items store one file at a time:
     for cvs_file_items in self.cvs_item_store.iter_cvs_file_items():
-      cvs_file_items.filter_excluded_symbols()
+      cvs_file_items.filter_excluded_symbols(revision_excluder)
       cvs_file_items.mutate_symbols()
 
       # Store whatever is left to the new file:
@@ -316,6 +320,7 @@ class FilterSymbolsPass(Pass):
           symbols_summary_file.write(
               '%x %x\n' % (cvs_item.symbol.id, cvs_item.id,))
 
+    revision_excluder.finish()
     cvs_items_db.close()
     revs_summary_file.close()
     symbols_summary_file.close()

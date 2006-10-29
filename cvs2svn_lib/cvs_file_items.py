@@ -39,6 +39,8 @@ class CVSFileItems(object):
     # The CVSItem.id of the root CVSItem:
     self.root_id = None
 
+    self.cvs_file = cvs_items[0].cvs_file
+
     for cvs_item in cvs_items:
       self._cvs_items[cvs_item.id] = cvs_item
       if not cvs_item.get_pred_ids():
@@ -119,14 +121,24 @@ class CVSFileItems(object):
 
     yield (cvs_branch, cvs_revisions, cvs_branches, cvs_tags)
 
-  def filter_excluded_symbols(self):
-    """Delete any excluded symbols and references to them."""
+  def filter_excluded_symbols(self, revision_excluder):
+    """Delete any excluded symbols and references to them.
 
+    Call the revision_excluder's callback methods to let it know what
+    is being excluded."""
+
+    revision_excluder_started = False
     for (cvs_branch, cvs_revisions, cvs_branches, cvs_tags) \
             in self.iter_lods():
       # Delete any excluded tags:
       for cvs_tag in cvs_tags[:]:
         if isinstance(cvs_tag.symbol, ExcludedSymbol):
+          # Notify the revision excluder:
+          if not revision_excluder_started:
+            revision_excluder.start_file(self.cvs_file)
+            revision_excluder_started = True
+          revision_excluder.exclude_tag(cvs_tag)
+
           del self[cvs_tag.id]
 
           # A CVSTag is the successor of the CVSRevision that it
@@ -146,6 +158,12 @@ class CVSFileItems(object):
         # these conditions should already be satisfied.
         assert not cvs_branches
         assert not cvs_tags
+
+        # Notify the revision excluder:
+        if not revision_excluder_started:
+          revision_excluder.start_file(self.cvs_file)
+          revision_excluder_started = True
+        revision_excluder.exclude_branch(cvs_branch, cvs_revisions)
 
         del self[cvs_branch.id]
 
@@ -168,6 +186,9 @@ class CVSFileItems(object):
         # sprouts from.  Delete this branch from that revision's
         # branch_ids:
         self[cvs_branch.rev_id].branch_ids.remove(cvs_branch.id)
+
+    if revision_excluder_started:
+      revision_excluder.finish_file()
 
   def mutate_symbols(self):
     """Force symbols to be tags/branches based on self.symbol_db."""

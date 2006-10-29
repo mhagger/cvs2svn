@@ -110,8 +110,16 @@ the _FileDataCollector class instance.
 
 Next, the parser encounters the *real* revision data, which has the
 log messages and file contents.  For each revision, it invokes
-_FileDataCollector.set_revision_info(), which writes a record to
-'cvs2svn-cvs-items.pck'.
+_FileDataCollector.set_revision_info(), which sets some more fields in
+_RevisionData.  It also invokes RevisionRecorder.record_text(), which
+gives the RevisionRecorder the chance to record the file text if
+desired.  record_test() is allowed to return a token, which is carried
+along with the CVSRevision data and can be used by RevisionReader to
+retrieve the text in OutputPass.
+
+When the parser is done with the file, it calls
+_FileDataCollector.parse_completed(), which does some bookkeeping then
+writes a record for each CVSItem to 'cvs2svn-cvs-items.pck'.
 
 That's it -- the RCS file is done.
 

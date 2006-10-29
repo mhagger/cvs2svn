@@ -73,7 +73,8 @@ class CVSRevision(CVSItem):
                lod, first_on_branch_id, default_branch_revision,
                default_branch_prev_id, default_branch_next_id,
                tag_ids, branch_ids, branch_commit_ids,
-               closed_symbol_ids):
+               closed_symbol_ids,
+               revision_recorder_token):
     """Initialize a new CVSRevision object.
 
     Arguments:
@@ -103,6 +104,8 @@ class CVSRevision(CVSItem):
                              in this revision
        CLOSED_SYMBOL_IDS --> (list of int) ids of all symbols closed by
                              this revision
+       REVISION_RECORDER_TOKEN --> (arbitrary) a token that can be used by
+                                   RevisionRecorder/RevisionReader.
     """
 
     CVSItem.__init__(self, id, cvs_file)
@@ -123,6 +126,7 @@ class CVSRevision(CVSItem):
     self.branch_ids = branch_ids
     self.branch_commit_ids = branch_commit_ids
     self.closed_symbol_ids = closed_symbol_ids
+    self.revision_recorder_token = revision_recorder_token
 
   def _get_cvs_path(self):
     return self.cvs_file.cvs_path
@@ -158,6 +162,7 @@ class CVSRevision(CVSItem):
         self.default_branch_prev_id, self.default_branch_next_id,
         self.tag_ids, self.branch_ids, self.branch_commit_ids,
         self.closed_symbol_ids,
+        self.revision_recorder_token,
         )
 
   def __setstate__(self, data):
@@ -172,7 +177,8 @@ class CVSRevision(CVSItem):
      self.default_branch_revision,
      self.default_branch_prev_id, self.default_branch_next_id,
      self.tag_ids, self.branch_ids, self.branch_commit_ids,
-     self.closed_symbol_ids) = data
+     self.closed_symbol_ids,
+     self.revision_recorder_token) = data
     self.cvs_file = Ctx()._cvs_file_db.get_file(cvs_file_id)
     if lod_id is None:
       self.lod = Trunk()

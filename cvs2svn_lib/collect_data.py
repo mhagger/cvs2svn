@@ -172,6 +172,11 @@ class _RevisionData:
     # this revision.
     self.deltatext_exists = None
 
+    # A token that may be returned from
+    # RevisionRecorder.record_text().  It can be used by
+    # RevisionReader to obtain the text again.
+    self.revision_recorder_token = None
+
   def get_first_on_branch_id(self):
     return self.parent_branch_data and self.parent_branch_data.id
 
@@ -674,7 +679,8 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
     self._revision_data.append(rev_data)
 
-    self.collect_data.revision_recorder.record_text(rev_data, log, text)
+    self.revision_recorder_token = \
+        self.collect_data.revision_recorder.record_text(rev_data, log, text)
 
   def _process_default_branch_revisions(self):
     """Process any non-trunk default branch revisions.
@@ -794,7 +800,8 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         self._get_rev_id(rev_data.default_branch_prev),
         self._get_rev_id(rev_data.default_branch_next),
         tag_ids, branch_ids, branch_commit_ids,
-        closed_symbol_ids)
+        closed_symbol_ids,
+        rev_data.revision_recorder_token)
     rev_data.cvs_rev = cvs_rev
     self.collect_data.add_cvs_item(cvs_rev)
 

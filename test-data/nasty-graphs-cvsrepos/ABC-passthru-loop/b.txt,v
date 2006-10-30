@@ -1,0 +1,57 @@
+head	1.3;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2006.10.30.22.11.24;	author mhagger;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2006.10.30.22.11.23;	author mhagger;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2006.10.30.22.11.22;	author mhagger;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@ABC-passthru-loop-A
+@
+text
+@1.3
+@
+
+
+1.2
+log
+@ABC-passthru-loop-C
+@
+text
+@d1 1
+a1 1
+1.2
+@
+
+
+1.1
+log
+@ABC-passthru-loop-B
+@
+text
+@d1 1
+a1 1
+1.1
+@
+

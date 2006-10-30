@@ -2335,7 +2335,13 @@ def repeated_deltatext():
       )
 
 
-#----------------------------------------------------------------------
+def nasty_graphs():
+  "process some nasty dependency graphs"
+
+  # It's not how well the bear can dance, but that the bear can dance
+  # at all:
+  conv = ensure_conversion('nasty-graphs')
+
 
 ########################################################################
 # Run the tests
@@ -2431,6 +2437,7 @@ test_list = [ None,
               tag_with_no_revision,
               XFail(delete_cvsignore),
               repeated_deltatext,
+              nasty_graphs,                         # 90
               ]
 
 if __name__ == '__main__':

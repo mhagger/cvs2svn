@@ -1,0 +1,73 @@
+head	1.4;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.4
+date	2006.10.30.22.11.47;	author mhagger;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2006.10.30.22.11.46;	author mhagger;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2006.10.30.22.11.45;	author mhagger;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2006.10.30.22.11.44;	author mhagger;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.4
+log
+@AB-double-passthru-loop-B
+@
+text
+@1.4
+@
+
+
+1.3
+log
+@AB-double-passthru-loop-A
+@
+text
+@d1 1
+a1 1
+1.3
+@
+
+
+1.2
+log
+@AB-double-passthru-loop-D
+@
+text
+@d1 1
+a1 1
+1.2
+@
+
+
+1.1
+log
+@AB-double-passthru-loop-C
+@
+text
+@d1 1
+a1 1
+1.1
+@
+

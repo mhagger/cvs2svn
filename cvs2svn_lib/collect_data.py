@@ -472,9 +472,11 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
           % (self.cvs_file.filename, revision,))
 
     # Record basic information about the revision:
-    self._rev_data[revision] = _RevisionData(
+    rev_data = _RevisionData(
         self.collect_data.key_generator.gen_id(),
         revision, int(timestamp), author, state)
+    self._rev_data[revision] = rev_data
+    self.sdc.register_commit(rev_data)
 
     # When on trunk, the RCS 'next' revision number points to what
     # humans might consider to be the 'previous' revision number.  For
@@ -589,9 +591,6 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     """The revision tree has been parsed.  Analyze it for consistency.
 
     This is a callback method declared in Sink."""
-
-    for rev_data in self._rev_data.values():
-      self.sdc.register_commit(rev_data)
 
     self._resolve_primary_dependencies()
     self._resolve_branch_dependencies()

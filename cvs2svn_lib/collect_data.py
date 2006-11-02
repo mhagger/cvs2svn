@@ -460,6 +460,12 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       assert branch_data.child is None
       branch_data.child = branch
 
+    if revision in self._rev_data:
+      # This revision has already been seen.
+      raise FatalError(
+          'File %r contains duplicate definitions of revision %s.'
+          % (self.cvs_file.filename, revision,))
+
     # Record basic information about the revision:
     self._rev_data[revision] = _RevisionData(
         self.collect_data.key_generator.gen_id(),

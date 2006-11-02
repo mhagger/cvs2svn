@@ -335,11 +335,12 @@ class _SymbolDataCollector(object):
     REVISION is a branch revision number with an even number of
     components; for example '1.7.2.1' (never '1.7.2' nor '1.7.0.2').
     For the convenience of callers, REVISION can also be a trunk
-    revision such as '1.2', in which case just return None."""
+    revision such as '1.2', in which case just return None.  Raise
+    KeyError iff REVISION is a non-trunk revision but is not known."""
 
     if is_trunk_revision(revision):
       return None
-    return self.branches_data.get(self.rev_to_branch_number(revision))
+    return self.branches_data[self.rev_to_branch_number(revision)]
 
   def register_commit(self, rev_data):
     """If REV_DATA describes a non-trunk revision number, then record
@@ -452,9 +453,9 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     """This is a callback method declared in Sink."""
 
     for branch in branches:
-      branch_data = self.sdc.rev_to_branch_data(branch)
-
-      if branch_data is None:
+      try:
+        branch_data = self.sdc.rev_to_branch_data(branch)
+      except KeyError:
         # Normally we learn about the branches from the branch names
         # and numbers parsed from the symbolic name header.  But this
         # must have been an unlabeled branch that slipped through the

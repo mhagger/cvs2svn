@@ -224,7 +224,7 @@ class _TagData(_SymbolData):
     self.rev = rev
 
 
-class _SymbolDataCollector:
+class _SymbolDataCollector(object):
   """Collect information about symbols in a CVSFile."""
 
   def __init__(self, fdc, cvs_file):
@@ -315,8 +315,23 @@ class _SymbolDataCollector:
     else:
       self._add_tag(name, revision)
 
+  def rev_to_branch_number(revision):
+    """Return the branch_number of the branch on which REVISION lies.
+
+    REVISION is a branch revision number with an even number of
+    components; for example '1.7.2.1' (never '1.7.2' nor '1.7.0.2').
+    The return value is the branch number (for example, '1.7.2').
+    Return none iff REVISION is a trunk revision such as '1.2'."""
+
+    if is_trunk_revision(revision):
+      return None
+    return revision[:revision.rindex(".")]
+
+  rev_to_branch_number = staticmethod(rev_to_branch_number)
+
   def rev_to_branch_data(self, revision):
     """Return the branch_data of the branch on which REVISION lies.
+
     REVISION is a branch revision number with an even number of
     components; for example '1.7.2.1' (never '1.7.2' nor '1.7.0.2').
     For the convenience of callers, REVISION can also be a trunk
@@ -324,7 +339,7 @@ class _SymbolDataCollector:
 
     if is_trunk_revision(revision):
       return None
-    return self.branches_data.get(revision[:revision.rindex(".")])
+    return self.branches_data.get(self.rev_to_branch_number(revision))
 
   def register_commit(self, rev_data):
     """If REV_DATA describes a non-trunk revision number, then record
@@ -332,12 +347,8 @@ class _SymbolDataCollector:
     commit in symbol_stats, which is used to generate statistics for
     --force-branch and --force-tag guidance."""
 
-    rev = rev_data.rev
-    if is_branch_revision(rev):
-      branch_number = rev[:rev.rindex(".")]
-
-      branch_data = self.branches_data[branch_number]
-
+    branch_data = self.rev_to_branch_data(rev_data.rev)
+    if branch_data is not None:
       # Register the commit on this non-trunk branch
       self.collect_data.symbol_stats[branch_data.symbol] \
           .register_branch_commit()
@@ -441,9 +452,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     """This is a callback method declared in Sink."""
 
     for branch in branches:
-      branch_number = branch[:branch.rindex('.')]
-
-      branch_data = self.sdc.branches_data.get(branch_number)
+      branch_data = self.sdc.rev_to_branch_data(branch)
 
       if branch_data is None:
         # Normally we learn about the branches from the branch names
@@ -451,7 +460,8 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         # must have been an unlabeled branch that slipped through the
         # net.  Generate a name for it and create a _BranchData record
         # for it now.
-        branch_data = self.sdc._add_unlabeled_branch(branch_number)
+        branch_data = self.sdc._add_unlabeled_branch(
+            self.sdc.rev_to_branch_number(branch))
 
       assert branch_data.child is None
       branch_data.child = branch

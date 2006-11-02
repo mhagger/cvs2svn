@@ -14,7 +14,38 @@
 # history and logs, available at http://cvs2svn.tigris.org/.
 # ====================================================================
 
-"""This module contains database facilities used by cvs2svn."""
+"""Data collection classes.
+
+This module contains the code used to collect data from the CVS
+repository.  It parses *,v files, recording all useful information
+except for the actual file contents (though even the file contents
+might be recorded by the RevisionRecorder if one is configured).
+
+As a *,v file is parsed, the information pertaining to the file is
+accumulated in memory, mostly in _RevisionData, _BranchData, and
+_TagData objects.  When parsing is complete, a final pass is made over
+the data to create some final dependency links, collect statistics,
+etc., then the _*Data objects are converted into CVSItem objects
+(CVSRevision, CVSBranch, and CVSTag respectively) and the CVSItems are
+dumped into databases.
+
+During the data collection, persistent unique ids are allocated to
+many types of objects: CVSFile, Symbol, and CVSItems.  CVSItems are a
+special case.  CVSItem ids are unique across all CVSItem types, and
+the ids are carried over from the corresponding data collection
+objects:
+
+    _RevisionData -> CVSRevision
+
+    _BranchData -> CVSBranch
+
+    _TagData -> CVSTag
+
+In a later pass it is possible to convert tags <-> branches.  But even
+if this occurs, the new branch or tag uses the same id as the old tag
+or branch.
+
+"""
 
 
 from __future__ import generators

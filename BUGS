@@ -9,31 +9,43 @@ for that, see
 
    http://cvs2svn.tigris.org/issue_tracker.html
 
-Before reporting a bug, check to see
+Before reporting a bug:
 
-   a) if you are already running the latest version of cvs2svn
+   a) Verify that you are running the latest version of cvs2svn.
 
-   b) if your bug is already filed in the issue tracker (see
-      http://tinyurl.com/2uxwv for a list of all open bugs).
+   b) Read the current frequently-asked-questions list at
+      http://cvs2svn.tigris.org/faq.html to see if your problem has a
+      known solution, and to help determine if your problem is caused
+      by corruption in your CVS repository.
+
+   c) Check to see if your bug is already filed in the issue tracker
+      (see http://tinyurl.com/2uxwv for a list of all open bugs).
 
 Then, mail your bug report to dev@cvs2svn.tigris.org.
 
 To be useful, a bug report should include the following information:
 
    * The revision of cvs2svn you ran.  Run 'cvs2svn --version' to
-     discover this.
+     determine this.
 
-   * The version of Subversion you used it with.
+   * The version of Subversion you used it with.  Run 'svnadmin
+     --version' to determine this.
 
    * The exact cvs2svn command line you invoked, and the output it
      produced.
+
+   * The contents of the configuration file that you used (if you used
+     the --config option).
 
    * The data you ran it on.  If your CVS repository is small (only a
      few kilobytes), then just provide the repository itself.  If it's
      large, or if the data is confidential, then please try to come up
      with some smaller, releasable data set that still stimulates the
-     bug.  Often this is just a matter of invoking cvs2svn on deeper
-     subdirectories, until you find the minimal reproduction case.
+     bug.  The cvs2svn project includes one script that can often help
+     you narrow down the source of the bug to just a few *,v files,
+     and another that helps strip proprietary information out of your
+     repository.  See the FAQ (http://cvs2svn.tigris.org/faq.html) for
+     more information.
 
 The most important thing is that we be able to reproduce the bug :-).
 If we can reproduce it, we can usually fix it.  If we can't reproduce

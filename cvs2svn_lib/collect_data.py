@@ -380,10 +380,6 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     # { revision : _RevisionData instance }
     self._rev_data = { }
 
-    # A list [ revision ] of the revision numbers seen, in the order
-    # they were given to us by rcsparse:
-    self._rev_order = []
-
     # Lists [ (parent, child) ] of revision number pairs indicating
     # that revision child depends on revision parent along the main
     # line of development.
@@ -470,9 +466,6 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     self._rev_data[revision] = _RevisionData(
         self.collect_data.key_generator.gen_id(),
         revision, int(timestamp), author, state)
-
-    # Remember the order that revisions were defined:
-    self._rev_order.append(revision)
 
     # When on trunk, the RCS 'next' revision number points to what
     # humans might consider to be the 'previous' revision number.  For
@@ -588,8 +581,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
     This is a callback method declared in Sink."""
 
-    for rev in self._rev_order:
-      rev_data = self._rev_data[rev]
+    for rev_data in self._rev_data.values():
       self.sdc.register_commit(rev_data)
 
     self._resolve_primary_dependencies()

@@ -332,14 +332,12 @@ class _SymbolDataCollector(object):
   def rev_to_branch_data(self, revision):
     """Return the branch_data of the branch on which REVISION lies.
 
-    REVISION is a branch revision number with an even number of
+    REVISION must be a branch revision number with an even number of
     components; for example '1.7.2.1' (never '1.7.2' nor '1.7.0.2').
-    For the convenience of callers, REVISION can also be a trunk
-    revision such as '1.2', in which case just return None.  Raise
-    KeyError iff REVISION is a non-trunk revision but is not known."""
+    Raise KeyError iff REVISION is unknown."""
 
-    if is_trunk_revision(revision):
-      return None
+    assert not is_trunk_revision(revision)
+
     return self.branches_data[self.rev_to_branch_number(revision)]
 
   def register_commit(self, rev_data):
@@ -348,8 +346,8 @@ class _SymbolDataCollector(object):
     commit in symbol_stats, which is used to generate statistics for
     --force-branch and --force-tag guidance."""
 
-    branch_data = self.rev_to_branch_data(rev_data.rev)
-    if branch_data is not None:
+    if not is_trunk_revision(rev_data.rev):
+      branch_data = self.rev_to_branch_data(rev_data.rev)
       # Register the commit on this non-trunk branch
       self.collect_data.symbol_stats[branch_data.symbol] \
           .register_branch_commit()
@@ -668,11 +666,10 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
                        % (warning_prefix, self.cvs_file.filename, revision,))
       return
 
-    branch_symbol = self.sdc.rev_to_branch_data(revision)
-    if branch_symbol == None:
-      branch_name = None
+    if is_branch_revision(revision):
+      branch_name = self.sdc.rev_to_branch_data(revision).symbol.name
     else:
-      branch_name = branch_symbol.symbol.name
+      branch_name = None
 
     rev_data.metadata_id = self.collect_data.metadata_db.get_key(
         self.project, branch_name, rev_data.author, log)

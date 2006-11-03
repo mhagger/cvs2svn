@@ -144,66 +144,6 @@ class SymbolingsLogger:
       del self._open_paths_with_default_branches[path]
 
 
-class OpeningsClosingsMap:
-  """A dictionary of openings and closings for a symbol in the current
-  SVNCommit.
-
-  The user should call self.register() for the openings and closings,
-  then self.get_node_tree() to retrieve the information as a
-  SymbolFillingGuide."""
-
-  def __init__(self, symbol):
-    """Initialize OpeningsClosingsMap and prepare it for receiving
-    openings and closings."""
-
-    self.symbol = symbol
-
-    # A dictionary of SVN_PATHS to SVNRevisionRange objects.
-    self.things = { }
-
-  def register_opening(self, svn_path, svn_revnum):
-    """Register an opening revision for this symbolic name.
-
-    SVN_PATH is the source path that needs to be copied into
-    self.symbol, and SVN_REVNUM is the first svn revision number that
-    we can copy from (our opening)."""
-
-    # Always log an OPENING, even if it overwrites a previous
-    # OPENING/CLOSING:
-    self.things[svn_path] = SVNRevisionRange(svn_revnum)
-
-  def register_closing(self, svn_path, svn_revnum):
-    """Register a closing revision for this symbolic name.
-
-    SVN_PATH is the source path that needs to be copied into
-    self.symbol, and SVN_REVNUM is the last (not inclusive) svn
-    revision number that we can copy from (our closing).
-
-    The opening for a given SVN_PATH must be passed before the closing
-    for it to have any effect.  Any closing encountered before a
-    corresponding opening will be discarded.
-
-    It is not necessary to pass a corresponding closing for every
-    opening."""
-
-    # Only log a CLOSING if we've already registered an OPENING for
-    # that path.
-    if svn_path in self.things:
-      self.things[svn_path].add_closing(svn_revnum)
-
-  def is_empty(self):
-    """Return true if we haven't accumulated any openings or closings,
-    false otherwise."""
-
-    return not len(self.things)
-
-  def get_things(self):
-    """Return a list of (svn_path, SVNRevisionRange) tuples for all
-    svn_paths with registered openings or closings."""
-
-    return self.things.items()
-
-
 class SymbolingsReader:
   """Provides an interface to retrieve symbol openings and closings.
 
@@ -284,7 +224,8 @@ class SymbolingsReader:
     perfectly fine, because we can still do a valid fill without the
     closing--we always try to fill what we can as soon as we can."""
 
-    openings_closings_map = OpeningsClosingsMap(symbol)
+    # A map {svn_path : SVNRevisionRange}:
+    openings_closings_map = {}
 
     for (revnum, type, branch_id, cvs_file_id) \
             in self._generate_lines(symbol, svn_revnum):
@@ -299,10 +240,15 @@ class SymbolingsReader:
             branch, cvs_file.cvs_path)
 
       if type == OPENING:
-        openings_closings_map.register_opening(svn_path, revnum)
+        # Always log an OPENING, even if it overwrites a previous
+        # OPENING/CLOSING:
+        openings_closings_map[svn_path] = SVNRevisionRange(revnum)
       else:
-        openings_closings_map.register_closing(svn_path, revnum)
+        # Only register a CLOSING if a corresponding OPENING has
+        # already been recorded:
+        if svn_path in openings_closings_map:
+          openings_closings_map[svn_path].add_closing(revnum)
 
-    return SymbolFillingGuide(openings_closings_map)
+    return SymbolFillingGuide(symbol, openings_closings_map)
 
 

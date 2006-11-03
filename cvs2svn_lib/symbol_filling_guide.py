@@ -45,18 +45,19 @@ class SymbolFillingGuide:
   revnum" differs from their parents' and if it does, take appropriate
   actions to "patch up" the subtrees."""
 
-  def __init__(self, openings_closings_map):
-    """Initializes a SymbolFillingGuide for OPENINGS_CLOSINGS_MAP and
-    store into it the openings and closings from
-    OPENINGS_CLOSINGS_MAP."""
+  def __init__(self, symbol, openings_closings_map):
+    """Initializes a SymbolFillingGuide for SYMBOL and store into it
+    the openings and closings from OPENINGS_CLOSINGS_MAP.
+    OPENINGS_CLOSINGS_MAP is a map {svn_path : SVNRevisionRange}
+    containing the openings and closings for svn_paths."""
 
-    self.symbol = openings_closings_map.symbol
+    self.symbol = symbol
 
     # The dictionary that holds our node tree as a map { node_key :
     # node }.
     self._node_tree = { }
 
-    for svn_path, svn_revision_range in openings_closings_map.get_things():
+    for svn_path, svn_revision_range in openings_closings_map.items():
       (head, tail) = path_split(svn_path)
       self._get_node_for_path(head)[tail] = svn_revision_range
 

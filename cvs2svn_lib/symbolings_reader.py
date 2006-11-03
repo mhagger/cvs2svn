@@ -77,6 +77,9 @@ class SymbolingsReader:
           break
         id, revnum, type, branch_id, cvs_file_id = line.split()
         id = int(id, 16)
+        revnum = int(revnum)
+        if id != symbol.id or revnum > svn_revnum:
+          break
         cvs_file_id = int(cvs_file_id, 16)
         cvs_file = Ctx()._cvs_file_db.get_file(cvs_file_id)
         if branch_id == '*':
@@ -85,9 +88,6 @@ class SymbolingsReader:
           branch_id = int(branch_id, 16)
           svn_path = cvs_file.project.make_branch_path(
               Ctx()._symbol_db.get_symbol(branch_id), cvs_file.cvs_path)
-        revnum = int(revnum)
-        if revnum > svn_revnum or id != symbol.id:
-          break
         openings_closings_map.register(svn_path, revnum, type)
 
       # get current offset of the read marker and set it to the offset

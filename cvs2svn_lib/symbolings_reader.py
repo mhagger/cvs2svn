@@ -25,6 +25,8 @@ from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.database import Database
 from cvs2svn_lib.openings_closings import OpeningsClosingsMap
+from cvs2svn_lib.openings_closings import OPENING
+from cvs2svn_lib.openings_closings import CLOSING
 from cvs2svn_lib.symbol_filling_guide import SymbolFillingGuide
 
 
@@ -88,7 +90,10 @@ class SymbolingsReader:
           branch_id = int(branch_id, 16)
           svn_path = cvs_file.project.make_branch_path(
               Ctx()._symbol_db.get_symbol(branch_id), cvs_file.cvs_path)
-        openings_closings_map.register(svn_path, revnum, type)
+        if type == OPENING:
+          openings_closings_map.register_opening(svn_path, revnum)
+        else:
+          openings_closings_map.register_closing(svn_path, revnum)
 
       # get current offset of the read marker and set it to the offset
       # for the beginning of the line we just read if we used anything

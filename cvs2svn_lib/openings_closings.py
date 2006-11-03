@@ -156,28 +156,34 @@ class OpeningsClosingsMap:
     # A dictionary of SVN_PATHS to SVNRevisionRange objects.
     self.things = { }
 
-  def register(self, svn_path, svn_revnum, type):
-    """Register an opening or closing revision for this symbolic name.
+  def register_opening(self, svn_path, svn_revnum):
+    """Register an opening revision for this symbolic name.
+
     SVN_PATH is the source path that needs to be copied into
-    self.symbol, and SVN_REVNUM is either the first svn revision
-    number that we can copy from (our opening), or the last (not
-    inclusive) svn revision number that we can copy from (our
-    closing).  TYPE indicates whether this path is an opening or a a
-    closing.
+    self.symbol, and SVN_REVNUM is the first svn revision number that
+    we can copy from (our opening)."""
+
+    # Always log an OPENING, even if it overwrites a previous
+    # OPENING/CLOSING:
+    self.things[svn_path] = SVNRevisionRange(svn_revnum)
+
+  def register_closing(self, svn_path, svn_revnum):
+    """Register a closing revision for this symbolic name.
+
+    SVN_PATH is the source path that needs to be copied into
+    self.symbol, and SVN_REVNUM is the last (not inclusive) svn
+    revision number that we can copy from (our closing).
 
     The opening for a given SVN_PATH must be passed before the closing
-    for it to have any effect... any closing encountered before a
+    for it to have any effect.  Any closing encountered before a
     corresponding opening will be discarded.
 
     It is not necessary to pass a corresponding closing for every
     opening."""
 
-    # Always log an OPENING
-    if type == OPENING:
-      self.things[svn_path] = SVNRevisionRange(svn_revnum)
-    # Only log a closing if we've already registered the opening for that
-    # path.
-    elif type == CLOSING and svn_path in self.things:
+    # Only log a CLOSING if we've already registered an OPENING for
+    # that path.
+    if svn_path in self.things:
       self.things[svn_path].add_closing(svn_revnum)
 
   def is_empty(self):

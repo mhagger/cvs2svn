@@ -670,8 +670,8 @@ class TopologicalSortPass(Pass):
         DB_OPEN_READ)
 
     changesets_db = ChangesetDatabase(
-        artifact_manager.get_temp_file(
-            config.CHANGESETS_REVBROKEN_DB), DB_OPEN_READ)
+        artifact_manager.get_temp_file(config.CHANGESETS_REVBROKEN_DB),
+        DB_OPEN_READ)
     Ctx()._changesets_db = changesets_db
 
     Ctx()._cvs_item_to_changeset_id = CVSItemToChangesetTable(
@@ -691,7 +691,8 @@ class TopologicalSortPass(Pass):
     del changeset_ids
 
     sorted_changesets = open(
-        artifact_manager.get_temp_file(config.CHANGESETS_SORTED_DATAFILE), 'w')
+        artifact_manager.get_temp_file(config.CHANGESETS_SORTED_DATAFILE),
+        'w')
 
     # Ensure a monotonically-increasing timestamp series by keeping
     # track of the previous timestamp and ensuring that the following
@@ -724,8 +725,8 @@ class CreateDatabasesPass(Pass):
     """Generate changesets in commit order."""
 
     changesets_db = ChangesetDatabase(
-        artifact_manager.get_temp_file(
-            config.CHANGESETS_REVBROKEN_DB), DB_OPEN_READ)
+        artifact_manager.get_temp_file(config.CHANGESETS_REVBROKEN_DB),
+        DB_OPEN_READ)
 
     for line in file(
             artifact_manager.get_temp_file(

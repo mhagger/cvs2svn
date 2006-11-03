@@ -33,7 +33,7 @@ from cvs2svn_lib.record_table import UnsignedIntegerPacker
 from cvs2svn_lib.record_table import RecordTable
 from cvs2svn_lib.symbol import BranchSymbol
 from cvs2svn_lib.symbol import TagSymbol
-from cvs2svn_lib.symbolings_reader import SymbolingsReader
+from cvs2svn_lib.openings_closings import SymbolingsReader
 from cvs2svn_lib.fill_source import FillSource
 from cvs2svn_lib.svn_revision_range import SVNRevisionRange
 from cvs2svn_lib.svn_commit_item import SVNCommitItem

@@ -17,6 +17,8 @@
 """This module contains classes to keep track of symbol openings/closings."""
 
 
+from __future__ import generators
+
 import cPickle
 
 from cvs2svn_lib.boolean import *
@@ -228,13 +230,52 @@ class SymbolingsReader:
     self.offsets = cPickle.load(offsets_db)
     offsets_db.close()
 
+  def _generate_lines(self, symbol, svn_revnum):
+    """Generate the lines for SYMBOL with SVN revisions <= SVN_REVNUM.
+
+    SYMBOL is a TypedSymbol instance and SVN_REVNUM is an SVN revision
+    number.  Yield the tuple (revnum, type, branch_id, cvs_file_id)
+    for all openings and closings for SYMBOL between the SVN_REVNUM
+    parameter passed to the last call to this method() and the value
+    of SVN_REVNUM passed to this call.
+
+    Adjust self.offsets[SUMBOL.id] to point past the lines that are
+    generated.  This generator should always be allowed to run to
+    completion."""
+
+    if symbol.id in self.offsets:
+      # Set our read offset for self.symbolings to the offset for this
+      # symbol:
+      self.symbolings.seek(self.offsets[symbol.id])
+
+      while True:
+        fpos = self.symbolings.tell()
+        line = self.symbolings.readline().rstrip()
+        if not line:
+          del self.offsets[symbol.id]
+          break
+        id, revnum, type, branch_id, cvs_file_id = line.split()
+        id = int(id, 16)
+        revnum = int(revnum)
+        if id != symbol.id:
+          del self.offsets[symbol.id]
+          break
+        elif revnum > svn_revnum:
+          # Update offset for this symbol to the first unused line:
+          self.offsets[symbol.id] = fpos
+          break
+        cvs_file_id = int(cvs_file_id, 16)
+
+        yield (revnum, type, branch_id, cvs_file_id)
+
   def filling_guide_for_symbol(self, symbol, svn_revnum):
     """Return the next SymbolFillingGuide for SYMBOL.
 
     SYMBOL is a TypedSymbol instance and SVN_REVNUM is an SVN revision
     number.  The SymbolFillingGuide will contain all openings and
-    closings for SYMBOL between the SVN_REVNUM parameter to the last
-    call to filling_guide_for_symbol() and SVN_REVNUM.
+    closings for SYMBOL between the SVN_REVNUM parameter passed to the
+    last call to this method and value of SVN_REVNUM passed to this
+    call.
 
     Note that if we encounter an opening rev in this fill, but the
     corresponding closing rev takes place later than SVN_REVNUM, the
@@ -245,41 +286,22 @@ class SymbolingsReader:
 
     openings_closings_map = OpeningsClosingsMap(symbol)
 
-    # It's possible to have a branch start with a file that was added
-    # on a branch
-    if symbol.id in self.offsets:
-      # Set our read offset for self.symbolings to the offset for this
-      # symbol:
-      self.symbolings.seek(self.offsets[symbol.id])
+    for (revnum, type, branch_id, cvs_file_id) \
+            in self._generate_lines(symbol, svn_revnum):
+      cvs_file = Ctx()._cvs_file_db.get_file(cvs_file_id)
 
-      while True:
-        fpos = self.symbolings.tell()
-        line = self.symbolings.readline().rstrip()
-        if not line:
-          break
-        id, revnum, type, branch_id, cvs_file_id = line.split()
-        id = int(id, 16)
-        revnum = int(revnum)
-        if id != symbol.id or revnum > svn_revnum:
-          break
-        cvs_file_id = int(cvs_file_id, 16)
-        cvs_file = Ctx()._cvs_file_db.get_file(cvs_file_id)
-        if branch_id == '*':
-          svn_path = cvs_file.project.make_trunk_path(cvs_file.cvs_path)
-        else:
-          branch_id = int(branch_id, 16)
-          svn_path = cvs_file.project.make_branch_path(
-              Ctx()._symbol_db.get_symbol(branch_id), cvs_file.cvs_path)
-        if type == OPENING:
-          openings_closings_map.register_opening(svn_path, revnum)
-        else:
-          openings_closings_map.register_closing(svn_path, revnum)
+      if branch_id == '*':
+        svn_path = cvs_file.project.make_trunk_path(cvs_file.cvs_path)
+      else:
+        branch_id = int(branch_id, 16)
+        branch = Ctx()._symbol_db.get_symbol(branch_id)
+        svn_path = cvs_file.project.make_branch_path(
+            branch, cvs_file.cvs_path)
 
-      # get current offset of the read marker and set it to the offset
-      # for the beginning of the line we just read if we used anything
-      # we read.
-      if not openings_closings_map.is_empty():
-        self.offsets[symbol.id] = fpos
+      if type == OPENING:
+        openings_closings_map.register_opening(svn_path, revnum)
+      else:
+        openings_closings_map.register_closing(svn_path, revnum)
 
     return SymbolFillingGuide(openings_closings_map)
 

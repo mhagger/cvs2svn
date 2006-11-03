@@ -419,9 +419,9 @@ This pass does the following:
    called the "Opening", and the first *invalid* Subversion revision
    number encountered after the "Opening" is called the "Closing".  In
    this pass, the SymbolingsLogger class writes out a line (for each
-   symbolic name that it opens) to cvs2svn-symbolic-names.txt if it is
-   the first possible source revision (the "opening" revision) for a
-   copy to create a branch or tag, or if it is the last possible
+   symbolic name that it opens) to 'cvs2svn-symbolic-names.txt' if it
+   is the first possible source revision (the "opening" revision) for
+   a copy to create a branch or tag, or if it is the last possible
    revision (the "closing" revision) for a copy to create a branch or
    tag.  Not every opening will have a corresponding closing.
 

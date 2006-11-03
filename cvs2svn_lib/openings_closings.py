@@ -203,10 +203,12 @@ class OpeningsClosingsMap:
 
 
 class SymbolingsReader:
-  """Provides an interface to the SYMBOL_OPENINGS_CLOSINGS_SORTED file
-  and the SYMBOL_OFFSETS_DB.  Does the heavy lifting of finding and
-  returning the correct opening and closing Subversion revision
-  numbers for a given symbolic name."""
+  """Provides an interface to retrieve symbol openings and closings.
+
+  This class accesses the SYMBOL_OPENINGS_CLOSINGS_SORTED file and the
+  SYMBOL_OFFSETS_DB.  Does the heavy lifting of finding and returning
+  the correct opening and closing Subversion revision numbers for a
+  given symbolic name and SVN revision number range."""
 
   def __init__(self):
     """Opens the SYMBOL_OPENINGS_CLOSINGS_SORTED for reading, and
@@ -220,20 +222,26 @@ class SymbolingsReader:
     # from it a fair bit, so suck it into memory
     offsets_db = file(
         artifact_manager.get_temp_file(config.SYMBOL_OFFSETS_DB), 'rb')
-    # A map from symbol_id to offset.
+    # A map from symbol_id to offset.  The values of this map are
+    # incremented as the openings and closings for a symbol are
+    # consumed.
     self.offsets = cPickle.load(offsets_db)
     offsets_db.close()
 
   def filling_guide_for_symbol(self, symbol, svn_revnum):
-    """Given SYMBOL and SVN_REVNUM, return a new SymbolFillingGuide object.
+    """Return the next SymbolFillingGuide for SYMBOL.
 
-    SYMBOL is a TypedSymbol instance.  Note that if we encounter an
-    opening rev in this fill, but the corresponding closing rev takes
-    place later than SVN_REVNUM, the closing will not be passed to
-    SymbolFillingGuide in this fill (and will be discarded when
-    encountered in a later fill).  This is perfectly fine, because we
-    can still do a valid fill without the closing--we always try to
-    fill what we can as soon as we can."""
+    SYMBOL is a TypedSymbol instance and SVN_REVNUM is an SVN revision
+    number.  The SymbolFillingGuide will contain all openings and
+    closings for SYMBOL between the SVN_REVNUM parameter to the last
+    call to filling_guide_for_symbol() and SVN_REVNUM.
+
+    Note that if we encounter an opening rev in this fill, but the
+    corresponding closing rev takes place later than SVN_REVNUM, the
+    closing will not be passed to SymbolFillingGuide in this fill (and
+    will be discarded when encountered in a later fill).  This is
+    perfectly fine, because we can still do a valid fill without the
+    closing--we always try to fill what we can as soon as we can."""
 
     openings_closings_map = OpeningsClosingsMap(symbol)
 

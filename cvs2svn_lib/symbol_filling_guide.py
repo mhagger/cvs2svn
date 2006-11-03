@@ -28,13 +28,13 @@ from cvs2svn_lib.fill_source import FillSource
 
 
 class SymbolFillingGuide:
-  """A node tree representing the source paths to be copied to fill
-  self.name in the current SVNCommit.
+  """A node tree representing the source paths to be copied to fill a
+  symbol in the current SVNCommit.
 
   self._node_tree is the root of the directory tree, in the form {
   path_component : subnode }.  Leaf nodes are instances of
   SVNRevisionRange.  Intermediate (directory) nodes are dictionaries
-  mapping relative names to subnodes.
+  mapping path_components to subnodes.
 
   By walking self._node_tree and calling self.get_best_revnum() on
   each node, the caller can determine what subversion revision number
@@ -68,13 +68,9 @@ class SymbolFillingGuide:
 
     # Walk down the path, one node at a time.
     node = self._node_tree
+
     for component in svn_path.split('/'):
-      if component in node:
-        node = node[component]
-      else:
-        old_node = node
-        node = {}
-        old_node[component] = node
+      node = node.setdefault(component, {})
 
     return node
 

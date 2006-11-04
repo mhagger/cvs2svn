@@ -27,6 +27,92 @@ from cvs2svn_lib.svn_revision_range import SVNRevisionRange
 from cvs2svn_lib.fill_source import FillSource
 
 
+class _RevisionScores:
+  """Represent the scores for a range of revisions."""
+
+  def __init__(self, svn_revision_ranges):
+    """Initialize based on SVN_REVISION_RANGES.
+
+    SVN_REVISION_RANGES is a list of SVNRevisionRange objects.
+
+    The score of an svn revision is defined to be the number of
+    SVNRevisionRanges that include the revision.  A score thus
+    indicates that copying the corresponding revision (or any
+    following revision up to the next revision in the list) of the
+    object in question would yield that many correct paths at or
+    underneath the object.  There may be other paths underneath it
+    which are not correct and would need to be deleted or recopied;
+    those can only be detected by descending and examining their
+    scores.
+
+    If SVN_REVISION_RANGES is empty, then all scores are undefined."""
+
+    # A list that looks like:
+    #
+    #    [(REV1 SCORE1), (REV2 SCORE2), ...]
+    #
+    # where the tuples are sorted by revision number and score is the
+    # number of correct paths that would result from using the
+    # specified revision number as a source.
+    self.scores = []
+
+    # First look for easy out.
+    if not svn_revision_ranges:
+      return
+
+    # Create lists of opening and closing revisions along with the
+    # corresponding delta to the total score:
+    openings = [ (x.opening_revnum, +1)
+                 for x in svn_revision_ranges ]
+    closings = [ (x.closing_revnum, -1)
+                 for x in svn_revision_ranges
+                 if x.closing_revnum is not None ]
+
+    things = openings + closings
+    # Sort by revision number:
+    things.sort()
+    # Initialize output list with zeroth element of things.  This
+    # element must exist, because it was verified that
+    # svn_revision_ranges (and therefore openings) is not empty.
+    self.scores = [ things[0] ]
+    total = things[0][1]
+    for (rev, change) in things[1:]:
+      total += change
+      if rev == self.scores[-1][0]:
+        # Same revision as last entry; modify last entry:
+        self.scores[-1] = (rev, total)
+      else:
+        # Previously-unseen revision; create new entry:
+        self.scores.append((rev, total))
+
+  def best_rev(self, preferred_rev):
+    """Find the revnum from SCORES with the highest score.
+
+    SCORES is a list returned by score_revisions().  Return (revnum,
+    score) for the revnum with the highest score.  If the maximum
+    score is shared by multiple revisions, the oldest revision is
+    selected, unless PREFERRED_REV is one of the possibilities, in
+    which case, it is selected.  PREFERRED_REV does not have to be
+    one of the revisions with a specific score."""
+
+    max_score = 0
+    preferred_rev_score = -1
+    rev = SVN_INVALID_REVNUM
+    if preferred_rev is None:
+      # Comparison order of different types is arbitrary.  Do not
+      # expect None to compare less than int values below.
+      preferred_rev = SVN_INVALID_REVNUM
+    for revnum, count in self.scores:
+      if count > max_score:
+        max_score = count
+        rev = revnum
+      if revnum <= preferred_rev:
+        preferred_rev_score = count
+    if preferred_rev_score == max_score:
+      rev = preferred_rev
+    return rev, max_score
+
+
 class SymbolFillingGuide:
   """A node tree representing the source paths to be copied to fill a
   symbol in the current SVNCommit.
@@ -82,95 +168,13 @@ class SymbolFillingGuide:
     PREFERRED_REVNUM is passed to best_rev and used to calculate the
     best_revnum."""
 
-    def score_revisions(svn_revision_ranges):
-      """Return a list of revisions and scores based on SVN_REVISION_RANGES.
-
-      SVN_REVISION_RANGES is a list of SVNRevisionRange objects.
-      Return a list that looks like:
-
-         [(REV1 SCORE1), (REV2 SCORE2), ...]
-
-      where the tuples are sorted by revision number and score is the
-      number of correct paths that would result from using the
-      specified revision number as a source.
-
-      For each svn revision that appears as either an opening_revnum
-      or closing_revnum for one of the svn_revision_ranges, output a
-      tuple indicating how many of the SVNRevisionRanges include that
-      svn_revision in its range.  A score thus indicates that copying
-      the corresponding revision (or any following revision up to the
-      next revision in the list) of the object in question would yield
-      that many correct paths at or underneath the object.  There may
-      be other paths underneath it which are not correct and would
-      need to be deleted or recopied; those can only be detected by
-      descending and examining their scores.
-
-      If SVN_REVISION_RANGES is empty, return the empty list."""
-
-      # First look for easy out.
-      if not svn_revision_ranges:
-        return []
-
-      # Create lists of opening and closing revisions along with the
-      # corresponding delta to the total score:
-      openings = [ (x.opening_revnum, +1)
-                   for x in svn_revision_ranges ]
-      closings = [ (x.closing_revnum, -1)
-                   for x in svn_revision_ranges
-                   if x.closing_revnum is not None ]
-
-      things = openings + closings
-      # Sort by revision number:
-      things.sort()
-      # Initialize output list with zeroth element of things.  This
-      # element must exist, because it was already verified that
-      # openings is not empty.
-      scores = [ things[0] ]
-      total = things[0][1]
-      for (rev, change) in things[1:]:
-        total += change
-        if rev == scores[-1][0]:
-          # Same revision as last entry; modify last entry:
-          scores[-1] = (rev, total)
-        else:
-          # Previously-unseen revision; create new entry:
-          scores.append((rev, total))
-      return scores
-
-    def best_rev(scores, preferred_rev):
-      """Find the revnum from SCORES with the highest score.
-
-      SCORES is a list returned by score_revisions().  Return (revnum,
-      score) for the revnum with the highest score.  If the maximum
-      score is shared by multiple revisions, the oldest revision is
-      selected, unless PREFERRED_REV is one of the possibilities, in
-      which case, it is selected.  PREFERRED_REV does not have to be
-      one of the revisions with a specific score."""
-
-      max_score = 0
-      preferred_rev_score = -1
-      rev = SVN_INVALID_REVNUM
-      if preferred_rev is None:
-        # Comparison order of different types is arbitrary.  Do not
-        # expect None to compare less than int values below.
-        preferred_rev = SVN_INVALID_REVNUM
-      for revnum, count in scores:
-        if count > max_score:
-          max_score = count
-          rev = revnum
-        if revnum <= preferred_rev:
-          preferred_rev_score = count
-      if preferred_rev_score == max_score:
-        rev = preferred_rev
-      return rev, max_score
-
     # Aggregate openings and closings from the rev tree
     svn_revision_ranges = self._list_revnums(node)
 
     # Score the lists
-    scores = score_revisions(svn_revision_ranges)
+    revision_scores = _RevisionScores(svn_revision_ranges)
 
-    revnum, max_score = best_rev(scores, preferred_revnum)
+    revnum, max_score = revision_scores.best_rev(preferred_revnum)
 
     if revnum == SVN_INVALID_REVNUM:
       raise FatalError(

@@ -83,13 +83,16 @@ class SymbolFillingGuide:
     best_revnum."""
 
     def score_revisions(svn_revision_ranges):
-      """Return a list of revisions and scores based on
-      SVN_REVISION_RANGES.  The returned list looks like:
+      """Return a list of revisions and scores based on SVN_REVISION_RANGES.
+
+      SVN_REVISION_RANGES is a list of SVNRevisionRange objects.
+      Return a list that looks like:
 
          [(REV1 SCORE1), (REV2 SCORE2), ...]
 
-      where the tuples are sorted by revision number.
-      SVN_REVISION_RANGES is a list of SVNRevisionRange objects.
+      where the tuples are sorted by revision number and score is the
+      number of correct paths that would result from using the
+      specified revision number as a source.
 
       For each svn revision that appears as either an opening_revnum
       or closing_revnum for one of the svn_revision_ranges, output a
@@ -102,28 +105,28 @@ class SymbolFillingGuide:
       need to be deleted or recopied; those can only be detected by
       descending and examining their scores.
 
-      If OPENINGS is empty, return the empty list."""
+      If SVN_REVISION_RANGES is empty, return the empty list."""
 
-      openings = [ x.opening_revnum
+      # First look for easy out.
+      if not svn_revision_ranges:
+        return []
+
+      # Create lists of opening and closing revisions along with the
+      # corresponding delta to the total score:
+      openings = [ (x.opening_revnum, +1)
                    for x in svn_revision_ranges ]
-      closings = [ x.closing_revnum
+      closings = [ (x.closing_revnum, -1)
                    for x in svn_revision_ranges
                    if x.closing_revnum is not None ]
 
-      # First look for easy out.
-      if not openings:
-        return []
-
-      # Create a list with both openings (which increment the total)
-      # and closings (which decrement the total):
-      things = [(rev,1) for rev in openings] + [(rev,-1) for rev in closings]
+      things = openings + closings
       # Sort by revision number:
       things.sort()
       # Initialize output list with zeroth element of things.  This
       # element must exist, because it was already verified that
       # openings is not empty.
       scores = [ things[0] ]
-      total = scores[-1][1]
+      total = things[0][1]
       for (rev, change) in things[1:]:
         total += change
         if rev == scores[-1][0]:
@@ -135,11 +138,14 @@ class SymbolFillingGuide:
       return scores
 
     def best_rev(scores, preferred_rev):
-      """Return the revision with the highest score from SCORES, a list
-      returned by score_revisions().  When the maximum score is shared
-      by multiple revisions, the oldest revision is selected, unless
-      PREFERRED_REV is one of the possibilities, in which case, it is
-      selected."""
+      """Find the revnum from SCORES with the highest score.
+
+      SCORES is a list returned by score_revisions().  Return (revnum,
+      score) for the revnum with the highest score.  If the maximum
+      score is shared by multiple revisions, the oldest revision is
+      selected, unless PREFERRED_REV is one of the possibilities, in
+      which case, it is selected.  PREFERRED_REV does not have to be
+      one of the revisions with a specific score."""
 
       max_score = 0
       preferred_rev_score = -1
@@ -189,16 +195,20 @@ class SymbolFillingGuide:
   def get_sources(self):
     """Return the list of sources for this symbolic name.
 
-    The Project instance defines what are legitimate sources.  Raise
-    an exception if a change occurred outside of the source
-    directories."""
+    The Project instance defines what are legitimate sources
+    (basically, the project's trunk or any directory directly under
+    its branches path).  Raise an exception if a change occurred
+    outside of the source directories."""
 
     return self._get_sub_sources('', self._node_tree)
 
   def _get_sub_sources(self, start_svn_path, start_node):
-    """Return the list of sources for this symbolic name, starting the
-    search at path START_SVN_PATH, which is node START_NODE.  This is
-    a helper method, called by get_sources() (see)."""
+    """Return the list of sources within SVN_START_PATH.
+
+    Start the search at path START_SVN_PATH, which is node START_NODE.
+    Return a list of FillSource objects.
+
+    This is a helper method, called by get_sources() (see)."""
 
     if isinstance(start_node, SVNRevisionRange):
       # This implies that a change was found outside of the
@@ -220,9 +230,10 @@ class SymbolFillingGuide:
     return sources
 
   def print_node_tree(self, node, name='/', indent_depth=0):
-    """For debugging purposes.  Prints all nodes in TREE that are
-    rooted at NODE.  INDENT_DEPTH is used to indent the output of
-    recursive calls."""
+    """Print all nodes in TREE that are rooted at NODE to sys.stdout.
+
+    INDENT_DEPTH is used to indent the output of recursive calls.
+    This method is included for debugging purposes."""
 
     if not indent_depth:
       print "TREE", "=" * 75

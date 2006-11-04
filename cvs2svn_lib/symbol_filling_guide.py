@@ -17,6 +17,8 @@
 """This module contains database facilities used by cvs2svn."""
 
 
+import bisect
+
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.common import path_join
 from cvs2svn_lib.common import path_split
@@ -85,30 +87,41 @@ class _RevisionScores:
         # Previously-unseen revision; create new entry:
         self.scores.append((rev, total))
 
-  def best_rev(self, preferred_rev):
-    """Find the revnum from SCORES with the highest score.
+  def get_score(self, rev):
+    """Return the score for svn revision REV.
 
-    SCORES is a list returned by score_revisions().  Return (revnum,
-    score) for the revnum with the highest score.  If the maximum
-    score is shared by multiple revisions, the oldest revision is
-    selected, unless PREFERRED_REV is one of the possibilities, in
-    which case, it is selected.  PREFERRED_REV does not have to be
-    one of the revisions with a specific score."""
+    If REV doesn't appear explicitly in self.scores, use the score of
+    the higest revision preceding REV.  If there are no preceding
+    revisions, then the score for REV is unknown; in this case, return
+    -1."""
+
+    # Remember, according to the tuple sorting rules,
+    #
+    #    (rev, anything,) < (rev+1,) < (rev+1, anything,)
+    predecessor_index = bisect.bisect(self.scores, (rev+1,)) - 1
+
+    if predecessor_index < 0:
+      # raise ValueError('Score for revision %s is unknown' % rev)
+      return -1
+
+    return self.scores[predecessor_index][1]
+
+  def best_rev(self, preferred_rev):
+    """Find the revnum with the highest score.
+
+    Return (revnum, score) for the revnum with the highest score.  If
+    the highest score is shared by multiple revisions, select the
+    oldest revision, unless PREFERRED_REV is one of the possibilities,
+    in which case, it is selected."""
 
     max_score = 0
-    preferred_rev_score = -1
     rev = SVN_INVALID_REVNUM
-    if preferred_rev is None:
-      # Comparison order of different types is arbitrary.  Do not
-      # expect None to compare less than int values below.
-      preferred_rev = SVN_INVALID_REVNUM
     for revnum, count in self.scores:
       if count > max_score:
         max_score = count
         rev = revnum
-      if revnum <= preferred_rev:
-        preferred_rev_score = count
-    if preferred_rev_score == max_score:
+    if preferred_rev is not None \
+           and self.get_score(preferred_rev) == max_score:
       rev = preferred_rev
     return rev, max_score
 

@@ -106,13 +106,12 @@ class _RevisionScores:
 
     return self.scores[predecessor_index][1]
 
-  def best_rev(self, preferred_rev):
+  def best_rev(self):
     """Find the revnum with the highest score.
 
     Return (revnum, score) for the revnum with the highest score.  If
     the highest score is shared by multiple revisions, select the
-    oldest revision, unless PREFERRED_REV is one of the possibilities,
-    in which case, it is selected."""
+    oldest revision."""
 
     max_score = 0
     rev = SVN_INVALID_REVNUM
@@ -120,9 +119,6 @@ class _RevisionScores:
       if count > max_score:
         max_score = count
         rev = revnum
-    if preferred_rev is not None \
-           and self.get_score(preferred_rev) == max_score:
-      rev = preferred_rev
     return rev, max_score
 
 
@@ -187,7 +183,10 @@ class SymbolFillingGuide:
     # Score the lists
     revision_scores = _RevisionScores(svn_revision_ranges)
 
-    revnum, max_score = revision_scores.best_rev(preferred_revnum)
+    revnum, max_score = revision_scores.best_rev()
+    if preferred_revnum is not None \
+           and revision_scores.get_score(preferred_revnum) == max_score:
+      revnum = preferred_revnum
 
     if revnum == SVN_INVALID_REVNUM:
       raise FatalError(

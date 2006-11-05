@@ -380,7 +380,7 @@ class SVNRepositoryMirror:
 
   def _fill(self, symbol_fill, dest_prefix, dest_key, sources,
             path = None, parent_source_prefix = None,
-            preferred_revnum = None, prune_ok = None):
+            preferred_revnum = None, prune_ok = False):
     """Fill the tag or branch at DEST_PREFIX + PATH with items from
     SOURCES, and recurse into the child items.
 
@@ -424,21 +424,21 @@ class SVNRepositoryMirror:
 
     # Figure out if we shall copy to this destination and delete any
     # destination path that is in the way.
-    do_copy = 0
+    do_copy = False
     if dest_key is None:
-      do_copy = 1
+      do_copy = True
     elif prune_ok and (
           parent_source_prefix != copy_source.prefix
           or copy_source.revnum != preferred_revnum):
       # We are about to replace the destination, so we need to remove
       # it before we perform the copy.
       self.delete_path(dest_path)
-      do_copy = 1
+      do_copy = True
 
     if do_copy:
       dest_key, dest_entries = \
           self.copy_path(src_path, dest_path, copy_source.revnum)
-      prune_ok = 1
+      prune_ok = True
     else:
       dest_entries = self._get_node(dest_key)
 

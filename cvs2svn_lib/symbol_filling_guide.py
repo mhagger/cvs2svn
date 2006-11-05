@@ -106,20 +106,20 @@ class _RevisionScores:
 
     return self.scores[predecessor_index][1]
 
-  def best_rev(self):
+  def get_best_revnum(self):
     """Find the revnum with the highest score.
 
     Return (revnum, score) for the revnum with the highest score.  If
     the highest score is shared by multiple revisions, select the
     oldest revision."""
 
-    max_score = 0
-    rev = SVN_INVALID_REVNUM
-    for revnum, count in self.scores:
-      if count > max_score:
-        max_score = count
-        rev = revnum
-    return rev, max_score
+    best_revnum = SVN_INVALID_REVNUM
+    best_score = 0
+    for revnum, score in self.scores:
+      if score > best_score:
+        best_score = score
+        best_revnum = revnum
+    return best_revnum, best_score
 
 
 class SymbolFillingGuide:
@@ -173,7 +173,7 @@ class SymbolFillingGuide:
     """Determine the best subversion revision number to use when
     copying the source tree beginning at NODE.
 
-    Return (svn_revnum, score) for the best revision found.  If
+    Return (revnum, score) for the best revision found.  If
     PREFERRED_REVNUM is not None and is among the revision numbers
     with the best scores, return it; otherwise, return the oldest such
     revision."""
@@ -184,16 +184,16 @@ class SymbolFillingGuide:
     # Score the lists
     revision_scores = _RevisionScores(svn_revision_ranges)
 
-    revnum, max_score = revision_scores.best_rev()
+    best_revnum, best_score = revision_scores.get_best_revnum()
     if preferred_revnum is not None \
-           and revision_scores.get_score(preferred_revnum) == max_score:
-      revnum = preferred_revnum
+           and revision_scores.get_score(preferred_revnum) == best_score:
+      best_revnum = preferred_revnum
 
-    if revnum == SVN_INVALID_REVNUM:
+    if best_revnum == SVN_INVALID_REVNUM:
       raise FatalError(
           "failed to find a revision to copy from when copying %s"
           % self.symbol.name)
-    return revnum, max_score
+    return best_revnum, best_score
 
   def _list_revnums(self, node):
     """Return a list of all the SVNRevisionRanges (including

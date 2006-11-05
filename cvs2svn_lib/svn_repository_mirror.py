@@ -385,13 +385,13 @@ class SVNRepositoryMirror:
     SOURCES, and recurse into the child items.
 
     DEST_PREFIX is the prefix of the destination directory, e.g.
-    '/tags/my_tag' or '/branches/my_branch', and SOURCES is a list of
+    'tags/my_tag' or 'branches/my_branch', and SOURCES is a list of
     FillSource classes that are candidates to be copied to the
     destination.  DEST_KEY is the key in self._nodes_db to the
     destination, or None if the destination does not yet exist.
 
     PATH is the path relative to DEST_PREFIX.  If PATH is None, we
-    are at the top level, e.g. '/tags/my_tag'.
+    are at the top level, e.g. 'tags/my_tag'.
 
     PARENT_SOURCE_PREFIX is the source prefix that was used to copy
     the parent directory, and PREFERRED_REVNUM is an int which is the
@@ -405,8 +405,8 @@ class SVNRepositoryMirror:
     SYMBOL_FILL._node_tree, provided that said directory has a source
     prefix of one of the PARENT_SOURCE_PREFIX.
 
-    PATH, PARENT_SOURCE_PREFIX, PRUNE_OK, and PREFERRED_REVNUM
-    should only be passed in by recursive calls."""
+    PATH, PARENT_SOURCE_PREFIX, PRUNE_OK, and PREFERRED_REVNUM should
+    only be passed in by recursive calls."""
 
     # Calculate scores and revnums for all sources
     for source in sources:

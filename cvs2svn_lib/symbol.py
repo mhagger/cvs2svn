@@ -68,10 +68,17 @@ class TypedSymbol(Symbol):
     Symbol.__init__(self, symbol.id, symbol.project, symbol.name)
 
 
-class BranchSymbol(TypedSymbol):
+class IncludedSymbol(TypedSymbol):
+  """A TypedSymbol that will be included in the conversion."""
+
   def get_path(self, *components):
     """Return the svn path for this symbol."""
 
+    raise NotImplementedError()
+
+
+class BranchSymbol(IncludedSymbol):
+  def get_path(self, *components):
     return path_join(self.project.get_branch_path(self), *components)
 
   def __str__(self):
@@ -80,10 +87,8 @@ class BranchSymbol(TypedSymbol):
     return 'Branch %r' % (self.name,)
 
 
-class TagSymbol(TypedSymbol):
+class TagSymbol(IncludedSymbol):
   def get_path(self, *components):
-    """Return the svn path for this symbol."""
-
     return path_join(self.project.get_tag_path(self), *components)
 
   def __str__(self):

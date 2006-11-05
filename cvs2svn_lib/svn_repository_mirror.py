@@ -347,12 +347,7 @@ class SVNRepositoryMirror:
       # (as opposed to a copy).  This case is covered by test 16.
       self._fill_empty_branch(symbol)
     else:
-      if isinstance(symbol, TagSymbol):
-        dest_prefix = symbol.project.get_tag_path(symbol)
-      else:
-        assert isinstance(symbol, BranchSymbol)
-        dest_prefix = symbol.project.get_branch_path(symbol)
-
+      dest_prefix = symbol.get_path()
       dest_key = self._open_writable_node(dest_prefix, False)[0]
       self._fill(symbol_fill, dest_prefix, dest_key, sources)
 
@@ -363,7 +358,7 @@ class SVNRepositoryMirror:
     Create the branch by copying trunk from the our current revision
     number minus 1."""
 
-    dest_path = symbol.project.get_branch_path(symbol)
+    dest_path = symbol.get_path()
 
     if self.path_exists(dest_path):
       raise self.SVNRepositoryMirrorInvalidFillOperationError(

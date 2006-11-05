@@ -19,6 +19,7 @@
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.context import Ctx
+from cvs2svn_lib.common import path_join
 
 
 class Symbol:
@@ -68,6 +69,11 @@ class TypedSymbol(Symbol):
 
 
 class BranchSymbol(TypedSymbol):
+  def get_path(self, *components):
+    """Return the svn path for this symbol."""
+
+    return path_join(self.project.get_branch_path(self), *components)
+
   def __str__(self):
     """For convenience only.  The format is subject to change at any time."""
 
@@ -75,6 +81,11 @@ class BranchSymbol(TypedSymbol):
 
 
 class TagSymbol(TypedSymbol):
+  def get_path(self, *components):
+    """Return the svn path for this symbol."""
+
+    return path_join(self.project.get_tag_path(self), *components)
+
   def __str__(self):
     """For convenience only.  The format is subject to change at any time."""
 

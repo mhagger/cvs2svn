@@ -198,7 +198,7 @@ class SymbolFillingGuide:
   def _get_revision_ranges(self, node):
     """Return a list of all the SVNRevisionRanges at and under NODE.
 
-     Include duplicates."""
+    Include duplicates."""
 
     if isinstance(node, SVNRevisionRange):
       # It is a leaf node.

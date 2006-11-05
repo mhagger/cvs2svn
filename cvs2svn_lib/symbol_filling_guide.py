@@ -179,7 +179,7 @@ class SymbolFillingGuide:
     revision."""
 
     # Aggregate openings and closings from the rev tree
-    svn_revision_ranges = self._list_revnums(node)
+    svn_revision_ranges = self._get_revision_ranges(node)
 
     # Score the lists
     revision_scores = _RevisionScores(svn_revision_ranges)
@@ -195,19 +195,20 @@ class SymbolFillingGuide:
           % self.symbol.name)
     return best_revnum, best_score
 
-  def _list_revnums(self, node):
-    """Return a list of all the SVNRevisionRanges (including
-    duplicates) for all leaf nodes at and under NODE."""
+  def _get_revision_ranges(self, node):
+    """Return a list of all the SVNRevisionRanges at and under NODE.
+
+     Include duplicates."""
 
     if isinstance(node, SVNRevisionRange):
       # It is a leaf node.
       return [ node ]
     else:
       # It is an intermediate node.
-      revnums = []
+      revision_ranges = []
       for key, subnode in node.items():
-        revnums.extend(self._list_revnums(subnode))
-      return revnums
+        revision_ranges.extend(self._get_revision_ranges(subnode))
+      return revision_ranges
 
   def get_sources(self):
     """Return the list of sources for this symbolic name.

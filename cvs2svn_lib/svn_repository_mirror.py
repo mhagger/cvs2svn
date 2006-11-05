@@ -342,7 +342,11 @@ class SVNRepositoryMirror:
     # Get the list of sources for the symbolic name.
     sources = symbol_fill.get_sources()
 
-    if sources:
+    if not sources:
+      # We can only get here for a branch whose first commit is an add
+      # (as opposed to a copy).  This case is covered by test 16.
+      self._fill_empty_branch(symbol)
+    else:
       if isinstance(symbol, TagSymbol):
         dest_prefix = symbol.project.get_tag_path(symbol)
       else:
@@ -351,35 +355,33 @@ class SVNRepositoryMirror:
 
       dest_key = self._open_writable_node(dest_prefix, False)[0]
       self._fill(symbol_fill, dest_prefix, dest_key, sources)
-    else:
-      # We can only get here for a branch whose first commit is an add
-      # (as opposed to a copy).
-      dest_path = symbol.project.get_branch_path(symbol)
-      if not self.path_exists(dest_path):
-        # If our symbol_fill was empty, that means that our first
-        # commit on the branch was to a file added on the branch, and
-        # that this is our first fill of that branch.
-        #
-        # This case is covered by test 16.
-        #
-        # ...we create the branch by copying trunk from the our
-        # current revision number minus 1
-        source_path = symbol.project.trunk_path
-        entries = self.copy_path(source_path, dest_path, self.youngest - 1)[1]
-        # Now since we've just copied trunk to a branch that's
-        # *supposed* to be empty, we delete any entries in the
-        # copied directory.
-        for entry in entries:
-          del_path = dest_path + '/' + entry
-          # Delete but don't prune.
-          self.delete_path(del_path)
-      else:
-        raise self.SVNRepositoryMirrorInvalidFillOperationError(
-            "Error filling branch '%s'.\n"
-            "Received an empty SymbolFillingGuide and\n"
-            "attempted to create a branch that already exists."
-            % symbol.get_clean_name()
-            )
+
+  def _fill_empty_branch(self, symbol):
+    """Fill a branch without any contents.
+
+    The first commit to a branch was to add a file on the branch.
+    Create the branch by copying trunk from the our current revision
+    number minus 1."""
+
+    dest_path = symbol.project.get_branch_path(symbol)
+
+    if self.path_exists(dest_path):
+      raise self.SVNRepositoryMirrorInvalidFillOperationError(
+          "Error filling branch '%s'.\n"
+          "Received an empty SymbolFillingGuide and\n"
+          "attempted to create a branch that already exists."
+          % symbol.get_clean_name()
+          )
+
+    source_path = symbol.project.trunk_path
+    entries = self.copy_path(source_path, dest_path, self.youngest - 1)[1]
+    # Now since we've just copied trunk to a branch that's
+    # *supposed* to be empty, we delete any entries in the
+    # copied directory.
+    for entry in entries:
+      del_path = dest_path + '/' + entry
+      # Delete but don't prune.
+      self.delete_path(del_path)
 
   def _fill(self, symbol_fill, dest_prefix, dest_key, sources,
             path = None, parent_source_prefix = None,

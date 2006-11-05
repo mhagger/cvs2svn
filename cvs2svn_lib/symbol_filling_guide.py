@@ -141,15 +141,18 @@ class SymbolFillingGuide:
   actions to "patch up" the subtrees."""
 
   def __init__(self, symbol, openings_closings_map):
-    """Initializes a SymbolFillingGuide for SYMBOL and store into it
-    the openings and closings from OPENINGS_CLOSINGS_MAP.
-    OPENINGS_CLOSINGS_MAP is a map {svn_path : SVNRevisionRange}
-    containing the openings and closings for svn_paths."""
+    """Initializes a SymbolFillingGuide for SYMBOL.
+
+    SYMBOL is either a BranchSymbol or a TagSymbol.  Record the
+    openings and closings from OPENINGS_CLOSINGS_MAP, which is a map
+    {svn_path : SVNRevisionRange} containing the openings and closings
+    for svn_paths."""
 
     self.symbol = symbol
 
-    # The dictionary that holds our node tree as a map { node_key :
-    # node }.
+    # The dictionary that holds our root node as a map {
+    # path_component : node }.  Subnodes are also dictionaries with
+    # the same form.
     self._node_tree = { }
 
     for svn_path, svn_revision_range in openings_closings_map.items():
@@ -159,7 +162,7 @@ class SymbolFillingGuide:
     #self.print_node_tree(self._node_tree)
 
   def _get_node_for_path(self, svn_path):
-    """Return the node key for svn_path, creating new nodes as needed."""
+    """Return the node for svn_path, creating new nodes as needed."""
 
     # Walk down the path, one node at a time.
     node = self._node_tree

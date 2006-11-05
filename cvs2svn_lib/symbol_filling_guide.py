@@ -171,11 +171,12 @@ class SymbolFillingGuide:
 
   def get_best_revnum(self, node, preferred_revnum):
     """Determine the best subversion revision number to use when
-    copying the source tree beginning at NODE.  Returns a
-    subversion revision number.
+    copying the source tree beginning at NODE.
 
-    PREFERRED_REVNUM is passed to best_rev and used to calculate the
-    best_revnum."""
+    Return (svn_revnum, score) for the best revision found.  If
+    PREFERRED_REVNUM is not None and is among the revision numbers
+    with the best scores, return it; otherwise, return the oldest such
+    revision."""
 
     # Aggregate openings and closings from the rev tree
     svn_revision_ranges = self._list_revnums(node)

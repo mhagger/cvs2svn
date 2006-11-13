@@ -254,7 +254,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
       self.dumpfile.write(prop_contents)
 
     # Insert a filter to convert all EOLs to LFs if neccessary
-    if s_item.needs_eol_filter:
+    if s_item.needs_eol_filter():
       data_reader = LF_EOL_Filter(stream)
     else:
       data_reader = stream

@@ -39,29 +39,37 @@ class SVNPropertySetter:
 class CVSRevisionNumberSetter(SVNPropertySetter):
   """Set the cvs2svn:cvs-rev property to the CVS revision number."""
 
+  propname = 'cvs2svn:cvs-rev'
+
   def set_properties(self, s_item):
-    s_item.svn_props['cvs2svn:cvs-rev'] = s_item.cvs_rev.rev
+    s_item.svn_props[self.propname] = s_item.cvs_rev.rev
     s_item.svn_props_changed = True
 
 
 class ExecutablePropertySetter(SVNPropertySetter):
   """Set the svn:executable property based on cvs_rev.cvs_file.executable."""
 
+  propname = 'svn:executable'
+
   def set_properties(self, s_item):
     if s_item.cvs_rev.cvs_file.executable:
-      s_item.svn_props['svn:executable'] = '*'
+      s_item.svn_props[self.propname] = '*'
 
 
 class BinaryFileEOLStyleSetter(SVNPropertySetter):
   """Set the eol-style for binary files to None."""
 
+  propname = 'svn:eol-style'
+
   def set_properties(self, s_item):
     if s_item.cvs_rev.cvs_file.mode == 'b':
-      s_item.svn_props['svn:eol-style'] = None
+      s_item.svn_props[self.propname] = None
 
 
 class MimeMapper(SVNPropertySetter):
   """A class that provides mappings from file names to MIME types."""
+
+  propname = 'svn:mime-type'
 
   def __init__(self, mime_types_file):
     self.mappings = { }
@@ -99,7 +107,7 @@ class MimeMapper(SVNPropertySetter):
 
     mime_type = self.mappings.get(extension, None)
     if mime_type is not None:
-      s_item.svn_props['svn:mime-type'] = mime_type
+      s_item.svn_props[self.propname] = mime_type
 
 
 class AutoPropsPropertySetter(SVNPropertySetter):
@@ -197,10 +205,12 @@ class BinaryFileDefaultMimeTypeSetter(SVNPropertySetter):
   """If the file is binary and its svn:mime-type property is not yet
   set, set it to 'application/octet-stream'."""
 
+  propname = 'svn:mime-type'
+
   def set_properties(self, s_item):
-    if 'svn:mime-type' not in s_item.svn_props \
+    if self.propname not in s_item.svn_props \
            and s_item.cvs_rev.cvs_file.mode == 'b':
-      s_item.svn_props['svn:mime-type'] = 'application/octet-stream'
+      s_item.svn_props[self.propname] = 'application/octet-stream'
 
 
 class EOLStyleFromMimeTypeSetter(SVNPropertySetter):
@@ -211,17 +221,21 @@ class EOLStyleFromMimeTypeSetter(SVNPropertySetter):
   starts with 'text/', then set svn:eol-style to native; otherwise,
   force it to remain unset.  See also issue #39."""
 
+  propname = 'svn:eol-style'
+
   def set_properties(self, s_item):
-    if 'svn:eol-style' not in s_item.svn_props \
+    if self.propname not in s_item.svn_props \
        and s_item.svn_props.get('svn:mime-type', None) is not None:
       if s_item.svn_props['svn:mime-type'].startswith("text/"):
-        s_item.svn_props['svn:eol-style'] = 'native'
+        s_item.svn_props[self.propname] = 'native'
       else:
-        s_item.svn_props['svn:eol-style'] = None
+        s_item.svn_props[self.propname] = None
 
 
 class DefaultEOLStyleSetter(SVNPropertySetter):
   """Set the eol-style if one has not already been set."""
+
+  propname = 'svn:eol-style'
 
   def __init__(self, value):
     """Initialize with the specified default VALUE."""
@@ -229,13 +243,15 @@ class DefaultEOLStyleSetter(SVNPropertySetter):
     self.value = value
 
   def set_properties(self, s_item):
-    if 'svn:eol-style' not in s_item.svn_props:
-      s_item.svn_props['svn:eol-style'] = self.value
+    if self.propname not in s_item.svn_props:
+      s_item.svn_props[self.propname] = self.value
 
 
 class KeywordsPropertySetter(SVNPropertySetter):
   """If the svn:keywords property is not yet set, set it based on the
   file's mode.  See issue #2."""
+
+  propname = 'svn:keywords'
 
   def __init__(self, value):
     """Use VALUE for the value of the svn:keywords property if it is
@@ -244,8 +260,8 @@ class KeywordsPropertySetter(SVNPropertySetter):
     self.value = value
 
   def set_properties(self, s_item):
-    if 'svn:keywords' not in s_item.svn_props \
+    if self.propname not in s_item.svn_props \
            and s_item.cvs_rev.cvs_file.mode in [None, 'kv', 'kvl']:
-      s_item.svn_props['svn:keywords'] = self.value
+      s_item.svn_props[self.propname] = self.value
 
 

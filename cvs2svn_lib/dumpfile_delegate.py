@@ -233,7 +233,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     # the keywords because they must be unexpanded in the repository,
     # or Subversion will get confused.
     stream = Ctx().revision_reader.get_content_stream(
-        cvs_rev, suppress_keyword_substitution=s_item.has_keywords)
+        cvs_rev, suppress_keyword_substitution=s_item.has_keywords())
 
     self.dumpfile.write('Node-path: %s\n'
                         'Node-kind: file\n'

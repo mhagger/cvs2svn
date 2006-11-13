@@ -46,12 +46,13 @@ class SVNCommitItem:
     for svn_property_setter in Ctx().svn_property_setters:
       svn_property_setter.set_properties(self)
 
-    self.has_keywords = self.svn_props.get('svn:keywords', None) is not None
-
   def needs_eol_filter(self):
     """Return True iff EOLs needs to be filtered for this item."""
 
     # Return true iff the property is unset or if it is set to None:
     return self.svn_props.get('svn:eol-style', None) is not None
+
+  def has_keywords(self):
+    return self.svn_props.get('svn:keywords', None) is not None
 
 

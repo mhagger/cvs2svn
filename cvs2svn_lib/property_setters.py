@@ -42,6 +42,9 @@ class CVSRevisionNumberSetter(SVNPropertySetter):
   propname = 'cvs2svn:cvs-rev'
 
   def set_properties(self, s_item):
+    if self.propname in s_item.svn_props:
+      return
+
     s_item.svn_props[self.propname] = s_item.cvs_rev.rev
     s_item.svn_props_changed = True
 
@@ -52,6 +55,9 @@ class ExecutablePropertySetter(SVNPropertySetter):
   propname = 'svn:executable'
 
   def set_properties(self, s_item):
+    if self.propname in s_item.svn_props:
+      return
+
     if s_item.cvs_rev.cvs_file.executable:
       s_item.svn_props[self.propname] = '*'
 
@@ -62,6 +68,9 @@ class BinaryFileEOLStyleSetter(SVNPropertySetter):
   propname = 'svn:eol-style'
 
   def set_properties(self, s_item):
+    if self.propname in s_item.svn_props:
+      return
+
     if s_item.cvs_rev.cvs_file.mode == 'b':
       s_item.svn_props[self.propname] = None
 
@@ -91,6 +100,9 @@ class MimeMapper(SVNPropertySetter):
         self.mappings[ext] = type
 
   def set_properties(self, s_item):
+    if self.propname in s_item.svn_props:
+      return
+
     basename, extension = os.path.splitext(
         os.path.basename(s_item.cvs_rev.cvs_path)
         )
@@ -208,8 +220,10 @@ class BinaryFileDefaultMimeTypeSetter(SVNPropertySetter):
   propname = 'svn:mime-type'
 
   def set_properties(self, s_item):
-    if self.propname not in s_item.svn_props \
-           and s_item.cvs_rev.cvs_file.mode == 'b':
+    if self.propname in s_item.svn_props:
+      return
+
+    if s_item.cvs_rev.cvs_file.mode == 'b':
       s_item.svn_props[self.propname] = 'application/octet-stream'
 
 
@@ -224,8 +238,10 @@ class EOLStyleFromMimeTypeSetter(SVNPropertySetter):
   propname = 'svn:eol-style'
 
   def set_properties(self, s_item):
-    if self.propname not in s_item.svn_props \
-       and s_item.svn_props.get('svn:mime-type', None) is not None:
+    if self.propname in s_item.svn_props:
+      return
+
+    if s_item.svn_props.get('svn:mime-type', None) is not None:
       if s_item.svn_props['svn:mime-type'].startswith("text/"):
         s_item.svn_props[self.propname] = 'native'
       else:
@@ -243,8 +259,10 @@ class DefaultEOLStyleSetter(SVNPropertySetter):
     self.value = value
 
   def set_properties(self, s_item):
-    if self.propname not in s_item.svn_props:
-      s_item.svn_props[self.propname] = self.value
+    if self.propname in s_item.svn_props:
+      return
+
+    s_item.svn_props[self.propname] = self.value
 
 
 class KeywordsPropertySetter(SVNPropertySetter):
@@ -260,8 +278,10 @@ class KeywordsPropertySetter(SVNPropertySetter):
     self.value = value
 
   def set_properties(self, s_item):
-    if self.propname not in s_item.svn_props \
-           and s_item.cvs_rev.cvs_file.mode in [None, 'kv', 'kvl']:
+    if self.propname in s_item.svn_props:
+      return
+
+    if s_item.cvs_rev.cvs_file.mode in [None, 'kv', 'kvl']:
       s_item.svn_props[self.propname] = self.value
 
 

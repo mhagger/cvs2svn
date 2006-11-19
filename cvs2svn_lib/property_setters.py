@@ -213,7 +213,7 @@ class AutoPropsPropertySetter(SVNPropertySetter):
         s_item.svn_props[k] = v
 
 
-class BinaryFileDefaultMimeTypeSetter(SVNPropertySetter):
+class CVSBinaryFileDefaultMimeTypeSetter(SVNPropertySetter):
   """If the file is binary and its svn:mime-type property is not yet
   set, set it to 'application/octet-stream'."""
 

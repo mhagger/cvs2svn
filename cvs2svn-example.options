@@ -54,7 +54,7 @@ from cvs2svn_lib.symbol_strategy import RuleBasedSymbolStrategy
 from cvs2svn_lib.symbol_strategy import UnambiguousUsageRule
 from cvs2svn_lib.symbol_transform import RegexpSymbolTransform
 from cvs2svn_lib.property_setters import AutoPropsPropertySetter
-from cvs2svn_lib.property_setters import BinaryFileDefaultMimeTypeSetter
+from cvs2svn_lib.property_setters import CVSBinaryFileDefaultMimeTypeSetter
 from cvs2svn_lib.property_setters import CVSBinaryFileEOLStyleSetter
 from cvs2svn_lib.property_setters import CVSRevisionNumberSetter
 from cvs2svn_lib.property_setters import DefaultEOLStyleSetter
@@ -226,7 +226,7 @@ ctx.svn_property_setters = [
 
     # If the file is binary and its svn:mime-type property is not yet
     # set, set svn:mime-type to 'application/octet-stream'.
-    BinaryFileDefaultMimeTypeSetter(),
+    CVSBinaryFileDefaultMimeTypeSetter(),
 
     # To try to determine the eol-style from the mime type, uncomment
     # the following line:

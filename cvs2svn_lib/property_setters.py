@@ -62,8 +62,8 @@ class ExecutablePropertySetter(SVNPropertySetter):
       s_item.svn_props[self.propname] = '*'
 
 
-class BinaryFileEOLStyleSetter(SVNPropertySetter):
-  """Set the eol-style for binary files to None."""
+class CVSBinaryFileEOLStyleSetter(SVNPropertySetter):
+  """Set the eol-style to None for files with CVS mode '-kb'."""
 
   propname = 'svn:eol-style'
 

@@ -54,7 +54,7 @@ from cvs2svn_lib.symbol_strategy import UnambiguousUsageRule
 from cvs2svn_lib.symbol_transform import RegexpSymbolTransform
 from cvs2svn_lib.property_setters import AutoPropsPropertySetter
 from cvs2svn_lib.property_setters import BinaryFileDefaultMimeTypeSetter
-from cvs2svn_lib.property_setters import BinaryFileEOLStyleSetter
+from cvs2svn_lib.property_setters import CVSBinaryFileEOLStyleSetter
 from cvs2svn_lib.property_setters import CVSRevisionNumberSetter
 from cvs2svn_lib.property_setters import DefaultEOLStyleSetter
 from cvs2svn_lib.property_setters import EOLStyleFromMimeTypeSetter
@@ -441,7 +441,7 @@ class RunOptions:
 
     ctx.svn_property_setters.append(ExecutablePropertySetter())
 
-    ctx.svn_property_setters.append(BinaryFileEOLStyleSetter())
+    ctx.svn_property_setters.append(CVSBinaryFileEOLStyleSetter())
 
     if mime_types_file:
       ctx.svn_property_setters.append(MimeMapper(mime_types_file))

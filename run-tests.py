@@ -104,14 +104,14 @@ def run_program(program, error_re, *varargs):
       for line in err:
         if re.match(error_re, line):
           return out
-      raise MissingErrorException
+      raise MissingErrorException()
     else:
       if svntest.main.verbose_mode:
         print '\n%s said:\n' % program
         for line in err:
           print '   ' + line,
         print
-      raise RunProgramException
+      raise RunProgramException()
   return out
 
 
@@ -498,7 +498,7 @@ class Conversion:
       else:
         run_cvs2svn(error_re, *args)
     except RunProgramException:
-      raise Failure
+      raise Failure()
     except MissingErrorException:
       raise Failure("Test failed because no error matched '%s'"
                             % error_re)
@@ -638,7 +638,7 @@ def ensure_conversion(name, error_re=None, passbypass=None,
 
   conv = already_converted[conv_id]
   if conv is None:
-    raise Failure
+    raise Failure()
   return conv
 
 
@@ -669,18 +669,18 @@ def show_help_passes():
 def attr_exec():
   "detection of the executable flag"
   if sys.platform == 'win32':
-    raise svntest.Skip
+    raise svntest.Skip()
   conv = ensure_conversion('main')
   st = os.stat(conv.get_wc('trunk', 'single-files', 'attr-exec'))
   if not st[0] & stat.S_IXUSR:
-    raise Failure
+    raise Failure()
 
 
 def space_fname():
   "conversion of filename with a space"
   conv = ensure_conversion('main')
   if not conv.path_exists('trunk', 'single-files', 'space fname'):
-    raise Failure
+    raise Failure()
 
 
 def two_quick():
@@ -689,7 +689,7 @@ def two_quick():
   logs = parse_log(
       os.path.join(conv.repos, 'trunk', 'single-files', 'twoquick'), {})
   if len(logs) != 2:
-    raise Failure
+    raise Failure()
 
 
 def prune_with_care(**kw):
@@ -1031,10 +1031,10 @@ def multiple_tags():
   "multiple tags referring to same revision"
   conv = ensure_conversion('main')
   if not conv.path_exists('tags', 'T_ALL_INITIAL_FILES', 'proj', 'default'):
-    raise Failure
+    raise Failure()
   if not conv.path_exists(
         'tags', 'T_ALL_INITIAL_FILES_BUT_ONE', 'proj', 'default'):
-    raise Failure
+    raise Failure()
 
 def bogus_tag():
   "conversion of invalid symbolic names"
@@ -1056,10 +1056,10 @@ def overlapping_branch():
           '/%(branches)s/vendorB (from /%(trunk)s:2)') == 'A'
       or conv.logs[rev].get_path_op(
              '/%(branches)s/vendorB (from /%(trunk)s:3)') == 'A'):
-    raise Failure
+    raise Failure()
   conv.logs[rev + 1].check_changes(())
   if len(conv.logs) != rev + 1:
-    raise Failure
+    raise Failure()
 
 
 def phoenix_branch(**kw):
@@ -1106,7 +1106,7 @@ def no_trunk_prune(**kw):
   for rev in conv.logs.keys():
     rev_logs = conv.logs[rev]
     if rev_logs.get_path_op('/%(trunk)s') == 'D':
-      raise Failure
+      raise Failure()
 
 
 def no_trunk_prune_variants():
@@ -1135,7 +1135,7 @@ def double_delete():
   conv.logs[rev + 1].check_msg('Remove this file for the first time.')
 
   if conv.logs[rev + 1].get_path_op('/%(trunk)s') is not None:
-    raise Failure
+    raise Failure()
 
 
 def split_branch():
@@ -1165,10 +1165,10 @@ def tagged_branch_and_trunk(**kw):
   a_path = conv.get_wc(tags, 'some-tag', 'a.txt')
   b_path = conv.get_wc(tags, 'some-tag', 'b.txt')
   if not (os.path.exists(a_path) and os.path.exists(b_path)):
-    raise Failure
+    raise Failure()
   if (open(a_path, 'r').read().find('1.24') == -1) \
      or (open(b_path, 'r').read().find('1.5') == -1):
-    raise Failure
+    raise Failure()
 
 
 def tagged_branch_and_trunk_variants():
@@ -1198,7 +1198,7 @@ def enroot_race_obo():
   conv = ensure_conversion('enroot-race-obo')
   conv.logs[3].check_change('/%(branches)s/BRANCH (from /%(trunk)s:2)', 'A')
   if not len(conv.logs) == 3:
-    raise Failure
+    raise Failure()
 
 
 def branch_delete_first(**kw):
@@ -1213,11 +1213,11 @@ def branch_delete_first(**kw):
 
   # 'file' was deleted from branch-1 and branch-2, but not branch-3
   if conv.path_exists(branches, 'branch-1', 'file'):
-    raise Failure
+    raise Failure()
   if conv.path_exists(branches, 'branch-2', 'file'):
-    raise Failure
+    raise Failure()
   if not conv.path_exists(branches, 'branch-3', 'file'):
-    raise Failure
+    raise Failure()
 
 
 def branch_delete_first_variants():
@@ -1264,7 +1264,7 @@ def nonascii_filenames():
 
   # So we're going to skip this test on Mac OS X for now.
   if sys.platform == "darwin":
-    raise svntest.Skip
+    raise svntest.Skip()
 
   try:
     # change locale to non-UTF-8 locale to generate latin1 names
@@ -1272,7 +1272,7 @@ def nonascii_filenames():
                      new_locale)
     locale_changed = 1
   except locale.Error:
-    raise svntest.Skip
+    raise svntest.Skip()
 
   try:
     srcrepos_path = os.path.join(test_data_dir,'main-cvsrepos')
@@ -1653,7 +1653,7 @@ def individual_passes():
   conv2 = ensure_conversion('main', passbypass=1)
 
   if conv.logs != conv2.logs:
-    raise Failure
+    raise Failure()
 
 
 def resync_bug():
@@ -1690,7 +1690,7 @@ def file_in_attic_too():
             r'(.*)' + re.escape(os.sep) + r'(.*) '
             + r'and '
             r'\1' + re.escape(os.sep) + r'Attic' + re.escape(os.sep) + r'\2'))
-    raise MissingErrorException
+    raise MissingErrorException()
   except Failure:
     pass
 
@@ -1700,9 +1700,9 @@ def retain_file_in_attic_too():
   conv = ensure_conversion(
       'file-in-attic-too', args=['--retain-conflicting-attic-files'])
   if not conv.path_exists('trunk', 'file.txt'):
-    raise Failure
+    raise Failure()
   if not conv.path_exists('trunk', 'Attic', 'file.txt'):
-    raise Failure
+    raise Failure()
 
 
 def symbolic_name_filling_guide():
@@ -1720,7 +1720,7 @@ class NodeTreeWalkException:
 def node_for_path(node, path):
   "In the tree rooted under SVNTree NODE, return the node at PATH."
   if node.name != '__SVN_ROOT_NODE':
-    raise NodeTreeWalkException
+    raise NodeTreeWalkException()
   path = path.strip('/')
   components = path.split('/')
   for component in components:
@@ -1849,11 +1849,11 @@ def ignore():
 
   if topdir_props['svn:ignore'] != \
      '*.idx\n*.aux\n*.dvi\n*.log\nfoo\nbar\nbaz\nqux\n\n':
-    raise Failure
+    raise Failure()
 
   if subdir_props['svn:ignore'] != \
      '*.idx\n*.aux\n*.dvi\n*.log\nfoo\nbar\nbaz\nqux\n\n':
-    raise Failure
+    raise Failure()
 
 
 def requires_cvs():
@@ -1865,13 +1865,13 @@ def requires_cvs():
   cl_contents = file(conv.get_wc("trunk", "client_lock.idl")).read()
 
   if atsign_contents[-1:] == "@":
-    raise Failure
+    raise Failure()
   if cl_contents.find("gregh\n//\n//Integration for locks") < 0:
-    raise Failure
+    raise Failure()
 
   if not (conv.logs[21].author == "William Lyon Phelps III" and
           conv.logs[20].author == "j random"):
-    raise Failure
+    raise Failure()
 
 
 def questionable_branch_names():
@@ -1905,7 +1905,7 @@ def exclude():
   for log in conv.logs.values():
     for item in log.changed_paths.keys():
       if item.startswith('/branches/') or item.startswith('/tags/'):
-        raise Failure
+        raise Failure()
 
 
 def vendor_branch_delete_add():
@@ -1932,7 +1932,7 @@ def native_eol():
   # LF EOLs, so we're safe.
   for line in lines:
     if line[-1] != '\n' or line[:-1].find('\r') != -1:
-      raise Failure
+      raise Failure()
 
 
 def double_fill():
@@ -1986,7 +1986,7 @@ def nested_ttb_directories():
       ensure_conversion(
           'main', error_re=r'.*paths .* and .* are not disjoint\.', **opts
           )
-      raise MissingErrorException
+      raise MissingErrorException()
     except Failure:
       pass
 
@@ -2075,7 +2075,7 @@ def ctrl_char_in_filename():
       # Operating systems that don't allow control characters in
       # filenames will hopefully have thrown an exception; in that
       # case, just skip this test.
-      raise svntest.Skip
+      raise svntest.Skip()
 
     try:
       conv = ensure_conversion(
@@ -2083,7 +2083,7 @@ def ctrl_char_in_filename():
           error_re=(r'.*Character .* in filename .* '
                     r'is not supported by subversion\.'),
           )
-      raise MissingErrorException
+      raise MissingErrorException()
     except Failure:
       pass
   finally:
@@ -2151,7 +2151,7 @@ def symbol_mismatches():
 
   try:
     ensure_conversion('symbol-mess')
-    raise MissingErrorException
+    raise MissingErrorException()
   except Failure:
     pass
 
@@ -2164,16 +2164,16 @@ def force_symbols():
       args=['--force-branch=MOSTLY_BRANCH', '--force-tag=MOSTLY_TAG'])
   if conv.path_exists('tags', 'BRANCH') \
      or not conv.path_exists('branches', 'BRANCH'):
-     raise Failure
+     raise Failure()
   if not conv.path_exists('tags', 'TAG') \
      or conv.path_exists('branches', 'TAG'):
-     raise Failure
+     raise Failure()
   if conv.path_exists('tags', 'MOSTLY_BRANCH') \
      or not conv.path_exists('branches', 'MOSTLY_BRANCH'):
-     raise Failure
+     raise Failure()
   if not conv.path_exists('tags', 'MOSTLY_TAG') \
      or conv.path_exists('branches', 'MOSTLY_TAG'):
-     raise Failure
+     raise Failure()
 
 
 def commit_blocks_tags():
@@ -2184,7 +2184,7 @@ def commit_blocks_tags():
     ensure_conversion(
         'symbol-mess',
         args=(basic_args + ['--force-tag=BRANCH_WITH_COMMIT']))
-    raise MissingErrorException
+    raise MissingErrorException()
   except Failure:
     pass
 
@@ -2198,7 +2198,7 @@ def blocked_excludes():
       ensure_conversion(
           'symbol-mess',
           args=(basic_args + ['--exclude=BLOCKED_BY_%s' % blocker]))
-      raise MissingErrorException
+      raise MissingErrorException()
     except Failure:
       pass
 
@@ -2222,10 +2222,10 @@ def regexp_force_symbols():
       args=['--force-branch=MOST.*_BRANCH', '--force-tag=MOST.*_TAG'])
   if conv.path_exists('tags', 'MOSTLY_BRANCH') \
      or not conv.path_exists('branches', 'MOSTLY_BRANCH'):
-     raise Failure
+     raise Failure()
   if not conv.path_exists('tags', 'MOSTLY_TAG') \
      or conv.path_exists('branches', 'MOSTLY_TAG'):
-     raise Failure
+     raise Failure()
 
 
 def heuristic_symbol_default():
@@ -2235,10 +2235,10 @@ def heuristic_symbol_default():
       'symbol-mess', args=['--symbol-default=heuristic'])
   if conv.path_exists('tags', 'MOSTLY_BRANCH') \
      or not conv.path_exists('branches', 'MOSTLY_BRANCH'):
-     raise Failure
+     raise Failure()
   if not conv.path_exists('tags', 'MOSTLY_TAG') \
      or conv.path_exists('branches', 'MOSTLY_TAG'):
-     raise Failure
+     raise Failure()
 
 
 def branch_symbol_default():
@@ -2248,10 +2248,10 @@ def branch_symbol_default():
       'symbol-mess', args=['--symbol-default=branch'])
   if conv.path_exists('tags', 'MOSTLY_BRANCH') \
      or not conv.path_exists('branches', 'MOSTLY_BRANCH'):
-     raise Failure
+     raise Failure()
   if conv.path_exists('tags', 'MOSTLY_TAG') \
      or not conv.path_exists('branches', 'MOSTLY_TAG'):
-     raise Failure
+     raise Failure()
 
 
 def tag_symbol_default():
@@ -2261,10 +2261,10 @@ def tag_symbol_default():
       'symbol-mess', args=['--symbol-default=tag'])
   if not conv.path_exists('tags', 'MOSTLY_BRANCH') \
      or conv.path_exists('branches', 'MOSTLY_BRANCH'):
-     raise Failure
+     raise Failure()
   if not conv.path_exists('tags', 'MOSTLY_TAG') \
      or conv.path_exists('branches', 'MOSTLY_TAG'):
-     raise Failure
+     raise Failure()
 
 
 def symbol_transform():
@@ -2279,13 +2279,13 @@ def symbol_transform():
           '--symbol-transform=^MOSTLY_(BRANCH|TAG):MOSTLY.\\1',
           ])
   if not conv.path_exists('branches', 'branch'):
-     raise Failure
+     raise Failure()
   if not conv.path_exists('tags', 'tag'):
-     raise Failure
+     raise Failure()
   if not conv.path_exists('branches', 'MOSTLY.BRANCH'):
-     raise Failure
+     raise Failure()
   if not conv.path_exists('tags', 'MOSTLY.TAG'):
-     raise Failure
+     raise Failure()
 
 
 def issue_99():
@@ -2300,7 +2300,7 @@ def issue_100():
   conv = ensure_conversion('issue-100')
   file1 = conv.get_wc('trunk', 'file1.txt')
   if file(file1).read() != 'file1.txt<1.2>\n':
-    raise Failure
+    raise Failure()
 
 
 def issue_106():

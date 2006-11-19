@@ -439,16 +439,14 @@ class RunOptions:
     else:
       assert False
 
-    ctx.svn_property_setters.append(ExecutablePropertySetter())
-
-    ctx.svn_property_setters.append(CVSBinaryFileEOLStyleSetter())
+    if auto_props_file:
+      ctx.svn_property_setters.append(AutoPropsPropertySetter(
+          auto_props_file, auto_props_ignore_case))
 
     if mime_types_file:
       ctx.svn_property_setters.append(MimeMapper(mime_types_file))
 
-    if auto_props_file:
-      ctx.svn_property_setters.append(AutoPropsPropertySetter(
-          auto_props_file, auto_props_ignore_case))
+    ctx.svn_property_setters.append(CVSBinaryFileEOLStyleSetter())
 
     ctx.svn_property_setters.append(BinaryFileDefaultMimeTypeSetter())
 
@@ -463,6 +461,8 @@ class RunOptions:
     if not keywords_off:
       ctx.svn_property_setters.append(
           KeywordsPropertySetter(config.SVN_KEYWORDS_VALUE))
+
+    ctx.svn_property_setters.append(ExecutablePropertySetter())
 
   def check_options(self):
     """Check the the run options are OK.

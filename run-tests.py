@@ -2008,13 +2008,16 @@ def auto_props_ignore_case():
 
   conv = ensure_conversion(
       'eol-mime',
-      args=['--auto-props=%s' % auto_props_path, '--auto-props-ignore-case'])
+      args=[
+          '--auto-props=%s' % auto_props_path,
+          '--auto-props-ignore-case',
+          '--eol-from-mime-type'])
   conv.check_props(
       ['myprop', 'svn:eol-style', 'svn:mime-type'],
       [
           ('trunk/foo.txt', ['txt', 'native', None]),
           ('trunk/foo.xml', ['xml', 'CRLF', 'text/xml']),
-          ('trunk/foo.zip', ['zip', 'native', 'application/zip']),
+          ('trunk/foo.zip', ['zip', None, 'application/zip']),
           ('trunk/foo.bin', ['bin', None, 'application/octet-stream']),
           ('trunk/foo.csv', ['csv', 'CRLF', 'text/csv']),
           ('trunk/foo.dbf', ['dbf', None, 'application/what-is-dbf']),
@@ -2031,13 +2034,16 @@ def auto_props():
       'auto-props')
 
   conv = ensure_conversion(
-      'eol-mime', args=['--auto-props=%s' % auto_props_path])
+      'eol-mime',
+      args=[
+          '--auto-props=%s' % auto_props_path,
+          '--eol-from-mime-type'])
   conv.check_props(
       ['myprop', 'svn:eol-style', 'svn:mime-type'],
       [
           ('trunk/foo.txt', ['txt', 'native', None]),
           ('trunk/foo.xml', ['xml', 'CRLF', 'text/xml']),
-          ('trunk/foo.zip', ['zip', 'native', 'application/zip']),
+          ('trunk/foo.zip', ['zip', None, 'application/zip']),
           ('trunk/foo.bin', ['bin', None, 'application/octet-stream']),
           ('trunk/foo.csv', ['csv', 'CRLF', 'text/csv']),
           ('trunk/foo.dbf', ['dbf', None, 'application/what-is-dbf']),

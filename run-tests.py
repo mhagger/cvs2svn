@@ -80,6 +80,10 @@ tmp_dir = 'tmp'
 #----------------------------------------------------------------------
 
 
+# The value to expect for svn:keywords if it is set:
+KEYWORDS = 'Author Date Id Revision'
+
+
 class RunProgramException:
   pass
 
@@ -1826,9 +1830,9 @@ def keywords():
   conv.check_props(
       ['svn:keywords', 'svn:eol-style', 'svn:mime-type'],
       [
-          ('trunk/foo.default', ['Author Date Id Revision', 'native', None]),
-          ('trunk/foo.kkvl', ['Author Date Id Revision', 'native', None]),
-          ('trunk/foo.kkv', ['Author Date Id Revision', 'native', None]),
+          ('trunk/foo.default', [KEYWORDS, 'native', None]),
+          ('trunk/foo.kkvl', [KEYWORDS, 'native', None]),
+          ('trunk/foo.kkv', [KEYWORDS, 'native', None]),
           ('trunk/foo.kb', [None, None, 'application/octet-stream']),
           ('trunk/foo.kk', [None, 'native', None]),
           ('trunk/foo.ko', [None, 'native', None]),

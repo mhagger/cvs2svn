@@ -1765,14 +1765,14 @@ def eol_mime():
   conv = ensure_conversion(
       'eol-mime', args=['--mime-types=%s' % mime_path, '--cvs-revnums'])
   conv.check_props(
-      ['svn:eol-style', 'svn:mime-type', 'cvs2svn:cvs-rev'],
+      ['svn:eol-style', 'svn:mime-type', 'cvs2svn:cvs-rev', 'svn:keywords'],
       [
-          ('trunk/foo.txt', ['native', None, '1.2']),
-          ('trunk/foo.xml', ['native', 'text/xml', '1.2']),
-          ('trunk/foo.zip', ['native', 'application/zip', '1.2']),
-          ('trunk/foo.bin', [None, 'application/octet-stream', '1.2']),
-          ('trunk/foo.csv', [None, 'text/csv', '1.2']),
-          ('trunk/foo.dbf', [None, 'application/what-is-dbf', '1.2']),
+          ('trunk/foo.txt', ['native', None, '1.2', KEYWORDS]),
+          ('trunk/foo.xml', ['native', 'text/xml', '1.2', KEYWORDS]),
+          ('trunk/foo.zip', ['native', 'application/zip', '1.2', KEYWORDS]),
+          ('trunk/foo.bin', [None, 'application/octet-stream', '1.2', None]),
+          ('trunk/foo.csv', [None, 'text/csv', '1.2', None]),
+          ('trunk/foo.dbf', [None, 'application/what-is-dbf', '1.2', None]),
           ]
       )
 
@@ -1780,14 +1780,14 @@ def eol_mime():
   conv = ensure_conversion(
       'eol-mime', args=['--mime-types=%s' % mime_path, '--no-default-eol'])
   conv.check_props(
-      ['svn:eol-style', 'svn:mime-type', 'cvs2svn:cvs-rev'],
+      ['svn:eol-style', 'svn:mime-type', 'cvs2svn:cvs-rev', 'svn:keywords'],
       [
-          ('trunk/foo.txt', [None, None, None]),
-          ('trunk/foo.xml', [None, 'text/xml', None]),
-          ('trunk/foo.zip', [None, 'application/zip', None]),
-          ('trunk/foo.bin', [None, 'application/octet-stream', None]),
-          ('trunk/foo.csv', [None, 'text/csv', None]),
-          ('trunk/foo.dbf', [None, 'application/what-is-dbf', None]),
+          ('trunk/foo.txt', [None, None, None, KEYWORDS]),
+          ('trunk/foo.xml', [None, 'text/xml', None, KEYWORDS]),
+          ('trunk/foo.zip', [None, 'application/zip', None, KEYWORDS]),
+          ('trunk/foo.bin', [None, 'application/octet-stream', None, None]),
+          ('trunk/foo.csv', [None, 'text/csv', None, None]),
+          ('trunk/foo.dbf', [None, 'application/what-is-dbf', None, None]),
           ]
       )
 
@@ -1796,14 +1796,14 @@ def eol_mime():
       '--mime-types=%s' % mime_path, '--eol-from-mime-type', '--cvs-revnums'
       ])
   conv.check_props(
-      ['svn:eol-style', 'svn:mime-type', 'cvs2svn:cvs-rev'],
+      ['svn:eol-style', 'svn:mime-type', 'cvs2svn:cvs-rev', 'svn:keywords'],
       [
-          ('trunk/foo.txt', ['native', None, '1.2']),
-          ('trunk/foo.xml', ['native', 'text/xml', '1.2']),
-          ('trunk/foo.zip', [None, 'application/zip', '1.2']),
-          ('trunk/foo.bin', [None, 'application/octet-stream', '1.2']),
-          ('trunk/foo.csv', [None, 'text/csv', '1.2']),
-          ('trunk/foo.dbf', [None, 'application/what-is-dbf', '1.2']),
+          ('trunk/foo.txt', ['native', None, '1.2', KEYWORDS]),
+          ('trunk/foo.xml', ['native', 'text/xml', '1.2', KEYWORDS]),
+          ('trunk/foo.zip', [None, 'application/zip', '1.2', KEYWORDS]),
+          ('trunk/foo.bin', [None, 'application/octet-stream', '1.2', None]),
+          ('trunk/foo.csv', [None, 'text/csv', '1.2', None]),
+          ('trunk/foo.dbf', [None, 'application/what-is-dbf', '1.2', None]),
           ]
       )
 
@@ -1812,14 +1812,14 @@ def eol_mime():
       '--mime-types=%s' % mime_path, '--eol-from-mime-type',
       '--no-default-eol'])
   conv.check_props(
-      ['svn:eol-style', 'svn:mime-type', 'cvs2svn:cvs-rev'],
+      ['svn:eol-style', 'svn:mime-type', 'cvs2svn:cvs-rev', 'svn:keywords'],
       [
-          ('trunk/foo.txt', [None, None, None]),
-          ('trunk/foo.xml', ['native', 'text/xml', None]),
-          ('trunk/foo.zip', [None, 'application/zip', None]),
-          ('trunk/foo.bin', [None, 'application/octet-stream', None]),
-          ('trunk/foo.csv', [None, 'text/csv', None]),
-          ('trunk/foo.dbf', [None, 'application/what-is-dbf', None]),
+          ('trunk/foo.txt', [None, None, None, KEYWORDS]),
+          ('trunk/foo.xml', ['native', 'text/xml', None, KEYWORDS]),
+          ('trunk/foo.zip', [None, 'application/zip', None, KEYWORDS]),
+          ('trunk/foo.bin', [None, 'application/octet-stream', None, None]),
+          ('trunk/foo.csv', [None, 'text/csv', None, None]),
+          ('trunk/foo.dbf', [None, 'application/what-is-dbf', None, None]),
           ]
       )
 
@@ -2017,16 +2017,16 @@ def auto_props_ignore_case():
           '--auto-props-ignore-case',
           '--eol-from-mime-type'])
   conv.check_props(
-      ['myprop', 'svn:eol-style', 'svn:mime-type'],
+      ['myprop', 'svn:eol-style', 'svn:mime-type', 'svn:keywords'],
       [
-          ('trunk/foo.txt', ['txt', 'native', None]),
-          ('trunk/foo.xml', ['xml', 'CRLF', 'text/xml']),
-          ('trunk/foo.zip', ['zip', None, 'application/zip']),
-          ('trunk/foo.bin', ['bin', None, 'application/octet-stream']),
-          ('trunk/foo.csv', ['csv', 'CRLF', 'text/csv']),
-          ('trunk/foo.dbf', ['dbf', None, 'application/what-is-dbf']),
-          ('trunk/foo.UPCASE1', ['UPCASE1', 'native', None]),
-          ('trunk/foo.UPCASE2', ['UPCASE2', 'native', None]),
+          ('trunk/foo.txt', ['txt', 'native', None, KEYWORDS]),
+          ('trunk/foo.xml', ['xml', 'CRLF', 'text/xml', KEYWORDS]),
+          ('trunk/foo.zip', ['zip', None, 'application/zip', KEYWORDS]),
+          ('trunk/foo.bin', ['bin', None, 'application/octet-stream', None]),
+          ('trunk/foo.csv', ['csv', 'CRLF', 'text/csv', None]),
+          ('trunk/foo.dbf', ['dbf', None, 'application/what-is-dbf', None]),
+          ('trunk/foo.UPCASE1', ['UPCASE1', 'native', None, KEYWORDS]),
+          ('trunk/foo.UPCASE2', ['UPCASE2', 'native', None, KEYWORDS]),
           ]
       )
 
@@ -2043,16 +2043,16 @@ def auto_props():
           '--auto-props=%s' % auto_props_path,
           '--eol-from-mime-type'])
   conv.check_props(
-      ['myprop', 'svn:eol-style', 'svn:mime-type'],
+      ['myprop', 'svn:eol-style', 'svn:mime-type', 'svn:keywords'],
       [
-          ('trunk/foo.txt', ['txt', 'native', None]),
-          ('trunk/foo.xml', ['xml', 'CRLF', 'text/xml']),
-          ('trunk/foo.zip', ['zip', None, 'application/zip']),
-          ('trunk/foo.bin', ['bin', None, 'application/octet-stream']),
-          ('trunk/foo.csv', ['csv', 'CRLF', 'text/csv']),
-          ('trunk/foo.dbf', ['dbf', None, 'application/what-is-dbf']),
-          ('trunk/foo.UPCASE1', ['UPCASE1', 'native', None]),
-          ('trunk/foo.UPCASE2', [None, 'native', None]),
+          ('trunk/foo.txt', ['txt', 'native', None, KEYWORDS]),
+          ('trunk/foo.xml', ['xml', 'CRLF', 'text/xml', KEYWORDS]),
+          ('trunk/foo.zip', ['zip', None, 'application/zip', KEYWORDS]),
+          ('trunk/foo.bin', ['bin', None, 'application/octet-stream', None]),
+          ('trunk/foo.csv', ['csv', 'CRLF', 'text/csv', None]),
+          ('trunk/foo.dbf', ['dbf', None, 'application/what-is-dbf', None]),
+          ('trunk/foo.UPCASE1', ['UPCASE1', 'native', None, KEYWORDS]),
+          ('trunk/foo.UPCASE2', [None, 'native', None, KEYWORDS]),
           ]
       )
 

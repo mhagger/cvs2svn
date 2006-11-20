@@ -31,7 +31,10 @@ class SVNPropertySetter:
   """Abstract class for objects that can set properties on a SVNCommitItem."""
 
   def set_properties(self, s_item):
-    """Set any properties that can be determined for S_ITEM."""
+    """Set any properties that can be determined for S_ITEM.
+
+    S_ITEM is an instance of SVNCommitItem.  This method should modify
+    S_ITEM.svn_props in place."""
 
     raise NotImplementedError
 

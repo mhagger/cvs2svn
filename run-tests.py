@@ -1821,9 +1821,7 @@ class EOLMime(Cvs2SvnPropertiesTestCase):
 
     Cvs2SvnPropertiesTestCase.__init__(
         self, 'eol-mime',
-        props_to_test=[
-            'svn:eol-style', 'svn:mime-type',
-            'cvs2svn:cvs-rev', 'svn:keywords'],
+        props_to_test=['svn:eol-style', 'svn:mime-type', 'svn:keywords'],
         args=['--mime-types=%s' % self.mime_path] + args,
         **kw)
 
@@ -1832,22 +1830,19 @@ class EOLMime(Cvs2SvnPropertiesTestCase):
 # the same FILE, but vary --no-default-eol and --eol-from-mime-type.
 # Thus there's one conversion with neither flag, one with just the
 # former, one with just the latter, and one with both.
-#
-# In two of the four conversions, we pass --cvs-revnums to make
-# certain that there are no bad interactions.
 
 
 # Neither --no-default-eol nor --eol-from-mime-type:
 eol_mime1 = EOLMime(
     variant=1,
-    args=['--cvs-revnums'],
+    args=[],
     expected_props=[
-        ('trunk/foo.txt', ['native', None, '1.2', KEYWORDS]),
-        ('trunk/foo.xml', ['native', 'text/xml', '1.2', KEYWORDS]),
-        ('trunk/foo.zip', ['native', 'application/zip', '1.2', KEYWORDS]),
-        ('trunk/foo.bin', [None, 'application/octet-stream', '1.2', None]),
-        ('trunk/foo.csv', [None, 'text/csv', '1.2', None]),
-        ('trunk/foo.dbf', [None, 'application/what-is-dbf', '1.2', None]),
+        ('trunk/foo.txt', ['native', None, KEYWORDS]),
+        ('trunk/foo.xml', ['native', 'text/xml', KEYWORDS]),
+        ('trunk/foo.zip', ['native', 'application/zip', KEYWORDS]),
+        ('trunk/foo.bin', [None, 'application/octet-stream', None]),
+        ('trunk/foo.csv', [None, 'text/csv', None]),
+        ('trunk/foo.dbf', [None, 'application/what-is-dbf', None]),
         ])
 
 
@@ -1856,26 +1851,26 @@ eol_mime2 = EOLMime(
     variant=2,
     args=['--no-default-eol'],
     expected_props=[
-        ('trunk/foo.txt', [None, None, None, KEYWORDS]),
-        ('trunk/foo.xml', [None, 'text/xml', None, KEYWORDS]),
-        ('trunk/foo.zip', [None, 'application/zip', None, KEYWORDS]),
-        ('trunk/foo.bin', [None, 'application/octet-stream', None, None]),
-        ('trunk/foo.csv', [None, 'text/csv', None, None]),
-        ('trunk/foo.dbf', [None, 'application/what-is-dbf', None, None]),
+        ('trunk/foo.txt', [None, None, KEYWORDS]),
+        ('trunk/foo.xml', [None, 'text/xml', KEYWORDS]),
+        ('trunk/foo.zip', [None, 'application/zip', KEYWORDS]),
+        ('trunk/foo.bin', [None, 'application/octet-stream', None]),
+        ('trunk/foo.csv', [None, 'text/csv', None]),
+        ('trunk/foo.dbf', [None, 'application/what-is-dbf', None]),
         ])
 
 
 # Just --eol-from-mime-type, not --no-default-eol:
 eol_mime3 = EOLMime(
     variant=3,
-    args=['--eol-from-mime-type', '--cvs-revnums'],
+    args=['--eol-from-mime-type'],
     expected_props=[
-        ('trunk/foo.txt', ['native', None, '1.2', KEYWORDS]),
-        ('trunk/foo.xml', ['native', 'text/xml', '1.2', KEYWORDS]),
-        ('trunk/foo.zip', [None, 'application/zip', '1.2', KEYWORDS]),
-        ('trunk/foo.bin', [None, 'application/octet-stream', '1.2', None]),
-        ('trunk/foo.csv', [None, 'text/csv', '1.2', None]),
-        ('trunk/foo.dbf', [None, 'application/what-is-dbf', '1.2', None]),
+        ('trunk/foo.txt', ['native', None, KEYWORDS]),
+        ('trunk/foo.xml', ['native', 'text/xml', KEYWORDS]),
+        ('trunk/foo.zip', [None, 'application/zip', KEYWORDS]),
+        ('trunk/foo.bin', [None, 'application/octet-stream', None]),
+        ('trunk/foo.csv', [None, 'text/csv', None]),
+        ('trunk/foo.dbf', [None, 'application/what-is-dbf', None]),
         ])
 
 
@@ -1884,12 +1879,42 @@ eol_mime4 = EOLMime(
     variant=4,
     args=['--eol-from-mime-type', '--no-default-eol'],
     expected_props=[
-        ('trunk/foo.txt', [None, None, None, KEYWORDS]),
-        ('trunk/foo.xml', ['native', 'text/xml', None, KEYWORDS]),
-        ('trunk/foo.zip', [None, 'application/zip', None, KEYWORDS]),
-        ('trunk/foo.bin', [None, 'application/octet-stream', None, None]),
-        ('trunk/foo.csv', [None, 'text/csv', None, None]),
-        ('trunk/foo.dbf', [None, 'application/what-is-dbf', None, None]),
+        ('trunk/foo.txt', [None, None, KEYWORDS]),
+        ('trunk/foo.xml', ['native', 'text/xml', KEYWORDS]),
+        ('trunk/foo.zip', [None, 'application/zip', KEYWORDS]),
+        ('trunk/foo.bin', [None, 'application/octet-stream', None]),
+        ('trunk/foo.csv', [None, 'text/csv', None]),
+        ('trunk/foo.dbf', [None, 'application/what-is-dbf', None]),
+        ])
+
+
+cvs_revnums_off = Cvs2SvnPropertiesTestCase(
+    'eol-mime',
+    description='test non-setting of cvs2svn:cvs-rev property',
+    args=[],
+    props_to_test=['cvs2svn:cvs-rev'],
+    expected_props=[
+        ('trunk/foo.txt', [None]),
+        ('trunk/foo.xml', [None]),
+        ('trunk/foo.zip', [None]),
+        ('trunk/foo.bin', [None]),
+        ('trunk/foo.csv', [None]),
+        ('trunk/foo.dbf', [None]),
+        ])
+
+
+cvs_revnums_on = Cvs2SvnPropertiesTestCase(
+    'eol-mime',
+    description='test setting of cvs2svn:cvs-rev property',
+    args=['--cvs-revnums'],
+    props_to_test=['cvs2svn:cvs-rev'],
+    expected_props=[
+        ('trunk/foo.txt', ['1.2']),
+        ('trunk/foo.xml', ['1.2']),
+        ('trunk/foo.zip', ['1.2']),
+        ('trunk/foo.bin', ['1.2']),
+        ('trunk/foo.csv', ['1.2']),
+        ('trunk/foo.dbf', ['1.2']),
         ])
 
 
@@ -2490,6 +2515,8 @@ test_list = [
     eol_mime3,
 # 60:
     eol_mime4,
+    cvs_revnums_off,
+    cvs_revnums_on,
     keywords,
     ignore,
     requires_cvs,
@@ -2497,9 +2524,9 @@ test_list = [
     questionable_tag_names,
     revision_reorder_bug,
     exclude,
+# 70:
     vendor_branch_delete_add,
     resync_pass2_pull_forward,
-# 70:
     native_eol,
     double_fill,
     resync_pass2_push_backward,
@@ -2508,9 +2535,9 @@ test_list = [
     nested_ttb_directories,
     auto_props_ignore_case,
     auto_props,
+# 80:
     ctrl_char_in_filename,
     commit_dependencies,
-# 80:
     show_help_passes,
     multiple_tags,
     double_branch_delete,
@@ -2519,9 +2546,9 @@ test_list = [
     commit_blocks_tags,
     blocked_excludes,
     unblock_blocked_excludes,
+# 90:
     regexp_force_symbols,
     heuristic_symbol_default,
-# 90:
     branch_symbol_default,
     tag_symbol_default,
     symbol_transform,
@@ -2530,9 +2557,9 @@ test_list = [
     issue_106,
     options_option,
     tag_with_no_revision,
+# 100:
     XFail(delete_cvsignore),
     repeated_deltatext,
-# 100:
     nasty_graphs,
     ]
 

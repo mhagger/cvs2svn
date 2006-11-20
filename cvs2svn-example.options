@@ -206,7 +206,7 @@ ctx.username = None
 # the rules are tried one by one.  Any rule can add or suppress one or
 # more svn properties.  Typically the rules will not overwrite
 # properties set by a previous rule (though they are free to do so).
-ctx.svn_property_setters = [
+ctx.svn_property_setters.extend([
     # To read auto-props rules from a file, uncomment the following line
     # and specify a filename.  The boolean argument specifies whether
     # case should be ignored when matching filenames to the filename
@@ -255,7 +255,7 @@ ctx.svn_property_setters = [
     # numbers as file properties in the SVN archive:
     #CVSRevisionNumberSetter(),
 
-    ]
+    ])
 
 # The directory to use for temporary files:
 ctx.tmpdir = 'tmp'

@@ -128,6 +128,8 @@ repository's history as possible.</p>
 </dl>
 
 
+<hr />
+
 <h1><a name="reqs">Requirements</a></h1>
 
 <p>cvs2svn requires the following:</p>
@@ -360,16 +362,60 @@ any changes to your CVS repository, but if you start moving things
 around and deleting things in a CVS repository, it's all too easy to
 shoot yourself in the foot.</p>
 
+<h2>End-of-line translation</h2>
+
+<p>One of the most important topics to consider when converting a
+repository is the distinction between binary and text files.  Text
+files are handled differently than binary files by both CVS and
+Subversion.  When a text file is checked out, the character used to
+denote the end of line ("EOL") is converted to the local computer's
+format.  This is usually the most convenient behavior for text files.
+Moreover, both CVS and Subversion allow "keywords" in text files (such
+as <tt>$Id$</tt>), which are expanded with version control information
+when the file is checked out.  However, if line-end translation or
+keyword expansion is applied to a binary file, the file will usually
+be corrupted.</p>
+
+<p>By default, CVS treats a file as text unless you specifically tell
+it that the file is binary.  You can tell CVS that a file is binary by
+using the command <tt>cvs admin -kb <i>filename</i></tt>.  But often
+CVS users forget to specify which files are binary.  As long as the
+repository is only used under Unix, they may never notice a problem,
+because the internal format of CVS is the same as the Unix format.</p>
+
+<p>If you have been conscientious about marking files as binary in
+CVS, then cvs2svn shouldn't have any problem.  But if you have been
+sloppy, you need to do something now to avoid future problems:</p>
+
+<ul>
+
+  <li>Fix your CVS repository <em>before</em> conversion by running
+    <tt>cvs admin -kb <i>filename</i></tt> for each binary file in the
+    repository.</li>
+
+  <li>Use cvs2svn options to let cvs2svn deduce which files are binary
+    <em>during</em> the conversion.  The useful options are
+    <tt>--eol-from-mime-type</tt>, <tt>--no-default-eol</tt>,
+    <tt>--keywords-off</tt>, and <tt>--auto-props</tt>.
+
+</ul>
+
+<h2>Converting part of repository</h2>
+
 <p>If you want to convert a subdirectory in your repository, you can
-just point cvs2svn at the subdirectory and go.</p>
+just point cvs2svn at the subdirectory and go.  There is no need to
+delete the unwanted directories from the CVS repository.</p>
 
-<p>If there are any files that you <i>don't</i> want converted into
-your new Subversion repository, you should delete them or move them
-aside.</p>
+<p>If the subdirectory that you are converting contains any files that
+you <i>don't</i> want converted into your new Subversion repository,
+you should delete them or move them aside.  Such files can be deleted
+from HEAD after the conversion, but they will still be visible in the
+repository history.</p>
 
-Lastly, even though you can move and copy files and directories around
-in Subversion, you may want to do some rearranging (typically of
-directories) before running your conversion.
+<p>Lastly, even though you can move and copy files and directories
+around in Subversion, you may want to do some rearranging of project
+directories before running your conversion to get the desired
+repository project organization.</p>
 
 <hr />
 

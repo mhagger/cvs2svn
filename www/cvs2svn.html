@@ -365,10 +365,13 @@ shoot yourself in the foot.</p>
 <h2>End-of-line translation</h2>
 
 <p>One of the most important topics to consider when converting a
-repository is the distinction between binary and text files.  Text
-files are handled differently than binary files by both CVS and
-Subversion.  When a text file is checked out, the character used to
-denote the end of line ("EOL") is converted to the local computer's
+repository is the distinction between binary and text files.  If you
+accidentally treat a binary file as text <strong>your repository
+contents will be corrupted</strong>.</p>
+
+<p>Text files are handled differently than binary files by both CVS
+and Subversion.  When a text file is checked out, the character used
+to denote the end of line ("EOL") is converted to the local computer's
 format.  This is usually the most convenient behavior for text files.
 Moreover, both CVS and Subversion allow "keywords" in text files (such
 as <tt>$Id$</tt>), which are expanded with version control information
@@ -379,13 +382,15 @@ be corrupted.</p>
 <p>By default, CVS treats a file as text unless you specifically tell
 it that the file is binary.  You can tell CVS that a file is binary by
 using the command <tt>cvs admin -kb <i>filename</i></tt>.  But often
-CVS users forget to specify which files are binary.  As long as the
+CVS users forget to specify which files are binary, and as long as the
 repository is only used under Unix, they may never notice a problem,
 because the internal format of CVS is the same as the Unix format.</p>
 
 <p>If you have been conscientious about marking files as binary in
 CVS, then cvs2svn shouldn't have any problem.  But if you have been
-sloppy, you need to do something now to avoid future problems:</p>
+sloppy, you need to do something now <strong>or you will have
+problems</strong>.  Subversion is not as forgiving as CVS if you tell
+it to treat a binary file as text.  Your choices are:</p>
 
 <ul>
 

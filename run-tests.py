@@ -1893,21 +1893,19 @@ eol_mime4 = EOLMime(
         ])
 
 
-def keywords():
-  "test setting of svn:keywords property among others"
-  conv = ensure_conversion('keywords')
-  conv.check_props(
-      ['svn:keywords', 'svn:eol-style', 'svn:mime-type'],
-      [
-          ('trunk/foo.default', [KEYWORDS, 'native', None]),
-          ('trunk/foo.kkvl', [KEYWORDS, 'native', None]),
-          ('trunk/foo.kkv', [KEYWORDS, 'native', None]),
-          ('trunk/foo.kb', [None, None, 'application/octet-stream']),
-          ('trunk/foo.kk', [None, 'native', None]),
-          ('trunk/foo.ko', [None, 'native', None]),
-          ('trunk/foo.kv', [None, 'native', None]),
-          ]
-      )
+keywords = Cvs2SvnPropertiesTestCase(
+    'keywords',
+    description='test setting of svn:keywords property among others',
+    props_to_test=['svn:keywords', 'svn:eol-style', 'svn:mime-type'],
+    expected_props=[
+        ('trunk/foo.default', [KEYWORDS, 'native', None]),
+        ('trunk/foo.kkvl', [KEYWORDS, 'native', None]),
+        ('trunk/foo.kkv', [KEYWORDS, 'native', None]),
+        ('trunk/foo.kb', [None, None, 'application/octet-stream']),
+        ('trunk/foo.kk', [None, 'native', None]),
+        ('trunk/foo.ko', [None, 'native', None]),
+        ('trunk/foo.kv', [None, 'native', None]),
+        ])
 
 
 def ignore():
@@ -2061,69 +2059,66 @@ def nested_ttb_directories():
       pass
 
 
-def auto_props_ignore_case():
-  "test auto-props (case-insensitive)"
-  ### TODO: It's a bit klugey to construct this path here.  See also
-  ### the comment in eol_mime().
-  auto_props_path = os.path.join(test_data_dir, 'eol-mime-cvsrepos',
-      'auto-props')
+class AutoProps(Cvs2SvnPropertiesTestCase):
+  """Test auto-props.
 
-  # The files are as follows:
-  #
-  #     trunk/foo.txt: no -kb, mime auto-prop says nothing.
-  #     trunk/foo.xml: no -kb, mime auto-prop says text and eol-style=CRLF.
-  #     trunk/foo.zip: no -kb, mime auto-prop says non-text.
-  #     trunk/foo.bin: has -kb, mime auto-prop says nothing.
-  #     trunk/foo.csv: has -kb, mime auto-prop says text.
-  #     trunk/foo.dbf: has -kb, mime auto-prop says non-text.
-  #     trunk/foo.UPCASE1: no -kb, no mime type.
-  #     trunk/foo.UPCASE2: no -kb, no mime type.
+  The files are as follows:
 
-  conv = ensure_conversion(
-      'eol-mime',
-      args=[
-          '--auto-props=%s' % auto_props_path,
-          '--auto-props-ignore-case',
-          '--eol-from-mime-type'])
-  conv.check_props(
-      ['myprop', 'svn:eol-style', 'svn:mime-type', 'svn:keywords'],
-      [
-          ('trunk/foo.txt', ['txt', 'native', None, KEYWORDS]),
-          ('trunk/foo.xml', ['xml', 'CRLF', 'text/xml', KEYWORDS]),
-          ('trunk/foo.zip', ['zip', None, 'application/zip', KEYWORDS]),
-          ('trunk/foo.bin', ['bin', None, 'application/octet-stream', None]),
-          ('trunk/foo.csv', ['csv', 'CRLF', 'text/csv', None]),
-          ('trunk/foo.dbf', ['dbf', None, 'application/what-is-dbf', None]),
-          ('trunk/foo.UPCASE1', ['UPCASE1', 'native', None, KEYWORDS]),
-          ('trunk/foo.UPCASE2', ['UPCASE2', 'native', None, KEYWORDS]),
-          ]
-      )
+      trunk/foo.txt: no -kb, mime auto-prop says nothing.
+      trunk/foo.xml: no -kb, mime auto-prop says text and eol-style=CRLF.
+      trunk/foo.zip: no -kb, mime auto-prop says non-text.
+      trunk/foo.bin: has -kb, mime auto-prop says nothing.
+      trunk/foo.csv: has -kb, mime auto-prop says text.
+      trunk/foo.dbf: has -kb, mime auto-prop says non-text.
+      trunk/foo.UPCASE1: no -kb, no mime type.
+      trunk/foo.UPCASE2: no -kb, no mime type.
+  """
+
+  def __init__(self, args, **kw):
+    ### TODO: It's a bit klugey to construct this path here.  See also
+    ### the comment in eol_mime().
+    auto_props_path = os.path.join(
+        test_data_dir, 'eol-mime-cvsrepos', 'auto-props')
+
+    Cvs2SvnPropertiesTestCase.__init__(
+        self, 'eol-mime',
+        props_to_test=[
+            'myprop', 'svn:eol-style', 'svn:mime-type', 'svn:keywords'],
+        args=[
+            '--auto-props=%s' % auto_props_path,
+            '--eol-from-mime-type'
+            ] + args,
+        **kw)
 
 
-def auto_props():
-  "test auto-props (case-sensitive)"
-  # See auto_props for comments.
-  auto_props_path = os.path.join(test_data_dir, 'eol-mime-cvsrepos',
-      'auto-props')
+auto_props_ignore_case = AutoProps(
+    description="test auto-props (case-insensitive)",
+    args=['--auto-props-ignore-case'],
+    expected_props=[
+        ('trunk/foo.txt', ['txt', 'native', None, KEYWORDS]),
+        ('trunk/foo.xml', ['xml', 'CRLF', 'text/xml', KEYWORDS]),
+        ('trunk/foo.zip', ['zip', None, 'application/zip', KEYWORDS]),
+        ('trunk/foo.bin', ['bin', None, 'application/octet-stream', None]),
+        ('trunk/foo.csv', ['csv', 'CRLF', 'text/csv', None]),
+        ('trunk/foo.dbf', ['dbf', None, 'application/what-is-dbf', None]),
+        ('trunk/foo.UPCASE1', ['UPCASE1', 'native', None, KEYWORDS]),
+        ('trunk/foo.UPCASE2', ['UPCASE2', 'native', None, KEYWORDS]),
+        ])
 
-  conv = ensure_conversion(
-      'eol-mime',
-      args=[
-          '--auto-props=%s' % auto_props_path,
-          '--eol-from-mime-type'])
-  conv.check_props(
-      ['myprop', 'svn:eol-style', 'svn:mime-type', 'svn:keywords'],
-      [
-          ('trunk/foo.txt', ['txt', 'native', None, KEYWORDS]),
-          ('trunk/foo.xml', ['xml', 'CRLF', 'text/xml', KEYWORDS]),
-          ('trunk/foo.zip', ['zip', None, 'application/zip', KEYWORDS]),
-          ('trunk/foo.bin', ['bin', None, 'application/octet-stream', None]),
-          ('trunk/foo.csv', ['csv', 'CRLF', 'text/csv', None]),
-          ('trunk/foo.dbf', ['dbf', None, 'application/what-is-dbf', None]),
-          ('trunk/foo.UPCASE1', ['UPCASE1', 'native', None, KEYWORDS]),
-          ('trunk/foo.UPCASE2', [None, 'native', None, KEYWORDS]),
-          ]
-      )
+
+auto_props = AutoProps(
+    description="test auto-props (case-sensitive)",
+    args=[],
+    expected_props=[
+        ('trunk/foo.txt', ['txt', 'native', None, KEYWORDS]),
+        ('trunk/foo.xml', ['xml', 'CRLF', 'text/xml', KEYWORDS]),
+        ('trunk/foo.zip', ['zip', None, 'application/zip', KEYWORDS]),
+        ('trunk/foo.bin', ['bin', None, 'application/octet-stream', None]),
+        ('trunk/foo.csv', ['csv', 'CRLF', 'text/csv', None]),
+        ('trunk/foo.dbf', ['dbf', None, 'application/what-is-dbf', None]),
+        ('trunk/foo.UPCASE1', ['UPCASE1', 'native', None, KEYWORDS]),
+        ('trunk/foo.UPCASE2', [None, 'native', None, KEYWORDS]),
+        ])
 
 
 def ctrl_char_in_filename():

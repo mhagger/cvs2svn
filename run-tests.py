@@ -1758,94 +1758,104 @@ def props_for_path(node, path):
   return node_for_path(node, path).props
 
 
-def eol_mime():
-  "test eol settings and mime types together"
-  ###TODO: It's a bit klugey to construct this path here.  But so far
-  ### there's only one test with a mime.types file.  If we have more,
-  ### we should abstract this into some helper, which would be located
-  ### near ensure_conversion().  Note that it is a convention of this
-  ### test suite for a mime.types file to be located in the top level
-  ### of the CVS repository to which it applies.
-  mime_path = os.path.join(test_data_dir, 'eol-mime-cvsrepos', 'mime.types')
+class EOLMime(Cvs2SvnTestCase):
+  """eol settings and mime types together
 
-  # We do four conversions.  Each time, we pass --mime-types=FILE with
-  # the same FILE, but vary --no-default-eol and --eol-from-mime-type.
-  # Thus there's one conversion with neither flag, one with just the
-  # former, one with just the latter, and one with both.
-  #
-  # In two of the four conversions, we pass --cvs-revnums to make
-  # certain that there are no bad interactions.
-  #
-  # The files are as follows:
-  #
-  #     trunk/foo.txt: no -kb, mime file says nothing.
-  #     trunk/foo.xml: no -kb, mime file says text.
-  #     trunk/foo.zip: no -kb, mime file says non-text.
-  #     trunk/foo.bin: has -kb, mime file says nothing.
-  #     trunk/foo.csv: has -kb, mime file says text.
-  #     trunk/foo.dbf: has -kb, mime file says non-text.
+  The files are as follows:
 
-  ## Neither --no-default-eol nor --eol-from-mime-type. ##
-  conv = ensure_conversion(
-      'eol-mime', args=['--mime-types=%s' % mime_path, '--cvs-revnums'])
-  conv.check_props(
-      ['svn:eol-style', 'svn:mime-type', 'cvs2svn:cvs-rev', 'svn:keywords'],
-      [
-          ('trunk/foo.txt', ['native', None, '1.2', KEYWORDS]),
-          ('trunk/foo.xml', ['native', 'text/xml', '1.2', KEYWORDS]),
-          ('trunk/foo.zip', ['native', 'application/zip', '1.2', KEYWORDS]),
-          ('trunk/foo.bin', [None, 'application/octet-stream', '1.2', None]),
-          ('trunk/foo.csv', [None, 'text/csv', '1.2', None]),
-          ('trunk/foo.dbf', [None, 'application/what-is-dbf', '1.2', None]),
-          ]
-      )
+      trunk/foo.txt: no -kb, mime file says nothing.
+      trunk/foo.xml: no -kb, mime file says text.
+      trunk/foo.zip: no -kb, mime file says non-text.
+      trunk/foo.bin: has -kb, mime file says nothing.
+      trunk/foo.csv: has -kb, mime file says text.
+      trunk/foo.dbf: has -kb, mime file says non-text.
+  """
 
-  ## Just --no-default-eol, not --eol-from-mime-type. ##
-  conv = ensure_conversion(
-      'eol-mime', args=['--mime-types=%s' % mime_path, '--no-default-eol'])
-  conv.check_props(
-      ['svn:eol-style', 'svn:mime-type', 'cvs2svn:cvs-rev', 'svn:keywords'],
-      [
-          ('trunk/foo.txt', [None, None, None, KEYWORDS]),
-          ('trunk/foo.xml', [None, 'text/xml', None, KEYWORDS]),
-          ('trunk/foo.zip', [None, 'application/zip', None, KEYWORDS]),
-          ('trunk/foo.bin', [None, 'application/octet-stream', None, None]),
-          ('trunk/foo.csv', [None, 'text/csv', None, None]),
-          ('trunk/foo.dbf', [None, 'application/what-is-dbf', None, None]),
-          ]
-      )
+  def __init__(self, expected_props, args, **kw):
+    # TODO: It's a bit klugey to construct this path here.  But so far
+    # there's only one test with a mime.types file.  If we have more,
+    # we should abstract this into some helper, which would be located
+    # near ensure_conversion().  Note that it is a convention of this
+    # test suite for a mime.types file to be located in the top level
+    # of the CVS repository to which it applies.
+    self.mime_path = os.path.join(
+        test_data_dir, 'eol-mime-cvsrepos', 'mime.types')
 
-  ## Just --eol-from-mime-type, not --no-default-eol. ##
-  conv = ensure_conversion('eol-mime', args=[
-      '--mime-types=%s' % mime_path, '--eol-from-mime-type', '--cvs-revnums'
-      ])
-  conv.check_props(
-      ['svn:eol-style', 'svn:mime-type', 'cvs2svn:cvs-rev', 'svn:keywords'],
-      [
-          ('trunk/foo.txt', ['native', None, '1.2', KEYWORDS]),
-          ('trunk/foo.xml', ['native', 'text/xml', '1.2', KEYWORDS]),
-          ('trunk/foo.zip', [None, 'application/zip', '1.2', KEYWORDS]),
-          ('trunk/foo.bin', [None, 'application/octet-stream', '1.2', None]),
-          ('trunk/foo.csv', [None, 'text/csv', '1.2', None]),
-          ('trunk/foo.dbf', [None, 'application/what-is-dbf', '1.2', None]),
-          ]
-      )
+    args = ['--mime-types=%s' % self.mime_path] + args
 
-  ## Both --no-default-eol and --eol-from-mime-type. ##
-  conv = ensure_conversion('eol-mime', args=[
-      '--mime-types=%s' % mime_path, '--eol-from-mime-type',
-      '--no-default-eol'])
-  conv.check_props(
-      ['svn:eol-style', 'svn:mime-type', 'cvs2svn:cvs-rev', 'svn:keywords'],
-      [
-          ('trunk/foo.txt', [None, None, None, KEYWORDS]),
-          ('trunk/foo.xml', ['native', 'text/xml', None, KEYWORDS]),
-          ('trunk/foo.zip', [None, 'application/zip', None, KEYWORDS]),
-          ('trunk/foo.bin', [None, 'application/octet-stream', None, None]),
-          ('trunk/foo.csv', [None, 'text/csv', None, None]),
-          ('trunk/foo.dbf', [None, 'application/what-is-dbf', None, None]),
-          ]
-      )
+    Cvs2SvnTestCase.__init__(self, 'eol-mime', args=args, **kw)
+    self.expected_props = expected_props
+
+  def run(self):
+    conv = self.ensure_conversion()
+    conv.check_props(
+        ['svn:eol-style', 'svn:mime-type', 'cvs2svn:cvs-rev', 'svn:keywords'],
+        self.expected_props)
+
+
+# We do four conversions.  Each time, we pass --mime-types=FILE with
+# the same FILE, but vary --no-default-eol and --eol-from-mime-type.
+# Thus there's one conversion with neither flag, one with just the
+# former, one with just the latter, and one with both.
+#
+# In two of the four conversions, we pass --cvs-revnums to make
+# certain that there are no bad interactions.
+
+
+# Neither --no-default-eol nor --eol-from-mime-type:
+eol_mime1 = EOLMime(
+    variant=1,
+    args=['--cvs-revnums'],
+    expected_props=[
+        ('trunk/foo.txt', ['native', None, '1.2', KEYWORDS]),
+        ('trunk/foo.xml', ['native', 'text/xml', '1.2', KEYWORDS]),
+        ('trunk/foo.zip', ['native', 'application/zip', '1.2', KEYWORDS]),
+        ('trunk/foo.bin', [None, 'application/octet-stream', '1.2', None]),
+        ('trunk/foo.csv', [None, 'text/csv', '1.2', None]),
+        ('trunk/foo.dbf', [None, 'application/what-is-dbf', '1.2', None]),
+        ])
+
+
+# Just --no-default-eol, not --eol-from-mime-type:
+eol_mime2 = EOLMime(
+    variant=2,
+    args=['--no-default-eol'],
+    expected_props=[
+        ('trunk/foo.txt', [None, None, None, KEYWORDS]),
+        ('trunk/foo.xml', [None, 'text/xml', None, KEYWORDS]),
+        ('trunk/foo.zip', [None, 'application/zip', None, KEYWORDS]),
+        ('trunk/foo.bin', [None, 'application/octet-stream', None, None]),
+        ('trunk/foo.csv', [None, 'text/csv', None, None]),
+        ('trunk/foo.dbf', [None, 'application/what-is-dbf', None, None]),
+        ])
+
+
+# Just --eol-from-mime-type, not --no-default-eol:
+eol_mime3 = EOLMime(
+    variant=3,
+    args=['--eol-from-mime-type', '--cvs-revnums'],
+    expected_props=[
+        ('trunk/foo.txt', ['native', None, '1.2', KEYWORDS]),
+        ('trunk/foo.xml', ['native', 'text/xml', '1.2', KEYWORDS]),
+        ('trunk/foo.zip', [None, 'application/zip', '1.2', KEYWORDS]),
+        ('trunk/foo.bin', [None, 'application/octet-stream', '1.2', None]),
+        ('trunk/foo.csv', [None, 'text/csv', '1.2', None]),
+        ('trunk/foo.dbf', [None, 'application/what-is-dbf', '1.2', None]),
+        ])
+
+
+# Both --no-default-eol and --eol-from-mime-type:
+eol_mime4 = EOLMime(
+    variant=4,
+    args=['--eol-from-mime-type', '--no-default-eol'],
+    expected_props=[
+        ('trunk/foo.txt', [None, None, None, KEYWORDS]),
+        ('trunk/foo.xml', ['native', 'text/xml', None, KEYWORDS]),
+        ('trunk/foo.zip', [None, 'application/zip', None, KEYWORDS]),
+        ('trunk/foo.bin', [None, 'application/octet-stream', None, None]),
+        ('trunk/foo.csv', [None, 'text/csv', None, None]),
+        ('trunk/foo.dbf', [None, 'application/what-is-dbf', None, None]),
+        ])
 
 
 def keywords():
@@ -2445,10 +2455,13 @@ test_list = [
     file_in_attic_too,
     retain_file_in_attic_too,
     symbolic_name_filling_guide,
-    eol_mime,
+    eol_mime1,
+    eol_mime2,
+    eol_mime3,
+# 60:
+    eol_mime4,
     keywords,
     ignore,
-# 60:
     requires_cvs,
     questionable_branch_names,
     questionable_tag_names,
@@ -2456,10 +2469,10 @@ test_list = [
     exclude,
     vendor_branch_delete_add,
     resync_pass2_pull_forward,
+# 70:
     native_eol,
     double_fill,
     resync_pass2_push_backward,
-# 70:
     double_add,
     bogus_branch_copy,
     nested_ttb_directories,
@@ -2467,10 +2480,10 @@ test_list = [
     auto_props,
     ctrl_char_in_filename,
     commit_dependencies,
+# 80:
     show_help_passes,
     multiple_tags,
     double_branch_delete,
-# 80:
     symbol_mismatches,
     force_symbols,
     commit_blocks_tags,
@@ -2478,10 +2491,10 @@ test_list = [
     unblock_blocked_excludes,
     regexp_force_symbols,
     heuristic_symbol_default,
+# 90:
     branch_symbol_default,
     tag_symbol_default,
     symbol_transform,
-# 90:
     issue_99,
     issue_100,
     issue_106,
@@ -2489,6 +2502,7 @@ test_list = [
     tag_with_no_revision,
     XFail(delete_cvsignore),
     repeated_deltatext,
+# 100:
     nasty_graphs,
     ]
 

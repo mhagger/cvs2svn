@@ -61,6 +61,7 @@ from cvs2svn_lib.property_setters import EOLStyleFromMimeTypeSetter
 from cvs2svn_lib.property_setters import ExecutablePropertySetter
 from cvs2svn_lib.property_setters import KeywordsPropertySetter
 from cvs2svn_lib.property_setters import MimeMapper
+from cvs2svn_lib.property_setters import SVNBinaryFileKeywordsPropertySetter
 
 
 usage_message_template = """\
@@ -457,6 +458,8 @@ class RunOptions:
       ctx.svn_property_setters.append(DefaultEOLStyleSetter(None))
     else:
       ctx.svn_property_setters.append(DefaultEOLStyleSetter('native'))
+
+    ctx.svn_property_setters.append(SVNBinaryFileKeywordsPropertySetter())
 
     if not keywords_off:
       ctx.svn_property_setters.append(

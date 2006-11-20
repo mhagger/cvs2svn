@@ -1851,9 +1851,9 @@ eol_mime2 = EOLMime(
     variant=2,
     args=['--no-default-eol'],
     expected_props=[
-        ('trunk/foo.txt', [None, None, KEYWORDS]),
-        ('trunk/foo.xml', [None, 'text/xml', KEYWORDS]),
-        ('trunk/foo.zip', [None, 'application/zip', KEYWORDS]),
+        ('trunk/foo.txt', [None, None, None]),
+        ('trunk/foo.xml', [None, 'text/xml', None]),
+        ('trunk/foo.zip', [None, 'application/zip', None]),
         ('trunk/foo.bin', [None, 'application/octet-stream', None]),
         ('trunk/foo.csv', [None, 'text/csv', None]),
         ('trunk/foo.dbf', [None, 'application/what-is-dbf', None]),
@@ -1867,7 +1867,7 @@ eol_mime3 = EOLMime(
     expected_props=[
         ('trunk/foo.txt', ['native', None, KEYWORDS]),
         ('trunk/foo.xml', ['native', 'text/xml', KEYWORDS]),
-        ('trunk/foo.zip', [None, 'application/zip', KEYWORDS]),
+        ('trunk/foo.zip', [None, 'application/zip', None]),
         ('trunk/foo.bin', [None, 'application/octet-stream', None]),
         ('trunk/foo.csv', [None, 'text/csv', None]),
         ('trunk/foo.dbf', [None, 'application/what-is-dbf', None]),
@@ -1879,9 +1879,9 @@ eol_mime4 = EOLMime(
     variant=4,
     args=['--eol-from-mime-type', '--no-default-eol'],
     expected_props=[
-        ('trunk/foo.txt', [None, None, KEYWORDS]),
+        ('trunk/foo.txt', [None, None, None]),
         ('trunk/foo.xml', ['native', 'text/xml', KEYWORDS]),
-        ('trunk/foo.zip', [None, 'application/zip', KEYWORDS]),
+        ('trunk/foo.zip', [None, 'application/zip', None]),
         ('trunk/foo.bin', [None, 'application/octet-stream', None]),
         ('trunk/foo.csv', [None, 'text/csv', None]),
         ('trunk/foo.dbf', [None, 'application/what-is-dbf', None]),
@@ -2122,7 +2122,7 @@ auto_props_ignore_case = AutoProps(
     expected_props=[
         ('trunk/foo.txt', ['txt', 'native', None, KEYWORDS]),
         ('trunk/foo.xml', ['xml', 'CRLF', 'text/xml', KEYWORDS]),
-        ('trunk/foo.zip', ['zip', None, 'application/zip', KEYWORDS]),
+        ('trunk/foo.zip', ['zip', None, 'application/zip', None]),
         ('trunk/foo.bin', ['bin', None, 'application/octet-stream', None]),
         ('trunk/foo.csv', ['csv', 'CRLF', 'text/csv', None]),
         ('trunk/foo.dbf', ['dbf', None, 'application/what-is-dbf', None]),
@@ -2137,7 +2137,7 @@ auto_props = AutoProps(
     expected_props=[
         ('trunk/foo.txt', ['txt', 'native', None, KEYWORDS]),
         ('trunk/foo.xml', ['xml', 'CRLF', 'text/xml', KEYWORDS]),
-        ('trunk/foo.zip', ['zip', None, 'application/zip', KEYWORDS]),
+        ('trunk/foo.zip', ['zip', None, 'application/zip', None]),
         ('trunk/foo.bin', ['bin', None, 'application/octet-stream', None]),
         ('trunk/foo.csv', ['csv', 'CRLF', 'text/csv', None]),
         ('trunk/foo.dbf', ['dbf', None, 'application/what-is-dbf', None]),

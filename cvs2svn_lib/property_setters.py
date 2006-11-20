@@ -265,6 +265,19 @@ class DefaultEOLStyleSetter(SVNPropertySetter):
     s_item.svn_props[self.propname] = self.value
 
 
+class SVNBinaryFileKeywordsPropertySetter(SVNPropertySetter):
+  """Turn off svn:keywords for files with svn:eol-style==None."""
+
+  propname = 'svn:keywords'
+
+  def set_properties(self, s_item):
+    if self.propname in s_item.svn_props:
+      return
+
+    if s_item.svn_props['svn:eol-style'] is None:
+      s_item.svn_props[self.propname] = None
+
+
 class KeywordsPropertySetter(SVNPropertySetter):
   """If the svn:keywords property is not yet set, set it based on the
   file's mode.  See issue #2."""

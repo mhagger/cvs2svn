@@ -644,13 +644,32 @@ def ensure_conversion(name, error_re=None, passbypass=None,
 
 
 class Cvs2SvnTestCase(TestCase):
-  def __init__(self, name, variant=None,
+  def __init__(self, name, description=None, variant=None,
                error_re=None, passbypass=None,
                trunk=None, branches=None, tags=None,
                args=None, options_file=None):
     TestCase.__init__(self)
     self.name = name
-    self.variant = variant
+
+    if description is not None:
+      self._description = description
+    else:
+      # By default, use the first line of the class docstring as the
+      # description:
+      self._description = self.__doc__.splitlines()[0]
+
+    # Check that the original description is OK before we tinker with
+    # it:
+    self.check_description()
+
+    if variant is not None:
+      # Modify description to show the variant.  Trim description
+      # first if necessary to stay within the 50-character limit.
+      suffix = '...variant %s' % (variant,)
+      self._description = self._description[:50 - len(suffix)] + suffix
+      # Check that the description is still OK:
+      self.check_description()
+
     self.error_re = error_re
     self.passbypass = passbypass
     self.trunk = trunk
@@ -660,11 +679,7 @@ class Cvs2SvnTestCase(TestCase):
     self.options_file = options_file
 
   def get_description(self):
-    s = self.__doc__.splitlines()[0]
-    if self.variant is not None:
-      suffix = '...variant %s' % (self.variant,)
-      s = s[:50 - len(suffix)] + suffix
-    return s
+    return self._description
 
   def ensure_conversion(self):
     return ensure_conversion(

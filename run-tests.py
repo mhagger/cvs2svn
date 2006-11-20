@@ -2093,7 +2093,7 @@ class AutoProps(Cvs2SvnPropertiesTestCase):
       trunk/foo.xml: no -kb, mime auto-prop says text and eol-style=CRLF.
       trunk/foo.zip: no -kb, mime auto-prop says non-text.
       trunk/foo.bin: has -kb, mime auto-prop says nothing.
-      trunk/foo.csv: has -kb, mime auto-prop says text.
+      trunk/foo.csv: has -kb, mime auto-prop says text and eol-style=CRLF.
       trunk/foo.dbf: has -kb, mime auto-prop says non-text.
       trunk/foo.UPCASE1: no -kb, no mime type.
       trunk/foo.UPCASE2: no -kb, no mime type.

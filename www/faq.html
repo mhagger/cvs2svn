@@ -34,6 +34,9 @@
     that <tt>trunk/tags/branches</tt> are inside of
     <tt>foo</tt>?</a></li>
 
+  <li><a href="#eol-fixup">How do I fix up end-of-line translation
+    problems?</a></li>
+
   <li><a href="#path-symbol-transforms">I want a single project but
     tag-rewriting rules that vary by subdirectory.  Can this be
     done?</a></li>
@@ -219,6 +222,113 @@ ctx.add_project(
     href="#onetoone">How can I convert separate projects in my CVS
     repository into a single Subversion repository?</a> for more
     information.</p>
+
+
+<h3><a name="eol-fixup" title="#eol-fixup">How do I fix up end-of-line
+  translation problems?</a></h3>
+
+  <p>If binary files are marked as such in CVS, then cvs2svn usually
+    doesn't have any problems.  If not, then you need to take action
+    to prevent future problems.</p>
+
+  <p>One possibility is to tell CVS which files are binary
+    <em>before</em> the conversion, by running <tt>cvs admin -kb
+    <i>filename</i></tt> for each binary file in the repository.</p>
+
+  <p>Alternatively, cvs2svn has a number of options that can help set
+    up the correct end-of-line translation parameters during the
+    conversion:</p>
+
+    <table border="1" cellpadding="10" cellspacing="3" width="80%">
+
+      <tr>
+        <td align="right"><tt>--no-default-eol</tt></td>
+        <td>Usually cvs2svn treats a file as text unless one of the
+          other rules determines that it is binary or if it is marked
+          as binary in CVS.  But if this option is specified, then
+          cvs2svn assumes that a file is binary unless it is
+          specifically determined to be text.</td>
+      </tr>
+
+      <tr>
+        <td align="right"><tt>--auto-props=FILE</tt></td>
+        <td><p>Set arbitrary Subversion properties on files based on the
+          auto-props section of a file in svn config format.  The
+	  auto-props file might have content like this:</p>
+<pre>
+[auto-props]
+*.txt = svn:mime-type=text/plain;svn:eol-style=native
+*.doc = svn:mime-type=application/msword;svn:eol-style=
+</pre>
+	  <p>This option can also be used in combination with
+	  <tt>--eol-from-mime-type</tt>.</p></td>
+      </tr>
+
+      <tr>
+        <td align="right"><tt>--auto-props-ignore-case</tt></td>
+        <td>Ignore the case of filenames when matching auto-props
+          patterns.</td>
+      </tr>
+
+      <tr>
+        <td align="right"><tt>--mime-types=FILE</tt></td>
+        <td><p>Specifies an Apache-style mime.types file for setting
+          files' <tt>svn:mime-type</tt> property based on the file
+          extension.  The mime-types file might have content like
+          this:</p>
+<pre>
+text/plain              txt
+application/msword      doc
+</pre>
+          <p>This option only has an effect on svn:eol-style if it is
+          used in combination with
+          <tt>--eol-from-mime-type</tt>.</p></td>
+      </tr>
+
+      <tr>
+        <td align="right"><tt>--eol-from-mime-type</tt></td>
+        <td>Set <tt>svn:eol-style</tt> based on the file's mime type
+          (if known).  If the mime type starts with "<tt>text/</tt>",
+          then the file is treated as a text file; otherwise, it is
+          treated as binary.  This option is useful in combination with
+          <tt>--auto-props</tt> or <tt>--mime-types</tt>.</td>
+      </tr>
+
+    </table>
+
+  <p>The nuclear weapon of this ensemble is <tt>--no-default-eol</tt>,
+    which prevents line-end translation altogether (at least in the
+    absence of other options).  <tt>--no-default-eol</tt> forces the
+    file contents in the SVN repository to be the same as the contents
+    you would get if checking out with CVS on the machine on which
+    cvs2svn is run.  This also means that the EOL characters of text
+    files will be the same no matter where the SVN data are checked
+    out (i.e., not translated to the checkout machine's EOL
+    format).</p>
+
+  <p>To do a better job, you can use <tt>--auto-props</tt>,
+    <tt>--mime-types</tt>, and <tt>--eol-from-mime-type</tt> to
+    specify exactly which properties to set on each file based on its
+    filename.</p>
+
+  <p>For total control over setting properties on files, you can use
+    the <a
+    href="cvs2svn.html#options-file-method"><tt>--options</tt>-file
+    method</a> and write your own <tt>SVNPropertySetter</tt> in
+    Python.  For example,</p>
+<pre>
+from cvs2svn_lib.property_setters import SVNPropertySetter
+
+class MyPropertySetter(SVNPropertySetter):
+  def set_properties(self, s_item):
+    if s_item.cvs_rev.cvs_file.cvs_path.startswith('path/to/funny/files/'):
+      s_item.svn_props['svn:mime-type'] = 'text/plain'
+      s_item.svn_props['svn:eol-style'] = 'CRLF'
+
+ctx.svn_property_setters.append(MyPropertySetter())
+</pre>
+  <p>See the file <tt>cvs2svn_lib/property_setters.py</tt> for more
+    examples.</p>
 
 
 <h3><a name="path-symbol-transforms" title="#path-symbol-transforms">I

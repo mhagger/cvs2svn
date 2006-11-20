@@ -58,6 +58,7 @@ if not (os.path.exists('cvs2svn') and os.path.exists('test-data')):
 # Load the Subversion test framework.
 import svntest
 from svntest import Failure
+from svntest.testcase import TestCase
 from svntest.testcase import Skip
 from svntest.testcase import XFail
 
@@ -642,6 +643,31 @@ def ensure_conversion(name, error_re=None, passbypass=None,
   return conv
 
 
+class Cvs2SvnTestCase(TestCase):
+  def __init__(self, name, variant=None,
+               trunk=None, branches=None, tags=None):
+    TestCase.__init__(self)
+    self.name = name
+    self.variant = variant
+    self.trunk = trunk
+    self.branches = branches
+    self.tags = tags
+
+  def get_description(self):
+    s = self.__doc__.splitlines()[0]
+    if self.variant is not None:
+      suffix = '...variant %s' % (self.variant,)
+      s = s[:50 - len(suffix)] + suffix
+    return s
+
+  def ensure_conversion(
+      self, error_re=None, passbypass=None, args=None, options_file=None):
+    return ensure_conversion(
+        self.name, error_re, passbypass,
+        trunk=self.trunk, branches=self.branches, tags=self.tags,
+        args=args, options_file=options_file)
+
+
 #----------------------------------------------------------------------
 # Tests.
 #----------------------------------------------------------------------
@@ -692,78 +718,76 @@ def two_quick():
     raise Failure()
 
 
-def prune_with_care(**kw):
+class PruneWithCare(Cvs2SvnTestCase):
   "prune, but never too much"
-  # Robert Pluim encountered this lovely one while converting the
-  # directory src/gnu/usr.bin/cvs/contrib/pcl-cvs/ in FreeBSD's CVS
-  # repository (see issue #1302).  Step 4 is the doozy:
-  #
-  #   revision 1:  adds trunk/blah/, adds trunk/blah/cookie
-  #   revision 2:  adds trunk/blah/NEWS
-  #   revision 3:  deletes trunk/blah/cookie
-  #   revision 4:  deletes blah   [re-deleting trunk/blah/cookie pruned blah!]
-  #   revision 5:  does nothing
-  #
-  # After fixing cvs2svn, the sequence (correctly) looks like this:
-  #
-  #   revision 1:  adds trunk/blah/, adds trunk/blah/cookie
-  #   revision 2:  adds trunk/blah/NEWS
-  #   revision 3:  deletes trunk/blah/cookie
-  #   revision 4:  does nothing    [because trunk/blah/cookie already deleted]
-  #   revision 5:  deletes blah
-  #
-  # The difference is in 4 and 5.  In revision 4, it's not correct to
-  # prune blah/, because NEWS is still in there, so revision 4 does
-  # nothing now.  But when we delete NEWS in 5, that should bubble up
-  # and prune blah/ instead.
-  #
-  # ### Note that empty revisions like 4 are probably going to become
-  # ### at least optional, if not banished entirely from cvs2svn's
-  # ### output.  Hmmm, or they may stick around, with an extra
-  # ### revision property explaining what happened.  Need to think
-  # ### about that.  In some sense, it's a bug in Subversion itself,
-  # ### that such revisions don't show up in 'svn log' output.
-  #
-  # In the test below, 'trunk/full-prune/first' represents
-  # cookie, and 'trunk/full-prune/second' represents NEWS.
 
-  conv = ensure_conversion('main', **kw)
+  def __init__(self, **kw):
+    Cvs2SvnTestCase.__init__(self, 'main', **kw)
 
-  # Confirm that revision 4 removes '/trunk/full-prune/first',
-  # and that revision 6 removes '/trunk/full-prune'.
-  #
-  # Also confirm similar things about '/full-prune-reappear/...',
-  # which is similar, except that later on it reappears, restored
-  # from pruneland, because a file gets added to it.
-  #
-  # And finally, a similar thing for '/partial-prune/...', except that
-  # in its case, a permanent file on the top level prevents the
-  # pruning from going farther than the subdirectory containing first
-  # and second.
+  def run(self):
+    # Robert Pluim encountered this lovely one while converting the
+    # directory src/gnu/usr.bin/cvs/contrib/pcl-cvs/ in FreeBSD's CVS
+    # repository (see issue #1302).  Step 4 is the doozy:
+    #
+    #   revision 1:  adds trunk/blah/, adds trunk/blah/cookie
+    #   revision 2:  adds trunk/blah/NEWS
+    #   revision 3:  deletes trunk/blah/cookie
+    #   revision 4:  deletes blah [re-deleting trunk/blah/cookie pruned blah!]
+    #   revision 5:  does nothing
+    #
+    # After fixing cvs2svn, the sequence (correctly) looks like this:
+    #
+    #   revision 1:  adds trunk/blah/, adds trunk/blah/cookie
+    #   revision 2:  adds trunk/blah/NEWS
+    #   revision 3:  deletes trunk/blah/cookie
+    #   revision 4:  does nothing [because trunk/blah/cookie already deleted]
+    #   revision 5:  deletes blah
+    #
+    # The difference is in 4 and 5.  In revision 4, it's not correct to
+    # prune blah/, because NEWS is still in there, so revision 4 does
+    # nothing now.  But when we delete NEWS in 5, that should bubble up
+    # and prune blah/ instead.
+    #
+    # ### Note that empty revisions like 4 are probably going to become
+    # ### at least optional, if not banished entirely from cvs2svn's
+    # ### output.  Hmmm, or they may stick around, with an extra
+    # ### revision property explaining what happened.  Need to think
+    # ### about that.  In some sense, it's a bug in Subversion itself,
+    # ### that such revisions don't show up in 'svn log' output.
+    #
+    # In the test below, 'trunk/full-prune/first' represents
+    # cookie, and 'trunk/full-prune/second' represents NEWS.
 
-  rev = 11
-  for path in ('/%(trunk)s/full-prune/first',
-               '/%(trunk)s/full-prune-reappear/sub/first',
-               '/%(trunk)s/partial-prune/sub/first'):
-    conv.logs[rev].check_change(path, 'D')
+    conv = self.ensure_conversion()
 
-  rev = 13
-  for path in ('/%(trunk)s/full-prune',
-               '/%(trunk)s/full-prune-reappear',
-               '/%(trunk)s/partial-prune/sub'):
-    conv.logs[rev].check_change(path, 'D')
+    # Confirm that revision 4 removes '/trunk/full-prune/first',
+    # and that revision 6 removes '/trunk/full-prune'.
+    #
+    # Also confirm similar things about '/full-prune-reappear/...',
+    # which is similar, except that later on it reappears, restored
+    # from pruneland, because a file gets added to it.
+    #
+    # And finally, a similar thing for '/partial-prune/...', except that
+    # in its case, a permanent file on the top level prevents the
+    # pruning from going farther than the subdirectory containing first
+    # and second.
 
-  rev = 47
-  for path in ('/%(trunk)s/full-prune-reappear',
-               '/%(trunk)s/full-prune-reappear/appears-later'):
-    conv.logs[rev].check_change(path, 'A')
+    rev = 11
+    for path in ('/%(trunk)s/full-prune/first',
+                 '/%(trunk)s/full-prune-reappear/sub/first',
+                 '/%(trunk)s/partial-prune/sub/first'):
+      conv.logs[rev].check_change(path, 'D')
 
+    rev = 13
+    for path in ('/%(trunk)s/full-prune',
+                 '/%(trunk)s/full-prune-reappear',
+                 '/%(trunk)s/partial-prune/sub'):
+      conv.logs[rev].check_change(path, 'D')
 
-def prune_with_care_variants():
-  "prune, with alternate repo layout"
-  prune_with_care(trunk='a', branches='b', tags='c')
-  prune_with_care(trunk='a/1', branches='b/1', tags='c/1')
-  prune_with_care(trunk='a/1', branches='a/2', tags='a/3')
+    rev = 47
+    for path in ('/%(trunk)s/full-prune-reappear',
+                 '/%(trunk)s/full-prune-reappear/appears-later'):
+      conv.logs[rev].check_change(path, 'A')
 
 
 def interleaved_commits():
@@ -867,57 +891,55 @@ def simple_commits():
     ))
 
 
-def simple_tags(**kw):
-  "simple tags and branches with no commits"
-  # See test-data/main-cvsrepos/proj/README.
-  conv = ensure_conversion('main', **kw)
+class SimpleTags(Cvs2SvnTestCase):
+  "simple tags and branches, no commits"
 
-  # Verify the copy source for the tags we are about to check
-  # No need to verify the copyfrom revision, as simple_commits did that
-  conv.logs[24].check(sym_log_msg('vendorbranch'), (
-    ('/%(branches)s/vendorbranch/proj (from /%(trunk)s/proj:23)', 'A'),
-    ))
+  def __init__(self, **kw):
+    # See test-data/main-cvsrepos/proj/README.
+    Cvs2SvnTestCase.__init__(self, 'main', **kw)
 
-  fromstr = ' (from /%(branches)s/vendorbranch:25)'
+  def run(self):
+    conv = self.ensure_conversion()
 
-  # Tag on rev 1.1.1.1 of all files in proj
-  log = conv.find_tag_log('T_ALL_INITIAL_FILES')
-  log.check(sym_log_msg('T_ALL_INITIAL_FILES',1), (
-    ('/%(tags)s/T_ALL_INITIAL_FILES'+fromstr, 'A'),
-    ('/%(tags)s/T_ALL_INITIAL_FILES/single-files', 'D'),
-    ('/%(tags)s/T_ALL_INITIAL_FILES/partial-prune', 'D'),
-    ))
+    # Verify the copy source for the tags we are about to check
+    # No need to verify the copyfrom revision, as simple_commits did that
+    conv.logs[24].check(sym_log_msg('vendorbranch'), (
+      ('/%(branches)s/vendorbranch/proj (from /%(trunk)s/proj:23)', 'A'),
+      ))
 
-  # The same, as a branch
-  conv.logs[26].check(sym_log_msg('B_FROM_INITIALS'), (
-    ('/%(branches)s/B_FROM_INITIALS'+fromstr, 'A'),
-    ('/%(branches)s/B_FROM_INITIALS/single-files', 'D'),
-    ('/%(branches)s/B_FROM_INITIALS/partial-prune', 'D'),
-    ))
+    fromstr = ' (from /%(branches)s/vendorbranch:25)'
 
-  # Tag on rev 1.1.1.1 of all files in proj, except one
-  log = conv.find_tag_log('T_ALL_INITIAL_FILES_BUT_ONE')
-  log.check(sym_log_msg('T_ALL_INITIAL_FILES_BUT_ONE',1), (
-    ('/%(tags)s/T_ALL_INITIAL_FILES_BUT_ONE'+fromstr, 'A'),
-    ('/%(tags)s/T_ALL_INITIAL_FILES_BUT_ONE/single-files', 'D'),
-    ('/%(tags)s/T_ALL_INITIAL_FILES_BUT_ONE/partial-prune', 'D'),
-    ('/%(tags)s/T_ALL_INITIAL_FILES_BUT_ONE/proj/sub1/subsubB', 'D'),
-    ))
+    # Tag on rev 1.1.1.1 of all files in proj
+    log = conv.find_tag_log('T_ALL_INITIAL_FILES')
+    log.check(sym_log_msg('T_ALL_INITIAL_FILES',1), (
+      ('/%(tags)s/T_ALL_INITIAL_FILES'+fromstr, 'A'),
+      ('/%(tags)s/T_ALL_INITIAL_FILES/single-files', 'D'),
+      ('/%(tags)s/T_ALL_INITIAL_FILES/partial-prune', 'D'),
+      ))
 
-  # The same, as a branch
-  conv.logs[27].check(sym_log_msg('B_FROM_INITIALS_BUT_ONE'), (
-    ('/%(branches)s/B_FROM_INITIALS_BUT_ONE'+fromstr, 'A'),
-    ('/%(branches)s/B_FROM_INITIALS_BUT_ONE/single-files', 'D'),
-    ('/%(branches)s/B_FROM_INITIALS_BUT_ONE/partial-prune', 'D'),
-    ('/%(branches)s/B_FROM_INITIALS_BUT_ONE/proj/sub1/subsubB', 'D'),
-    ))
+    # The same, as a branch
+    conv.logs[26].check(sym_log_msg('B_FROM_INITIALS'), (
+      ('/%(branches)s/B_FROM_INITIALS'+fromstr, 'A'),
+      ('/%(branches)s/B_FROM_INITIALS/single-files', 'D'),
+      ('/%(branches)s/B_FROM_INITIALS/partial-prune', 'D'),
+      ))
 
+    # Tag on rev 1.1.1.1 of all files in proj, except one
+    log = conv.find_tag_log('T_ALL_INITIAL_FILES_BUT_ONE')
+    log.check(sym_log_msg('T_ALL_INITIAL_FILES_BUT_ONE',1), (
+      ('/%(tags)s/T_ALL_INITIAL_FILES_BUT_ONE'+fromstr, 'A'),
+      ('/%(tags)s/T_ALL_INITIAL_FILES_BUT_ONE/single-files', 'D'),
+      ('/%(tags)s/T_ALL_INITIAL_FILES_BUT_ONE/partial-prune', 'D'),
+      ('/%(tags)s/T_ALL_INITIAL_FILES_BUT_ONE/proj/sub1/subsubB', 'D'),
+      ))
 
-def simple_tags_variants():
-  "simple tags, with alternate repo layout"
-  simple_tags(trunk='a', branches='b', tags='c')
-  simple_tags(trunk='a/1', branches='b/1', tags='c/1')
-  simple_tags(trunk='a/1', branches='a/2', tags='a/3')
+    # The same, as a branch
+    conv.logs[27].check(sym_log_msg('B_FROM_INITIALS_BUT_ONE'), (
+      ('/%(branches)s/B_FROM_INITIALS_BUT_ONE'+fromstr, 'A'),
+      ('/%(branches)s/B_FROM_INITIALS_BUT_ONE/single-files', 'D'),
+      ('/%(branches)s/B_FROM_INITIALS_BUT_ONE/partial-prune', 'D'),
+      ('/%(branches)s/B_FROM_INITIALS_BUT_ONE/proj/sub1/subsubB', 'D'),
+      ))
 
 
 def simple_branch_commits():
@@ -1062,21 +1084,21 @@ def overlapping_branch():
     raise Failure()
 
 
-def phoenix_branch(**kw):
+class PhoenixBranch(Cvs2SvnTestCase):
   "convert a branch file rooted in a 'dead' revision"
-  conv = ensure_conversion('phoenix', **kw)
-  conv.logs[8].check(sym_log_msg('volsung_20010721'), (
-    ('/%(branches)s/volsung_20010721 (from /%(trunk)s:7)', 'A'),
-    ('/%(branches)s/volsung_20010721/file.txt', 'D'),
-    ))
-  conv.logs[9].check('This file was supplied by Jack Moffitt', (
-    ('/%(branches)s/volsung_20010721/phoenix', 'A'),
-    ))
 
+  def __init__(self, **kw):
+    Cvs2SvnTestCase.__init__(self, 'phoenix', **kw)
 
-def phoenix_branch_variants():
-  "'dead' revision, with alternate repo layout"
-  phoenix_branch(trunk='a/1', branches='b/1', tags='c/1')
+  def run(self):
+    conv = self.ensure_conversion()
+    conv.logs[8].check(sym_log_msg('volsung_20010721'), (
+      ('/%(branches)s/volsung_20010721 (from /%(trunk)s:7)', 'A'),
+      ('/%(branches)s/volsung_20010721/file.txt', 'D'),
+      ))
+    conv.logs[9].check('This file was supplied by Jack Moffitt', (
+      ('/%(branches)s/volsung_20010721/phoenix', 'A'),
+      ))
 
 
 ###TODO: We check for 4 changed paths here to accomodate creating tags
@@ -1100,20 +1122,18 @@ def overdead():
   conv = ensure_conversion('overdead')
 
 
-def no_trunk_prune(**kw):
+class NoTrunkPrune(Cvs2SvnTestCase):
   "ensure that trunk doesn't get pruned"
-  conv = ensure_conversion('overdead', **kw)
-  for rev in conv.logs.keys():
-    rev_logs = conv.logs[rev]
-    if rev_logs.get_path_op('/%(trunk)s') == 'D':
-      raise Failure()
 
+  def __init__(self, **kw):
+    Cvs2SvnTestCase.__init__(self, 'overdead', **kw)
 
-def no_trunk_prune_variants():
-  "no trunk pruning, with alternate repo layout"
-  no_trunk_prune(trunk='a', branches='b', tags='c')
-  no_trunk_prune(trunk='a/1', branches='b/1', tags='c/1')
-  no_trunk_prune(trunk='a/1', branches='a/2', tags='a/3')
+  def run(self):
+    conv = self.ensure_conversion()
+    for rev in conv.logs.keys():
+      rev_logs = conv.logs[rev]
+      if rev_logs.get_path_op('/%(trunk)s') == 'D':
+        raise Failure()
 
 
 def double_delete():
@@ -1156,24 +1176,24 @@ def resync_misgroups():
   conv = ensure_conversion('resync-misgroups')
 
 
-def tagged_branch_and_trunk(**kw):
+class TaggedBranchAndTrunk(Cvs2SvnTestCase):
   "allow tags with mixed trunk and branch sources"
-  conv = ensure_conversion('tagged-branch-n-trunk', **kw)
 
-  tags = kw.get('tags', 'tags')
+  def __init__(self, **kw):
+    Cvs2SvnTestCase.__init__(self, 'tagged-branch-n-trunk', **kw)
 
-  a_path = conv.get_wc(tags, 'some-tag', 'a.txt')
-  b_path = conv.get_wc(tags, 'some-tag', 'b.txt')
-  if not (os.path.exists(a_path) and os.path.exists(b_path)):
-    raise Failure()
-  if (open(a_path, 'r').read().find('1.24') == -1) \
-     or (open(b_path, 'r').read().find('1.5') == -1):
-    raise Failure()
+  def run(self):
+    conv = self.ensure_conversion()
 
+    tags = conv.symbols.get('tags', 'tags')
 
-def tagged_branch_and_trunk_variants():
-  "mixed tags, with alternate repo layout"
-  tagged_branch_and_trunk(trunk='a/1', branches='a/2', tags='a/3')
+    a_path = conv.get_wc(tags, 'some-tag', 'a.txt')
+    b_path = conv.get_wc(tags, 'some-tag', 'b.txt')
+    if not (os.path.exists(a_path) and os.path.exists(b_path)):
+      raise Failure()
+    if (open(a_path, 'r').read().find('1.24') == -1) \
+       or (open(b_path, 'r').read().find('1.5') == -1):
+      raise Failure()
 
 
 def enroot_race():
@@ -1201,28 +1221,28 @@ def enroot_race_obo():
     raise Failure()
 
 
-def branch_delete_first(**kw):
+class BranchDeleteFirst(Cvs2SvnTestCase):
   "correctly handle deletion as initial branch action"
-  # See test-data/branch-delete-first-cvsrepos/README.
-  #
-  # The conversion will fail if the bug is present, and
-  # ensure_conversion would raise Failure.
-  conv = ensure_conversion('branch-delete-first', **kw)
 
-  branches = kw.get('branches', 'branches')
+  def __init__(self, **kw):
+    Cvs2SvnTestCase.__init__(self, 'branch-delete-first', **kw)
 
-  # 'file' was deleted from branch-1 and branch-2, but not branch-3
-  if conv.path_exists(branches, 'branch-1', 'file'):
-    raise Failure()
-  if conv.path_exists(branches, 'branch-2', 'file'):
-    raise Failure()
-  if not conv.path_exists(branches, 'branch-3', 'file'):
-    raise Failure()
+  def run(self):
+    # See test-data/branch-delete-first-cvsrepos/README.
+    #
+    # The conversion will fail if the bug is present, and
+    # ensure_conversion would raise Failure.
+    conv = self.ensure_conversion()
 
+    branches = conv.symbols.get('branches', 'branches')
 
-def branch_delete_first_variants():
-  "initial delete, with alternate repo layout"
-  branch_delete_first(trunk='a/1', branches='a/2', tags='a/3')
+    # 'file' was deleted from branch-1 and branch-2, but not branch-3
+    if conv.path_exists(branches, 'branch-1', 'file'):
+      raise Failure()
+    if conv.path_exists(branches, 'branch-2', 'file'):
+      raise Failure()
+    if not conv.path_exists(branches, 'branch-3', 'file'):
+      raise Failure()
 
 
 def nonascii_filenames():
@@ -1576,17 +1596,16 @@ def pass5_when_to_fill():
   conv = ensure_conversion('pass5-when-to-fill')
 
 
-def empty_trunk(**kw):
+class EmptyTrunk(Cvs2SvnTestCase):
   "don't break when the trunk is empty"
-  # The conversion will fail if the bug is present, and
-  # ensure_conversion would raise Failure.
-  conv = ensure_conversion('empty-trunk', **kw)
 
+  def __init__(self, **kw):
+    Cvs2SvnTestCase.__init__(self, 'empty-trunk', **kw)
 
-def empty_trunk_variants():
-  "empty trunk, with alternate repo layout"
-  empty_trunk(trunk='a', branches='b', tags='c')
-  empty_trunk(trunk='a/1', branches='a/2', tags='a/3')
+  def run(self):
+    # The conversion will fail if the bug is present, and
+    # ensure_conversion would raise Failure.
+    conv = self.ensure_conversion()
 
 
 def no_spurious_svn_commits():
@@ -1625,19 +1644,19 @@ def no_spurious_svn_commits():
     ))
 
 
-def peer_path_pruning(**kw):
+class PeerPathPruning(Cvs2SvnTestCase):
   "make sure that filling prunes paths correctly"
-  conv = ensure_conversion('peer-path-pruning', **kw)
-  conv.logs[8].check(sym_log_msg('BRANCH'), (
-    ('/%(branches)s/BRANCH (from /%(trunk)s:6)', 'A'),
-    ('/%(branches)s/BRANCH/bar', 'D'),
-    ('/%(branches)s/BRANCH/foo (from /%(trunk)s/foo:7)', 'R'),
-    ))
 
+  def __init__(self, **kw):
+    Cvs2SvnTestCase.__init__(self, 'peer-path-pruning', **kw)
 
-def peer_path_pruning_variants():
-  "filling prune paths, with alternate repo layout"
-  peer_path_pruning(trunk='a/1', branches='a/2', tags='a/3')
+  def run(self):
+    conv = self.ensure_conversion()
+    conv.logs[8].check(sym_log_msg('BRANCH'), (
+      ('/%(branches)s/BRANCH (from /%(trunk)s:6)', 'A'),
+      ('/%(branches)s/BRANCH/bar', 'D'),
+      ('/%(branches)s/BRANCH/foo (from /%(trunk)s/foo:7)', 'R'),
+      ))
 
 
 def invalid_closings_on_trunk():
@@ -2363,81 +2382,89 @@ test_list = [
     attr_exec,
     space_fname,
     two_quick,
-    prune_with_care,
+    PruneWithCare(),
+    PruneWithCare(variant=1, trunk='a', branches='b', tags='c'),
+    PruneWithCare(variant=2, trunk='a/1', branches='b/1', tags='c/1'),
+    PruneWithCare(variant=3, trunk='a/1', branches='a/2', tags='a/3'),
     interleaved_commits,
-    simple_commits,
-    simple_tags,
-    simple_branch_commits,
 # 10:
+    simple_commits,
+    SimpleTags(),
+    SimpleTags(variant=1, trunk='a', branches='b', tags='c'),
+    SimpleTags(variant=2, trunk='a/1', branches='b/1', tags='c/1'),
+    SimpleTags(variant=3, trunk='a/1', branches='a/2', tags='a/3'),
+    simple_branch_commits,
     mixed_time_tag,
     mixed_time_branch_with_added_file,
     mixed_commit,
     split_time_branch,
+# 20:
     bogus_tag,
     overlapping_branch,
-    phoenix_branch,
+    PhoenixBranch(),
+    PhoenixBranch(variant=1, trunk='a/1', branches='b/1', tags='c/1'),
     ctrl_char_in_log,
     overdead,
-    no_trunk_prune,
-# 20:
+    NoTrunkPrune(),
+    NoTrunkPrune(variant=1, trunk='a', branches='b', tags='c'),
+    NoTrunkPrune(variant=2, trunk='a/1', branches='b/1', tags='c/1'),
+    NoTrunkPrune(variant=3, trunk='a/1', branches='a/2', tags='a/3'),
+# 30:
     double_delete,
     split_branch,
     resync_misgroups,
-    tagged_branch_and_trunk,
+    TaggedBranchAndTrunk(),
+    TaggedBranchAndTrunk(variant=1, trunk='a/1', branches='a/2', tags='a/3'),
     enroot_race,
     enroot_race_obo,
-    branch_delete_first,
+    BranchDeleteFirst(),
+    BranchDeleteFirst(variant=1, trunk='a/1', branches='a/2', tags='a/3'),
     nonascii_filenames,
+# 40:
     vendor_branch_sameness,
     default_branches,
-# 30:
     compose_tag_three_sources,
     pass5_when_to_fill,
-    peer_path_pruning,
-    empty_trunk,
+    PeerPathPruning(),
+    PeerPathPruning(variant=1, trunk='a/1', branches='a/2', tags='a/3'),
+    EmptyTrunk(),
+    EmptyTrunk(variant=1, trunk='a', branches='b', tags='c'),
+    EmptyTrunk(variant=2, trunk='a/1', branches='a/2', tags='a/3'),
     no_spurious_svn_commits,
+# 50:
     invalid_closings_on_trunk,
     individual_passes,
     resync_bug,
     branch_from_default_branch,
     file_in_attic_too,
-# 40:
     retain_file_in_attic_too,
     symbolic_name_filling_guide,
     eol_mime,
     keywords,
     ignore,
+# 60:
     requires_cvs,
     questionable_branch_names,
     questionable_tag_names,
     revision_reorder_bug,
     exclude,
-# 50:
     vendor_branch_delete_add,
     resync_pass2_pull_forward,
     native_eol,
     double_fill,
     resync_pass2_push_backward,
+# 70:
     double_add,
     bogus_branch_copy,
     nested_ttb_directories,
-    prune_with_care_variants,
-    simple_tags_variants,
-# 60:
-    phoenix_branch_variants,
-    no_trunk_prune_variants,
-    tagged_branch_and_trunk_variants,
-    branch_delete_first_variants,
-    empty_trunk_variants,
-    peer_path_pruning_variants,
     auto_props_ignore_case,
     auto_props,
     ctrl_char_in_filename,
     commit_dependencies,
-# 70:
     show_help_passes,
     multiple_tags,
     double_branch_delete,
+# 80:
     symbol_mismatches,
     force_symbols,
     commit_blocks_tags,
@@ -2445,10 +2472,10 @@ test_list = [
     unblock_blocked_excludes,
     regexp_force_symbols,
     heuristic_symbol_default,
-# 80:
     branch_symbol_default,
     tag_symbol_default,
     symbol_transform,
+# 90:
     issue_99,
     issue_100,
     issue_106,
@@ -2456,7 +2483,6 @@ test_list = [
     tag_with_no_revision,
     XFail(delete_cvsignore),
     repeated_deltatext,
-# 90:
     nasty_graphs,
     ]
 

@@ -674,6 +674,29 @@ class Cvs2SvnTestCase(TestCase):
         args=self.args, options_file=self.options_file)
 
 
+class Cvs2SvnPropertiesTestCase(Cvs2SvnTestCase):
+  """Test properties resulting from a conversion."""
+
+  def __init__(self, name, props_to_test, expected_props, **kw):
+    """Initialize an instance of Cvs2SvnPropertiesTestCase.
+
+    NAME is the name of the test, passed to Cvs2SvnTestCase.
+    PROPS_TO_TEST is a list of the names of svn properties that should
+    be tested.  EXPECTED_PROPS is a list of tuples [(filename,
+    [value,...])], where the second item in each tuple is a list of
+    values expected for the properties listed in PROPS_TO_TEST for the
+    specified filename.  If a property must *not* be set, then its
+    value should be listed as None."""
+
+    Cvs2SvnTestCase.__init__(self, name, **kw)
+    self.props_to_test = props_to_test
+    self.expected_props = expected_props
+
+  def run(self):
+    conv = self.ensure_conversion()
+    conv.check_props(self.props_to_test, self.expected_props)
+
+
 #----------------------------------------------------------------------
 # Tests.
 #----------------------------------------------------------------------
@@ -1758,7 +1781,7 @@ def props_for_path(node, path):
   return node_for_path(node, path).props
 
 
-class EOLMime(Cvs2SvnTestCase):
+class EOLMime(Cvs2SvnPropertiesTestCase):
   """eol settings and mime types together
 
   The files are as follows:
@@ -1771,7 +1794,7 @@ class EOLMime(Cvs2SvnTestCase):
       trunk/foo.dbf: has -kb, mime file says non-text.
   """
 
-  def __init__(self, expected_props, args, **kw):
+  def __init__(self, args, **kw):
     # TODO: It's a bit klugey to construct this path here.  But so far
     # there's only one test with a mime.types file.  If we have more,
     # we should abstract this into some helper, which would be located
@@ -1781,16 +1804,13 @@ class EOLMime(Cvs2SvnTestCase):
     self.mime_path = os.path.join(
         test_data_dir, 'eol-mime-cvsrepos', 'mime.types')
 
-    args = ['--mime-types=%s' % self.mime_path] + args
-
-    Cvs2SvnTestCase.__init__(self, 'eol-mime', args=args, **kw)
-    self.expected_props = expected_props
-
-  def run(self):
-    conv = self.ensure_conversion()
-    conv.check_props(
-        ['svn:eol-style', 'svn:mime-type', 'cvs2svn:cvs-rev', 'svn:keywords'],
-        self.expected_props)
+    Cvs2SvnPropertiesTestCase.__init__(
+        self, 'eol-mime',
+        props_to_test=[
+            'svn:eol-style', 'svn:mime-type',
+            'cvs2svn:cvs-rev', 'svn:keywords'],
+        args=['--mime-types=%s' % self.mime_path] + args,
+        **kw)
 
 
 # We do four conversions.  Each time, we pass --mime-types=FILE with

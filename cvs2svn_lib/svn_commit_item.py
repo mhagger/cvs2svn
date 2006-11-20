@@ -49,8 +49,9 @@ class SVNCommitItem:
   def needs_eol_filter(self):
     """Return True iff EOLs needs to be filtered for this item."""
 
-    # Return true iff the property is unset or if it is set to None:
-    return self.svn_props.get('svn:eol-style', None) is not None
+    # Return true iff the property is unset, set to None, or set to
+    # the empty string:
+    return not self.svn_props.get('svn:eol-style', None)
 
   def has_keywords(self):
     return self.svn_props.get('svn:keywords', None) is not None

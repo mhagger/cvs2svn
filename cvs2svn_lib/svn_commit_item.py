@@ -47,13 +47,14 @@ class SVNCommitItem:
       svn_property_setter.set_properties(self)
 
   def needs_eol_filter(self):
-    """Return True iff EOLs needs to be filtered for this item."""
+    """Return True iff EOLs needs to be filtered for this item.
 
-    # Return true iff the property is unset, set to None, or set to
-    # the empty string:
-    return not self.svn_props.get('svn:eol-style', None)
+    This returns true for any svn:eol-style that does not indicate a
+    binary file."""
+
+    return bool(self.svn_props.get('svn:eol-style', None))
 
   def has_keywords(self):
-    return self.svn_props.get('svn:keywords', None) is not None
+    return bool(self.svn_props.get('svn:keywords', None))
 
 

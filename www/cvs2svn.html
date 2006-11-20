@@ -21,6 +21,8 @@
 
 <ul>
 
+  <li><a href="#intro">Introduction</a></li>
+
   <li><a href="#reqs">Requirements</a></li>
 
   <li><a href="#install">Installation</a></li>
@@ -36,6 +38,95 @@
 </ul>
 
 <hr />
+
+<h1><a name="intro">Introduction</a></h1>
+
+<p>cvs2svn is a program that can be used to migrate a CVS repository
+to <a href="http://subversion.tigris.org/">Subversion</a> (otherwise
+known as "SVN").  The primary goal of cvs2svn is to migrate as much
+information as possible from your old CVS repository to your new
+Subversion repository.</p>
+
+<p>But unfortunately, CVS doesn't record complete information about
+your project's history.  For example, CVS doesn't record what file
+modifications took place within the same CVS commit.  Therefore,
+cvs2svn attempts to infer from CVS's incomplete information what
+<em>really</em> happened in the history of your repository.  So the
+second goal of cvs2svn is to reconstruct as much of your CVS
+repository's history as possible.</p>
+
+<h2>cvs2svn features</h2>
+
+<dl>
+
+  <dt>No information lost</dt>
+  <dd>cvs2svn works hard to avoid losing any information from your CVS
+    repository (unless you specifically ask for a partial conversion
+    using <tt>--trunk-only</tt> or <tt>--exclude</tt>).</dd>
+
+  <dt>Changesets</dt>
+  <dd>CVS records modifications file-by-file, and does not keep track
+    of what files were modified at the same time.  cvs2svn uses
+    information like the file modification times, log messages, and
+    dependency information to reconstruct the original
+    changesets.</dd>
+
+  <dt>Branch vs. tag</dt>
+  <dd>CVS allows the same symbol name to be used sometimes as a
+    branch, sometimes as a tag.  cvs2svn has heuristics to decide how
+    to convert such "mixed" symbols (<tt>--force-branch</tt>,
+    <tt>--force-tag</tt>, <tt>--symbol-default</tt>).</dd>
+
+  <dt>Branch and tag creation times</dt>
+  <dd>CVS does not record when branches and tags are created.  cvs2svn
+    creates branches and tags at a reasonable time, consistent with
+    the file revisions that were tagged, and tries to create each one
+    within a single Subversion commit if possible.</dd>
+
+  <dt>Mime types</dt>
+  <dd>CVS does not record files' mime types.  cvs2svn provides several
+    mechanisms for choosing reasonable file mime types
+    (<tt>--mime-types</tt>, <tt>--auto-props</tt>).</dd>
+
+  <dt>Binary vs. text</dt>
+  <dd>Many CVS repositories do not systematically record which files
+    are binary and which are text.  (This is mostly important if the
+    repository is used on non-Unix systems.)  cvs2svn provides a
+    number of ways to infer this information
+    (<tt>--eol-from-mime-type</tt>, <tt>--no-default-eol</tt>,
+    <tt>--keywords-off</tt>, <tt>--auto-props</tt>).</dd>
+
+  <dt>Subversion file properties</dt>
+  <dd>Subversion allows arbitrary text properties to be attached to
+    files.  cvs2svn provides a mechanism to set such properties when a
+    file is first added to the repository
+    (<tt>--auto-props</tt>).</dd>
+
+  <dt>Timestamp error correction</dt>
+  <dd>Many CVS repositories contain timestamp errors due to servers'
+    clocks being set incorrectly during part of the repository's
+    history.  cvs2svn's history reconstruction is relatively robust
+    against timestamp errors and it writes monotonic timestamps to the
+    Subversion repository.</dd>
+
+  <dt>Subversion repository customization</dt>
+  <dd>cvs2svn provides many options that allow you to customize the
+    structure of the resulting Subversion repository
+    (<tt>--trunk</tt>, <tt>--branches</tt>, <tt>--tags</tt>,
+    <tt>--no-prune</tt>, <tt>--symbol-transform</tt>, etc.; see also
+    the additional customization options available by using the <a
+    href="#options-file-method"><tt>--options</tt>-file
+    method</a>).</dd>
+
+  <dt>Support for multiple character encodings</dt>
+  <dd>CVS does not record which character encoding was used to store
+    metainformation like file names, author names and log messages.
+    cvs2svn provides options to convert this text into UTF-8 as used
+    by Subversion (<tt>--encoding</tt>,
+    <tt>--fallback-encoding</tt>).</dd>
+
+</dl>
+
 
 <h1><a name="reqs">Requirements</a></h1>
 

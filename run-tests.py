@@ -645,13 +645,19 @@ def ensure_conversion(name, error_re=None, passbypass=None,
 
 class Cvs2SvnTestCase(TestCase):
   def __init__(self, name, variant=None,
-               trunk=None, branches=None, tags=None):
+               error_re=None, passbypass=None,
+               trunk=None, branches=None, tags=None,
+               args=None, options_file=None):
     TestCase.__init__(self)
     self.name = name
     self.variant = variant
+    self.error_re = error_re
+    self.passbypass = passbypass
     self.trunk = trunk
     self.branches = branches
     self.tags = tags
+    self.args = args
+    self.options_file = options_file
 
   def get_description(self):
     s = self.__doc__.splitlines()[0]
@@ -660,12 +666,12 @@ class Cvs2SvnTestCase(TestCase):
       s = s[:50 - len(suffix)] + suffix
     return s
 
-  def ensure_conversion(
-      self, error_re=None, passbypass=None, args=None, options_file=None):
+  def ensure_conversion(self):
     return ensure_conversion(
-        self.name, error_re, passbypass,
+        self.name,
+        error_re=self.error_re, passbypass=self.passbypass,
         trunk=self.trunk, branches=self.branches, tags=self.tags,
-        args=args, options_file=options_file)
+        args=self.args, options_file=self.options_file)
 
 
 #----------------------------------------------------------------------

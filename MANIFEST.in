@@ -1,7 +1,8 @@
 include *.py cvs2svn.1 dist.sh MANIFEST.in Makefile
-include README BUGS COMMITTERS COPYING HACKING design-notes.txt CHANGES
+include README BUGS COMMITTERS COPYING HACKING CHANGES
 recursive-include svntest *
 recursive-include test-data *
+recursive-include doc *
 recursive-include www *
 recursive-include contrib *.py
 prune www/tigris-branding

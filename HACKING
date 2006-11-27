@@ -10,7 +10,7 @@ http://svn.collab.net/repos/svn/trunk/www/hacking.html.
 
 Also:
 
-   - Read design-notes.txt, you won't regret it.
+   - Read doc/design-notes.txt, you won't regret it.
    - Read the class documentation in cvs2svn.
    - Please put a new test in run-tests.py when you fix a bug.
    - Use 2 spaces between sentences in comments and docstrings.

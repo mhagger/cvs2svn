@@ -1,0 +1,165 @@
+This is a description of how symbols (tags and branches) are handled
+by cvs2svn, determined by reading the code.
+
+
+CollectRevsPass
+===============
+
+Collect all information about CVS tags and branches from the CVS
+repository.
+
+For each symbol name seen in each project, create a Symbol object.
+The Symbol object has an id, project, and name.
+
+For each Symbol object, collect statistics about how often is was used
+as a branch vs tag, how often there was a commit on a branch with that
+name, and which other symbols branched off of a branch with that name.
+These statistics are used in CollateSymbolsPass to determine which
+symbols can be excluded or converted from tags to branches or vice
+versa.
+
+For each tag seen within each file, create a CVSTag object recording
+an id, CVSFile, Symbol, and the id of the CVSRevision being tagged.
+
+For each branch seen within each file, create a CVSBranch object
+recording an id, CVSFile, Symbol, the branch number (e.g., '1.4.2'),
+the id of the CVSRevision from which the branch sprouts, and the id of
+the first CVSRevision on the branch (if any).
+
+For each revision seen within each file, create a CVSRevision object
+recording (among other things) the line of development (trunk or
+branch) on which the revision appeared, a list of ids of CVSTags
+tagging the revision, a list of ids of CVSBranches sprouting from the
+revision, and a list of ids of all symbols "closed" by the revision.
+
+A symbol is considered "closed" by a CVSRevision if the CVSRevision
+follows the CVSRevision from which the symbol sprouted.  (Currently,
+each symbol is considered to sprout from a single, definite revision,
+so it is uniquely closed by that revision's successor.  Eventually we
+want to consider all of the possible roots for a symbol.)
+
+
+CollateSymbolsPass
+==================
+
+Use the symbol statistics collected in CollectRevsPass and
+Ctx().symbol_strategy to decide which symbols should be treated as
+branches, which as tags, and which symbols should be excluded from the
+conversion altogether.  Consistency checks prevent, for example, a
+branch from being converted into a tag if there were commits on the
+branch.
+
+This pass creates the symbol database, SYMBOL_DB, which is accessed in
+later passes via the SymbolDatabase class.  The SymbolDatabase
+contains TypedSymbol (BranchSymbol, TagSymbol, or ExcludedSymbol)
+instances indicating how each symbol should be processed in the
+conversion.  The IDs used for a TypedSymbol is the same as the ID
+allocated to the corresponding symbol in CollectRevsPass, so
+references in CVSItems do not have to be updated.
+
+
+FilterSymbolsPass
+=================
+
+Iterate through all of the CVSItems, mutating CVSTags to CVSBranches
+and vice versa and excluding other CVSSymbols as specified by the
+SymbolDatabase.  Additionally, filter out any CVSRevisions that reside
+on excluded CVSBranches.
+
+Additionally, write a record to CVS_SYMBOLS_SUMMARY_DATAFILE for each
+surviving CVSSymbol, listing the Symbol id and the CVSItem id for each
+one on a line of text.  (This file will be sorted in
+SortSymbolSummaryPass then used in InitializeChangesetsPass to create
+SymbolChangesets.)
+
+
+SortRevisionSummaryPass
+=======================
+
+N/A
+
+
+SortSymbolSummaryPass
+=====================
+
+Sort CVS_SYMBOLS_SUMMARY_DATAFILE, creating
+CVS_SYMBOLS_SUMMARY_SORTED_DATAFILE.  The sort groups together symbol
+items that might be added to the same SymbolChangeset.
+
+
+InitializeChangesetsPass
+========================
+
+Read CVS_SYMBOLS_SUMMARY_SORTED_DATAFILE, grouping CVSSymbol items
+with the same Symbol id into SymbolChangesets.  (The SymbolChangesets
+are currently unused.)
+
+
+BreakCVSRevisionChangesetLoopsPass
+==================================
+
+N/A
+
+
+TopologicalSortPass
+===================
+
+N/A
+
+
+CreateDatabasesPass
+===================
+
+Create a database containing the last changeset that is a source for
+each symbol.  The keys of the database are Changeset ids, and the
+values are a list of symbol ids for which a CVSRevision in that
+Changeset is the last "opening".
+
+This involves iterating through all changesets in order.  For each
+changeset, iterate through all CVSRevisions in the changeset and then
+look up each tag and branch sprouting from that CVSRevision.  In
+either case, record the changeset as an opening for the symbol.
+
+Then invert the map: for each changeset, record the list of symbols
+for which the changeset contains the last opening.  Store the results
+in SYMBOL_LAST_CHANGESETS_DB.
+
+
+CreateRevsPass
+==============
+
+Create SVNCommits and assign svn revision numbers to each one.  Create
+a database (SVN_COMMITS_DB) to map svn revision numbers to SVNCommits
+and another (CVS_REVS_TO_SVN_REVNUMS) to map each CVSRevision id to
+the number of the svn revision containing it.
+
+Also, SymbolingsLogger writes a line to SYMBOL_OPENINGS_CLOSINGS for
+each opening or closing svn revision for each CVSSymbol.
+
+
+SortSymbolsPass
+===============
+
+This pass merely sorts SYMBOL_OPENINGS_CLOSINGS into
+SYMBOL_OPENINGS_CLOSINGS_SORTED.  This orders the file first by
+symbolic name, and second by Subversion revision number, thus grouping
+all openings and closings for each symbolic name together.
+
+
+IndexSymbolsPass
+================
+
+Iterate through all the lines in SYMBOL_OPENINGS_CLOSINGS_SORTED,
+writing out a pickled map to SYMBOL_OFFSETS_DB mapping the Symbol id
+to the file offset in SYMBOL_OPENINGS_CLOSINGS_SORTED where the Symbol
+id is first encountered.  This will allow us to seek to the various
+offsets in the file and sequentially read only the openings and
+closings that we need.
+
+
+OutputPass
+==========
+
+To be written...
+
+

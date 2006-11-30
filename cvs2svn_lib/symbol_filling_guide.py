@@ -218,8 +218,9 @@ class SymbolFillingGuide:
 
     The Project instance defines what are legitimate sources
     (basically, the project's trunk or any directory directly under
-    its branches path).  Raise an exception if a change occurred
-    outside of the source directories."""
+    its branches path).  Return a list of FillSource objects.  Raise
+    an exception if a change occurred outside of the source
+    directories."""
 
     return self._get_sub_sources('', self._node_tree)
 

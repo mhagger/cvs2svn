@@ -1,0 +1,64 @@
+This file contains a description of the RevisionReader /
+RevisionRecorder / RevisionExcluder mechanism.
+
+
+cvs2svn now includes hooks to make it possible to avoid having to
+invoke CVS/RCS zillions of times in OutputPass (which is currently the
+most expensive part of the conversion by far).  Here is a brief
+description of how the new hooks work.
+
+The trick is to record the CVS file revisions' contents during
+CollectRevsPass, then regurgitate the contents during OutputPass.
+(For non-SVN backends, OutputPass might not even require the file
+contents.)
+
+There is an interface called RevisionReader that is used in OutputPass
+to retrieve the contents of a file.  The RevisionReader that should be
+used for a run of cvs2svn can be set using the --options file method
+with a line like:
+
+    ctx.revision_reader = MyRevisionReader()
+
+The RevisionReaders supplied with cvs2svn are RCSRevisionReader and
+CVSRevisionReader, which do not record anything during CollectRevsPass
+and which call rcs or cvs in OutputPass to get the file contents.
+(This repeated invocation of rcs/cvs is the most expensive part of the
+conversion.)
+
+But it is possible to do things differently.  A RevisionReader that
+wants to record information during CollectRevsPass should define a
+method get_revision_recorder(), which should return an instance of
+RevisionRecorder.  A RevisionRecorder has callback methods that are
+invoked as the CVS files are parsed.  For example,
+RevisionRecorder.record_text() is passed the log message and text
+(full text or delta) for each file revision.  The record_text() method
+is allowed to return an arbitrary token (for example, a content hash),
+and that token is stored into CVSRevision.revision_recorder_token and
+carried along by cvs2svn.
+
+Later, when OutputPass requires the file contents, it calls
+RevisionReader.get_content_stream(), which is passed a CVSRevision
+instance and has to return a stream object that produces the file
+revision's contents.  The fancy RevisionReader could use the token to
+retrieve the pre-stored file contents without having to call CVS or
+RCS at all.
+
+Obviously, nothing is gained unless RevisionReader can store and read
+the full-text contents faster than CVS/RCS.  Moreover, storing the
+whole file contents for each revision will take lots of temporary
+space, so some kind of delta storage is probably required.  Thus the
+implementation of RevisionRecorder and RevisionReader is not trivial.
+
+
+RevisionExcluder
+
+One idea for RevisionRecorder/RevisionReader requires the full text of
+each file to be remembered for each branch that is currently active
+(i.e., each branch that still has unprocessed revisions).  To reduce
+the temporary space needed by this scheme, there is a RevisionExcluder
+interface by which the RevisionReader can be informed about which
+branches and tags are to be excluded from the conversion.  Presumably
+the RevisionReader would use this information to cull temporary data
+that won't be needed for the conversion.
+
+

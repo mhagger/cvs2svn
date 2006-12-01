@@ -94,6 +94,14 @@ branch_tag_re = re.compile(r'''
     ''', re.VERBOSE)
 
 
+def rev_tuple(rev):
+  """Return a tuple of integers corresponding to revision number REV.
+
+  For example, if REV is '1.2.3.4', then return (1,2,3,4)."""
+
+  return tuple([int(x) for x in rev.split('.')])
+
+
 def is_trunk_revision(rev):
   """Return True iff REV is a trunk revision."""
 
@@ -161,11 +169,13 @@ class _RevisionData:
     self.child = None
 
     # The _BranchData instances of branches that sprout from this
-    # revision.  It would be inconvenient to initialize it here
-    # because we would have to scan through all branches known by the
-    # _SymbolDataCollector to find the ones having us as the parent.
-    # Instead, this information is filled in by
-    # _FileDataCollector._resolve_dependencies().
+    # revision, sorted in ascending order by branch number.  It would
+    # be inconvenient to initialize it here because we would have to
+    # scan through all branches known by the _SymbolDataCollector to
+    # find the ones having us as the parent.  Instead, this
+    # information is filled in by
+    # _FileDataCollector._resolve_dependencies() and sorted by
+    # _FileDataCollector._sort_branches().
     self.branches_data = []
 
     # The revision numbers of the first commits on any branches on
@@ -576,6 +586,14 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
           child_data.parent = branch_data.parent
           parent_data.branches_revs_data.append(branch_data.child)
 
+  def _sort_branches(self):
+    """Sort the branches sprouting from each revision in revision order."""
+
+    for rev_data in self._revision_data:
+      rev_data.branches_data.sort(
+          lambda a, b: cmp(rev_tuple(a.branch_number),
+                           rev_tuple(b.branch_number)))
+
   def _resolve_tag_dependencies(self):
     """Resolve dependencies involving tags."""
 
@@ -625,6 +643,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
     self._resolve_primary_dependencies()
     self._resolve_branch_dependencies()
+    self._sort_branches()
     self._resolve_tag_dependencies()
     self._determine_root_rev()
 

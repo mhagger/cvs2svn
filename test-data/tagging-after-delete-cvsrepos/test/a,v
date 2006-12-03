@@ -1,0 +1,25 @@
+head	1.1;
+access;
+symbols
+	tag1:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2006.11.28.18.18.23;	author mark;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@added files
+@
+text
+@file a
+@

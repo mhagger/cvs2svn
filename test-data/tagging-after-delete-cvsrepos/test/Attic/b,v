@@ -1,0 +1,38 @@
+head	1.2;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2006.11.28.18.18.39;	author mark;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2006.11.28.18.18.24;	author mark;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@removed file b
+@
+text
+@file b
+@
+
+
+1.1
+log
+@added files
+@
+text
+@@
+

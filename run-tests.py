@@ -2442,6 +2442,19 @@ def nasty_graphs():
   conv = ensure_conversion('nasty-graphs')
 
 
+def tagging_after_delete():
+  "optimal tag after deleting files"
+
+  conv = ensure_conversion('tagging-after-delete')
+
+  # tag should be 'clean', no deletes
+  log = conv.find_tag_log('tag1')
+  expected = (
+    ('/%(tags)s/tag1 (from /%(trunk)s:3)', 'A'),
+    )
+  log.check_changes(expected)
+
+
 ########################################################################
 # Run the tests
 
@@ -2561,6 +2574,7 @@ test_list = [
     XFail(delete_cvsignore),
     repeated_deltatext,
     nasty_graphs,
+    XFail(tagging_after_delete),
     ]
 
 if __name__ == '__main__':

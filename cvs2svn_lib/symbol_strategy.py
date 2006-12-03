@@ -218,8 +218,9 @@ class RuleBasedSymbolStrategy:
       sys.stderr.write(
           error_prefix + ": It is not clear how the following symbols "
           "should be converted.\n"
-          "Use --force-tag, --force-branch and/or --exclude to resolve the "
-          "ambiguity.\n")
+          "Use --force-tag, --force-branch, --exclude, and/or "
+          "--symbol-default to\n"
+          "resolve the ambiguity.\n")
       for stats in mismatches:
         sys.stderr.write("    %s\n" % stats)
       return None

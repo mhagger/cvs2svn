@@ -18,6 +18,11 @@ These statistics are used in CollateSymbolsPass to determine which
 symbols can be excluded or converted from tags to branches or vice
 versa.
 
+For each Symbol object, also count in how many files each branch (or
+trunk) could have served as the symbol's parent.  This information is
+stored to the symbol statistics database but is otherwise still
+unused.
+
 For each tag seen within each file, create a CVSTag object recording
 an id, CVSFile, Symbol, and the id of the CVSRevision being tagged.
 
@@ -160,6 +165,12 @@ closings that we need.
 OutputPass
 ==========
 
-To be written...
+The filling of a symbol is triggered when SVNSymbolCommit.commit()
+calls SVNRepositoryMirror.fill_symbol().  A filling guide is obtained
+from SymbolingsReader.filling_guide_for_symbol() and from the filling
+guide a list of sources (FillSource objects) is obtained via
+SymbolFillingGuide.get_sources().
+
+...still incomplete...
 
 

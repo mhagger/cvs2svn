@@ -611,9 +611,12 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
                            for tag_data in tag_data_list]),))
         del self.sdc.tags_data[rev]
       else:
+        # Determine where data for closed tags has to be stored:
         if Ctx().trunk_only or parent_data.child is None:
+          # Don't store it at all:
           closed_symbols_data = None
         else:
+          # Store it to the revision that follows the tagged revision:
           closed_symbols_data = \
               self._rev_data[parent_data.child].closed_symbols_data
 

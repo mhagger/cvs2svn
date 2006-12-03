@@ -184,10 +184,6 @@ class _RevisionData:
     # the dependency that exists via branches_data.
     self.branches_revs_data = []
 
-    # The _SymbolData instances of symbols that are closed by this
-    # revision.
-    self.closed_symbols_data = []
-
     # The _TagData instances of tags that are connected to this
     # revision.
     self.tags_data = []
@@ -572,7 +568,6 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
         if not Ctx().trunk_only and parent_data.child is not None:
           closing_data = self._rev_data[parent_data.child]
-          closing_data.closed_symbols_data.append(branch_data)
 
         # If the branch has a child (i.e., something was committed on
         # the branch), then we store a reference to the branch_data
@@ -611,22 +606,10 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
                            for tag_data in tag_data_list]),))
         del self.sdc.tags_data[rev]
       else:
-        # Determine where data for closed tags has to be stored:
-        if Ctx().trunk_only or parent_data.child is None:
-          # Don't store it at all:
-          closed_symbols_data = None
-        else:
-          # Store it to the revision that follows the tagged revision:
-          closed_symbols_data = \
-              self._rev_data[parent_data.child].closed_symbols_data
-
         for tag_data in tag_data_list:
           assert tag_data.rev == rev
           # The tag_data's rev has the tag as a child:
           parent_data.tags_data.append(tag_data)
-
-          if closed_symbols_data is not None:
-            closed_symbols_data.append(tag_data)
 
   def _determine_root_rev(self):
     """Determine self.root_rev.
@@ -869,11 +852,6 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         for tag_data in rev_data.tags_data
         ]
 
-    closed_symbol_ids = [
-        closed_symbol_data.symbol.id
-        for closed_symbol_data in rev_data.closed_symbols_data
-        ]
-
     cvs_rev = CVSRevision(
         self._get_rev_id(rev_data.rev), self.cvs_file,
         rev_data.timestamp, rev_data.metadata_id,
@@ -888,7 +866,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         self._get_rev_id(rev_data.default_branch_prev),
         self._get_rev_id(rev_data.default_branch_next),
         tag_ids, branch_ids, branch_commit_ids,
-        closed_symbol_ids,
+        None,
         rev_data.revision_recorder_token)
     rev_data.cvs_rev = cvs_rev
     self.collect_data.add_cvs_item(cvs_rev)

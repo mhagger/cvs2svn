@@ -34,14 +34,8 @@ the first CVSRevision on the branch (if any).
 For each revision seen within each file, create a CVSRevision object
 recording (among other things) the line of development (trunk or
 branch) on which the revision appeared, a list of ids of CVSTags
-tagging the revision, a list of ids of CVSBranches sprouting from the
-revision, and a list of ids of all symbols "closed" by the revision.
-
-A symbol is considered "closed" by a CVSRevision if the CVSRevision
-follows the CVSRevision from which the symbol sprouted.  (Currently,
-each symbol is considered to sprout from a single, definite revision,
-so it is uniquely closed by that revision's successor.  Eventually we
-want to consider all of the possible roots for a symbol.)
+tagging the revision, and a list of ids of CVSBranches sprouting from
+the revision.
 
 
 CollateSymbolsPass
@@ -76,6 +70,15 @@ surviving CVSSymbol, listing the Symbol id and the CVSItem id for each
 one on a line of text.  (This file will be sorted in
 SortSymbolSummaryPass then used in InitializeChangesetsPass to create
 SymbolChangesets.)
+
+Finally, record a list of ids of all symbols "closed" by each
+CVSRevision.
+
+A symbol is considered "closed" by a CVSRevision if the CVSRevision
+follows the CVSRevision from which the symbol sprouted.  (Currently,
+each symbol is considered to sprout from a single, definite revision,
+so it is uniquely closed by that revision's successor.  Eventually we
+want to consider multiple possible roots for a symbol.)
 
 
 SortRevisionSummaryPass

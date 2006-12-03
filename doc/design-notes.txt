@@ -227,6 +227,9 @@ as a group.  It does the following things:
      the results of CollateSymbolsPass, and fix up the references from
      other CVSItems.
 
+   - For each CVSRevision, record the list of symbols that the
+     revision closes.
+
    - Write the surviving CVSItems to the indexed store in files
      'cvs2svn-cvs-items-filtered-index.pck' and
      'cvs2svn-cvs-items-filtered.pck'.

@@ -102,8 +102,8 @@ class CVSRevision(CVSItem):
                             revision that should be treated as branches
        BRANCH_COMMIT_IDS --> (list of int) ids of commits on branches rooted
                              in this revision
-       CLOSED_SYMBOL_IDS --> (list of int) ids of all symbols closed by
-                             this revision
+       CLOSED_SYMBOL_IDS --> (None or list of int) ids of all symbols closed
+                             by this revision (set in FilterSymbolsPass)
        REVISION_RECORDER_TOKEN --> (arbitrary) a token that can be used by
                                    RevisionRecorder/RevisionReader.
     """

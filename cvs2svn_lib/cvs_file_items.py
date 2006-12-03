@@ -227,4 +227,24 @@ class CVSFileItems(object):
       else:
         raise RuntimeError('Unknown cvs item type')
 
+  def record_closed_symbols(self):
+    """Populate CVSRevision.closed_symbol_ids for the surviving revisions."""
+
+    for cvs_item in self.values():
+      if isinstance(cvs_item, CVSRevision):
+        cvs_item.closed_symbol_ids = []
+
+    for cvs_item in self.values():
+      if not isinstance(cvs_item, CVSRevision):
+        continue
+      cvs_revision = cvs_item
+      if cvs_revision.next_id is None:
+        continue
+      next_item = self[cvs_revision.next_id]
+      cvs_symbols = [
+          self[symbol_id]
+          for symbol_id in (cvs_revision.tag_ids + cvs_revision.branch_ids)]
+      for cvs_symbol in cvs_symbols:
+        next_item.closed_symbol_ids.append(cvs_symbol.symbol.id)
+
 

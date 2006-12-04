@@ -49,7 +49,7 @@ class PipeStream(object):
     error_output = self.pipe.stderr.read()
     exit_status = self.pipe.wait()
     if exit_status:
-      raise CommandError(self.pipe_cmd, exit_status, error_output)
+      raise CommandError(self.pipe_command, exit_status, error_output)
 
 
 class RevisionReader(object):

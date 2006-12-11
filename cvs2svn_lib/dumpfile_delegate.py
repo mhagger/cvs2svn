@@ -334,11 +334,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
 def generate_ignores(cvs_rev):
   # Read in props
   stream = Ctx().revision_reader.get_content_stream(cvs_rev)
-  buf = stream.read(config.PIPE_READ_SIZE)
-  raw_ignore_val = ""
-  while buf:
-    raw_ignore_val += buf
-    buf = stream.read(config.PIPE_READ_SIZE)
+  raw_ignore_val = stream.read()
   stream.close()
 
   # Tweak props: First, convert any spaces to newlines...

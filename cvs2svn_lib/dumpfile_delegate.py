@@ -206,10 +206,25 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
       prop_contents = ''
       props_header = ''
 
+    # If the file has keywords, we must prevent CVS/RCS from expanding
+    # the keywords because they must be unexpanded in the repository,
+    # or Subversion will get confused.
+    stream = Ctx().revision_reader.get_content_stream(
+        cvs_rev, suppress_keyword_substitution=s_item.has_keywords())
+
+    # Insert a filter to convert all EOLs to LFs if neccessary
+    if s_item.needs_eol_filter():
+      data_reader = LF_EOL_Filter(stream)
+    else:
+      data_reader = stream
+
+    buf = None
+
     # treat .cvsignore as a directory property
     dir_path, basename = os.path.split(cvs_rev.svn_path)
     if basename == ".cvsignore":
-      ignore_vals = generate_ignores(cvs_rev)
+      buf = data_reader.read()
+      ignore_vals = generate_ignores(buf)
       ignore_contents = '\n'.join(ignore_vals)
       if ignore_contents:
         ignore_contents += '\n'
@@ -229,12 +244,6 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
                           % (self._utf8_path(dir_path), ignore_len,
                              ignore_len, ignore_contents))
 
-    # If the file has keywords, we must prevent CVS/RCS from expanding
-    # the keywords because they must be unexpanded in the repository,
-    # or Subversion will get confused.
-    stream = Ctx().revision_reader.get_content_stream(
-        cvs_rev, suppress_keyword_substitution=s_item.has_keywords())
-
     self.dumpfile.write('Node-path: %s\n'
                         'Node-kind: file\n'
                         'Node-action: %s\n'
@@ -253,22 +262,16 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     if prop_contents:
       self.dumpfile.write(prop_contents)
 
-    # Insert a filter to convert all EOLs to LFs if neccessary
-    if s_item.needs_eol_filter():
-      data_reader = LF_EOL_Filter(stream)
-    else:
-      data_reader = stream
-
     # Insert the rev contents, calculating length and checksum as we go.
     checksum = md5.new()
     length = 0
-    while True:
+    if buf is None:
       buf = data_reader.read(config.PIPE_READ_SIZE)
-      if buf == '':
-        break
+    while buf != '':
       checksum.update(buf)
       length += len(buf)
       self.dumpfile.write(buf)
+      buf = data_reader.read(config.PIPE_READ_SIZE)
 
     stream.close()
 
@@ -331,26 +334,15 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     self.dumpfile.close()
 
 
-def generate_ignores(cvs_rev):
-  # Read in props
-  stream = Ctx().revision_reader.get_content_stream(cvs_rev)
-  raw_ignore_val = stream.read()
-  stream.close()
-
-  # Tweak props: First, convert any spaces to newlines...
-  raw_ignore_val = '\n'.join(raw_ignore_val.split())
-  raw_ignores = raw_ignore_val.split('\n')
+def generate_ignores(raw_ignore_val):
   ignore_vals = [ ]
-  for ignore in raw_ignores:
+  for ignore in raw_ignore_val.split():
     # Reset the list if we encounter a '!'
     # See http://cvsbook.red-bean.com/cvsbook.html#cvsignore
     if ignore == '!':
       ignore_vals = [ ]
-      continue
-    # Skip empty lines
-    if len(ignore) == 0:
-      continue
-    ignore_vals.append(ignore)
+    else:
+      ignore_vals.append(ignore)
   return ignore_vals
 
 
@@ -363,7 +355,7 @@ class LF_EOL_Filter:
     self.carry_cr = False
     self.eof = False
 
-  def read(self, size):
+  def read(self, size=-1):
     while True:
       buf = self.stream.read(size)
       self.eof = len(buf) == 0

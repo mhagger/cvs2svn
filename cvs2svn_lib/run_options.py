@@ -149,7 +149,7 @@ class RunOptions:
           "trunk-only",
           "trunk=", "branches=", "tags=",
           "no-prune",
-          "encoding=",
+          "encoding=", "fallback-encoding=",
           "force-branch=", "force-tag=", "exclude=", "symbol-default=",
           "symbol-transform=",
           "username=",

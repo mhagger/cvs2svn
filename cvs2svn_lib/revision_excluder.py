@@ -77,8 +77,8 @@ class RevisionExcluder:
     This callback is called once for each branch that is to be
     excluded for CVS_FILE.  CVS_BRANCH is the CVSBranch object for the
     branch that is being excluded.  CVS_REVISIONS is a list of
-    CVSRevisions on that branch.  Callbacks are always called in the
-    following sequence:
+    CVSRevisions on that branch, ordered by increasing revision number.
+    Callbacks are always called in the following sequence:
 
         revision_excluder.start()
         for cvs_file in files_with_excluded_branches:
@@ -102,6 +102,12 @@ class RevisionExcluder:
     This callback is called once for each CVSFile from which branches
     had to be excluded.  It is called after all exclude_tag() and
     exclude_branch() calls for that file."""
+
+    raise NotImplementedError()
+
+  def skip_file(self, cvs_file):
+    """When start_file/finish_file have not been called on a file,
+    this is called instead."""
 
     raise NotImplementedError()
 
@@ -130,6 +136,9 @@ class NullRevisionExcluder(RevisionExcluder):
     pass
 
   def finish_file(self):
+    pass
+
+  def skip_file(self, cvs_file):
     pass
 
   def finish(self):

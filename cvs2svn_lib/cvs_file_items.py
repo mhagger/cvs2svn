@@ -189,6 +189,8 @@ class CVSFileItems(object):
 
     if revision_excluder_started:
       revision_excluder.finish_file()
+    else:
+      revision_excluder.skip_file(self.cvs_file)
 
   def mutate_symbols(self):
     """Force symbols to be tags/branches based on self.symbol_db."""

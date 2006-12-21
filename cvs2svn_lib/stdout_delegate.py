@@ -57,6 +57,9 @@ class StdoutDelegate(SVNRepositoryMirrorDelegate):
 
     Log().verbose("  Changing", s_item.cvs_rev.svn_path)
 
+  def skip_path(self, cvs_rev):
+    pass
+
   def delete_path(self, path):
     """Print a line stating that we are 'deleting' PATH."""
 

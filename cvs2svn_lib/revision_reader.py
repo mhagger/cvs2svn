@@ -85,6 +85,15 @@ class RevisionReader(object):
 
     raise NotImplementedError
 
+  def skip_content(self, cvs_rev):
+    """Inform the reader that CVS_REV would be fetched now, but isn't
+    actually needed.
+
+    This may be used for internal housekeeping.
+    Note that this is not called for OP_DELETE revisions."""
+
+    raise NotImplementedError
+
 
 class RCSRevisionReader(RevisionReader):
   """A RevisionReader that reads the contents via RCS."""
@@ -109,6 +118,9 @@ class RCSRevisionReader(RevisionReader):
       pipe_cmd.append('-kk')
     pipe_cmd.append(cvs_rev.cvs_file.filename)
     return PipeStream(pipe_cmd)
+
+  def skip_content(self, cvs_rev):
+    pass
 
 
 class CVSRevisionReader(RevisionReader):
@@ -147,5 +159,8 @@ class CVSRevisionReader(RevisionReader):
       pipe_cmd.append('-kk')
     pipe_cmd.append(project.cvs_module + cvs_rev.cvs_path)
     return PipeStream(pipe_cmd)
+
+  def skip_content(self, cvs_rev):
+    pass
 
 

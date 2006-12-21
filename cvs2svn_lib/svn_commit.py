@@ -244,7 +244,7 @@ class SVNPrimaryCommit(SVNCommit, SVNRevisionCommit):
         # CVSCommit._commit() for what this is all about.  Note that
         # although asking repos.path_exists() is somewhat expensive,
         # we only do it if the first two (cheap) tests succeed first.
-        pass
+        repos.skip_path(cvs_rev)
 
       elif cvs_rev.op == OP_ADD:
         repos.add_path(cvs_rev)

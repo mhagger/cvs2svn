@@ -917,6 +917,7 @@ class OutputPass(Pass):
     if not Ctx().trunk_only:
       self._register_temp_file_needed(config.SYMBOL_OPENINGS_CLOSINGS_SORTED)
       self._register_temp_file_needed(config.SYMBOL_OFFSETS_DB)
+    Ctx().revision_reader.register_artifacts(self)
 
   def run(self, stats_keeper):
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
@@ -933,6 +934,8 @@ class OutputPass(Pass):
     Ctx().output_option.setup(repos)
 
     repos.add_delegate(StdoutDelegate(stats_keeper.svn_rev_count()))
+
+    Ctx().revision_reader.start()
 
     svn_revnum = 2 # Repository initialization is 1.
 
@@ -952,6 +955,8 @@ class OutputPass(Pass):
       svn_revnum += 1
 
     repos.finish()
+
+    Ctx().revision_reader.finish()
 
     Ctx().output_option.cleanup()
 

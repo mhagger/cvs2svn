@@ -235,7 +235,10 @@ class SVNPrimaryCommit(SVNCommit, SVNRevisionCommit):
                   % (len(self.cvs_revs), plural))
     for cvs_rev in self.cvs_revs:
       if cvs_rev.op == OP_DELETE:
-        repos.delete_path(cvs_rev.svn_path, Ctx().prune)
+        # FIXME: This test requires a database lookup.  It should be
+        # possible to avoid it:
+        if repos.path_exists(cvs_rev.svn_path):
+          repos.delete_path(cvs_rev.svn_path, Ctx().prune)
 
       elif (cvs_rev.rev == "1.1.1.1"
           and not cvs_rev.deltatext_exists
@@ -404,7 +407,11 @@ class SVNPostCommit(SVNCommit, SVNRevisionCommit):
       else:
         assert cvs_rev.op == OP_DELETE
         # delete trunk path
-        repos.delete_path(svn_trunk_path)
+
+        # FIXME: This test requires a database lookup.  It should be
+        # possible to avoid it:
+        if repos.path_exists(svn_trunk_path):
+          repos.delete_path(svn_trunk_path)
 
     repos.end_commit()
 

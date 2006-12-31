@@ -127,7 +127,8 @@ class Project(object):
       self.symbol_transforms = symbol_transforms
 
   def __cmp__(self, other):
-    return cmp(self.id, other.id)
+    return cmp(self.cvs_module, other.cvs_module) \
+           or cmp(self.id, other.id)
 
   def __hash__(self):
     return self.id

@@ -29,7 +29,9 @@ class Symbol:
     self.name = name
 
   def __cmp__(self, other):
-    return cmp(self.project, other.project) or cmp(self.id, other.id)
+    return cmp(self.project, other.project) \
+           or cmp(self.name, other.name) \
+           or cmp(self.id, other.id)
 
   def __hash__(self):
     return hash( (self.project, self.id,) )

@@ -29,7 +29,7 @@ from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.line_of_development import Branch
 from cvs2svn_lib.svn_revision_range import SVNRevisionRange
-from cvs2svn_lib.symbol_filling_guide import SymbolFillingGuide
+from cvs2svn_lib.symbol_filling_guide import get_sources
 
 
 # Constants used in SYMBOL_OPENINGS_CLOSINGS
@@ -103,7 +103,7 @@ class SymbolingsLogger:
 
     Write out a single line to the symbol_openings_closings file
     representing that SVN_REVNUM of SVN_FILE on BRANCH_ID is either
-    the opening or closing (TYPE) of NAME (a symbolic name).
+    the opening or closing (TYPE) of the symbol with id SYMBOL_ID.
 
     TYPE should be one of the following constants: OPENING or CLOSING.
 
@@ -208,21 +208,20 @@ class SymbolingsReader:
 
         yield (revnum, type, branch_id, cvs_file_id)
 
-  def filling_guide_for_symbol(self, symbol, svn_revnum):
-    """Return the next SymbolFillingGuide for SYMBOL.
+  def get_sources(self, symbol, svn_revnum):
+    """Return the list of possible sources for SYMBOL.
 
     SYMBOL is a TypedSymbol instance and SVN_REVNUM is an SVN revision
-    number.  The SymbolFillingGuide will contain all openings and
-    closings for SYMBOL between the SVN_REVNUM parameter passed to the
-    last call to this method and value of SVN_REVNUM passed to this
-    call.
+    number.  The symbol sources will contain all openings and closings
+    for SYMBOL between the SVN_REVNUM parameter passed to the last
+    call to this method and value of SVN_REVNUM passed to this call.
 
     Note that if we encounter an opening rev in this fill, but the
     corresponding closing rev takes place later than SVN_REVNUM, the
-    closing will not be passed to SymbolFillingGuide in this fill (and
-    will be discarded when encountered in a later fill).  This is
-    perfectly fine, because we can still do a valid fill without the
-    closing--we always try to fill what we can as soon as we can."""
+    closing will not be passed to get_sources() in this fill (and will
+    be discarded when encountered in a later fill).  This is perfectly
+    fine, because we can still do a valid fill without the closing--we
+    always try to fill what we can as soon as we can."""
 
     # A map {svn_path : SVNRevisionRange}:
     openings_closings_map = {}
@@ -246,9 +245,10 @@ class SymbolingsReader:
       else:
         # Only register a CLOSING if a corresponding OPENING has
         # already been recorded:
-        if svn_path in openings_closings_map:
-          openings_closings_map[svn_path].add_closing(revnum)
+        range = openings_closings_map.get(svn_path)
+        if range is not None:
+          range.add_closing(revnum)
 
-    return SymbolFillingGuide(symbol, openings_closings_map)
+    return get_sources(symbol, openings_closings_map)
 
 

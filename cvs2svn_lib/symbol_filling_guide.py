@@ -14,8 +14,10 @@
 # history and logs, available at http://cvs2svn.tigris.org/.
 # ====================================================================
 
-"""This module contains database facilities used by cvs2svn."""
+"""This module contains classes to help choose symbol sources."""
 
+
+from __future__ import generators
 
 import bisect
 
@@ -26,7 +28,6 @@ from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import SVN_INVALID_REVNUM
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.svn_revision_range import SVNRevisionRange
-from cvs2svn_lib.fill_source import FillSource
 
 
 class _RevisionScores:
@@ -51,11 +52,14 @@ class _RevisionScores:
 
     # A list that looks like:
     #
-    #    [(REV1 SCORE1), (REV2 SCORE2), ...]
+    #    [(REV1 SCORE1), (REV2 SCORE2), (REV3 SCORE3), ...]
     #
-    # where the tuples are sorted by revision number and score is the
-    # number of correct paths that would result from using the
-    # specified revision number as a source.
+    # where the tuples are sorted by revision number and the revision
+    # numbers are distinct.  Score is the number of correct paths that
+    # would result from using the specified revision number (or any
+    # other revision preceding the next revision listed) as a source.
+    # For example, the score of any revision REV in the range REV2 <=
+    # REV < REV3 is equal to SCORE2.
     self.scores = []
 
     # First look for easy out.
@@ -122,26 +126,118 @@ class _RevisionScores:
     return best_revnum, best_score
 
 
-class SymbolFillingGuide:
-  """A node tree representing the source paths to be copied to fill a
-  symbol in the current SVNCommit.
+class FillSource:
+  """Representation of a fill source.
 
-  self._node_tree is the root of the directory tree, in the form {
-  path_component : subnode }.  Leaf nodes are instances of
-  SVNRevisionRange.  Intermediate (directory) nodes are dictionaries
-  mapping path_components to subnodes.
+  A fill source is a directory (either trunk or a branches
+  subdirectory) that can be used as a source for a symbol, along with
+  the self-computed score for the source.  FillSources can be
+  compared; the comparison is such that it sorts FillSources in
+  descending order by score (higher score implies smaller).
 
-  By walking self._node_tree and calling self.get_best_revnum() on
-  each node, the caller can determine what subversion revision number
-  to copy the path corresponding to that node from.  self._node_tree
-  should be treated as read-only.
+  These objects are used by the symbol filler in SVNRepositoryMirror."""
 
-  The caller can then descend to sub-nodes to see if their "best
-  revnum" differs from their parents' and if it does, take appropriate
-  actions to "patch up" the subtrees."""
+  def __init__(self, symbol, prefix, node, preferred_revnum=None):
+    """Create an unscored fill source with a prefix and a key."""
+
+    # The _SymbolFillingGuide used to obtain score information:
+    self._symbol = symbol
+
+    # The svn path that is the base of this source:
+    self.prefix = prefix
+
+    # The node in the _SymbolFillingGuide corresponding to the prefix
+    # path:
+    self.node = node
+
+    # SCORE is the score of this source; REVNUM is the revision number
+    # with the best score:
+    self.revnum, self.score = self._get_best_revnum(preferred_revnum)
+
+  def _get_best_revnum(self, preferred_revnum):
+    """Determine the best subversion revision number to use when
+    copying the source tree beginning at this source.
+
+    Return (revnum, score) for the best revision found.  If
+    PREFERRED_REVNUM is not None and is among the revision numbers
+    with the best scores, return it; otherwise, return the oldest such
+    revision."""
+
+    # Aggregate openings and closings from our rev tree
+    svn_revision_ranges = self._get_revision_ranges(self.node)
+
+    # Score the lists
+    revision_scores = _RevisionScores(svn_revision_ranges)
+
+    best_revnum, best_score = revision_scores.get_best_revnum()
+    if preferred_revnum is not None \
+           and revision_scores.get_score(preferred_revnum) == best_score:
+      best_revnum = preferred_revnum
+
+    if best_revnum == SVN_INVALID_REVNUM:
+      raise FatalError(
+          "failed to find a revision to copy from when copying %s"
+          % self._symbol.name)
+    return best_revnum, best_score
+
+  def _get_revision_ranges(self, node):
+    """Return a list of all the SVNRevisionRanges at and under NODE.
+
+    Include duplicates.  This is a helper method used by
+    _get_best_revnum()."""
+
+    if isinstance(node, SVNRevisionRange):
+      # It is a leaf node.
+      return [ node ]
+    else:
+      # It is an intermediate node.
+      revision_ranges = []
+      for key, subnode in node.items():
+        revision_ranges.extend(self._get_revision_ranges(subnode))
+      return revision_ranges
+
+  def get_subsource(self, node, preferred_revnum):
+    """Return the FillSource for the specified NODE."""
+
+    return FillSource(self._symbol, self.prefix, node, preferred_revnum)
+
+  def __cmp__(self, other):
+    """Comparison operator that sorts FillSources in descending score order.
+
+    If the scores are the same, prefer trunk, or alphabetical order by
+    path - these cases are mostly useful to stabilize testsuite
+    results."""
+
+    trunk_path = self._symbol.project.trunk_path
+    return cmp(other.score, self.score) \
+           or cmp(other.prefix == trunk_path, self.prefix == trunk_path) \
+           or cmp(self.prefix, other.prefix)
+
+
+class _SymbolFillingGuide:
+  """A tree holding the sources that can be copied to fill a symbol.
+
+  The class holds a node tree representing any parts of the svn
+  directory structure that can be used to incrementally fill the
+  symbol in the current SVNCommit.  The directory nodes in the tree
+  are dictionaries mapping pathname components to subnodes.  A leaf
+  node exists for any potential source that has had an opening since
+  the last fill of this symbol, and thus can be filled in this commit.
+  The leaves themselves are SVNRevisionRange objects telling for what
+  range of revisions the leaf could serve as a source.
+
+  self._node_tree is the root node of the directory tree.  By walking
+  self._node_tree and calling self._get_best_revnum() on each node,
+  the caller can determine what subversion revision number to copy the
+  path corresponding to that node from.  self._node_tree should be
+  treated as read-only.
+
+  The caller can then descend to sub-nodes to see if their 'best
+  revnum' differs from their parent's and if it does, take appropriate
+  actions to 'patch up' the subtrees."""
 
   def __init__(self, symbol, openings_closings_map):
-    """Initializes a SymbolFillingGuide for SYMBOL.
+    """Initializes a _SymbolFillingGuide for SYMBOL.
 
     SYMBOL is either a BranchSymbol or a TagSymbol.  Record the
     openings and closings from OPENINGS_CLOSINGS_MAP, which is a map
@@ -172,63 +268,22 @@ class SymbolFillingGuide:
 
     return node
 
-  def get_best_revnum(self, node, preferred_revnum):
-    """Determine the best subversion revision number to use when
-    copying the source tree beginning at NODE.
-
-    Return (revnum, score) for the best revision found.  If
-    PREFERRED_REVNUM is not None and is among the revision numbers
-    with the best scores, return it; otherwise, return the oldest such
-    revision."""
-
-    # Aggregate openings and closings from the rev tree
-    svn_revision_ranges = self._get_revision_ranges(node)
-
-    # Score the lists
-    revision_scores = _RevisionScores(svn_revision_ranges)
-
-    best_revnum, best_score = revision_scores.get_best_revnum()
-    if preferred_revnum is not None \
-           and revision_scores.get_score(preferred_revnum) == best_score:
-      best_revnum = preferred_revnum
-
-    if best_revnum == SVN_INVALID_REVNUM:
-      raise FatalError(
-          "failed to find a revision to copy from when copying %s"
-          % self.symbol.name)
-    return best_revnum, best_score
-
-  def _get_revision_ranges(self, node):
-    """Return a list of all the SVNRevisionRanges at and under NODE.
-
-    Include duplicates."""
-
-    if isinstance(node, SVNRevisionRange):
-      # It is a leaf node.
-      return [ node ]
-    else:
-      # It is an intermediate node.
-      revision_ranges = []
-      for key, subnode in node.items():
-        revision_ranges.extend(self._get_revision_ranges(subnode))
-      return revision_ranges
-
   def get_sources(self):
-    """Return the list of sources for this symbolic name.
+    """Return the list of unscored sources for this symbolic name.
 
     The Project instance defines what are legitimate sources
     (basically, the project's trunk or any directory directly under
-    its branches path).  Return a list of FillSource objects.  Raise
-    an exception if a change occurred outside of the source
-    directories."""
+    its branches path).  Return a list of FillSource objects, one for
+    each source that is present in the node tree.  Raise an exception
+    if a change occurred outside of the source directories."""
 
-    return self._get_sub_sources('', self._node_tree)
+    return list(self._get_sub_sources('', self._node_tree))
 
   def _get_sub_sources(self, start_svn_path, start_node):
-    """Return the list of sources within SVN_START_PATH.
+    """Generate the sources within SVN_START_PATH.
 
     Start the search at path START_SVN_PATH, which is node START_NODE.
-    Return a list of FillSource objects.
+    Generate a sequence of unscored FillSource objects.
 
     This is a helper method, called by get_sources() (see)."""
 
@@ -237,19 +292,17 @@ class SymbolFillingGuide:
       # legitimate sources.  This should never happen.
       raise
     elif self.symbol.project.is_source(start_svn_path):
-      # This is a legitimate source.  Add it to list.
-      return [ FillSource(self.symbol.project, start_svn_path, start_node) ]
+      # This is a legitimate source.  Output it:
+      yield FillSource(self.symbol, start_svn_path, start_node)
     else:
       # This is a directory that is not a legitimate source.  (That's
-      # OK because it hasn't changed directly.)  But directories
-      # within it have been changed, so we need to search recursively
-      # to find their enclosing sources.
-      sources = []
+      # OK because it hasn't changed directly.)  But one or more
+      # directories within it have been changed, so we need to search
+      # recursively to find the sources enclosing them.
       for entry, node in start_node.items():
         svn_path = path_join(start_svn_path, entry)
-        sources.extend(self._get_sub_sources(svn_path, node))
-
-    return sources
+        for source in self._get_sub_sources(svn_path, node):
+          yield source
 
   def print_node_tree(self, node, name='/', indent_depth=0):
     """Print all nodes in TREE that are rooted at NODE to sys.stdout.
@@ -265,5 +318,9 @@ class SymbolFillingGuide:
       print "TREE:", " " * (indent_depth * 2), name
       for key, value in node.items():
         self.print_node_tree(value, key, (indent_depth + 1))
+
+
+def get_sources(symbol, openings_closings_map):
+  return _SymbolFillingGuide(symbol, openings_closings_map).get_sources()
 
 

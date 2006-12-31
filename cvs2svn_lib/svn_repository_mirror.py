@@ -418,16 +418,17 @@ class SVNRepositoryMirror:
     repository by the end of this call, even if there are no paths
     under it."""
 
-    # Get the list of sources for the symbolic name:
-    sources = self._symbolings_reader.get_sources(symbol, self._youngest)
+    # Get the set of sources for the symbolic name:
+    source_set = \
+        self._symbolings_reader.get_source_set(symbol, self._youngest)
 
-    if not sources:
+    if not source_set:
       # We can only get here for a branch whose first commit is an add
       # (as opposed to a copy).  This case is covered by test 16.
       self._fill_empty_branch(symbol)
     else:
       dest_node = self._open_writable_node(symbol.get_path(), False)
-      self._fill(symbol, dest_node, sources)
+      self._fill(symbol, dest_node, source_set)
 
   def _fill_empty_branch(self, symbol):
     """Fill a branch without any contents.
@@ -474,7 +475,7 @@ class SVNRepositoryMirror:
         dest_node.delete_component(component)
     return dest_node
 
-  def _fill(self, symbol, dest_node, sources,
+  def _fill(self, symbol, dest_node, source_set,
             path=None, parent_source=None, prune_ok=False):
     """Fill the tag or branch SYMBOL at relative path PATH.
 
@@ -505,10 +506,7 @@ class SVNRepositoryMirror:
     PATH, PARENT_SOURCE, and PRUNE_OK should only be passed in by
     recursive calls."""
 
-    # Sort the sources in descending score order so that we will make
-    # a eventual copy from the source with the highest score.
-    sources.sort()
-    copy_source = sources[0]
+    copy_source = source_set.get_best_source()
 
     src_path = path_join(copy_source.prefix, path)
     dest_path = symbol.get_path(path)
@@ -535,23 +533,19 @@ class SVNRepositoryMirror:
       dest_node = self.copy_path(src_path, dest_path, copy_source.revnum)
       prune_ok = True
 
-    # Create the SRC_ENTRIES hash from SOURCES.  The keys are path
-    # elements and the values are lists of FillSource classes where
-    # this path element exists.
-    src_entries = {}
-    for source in sources:
-      for entry, subsource in source.get_subsources(copy_source.revnum):
-        src_entries.setdefault(entry, []).append(subsource)
+    # Get the map {entry : FillSourceSet} for entries within this
+    # directory that need filling.
+    src_entries = source_set.get_subsource_sets(copy_source.revnum)
 
     if prune_ok:
       dest_node = self._prune_extra_entries(dest_path, dest_node, src_entries)
 
     # Recurse into the SRC_ENTRIES keys sorted in alphabetical order.
-    src_keys = src_entries.keys()
-    src_keys.sort()
-    for src_key in src_keys:
-      self._fill(symbol, dest_node[src_key],
-                 src_entries[src_key], path_join(path, src_key),
+    entries = src_entries.keys()
+    entries.sort()
+    for entry in entries:
+      self._fill(symbol, dest_node[entry],
+                 src_entries[entry], path_join(path, entry),
                  copy_source, prune_ok)
 
   def add_delegate(self, delegate):

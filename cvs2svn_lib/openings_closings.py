@@ -29,7 +29,7 @@ from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.line_of_development import Branch
 from cvs2svn_lib.svn_revision_range import SVNRevisionRange
-from cvs2svn_lib.symbol_filling_guide import get_sources
+from cvs2svn_lib.symbol_filling_guide import get_source_set
 
 
 # Constants used in SYMBOL_OPENINGS_CLOSINGS
@@ -208,7 +208,7 @@ class SymbolingsReader:
 
         yield (revnum, type, branch_id, cvs_file_id)
 
-  def get_sources(self, symbol, svn_revnum):
+  def get_source_set(self, symbol, svn_revnum):
     """Return the list of possible sources for SYMBOL.
 
     SYMBOL is a TypedSymbol instance and SVN_REVNUM is an SVN revision
@@ -218,10 +218,10 @@ class SymbolingsReader:
 
     Note that if we encounter an opening rev in this fill, but the
     corresponding closing rev takes place later than SVN_REVNUM, the
-    closing will not be passed to get_sources() in this fill (and will
-    be discarded when encountered in a later fill).  This is perfectly
-    fine, because we can still do a valid fill without the closing--we
-    always try to fill what we can as soon as we can."""
+    closing will not be passed to get_source_set() in this fill (and
+    will be discarded when encountered in a later fill).  This is
+    perfectly fine, because we can still do a valid fill without the
+    closing--we always try to fill what we can as soon as we can."""
 
     # A map {svn_path : SVNRevisionRange}:
     openings_closings_map = {}
@@ -249,6 +249,6 @@ class SymbolingsReader:
         if range is not None:
           range.add_closing(revnum)
 
-    return get_sources(symbol, openings_closings_map)
+    return get_source_set(symbol, openings_closings_map)
 
 

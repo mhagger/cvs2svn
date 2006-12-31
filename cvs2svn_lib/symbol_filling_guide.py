@@ -22,6 +22,7 @@ from __future__ import generators
 import bisect
 
 from cvs2svn_lib.boolean import *
+from cvs2svn_lib.set_support import *
 from cvs2svn_lib.common import path_join
 from cvs2svn_lib.common import path_split
 from cvs2svn_lib.common import FatalError
@@ -221,6 +222,42 @@ class FillSource:
            or cmp(self.prefix, other.prefix)
 
 
+class FillSourceSet:
+  """A set of FillSources for a given symbol and path."""
+
+  def __init__(self, symbol, sources):
+    # The symbol that the sources are for:
+    self._symbol = symbol
+
+    # A list of sources, sorted in descending order of score.
+    self._sources = sources
+    self._sources.sort()
+
+  def __nonzero__(self):
+    return bool(self._sources)
+
+  def get_best_source(self):
+    return self._sources[0]
+
+  def get_subsource_sets(self, preferred_revnum):
+    """Return a FillSourceSet for each subentry that still needs filling.
+
+    The return value is a map {entry : FillSourceSet} for subentries
+    that need filling, where entry is a path element under the path
+    handled by SELF."""
+
+    source_entries = {}
+    for source in self._sources:
+      for entry, subsource in source.get_subsources(preferred_revnum):
+        source_entries.setdefault(entry, []).append(subsource)
+
+    retval = {}
+    for (entry, source_list) in source_entries.items():
+      retval[entry] = FillSourceSet(self._symbol, source_list)
+
+    return retval
+
+
 class _SymbolFillingGuide:
   """A tree holding the sources that can be copied to fill a symbol.
 
@@ -275,7 +312,7 @@ class _SymbolFillingGuide:
 
     return node
 
-  def get_sources(self):
+  def get_source_set(self):
     """Return the list of FillSources for this symbolic name.
 
     The Project instance defines what are legitimate sources
@@ -284,7 +321,9 @@ class _SymbolFillingGuide:
     each source that is present in the node tree.  Raise an exception
     if a change occurred outside of the source directories."""
 
-    return list(self._get_sub_sources('', self._node_tree))
+    return FillSourceSet(
+        self.symbol, list(self._get_sub_sources('', self._node_tree))
+        )
 
   def _get_sub_sources(self, start_svn_path, start_node):
     """Generate the sources within SVN_START_PATH.
@@ -292,7 +331,7 @@ class _SymbolFillingGuide:
     Start the search at path START_SVN_PATH, which is node START_NODE.
     Generate a sequence of FillSource objects.
 
-    This is a helper method, called by get_sources() (see)."""
+    This is a helper method, called by get_source_set() (see)."""
 
     if isinstance(start_node, SVNRevisionRange):
       # This implies that a change was found outside of the
@@ -327,7 +366,7 @@ class _SymbolFillingGuide:
         self.print_node_tree(value, key, (indent_depth + 1))
 
 
-def get_sources(symbol, openings_closings_map):
-  return _SymbolFillingGuide(symbol, openings_closings_map).get_sources()
+def get_source_set(symbol, openings_closings_map):
+  return _SymbolFillingGuide(symbol, openings_closings_map).get_source_set()
 
 

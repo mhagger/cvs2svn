@@ -225,9 +225,13 @@ class FillSource:
 class FillSourceSet:
   """A set of FillSources for a given symbol and path."""
 
-  def __init__(self, symbol, sources):
+  def __init__(self, symbol, path, sources):
     # The symbol that the sources are for:
     self._symbol = symbol
+
+    # The path, relative to the source base paths, that is being
+    # processed:
+    self.path = path
 
     # A list of sources, sorted in descending order of score.
     self._sources = sources
@@ -253,7 +257,9 @@ class FillSourceSet:
 
     retval = {}
     for (entry, source_list) in source_entries.items():
-      retval[entry] = FillSourceSet(self._symbol, source_list)
+      retval[entry] = FillSourceSet(
+          self._symbol, path_join(self.path, entry), source_list
+          )
 
     return retval
 
@@ -322,7 +328,7 @@ class _SymbolFillingGuide:
     if a change occurred outside of the source directories."""
 
     return FillSourceSet(
-        self.symbol, list(self._get_sub_sources('', self._node_tree))
+        self.symbol, '', list(self._get_sub_sources('', self._node_tree))
         )
 
   def _get_sub_sources(self, start_svn_path, start_node):

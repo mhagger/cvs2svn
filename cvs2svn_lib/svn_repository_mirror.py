@@ -544,10 +544,8 @@ class SVNRepositoryMirror:
     # this path element exists.
     src_entries = {}
     for source in sources:
-      if not isinstance(source.node, SVNRevisionRange):
-        for entry, node in source.node.items():
-          src_entries.setdefault(entry, []).append(
-              source.get_subsource(node, copy_source.revnum))
+      for entry, subsource in source.get_subsources(copy_source.revnum):
+        src_entries.setdefault(entry, []).append(subsource)
 
     if prune_ok:
       dest_node = self._prune_extra_entries(dest_path, dest_node, src_entries)

@@ -476,8 +476,7 @@ class SVNRepositoryMirror:
     return dest_node
 
   def _fill(self, dest_prefix, dest_node, sources,
-            path=None, parent_source_prefix=None,
-            preferred_revnum=None, prune_ok=False):
+            path=None, parent_source=None, prune_ok=False):
     """Fill the tag or branch at DEST_PREFIX + PATH with items from
     SOURCES, and recurse into the child items.
 
@@ -520,8 +519,9 @@ class SVNRepositoryMirror:
       # be copied:
       do_copy = True
     elif prune_ok and (
-          parent_source_prefix != copy_source.prefix
-          or copy_source.revnum != preferred_revnum):
+          parent_source is None
+          or copy_source.prefix != parent_source.prefix
+          or copy_source.revnum != parent_source.revnum):
       # The parent path was copied from a different source than we
       # need to use, so we have to delete the version that was copied
       # with the parent before we can re-copy from the correct source:
@@ -551,7 +551,7 @@ class SVNRepositoryMirror:
     for src_key in src_keys:
       self._fill(dest_prefix, dest_node[src_key],
                  src_entries[src_key], path_join(path, src_key),
-                 copy_source.prefix, copy_source.revnum, prune_ok)
+                 copy_source, prune_ok)
 
   def add_delegate(self, delegate):
     """Adds DELEGATE to self._delegates.

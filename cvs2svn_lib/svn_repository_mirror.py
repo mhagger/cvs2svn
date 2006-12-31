@@ -426,9 +426,8 @@ class SVNRepositoryMirror:
       # (as opposed to a copy).  This case is covered by test 16.
       self._fill_empty_branch(symbol)
     else:
-      dest_prefix = symbol.get_path()
-      dest_node = self._open_writable_node(dest_prefix, False)
-      self._fill(dest_prefix, dest_node, sources)
+      dest_node = self._open_writable_node(symbol.get_path(), False)
+      self._fill(symbol, dest_node, sources)
 
   def _fill_empty_branch(self, symbol):
     """Fill a branch without any contents.
@@ -475,34 +474,36 @@ class SVNRepositoryMirror:
         dest_node.delete_component(component)
     return dest_node
 
-  def _fill(self, dest_prefix, dest_node, sources,
+  def _fill(self, symbol, dest_node, sources,
             path=None, parent_source=None, prune_ok=False):
-    """Fill the tag or branch at DEST_PREFIX + PATH with items from
-    SOURCES, and recurse into the child items.
+    """Fill the tag or branch SYMBOL at relative path PATH.
 
-    DEST_PREFIX is the prefix of the destination directory, e.g.
-    'tags/my_tag' or 'branches/my_branch', and SOURCES is a list of
-    FillSource classes that are candidates to be copied to the
-    destination.  DEST_NODE is the node of the destination, or None if
-    the destination does not yet exist.
+    Use items from SOURCES, and recurse into the child items.
 
-    PATH is the path relative to DEST_PREFIX.  If PATH is None, we
-    are at the top level, e.g. 'tags/my_tag'.
+    Fill SYMBOL starting at the path SYMBOL.get_path(PATH).  DEST_NODE
+    is the node of this destination path, or None if the destination
+    does not yet exist.  All directories above this path have already
+    been filled.  SOURCES is a list of FillSource classes that are
+    candidates to be copied to the destination.
 
-    PARENT_SOURCE_PREFIX is the source prefix that was used to copy
-    the parent directory, and PREFERRED_REVNUM is an int which is the
-    source revision number that the caller (who may have copied KEY's
-    parent) used to perform its copy.  If PREFERRED_REVNUM is None,
-    then no revision is preferable to any other (which probably means
-    that no copies have happened yet).
+    PATH is the path relative to SYMBOL.get_path().  If PATH is None,
+    we are at the top level path for SYMBOL, e.g. 'tags/my_tag'.
+
+    PARENT_SOURCE is the source that was best for the parent
+    directory.  (Note that the parent directory wasn't necessarily
+    copied in this commit, but PARENT_SOURCE was chosen anyway.)  We
+    prefer to copy from the same source as was used for the parent,
+    since it typically requires less touching-up.  If PARENT_SOURCE is
+    None, then this is the top-level directory, and no revision is
+    preferable to any other (which probably means that no copies have
+    happened yet).
 
     PRUNE_OK means that a copy has been made in this recursion, and
     it's safe to prune directories that are not in
-    SYMBOL_FILL._node_tree, provided that said directory has a source
-    prefix of one of the PARENT_SOURCE_PREFIX.
+    SYMBOL_FILL._node_tree.
 
-    PATH, PARENT_SOURCE_PREFIX, PRUNE_OK, and PREFERRED_REVNUM should
-    only be passed in by recursive calls."""
+    PATH, PARENT_SOURCE, and PRUNE_OK should only be passed in by
+    recursive calls."""
 
     # Sort the sources in descending score order so that we will make
     # a eventual copy from the source with the highest score.
@@ -510,7 +511,7 @@ class SVNRepositoryMirror:
     copy_source = sources[0]
 
     src_path = path_join(copy_source.prefix, path)
-    dest_path = path_join(dest_prefix, path)
+    dest_path = symbol.get_path(path)
 
     # Figure out if we shall copy to this destination and delete any
     # destination path that is in the way.
@@ -549,7 +550,7 @@ class SVNRepositoryMirror:
     src_keys = src_entries.keys()
     src_keys.sort()
     for src_key in src_keys:
-      self._fill(dest_prefix, dest_node[src_key],
+      self._fill(symbol, dest_node[src_key],
                  src_entries[src_key], path_join(path, src_key),
                  copy_source, prune_ok)
 

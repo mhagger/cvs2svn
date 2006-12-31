@@ -476,19 +476,16 @@ class SVNRepositoryMirror:
     return dest_node
 
   def _fill(self, symbol, dest_node, source_set,
-            path=None, parent_source=None, prune_ok=False):
-    """Fill the tag or branch SYMBOL at relative path PATH.
+            parent_source=None, prune_ok=False):
+    """Fill the tag or branch SYMBOL at the path indicated by SOURCE_SET.
 
-    Use items from SOURCES, and recurse into the child items.
+    Use items from SOURCE_SET, and recurse into the child items.
 
-    Fill SYMBOL starting at the path SYMBOL.get_path(PATH).  DEST_NODE
-    is the node of this destination path, or None if the destination
-    does not yet exist.  All directories above this path have already
-    been filled.  SOURCES is a list of FillSource classes that are
-    candidates to be copied to the destination.
-
-    PATH is the path relative to SYMBOL.get_path().  If PATH is None,
-    we are at the top level path for SYMBOL, e.g. 'tags/my_tag'.
+    Fill SYMBOL starting at the path SYMBOL.get_path(SOURCE_SET.path).
+    DEST_NODE is the node of this destination path, or None if the
+    destination does not yet exist.  All directories above this path
+    have already been filled.  SOURCE_SET is a list of FillSource
+    classes that are candidates to be copied to the destination.
 
     PARENT_SOURCE is the source that was best for the parent
     directory.  (Note that the parent directory wasn't necessarily
@@ -503,13 +500,13 @@ class SVNRepositoryMirror:
     it's safe to prune directories that are not in
     SYMBOL_FILL._node_tree.
 
-    PATH, PARENT_SOURCE, and PRUNE_OK should only be passed in by
-    recursive calls."""
+    PARENT_SOURCE, and PRUNE_OK should only be passed in by recursive
+    calls."""
 
     copy_source = source_set.get_best_source()
 
-    src_path = path_join(copy_source.prefix, path)
-    dest_path = symbol.get_path(path)
+    src_path = path_join(copy_source.prefix, source_set.path)
+    dest_path = symbol.get_path(source_set.path)
 
     # Figure out if we shall copy to this destination and delete any
     # destination path that is in the way.
@@ -544,8 +541,7 @@ class SVNRepositoryMirror:
     entries = src_entries.keys()
     entries.sort()
     for entry in entries:
-      self._fill(symbol, dest_node[entry],
-                 src_entries[entry], path_join(path, entry),
+      self._fill(symbol, dest_node[entry], src_entries[entry],
                  copy_source, prune_ok)
 
   def add_delegate(self, delegate):

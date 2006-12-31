@@ -138,12 +138,13 @@ class FillSource:
   These objects are used by the symbol filler in SVNRepositoryMirror."""
 
   def __init__(self, symbol, prefix, node, preferred_revnum=None):
-    """Create an unscored fill source with a prefix and a key."""
+    """Create a scored fill source with a prefix and a key."""
 
-    # The _SymbolFillingGuide used to obtain score information:
+    # The Symbol instance for the symbol to be filled:
     self._symbol = symbol
 
-    # The svn path that is the base of this source:
+    # The svn path that is the base of this source (e.g.,
+    # 'project1/trunk' or 'project1/branches/BRANCH1'):
     self.prefix = prefix
 
     # The node in the _SymbolFillingGuide corresponding to the prefix
@@ -269,7 +270,7 @@ class _SymbolFillingGuide:
     return node
 
   def get_sources(self):
-    """Return the list of unscored sources for this symbolic name.
+    """Return the list of FillSources for this symbolic name.
 
     The Project instance defines what are legitimate sources
     (basically, the project's trunk or any directory directly under
@@ -283,7 +284,7 @@ class _SymbolFillingGuide:
     """Generate the sources within SVN_START_PATH.
 
     Start the search at path START_SVN_PATH, which is node START_NODE.
-    Generate a sequence of unscored FillSource objects.
+    Generate a sequence of FillSource objects.
 
     This is a helper method, called by get_sources() (see)."""
 

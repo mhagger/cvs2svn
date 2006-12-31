@@ -24,18 +24,13 @@ from cvs2svn_lib.common import DB_OPEN_READ
 from cvs2svn_lib.common import path_join
 from cvs2svn_lib.common import path_split
 from cvs2svn_lib.context import Ctx
-from cvs2svn_lib.log import Log
 from cvs2svn_lib.key_generator import KeyGenerator
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.serializer import MarshalSerializer
 from cvs2svn_lib.database import IndexedDatabase
 from cvs2svn_lib.record_table import UnsignedIntegerPacker
 from cvs2svn_lib.record_table import RecordTable
-from cvs2svn_lib.symbol import BranchSymbol
-from cvs2svn_lib.symbol import TagSymbol
 from cvs2svn_lib.openings_closings import SymbolingsReader
-from cvs2svn_lib.symbol_filling_guide import FillSource
-from cvs2svn_lib.svn_revision_range import SVNRevisionRange
 from cvs2svn_lib.svn_commit_item import SVNCommitItem
 
 

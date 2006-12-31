@@ -26,7 +26,6 @@ from cvs2svn_lib.common import path_join
 from cvs2svn_lib.common import path_split
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import SVN_INVALID_REVNUM
-from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.svn_revision_range import SVNRevisionRange
 
 

@@ -164,9 +164,9 @@ class FillSource:
     copying the source tree beginning at this source.
 
     Return (revnum, score) for the best revision found.  If
-    PREFERRED_REVNUM is not None and is among the revision numbers
-    with the best scores, return it; otherwise, return the oldest such
-    revision."""
+    SELF._preferred_source is not None and its revision number is
+    among the revision numbers with the best scores, return it;
+    otherwise, return the oldest such revision."""
 
     # Aggregate openings and closings from our rev tree
     svn_revision_ranges = self._get_revision_ranges(self.node)
@@ -175,6 +175,7 @@ class FillSource:
     revision_scores = _RevisionScores(svn_revision_ranges)
 
     best_revnum, best_score = revision_scores.get_best_revnum()
+
     if self._preferred_source is not None \
            and revision_scores.get_score(self._preferred_source.revnum) \
                == best_score:

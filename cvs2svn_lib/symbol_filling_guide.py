@@ -137,7 +137,7 @@ class FillSource:
 
   These objects are used by the symbol filler in SVNRepositoryMirror."""
 
-  def __init__(self, symbol, prefix, node, preferred_revnum=None):
+  def __init__(self, symbol, prefix, node, preferred_source=None):
     """Create a scored fill source with a prefix and a key."""
 
     # The Symbol instance for the symbol to be filled:
@@ -151,11 +151,15 @@ class FillSource:
     # path:
     self.node = node
 
+    # The source that we should prefer to use, or None if there is no
+    # preference:
+    self._preferred_source = preferred_source
+
     # SCORE is the score of this source; REVNUM is the revision number
     # with the best score:
-    self.revnum, self.score = self._get_best_revnum(preferred_revnum)
+    self.revnum, self.score = self._get_best_revnum()
 
-  def _get_best_revnum(self, preferred_revnum):
+  def _get_best_revnum(self):
     """Determine the best subversion revision number to use when
     copying the source tree beginning at this source.
 
@@ -171,9 +175,10 @@ class FillSource:
     revision_scores = _RevisionScores(svn_revision_ranges)
 
     best_revnum, best_score = revision_scores.get_best_revnum()
-    if preferred_revnum is not None \
-           and revision_scores.get_score(preferred_revnum) == best_score:
-      best_revnum = preferred_revnum
+    if self._preferred_source is not None \
+           and revision_scores.get_score(self._preferred_source.revnum) \
+               == best_score:
+      best_revnum = self._preferred_source.revnum
 
     if best_revnum == SVN_INVALID_REVNUM:
       raise FatalError(
@@ -197,17 +202,17 @@ class FillSource:
         revision_ranges.extend(self._get_revision_ranges(subnode))
       return revision_ranges
 
-  def _get_subsource(self, node, preferred_revnum):
+  def _get_subsource(self, node, preferred_source):
     """Return the FillSource for the specified NODE."""
 
-    return FillSource(self._symbol, self.prefix, node, preferred_revnum)
+    return FillSource(self._symbol, self.prefix, node, preferred_source)
 
-  def get_subsources(self, preferred_revnum):
+  def get_subsources(self, preferred_source):
     """Generate (entry, FillSource) for all direct subsources."""
 
     if not isinstance(self.node, SVNRevisionRange):
       for entry, node in self.node.items():
-        yield entry, self._get_subsource(node, preferred_revnum)
+        yield entry, self._get_subsource(node, preferred_source)
 
   def __cmp__(self, other):
     """Comparison operator that sorts FillSources in descending score order.
@@ -243,7 +248,7 @@ class FillSourceSet:
   def get_best_source(self):
     return self._sources[0]
 
-  def get_subsource_sets(self, preferred_revnum):
+  def get_subsource_sets(self, preferred_source):
     """Return a FillSourceSet for each subentry that still needs filling.
 
     The return value is a map {entry : FillSourceSet} for subentries
@@ -252,7 +257,7 @@ class FillSourceSet:
 
     source_entries = {}
     for source in self._sources:
-      for entry, subsource in source.get_subsources(preferred_revnum):
+      for entry, subsource in source.get_subsources(preferred_source):
         source_entries.setdefault(entry, []).append(subsource)
 
     retval = {}

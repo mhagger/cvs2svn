@@ -532,7 +532,7 @@ class SVNRepositoryMirror:
 
     # Get the map {entry : FillSourceSet} for entries within this
     # directory that need filling.
-    src_entries = source_set.get_subsource_sets(copy_source.revnum)
+    src_entries = source_set.get_subsource_sets(copy_source)
 
     if prune_ok:
       dest_node = self._prune_extra_entries(dest_path, dest_node, src_entries)

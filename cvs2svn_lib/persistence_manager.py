@@ -28,7 +28,6 @@ from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.record_table import SignedIntegerPacker
 from cvs2svn_lib.record_table import RecordTable
 from cvs2svn_lib.database import PrimedPDatabase
-from cvs2svn_lib.svn_commit import SVNCommit
 from cvs2svn_lib.svn_commit import SVNRevisionCommit
 from cvs2svn_lib.svn_commit import SVNInitialProjectCommit
 from cvs2svn_lib.svn_commit import SVNPrimaryCommit
@@ -65,11 +64,10 @@ class PersistenceManager:
         artifact_manager.get_temp_file(config.CVS_REVS_TO_SVN_REVNUMS),
         mode, SignedIntegerPacker(SVN_INVALID_REVNUM))
 
-    # branch_id -> svn_revnum in which branch was last filled.  This
-    # is used by CVSCommit._pre_commit, to prevent creating a fill
-    # revision which would have nothing to do.  The record with index
-    # None reflects the svn revision of the last SVNPostCommit.
-    self.last_filled = {}
+    # Symbol -> svn_revnum in which branch symbol was last filled.
+    # This is used by SVNCommitCreator._pre_commit, to prevent
+    # creating a fill revision which would have nothing to do.
+    self._last_filled = {}
 
   def get_svn_revnum(self, cvs_rev_id):
     """Return the Subversion revision number in which CVS_REV_ID was
@@ -105,10 +103,18 @@ class PersistenceManager:
         Log().verbose(' %s %s' % (cvs_rev.cvs_path, cvs_rev.rev,))
         self.cvs2svn_db[cvs_rev.id] = svn_commit.revnum
 
-    # If it is a symbol commit, then record last_filled.
+    # If it is a symbol commit, then record _last_filled.
     if isinstance(svn_commit, SVNSymbolCommit):
-      self.last_filled[svn_commit.symbol.id] = svn_commit.revnum
+      self._last_filled[svn_commit.symbol] = svn_commit.revnum
     elif isinstance(svn_commit, SVNPostCommit):
-      self.last_filled[None] = svn_commit.revnum
+      self._last_filled[None] = svn_commit.revnum
 
+  def filled(self, lod):
+    """Return True iff LOD has ever been filled."""
 
+    return lod.symbol in self._last_filled
+
+  def filled_since(self, lod, svn_revnum):
+    """Return True iff LOD has been filled since SVN_REVNUM."""
+
+    return self._last_filled.get(lod.symbol, 0) >= svn_revnum

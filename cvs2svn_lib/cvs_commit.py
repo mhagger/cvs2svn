@@ -131,6 +131,43 @@ class CVSCommit:
       # OP_CHANGE or OP_ADD
       self.changes.append(cvs_rev)
 
+  def _fill_needed(cvs_rev):
+    """Return True iff this is the first commit on a new branch (for
+    this file) and we need to fill the branch; else return False.
+    See comments below for the detailed rules."""
+
+    if cvs_rev.first_on_branch_id is None:
+      # Only commits that are the first on their branch can force fills:
+      return False
+
+    pm = Ctx()._persistence_manager
+
+    # It should be the case that when we have a file F that is
+    # added on branch B (thus, F on trunk is in state 'dead'), we
+    # generate an SVNCommit to fill B iff the branch has never
+    # been filled before.
+    if cvs_rev.op == OP_ADD:
+      # Fill the branch only if it has never been filled before:
+      return not pm.filled(cvs_rev.lod)
+    elif cvs_rev.op == OP_CHANGE:
+      # We need to fill only if the last commit affecting the file
+      # has not been filled yet:
+      return not pm.filled_since(
+          cvs_rev.lod, pm.get_svn_revnum(cvs_rev.prev_id))
+    elif cvs_rev.op == OP_DELETE:
+      # If the previous revision was also a delete, we don't need
+      # to fill it - and there's nothing to copy to the branch, so
+      # we can't anyway.  No one seems to know how to get CVS to
+      # produce the double delete case, but it's been observed.
+      if Ctx()._cvs_items_db[cvs_rev.prev_id].op == OP_DELETE:
+        return False
+      # Other deletes need fills only if the last commit affecting
+      # the file has not been filled yet:
+      return not pm.filled_since(
+          cvs_rev.lod, pm.get_svn_revnum(cvs_rev.prev_id))
+
+  _fill_needed = staticmethod(_fill_needed)
+
   def _pre_commit(self, done_symbols):
     """Generate any SVNCommits that must exist before the main commit.
 
@@ -148,40 +185,6 @@ class CVSCommit:
     # counted.
     accounted_for_symbols = set()
 
-    def fill_needed(cvs_rev):
-      """Return True iff this is the first commit on a new branch (for
-      this file) and we need to fill the branch; else return False.
-      See comments below for the detailed rules."""
-
-      if cvs_rev.first_on_branch_id is None:
-        # Only commits that are the first on their branch can force fills:
-        return False
-
-      pm = Ctx()._persistence_manager
-      prev_svn_revnum = pm.get_svn_revnum(cvs_rev.prev_id)
-
-      # It should be the case that when we have a file F that is
-      # added on branch B (thus, F on trunk is in state 'dead'), we
-      # generate an SVNCommit to fill B iff the branch has never
-      # been filled before.
-      if cvs_rev.op == OP_ADD:
-        # Fill the branch only if it has never been filled before:
-        return cvs_rev.lod.symbol.id not in pm.last_filled
-      elif cvs_rev.op == OP_CHANGE:
-        # We need to fill only if the last commit affecting the file
-        # has not been filled yet:
-        return prev_svn_revnum > pm.last_filled.get(cvs_rev.lod.symbol.id, 0)
-      elif cvs_rev.op == OP_DELETE:
-        # If the previous revision was also a delete, we don't need
-        # to fill it - and there's nothing to copy to the branch, so
-        # we can't anyway.  No one seems to know how to get CVS to
-        # produce the double delete case, but it's been observed.
-        if Ctx()._cvs_items_db[cvs_rev.prev_id].op == OP_DELETE:
-          return False
-        # Other deletes need fills only if the last commit affecting
-        # the file has not been filled yet:
-        return prev_svn_revnum > pm.last_filled.get(cvs_rev.lod.symbol.id, 0)
-
     for cvs_rev in self.changes + self.deletes:
       # If a commit is on a branch, we must ensure that the branch
       # path being committed exists (in HEAD of the Subversion
@@ -191,37 +194,39 @@ class CVSCommit:
       if isinstance(cvs_rev.lod, Branch) \
           and cvs_rev.lod.symbol not in accounted_for_symbols \
           and cvs_rev.lod.symbol not in done_symbols \
-          and fill_needed(cvs_rev):
+          and self._fill_needed(cvs_rev):
         symbol = cvs_rev.lod.symbol
         self.secondary_commits.append(SVNPreCommit(symbol))
         accounted_for_symbols.add(symbol)
 
+  def _delete_needed(cvs_rev):
+    """Return True iff the specified delete CVS_REV is really needed.
+
+    When a file is added on a branch, CVS not only adds the file on
+    the branch, but generates a trunk revision (typically 1.1) for
+    that file in state 'dead'.  We only want to add this revision if
+    the log message is not the standard cvs fabricated log message."""
+
+    if cvs_rev.prev_id is not None:
+      return True
+
+    # cvs_rev.branch_ids may be empty if the originating branch has
+    # been excluded.
+    if not cvs_rev.branch_ids:
+      return False
+    # FIXME: This message will not match if the RCS file was renamed
+    # manually after it was created.
+    cvs_generated_msg = 'file %s was initially added on branch %s.\n' % (
+        cvs_rev.cvs_file.basename,
+        Ctx()._cvs_items_db[cvs_rev.branch_ids[0]].symbol.name,)
+    author, log_msg = Ctx()._metadata_db[cvs_rev.metadata_id]
+    return log_msg != cvs_generated_msg
+
+  _delete_needed = staticmethod(_delete_needed)
+
   def _commit(self):
     """Generates the primary SVNCommit that corresponds to this
     CVSCommit."""
-
-    def delete_needed(cvs_rev):
-      """Return True iff the specified delete CVS_REV is really needed.
-
-      When a file is added on a branch, CVS not only adds the file on
-      the branch, but generates a trunk revision (typically 1.1) for
-      that file in state 'dead'.  We only want to add this revision if
-      the log message is not the standard cvs fabricated log message."""
-
-      if cvs_rev.prev_id is not None:
-        return True
-
-      # cvs_rev.branch_ids may be empty if the originating branch has
-      # been excluded.
-      if not cvs_rev.branch_ids:
-        return False
-      # FIXME: This message will not match if the RCS file was renamed
-      # manually after it was created.
-      cvs_generated_msg = 'file %s was initially added on branch %s.\n' % (
-          cvs_rev.cvs_file.basename,
-          Ctx()._cvs_items_db[cvs_rev.branch_ids[0]].symbol.name,)
-      author, log_msg = Ctx()._metadata_db[cvs_rev.metadata_id]
-      return log_msg != cvs_generated_msg
 
     # Generate an SVNCommit unconditionally.  Even if the only change
     # in this CVSCommit is a deletion of an already-deleted file (that
@@ -231,7 +236,7 @@ class CVSCommit:
     # revision, because we don't want to lose that information.
     needed_deletes = [ cvs_rev
                        for cvs_rev in self.deletes
-                       if delete_needed(cvs_rev)
+                       if self._delete_needed(cvs_rev)
                        ]
     svn_commit = SVNPrimaryCommit(self.changes + needed_deletes)
     self.motivating_commit = svn_commit

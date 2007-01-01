@@ -64,10 +64,10 @@ class PersistenceManager:
         artifact_manager.get_temp_file(config.CVS_REVS_TO_SVN_REVNUMS),
         mode, SignedIntegerPacker(SVN_INVALID_REVNUM))
 
-    # Symbol -> svn_revnum in which branch symbol was last filled.
-    # This is used by SVNCommitCreator._pre_commit, to prevent
-    # creating a fill revision which would have nothing to do.
-    self._last_filled = {}
+    # A map {Symbol -> [svn_revnum,...]} where svn_revnums are the svn
+    # revision numbers in which the symbol was filled, in numerical
+    # order.
+    self._fills = {}
 
   def get_svn_revnum(self, cvs_rev_id):
     """Return the Subversion revision number in which CVS_REV_ID was
@@ -103,18 +103,20 @@ class PersistenceManager:
         Log().verbose(' %s %s' % (cvs_rev.cvs_path, cvs_rev.rev,))
         self.cvs2svn_db[cvs_rev.id] = svn_commit.revnum
 
-    # If it is a symbol commit, then record _last_filled.
+    # If it is a symbol commit, then record _fills.
     if isinstance(svn_commit, SVNSymbolCommit):
-      self._last_filled[svn_commit.symbol] = svn_commit.revnum
+      self._fills.setdefault(svn_commit.symbol, []).append(svn_commit.revnum)
     elif isinstance(svn_commit, SVNPostCommit):
-      self._last_filled[None] = svn_commit.revnum
+      self._fills.setdefault(None, []).append(svn_commit.revnum)
 
   def filled(self, lod):
     """Return True iff LOD has ever been filled."""
 
-    return lod.symbol in self._last_filled
+    return lod.symbol in self._fills
 
   def filled_since(self, lod, svn_revnum):
     """Return True iff LOD has been filled since SVN_REVNUM."""
 
-    return self._last_filled.get(lod.symbol, 0) >= svn_revnum
+    return self._fills.get(lod.symbol, [0])[-1] >= svn_revnum
+
+

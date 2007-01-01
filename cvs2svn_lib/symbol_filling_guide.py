@@ -218,12 +218,17 @@ class FillSource:
   def __cmp__(self, other):
     """Comparison operator that sorts FillSources in descending score order.
 
-    If the scores are the same, prefer trunk, or alphabetical order by
-    path - these cases are mostly useful to stabilize testsuite
-    results."""
+    If the scores are the same, prefer the source that is taken from
+    the same branch as its preferred_source; otherwise, prefer the one
+    that is on trunk.  If all those are equal then use alphabetical
+    order by path (to stabilize testsuite results)."""
 
     trunk_path = self._symbol.project.trunk_path
     return cmp(other.score, self.score) \
+           or cmp(other._preferred_source is not None
+                  and other.prefix == other._preferred_source.prefix,
+                  self._preferred_source is not None
+                  and self.prefix == self._preferred_source.prefix) \
            or cmp(other.prefix == trunk_path, self.prefix == trunk_path) \
            or cmp(self.prefix, other.prefix)
 

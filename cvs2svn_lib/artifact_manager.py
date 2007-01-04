@@ -118,6 +118,7 @@ class ArtifactManager:
 
   def register_artifact(self, artifact, which_pass):
     """Register a new ARTIFACT for management by this class.
+
     WHICH_PASS is the pass that creates ARTIFACT, and is also assumed
     to need it.  It is an error to registier the same artifact more
     than once."""
@@ -127,18 +128,20 @@ class ArtifactManager:
     self.register_artifact_needed(artifact.name, which_pass)
 
   def register_temp_file(self, basename, which_pass):
-    """Register a temporary file with base name BASENAME as an
-    artifact.  Return the filename of the temporary file."""
+    """Register a temporary file with base name BASENAME as an artifact.
+
+    Return the filename of the temporary file."""
 
     artifact = TempFileArtifact(basename)
     self.register_artifact(artifact, which_pass)
     return artifact.filename
 
   def get_artifact(self, artifact_name):
-    """Return the artifact with the specified name.  If the artifact
-    does not currently exist, raise a KeyError.  If it is not
-    registered as being needed by one of the active passes, raise an
-    ArtifactNotActiveError."""
+    """Return the artifact with the specified name.
+
+    If the artifact does not currently exist, raise a KeyError.  If it
+    is not registered as being needed by one of the active passes,
+    raise an ArtifactNotActiveError."""
 
     artifact = self._artifacts[artifact_name]
     for active_pass in self._active_passes:
@@ -160,6 +163,7 @@ class ArtifactManager:
 
   def register_artifact_needed(self, artifact_name, which_pass):
     """Register that WHICH_PASS needs the artifact named ARTIFACT_NAME.
+
     An artifact with this name must already have been registered."""
 
     artifact = self._artifacts[artifact_name]
@@ -170,8 +174,10 @@ class ArtifactManager:
       self._pass_needs[which_pass] = set([artifact,])
 
   def register_temp_file_needed(self, basename, which_pass):
-    """Register that the temporary file with base name BASENAME is
-    needed by WHICH_PASS."""
+    """Register that a temporary file is needed by WHICH_PASS.
+
+    Register that the temporary file with base name BASENAME is needed
+    by WHICH_PASS."""
 
     self.register_artifact_needed(basename, which_pass)
 
@@ -211,7 +217,9 @@ class ArtifactManager:
     self._active_passes.add(which_pass)
 
   def pass_continued(self, which_pass):
-    """WHICH_PASS, which has already been started, will be continued
+    """WHICH_PASS will be continued during the next program run.
+
+    WHICH_PASS, which has already been started, will be continued
     during the next program run.  Unregister any artifacts that would
     be cleaned up at the end of WHICH_PASS without actually cleaning
     them up."""
@@ -220,8 +228,9 @@ class ArtifactManager:
     self._unregister_artifacts(which_pass)
 
   def pass_done(self, which_pass):
-    """WHICH_PASS is done.  Clean up all artifacts that are no longer
-    needed."""
+    """WHICH_PASS is done.
+
+    Clean up all artifacts that are no longer needed."""
 
     self._active_passes.remove(which_pass)
     artifacts = self._unregister_artifacts(which_pass)
@@ -231,16 +240,18 @@ class ArtifactManager:
 
   def pass_deferred(self, which_pass):
     """WHICH_PASS is being deferred until a future cvs2svn run.
+
     Unregister any artifacts that would be cleaned up during
     WHICH_PASS."""
 
     self._unregister_artifacts(which_pass)
 
   def check_clean(self):
-    """All passes have been processed.  Output a warning messages if
-    all artifacts have not been accounted for.  (This is mainly a
-    consistency check, that no artifacts were registered under
-    nonexistent passes.)"""
+    """All passes have been processed.
+
+    Output a warning messages if all artifacts have not been accounted
+    for.  (This is mainly a consistency check, that no artifacts were
+    registered under nonexistent passes.)"""
 
     unclean_artifact_names = [
         artifact.name

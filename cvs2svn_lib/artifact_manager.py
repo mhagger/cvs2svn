@@ -75,13 +75,18 @@ class ArtifactManager:
 
   To use this class:
 
-  - Call register_artifact() or register_temp_file() for all possible
-    artifacts (even those that should have been created by previous
-    cvs2svn runs).
+  - Call artifact_manager[name] = artifact once for each known
+    artifact.
 
-  - Call register_artifact_needed() or register_temp_file_needed() for
-    any artifact that are needed by any pass (even those passes that
-    won't be executed during this cvs2svn run).
+  - Call artifact_manager.creates(which_pass, name) to indicate that
+    WHICH_PASS is the pass that creates the artifact named NAME.
+
+  - Call artifact_manager.uses(which_pass, name) to indicate that
+    WHICH_PASS needs to use the artifact named NAME.
+
+  There are also helper methods register_artifact(),
+  register_temp_file(), register_artifact_needed(), and
+  register_temp_file_needed() which combine some useful operations.
 
   Then, in pass order:
 
@@ -116,6 +121,52 @@ class ArtifactManager:
     # A set of passes that are currently being executed.
     self._active_passes = set()
 
+  def __setitem__(self, name, artifact):
+    """Add ARTIFACT to the list of artifacts that we manage.
+
+    Store it under NAME."""
+
+    assert name not in self._artifacts
+    self._artifacts[name] = artifact
+
+  def __getitem__(self, name):
+    """Return the artifact with the specified name.
+
+    If the artifact does not currently exist, raise a KeyError.  If it
+    is not registered as being needed by one of the active passes,
+    raise an ArtifactNotActiveError."""
+
+    artifact = self._artifacts[name]
+    for active_pass in self._active_passes:
+      if artifact in self._pass_needs[active_pass]:
+        # OK
+        return artifact
+    else:
+      raise ArtifactNotActiveError(name)
+
+  def creates(self, which_pass, name):
+    """Register that WHICH_PASS creates the artifact named NAME.
+
+    An artifact with this name must already have been registered."""
+
+    artifact = self._artifacts[name]
+
+    # An artifact is automatically "needed" in the pass in which it is
+    # created:
+    self.uses(which_pass, name)
+
+  def uses(self, which_pass, name):
+    """Register that WHICH_PASS uses the artifact named NAME.
+
+    An artifact with this name must already have been registered."""
+
+    artifact = self._artifacts[name]
+    artifact._passes_needed.add(which_pass)
+    if which_pass in self._pass_needs:
+      self._pass_needs[which_pass].add(artifact)
+    else:
+      self._pass_needs[which_pass] = set([artifact])
+
   def register_artifact(self, artifact, which_pass):
     """Register a new ARTIFACT for management by this class.
 
@@ -123,9 +174,8 @@ class ArtifactManager:
     to need it.  It is an error to registier the same artifact more
     than once."""
 
-    assert artifact.name not in self._artifacts
-    self._artifacts[artifact.name] = artifact
-    self.register_artifact_needed(artifact.name, which_pass)
+    self[artifact.name] = artifact
+    self.creates(which_pass, artifact.name)
 
   def register_temp_file(self, basename, which_pass):
     """Register a temporary file with base name BASENAME as an artifact.
@@ -137,21 +187,7 @@ class ArtifactManager:
     return artifact.filename
 
   def get_artifact(self, artifact_name):
-    """Return the artifact with the specified name.
-
-    If the artifact does not currently exist, raise a KeyError.  If it
-    is not registered as being needed by one of the active passes,
-    raise an ArtifactNotActiveError."""
-
-    artifact = self._artifacts[artifact_name]
-    for active_pass in self._active_passes:
-      if artifact in self._pass_needs[active_pass]:
-        # OK
-        break
-    else:
-      raise ArtifactNotActiveError(artifact_name)
-
-    return artifact
+    return self[artifact_name]
 
   def get_temp_file(self, basename):
     """Return the filename of the temporary file with the specified BASENAME.
@@ -162,7 +198,7 @@ class ArtifactManager:
     return self.get_artifact(basename).filename
 
   def register_artifact_needed(self, artifact_name, which_pass):
-    """Register that WHICH_PASS needs the artifact named ARTIFACT_NAME.
+    """Register that WHICH_PASS uses the artifact named ARTIFACT_NAME.
 
     An artifact with this name must already have been registered."""
 

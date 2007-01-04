@@ -963,3 +963,25 @@ class OutputPass(Pass):
     Ctx()._cvs_items_db.close()
 
 
+# The list of passes constituting a run of cvs2svn:
+passes = [
+    CollectRevsPass(),
+    CollateSymbolsPass(),
+    #CheckItemStoreDependenciesPass(config.CVS_ITEMS_STORE),
+    FilterSymbolsPass(),
+    #CheckIndexedItemStoreDependenciesPass(
+    #    config.CVS_ITEMS_FILTERED_STORE,
+    #    config.CVS_ITEMS_FILTERED_INDEX_TABLE),
+    SortRevisionSummaryPass(),
+    SortSymbolSummaryPass(),
+    InitializeChangesetsPass(),
+    BreakCVSRevisionChangesetLoopsPass(),
+    TopologicalSortPass(),
+    CreateDatabasesPass(),
+    CreateRevsPass(),
+    SortSymbolsPass(),
+    IndexSymbolsPass(),
+    OutputPass(),
+    ]
+
+

@@ -29,9 +29,7 @@ class Artifact:
   """An artifact that can be created, used across cvs2svn passes, then
   cleaned up."""
 
-  def __init__(self, name):
-    self.name = name
-
+  def __init__(self):
     # A set of passes that need this artifact.  This field is
     # maintained by ArtifactManager.
     self._passes_needed = set()
@@ -41,20 +39,20 @@ class Artifact:
 
     pass
 
-  def __str__(self):
-    return self.name
-
 
 class TempFileArtifact(Artifact):
   """A temporary file that can be used across cvs2svn passes."""
 
   def __init__(self, basename):
-    Artifact.__init__(self, basename)
+    Artifact.__init__(self)
     self.filename = Ctx().get_temp_filename(basename)
 
   def cleanup(self):
     Log().verbose("Deleting", self.filename)
     os.unlink(self.filename)
+
+  def __str__(self):
+    return 'Temporary file %r' % self.filename
 
 
 class ArtifactNotActiveError(Exception):
@@ -84,9 +82,9 @@ class ArtifactManager:
   - Call artifact_manager.uses(which_pass, name) to indicate that
     WHICH_PASS needs to use the artifact named NAME.
 
-  There are also helper methods register_artifact(),
-  register_temp_file(), register_artifact_needed(), and
-  register_temp_file_needed() which combine some useful operations.
+  There are also helper methods register_temp_file(),
+  register_artifact_needed(), and register_temp_file_needed() which
+  combine some useful operations.
 
   Then, in pass order:
 
@@ -167,23 +165,14 @@ class ArtifactManager:
     else:
       self._pass_needs[which_pass] = set([artifact])
 
-  def register_artifact(self, artifact, which_pass):
-    """Register a new ARTIFACT for management by this class.
-
-    WHICH_PASS is the pass that creates ARTIFACT, and is also assumed
-    to need it.  It is an error to registier the same artifact more
-    than once."""
-
-    self[artifact.name] = artifact
-    self.creates(which_pass, artifact.name)
-
   def register_temp_file(self, basename, which_pass):
     """Register a temporary file with base name BASENAME as an artifact.
 
     Return the filename of the temporary file."""
 
     artifact = TempFileArtifact(basename)
-    self.register_artifact(artifact, which_pass)
+    self[basename] = artifact
+    self.creates(which_pass, basename)
     return artifact.filename
 
   def get_artifact(self, artifact_name):
@@ -289,15 +278,15 @@ class ArtifactManager:
     for.  (This is mainly a consistency check, that no artifacts were
     registered under nonexistent passes.)"""
 
-    unclean_artifact_names = [
-        artifact.name
+    unclean_artifacts = [
+        str(artifact)
         for artifact in self._artifacts.values()
         if artifact._passes_needed]
 
-    if unclean_artifact_names:
+    if unclean_artifacts:
       Log().warn(
           'INTERNAL: The following artifacts were not cleaned up:\n    %s\n'
-          % ('\n    '.join(unclean_artifact_names)))
+          % ('\n    '.join(unclean_artifacts)))
 
 
 # The default ArtifactManager instance:

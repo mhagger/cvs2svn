@@ -172,6 +172,44 @@ class ChangesetGraph(object):
     else:
       return 'ChangesetGraph:\n  EMPTY\n'
 
+  def output_coarse_dot(self, f):
+    """Output the graph in DOT format to file-like object f.
+
+    Include only changesets in the graph, and the dependencies between
+    changesets."""
+
+    f.write('digraph G {\n')
+    for node in self:
+      for succ_id in node.succ_ids:
+        f.write('  C%x -> C%x\n' % (node.id, succ_id,))
+      f.write('\n')
+    f.write('}\n')
+
+  def output_fine_dot(self, f):
+    """Output the graph in DOT format to file-like object f.
+
+    Include all CVSItems and the CVSItem-CVSItem dependencies in the
+    graph.  Group the CVSItems into clusters by changeset."""
+
+    f.write('digraph G {\n')
+    for node in self:
+      f.write('  subgraph cluster_%x {\n' % (node.id,))
+      f.write('    label = "C%x";\n' % (node.id,))
+      changeset = Ctx()._changesets_db[node.id]
+      for item_id in changeset.cvs_item_ids:
+        f.write('    I%x;\n' % (item_id,))
+      f.write('  }\n\n')
+
+    for node in self:
+      changeset = Ctx()._changesets_db[node.id]
+      for cvs_item in changeset.get_cvs_items():
+        for succ_id in cvs_item.get_succ_ids():
+          f.write('  I%x -> I%x;\n' % (cvs_item.id, succ_id,))
+
+      f.write('\n')
+
+    f.write('}\n')
+
 
 class _ChangesetGraphNode(object):
   """A node in the changeset dependency graph."""

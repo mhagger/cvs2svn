@@ -175,8 +175,9 @@ class ChangesetGraph(object):
   def output_coarse_dot(self, f):
     """Output the graph in DOT format to file-like object f.
 
-    Include only changesets in the graph, and the dependencies between
-    changesets."""
+    Such a file can be rendered into a visual representation of the
+    graph using tools like graphviz.  Include only changesets in the
+    graph, and the dependencies between changesets."""
 
     f.write('digraph G {\n')
     for node in self:
@@ -188,8 +189,10 @@ class ChangesetGraph(object):
   def output_fine_dot(self, f):
     """Output the graph in DOT format to file-like object f.
 
-    Include all CVSItems and the CVSItem-CVSItem dependencies in the
-    graph.  Group the CVSItems into clusters by changeset."""
+    Such a file can be rendered into a visual representation of the
+    graph using tools like graphviz.  Include all CVSItems and the
+    CVSItem-CVSItem dependencies in the graph.  Group the CVSItems
+    into clusters by changeset."""
 
     f.write('digraph G {\n')
     for node in self:

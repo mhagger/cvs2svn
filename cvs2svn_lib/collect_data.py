@@ -584,7 +584,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
   def _sort_branches(self):
     """Sort the branches sprouting from each revision in revision order."""
 
-    for rev_data in self._revision_data:
+    for rev_data in self._rev_data.values():
       rev_data.branches_data.sort(
           lambda a, b: cmp(rev_tuple(a.branch_number),
                            rev_tuple(b.branch_number)))

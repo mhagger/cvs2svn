@@ -19,6 +19,7 @@
 
 import sys
 import os
+import types
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.common import FatalError

@@ -45,9 +45,7 @@ log
 @This is a log message.
 @
 text
-@d1 1
-a1 1
-This is revision 1.2 of file.txt
+@This is revision 1.2 of file.txt
 @
 
 

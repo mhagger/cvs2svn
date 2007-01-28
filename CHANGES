@@ -1,3 +1,11 @@
+Version 1.5.1 (28 January 2007)
+-------------------------------
+
+ Bugs fixed:
+ * Add missing import in cvs2svn_lib/process.py.
+ * Fix omission of parsing of the --fallback-encoding option.
+
+
 Version 1.5.0 (03 October 2006)
 -------------------------------
 

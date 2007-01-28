@@ -60,6 +60,16 @@ class ChangesetGraph(object):
 
     self.nodes[node.id] = node
 
+  def __nonzero__(self):
+    """Instances are considered True iff they contain any nodes."""
+
+    return bool(self.nodes)
+
+  def __contains__(self, id):
+    """Return True if the specified ID is contained in this graph."""
+
+    return id in self.nodes
+
   def __getitem__(self, id):
     return self.nodes[id]
 
@@ -83,6 +93,9 @@ class ChangesetGraph(object):
       pred.succ_ids.remove(node.id)
 
     del self.nodes[node.id]
+
+  def keys(self):
+    return self.nodes.keys()
 
   def __iter__(self):
     return self.nodes.itervalues()

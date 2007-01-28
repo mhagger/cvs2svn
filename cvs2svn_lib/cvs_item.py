@@ -297,7 +297,8 @@ class CVSBranch(CVSSymbol):
   def __str__(self):
     """For convenience only.  The format is subject to change at any time."""
 
-    return '%s Branch \'%s\' <%x>' % (self.cvs_file, self.symbol, self.id,)
+    return '%s:%s:%s<%x>' \
+           % (self.cvs_file, self.symbol, self.branch_number, self.id,)
 
 
 class CVSTag(CVSSymbol):
@@ -331,6 +332,7 @@ class CVSTag(CVSSymbol):
   def __str__(self):
     """For convenience only.  The format is subject to change at any time."""
 
-    return '%s Tag \'%s\' <%x>' % (self.cvs_file, self.symbol, self.id,)
+    return '%s:%s:%x<%x>' \
+           % (self.cvs_file, self.symbol, self.rev_id, self.id,)
 
 

@@ -2455,6 +2455,12 @@ def tagging_after_delete():
   log.check_changes(expected)
 
 
+def crossed_branches():
+  "branches created in inconsistent orders"
+
+  conv = ensure_conversion('crossed-branches')
+
+
 ########################################################################
 # Run the tests
 
@@ -2519,7 +2525,7 @@ test_list = [
     invalid_closings_on_trunk,
     individual_passes,
     resync_bug,
-    branch_from_default_branch,
+    XFail(branch_from_default_branch),
     file_in_attic_too,
     retain_file_in_attic_too,
     symbolic_name_filling_guide,
@@ -2575,6 +2581,7 @@ test_list = [
     repeated_deltatext,
     nasty_graphs,
     XFail(tagging_after_delete),
+    crossed_branches,
     ]
 
 if __name__ == '__main__':

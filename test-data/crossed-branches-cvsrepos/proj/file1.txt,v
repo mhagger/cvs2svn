@@ -1,0 +1,77 @@
+head	1.2;
+access;
+symbols
+	BRANCH4:1.2.0.4
+	BRANCH3:1.2.0.2
+	BRANCH2:1.1.0.4
+	BRANCH1:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2007.01.20.14.54.27;	author mhagger;	state Exp;
+branches
+	1.2.2.1
+	1.2.4.1;
+next	1.1;
+
+1.1
+date	2007.01.20.14.45.02;	author mhagger;	state Exp;
+branches;
+next	;
+
+1.2.2.1
+date	2007.01.20.14.56.46;	author mhagger;	state Exp;
+branches;
+next	;
+
+1.2.4.1
+date	2007.01.20.14.57.11;	author mhagger;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Revisions 1.2
+@
+text
+@1.2
+@
+
+
+1.2.4.1
+log
+@Shared commit message
+@
+text
+@d1 1
+a1 1
+BRANCH4 commit
+@
+
+
+1.2.2.1
+log
+@Shared commit message
+@
+text
+@d1 1
+a1 1
+BRANCH3 commit
+@
+
+
+1.1
+log
+@Adding two files
+@
+text
+@d1 1
+@
+

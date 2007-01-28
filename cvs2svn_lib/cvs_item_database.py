@@ -19,7 +19,6 @@
 
 from __future__ import generators
 
-import struct
 import cPickle
 
 from cvs2svn_lib.boolean import *

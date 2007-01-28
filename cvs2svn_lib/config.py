@@ -147,11 +147,12 @@ SVN_COMMITS_DB = 'cvs2svn-svn-commits.db'
 # large enough to be efficient without wasting too much memory.
 PIPE_READ_SIZE = 128 * 1024
 
-# Records the project.id, author, and log message for each changeset.
-# There are two types of mapping: digest -> metadata_id, and
-# metadata_id -> (projet.id, author, logmessage).  The digests are
-# computed in such a way that CVS commits that are eligible to be
-# combined into the same SVN commit are assigned the same digest.
+# Records the author and log message for each changeset.  The database
+# contains a map metadata_id -> (author, logmessage).  Each
+# CVSRevision that is eligible to be combined into the same SVN commit
+# is assigned the same id.  Note that the (author, logmessage) pairs
+# are not necessarily all distinct; other data are taken into account
+# when constructing ids.
 METADATA_DB = "cvs2svn-metadata.db"
 
 # If this run's output is a repository, then (in the tmpdir) we use

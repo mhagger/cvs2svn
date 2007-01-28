@@ -180,15 +180,17 @@ When every CVS file is done, CollectRevsPass is complete, and:
        revisions from different branches by including the branch name
        in the digest.
 
-     This database contains two mappings for each digest:
+     During the database creation phase, the database keeps track of a
+     map
 
-     digest (40-byte string) -> metadata_id (int)
+       digest (20-byte string) -> metadata_id (int)
 
-     metadata_id (int as hex) -> (project_id, author, log_msg,) (tuple)
+     to allow the record for a set of metadata to be located
+     efficiently.  As data are collected, it stores a map
 
-     The first mapping is used to locate the metadata_id for the
-     metadata record having a specific digest, and the second is used
-     as a key to locate the actual metadata.  CVSRevision records
+       metadata_id (int as hex) -> (author, log_msg,) (tuple)
+
+     into the database for use in future passes.  CVSRevision records
      include the metadata_id.
 
 During this run, each file, symbol, CVSItem, and metadata record is

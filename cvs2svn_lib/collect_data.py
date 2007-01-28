@@ -783,6 +783,11 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         rev_data = self._rev_data[rev]
         rev_data.non_trunk_default_branch_revision = True
         rev = rev_data.child
+      if self._rev_data.get('1.2') is not None:
+        err = ('%s: File has default branch=%s but also 1.2 revision'
+               % (error_prefix, self.default_branch,))
+        sys.stderr.write(err + '\n')
+        self.collect_data.fatal_errors.append(err)
     elif self._file_imported:
       # No default branch, but the file appears to have been imported.
       # So our educated guess is that all revisions on the '1.1.1'

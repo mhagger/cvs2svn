@@ -287,8 +287,14 @@ class IndexedDatabase:
     offset = self.index_table[index]
     return self._fetch(offset)
 
+  def get(self, item, default=None):
+    try:
+      return self[item]
+    except KeyError:
+      return default
+
   def __delitem__(self, index):
-    offset = self.index_table[index]
+    self.index_table[index]
     self.index_table[index] = 0
 
   def close(self):

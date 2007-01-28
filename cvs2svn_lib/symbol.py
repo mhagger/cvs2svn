@@ -40,7 +40,7 @@ class Symbol:
     return self.name
 
   def __repr__(self):
-    return '%s <%x>' % (self, self.id,)
+    return '%s<%x>' % (self, self.id,)
 
   def __getstate__(self):
     return (self.id, self.project.id, self.name,)
@@ -86,7 +86,7 @@ class BranchSymbol(IncludedSymbol):
   def __str__(self):
     """For convenience only.  The format is subject to change at any time."""
 
-    return 'Branch %r' % (self.name,)
+    return 'Branch(%r)' % (self.name,)
 
 
 class TagSymbol(IncludedSymbol):
@@ -96,13 +96,13 @@ class TagSymbol(IncludedSymbol):
   def __str__(self):
     """For convenience only.  The format is subject to change at any time."""
 
-    return 'Tag %r' % (self.name,)
+    return 'Tag(%r)' % (self.name,)
 
 
 class ExcludedSymbol(TypedSymbol):
   def __str__(self):
     """For convenience only.  The format is subject to change at any time."""
 
-    return 'ExcludedSymbol %r' % (self.name,)
+    return 'ExcludedSymbol(%r)' % (self.name,)
 
 

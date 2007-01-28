@@ -18,6 +18,7 @@
 VERSION = '1.6.0-dev'
 
 import sys
+import gc
 
 # Make sure this Python is recent enough.  Do this as early as possible,
 # using only code compatible with Python 1.5.2 before the check.
@@ -49,6 +50,10 @@ Ctx().VERSION = VERSION
 
 
 def main():
+  # Disable garbage collection, as we try not to create any circular
+  # data structures:
+  gc.disable()
+
   # Convenience var, so we don't have to keep instantiating this Borg.
   ctx = Ctx()
 
@@ -96,8 +101,10 @@ def main():
     else:
       pass_manager.run(run_options.start_pass, run_options.end_pass)
   finally:
-    try: os.rmdir(os.path.join(ctx.tmpdir, 'cvs2svn.lock'))
-    except: pass
+    try:
+      os.rmdir(os.path.join(ctx.tmpdir, 'cvs2svn.lock'))
+    except:
+      pass
 
 
 if __name__ == '__main__':

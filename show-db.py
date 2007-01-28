@@ -8,6 +8,9 @@ import getopt
 import cPickle as pickle
 from cStringIO import StringIO
 
+from cvs2svn_lib import config
+from cvs2svn_lib.context import Ctx
+
 
 def usage():
   cmd = sys.argv[0]
@@ -81,23 +84,12 @@ def show_str2ppickle_db(fname):
     print    "%6s: %r" % (i, o)
     print "        %s" % (o,)
 
-def show_cvsitemstore(fname):
-  f = open(fname, 'rb')
-
-  u1 = pickle.Unpickler(f)
-  memo = u1.load()
-
-  while True:
-    u2 = pickle.Unpickler(f)
-    u2.memo = memo.copy()
-    try:
-      items = u2.load()
-    except EOFError:
-      break
+def show_cvsitemstore():
+  for cvs_file_items in Ctx()._cvs_items_db.iter_cvs_file_items():
+    items = cvs_file_items.values()
     items.sort(key=lambda i: i.id)
     for item in items:
-      print    "%6s: %r" % (item.id, item)
-      print "        %s" % (item,)
+      print    "%6x: %s" % (item.id, item,)
 
 
 def show_resynccvsitemstore(fname):
@@ -113,8 +105,7 @@ def show_resynccvsitemstore(fname):
       item = u.load()
     except EOFError:
       break
-    print    "%6s: %r" % (item.id, item)
-    print "        %s" % (item,)
+    print    "%6s: %s" % (item.id, item,)
 
 
 
@@ -133,20 +124,18 @@ def prime_ctx():
   from cvs2svn_lib.symbol_database import SymbolDatabase
   from cvs2svn_lib.cvs_file_database import CVSFileDatabase
   from cvs2svn_lib.artifact_manager import artifact_manager
-  from cvs2svn_lib.context import Ctx
+  artifact_manager.register_temp_file("cvs2svn-cvs-files.pck", None)
   artifact_manager.register_temp_file("cvs2svn-symbols.pck", None)
   artifact_manager.register_temp_file("cvs2svn-cvs-files.db", None)
-  from cvs2svn_lib.cvs_item_database import OldIndexedCVSItemStore
+  from cvs2svn_lib.cvs_item_database import OldCVSItemStore
   from cvs2svn_lib.metadata_database import MetadataDatabase
-  from cvs2svn_lib import config
   artifact_manager.register_temp_file("cvs2svn-metadata.db", None)
   artifact_manager.pass_started(None)
 
   Ctx().projects = ProjectList()
   Ctx()._symbol_db = SymbolDatabase()
   Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
-  Ctx()._cvs_items_db = OldIndexedCVSItemStore(
-      config.CVS_ITEMS_RESYNC_STORE, config.CVS_ITEMS_RESYNC_INDEX_TABLE)
+  Ctx()._cvs_items_db = OldCVSItemStore(config.CVS_ITEMS_STORE)
   Ctx()._metadata_db = MetadataDatabase(DB_OPEN_READ)
 
 def main():
@@ -190,7 +179,7 @@ def main():
       show_str2marshal_db("cvs2svn-cvs-revs-to-svn-revnums.db")
     elif o == "-i":
       prime_ctx()
-      show_cvsitemstore("cvs2svn-cvs-items.pck")
+      show_cvsitemstore()
     elif o == "-I":
       prime_ctx()
       show_resynccvsitemstore("cvs2svn-cvs-items-resync.pck")

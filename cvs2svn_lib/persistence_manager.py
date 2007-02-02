@@ -79,9 +79,7 @@ class PersistenceManager:
   def get_svn_commit(self, svn_revnum):
     """Return an SVNCommit that corresponds to SVN_REVNUM.
 
-    If no SVNCommit exists for revnum SVN_REVNUM, then return None.
-
-    This method can throw SVNCommitInternalInconsistencyError."""
+    If no SVNCommit exists for revnum SVN_REVNUM, then return None."""
 
     return self.svn_commit_db.get('%x' % svn_revnum, None)
 

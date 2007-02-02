@@ -14,7 +14,7 @@
 # history and logs, available at http://cvs2svn.tigris.org/.
 # ====================================================================
 
-"""A node in the changeset dependency graph."""
+"""The changeset dependency graph."""
 
 
 from __future__ import generators
@@ -22,15 +22,15 @@ from __future__ import generators
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.set_support import *
 from cvs2svn_lib.context import Ctx
-from cvs2svn_lib.time_range import TimeRange
 from cvs2svn_lib.changeset import RevisionChangeset
+from cvs2svn_lib.changeset_graph_node import ChangesetGraphNode
 
 
 class ChangesetGraph(object):
   """A graph of changesets and their dependencies."""
 
   def __init__(self):
-    # A map { id : _ChangesetGraphNode }
+    # A map { id : ChangesetGraphNode }
     self.nodes = {}
 
   def add_changeset(self, changeset):
@@ -39,24 +39,26 @@ class ChangesetGraph(object):
     Determine and record any dependencies to changesets that are
     already in the graph."""
 
-    node = _ChangesetGraphNode(changeset.id)
-    for cvs_item in changeset.get_cvs_items():
-      for succ_id in cvs_item.get_succ_ids():
-        changeset_id = Ctx()._cvs_item_to_changeset_id[succ_id]
-        succ_node = self.nodes.get(changeset_id)
-        if succ_node is not None:
-          node.succ_ids.add(succ_node.id)
-          succ_node.pred_ids.add(node.id)
+    node = changeset.create_graph_node()
 
-      for pred_id in cvs_item.get_pred_ids():
-        changeset_id = Ctx()._cvs_item_to_changeset_id[pred_id]
-        pred_node = self.nodes.get(changeset_id)
-        if pred_node is not None:
-          node.pred_ids.add(pred_node.id)
-          pred_node.succ_ids.add(node.id)
+    # Now tie the node into our graph.  If a changeset referenced by
+    # node is already in our graph, then add the backwards connection
+    # from the other node to the new one.  If not, then delete the
+    # changeset from node.
 
-      if isinstance(changeset, RevisionChangeset):
-        node.time_range.add(cvs_item.timestamp)
+    for pred_id in list(node.pred_ids):
+      pred_node = self.nodes.get(pred_id)
+      if pred_node is not None:
+        pred_node.succ_ids.add(node.id)
+      else:
+        node.pred_ids.remove(pred_id)
+
+    for succ_id in list(node.succ_ids):
+      succ_node = self.nodes.get(succ_id)
+      if succ_node is not None:
+        succ_node.pred_ids.add(node.id)
+      else:
+        node.succ_ids.remove(succ_id)
 
     self.nodes[node.id] = node
 
@@ -225,24 +227,5 @@ class ChangesetGraph(object):
       f.write('\n')
 
     f.write('}\n')
-
-
-class _ChangesetGraphNode(object):
-  """A node in the changeset dependency graph."""
-
-  def __init__(self, id):
-    self.id = id
-    self.time_range = TimeRange()
-    self.pred_ids = set()
-    self.succ_ids = set()
-
-  def __repr__(self):
-    """For convenience only.  The format is subject to change at any time."""
-
-    return '%x; pred=[%s]; succ=[%s]' % (
-        self.id,
-        ','.join(['%x' % id for id in self.pred_ids]),
-        ','.join(['%x' % id for id in self.succ_ids]),
-        )
 
 

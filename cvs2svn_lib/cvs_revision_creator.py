@@ -80,9 +80,10 @@ class CVSRevisionCreator:
 
     for cvs_rev in cvs_revs:
       if Ctx().trunk_only and isinstance(cvs_rev.lod, Branch):
-        continue
-
-      cvs_commit.add_revision(cvs_rev)
+        # Omit this revision
+        pass
+      else:
+        cvs_commit.add_revision(cvs_rev)
 
     cvs_commit.process_revisions(self._done_symbols)
 

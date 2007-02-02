@@ -121,6 +121,43 @@ class CVSFileItems(object):
 
     yield (cvs_branch, cvs_revisions, cvs_branches, cvs_tags)
 
+  def _exclude_tag(self, cvs_tag):
+    """Exclude the specified CVS_TAG."""
+
+    del self[cvs_tag.id]
+
+    # A CVSTag is the successor of the CVSRevision that it
+    # sprouts from.  Delete this tag from that revision's
+    # tag_ids:
+    self[cvs_tag.rev_id].tag_ids.remove(cvs_tag.id)
+
+  def _exclude_branch(self, cvs_branch, cvs_revisions):
+    """Exclude the specified CVS_BRANCH.
+
+    Also exclude CVS_REVISIONS, which are on CVS_BRANCH."""
+
+    del self[cvs_branch.id]
+
+    if cvs_revisions:
+      # The first CVSRevision on a branch has to be detached from
+      # the revision from which the branch sprang:
+      cvs_rev = cvs_revisions[0]
+      self[cvs_rev.prev_id].branch_commit_ids.remove(cvs_rev.id)
+      for cvs_rev in cvs_revisions:
+        del self[cvs_rev.id]
+        # If cvs_rev is the last default revision on a non-trunk
+        # default branch followed by a 1.2 revision, then the 1.2
+        # revision depends on this one.
+        if cvs_rev.default_branch_next_id is not None:
+          next = self[cvs_rev.default_branch_next_id]
+          assert next.default_branch_prev_id == cvs_rev.id
+          next.default_branch_prev_id = None
+
+    # A CVSBranch is the successor of the CVSRevision that it
+    # sprouts from.  Delete this branch from that revision's
+    # branch_ids:
+    self[cvs_branch.rev_id].branch_ids.remove(cvs_branch.id)
+
   def filter_excluded_symbols(self, revision_excluder):
     """Delete any excluded symbols and references to them.
 
@@ -139,12 +176,7 @@ class CVSFileItems(object):
             revision_excluder_started = True
           revision_excluder.exclude_tag(cvs_tag)
 
-          del self[cvs_tag.id]
-
-          # A CVSTag is the successor of the CVSRevision that it
-          # sprouts from.  Delete this tag from that revision's
-          # tag_ids:
-          self[cvs_tag.rev_id].tag_ids.remove(cvs_tag.id)
+          self._exclude_tag(cvs_tag)
 
           cvs_tags.remove(cvs_tag)
 
@@ -165,27 +197,7 @@ class CVSFileItems(object):
           revision_excluder_started = True
         revision_excluder.exclude_branch(cvs_branch, cvs_revisions)
 
-        del self[cvs_branch.id]
-
-        if cvs_revisions:
-          # The first CVSRevision on a branch has to be detached from
-          # the revision from which the branch sprang:
-          cvs_rev = cvs_revisions[0]
-          self[cvs_rev.prev_id].branch_commit_ids.remove(cvs_rev.id)
-          for cvs_rev in cvs_revisions:
-            del self[cvs_rev.id]
-            # If cvs_rev is the last default revision on a non-trunk
-            # default branch followed by a 1.2 revision, then the 1.2
-            # revision depends on this one.
-            if cvs_rev.default_branch_next_id is not None:
-              next = self[cvs_rev.default_branch_next_id]
-              assert next.default_branch_prev_id == cvs_rev.id
-              next.default_branch_prev_id = None
-
-        # A CVSBranch is the successor of the CVSRevision that it
-        # sprouts from.  Delete this branch from that revision's
-        # branch_ids:
-        self[cvs_branch.rev_id].branch_ids.remove(cvs_branch.id)
+        self._exclude_branch(cvs_branch, cvs_revisions)
 
     if revision_excluder_started:
       revision_excluder.finish_file()

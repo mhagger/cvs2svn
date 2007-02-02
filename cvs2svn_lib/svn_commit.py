@@ -46,12 +46,6 @@ class SVNCommit:
   # to create trunk, tags, and branches.
   revnum = 2
 
-  class SVNCommitInternalInconsistencyError(Exception):
-    """Exception raised if we encounter an impossible state in the
-    SVNCommit Databases."""
-
-    pass
-
   def __init__(self, description, revnum=None):
     """Instantiate an SVNCommit.  DESCRIPTION is for debugging only.
     If REVNUM, the SVNCommit will correspond to that revision number;
@@ -113,8 +107,8 @@ class SVNCommit:
       Log().warn("  date:   '%s'" % date)
       if isinstance(self, SVNRevisionCommit):
         Log().warn("(subversion rev %s)  Related files:" % self.revnum)
-        for cvs_rev in self.cvs_revs:
-          Log().warn(" ", cvs_rev.cvs_file.filename)
+        for cvs_item in self.get_cvs_items():
+          Log().warn(" ", cvs_item.cvs_file.filename)
       else:
         Log().warn("(subversion rev %s)" % self.revnum)
 

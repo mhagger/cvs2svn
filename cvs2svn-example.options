@@ -70,6 +70,7 @@ from cvs2svn_lib.property_setters import SVNBinaryFileKeywordsPropertySetter
 #Log().log_level = Log.QUIET
 Log().log_level = Log.NORMAL
 #Log().log_level = Log.VERBOSE
+#Log().log_level = Log.DEBUG
 
 
 # There are several possible options for where to put the output of a

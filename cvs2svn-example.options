@@ -112,16 +112,16 @@ ctx.dry_run = False
 
 # Change the following to CVSRevisionReader() if cvs2svn should use
 # "cvs" to read file versions out of *,v files.  (The default is to
-# use "co", which is part of RCS, and is much faster):
-ctx.revision_reader = RCSRevisionReader()
-#ctx.revision_reader = CVSRevisionReader()
+# use "co", which is part of RCS, and is much faster.)  The arguments
+# can be used to specify an alternative path where the corresponding
+# program can be found:
+ctx.revision_reader = RCSRevisionReader(co_executable='co')
+#ctx.revision_reader = CVSRevisionReader(cvs_executable='cvs')
 
 # Set the name (and optionally the path) of some executables required
 # by cvs2svn.  'co' is needed by default; 'cvs' is needed if
 # ctx.use_cvs is set to True:
 ctx.svnadmin_executable = 'svnadmin'
-ctx.co_executable = 'co'
-ctx.cvs_executable = 'cvs'
 ctx.sort_executable = 'sort'
 
 # Change the following line to True if the conversion should only

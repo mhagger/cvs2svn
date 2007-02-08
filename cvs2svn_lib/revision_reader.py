@@ -119,9 +119,10 @@ class RevisionReader(object):
 class RCSRevisionReader(RevisionReader):
   """A RevisionReader that reads the contents via RCS."""
 
-  def __init__(self):
+  def __init__(self, co_executable):
+    self.co_executable = co_executable
     try:
-      check_command_runs([ Ctx().co_executable, '-V' ], 'co')
+      check_command_runs([self.co_executable, '-V'], self.co_executable)
     except CommandFailedException, e:
       raise FatalError('%s\n'
                        'Please check that co is installed and in your PATH\n'
@@ -140,7 +141,7 @@ class RCSRevisionReader(RevisionReader):
     pass
 
   def get_content_stream(self, cvs_rev, suppress_keyword_substitution=False):
-    pipe_cmd = [ Ctx().co_executable, '-q', '-x,v', '-p' + cvs_rev.rev ]
+    pipe_cmd = [self.co_executable, '-q', '-x,v', '-p' + cvs_rev.rev]
     if suppress_keyword_substitution:
       pipe_cmd.append('-kk')
     pipe_cmd.append(cvs_rev.cvs_file.filename)
@@ -156,11 +157,13 @@ class RCSRevisionReader(RevisionReader):
 class CVSRevisionReader(RevisionReader):
   """A RevisionReader that reads the contents via CVS."""
 
-  def __init__(self):
+  def __init__(self, cvs_executable):
+    self.cvs_executable = cvs_executable
+
     def cvs_ok(global_arguments):
       check_command_runs(
-          [ Ctx().cvs_executable ] + global_arguments + [ '--version' ],
-          'cvs')
+          [self.cvs_executable] + global_arguments + ['--version'],
+          self.cvs_executable)
 
     self.global_arguments = [ "-q", "-R" ]
     try:
@@ -188,9 +191,9 @@ class CVSRevisionReader(RevisionReader):
 
   def get_content_stream(self, cvs_rev, suppress_keyword_substitution=False):
     project = cvs_rev.cvs_file.project
-    pipe_cmd = [ Ctx().cvs_executable ] + self.global_arguments + \
-               [ '-d', project.cvs_repository_root,
-                 'co', '-r' + cvs_rev.rev, '-p' ]
+    pipe_cmd = [self.cvs_executable] + self.global_arguments + \
+               ['-d', project.cvs_repository_root,
+                'co', '-r' + cvs_rev.rev, '-p']
     if suppress_keyword_substitution:
       pipe_cmd.append('-kk')
     pipe_cmd.append(project.cvs_module + cvs_rev.cvs_path)

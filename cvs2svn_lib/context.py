@@ -44,8 +44,6 @@ class Ctx:
     self.dry_run = False
     self.revision_reader = None
     self.svnadmin_executable = config.SVNADMIN_EXECUTABLE
-    self.co_executable = config.CO_EXECUTABLE
-    self.cvs_executable = config.CVS_EXECUTABLE
     self.sort_executable = config.SORT_EXECUTABLE
     self.trunk_only = False
     self.prune = True

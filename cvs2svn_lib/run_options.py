@@ -270,6 +270,8 @@ class RunOptions:
     eol_from_mime_type = False
     no_default_eol = False
     keywords_off = False
+    co_executable = config.CO_EXECUTABLE
+    cvs_executable = config.CVS_EXECUTABLE
     trunk_base = config.DEFAULT_TRUNK_BASE
     branches_base = config.DEFAULT_BRANCHES_BASE
     tags_base = config.DEFAULT_TAGS_BASE
@@ -349,9 +351,9 @@ class RunOptions:
       elif opt == '--svnadmin':
         ctx.svnadmin_executable = value
       elif opt == '--co':
-        ctx.co_executable = value
+        co_executable = value
       elif opt == '--cvs':
-        ctx.cvs_executable = value
+        cvs_executable = value
       elif opt == '--sort':
         ctx.sort_executable = value
       elif opt == '--dump-only':
@@ -417,9 +419,9 @@ class RunOptions:
       ctx.output_option = DumpfileOutputOption(dumpfile)
 
     if use_cvs:
-      ctx.revision_reader = CVSRevisionReader()
+      ctx.revision_reader = CVSRevisionReader(cvs_executable)
     else:
-      ctx.revision_reader = RCSRevisionReader()
+      ctx.revision_reader = RCSRevisionReader(co_executable)
 
     # Create the default project (using ctx.trunk, ctx.branches, and
     # ctx.tags):

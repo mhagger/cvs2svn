@@ -14,12 +14,36 @@
 # history and logs, available at http://cvs2svn.tigris.org/.
 # ====================================================================
 
-# An options file like this can be used to configure cvs2svn.  The
-# file is in Python syntax, but you don't need to know Python to
+#                  #####################
+#                  ## PLEASE READ ME! ##
+#                  #####################
+#
+# This is a template for an options file that can be used to configure
+# cvs2svn.  Many options do not have defaults, so it is easier to copy
+# this file and modify what you need rather than creating a new
+# options file from scratch.
+#
+# This file is in Python syntax, but you don't need to know Python to
 # modify it.  But if you *do* know Python, then you will be happy to
 # know that you can use arbitary Python constructs to do fancy
 # configuration tricks.
-
+#
+# But please be aware of the following:
+#
+# * In many places, leading whitespace is significant in Python (it is
+#   used instead of curly braces to group statements together).
+#   Therefore, if you don't know what you are doing, it is best to
+#   leave the whitespace as it is.
+#
+# * In normal strings, Python uses backslashes ("\") are used as an
+#   escape character.  Therefore you need to be careful, especially
+#   when specifying regular expressions or Windows filenames.  It is
+#   recommended that you use "raw strings" for these cases.
+#   Backslashes in raw strings are treated literally.  A raw string is
+#   written by prefixing an "r" character to a string.  Example:
+#
+#       ctx.sort_executable = r'c:\\windows\system32\sort.exe'
+#
 # Two identifiers will have been defined before this file is executed,
 # and can be used freely within this file:
 #
@@ -85,7 +109,7 @@ Log().log_level = Log.NORMAL
 # third (optional) argument can be specified to set the
 # --bdb-txn-nosync option on a bdb repository:
 ctx.output_option = NewRepositoryOutputOption(
-    'svnrepo', # Path to repository
+    r'/path/to/svnrepo', # Path to repository
     #fs_type='fsfs', # Type of repository to create
     #bdb_txn_nosync=False, # For bsd repositories, this option can be added
     )
@@ -95,14 +119,14 @@ ctx.output_option = NewRepositoryOutputOption(
 # The argument is the filesystem path of an existing local SVN
 # repository (this repository must already exist):
 #ctx.output_option = ExistingRepositoryOutputOption(
-#    'svnrepo', # Path to repository
+#    r'/path/to/svnrepo', # Path to repository
 #    )
 
 # Use this type of output option if you want the output of the
 # conversion to be written to a SVN dumpfile instead of committing
 # them into an actual repository:
 #ctx.output_option = DumpfileOutputOption(
-#    dumpfile_path='cvs2svn-dump', # Name of dumpfile to create
+#    dumpfile_path=r'/path/to/cvs2svn-dump', # Name of dumpfile to create
 #    )
 
 
@@ -115,14 +139,13 @@ ctx.dry_run = False
 # use "co", which is part of RCS, and is much faster.)  The arguments
 # can be used to specify an alternative path where the corresponding
 # program can be found:
-ctx.revision_reader = RCSRevisionReader(co_executable='co')
-#ctx.revision_reader = CVSRevisionReader(cvs_executable='cvs')
+ctx.revision_reader = RCSRevisionReader(co_executable=r'co')
+#ctx.revision_reader = CVSRevisionReader(cvs_executable=r'cvs')
 
-# Set the name (and optionally the path) of some executables required
-# by cvs2svn.  'co' is needed by default; 'cvs' is needed if
-# ctx.use_cvs is set to True:
-ctx.svnadmin_executable = 'svnadmin'
-ctx.sort_executable = 'sort'
+# Set the name (and optionally the path) of some other executables
+# required by cvs2svn:
+ctx.svnadmin_executable = r'svnadmin'
+ctx.sort_executable = r'sort'
 
 # Change the following line to True if the conversion should only
 # include the trunk of the repository (i.e., all branches and tags
@@ -164,15 +187,15 @@ ctx.symbol_strategy = RuleBasedSymbolStrategy()
 
 # To force all symbols matching a regular expression to be converted
 # as branches, add rules like the following:
-#ctx.symbol_strategy.add_rule(ForceBranchRegexpStrategyRule('branch.*'))
+#ctx.symbol_strategy.add_rule(ForceBranchRegexpStrategyRule(r'branch.*'))
 
 # To force all symbols matching a regular expression to be converted
 # as tags, add rules like the following:
-#ctx.symbol_strategy.add_rule(ForceTagRegexpStrategyRule('tag.*'))
+#ctx.symbol_strategy.add_rule(ForceTagRegexpStrategyRule(r'tag.*'))
 
 # To force all symbols matching a regular expression to be excluded
 # from the conversion, add rules like the following:
-#ctx.symbol_strategy.add_rule(ExcludeRegexpStrategyRule('unknown-.*'))
+#ctx.symbol_strategy.add_rule(ExcludeRegexpStrategyRule(r'unknown-.*'))
 
 # Usually you want this rule, to convert unambiguous symbols (symbols
 # that were only ever used as tags or only ever used as branches in
@@ -215,13 +238,13 @@ ctx.svn_property_setters.extend([
     # case should be ignored when matching filenames to the filename
     # patterns found in the auto-props file:
     #AutoPropsPropertySetter(
-    #    '/home/username/.subversion/config',
+    #    r'/home/username/.subversion/config',
     #    False,
     #    ),
 
     # To read mime types from a file, uncomment the following line and
     # specify a filename:
-    #MimeMapper('/etc/mime.types'),
+    #MimeMapper(r'/etc/mime.types'),
 
     # Omit the svn:eol-style property from any files that are listed
     # as binary (i.e., mode '-kb') in CVS:
@@ -261,7 +284,7 @@ ctx.svn_property_setters.extend([
     ])
 
 # The directory to use for temporary files:
-ctx.tmpdir = 'tmp'
+ctx.tmpdir = r'tmp'
 
 # To skip the cleanup of temporary files, uncomment the following
 # option:
@@ -289,13 +312,16 @@ ctx.retain_conflicting_attic_files = False
 # - The filesystem path of the project within the CVS repository.
 #
 # - The path that should be used for the "trunk" directory of this
-#   project within the SVN repository.
+#   project within the SVN repository.  This is an SVN path, so it
+#   should always use forward slashes ("/").
 #
 # - The path that should be used for the "branches" directory of this
-#   project within the SVN repository.
+#   project within the SVN repository.  This is an SVN path, so it
+#   should always use forward slashes ("/").
 #
 # - The path that should be used for the "tags" directory of this
-#   project within the SVN repository.
+#   project within the SVN repository.  This is an SVN path, so it
+#   should always use forward slashes ("/").
 #
 # - A list of symbol transformations that can be used to rename
 #   symbols in this project.  Each entry is a tuple (pattern,
@@ -307,12 +333,12 @@ ctx.retain_conflicting_attic_files = False
 #   r'\1' or r'\g<name>').  Typically you will want to use raw strings
 #   (strings with a preceding 'r', like shown in the examples) for the
 #   regexp and its replacement to avoid backslash substitution within
-#   those strings."""
+#   those strings.
 
 # Create the default project (using ctx.trunk, ctx.branches, and ctx.tags):
 ctx.add_project(
     Project(
-        'test-data/main-cvsrepos',
+        r'test-data/main-cvsrepos',
         'trunk',
         'branches',
         'tags',
@@ -329,7 +355,7 @@ ctx.add_project(
 # and projA/tags:
 #ctx.add_project(
 #    Project(
-#        'my/cvsrepo/projA',
+#        r'my/cvsrepo/projA',
 #        'projA/trunk',
 #        'projA/branches',
 #        'projA/tags',

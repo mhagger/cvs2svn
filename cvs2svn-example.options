@@ -42,7 +42,7 @@
 #   Backslashes in raw strings are treated literally.  A raw string is
 #   written by prefixing an "r" character to a string.  Example:
 #
-#       ctx.sort_executable = r'c:\\windows\system32\sort.exe'
+#       ctx.sort_executable = r'c:\windows\system32\sort.exe'
 #
 # Two identifiers will have been defined before this file is executed,
 # and can be used freely within this file:

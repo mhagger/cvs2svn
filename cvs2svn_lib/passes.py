@@ -29,6 +29,7 @@ from cvs2svn_lib.set_support import *
 from cvs2svn_lib import config
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.common import FatalException
+from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import DB_OPEN_NEW
 from cvs2svn_lib.common import DB_OPEN_READ
 from cvs2svn_lib.common import DB_OPEN_WRITE
@@ -71,19 +72,27 @@ def sort_file(infilename, outfilename, options=''):
   # it to 'C'
   lc_all_tmp = os.environ.get('LC_ALL', None)
   os.environ['LC_ALL'] = 'C'
+  command = '%s -T %s %s %s > %s' % (
+      Ctx().sort_executable, Ctx().tmpdir, options, infilename, outfilename
+      )
   try:
     # The -T option to sort has a nice side effect.  The Win32 sort is
     # case insensitive and cannot be used, and since it does not
     # understand the -T option and dies if we try to use it, there is
     # no risk that we use that sort by accident.
-    run_command('%s -T %s %s %s > %s'
-                % (Ctx().sort_executable, Ctx().tmpdir, options,
-                   infilename, outfilename))
+    run_command(command)
   finally:
     if lc_all_tmp is None:
       del os.environ['LC_ALL']
     else:
       os.environ['LC_ALL'] = lc_all_tmp
+
+  # On some versions of Windows, os.system() does not return an error
+  # if the command fails.  So add a little consistency test here that
+  # the output file was created and has the right size:
+  if not os.path.exists(outfilename) \
+     or os.path.getsize(outfilename) != os.path.getsize(infilename):
+    raise FatalError('Command failed: "%s"' % (command,))
 
 
 class Pass(object):

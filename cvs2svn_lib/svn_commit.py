@@ -107,8 +107,8 @@ class SVNCommit:
       Log().warn("  date:   '%s'" % date)
       if isinstance(self, SVNRevisionCommit):
         Log().warn("(subversion rev %s)  Related files:" % self.revnum)
-        for cvs_item in self.get_cvs_items():
-          Log().warn(" ", cvs_item.cvs_file.filename)
+        for cvs_rev in self.cvs_revs:
+          Log().warn(" ", cvs_rev.cvs_file.filename)
       else:
         Log().warn("(subversion rev %s)" % self.revnum)
 

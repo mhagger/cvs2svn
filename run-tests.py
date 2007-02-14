@@ -1358,6 +1358,16 @@ def nonascii_filenames():
     svntest.main.safe_rmtree(dstrepos_path)
 
 
+class UnicodeLog(Cvs2SvnTestCase):
+  "log message contains unicode"
+
+  def __init__(self, **kw):
+    Cvs2SvnTestCase.__init__(self, 'unicode-log', **kw)
+
+  def run(self):
+    conv = self.ensure_conversion()
+
+
 def vendor_branch_sameness():
   "avoid spurious changes for initial revs"
   conv = ensure_conversion('vendor-branch-sameness')
@@ -2511,6 +2521,10 @@ test_list = [
     BranchDeleteFirst(variant=1, trunk='a/1', branches='a/2', tags='a/3'),
     nonascii_filenames,
 # 40:
+    UnicodeLog(),
+    UnicodeLog(variant='encoding', args=['--encoding=unicode']),
+    UnicodeLog(variant='fallback-encoding',
+               args=['--fallback-encoding=unicode']),
     vendor_branch_sameness,
     default_branches,
     compose_tag_three_sources,
@@ -2518,10 +2532,10 @@ test_list = [
     PeerPathPruning(),
     PeerPathPruning(variant=1, trunk='a/1', branches='a/2', tags='a/3'),
     EmptyTrunk(),
+# 50:
     EmptyTrunk(variant=1, trunk='a', branches='b', tags='c'),
     EmptyTrunk(variant=2, trunk='a/1', branches='a/2', tags='a/3'),
     no_spurious_svn_commits,
-# 50:
     invalid_closings_on_trunk,
     individual_passes,
     resync_bug,
@@ -2529,10 +2543,10 @@ test_list = [
     file_in_attic_too,
     retain_file_in_attic_too,
     symbolic_name_filling_guide,
+# 60:
     eol_mime1,
     eol_mime2,
     eol_mime3,
-# 60:
     eol_mime4,
     cvs_revnums_off,
     cvs_revnums_on,
@@ -2540,10 +2554,10 @@ test_list = [
     ignore,
     requires_cvs,
     questionable_branch_names,
+# 70:
     questionable_tag_names,
     revision_reorder_bug,
     exclude,
-# 70:
     vendor_branch_delete_add,
     resync_pass2_pull_forward,
     native_eol,
@@ -2551,10 +2565,10 @@ test_list = [
     resync_pass2_push_backward,
     double_add,
     bogus_branch_copy,
+# 80:
     nested_ttb_directories,
     auto_props_ignore_case,
     auto_props,
-# 80:
     ctrl_char_in_filename,
     commit_dependencies,
     show_help_passes,
@@ -2562,10 +2576,10 @@ test_list = [
     double_branch_delete,
     symbol_mismatches,
     force_symbols,
+# 90:
     commit_blocks_tags,
     blocked_excludes,
     unblock_blocked_excludes,
-# 90:
     regexp_force_symbols,
     heuristic_symbol_default,
     branch_symbol_default,
@@ -2573,10 +2587,10 @@ test_list = [
     symbol_transform,
     issue_99,
     issue_100,
+# 100:
     issue_106,
     options_option,
     tag_with_no_revision,
-# 100:
     XFail(delete_cvsignore),
     repeated_deltatext,
     nasty_graphs,

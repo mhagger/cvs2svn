@@ -1,0 +1,24 @@
+head     1.1;
+access;
+symbols;
+locks; strict;
+comment  @# @;
+
+
+1.1
+date     2007.02.13.21.13.21;  author kylo;  state Exp;
+branches ;
+next     ;
+
+
+desc
+@@
+
+
+
+1.1
+log
+@This is a test message with unicode: å
+@
+text
+@@

@@ -238,7 +238,9 @@ class CVSCommit:
                        for cvs_rev in self.deletes
                        if self._delete_needed(cvs_rev)
                        ]
-    svn_commit = SVNPrimaryCommit(self.changes + needed_deletes)
+    cvs_revs = self.changes + needed_deletes
+    cvs_revs.sort(lambda a, b: cmp(a.cvs_file.filename, b.cvs_file.filename))
+    svn_commit = SVNPrimaryCommit(cvs_revs)
     self.motivating_commit = svn_commit
 
     for cvs_rev in self.changes:
@@ -292,9 +294,12 @@ class CVSCommit:
 
     # Only generate a commit if we have default branch revs
     if self.default_branch_cvs_revisions:
+      cvs_revs = self.default_branch_cvs_revisions
+      cvs_revs.sort(
+          lambda a, b: cmp(a.cvs_file.filename, b.cvs_file.filename)
+          )
       # Generate an SVNCommit for all of our default branch cvs_revs.
-      svn_commit = SVNPostCommit(self.motivating_commit.revnum,
-                                 self.default_branch_cvs_revisions)
+      svn_commit = SVNPostCommit(self.motivating_commit.revnum, cvs_revs)
       for cvs_rev in self.default_branch_cvs_revisions:
         Ctx()._symbolings_logger.log_default_branch_closing(
             cvs_rev, svn_commit.revnum)

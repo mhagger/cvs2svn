@@ -34,6 +34,76 @@ class CycleInGraphException(Exception):
         % ' -> '.join(map(str, cycle + [cycle[0]])))
 
 
+class NoPredNodeInGraphException(Exception):
+  def __init__(self, node):
+    Exception.__init__(self, 'Node %s has no predecessors' % (node,))
+
+
+class ReachablePredecessors(object):
+  """Represent the changesets that a specified changeset depends on.
+
+  We consider direct and indirect dependencies in the sense that the
+  changeset can be reached by following a chain of predecessor nodes."""
+
+  def __init__(self, graph, starting_node_id):
+    self.graph = graph
+    self.starting_node_id = starting_node_id
+
+    # A map {node_id : (steps, next_node_id)} where NODE_ID can be
+    # reached from STARTING_NODE_ID in STEPS steps, and NEXT_NODE_ID
+    # is the id of the previous node in the path.  STARTING_NODE_ID is
+    # only included as a key if there is a loop leading back to it.
+    self.reachable_changesets = {}
+
+    # A list of (node_id, steps) that still have to be investigated,
+    # and STEPS is the number of steps to get to NODE_ID.
+    open_nodes = [(starting_node_id, 0)]
+    # A breadth-first search:
+    while open_nodes:
+      (id, steps) = open_nodes.pop(0)
+      steps += 1
+      node = self.graph[id]
+      for pred_id in node.pred_ids:
+        # Since the search is breadth-first, we only have to set steps
+        # that don't already exist.
+        pred_record = self.reachable_changesets.get(pred_id)
+        if pred_record is None:
+          self.reachable_changesets[pred_id] = (steps, id)
+          open_nodes.append((pred_id, steps))
+
+  def get_path(self, ending_node_id):
+    """Return the shortest path from ENDING_NODE_ID to STARTING_NODE_ID.
+
+    Return a list of changesets, where the 0th one has ENDING_NODE_ID
+    and the last one has STARTING_NODE_ID.  If there is no such path,
+    return None."""
+
+    if ending_node_id not in self.reachable_changesets:
+      return None
+
+    path = [Ctx()._changesets_db[ending_node_id]]
+    id = self.reachable_changesets[ending_node_id][1]
+    while id != self.starting_node_id:
+      path.append(Ctx()._changesets_db[id])
+      id = self.reachable_changesets[id][1]
+    path.append(Ctx()._changesets_db[self.starting_node_id])
+    return path
+
+  def __iter__(self):
+    """Iterate over all reachable nodes, in path length order.
+
+    Yield (node_id, steps) for each reachable node, where STEPS is the
+    number of steps needed to reach the node from starting_node.  The
+    nodes are yielded in ascending path-length order.  Nodes that have
+    the same path length are yielded in node_id (i.e., essentially
+    arbitrary) order."""
+
+    items = self.reachable_changesets.items()
+    items.sort(lambda a, b: cmp(a[1][0], b[1][0]))
+    for (id, (steps, next_id,)) in items:
+      yield (id, steps)
+
+
 class ChangesetGraph(object):
   """A graph of changesets and their dependencies."""
 
@@ -110,7 +180,10 @@ class ChangesetGraph(object):
   def __iter__(self):
     return self.nodes.itervalues()
 
-  def _consume_nopred_nodes(self):
+  def get_reachable_predecessors(self, id):
+    return ReachablePredecessors(self, id)
+
+  def consume_nopred_nodes(self):
     """Remove and yield changesets in dependency order.
 
     Each iteration, this generator yields a (changeset_id, time_range)
@@ -159,24 +232,33 @@ class ChangesetGraph(object):
         nopred_nodes.sort(compare)
       yield (node.id, node.time_range)
 
-  def _find_cycle(self):
+  def find_cycle(self, starting_node_id):
     """Find a cycle in the dependency graph and return it.
 
+    Use STARTING_NODE_ID as the place to start looking.  This routine
+    must only be called after all nopred_nodes have been removed.
     Return the list of changesets that are involved in the cycle
     (ordered such that cycle[n-1] is a predecessor of cycle[n] and
-    cycle[-1] is a predecessor of cycle[0]).  This routine must only
-    be called after all nopred_nodes have been removed but the node
-    list is not empty."""
+    cycle[-1] is a predecessor of cycle[0])."""
 
     # Since there are no nopred nodes in the graph, all nodes in the
     # graph must either be involved in a cycle or depend (directly or
-    # indirectly) on nodes that are in a cycle.  Pick an arbitrary
-    # node and follow it backwards until a node is seen a second time;
-    # then we have our cycle.
-    node = self.nodes.itervalues().next()
+    # indirectly) on nodes that are in a cycle.
+
+    # Pick an arbitrary node:
+    node = self[starting_node_id]
+
     seen_nodes = [node]
+
+    # Follow it backwards until a node is seen a second time; then we
+    # have our cycle.
     while True:
-      node_id = node.pred_ids.__iter__().next()
+      # Pick an arbitrary predecessor of node.  It must exist, because
+      # there are no nopred nodes:
+      try:
+        node_id = node.pred_ids.__iter__().next()
+      except StopIteration:
+        raise NoPredNodeInGraphException(node)
       node = self[node_id]
       try:
         i = seen_nodes.index(node)
@@ -203,14 +285,19 @@ class ChangesetGraph(object):
     CycleInGraphException."""
 
     while True:
-      for (changeset_id, time_range) in self._consume_nopred_nodes():
+      for (changeset_id, time_range) in self.consume_nopred_nodes():
         yield (changeset_id, time_range)
 
-      if not self.nodes:
-        return
+      # If there are any nodes left in the graph, then there must be
+      # at least one cycle.  Find a cycle and process it.
 
-      # There must be a cycle; find and process it:
-      cycle = self._find_cycle()
+      # This might raise StopIteration, but that indicates that the
+      # graph has been fully consumed, so we just let the exception
+      # escape.
+      start_node_id = self.nodes.iterkeys().next()
+
+      cycle = self.find_cycle(start_node_id)
+
       if cycle_breaker is not None:
         cycle_breaker(cycle)
       else:

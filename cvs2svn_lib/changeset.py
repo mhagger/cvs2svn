@@ -145,7 +145,7 @@ class OrderedChangeset(Changeset):
     (self.prev_id, self.next_id,) = state[-2:]
 
   def __str__(self):
-    return 'OrderedChangeset<%x>' % (self.id,)
+    return 'OrderedChangeset<%x(%d)>' % (self.id, self.ordinal,)
 
 
 class SymbolChangeset(Changeset):

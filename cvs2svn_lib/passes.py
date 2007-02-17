@@ -644,12 +644,10 @@ class BreakCVSRevisionChangesetLoopsPass(Pass):
 
     Ctx()._changesets_db = self.changesets_db
 
-    while True:
-      cycle = self.changeset_graph.find_cycle()
-      if cycle is None:
-        break
-      else:
-        self.break_cycle(cycle)
+    # Consume the graph, breaking cycles using self.break_cycle():
+    for (changeset_id, time_range) in self.changeset_graph.consume_graph(
+          cycle_breaker=self.break_cycle):
+      pass
 
     self.cvs_item_to_changeset_id.close()
     self.changesets_db.close()
@@ -709,7 +707,7 @@ class TopologicalSortPass(Pass):
     # one is larger.
     timestamp = 0
 
-    for (changeset_id, time_range) in changeset_graph.remove_nopred_nodes():
+    for (changeset_id, time_range) in changeset_graph.consume_graph():
       timestamp = max(time_range.t_max, timestamp + 1)
       sorted_changesets.write('%x %08x\n' % (changeset_id, timestamp,))
 

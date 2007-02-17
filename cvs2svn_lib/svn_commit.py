@@ -46,7 +46,7 @@ class SVNCommit:
   # to create trunk, tags, and branches.
   revnum = 2
 
-  def __init__(self, description, revnum=None):
+  def __init__(self, description, date, revnum=None):
     """Instantiate an SVNCommit.  DESCRIPTION is for debugging only.
     If REVNUM, the SVNCommit will correspond to that revision number;
     and if CVS_REVS, then they must be the exact set of CVSRevisions for
@@ -57,6 +57,11 @@ class SVNCommit:
     invoking add_revision()."""
 
     self.description = description
+
+    # The date of the commit, as an integer.  While the SVNCommit is
+    # being built up, this contains the latest date seen so far.  This
+    # member is set externally.
+    self.date = date
 
     # Revprop metadata for this commit.
     #
@@ -69,11 +74,6 @@ class SVNCommit:
     # self._get_revprops() is used to to get them, in dictionary form.
     self._author = Ctx().username
     self._log_msg = "This log message means an SVNCommit was used too soon."
-
-    # The date of the commit, as an integer.  While the SVNCommit is
-    # being built up, this contains the latest date seen so far.  This
-    # member is set externally.
-    self.date = 0
 
     if revnum:
       self.revnum = revnum
@@ -181,8 +181,7 @@ class SVNRevisionCommit(SVNCommit):
 
 class SVNInitialProjectCommit(SVNCommit):
   def __init__(self, date, revnum=None):
-    SVNCommit.__init__(self, 'Initialization', revnum)
-    self.date = date
+    SVNCommit.__init__(self, 'Initialization', date, revnum)
 
   def _get_log_msg(self):
     return 'New repository initialized by cvs2svn.'
@@ -203,8 +202,8 @@ class SVNInitialProjectCommit(SVNCommit):
 
 
 class SVNPrimaryCommit(SVNCommit, SVNRevisionCommit):
-  def __init__(self, cvs_revs, revnum=None):
-    SVNCommit.__init__(self, 'commit', revnum)
+  def __init__(self, cvs_revs, date, revnum=None):
+    SVNCommit.__init__(self, 'commit', date, revnum)
     SVNRevisionCommit.__init__(self, cvs_revs)
 
   def __str__(self):
@@ -278,15 +277,13 @@ class SVNPrimaryCommit(SVNCommit, SVNRevisionCommit):
 
   def __setstate__(self, state):
     (revnum, date, rev_state,) = state
-    SVNCommit.__init__(self, "Retrieved from disk", revnum)
+    SVNCommit.__init__(self, "Retrieved from disk", date, revnum)
     SVNRevisionCommit.__setstate__(self, rev_state)
-
-    self.date = date
 
 
 class SVNSymbolCommit(SVNCommit):
-  def __init__(self, description, symbol, revnum=None):
-    SVNCommit.__init__(self, description, revnum)
+  def __init__(self, description, symbol, date, revnum=None):
+    SVNCommit.__init__(self, description, date, revnum)
 
     # The TypedSymbol that is filled in this SVNCommit.
     self.symbol = symbol
@@ -325,9 +322,8 @@ class SVNSymbolCommit(SVNCommit):
   def __setstate__(self, state):
     (revnum, symbol_id, date) = state
     symbol = Ctx()._symbol_db.get_symbol(symbol_id)
-    SVNSymbolCommit.__init__(self, "Retrieved from disk", symbol, revnum)
-
-    self.date = date
+    SVNSymbolCommit.__init__(
+        self, "Retrieved from disk", symbol, date, revnum)
 
   def __str__(self):
     """ Print a human-readable description of this SVNCommit.
@@ -342,12 +338,12 @@ class SVNSymbolCommit(SVNCommit):
 class SVNPreCommit(SVNSymbolCommit):
   def __init__(self, symbol, revnum=None):
     SVNSymbolCommit.__init__(
-        self, 'pre-commit symbolic name %r' % symbol.name, symbol, revnum)
+        self, 'pre-commit symbolic name %r' % symbol.name, symbol, 0, revnum)
 
 
 class SVNPostCommit(SVNCommit, SVNRevisionCommit):
   def __init__(self, motivating_revnum, cvs_revs, revnum=None):
-    SVNCommit.__init__(self, 'post-commit default branch(es)', revnum)
+    SVNCommit.__init__(self, 'post-commit default branch(es)', 0, revnum)
     SVNRevisionCommit.__init__(self, cvs_revs)
 
     # The subversion revision number of the *primary* commit where the
@@ -416,17 +412,15 @@ class SVNPostCommit(SVNCommit, SVNRevisionCommit):
 
   def __setstate__(self, state):
     (revnum, motivating_revnum, date, rev_state,) = state
-    SVNCommit.__init__(self, "Retrieved from disk", revnum)
+    SVNCommit.__init__(self, "Retrieved from disk", date, revnum)
     SVNRevisionCommit.__setstate__(self, rev_state)
 
-    self.date = date
     self._motivating_revnum = motivating_revnum
 
 
 class SVNSymbolCloseCommit(SVNSymbolCommit):
   def __init__(self, symbol, date, revnum=None):
     SVNSymbolCommit.__init__(
-        self, 'closing tag/branch %r' % symbol.name, symbol, revnum)
-    self.date = date
+        self, 'closing tag/branch %r' % symbol.name, symbol, date, revnum)
 
 

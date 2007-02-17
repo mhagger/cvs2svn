@@ -185,27 +185,6 @@ class CVSRevision(CVSItem):
     else:
       self.lod = Branch(Ctx()._symbol_db.get_symbol(lod_id))
 
-  def opens_symbol(self, symbol_id):
-    """Return True iff this CVSRevision is the opening CVSRevision for
-    SYMBOL_ID (for this RCS file)."""
-
-    # FIXME: All these DB reads are going to be expensive!
-    for tag_id in self.tag_ids:
-      cvs_tag = Ctx()._cvs_items_db[tag_id]
-      if symbol_id == cvs_tag.symbol.id:
-        return True
-    # If this cvs_rev opens a branch and our op is OP_DELETE, then
-    # that means that the file that this cvs_rev belongs to was
-    # created on the branch, so for all intents and purposes, this
-    # cvs_rev is *technically* not an opening.  See Issue #62 for
-    # more information.
-    if self.op != OP_DELETE:
-      for branch_id in self.branch_ids:
-        cvs_branch = Ctx()._cvs_items_db[branch_id]
-        if symbol_id == cvs_branch.symbol.id:
-          return True
-    return False
-
   def get_pred_ids(self):
     retval = set()
     if self.first_on_branch_id is not None:

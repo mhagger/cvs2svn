@@ -75,15 +75,14 @@ class CVSRevisionCreator:
 
     metadata_id = cvs_revs[0].metadata_id
 
-    author, log = Ctx()._metadata_db[metadata_id]
-    cvs_commit = CVSCommit(metadata_id, author, log, timestamp)
+    if Ctx().trunk_only:
+      # Filter out non-trunk revisions:
+      cvs_revs = [
+          cvs_rev
+          for cvs_rev in cvs_revs
+          if not isinstance(cvs_rev.lod, Branch)]
 
-    for cvs_rev in cvs_revs:
-      if Ctx().trunk_only and isinstance(cvs_rev.lod, Branch):
-        # Omit this revision
-        pass
-      else:
-        cvs_commit.add_revision(cvs_rev)
+    cvs_commit = CVSCommit(metadata_id, timestamp, cvs_revs)
 
     cvs_commit.process_revisions(self._done_symbols)
 

@@ -20,6 +20,8 @@
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.set_support import *
 from cvs2svn_lib.context import Ctx
+from cvs2svn_lib.symbol import BranchSymbol
+from cvs2svn_lib.symbol import TagSymbol
 from cvs2svn_lib.cvs_item import CVSRevision
 from cvs2svn_lib.time_range import TimeRange
 from cvs2svn_lib.changeset_graph_node import ChangesetGraphNode
@@ -60,6 +62,9 @@ class Changeset(object):
   def __setstate__(self, state):
     (self.id, self.cvs_item_ids,) = state
 
+  def __cmp__(self, other):
+    raise NotImplementedError()
+
   def __str__(self):
     raise NotImplementedError()
 
@@ -70,6 +75,8 @@ class Changeset(object):
 
 class RevisionChangeset(Changeset):
   """A Changeset consisting of CVSRevisions."""
+
+  _sort_order = 2
 
   def create_graph_node(self):
     time_range = TimeRange()
@@ -90,6 +97,10 @@ class RevisionChangeset(Changeset):
   def create_split_changeset(self, id, cvs_item_ids):
     return RevisionChangeset(id, cvs_item_ids)
 
+  def __cmp__(self, other):
+    return cmp(self._sort_order, other._sort_order) \
+           or cmp(self.id, other.id)
+
   def __str__(self):
     return 'RevisionChangeset<%x>' % (self.id,)
 
@@ -102,6 +113,8 @@ class OrderedChangeset(Changeset):
   chain of dependencies with the order consistent with the
   dependencies).  These OrderedChangesets form the skeleton for the
   full topological sort that includes SymbolChangesets as well."""
+
+  _sort_order = 1
 
   def __init__(self, id, cvs_item_ids, prev_id, next_id):
     Changeset.__init__(self, id, cvs_item_ids)
@@ -138,11 +151,15 @@ class OrderedChangeset(Changeset):
     return ChangesetGraphNode(self.id, time_range, pred_ids, succ_ids)
 
   def __getstate__(self):
-    return Changeset.__getstate__(self) + (self.prev_id, self.next_id,)
+    return (Changeset.__getstate__(self), self.prev_id, self.next_id,)
 
   def __setstate__(self, state):
-    Changeset.__setstate__(self, state[:-2])
-    (self.prev_id, self.next_id,) = state[-2:]
+    (changeset_state, self.prev_id, self.next_id,) = state
+    Changeset.__setstate__(self, changeset_state)
+
+  def __cmp__(self, other):
+    return cmp(self._sort_order, other._sort_order) \
+           or cmp(self.id, other.id)
 
   def __str__(self):
     return 'OrderedChangeset<%x(%d)>' % (self.id, self.ordinal,)
@@ -150,6 +167,10 @@ class OrderedChangeset(Changeset):
 
 class SymbolChangeset(Changeset):
   """A Changeset consisting of CVSSymbols."""
+
+  def __init__(self, id, symbol, cvs_item_ids):
+    Changeset.__init__(self, id, cvs_item_ids)
+    self.symbol = symbol
 
   def create_graph_node(self):
     pred_ids = set()
@@ -164,10 +185,55 @@ class SymbolChangeset(Changeset):
 
     return ChangesetGraphNode(self.id, TimeRange(), pred_ids, succ_ids)
 
+  def __cmp__(self, other):
+    return cmp(self._sort_order, other._sort_order) \
+           or cmp(self.symbol, other.symbol) \
+           or cmp(self.id, other.id)
+
+  def __getstate__(self):
+    return (Changeset.__getstate__(self), self.symbol.id,)
+
+  def __setstate__(self, state):
+    (changeset_state, symbol_id) = state
+    Changeset.__setstate__(self, changeset_state)
+    self.symbol = Ctx()._symbol_db.get_symbol(symbol_id)
+
+
+class BranchChangeset(SymbolChangeset):
+  """A Changeset consisting of CVSBranches."""
+
+  _sort_order = 0
+
   def create_split_changeset(self, id, cvs_item_ids):
-    return SymbolChangeset(id, cvs_item_ids)
+    return BranchChangeset(id, self.symbol, cvs_item_ids)
 
   def __str__(self):
-    return 'SymbolChangeset<%x>' % (self.id,)
+    return 'BranchChangeset<%x>("%s")' % (self.id, self.symbol,)
+
+
+class TagChangeset(SymbolChangeset):
+  """A Changeset consisting of CVSTags."""
+
+  _sort_order = 0
+
+  def create_split_changeset(self, id, cvs_item_ids):
+    return TagChangeset(id, self.symbol, cvs_item_ids)
+
+  def __str__(self):
+    return 'TagChangeset<%x>("%s")' % (self.id, self.symbol,)
+
+
+def create_symbol_changeset(id, symbol, cvs_item_ids):
+  """Factory function for SymbolChangesets.
+
+  Return a BranchChangeset or TagChangeset, depending on the type of
+  SYMBOL.  SYMBOL must be a BranchSymbol or TagSymbol."""
+
+  if isinstance(symbol, BranchSymbol):
+    return BranchChangeset(id, symbol, cvs_item_ids)
+  if isinstance(symbol, TagSymbol):
+    return TagChangeset(id, symbol, cvs_item_ids)
+  else:
+    raise 'Unknown symbol type'
 
 

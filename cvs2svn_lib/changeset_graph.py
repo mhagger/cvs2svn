@@ -23,6 +23,9 @@ from cvs2svn_lib.boolean import *
 from cvs2svn_lib.set_support import *
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.changeset import RevisionChangeset
+from cvs2svn_lib.changeset import OrderedChangeset
+from cvs2svn_lib.changeset import BranchChangeset
+from cvs2svn_lib.changeset import TagChangeset
 from cvs2svn_lib.changeset_graph_node import ChangesetGraphNode
 
 
@@ -312,6 +315,13 @@ class ChangesetGraph(object):
     else:
       return 'ChangesetGraph:\n  EMPTY\n'
 
+  node_colors = {
+      RevisionChangeset : 'lightgreen',
+      OrderedChangeset : 'cyan',
+      BranchChangeset : 'orange',
+      TagChangeset : 'yellow',
+      }
+
   def output_coarse_dot(self, f):
     """Output the graph in DOT format to file-like object f.
 
@@ -321,9 +331,16 @@ class ChangesetGraph(object):
 
     f.write('digraph G {\n')
     for node in self:
+      f.write(
+          '  C%x [style=filled, fillcolor=%s];\n'
+          % (node.id, self.node_colors[node.get_changeset().__class__],))
+    f.write('\n')
+
+    for node in self:
       for succ_id in node.succ_ids:
         f.write('  C%x -> C%x\n' % (node.id, succ_id,))
       f.write('\n')
+
     f.write('}\n')
 
   def output_fine_dot(self, f):
@@ -341,6 +358,10 @@ class ChangesetGraph(object):
       changeset = Ctx()._changesets_db[node.id]
       for item_id in changeset.cvs_item_ids:
         f.write('    I%x;\n' % (item_id,))
+      f.write('    style=filled;\n')
+      f.write(
+          '    fillcolor=%s;\n'
+          % (self.node_colors[node.get_changeset().__class__],))
       f.write('  }\n\n')
 
     for node in self:

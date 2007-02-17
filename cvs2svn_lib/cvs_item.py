@@ -61,6 +61,14 @@ class CVSItem(object):
   def get_id_closed(self):
     """Return the CVSItem.id of the CVSItem closed by this one.
 
+    The definition of 'close' is as follows: When CVSItem A closes
+    CVSItem B, that means that the SVN revision when A is committed is
+    the end of the lifetime of B.  This is interesting because it sets
+    the last SVN revision number from which the contents of B can be
+    copied (for example, to fill a symbol).  See the concrete
+    implementations of this method for the exact rules about what
+    closes what.
+
     Return None if this CVSItem doesn't close any other CVSItem."""
 
     raise NotImplementedError()
@@ -215,9 +223,39 @@ class CVSRevision(CVSItem):
     return retval
 
   def get_id_closed(self):
+    # FIXME: Non-trunk default branches are not handled correctly.  If
+    # a file is first imported on a vendor branch, then:
+    #
+    # - If the file is then branched from trunk via 'cvs tag -b
+    #   BRANCH', the branch (surprisingly) sprouts from 1.1.1.1, not
+    #   1.1.
+    #
+    # - If the file is tagged from version 1.1 explicitly via 'cvs tag
+    #   -r 1.1 -b BRANCH', then the branch sprouts from 1.1.
+    #
+    # Therefore, if there is a revision 1.1.1.2 that is still on the
+    # default branch, I believe we should consider it to close 1.1 in
+    # addition to 1.1.1.1.  Then the 1.x branch should remain closed
+    # until 1.2 is committed.  1.2 shouldn't actually close anything
+    # (because 1.1 was already closed by 1.1.1.2).
+    #
+    # The correct solution for this problem is probably to manufacture
+    # 'ghost' CVSRevisions for the trunk revisions that are copied
+    # from the vendor branch, and to string those together correctly
+    # and allow them to serve as fill sources.
+    #
+    # I believe (though I am not certain) that the current code fails
+    # in the following situation:
+    #
+    # If a branch is created explicitly from revision 1.1, but it is
+    # only filled after 1.1.1.2 has been committed (thereby causing
+    # 1.1 to be overwritten), then I think the branch would
+    # erroneously be filled from the current trunk, giving the
+    # contents of 1.1.1.2 instead of those of 1.1.
+
     if self.first_on_branch_id is not None:
       # The first CVSRevision on a branch is considered to close the
-      # branch.
+      # branch:
       return self.first_on_branch_id
     else:
       # Since this CVSRevision is not the first on a branch, its

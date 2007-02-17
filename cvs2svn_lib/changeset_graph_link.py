@@ -104,28 +104,40 @@ class ChangesetGraphLink(object):
     if not self.is_breakable():
       raise ValueError('Changeset is not breakable: %r' % self.changeset)
 
+    pred_items = []
+    succ_items = []
+
+    # For each link type, should such CVSItems be moved to the
+    # changeset containing the predecessor items or the one containing
+    # the successor items?
+    destination = {
+        LINK_PRED : pred_items,
+        LINK_SUCC : succ_items,
+        }
+
     if self.pred_links == 0:
-      item_type_to_move = LINK_SUCC
+      destination[LINK_NONE] = pred_items
+      destination[LINK_PASSTHRU] = pred_items
     elif self.succ_links == 0:
-      item_type_to_move = LINK_PRED
+      destination[LINK_NONE] = succ_items
+      destination[LINK_PASSTHRU] = succ_items
     elif self.pred_links < self.succ_links:
-      item_type_to_move = LINK_PRED
+      destination[LINK_NONE] = succ_items
+      destination[LINK_PASSTHRU] = succ_items
     else:
-      item_type_to_move = LINK_SUCC
-    items_to_keep = []
-    items_to_move = []
+      destination[LINK_NONE] = pred_items
+      destination[LINK_PASSTHRU] = pred_items
+
     for cvs_item in self.changeset.get_cvs_items():
-      if _get_link_type(self.pred, cvs_item, self.succ) == item_type_to_move:
-        items_to_move.append(cvs_item.id)
-      else:
-        items_to_keep.append(cvs_item.id)
+      link_type = _get_link_type(self.pred, cvs_item, self.succ)
+      destination[link_type].append(cvs_item.id)
 
     # Create new changesets of the same type as the old one:
     return [
-        self.changeset.__class__(
-            changeset_key_generator.gen_id(), items_to_keep),
-        self.changeset.__class__(
-            changeset_key_generator.gen_id(), items_to_move),
+        self.changeset.create_split_changeset(
+            changeset_key_generator.gen_id(), pred_items),
+        self.changeset.create_split_changeset(
+            changeset_key_generator.gen_id(), succ_items),
         ]
 
   def __str__(self):

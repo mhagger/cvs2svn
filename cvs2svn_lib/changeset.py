@@ -44,6 +44,16 @@ class Changeset(object):
 
     raise NotImplementedError()
 
+  def create_split_changeset(self, id, cvs_item_ids):
+    """Return a Changeset with the specified contents.
+
+    This method is only implemented for changesets that can be split.
+    The type of the new changeset should be the same as that of SELF,
+    and any other information from SELF should also be copied to the
+    new changeset."""
+
+    raise NotImplementedError()
+
   def __getstate__(self):
     return (self.id, self.cvs_item_ids,)
 
@@ -77,8 +87,65 @@ class RevisionChangeset(Changeset):
 
     return ChangesetGraphNode(self.id, time_range, pred_ids, succ_ids)
 
+  def create_split_changeset(self, id, cvs_item_ids):
+    return RevisionChangeset(id, cvs_item_ids)
+
   def __str__(self):
     return 'RevisionChangeset<%x>' % (self.id,)
+
+
+class OrderedChangeset(Changeset):
+  """A Changeset of CVSRevisions whose preliminary order is known.
+
+  The first changeset ordering involves only RevisionChangesets, and
+  results in a full ordering of RevisionChangesets (i.e., a linear
+  chain of dependencies with the order consistent with the
+  dependencies).  These OrderedChangesets form the skeleton for the
+  full topological sort that includes SymbolChangesets as well."""
+
+  def __init__(self, id, cvs_item_ids, prev_id, next_id):
+    Changeset.__init__(self, id, cvs_item_ids)
+
+    # The changeset id of the previous OrderedChangeset, or None if
+    # this is the first OrderedChangeset:
+    self.prev_id = prev_id
+
+    # The changeset id of the next OrderedChangeset, or None if this
+    # is the last OrderedChangeset:
+    self.next_id = next_id
+
+  def create_graph_node(self):
+    time_range = TimeRange()
+
+    pred_ids = set()
+    succ_ids = set()
+
+    if self.prev_id is not None:
+      pred_ids.add(self.prev_id)
+
+    if self.next_id is not None:
+      succ_ids.add(self.next_id)
+
+    for cvs_item in self.get_cvs_items():
+      time_range.add(cvs_item.timestamp)
+
+      for pred_id in cvs_item.get_symbol_pred_ids():
+        pred_ids.add(Ctx()._cvs_item_to_changeset_id[pred_id])
+
+      for succ_id in cvs_item.get_symbol_succ_ids():
+        succ_ids.add(Ctx()._cvs_item_to_changeset_id[succ_id])
+
+    return ChangesetGraphNode(self.id, time_range, pred_ids, succ_ids)
+
+  def __getstate__(self):
+    return Changeset.__getstate__(self) + (self.prev_id, self.next_id,)
+
+  def __setstate__(self, state):
+    Changeset.__setstate__(self, state[:-2])
+    (self.prev_id, self.next_id,) = state[-2:]
+
+  def __str__(self):
+    return 'OrderedChangeset<%x>' % (self.id,)
 
 
 class SymbolChangeset(Changeset):
@@ -96,6 +163,9 @@ class SymbolChangeset(Changeset):
         succ_ids.add(Ctx()._cvs_item_to_changeset_id[succ_id])
 
     return ChangesetGraphNode(self.id, TimeRange(), pred_ids, succ_ids)
+
+  def create_split_changeset(self, id, cvs_item_ids):
+    return SymbolChangeset(id, cvs_item_ids)
 
   def __str__(self):
     return 'SymbolChangeset<%x>' % (self.id,)

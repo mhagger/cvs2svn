@@ -128,28 +128,35 @@ class ChangesetGraph(object):
     The graph should not be otherwise altered while this generator is
     running."""
 
-    # Find a list of nodes with no predecessors:
+    def compare((node_1, changeset_1), (node_2, changeset_2)):
+      """Define an ordering on nopred_nodes elements."""
+
+      return cmp(node_1.time_range, node_2.time_range) \
+             or cmp(changeset_1, changeset_2)
+
+    # Find a list of (node,changeset,) where the node has no
+    # predecessors:
     nopred_nodes = [
-        node
+        (node, node.get_changeset(),)
         for node in self.nodes.itervalues()
         if not node.pred_ids]
-    nopred_nodes.sort(lambda a, b: cmp(a.time_range, b.time_range))
+    nopred_nodes.sort(compare)
     while nopred_nodes:
-      node = nopred_nodes.pop(0)
+      (node, changeset,) = nopred_nodes.pop(0)
       del self[node.id]
       # See if any successors are now ready for extraction:
       new_nodes_found = False
       for succ_id in node.succ_ids:
         succ = self[succ_id]
         if not succ.pred_ids:
-          nopred_nodes.append(succ)
+          nopred_nodes.append( (succ, succ.get_changeset(),) )
           new_nodes_found = True
       if new_nodes_found:
         # All this repeated sorting is very wasteful.  We should
         # instead use a heap to keep things coming out in order.  But
         # I highly doubt that this will be a bottleneck, so here we
         # go.
-        nopred_nodes.sort(lambda a, b: cmp(a.time_range, b.time_range))
+        nopred_nodes.sort(compare)
       yield (node.id, node.time_range)
 
   def _find_cycle(self):

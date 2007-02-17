@@ -58,6 +58,13 @@ class CVSItem(object):
 
     raise NotImplementedError()
 
+  def get_id_closed(self):
+    """Return the CVSItem.id of the CVSItem closed by this one.
+
+    Return None if this CVSItem doesn't close any other CVSItem."""
+
+    raise NotImplementedError()
+
 
 class CVSRevision(CVSItem):
   """Information about a single CVS revision.
@@ -207,6 +214,18 @@ class CVSRevision(CVSItem):
       retval.add(id)
     return retval
 
+  def get_id_closed(self):
+    if self.first_on_branch_id is not None:
+      # The first CVSRevision on a branch is considered to close the
+      # branch.
+      return self.first_on_branch_id
+    else:
+      # Since this CVSRevision is not the first on a branch, its
+      # prev_id is on the same LOD and this item closes that one.  For
+      # the very first revision prev_id is None, but that's OK because
+      # that revision doesn't close anything:
+      return self.prev_id
+
   def __str__(self):
     """For convenience only.  The format is subject to change at any time."""
 
@@ -231,6 +250,10 @@ class CVSSymbol(CVSItem):
 
     self.symbol = symbol
     self.rev_id = rev_id
+
+  def get_id_closed(self):
+    # A Symbol does not close any other CVSItems:
+    return None
 
 
 class CVSBranch(CVSSymbol):

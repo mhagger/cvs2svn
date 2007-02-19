@@ -23,6 +23,7 @@ import sys
 import os
 import re
 import getopt
+import time
 try:
   my_getopt = getopt.gnu_getopt
 except AttributeError:
@@ -195,6 +196,14 @@ class RunOptions:
     # Now process options that can be used either with or without
     # --options:
     self.process_common_options()
+
+    # Now the log level has been set; log the time when the run started:
+    Log().verbose(
+        time.strftime(
+            'Conversion start time: %Y-%m-%d %I:%M:%S %Z',
+            time.localtime(Log().start_time)
+            )
+        )
 
     if options_file_found:
       # All of the options that are compatible with --options have

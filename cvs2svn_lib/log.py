@@ -78,7 +78,7 @@ class Log:
       retval.append('%f:' % (time.time() - self.start_time,))
 
     if self.use_timestamps:
-      retval.append(time.strftime('[%Y-%m-%d %I:%m:%S %Z] -'))
+      retval.append(time.strftime('[%Y-%m-%d %I:%M:%S %Z] -'))
 
     return retval
 

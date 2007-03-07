@@ -219,6 +219,8 @@ class RecordTable:
       self.f.seek(i * self.packer.record_len)
       s = self.f.read(self.packer.record_len)
       self._cache[i] = (False, s)
+      if len(self._cache) >= self._max_memory_cache:
+        self.flush()
 
     if s == self.packer.empty_value:
       raise KeyError(i)

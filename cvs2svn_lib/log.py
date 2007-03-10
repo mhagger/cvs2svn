@@ -19,6 +19,7 @@
 
 import sys
 import time
+import threading
 
 from cvs2svn_lib.boolean import *
 
@@ -32,6 +33,8 @@ class Log:
 
   If self.use_timestamps is True, each line will be timestamped with a
   human-readable clock time.
+
+  The public methods of this class are thread-safe.
 
   This class is a Borg; see
   http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/66531."""
@@ -57,12 +60,22 @@ class Log:
     # Set this to True if you want to see timestamps on each line output.
     self.use_timestamps = False
     self.logger = sys.stdout
+    # Lock to serialize writes to the log:
+    self.lock = threading.Lock()
 
   def increase_verbosity(self):
-    self.log_level = min(self.log_level + 1, Log.DEBUG)
+    self.lock.acquire()
+    try:
+      self.log_level = min(self.log_level + 1, Log.DEBUG)
+    finally:
+      self.lock.release()
 
   def decrease_verbosity(self):
-    self.log_level = max(self.log_level - 1, Log.WARN)
+    self.lock.acquire()
+    try:
+      self.log_level = max(self.log_level - 1, Log.WARN)
+    finally:
+      self.lock.release()
 
   def is_on(self, level):
     """Return True iff messages at the specified LEVEL are currently on.
@@ -92,10 +105,14 @@ class Log:
     there are multiple ARGS, they will be separated by spaces."""
 
     if self.is_on(log_level):
-      self.logger.write(' '.join(self._timestamp() + map(str, args)) + "\n")
-      # Ensure that log output doesn't get out-of-order with respect to
-      # stderr output.
-      self.logger.flush()
+      self.lock.acquire()
+      try:
+        self.logger.write(' '.join(self._timestamp() + map(str, args)) + "\n")
+        # Ensure that log output doesn't get out-of-order with respect to
+        # stderr output.
+        self.logger.flush()
+      finally:
+        self.lock.release()
 
   def warn(self, *args):
     """Log a message at the WARN level."""

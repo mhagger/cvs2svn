@@ -27,7 +27,8 @@ class Log:
   """A Simple logging facility.
 
   If self.log_level is DEBUG or higher, each line will be timestamped
-  with the number of seconds since the start of the program run.
+  with the number of wall-clock seconds since the time when this
+  module was first imported.
 
   If self.use_timestamps is True, each line will be timestamped with a
   human-readable clock time.
@@ -44,6 +45,8 @@ class Log:
   VERBOSE = 2
   DEBUG = 3
 
+  start_time = time.time()
+
   __shared_state = {}
 
   def __init__(self):
@@ -54,7 +57,6 @@ class Log:
     # Set this to True if you want to see timestamps on each line output.
     self.use_timestamps = False
     self.logger = sys.stdout
-    self.start_time = time.time()
 
   def increase_verbosity(self):
     self.log_level = min(self.log_level + 1, Log.DEBUG)

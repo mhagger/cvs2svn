@@ -18,7 +18,6 @@
 VERSION = '1.6.0-dev'
 
 import sys
-import gc
 
 # Make sure this Python is recent enough.  Do this as early as possible,
 # using only code compatible with Python 1.5.2 before the check.
@@ -28,6 +27,7 @@ if sys.hexversion < 0x02020000:
 
 import os
 import errno
+import gc
 
 try:
   # Try to get access to a bunch of encodings for use with --encoding.

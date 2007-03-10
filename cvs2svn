@@ -44,7 +44,7 @@ from cvs2svn_lib.pass_manager import PassManager
 from cvs2svn_lib.passes import passes
 
 
-def main():
+def main(progname, cmd_args):
   # Disable garbage collection, as we try not to create any circular
   # data structures:
   gc.disable()
@@ -54,7 +54,7 @@ def main():
 
   pass_manager = PassManager(passes)
 
-  run_options = RunOptions(sys.argv[0], sys.argv[1:], pass_manager)
+  run_options = RunOptions(progname, cmd_args, pass_manager)
 
   # Make sure the tmp directory exists.  Note that we don't check if
   # it's empty -- we want to be able to use, for example, "." to hold
@@ -104,7 +104,7 @@ def main():
 
 if __name__ == '__main__':
   try:
-    main()
+    main(sys.argv[0], sys.argv[1:])
   except FatalException, e:
     sys.stderr.write(str(e))
     sys.exit(1)

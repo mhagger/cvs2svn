@@ -59,7 +59,7 @@ def main():
 
   pass_manager = PassManager(passes)
 
-  run_options = RunOptions(pass_manager)
+  run_options = RunOptions(sys.argv[0], sys.argv[1:], pass_manager)
 
   # Make sure the tmp directory exists.  Note that we don't check if
   # it's empty -- we want to be able to use, for example, "." to hold

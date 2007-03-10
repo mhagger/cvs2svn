@@ -15,8 +15,6 @@
 # history and logs, available at http://cvs2svn.tigris.org/.
 # ====================================================================
 
-VERSION = '1.6.0-dev'
-
 import sys
 
 # Make sure this Python is recent enough.  Do this as early as possible,
@@ -44,9 +42,6 @@ from cvs2svn_lib.run_options import RunOptions
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.pass_manager import PassManager
 from cvs2svn_lib.passes import passes
-
-
-Ctx().VERSION = VERSION
 
 
 def main():

@@ -30,6 +30,7 @@ except AttributeError:
   my_getopt = getopt.getopt
 
 from cvs2svn_lib.boolean import *
+from cvs2svn_lib.version import VERSION
 from cvs2svn_lib import config
 from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.common import error_prefix
@@ -224,7 +225,7 @@ class RunOptions:
       self.pass_manager.help_passes()
       sys.exit(0)
     elif self.get_options('--version'):
-      print '%s version %s' % (os.path.basename(self.progname), Ctx().VERSION)
+      print '%s version %s' % (os.path.basename(self.progname), VERSION)
       sys.exit(0)
 
   def process_common_options(self):

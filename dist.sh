@@ -3,7 +3,7 @@ set -e
 
 # Build a cvs2svn distribution.
 
-VERSION=`python -c '__name__=""; execfile("cvs2svn"); print VERSION'`
+VERSION=`python cvs2svn_lib/version.py`
 echo "Building cvs2svn ${VERSION}"
 WC_REV=`svnversion -n .`
 DIST_BASE=cvs2svn-${VERSION}

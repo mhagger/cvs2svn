@@ -1,0 +1,88 @@
+#!/usr/bin/env python
+# (Be in -*- python -*- mode.)
+#
+# ====================================================================
+# Copyright (c) 2000-2007 CollabNet.  All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.  The terms
+# are also available at http://subversion.tigris.org/license-1.html.
+# If newer versions of this license are posted there, you may use a
+# newer version instead, at your option.
+#
+# This software consists of voluntary contributions made by many
+# individuals.  For exact contribution history, see the revision
+# history and logs, available at http://cvs2svn.tigris.org/.
+# ====================================================================
+
+"""Run cvs2svn, but logging memory usage.
+
+Memory use is logged every MemoryLogger.interval seconds at the NORMAL
+level.  This script takes the same parameters as cvs2svn.
+
+Memory use is determined by reading from the /proc filesystem.  This
+method is not very portable, but should hopefully work on a typical
+modern Linux."""
+
+
+import sys
+import os
+
+# Make sure this Python is recent enough.  Do this as early as possible,
+# using only code compatible with Python 1.5.2 before the check.
+if sys.hexversion < 0x02020000:
+  sys.stderr.write("ERROR: Python 2.2 or higher required.\n")
+  sys.exit(1)
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(sys.argv[0])))
+
+import re
+import time
+import threading
+
+from cvs2svn_lib.boolean import *
+from cvs2svn_lib.common import FatalException
+from cvs2svn_lib.log import Log
+from cvs2svn_lib.main import main
+
+
+rss_re = re.compile(r'^VmRSS\:\s+(?P<mem>.*)$')
+
+def get_memory_used():
+  filename = '/proc/%d/status' % (os.getpid(),)
+  for l in open(filename).readlines():
+    l = l.strip()
+    m = rss_re.match(l)
+    if m:
+      return m.group('mem')
+
+  return 'Unknown'
+
+
+class MemoryLogger(threading.Thread):
+  interval = 0.1
+
+  def __init__(self):
+    threading.Thread.__init__(self)
+    self.setDaemon(True)
+    self.start_time = time.time()
+
+  def run(self):
+    i = 0
+    while True:
+      delay = self.start_time + self.interval * i - time.time()
+      if delay > 0:
+        time.sleep(delay)
+      Log().verbose('Memory used: %s' % (get_memory_used(),))
+      i += 1
+
+
+MemoryLogger().start()
+
+try:
+  main(sys.argv[0], sys.argv[1:])
+except FatalException, e:
+  sys.stderr.write(str(e))
+  sys.exit(1)
+
+

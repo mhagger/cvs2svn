@@ -127,9 +127,9 @@ USAGE: %(progname)s [-v] [-s svn-repos-path] [-p pass] cvs-repos-path
   --sort=PATH          path to the GNU "sort" program
 """
 
-def usage():
+def usage(progname):
   sys.stdout.write(usage_message_template % {
-      'progname' : os.path.basename(sys.argv[0]),
+      'progname' : progname,
       'trunk_base' : config.DEFAULT_TRUNK_BASE,
       'branches_base' : config.DEFAULT_BRANCHES_BASE,
       'tags_base' : config.DEFAULT_TAGS_BASE,
@@ -178,7 +178,7 @@ class RunOptions:
           ])
     except getopt.GetoptError, e:
       sys.stderr.write(error_prefix + ': ' + str(e) + '\n\n')
-      usage()
+      usage(sys.argv[0])
       sys.exit(1)
 
     # First look for any 'help'-type options, as they just cause the
@@ -222,7 +222,7 @@ class RunOptions:
     """Process any help-type options."""
 
     if self.get_options('-h', '--help'):
-      usage()
+      usage(sys.argv[0])
       sys.exit(0)
     elif self.get_options('--help-passes'):
       self.pass_manager.help_passes()
@@ -377,13 +377,13 @@ class RunOptions:
 
     # Consistency check for options and arguments.
     if len(self.args) == 0:
-      usage()
+      usage(sys.argv[0])
       sys.exit(1)
 
     if len(self.args) > 1:
       sys.stderr.write(error_prefix +
                        ": must pass only one CVS repository.\n")
-      usage()
+      usage(sys.argv[0])
       sys.exit(1)
 
     cvsroot = self.args[0]

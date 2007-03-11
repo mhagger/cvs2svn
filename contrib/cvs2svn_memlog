@@ -17,8 +17,8 @@
 
 """Run cvs2svn, but logging memory usage.
 
-Memory use is logged every MemoryLogger.interval seconds at the NORMAL
-level.  This script takes the same parameters as cvs2svn.
+Memory use is logged every MemoryLogger.interval seconds.  This script
+takes the same parameters as cvs2svn.
 
 Memory use is determined by reading from the /proc filesystem.  This
 method is not very portable, but should hopefully work on a typical
@@ -73,7 +73,7 @@ class MemoryLogger(threading.Thread):
       delay = self.start_time + self.interval * i - time.time()
       if delay > 0:
         time.sleep(delay)
-      Log().verbose('Memory used: %s' % (get_memory_used(),))
+      Log().write('Memory used: %s' % (get_memory_used(),))
       i += 1
 
 

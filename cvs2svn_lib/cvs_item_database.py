@@ -26,6 +26,7 @@ from cvs2svn_lib.common import DB_OPEN_NEW
 from cvs2svn_lib.common import DB_OPEN_READ
 from cvs2svn_lib.common import DB_OPEN_WRITE
 from cvs2svn_lib.common import FatalError
+from cvs2svn_lib.log import Log
 from cvs2svn_lib.cvs_item import CVSRevision
 from cvs2svn_lib.cvs_item import CVSBranch
 from cvs2svn_lib.cvs_item import CVSTag
@@ -57,6 +58,11 @@ class NewCVSItemStore:
     self.current_file_id = None
     self.current_file_items = []
 
+  def __del__(self):
+    if self.f is not None:
+      Log().debug('%r was destroyed without being closed.' % (self,))
+      self.close()
+
   def _flush(self):
     """Write the current items to disk."""
 
@@ -75,7 +81,9 @@ class NewCVSItemStore:
 
   def close(self):
     self._flush()
+    self.current_file_items = None
     self.f.close()
+    self.f = None
 
 
 class OldCVSItemStore:
@@ -96,6 +104,11 @@ class OldCVSItemStore:
 
     # The CVSFileItems instance for the current file.
     self.cvs_file_items = None
+
+  def __del__(self):
+    if self.f is not None:
+      Log().debug('%r was destroyed without being closed.' % (self,))
+      self.close()
 
   def _read_file_chunk(self):
     self.current_file_items = self.serializer.loadf(self.f)
@@ -128,6 +141,12 @@ class OldCVSItemStore:
     except KeyError:
       raise FatalError(
           'Key %r not found within items currently accessible.' % (id,))
+
+  def close(self):
+    self.f.close()
+    self.f = None
+    self.current_file_items = None
+    self.cvs_file_items = None
 
 
 def IndexedCVSItemStore(filename, index_filename, mode):

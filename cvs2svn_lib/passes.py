@@ -245,7 +245,7 @@ class CheckItemStoreDependenciesPass(CheckDependenciesPass):
 
     CheckDependenciesPass.run(self, stats_keeper)
 
-    del self.cvs_item_store
+    self.cvs_item_store = None
 
 
 class CheckIndexedItemStoreDependenciesPass(CheckDependenciesPass):
@@ -273,7 +273,7 @@ class CheckIndexedItemStoreDependenciesPass(CheckDependenciesPass):
 
     CheckDependenciesPass.run(self, stats_keeper)
 
-    del self.cvs_item_store
+    self.cvs_item_store = None
 
 
 class FilterSymbolsPass(Pass):
@@ -295,7 +295,7 @@ class FilterSymbolsPass(Pass):
   def run(self, stats_keeper):
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
     Ctx()._symbol_db = SymbolDatabase()
-    self.cvs_item_store = OldCVSItemStore(
+    cvs_item_store = OldCVSItemStore(
         artifact_manager.get_temp_file(config.CVS_ITEMS_STORE))
     cvs_items_db = IndexedCVSItemStore(
         artifact_manager.get_temp_file(config.CVS_ITEMS_FILTERED_STORE),
@@ -314,7 +314,7 @@ class FilterSymbolsPass(Pass):
 
     revision_excluder.start()
     # Process the cvs items store one file at a time:
-    for cvs_file_items in self.cvs_item_store.iter_cvs_file_items():
+    for cvs_file_items in cvs_item_store.iter_cvs_file_items():
       cvs_file_items.filter_excluded_symbols(revision_excluder)
       cvs_file_items.mutate_symbols()
       cvs_file_items.record_closed_symbols()
@@ -332,9 +332,10 @@ class FilterSymbolsPass(Pass):
               '%x %x\n' % (cvs_item.symbol.id, cvs_item.id,))
 
     revision_excluder.finish()
-    cvs_items_db.close()
-    revs_summary_file.close()
     symbols_summary_file.close()
+    revs_summary_file.close()
+    cvs_items_db.close()
+    cvs_item_store.close()
     Ctx()._symbol_db.close()
     Ctx()._cvs_file_db.close()
 
@@ -545,8 +546,9 @@ class InitializeChangesetsPass(Pass):
       Log().verbose(repr(changeset))
       self.store_changeset(changeset)
 
-    self.cvs_item_to_changeset_id.close()
     self.changesets_db.close()
+    self.cvs_item_to_changeset_id.close()
+    Ctx()._cvs_items_db.close()
     Ctx()._symbol_db.close()
     Ctx()._cvs_file_db.close()
 
@@ -656,8 +658,9 @@ class BreakCVSRevisionChangesetLoopsPass(Pass):
           cycle_breaker=self.break_cycle):
       pass
 
-    self.cvs_item_to_changeset_id.close()
     self.changesets_db.close()
+    self.cvs_item_to_changeset_id.close()
+    Ctx()._cvs_items_db.close()
     Ctx()._symbol_db.close()
     Ctx()._cvs_file_db.close()
 
@@ -722,6 +725,7 @@ class TopologicalSortPass(Pass):
 
     sorted_changesets.close()
     Ctx()._changesets_db.close()
+    Ctx()._cvs_items_db.close()
     Ctx()._symbol_db.close()
     Ctx()._cvs_file_db.close()
 

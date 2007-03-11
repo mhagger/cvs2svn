@@ -138,7 +138,7 @@ class RecordTable:
   # about 96 bytes on a 32-bit computer.
   CACHE_OVERHEAD_PER_ENTRY = 96
 
-  def __init__(self, filename, mode, packer):
+  def __init__(self, filename, mode, packer, cache_memory=CACHE_MEMORY):
     self.filename = filename
     self.mode = mode
     if self.mode == DB_OPEN_NEW:
@@ -150,10 +150,11 @@ class RecordTable:
     else:
       raise RuntimeError('Invalid mode %r' % self.mode)
     self.packer = packer
+    self.cache_memory = cache_memory
 
     # Number of items that can be stored in the write cache.
     self._max_memory_cache = (
-        self.CACHE_MEMORY
+        self.cache_memory
         / (self.CACHE_OVERHEAD_PER_ENTRY + self.packer.record_len))
 
     # Read and write cache; a map {i : (dirty, s)}, where i is an

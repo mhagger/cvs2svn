@@ -97,46 +97,49 @@ class Log:
 
     return retval
 
-  def write(self, log_level, *args):
-    """Write a message to the log at level LOG_LEVEL.
+  def write(self, *args):
+    """Write a message to the log.
 
-    This is the public method to use for writing to a file.  Only
-    messages whose LOG_LEVEL is <= self.log_level will be printed.  If
-    there are multiple ARGS, they will be separated by spaces."""
+    This is the public method to use for writing to a file.  If there
+    are multiple ARGS, they will be separated by spaces."""
 
-    if self.is_on(log_level):
-      self.lock.acquire()
-      try:
-        self.logger.write(' '.join(self._timestamp() + map(str, args)) + "\n")
-        # Ensure that log output doesn't get out-of-order with respect to
-        # stderr output.
-        self.logger.flush()
-      finally:
-        self.lock.release()
+    self.lock.acquire()
+    try:
+      self.logger.write(' '.join(self._timestamp() + map(str, args)) + "\n")
+      # Ensure that log output doesn't get out-of-order with respect to
+      # stderr output.
+      self.logger.flush()
+    finally:
+      self.lock.release()
 
   def warn(self, *args):
     """Log a message at the WARN level."""
 
-    self.write(Log.WARN, *args)
+    if self.is_on(Log.WARN):
+      self.write(*args)
 
   def quiet(self, *args):
     """Log a message at the QUIET level."""
 
-    self.write(Log.QUIET, *args)
+    if self.is_on(Log.QUIET):
+      self.write(*args)
 
   def normal(self, *args):
     """Log a message at the NORMAL level."""
 
-    self.write(Log.NORMAL, *args)
+    if self.is_on(Log.NORMAL):
+      self.write(*args)
 
   def verbose(self, *args):
     """Log a message at the VERBOSE level."""
 
-    self.write(Log.VERBOSE, *args)
+    if self.is_on(Log.VERBOSE):
+      self.write(*args)
 
   def debug(self, *args):
     """Log a message at the DEBUG level."""
 
-    self.write(Log.DEBUG, *args)
+    if self.is_on(Log.DEBUG):
+      self.write(*args)
 
 

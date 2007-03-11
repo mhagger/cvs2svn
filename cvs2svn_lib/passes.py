@@ -716,6 +716,7 @@ class TopologicalSortPass(Pass):
       sorted_changesets.write('%x %08x\n' % (changeset_id, timestamp,))
 
     sorted_changesets.close()
+    Ctx()._changesets_db.close()
 
     Log().quiet("Done")
 
@@ -745,6 +746,8 @@ class CreateDatabasesPass(Pass):
                 config.CHANGESETS_SORTED_DATAFILE)):
       [changeset_id, timestamp] = [int(s, 16) for s in line.strip().split()]
       yield changesets_db[changeset_id]
+
+    changesets_db.close()
 
   def run(self, stats_keeper):
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
@@ -813,6 +816,8 @@ class CreateRevsPass(Pass):
                 config.CHANGESETS_SORTED_DATAFILE)):
       [changeset_id, timestamp] = [int(s, 16) for s in line.strip().split()]
       yield (changesets_db[changeset_id], timestamp)
+
+    changesets_db.close()
 
   def run(self, stats_keeper):
     Log().quiet("Mapping CVS revisions to Subversion commits...")

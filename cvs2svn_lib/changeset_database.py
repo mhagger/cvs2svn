@@ -24,6 +24,7 @@ import struct
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.common import DB_OPEN_NEW
 from cvs2svn_lib.common import DB_OPEN_READ
+from cvs2svn_lib.log import Log
 from cvs2svn_lib.changeset import Changeset
 from cvs2svn_lib.changeset import RevisionChangeset
 from cvs2svn_lib.changeset import OrderedChangeset
@@ -43,6 +44,11 @@ class ChangesetDatabase:
         filename, mode,
         (Changeset, RevisionChangeset, OrderedChangeset, SymbolChangeset,))
 
+  def __del__(self):
+    if self.db is not None:
+      Log().debug('%r was destroyed without being closed.' % (self,))
+      self.close()
+
   def store(self, changeset):
     self.db['%x' % changeset.id] = changeset
 
@@ -57,5 +63,6 @@ class ChangesetDatabase:
 
   def close(self):
     self.db.close()
+    self.db = None
 
 

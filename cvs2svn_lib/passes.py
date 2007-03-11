@@ -835,8 +835,11 @@ class CreateRevsPass(Pass):
     if not Ctx().trunk_only:
       Ctx()._symbolings_logger.close()
     Ctx()._cvs_items_db.close()
+    Ctx()._metadata_db.close()
+
     stats_keeper.set_svn_rev_count(SVNCommit.revnum - 1)
     stats_keeper.archive()
+
     Log().quiet("Done")
 
 
@@ -971,6 +974,7 @@ class OutputPass(Pass):
     Ctx().output_option.cleanup()
 
     Ctx()._cvs_items_db.close()
+    Ctx()._metadata_db.close()
 
 
 # The list of passes constituting a run of cvs2svn:

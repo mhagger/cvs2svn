@@ -1057,6 +1057,8 @@ class CollectData:
     self.revision_recorder.finish()
     self.symbol_stats.close()
     self.symbol_stats = None
+    self.metadata_db.close()
+    self.metadata_db = None
     self._cvs_item_store.close()
 
 

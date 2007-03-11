@@ -24,6 +24,7 @@ from cvs2svn_lib import config
 from cvs2svn_lib.common import DB_OPEN_READ
 from cvs2svn_lib.common import DB_OPEN_WRITE
 from cvs2svn_lib.common import DB_OPEN_NEW
+from cvs2svn_lib.log import Log
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.database import PDatabase
 
@@ -46,6 +47,11 @@ class CVSFileDatabase:
     else:
       raise RuntimeError('Invalid mode %r' % self.mode)
 
+  def __del__(self):
+    if self._cvs_files is not None:
+      Log().debug('%r was destroyed without being closed.' % (self,))
+      self.close()
+
   def log_file(self, cvs_file):
     """Add CVS_FILE, a CVSFile instance, to the database."""
 
@@ -64,5 +70,7 @@ class CVSFileDatabase:
       f = open(artifact_manager.get_temp_file(config.CVS_FILES_DB), 'wb')
       cPickle.dump(self._cvs_files, f, -1)
       f.close()
+
+    self._cvs_files = None
 
 

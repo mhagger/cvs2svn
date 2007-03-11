@@ -335,6 +335,7 @@ class FilterSymbolsPass(Pass):
     cvs_items_db.close()
     revs_summary_file.close()
     symbols_summary_file.close()
+    Ctx()._cvs_file_db.close()
 
     Log().quiet("Done")
 
@@ -546,6 +547,7 @@ class InitializeChangesetsPass(Pass):
 
     self.cvs_item_to_changeset_id.close()
     self.changesets_db.close()
+    Ctx()._cvs_file_db.close()
 
     Log().quiet("Done")
 
@@ -655,6 +657,7 @@ class BreakCVSRevisionChangesetLoopsPass(Pass):
 
     self.cvs_item_to_changeset_id.close()
     self.changesets_db.close()
+    Ctx()._cvs_file_db.close()
 
     Log().quiet("Done")
 
@@ -717,6 +720,7 @@ class TopologicalSortPass(Pass):
 
     sorted_changesets.close()
     Ctx()._changesets_db.close()
+    Ctx()._cvs_file_db.close()
 
     Log().quiet("Done")
 
@@ -774,6 +778,7 @@ class CreateDatabasesPass(Pass):
       last_sym_name_db.create_database()
 
     Ctx()._cvs_items_db.close()
+    Ctx()._cvs_file_db.close()
 
     stats_keeper.set_stats_reflect_exclude(True)
 
@@ -842,6 +847,7 @@ class CreateRevsPass(Pass):
       Ctx()._symbolings_logger.close()
     Ctx()._cvs_items_db.close()
     Ctx()._metadata_db.close()
+    Ctx()._cvs_file_db.close()
 
     stats_keeper.set_svn_rev_count(SVNCommit.revnum - 1)
     stats_keeper.archive()
@@ -981,6 +987,7 @@ class OutputPass(Pass):
 
     Ctx()._cvs_items_db.close()
     Ctx()._metadata_db.close()
+    Ctx()._cvs_file_db.close()
 
 
 # The list of passes constituting a run of cvs2svn:

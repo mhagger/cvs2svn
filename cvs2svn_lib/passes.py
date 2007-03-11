@@ -141,13 +141,14 @@ class CollectRevsPass(Pass):
         Ctx().revision_reader.get_revision_recorder(), stats_keeper)
     for project in Ctx().projects:
       cd.process_project(project)
-    cd.flush()
 
-    if cd.fatal_errors:
+    fatal_errors = cd.close()
+
+    if fatal_errors:
       raise FatalException("Pass 1 complete.\n"
                            + "=" * 75 + "\n"
                            + "Error summary:\n"
-                           + "\n".join(cd.fatal_errors) + "\n"
+                           + "\n".join(fatal_errors) + "\n"
                            + "Exited due to fatal error(s).\n")
 
     Ctx()._cvs_file_db.close()

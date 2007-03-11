@@ -1038,6 +1038,11 @@ class CollectData:
 
     self.revision_recorder.start()
 
+  def __del__(self):
+    if self._cvs_item_store is not None:
+      Log().debug('%r was destroyed without being closed.' % (self,))
+      self.close()
+
   def process_project(self, project):
     pdc = _ProjectDataCollector(self, project)
     self.num_files += pdc.num_files
@@ -1053,12 +1058,22 @@ class CollectData:
     self._cvs_item_store.add(cvs_item)
     self.stats_keeper.record_cvs_item(cvs_item)
 
-  def flush(self):
+  def close(self):
+    """Close the data structures associated with this instance.
+
+    Return a list of fatal errors encountered while processing input.
+    Each list entry is a string describing one fatal error."""
+
     self.revision_recorder.finish()
     self.symbol_stats.close()
     self.symbol_stats = None
     self.metadata_db.close()
     self.metadata_db = None
     self._cvs_item_store.close()
+    self._cvs_item_store = None
+    self.revision_recorder = None
+    retval = self.fatal_errors
+    self.fatal_errors = None
+    return retval
 
 

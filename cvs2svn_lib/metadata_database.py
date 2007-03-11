@@ -56,22 +56,25 @@ class MetadataDatabase:
     argument to Database or anydbm.open()).  Use CVS_FILE_DB to look
     up CVSFiles."""
 
-    if mode == DB_OPEN_NEW:
+    self.mode = mode
+
+    if self.mode == DB_OPEN_NEW:
       # A map { digest : id }:
       self._digest_to_id = {}
 
       # A key_generator to generate keys for metadata that haven't
       # been seen yet:
       self.key_generator = KeyGenerator(1)
-    elif mode == DB_OPEN_READ:
+    elif self.mode == DB_OPEN_READ:
       # In this case, we don't need key_generator or _digest_to_id.
       pass
-    elif mode == DB_OPEN_WRITE:
+    elif self.mode == DB_OPEN_WRITE:
       # Modifying an existing database is not supported:
-      raise NotImplementedError('Mode %r is not supported' % mode)
+      raise NotImplementedError('Mode %r is not supported' % self.mode)
 
-    self.db = Database(artifact_manager.get_temp_file(config.METADATA_DB),
-                       mode)
+    self.db = Database(
+        artifact_manager.get_temp_file(config.METADATA_DB), self.mode
+        )
 
   def get_key(self, project, branch_name, author, log_msg):
       """Return the id for the specified metadata.

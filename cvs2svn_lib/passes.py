@@ -989,7 +989,7 @@ class OutputPass(Pass):
       svn_commit.commit(repos)
       svn_revnum += 1
 
-    repos.finish()
+    repos.close()
 
     Ctx().revision_reader.finish()
 

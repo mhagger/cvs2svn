@@ -1055,7 +1055,8 @@ class CollectData:
 
   def flush(self):
     self.revision_recorder.finish()
+    self.symbol_stats.close()
+    self.symbol_stats = None
     self._cvs_item_store.close()
-    self.symbol_stats.write()
 
 

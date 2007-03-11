@@ -123,6 +123,11 @@ class SymbolStatisticsCollector:
     # A map { symbol -> record } for all symbols (branches and tags)
     self._stats = { }
 
+  def __del__(self):
+    if self._stats is not None:
+      Log().debug('%r was destroyed without being closed.' % (self,))
+      self.close()
+
   def __getitem__(self, symbol):
     """Return the _Stats record for SYMBOL.
 
@@ -135,13 +140,14 @@ class SymbolStatisticsCollector:
       self._stats[symbol] = stats
       return stats
 
-  def write(self):
+  def close(self):
     """Store the stats database to the SYMBOL_STATISTICS_LIST file."""
 
     f = open(artifact_manager.get_temp_file(config.SYMBOL_STATISTICS_LIST),
              'wb')
     cPickle.dump(self._stats.values(), f, -1)
     f.close()
+    self._stats = None
 
 
 class SymbolStatistics:

@@ -20,6 +20,7 @@
 import cPickle
 
 from cvs2svn_lib.boolean import *
+from cvs2svn_lib.log import Log
 from cvs2svn_lib import config
 from cvs2svn_lib.artifact_manager import artifact_manager
 
@@ -41,12 +42,20 @@ class SymbolDatabase:
     for symbol in symbols:
       self._symbols[symbol.id] = symbol
 
+  def __del__(self):
+    if self._symbols is not None:
+      Log().debug('%r was destroyed without being closed.' % (self,))
+      self.close()
+
   def get_symbol(self, id):
     """Return the symbol instance with id ID.
 
     Raise KeyError if the symbol is not known."""
 
     return self._symbols[id]
+
+  def close(self):
+    self._symbols = None
 
 
 def create_symbol_database(symbols):

@@ -335,6 +335,7 @@ class FilterSymbolsPass(Pass):
     cvs_items_db.close()
     revs_summary_file.close()
     symbols_summary_file.close()
+    Ctx()._symbol_db.close()
     Ctx()._cvs_file_db.close()
 
     Log().quiet("Done")
@@ -522,8 +523,7 @@ class InitializeChangesetsPass(Pass):
     Log().quiet("Creating preliminary commit sets...")
 
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
-    self.symbol_db = SymbolDatabase()
-    Ctx()._symbol_db = self.symbol_db
+    Ctx()._symbol_db = SymbolDatabase()
     Ctx()._cvs_items_db = IndexedCVSItemStore(
         artifact_manager.get_temp_file(config.CVS_ITEMS_FILTERED_STORE),
         artifact_manager.get_temp_file(config.CVS_ITEMS_FILTERED_INDEX_TABLE),
@@ -547,6 +547,7 @@ class InitializeChangesetsPass(Pass):
 
     self.cvs_item_to_changeset_id.close()
     self.changesets_db.close()
+    Ctx()._symbol_db.close()
     Ctx()._cvs_file_db.close()
 
     Log().quiet("Done")
@@ -657,6 +658,7 @@ class BreakCVSRevisionChangesetLoopsPass(Pass):
 
     self.cvs_item_to_changeset_id.close()
     self.changesets_db.close()
+    Ctx()._symbol_db.close()
     Ctx()._cvs_file_db.close()
 
     Log().quiet("Done")
@@ -720,6 +722,7 @@ class TopologicalSortPass(Pass):
 
     sorted_changesets.close()
     Ctx()._changesets_db.close()
+    Ctx()._symbol_db.close()
     Ctx()._cvs_file_db.close()
 
     Log().quiet("Done")
@@ -778,6 +781,7 @@ class CreateDatabasesPass(Pass):
       last_sym_name_db.create_database()
 
     Ctx()._cvs_items_db.close()
+    Ctx()._symbol_db.close()
     Ctx()._cvs_file_db.close()
 
     stats_keeper.set_stats_reflect_exclude(True)
@@ -847,6 +851,7 @@ class CreateRevsPass(Pass):
       Ctx()._symbolings_logger.close()
     Ctx()._cvs_items_db.close()
     Ctx()._metadata_db.close()
+    Ctx()._symbol_db.close()
     Ctx()._cvs_file_db.close()
 
     stats_keeper.set_svn_rev_count(SVNCommit.revnum - 1)
@@ -922,6 +927,7 @@ class IndexSymbolsPass(Pass):
     if not Ctx().trunk_only:
       Ctx()._symbol_db = SymbolDatabase()
       self.generate_offsets_for_symbolings()
+      Ctx()._symbol_db.close()
     Log().quiet("Done.")
 
 
@@ -984,7 +990,8 @@ class OutputPass(Pass):
     Ctx().revision_reader.finish()
 
     Ctx().output_option.cleanup()
-
+    if not Ctx().trunk_only:
+      Ctx()._symbol_db.close()
     Ctx()._cvs_items_db.close()
     Ctx()._metadata_db.close()
     Ctx()._cvs_file_db.close()

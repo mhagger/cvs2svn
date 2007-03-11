@@ -31,6 +31,7 @@ from cvs2svn_lib.common import DB_OPEN_WRITE
 from cvs2svn_lib.common import DB_OPEN_NEW
 from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.common import error_prefix
+from cvs2svn_lib.log import Log
 from cvs2svn_lib.record_table import FileOffsetPacker
 from cvs2svn_lib.record_table import RecordTable
 from cvs2svn_lib.serializer import PrimedPickleSerializer
@@ -107,6 +108,11 @@ class AbstractDatabase:
       if meth_ref:
         setattr(self, meth_name, meth_ref)
 
+  def __del__(self):
+    if self.db is not None:
+      Log().debug('%r was destroyed without being closed.' % (self,))
+      self.close()
+
   def __delitem__(self, key):
     # gdbm defines a __delitem__ method, but it cannot be assigned.  So
     # this method provides a fallback definition via explicit delegation:
@@ -150,6 +156,7 @@ class AbstractDatabase:
 
   def close(self):
     self.db.close()
+    self.db = None
 
 
 class Database(AbstractDatabase):
@@ -267,6 +274,11 @@ class IndexedDatabase:
       # Read the memo from the first pickle:
       self.serializer = cPickle.load(self.f)
 
+  def __del__(self):
+    if self.f is not None:
+      Log().debug('%r was destroyed without being closed.' % (self,))
+      self.close()
+
   def __setitem__(self, index, item):
     """Write ITEM into the database indexed by INDEX."""
 
@@ -299,7 +311,9 @@ class IndexedDatabase:
 
   def close(self):
     self.index_table.close()
+    self.index_table = None
     self.f.close()
+    self.f = None
 
 
 class IndexedStore(IndexedDatabase):

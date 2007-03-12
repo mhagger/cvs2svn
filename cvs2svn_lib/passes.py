@@ -926,13 +926,14 @@ class IndexSymbolsPass(Pass):
     offsets_db.close()
 
   def run(self, stats_keeper):
-    Log().quiet("Determining offsets for all symbolic names...")
-
-    if not Ctx().trunk_only:
+    if Ctx().trunk_only:
+      Log().quiet("Trunk-only conversion--nothing to do.")
+    else:
+      Log().quiet("Determining offsets for all symbolic names...")
       Ctx()._symbol_db = SymbolDatabase()
       self.generate_offsets_for_symbolings()
       Ctx()._symbol_db.close()
-    Log().quiet("Done.")
+      Log().quiet("Done.")
 
 
 class OutputPass(Pass):

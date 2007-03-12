@@ -854,6 +854,7 @@ class CreateRevsPass(Pass):
     creator.close()
     if not Ctx().trunk_only:
       Ctx()._symbolings_logger.close()
+    Ctx()._persistence_manager.close()
     Ctx()._cvs_items_db.close()
     Ctx()._metadata_db.close()
     Ctx()._symbol_db.close()
@@ -996,6 +997,7 @@ class OutputPass(Pass):
     Ctx().revision_reader.finish()
 
     Ctx().output_option.cleanup()
+    persistence_manager.close()
     if not Ctx().trunk_only:
       Ctx()._symbol_db.close()
     Ctx()._cvs_items_db.close()

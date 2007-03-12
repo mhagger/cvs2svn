@@ -69,6 +69,11 @@ class PersistenceManager:
     # order.
     self._fills = {}
 
+  def __del__(self):
+    if self.svn_commit_db is not None:
+      Log().debug('%r was destroyed without being closed.' % (self,))
+      self.close()
+
   def get_svn_revnum(self, cvs_rev_id):
     """Return the Subversion revision number in which CVS_REV_ID was
     committed, or SVN_INVALID_REVNUM if there is no mapping for
@@ -116,5 +121,12 @@ class PersistenceManager:
     """Return True iff LOD has been filled since SVN_REVNUM."""
 
     return self._fills.get(lod.symbol, [0])[-1] >= svn_revnum
+
+  def close(self):
+    self.cvs2svn_db.close()
+    self.cvs2svn_db = None
+    self.svn_commit_db.close()
+    self.svn_commit_db = None
+    self._fills = None
 
 

@@ -851,6 +851,7 @@ class CreateRevsPass(Pass):
     for (changeset, timestamp) in self.get_changesets():
       creator.process_changeset(changeset, timestamp)
 
+    creator.close()
     if not Ctx().trunk_only:
       Ctx()._symbolings_logger.close()
     Ctx()._cvs_items_db.close()

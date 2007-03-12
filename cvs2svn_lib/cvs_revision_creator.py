@@ -46,6 +46,11 @@ class CVSRevisionCreator:
     # never need to fill it again.
     self._done_symbols = set()
 
+  def __del__(self):
+    if self._done_symbols is not None:
+      Log().debug('%r was destroyed without being closed.' % (self,))
+      self.close()
+
   def _commit_symbols(self, symbols, timestamp):
     """Generate one SVNCommit for each symbol in SYMBOLS."""
 
@@ -96,5 +101,11 @@ class CVSRevisionCreator:
         symbols.add(Ctx()._symbol_db.get_symbol(symbol_id))
 
       self._commit_symbols(symbols, timestamp)
+
+  def close(self):
+    self._done_symbols = None
+    if not Ctx().trunk_only:
+      self._last_changesets_db.close()
+      self._last_changesets_db = None
 
 

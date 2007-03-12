@@ -658,6 +658,7 @@ class BreakCVSRevisionChangesetLoopsPass(Pass):
           cycle_breaker=self.break_cycle):
       pass
 
+    self.changeset_graph = None
     self.changesets_db.close()
     self.cvs_item_to_changeset_id.close()
     Ctx()._cvs_items_db.close()
@@ -724,6 +725,7 @@ class TopologicalSortPass(Pass):
       sorted_changesets.write('%x %08x\n' % (changeset_id, timestamp,))
 
     sorted_changesets.close()
+    Ctx()._cvs_item_to_changeset_id.close()
     Ctx()._changesets_db.close()
     Ctx()._cvs_items_db.close()
     Ctx()._symbol_db.close()
@@ -921,6 +923,8 @@ class IndexSymbolsPass(Pass):
         Log().verbose(' ', Ctx()._symbol_db.get_symbol(id).name)
         old_id = id
         offsets[id] = fpos
+
+    f.close()
 
     offsets_db = file(
         artifact_manager.get_temp_file(config.SYMBOL_OFFSETS_DB), 'wb')

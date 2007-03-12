@@ -25,6 +25,7 @@ from cvs2svn_lib.boolean import *
 from cvs2svn_lib import config
 from cvs2svn_lib.common import DB_OPEN_READ
 from cvs2svn_lib.common import OP_DELETE
+from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.line_of_development import Branch
@@ -81,6 +82,11 @@ class SymbolingsLogger:
     # values are the ids of symbols that this path has opened.
     self._open_paths_with_default_branches = { }
 
+  def __del__(self):
+    if self.symbolings is not None:
+      Log().debug('%r was destroyed without being closed.' % (self,))
+      self.close()
+
   def log_revision(self, cvs_rev, svn_revnum):
     """Log any openings and closings found in CVS_REV."""
 
@@ -121,6 +127,7 @@ class SymbolingsLogger:
 
   def close(self):
     self.symbolings.close()
+    self.symbolings = None
 
   def _note_default_branch_opening(self, cvs_rev, symbol_id):
     """If CVS_REV is a default branch revision, log CVS_REV.cvs_path

@@ -19,6 +19,7 @@
 import os
 
 from cvs2svn_lib.boolean import *
+from cvs2svn_lib.common import path_split
 from cvs2svn_lib.key_generator import KeyGenerator
 from cvs2svn_lib.context import Ctx
 
@@ -71,9 +72,9 @@ class CVSFile(object):
     self.project = Ctx().projects[project_id]
 
   def get_basename(self):
-    """Return the last path component of self.filename, minus the ',v'."""
+    """Return the last path component of self.cvs_path."""
 
-    return os.path.basename(self.filename)[:-2]
+    return path_split(self.cvs_path)[1]
 
   basename = property(get_basename)
 

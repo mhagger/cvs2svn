@@ -961,6 +961,10 @@ class _ProjectDataCollector:
     return symbol
 
   def _process_file(self, pathname):
+    self.project.verify_filename_legal(
+        pathname, os.path.basename(pathname)[:-2]
+        )
+    Log().normal(pathname)
     try:
       cvs_file = self.project.get_cvs_file(pathname)
     except FileInAndOutOfAtticException, e:
@@ -996,8 +1000,6 @@ class _ProjectDataCollector:
         # characters, but otherwise ignore it:
         self.project.verify_filename_legal(pathname, fname)
       elif fname.endswith(',v'):
-        self.project.verify_filename_legal(pathname, fname[:-2])
-        Log().normal(pathname)
         self._process_file(pathname)
         self.found_valid_file = True
 

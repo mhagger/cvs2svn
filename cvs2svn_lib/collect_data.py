@@ -1003,14 +1003,16 @@ class _ProjectDataCollector:
 
   def _visit_directory(self, dirname, files):
     for fname in files:
-      verify_filename_legal(fname)
-      if not fname.endswith(',v'):
-        continue
-      self.found_valid_file = True
       pathname = os.path.join(dirname, fname)
-      Log().normal(pathname)
-
-      self._process_file(pathname)
+      if os.path.isdir(pathname):
+        # Verify that the directory name does not contain any illegal
+        # characters, but otherwise ignore it:
+        verify_filename_legal(fname)
+      elif fname.endswith(',v'):
+        verify_filename_legal(fname[:-2])
+        Log().normal(pathname)
+        self._process_file(pathname)
+        self.found_valid_file = True
 
 
 class CollectData:

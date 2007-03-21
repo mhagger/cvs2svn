@@ -960,7 +960,22 @@ class _ProjectDataCollector:
       self.symbols[name] = symbol
     return symbol
 
-  def _process_file(self, pathname):
+  def _process_file(self, cvs_file):
+    try:
+      cvs2svn_rcsparse.parse(
+          open(cvs_file.filename, 'rb'), _FileDataCollector(self, cvs_file)
+          )
+    except (cvs2svn_rcsparse.common.RCSParseError, ValueError, RuntimeError):
+      err = "%s: %r is not a valid ,v file" \
+            % (error_prefix, cvs_file.filename)
+      sys.stderr.write(err + '\n')
+      self.fatal_errors.append(err)
+    except:
+      Log().warn("Exception occurred while parsing %s" % cvs_file.filename)
+      raise
+    self.num_files += 1
+
+  def _process_attic_file(self, pathname):
     self.project.verify_filename_legal(
         pathname, os.path.basename(pathname)[:-2]
         )
@@ -980,19 +995,7 @@ class _ProjectDataCollector:
         self.fatal_errors.append(err)
         return
 
-    try:
-      cvs2svn_rcsparse.parse(
-          open(cvs_file.filename, 'rb'), _FileDataCollector(self, cvs_file)
-          )
-    except (cvs2svn_rcsparse.common.RCSParseError, ValueError, RuntimeError):
-      err = "%s: %r is not a valid ,v file" \
-            % (error_prefix, cvs_file.filename)
-      sys.stderr.write(err + '\n')
-      self.fatal_errors.append(err)
-    except:
-      Log().warn("Exception occurred while parsing %s" % cvs_file.filename)
-      raise
-    self.num_files += 1
+    self._process_file(cvs_file)
 
   def _visit_attic_directory(self, dirname):
     for fname in os.listdir(dirname):
@@ -1000,8 +1003,15 @@ class _ProjectDataCollector:
       if os.path.isdir(pathname):
         Log().warn("Directory %s found within Attic; ignoring" % (pathname,))
       elif fname.endswith(',v'):
-        self._process_file(pathname)
+        self._process_attic_file(pathname)
         self.found_valid_file = True
+
+  def _process_non_attic_file(self, pathname):
+    self.project.verify_filename_legal(
+        pathname, os.path.basename(pathname)[:-2]
+        )
+    Log().normal(pathname)
+    self._process_file(self.project.get_cvs_file(pathname))
 
   def _visit_non_attic_directory(self, dirname, files):
     try:
@@ -1019,7 +1029,7 @@ class _ProjectDataCollector:
         # characters, but otherwise ignore it:
         self.project.verify_filename_legal(pathname, fname)
       elif fname.endswith(',v'):
-        self._process_file(pathname)
+        self._process_non_attic_file(pathname)
         self.found_valid_file = True
 
     if has_attic:

@@ -884,7 +884,7 @@ class SortSymbolsPass(Pass):
           artifact_manager.get_temp_file(config.SYMBOL_OPENINGS_CLOSINGS),
           artifact_manager.get_temp_file(
               config.SYMBOL_OPENINGS_CLOSINGS_SORTED),
-          options='-k1,1 -k2,2n -k3')
+          options='-k 1,1 -k 2,2n -k 3')
     Log().quiet("Done")
 
 

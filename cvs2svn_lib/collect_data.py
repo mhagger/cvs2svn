@@ -982,13 +982,15 @@ class _ProjectDataCollector:
 
     try:
       cvs2svn_rcsparse.parse(
-          open(pathname, 'rb'), _FileDataCollector(self, cvs_file))
+          open(cvs_file.filename, 'rb'), _FileDataCollector(self, cvs_file)
+          )
     except (cvs2svn_rcsparse.common.RCSParseError, ValueError, RuntimeError):
-      err = "%s: %r is not a valid ,v file" % (error_prefix, pathname)
+      err = "%s: %r is not a valid ,v file" \
+            % (error_prefix, cvs_file.filename)
       sys.stderr.write(err + '\n')
       self.fatal_errors.append(err)
     except:
-      Log().warn("Exception occurred while parsing %s" % pathname)
+      Log().warn("Exception occurred while parsing %s" % cvs_file.filename)
       raise
     self.num_files += 1
 

@@ -937,7 +937,7 @@ class _ProjectDataCollector:
     self.symbols = {}
 
     os.path.walk(self.project.project_cvs_repos_path,
-                 _ProjectDataCollector._visit_directory, self)
+                 _ProjectDataCollector._visit_non_attic_directory, self)
     if not self.fatal_errors and not self.found_valid_file:
       self.fatal_errors.append(
           '\n'
@@ -1003,7 +1003,7 @@ class _ProjectDataCollector:
         self._process_file(pathname)
         self.found_valid_file = True
 
-  def _visit_directory(self, dirname, files):
+  def _visit_non_attic_directory(self, dirname, files):
     try:
       # Remove Attic from the directory recursion; we will handle it
       # specially below.

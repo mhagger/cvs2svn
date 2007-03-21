@@ -994,9 +994,9 @@ class _ProjectDataCollector:
       if os.path.isdir(pathname):
         # Verify that the directory name does not contain any illegal
         # characters, but otherwise ignore it:
-        self.project.verify_filename_legal(fname)
+        self.project.verify_filename_legal(pathname, fname)
       elif fname.endswith(',v'):
-        self.project.verify_filename_legal(fname[:-2])
+        self.project.verify_filename_legal(pathname, fname[:-2])
         Log().normal(pathname)
         self._process_file(pathname)
         self.found_valid_file = True

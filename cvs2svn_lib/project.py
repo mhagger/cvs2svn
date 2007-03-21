@@ -168,9 +168,32 @@ class Project(object):
 
   ctrl_characters_regexp = re.compile('[\\\x00-\\\x1f\\\x7f]')
 
-  def verify_filename_legal(filename):
-    """Verify that FILENAME does not include any control characters.  If
-    it does, raise a FatalError."""
+  def verify_filename_legal(path, filename):
+    """Verify that FILENAME is a legal filename.
+
+    FILENAME is a path component of a CVS path.  Check that it won't
+    choke SVN:
+
+    - Check that it is not empty.
+
+    - Check that it is not equal to '.' or '..'.
+
+    - Check that the filename does not include any control characters.
+
+    If any of these tests fail, raise a FatalError.  PATH is the full
+    filesystem path from which FILENAME was derived; it can be used in
+    error messages."""
+
+    if filename == '':
+      raise FatalError(
+          "File %s would result in an empty filename." % (path,)
+          )
+
+    if filename in ['.', '..']:
+      raise FatalError(
+          "File %s would result in an illegal filename '%s'."
+          % (path, filename,)
+          )
 
     m = Project.ctrl_characters_regexp.search(filename)
     if m:

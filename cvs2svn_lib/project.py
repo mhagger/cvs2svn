@@ -166,6 +166,20 @@ class Project(object):
 
   determine_repository_root = staticmethod(determine_repository_root)
 
+  ctrl_characters_regexp = re.compile('[\\\x00-\\\x1f\\\x7f]')
+
+  def verify_filename_legal(filename):
+    """Verify that FILENAME does not include any control characters.  If
+    it does, raise a FatalError."""
+
+    m = Project.ctrl_characters_regexp.search(filename)
+    if m:
+      raise FatalError(
+          "Character %r in filename %r is not supported by Subversion."
+          % (m.group(), filename,))
+
+  verify_filename_legal = staticmethod(verify_filename_legal)
+
   def _get_cvs_path(self, filename):
     """Return the path to FILENAME relative to project_cvs_repos_path.
 

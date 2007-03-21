@@ -925,19 +925,6 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     del self.sdc
 
 
-ctrl_characters_regexp = re.compile('[\\\x00-\\\x1f\\\x7f]')
-
-def verify_filename_legal(filename):
-  """Verify that FILENAME does not include any control characters.  If
-  it does, raise a FatalError."""
-
-  m = ctrl_characters_regexp.search(filename)
-  if m:
-    raise FatalError(
-        "Character %r in filename %r is not supported by Subversion."
-        % (m.group(), filename,))
-
-
 class _ProjectDataCollector:
   def __init__(self, collect_data, project):
     self.collect_data = collect_data
@@ -1007,9 +994,9 @@ class _ProjectDataCollector:
       if os.path.isdir(pathname):
         # Verify that the directory name does not contain any illegal
         # characters, but otherwise ignore it:
-        verify_filename_legal(fname)
+        self.project.verify_filename_legal(fname)
       elif fname.endswith(',v'):
-        verify_filename_legal(fname[:-2])
+        self.project.verify_filename_legal(fname[:-2])
         Log().normal(pathname)
         self._process_file(pathname)
         self.found_valid_file = True

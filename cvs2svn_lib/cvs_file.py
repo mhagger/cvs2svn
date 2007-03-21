@@ -34,15 +34,20 @@ class CVSFile(object):
 
     Arguments:
 
-      ID                 --> (int or None) unique id for this file.  If None,
-                             a new id is generated.
-      PROJECT            --> (Project) the project containing this file
-      FILENAME           --> (string) the filesystem path to the CVS file
-      CVS_PATH           --> (string) the canonical path within the CVS
-                             project (no 'Attic', no ',v', forward slashes)
-      EXECUTABLE         --> (bool) True iff RCS file has executable bit set
-      FILE_SIZE          --> (long) size of the RCS file in bytes
-      MODE               --> (string or None) 'kkv', 'kb', etc."""
+      ID          --> (int or None) unique id for this file.  If None, a new
+                      id is generated.
+      PROJECT     --> (Project) the project containing this file
+      FILENAME    --> (string) the filesystem path to the CVS file
+      CVS_PATH    --> (string) the canonical path within the CVS project (no
+                      'Attic', no ',v', forward slashes)
+      EXECUTABLE  --> (bool) True iff RCS file has executable bit set
+      FILE_SIZE   --> (long) size of the RCS file in bytes
+      MODE        --> (string or None) 'kkv', 'kb', etc.
+
+    CVS_PATH might contain an 'Attic' component if it should be
+    retained in the SVN repository; i.e., if the same filename exists
+    out of Attic and the --retain-conflicting-attic-files option was
+    specified."""
 
     if id is None:
       self.id = self.key_generator.gen_id()

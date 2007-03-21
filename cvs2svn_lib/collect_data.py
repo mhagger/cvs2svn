@@ -992,7 +992,24 @@ class _ProjectDataCollector:
       raise
     self.num_files += 1
 
+  def _visit_attic_directory(self, dirname):
+    for fname in os.listdir(dirname):
+      pathname = os.path.join(dirname, fname)
+      if os.path.isdir(pathname):
+        Log().warn("Directory %s found within Attic; ignoring" % (pathname,))
+      elif fname.endswith(',v'):
+        self._process_file(pathname)
+        self.found_valid_file = True
+
   def _visit_directory(self, dirname, files):
+    try:
+      # Remove Attic from the directory recursion; we will handle it
+      # specially below.
+      del files[files.index('Attic')]
+      has_attic = True
+    except ValueError:
+      has_attic = False
+
     for fname in files:
       pathname = os.path.join(dirname, fname)
       if os.path.isdir(pathname):
@@ -1002,6 +1019,9 @@ class _ProjectDataCollector:
       elif fname.endswith(',v'):
         self._process_file(pathname)
         self.found_valid_file = True
+
+    if has_attic:
+      self._visit_attic_directory(os.path.join(dirname, 'Attic'))
 
 
 class CollectData:

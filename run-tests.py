@@ -1363,8 +1363,12 @@ def nonascii_filenames():
 class UnicodeLog(Cvs2SvnTestCase):
   "log message contains unicode"
 
-  def __init__(self, **kw):
+  def __init__(self, warning_re=None, **kw):
     Cvs2SvnTestCase.__init__(self, 'unicode-log', **kw)
+    if warning_re is None:
+      self.warning_re = None
+    else:
+      self.warning_re = re.compile(warning_re)
 
   def run(self):
     try:
@@ -1374,6 +1378,14 @@ class UnicodeLog(Cvs2SvnTestCase):
       raise svntest.Skip()
 
     conv = self.ensure_conversion()
+
+    if self.warning_re is not None:
+      for line in conv.stdout:
+        if self.warning_re.match(line):
+          # We found the warning that we were looking for.  Exit happily.
+          return
+      else:
+        raise Failure()
 
 
 def vendor_branch_sameness():
@@ -2529,10 +2541,12 @@ test_list = [
     BranchDeleteFirst(variant=1, trunk='a/1', branches='a/2', tags='a/3'),
     nonascii_filenames,
 # 40:
-    UnicodeLog(),
-    UnicodeLog(variant='encoding', args=['--encoding=utf_8']),
-    UnicodeLog(variant='fallback-encoding',
-               args=['--fallback-encoding=utf_8']),
+    UnicodeLog(
+        warning_re=r'WARNING\: problem encoding author or log message'),
+    UnicodeLog(
+        variant='encoding', args=['--encoding=utf_8']),
+    UnicodeLog(
+        variant='fallback-encoding', args=['--fallback-encoding=utf_8']),
     vendor_branch_sameness,
     default_branches,
     compose_tag_three_sources,

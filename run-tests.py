@@ -433,6 +433,8 @@ class Conversion:
     symbols -- a dictionary of symbols used for string interpolation
         in path names.
 
+    stdout -- a list of lines written by cvs2svn to stdout
+
     _wc -- the basename of the svn working copy (within tmp_dir).
 
     _wc_path -- the path to the svn working copy, if it has already
@@ -495,9 +497,9 @@ class Conversion:
     try:
       if passbypass:
         for p in range(1, self.get_last_pass() + 1):
-          run_cvs2svn(error_re, '-p', str(p), *args)
+          self.stdout = run_cvs2svn(error_re, '-p', str(p), *args)
       else:
-        run_cvs2svn(error_re, *args)
+        self.stdout = run_cvs2svn(error_re, *args)
     except RunProgramException:
       raise Failure()
     except MissingErrorException:

@@ -1365,6 +1365,12 @@ class UnicodeLog(Cvs2SvnTestCase):
     Cvs2SvnTestCase.__init__(self, 'unicode-log', **kw)
 
   def run(self):
+    try:
+      # ensure the availability of the "utf_8" encoding:
+      u'a'.encode('utf_8').decode('utf_8')
+    except LookupError:
+      raise svntest.Skip()
+
     conv = self.ensure_conversion()
 
 
@@ -2522,9 +2528,9 @@ test_list = [
     nonascii_filenames,
 # 40:
     UnicodeLog(),
-    UnicodeLog(variant='encoding', args=['--encoding=unicode']),
+    UnicodeLog(variant='encoding', args=['--encoding=utf_8']),
     UnicodeLog(variant='fallback-encoding',
-               args=['--fallback-encoding=unicode']),
+               args=['--fallback-encoding=utf_8']),
     vendor_branch_sameness,
     default_branches,
     compose_tag_three_sources,

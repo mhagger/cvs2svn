@@ -76,7 +76,6 @@ from cvs2svn_lib.cvs_item import CVSRevision
 from cvs2svn_lib.cvs_item import CVSBranch
 from cvs2svn_lib.cvs_item import CVSTag
 from cvs2svn_lib.key_generator import KeyGenerator
-from cvs2svn_lib.database import Database
 from cvs2svn_lib.cvs_item_database import NewCVSItemStore
 from cvs2svn_lib.symbol import Symbol
 from cvs2svn_lib.symbol_statistics import SymbolStatisticsCollector

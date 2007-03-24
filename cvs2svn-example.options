@@ -60,6 +60,7 @@ import re
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib import config
+from cvs2svn_lib.common import UTF8Encoder
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.project import Project
 from cvs2svn_lib.output_option import DumpfileOutputOption
@@ -156,22 +157,32 @@ ctx.trunk_only = False
 # directory once the last file has been deleted from it:
 ctx.prune = False
 
-# A list of encodings that should be tried when converting filenames,
-# author names, log messages, etc. to UTF8.  The encoders are tried in
-# order in 'strict' mode until one of them succeeds.  If none
-# succeeds, then ctx.fallback_encoding is used in lossy 'replace' mode
-# (if it is configured):
-ctx.encoding = [
-    #'latin1',
-    'ascii',
-    ]
+# How to converting author names and log messages to UTF8.  The first
+# argument is a list of encoders that are tried in order in 'strict'
+# mode until one of them succeeds.  If none of those succeeds, then
+# fallback_encoding is used in lossy 'replace' mode (if it is
+# specified).  Setting a fallback encoder ensures that the encoder
+# always succeeds, but it can cause information loss.
+ctx.utf8_encoder = UTF8Encoder(
+    [
+        #'latin1',
+        #'utf8',
+        'ascii',
+        ],
+    #fallback_encoder='ascii'
+    )
 
-# The encoding to use if all of the encodings listed in ctx.encoding
-# fail.  This encoding is used in 'replace' mode, which always
-# succeeds but can cause information loss.  To enable this feature,
-# set the following value to the name of the desired encoding (e.g.,
-# 'ascii').
-ctx.fallback_encoding = None
+# The following encoder is used to convert filenames to UTF8.  See the
+# documentation for ctx.utf8_encoder for more information.  You might
+# want to set this encoder stricter than ctx.utf8_encoder.
+ctx.filename_utf8_encoder = UTF8Encoder(
+    [
+        #'latin1',
+        #'utf8',
+        'ascii',
+        ],
+    #fallback_encoder='ascii'
+    )
 
 # The basic strategy for converting symbols (this should usually be
 # left unchanged).  A CVS symbol might be used as a tag in one file

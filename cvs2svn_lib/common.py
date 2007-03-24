@@ -175,8 +175,8 @@ def to_utf8(value, strict=False):
   STRICT is True, in which case raise a UnicodeError)."""
 
   if strict:
-    return UTF8Encoder(Ctx().encoding)(value)
+    return Ctx().filename_utf8_encoder(value)
   else:
-    return UTF8Encoder(Ctx().encoding, Ctx().fallback_encoding)(value)
+    return Ctx().utf8_encoder(value)
 
 

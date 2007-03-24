@@ -47,8 +47,8 @@ class Ctx:
     self.sort_executable = config.SORT_EXECUTABLE
     self.trunk_only = False
     self.prune = True
-    self.encoding = ["ascii"]
-    self.fallback_encoding = None
+    self.utf8_encoder = lambda s: s.decode('ascii').encode('utf8')
+    self.filename_utf8_encoder = lambda s: s.decode('ascii').encode('utf8')
     self.symbol_strategy = None
     self.username = None
     self.svn_property_setters = []

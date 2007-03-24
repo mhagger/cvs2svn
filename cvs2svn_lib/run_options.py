@@ -35,6 +35,7 @@ from cvs2svn_lib import config
 from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.common import FatalError
+from cvs2svn_lib.common import UTF8Encoder
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.output_option import DumpfileOutputOption
@@ -281,6 +282,8 @@ class RunOptions:
     trunk_base = config.DEFAULT_TRUNK_BASE
     branches_base = config.DEFAULT_BRANCHES_BASE
     tags_base = config.DEFAULT_TAGS_BASE
+    encodings = ['ascii']
+    fallback_encoding = None
     symbol_transforms = []
 
     ctx.symbol_strategy = RuleBasedSymbolStrategy()
@@ -305,9 +308,9 @@ class RunOptions:
       elif opt == '--no-prune':
         ctx.prune = False
       elif opt == '--encoding':
-        ctx.encoding.insert(-1, value)
+        encodings.insert(-1, value)
       elif opt == '--fallback-encoding':
-        ctx.fallback_encoding = value
+        fallback_encoding = value
       elif opt == '--force-branch':
         ctx.symbol_strategy.add_rule(ForceBranchRegexpStrategyRule(value))
       elif opt == '--force-tag':
@@ -434,6 +437,13 @@ class RunOptions:
     ctx.add_project(Project(
         cvsroot, trunk_base, branches_base, tags_base,
         symbol_transforms=symbol_transforms))
+
+    try:
+      ctx.utf8_decoder = UTF8Encoder(encodings, fallback_encoding)
+      # Don't use fallback_encoding for filenames:
+      ctx.filename_utf8_decoder = UTF8Encoder(encodings)
+    except LookupError, e:
+      raise FatalError(str(e))
 
     ctx.symbol_strategy.add_rule(UnambiguousUsageRule())
     if symbol_strategy_default == 'strict':

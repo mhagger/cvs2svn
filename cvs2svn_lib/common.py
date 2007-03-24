@@ -168,15 +168,3 @@ class UTF8Encoder:
       raise UnicodeError
 
 
-def to_utf8(value, strict=False):
-  """Encode (as Unicode) VALUE, trying the encodings in Ctx().encoding
-  as valid source encodings.  If all of the encodings fail, then
-  encode using Ctx().fallback_encoding if it is configured (unless
-  STRICT is True, in which case raise a UnicodeError)."""
-
-  if strict:
-    return Ctx().filename_utf8_encoder(value)
-  else:
-    return Ctx().utf8_encoder(value)
-
-

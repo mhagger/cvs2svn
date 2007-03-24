@@ -23,7 +23,6 @@ from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.common import OP_ADD
 from cvs2svn_lib.common import OP_CHANGE
 from cvs2svn_lib.common import OP_DELETE
-from cvs2svn_lib.common import to_utf8
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.symbol import BranchSymbol
@@ -94,8 +93,8 @@ class SVNCommit:
     try:
       utf8_author = None
       if self._author is not None:
-        utf8_author = to_utf8(self._author)
-      utf8_log = to_utf8(log_msg)
+        utf8_author = Ctx().utf8_encoder(self._author)
+      utf8_log = Ctx().utf8_encoder(log_msg)
       return { 'svn:author' : utf8_author,
                'svn:log'    : utf8_log,
                'svn:date'   : date }

@@ -18,6 +18,7 @@
 
 
 import time
+import codecs
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.context import Ctx
@@ -120,21 +121,62 @@ def format_date(date):
   return time.strftime("%Y-%m-%dT%H:%M:%S.000000Z", time.gmtime(date))
 
 
+class UTF8Encoder:
+  """Callable that decodes strings into unicode then encodes them as utf8."""
+
+  def __init__(self, encodings, fallback_encoding=None):
+    """Create a UTF8Encoder instance.
+
+    ENCODINGS is a list containing the names of encodings that are
+    attempted to be used as source encodings in 'strict' mode.
+
+    FALLBACK_ENCODING, if specified, is the name of an encoding that
+    should be used as a source encoding in lossy 'replace' mode if all
+    of ENCODINGS failed.
+
+    Raise LookupError if any of the specified encodings is unknown."""
+
+    self.decoders = [
+        (encoding, codecs.lookup(encoding)[1])
+        for encoding in encodings]
+
+    if fallback_encoding is None:
+      self.fallback_decoder = None
+    else:
+      self.fallback_decoder = (
+          fallback_encoding, codecs.lookup(fallback_encoding)[1]
+          )
+
+  def __call__(self, s):
+    """Try to decode 8-bit string S using our configured source encodings.
+
+    Return the string as unicode, encoded in an 8-bit string as utf8.
+
+    Raise UnicodeError if the string cannot be decoded using any of
+    the source encodings and no fallback encoding was specified."""
+
+    for (name, decoder) in self.decoders:
+      try:
+        return decoder(s)[0].encode('utf8')
+      except ValueError:
+        Log().verbose("Encoding '%s' failed for string %r" % (name, s))
+
+    if self.fallback_decoder is not None:
+      (name, decoder) = self.fallback_decoder
+      return decoder(s, 'replace')[0].encode('utf8')
+    else:
+      raise UnicodeError
+
+
 def to_utf8(value, strict=False):
   """Encode (as Unicode) VALUE, trying the encodings in Ctx().encoding
   as valid source encodings.  If all of the encodings fail, then
   encode using Ctx().fallback_encoding if it is configured (unless
   STRICT is True, in which case raise a UnicodeError)."""
 
-  for encoding in Ctx().encoding:
-    try:
-      return unicode(value, encoding).encode('utf8')
-    except ValueError:
-      Log().verbose("Encoding %r failed for string %r" % (encoding, value))
-
-  if not strict and Ctx().fallback_encoding is not None:
-    return unicode(value, Ctx().fallback_encoding, 'replace').encode('utf8')
+  if strict:
+    return UTF8Encoder(Ctx().encoding)(value)
   else:
-    raise UnicodeError
+    return UTF8Encoder(Ctx().encoding, Ctx().fallback_encoding)(value)
 
 

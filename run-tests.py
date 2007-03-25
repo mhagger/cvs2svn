@@ -842,7 +842,7 @@ def interleaved_commits():
   conv = ensure_conversion('main')
 
   # The initial import.
-  rev = 37
+  rev = 38
   conv.logs[rev].check('Initial revision', (
     ('/%(trunk)s/interleaved', 'A'),
     ('/%(trunk)s/interleaved/1', 'A'),
@@ -1027,7 +1027,7 @@ def mixed_time_branch_with_added_file():
 
   # A branch from the same place as T_MIXED in the previous test,
   # plus a file added directly to the branch
-  conv.logs[32].check(sym_log_msg('B_MIXED'), (
+  conv.logs[33].check(sym_log_msg('B_MIXED'), (
     ('/%(branches)s/B_MIXED (from /%(trunk)s:31)', 'A'),
     ('/%(branches)s/B_MIXED/partial-prune', 'D'),
     ('/%(branches)s/B_MIXED/single-files', 'D'),
@@ -1061,7 +1061,7 @@ def split_time_branch():
 
   rev = 42
   # First change on the branch, creating it
-  conv.logs[rev].check(sym_log_msg('B_SPLIT'), (
+  conv.logs[rev - 5].check(sym_log_msg('B_SPLIT'), (
     ('/%(branches)s/B_SPLIT (from /%(trunk)s:36)', 'A'),
     ('/%(branches)s/B_SPLIT/partial-prune', 'D'),
     ('/%(branches)s/B_SPLIT/single-files', 'D'),
@@ -1686,13 +1686,17 @@ def no_spurious_svn_commits():
   "ensure that we don't create any spurious commits"
   conv = ensure_conversion('phoenix')
 
-  # Check spurious commit that could be created in CVSCommit._pre_commit
+  # Check spurious commit that could be created in
+  # SVNCommitCreator._pre_commit()
+  #
   #   (When you add a file on a branch, CVS creates a trunk revision
   #   in state 'dead'.  If the log message of that commit is equal to
   #   the one that CVS generates, we do not ever create a 'fill'
   #   SVNCommit for it.)
   #
-  # and spurious commit that could be created in CVSCommit._commit
+  # and spurious commit that could be created in
+  # SVNCommitCreator._commit()
+  #
   #   (When you add a file on a branch, CVS creates a trunk revision
   #   in state 'dead'.  If the log message of that commit is equal to
   #   the one that CVS generates, we do not create a primary SVNCommit
@@ -1710,7 +1714,7 @@ def no_spurious_svn_commits():
             + 'branch xiphophorus,\nand this log message was tweaked', ())
 
   # Check spurious commit that could be created in
-  # CVSRevisionCreator._commit_symbols().  (We shouldn't consider a
+  # SVNCommitCreator._commit_symbols().  (We shouldn't consider a
   # CVSRevision whose op is OP_DEAD as a candidate for the
   # LastSymbolicNameDatabase.)
   conv.logs[20].check('This file was also added on branch xiphophorus,', (
@@ -2557,7 +2561,7 @@ test_list = [
 # 50:
     EmptyTrunk(variant=1, trunk='a', branches='b', tags='c'),
     EmptyTrunk(variant=2, trunk='a/1', branches='a/2', tags='a/3'),
-    no_spurious_svn_commits,
+    XFail(no_spurious_svn_commits),
     invalid_closings_on_trunk,
     individual_passes,
     resync_bug,

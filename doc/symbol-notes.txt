@@ -109,6 +109,19 @@ BreakCVSRevisionChangesetLoopsPass
 N/A
 
 
+RevisionTopologicalSortPass
+===========================
+
+N/A
+
+
+BreakCVSSymbolChangesetLoopsPass
+================================
+
+Read in the complete changeset graph and break any loops that are
+found by breaking up symbol changesets.
+
+
 TopologicalSortPass
 ===================
 

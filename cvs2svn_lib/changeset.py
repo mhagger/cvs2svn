@@ -116,8 +116,11 @@ class OrderedChangeset(Changeset):
 
   _sort_order = 1
 
-  def __init__(self, id, cvs_item_ids, prev_id, next_id):
+  def __init__(self, id, cvs_item_ids, ordinal, prev_id, next_id):
     Changeset.__init__(self, id, cvs_item_ids)
+
+    # The order of this changeset among all OrderedChangesets:
+    self.ordinal = ordinal
 
     # The changeset id of the previous OrderedChangeset, or None if
     # this is the first OrderedChangeset:
@@ -151,10 +154,12 @@ class OrderedChangeset(Changeset):
     return ChangesetGraphNode(self.id, time_range, pred_ids, succ_ids)
 
   def __getstate__(self):
-    return (Changeset.__getstate__(self), self.prev_id, self.next_id,)
+    return (
+        Changeset.__getstate__(self),
+        self.ordinal, self.prev_id, self.next_id,)
 
   def __setstate__(self, state):
-    (changeset_state, self.prev_id, self.next_id,) = state
+    (changeset_state, self.ordinal, self.prev_id, self.next_id,) = state
     Changeset.__setstate__(self, changeset_state)
 
   def __cmp__(self, other):

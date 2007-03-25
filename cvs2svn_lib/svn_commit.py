@@ -14,7 +14,7 @@
 # history and logs, available at http://cvs2svn.tigris.org/.
 # ====================================================================
 
-"""This module contains the CVSCommit class."""
+"""This module contains the SVNCommit classes."""
 
 
 from cvs2svn_lib.boolean import *
@@ -236,9 +236,10 @@ class SVNPrimaryCommit(SVNCommit, SVNRevisionCommit):
           and not cvs_rev.deltatext_exists
           and repos.path_exists(cvs_rev.svn_path)):
         # This change can be omitted.  See comment in
-        # CVSCommit._commit() for what this is all about.  Note that
-        # although asking repos.path_exists() is somewhat expensive,
-        # we only do it if the first two (cheap) tests succeed first.
+        # SVNCommitCreator._commit() for what this is all about.  Note
+        # that although asking repos.path_exists() is somewhat
+        # expensive, we only do it if the first two (cheap) tests
+        # succeed first.
         repos.skip_path(cvs_rev)
 
       elif cvs_rev.op == OP_ADD:
@@ -281,11 +282,14 @@ class SVNPrimaryCommit(SVNCommit, SVNRevisionCommit):
 
 
 class SVNSymbolCommit(SVNCommit):
-  def __init__(self, description, symbol, date, revnum=None):
-    SVNCommit.__init__(self, description, date, revnum)
+  def __init__(self, symbol, cvs_symbol_ids, date, revnum=None):
+    SVNCommit.__init__(
+        self, 'copying to tag/branch %r' % symbol.name, date, revnum)
 
     # The TypedSymbol that is filled in this SVNCommit.
     self.symbol = symbol
+
+    self.cvs_symbol_ids = cvs_symbol_ids
 
   def _get_log_msg(self):
     """Return a manufactured log message for this commit."""
@@ -316,13 +320,12 @@ class SVNSymbolCommit(SVNCommit):
     repos.end_commit()
 
   def __getstate__(self):
-    return (self.revnum, self.symbol.id, self.date)
+    return (self.revnum, self.symbol.id, self.cvs_symbol_ids, self.date)
 
   def __setstate__(self, state):
-    (revnum, symbol_id, date) = state
+    (revnum, symbol_id, cvs_symbol_ids, date) = state
     symbol = Ctx()._symbol_db.get_symbol(symbol_id)
-    SVNSymbolCommit.__init__(
-        self, "Retrieved from disk", symbol, date, revnum)
+    SVNSymbolCommit.__init__(self, symbol, cvs_symbol_ids, date, revnum)
 
   def __str__(self):
     """ Print a human-readable description of this SVNCommit.
@@ -334,15 +337,9 @@ class SVNSymbolCommit(SVNCommit):
         + "   symbolic name: %s\n" % self.symbol.get_clean_name())
 
 
-class SVNPreCommit(SVNSymbolCommit):
-  def __init__(self, symbol, revnum=None):
-    SVNSymbolCommit.__init__(
-        self, 'pre-commit symbolic name %r' % symbol.name, symbol, 0, revnum)
-
-
 class SVNPostCommit(SVNCommit, SVNRevisionCommit):
-  def __init__(self, motivating_revnum, cvs_revs, revnum=None):
-    SVNCommit.__init__(self, 'post-commit default branch(es)', 0, revnum)
+  def __init__(self, motivating_revnum, cvs_revs, date):
+    SVNCommit.__init__(self, 'post-commit default branch(es)', date)
     SVNRevisionCommit.__init__(self, cvs_revs)
 
     # The subversion revision number of the *primary* commit where the
@@ -375,8 +372,9 @@ class SVNPostCommit(SVNCommit, SVNRevisionCommit):
     """Commit SELF to REPOS, which is a SVNRepositoryMirror.
 
     Propagate any changes that happened on a non-trunk default branch
-    to the trunk of the repository.  See CVSCommit._post_commit() for
-    details on why this is necessary."""
+    to the trunk of the repository.  See
+    SVNCommitCreator._post_commit() for details on why this is
+    necessary."""
 
     repos.start_commit(self.revnum, self._get_revprops())
 
@@ -415,11 +413,5 @@ class SVNPostCommit(SVNCommit, SVNRevisionCommit):
     SVNRevisionCommit.__setstate__(self, rev_state)
 
     self._motivating_revnum = motivating_revnum
-
-
-class SVNSymbolCloseCommit(SVNSymbolCommit):
-  def __init__(self, symbol, date, revnum=None):
-    SVNSymbolCommit.__init__(
-        self, 'closing tag/branch %r' % symbol.name, symbol, date, revnum)
 
 

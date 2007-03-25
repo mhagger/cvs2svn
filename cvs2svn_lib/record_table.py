@@ -38,6 +38,7 @@ from __future__ import generators
 import os
 import types
 import struct
+import mmap
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.common import DB_OPEN_READ
@@ -278,5 +279,136 @@ class RecordTable:
     self._cache = None
     self.f.close()
     self.f = None
+
+
+class MmapRecordTable:
+  GROWTH_INCREMENT = 65536
+
+  def __init__(self, filename, mode, packer):
+    self.filename = filename
+    self.mode = mode
+    self.packer = packer
+    if self.mode == DB_OPEN_NEW:
+      self.python_file = open(self.filename, 'wb+')
+      self.python_file.write('\0' * self.GROWTH_INCREMENT)
+      self.python_file.flush()
+      self._filesize = self.GROWTH_INCREMENT
+      self.f = mmap.mmap(
+          self.python_file.fileno(), self._filesize,
+          access=mmap.ACCESS_WRITE
+          )
+
+      # The index just beyond the last record ever written:
+      self._limit = 0
+    elif self.mode == DB_OPEN_WRITE:
+      self.python_file = open(self.filename, 'rb+')
+      self._filesize = os.path.getsize(self.filename)
+      self.f = mmap.mmap(
+          self.python_file.fileno(), self._filesize,
+          access=mmap.ACCESS_WRITE
+          )
+
+      # The index just beyond the last record ever written:
+      self._limit = os.path.getsize(self.filename) // self.packer.record_len
+    elif self.mode == DB_OPEN_READ:
+      self.python_file = open(self.filename, 'rb')
+      self._filesize = os.path.getsize(self.filename)
+      self.f = mmap.mmap(
+          self.python_file.fileno(), self._filesize,
+          access=mmap.ACCESS_READ
+          )
+
+      # The index just beyond the last record ever written:
+      self._limit = os.path.getsize(self.filename) // self.packer.record_len
+    else:
+      raise RuntimeError('Invalid mode %r' % self.mode)
+
+  def __str__(self):
+    return 'MmapRecordTable(%r)' % (self.filename,)
+
+  def flush(self):
+    self.f.flush()
+
+  def _set_packed_record(self, i, s):
+    """Set the value for index I to the packed value S."""
+
+    if self.mode == DB_OPEN_READ:
+      raise RecordTableAccessError()
+    if i < 0:
+      raise KeyError()
+    if i >= self._limit:
+      # This write extends the range of valid indices.  First check
+      # whether the file has to be enlarged:
+      new_size = (i + 1) * self.packer.record_len
+      if new_size > self._filesize:
+        self._filesize = (
+            (new_size + self.GROWTH_INCREMENT - 1)
+            // self.GROWTH_INCREMENT
+            * self.GROWTH_INCREMENT
+            )
+        self.f.resize(self._filesize)
+      # Now pad up to the new record with empty_value, then write record:
+      self.f.seek(self._limit * self.packer.record_len)
+      if i > self._limit:
+        self.f.write(self.packer.empty_value * (i - self._limit))
+      self.f.write(s)
+      self._limit = i + 1
+    else:
+      self.f.seek(i * self.packer.record_len)
+      self.f.write(s)
+
+  def __setitem__(self, i, v):
+    self._set_packed_record(i, self.packer.pack(v))
+
+  def __getitem__(self, i):
+    """Return the item for index I.
+
+    Raise KeyError if that item has never been set (or if it was set
+    to self.packer.empty_value)."""
+
+    if not 0 <= i < self._limit:
+      raise KeyError(i)
+    self.f.seek(i * self.packer.record_len)
+    s = self.f.read(self.packer.record_len)
+
+    if s == self.packer.empty_value:
+      raise KeyError(i)
+
+    return self.packer.unpack(s)
+
+  def get(self, i, default=None):
+    try:
+      return self[i]
+    except KeyError:
+      return default
+
+  def __delitem__(self, i):
+    """Delete the item for index I.
+
+    Raise KeyError if that item has never been set (or if it was set
+    to self.packer.empty_value)."""
+
+    if self.mode == DB_OPEN_READ:
+      raise RecordTableAccessError()
+
+    # Check that the value was set (otherwise raise KeyError):
+    self[i]
+    self._set_packed_record(i, self.packer.empty_value)
+
+  def __iter__(self):
+    """Yield the values in the map in key order.
+
+    Skip over values that haven't been defined."""
+
+    for i in xrange(0, self._limit):
+      try:
+        yield self[i]
+      except KeyError:
+        pass
+
+  def close(self):
+    self.flush()
+    self.f.close()
+    self.python_file.close()
 
 

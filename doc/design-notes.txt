@@ -353,31 +353,80 @@ The new changesets are written to
 files produced by InitializeChangesetsPass.
 
 
+RevisionTopologicalSortPass
+===========================
+
+Topologically sort the RevisionChangesets resulting from the previous
+pass, thereby picking the order in which the RevisionChangesets will
+be committed.  Then simplify the RevisionChangeset graph into a linear
+chain by including dependency links only from each changeset to its
+commit-order successor and vice versa.  This simplified graph enforces
+the commit order that resulted from the topological sort, even after
+the SymbolChangesets are added back into the graph later.
+
+The graph is simplified by converting each RevisionChangeset into a
+OrderedChangeset with the same changeset id.  Each OrderedChangeset
+keeps track of the previous and next OrderedChangeset in addition to
+the contained CVSRevisions.  Store the OrderedChangesets into
+'cvs2svn-changesets-revsorted.db' along with the unmodified
+SymbolChangesets.
+
+
+BreakCVSSymbolChangesetLoopsPass
+================================
+
+Read in the complete changeset graph and break any loops in the
+dependency graph by breaking up CVSBranch changesets.
+
+At this stage, all loops can be broken up by this mechanism because
+(1) all CVSRevision dependency loops were already broken in
+BreakCVSRevisionChangesetLoopsPass; (2) CVSTags cannot participate in
+dependency loops because no other CVSItem can depend on a CVSTag.
+
+Since the input of this pass is the output of
+RevisionTopologicalSortPass, all revision loops have already been
+broken up and the order that the RevisionChangesets will be committed
+has been determined.  In this pass, the complete changeset graph is
+created in memory, including the linear list of OrderedChangesets from
+RevisionTopologicalSortPass plus all of the symbol changesets.
+Because this pass doesn't break up any OrderedChangesets, it is
+constrained to finding places within the revision changeset sequence
+in which the symbol changeset commits can be inserted.
+
+The new changesets are written to
+'cvs2svn-cvs-item-to-changeset-symbroken.dat' and
+'cvs2svn-changesets-symbroken.db', which are in the same format as the
+files produced by InitializeChangesetsPass.
+
+
 TopologicalSortPass
 ===================
 
-Given that BreakCVSRevisionChangesetLoopsPass has broken up any
-dependency cycles among the revision changesets, it is by definition
-possible to order the changesets in such a way that all of a
-changeset's dependencies are committed before the changeset itself.
-(This is called a topological sort.)  This pass does so by again
-building up the graph of changesets in memory, then at each step
-picking a changeset that has no remaining dependencies and removing it
-from the graph.  Whenever more than one dependency-free changeset is
-available, the one with the earliest timestamp is chosen.  As
-changesets are processed, the timestamp sequence is ensured to be
-monotonic by the simple expedient of adjusting retrograde timestamps
-to be later than their predecessor.
+Given that BreakCVSRevisionChangesetLoopsPass and
+BreakCVSSymbolChangesetLoopsPass have broken up any dependency cycles
+among the changesets, it is by definition possible to order the
+changesets in such a way that all of a changeset's dependencies are
+committed before the changeset itself.  (This is called a topological
+sort.)  This pass does so by again building up the graph of changesets
+in memory, then at each step picking a changeset that has no remaining
+dependencies and removing it from the graph.  Whenever more than one
+dependency-free changeset is available, the one with the earliest
+timestamp is chosen (with symbol changesets being committed as soon as
+possible).  As changesets are processed, the timestamp sequence is
+ensured to be monotonic by the simple expedient of adjusting
+retrograde timestamps to be later than their predecessor.
 
 This pass writes a line to 'cvs2svn-changesets-s.txt' for each
-changeset, in the order that the changesets should be committed.  Each
-lines contains
+RevisionChangeset, in the order that the changesets should be
+committed.  Each lines contains
 
     CHANGESET_ID TIMESTAMP
 
 where CHANGESET_ID is the id of the changeset and TIMESTAMP is the
 timstamp that should be assigned to it when it is committed.  Both
 values are written in hexadecimal.
+
+For now, the SymbolChangesets are not passed on to the next step.
 
 
 CreateDatabasesPass (formerly called pass4):

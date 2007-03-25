@@ -23,6 +23,7 @@ from cvs2svn_lib.common import DB_OPEN_NEW
 from cvs2svn_lib.common import DB_OPEN_READ
 from cvs2svn_lib.common import path_join
 from cvs2svn_lib.common import path_split
+from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.key_generator import KeyGenerator
 from cvs2svn_lib.artifact_manager import artifact_manager
@@ -446,12 +447,13 @@ class SVNRepositoryMirror:
     dest_path = symbol.get_path()
 
     if self.path_exists(dest_path):
-      raise self.SVNRepositoryMirrorInvalidFillOperationError(
+      Log().warn(
           "Error filling branch '%s'.\n"
           "Received an empty SymbolFillingGuide and\n"
           "attempted to create a branch that already exists."
           % symbol.get_clean_name()
           )
+      return
 
     source_path = symbol.project.trunk_path
     node = self.copy_path(source_path, dest_path, self._youngest - 1)

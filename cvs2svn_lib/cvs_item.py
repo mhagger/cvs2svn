@@ -200,24 +200,36 @@ class CVSRevision(CVSItem):
     else:
       self.lod = Branch(Ctx()._symbol_db.get_symbol(lod_id))
 
-  def get_pred_ids(self):
+  def get_symbol_pred_ids(self):
+    """Return the pred_ids for symbol predecessors."""
+
     retval = set()
     if self.first_on_branch_id is not None:
       retval.add(self.first_on_branch_id)
+    return retval
+
+  def get_pred_ids(self):
+    retval = self.get_symbol_pred_ids()
     if self.prev_id is not None:
       retval.add(self.prev_id)
     if self.default_branch_prev_id is not None:
       retval.add(self.default_branch_prev_id)
     return retval
 
-  def get_succ_ids(self):
+  def get_symbol_succ_ids(self):
+    """Return the succ_ids for symbol successors."""
+
     retval = set()
+    for id in self.branch_ids + self.tag_ids:
+      retval.add(id)
+    return retval
+
+  def get_succ_ids(self):
+    retval = self.get_symbol_succ_ids()
     if self.next_id is not None:
       retval.add(self.next_id)
     if self.default_branch_next_id is not None:
       retval.add(self.default_branch_next_id)
-    for id in self.branch_ids + self.tag_ids:
-      retval.add(id)
     for id in self.branch_commit_ids:
       retval.add(id)
     return retval

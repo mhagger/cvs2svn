@@ -21,8 +21,12 @@ Version x.x.x (not yet released)
  * Gracefully handle tags that refer to nonexistent revisions.
  * Check and fail if revision header appears multiple times.
  * Gracefully handle multiple deltatext blocks for same revision.
+ * Be more careful about only processing reasonable *,v files.
+ * Improve checks for illegal filenames.
+ * Check if a directory name conflicts with a filename.
 
  Miscellaneous:
+ * Add a simple (nonportable) script to log cvs2svn memory usage.
 
 
 Version 1.5.1 (28 January 2007)

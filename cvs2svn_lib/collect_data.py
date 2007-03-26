@@ -1021,12 +1021,26 @@ class _ProjectDataCollector:
     except ValueError:
       has_attic = False
 
-    for fname in files:
+    for fname in files[:]:
       pathname = os.path.join(dirname, fname)
       if os.path.isdir(pathname):
         # Verify that the directory name does not contain any illegal
-        # characters, but otherwise ignore it:
+        # characters:
         self.project.verify_filename_legal(pathname, fname)
+        # Check if there is a conflict between this directory name and
+        # a file name:
+        if (fname + ',v') in files:
+          err = (
+              '%s: Directory name conflicts with filename.  Please remove '
+              'one or the other:\n'
+              '    "%s"\n'
+              '    "%s"'
+              % (error_prefix, pathname, pathname + ',v')
+              )
+          sys.stderr.write(err + '\n')
+          self.fatal_errors.append(err)
+          # Remove directory from recursion:
+          files.remove(fname)
       elif fname.endswith(',v'):
         self._process_non_attic_file(pathname)
         self.found_valid_file = True

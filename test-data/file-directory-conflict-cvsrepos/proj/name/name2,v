@@ -1,0 +1,23 @@
+head	1.1;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2007.03.26.12.00.00;	author mhagger;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Adding file "name2".
+@
+text
+@@

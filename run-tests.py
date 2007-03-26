@@ -2486,6 +2486,15 @@ def crossed_branches():
   conv = ensure_conversion('crossed-branches')
 
 
+def file_directory_conflict():
+  "error when filename conflicts with directory name"
+
+  conv = ensure_conversion(
+      'file-directory-conflict',
+      error_re=r'.*Directory name conflicts with filename',
+      )
+
+
 ########################################################################
 # Run the tests
 
@@ -2613,6 +2622,7 @@ test_list = [
     nasty_graphs,
     XFail(tagging_after_delete),
     crossed_branches,
+    file_directory_conflict,
     ]
 
 if __name__ == '__main__':

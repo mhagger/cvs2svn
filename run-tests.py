@@ -88,8 +88,11 @@ class RunProgramException(Failure):
   pass
 
 
-class MissingErrorException:
-  pass
+class MissingErrorException(Failure):
+  def __init__(self, error_re):
+    Failure.__init__(
+        self, "Test failed because no error matched '%s'" % (error_re,)
+        )
 
 
 def run_program(program, error_re, *varargs):
@@ -107,7 +110,7 @@ def run_program(program, error_re, *varargs):
       for line in err:
         if re.match(error_re, line):
           return out
-      raise MissingErrorException()
+      raise MissingErrorException(error_re)
     else:
       if svntest.main.verbose_mode:
         print '\n%s said:\n' % program
@@ -496,24 +499,19 @@ class Conversion:
           '--options=%s' % self.options_file,
           ])
 
-    try:
-      if passbypass:
-        self.stdout = []
-        for p in range(1, self.get_last_pass() + 1):
-          self.stdout += run_cvs2svn(error_re, '-p', str(p), *args)
-      else:
-        self.stdout = run_cvs2svn(error_re, *args)
-    except RunProgramException:
-      raise Failure()
-    except MissingErrorException:
-      raise Failure("Test failed because no error matched '%s'"
-                            % error_re)
+    if passbypass:
+      self.stdout = []
+      for p in range(1, self.get_last_pass() + 1):
+        self.stdout += run_cvs2svn(error_re, '-p', str(p), *args)
+    else:
+      self.stdout = run_cvs2svn(error_re, *args)
 
-    if not os.path.isdir(self.repos):
+    if os.path.isdir(self.repos):
+      self.logs = parse_log(self.repos, self.symbols)
+    elif error_re is None:
       raise Failure("Repository not created: '%s'"
-                            % os.path.join(os.getcwd(), self.repos))
+                    % os.path.join(os.getcwd(), self.repos))
 
-    self.logs = parse_log(self.repos, self.symbols)
 
   def find_tag_log(self, tagname):
     """Search LOGS for a log message containing 'TAGNAME' and return the
@@ -1782,17 +1780,15 @@ def branch_from_default_branch():
 
 def file_in_attic_too():
   "die if a file exists in and out of the attic"
-  try:
-    ensure_conversion(
-        'file-in-attic-too',
-        error_re=(
-            r'A CVS repository cannot contain both '
-            r'(.*)' + re.escape(os.sep) + r'(.*) '
-            + r'and '
-            r'\1' + re.escape(os.sep) + r'Attic' + re.escape(os.sep) + r'\2'))
-    raise MissingErrorException()
-  except Failure:
-    pass
+  ensure_conversion(
+      'file-in-attic-too',
+      error_re=(
+          r'.*A CVS repository cannot contain both '
+          r'(.*)' + re.escape(os.sep) + r'(.*) '
+          + r'and '
+          r'\1' + re.escape(os.sep) + r'Attic' + re.escape(os.sep) + r'\2'
+          )
+      )
 
 
 def retain_file_in_attic_too():
@@ -2112,13 +2108,9 @@ def nested_ttb_directories():
     ]
 
   for opts in opts_list:
-    try:
-      ensure_conversion(
-          'main', error_re=r'.*paths .* and .* are not disjoint\.', **opts
-          )
-      raise MissingErrorException()
-    except Failure:
-      pass
+    ensure_conversion(
+        'main', error_re=r'.*paths .* and .* are not disjoint\.', **opts
+        )
 
 
 class AutoProps(Cvs2SvnPropertiesTestCase):
@@ -2204,15 +2196,11 @@ def ctrl_char_in_filename():
       # case, just skip this test.
       raise svntest.Skip()
 
-    try:
-      conv = ensure_conversion(
-          'ctrl-char-filename',
-          error_re=(r'.*Character .* in filename .* '
-                    r'is not supported by subversion\.'),
-          )
-      raise MissingErrorException()
-    except Failure:
-      pass
+    conv = ensure_conversion(
+        'ctrl-char-filename',
+        error_re=(r'.*Character .* in filename .* '
+                  r'is not supported by Subversion\.'),
+        )
   finally:
     svntest.main.safe_rmtree(dstrepos_path)
 

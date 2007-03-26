@@ -84,11 +84,13 @@ tmp_dir = 'tmp'
 KEYWORDS = 'Author Date Id Revision'
 
 
-class RunProgramException:
+class RunProgramException(Failure):
   pass
+
 
 class MissingErrorException:
   pass
+
 
 def run_program(program, error_re, *varargs):
   """Run PROGRAM with VARARGS, return stdout as a list of lines.

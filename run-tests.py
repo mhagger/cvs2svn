@@ -496,8 +496,9 @@ class Conversion:
 
     try:
       if passbypass:
+        self.stdout = []
         for p in range(1, self.get_last_pass() + 1):
-          self.stdout = run_cvs2svn(error_re, '-p', str(p), *args)
+          self.stdout += run_cvs2svn(error_re, '-p', str(p), *args)
       else:
         self.stdout = run_cvs2svn(error_re, *args)
     except RunProgramException:

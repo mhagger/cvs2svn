@@ -1364,12 +1364,19 @@ def nonascii_filenames():
 class UnicodeLog(Cvs2SvnTestCase):
   "log message contains unicode"
 
-  def __init__(self, warning_re=None, **kw):
+  warning_re=re.compile(r'WARNING\: problem encoding author or log message')
+
+  def __init__(self, warning_expected, **kw):
     Cvs2SvnTestCase.__init__(self, 'unicode-log', **kw)
-    if warning_re is None:
-      self.warning_re = None
+    self.warning_expected = warning_expected
+
+  def warning_found(self, lines):
+    for line in lines:
+      if self.warning_re.match(line):
+        # We found the warning that we were looking for.
+        return 1
     else:
-      self.warning_re = re.compile(warning_re)
+      return 0
 
   def run(self):
     try:
@@ -1380,12 +1387,11 @@ class UnicodeLog(Cvs2SvnTestCase):
 
     conv = self.ensure_conversion()
 
-    if self.warning_re is not None:
-      for line in conv.stdout:
-        if self.warning_re.match(line):
-          # We found the warning that we were looking for.  Exit happily.
-          return
-      else:
+    if self.warning_expected:
+      if not self.warning_found(conv.stdout):
+        raise Failure()
+    else:
+      if self.warning_found(conv.stdout):
         raise Failure()
 
 
@@ -2546,10 +2552,12 @@ test_list = [
     nonascii_filenames,
 # 40:
     UnicodeLog(
-        warning_re=r'WARNING\: problem encoding author or log message'),
+        warning_expected=1),
     UnicodeLog(
+        warning_expected=0,
         variant='encoding', args=['--encoding=utf_8']),
     UnicodeLog(
+        warning_expected=0,
         variant='fallback-encoding', args=['--fallback-encoding=utf_8']),
     vendor_branch_sameness,
     default_branches,

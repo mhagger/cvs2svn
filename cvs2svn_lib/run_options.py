@@ -439,9 +439,9 @@ class RunOptions:
         symbol_transforms=symbol_transforms))
 
     try:
-      ctx.utf8_decoder = UTF8Encoder(encodings, fallback_encoding)
+      ctx.utf8_encoder = UTF8Encoder(encodings, fallback_encoding)
       # Don't use fallback_encoding for filenames:
-      ctx.filename_utf8_decoder = UTF8Encoder(encodings)
+      ctx.filename_utf8_encoder = UTF8Encoder(encodings)
     except LookupError, e:
       raise FatalError(str(e))
 

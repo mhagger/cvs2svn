@@ -750,7 +750,8 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     self._revision_data.append(rev_data)
 
     self.revision_recorder_token = \
-        self.collect_data.revision_recorder.record_text(rev_data, log, text)
+        self.collect_data.revision_recorder.record_text(
+            self._rev_data, revision, log, text)
 
   def _process_default_branch_revisions(self):
     """Process any non-trunk default branch revisions.

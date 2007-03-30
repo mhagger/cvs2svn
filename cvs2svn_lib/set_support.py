@@ -85,6 +85,14 @@ except NameError:
             retval.add(x)
         return retval
 
+      def update(self, other):
+        for x in other:
+          self.add(x)
+        return self
+
+      def __ior__(self, other):
+        return self.update(other)
+
       def __repr__(self):
         return 'Set(%r)' % (self._dict.keys(),)
 

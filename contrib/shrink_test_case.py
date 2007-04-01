@@ -37,16 +37,41 @@ if the bug is still present, and fail if the bug is absent."""
 import sys
 import os
 import shutil
+import getopt
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(sys.argv[0])))
 
 from cvs2svn_lib.key_generator import KeyGenerator
+
+usage_string = """\
+USAGE: %(progname)s [OPT...] CVSREPO TEST_COMMAND
+
+  CVSREPO is the path to a CVS repository.
+
+  ***THE REPOSITORY WILL BE DESTROYED***
+
+  TEST_COMMAND is a command that runs successfully (i.e., with exit
+  code '0') if the bug is still present, and fails if the bug is
+  absent.
+
+Valid options:
+  --skip-initial-test  Assume that the bug is present when run on the initial
+                       repository.  Usually this fact is verified
+                       automatically.
+  --help, -h           Print this usage message.
+"""
+
 
 verbose = 1
 
 tmpdir = 'shrink_test_case-tmp'
 
 file_key_generator = KeyGenerator(1)
+
+
+def usage(f=sys.stderr):
+  f.write(usage_string % {'progname' : sys.argv[0]})
+
 
 def get_tmp_filename():
     return os.path.join(tmpdir, 'f%07d.tmp' % file_key_generator.gen_id())
@@ -261,26 +286,54 @@ def try_delete_files(path):
         try_delete_files(subdir)
 
 
-cvsrepo = sys.argv[1]
-test_command = sys.argv[2:]
+try:
+    opts, args = getopt.getopt(sys.argv[1:], 'h', [
+        'skip-initial-test',
+        'help',
+        ])
+except getopt.GetoptError, e:
+    sys.stderr.write('Unknown option: %s\n' % (e,))
+    usage()
+    sys.exit(1)
+
+
+skip_initial_test = False
+
+for opt, value in opts:
+    if opt in ['--skip-initial-test']:
+        skip_initial_test = True
+    elif opt in ['-h', '--help']:
+        usage(sys.stdout)
+        sys.exit(0)
+    else:
+        sys.exit('Internal error')
+
+
+cvsrepo = args[0]
+test_command = args[1:]
 
 
 if not os.path.isdir(tmpdir):
     os.makedirs(tmpdir)
 
 
-# Verify that test_command succeeds with the original repository:
-try:
-    command(*test_command)
-except CommandFailedException, e:
-    sys.stderr.write(
-        'ERROR!  The test command failed with the original repository.\n'
-        'The test command should be designed so that it succeeds\n'
-        '(indicating that the bug is still present) with the original\n'
-        'repository, and fails only after the bug disappears.\n'
-        'Please fix your test command and start again.\n'
+if not skip_initial_test:
+    # Verify that test_command succeeds with the original repository:
+    try:
+        command(*test_command)
+    except CommandFailedException, e:
+        sys.stderr.write(
+            'ERROR!  The test command failed with the original repository.\n'
+            'The test command should be designed so that it succeeds\n'
+            '(indicating that the bug is still present) with the original\n'
+            'repository, and fails only after the bug disappears.\n'
+            'Please fix your test command and start again.\n'
+            )
+        sys.exit(1)
+    sys.stdout.write(
+        'The bug is confirmed to exist in the initial repository.\n'
         )
-    sys.exit(1)
+
 
 try_delete_subdirs(cvsrepo)
 try_delete_files(cvsrepo)

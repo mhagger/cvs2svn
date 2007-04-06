@@ -17,6 +17,8 @@
 """This module contains class PersistenceManager."""
 
 
+import bisect
+
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib import config
 from cvs2svn_lib.common import DB_OPEN_NEW
@@ -117,6 +119,26 @@ class PersistenceManager:
     """Return True iff LOD has been filled since SVN_REVNUM."""
 
     return self._fills.get(lod.symbol, [0])[-1] >= svn_revnum
+
+  def last_filled(self, symbol):
+    """Return the last svn revision number in which SYMBOL was filled.
+
+    If it has never been filled, return None."""
+
+    return self._fills.get(symbol, [None])[-1]
+
+  def first_fill_after(self, symbol, revnum):
+    """Return the svn revnum of the first fill of SYMBOL after REVNUM.
+
+    Return None if SYMBOL has not been filled since REVNUM."""
+
+    fills = self._fills.get(symbol, [])
+
+    i = bisect.bisect_right(fills, revnum)
+    if i == len(fills):
+      return None
+
+    return fills[i]
 
   def close(self):
     self.cvs2svn_db.close()

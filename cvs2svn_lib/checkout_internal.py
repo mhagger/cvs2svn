@@ -212,7 +212,7 @@ class InternalRevisionExcluder(RevisionExcluder):
 
 
 class _Rev:
-  def __init__(self, cvs_rev_id, ref):
+  def __init__(self, ref):
     # The number of revisions defined relative to this revision.
     self.ref = ref
 
@@ -232,8 +232,8 @@ class _Rev:
 class _PendingRev(_Rev):
   """A _Rev that hasn't been retrieved yet."""
 
-  def __init__(self, cvs_rev_id):
-    _Rev.__init__(self, cvs_rev_id, 0)
+  def __init__(self):
+    _Rev.__init__(self, 0)
 
     # The cvs_rev_id of the revision that this one is defined
     # relative to, or None if it is the root revision.
@@ -274,7 +274,7 @@ class _CheckedOutRev(_Rev):
   """A _Rev that has been retrieved, but is still referred to by other revs."""
 
   def __init__(self, cvs_rev_id, ref, file_tree, text):
-    _Rev.__init__(self, cvs_rev_id, ref)
+    _Rev.__init__(self, ref)
     file_tree._co_db[str(cvs_rev_id)] = text
 
   def checkout(self, cvs_rev_id, file_tree, deref=0):
@@ -305,7 +305,7 @@ class _FileTree:
       for cvs_rev_id in lod:
         rev = self._revs.get(cvs_rev_id, None)
         if rev is None:
-          rev = _PendingRev(cvs_rev_id)
+          rev = _PendingRev()
           self[cvs_rev_id] = rev
         if succ_cvs_rev_id is not None:
           self[succ_cvs_rev_id].prev = cvs_rev_id

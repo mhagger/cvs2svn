@@ -245,29 +245,31 @@ class _PendingRev(_Rev):
     Recurse if a revision was skipped.  FILE_TREE is the _FileTree
     that manages this revision."""
 
+    self.ref -= deref
     if self.prev is not None:
       co = file_tree[self.prev].checkout(self.prev, file_tree, 1)
       co.apply_diff(file_tree._delta_db[cvs_rev_id])
+      if self.ref or not deref:
+        text = co.get_text()
     else:
       # Root revision - initialize checkout.
-      co = RCSStream(file_tree._delta_db[cvs_rev_id])
-    self.ref -= deref
+      text = file_tree._delta_db[cvs_rev_id]
+      if deref:
+        co = RCSStream(text)
     if self.ref:
       # Revision has descendants.  Replace SELF with a _CheckedOutRev
       # in file_tree:
-      text = co.get_text()
       file_tree[cvs_rev_id] = _CheckedOutRev(
           cvs_rev_id, self.ref, file_tree, text
           )
-      if not deref:
-        return text
     else:
       # Revision is branch head with no descendants.  It is no longer
       # needed.
       del file_tree[cvs_rev_id]
-      if not deref:
-        return co.get_text()
-    return co
+    if deref:
+      return co
+    else:
+      return text
 
 
 class _CheckedOutRev(_Rev):

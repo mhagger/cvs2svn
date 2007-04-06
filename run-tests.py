@@ -513,6 +513,21 @@ class Conversion:
                     % os.path.join(os.getcwd(), self.repos))
 
 
+  def output_found(self, pattern):
+    """Return True if PATTERN matches any line in self.stdout.
+
+    PATTERN is a regular expression pattern as a string.
+    """
+
+    pattern_re = re.compile(pattern)
+
+    for line in self.stdout:
+      if pattern_re.match(line):
+        # We found the pattern that we were looking for.
+        return 1
+    else:
+      return 0
+
   def find_tag_log(self, tagname):
     """Search LOGS for a log message containing 'TAGNAME' and return the
     log in which it was found."""
@@ -1364,19 +1379,11 @@ def nonascii_filenames():
 class UnicodeLog(Cvs2SvnTestCase):
   "log message contains unicode"
 
-  warning_re=re.compile(r'WARNING\: problem encoding author or log message')
+  warning_pattern = r'WARNING\: problem encoding author or log message'
 
   def __init__(self, warning_expected, **kw):
     Cvs2SvnTestCase.__init__(self, 'unicode-log', **kw)
     self.warning_expected = warning_expected
-
-  def warning_found(self, lines):
-    for line in lines:
-      if self.warning_re.match(line):
-        # We found the warning that we were looking for.
-        return 1
-    else:
-      return 0
 
   def run(self):
     try:
@@ -1388,10 +1395,10 @@ class UnicodeLog(Cvs2SvnTestCase):
     conv = self.ensure_conversion()
 
     if self.warning_expected:
-      if not self.warning_found(conv.stdout):
+      if not conv.output_found(self.warning_pattern):
         raise Failure()
     else:
-      if self.warning_found(conv.stdout):
+      if conv.output_found(self.warning_pattern):
         raise Failure()
 
 

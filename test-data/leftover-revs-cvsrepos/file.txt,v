@@ -1,0 +1,60 @@
+head	1.2;
+access;
+symbols
+	BRANCH:1.2.0.2;
+locks; strict;
+comment	@// @;
+
+
+1.2
+date	2003.07.04.16.36.26;	author author4;	state dead;
+branches
+	1.2.2.1;
+next	1.1;
+
+1.1
+date	2003.07.04.16.13.47;	author author4;	state Exp;
+branches;
+next	;
+
+1.2.2.1
+date	2003.07.13.07.12.30;	author author15;	state Exp;
+branches;
+next	1.2.2.2;
+
+1.2.2.2
+date	2004.04.09.01.57.02;	author author15;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@log 1670@
+text
+@@
+
+
+1.2.2.1
+log
+@log 1950@
+text
+@@
+
+
+1.2.2.2
+log
+@log 11@
+text
+@@
+
+
+1.1
+log
+@log 1671@
+text
+@@

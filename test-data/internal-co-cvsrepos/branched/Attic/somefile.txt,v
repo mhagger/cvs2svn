@@ -1,0 +1,181 @@
+head	1.5;
+access;
+symbols
+	BRANCH_FROM_DEAD:1.5.0.2
+	BRANCH:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.5
+date	2007.04.05.15.32.44;	author ossi;	state dead;
+branches
+	1.5.2.1;
+next	1.4;
+commitid	ksTEPgcwRGzBKTcs;
+
+1.4
+date	2007.04.05.15.32.23;	author ossi;	state Exp;
+branches;
+next	1.3;
+commitid	g00K7nhwfWduKTcs;
+
+1.3
+date	2007.04.05.15.13.23;	author ossi;	state dead;
+branches;
+next	1.2;
+commitid	6vDsezBCNsbYDTcs;
+
+1.2
+date	2007.04.05.15.13.08;	author ossi;	state Exp;
+branches;
+next	1.1;
+commitid	XPB93k3c4jJSDTcs;
+
+1.1
+date	2007.04.05.15.07.41;	author ossi;	state Exp;
+branches
+	1.1.2.1;
+next	;
+commitid	jgg4E7IfvqX0CTcs;
+
+1.5.2.1
+date	2007.04.05.15.32.44;	author ossi;	state dead;
+branches;
+next	1.5.2.2;
+commitid	bGYbKyNPiicdLTcs;
+
+1.5.2.2
+date	2007.04.05.15.34.30;	author ossi;	state Exp;
+branches;
+next	;
+commitid	bGYbKyNPiicdLTcs;
+
+1.1.2.1
+date	2007.04.05.15.30.02;	author ossi;	state Exp;
+branches;
+next	1.1.2.2;
+commitid	6MkfqH2xRPLDJTcs;
+
+1.1.2.2
+date	2007.04.05.15.30.44;	author ossi;	state Exp;
+branches;
+next	1.1.2.3;
+commitid	BSF6Cvx3cHWUJTcs;
+
+1.1.2.3
+date	2007.04.05.15.30.55;	author ossi;	state dead;
+branches;
+next	;
+commitid	UTPOIUtFBh3ZJTcs;
+
+
+desc
+@@
+
+
+1.5
+log
+@file re-deleted on trunk
+@
+text
+@resurrected file content.
+@
+
+
+1.5.2.1
+log
+@file somefile.txt was added on branch BRANCH_FROM_DEAD on 2007-04-05 15:34:30 +0000
+@
+text
+@d1 1
+@
+
+
+1.5.2.2
+log
+@file revived on branch
+@
+text
+@a0 1
+text on branch spawning from dead revision.@
+
+
+1.4
+log
+@file resurrected on trunk
+@
+text
+@@
+
+
+1.3
+log
+@file deleted
+@
+text
+@d1 1
+a1 2
+keyword: $Id: somefile.txt,v 1.2 2007-04-05 15:13:08 ossi Exp $ now done
+this is modified file content.
+@
+
+
+1.2
+log
+@file modified
+@
+text
+@d1 1
+a1 1
+keyword: $Id: somefile.txt,v 1.1 2007-04-05 15:07:41 ossi Exp $ now done
+@
+
+
+1.1
+log
+@file added
+@
+text
+@d1 2
+a2 2
+this is file content.
+keyword: $Id: fake expaded keyword$ now done
+@
+
+
+1.1.2.1
+log
+@modified on branch
+@
+text
+@d2 1
+a2 2
+text added on branch.
+keyword: $Id: somefile.txt,v 1.1 2007-04-05 15:07:41 ossi Exp $ now done
+@
+
+
+1.1.2.2
+log
+@file modified on branch, take 2
+@
+text
+@d3 1
+a3 2
+keyword: $Id: somefile.txt,v 1.1.2.1 2007-04-05 15:30:02 ossi Exp $ now done
+more text added on branch.
+@
+
+
+1.1.2.3
+log
+@file deleted on branch
+@
+text
+@d3 1
+a3 1
+keyword: $Id: somefile.txt,v 1.1.2.2 2007-04-05 15:30:44 ossi Exp $ now done
+@
+
+

@@ -45,6 +45,7 @@ from cvs2svn_lib.project import Project
 from cvs2svn_lib.pass_manager import InvalidPassError
 from cvs2svn_lib.revision_reader import RCSRevisionReader
 from cvs2svn_lib.revision_reader import CVSRevisionReader
+from cvs2svn_lib.checkout_internal import InternalRevisionReader
 from cvs2svn_lib.symbol_strategy import AllBranchRule
 from cvs2svn_lib.symbol_strategy import AllTagRule
 from cvs2svn_lib.symbol_strategy import BranchIfCommitsRule
@@ -85,6 +86,8 @@ USAGE: %(progname)s [-v] [-s svn-repos-path] [-p pass] cvs-repos-path
                        just print what would happen.
   --use-cvs            use CVS instead of RCS 'co' to extract data
                        (only use this if having problems with RCS)
+  --use-internal-co    use internal implementation of RCS 'co' to extract data
+                       (very fast but disk space intensive)
   --trunk-only         convert only trunk commits, not tags nor branches
   --trunk=PATH         path for trunk (default: %(trunk_base)s)
   --branches=PATH      path for branches (default: %(branches_base)s)
@@ -151,7 +154,7 @@ class RunOptions:
           "help", "help-passes", "version",
           "verbose", "quiet",
           "existing-svnrepos", "dumpfile=", "dry-run",
-          "use-cvs",
+          "use-cvs", "use-internal-co",
           "trunk-only",
           "trunk=", "branches=", "tags=",
           "no-prune",
@@ -270,6 +273,7 @@ class RunOptions:
     dump_only = False
     dumpfile = None
     use_cvs = False
+    use_internal_co = False
     symbol_strategy_default = 'strict'
     mime_types_file = None
     auto_props_file = None
@@ -297,6 +301,8 @@ class RunOptions:
         dumpfile = value
       elif opt == '--use-cvs':
         use_cvs = True
+      elif opt == '--use-internal-co':
+        use_internal_co = True
       elif opt == '--trunk-only':
         ctx.trunk_only = True
       elif opt == '--trunk':
@@ -414,6 +420,9 @@ class RunOptions:
     not_both(fs_type, '--fs-type',
              existing_svnrepos, '--existing-svnrepos')
 
+    not_both(use_cvs, '--use-cvs',
+             use_internal_co, '--use-internal-co')
+
     if fs_type and fs_type != 'bdb' and bdb_txn_nosync:
       raise FatalError("cannot pass --bdb-txn-nosync with --fs-type=%s."
                        % fs_type)
@@ -427,7 +436,9 @@ class RunOptions:
     else:
       ctx.output_option = DumpfileOutputOption(dumpfile)
 
-    if use_cvs:
+    if use_internal_co:
+      ctx.revision_reader = InternalRevisionReader()
+    elif use_cvs:
       ctx.revision_reader = CVSRevisionReader(cvs_executable)
     else:
       ctx.revision_reader = RCSRevisionReader(co_executable)

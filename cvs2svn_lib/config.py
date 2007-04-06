@@ -168,6 +168,35 @@ PIPE_READ_SIZE = 128 * 1024
 # when constructing ids.
 METADATA_DB = "cvs2svn-metadata.db"
 
+# The following four databases are used in conjunction with --use-internal-co.
+
+# Records the RCS deltas for all CVS revisions.  The deltas are to be
+# applied forward, i.e. those from trunk are reversed wrt RCS.
+RCS_DELTAS_INDEX_TABLE = "cvs2svn-rcs-deltas-index.dat"
+RCS_DELTAS_STORE = "cvs2svn-rcs-deltas.pck"
+
+# Records the revision tree of each RCS file.  The format is a list of
+# list of integers.  The outer list holds lines of development, the inner list
+# revisions within the LODs, revisions are CVSItem ids.  Branches "closer
+# to the trunk" appear later.  Revisions are sorted by reverse chronological
+# order.  The last revision of each branch is the revision it sprouts from.
+# Revisions that represent deletions at the end of a branch are omitted.
+RCS_TREES_INDEX_TABLE = "cvs2svn-rcs-trees-index.dat"
+RCS_TREES_STORE = "cvs2svn-rcs-trees.pck"
+
+# Records the revision tree of each RCS file after removing revisions
+# belonging to excluded branches.  Note that the branch ordering is arbitrary
+# in this file.
+RCS_TREES_FILTERED_INDEX_TABLE = "cvs2svn-rcs-trees-filtered-index.dat"
+RCS_TREES_FILTERED_STORE = "cvs2svn-rcs-trees-filtered.pck"
+
+# At any given time during OutputPass, holds the full text of each CVS
+# revision that was checked out already and still has descendants that will
+# be checked out.
+CVS_CHECKOUT_DB = "cvs2svn-cvs-checkout.db"
+
+# End of DBs related to --use-internal-co.
+
 # If this run's output is a repository, then (in the tmpdir) we use
 # a dumpfile of this name for repository loads.
 #

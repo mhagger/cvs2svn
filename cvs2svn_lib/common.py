@@ -168,3 +168,21 @@ class UTF8Encoder:
       raise UnicodeError
 
 
+class Timestamper:
+  """Return monotonic timestamps derived from changeset timestamps."""
+
+  def __init__(self):
+    # The last timestamp that has been returned:
+    self.timestamp = 0.0
+
+  def get(self, timestamp):
+    """Return a reasonable timestamp derived from TIMESTAMP.
+
+    Push TIMESTAMP into the future if necessary to ensure that it is
+    at least one second later than every other timestamp that has been
+    returned by previous calls to this method."""
+
+    self.timestamp = max(timestamp, self.timestamp + 1.0)
+    return self.timestamp
+
+

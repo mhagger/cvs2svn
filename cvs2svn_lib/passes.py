@@ -34,6 +34,7 @@ from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import DB_OPEN_NEW
 from cvs2svn_lib.common import DB_OPEN_READ
 from cvs2svn_lib.common import DB_OPEN_WRITE
+from cvs2svn_lib.common import Timestamper
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.cvs_file_database import CVSFileDatabase
@@ -1008,10 +1009,10 @@ class TopologicalSortPass(Pass):
     # Ensure a monotonically-increasing timestamp series by keeping
     # track of the previous timestamp and ensuring that the following
     # one is larger.
-    timestamp = 0
+    timestamper = Timestamper()
 
     for (changeset_id, time_range) in changeset_graph.consume_graph():
-      timestamp = max(time_range.t_max, timestamp + 1)
+      timestamp = timestamper.get(time_range.t_max)
       sorted_changesets.write('%x %08x\n' % (changeset_id, timestamp,))
 
     sorted_changesets.close()

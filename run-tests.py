@@ -2588,6 +2588,23 @@ def requires_internal_co():
     raise Failure()
 
 
+def timestamp_chaos():
+  "test timestamp adjustments"
+
+  conv = ensure_conversion('timestamp-chaos', args=["-v"])
+
+  times = [
+      '2007-01-01 22:00:00', # Initial commit
+      '2007-01-01 22:00:00', # revision 1.1 of both files
+      '2007-01-01 22:00:01', # revision 1.2 of file1.txt, adjusted forwards
+      '2007-01-01 22:00:02', # revision 1.2 of file1.txt, adjusted backwards
+      '2007-01-01 23:00:00', # revision 1.3 of both files
+      ]
+  for i in range(len(times)):
+    if abs(conv.logs[i + 1].date - time.mktime(svn_strptime(times[i]))) > 0.1:
+      raise Failure()
+
+
 ########################################################################
 # Run the tests
 
@@ -2724,6 +2741,7 @@ test_list = [
     internal_co_trunk_only,
     XFail(leftover_revs),
     requires_internal_co,
+    timestamp_chaos,
     ]
 
 if __name__ == '__main__':

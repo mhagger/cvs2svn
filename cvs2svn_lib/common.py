@@ -175,6 +175,9 @@ class Timestamper:
     # The last timestamp that has been returned:
     self.timestamp = 0.0
 
+    # The maximum timestamp that is considered reasonable:
+    self.max_timestamp = time.time() + 24.0 * 60.0 * 60.0
+
   def get(self, timestamp):
     """Return a reasonable timestamp derived from TIMESTAMP.
 
@@ -182,7 +185,34 @@ class Timestamper:
     at least one second later than every other timestamp that has been
     returned by previous calls to this method."""
 
-    self.timestamp = max(timestamp, self.timestamp + 1.0)
+    if timestamp > self.max_timestamp:
+      # If a timestamp is in the future, it is assumed that it is
+      # bogus.  Shift it backwards in time to prevent it forcing other
+      # timestamps to be pushed even further in the future.
+
+      # Note that this is not nearly a complete solution to the bogus
+      # timestamp problem.  A timestamp in the future still affects
+      # the ordering of changesets, and a changeset having such a
+      # timestamp will not be committed until all changesets with
+      # earlier timestamps have been committed, even if other
+      # changesets with even earlier timestamps depend on this one.
+      self.timestamp = self.timestamp + 1.0
+      Log().warn(
+          'Timestamp "%s" is in the future; changed to "%s".'
+          % (time.asctime(time.gmtime(timestamp)),
+             time.asctime(time.gmtime(self.timestamp)),)
+          )
+    elif timestamp < self.timestamp + 1.0:
+      self.timestamp = self.timestamp + 1.0
+      if Log().is_on(Log.VERBOSE):
+        Log().verbose(
+            'Timestamp "%s" adjusted to "%s" to ensure monotonicity.'
+            % (time.asctime(time.gmtime(timestamp)),
+               time.asctime(time.gmtime(self.timestamp)),)
+            )
+    else:
+      self.timestamp = timestamp
+
     return self.timestamp
 
 

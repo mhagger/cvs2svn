@@ -414,7 +414,9 @@ dependency-free changeset is available, the one with the earliest
 timestamp is chosen (with symbol changesets being committed as soon as
 possible).  As changesets are processed, the timestamp sequence is
 ensured to be monotonic by the simple expedient of adjusting
-retrograde timestamps to be later than their predecessor.
+retrograde timestamps to be later than their predecessor.  Timestamps
+that lie in the future, on the other hand, are assumed to be bogus and
+are adjusted backwards, also to be just later than their predecessor.
 
 This pass writes a line to 'cvs2svn-changesets-s.txt' for each
 RevisionChangeset, in the order that the changesets should be

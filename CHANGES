@@ -18,6 +18,7 @@ Version x.x.x (not yet released)
  Improvements and output changes:
  * Analyze CVS revision dependency graph, giving a more robust conversion.
  * In the case of clock skew to the past, resync forwards, not backwards.
+ * Treat timestamps that lie in the future as bogus, and adjust backwards.
  * Gracefully handle tags that refer to nonexistent revisions.
  * Check and fail if revision header appears multiple times.
  * Gracefully handle multiple deltatext blocks for same revision.

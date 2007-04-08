@@ -2621,14 +2621,13 @@ def symlinks():
 
   # This is a test for issue #97.
 
-  srcrepos_path = os.path.join(test_data_dir, 'symlink-cvsrepos')
   if not os.path.islink(
-      os.path.join(test_data_dir, 'symlink-cvsrepos', 'proj', 'dir2')
+      os.path.join(test_data_dir, 'symlinks-cvsrepos', 'proj', 'dir2')
       ):
     # Apparently this OS doesn't support symlinks, so skip test.
     raise svntest.Skip()
 
-  conv = ensure_conversion('symlink')
+  conv = ensure_conversion('symlinks')
   conv.logs[2].check('', (
     ('/%(trunk)s/proj', 'A'),
     ('/%(trunk)s/proj/file.txt', 'A'),

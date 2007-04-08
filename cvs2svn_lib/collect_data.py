@@ -293,12 +293,14 @@ class _SymbolDataCollector(object):
     branch_data = self.branches_data.get(branch_number)
 
     if branch_data is not None:
-      sys.stderr.write("%s: in '%s':\n"
-                       "   branch '%s' already has name '%s',\n"
-                       "   cannot also have name '%s', ignoring the latter\n"
-                       % (warning_prefix,
-                          self.cvs_file.filename, branch_number,
-                          branch_data.symbol.name, name))
+      Log().warn(
+          "%s: in '%s':\n"
+          "   branch '%s' already has name '%s',\n"
+          "   cannot also have name '%s', ignoring the latter\n"
+          % (warning_prefix,
+             self.cvs_file.filename, branch_number,
+             branch_data.symbol.name, name)
+          )
       return branch_data
 
     symbol = self.pdc.get_symbol(name)
@@ -724,10 +726,12 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       # that's what we will do.  (For the record: "cvs log" fails on
       # such a file; "rlog" prints the log message from the first
       # block and ignores the second one.)
-      sys.stderr.write("%s: in '%s':\n"
-                       "   Deltatext block for revision %s appeared twice; "
-                       "ignoring the second occurrence.\n"
-                       % (warning_prefix, self.cvs_file.filename, revision,))
+      Log().warn(
+          "%s: in '%s':\n"
+          "   Deltatext block for revision %s appeared twice;\n"
+          "   ignoring the second occurrence.\n"
+          % (warning_prefix, self.cvs_file.filename, revision,)
+          )
       return
 
     if is_branch_revision(revision):
@@ -983,10 +987,11 @@ class _ProjectDataCollector:
       cvs_file = self.project.get_cvs_file(pathname)
     except FileInAndOutOfAtticException, e:
       if Ctx().retain_conflicting_attic_files:
-        sys.stdout.write(
+        Log().warn(
             "%s: %s;\n"
             "   storing the latter into 'Attic' subdirectory.\n"
-            % (warning_prefix, e))
+            % (warning_prefix, e)
+            )
         cvs_file = self.project.get_cvs_file(pathname, leave_in_attic=True)
       else:
         self.collect_data.record_fatal_error(str(e))

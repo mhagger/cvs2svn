@@ -2768,7 +2768,7 @@ test_list = [
     XFail(tagging_after_delete),
     crossed_branches,
     file_directory_conflict,
-    XFail(attic_directory_conflict),
+    attic_directory_conflict,
 # 110:
     internal_co,
     internal_co_exclude,

@@ -998,13 +998,19 @@ class _ProjectDataCollector:
       return self.project.get_cvs_file(pathname, leave_in_attic=True)
 
   def _visit_attic_directory(self, dirname):
+    # Maps { fname[:-2] : pathname }:
+    rcsfiles = {}
+
     for fname in os.listdir(dirname):
       pathname = os.path.join(dirname, fname)
       if os.path.isdir(pathname):
         Log().warn("Directory %s found within Attic; ignoring" % (pathname,))
       elif fname.endswith(',v'):
         self.found_rcs_file = True
+        rcsfiles[fname[:-2]] = pathname
         self._process_file(self._get_attic_file(pathname))
+
+    return rcsfiles
 
   def _get_non_attic_file(self, pathname):
     """Return a CVSFile object for the non-Attic file at PATHNAME."""
@@ -1017,12 +1023,17 @@ class _ProjectDataCollector:
     # Map { fname[:-2] : pathname }:
     rcsfiles = {}
 
+    attic_dir = None
+
     dirs = []
 
     for fname in files[:]:
       pathname = os.path.join(dirname, fname)
       if os.path.isdir(pathname):
-        dirs.append(fname)
+        if fname == 'Attic':
+          attic_dir = fname
+        else:
+          dirs.append(fname)
       elif fname.endswith(',v'):
         self.found_rcs_file = True
         rcsfiles[fname[:-2]] = pathname
@@ -1031,8 +1042,30 @@ class _ProjectDataCollector:
         # Silently ignore other files:
         pass
 
-    # Now recurse into subdirectories (including 'Attic', if it
-    # exists):
+    if attic_dir is not None:
+      pathname = os.path.join(dirname, attic_dir)
+      attic_rcsfiles = self._visit_attic_directory(pathname)
+      alldirs = dirs + [attic_dir]
+    else:
+      alldirs = dirs
+      attic_rcsfiles = {}
+
+    # Check for conflicts between directory names and the filenames
+    # that will result from the rcs files (both in this directory and
+    # in attic).  (We recurse into the subdirectories nevertheless, to
+    # try to detect more problems.)
+    for fname in alldirs:
+      for rcsfile_list in [rcsfiles, attic_rcsfiles]:
+        if fname in rcsfile_list:
+          self.collect_data.record_fatal_error(
+              'Directory name conflicts with filename.  Please remove or '
+              'rename one or them:\n'
+              '    "%s"\n'
+              '    "%s"'
+              % (pathname, rcsfile_list[fname],)
+              )
+
+    # Now recurse into the other subdirectories:
     for fname in dirs:
       pathname = os.path.join(dirname, fname)
 
@@ -1040,23 +1073,7 @@ class _ProjectDataCollector:
       # characters:
       self.project.verify_filename_legal(pathname, fname)
 
-      # Check if there is a conflict between this directory name and
-      # a file name:
-      if fname in rcsfiles:
-        self.collect_data.record_fatal_error(
-            'Directory name conflicts with filename.  Please remove '
-            'one or the other:\n'
-            '    "%s"\n'
-            '    "%s"'
-            % (pathname, rcsfiles[fname],)
-            )
-        # We recurse into the directory nevertheless, to try to detect
-        # more problems.
-
-      if fname == 'Attic':
-        self._visit_attic_directory(pathname)
-      else:
-        self._visit_non_attic_directory(pathname)
+      self._visit_non_attic_directory(pathname)
 
 
 class CollectData:

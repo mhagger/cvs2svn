@@ -13,6 +13,7 @@ Version x.x.x (not yet released)
  * Fix issue #97: Follow symlinks within CVS repository.
  * Fix issue #99: cvs2svn tries to create a file twice.
  * Fix issue #100: cvs2svn doesn't retrieve the right version.
+ * Fix issue #105: Conflict between directory and Attic file causes crash.
  * Fix issue #106: SVNRepositoryMirrorParentMissingError.
  * Fix missing command-line handling of --fallback-encoding option.
 

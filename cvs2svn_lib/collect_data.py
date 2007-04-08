@@ -1055,11 +1055,13 @@ class _ProjectDataCollector:
     # in attic).  (We recurse into the subdirectories nevertheless, to
     # try to detect more problems.)
     for fname in alldirs:
+      pathname = os.path.join(dirname, fname)
       for rcsfile_list in [rcsfiles, attic_rcsfiles]:
         if fname in rcsfile_list:
           self.collect_data.record_fatal_error(
               'Directory name conflicts with filename.  Please remove or '
-              'rename one or them:\n'
+              'rename one\n'
+              'of the following:\n'
               '    "%s"\n'
               '    "%s"'
               % (pathname, rcsfile_list[fname],)

@@ -10,6 +10,7 @@ Version x.x.x (not yet released)
  * Don't set svn:keywords on files for which svn:eol-style is not set.
 
  Bugs fixed:
+ * Fix issue #97: Follow symlinks within CVS repository.
  * Fix issue #99: cvs2svn tries to create a file twice.
  * Fix issue #100: cvs2svn doesn't retrieve the right version.
  * Fix issue #106: SVNRepositoryMirrorParentMissingError.

@@ -1013,7 +1013,10 @@ class _ProjectDataCollector:
 
   def _visit_non_attic_directory(self, dirname):
     files = os.listdir(dirname)
-    rcsfiles = []
+
+    # Map { fname[:-2] : pathname }:
+    rcsfiles = {}
+
     dirs = []
 
     for fname in files[:]:
@@ -1022,7 +1025,7 @@ class _ProjectDataCollector:
         dirs.append(fname)
       elif fname.endswith(',v'):
         self.found_rcs_file = True
-        rcsfiles.append(fname)
+        rcsfiles[fname[:-2]] = pathname
         self._process_file(self._get_non_attic_file(pathname))
       else:
         # Silently ignore other files:
@@ -1039,13 +1042,13 @@ class _ProjectDataCollector:
 
       # Check if there is a conflict between this directory name and
       # a file name:
-      if (fname + ',v') in rcsfiles:
+      if fname in rcsfiles:
         self.collect_data.record_fatal_error(
             'Directory name conflicts with filename.  Please remove '
             'one or the other:\n'
             '    "%s"\n'
             '    "%s"'
-            % (pathname, pathname + ',v',)
+            % (pathname, rcsfiles[fname],)
             )
         # We recurse into the directory nevertheless, to try to detect
         # more problems.

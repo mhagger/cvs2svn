@@ -2508,6 +2508,17 @@ def file_directory_conflict():
       )
 
 
+def attic_directory_conflict():
+  "error when attic filename conflicts with dirname"
+
+  # This tests the problem reported in issue #105.
+
+  conv = ensure_conversion(
+      'attic-directory-conflict',
+      error_re=r'.*Directory name conflicts with filename',
+      )
+
+
 def internal_co():
   "verify that --use-internal-co works"
 
@@ -2735,8 +2746,9 @@ test_list = [
     XFail(tagging_after_delete),
     crossed_branches,
     file_directory_conflict,
-    internal_co,
+    XFail(attic_directory_conflict),
 # 110:
+    internal_co,
     internal_co_exclude,
     internal_co_trunk_only,
     XFail(leftover_revs),

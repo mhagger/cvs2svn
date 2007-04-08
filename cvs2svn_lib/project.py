@@ -37,7 +37,13 @@ def verify_paths_disjoint(*paths):
   that 'a/b/c/d' is nested in 'a/b'), or any two paths are identical,
   write an error message and exit."""
 
-  paths = [(path.split('/'), path) for path in paths]
+  def split(path):
+    if not path:
+      return []
+    else:
+      return path.split('/')
+
+  paths = [(split(path), path) for path in paths]
   # If all overlapping elements are equal, a shorter list is
   # considered "less than" a longer one.  Therefore if any paths are
   # nested, this sort will leave at least one such pair adjacent, in
@@ -48,21 +54,23 @@ def verify_paths_disjoint(*paths):
     split_path2, path2 = paths[i]
     if len(split_path1) <= len(split_path2) \
        and split_path2[:len(split_path1)] == split_path1:
-      raise FatalError("paths %s and %s are not disjoint." % (path1, path2,))
+      raise FatalError(
+          'paths "%s" and "%s" are not disjoint.' % (path1, path2,)
+          )
 
 
-def normalize_ttb_path(opt, path):
+def normalize_ttb_path(opt, path, allow_empty=False):
   """Normalize a path to be used for --trunk, --tags, or --branches.
 
   1. Strip leading, trailing, and duplicated '/'.
-  2. Verify that the path is not empty.
+  2. If ALLOW_EMPTY is not set, verify that PATH is not empty.
 
   Return the normalized path.
 
   If the path is invalid, write an error message and exit."""
 
   norm_path = path_join(*path.split('/'))
-  if not norm_path:
+  if not allow_empty and not norm_path:
     raise FatalError("cannot pass an empty path to %s." % (opt,))
   return norm_path
 
@@ -111,12 +119,20 @@ class Project(object):
     self.project_prefix_re = re.compile(
         r'^' + re.escape(self.project_cvs_repos_path)
         + r'(' + re.escape(os.sep) + r'|$)')
-    self.trunk_path = normalize_ttb_path('--trunk', trunk_path)
+    self.trunk_path = normalize_ttb_path(
+        '--trunk', trunk_path, allow_empty=Ctx().trunk_only
+        )
     self.branches_path = normalize_ttb_path('--branches', branches_path)
     self.tags_path = normalize_ttb_path('--tags', tags_path)
-    verify_paths_disjoint(self.trunk_path, self.branches_path, self.tags_path)
-    self._unremovable_paths = [
-        self.trunk_path, self.branches_path, self.tags_path]
+    if Ctx().trunk_only:
+      self._unremovable_paths = [self.trunk_path]
+    else:
+      verify_paths_disjoint(
+          self.trunk_path, self.branches_path, self.tags_path
+          )
+      self._unremovable_paths = [
+          self.trunk_path, self.branches_path, self.tags_path
+          ]
 
     # A list of transformation rules (regexp, replacement) applied to
     # symbol names in this project.

@@ -8,6 +8,7 @@ Version x.x.x (not yet released)
  * RevisionReader hook allow file text to be retrieved from RevisionRecorder.
  * Slightly changed the order that properties are set, for more flexibility.
  * Don't set svn:keywords on files for which svn:eol-style is not set.
+ * Implement issue #53: Allow --trunk='' for --trunk-only conversions.
 
  Bugs fixed:
  * Fix issue #97: Follow symlinks within CVS repository.

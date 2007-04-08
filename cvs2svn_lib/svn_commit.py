@@ -192,7 +192,9 @@ class SVNInitialProjectCommit(SVNCommit):
     repos.start_commit(self.revnum, self._get_revprops())
 
     for project in Ctx().projects:
-      repos.mkdir(project.trunk_path)
+      # For a trunk-only conversion, trunk_path might be ''.
+      if project.trunk_path:
+        repos.mkdir(project.trunk_path)
       if not Ctx().trunk_only:
         repos.mkdir(project.branches_path)
         repos.mkdir(project.tags_path)

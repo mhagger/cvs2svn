@@ -2638,6 +2638,16 @@ def symlinks():
     ))
 
 
+def empty_trunk_path():
+  "allow --trunk to be empty if --trunk-only"
+
+  # This is a test for issue #53.
+
+  conv = ensure_conversion(
+      'main', args=['--trunk-only', '--trunk='],
+      )
+
+
 ########################################################################
 # Run the tests
 
@@ -2777,6 +2787,7 @@ test_list = [
     requires_internal_co,
     timestamp_chaos,
     symlinks,
+    empty_trunk_path,
     ]
 
 if __name__ == '__main__':

@@ -964,6 +964,7 @@ class _ProjectDataCollector:
     return symbol
 
   def _process_file(self, cvs_file):
+    Log().normal(cvs_file.filename)
     try:
       cvs2svn_rcsparse.parse(
           open(cvs_file.filename, 'rb'), _FileDataCollector(self, cvs_file)
@@ -979,7 +980,6 @@ class _ProjectDataCollector:
 
   def _process_attic_file(self, pathname):
     self.found_rcs_file = True
-    Log().normal(pathname)
     try:
       cvs_file = self.project.get_cvs_file(pathname)
     except FileInAndOutOfAtticException, e:
@@ -1006,7 +1006,6 @@ class _ProjectDataCollector:
 
   def _process_non_attic_file(self, pathname):
     self.found_rcs_file = True
-    Log().normal(pathname)
     self._process_file(self.project.get_cvs_file(pathname))
 
   def _visit_non_attic_directory(self, dirname):

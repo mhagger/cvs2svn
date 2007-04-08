@@ -929,7 +929,7 @@ class _ProjectDataCollector:
   def __init__(self, collect_data, project):
     self.collect_data = collect_data
     self.project = project
-    self.found_valid_file = False
+    self.found_rcs_file = False
     self.fatal_errors = []
     self.num_files = 0
 
@@ -937,7 +937,8 @@ class _ProjectDataCollector:
     self.symbols = {}
 
     self._visit_non_attic_directory(self.project.project_cvs_repos_path)
-    if not self.fatal_errors and not self.found_valid_file:
+
+    if not self.found_rcs_file:
       self.fatal_errors.append(
           '\n'
           'No RCS files found under %r!\n'
@@ -975,6 +976,7 @@ class _ProjectDataCollector:
     self.num_files += 1
 
   def _process_attic_file(self, pathname):
+    self.found_rcs_file = True
     self.project.verify_filename_legal(
         pathname, os.path.basename(pathname)[:-2]
         )
@@ -1003,9 +1005,9 @@ class _ProjectDataCollector:
         Log().warn("Directory %s found within Attic; ignoring" % (pathname,))
       elif fname.endswith(',v'):
         self._process_attic_file(pathname)
-        self.found_valid_file = True
 
   def _process_non_attic_file(self, pathname):
+    self.found_rcs_file = True
     self.project.verify_filename_legal(
         pathname, os.path.basename(pathname)[:-2]
         )
@@ -1024,7 +1026,6 @@ class _ProjectDataCollector:
       elif fname.endswith(',v'):
         rcsfiles.append(fname)
         self._process_non_attic_file(pathname)
-        self.found_valid_file = True
       else:
         # Silently ignore other files:
         pass

@@ -567,9 +567,6 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       else:
         parent_data.branches_data.append(branch_data)
 
-        if not Ctx().trunk_only and parent_data.child is not None:
-          closing_data = self._rev_data[parent_data.child]
-
         # If the branch has a child (i.e., something was committed on
         # the branch), then we store a reference to the branch_data
         # there, define the child's parent to be the branch's parent,

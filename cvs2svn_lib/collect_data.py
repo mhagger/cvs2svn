@@ -990,9 +990,12 @@ class _ProjectDataCollector:
             "   storing the latter into 'Attic' subdirectory.\n"
             % (warning_prefix, e)
             )
-        return self.project.get_cvs_file(pathname, leave_in_attic=True)
       else:
-        raise
+        self.collect_data.record_fatal_error(str(e))
+
+      # Either way, return a CVSFile object so that the rest of the
+      # file processing can proceed:
+      return self.project.get_cvs_file(pathname, leave_in_attic=True)
 
   def _visit_attic_directory(self, dirname):
     for fname in os.listdir(dirname):
@@ -1001,11 +1004,7 @@ class _ProjectDataCollector:
         Log().warn("Directory %s found within Attic; ignoring" % (pathname,))
       elif fname.endswith(',v'):
         self.found_rcs_file = True
-        try:
-          self._process_file(self._get_attic_file(pathname))
-        except FileInAndOutOfAtticException, e:
-          self.collect_data.record_fatal_error(str(e))
-          return
+        self._process_file(self._get_attic_file(pathname))
 
   def _get_non_attic_file(self, pathname):
     """Return a CVSFile object for the non-Attic file at PATHNAME."""

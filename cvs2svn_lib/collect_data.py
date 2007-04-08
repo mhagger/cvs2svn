@@ -979,9 +979,6 @@ class _ProjectDataCollector:
 
   def _process_attic_file(self, pathname):
     self.found_rcs_file = True
-    self.project.verify_filename_legal(
-        pathname, os.path.basename(pathname)[:-2]
-        )
     Log().normal(pathname)
     try:
       cvs_file = self.project.get_cvs_file(pathname)
@@ -1009,9 +1006,6 @@ class _ProjectDataCollector:
 
   def _process_non_attic_file(self, pathname):
     self.found_rcs_file = True
-    self.project.verify_filename_legal(
-        pathname, os.path.basename(pathname)[:-2]
-        )
     Log().normal(pathname)
     self._process_file(self.project.get_cvs_file(pathname))
 

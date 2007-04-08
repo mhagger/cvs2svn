@@ -239,7 +239,12 @@ class Project(object):
     If LEAVE_IN_ATTIC is True, then leave the 'Attic' component in the
     filename.  Otherwise, raise FileInAndOutOfAtticException if the
     file is in Attic, and a file with the same filename appears
-    outside of Attic."""
+    outside of Attic.
+
+    Raise FatalError if the resulting filename would not be legal in
+    SVN."""
+
+    self.verify_filename_legal(filename, os.path.basename(filename)[:-2])
 
     if leave_in_attic or not self.is_file_in_attic(filename):
       canonical_filename = filename

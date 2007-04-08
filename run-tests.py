@@ -2284,6 +2284,14 @@ def symbol_mismatches():
     pass
 
 
+def overlook_symbol_mismatches():
+  "overlook conflicting tag/branch when --trunk-only"
+
+  # This is a test for issue #85.
+
+  ensure_conversion('symbol-mess', args=['--trunk-only'])
+
+
 def force_symbols():
   "force symbols to be tags/branches"
 
@@ -2756,8 +2764,9 @@ test_list = [
     multiple_tags,
     double_branch_delete,
     symbol_mismatches,
-    force_symbols,
+    XFail(overlook_symbol_mismatches),
 # 90:
+    force_symbols,
     commit_blocks_tags,
     blocked_excludes,
     unblock_blocked_excludes,
@@ -2767,8 +2776,8 @@ test_list = [
     tag_symbol_default,
     symbol_transform,
     issue_99,
-    issue_100,
 # 100:
+    issue_100,
     issue_106,
     options_option,
     tag_with_no_revision,
@@ -2778,8 +2787,8 @@ test_list = [
     XFail(tagging_after_delete),
     crossed_branches,
     file_directory_conflict,
-    attic_directory_conflict,
 # 110:
+    attic_directory_conflict,
     internal_co,
     internal_co_exclude,
     internal_co_trunk_only,

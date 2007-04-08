@@ -90,14 +90,16 @@ class Project(object):
   """A project within a CVS repository."""
 
   def __init__(self, project_cvs_repos_path,
-               trunk_path, branches_path, tags_path,
+               trunk_path, branches_path=None, tags_path=None,
                symbol_transforms=None):
     """Create a new Project record.
 
     PROJECT_CVS_REPOS_PATH is the main CVS directory for this project
     (within the filesystem).  TRUNK_PATH, BRANCHES_PATH, and TAGS_PATH
     are the full, normalized directory names in svn for the
-    corresponding part of the repository.
+    corresponding part of the repository.  (BRANCHES_PATH and
+    TAGS_PATH do not have to be specified for a --trunk-only
+    conversion.)
 
     SYMBOL_TRANSFORMS is a list of SymbolTransform instances which
     will be used to transform any symbol names within this project."""
@@ -122,11 +124,11 @@ class Project(object):
     self.trunk_path = normalize_ttb_path(
         '--trunk', trunk_path, allow_empty=Ctx().trunk_only
         )
-    self.branches_path = normalize_ttb_path('--branches', branches_path)
-    self.tags_path = normalize_ttb_path('--tags', tags_path)
     if Ctx().trunk_only:
       self._unremovable_paths = [self.trunk_path]
     else:
+      self.branches_path = normalize_ttb_path('--branches', branches_path)
+      self.tags_path = normalize_ttb_path('--tags', tags_path)
       verify_paths_disjoint(
           self.trunk_path, self.branches_path, self.tags_path
           )
@@ -292,7 +294,9 @@ class Project(object):
     """Return True iff SVN_PATH is a legitimate source for this project.
 
     Legitimate paths are self.trunk_path or any directory directly
-    under self.branches_path."""
+    under self.branches_path.
+
+    This routine must not be called during --trunk-only conversions."""
 
     if svn_path == self.trunk_path:
       return True
@@ -309,12 +313,16 @@ class Project(object):
     return svn_path in self._unremovable_paths
 
   def get_branch_path(self, branch_symbol):
-    """Return the svnpath for BRANCH_SYMBOL."""
+    """Return the svnpath for BRANCH_SYMBOL.
+
+    This routine must not be called during --trunk-only conversions."""
 
     return path_join(self.branches_path, branch_symbol.get_clean_name())
 
   def get_tag_path(self, tag_symbol):
-    """Return the svnpath for TAG_SYMBOL."""
+    """Return the svnpath for TAG_SYMBOL.
+
+    This routine must not be called during --trunk-only conversions."""
 
     return path_join(self.tags_path, tag_symbol.get_clean_name())
 
@@ -326,7 +334,9 @@ class Project(object):
     return path_join(self.trunk_path, cvs_path)
 
   def make_branch_path(self, branch_symbol, cvs_path):
-    """Return the svn path for CVS_PATH on branch BRANCH_SYMBOL."""
+    """Return the svn path for CVS_PATH on branch BRANCH_SYMBOL.
+
+    This routine must not be called during --trunk-only conversions."""
 
     return path_join(self.get_branch_path(branch_symbol), cvs_path)
 

@@ -336,10 +336,10 @@ class _SymbolDataCollector(object):
     # Check that the symbol is not already defined, which can easily
     # happen when --symbol-transform is used:
     if name in self._known_symbols:
-      err = "%s: Multiple definitions of the symbol '%s' in '%s'" \
-                % (error_prefix, name, self.cvs_file.filename)
-      sys.stderr.write(err + "\n")
-      self.collect_data.fatal_errors.append(err)
+      self.collect_data.record_fatal_error(
+          "Multiple definitions of the symbol '%s' in '%s'"
+          % (name, self.cvs_file.filename)
+          )
       return
 
     self._known_symbols.add(name)
@@ -784,10 +784,10 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         rev_data.non_trunk_default_branch_revision = True
         rev = rev_data.child
       if self._rev_data.get('1.2') is not None:
-        err = ('%s: File has default branch=%s but also 1.2 revision'
-               % (error_prefix, self.default_branch,))
-        sys.stderr.write(err + '\n')
-        self.collect_data.fatal_errors.append(err)
+        self.collect_data.record_fatal_error(
+            'File has default branch=%s but also 1.2 revision'
+            % (self.default_branch,)
+            )
     elif self._file_imported:
       # No default branch, but the file appears to have been imported.
       # So our educated guess is that all revisions on the '1.1.1'
@@ -930,7 +930,6 @@ class _ProjectDataCollector:
     self.collect_data = collect_data
     self.project = project
     self.found_rcs_file = False
-    self.fatal_errors = []
     self.num_files = 0
 
     # A map { name -> Symbol } for all known symbols in this project.
@@ -939,12 +938,12 @@ class _ProjectDataCollector:
     self._visit_non_attic_directory(self.project.project_cvs_repos_path)
 
     if not self.found_rcs_file:
-      self.fatal_errors.append(
-          '\n'
+      self.collect_data.record_fatal_error(
           'No RCS files found under %r!\n'
           'Are you absolutely certain you are pointing cvs2svn\n'
           'at a CVS repository?\n'
-          % self.project.project_cvs_repos_path)
+          % (self.project.project_cvs_repos_path,)
+          )
 
   def get_symbol(self, name):
     """Return the Symbol object for the symbol named NAME in this project.
@@ -966,10 +965,9 @@ class _ProjectDataCollector:
           open(cvs_file.filename, 'rb'), _FileDataCollector(self, cvs_file)
           )
     except (cvs2svn_rcsparse.common.RCSParseError, ValueError, RuntimeError):
-      err = "%s: %r is not a valid ,v file" \
-            % (error_prefix, cvs_file.filename)
-      sys.stderr.write(err + '\n')
-      self.fatal_errors.append(err)
+      self.collect_data.record_fatal_error(
+          "%r is not a valid ,v file" % (cvs_file.filename,)
+          )
     except:
       Log().warn("Exception occurred while parsing %s" % cvs_file.filename)
       raise
@@ -991,9 +989,7 @@ class _ProjectDataCollector:
             % (warning_prefix, e))
         cvs_file = self.project.get_cvs_file(pathname, leave_in_attic=True)
       else:
-        err = "%s: %s" % (error_prefix, e)
-        sys.stderr.write(err + '\n')
-        self.fatal_errors.append(err)
+        self.collect_data.record_fatal_error(str(e))
         return
 
     self._process_file(cvs_file)
@@ -1042,15 +1038,13 @@ class _ProjectDataCollector:
       # Check if there is a conflict between this directory name and
       # a file name:
       if (fname + ',v') in rcsfiles:
-        err = (
-            '%s: Directory name conflicts with filename.  Please remove '
+        self.collect_data.record_fatal_error(
+            'Directory name conflicts with filename.  Please remove '
             'one or the other:\n'
             '    "%s"\n'
             '    "%s"'
-            % (error_prefix, pathname, pathname + ',v')
+            % (pathname, pathname + ',v',)
             )
-        sys.stderr.write(err + '\n')
-        self.fatal_errors.append(err)
         # We recurse into the directory nevertheless, to try to detect
         # more problems.
 
@@ -1090,10 +1084,20 @@ class CollectData:
       Log().debug('%r was destroyed without being closed.' % (self,))
       self.close()
 
+  def record_fatal_error(self, err):
+    """Record that fatal error ERR was found.
+
+    ERR is a string (without trailing newline) describing the error.
+    Output the error to stderr immediately, and record a copy to be
+    output again in a summary at the end of CollectRevsPass."""
+
+    err = '%s: %s' % (error_prefix, err,)
+    sys.stderr.write(err + '\n')
+    self.fatal_errors.append(err)
+
   def process_project(self, project):
     pdc = _ProjectDataCollector(self, project)
     self.num_files += pdc.num_files
-    self.fatal_errors.extend(pdc.fatal_errors)
     Log().verbose('Processed', self.num_files, 'files')
 
   def add_cvs_file(self, cvs_file):

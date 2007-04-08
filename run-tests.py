@@ -2776,7 +2776,7 @@ test_list = [
     XFail(leftover_revs),
     requires_internal_co,
     timestamp_chaos,
-    XFail(symlinks),
+    symlinks,
     ]
 
 if __name__ == '__main__':

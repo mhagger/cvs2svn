@@ -936,8 +936,7 @@ class _ProjectDataCollector:
     # A map { name -> Symbol } for all known symbols in this project.
     self.symbols = {}
 
-    os.path.walk(self.project.project_cvs_repos_path,
-                 _ProjectDataCollector._visit_non_attic_directory, self)
+    self._visit_non_attic_directory(self.project.project_cvs_repos_path)
     if not self.fatal_errors and not self.found_valid_file:
       self.fatal_errors.append(
           '\n'
@@ -1013,41 +1012,51 @@ class _ProjectDataCollector:
     Log().normal(pathname)
     self._process_file(self.project.get_cvs_file(pathname))
 
-  def _visit_non_attic_directory(self, dirname, files):
-    try:
-      # Remove Attic from the directory recursion; we will handle it
-      # specially below.
-      del files[files.index('Attic')]
-      has_attic = True
-    except ValueError:
-      has_attic = False
+  def _visit_non_attic_directory(self, dirname):
+    files = os.listdir(dirname)
+    rcsfiles = []
+    dirs = []
 
     for fname in files[:]:
       pathname = os.path.join(dirname, fname)
       if os.path.isdir(pathname):
-        # Verify that the directory name does not contain any illegal
-        # characters:
-        self.project.verify_filename_legal(pathname, fname)
-        # Check if there is a conflict between this directory name and
-        # a file name:
-        if (fname + ',v') in files:
-          err = (
-              '%s: Directory name conflicts with filename.  Please remove '
-              'one or the other:\n'
-              '    "%s"\n'
-              '    "%s"'
-              % (error_prefix, pathname, pathname + ',v')
-              )
-          sys.stderr.write(err + '\n')
-          self.fatal_errors.append(err)
-          # Remove directory from recursion:
-          files.remove(fname)
+        dirs.append(fname)
       elif fname.endswith(',v'):
+        rcsfiles.append(fname)
         self._process_non_attic_file(pathname)
         self.found_valid_file = True
+      else:
+        # Silently ignore other files:
+        pass
 
-    if has_attic:
-      self._visit_attic_directory(os.path.join(dirname, 'Attic'))
+    # Now recurse into subdirectories (including 'Attic', if it
+    # exists):
+    for fname in dirs:
+      pathname = os.path.join(dirname, fname)
+
+      # Verify that the directory name does not contain any illegal
+      # characters:
+      self.project.verify_filename_legal(pathname, fname)
+
+      # Check if there is a conflict between this directory name and
+      # a file name:
+      if (fname + ',v') in rcsfiles:
+        err = (
+            '%s: Directory name conflicts with filename.  Please remove '
+            'one or the other:\n'
+            '    "%s"\n'
+            '    "%s"'
+            % (error_prefix, pathname, pathname + ',v')
+            )
+        sys.stderr.write(err + '\n')
+        self.fatal_errors.append(err)
+        # We recurse into the directory nevertheless, to try to detect
+        # more problems.
+
+      if fname == 'Attic':
+        self._visit_attic_directory(pathname)
+      else:
+        self._visit_non_attic_directory(pathname)
 
 
 class CollectData:

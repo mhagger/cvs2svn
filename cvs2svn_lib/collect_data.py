@@ -978,10 +978,11 @@ class _ProjectDataCollector:
       raise
     self.num_files += 1
 
-  def _process_attic_file(self, pathname):
-    self.found_rcs_file = True
+  def _get_attic_file(self, pathname):
+    """Return a CVSFile object for the Attic file at PATHNAME."""
+
     try:
-      cvs_file = self.project.get_cvs_file(pathname)
+      return self.project.get_cvs_file(pathname)
     except FileInAndOutOfAtticException, e:
       if Ctx().retain_conflicting_attic_files:
         Log().warn(
@@ -989,12 +990,9 @@ class _ProjectDataCollector:
             "   storing the latter into 'Attic' subdirectory.\n"
             % (warning_prefix, e)
             )
-        cvs_file = self.project.get_cvs_file(pathname, leave_in_attic=True)
+        return self.project.get_cvs_file(pathname, leave_in_attic=True)
       else:
-        self.collect_data.record_fatal_error(str(e))
-        return
-
-    self._process_file(cvs_file)
+        raise
 
   def _visit_attic_directory(self, dirname):
     for fname in os.listdir(dirname):
@@ -1002,11 +1000,17 @@ class _ProjectDataCollector:
       if os.path.isdir(pathname):
         Log().warn("Directory %s found within Attic; ignoring" % (pathname,))
       elif fname.endswith(',v'):
-        self._process_attic_file(pathname)
+        self.found_rcs_file = True
+        try:
+          self._process_file(self._get_attic_file(pathname))
+        except FileInAndOutOfAtticException, e:
+          self.collect_data.record_fatal_error(str(e))
+          return
 
-  def _process_non_attic_file(self, pathname):
-    self.found_rcs_file = True
-    self._process_file(self.project.get_cvs_file(pathname))
+  def _get_non_attic_file(self, pathname):
+    """Return a CVSFile object for the non-Attic file at PATHNAME."""
+
+    return self.project.get_cvs_file(pathname)
 
   def _visit_non_attic_directory(self, dirname):
     files = os.listdir(dirname)
@@ -1018,8 +1022,9 @@ class _ProjectDataCollector:
       if os.path.isdir(pathname):
         dirs.append(fname)
       elif fname.endswith(',v'):
+        self.found_rcs_file = True
         rcsfiles.append(fname)
-        self._process_non_attic_file(pathname)
+        self._process_file(self._get_non_attic_file(pathname))
       else:
         # Silently ignore other files:
         pass

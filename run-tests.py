@@ -2616,6 +2616,29 @@ def timestamp_chaos():
       raise Failure()
 
 
+def symlinks():
+  "convert a repository that contains symlinks"
+
+  # This is a test for issue #97.
+
+  srcrepos_path = os.path.join(test_data_dir, 'symlink-cvsrepos')
+  if not os.path.islink(
+      os.path.join(test_data_dir, 'symlink-cvsrepos', 'proj', 'dir2')
+      ):
+    # Apparently this OS doesn't support symlinks, so skip test.
+    raise svntest.Skip()
+
+  conv = ensure_conversion('symlink')
+  conv.logs[2].check('', (
+    ('/%(trunk)s/proj', 'A'),
+    ('/%(trunk)s/proj/file.txt', 'A'),
+    ('/%(trunk)s/proj/dir1', 'A'),
+    ('/%(trunk)s/proj/dir1/file.txt', 'A'),
+    ('/%(trunk)s/proj/dir2', 'A'),
+    ('/%(trunk)s/proj/dir2/file.txt', 'A'),
+    ))
+
+
 ########################################################################
 # Run the tests
 
@@ -2754,6 +2777,7 @@ test_list = [
     XFail(leftover_revs),
     requires_internal_co,
     timestamp_chaos,
+    XFail(symlinks),
     ]
 
 if __name__ == '__main__':

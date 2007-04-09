@@ -26,7 +26,7 @@ class LineOfDevelopment:
   """Base class for Trunk and Branch."""
 
   def get_path(self, *components):
-    """Return the svn path for this symbol."""
+    """Return the svn path for this LineOfDevelopment."""
 
     raise NotImplementedError()
 
@@ -108,16 +108,13 @@ class TypedSymbol(Symbol):
     Symbol.__init__(self, symbol.id, symbol.project, symbol.name)
 
 
-class IncludedSymbol(TypedSymbol):
+class IncludedSymbol(TypedSymbol, LineOfDevelopment):
   """A TypedSymbol that will be included in the conversion."""
 
-  def get_path(self, *components):
-    """Return the svn path for this symbol."""
-
-    raise NotImplementedError()
+  pass
 
 
-class Branch(LineOfDevelopment, IncludedSymbol):
+class Branch(IncludedSymbol):
   """An object that describes a CVS branch."""
 
   def get_path(self, *components):

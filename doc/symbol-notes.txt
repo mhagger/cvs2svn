@@ -50,11 +50,11 @@ branch.
 
 This pass creates the symbol database, SYMBOL_DB, which is accessed in
 later passes via the SymbolDatabase class.  The SymbolDatabase
-contains TypedSymbol (BranchSymbol, TagSymbol, or ExcludedSymbol)
-instances indicating how each symbol should be processed in the
-conversion.  The IDs used for a TypedSymbol is the same as the ID
-allocated to the corresponding symbol in CollectRevsPass, so
-references in CVSItems do not have to be updated.
+contains TypedSymbol (Branch, Tag, or ExcludedSymbol) instances
+indicating how each symbol should be processed in the conversion.  The
+IDs used for a TypedSymbol is the same as the ID allocated to the
+corresponding symbol in CollectRevsPass, so references in CVSItems do
+not have to be updated.
 
 
 FilterSymbolsPass

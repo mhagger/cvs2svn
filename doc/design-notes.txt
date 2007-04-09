@@ -208,11 +208,11 @@ which as tags, and which symbols should be excluded from the
 conversion altogether.
 
 Create 'cvs2svn-symbols.pck', which contains a pickle of a list of
-TypedSymbol (BranchSymbol, TagSymbol, or ExcludedSymbol) instances
-indicating how each symbol should be processed in the conversion.  The
-IDs used for a TypedSymbol is the same as the ID allocated to the
-corresponding symbol in CollectRevsPass, so references in CVSItems do
-not have to be updated.
+TypedSymbol (Branch, Tag, or ExcludedSymbol) instances indicating how
+each symbol should be processed in the conversion.  The IDs used for a
+TypedSymbol is the same as the ID allocated to the corresponding
+symbol in CollectRevsPass, so references in CVSItems do not have to be
+updated.
 
 
 FilterSymbolsPass

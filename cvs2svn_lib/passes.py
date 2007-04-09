@@ -171,7 +171,9 @@ class CollateSymbolsPass(Pass):
     self._register_temp_file_needed(config.SYMBOL_STATISTICS_LIST)
 
   def run(self, stats_keeper):
-    symbol_stats = SymbolStatistics()
+    symbol_stats = SymbolStatistics(
+        artifact_manager.get_temp_file(config.SYMBOL_STATISTICS_LIST)
+        )
 
     symbols = Ctx().symbol_strategy.get_symbols(symbol_stats)
 

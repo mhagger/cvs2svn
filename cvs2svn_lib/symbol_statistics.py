@@ -169,17 +169,15 @@ class SymbolStatistics:
 
      - A non-excluded branch depends on an excluded branch
 
-  The data in this class is read from a pickle file
-  (config.SYMBOL_STATISTICS_LIST)."""
+  The data in this class is read from a pickle file."""
 
-  def __init__(self):
-    """Read the stats database from the SYMBOL_STATISTICS_LIST file."""
+  def __init__(self, filename):
+    """Read the stats database from FILENAME."""
 
     # A map { Symbol -> _Stats } for all symbols (branches and tags)
     self._stats = { }
 
-    stats_list = cPickle.load(open(artifact_manager.get_temp_file(
-        config.SYMBOL_STATISTICS_LIST), 'rb'))
+    stats_list = cPickle.load(open(filename, 'rb'))
 
     for stats in stats_list:
       self._stats[stats.symbol] = stats

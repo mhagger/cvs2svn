@@ -110,13 +110,14 @@ SVN_MIRROR_NODES_STORE = 'cvs2svn-svn-nodes.pck'
 # from symbol_id to file offset.
 SYMBOL_OFFSETS_DB = 'cvs2svn-symbol-offsets.pck'
 
-# Maps changeset_ids (in hex) to lists of symbol ids, where the
-# changeset is the last such that is a source for those symbols.  For
-# example, if branch B's number is 1.3.0.2 in this CVS file, and this
-# file's 1.3 is the latest (by date) revision among *all* CVS files
-# that is a source for branch B, then the changeset.id for the
-# changeset holding this file at 1.3 would list the symbol id for
-# branch B in its list.
+# Maps changeset_ids (in hex) to lists of symbol ids for which the
+# changeset is the last changeset that is a source for that symbol.
+# In other words, after the changeset is committed, all of the symbols
+# in the list can be filled.  For example, if branch B's number is
+# 1.3.0.2 in this CVS file, and this file's 1.3 is the latest (by
+# date) revision among *all* CVS files that is a source for branch B,
+# then the changeset.id for the changeset holding this file at 1.3
+# would list the symbol id for branch B in its list.
 SYMBOL_LAST_CHANGESETS_DB = 'cvs2svn-symbol-last-changesets.db'
 
 # Pickled map of CVSFile.id to instance.

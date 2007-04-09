@@ -22,6 +22,28 @@ from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.common import path_join
 
 
+class LineOfDevelopment:
+  """Base class for Trunk and Branch."""
+
+  def make_path(self, cvs_file):
+    raise NotImplementedError()
+
+
+class Trunk(LineOfDevelopment):
+  """Represent the main line of development."""
+
+  def __init__(self):
+    pass
+
+  def make_path(self, cvs_file):
+    return cvs_file.project.make_trunk_path(cvs_file.cvs_path)
+
+  def __str__(self):
+    """For convenience only.  The format is subject to change at any time."""
+
+    return 'Trunk'
+
+
 class Symbol:
   def __init__(self, id, project, name):
     self.id = id
@@ -106,41 +128,13 @@ class ExcludedSymbol(TypedSymbol):
     return 'ExcludedSymbol(%r)' % (self.name,)
 
 
-class LineOfDevelopment:
-  """Base class for Trunk and Branch."""
-
-  def make_path(self, cvs_file):
-    raise NotImplementedError()
-
-
-class Trunk(LineOfDevelopment):
-  """Represent the main line of development."""
-
-  def __init__(self):
-    pass
-
-  def make_path(self, cvs_file):
-    return cvs_file.project.make_trunk_path(cvs_file.cvs_path)
-
-  def __str__(self):
-    """For convenience only.  The format is subject to change at any time."""
-
-    return 'Trunk'
-
-
-class Branch(LineOfDevelopment):
+class Branch(LineOfDevelopment, IncludedSymbol):
   """An object that describes a CVS branch."""
 
-  def __init__(self, symbol):
-    # The Symbol instance representing the name of the branch.
-    self.symbol = symbol
+  def get_path(self, *components):
+    return path_join(self.project.get_branch_path(self), *components)
 
   def make_path(self, cvs_file):
-    return cvs_file.project.make_branch_path(self.symbol, cvs_file.cvs_path)
-
-  def __str__(self):
-    """For convenience only.  The format is subject to change at any time."""
-
-    return 'Branch %r <%x>' % (self.symbol.name, self.symbol.id,)
+    return cvs_file.project.make_branch_path(self, cvs_file.cvs_path)
 
 

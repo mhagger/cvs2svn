@@ -91,7 +91,7 @@ class SymbolingsLogger:
     """Log any openings and closings found in CVS_REV."""
 
     if isinstance(cvs_rev.lod, Branch):
-      branch_id = cvs_rev.lod.symbol.id
+      branch_id = cvs_rev.lod.id
     else:
       branch_id = None
 

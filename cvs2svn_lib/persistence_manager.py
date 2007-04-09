@@ -113,12 +113,12 @@ class PersistenceManager:
   def filled(self, lod):
     """Return True iff LOD has ever been filled."""
 
-    return lod.symbol in self._fills
+    return lod in self._fills
 
   def filled_since(self, lod, svn_revnum):
     """Return True iff LOD has been filled since SVN_REVNUM."""
 
-    return self._fills.get(lod.symbol, [0])[-1] >= svn_revnum
+    return self._fills.get(lod, [0])[-1] >= svn_revnum
 
   def last_filled(self, symbol):
     """Return the last svn revision number in which SYMBOL was filled.

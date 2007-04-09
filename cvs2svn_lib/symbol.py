@@ -32,8 +32,8 @@ class LineOfDevelopment:
 class Trunk(LineOfDevelopment):
   """Represent the main line of development."""
 
-  def __init__(self):
-    pass
+  def __init__(self, project):
+    self.project = project
 
   def make_path(self, cvs_file):
     return cvs_file.project.get_trunk_path(cvs_file.cvs_path)

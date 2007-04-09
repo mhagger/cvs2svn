@@ -841,7 +841,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       branch_data = self.sdc.rev_to_branch_data(rev_data.rev)
       lod = Branch(branch_data.symbol)
     else:
-      lod = Trunk()
+      lod = Trunk(self.project)
 
     branch_ids = [
         branch_data.id

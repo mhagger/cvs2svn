@@ -196,7 +196,7 @@ class CVSRevision(CVSItem):
      self.revision_recorder_token) = data
     self.cvs_file = Ctx()._cvs_file_db.get_file(cvs_file_id)
     if lod_id is None:
-      self.lod = Trunk()
+      self.lod = Trunk(self.cvs_file.project)
     else:
       self.lod = Branch(Ctx()._symbol_db.get_symbol(lod_id))
 

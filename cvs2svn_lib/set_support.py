@@ -66,6 +66,9 @@ except NameError:
       def pop(self):
         return self._dict.popitem()[0]
 
+      def clear(self):
+        self._dict.clear()
+
       def difference(self, other):
         retval = set()
         for x in self:

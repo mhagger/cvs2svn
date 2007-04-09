@@ -24,7 +24,6 @@ from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.symbol import BranchSymbol
 from cvs2svn_lib.symbol import TagSymbol
 from cvs2svn_lib.symbol import ExcludedSymbol
-from cvs2svn_lib.line_of_development import Branch
 from cvs2svn_lib.cvs_item import CVSRevision
 from cvs2svn_lib.cvs_item import CVSSymbol
 from cvs2svn_lib.cvs_item import CVSBranch

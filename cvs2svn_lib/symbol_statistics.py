@@ -175,9 +175,6 @@ class SymbolStatistics:
   def __init__(self):
     """Read the stats database from the SYMBOL_STATISTICS_LIST file."""
 
-    # A hash that maps symbol names to _Stats instances
-    self._stats_by_name = { }
-
     # A map { Symbol -> _Stats } for all symbols (branches and tags)
     self._stats = { }
 
@@ -185,16 +182,14 @@ class SymbolStatistics:
         config.SYMBOL_STATISTICS_LIST), 'rb'))
 
     for stats in stats_list:
-      symbol = stats.symbol
-      self._stats_by_name[symbol.name] = stats
-      self._stats[symbol] = stats
+      self._stats[stats.symbol] = stats
 
-  def get_stats(self, name):
-    """Return the _Stats object for the symbol named NAME.
+  def get_stats(self, symbol):
+    """Return the _Stats object for Symbol instance SYMBOL.
 
     Raise KeyError if no such name exists."""
 
-    return self._stats_by_name[name]
+    return self._stats[symbol]
 
   def __iter__(self):
     return self._stats.itervalues()
@@ -251,7 +246,7 @@ class SymbolStatistics:
     invalid_tags = [ ]
     for symbol in symbols.values():
       if isinstance(symbol, TagSymbol):
-        stats = self.get_stats(symbol.name)
+        stats = self.get_stats(symbol)
         if stats.branch_commit_count > 0:
           invalid_tags.append(stats.symbol.name)
 

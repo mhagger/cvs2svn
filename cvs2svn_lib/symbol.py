@@ -103,7 +103,7 @@ class IncludedSymbol(TypedSymbol):
 
 class BranchSymbol(IncludedSymbol):
   def get_path(self, *components):
-    return path_join(self.project.get_branch_path(self), *components)
+    return self.project.get_branch_path(self, *components)
 
   def __str__(self):
     """For convenience only.  The format is subject to change at any time."""
@@ -113,7 +113,7 @@ class BranchSymbol(IncludedSymbol):
 
 class TagSymbol(IncludedSymbol):
   def get_path(self, *components):
-    return path_join(self.project.get_tag_path(self), *components)
+    return self.project.get_tag_path(self, *components)
 
   def __str__(self):
     """For convenience only.  The format is subject to change at any time."""
@@ -132,7 +132,7 @@ class Branch(LineOfDevelopment, IncludedSymbol):
   """An object that describes a CVS branch."""
 
   def get_path(self, *components):
-    return path_join(self.project.get_branch_path(self), *components)
+    return self.project.get_branch_path(self, *components)
 
   def make_path(self, cvs_file):
     return cvs_file.project.get_branch_path(self, cvs_file.cvs_path)

@@ -849,8 +849,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
   def _process_revision_data(self, rev_data):
     if is_branch_revision(rev_data.rev):
-      branch_data = self.sdc.rev_to_branch_data(rev_data.rev)
-      lod = Branch(branch_data.symbol)
+      lod = self.sdc.rev_to_branch_data(rev_data.rev).symbol
     else:
       lod = self.pdc.trunk
 

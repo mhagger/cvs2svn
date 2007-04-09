@@ -298,12 +298,4 @@ class SymbolStatistics:
       if symbol in stats.possible_parents:
         del stats.possible_parents[symbol]
 
-  def write(self, filename):
-    """Write the revised stats database to FILENAME."""
-
-    f = open(filename, 'wb')
-    cPickle.dump(self._stats.values(), f, -1)
-    f.close()
-    self._stats = None
-
 

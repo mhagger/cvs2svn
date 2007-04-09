@@ -1171,6 +1171,7 @@ class CollectData:
     Each list entry is a string describing one fatal error."""
 
     self.revision_recorder.finish()
+    self.symbol_stats.purge_ghost_symbols()
     self.symbol_stats.close()
     self.symbol_stats = None
     self.metadata_db.close()

@@ -84,6 +84,15 @@ class _Stats:
   def register_possible_parent(self, lod):
     self.possible_parents[lod] = self.possible_parents.get(lod, 0) + 1
 
+  def is_ghost(self):
+    """Return True iff this symbol never really existed."""
+
+    return (
+        self.branch_commit_count == 0
+        and not self.branch_blockers
+        and not self.possible_parents
+        )
+
   def __str__(self):
     return (
         '\'%s\' is a tag in %d files, a branch in '
@@ -140,6 +149,17 @@ class SymbolStatisticsCollector:
       stats = _Stats(symbol)
       self._stats[symbol] = stats
       return stats
+
+  def purge_ghost_symbols(self):
+    """Purge any symbols that don't have any activity.
+
+    Such ghost symbols can arise if a symbol was defined in an RCS
+    file but pointed at a non-existent revision."""
+
+    for stats in self._stats.values():
+      if stats.is_ghost():
+        Log().warn('Deleting ghost symbol: %s' % (stats.symbol,))
+        del self._stats[stats.symbol]
 
   def close(self):
     """Store the stats database to the SYMBOL_STATISTICS file."""

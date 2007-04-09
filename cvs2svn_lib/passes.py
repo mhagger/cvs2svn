@@ -1067,13 +1067,14 @@ class CreateDatabasesPass(Pass):
         for cvs_item in changeset.get_cvs_items():
           stats_keeper.record_cvs_item(cvs_item)
     else:
-      Log().quiet("Finding last CVS revisions for all symbolic names...")
+      Log().quiet("Finding last CVS revisions for each symbolic name...")
       last_sym_name_db = LastSymbolicNameDatabase()
 
       for changeset in self.get_changesets():
         for cvs_item in changeset.get_cvs_items():
           stats_keeper.record_cvs_item(cvs_item)
-        last_sym_name_db.log_changeset(changeset)
+          if isinstance(cvs_item, CVSRevision):
+            last_sym_name_db.log_cvs_revision(changeset, cvs_item)
 
       last_sym_name_db.create_database()
 

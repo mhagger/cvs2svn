@@ -42,19 +42,16 @@ class LastSymbolicNameDatabase:
     # containing the last CVS revision that the symbol was used in.
     self._symbols = {}
 
-  def log_changeset(self, changeset):
-    """Log all of the CVSRevisions in the changeset."""
+  def log_cvs_revision(self, changeset, cvs_rev):
+    """Record that CVS_REV is within CHANGESET."""
 
-    for cvs_item in changeset.get_cvs_items():
-      if isinstance(cvs_item, CVSRevision):
-        cvs_rev = cvs_item
-        for tag_id in cvs_rev.tag_ids:
-          cvs_tag = Ctx()._cvs_items_db[tag_id]
-          self._symbols[cvs_tag.symbol.id] = changeset.id
-        if cvs_rev.op != OP_DELETE:
-          for branch_id in cvs_rev.branch_ids:
-            cvs_branch = Ctx()._cvs_items_db[branch_id]
-            self._symbols[cvs_branch.symbol.id] = changeset.id
+    for tag_id in cvs_rev.tag_ids:
+      cvs_tag = Ctx()._cvs_items_db[tag_id]
+      self._symbols[cvs_tag.symbol.id] = changeset.id
+    if cvs_rev.op != OP_DELETE:
+      for branch_id in cvs_rev.branch_ids:
+        cvs_branch = Ctx()._cvs_items_db[branch_id]
+        self._symbols[cvs_branch.symbol.id] = changeset.id
 
   def create_database(self):
     """Create the SYMBOL_LAST_CHANGESETS_DB.

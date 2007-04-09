@@ -93,6 +93,27 @@ class _Stats:
         and not self.possible_parents
         )
 
+  def get_preferred_parents(self):
+    """Return the LineOfDevelopment preferred as parents for this symbol.
+
+    Return the tuple (BEST_SYMBOLS, BEST_COUNT), where BEST_SYMBOLS is
+    the set of LinesOfDevelopment that appeared most often as possible
+    parents, and BEST_COUNT is the number of times those symbols
+    appeared.  BEST_SYMBOLS might contain multiple symbols if multiple
+    LinesOfDevelopment have the same count."""
+
+    best_count = -1
+    best_symbols = set()
+    for (symbol, count) in self.possible_parents.items():
+      if count > best_count:
+        best_count = count
+        best_symbols.clear()
+        best_symbols.add(symbol)
+      elif count == best_count:
+        best_symbols.add(symbol)
+
+    return (best_symbols, best_count)
+
   def __str__(self):
     return (
         '\'%s\' is a tag in %d files, a branch in '
@@ -318,5 +339,20 @@ class SymbolStatistics:
       stats.branch_blockers.discard(symbol)
       if symbol in stats.possible_parents:
         del stats.possible_parents[symbol]
+
+  def get_preferred_parents(self):
+    """Return the LinesOfDevelopment preferred as parents for each symbol.
+
+    Return a map {Symbol : LineOfDevelopment} giving the LOD that
+    appears most often as a possible parent for each symbol."""
+
+    retval = {}
+    for stats in self._stats.itervalues():
+      (parents, count) = stats.get_preferred_parents()
+      parents = list(parents)
+      parents.sort()
+      retval[stats.symbol] = parents[0]
+
+    return retval
 
 

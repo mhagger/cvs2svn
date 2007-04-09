@@ -21,8 +21,8 @@ from __future__ import generators
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.common import FatalError
-from cvs2svn_lib.symbol import BranchSymbol
-from cvs2svn_lib.symbol import TagSymbol
+from cvs2svn_lib.symbol import Branch
+from cvs2svn_lib.symbol import Tag
 from cvs2svn_lib.symbol import ExcludedSymbol
 from cvs2svn_lib.cvs_item import CVSRevision
 from cvs2svn_lib.cvs_item import CVSSymbol
@@ -214,7 +214,7 @@ class CVSFileItems(object):
         pass
       elif isinstance(cvs_item, CVSSymbol):
         symbol = cvs_item.symbol
-        if isinstance(cvs_item, CVSBranch) and isinstance(symbol, TagSymbol):
+        if isinstance(cvs_item, CVSBranch) and isinstance(symbol, Tag):
           # Mutate the branch into a tag.
           if cvs_item.next_id is not None:
             # This shouldn't happen because it was checked in
@@ -228,7 +228,7 @@ class CVSFileItems(object):
           cvs_revision.branch_ids.remove(cvs_item.id)
           cvs_revision.tag_ids.append(cvs_item.id)
         elif isinstance(cvs_item, CVSTag) \
-               and isinstance(symbol, BranchSymbol):
+               and isinstance(symbol, Branch):
           # Mutate the tag into a branch.
           cvs_item = CVSBranch(
               cvs_item.id, cvs_item.cvs_file, cvs_item.symbol,

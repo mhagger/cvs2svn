@@ -24,8 +24,8 @@ from cvs2svn_lib.set_support import *
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.log import Log
-from cvs2svn_lib.symbol import BranchSymbol
-from cvs2svn_lib.symbol import TagSymbol
+from cvs2svn_lib.symbol import Branch
+from cvs2svn_lib.symbol import Tag
 from cvs2svn_lib.symbol import ExcludedSymbol
 
 
@@ -36,9 +36,9 @@ class StrategyRule:
     """Return an object describing what to do with the symbol in STATS.
 
     If this rule applies to the symbol whose statistics are collected
-    in STATS, then return an object of type BranchSymbol, TagSymbol,
-    or ExcludedSymbol as appropriate.  If this rule doesn't apply,
-    return None."""
+    in STATS, then return an object of type Branch, Tag, or
+    ExcludedSymbol as appropriate.  If this rule doesn't apply, return
+    None."""
 
     raise NotImplementedError
 
@@ -57,8 +57,8 @@ class _RegexpStrategyRule(StrategyRule):
     it is anchored at the beginning and end of the symbol name).
 
     ACTION is the class representing how the symbol should be
-    converted.  It should be one of the classes BranchSymbol,
-    TagSymbol, or ExcludedSymbol.
+    converted.  It should be one of the classes Branch, Tag, or
+    ExcludedSymbol.
 
     If PATTERN matches a symbol name, then get_symbol() returns
     ACTION(name, id); otherwise it returns None."""
@@ -81,14 +81,14 @@ class ForceBranchRegexpStrategyRule(_RegexpStrategyRule):
   """Force symbols matching pattern to be branches."""
 
   def __init__(self, pattern):
-    _RegexpStrategyRule.__init__(self, pattern, BranchSymbol)
+    _RegexpStrategyRule.__init__(self, pattern, Branch)
 
 
 class ForceTagRegexpStrategyRule(_RegexpStrategyRule):
   """Force symbols matching pattern to be tags."""
 
   def __init__(self, pattern):
-    _RegexpStrategyRule.__init__(self, pattern, TagSymbol)
+    _RegexpStrategyRule.__init__(self, pattern, Tag)
 
 
 class ExcludeRegexpStrategyRule(_RegexpStrategyRule):
@@ -108,9 +108,9 @@ class UnambiguousUsageRule(StrategyRule):
       # Can't decide
       return None
     elif is_branch:
-      return BranchSymbol(stats.symbol)
+      return Branch(stats.symbol)
     elif is_tag:
-      return TagSymbol(stats.symbol)
+      return Tag(stats.symbol)
     else:
       # The symbol didn't appear at all:
       return None
@@ -121,7 +121,7 @@ class BranchIfCommitsRule(StrategyRule):
 
   def get_symbol(self, stats):
     if stats.branch_commit_count > 0:
-      return BranchSymbol(stats.symbol)
+      return Branch(stats.symbol)
     else:
       return None
 
@@ -134,9 +134,9 @@ class HeuristicStrategyRule(StrategyRule):
 
   def get_symbol(self, stats):
     if stats.tag_create_count >= stats.branch_create_count:
-      return TagSymbol(stats.symbol)
+      return Tag(stats.symbol)
     else:
-      return BranchSymbol(stats.symbol)
+      return Branch(stats.symbol)
 
 
 class AllBranchRule(StrategyRule):
@@ -147,7 +147,7 @@ class AllBranchRule(StrategyRule):
   therefore only apply to the symbols not handled earlier."""
 
   def get_symbol(self, stats):
-    return BranchSymbol(stats.symbol)
+    return Branch(stats.symbol)
 
 
 class AllTagRule(StrategyRule):
@@ -161,7 +161,7 @@ class AllTagRule(StrategyRule):
   therefore only apply to the symbols not handled earlier."""
 
   def get_symbol(self, stats):
-    return TagSymbol(stats.symbol)
+    return Tag(stats.symbol)
 
 
 class SymbolStrategy:
@@ -171,9 +171,9 @@ class SymbolStrategy:
     """Return a list of TypedSymbol objects telling how to convert symbols.
 
     The values returned by the iterable are TypedSymbol objects
-    (BranchSymbol, TagSymbol, or ExcludedSymbol), indicating how each
-    symbol should be converted.  One TypedSymbol must be included in
-    the return value for each symbol described in SYMBOL_STATS.
+    (Branch, Tag, or ExcludedSymbol), indicating how each symbol
+    should be converted.  One TypedSymbol must be included in the
+    return value for each symbol described in SYMBOL_STATS.
 
     Return None if there was an error."""
 

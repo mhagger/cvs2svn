@@ -300,10 +300,10 @@ class _SymbolFillingGuide:
   def __init__(self, symbol, openings_closings_map):
     """Initializes a _SymbolFillingGuide for SYMBOL.
 
-    SYMBOL is either a BranchSymbol or a TagSymbol.  Record the
-    openings and closings from OPENINGS_CLOSINGS_MAP, which is a map
-    {svn_path : SVNRevisionRange} containing the openings and closings
-    for svn_paths."""
+    SYMBOL is either a Branch or a Tag.  Record the openings and
+    closings from OPENINGS_CLOSINGS_MAP, which is a map {svn_path :
+    SVNRevisionRange} containing the openings and closings for
+    svn_paths."""
 
     self.symbol = symbol
 

@@ -26,7 +26,7 @@ from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.symbol import Symbol
-from cvs2svn_lib.symbol import TagSymbol
+from cvs2svn_lib.symbol import Tag
 from cvs2svn_lib.symbol import ExcludedSymbol
 from cvs2svn_lib.symbol import TypedSymbol
 
@@ -247,7 +247,7 @@ class SymbolStatistics:
 
     invalid_tags = [ ]
     for symbol in symbols.values():
-      if isinstance(symbol, TagSymbol):
+      if isinstance(symbol, Tag):
         stats = self.get_stats(symbol)
         if stats.branch_commit_count > 0:
           invalid_tags.append(stats.symbol.name)

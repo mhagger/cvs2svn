@@ -101,9 +101,14 @@ class IncludedSymbol(TypedSymbol):
     raise NotImplementedError()
 
 
-class BranchSymbol(IncludedSymbol):
+class Branch(LineOfDevelopment, IncludedSymbol):
+  """An object that describes a CVS branch."""
+
   def get_path(self, *components):
     return self.project.get_branch_path(self, *components)
+
+  def make_path(self, cvs_file):
+    return cvs_file.project.get_branch_path(self, cvs_file.cvs_path)
 
   def __str__(self):
     """For convenience only.  The format is subject to change at any time."""
@@ -111,7 +116,7 @@ class BranchSymbol(IncludedSymbol):
     return 'Branch(%r)' % (self.name,)
 
 
-class TagSymbol(IncludedSymbol):
+class Tag(IncludedSymbol):
   def get_path(self, *components):
     return self.project.get_tag_path(self, *components)
 
@@ -126,15 +131,5 @@ class ExcludedSymbol(TypedSymbol):
     """For convenience only.  The format is subject to change at any time."""
 
     return 'ExcludedSymbol(%r)' % (self.name,)
-
-
-class Branch(LineOfDevelopment, IncludedSymbol):
-  """An object that describes a CVS branch."""
-
-  def get_path(self, *components):
-    return self.project.get_branch_path(self, *components)
-
-  def make_path(self, cvs_file):
-    return cvs_file.project.get_branch_path(self, cvs_file.cvs_path)
 
 

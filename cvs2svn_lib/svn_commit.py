@@ -25,8 +25,8 @@ from cvs2svn_lib.common import OP_CHANGE
 from cvs2svn_lib.common import OP_DELETE
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.log import Log
-from cvs2svn_lib.symbol import BranchSymbol
-from cvs2svn_lib.symbol import TagSymbol
+from cvs2svn_lib.symbol import Branch
+from cvs2svn_lib.symbol import Tag
 
 
 class SVNCommit:
@@ -297,10 +297,10 @@ class SVNSymbolCommit(SVNCommit):
     """Return a manufactured log message for this commit."""
 
     # Determine whether self.symbol is a tag.
-    if isinstance(self.symbol, TagSymbol):
+    if isinstance(self.symbol, Tag):
       type = 'tag'
     else:
-      assert isinstance(self.symbol, BranchSymbol)
+      assert isinstance(self.symbol, Branch)
       type = 'branch'
 
     # In Python 2.2.3, we could use textwrap.fill().  Oh well :-).

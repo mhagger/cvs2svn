@@ -20,8 +20,8 @@
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.set_support import *
 from cvs2svn_lib.context import Ctx
-from cvs2svn_lib.symbol import BranchSymbol
-from cvs2svn_lib.symbol import TagSymbol
+from cvs2svn_lib.symbol import Branch
+from cvs2svn_lib.symbol import Tag
 from cvs2svn_lib.cvs_item import CVSRevision
 from cvs2svn_lib.time_range import TimeRange
 from cvs2svn_lib.changeset_graph_node import ChangesetGraphNode
@@ -232,11 +232,11 @@ def create_symbol_changeset(id, symbol, cvs_item_ids):
   """Factory function for SymbolChangesets.
 
   Return a BranchChangeset or TagChangeset, depending on the type of
-  SYMBOL.  SYMBOL must be a BranchSymbol or TagSymbol."""
+  SYMBOL.  SYMBOL must be a Branch or Tag."""
 
-  if isinstance(symbol, BranchSymbol):
+  if isinstance(symbol, Branch):
     return BranchChangeset(id, symbol, cvs_item_ids)
-  if isinstance(symbol, TagSymbol):
+  if isinstance(symbol, Tag):
     return TagChangeset(id, symbol, cvs_item_ids)
   else:
     raise 'Unknown symbol type'

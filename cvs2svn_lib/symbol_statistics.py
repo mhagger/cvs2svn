@@ -25,6 +25,7 @@ from cvs2svn_lib import config
 from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.artifact_manager import artifact_manager
+from cvs2svn_lib.symbol import Trunk
 from cvs2svn_lib.symbol import Symbol
 from cvs2svn_lib.symbol import Tag
 from cvs2svn_lib.symbol import ExcludedSymbol
@@ -48,8 +49,8 @@ class _Stats:
     branch_blockers -- a set of Symbol instances for any symbols that
         sprout from a branch with this name.
 
-    possible_parents -- a map {Symbol : count} indicating in how many
-        files each Symbol could have served as the parent of
+    possible_parents -- a map {LineOfDevelopment : count} indicating
+        in how many files each LOD could have served as the parent of
         self.symbol.  The count for trunk is stored under key None."""
 
   def __init__(self, symbol):
@@ -80,8 +81,8 @@ class _Stats:
 
     self.branch_blockers.add(blocker)
 
-  def register_possible_parent(self, symbol):
-    self.possible_parents[symbol] = self.possible_parents.get(symbol, 0) + 1
+  def register_possible_parent(self, lod):
+    self.possible_parents[lod] = self.possible_parents.get(lod, 0) + 1
 
   def __str__(self):
     return (
@@ -96,10 +97,10 @@ class _Stats:
     parent_counts = self.possible_parents.items()
     parent_counts.sort(lambda a,b: - cmp(a[1], b[1]))
     for (symbol, count) in parent_counts:
-      if symbol is None:
+      if isinstance(symbol, Trunk):
         retval.append('    trunk : %d\n' % count)
       else:
-        retval.append('    \'%s\' : %d\n' % (symbol, count))
+        retval.append('    \'%s\' : %d\n' % (symbol.name, count))
     return ''.join(retval)
 
 

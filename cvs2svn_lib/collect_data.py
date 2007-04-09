@@ -638,7 +638,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       stats = self.collect_data.symbol_stats[branch_data.symbol]
       parent_data = self._rev_data[branch_data.parent]
       if is_trunk_revision(parent_data.rev):
-        stats.register_possible_parent(None)
+        stats.register_possible_parent(self.pdc.trunk)
       for parent in parent_data.branches_data:
         # A branch cannot be its own parent, nor can a branch's parent
         # be a branch that was created after it.  So we stop iterating
@@ -655,7 +655,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         stats = self.collect_data.symbol_stats[tag_data.symbol]
         parent_data = self._rev_data[tag_data.rev]
         if is_trunk_revision(parent_data.rev):
-          stats.register_possible_parent(None)
+          stats.register_possible_parent(self.pdc.trunk)
         for parent in parent_data.branches_data:
           stats.register_possible_parent(parent.symbol)
 

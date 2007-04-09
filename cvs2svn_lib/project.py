@@ -312,33 +312,34 @@ class Project(object):
 
     return svn_path in self._unremovable_paths
 
-  def get_branch_path(self, branch_symbol):
+  def get_trunk_path(self, *components):
+    """Return the trunk path.
+
+    Also append any cvs path components from COMPONENTS."""
+
+    return path_join(self.trunk_path, *components)
+
+  def get_branch_path(self, branch_symbol, *components):
     """Return the svnpath for BRANCH_SYMBOL.
 
+    Also append any cvs path components from COMPONENTS.
+
     This routine must not be called during --trunk-only conversions."""
 
-    return path_join(self.branches_path, branch_symbol.get_clean_name())
+    return path_join(
+        self.branches_path, branch_symbol.get_clean_name(), *components
+        )
 
-  def get_tag_path(self, tag_symbol):
+  def get_tag_path(self, tag_symbol, *components):
     """Return the svnpath for TAG_SYMBOL.
 
-    This routine must not be called during --trunk-only conversions."""
-
-    return path_join(self.tags_path, tag_symbol.get_clean_name())
-
-  def make_trunk_path(self, cvs_path):
-    """Return the trunk path for CVS_PATH.
-
-    Return the svn path for this file on trunk."""
-
-    return path_join(self.trunk_path, cvs_path)
-
-  def make_branch_path(self, branch_symbol, cvs_path):
-    """Return the svn path for CVS_PATH on branch BRANCH_SYMBOL.
+    Also append any cvs path components from COMPONENTS.
 
     This routine must not be called during --trunk-only conversions."""
 
-    return path_join(self.get_branch_path(branch_symbol), cvs_path)
+    return path_join(
+        self.tags_path, tag_symbol.get_clean_name(), *components
+        )
 
   def transform_symbol(self, cvs_file, name):
     """Transform the symbol NAME using the renaming rules specified

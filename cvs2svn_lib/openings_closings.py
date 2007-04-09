@@ -238,12 +238,11 @@ class SymbolingsReader:
       cvs_file = Ctx()._cvs_file_db.get_file(cvs_file_id)
 
       if branch_id == '*':
-        svn_path = cvs_file.project.make_trunk_path(cvs_file.cvs_path)
+        svn_path = cvs_file.project.get_trunk_path(cvs_file.cvs_path)
       else:
         branch_id = int(branch_id, 16)
         branch = Ctx()._symbol_db.get_symbol(branch_id)
-        svn_path = cvs_file.project.make_branch_path(
-            branch, cvs_file.cvs_path)
+        svn_path = cvs_file.project.get_branch_path(branch, cvs_file.cvs_path)
 
       if type == OPENING:
         # Always log an OPENING, even if it overwrites a previous

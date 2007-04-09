@@ -57,6 +57,12 @@ except NameError:
       def remove(self, value):
         del self._dict[value]
 
+      def discard(self, value):
+        try:
+          self.remove(value)
+        except KeyError:
+          pass
+
       def pop(self):
         return self._dict.popitem()[0]
 

@@ -21,8 +21,8 @@ from cvs2svn_lib.boolean import *
 from cvs2svn_lib.set_support import *
 from cvs2svn_lib.common import OP_DELETE
 from cvs2svn_lib.context import Ctx
-from cvs2svn_lib.line_of_development import Trunk
-from cvs2svn_lib.line_of_development import Branch
+from cvs2svn_lib.symbol import Trunk
+from cvs2svn_lib.symbol import Branch
 
 
 class CVSItem(object):

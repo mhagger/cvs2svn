@@ -70,8 +70,8 @@ from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.project import FileInAndOutOfAtticException
 from cvs2svn_lib.cvs_file import CVSFile
-from cvs2svn_lib.line_of_development import Trunk
-from cvs2svn_lib.line_of_development import Branch
+from cvs2svn_lib.symbol import Trunk
+from cvs2svn_lib.symbol import Branch
 from cvs2svn_lib.cvs_item import CVSRevision
 from cvs2svn_lib.cvs_item import CVSBranch
 from cvs2svn_lib.cvs_item import CVSTag

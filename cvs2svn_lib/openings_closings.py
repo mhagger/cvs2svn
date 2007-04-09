@@ -28,7 +28,7 @@ from cvs2svn_lib.common import OP_DELETE
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
-from cvs2svn_lib.line_of_development import Branch
+from cvs2svn_lib.symbol import Branch
 from cvs2svn_lib.svn_revision_range import SVNRevisionRange
 from cvs2svn_lib.symbol_filling_guide import get_source_set
 

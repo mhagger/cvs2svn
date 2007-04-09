@@ -31,7 +31,7 @@ from cvs2svn_lib.common import OP_DELETE
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
-from cvs2svn_lib.line_of_development import Branch
+from cvs2svn_lib.symbol import Branch
 from cvs2svn_lib.database import Database
 from cvs2svn_lib.changeset import OrderedChangeset
 from cvs2svn_lib.changeset import SymbolChangeset

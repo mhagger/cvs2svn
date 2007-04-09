@@ -280,4 +280,23 @@ class SymbolStatistics:
       | self._check_invalid_tags(symbols_by_name)
       )
 
+  def exclude_symbol(self, symbol):
+    """SYMBOL has been excluded; remove it from our statistics."""
+
+    del self._stats[symbol]
+
+    # Remove references to this symbol from other statistics objects:
+    for stats in self._stats.itervalues():
+      stats.branch_blockers.discard(symbol)
+      if symbol in stats.possible_parents:
+        del stats.possible_parents[symbol]
+
+  def write(self, filename):
+    """Write the revised stats database to FILENAME."""
+
+    f = open(filename, 'wb')
+    cPickle.dump(self._stats.values(), f, -1)
+    f.close()
+    self._stats = None
+
 

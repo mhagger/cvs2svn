@@ -149,7 +149,7 @@ class CVSRevision(CVSItem):
   cvs_path = property(_get_cvs_path)
 
   def get_svn_path(self):
-    return self.lod.make_path(self.cvs_file)
+    return self.lod.get_path(self.cvs_file.cvs_path)
 
   svn_path = property(get_svn_path)
 

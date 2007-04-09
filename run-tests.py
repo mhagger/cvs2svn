@@ -980,7 +980,7 @@ class SimpleTags(Cvs2SvnTestCase):
       ))
 
     # The same, as a branch
-    conv.logs[26].check(sym_log_msg('B_FROM_INITIALS'), (
+    conv.logs[28].check(sym_log_msg('B_FROM_INITIALS'), (
       ('/%(branches)s/B_FROM_INITIALS'+fromstr, 'A'),
       ('/%(branches)s/B_FROM_INITIALS/single-files', 'D'),
       ('/%(branches)s/B_FROM_INITIALS/partial-prune', 'D'),
@@ -996,7 +996,7 @@ class SimpleTags(Cvs2SvnTestCase):
       ))
 
     # The same, as a branch
-    conv.logs[27].check(sym_log_msg('B_FROM_INITIALS_BUT_ONE'), (
+    conv.logs[29].check(sym_log_msg('B_FROM_INITIALS_BUT_ONE'), (
       ('/%(branches)s/B_FROM_INITIALS_BUT_ONE'+fromstr, 'A'),
       ('/%(branches)s/B_FROM_INITIALS_BUT_ONE/single-files', 'D'),
       ('/%(branches)s/B_FROM_INITIALS_BUT_ONE/partial-prune', 'D'),

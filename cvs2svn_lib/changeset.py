@@ -76,7 +76,7 @@ class Changeset(object):
 class RevisionChangeset(Changeset):
   """A Changeset consisting of CVSRevisions."""
 
-  _sort_order = 2
+  _sort_order = 3
 
   def create_graph_node(self):
     time_range = TimeRange()
@@ -114,7 +114,7 @@ class OrderedChangeset(Changeset):
   dependencies).  These OrderedChangesets form the skeleton for the
   full topological sort that includes SymbolChangesets as well."""
 
-  _sort_order = 1
+  _sort_order = 2
 
   def __init__(self, id, cvs_item_ids, ordinal, prev_id, next_id):
     Changeset.__init__(self, id, cvs_item_ids)
@@ -207,7 +207,7 @@ class SymbolChangeset(Changeset):
 class BranchChangeset(SymbolChangeset):
   """A Changeset consisting of CVSBranches."""
 
-  _sort_order = 0
+  _sort_order = 1
 
   def create_split_changeset(self, id, cvs_item_ids):
     return BranchChangeset(id, self.symbol, cvs_item_ids)

@@ -105,10 +105,9 @@ class _Stats:
 class SymbolStatisticsCollector:
   """Collect statistics about symbols.
 
-  Record a brief summary of information about each symbol in the RCS
-  files into a database.  The database is created in CollectRevsPass
-  and it is used in CollateSymbolsPass (via the SymbolStatistics
-  class).
+  Record a summary of information about each symbol in the RCS files
+  into a database.  The database is created in CollectRevsPass and it
+  is used in CollateSymbolsPass (via the SymbolStatistics class).
 
   collect_data._SymbolDataCollector inserts information into instances
   of this class by by calling its register_*() methods.
@@ -116,11 +115,11 @@ class SymbolStatisticsCollector:
   Its main purpose is to assist in the decisions about which symbols
   can be treated as branches and tags and which may be excluded.
 
-  The data collected by this class can be written to a text file
+  The data collected by this class can be written to a file
   (config.SYMBOL_STATISTICS_LIST)."""
 
   def __init__(self):
-    # A map { symbol -> record } for all symbols (branches and tags)
+    # A map { symbol -> _Stats } for all symbols (branches and tags)
     self._stats = { }
 
   def __del__(self):

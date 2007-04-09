@@ -129,7 +129,7 @@ class CVSFileItems(object):
     # A CVSTag is the successor of the CVSRevision that it
     # sprouts from.  Delete this tag from that revision's
     # tag_ids:
-    self[cvs_tag.rev_id].tag_ids.remove(cvs_tag.id)
+    self[cvs_tag.source_id].tag_ids.remove(cvs_tag.id)
 
   def _exclude_branch(self, cvs_branch, cvs_revisions):
     """Exclude the specified CVS_BRANCH.
@@ -156,7 +156,7 @@ class CVSFileItems(object):
     # A CVSBranch is the successor of the CVSRevision that it
     # sprouts from.  Delete this branch from that revision's
     # branch_ids:
-    self[cvs_branch.rev_id].branch_ids.remove(cvs_branch.id)
+    self[cvs_branch.source_id].branch_ids.remove(cvs_branch.id)
 
   def filter_excluded_symbols(self, revision_excluder):
     """Delete any excluded symbols and references to them.
@@ -223,9 +223,9 @@ class CVSFileItems(object):
             raise FatalError('Attempt to exclude a branch with commits.')
           cvs_item = CVSTag(
               cvs_item.id, cvs_item.cvs_file, cvs_item.symbol,
-              cvs_item.rev_id)
+              cvs_item.source_id)
           self[cvs_item.id] = cvs_item
-          cvs_revision = self[cvs_item.rev_id]
+          cvs_revision = self[cvs_item.source_id]
           cvs_revision.branch_ids.remove(cvs_item.id)
           cvs_revision.tag_ids.append(cvs_item.id)
         elif isinstance(cvs_item, CVSTag) \
@@ -233,9 +233,9 @@ class CVSFileItems(object):
           # Mutate the tag into a branch.
           cvs_item = CVSBranch(
               cvs_item.id, cvs_item.cvs_file, cvs_item.symbol,
-              None, cvs_item.rev_id, None)
+              None, cvs_item.source_id, None)
           self[cvs_item.id] = cvs_item
-          cvs_revision = self[cvs_item.rev_id]
+          cvs_revision = self[cvs_item.source_id]
           cvs_revision.tag_ids.remove(cvs_item.id)
           cvs_revision.branch_ids.append(cvs_item.id)
       else:

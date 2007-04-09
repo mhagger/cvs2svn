@@ -73,6 +73,7 @@ from cvs2svn_lib.cvs_file import CVSFile
 from cvs2svn_lib.symbol import Symbol
 from cvs2svn_lib.symbol import Trunk
 from cvs2svn_lib.symbol import Branch
+from cvs2svn_lib.symbol import Tag
 from cvs2svn_lib.cvs_item import CVSRevision
 from cvs2svn_lib.cvs_item import CVSBranch
 from cvs2svn_lib.cvs_item import CVSTag
@@ -218,7 +219,10 @@ class _RevisionData:
 
 
 class _SymbolData:
-  """Collection area for information about a CVS symbol (branch or tag)."""
+  """Collection area for information about a symbol in a single CVSFile.
+
+  Whether SYMBOL is a Branch or a Tag depends on whether this instance
+  is serving as the base class for a _BranchData or a _TagData."""
 
   def __init__(self, id, symbol):
     """Initialize an object for SYMBOL."""
@@ -228,12 +232,12 @@ class _SymbolData:
     # that is derived from this instance.
     self.id = id
 
-    # An instance of Symbol.
+    # An instance of Branch or Tag.
     self.symbol = symbol
 
 
 class _BranchData(_SymbolData):
-  """Collection area for information about a CVSBranch."""
+  """Collection area for information about a Branch in a single CVSFile."""
 
   def __init__(self, id, symbol, branch_number):
     _SymbolData.__init__(self, id, symbol)
@@ -251,7 +255,7 @@ class _BranchData(_SymbolData):
 
 
 class _TagData(_SymbolData):
-  """Collection area for information about a CVSTag."""
+  """Collection area for information about a Tag in a single CVSFile."""
 
   def __init__(self, id, symbol, rev):
     _SymbolData.__init__(self, id, symbol)
@@ -261,7 +265,7 @@ class _TagData(_SymbolData):
 
 
 class _SymbolDataCollector(object):
-  """Collect information about symbols in a CVSFile."""
+  """Collect information about symbols in a single CVSFile."""
 
   def __init__(self, fdc, cvs_file):
     self.fdc = fdc
@@ -305,8 +309,12 @@ class _SymbolDataCollector(object):
 
     symbol = self.pdc.get_symbol(name)
     self.collect_data.symbol_stats[symbol].register_branch_creation()
+    # symbol is an undifferentiated Symbol, but we now know that in
+    # this file it is a Branch:
     branch_data = _BranchData(
-        self.collect_data.key_generator.gen_id(), symbol, branch_number)
+        self.collect_data.key_generator.gen_id(), Branch(symbol),
+        branch_number
+        )
     self.branches_data[branch_number] = branch_data
     return branch_data
 
@@ -319,8 +327,11 @@ class _SymbolDataCollector(object):
 
     symbol = self.pdc.get_symbol(name)
     self.collect_data.symbol_stats[symbol].register_tag_creation()
+    # symbol is an undifferentiated Symbol, but we now know that in
+    # this file it is a Tag:
     tag_data = _TagData(
-        self.collect_data.key_generator.gen_id(), symbol, revision)
+        self.collect_data.key_generator.gen_id(), Tag(symbol), revision
+        )
     self.tags_data.setdefault(revision, []).append(tag_data)
     return tag_data
 
@@ -937,6 +948,9 @@ class _ProjectDataCollector:
     self.trunk = Trunk(self.project)
 
     # A map { name -> Symbol } for all known symbols in this project.
+    # The symbols listed here are undifferentiated into Branches and
+    # Tags because the same name might appear as a branch in one file
+    # and a tag in another.
     self.symbols = {}
 
     self._visit_non_attic_directory(self.project.project_cvs_repos_path)

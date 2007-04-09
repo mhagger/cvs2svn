@@ -70,6 +70,7 @@ from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.project import FileInAndOutOfAtticException
 from cvs2svn_lib.cvs_file import CVSFile
+from cvs2svn_lib.symbol import Symbol
 from cvs2svn_lib.symbol import Trunk
 from cvs2svn_lib.symbol import Branch
 from cvs2svn_lib.cvs_item import CVSRevision
@@ -77,7 +78,6 @@ from cvs2svn_lib.cvs_item import CVSBranch
 from cvs2svn_lib.cvs_item import CVSTag
 from cvs2svn_lib.key_generator import KeyGenerator
 from cvs2svn_lib.cvs_item_database import NewCVSItemStore
-from cvs2svn_lib.symbol import Symbol
 from cvs2svn_lib.symbol_statistics import SymbolStatisticsCollector
 from cvs2svn_lib.metadata_database import MetadataDatabase
 
@@ -841,7 +841,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       branch_data = self.sdc.rev_to_branch_data(rev_data.rev)
       lod = Branch(branch_data.symbol)
     else:
-      lod = Trunk(self.project)
+      lod = self.pdc.trunk
 
     branch_ids = [
         branch_data.id
@@ -932,6 +932,9 @@ class _ProjectDataCollector:
     self.project = project
     self.found_rcs_file = False
     self.num_files = 0
+
+    # The Trunk LineOfDevelopment object for this project.
+    self.trunk = Trunk(self.project)
 
     # A map { name -> Symbol } for all known symbols in this project.
     self.symbols = {}

@@ -143,7 +143,7 @@ SYMBOL_DB = 'cvs2svn-symbols.pck'
 
 # A pickled list of the statistics for all symbols.  Each entry in the
 # list is an instance of cvs2svn_lib.symbol_statistics._Stats.
-SYMBOL_STATISTICS_LIST = 'cvs2svn-symbol-stats.pck'
+SYMBOL_STATISTICS = 'cvs2svn-symbol-statistics.pck'
 
 # These two databases provide a bidirectional mapping between
 # CVSRevision.ids (in hex) and Subversion revision numbers.

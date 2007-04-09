@@ -116,7 +116,7 @@ class SymbolStatisticsCollector:
   can be treated as branches and tags and which may be excluded.
 
   The data collected by this class can be written to a file
-  (config.SYMBOL_STATISTICS_LIST)."""
+  (config.SYMBOL_STATISTICS)."""
 
   def __init__(self):
     # A map { symbol -> _Stats } for all symbols (branches and tags)
@@ -140,9 +140,9 @@ class SymbolStatisticsCollector:
       return stats
 
   def close(self):
-    """Store the stats database to the SYMBOL_STATISTICS_LIST file."""
+    """Store the stats database to the SYMBOL_STATISTICS file."""
 
-    f = open(artifact_manager.get_temp_file(config.SYMBOL_STATISTICS_LIST),
+    f = open(artifact_manager.get_temp_file(config.SYMBOL_STATISTICS),
              'wb')
     cPickle.dump(self._stats.values(), f, -1)
     f.close()

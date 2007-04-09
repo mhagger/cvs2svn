@@ -130,8 +130,9 @@ When every CVS file is done, CollectRevsPass is complete, and:
 
    - Information about each symbol seen, along with statistics like
      how often it was used as a branch or tag, is written as a pickled
-     symbol_statistics._Stat object to 'cvs2svn-symbol-stats.pck'.
-     This includes the following information:
+     symbol_statistics._Stat object to
+     'cvs2svn-symbol-statistics.pck'.  This includes the following
+     information:
 
          ID NAME TAG_COUNT BRANCH_COUNT BRANCH_COMMIT_COUNT BLOCKERS
 

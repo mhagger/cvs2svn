@@ -134,7 +134,7 @@ class CollectRevsPass(Pass):
   """This pass was formerly known as pass1."""
 
   def register_artifacts(self):
-    self._register_temp_file(config.SYMBOL_STATISTICS_LIST)
+    self._register_temp_file(config.SYMBOL_STATISTICS)
     self._register_temp_file(config.METADATA_DB)
     self._register_temp_file(config.CVS_FILES_DB)
     self._register_temp_file(config.CVS_ITEMS_STORE)
@@ -168,11 +168,11 @@ class CollateSymbolsPass(Pass):
 
   def register_artifacts(self):
     self._register_temp_file(config.SYMBOL_DB)
-    self._register_temp_file_needed(config.SYMBOL_STATISTICS_LIST)
+    self._register_temp_file_needed(config.SYMBOL_STATISTICS)
 
   def run(self, stats_keeper):
     symbol_stats = SymbolStatistics(
-        artifact_manager.get_temp_file(config.SYMBOL_STATISTICS_LIST)
+        artifact_manager.get_temp_file(config.SYMBOL_STATISTICS)
         )
 
     symbols = Ctx().symbol_strategy.get_symbols(symbol_stats)

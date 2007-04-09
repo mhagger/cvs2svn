@@ -37,6 +37,16 @@ class Trunk(LineOfDevelopment):
   def __init__(self, project):
     self.project = project
 
+  def __cmp__(self, other):
+    if isinstance(other, Trunk):
+      return cmp(self.project, other.project)
+    else:
+      # Allow Trunk to compare less than Symbols:
+      return -1
+
+  def __hash__(self):
+    return hash(self.project)
+
   def get_path(self, *components):
     return self.project.get_trunk_path(*components)
 
@@ -53,9 +63,13 @@ class Symbol:
     self.name = name
 
   def __cmp__(self, other):
-    return cmp(self.project, other.project) \
-           or cmp(self.name, other.name) \
-           or cmp(self.id, other.id)
+    if isinstance(other, Symbol):
+      return cmp(self.project, other.project) \
+             or cmp(self.name, other.name) \
+             or cmp(self.id, other.id)
+    else:
+      # Allow Symbols to compare greater than Trunk:
+      return +1
 
   def __hash__(self):
     return hash( (self.project, self.id,) )

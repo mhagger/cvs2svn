@@ -637,8 +637,17 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     for branch_data in self.sdc.branches_data.values():
       stats = self.collect_data.symbol_stats[branch_data.symbol]
       parent_data = self._rev_data[branch_data.parent]
+
+      # The "obvious" parent of a branch is the branch holding the
+      # revision where the branch is rooted :
       if is_trunk_revision(parent_data.rev):
         stats.register_possible_parent(self.pdc.trunk)
+      else:
+        branch = self.sdc.rev_to_branch_data(parent_data.rev).symbol
+        stats.register_possible_parent(branch)
+
+      # Other possible parents are any other branches that are rooted
+      # at the same revision that have smaller revision numbers:
       for parent in parent_data.branches_data:
         # A branch cannot be its own parent, nor can a branch's parent
         # be a branch that was created after it.  So we stop iterating
@@ -654,8 +663,17 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       for tag_data in tag_data_list:
         stats = self.collect_data.symbol_stats[tag_data.symbol]
         parent_data = self._rev_data[tag_data.rev]
+
+        # The "obvious" parent of a branch is the branch holding the
+        # revision where the branch is rooted :
         if is_trunk_revision(parent_data.rev):
           stats.register_possible_parent(self.pdc.trunk)
+        else:
+          branch = self.sdc.rev_to_branch_data(parent_data.rev).symbol
+          stats.register_possible_parent(branch)
+
+        # Other possible parents are any branches that are rooted at
+        # the same revision:
         for parent in parent_data.branches_data:
           stats.register_possible_parent(parent.symbol)
 

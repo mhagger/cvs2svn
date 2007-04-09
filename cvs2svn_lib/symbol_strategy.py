@@ -168,11 +168,14 @@ class SymbolStrategy:
   """A strategy class, used to decide how to convert CVS symbols."""
 
   def get_symbols(self, symbol_stats):
-    """Return an iterable of symbols to convert.
+    """Return a list of TypedSymbol objects telling how to convert symbols.
 
-    The values returned by the iterable are BranchSymbol, TagSymbol,
-    or ExcludedSymbol objects, indicating how the symbol should be
-    converted.  Return None if there was an error."""
+    The values returned by the iterable are TypedSymbol objects
+    (BranchSymbol, TagSymbol, or ExcludedSymbol), indicating how each
+    symbol should be converted.  One TypedSymbol must be included in
+    the return value for each symbol described in SYMBOL_STATS.
+
+    Return None if there was an error."""
 
     raise NotImplementedError
 

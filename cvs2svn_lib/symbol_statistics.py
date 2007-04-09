@@ -28,6 +28,7 @@ from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.symbol import Symbol
 from cvs2svn_lib.symbol import TagSymbol
 from cvs2svn_lib.symbol import ExcludedSymbol
+from cvs2svn_lib.symbol import TypedSymbol
 
 
 class _Stats:
@@ -182,6 +183,9 @@ class SymbolStatistics:
     for stats in stats_list:
       self._stats[stats.symbol] = stats
 
+  def __len__(self):
+    return len(self._stats)
+
   def get_stats(self, symbol):
     """Return the _Stats object for Symbol instance SYMBOL.
 
@@ -267,18 +271,21 @@ class SymbolStatistics:
     symbol is to be converted.  Return True iff any problems were
     detected."""
 
+    assert len(symbols) == len(self)
+
     # Create a map { symbol_name : Symbol } including only
     # non-excluded symbols:
     symbols_by_name = {}
     for symbol in symbols:
+      assert isinstance(symbol, TypedSymbol)
       if not isinstance(symbol, ExcludedSymbol):
         symbols_by_name[symbol.name] = symbol
 
     # It is important that we not short-circuit here:
     return (
-      self._check_blocked_excludes(symbols_by_name)
-      | self._check_invalid_tags(symbols_by_name)
-      )
+        self._check_blocked_excludes(symbols_by_name)
+        | self._check_invalid_tags(symbols_by_name)
+        )
 
   def exclude_symbol(self, symbol):
     """SYMBOL has been excluded; remove it from our statistics."""

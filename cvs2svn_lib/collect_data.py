@@ -72,8 +72,6 @@ from cvs2svn_lib.project import FileInAndOutOfAtticException
 from cvs2svn_lib.cvs_file import CVSFile
 from cvs2svn_lib.symbol import Symbol
 from cvs2svn_lib.symbol import Trunk
-from cvs2svn_lib.symbol import Branch
-from cvs2svn_lib.symbol import Tag
 from cvs2svn_lib.cvs_item import CVSRevision
 from cvs2svn_lib.cvs_item import CVSBranch
 from cvs2svn_lib.cvs_item import CVSTag
@@ -221,8 +219,8 @@ class _RevisionData:
 class _SymbolData:
   """Collection area for information about a symbol in a single CVSFile.
 
-  Whether SYMBOL is a Branch or a Tag depends on whether this instance
-  is serving as the base class for a _BranchData or a _TagData."""
+  SYMBOL is an instance of Symbol, undifferentiated as a Branch or a
+  Tag regardless of whether self is a _BranchData or a _TagData."""
 
   def __init__(self, id, symbol):
     """Initialize an object for SYMBOL."""
@@ -232,7 +230,7 @@ class _SymbolData:
     # that is derived from this instance.
     self.id = id
 
-    # An instance of Branch or Tag.
+    # An instance of Symbol.
     self.symbol = symbol
 
 
@@ -309,11 +307,8 @@ class _SymbolDataCollector(object):
 
     symbol = self.pdc.get_symbol(name)
     self.collect_data.symbol_stats[symbol].register_branch_creation()
-    # symbol is an undifferentiated Symbol, but we now know that in
-    # this file it is a Branch:
     branch_data = _BranchData(
-        self.collect_data.key_generator.gen_id(), Branch(symbol),
-        branch_number
+        self.collect_data.key_generator.gen_id(), symbol, branch_number
         )
     self.branches_data[branch_number] = branch_data
     return branch_data
@@ -327,10 +322,8 @@ class _SymbolDataCollector(object):
 
     symbol = self.pdc.get_symbol(name)
     self.collect_data.symbol_stats[symbol].register_tag_creation()
-    # symbol is an undifferentiated Symbol, but we now know that in
-    # this file it is a Tag:
     tag_data = _TagData(
-        self.collect_data.key_generator.gen_id(), Tag(symbol), revision
+        self.collect_data.key_generator.gen_id(), symbol, revision
         )
     self.tags_data.setdefault(revision, []).append(tag_data)
     return tag_data

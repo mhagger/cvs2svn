@@ -14,7 +14,31 @@
 # history and logs, available at http://cvs2svn.tigris.org/.
 # ====================================================================
 
-"""This module contains classes to represent symbols."""
+"""This module contains classes that represent trunk, branches, and tags.
+
+The classes in this module represent lines of development, or LODs for
+short.  Trunk, branches, and tags are all examples of LODs.  Each LOD
+has an identifier that is unique across the whole conversion, and
+multiple instances representing the same abstract LOD have the same
+identifier.  The LODs in one project are distinct from those in
+another project, and have non-overlapping ids.  Even if, for example,
+two projects each have branches with the same name, the branches are
+considered distinct.
+
+Prior to CollateSymbolsPass, it is not know which symbols will be
+converted as branches and which as tags.  In this phase, the symbols
+are all represented by instances of the non-specific Symbol class.
+During CollateSymbolsPass, the Symbol instances are replaced by
+instances of Branch or Tag.  But the ids are preserved even when the
+symbols are converted.  (This is important to avoid having to rewrite
+databases with new symbol ids in CollateSymbolsPass.)  In particular,
+it is possible that a Symbol, Branch, and Tag instance all have the
+same id, in which case they are all considered equal.
+
+Trunk instances also have ids, and these ids are always distinct from
+the ids of Symbols.  (In fact, a Trunk's id is the negated id of the
+project containing the trunk, the minus sign preventing it from having
+the same id as any Symbol.)"""
 
 
 from cvs2svn_lib.boolean import *
@@ -23,7 +47,7 @@ from cvs2svn_lib.common import path_join
 
 
 class LineOfDevelopment:
-  """Base class for Trunk and Branch."""
+  """Base class for Trunk, Branch, and Tag."""
 
   def get_path(self, *components):
     """Return the svn path for this LineOfDevelopment."""
@@ -35,6 +59,7 @@ class Trunk(LineOfDevelopment):
   """Represent the main line of development."""
 
   def __init__(self, project):
+    self.id = - project.id
     self.project = project
 
   def __cmp__(self, other):
@@ -45,7 +70,7 @@ class Trunk(LineOfDevelopment):
       return -1
 
   def __hash__(self):
-    return hash(self.project)
+    return self.id
 
   def get_path(self, *components):
     return self.project.get_trunk_path(*components)
@@ -72,7 +97,7 @@ class Symbol:
       return +1
 
   def __hash__(self):
-    return hash( (self.project, self.id,) )
+    return self.id
 
   def __str__(self):
     return self.name

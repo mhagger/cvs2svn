@@ -159,10 +159,10 @@ class CVSRevision(CVSItem):
     The presence of this method improves the space efficiency of
     pickling CVSRevision instances."""
 
-    if isinstance(self.lod, Branch):
-      lod_id = self.lod.id
-    else:
+    if isinstance(self.lod, Trunk):
       lod_id = None
+    else:
+      lod_id = self.lod.id
 
     return (
         self.id, self.cvs_file.id,

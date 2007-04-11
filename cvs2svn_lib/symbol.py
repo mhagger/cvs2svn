@@ -17,15 +17,17 @@
 """This module contains classes that represent trunk, branches, and tags.
 
 The classes in this module represent lines of development, or LODs for
-short.  Trunk, branches, and tags are all examples of LODs.  Each LOD
-has an identifier that is unique across the whole conversion, and
-multiple instances representing the same abstract LOD have the same
-identifier.  The LODs in one project are distinct from those in
-another project, and have non-overlapping ids.  Even if, for example,
-two projects each have branches with the same name, the branches are
-considered distinct.
+short.  Trunk, Branches, and Tags are all LODs.
 
-Prior to CollateSymbolsPass, it is not know which symbols will be
+Symbols include Branches and Tags.  Each Symbol has an identifier that
+is unique across the whole conversion, and multiple instances
+representing the same abstract Symbol have the same identifier.  The
+Symbols in one project are distinct from those in another project, and
+have non-overlapping ids.  Even if, for example, two projects each
+have branches with the same name, the branches are considered
+distinct.
+
+Prior to CollateSymbolsPass, it is not known which symbols will be
 converted as branches and which as tags.  In this phase, the symbols
 are all represented by instances of the non-specific Symbol class.
 During CollateSymbolsPass, the Symbol instances are replaced by
@@ -35,10 +37,8 @@ databases with new symbol ids in CollateSymbolsPass.)  In particular,
 it is possible that a Symbol, Branch, and Tag instance all have the
 same id, in which case they are all considered equal.
 
-Trunk instances also have ids, and these ids are always distinct from
-the ids of Symbols.  (In fact, a Trunk's id is the negated id of the
-project containing the trunk, the minus sign preventing it from having
-the same id as any Symbol.)"""
+Trunk instances do not have ids, but Trunk objects can be compared to
+Symbol objects (trunks always compare less than symbols)."""
 
 
 from cvs2svn_lib.boolean import *
@@ -59,7 +59,6 @@ class Trunk(LineOfDevelopment):
   """Represent the main line of development."""
 
   def __init__(self, project):
-    self.id = - project.id
     self.project = project
 
   def __cmp__(self, other):
@@ -70,7 +69,7 @@ class Trunk(LineOfDevelopment):
       return -1
 
   def __hash__(self):
-    return self.id
+    return hash(self.project)
 
   def get_path(self, *components):
     return self.project.get_trunk_path(*components)

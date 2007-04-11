@@ -151,10 +151,7 @@ class SymbolStatisticsCollector:
   (config.SYMBOL_STATISTICS)."""
 
   def __init__(self):
-    # A map { symbol_id -> _Stats } for all symbols (branches and
-    # tags).  Although it would be cleaner to use the Symbol instance
-    # itself as a key, efficiency is important here because the
-    # tallying of possible parents is a bottleneck.
+    # A map { symbol -> _Stats } for all symbols (branches and tags)
     self._stats = { }
 
   def __del__(self):
@@ -168,10 +165,10 @@ class SymbolStatisticsCollector:
     Create and register a new one if necessary."""
 
     try:
-      return self._stats[symbol.id]
+      return self._stats[symbol]
     except KeyError:
       stats = _Stats(symbol)
-      self._stats[symbol.id] = stats
+      self._stats[symbol] = stats
       return stats
 
   def purge_ghost_symbols(self):
@@ -183,7 +180,7 @@ class SymbolStatisticsCollector:
     for stats in self._stats.values():
       if stats.is_ghost():
         Log().warn('Deleting ghost symbol: %s' % (stats.symbol,))
-        del self._stats[stats.symbol.id]
+        del self._stats[stats.symbol]
 
   def close(self):
     """Store the stats database to the SYMBOL_STATISTICS file."""
@@ -220,16 +217,13 @@ class SymbolStatistics:
   def __init__(self, filename):
     """Read the stats database from FILENAME."""
 
-    # A map { symbol_id -> _Stats } for all symbols (branches and
-    # tags).  Although it would be cleaner to use the Symbol instance
-    # itself as a key, efficiency is important here because the
-    # tallying of possible parents is a bottleneck.
+    # A map { Symbol -> _Stats } for all symbols (branches and tags)
     self._stats = { }
 
     stats_list = cPickle.load(open(filename, 'rb'))
 
     for stats in stats_list:
-      self._stats[stats.symbol.id] = stats
+      self._stats[stats.symbol] = stats
 
   def __len__(self):
     return len(self._stats)
@@ -239,7 +233,7 @@ class SymbolStatistics:
 
     Raise KeyError if no such name exists."""
 
-    return self._stats[symbol.id]
+    return self._stats[symbol]
 
   def __iter__(self):
     return self._stats.itervalues()
@@ -338,7 +332,7 @@ class SymbolStatistics:
   def exclude_symbol(self, symbol):
     """SYMBOL has been excluded; remove it from our statistics."""
 
-    del self._stats[symbol.id]
+    del self._stats[symbol]
 
     # Remove references to this symbol from other statistics objects:
     for stats in self._stats.itervalues():

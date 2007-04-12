@@ -39,6 +39,7 @@ from cvs2svn_lib.log import Log
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.cvs_file_database import CVSFileDatabase
 from cvs2svn_lib.metadata_database import MetadataDatabase
+from cvs2svn_lib.symbol import ExcludedSymbol
 from cvs2svn_lib.symbol_database import SymbolDatabase
 from cvs2svn_lib.symbol_database import create_symbol_database
 from cvs2svn_lib.symbol_statistics import SymbolStatistics
@@ -180,6 +181,10 @@ class CollateSymbolsPass(Pass):
     # Check the symbols for consistency and bail out if there were errors:
     if symbols is None or symbol_stats.check_consistency(symbols):
       sys.exit(1)
+
+    for symbol in symbols:
+      if isinstance(symbol, ExcludedSymbol):
+        symbol_stats.exclude_symbol(symbol)
 
     create_symbol_database(symbols)
 

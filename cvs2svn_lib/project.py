@@ -143,6 +143,9 @@ class Project(object):
     else:
       self.symbol_transforms = symbol_transforms
 
+  def __eq__(self, other):
+    return self.id == other.id
+
   def __cmp__(self, other):
     return cmp(self.cvs_module, other.cvs_module) \
            or cmp(self.id, other.id)

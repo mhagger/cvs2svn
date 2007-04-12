@@ -61,6 +61,9 @@ class Trunk(LineOfDevelopment):
   def __init__(self, project):
     self.project = project
 
+  def __eq__(self, other):
+    return isinstance(other, Trunk) and self.project == other.project
+
   def __cmp__(self, other):
     if isinstance(other, Trunk):
       return cmp(self.project, other.project)
@@ -85,6 +88,9 @@ class Symbol:
     self.id = id
     self.project = project
     self.name = name
+
+  def __eq__(self, other):
+    return isinstance(other, Symbol) and self.id == other.id
 
   def __cmp__(self, other):
     if isinstance(other, Symbol):

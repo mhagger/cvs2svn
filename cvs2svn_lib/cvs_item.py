@@ -30,6 +30,9 @@ class CVSItem(object):
     self.id = id
     self.cvs_file = cvs_file
 
+  def __eq__(self, other):
+    return self.id == other.id
+
   def __cmp__(self, other):
     return cmp(self.id, other.id)
 

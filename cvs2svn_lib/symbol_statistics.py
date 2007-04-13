@@ -51,7 +51,7 @@ class _Stats:
 
     possible_parents -- a map {LineOfDevelopment : count} indicating
         in how many files each LOD could have served as the parent of
-        self.symbol.  The count for trunk is stored under key None."""
+        self.symbol."""
 
   def __init__(self, symbol):
     self.symbol = symbol

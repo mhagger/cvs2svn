@@ -96,6 +96,13 @@ class Symbol:
     self.project = project
     self.name = name
 
+  def __getstate__(self):
+    return (self.id, self.project.id, self.name,)
+
+  def __setstate__(self, state):
+    (self.id, project_id, self.name,) = state
+    self.project = Ctx().projects[project_id]
+
   def __eq__(self, other):
     return isinstance(other, Symbol) and self.id == other.id
 
@@ -116,13 +123,6 @@ class Symbol:
 
   def __repr__(self):
     return '%s<%x>' % (self, self.id,)
-
-  def __getstate__(self):
-    return (self.id, self.project.id, self.name,)
-
-  def __setstate__(self, state):
-    (self.id, project_id, self.name,) = state
-    self.project = Ctx().projects[project_id]
 
   def get_clean_name(self):
     """Return self.name, translating characters that Subversion does

@@ -800,6 +800,22 @@ class BreakAllChangesetCyclesPass(Pass):
     self._register_temp_file_needed(config.CHANGESETS_REVSORTED_DB)
     self._register_temp_file_needed(config.CVS_ITEM_TO_CHANGESET_REVBROKEN)
 
+  def _get_pred_ordinals(self, cvs_symbol):
+    """Return the ordinals of OrderedChangesets that precede CVS_SYMBOL."""
+
+    return [
+        self.ordered_changeset_map[self.cvs_item_to_changeset_id[id]]
+        for id in cvs_symbol.get_pred_ids()
+        ]
+
+  def _get_succ_ordinals(self, cvs_symbol):
+    """Return the ordinals of OrderedChangesets that succeed CVS_SYMBOL."""
+
+    return [
+        self.ordered_changeset_map[self.cvs_item_to_changeset_id[id]]
+        for id in cvs_symbol.get_succ_ids()
+        ]
+
   def _split_symbol_changeset(self, changeset):
     """Split up CHANGESET to avoid any retrograde dependencies.
 
@@ -817,20 +833,14 @@ class BreakAllChangesetCyclesPass(Pass):
     # pred_ordinal.
     links = []
     for cvs_symbol in changeset.get_cvs_items():
-      pred_ordinals = [
-          self.ordered_changeset_map[self.cvs_item_to_changeset_id[id]]
-          for id in cvs_symbol.get_pred_ids()
-          ]
+      pred_ordinals = self._get_pred_ordinals(cvs_symbol)
       if not pred_ordinals:
         pred_ordinal = -1
       else:
         assert len(pred_ordinals) == 1
         [pred_ordinal] = pred_ordinals
 
-      succ_ordinals = [
-          self.ordered_changeset_map[self.cvs_item_to_changeset_id[id]]
-          for id in cvs_symbol.get_succ_ids()
-          ]
+      succ_ordinals = self._get_succ_ordinals(cvs_symbol)
       if not succ_ordinals:
         succ_ordinal = sys.maxint
       else:

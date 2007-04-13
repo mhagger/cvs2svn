@@ -61,6 +61,13 @@ class Trunk(LineOfDevelopment):
   def __init__(self, project):
     self.project = project
 
+  def __getstate__(self):
+    return (self.project.id,)
+
+  def __setstate__(self, state):
+    (project_id,) = state
+    self.project = Ctx().projects[project_id]
+
   def __eq__(self, other):
     return isinstance(other, Trunk) and self.project == other.project
 

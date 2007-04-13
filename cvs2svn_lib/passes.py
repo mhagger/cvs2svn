@@ -803,18 +803,20 @@ class BreakAllChangesetCyclesPass(Pass):
   def _get_pred_ordinals(self, cvs_symbol):
     """Return the ordinals of OrderedChangesets that precede CVS_SYMBOL."""
 
-    return [
-        self.ordered_changeset_map[self.cvs_item_to_changeset_id[id]]
-        for id in cvs_symbol.get_pred_ids()
-        ]
+    pred_ordinals = []
+    for id in cvs_symbol.get_pred_ids():
+      pred_changeset_id = self.cvs_item_to_changeset_id[id]
+      pred_ordinals.append(self.ordered_changeset_map[pred_changeset_id])
+    return pred_ordinals
 
   def _get_succ_ordinals(self, cvs_symbol):
     """Return the ordinals of OrderedChangesets that succeed CVS_SYMBOL."""
 
-    return [
-        self.ordered_changeset_map[self.cvs_item_to_changeset_id[id]]
-        for id in cvs_symbol.get_succ_ids()
-        ]
+    succ_ordinals = []
+    for id in cvs_symbol.get_succ_ids():
+      succ_changeset_id = self.cvs_item_to_changeset_id[id]
+      succ_ordinals.append(self.ordered_changeset_map[succ_changeset_id])
+    return succ_ordinals
 
   def _split_symbol_changeset(self, changeset):
     """Split up CHANGESET to avoid any retrograde dependencies.

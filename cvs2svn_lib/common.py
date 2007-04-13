@@ -57,6 +57,12 @@ class FatalException(Exception):
   pass
 
 
+class InternalError(FatalException):
+  """Exception thrown in the case of a cvs2svn internal error (aka, bug)."""
+
+  pass
+
+
 class FatalError(FatalException):
   """A FatalException that prepends error_prefix to the message."""
 

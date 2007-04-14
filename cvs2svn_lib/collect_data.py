@@ -382,6 +382,17 @@ class _SymbolDataCollector(object):
 
     return self.branches_data[self.rev_to_branch_number(revision)]
 
+  def rev_to_lod(self, revision):
+    """Return the line of development on which REVISION lies.
+
+    REVISION must be a revision number with an even number of
+    components.  Raise KeyError iff REVISION is unknown."""
+
+    if is_trunk_revision(revision):
+      return self.pdc.trunk
+    else:
+      return self.rev_to_branch_data(revision).symbol
+
   def register_commit(self, rev_data):
     """If REV_DATA describes a non-trunk revision number, then record
     it as a commit on the corresponding branch.  This records the
@@ -389,23 +400,22 @@ class _SymbolDataCollector(object):
     --force-branch and --force-tag guidance."""
 
     if not is_trunk_revision(rev_data.rev):
-      branch_data = self.rev_to_branch_data(rev_data.rev)
+      lod = self.rev_to_lod(rev_data.rev)
       # Register the commit on this non-trunk branch
-      self.collect_data.symbol_stats[branch_data.symbol] \
-          .register_branch_commit()
+      self.collect_data.symbol_stats[lod].register_branch_commit()
 
   def register_branch_blockers(self):
     for (revision, tag_data_list) in self.tags_data.items():
       if is_branch_revision(revision):
-        branch_data_parent = self.rev_to_branch_data(revision)
+        branch_data_parent = self.rev_to_lod(revision)
         for tag_data in tag_data_list:
-          self.collect_data.symbol_stats[branch_data_parent.symbol] \
+          self.collect_data.symbol_stats[branch_data_parent] \
               .register_branch_blocker(tag_data.symbol)
 
     for branch_data_child in self.branches_data.values():
       if is_branch_revision(branch_data_child.parent):
-        branch_data_parent = self.rev_to_branch_data(branch_data_child.parent)
-        self.collect_data.symbol_stats[branch_data_parent.symbol] \
+        branch_data_parent = self.rev_to_lod(branch_data_child.parent)
+        self.collect_data.symbol_stats[branch_data_parent] \
             .register_branch_blocker(branch_data_child.symbol)
 
 
@@ -633,11 +643,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
       # The "obvious" parent of a branch is the branch holding the
       # revision where the branch is rooted :
-      if is_trunk_revision(parent_data.rev):
-        stats.register_possible_parent(self.pdc.trunk)
-      else:
-        branch = self.sdc.rev_to_branch_data(parent_data.rev).symbol
-        stats.register_possible_parent(branch)
+      stats.register_possible_parent(self.sdc.rev_to_lod(parent_data.rev))
 
       # Other possible parents are any other branches that are rooted
       # at the same revision that have smaller revision numbers:
@@ -659,11 +665,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
         # The "obvious" parent of a branch is the branch holding the
         # revision where the branch is rooted :
-        if is_trunk_revision(parent_data.rev):
-          stats.register_possible_parent(self.pdc.trunk)
-        else:
-          branch = self.sdc.rev_to_branch_data(parent_data.rev).symbol
-          stats.register_possible_parent(branch)
+        stats.register_possible_parent(self.sdc.rev_to_lod(parent_data.rev))
 
         # Other possible parents are any branches that are rooted at
         # the same revision:
@@ -859,11 +861,6 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         prev_rev_data.default_branch_next = rev_1_2.rev
 
   def _process_revision_data(self, rev_data):
-    if is_branch_revision(rev_data.rev):
-      lod = self.sdc.rev_to_branch_data(rev_data.rev).symbol
-    else:
-      lod = self.pdc.trunk
-
     branch_ids = [
         branch_data.id
         for branch_data in rev_data.branches_data
@@ -887,7 +884,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         self._determine_operation(rev_data),
         rev_data.rev,
         rev_data.deltatext_exists,
-        lod,
+        self.sdc.rev_to_lod(rev_data.rev),
         rev_data.get_first_on_branch_id(),
         rev_data.non_trunk_default_branch_revision,
         self._get_rev_id(rev_data.default_branch_prev),

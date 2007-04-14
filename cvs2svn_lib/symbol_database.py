@@ -23,6 +23,7 @@ from cvs2svn_lib.boolean import *
 from cvs2svn_lib.log import Log
 from cvs2svn_lib import config
 from cvs2svn_lib.artifact_manager import artifact_manager
+from cvs2svn_lib.symbol import Trunk
 
 
 class SymbolDatabase:
@@ -62,9 +63,11 @@ def create_symbol_database(symbols):
   """Create and fill a symbol database.
 
   Record each symbol that is listed in SYMBOLS, which is an iterable
-  containing TypedSymbol objects."""
+  containing Trunk and TypedSymbol objects."""
 
   f = open(artifact_manager.get_temp_file(config.SYMBOL_DB), 'wb')
-  cPickle.dump(symbols, f, -1)
+  cPickle.dump(
+      [symbol for symbol in symbols if not isinstance(symbol, Trunk)],
+      f, -1)
   f.close()
 

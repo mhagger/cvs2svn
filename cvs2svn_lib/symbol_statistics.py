@@ -14,7 +14,7 @@
 # history and logs, available at http://cvs2svn.tigris.org/.
 # ====================================================================
 
-"""This module gathers and processes statistics about CVS symbols."""
+"""This module gathers and processes statistics about lines of development."""
 
 import sys
 import cPickle
@@ -37,25 +37,26 @@ class _Stats:
   """A summary of information about a symbol (tag or branch).
 
   Members:
-    symbol -- the Symbol instance of the symbol being described
 
-    tag_create_count -- the number of files on which this symbol
-        appears as a tag
+    lod -- the LineOfDevelopment instance of the lod being described
 
-    branch_create_count -- the number of files on which this symbol
+    tag_create_count -- the number of files on which this lod appears
+        as a tag
+
+    branch_create_count -- the number of files on which this lod
         appears as a branch
 
-    branch_commit_count -- the number of commits on this branch
+    branch_commit_count -- the number of commits on this lod
 
     branch_blockers -- a set of Symbol instances for any symbols that
         sprout from a branch with this name.
 
     possible_parents -- a map {LineOfDevelopment : count} indicating
         in how many files each LOD could have served as the parent of
-        self.symbol."""
+        self.lod."""
 
-  def __init__(self, symbol):
-    self.symbol = symbol
+  def __init__(self, lod):
+    self.lod = lod
     self.tag_create_count = 0
     self.branch_create_count = 0
     self.branch_commit_count = 0
@@ -63,39 +64,42 @@ class _Stats:
     self.possible_parents = { }
 
   def register_tag_creation(self):
-    """Register the creation of this symbol as a tag."""
+    """Register the creation of this lod as a tag."""
 
     self.tag_create_count += 1
 
   def register_branch_creation(self):
-    """Register the creation of this symbol as a branch."""
+    """Register the creation of this lod as a branch."""
 
     self.branch_create_count += 1
 
   def register_branch_commit(self):
-    """Register a commit on this symbol as a branch."""
+    """Register a commit on this lod as a trunk or branch."""
 
     self.branch_commit_count += 1
 
   def register_branch_blocker(self, blocker):
-    """Register BLOCKER as a blocker of this symbol as a branch."""
+    """Register BLOCKER as a blocker of this symbol as a trunk or branch."""
 
     self.branch_blockers.add(blocker)
 
   def register_possible_parent(self, lod):
+    """Register that LOD was a possible parent for SELF.lod in a file."""
+
     self.possible_parents[lod] = self.possible_parents.get(lod, 0) + 1
 
   def is_ghost(self):
-    """Return True iff this symbol never really existed."""
+    """Return True iff this lod never really existed."""
 
     return (
-        self.branch_commit_count == 0
+        not isinstance(self.lod, Trunk)
+        and self.branch_commit_count == 0
         and not self.branch_blockers
         and not self.possible_parents
         )
 
   def get_preferred_parents(self):
-    """Return the LineOfDevelopment preferred as parents for this symbol.
+    """Return the LinesOfDevelopment preferred as parents for this lod.
 
     Return the tuple (BEST_SYMBOLS, BEST_COUNT), where BEST_SYMBOLS is
     the set of LinesOfDevelopment that appeared most often as possible
@@ -119,7 +123,7 @@ class _Stats:
     return (
         '\'%s\' is a tag in %d files, a branch in '
         '%d files and has commits in %d files'
-        % (self.symbol, self.tag_create_count,
+        % (self.lod, self.tag_create_count,
            self.branch_create_count, self.branch_commit_count))
 
   def __repr__(self):
@@ -136,11 +140,12 @@ class _Stats:
 
 
 class SymbolStatisticsCollector:
-  """Collect statistics about symbols.
+  """Collect statistics about lines of development.
 
-  Record a summary of information about each symbol in the RCS files
-  into a database.  The database is created in CollectRevsPass and it
-  is used in CollateSymbolsPass (via the SymbolStatistics class).
+  Record a summary of information about each line of development in
+  the RCS files for later storage into a database.  The database is
+  created in CollectRevsPass and it is used in CollateSymbolsPass (via
+  the SymbolStatistics class).
 
   collect_data._SymbolDataCollector inserts information into instances
   of this class by by calling its register_*() methods.
@@ -148,11 +153,11 @@ class SymbolStatisticsCollector:
   Its main purpose is to assist in the decisions about which symbols
   can be treated as branches and tags and which may be excluded.
 
-  The data collected by this class can be written to a file
-  (config.SYMBOL_STATISTICS)."""
+  The data collected by this class can be written to the file
+  config.SYMBOL_STATISTICS."""
 
   def __init__(self):
-    # A map { symbol -> _Stats } for all symbols (branches and tags)
+    # A map { lod -> _Stats } for all lines of development:
     self._stats = { }
 
   def __del__(self):
@@ -160,16 +165,16 @@ class SymbolStatisticsCollector:
       Log().debug('%r was destroyed without being closed.' % (self,))
       self.close()
 
-  def __getitem__(self, symbol):
-    """Return the _Stats record for SYMBOL.
+  def __getitem__(self, lod):
+    """Return the _Stats record for line of development LOD.
 
     Create and register a new one if necessary."""
 
     try:
-      return self._stats[symbol]
+      return self._stats[lod]
     except KeyError:
-      stats = _Stats(symbol)
-      self._stats[symbol] = stats
+      stats = _Stats(lod)
+      self._stats[lod] = stats
       return stats
 
   def purge_ghost_symbols(self):
@@ -180,23 +185,22 @@ class SymbolStatisticsCollector:
 
     for stats in self._stats.values():
       if stats.is_ghost():
-        Log().warn('Deleting ghost symbol: %s' % (stats.symbol,))
-        del self._stats[stats.symbol]
+        Log().warn('Deleting ghost symbol: %s' % (stats.lod,))
+        del self._stats[stats.lod]
 
   def close(self):
     """Store the stats database to the SYMBOL_STATISTICS file."""
 
-    f = open(artifact_manager.get_temp_file(config.SYMBOL_STATISTICS),
-             'wb')
+    f = open(artifact_manager.get_temp_file(config.SYMBOL_STATISTICS), 'wb')
     cPickle.dump(self._stats.values(), f, -1)
     f.close()
     self._stats = None
 
 
 class SymbolStatistics:
-  """Read and handle symbol statistics.
+  """Read and handle line of development statistics.
 
-  The symbol statistics are read from a database created by
+  The statistics are read from a database created by
   SymbolStatisticsCollector.  This class has methods to process the
   statistics information and help with decisions about:
 
@@ -218,23 +222,24 @@ class SymbolStatistics:
   def __init__(self, filename):
     """Read the stats database from FILENAME."""
 
-    # A map { Symbol -> _Stats } for all symbols (branches and tags)
+    # A map { LineOfDevelopment -> _Stats } for all lines of
+    # development:
     self._stats = { }
 
     stats_list = cPickle.load(open(filename, 'rb'))
 
     for stats in stats_list:
-      self._stats[stats.symbol] = stats
+      self._stats[stats.lod] = stats
 
   def __len__(self):
     return len(self._stats)
 
-  def get_stats(self, symbol):
-    """Return the _Stats object for Symbol instance SYMBOL.
+  def get_stats(self, lod):
+    """Return the _Stats object for LineOfDevelopment instance LOD.
 
-    Raise KeyError if no such name exists."""
+    Raise KeyError if no such lod exists."""
 
-    return self._stats[symbol]
+    return self._stats[lod]
 
   def __iter__(self):
     return self._stats.itervalues()
@@ -243,24 +248,29 @@ class SymbolStatistics:
     """Find all excluded symbols that are blocked by non-excluded symbols.
 
     Non-excluded symbols are by definition the symbols contained in
-    SYMBOLS, which is a map { name : Symbol }.  Return a map { name :
-    blocker_names } containing any problems found, where blocker_names
-    is a set containing the names of blocking symbols."""
+    SYMBOLS, which is a map { name : Symbol } not including Trunk
+    entries.  Return a map { name : blocker_names } containing any
+    problems found, where blocker_names is a set containing the names
+    of blocking symbols."""
 
     blocked_branches = {}
     for stats in self:
-      if stats.symbol.name not in symbols:
+      if isinstance(stats.lod, Trunk):
+        # Trunk is never excluded
+        pass
+      elif stats.lod.name not in symbols:
         blockers = [ blocker.name for blocker in stats.branch_blockers
                      if blocker.name in symbols ]
         if blockers:
-          blocked_branches[stats.symbol.name] = set(blockers)
+          blocked_branches[stats.lod.name] = set(blockers)
     return blocked_branches
 
   def _check_blocked_excludes(self, symbols):
     """Check whether any excluded branches are blocked.
 
-    A branch can be blocked because it has another, non-excluded
-    symbol that depends on it.  If any blocked excludes are found,
+    SYMBOLS is a map { name : Symbol } not including Trunk entries.  A
+    branch can be blocked because it has another, non-excluded symbol
+    that depends on it.  If any blocked excludes are found in SYMBOLS,
     output error messages describing the situation.  Return True if
     any errors were found."""
 
@@ -282,9 +292,10 @@ class SymbolStatistics:
   def _check_invalid_tags(self, symbols):
     """Check for commits on any symbols that are to be converted as tags.
 
-    In that case, they can't be converted as tags.  If any invalid
-    tags are found, output error messages describing the problems.
-    Return True iff any errors are found."""
+    SYMBOLS is a map { name : Symbol } not including Trunk entries.
+    If there is a commit on a symbol, then it cannot be converted as a
+    tag.  If any tags with commits are found, output error messages
+    describing the problems.  Return True iff any errors are found."""
 
     Log().quiet("Checking for forced tags with commits...")
 
@@ -293,7 +304,7 @@ class SymbolStatistics:
       if isinstance(symbol, Tag):
         stats = self.get_stats(symbol)
         if stats.branch_commit_count > 0:
-          invalid_tags.append(stats.symbol.name)
+          invalid_tags.append(stats.lod.name)
 
     if not invalid_tags:
       # No problems found:
@@ -307,42 +318,48 @@ class SymbolStatistics:
 
     return True
 
-  def check_consistency(self, symbols):
+  def check_consistency(self, lods):
     """Check the plan for how to convert symbols for consistency.
 
-    SYMBOLS is an iterable of TypedSymbol objects indicating how each
-    symbol is to be converted.  Return True iff any problems were
-    detected."""
+    LODS is an iterable of Trunk and TypedSymbol objects indicating
+    how each line of development is to be converted.  Return True iff
+    any problems were detected."""
 
     # Keep track of which symbols have not yet been processed:
-    unprocessed_symbols = set(self._stats.keys())
+    unprocessed_lods = set(self._stats.keys())
 
     # Create a map { symbol_name : Symbol } including only
     # non-excluded symbols:
     symbols_by_name = {}
-    for symbol in symbols:
-      if not isinstance(symbol, TypedSymbol):
-        raise InternalError('Symbol %s is of unexpected type' % (symbol,))
-
+    for lod in lods:
       try:
-        unprocessed_symbols.remove(symbol)
+        unprocessed_lods.remove(lod)
       except KeyError:
-        if symbol in self._stats:
+        if lod in self._stats:
           raise InternalError(
               'Symbol %s appeared twice in the symbol conversion table'
-              % (symbol,))
+              % (lod,))
         else:
-          raise InternalError('Symbol %s is unknown' % (symbol,))
+          raise InternalError('Symbol %s is unknown' % (lod,))
 
-      if not isinstance(symbol, ExcludedSymbol):
-        symbols_by_name[symbol.name] = symbol
+      if isinstance(lod, Trunk):
+        # Trunk is not processed any further.
+        pass
+      elif isinstance(lod, ExcludedSymbol):
+        # Symbol excluded; don't process it any further.
+        pass
+      elif isinstance(lod, TypedSymbol):
+        # This is an included symbol.  Include it in the symbol check.
+        symbols_by_name[lod.name] = lod
+      else:
+        raise InternalError('Symbol %s is of unexpected type' % (lod,))
 
     # Make sure that all symbols were processed:
-    if unprocessed_symbols:
+    if unprocessed_lods:
         raise InternalError(
             'The following symbols did not appear in the symbol conversion '
             'table: %s'
-            % (', '.join([str(s) for s in unprocessed_symbols]),))
+            % (', '.join([str(s) for s in unprocessed_lods]),))
 
     # It is important that we not short-circuit here:
     return (
@@ -365,14 +382,19 @@ class SymbolStatistics:
     """Return the LinesOfDevelopment preferred as parents for each symbol.
 
     Return a map {Symbol : LineOfDevelopment} giving the LOD that
-    appears most often as a possible parent for each symbol."""
+    appears most often as a possible parent for each symbol.  Do not
+    include entries for Trunk objects."""
 
     retval = {}
     for stats in self._stats.itervalues():
-      (parents, count) = stats.get_preferred_parents()
-      parents = list(parents)
-      parents.sort()
-      retval[stats.symbol] = parents[0]
+      if isinstance(stats.lod, Trunk):
+        # Trunk entries don't have any parents.
+        pass
+      else:
+        (parents, count) = stats.get_preferred_parents()
+        parents = list(parents)
+        parents.sort()
+        retval[stats.lod] = parents[0]
 
     return retval
 

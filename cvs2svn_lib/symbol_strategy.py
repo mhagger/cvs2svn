@@ -24,6 +24,7 @@ from cvs2svn_lib.set_support import *
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.log import Log
+from cvs2svn_lib.symbol import Trunk
 from cvs2svn_lib.symbol import Branch
 from cvs2svn_lib.symbol import Tag
 from cvs2svn_lib.symbol import ExcludedSymbol
@@ -71,8 +72,8 @@ class _RegexpStrategyRule(StrategyRule):
     self.action = action
 
   def get_symbol(self, stats):
-    if self.regexp.match(stats.symbol.name):
-      return self.action(stats.symbol)
+    if self.regexp.match(stats.lod.name):
+      return self.action(stats.lod)
     else:
       return None
 
@@ -108,9 +109,9 @@ class UnambiguousUsageRule(StrategyRule):
       # Can't decide
       return None
     elif is_branch:
-      return Branch(stats.symbol)
+      return Branch(stats.lod)
     elif is_tag:
-      return Tag(stats.symbol)
+      return Tag(stats.lod)
     else:
       # The symbol didn't appear at all:
       return None
@@ -121,7 +122,7 @@ class BranchIfCommitsRule(StrategyRule):
 
   def get_symbol(self, stats):
     if stats.branch_commit_count > 0:
-      return Branch(stats.symbol)
+      return Branch(stats.lod)
     else:
       return None
 
@@ -134,9 +135,9 @@ class HeuristicStrategyRule(StrategyRule):
 
   def get_symbol(self, stats):
     if stats.tag_create_count >= stats.branch_create_count:
-      return Tag(stats.symbol)
+      return Tag(stats.lod)
     else:
-      return Branch(stats.symbol)
+      return Branch(stats.lod)
 
 
 class AllBranchRule(StrategyRule):
@@ -147,7 +148,7 @@ class AllBranchRule(StrategyRule):
   therefore only apply to the symbols not handled earlier."""
 
   def get_symbol(self, stats):
-    return Branch(stats.symbol)
+    return Branch(stats.lod)
 
 
 class AllTagRule(StrategyRule):
@@ -161,7 +162,7 @@ class AllTagRule(StrategyRule):
   therefore only apply to the symbols not handled earlier."""
 
   def get_symbol(self, stats):
-    return Tag(stats.symbol)
+    return Tag(stats.lod)
 
 
 class SymbolStrategy:
@@ -170,10 +171,11 @@ class SymbolStrategy:
   def get_symbols(self, symbol_stats):
     """Return a list of TypedSymbol objects telling how to convert symbols.
 
-    The values returned by the iterable are TypedSymbol objects
-    (Branch, Tag, or ExcludedSymbol), indicating how each symbol
-    should be converted.  One TypedSymbol must be included in the
-    return value for each symbol described in SYMBOL_STATS.
+    The list values are TypedSymbol objects (Branch, Tag, or
+    ExcludedSymbol), indicating how each symbol should be converted.
+    Trunk objects in SYMBOL_STATS should be passed through unchanged.
+    One object must be included in the return value for each line of
+    development described in SYMBOL_STATS.
 
     Return None if there was an error."""
 
@@ -199,12 +201,15 @@ class RuleBasedSymbolStrategy:
     self._rules.append(rule)
 
   def _get_symbol(self, stats):
-    for rule in self._rules:
-      symbol = rule.get_symbol(stats)
-      if symbol is not None:
-        return symbol
+    if isinstance(stats.lod, Trunk):
+      return stats.lod
     else:
-      return None
+      for rule in self._rules:
+        symbol = rule.get_symbol(stats)
+        if symbol is not None:
+          return symbol
+      else:
+        return None
 
   def get_symbols(self, symbol_stats):
     symbols = []

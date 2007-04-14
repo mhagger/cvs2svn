@@ -399,24 +399,19 @@ class _SymbolDataCollector(object):
     commit in symbol_stats, which is used to generate statistics for
     --force-branch and --force-tag guidance."""
 
-    if not is_trunk_revision(rev_data.rev):
-      lod = self.rev_to_lod(rev_data.rev)
-      # Register the commit on this non-trunk branch
-      self.collect_data.symbol_stats[lod].register_branch_commit()
+    lod = self.rev_to_lod(rev_data.rev)
+    self.collect_data.symbol_stats[lod].register_branch_commit()
 
   def register_branch_blockers(self):
     for (revision, tag_data_list) in self.tags_data.items():
-      if is_branch_revision(revision):
-        branch_data_parent = self.rev_to_lod(revision)
-        for tag_data in tag_data_list:
-          self.collect_data.symbol_stats[branch_data_parent] \
-              .register_branch_blocker(tag_data.symbol)
+      stats = self.collect_data.symbol_stats[self.rev_to_lod(revision)]
+      for tag_data in tag_data_list:
+        stats.register_branch_blocker(tag_data.symbol)
 
     for branch_data_child in self.branches_data.values():
-      if is_branch_revision(branch_data_child.parent):
-        branch_data_parent = self.rev_to_lod(branch_data_child.parent)
-        self.collect_data.symbol_stats[branch_data_parent] \
-            .register_branch_blocker(branch_data_child.symbol)
+      parent_lod = self.rev_to_lod(branch_data_child.parent)
+      self.collect_data.symbol_stats[parent_lod] \
+          .register_branch_blocker(branch_data_child.symbol)
 
 
 class _FileDataCollector(cvs2svn_rcsparse.Sink):
@@ -953,6 +948,8 @@ class _ProjectDataCollector:
 
     # The Trunk LineOfDevelopment object for this project.
     self.trunk = Trunk(self.project)
+    # This causes a record for self.trunk to spring into existence:
+    self.collect_data.symbol_stats[self.trunk]
 
     # A map { name -> Symbol } for all known symbols in this project.
     # The symbols listed here are undifferentiated into Branches and

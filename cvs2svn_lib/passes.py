@@ -37,6 +37,7 @@ from cvs2svn_lib.common import DB_OPEN_READ
 from cvs2svn_lib.common import DB_OPEN_WRITE
 from cvs2svn_lib.common import Timestamper
 from cvs2svn_lib.log import Log
+from cvs2svn_lib.pass_manager import Pass
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.cvs_file_database import CVSFileDatabase
 from cvs2svn_lib.metadata_database import MetadataDatabase
@@ -101,35 +102,6 @@ def sort_file(infilename, outfilename, options=''):
   if not os.path.exists(outfilename) \
      or os.path.getsize(outfilename) != os.path.getsize(infilename):
     raise FatalError('Command failed: "%s"' % (command,))
-
-
-class Pass(object):
-  """Base class for one step of the conversion."""
-
-  def __init__(self):
-    # By default, use the pass object's class name as the pass name:
-    self.name = self.__class__.__name__
-
-  def register_artifacts(self):
-    """Register artifacts (created and needed) in artifact_manager."""
-
-    raise NotImplementedError
-
-  def _register_temp_file(self, basename):
-    """Helper method; for brevity only."""
-
-    artifact_manager.register_temp_file(basename, self)
-
-  def _register_temp_file_needed(self, basename):
-    """Helper method; for brevity only."""
-
-    artifact_manager.register_temp_file_needed(basename, self)
-
-  def run(self, stats_keeper):
-    """Carry out this step of the conversion.
-    STATS_KEEPER is a StatsKeeper instance."""
-
-    raise NotImplementedError
 
 
 class CollectRevsPass(Pass):

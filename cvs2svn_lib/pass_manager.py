@@ -55,6 +55,35 @@ def check_for_garbage():
     del gc.garbage[:]
 
 
+class Pass(object):
+  """Base class for one step of the conversion."""
+
+  def __init__(self):
+    # By default, use the pass object's class name as the pass name:
+    self.name = self.__class__.__name__
+
+  def register_artifacts(self):
+    """Register artifacts (created and needed) in artifact_manager."""
+
+    raise NotImplementedError
+
+  def _register_temp_file(self, basename):
+    """Helper method; for brevity only."""
+
+    artifact_manager.register_temp_file(basename, self)
+
+  def _register_temp_file_needed(self, basename):
+    """Helper method; for brevity only."""
+
+    artifact_manager.register_temp_file_needed(basename, self)
+
+  def run(self, stats_keeper):
+    """Carry out this step of the conversion.
+    STATS_KEEPER is a StatsKeeper instance."""
+
+    raise NotImplementedError
+
+
 class PassManager:
   """Manage a list of passes that can be executed separately or all at once.
 

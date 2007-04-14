@@ -1280,8 +1280,7 @@ class OutputPass(Pass):
         artifact_manager.get_temp_file(config.CVS_ITEMS_FILTERED_STORE),
         artifact_manager.get_temp_file(config.CVS_ITEMS_FILTERED_INDEX_TABLE),
         DB_OPEN_READ)
-    if not Ctx().trunk_only:
-      Ctx()._symbol_db = SymbolDatabase()
+    Ctx()._symbol_db = SymbolDatabase()
     repos = SVNRepositoryMirror()
     persistence_manager = PersistenceManager(DB_OPEN_READ)
 
@@ -1314,8 +1313,7 @@ class OutputPass(Pass):
 
     Ctx().output_option.cleanup()
     persistence_manager.close()
-    if not Ctx().trunk_only:
-      Ctx()._symbol_db.close()
+    Ctx()._symbol_db.close()
     Ctx()._cvs_items_db.close()
     Ctx()._metadata_db.close()
     Ctx()._cvs_file_db.close()

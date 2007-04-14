@@ -66,8 +66,6 @@ def create_symbol_database(symbols):
   containing Trunk and TypedSymbol objects."""
 
   f = open(artifact_manager.get_temp_file(config.SYMBOL_DB), 'wb')
-  cPickle.dump(
-      [symbol for symbol in symbols if not isinstance(symbol, Trunk)],
-      f, -1)
+  cPickle.dump(symbols, f, -1)
   f.close()
 

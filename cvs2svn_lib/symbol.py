@@ -58,14 +58,15 @@ class LineOfDevelopment:
 class Trunk(LineOfDevelopment):
   """Represent the main line of development."""
 
-  def __init__(self, project):
+  def __init__(self, id, project):
+    self.id = id
     self.project = project
 
   def __getstate__(self):
-    return (self.project.id,)
+    return (self.id, self.project.id,)
 
   def __setstate__(self, state):
-    (project_id,) = state
+    (self.id, project_id,) = state
     self.project = Ctx().projects[project_id]
 
   def __eq__(self, other):

@@ -21,8 +21,6 @@ from cvs2svn_lib.boolean import *
 from cvs2svn_lib.set_support import *
 from cvs2svn_lib.common import OP_DELETE
 from cvs2svn_lib.context import Ctx
-from cvs2svn_lib.symbol import Trunk
-from cvs2svn_lib.symbol import Branch
 
 
 class CVSItem(object):
@@ -162,11 +160,6 @@ class CVSRevision(CVSItem):
     The presence of this method improves the space efficiency of
     pickling CVSRevision instances."""
 
-    if isinstance(self.lod, Trunk):
-      lod_id = None
-    else:
-      lod_id = self.lod.id
-
     return (
         self.id, self.cvs_file.id,
         self.timestamp, self.metadata_id,
@@ -174,7 +167,7 @@ class CVSRevision(CVSItem):
         self.op,
         self.rev,
         self.deltatext_exists,
-        lod_id,
+        self.lod.id,
         self.first_on_branch_id,
         self.default_branch_revision,
         self.default_branch_prev_id, self.default_branch_next_id,
@@ -198,10 +191,7 @@ class CVSRevision(CVSItem):
      self.closed_symbol_ids,
      self.revision_recorder_token) = data
     self.cvs_file = Ctx()._cvs_file_db.get_file(cvs_file_id)
-    if lod_id is None:
-      self.lod = Trunk(self.cvs_file.project)
-    else:
-      self.lod = Branch(Ctx()._symbol_db.get_symbol(lod_id))
+    self.lod = Ctx()._symbol_db.get_symbol(lod_id)
 
   def get_symbol_pred_ids(self):
     """Return the pred_ids for symbol predecessors."""

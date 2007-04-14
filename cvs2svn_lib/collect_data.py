@@ -947,7 +947,8 @@ class _ProjectDataCollector:
     self.num_files = 0
 
     # The Trunk LineOfDevelopment object for this project.
-    self.trunk = Trunk(self.project)
+    self.trunk = Trunk(
+        self.collect_data.symbol_key_generator.gen_id(), self.project)
     # This causes a record for self.trunk to spring into existence:
     self.collect_data.symbol_stats[self.trunk]
 

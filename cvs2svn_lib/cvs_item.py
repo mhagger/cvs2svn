@@ -314,20 +314,30 @@ class CVSBranch(CVSSymbol):
                             or None if this is a converted tag
        SOURCE_ID       -->  (int) id of CVSRevision or CVSBranch from which
                             this branch sprouts
-       NEXT_ID         -->  (int or None) id of first rev on this branch"""
+       NEXT_ID         -->  (int or None) id of first rev on this branch
+       TAG_IDS         -->  (list of int) ids of CVSSymbols on this revision
+                            that should be treated as tags (can be set due to
+                            parent adjustment)
+       BRANCH_IDS      -->  (list of int) ids of all CVSSymbols rooted in this
+                            revision that should be treated as branches (can
+                            be set due to parent adjustment)"""
 
     CVSSymbol.__init__(self, id, cvs_file, symbol, source_id)
     self.branch_number = branch_number
     self.next_id = next_id
+    self.tag_ids = []
+    self.branch_ids = []
 
   def __getstate__(self):
     return (
         self.id, self.cvs_file.id,
-        self.symbol.id, self.branch_number, self.source_id, self.next_id)
+        self.symbol.id, self.branch_number, self.source_id, self.next_id,
+        self.tag_ids, self.branch_ids)
 
   def __setstate__(self, data):
     (self.id, cvs_file_id,
-     symbol_id, self.branch_number, self.source_id, self.next_id) = data
+     symbol_id, self.branch_number, self.source_id, self.next_id,
+     self.tag_ids, self.branch_ids) = data
     self.cvs_file = Ctx()._cvs_file_db.get_file(cvs_file_id)
     self.symbol = Ctx()._symbol_db.get_symbol(symbol_id)
 
@@ -335,7 +345,7 @@ class CVSBranch(CVSSymbol):
     return set([self.source_id])
 
   def get_succ_ids(self):
-    retval = set()
+    retval = set(self.tag_ids + self.branch_ids)
     if self.next_id is not None:
       retval.add(self.next_id)
     return retval

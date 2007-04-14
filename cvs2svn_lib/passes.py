@@ -31,6 +31,7 @@ from cvs2svn_lib import config
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.common import FatalException
 from cvs2svn_lib.common import FatalError
+from cvs2svn_lib.common import InternalError
 from cvs2svn_lib.common import DB_OPEN_NEW
 from cvs2svn_lib.common import DB_OPEN_READ
 from cvs2svn_lib.common import DB_OPEN_WRITE
@@ -185,6 +186,16 @@ class CollateSymbolsPass(Pass):
     for symbol in symbols:
       if isinstance(symbol, ExcludedSymbol):
         symbol_stats.exclude_symbol(symbol)
+
+    preferred_parents = symbol_stats.get_preferred_parents()
+
+    for symbol in symbols:
+      if symbol in preferred_parents:
+        symbol.preferred_parent_id = preferred_parents[symbol].id
+        del preferred_parents[symbol]
+
+    if preferred_parents:
+      raise InternalError('Some symbols unaccounted for')
 
     create_symbol_database(symbols)
 

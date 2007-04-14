@@ -97,11 +97,15 @@ class Symbol:
     self.project = project
     self.name = name
 
+    # If this symbol has a preferred parent, this member is the id of
+    # the LineOfDevelopment instance representing it.
+    self.preferred_parent_id = None
+
   def __getstate__(self):
-    return (self.id, self.project.id, self.name,)
+    return (self.id, self.project.id, self.name, self.preferred_parent_id,)
 
   def __setstate__(self, state):
-    (self.id, project_id, self.name,) = state
+    (self.id, project_id, self.name, self.preferred_parent_id,) = state
     self.project = Ctx().projects[project_id]
 
   def __eq__(self, other):

@@ -23,6 +23,7 @@ from cvs2svn_lib.boolean import *
 from cvs2svn_lib.set_support import *
 from cvs2svn_lib import config
 from cvs2svn_lib.common import error_prefix
+from cvs2svn_lib.common import InternalError
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.symbol import Trunk
@@ -313,15 +314,35 @@ class SymbolStatistics:
     symbol is to be converted.  Return True iff any problems were
     detected."""
 
-    assert len(symbols) == len(self)
+    # Keep track of which symbols have not yet been processed:
+    unprocessed_symbols = set(self._stats.keys())
 
     # Create a map { symbol_name : Symbol } including only
     # non-excluded symbols:
     symbols_by_name = {}
     for symbol in symbols:
-      assert isinstance(symbol, TypedSymbol)
+      if not isinstance(symbol, TypedSymbol):
+        raise InternalError('Symbol %s is of unexpected type' % (symbol,))
+
+      try:
+        unprocessed_symbols.remove(symbol)
+      except KeyError:
+        if symbol in self._stats:
+          raise InternalError(
+              'Symbol %s appeared twice in the symbol conversion table'
+              % (symbol,))
+        else:
+          raise InternalError('Symbol %s is unknown' % (symbol,))
+
       if not isinstance(symbol, ExcludedSymbol):
         symbols_by_name[symbol.name] = symbol
+
+    # Make sure that all symbols were processed:
+    if unprocessed_symbols:
+        raise InternalError(
+            'The following symbols did not appear in the symbol conversion '
+            'table: %s'
+            % (', '.join([str(s) for s in unprocessed_symbols]),))
 
     # It is important that we not short-circuit here:
     return (

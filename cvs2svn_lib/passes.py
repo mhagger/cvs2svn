@@ -1,7 +1,7 @@
 # (Be in -*- python -*- mode.)
 #
 # ====================================================================
-# Copyright (c) 2000-2006 CollabNet.  All rights reserved.
+# Copyright (c) 2000-2007 CollabNet.  All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.  The terms
@@ -14,7 +14,7 @@
 # history and logs, available at http://cvs2svn.tigris.org/.
 # ====================================================================
 
-"""This module contains database facilities used by cvs2svn."""
+"""This module defines the passes that make up a conversion."""
 
 
 from __future__ import generators
@@ -71,6 +71,10 @@ from cvs2svn_lib.persistence_manager import PersistenceManager
 from cvs2svn_lib.stdout_delegate import StdoutDelegate
 from cvs2svn_lib.collect_data import CollectData
 from cvs2svn_lib.process import run_command
+from cvs2svn_lib.check_dependencies_pass \
+    import CheckItemStoreDependenciesPass
+from cvs2svn_lib.check_dependencies_pass \
+    import CheckIndexedItemStoreDependenciesPass
 
 
 def sort_file(infilename, outfilename, options=''):
@@ -172,109 +176,6 @@ class CollateSymbolsPass(Pass):
     create_symbol_database(symbols)
 
     Log().quiet("Done")
-
-
-class CheckDependenciesPass(Pass):
-  """Check that the dependencies are self-consistent."""
-
-  def __init__(self):
-    Pass.__init__(self)
-
-  def register_artifacts(self):
-    self._register_temp_file_needed(config.SYMBOL_DB)
-    self._register_temp_file_needed(config.CVS_FILES_DB)
-
-  def iter_cvs_items(self):
-    raise NotImplementedError()
-
-  def get_cvs_item(self, item_id):
-    raise NotImplementedError()
-
-  def run(self, stats_keeper):
-    Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
-    self.symbol_db = SymbolDatabase()
-    Ctx()._symbol_db = self.symbol_db
-
-    Log().quiet("Checking dependency consistency...")
-
-    fatal_errors = []
-    for cvs_item in self.iter_cvs_items():
-      # Check that the pred_ids and succ_ids are mutually consistent:
-      for pred_id in cvs_item.get_pred_ids():
-        pred = self.get_cvs_item(pred_id)
-        if not cvs_item.id in pred.get_succ_ids():
-          fatal_errors.append(
-              '%s lists pred=%s, but not vice versa.' % (cvs_item, pred,))
-
-      for succ_id in cvs_item.get_succ_ids():
-        succ = self.get_cvs_item(succ_id)
-        if not cvs_item.id in succ.get_pred_ids():
-          fatal_errors.append(
-              '%s lists succ=%s, but not vice versa.' % (cvs_item, succ,))
-
-    if fatal_errors:
-      raise FatalException("Dependencies inconsistent:\n"
-                           + "\n".join(fatal_errors) + "\n"
-                           + "Exited due to fatal error(s).\n")
-
-    self.symbol_db.close()
-    self.symbol_db = None
-    Ctx()._cvs_file_db.close()
-    Log().quiet("Done")
-
-
-class CheckItemStoreDependenciesPass(CheckDependenciesPass):
-  def __init__(self, cvs_items_store_file):
-    CheckDependenciesPass.__init__(self)
-    self.cvs_items_store_file = cvs_items_store_file
-
-  def register_artifacts(self):
-    CheckDependenciesPass.register_artifacts(self)
-    self._register_temp_file_needed(self.cvs_items_store_file)
-
-  def iter_cvs_items(self):
-    return self.cvs_item_store.__iter__()
-
-  def get_cvs_item(self, item_id):
-    return self.cvs_item_store[item_id]
-
-  def run(self, stats_keeper):
-    self.cvs_item_store = OldCVSItemStore(
-        artifact_manager.get_temp_file(self.cvs_items_store_file))
-
-    CheckDependenciesPass.run(self, stats_keeper)
-
-    self.cvs_item_store.close()
-    self.cvs_item_store = None
-
-
-class CheckIndexedItemStoreDependenciesPass(CheckDependenciesPass):
-  def __init__(self, cvs_items_store_file, cvs_items_store_index_file):
-    CheckDependenciesPass.__init__(self)
-    self.cvs_items_store_file = cvs_items_store_file
-    self.cvs_items_store_index_file = cvs_items_store_index_file
-
-  def register_artifacts(self):
-    CheckDependenciesPass.register_artifacts(self)
-    self._register_temp_file_needed(self.cvs_items_store_file)
-    self._register_temp_file_needed(self.cvs_items_store_index_file)
-
-  def iter_cvs_items(self):
-    return self.cvs_item_store.__iter__()
-
-  def get_cvs_item(self, item_id):
-    return self.cvs_item_store[item_id]
-
-  def run(self, stats_keeper):
-    self.cvs_item_store = IndexedCVSItemStore(
-        artifact_manager.get_temp_file(self.cvs_items_store_file),
-        artifact_manager.get_temp_file(self.cvs_items_store_index_file),
-        DB_OPEN_READ)
-
-    CheckDependenciesPass.run(self, stats_keeper)
-
-    self.cvs_item_store.close()
-    self.cvs_item_store = None
 
 
 class FilterSymbolsPass(Pass):

@@ -245,6 +245,9 @@ class CheckDependenciesPass(Pass):
                            + "\n".join(fatal_errors) + "\n"
                            + "Exited due to fatal error(s).\n")
 
+    self.symbol_db.close()
+    self.symbol_db = None
+    Ctx()._cvs_file_db.close()
     Log().quiet("Done")
 
 
@@ -269,6 +272,7 @@ class CheckItemStoreDependenciesPass(CheckDependenciesPass):
 
     CheckDependenciesPass.run(self, stats_keeper)
 
+    self.cvs_item_store.close()
     self.cvs_item_store = None
 
 
@@ -297,6 +301,7 @@ class CheckIndexedItemStoreDependenciesPass(CheckDependenciesPass):
 
     CheckDependenciesPass.run(self, stats_keeper)
 
+    self.cvs_item_store.close()
     self.cvs_item_store = None
 
 

@@ -389,7 +389,7 @@ class CVSTag(CVSSymbol):
   def __str__(self):
     """For convenience only.  The format is subject to change at any time."""
 
-    return '%s:%s:%x<%x>' \
-           % (self.cvs_file, self.symbol, self.source_id, self.id,)
+    return '%s:%s<%x>' \
+           % (self.cvs_file, self.symbol, self.id,)
 
 

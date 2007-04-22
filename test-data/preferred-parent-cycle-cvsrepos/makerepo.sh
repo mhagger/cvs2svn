@@ -9,39 +9,47 @@
 # The branching structure of the three files in this repository is
 # constructed to create a loop in the preferred parent of each branch
 # A, B, and C.  The branches are as follows ('*' marks revisions,
-# which are used to disambiguate the parentage of each branch within a
-# single file):
+# which are used to prevent trunk from being a possible parent of
+# branches A, B, or C):
 #
 # file1:
 # --*--+-------------------- trunk
 #      |
-#      +--*--+-------------- branch A
+#      +--*--+-------------- branch X
 #            |
-#            +--*--+-------- branch B
-#                  |
-#                  +-------- branch C
+#            +-------------- branch A
+#            |
+#            +-------------- branch B
+#            |
+#            +-------------- branch C
 #
 # file2:
 # --*--+-------------------- trunk
 #      |
-#      +--*--+-------------- branch B
+#      +--*--+-------------- branch Y
 #            |
-#            +--*--+-------- branch C
-#                  |
-#                  +-------- branch A
+#            +-------------- branch B
+#            |
+#            +-------------- branch C
+#            |
+#            +-------------- branch A
 #
 # file3:
 # --*--+-------------------- trunk
 #      |
-#      +--*--+-------------- branch C
+#      +--*--+-------------- branch Z
 #            |
-#            +--*--+-------- branch A
-#                  |
-#                  +-------- branch B
+#            +-------------- branch C
+#            |
+#            +-------------- branch A
+#            |
+#            +-------------- branch B
 #
-# Note that the possible parents of A are (trunk, C, C), those of B
-# are (A, trunk, A), and those of C are (B, B, trunk).  Therefore the
-# preferred parents form a cycle A -> C -> B -> A.
+
+# Note that the possible parents of A are (X, Y, Z, C*2, B*1), those
+# of B are (X, Y, Z, A*2, C*1), and those of C are (X, Y, Z, B*2,
+# A*1).  Therefore the preferred parents form a cycle A -> C -> B ->
+# A.
 
 repo=`pwd`/test-data/preferred-parent-cycle-cvsrepos
 wc=`pwd`/tmp/preferred-parent-cycle-wc
@@ -62,41 +70,46 @@ cvs add file1 file2 file3
 cvs commit -m 'Adding files on trunk' .
 
 
-cvs tag -b A file1
-cvs up -r A file1
+cvs tag -b X file1
+cvs up -r X file1
 
-cvs tag -b B file2
-cvs up -r B file2
+cvs tag -b Y file2
+cvs up -r Y file2
 
-cvs tag -b C file3
-cvs up -r C file3
+cvs tag -b Z file3
+cvs up -r Z file3
 
 echo '1.1.2.1' >file1
 echo '1.1.2.1' >file2
 echo '1.1.2.1' >file3
-cvs commit -m 'Adding revision on first-level branch' .
+cvs commit -m 'Adding revision on first-level branches' .
 
+
+cvs tag -b A file1
+cvs up -r A file1
 
 cvs tag -b B file1
 cvs up -r B file1
 
-cvs tag -b C file2
-cvs up -r C file2
-
-cvs tag -b A file3
-cvs up -r A file3
-
-echo '1.1.2.1.2.1' >file1
-echo '1.1.2.1.2.1' >file2
-echo '1.1.2.1.2.1' >file3
-cvs commit -m 'Adding revision on second-level branch' .
-
-
 cvs tag -b C file1
 cvs up -r C file1
 
+
+cvs tag -b B file2
+cvs up -r B file2
+
+cvs tag -b C file2
+cvs up -r C file2
+
 cvs tag -b A file2
 cvs up -r A file2
+
+
+cvs tag -b C file3
+cvs up -r C file3
+
+cvs tag -b A file3
+cvs up -r A file3
 
 cvs tag -b B file3
 cvs up -r B file3

@@ -1122,11 +1122,6 @@ class CollectData:
 
     self.revision_recorder.start()
 
-  def __del__(self):
-    if self._cvs_item_store is not None:
-      Log().debug('%r was destroyed without being closed.' % (self,))
-      self.close()
-
   def record_fatal_error(self, err):
     """Record that fatal error ERR was found.
 

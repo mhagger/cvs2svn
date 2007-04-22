@@ -82,11 +82,6 @@ class SymbolingsLogger:
     # values are the ids of symbols that this path has opened.
     self._open_paths_with_default_branches = { }
 
-  def __del__(self):
-    if self.symbolings is not None:
-      Log().debug('%r was destroyed without being closed.' % (self,))
-      self.close()
-
   def log_revision(self, cvs_rev, svn_revnum):
     """Log any openings and closings found in CVS_REV."""
 

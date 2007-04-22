@@ -179,11 +179,6 @@ class SVNRepositoryMirror:
     if not Ctx().trunk_only:
       self._symbolings_reader = SymbolingsReader()
 
-  def __del__(self):
-    if self._nodes_db is not None:
-      Log().debug('%r was destroyed without being closed.' % (self,))
-      self.close()
-
   def start_commit(self, revnum, revprops):
     """Start a new commit."""
 

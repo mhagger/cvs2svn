@@ -171,11 +171,6 @@ class RecordTable:
     # The index just beyond the last record ever written to disk:
     self._limit_written = self._limit
 
-  def __del__(self):
-    if self.f is not None:
-      Log().debug('%r was destroyed without being closed.' % (self,))
-      self.close()
-
   def __str__(self):
     return 'RecordTable(%r)' % (self.filename,)
 

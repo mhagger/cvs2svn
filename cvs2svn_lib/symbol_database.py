@@ -43,11 +43,6 @@ class SymbolDatabase:
     for symbol in symbols:
       self._symbols[symbol.id] = symbol
 
-  def __del__(self):
-    if self._symbols is not None:
-      Log().debug('%r was destroyed without being closed.' % (self,))
-      self.close()
-
   def get_symbol(self, id):
     """Return the symbol instance with id ID.
 

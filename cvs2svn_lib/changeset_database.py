@@ -44,11 +44,6 @@ class ChangesetDatabase:
         filename, mode,
         (Changeset, RevisionChangeset, OrderedChangeset, SymbolChangeset,))
 
-  def __del__(self):
-    if self.db is not None:
-      Log().debug('%r was destroyed without being closed.' % (self,))
-      self.close()
-
   def store(self, changeset):
     self.db['%x' % changeset.id] = changeset
 

@@ -47,11 +47,6 @@ class CVSFileDatabase:
     else:
       raise RuntimeError('Invalid mode %r' % self.mode)
 
-  def __del__(self):
-    if self._cvs_files is not None:
-      Log().debug('%r was destroyed without being closed.' % (self,))
-      self.close()
-
   def log_file(self, cvs_file):
     """Add CVS_FILE, a CVSFile instance, to the database."""
 

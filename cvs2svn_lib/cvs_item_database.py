@@ -58,11 +58,6 @@ class NewCVSItemStore:
     self.current_file_id = None
     self.current_file_items = []
 
-  def __del__(self):
-    if self.f is not None:
-      Log().debug('%r was destroyed without being closed.' % (self,))
-      self.close()
-
   def _flush(self):
     """Write the current items to disk."""
 
@@ -104,11 +99,6 @@ class OldCVSItemStore:
 
     # The CVSFileItems instance for the current file.
     self.cvs_file_items = None
-
-  def __del__(self):
-    if self.f is not None:
-      Log().debug('%r was destroyed without being closed.' % (self,))
-      self.close()
 
   def _read_file_chunk(self):
     self.current_file_items = self.serializer.loadf(self.f)

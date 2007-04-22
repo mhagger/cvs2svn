@@ -52,11 +52,6 @@ class SVNCommitCreator:
           artifact_manager.get_temp_file(config.SYMBOL_LAST_CHANGESETS_DB),
           DB_OPEN_READ)
 
-  def __del__(self):
-    if self._done_symbols is not None:
-      Log().debug('%r was destroyed without being closed.' % (self,))
-      self.close()
-
   def _delete_needed(self, cvs_rev):
     """Return True iff the specified delete CVS_REV is really needed.
 

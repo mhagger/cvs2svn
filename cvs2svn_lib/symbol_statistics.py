@@ -160,11 +160,6 @@ class SymbolStatisticsCollector:
     # A map { lod -> _Stats } for all lines of development:
     self._stats = { }
 
-  def __del__(self):
-    if self._stats is not None:
-      Log().debug('%r was destroyed without being closed.' % (self,))
-      self.close()
-
   def __getitem__(self, lod):
     """Return the _Stats record for line of development LOD.
 

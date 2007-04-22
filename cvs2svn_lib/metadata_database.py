@@ -77,11 +77,6 @@ class MetadataDatabase:
         artifact_manager.get_temp_file(config.METADATA_DB), self.mode
         )
 
-  def __del__(self):
-    if self.db is not None:
-      Log().debug('%r was destroyed without being closed.' % (self,))
-      self.close()
-
   def get_key(self, project, branch_name, author, log_msg):
       """Return the id for the specified metadata.
 

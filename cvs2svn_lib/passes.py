@@ -159,15 +159,21 @@ class CollateSymbolsPass(Pass):
     if symbols is None or symbol_stats.check_consistency(symbols):
       sys.exit(1)
 
+    symbols_by_id = {}
     for symbol in symbols:
       if isinstance(symbol, ExcludedSymbol):
         symbol_stats.exclude_symbol(symbol)
+      else:
+        symbols_by_id[symbol.id] = symbol
 
     preferred_parents = symbol_stats.get_preferred_parents()
 
     for symbol in symbols:
       if symbol in preferred_parents:
         symbol.preferred_parent_id = preferred_parents[symbol].id
+        Log().debug(
+            'The preferred parent of %s is %s'
+            % (symbol, symbols_by_id[symbol.preferred_parent_id],))
         del preferred_parents[symbol]
 
     if preferred_parents:

@@ -2656,6 +2656,12 @@ def empty_trunk_path():
       )
 
 
+def preferred_parent_cycle():
+  "handle a cycle in branch parent preferences"
+
+  conv = ensure_conversion('preferred-parent-cycle')
+
+
 ########################################################################
 # Run the tests
 
@@ -2797,6 +2803,7 @@ test_list = [
     timestamp_chaos,
     symlinks,
     empty_trunk_path,
+    preferred_parent_cycle,
     ]
 
 if __name__ == '__main__':

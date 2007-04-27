@@ -24,7 +24,7 @@ from cvs2svn_lib import config
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.artifact_manager import artifact_manager
-from cvs2svn_lib.database import Database
+from cvs2svn_lib.database import MarshallDatabase
 from cvs2svn_lib.database import DB_OPEN_READ
 from cvs2svn_lib.database import DB_OPEN_WRITE
 from cvs2svn_lib.database import DB_OPEN_NEW
@@ -32,7 +32,7 @@ from cvs2svn_lib.key_generator import KeyGenerator
 
 
 class MetadataDatabase:
-  """A Database to store metadata about CVSRevisions.
+  """A MarshallDatabase to store metadata about CVSRevisions.
 
   This database manages a map
 
@@ -54,8 +54,8 @@ class MetadataDatabase:
 
   def __init__(self, mode):
     """Initialize an instance, opening database in MODE (like the MODE
-    argument to Database or anydbm.open()).  Use CVS_FILE_DB to look
-    up CVSFiles."""
+    argument to MarshallDatabase or anydbm.open()).  Use CVS_FILE_DB to
+    look up CVSFiles."""
 
     self.mode = mode
 
@@ -73,7 +73,7 @@ class MetadataDatabase:
       # Modifying an existing database is not supported:
       raise NotImplementedError('Mode %r is not supported' % self.mode)
 
-    self.db = Database(
+    self.db = MarshallDatabase(
         artifact_manager.get_temp_file(config.METADATA_DB), self.mode
         )
 

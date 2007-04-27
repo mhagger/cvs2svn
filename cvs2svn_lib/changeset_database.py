@@ -31,7 +31,7 @@ from cvs2svn_lib.changeset import OrderedChangeset
 from cvs2svn_lib.changeset import SymbolChangeset
 from cvs2svn_lib.record_table import UnsignedIntegerPacker
 from cvs2svn_lib.record_table import RecordTable
-from cvs2svn_lib.database import PrimedPDatabase
+from cvs2svn_lib.database import PrimedPickleDatabase
 
 
 def CVSItemToChangesetTable(filename, mode):
@@ -40,7 +40,7 @@ def CVSItemToChangesetTable(filename, mode):
 
 class ChangesetDatabase:
   def __init__(self, filename, mode):
-    self.db = PrimedPDatabase(
+    self.db = PrimedPickleDatabase(
         filename, mode,
         (Changeset, RevisionChangeset, OrderedChangeset, SymbolChangeset,))
 

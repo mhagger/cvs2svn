@@ -154,7 +154,7 @@ class AbstractDatabase:
     self.db = None
 
 
-class SDatabase(AbstractDatabase):
+class StringDatabase(AbstractDatabase):
   """A database that can only store strings."""
 
   def __getitem__(self, key):
@@ -164,7 +164,7 @@ class SDatabase(AbstractDatabase):
     self.db[key] = value
 
 
-class Database(AbstractDatabase):
+class MarshallDatabase(AbstractDatabase):
   """A database that uses the marshal module to store built-in types."""
 
   def __getitem__(self, key):
@@ -174,7 +174,7 @@ class Database(AbstractDatabase):
     self.db[key] = marshal.dumps(value)
 
 
-class PrimedPDatabase(AbstractDatabase):
+class PrimedPickleDatabase(AbstractDatabase):
   """A database that uses cPickle module to store arbitrary objects.
 
   The Pickler and Unpickler are 'primed' by pre-pickling PRIMER, which

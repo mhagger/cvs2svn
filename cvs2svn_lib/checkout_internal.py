@@ -58,7 +58,7 @@ from cvs2svn_lib.rcs_stream import RCSStream
 from cvs2svn_lib.revision_recorder import RevisionRecorder
 from cvs2svn_lib.revision_excluder import RevisionExcluder
 from cvs2svn_lib.revision_reader import RevisionReader
-from cvs2svn_lib.serializer import PrimedPickleSerializer
+from cvs2svn_lib.serializer import StringSerializer
 
 class InternalRevisionRecorder(RevisionRecorder):
   """A RevisionRecorder that reconstructs the full text internally."""
@@ -73,11 +73,11 @@ class InternalRevisionRecorder(RevisionRecorder):
     self._rcs_deltas = IndexedDatabase(
         artifact_manager.get_temp_file(config.RCS_DELTAS_STORE),
         artifact_manager.get_temp_file(config.RCS_DELTAS_INDEX_TABLE),
-        DB_OPEN_NEW, PrimedPickleSerializer(None))
+        DB_OPEN_NEW, StringSerializer())
     self._rcs_trees = IndexedDatabase(
         artifact_manager.get_temp_file(config.RCS_TREES_STORE),
         artifact_manager.get_temp_file(config.RCS_TREES_INDEX_TABLE),
-        DB_OPEN_NEW, PrimedPickleSerializer(None))
+        DB_OPEN_NEW, StringSerializer())
 
   def start_file(self, cvs_file):
     self._cvs_file = cvs_file
@@ -177,7 +177,7 @@ class InternalRevisionExcluder(RevisionExcluder):
     self._new_tree_db = IndexedDatabase(
         artifact_manager.get_temp_file(config.RCS_TREES_FILTERED_STORE),
         artifact_manager.get_temp_file(config.RCS_TREES_FILTERED_INDEX_TABLE),
-        DB_OPEN_NEW, PrimedPickleSerializer(None))
+        DB_OPEN_NEW, StringSerializer())
 
   def start_file(self, cvs_file):
     self._id = cvs_file.id

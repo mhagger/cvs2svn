@@ -49,6 +49,26 @@ class Serializer:
     raise NotImplementedError()
 
 
+class StringSerializer(Serializer):
+  """This class serializes/deserializes strings.
+
+  Dumps and loads are simple pass-throughs, while dumpf and loadf use
+  marshal (so the serialized values know their own lenght in the file).
+  As a consequence, the two storage methods must not be mixed."""
+
+  def dumpf(self, f, object):
+    marshal.dump(object, f)
+
+  def dumps(self, object):
+    return object
+
+  def loadf(self, f):
+    return marshal.load(f)
+
+  def loads(self, s):
+    return s
+
+
 class MarshalSerializer(Serializer):
   """This class uses the marshal module to serialize/deserialize.
 

@@ -174,16 +174,6 @@ class Database(AbstractDatabase):
     self.db[key] = marshal.dumps(value)
 
 
-class PDatabase(AbstractDatabase):
-  """A database that uses the cPickle module to store arbitrary objects."""
-
-  def __getitem__(self, key):
-    return cPickle.loads(self.db[key])
-
-  def __setitem__(self, key, value):
-    self.db[key] = cPickle.dumps(value, -1)
-
-
 class PrimedPDatabase(AbstractDatabase):
   """A database that uses cPickle module to store arbitrary objects.
 

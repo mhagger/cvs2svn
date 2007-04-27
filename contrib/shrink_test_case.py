@@ -70,7 +70,7 @@ file_key_generator = KeyGenerator(1)
 
 
 def usage(f=sys.stderr):
-  f.write(usage_string % {'progname' : sys.argv[0]})
+    f.write(usage_string % {'progname' : sys.argv[0]})
 
 
 def get_tmp_filename():

@@ -130,6 +130,16 @@ class Modification:
                 sys.stdout.write('Attempted modification unsuccessful.\n')
             self.revert()
             return False
+        except KeyboardInterrupt:
+            sys.stderr.write('Interrupted.  Reverting last modifications.\n')
+            self.revert()
+            raise
+        except Exception:
+            sys.stderr.write(
+                'Unexpected exception.  Reverting last modifications.\n'
+                )
+            self.revert()
+            raise
         else:
             self.commit()
             if verbose >= 1:
@@ -337,5 +347,13 @@ if not skip_initial_test:
         )
 
 
-try_delete_subdirs(cvsrepo)
-try_delete_files(cvsrepo)
+try:
+    try:
+        try_delete_subdirs(cvsrepo)
+        try_delete_files(cvsrepo)
+    except KeyboardInterrupt:
+        pass
+finally:
+    os.rmdir(tmpdir)
+
+

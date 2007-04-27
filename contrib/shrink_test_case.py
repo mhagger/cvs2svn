@@ -115,28 +115,30 @@ class Modification:
         raise NotImplementedError()
 
     def try_mod(self):
+        if verbose >= 1:
+            sys.stdout.write('Testing with the following modifications:\n')
+            self.output(sys.stdout, '  ')
         self.modify()
         try:
             command(*test_command)
         except CommandFailedException:
             if verbose >= 1:
                 sys.stdout.write(
-                    'The bug disappeared after the following modifications '
-                    '(which were reverted):\n'
+                    'The bug disappeared.  Reverting modifications.\n'
                     )
-                self.output(sys.stdout, '  ')
             else:
-                sys.stdout.write(
-                    'Attempted modification unsuccessful.\n'
-                    )
+                sys.stdout.write('Attempted modification unsuccessful.\n')
             self.revert()
             return False
         else:
             self.commit()
-            sys.stdout.write(
-                'The bug remains after the following modifications:\n'
-                )
-            self.output(sys.stdout, '  ')
+            if verbose >= 1:
+                sys.stdout.write('The bug remains.  Keeping modifications.\n')
+            else:
+                sys.stdout.write(
+                    'The bug remains after the following modifications:\n'
+                    )
+                self.output(sys.stdout, '  ')
             return True
 
     def output(self, f, prefix=''):

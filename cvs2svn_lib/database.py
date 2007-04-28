@@ -21,8 +21,6 @@ from __future__ import generators
 
 import sys
 import os
-import marshal
-import cStringIO
 import cPickle
 
 from cvs2svn_lib.boolean import *
@@ -34,7 +32,6 @@ from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.record_table import FileOffsetPacker
 from cvs2svn_lib.record_table import RecordTable
-from cvs2svn_lib.serializer import PrimedPickleSerializer
 
 
 # DBM module selection
@@ -154,58 +151,28 @@ class AbstractDatabase:
     self.db = None
 
 
-class StringDatabase(AbstractDatabase):
-  """A database that can only store strings."""
+class Database(AbstractDatabase):
+  """A database that uses a Serializer to store objects of a certain type.
 
-  def __getitem__(self, key):
-    return self.db[key]
-
-  def __setitem__(self, key, value):
-    self.db[key] = value
-
-
-class MarshallDatabase(AbstractDatabase):
-  """A database that uses the marshal module to store built-in types."""
-
-  def __getitem__(self, key):
-    return marshal.loads(self.db[key])
-
-  def __setitem__(self, key, value):
-    self.db[key] = marshal.dumps(value)
-
-
-class PrimedPickleDatabase(AbstractDatabase):
-  """A database that uses cPickle module to store arbitrary objects.
-
-  The Pickler and Unpickler are 'primed' by pre-pickling PRIMER, which
-  can be an arbitrary object (e.g., a list of objects that are
-  expected to occur frequently in the database entries).  From then
-  on, if objects within individual database entries are recognized
-  from PRIMER, then only their persistent IDs need to be pickled
-  instead of the whole object.
-
-  Concretely, when a new database is created, the pickler memo and
-  unpickler memo for PRIMER are computed, pickled, and stored in
-  db[self.pickler_pair_key] as a tuple.  When an existing database is
-  opened for reading or update, the pickler and unpickler memos are
-  read from db[self.pickler_pair_key].  In either case, these memos
-  are used to initialize a PrimedPickler and PrimedUnpickler, which
-  are used for future write and read accesses respectively.
-
-  Since the database entry with key self.pickler_pair_key is used to
-  store the memo, self.pickler_pair_key may not be used as a key for
+  Since the database entry with the key self.serializer_key is used to
+  store the serializer, self.serializer_key may not be used as a key for
   normal entries."""
 
-  pickler_pair_key = '_'
+  serializer_key = '_.%$1\t;_ '
 
-  def __init__(self, filename, mode, primer):
+  def __init__(self, filename, mode, serializer=None):
+    """Constructor.
+
+    The database stores its Serializer, so none needs to be supplied
+    when opening an existing database."""
+
     AbstractDatabase.__init__(self, filename, mode)
 
     if mode == DB_OPEN_NEW:
-      self.serializer = PrimedPickleSerializer(primer)
-      self.db[self.pickler_pair_key] = cPickle.dumps(self.serializer)
+      self.serializer = serializer
+      self.db[self.serializer_key] = cPickle.dumps(self.serializer)
     else:
-      self.serializer = cPickle.loads(self.db[self.pickler_pair_key])
+      self.serializer = cPickle.loads(self.db[self.serializer_key])
 
   def __getitem__(self, key):
     return self.serializer.loads(self.db[key])
@@ -213,9 +180,9 @@ class PrimedPickleDatabase(AbstractDatabase):
   def __setitem__(self, key, value):
     self.db[key] = self.serializer.dumps(value)
 
-  def keys(self):
+  def keys(self): # TODO: Once needed, handle iterators as well.
     retval = self.db.keys()
-    retval.remove(self.pickler_pair_key)
+    retval.remove(self.serializer_key)
     return retval
 
 

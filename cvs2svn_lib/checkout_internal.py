@@ -51,7 +51,7 @@ from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.collect_data import is_trunk_revision
 from cvs2svn_lib.context import Ctx
-from cvs2svn_lib.database import StringDatabase
+from cvs2svn_lib.database import Database
 from cvs2svn_lib.database import IndexedDatabase
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.rcs_stream import RCSStream
@@ -381,8 +381,9 @@ class InternalRevisionReader(RevisionReader):
         artifact_manager.get_temp_file(config.RCS_TREES_FILTERED_STORE),
         artifact_manager.get_temp_file(config.RCS_TREES_FILTERED_INDEX_TABLE),
         DB_OPEN_READ)
-    self._co_db = StringDatabase(
-        artifact_manager.get_temp_file(config.CVS_CHECKOUT_DB), DB_OPEN_NEW)
+    self._co_db = Database(
+        artifact_manager.get_temp_file(config.CVS_CHECKOUT_DB), DB_OPEN_NEW,
+        StringSerializer())
 
     # A map { CVSFILE : _FileTree } for files that currently have live
     # revisions:

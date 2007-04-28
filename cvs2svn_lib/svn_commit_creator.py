@@ -32,7 +32,7 @@ from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.symbol import Branch
-from cvs2svn_lib.database import MarshallDatabase
+from cvs2svn_lib.database import Database
 from cvs2svn_lib.changeset import OrderedChangeset
 from cvs2svn_lib.changeset import SymbolChangeset
 from cvs2svn_lib.svn_commit import SVNCommit
@@ -48,7 +48,7 @@ class SVNCommitCreator:
     self._persistence_manager = persistence_manager
 
     if not Ctx().trunk_only:
-      self._last_changesets_db = MarshallDatabase(
+      self._last_changesets_db = Database(
           artifact_manager.get_temp_file(config.SYMBOL_LAST_CHANGESETS_DB),
           DB_OPEN_READ)
 

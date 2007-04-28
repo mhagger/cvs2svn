@@ -93,14 +93,20 @@ class PrimedPickleSerializer(Serializer):
   """This class acts as a pickler/unpickler with a pre-initialized memo.
 
   The picklers and unpicklers are 'pre-trained' to recognize the
-  objects that are in the primer.  (Note that the memos needed for
+  objects that are in the primer.  If objects are recognized
+  from PRIMER, then only their persistent IDs need to be pickled
+  instead of the whole object.  (Note that the memos needed for
   pickling and unpickling are different.)
 
   A new pickler/unpickler is created for each use, each time with the
   memo initialized appropriately for pickling or unpickling."""
 
   def __init__(self, primer):
-    """Prepare to make picklers/unpicklers with the specified primer."""
+    """Prepare to make picklers/unpicklers with the specified primer.
+
+    The Pickler and Unpickler are 'primed' by pre-pickling PRIMER,
+    which can be an arbitrary object (e.g., a list of objects that are
+    expected to occur frequently in the objects to be serialized)."""
 
     f = cStringIO.StringIO()
     pickler = cPickle.Pickler(f, -1)

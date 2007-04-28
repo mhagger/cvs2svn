@@ -24,13 +24,14 @@ from cvs2svn_lib.common import OP_DELETE
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.cvs_item import CVSRevision
-from cvs2svn_lib.database import MarshallDatabase
+from cvs2svn_lib.database import Database
+from cvs2svn_lib.serializer import MarshalSerializer
 
 
 class LastSymbolicNameDatabase:
   """Passing every changeset in s-revs to this class will result in a
-  MarshallDatabase whose key is the last changeset a symbolic name was
-  seen in, and whose value is a list of all symbolicnames that were last
+  Database whose key is the last changeset a symbolic name was seen
+  in, and whose value is a list of all symbolicnames that were last
   seen in that changeset."""
 
   def __init__(self):
@@ -64,9 +65,9 @@ class LastSymbolicNameDatabase:
     for symbol_id, changeset_id in self._symbols.iteritems():
       symbol_revs.setdefault(changeset_id, []).append(symbol_id)
 
-    symbol_revs_db = MarshallDatabase(
+    symbol_revs_db = Database(
         artifact_manager.get_temp_file(config.SYMBOL_LAST_CHANGESETS_DB),
-        DB_OPEN_NEW)
+        DB_OPEN_NEW, MarshalSerializer())
     for (changeset_id, symbol_ids) in symbol_revs.iteritems():
       symbol_revs_db['%x' % changeset_id] = symbol_ids
     symbol_revs_db.close()

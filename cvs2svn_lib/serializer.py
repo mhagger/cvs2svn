@@ -21,6 +21,7 @@ from __future__ import generators
 import cStringIO
 import marshal
 import cPickle
+import zlib
 
 from cvs2svn_lib.boolean import *
 
@@ -142,5 +143,30 @@ class PrimedPickleSerializer(Serializer):
     """Return the object deserialized from string S."""
 
     return self.loadf(cStringIO.StringIO(s))
+
+
+class CompressingSerializer(Serializer):
+  """This class wraps other Serializers to compress their serialized data.
+
+  The bit streams for dumps and loads are different from those of dumpf
+  and loadf for the reasons explained in StringSerializer."""
+
+  def __init__(self, wrapee):
+    """Constructor.  WRAPEE is the Serializer whose bitstream ought to be
+    compressed."""
+
+    self.wrapee = wrapee
+
+  def dumpf(self, f, object):
+    marshal.dump(self.dumps(object), f)
+
+  def dumps(self, object):
+    return zlib.compress(self.wrapee.dumps(object), 9)
+
+  def loadf(self, f):
+    return self.loads(marshal.load(f))
+
+  def loads(self, s):
+    return self.wrapee.loads(zlib.decompress(s))
 
 

@@ -437,7 +437,7 @@ class RunOptions:
       ctx.output_option = DumpfileOutputOption(dumpfile)
 
     if use_internal_co:
-      ctx.revision_reader = InternalRevisionReader()
+      ctx.revision_reader = InternalRevisionReader(compress=True)
     elif use_cvs:
       ctx.revision_reader = CVSRevisionReader(cvs_executable)
     else:

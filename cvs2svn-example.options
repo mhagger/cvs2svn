@@ -142,10 +142,14 @@ ctx.dry_run = False
 # can be used to specify an alternative path where the corresponding
 # program can be found.
 # The third alternative is using a built-in version of "co" that is
-# up to 50% faster but requires lots of disk space:
+# up to 50% faster but requires lots of disk space.  Setting compress
+# to True cuts the additional space requirements by half for the price
+# of a CPU time increase around 35% - however, the total conversion
+# time is still lower due to the reduced I/O pressure - unless --tmpdir
+# is on a RAM disk:
 ctx.revision_reader = RCSRevisionReader(co_executable=r'co')
 #ctx.revision_reader = CVSRevisionReader(cvs_executable=r'cvs')
-#ctx.revision_reader = InternalRevisionReader()
+#ctx.revision_reader = InternalRevisionReader(compress=True)
 
 # Set the name (and optionally the path) of some other executables
 # required by cvs2svn:

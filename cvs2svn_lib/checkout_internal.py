@@ -59,9 +59,13 @@ from cvs2svn_lib.revision_recorder import RevisionRecorder
 from cvs2svn_lib.revision_excluder import RevisionExcluder
 from cvs2svn_lib.revision_reader import RevisionReader
 from cvs2svn_lib.serializer import StringSerializer
+from cvs2svn_lib.serializer import CompressingSerializer
 
 class InternalRevisionRecorder(RevisionRecorder):
   """A RevisionRecorder that reconstructs the full text internally."""
+
+  def __init__(self, compress):
+    self._compress = compress
 
   def register_artifacts(self, which_pass):
     which_pass._register_temp_file(config.RCS_DELTAS_INDEX_TABLE)
@@ -70,10 +74,13 @@ class InternalRevisionRecorder(RevisionRecorder):
     which_pass._register_temp_file(config.RCS_TREES_STORE)
 
   def start(self):
+    ser = StringSerializer()
+    if self._compress:
+      ser = CompressingSerializer(ser)
     self._rcs_deltas = IndexedDatabase(
         artifact_manager.get_temp_file(config.RCS_DELTAS_STORE),
         artifact_manager.get_temp_file(config.RCS_DELTAS_INDEX_TABLE),
-        DB_OPEN_NEW, StringSerializer())
+        DB_OPEN_NEW, ser)
     self._rcs_trees = IndexedDatabase(
         artifact_manager.get_temp_file(config.RCS_TREES_STORE),
         artifact_manager.get_temp_file(config.RCS_TREES_INDEX_TABLE),
@@ -355,8 +362,8 @@ class InternalRevisionReader(RevisionReader):
       r'Author|Date|Header|Id|Name|Locker|Log|RCSfile|Revision|Source|State' +
       r'):[^$\n]*\$')
 
-  def __init__(self):
-    pass
+  def __init__(self, compress):
+    self._compress = compress
 
   def register_artifacts(self, which_pass):
     which_pass._register_temp_file(config.CVS_CHECKOUT_DB)
@@ -367,7 +374,7 @@ class InternalRevisionReader(RevisionReader):
         config.RCS_TREES_FILTERED_INDEX_TABLE)
 
   def get_revision_recorder(self):
-    return InternalRevisionRecorder()
+    return InternalRevisionRecorder(self._compress)
 
   def get_revision_excluder(self):
     return InternalRevisionExcluder()
@@ -381,9 +388,12 @@ class InternalRevisionReader(RevisionReader):
         artifact_manager.get_temp_file(config.RCS_TREES_FILTERED_STORE),
         artifact_manager.get_temp_file(config.RCS_TREES_FILTERED_INDEX_TABLE),
         DB_OPEN_READ)
+    ser = StringSerializer()
+    if self._compress:
+      ser = CompressingSerializer(ser)
     self._co_db = Database(
         artifact_manager.get_temp_file(config.CVS_CHECKOUT_DB), DB_OPEN_NEW,
-        StringSerializer())
+        ser)
 
     # A map { CVSFILE : _FileTree } for files that currently have live
     # revisions:

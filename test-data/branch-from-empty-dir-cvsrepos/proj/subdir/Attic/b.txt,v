@@ -1,0 +1,40 @@
+head	1.2;
+access;
+symbols
+	BRANCH2:1.2.0.4
+	BRANCH1:1.2.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2007.04.30.15.20.32;	author mhagger;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2007.04.30.15.20.31;	author mhagger;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Removing subdir/b.txt
+@
+text
+@1.1
+@
+
+
+1.1
+log
+@Adding subdir/b.txt:1.1
+@
+text
+@@
+

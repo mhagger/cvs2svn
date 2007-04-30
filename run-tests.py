@@ -2662,6 +2662,12 @@ def preferred_parent_cycle():
   conv = ensure_conversion('preferred-parent-cycle')
 
 
+def branch_from_empty_dir():
+  "branch from an empty directory"
+
+  conv = ensure_conversion('branch-from-empty-dir')
+
+
 ########################################################################
 # Run the tests
 
@@ -2804,6 +2810,8 @@ test_list = [
     symlinks,
     empty_trunk_path,
     preferred_parent_cycle,
+# 120:
+    branch_from_empty_dir,
     ]
 
 if __name__ == '__main__':

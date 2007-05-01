@@ -94,10 +94,10 @@ class SymbolingsLogger:
       symbol = Ctx()._cvs_items_db[id].symbol
       self._note_default_branch_opening(cvs_rev, symbol.id)
       if cvs_rev.op != OP_DELETE:
-        self._log(symbol.id, svn_revnum, cvs_rev.cvs_file, branch_id, OPENING)
+        self._log_opening(symbol.id, svn_revnum, cvs_rev.cvs_file, branch_id)
 
     for symbol_id in cvs_rev.closed_symbol_ids:
-      self._log(symbol_id, svn_revnum, cvs_rev.cvs_file, branch_id, CLOSING)
+      self._log_closing(symbol_id, svn_revnum, cvs_rev.cvs_file, branch_id)
 
   def _log(self, symbol_id, svn_revnum, cvs_file, branch_id, type):
     """Log an opening or closing to self.symbolings.
@@ -120,6 +120,20 @@ class SymbolingsLogger:
         '%x %d %s %s %x\n'
         % (symbol_id, svn_revnum, type, branch_id, cvs_file.id))
 
+  def _log_opening(self, symbol_id, svn_revnum, cvs_file, branch_id):
+    """Log an opening to self.symbolings.
+
+    See _log() for more information."""
+
+    self._log(symbol_id, svn_revnum, cvs_file, branch_id, OPENING)
+
+  def _log_closing(self, symbol_id, svn_revnum, cvs_file, branch_id):
+    """Log a closing to self.symbolings.
+
+    See _log() for more information."""
+
+    self._log(symbol_id, svn_revnum, cvs_file, branch_id, CLOSING)
+
   def close(self):
     self.symbolings.close()
     self.symbolings = None
@@ -141,7 +155,7 @@ class SymbolingsLogger:
     if path in self._open_paths_with_default_branches:
       # log each symbol as a closing
       for symbol_id in self._open_paths_with_default_branches[path]:
-        self._log(symbol_id, svn_revnum, cvs_rev.cvs_file, None, CLOSING)
+        self._log_closing(symbol_id, svn_revnum, cvs_rev.cvs_file, None)
       # Remove them from the openings list as we're done with them.
       del self._open_paths_with_default_branches[path]
 

@@ -136,19 +136,25 @@ repository's history as possible.</p>
 
 <ul>
 
+  <li>Direct (filesystem) access to a copy of the CVS repository that
+    you want to convert.  cvs2svn parses the files in the CVS
+    repository directly, so it is not enough to have remote CVS
+    access.  See the <a href="faq.html#repoaccess">FAQ</a> for more
+    information.
+  </li>
   <li>Python 2.2 or greater.  See
-      <a href="http://www.python.org/">http://www.python.org/.</a>
+    <a href="http://www.python.org/">http://www.python.org/.</a>
   </li>
   <li>One or both of RCS `co' or CVS.  The RCS home page is
-     <a href="http://www.cs.purdue.edu/homes/trinkle/RCS/"
-             >http://www.cs.purdue.edu/homes/trinkle/RCS/</a>,
-     and the CVS home page is
-     <a href="http://ccvs.cvshome.org/">http://ccvs.cvshome.org/</a>.
+    <a href="http://www.cs.purdue.edu/homes/trinkle/RCS/"
+            >http://www.cs.purdue.edu/homes/trinkle/RCS/</a>,
+    and the CVS home page is
+    <a href="http://ccvs.cvshome.org/">http://ccvs.cvshome.org/</a>.
 
-  By default, cvs2svn only depends on RCS 'co', and we recommend this
-  as it is faster.  Most likely you will never encounter the edge
-  cases that would make it necessary to use CVS instead.  See the <a
-  href="#use-cvs">--use-cvs flag</a> for more details.
+    By default, cvs2svn only depends on RCS 'co', and we recommend
+    this as it is faster.  Most likely you will never encounter the
+    edge cases that would make it necessary to use CVS instead.  See
+    the <a href="#use-cvs">--use-cvs flag</a> for more details.
   </li>
   <li>GNU sort, which is part of the coreutils package, see <a
     href="http://www.gnu.org/software/coreutils/"

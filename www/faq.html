@@ -21,6 +21,9 @@
 
 <ol>
 
+  <li><a href="#repoaccess">How can I convert a CVS repository to
+    which I only have remote access?</a></li>
+
   <li><a href="#oneatatime">How can I convert my CVS repository one
     module at a time?</a></li>
 
@@ -74,6 +77,40 @@
 <hr />
 
 <h2>How-to:</h2>
+
+<h3><a name="repoaccess" title="#repoaccess">How can I convert a CVS
+repository to which I only have remote access?</a></h3>
+
+<p>cvs2svn requires direct, filesystem access to a copy of the CVS
+repository that you want to convert.  The reason for this requirement
+is that cvs2svn directly parses the <tt>*,v</tt> files that make up
+the CVS repository.</p>
+
+<p>Many remote hosting sites provide access to backups of your CVS
+repository, which could be used for a cvs2svn conversion.  For
+example:</p>
+
+<ul>
+  <li><a href="http://sourceforge.net">SourceForge</a> allows CVS
+    content to be accessed via
+    <a href="http://sourceforge.net/docs/E04/en/#rsync">rsync</a>.  In
+    fact, they provide <a
+    href="http://sourceforge.net/docman/display_doc.php?docid=31070&group_id=1#import">complete instructions</a>
+    for migrating a SourceForge project from CVS to SVN.</li>
+  <li>...<i>(other examples welcome)</i></li>
+</ul>
+
+<p>If your provider does not provide any way to download your CVS
+repository, there is a possible workaround.  The <a
+href="http://cvs.m17n.org/~akr/cvssuck/">CVSsuck</a> tool claims to be
+able to mirror a remote CVS repository using only CVS commands.  It
+should be possible to use this tool to fetch a copy of your CVS
+repository from your provider, then to use cvs2svn to convert the
+copy.  However, the developers of cvs2svn do not have any experience
+with this tool, so you are on your own here.  If you try this method,
+please tell us about your experience on the <a
+href="mailto:users@cvs2svn.tigris.org">users mailing list</a>.</p>
+
 
 <h3><a name="oneatatime" title="#oneatatime">How can I convert my CVS
 repository one module at a time?</a></h3>

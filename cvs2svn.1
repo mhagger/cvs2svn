@@ -5,15 +5,24 @@
 cvs2svn \- convert a cvs repository into a subversion repository
 .SH SYNOPSIS
 .B cvs2svn
-[\fIOPTION\fR]... \fI-s svn-repos-path cvs-repos-path\fR
+[\fIOPTION\fR]... \fIOUTPUT-OPTION CVS-REPOS-PATH\fR
 .br
 .B cvs2svn
-[\fIOPTION\fR]... \fI--dumpfile=path cvs-repos-path\fR
+[\fIOPTION\fR]... \fI--options=PATH\fR
 .SH DESCRIPTION
 Create a new Subversion repository based on the version history stored in a
 CVS repository. Each CVS commit will be mirrored in the Subversion
 repository, including such information as date of commit and id of the
 committer.
+.P
+\fICVS-REPOS-PATH\fR is the filesystem path of the part of the CVS
+repository that you want to convert.  It is not possible to convert a
+CVS repository to which you only have remote access; see the FAQ for
+more information.  This path doesn't have to be the top level
+directory of a CVS repository; it can point at a project within a
+repository, in which case only that project will be converted.  This
+path or one of its parent directories has to contain a subdirectory
+called CVSROOT (though the CVSROOT directory can be empty).
 .TP
 \fB--help\fR, \fB-h\fR
 Print the usage message and exit with success.

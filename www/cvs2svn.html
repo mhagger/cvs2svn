@@ -489,9 +489,23 @@ this:</p>
   <tr>
     <td colspan="2">
       USAGE:<br/>
-      <tt>cvs2svn [-s svn-repos-path|--dumpfile=PATH] cvs-repos-path</tt><br/>
-      <tt>cvs2svn --options=PATH</tt><br/>
+      <tt>cvs2svn [OPTIONS]... [-s SVN-REPOS-PATH|--dumpfile=PATH|--dry-run]
+      CVS-REPOS-PATH</tt><br/>
+      <tt>cvs2svn [OPTIONS]... --options=PATH</tt><br/>
     </td>
+  </tr>
+
+  <tr>
+    <td align="right"><tt>CVS-REPOS-PATH</tt></td>
+    <td>The filesystem path of the part of the CVS repository that you
+      want to convert.  It is not possible to convert a CVS repository
+      to which you only have remote access; see <a
+      href="faq.html#repoaccess">the FAQ</a> for details.  This
+      doesn't have to be the top level directory of a CVS repository;
+      it can point at a project within a repository, in which case
+      only that project will be converted.  This path or one of its
+      parent directories has to contain a subdirectory called CVSROOT
+      (though the CVSROOT directory can be empty).</td>
   </tr>
 
   <tr>

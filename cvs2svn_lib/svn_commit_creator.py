@@ -34,7 +34,8 @@ from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.symbol import Branch
 from cvs2svn_lib.database import Database
 from cvs2svn_lib.changeset import OrderedChangeset
-from cvs2svn_lib.changeset import SymbolChangeset
+from cvs2svn_lib.changeset import BranchChangeset
+from cvs2svn_lib.changeset import TagChangeset
 from cvs2svn_lib.svn_commit import SVNCommit
 from cvs2svn_lib.svn_commit import SVNPrimaryCommit
 from cvs2svn_lib.svn_commit import SVNSymbolCommit
@@ -221,15 +222,30 @@ class SVNCommitCreator:
       self._last_changesets_db.close()
       self._last_changesets_db = None
 
-  def _process_symbol_changeset(self, changeset, timestamp):
-    """Process SymbolChangeset CHANGESET, producing a SVNSymbolCommit."""
+  def _process_tag_changeset(self, changeset, timestamp):
+    """Process TagChangeset CHANGESET, producing a SVNSymbolCommit."""
 
-    if not Ctx().trunk_only:
-      self._persistence_manager.put_svn_commit(
-          SVNSymbolCommit(
-              changeset.symbol, changeset.cvs_item_ids, timestamp
-              )
-          )
+    if Ctx().trunk_only:
+      return
+
+    svn_commit = SVNSymbolCommit(
+        changeset.symbol, changeset.cvs_item_ids, timestamp)
+    self._persistence_manager.put_svn_commit(svn_commit)
+
+
+  def _process_branch_changeset(self, changeset, timestamp):
+    """Process BranchChangeset CHANGESET, producing a SVNSymbolCommit."""
+
+    if Ctx().trunk_only:
+      return
+
+    svn_commit = SVNSymbolCommit(
+        changeset.symbol, changeset.cvs_item_ids, timestamp)
+    self._persistence_manager.put_svn_commit(svn_commit)
+    for cvs_branch in changeset.get_cvs_items():
+      Ctx()._symbolings_logger.log_branch_revision(
+          cvs_branch, svn_commit.revnum)
+
 
   def process_changeset(self, changeset, timestamp):
     """Process CHANGESET, using TIMESTAMP for all of its entries.
@@ -239,8 +255,10 @@ class SVNCommitCreator:
 
     if isinstance(changeset, OrderedChangeset):
       self._process_revision_changeset(changeset, timestamp)
-    elif isinstance(changeset, SymbolChangeset):
-      self._process_symbol_changeset(changeset, timestamp)
+    elif isinstance(changeset, TagChangeset):
+      self._process_tag_changeset(changeset, timestamp)
+    elif isinstance(changeset, BranchChangeset):
+      self._process_branch_changeset(changeset, timestamp)
     else:
       raise TypeError('Illegal changeset %r' % changeset)
 

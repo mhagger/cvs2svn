@@ -257,17 +257,21 @@ def try_modification_combinations(mods):
 
 
 def get_dirs(path):
-    for filename in os.listdir(path):
-        subdir = os.path.join(path, filename)
-        if os.path.isdir(subdir):
-            yield subdir
+    filenames = os.listdir(path)
+    filenames.sort()
+    for filename in filenames:
+        subpath = os.path.join(path, filename)
+        if os.path.isdir(subpath):
+            yield subpath
 
 
 def get_files(path):
-    for filename in os.listdir(path):
-        subdir = os.path.join(path, filename)
-        if os.path.isfile(subdir):
-            yield subdir
+    filenames = os.listdir(path)
+    filenames.sort()
+    for filename in filenames:
+        subpath = os.path.join(path, filename)
+        if os.path.isfile(subpath):
+            yield subpath
 
 
 def try_delete_subdirs(path):

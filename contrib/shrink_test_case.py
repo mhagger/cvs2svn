@@ -158,8 +158,14 @@ class Modification:
         return str(self)
 
 
+class EmptyModificationListException(Exception):
+    pass
+
+
 class CompoundModification(Modification):
     def __init__(self, modifications):
+        if not modifications:
+            raise EmptyModificationListException()
         self.modifications = modifications
 
     def modify(self):

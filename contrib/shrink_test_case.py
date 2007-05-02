@@ -376,17 +376,12 @@ def try_modification_combinations(mod):
     # A list of lists of modifications that should still be tried:
     todo = [mod]
 
-    retval = False
-
     while todo:
         todo.sort(key=lambda mod: mod.get_size())
         mod = todo.pop()
         success = mod.try_mod()
-        retval |= success
         # Now add possible submodifications to the list of things to try:
         todo.extend(mod.get_submodifications(success))
-
-    return retval
 
 
 def get_dirs(path):

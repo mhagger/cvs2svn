@@ -188,6 +188,18 @@ class CompoundModification(Modification):
         return str(self.modifications)
 
 
+def create_modification(mods):
+    """Create and return a Modification based on the iterable MODS.
+
+    Raise EmptyModificationListException if mods is empty."""
+
+    mods = list(mods)
+    if len(mods) == 1:
+        return mods[0]
+    else:
+        return CompoundModification(mods)
+
+
 class DeleteDirectoryModification(Modification):
     def __init__(self, path):
         self.path = path

@@ -151,6 +151,15 @@ class Modification:
                 self.output(sys.stdout, '  ')
             return True
 
+    def get_submodifications(self, success):
+        """Return a generator or iterable of submodifications.
+
+        Return submodifications that should be tried after this this
+        modification.  SUCCESS specifies whether this modification was
+        successful."""
+
+        return []
+
     def output(self, f, prefix=''):
         raise NotImplementedError()
 
@@ -179,6 +188,22 @@ class CompoundModification(Modification):
     def commit(self):
         for modification in self.modifications:
             modification.commit()
+
+    def get_submodifications(self, success):
+        if success:
+            # All modifications were completed successfully; no need
+            # to try subsets:
+            pass
+        elif len(self.modifications) == 1:
+            # Our modification list cannot be subdivided, but maybe
+            # the remaining modification can:
+            for mod in self.modifications[0].get_submodifications(False):
+                yield mod
+        else:
+            # Create subsets of each half of the list:
+            n = len(self.modifications) // 2
+            yield create_modification(self.modifications[:n])
+            yield create_modification(self.modifications[n:])
 
     def output(self, f, prefix=''):
         for modification in self.modifications:
@@ -246,30 +271,22 @@ class DeleteFileModification(Modification):
         return 'DeleteFile(%r)' % self.path
 
 
-def try_modification_combinations(mods):
-    """Try to do as many modifications from the list as possible.
+def try_modification_combinations(mod):
+    """Try MOD and its submodifications.
 
     Return True if any modifications were successful."""
 
     # A list of lists of modifications that should still be tried:
-    todo = [mods]
+    todo = [mod]
 
     retval = False
 
     while todo:
-        mods = todo.pop(0)
-        if not mods:
-            continue
-        elif len(mods) == 1:
-            retval = retval | mods[0].try_mod()
-        elif CompoundModification(mods).try_mod():
-            # All modifications, together, worked.
-            retval = True
-        else:
-            # We can't do all of them at once.  Try doing subsets of each
-            # half of the list:
-            n = len(mods) // 2
-            todo.extend([mods[:n], mods[n:]])
+        mod = todo.pop(0)
+        success = mod.try_mod()
+        retval |= success
+        # Now add possible submodifications to the list of things to try:
+        todo.extend(mod.get_submodifications(success))
 
     return retval
 
@@ -300,7 +317,8 @@ def try_delete_subdirs(path):
         DeleteDirectoryModification(subdir)
         for subdir in get_dirs(path)
         ]
-    try_modification_combinations(mods)
+    if mods:
+        try_modification_combinations(create_modification(mods))
 
     # Now recurse into any remaining subdirectories and do the same:
     for subdir in get_dirs(path):
@@ -313,7 +331,8 @@ def try_delete_files(path):
         for filename in get_files(path)
         ]
 
-    try_modification_combinations(mods)
+    if mods:
+        try_modification_combinations(create_modification(mods))
 
     # Now recurse into any remaining subdirectories and do the same:
     for subdir in get_dirs(path):

@@ -97,6 +97,15 @@ def command(cmd, *args):
 class Modification:
     """A reversible modification that can be made to the repository."""
 
+    def get_size(self):
+        """Return the estimated size of this modification.
+
+        This should be approximately the number of bytes by which the
+        problem will be shrunk if this modification is successful.  It
+        is used to choose the order to attempt the modifications."""
+
+        raise NotImplementedError()
+
     def modify(self):
         """Modify the repository.
 
@@ -182,6 +191,9 @@ class SplitModification(Modification):
         self.mod1 = mod1
         self.mod2 = mod2
 
+    def get_size(self):
+        return self.mod1.get_size()
+
     def modify(self):
         self.mod1.modify()
 
@@ -213,6 +225,10 @@ class CompoundModification(Modification):
         if not modifications:
             raise EmptyModificationListException()
         self.modifications = modifications
+        self.size = sum(mod.get_size() for mod in self.modifications)
+
+    def get_size(self):
+        return self.size
 
     def modify(self):
         for modification in self.modifications:
@@ -265,9 +281,25 @@ def create_modification(mods):
         return CompoundModification(mods)
 
 
+def compute_dir_size(path):
+    size = 0L
+    for filename in os.listdir(path):
+        subpath = os.path.join(path, filename)
+        if os.path.isdir(subpath):
+            size += compute_dir_size(subpath)
+        elif os.path.isfile(subpath):
+            size += os.path.getsize(subpath)
+
+    return size
+
+
 class DeleteDirectoryModification(Modification):
     def __init__(self, path):
         self.path = path
+        self.size = compute_dir_size(self.path)
+
+    def get_size(self):
+        return self.size
 
     def modify(self):
         self.tempfile = get_tmp_filename()
@@ -305,6 +337,10 @@ class DeleteDirectoryModification(Modification):
 class DeleteFileModification(Modification):
     def __init__(self, path):
         self.path = path
+        self.size = os.path.getsize(self.path)
+
+    def get_size(self):
+        return self.size
 
     def modify(self):
         self.tempfile = get_tmp_filename()
@@ -336,7 +372,8 @@ def try_modification_combinations(mod):
     retval = False
 
     while todo:
-        mod = todo.pop(0)
+        todo.sort(key=lambda mod: mod.get_size())
+        mod = todo.pop()
         success = mod.try_mod()
         retval |= success
         # Now add possible submodifications to the list of things to try:

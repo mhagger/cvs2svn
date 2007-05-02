@@ -188,6 +188,10 @@ class SplitModification(Modification):
     (though its submodifications are attempted)."""
 
     def __init__(self, mod1, mod2):
+        # Choose mod1 to be the larger modification:
+        if mod2.get_size() > mod1.get_size():
+            mod1, mod2 = mod2, mod1
+
         self.mod1 = mod1
         self.mod2 = mod2
 

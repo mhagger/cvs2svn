@@ -241,6 +241,20 @@ class DeleteDirectoryModification(Modification):
         shutil.rmtree(self.tempfile)
         self.tempfile = None
 
+    def get_submodifications(self, success):
+        if success:
+            # The whole directory could be deleted; no need to try
+            # deleting subdirectories:
+            pass
+        else:
+            # Try deleting subdirectories:
+            mods = [
+                DeleteDirectoryModification(subdir)
+                for subdir in get_dirs(self.path)
+                ]
+            if mods:
+                yield create_modification(mods)
+
     def output(self, f, prefix=''):
         f.write('%sDeleted directory %r\n' % (prefix, self.path,))
 
@@ -309,22 +323,6 @@ def get_files(path):
             yield subpath
 
 
-def try_delete_subdirs(path):
-    """Try to delete subdirectories under PATH (recursively)."""
-
-    # First try to delete the subdirectories themselves:
-    mods = [
-        DeleteDirectoryModification(subdir)
-        for subdir in get_dirs(path)
-        ]
-    if mods:
-        try_modification_combinations(create_modification(mods))
-
-    # Now recurse into any remaining subdirectories and do the same:
-    for subdir in get_dirs(path):
-        try_delete_subdirs(subdir)
-
-
 def try_delete_files(path):
     mods = [
         DeleteFileModification(filename)
@@ -390,7 +388,7 @@ if not skip_initial_test:
 
 try:
     try:
-        try_delete_subdirs(cvsrepo)
+        try_modification_combinations(DeleteDirectoryModification(cvsrepo))
         try_delete_files(cvsrepo)
     except KeyboardInterrupt:
         pass

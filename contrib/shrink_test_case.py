@@ -171,6 +171,43 @@ class EmptyModificationListException(Exception):
     pass
 
 
+class SplitModification(Modification):
+    """Holds two modifications split out of a failing modification.
+
+    Because the original modification failed, it known that mod1+mod2
+    can't succeed.  So if mod1 succeeds, mod2 need not be attempted
+    (though its submodifications are attempted)."""
+
+    def __init__(self, mod1, mod2):
+        self.mod1 = mod1
+        self.mod2 = mod2
+
+    def modify(self):
+        self.mod1.modify()
+
+    def revert(self):
+        self.mod1.revert()
+
+    def commit(self):
+        self.mod1.commit()
+
+    def get_submodifications(self, success):
+        if success:
+            for mod in self.mod2.get_submodifications(False):
+                yield mod
+        else:
+            yield self.mod2
+
+        for mod in self.mod1.get_submodifications(success):
+            yield mod
+
+    def output(self, f, prefix=''):
+        self.mod1.output(f, prefix=prefix)
+
+    def __str__(self):
+        return 'SplitModification(%s, %s)' % (self.mod1, self.mod2,)
+
+
 class CompoundModification(Modification):
     def __init__(self, modifications):
         if not modifications:
@@ -200,10 +237,13 @@ class CompoundModification(Modification):
             for mod in self.modifications[0].get_submodifications(False):
                 yield mod
         else:
-            # Create subsets of each half of the list:
+            # Create subsets of each half of the list and put them in
+            # a SplitModification:
             n = len(self.modifications) // 2
-            yield create_modification(self.modifications[:n])
-            yield create_modification(self.modifications[n:])
+            yield SplitModification(
+                create_modification(self.modifications[:n]),
+                create_modification(self.modifications[n:])
+                )
 
     def output(self, f, prefix=''):
         for modification in self.modifications:

@@ -315,14 +315,21 @@ class DeleteDirectoryModification(Modification):
 
     def get_submodifications(self, success):
         if success:
-            # The whole directory could be deleted; no need to try
-            # deleting subdirectories:
+            # The whole directory could be deleted; no need to recurse:
             pass
         else:
             # Try deleting subdirectories:
             mods = [
                 DeleteDirectoryModification(subdir)
                 for subdir in get_dirs(self.path)
+                ]
+            if mods:
+                yield create_modification(mods)
+
+            # Try deleting files:
+            mods = [
+                DeleteFileModification(filename)
+                for filename in get_files(self.path)
                 ]
             if mods:
                 yield create_modification(mods)
@@ -400,20 +407,6 @@ def get_files(path):
             yield subpath
 
 
-def try_delete_files(path):
-    mods = [
-        DeleteFileModification(filename)
-        for filename in get_files(path)
-        ]
-
-    if mods:
-        try_modification_combinations(create_modification(mods))
-
-    # Now recurse into any remaining subdirectories and do the same:
-    for subdir in get_dirs(path):
-        try_delete_files(subdir)
-
-
 try:
     opts, args = getopt.getopt(sys.argv[1:], 'h', [
         'skip-initial-test',
@@ -466,7 +459,6 @@ if not skip_initial_test:
 try:
     try:
         try_modification_combinations(DeleteDirectoryModification(cvsrepo))
-        try_delete_files(cvsrepo)
     except KeyboardInterrupt:
         pass
 finally:

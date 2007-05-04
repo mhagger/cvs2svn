@@ -2,6 +2,7 @@ Version x.x.x (not yet released)
 --------------------------------
 
  New features:
+ * Add --use-internal-co option to accelerate conversion up to 50%.
  * Add --retain-conflicting-attic-files option.
  * Add --no-cross-branch-commits option.
  * RevisionRecorder hook allows file text/deltas to be recorded in pass 1.

@@ -406,6 +406,15 @@ def get_files(path):
             yield subpath
 
 
+first_fail_message = """\
+ERROR!  The test command failed with the original repository.  The
+test command should be designed so that it succeeds (indicating that
+the bug is still present) with the original repository, and fails only
+after the bug disappears.  Please fix your test command and start
+again.
+"""
+
+
 try:
     opts, args = getopt.getopt(sys.argv[1:], 'h', [
         'skip-initial-test',
@@ -442,13 +451,7 @@ if not skip_initial_test:
     try:
         test_command()
     except CommandFailedException, e:
-        sys.stderr.write(
-            'ERROR!  The test command failed with the original repository.\n'
-            'The test command should be designed so that it succeeds\n'
-            '(indicating that the bug is still present) with the original\n'
-            'repository, and fails only after the bug disappears.\n'
-            'Please fix your test command and start again.\n'
-            )
+        sys.stderr.write(first_fail_message)
         sys.exit(1)
     sys.stdout.write(
         'The bug is confirmed to exist in the initial repository.\n'

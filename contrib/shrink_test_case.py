@@ -38,10 +38,18 @@ import sys
 import os
 import shutil
 import getopt
+from cStringIO import StringIO
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(sys.argv[0])))
 
 from cvs2svn_lib.key_generator import KeyGenerator
+
+import cvs2svn_rcsparse
+
+
+from contrib.rcs_file_filter import WriteRCSFileSink
+from contrib.rcs_file_filter import FilterSink
+
 
 usage_string = """\
 USAGE: %(progname)s [OPT...] CVSREPO TEST_COMMAND
@@ -365,11 +373,129 @@ class DeleteFileModification(Modification):
         os.remove(self.tempfile)
         self.tempfile = None
 
+    def get_submodifications(self, success):
+        tags = list(get_tag_set(self.path))
+        if tags:
+            tags.sort()
+            filters = [DeleteTagRCSFileFilter(tag) for tag in tags]
+            return [RCSFileModification(self.path, filters)]
+        else:
+            return []
+
     def output(self, f, prefix=''):
         f.write('%sDeleted file %r\n' % (prefix, self.path,))
 
     def __str__(self):
         return 'DeleteFile(%r)' % self.path
+
+
+class RCSFileFilter:
+    def get_size(self):
+        raise NotImplementedError()
+
+    def get_filter_sink(self, sink):
+        raise NotImplementedError()
+
+    def filter(self, text):
+        fout = StringIO()
+        sink = WriteRCSFileSink(fout)
+        filter = self.get_filter_sink(sink)
+        cvs2svn_rcsparse.parse(StringIO(text), filter)
+        return fout.getvalue()
+
+    def output(self, f, prefix=''):
+        raise NotImplementedError()
+
+
+class DeleteTagRCSFileFilter(RCSFileFilter):
+    class Sink(FilterSink):
+        def __init__(self, sink, tagname):
+            FilterSink.__init__(self, sink)
+            self.tagname = tagname
+
+        def define_tag(self, name, revision):
+            if name != self.tagname:
+                FilterSink.define_tag(self, name, revision)
+
+    def __init__(self, tagname):
+        self.tagname = tagname
+
+    def get_size(self):
+        return 50
+
+    def get_filter_sink(self, sink):
+        return self.Sink(sink, self.tagname)
+
+    def output(self, f, prefix=''):
+        f.write('%sDeleted tag %r\n' % (prefix, self.tagname,))
+
+
+def get_tag_set(path):
+    class TagCollector(cvs2svn_rcsparse.Sink):
+        def __init__(self):
+            self.tags = set()
+
+        def define_tag(self, name, revision):
+            revtuple = [int(s) for s in revision.split('.') if int(s)]
+            if len(revtuple) % 2 == 0:
+                # This is a tag (as opposed to branch)
+                self.tags.add(name)
+
+    tag_collector = TagCollector()
+    cvs2svn_rcsparse.parse(open(path, 'rb'), tag_collector)
+    return tag_collector.tags
+
+
+class RCSFileModification(Modification):
+    """A Modification that involves changing the contents of an RCS file."""
+
+    def __init__(self, path, filters):
+        self.path = path
+        self.filters = filters[:]
+        self.size = 0
+        for filter in self.filters:
+            self.size += filter.get_size()
+
+    def get_size(self):
+        return self.size
+
+    def modify(self):
+        self.tempfile = get_tmp_filename()
+        shutil.move(self.path, self.tempfile)
+        text = open(self.tempfile, 'rb').read()
+        for filter in self.filters:
+            text = filter.filter(text)
+        open(self.path, 'wb').write(text)
+
+    def revert(self):
+        shutil.move(self.tempfile, self.path)
+        self.tempfile = None
+
+    def commit(self):
+        os.remove(self.tempfile)
+        self.tempfile = None
+
+    def get_submodifications(self, success):
+        if success:
+            # All filters completed successfully; no need to try
+            # subsets:
+            pass
+        elif len(self.filters) == 1:
+            pass
+        else:
+            n = len(self.filters) // 2
+            yield SplitModification(
+                RCSFileModification(self.path, self.filters[:n]),
+                RCSFileModification(self.path, self.filters[n:])
+                )
+
+    def output(self, f, prefix=''):
+        f.write('%sModified file %r\n' % (prefix, self.path,))
+        for filter in self.filters:
+            filter.output(f, prefix=(prefix + '  '))
+
+    def __str__(self):
+        return 'RCSFileModification(%r)' % (self.filters,)
 
 
 def try_modification_combinations(test_command, mod):

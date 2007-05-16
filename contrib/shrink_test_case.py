@@ -415,57 +415,59 @@ again.
 """
 
 
-try:
-    opts, args = getopt.getopt(sys.argv[1:], 'h', [
-        'skip-initial-test',
-        'help',
-        ])
-except getopt.GetoptError, e:
-    sys.stderr.write('Unknown option: %s\n' % (e,))
-    usage()
-    sys.exit(1)
-
-
-skip_initial_test = False
-
-for opt, value in opts:
-    if opt in ['--skip-initial-test']:
-        skip_initial_test = True
-    elif opt in ['-h', '--help']:
-        usage(sys.stdout)
-        sys.exit(0)
-    else:
-        sys.exit('Internal error')
-
-
-cvsrepo = args[0]
-
-def test_command():
-    command(*args[1:])
-
-if not os.path.isdir(tmpdir):
-    os.makedirs(tmpdir)
-
-if not skip_initial_test:
-    # Verify that test_command succeeds with the original repository:
+def main():
     try:
-        test_command()
-    except CommandFailedException, e:
-        sys.stderr.write(first_fail_message)
+        opts, args = getopt.getopt(sys.argv[1:], 'h', [
+            'skip-initial-test',
+            'help',
+            ])
+    except getopt.GetoptError, e:
+        sys.stderr.write('Unknown option: %s\n' % (e,))
+        usage()
         sys.exit(1)
-    sys.stdout.write(
-        'The bug is confirmed to exist in the initial repository.\n'
-        )
 
+    skip_initial_test = False
 
-try:
-    try:
-        try_modification_combinations(
-            test_command, DeleteDirectoryModification(cvsrepo)
+    for opt, value in opts:
+        if opt in ['--skip-initial-test']:
+            skip_initial_test = True
+        elif opt in ['-h', '--help']:
+            usage(sys.stdout)
+            sys.exit(0)
+        else:
+            sys.exit('Internal error')
+
+    cvsrepo = args[0]
+
+    def test_command():
+        command(*args[1:])
+
+    if not os.path.isdir(tmpdir):
+        os.makedirs(tmpdir)
+
+    if not skip_initial_test:
+        # Verify that test_command succeeds with the original repository:
+        try:
+            test_command()
+        except CommandFailedException, e:
+            sys.stderr.write(first_fail_message)
+            sys.exit(1)
+        sys.stdout.write(
+            'The bug is confirmed to exist in the initial repository.\n'
             )
-    except KeyboardInterrupt:
-        pass
-finally:
-    os.rmdir(tmpdir)
+
+    try:
+        try:
+            try_modification_combinations(
+                test_command, DeleteDirectoryModification(cvsrepo)
+                )
+        except KeyboardInterrupt:
+            pass
+    finally:
+        os.rmdir(tmpdir)
+
+
+if __name__ == '__main__':
+    main()
 
 

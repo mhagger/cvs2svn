@@ -389,6 +389,13 @@ class DeleteFileModification(Modification):
         return 'DeleteFile(%r)' % self.path
 
 
+def rev_tuple(revision):
+    retval = [int(s) for s in revision.split('.') if int(s)]
+    if retval[-2] == 0:
+        del retval[-2]
+    return tuple(retval)
+
+
 class RCSFileFilter:
     def get_size(self):
         raise NotImplementedError()
@@ -436,7 +443,7 @@ def get_tag_set(path):
             self.tags = set()
 
         def define_tag(self, name, revision):
-            revtuple = [int(s) for s in revision.split('.') if int(s)]
+            revtuple = rev_tuple(revision)
             if len(revtuple) % 2 == 0:
                 # This is a tag (as opposed to branch)
                 self.tags.add(name)

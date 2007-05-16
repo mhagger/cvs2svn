@@ -123,13 +123,13 @@ class Modification:
 
         raise NotImplementedError()
 
-    def try_mod(self):
+    def try_mod(self, test_command):
         if verbose >= 1:
             sys.stdout.write('Testing with the following modifications:\n')
             self.output(sys.stdout, '  ')
         self.modify()
         try:
-            command(*test_command)
+            test_command()
         except CommandFailedException:
             if verbose >= 1:
                 sys.stdout.write(
@@ -372,7 +372,7 @@ class DeleteFileModification(Modification):
         return 'DeleteFile(%r)' % self.path
 
 
-def try_modification_combinations(mod):
+def try_modification_combinations(test_command, mod):
     """Try MOD and its submodifications.
 
     Return True if any modifications were successful."""
@@ -383,7 +383,7 @@ def try_modification_combinations(mod):
     while todo:
         todo.sort(key=lambda mod: mod.get_size())
         mod = todo.pop()
-        success = mod.try_mod()
+        success = mod.try_mod(test_command)
         # Now add possible submodifications to the list of things to try:
         todo.extend(mod.get_submodifications(success))
 
@@ -430,17 +430,17 @@ for opt, value in opts:
 
 
 cvsrepo = args[0]
-test_command = args[1:]
 
+def test_command():
+    command(*args[1:])
 
 if not os.path.isdir(tmpdir):
     os.makedirs(tmpdir)
 
-
 if not skip_initial_test:
     # Verify that test_command succeeds with the original repository:
     try:
-        command(*test_command)
+        test_command()
     except CommandFailedException, e:
         sys.stderr.write(
             'ERROR!  The test command failed with the original repository.\n'
@@ -457,7 +457,9 @@ if not skip_initial_test:
 
 try:
     try:
-        try_modification_combinations(DeleteDirectoryModification(cvsrepo))
+        try_modification_combinations(
+            test_command, DeleteDirectoryModification(cvsrepo)
+            )
     except KeyboardInterrupt:
         pass
 finally:

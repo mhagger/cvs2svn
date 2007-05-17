@@ -630,13 +630,13 @@ class RCSFileModification(Modification):
         return 'RCSFileModification(%r)' % (self.filters,)
 
 
-def try_modification_combinations(test_command, mod):
+def try_modification_combinations(test_command, mods):
     """Try MOD and its submodifications.
 
     Return True if any modifications were successful."""
 
     # A list of lists of modifications that should still be tried:
-    todo = [mod]
+    todo = list(mods)
 
     while todo:
         todo.sort(key=lambda mod: mod.get_size())
@@ -720,7 +720,7 @@ def main():
     try:
         try:
             try_modification_combinations(
-                test_command, DeleteDirectoryModification(cvsrepo)
+                test_command, [DeleteDirectoryModification(cvsrepo)]
                 )
         except KeyboardInterrupt:
             pass

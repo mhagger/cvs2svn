@@ -478,6 +478,103 @@ def get_tag_set(path):
     return tag_collector.get_tags()
 
 
+class DeleteBranchTreeRCSFileFilter(RCSFileFilter):
+    class Sink(FilterSink):
+        def __init__(self, sink, branch_rev):
+            FilterSink.__init__(self, sink)
+            self.branch_rev = branch_rev
+
+        def is_on_branch(self, revision):
+            revtuple = rev_tuple(revision)
+            return revtuple[:len(self.branch_rev)] == self.branch_rev
+
+        def define_tag(self, name, revision):
+            if not self.is_on_branch(revision):
+                FilterSink.define_tag(self, name, revision)
+
+        def define_revision(
+            self, revision, timestamp, author, state, branches, next
+            ):
+            if not self.is_on_branch(revision):
+                branches = [
+                    branch
+                    for branch in branches
+                    if not self.is_on_branch(branch)
+                    ]
+                FilterSink.define_revision(
+                    self, revision, timestamp, author, state, branches, next
+                    )
+
+        def set_revision_info(self, revision, log, text):
+            if not self.is_on_branch(revision):
+                FilterSink.set_revision_info(self, revision, log, text)
+
+    def __init__(self, branch_rev, subbranch_tree):
+        self.branch_rev = branch_rev
+        self.subbranch_tree = subbranch_tree
+
+    def get_size(self):
+        return 100
+
+    def get_filter_sink(self, sink):
+        return self.Sink(sink, self.branch_rev)
+
+    def get_subfilters(self):
+        for (branch_rev, subbranch_tree) in self.subbranch_tree:
+            yield DeleteBranchTreeRCSFileFilter(branch_rev, subbranch_tree)
+
+    def output(self, f, prefix=''):
+        f.write(
+            '%sDeleted branch %s\n'
+            % (prefix, '.'.join([str(s) for s in self.branch_rev]),)
+            )
+
+
+def get_branch_tree(path):
+    """Return the forest of branches in path.
+
+    Return [(branch_revision, [sub_branch, ...]), ...], where
+    branch_revision is a revtuple and sub_branch has the same form as
+    the whole return value.
+
+    """
+
+    class BranchCollector(cvs2svn_rcsparse.Sink):
+        def __init__(self):
+            self.branches = {}
+
+        def define_revision(
+            self, revision, timestamp, author, state, branches, next
+            ):
+            parent = rev_tuple(revision)[:-1]
+            if len(parent) == 1:
+                parent = (1,)
+            entry = self.branches.setdefault(parent, [])
+            for branch in branches:
+                entry.append(rev_tuple(branch)[:-1])
+
+        def _get_subbranches(self, parent):
+            retval = []
+            try:
+                branches = self.branches[parent]
+            except KeyError:
+                return []
+            del self.branches[parent]
+            for branch in branches:
+                subbranches = self._get_subbranches(branch)
+                retval.append((branch, subbranches,))
+            return retval
+
+        def get_branches(self):
+            retval = self._get_subbranches((1,))
+            assert not self.branches
+            return retval
+
+    branch_collector = BranchCollector()
+    cvs2svn_rcsparse.parse(open(path, 'rb'), branch_collector)
+    return branch_collector.get_branches()
+
+
 class RCSFileModification(Modification):
     """A Modification that involves changing the contents of an RCS file."""
 

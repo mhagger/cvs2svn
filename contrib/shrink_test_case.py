@@ -294,7 +294,8 @@ def create_modification(mods):
 
 
 def compute_dir_size(path):
-    size = 0L
+    # Add a little bit for the directory itself.
+    size = 100L
     for filename in os.listdir(path):
         subpath = os.path.join(path, filename)
         if os.path.isdir(subpath):

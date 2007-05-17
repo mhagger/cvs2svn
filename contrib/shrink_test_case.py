@@ -374,15 +374,6 @@ class DeleteFileModification(Modification):
         os.remove(self.tempfile)
         self.tempfile = None
 
-    def get_submodifications(self, success):
-        tags = list(get_tag_set(self.path))
-        if tags:
-            tags.sort()
-            filters = [DeleteTagRCSFileFilter(tag) for tag in tags]
-            return [RCSFileModification(self.path, filters)]
-        else:
-            return []
-
     def output(self, f, prefix=''):
         f.write('%sDeleted file %r\n' % (prefix, self.path,))
 
@@ -671,6 +662,18 @@ def shrink_repository(test_command, cvsrepo):
     try_modification_combinations(
             test_command, [DeleteDirectoryModification(cvsrepo)]
             )
+
+    # Try deleting tags:
+    mods = []
+    for path in get_files(cvsrepo, recurse=True):
+        tags = list(get_tag_set(path))
+        if tags:
+            tags.sort()
+            filters = [DeleteTagRCSFileFilter(tag) for tag in tags]
+            mods.append(RCSFileModification(path, filters))
+
+    if mods:
+        try_modification_combinations(test_command, mods)
 
 
 first_fail_message = """\

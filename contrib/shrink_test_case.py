@@ -411,6 +411,9 @@ class RCSFileFilter:
         cvs2svn_rcsparse.parse(StringIO(text), filter)
         return fout.getvalue()
 
+    def get_subfilters(self):
+        return []
+
     def output(self, f, prefix=''):
         raise NotImplementedError()
 
@@ -510,7 +513,10 @@ class RCSFileModification(Modification):
             # subsets:
             pass
         elif len(self.filters) == 1:
-            pass
+            # The last filter failed; see if it has any subfilters:
+            subfilters = list(self.filters[0].get_subfilters())
+            if subfilters:
+                yield RCSFileModification(self.path, subfilters)
         else:
             n = len(self.filters) // 2
             yield SplitModification(

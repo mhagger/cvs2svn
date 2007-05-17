@@ -558,13 +558,16 @@ def get_dirs(path):
             yield subpath
 
 
-def get_files(path):
+def get_files(path, recurse=False):
     filenames = os.listdir(path)
     filenames.sort()
     for filename in filenames:
         subpath = os.path.join(path, filename)
         if os.path.isfile(subpath):
             yield subpath
+        elif recurse and os.path.isdir(subpath):
+            for x in get_files(subpath, recurse=recurse):
+                yield x
 
 
 first_fail_message = """\

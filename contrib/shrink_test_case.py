@@ -663,6 +663,22 @@ def shrink_repository(test_command, cvsrepo):
             test_command, [DeleteDirectoryModification(cvsrepo)]
             )
 
+    # Try deleting branches:
+    mods = []
+    for path in get_files(cvsrepo, recurse=True):
+        branch_tree = get_branch_tree(path)
+        if branch_tree:
+            filters = []
+            for (branch_revision, subbranch_tree) in branch_tree:
+                filters.append(
+                    DeleteBranchTreeRCSFileFilter(
+                        branch_revision, subbranch_tree
+                        )
+                    )
+            mods.append(RCSFileModification(path, filters))
+    if mods:
+        try_modification_combinations(test_command, mods)
+
     # Try deleting tags:
     mods = []
     for path in get_files(cvsrepo, recurse=True):

@@ -443,15 +443,36 @@ def get_tag_set(path):
         def __init__(self):
             self.tags = set()
 
+            # A map { branch_tuple : name } for branches on which no
+            # revisions have yet been seen:
+            self.branches = {}
+
         def define_tag(self, name, revision):
             revtuple = rev_tuple(revision)
             if len(revtuple) % 2 == 0:
                 # This is a tag (as opposed to branch)
                 self.tags.add(name)
+            else:
+                self.branches[revtuple] = name
+
+        def define_revision(
+            self, revision, timestamp, author, state, branches, next
+            ):
+            branch = rev_tuple(revision)[:-1]
+            try:
+                del self.branches[branch]
+            except KeyError:
+                pass
+
+        def get_tags(self):
+            tags = self.tags
+            for branch in self.branches.values():
+                tags.add(branch)
+            return tags
 
     tag_collector = TagCollector()
     cvs2svn_rcsparse.parse(open(path, 'rb'), tag_collector)
-    return tag_collector.tags
+    return tag_collector.get_tags()
 
 
 class RCSFileModification(Modification):

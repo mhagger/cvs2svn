@@ -619,7 +619,10 @@ def main():
         except KeyboardInterrupt:
             pass
     finally:
-        os.rmdir(tmpdir)
+        try:
+            os.rmdir(tmpdir)
+        except Exception, e:
+            sys.stderr.write('ERROR: %s (ignored)\n' % (e,))
 
 
 if __name__ == '__main__':

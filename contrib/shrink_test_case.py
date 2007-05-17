@@ -667,6 +667,12 @@ def get_files(path, recurse=False):
                 yield x
 
 
+def shrink_repository(test_command, cvsrepo):
+    try_modification_combinations(
+            test_command, [DeleteDirectoryModification(cvsrepo)]
+            )
+
+
 first_fail_message = """\
 ERROR!  The test command failed with the original repository.  The
 test command should be designed so that it succeeds (indicating that
@@ -719,9 +725,7 @@ def main():
 
     try:
         try:
-            try_modification_combinations(
-                test_command, [DeleteDirectoryModification(cvsrepo)]
-                )
+            shrink_repository(test_command, cvsrepo)
         except KeyboardInterrupt:
             pass
     finally:

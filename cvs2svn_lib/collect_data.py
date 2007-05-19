@@ -589,12 +589,16 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
           parent_data.branches_revs_data.append(branch_data.child)
 
   def _sort_branches(self):
-    """Sort the branches sprouting from each revision in revision order."""
+    """Sort the branches sprouting from each revision in creation order.
+
+    Creation order is taken to be the reverse of the order that they
+    are listed in the symbols part of the RCS file.  (If a branch is
+    created then deleted, a later branch can be assigned the recycled
+    branch number; therefore branch numbers are not an indication of
+    creation order.)"""
 
     for rev_data in self._rev_data.values():
-      rev_data.branches_data.sort(
-          lambda a, b: cmp(rev_tuple(a.branch_number),
-                           rev_tuple(b.branch_number)))
+      rev_data.branches_data.sort(lambda a, b: - cmp(a.id, b.id))
 
   def _resolve_tag_dependencies(self):
     """Resolve dependencies involving tags."""

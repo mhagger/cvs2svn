@@ -969,37 +969,32 @@ class SimpleTags(Cvs2SvnTestCase):
       ('/%(branches)s/vendorbranch/proj (from /%(trunk)s/proj:23)', 'A'),
       ))
 
-    fromstr = ' (from /%(branches)s/vendorbranch:25)'
+    fromstr = ' (from /%(branches)s/B_FROM_INITIALS:26)'
 
     # Tag on rev 1.1.1.1 of all files in proj
+    conv.logs[26].check(sym_log_msg('B_FROM_INITIALS'), (
+      ('/%(branches)s/B_FROM_INITIALS (from /%(branches)s/vendorbranch:25)',
+       'A'),
+      ('/%(branches)s/B_FROM_INITIALS/single-files', 'D'),
+      ('/%(branches)s/B_FROM_INITIALS/partial-prune', 'D'),
+      ))
+
+    # The same, as a tag
     log = conv.find_tag_log('T_ALL_INITIAL_FILES')
     log.check(sym_log_msg('T_ALL_INITIAL_FILES',1), (
       ('/%(tags)s/T_ALL_INITIAL_FILES'+fromstr, 'A'),
-      ('/%(tags)s/T_ALL_INITIAL_FILES/single-files', 'D'),
-      ('/%(tags)s/T_ALL_INITIAL_FILES/partial-prune', 'D'),
-      ))
-
-    # The same, as a branch
-    conv.logs[28].check(sym_log_msg('B_FROM_INITIALS'), (
-      ('/%(branches)s/B_FROM_INITIALS'+fromstr, 'A'),
-      ('/%(branches)s/B_FROM_INITIALS/single-files', 'D'),
-      ('/%(branches)s/B_FROM_INITIALS/partial-prune', 'D'),
       ))
 
     # Tag on rev 1.1.1.1 of all files in proj, except one
     log = conv.find_tag_log('T_ALL_INITIAL_FILES_BUT_ONE')
     log.check(sym_log_msg('T_ALL_INITIAL_FILES_BUT_ONE',1), (
       ('/%(tags)s/T_ALL_INITIAL_FILES_BUT_ONE'+fromstr, 'A'),
-      ('/%(tags)s/T_ALL_INITIAL_FILES_BUT_ONE/single-files', 'D'),
-      ('/%(tags)s/T_ALL_INITIAL_FILES_BUT_ONE/partial-prune', 'D'),
       ('/%(tags)s/T_ALL_INITIAL_FILES_BUT_ONE/proj/sub1/subsubB', 'D'),
       ))
 
     # The same, as a branch
     conv.logs[29].check(sym_log_msg('B_FROM_INITIALS_BUT_ONE'), (
       ('/%(branches)s/B_FROM_INITIALS_BUT_ONE'+fromstr, 'A'),
-      ('/%(branches)s/B_FROM_INITIALS_BUT_ONE/single-files', 'D'),
-      ('/%(branches)s/B_FROM_INITIALS_BUT_ONE/partial-prune', 'D'),
       ('/%(branches)s/B_FROM_INITIALS_BUT_ONE/proj/sub1/subsubB', 'D'),
       ))
 

@@ -20,7 +20,11 @@
 from __future__ import generators
 
 from cvs2svn_lib.boolean import *
+from cvs2svn_lib.common import InternalError
 from cvs2svn_lib.common import FatalError
+from cvs2svn_lib.context import Ctx
+from cvs2svn_lib.log import Log
+from cvs2svn_lib.symbol import Trunk
 from cvs2svn_lib.symbol import Branch
 from cvs2svn_lib.symbol import Tag
 from cvs2svn_lib.symbol import ExcludedSymbol
@@ -239,6 +243,109 @@ class CVSFileItems(object):
           cvs_revision.branch_ids.append(cvs_item.id)
       else:
         raise RuntimeError('Unknown cvs item type')
+
+  def _adjust_tag_parent(self, cvs_tag):
+    """Adjust the parent of CVS_TAG if possible and preferred.
+
+    CVS_TAG is an instance of CVSTag.  This method must be called in
+    leaf-to-trunk order."""
+
+    # The Symbol that cvs_tag would like to have as a parent:
+    preferred_parent = Ctx()._symbol_db.get_symbol(
+        cvs_tag.symbol.preferred_parent_id)
+    # The CVSRevision that is its direct parent:
+    source = self[cvs_tag.source_id]
+    assert isinstance(source, CVSRevision)
+
+    if preferred_parent == source.lod:
+      # The preferred parent is already the parent.
+      return
+
+    if isinstance(preferred_parent, Trunk):
+      # It is not possible to graft *onto* Trunk:
+      return
+
+    # Try to find the preferred parent among the possible parents:
+    for branch_id in source.branch_ids:
+      if self[branch_id].symbol == preferred_parent:
+        # We found it!
+        break
+    else:
+      # The preferred parent is not a possible parent in this file.
+      return
+
+    parent = self[branch_id]
+    assert isinstance(parent, CVSBranch)
+
+    Log().debug('Grafting %s from %s (on %s) onto %s' % (
+                cvs_tag, source, source.lod, parent,))
+    # Switch parent:
+    source.tag_ids.remove(cvs_tag.id)
+    parent.tag_ids.append(cvs_tag.id)
+    cvs_tag.source_id = parent.id
+
+  def _adjust_branch_parents(self, cvs_branch):
+    """Adjust the parent of CVS_BRANCH if possible and preferred.
+
+    CVS_BRANCH is an instance of CVSBranch.  This method must be
+    called in leaf-to-trunk order."""
+
+    # The Symbol that cvs_branch would like to have as a parent:
+    preferred_parent = Ctx()._symbol_db.get_symbol(
+        cvs_branch.symbol.preferred_parent_id)
+    # The CVSRevision that is its direct parent:
+    source = self[cvs_branch.source_id]
+    # This is always a CVSRevision because we haven't adjusted it yet:
+    assert isinstance(source, CVSRevision)
+
+    if preferred_parent == source.lod:
+      # The preferred parent is already the parent.
+      return
+
+    if isinstance(preferred_parent, Trunk):
+      # It is not possible to graft *onto* Trunk:
+      return
+
+    # Try to find the preferred parent among the possible parents:
+    for branch_id in source.branch_ids:
+      possible_parent = self[branch_id]
+      if possible_parent.symbol == preferred_parent:
+        # We found it!
+        break
+      elif possible_parent.symbol == cvs_branch.symbol:
+        # Only branches that precede the branch to be adjusted are
+        # considered possible parents.  Leave parentage unchanged:
+        return
+    else:
+      # This point should never be reached.
+      raise InternalError(
+          'Possible parent search did not terminate as expected')
+
+    parent = possible_parent
+    assert isinstance(parent, CVSBranch)
+
+    Log().debug('Grafting %s from %s (on %s) onto %s' % (
+                cvs_branch, source, source.lod, parent,))
+    # Switch parent:
+    source.branch_ids.remove(cvs_branch.id)
+    parent.branch_ids.append(cvs_branch.id)
+    cvs_branch.source_id = parent.id
+
+  def adjust_parents(self):
+    """Adjust the parents of symbols to their preferred parents.
+
+    If a CVSSymbol has a preferred parent that is different than its
+    current parent, and if the preferred parent is an allowed parent
+    of the CVSSymbol in this file, then graft the CVSSymbol onto its
+    preferred parent."""
+
+    for (containing_branch, cvs_revisions, cvs_branches, cvs_tags) \
+            in self.iter_lods():
+      for cvs_tag in cvs_tags:
+        self._adjust_tag_parent(cvs_tag)
+
+      for cvs_branch in cvs_branches:
+        self._adjust_branch_parents(cvs_branch)
 
   def record_closed_symbols(self):
     """Populate CVSRevision.closed_symbol_ids for the surviving revisions."""

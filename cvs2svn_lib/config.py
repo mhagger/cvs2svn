@@ -53,6 +53,11 @@ CVS_ITEM_TO_CHANGESET = 'cvs2svn-cvs-item-to-changeset.dat'
 CVS_ITEM_TO_CHANGESET_REVBROKEN = \
     'cvs2svn-cvs-item-to-changeset-revbroken.dat'
 
+# A mapping from CVSItem id to Changeset id, after the SymbolChangeset
+# loops have been broken.
+CVS_ITEM_TO_CHANGESET_SYMBROKEN = \
+    'cvs2svn-cvs-item-to-changeset-symbroken.dat'
+
 # A mapping from CVSItem id to Changeset id, after all Changeset
 # loops have been broken.
 CVS_ITEM_TO_CHANGESET_ALLBROKEN = \
@@ -68,6 +73,10 @@ CHANGESETS_REVBROKEN_DB = 'cvs2svn-changesets-revbroken.db'
 # A mapping from id to Changeset, after the RevisionChangesets have
 # been sorted and converted into OrderedChangesets.
 CHANGESETS_REVSORTED_DB = 'cvs2svn-changesets-revsorted.db'
+
+# A mapping from id to Changeset, after the SymbolChangeset loops have
+# been broken.
+CHANGESETS_SYMBROKEN_DB = 'cvs2svn-changesets-symbroken.db'
 
 # A mapping from id to Changeset, after all Changeset loops have been
 # broken.

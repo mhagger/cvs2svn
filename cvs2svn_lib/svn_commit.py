@@ -80,6 +80,11 @@ class SVNCommit:
       self.revnum = SVNCommit.revnum
       SVNCommit.revnum += 1
 
+  def get_cvs_items(self):
+    """Return a list containing the CVSItems in this commit."""
+
+    raise NotImplementedError()
+
   def _get_log_msg(self):
     """Return a log message for this commit."""
 
@@ -142,6 +147,9 @@ class SVNRevisionCommit(SVNCommit):
     for cvs_rev in cvs_revs:
       self.cvs_revs.append(cvs_rev)
 
+  def get_cvs_items(self):
+    return self.cvs_revs
+
   def __getstate__(self):
     """Return the part of the state represented by this mixin."""
 
@@ -182,6 +190,9 @@ class SVNInitialProjectCommit(SVNCommit):
   def __init__(self, date, revnum=None):
     SVNCommit.__init__(self, 'Initialization', date, revnum)
 
+  def get_cvs_items(self):
+    return []
+
   def _get_log_msg(self):
     return 'New repository initialized by cvs2svn.'
 
@@ -206,6 +217,9 @@ class SVNPrimaryCommit(SVNCommit, SVNRevisionCommit):
   def __init__(self, cvs_revs, date, revnum=None):
     SVNCommit.__init__(self, 'commit', date, revnum)
     SVNRevisionCommit.__init__(self, cvs_revs)
+
+  def get_cvs_items(self):
+    return SVNRevisionCommit.get_cvs_items(self)
 
   def __str__(self):
     return SVNCommit.__str__(self) + SVNRevisionCommit.__str__(self)
@@ -293,6 +307,9 @@ class SVNSymbolCommit(SVNCommit):
 
     self.cvs_symbol_ids = cvs_symbol_ids
 
+  def get_cvs_items(self):
+    return [Ctx()._cvs_items_db[id] for id in self.cvs_symbol_ids]
+
   def _get_log_msg(self):
     """Return a manufactured log message for this commit."""
 
@@ -357,6 +374,13 @@ class SVNPostCommit(SVNCommit, SVNRevisionCommit):
     # for a single synchronization commit to contain CVSRevisions on
     # multiple different default branches.
     self._motivating_revnum = motivating_revnum
+
+  def get_cvs_items(self):
+    # It might seem that we should return
+    # SVNRevisionCommit.get_cvs_items(self) here, but this commit
+    # doesn't really include those CVSItems, but rather followup
+    # commits to those.
+    return []
 
   def __str__(self):
     return SVNCommit.__str__(self) + SVNRevisionCommit.__str__(self)

@@ -633,44 +633,6 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         self._root_rev = rev_data.rev
     assert self._root_rev is not None
 
-  def _register_branch_possible_parents(self):
-    """Register the possible parents of each branch in this file."""
-
-    for branch_data in self.sdc.branches_data.values():
-      stats = self.collect_data.symbol_stats[branch_data.symbol]
-      parent_data = self._rev_data[branch_data.parent]
-
-      # The "obvious" parent of a branch is the branch holding the
-      # revision where the branch is rooted :
-      stats.register_possible_parent(self.sdc.rev_to_lod(parent_data.rev))
-
-      # Other possible parents are any other branches that are rooted
-      # at the same revision that have smaller revision numbers:
-      for parent in parent_data.branches_data:
-        # A branch cannot be its own parent, nor can a branch's parent
-        # be a branch that was created after it.  So we stop iterating
-        # when we reached the branch whose parents we are collecting:
-        if parent is branch_data:
-          break
-        stats.register_possible_parent(parent.symbol)
-
-  def _register_tag_possible_parents(self):
-    """Register the possible parents of each tag in this file."""
-
-    for tag_data_list in self.sdc.tags_data.values():
-      for tag_data in tag_data_list:
-        stats = self.collect_data.symbol_stats[tag_data.symbol]
-        parent_data = self._rev_data[tag_data.rev]
-
-        # The "obvious" parent of a branch is the branch holding the
-        # revision where the branch is rooted :
-        stats.register_possible_parent(self.sdc.rev_to_lod(parent_data.rev))
-
-        # Other possible parents are any branches that are rooted at
-        # the same revision:
-        for parent in parent_data.branches_data:
-          stats.register_possible_parent(parent.symbol)
-
   def tree_completed(self):
     """The revision tree has been parsed.  Analyze it for consistency.
 
@@ -681,8 +643,6 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     self._sort_branches()
     self._resolve_tag_dependencies()
     self._determine_root_rev()
-    self._register_branch_possible_parents()
-    self._register_tag_possible_parents()
 
   def _determine_operation(self, rev_data):
     # How to tell if a CVSRevision is an add, a change, or a deletion:
@@ -859,6 +819,44 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         rev_1_2.default_branch_prev = prev_rev_data.rev
         prev_rev_data.default_branch_next = rev_1_2.rev
 
+  def _register_branch_possible_parents(self):
+    """Register the possible parents of each branch in this file."""
+
+    for branch_data in self.sdc.branches_data.values():
+      stats = self.collect_data.symbol_stats[branch_data.symbol]
+      parent_data = self._rev_data[branch_data.parent]
+
+      # The "obvious" parent of a branch is the branch holding the
+      # revision where the branch is rooted :
+      stats.register_possible_parent(self.sdc.rev_to_lod(parent_data.rev))
+
+      # Other possible parents are any other branches that are rooted
+      # at the same revision that have smaller revision numbers:
+      for parent in parent_data.branches_data:
+        # A branch cannot be its own parent, nor can a branch's parent
+        # be a branch that was created after it.  So we stop iterating
+        # when we reached the branch whose parents we are collecting:
+        if parent is branch_data:
+          break
+        stats.register_possible_parent(parent.symbol)
+
+  def _register_tag_possible_parents(self):
+    """Register the possible parents of each tag in this file."""
+
+    for tag_data_list in self.sdc.tags_data.values():
+      for tag_data in tag_data_list:
+        stats = self.collect_data.symbol_stats[tag_data.symbol]
+        parent_data = self._rev_data[tag_data.rev]
+
+        # The "obvious" parent of a branch is the branch holding the
+        # revision where the branch is rooted :
+        stats.register_possible_parent(self.sdc.rev_to_lod(parent_data.rev))
+
+        # Other possible parents are any branches that are rooted at
+        # the same revision:
+        for parent in parent_data.branches_data:
+          stats.register_possible_parent(parent.symbol)
+
   def _process_revision_data(self, rev_data):
     branch_ids = [
         branch_data.id
@@ -925,6 +923,9 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     This is a callback method declared in Sink."""
 
     self._process_default_branch_revisions()
+
+    self._register_branch_possible_parents()
+    self._register_tag_possible_parents()
 
     for rev_data in self._revision_data:
       self._process_revision_data(rev_data)

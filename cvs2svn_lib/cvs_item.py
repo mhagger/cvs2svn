@@ -43,6 +43,11 @@ class CVSItem(object):
   def __setstate__(self, data):
     raise NotImplementedError()
 
+  def get_svn_path(self):
+    """Return the SVN path associated with this CVSItem."""
+
+    raise NotImplementedError()
+
   def get_pred_ids(self):
     """Return the CVSItem.ids of direct predecessors of SELF.
 
@@ -305,6 +310,9 @@ class CVSSymbol(CVSItem):
 
     self.symbol = symbol
     self.source_id = source_id
+
+  def get_svn_path(self):
+    return self.symbol.get_path(self.cvs_file.cvs_path)
 
   def get_ids_closed(self):
     # A Symbol does not close any other CVSItems:

@@ -48,14 +48,14 @@ class StdoutDelegate(SVNRepositoryMirrorDelegate):
     Log().verbose("  New Directory", path)
 
   def add_path(self, s_item):
-    """Print a line stating that we are 'adding' s_item.cvs_rev.svn_path."""
+    """Print a line stating what path we are 'adding'."""
 
-    Log().verbose("  Adding", s_item.cvs_rev.svn_path)
+    Log().verbose("  Adding", s_item.cvs_rev.get_svn_path())
 
   def change_path(self, s_item):
-    """Print a line stating that we are 'changing' s_item.cvs_rev.svn_path."""
+    """Print a line stating what path we are 'changing'."""
 
-    Log().verbose("  Changing", s_item.cvs_rev.svn_path)
+    Log().verbose("  Changing", s_item.cvs_rev.get_svn_path())
 
   def skip_path(self, cvs_rev):
     pass

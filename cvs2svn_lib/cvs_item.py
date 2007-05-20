@@ -155,8 +155,6 @@ class CVSRevision(CVSItem):
   def get_svn_path(self):
     return self.lod.get_path(self.cvs_file.cvs_path)
 
-  svn_path = property(get_svn_path)
-
   def __getstate__(self):
     """Return the contents of this instance, for pickling.
 

@@ -220,7 +220,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     buf = None
 
     # treat .cvsignore as a directory property
-    dir_path, basename = os.path.split(cvs_rev.svn_path)
+    dir_path, basename = os.path.split(cvs_rev.get_svn_path())
     if basename == ".cvsignore":
       buf = data_reader.read()
       ignore_vals = generate_ignores(buf)
@@ -248,7 +248,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
                         'Node-action: %s\n'
                         '%s'  # no property header if no props
                         'Text-content-length: '
-                        % (self._utf8_path(cvs_rev.svn_path),
+                        % (self._utf8_path(cvs_rev.get_svn_path()),
                            action, props_header))
 
     pos = self.dumpfile.tell()

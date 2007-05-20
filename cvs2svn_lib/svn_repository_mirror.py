@@ -363,7 +363,7 @@ class SVNRepositoryMirror:
   def add_path(self, cvs_rev):
     """Add the CVS_REV's svn_path to the repository mirror."""
 
-    (parent_path, component,) = path_split(cvs_rev.svn_path)
+    (parent_path, component,) = path_split(cvs_rev.get_svn_path())
     parent_node = self._open_writable_node(parent_path, True)
 
     assert component not in parent_node

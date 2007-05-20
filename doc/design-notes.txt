@@ -430,14 +430,10 @@ timstamp that should be assigned to it when it is committed.  Both
 values are written in hexadecimal.
 
 
-CreateDatabasesPass (formerly called pass4):
-===================
+UpdateStatisticsPass (formerly called pass4):
+====================
 
-Find and create a database containing the last changeset that is a
-source for each symbol.  This will result in a database containing
-key-value pairs whose key is a changeset id, and whose value is a list
-of symbol ids whose last fill can occur after the changeset is
-committed.
+Update the conversion statistics with excluded symbols omitted.
 
 
 CreateRevsPass (formerly called pass5)

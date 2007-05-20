@@ -128,22 +128,10 @@ TopologicalSortPass
 N/A
 
 
-CreateDatabasesPass
-===================
+UpdateStatisticsPass
+====================
 
-Create a database containing the last changeset that is a source for
-each symbol.  The keys of the database are Changeset ids, and the
-values are a list of symbol ids for which a CVSRevision in that
-Changeset is the last "opening".
-
-This involves iterating through all changesets in order.  For each
-changeset, iterate through all CVSRevisions in the changeset and then
-look up each tag and branch sprouting from that CVSRevision.  In
-either case, record the changeset as an opening for the symbol.
-
-Then invert the map: for each changeset, record the list of symbols
-for which the changeset contains the last opening.  Store the results
-in SYMBOL_LAST_CHANGESETS_DB.
+Update the conversion statistics with excluded symbols omitted.
 
 
 CreateRevsPass

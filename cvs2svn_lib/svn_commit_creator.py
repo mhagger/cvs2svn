@@ -48,11 +48,6 @@ class SVNCommitCreator:
   def __init__(self, persistence_manager):
     self._persistence_manager = persistence_manager
 
-    if not Ctx().trunk_only:
-      self._last_changesets_db = Database(
-          artifact_manager.get_temp_file(config.SYMBOL_LAST_CHANGESETS_DB),
-          DB_OPEN_READ)
-
   def _delete_needed(self, cvs_rev):
     """Return True iff the specified delete CVS_REV is really needed.
 
@@ -218,9 +213,6 @@ class SVNCommitCreator:
 
   def close(self):
     self._done_symbols = None
-    if not Ctx().trunk_only:
-      self._last_changesets_db.close()
-      self._last_changesets_db = None
 
   def _process_tag_changeset(self, changeset, timestamp):
     """Process TagChangeset CHANGESET, producing a SVNSymbolCommit."""

@@ -61,7 +61,6 @@ from cvs2svn_lib.changeset_graph import ChangesetGraph
 from cvs2svn_lib.changeset_graph_link import ChangesetGraphLink
 from cvs2svn_lib.changeset_database import ChangesetDatabase
 from cvs2svn_lib.changeset_database import CVSItemToChangesetTable
-from cvs2svn_lib.last_symbolic_name_database import LastSymbolicNameDatabase
 from cvs2svn_lib.svn_commit import SVNCommit
 from cvs2svn_lib.openings_closings import SymbolingsLogger
 from cvs2svn_lib.svn_commit_creator import SVNCommitCreator
@@ -1167,12 +1166,10 @@ class TopologicalSortPass(Pass):
     Log().quiet("Done")
 
 
-class CreateDatabasesPass(Pass):
+class UpdateStatisticsPass(Pass):
   """This pass was formerly known as pass4."""
 
   def register_artifacts(self):
-    if not Ctx().trunk_only:
-      self._register_temp_file(config.SYMBOL_LAST_CHANGESETS_DB)
     self._register_temp_file_needed(config.CVS_FILES_DB)
     self._register_temp_file_needed(config.SYMBOL_DB)
     self._register_temp_file_needed(config.CVS_ITEMS_FILTERED_STORE)
@@ -1203,22 +1200,10 @@ class CreateDatabasesPass(Pass):
         artifact_manager.get_temp_file(config.CVS_ITEMS_FILTERED_INDEX_TABLE),
         DB_OPEN_READ)
 
-    if Ctx().trunk_only:
-      Log().quiet("Recording updated statistics...")
-      for changeset in self.get_changesets():
-        for cvs_item in changeset.get_cvs_items():
-          stats_keeper.record_cvs_item(cvs_item)
-    else:
-      Log().quiet("Finding last CVS revisions for each symbolic name...")
-      last_sym_name_db = LastSymbolicNameDatabase()
-
-      for changeset in self.get_changesets():
-        for cvs_item in changeset.get_cvs_items():
-          stats_keeper.record_cvs_item(cvs_item)
-          if isinstance(cvs_item, CVSRevision):
-            last_sym_name_db.log_cvs_revision(changeset, cvs_item)
-
-      last_sym_name_db.create_database()
+    Log().quiet("Recording updated statistics...")
+    for changeset in self.get_changesets():
+      for cvs_item in changeset.get_cvs_items():
+        stats_keeper.record_cvs_item(cvs_item)
 
     Ctx()._cvs_items_db.close()
     Ctx()._symbol_db.close()
@@ -1245,7 +1230,6 @@ class CreateRevsPass(Pass):
     self._register_temp_file(config.CVS_REVS_TO_SVN_REVNUMS)
     if not Ctx().trunk_only:
       self._register_temp_file(config.SYMBOL_OPENINGS_CLOSINGS)
-      self._register_temp_file_needed(config.SYMBOL_LAST_CHANGESETS_DB)
     self._register_temp_file_needed(config.CVS_FILES_DB)
     self._register_temp_file_needed(config.CVS_ITEMS_FILTERED_STORE)
     self._register_temp_file_needed(config.CVS_ITEMS_FILTERED_INDEX_TABLE)
@@ -1459,7 +1443,7 @@ passes = [
     BreakSymbolChangesetCyclesPass(),
     BreakAllChangesetCyclesPass(),
     TopologicalSortPass(),
-    CreateDatabasesPass(),
+    UpdateStatisticsPass(),
     CreateRevsPass(),
     SortSymbolsPass(),
     IndexSymbolsPass(),

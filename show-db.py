@@ -24,7 +24,6 @@ def usage():
       '  -N      SVNRepositoryMirror nodes table\n'
       '  -r rev  SVNRepositoryMirror node tree for specific revision\n'
       '  -m      MetadataDatabase\n'
-      '  -l      LastSymbolicNameDatabase\n'
       '  -f      CVSFileDatabase\n'
       '  -c      PersistenceManager SVNCommit table\n'
       '  -C      PersistenceManager cvs-revs-to-svn-revnums table\n'
@@ -168,8 +167,6 @@ def main():
       print_node_tree(db, key, "Revision %d" % revnum)
     elif o == "-m":
       show_str2marshal_db("cvs2svn-metadata.db")
-    elif o == "-l":
-      show_str2marshal_db("cvs2svn-symbol-last-changesets.db")
     elif o == "-f":
       show_str2pickle_db("cvs2svn-cvs-files.db")
     elif o == "-c":

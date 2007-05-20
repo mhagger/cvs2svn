@@ -158,7 +158,7 @@ class SymbolingsLogger:
 
   def _note_default_branch_opening(self, cvs_rev, symbol_id):
     """If CVS_REV is a default branch revision, log
-    CVS_REV.cvs_file.id as an opening for SYMBOLIC_NAME."""
+    CVS_REV.cvs_file.id as an opening for SYMBOL_ID."""
 
     self._open_files_with_default_branches.setdefault(
         cvs_rev.cvs_file.id, []).append(symbol_id)

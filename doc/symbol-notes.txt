@@ -125,12 +125,6 @@ found by breaking up symbol changesets.
 TopologicalSortPass
 ===================
 
-N/A
-
-
-UpdateStatisticsPass
-====================
-
 Update the conversion statistics with excluded symbols omitted.
 
 

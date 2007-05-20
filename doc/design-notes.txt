@@ -430,12 +430,6 @@ timstamp that should be assigned to it when it is committed.  Both
 values are written in hexadecimal.
 
 
-UpdateStatisticsPass (formerly called pass4):
-====================
-
-Update the conversion statistics with excluded symbols omitted.
-
-
 CreateRevsPass (formerly called pass5)
 ==============
 

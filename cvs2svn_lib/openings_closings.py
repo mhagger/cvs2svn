@@ -103,8 +103,6 @@ class SymbolingsLogger:
   def log_branch_revision(self, cvs_branch, svn_revnum):
     """Log any openings and closings found in CVS_BRANCH."""
 
-    branch_id = cvs_branch.symbol.id
-
     # Determine whether the revision originally being branched was an
     # OP_DELETE, because if it was then it does not count as an
     # opening:
@@ -114,9 +112,10 @@ class SymbolingsLogger:
 
     if source.op != OP_DELETE:
       for id in cvs_branch.tag_ids + cvs_branch.branch_ids:
-        symbol = Ctx()._cvs_items_db[id].symbol
+        cvs_symbol = Ctx()._cvs_items_db[id]
         self._log_opening(
-            symbol.id, svn_revnum, cvs_branch.cvs_file, branch_id)
+            cvs_symbol.symbol.id,
+            svn_revnum, cvs_branch.cvs_file, cvs_branch.symbol.id)
 
   def _log(self, symbol_id, svn_revnum, cvs_file, branch_id, type):
     """Log an opening or closing to self.symbolings.

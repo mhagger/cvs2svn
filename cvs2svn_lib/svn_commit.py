@@ -334,7 +334,7 @@ class SVNSymbolCommit(SVNCommit):
 
     repos.start_commit(self.revnum, self._get_revprops())
     Log().verbose("Filling symbolic name:", self.symbol.get_clean_name())
-    repos.fill_symbol(self.symbol)
+    repos.fill_symbol(self)
 
     repos.end_commit()
 

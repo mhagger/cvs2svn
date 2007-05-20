@@ -411,7 +411,7 @@ class SVNRepositoryMirror:
     # node again so that its path is correct.
     return dest_parent_node[dest_basename]
 
-  def fill_symbol(self, symbol):
+  def fill_symbol(self, svn_symbol_commit):
     """Perform all copies necessary to create as much of the the tag
     or branch SYMBOL as possible given the current revision of the
     repository mirror.  SYMBOL is an instance of TypedSymbol.
@@ -419,6 +419,8 @@ class SVNRepositoryMirror:
     The symbolic name is guaranteed to exist in the Subversion
     repository by the end of this call, even if there are no paths
     under it."""
+
+    symbol = svn_symbol_commit.symbol
 
     # Get the set of sources for the symbolic name:
     source_set = \

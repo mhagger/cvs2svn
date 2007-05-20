@@ -634,7 +634,9 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     assert self._root_rev is not None
 
   def tree_completed(self):
-    """The revision tree has been parsed.  Analyze it for consistency.
+    """The revision tree has been parsed.
+
+    Analyze it for consistency and connect some loose ends.
 
     This is a callback method declared in Sink."""
 
@@ -830,8 +832,9 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       # revision where the branch is rooted :
       stats.register_possible_parent(self.sdc.rev_to_lod(parent_data.rev))
 
-      # Other possible parents are any other branches that are rooted
-      # at the same revision that have smaller revision numbers:
+      # Any other branches that are rooted at the same revision and
+      # were committed earlier than the branch are also possible
+      # parents:
       for parent in parent_data.branches_data:
         # A branch cannot be its own parent, nor can a branch's parent
         # be a branch that was created after it.  So we stop iterating
@@ -852,8 +855,8 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         # revision where the branch is rooted :
         stats.register_possible_parent(self.sdc.rev_to_lod(parent_data.rev))
 
-        # Other possible parents are any branches that are rooted at
-        # the same revision:
+        # Branches that are rooted at the same revision are also
+        # possible parents:
         for parent in parent_data.branches_data:
           stats.register_possible_parent(parent.symbol)
 

@@ -184,12 +184,15 @@ class Timestamper:
     # The maximum timestamp that is considered reasonable:
     self.max_timestamp = time.time() + 24.0 * 60.0 * 60.0
 
-  def get(self, timestamp):
+  def get(self, timestamp, change_expected):
     """Return a reasonable timestamp derived from TIMESTAMP.
 
     Push TIMESTAMP into the future if necessary to ensure that it is
     at least one second later than every other timestamp that has been
-    returned by previous calls to this method."""
+    returned by previous calls to this method.
+
+    If CHANGE_EXPECTED is not True, then log a message if the
+    timestamp has to be changed."""
 
     if timestamp > self.max_timestamp:
       # If a timestamp is in the future, it is assumed that it is
@@ -203,14 +206,15 @@ class Timestamper:
       # earlier timestamps have been committed, even if other
       # changesets with even earlier timestamps depend on this one.
       self.timestamp = self.timestamp + 1.0
-      Log().warn(
-          'Timestamp "%s" is in the future; changed to "%s".'
-          % (time.asctime(time.gmtime(timestamp)),
-             time.asctime(time.gmtime(self.timestamp)),)
-          )
+      if not change_expected:
+        Log().warn(
+            'Timestamp "%s" is in the future; changed to "%s".'
+            % (time.asctime(time.gmtime(timestamp)),
+               time.asctime(time.gmtime(self.timestamp)),)
+            )
     elif timestamp < self.timestamp + 1.0:
       self.timestamp = self.timestamp + 1.0
-      if Log().is_on(Log.VERBOSE):
+      if not change_expected and Log().is_on(Log.VERBOSE):
         Log().verbose(
             'Timestamp "%s" adjusted to "%s" to ensure monotonicity.'
             % (time.asctime(time.gmtime(timestamp)),

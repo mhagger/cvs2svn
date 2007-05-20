@@ -1134,9 +1134,12 @@ class TopologicalSortPass(Pass):
 
     changeset_graph = ChangesetGraph()
 
+    symbol_changeset_ids = set()
     for changeset_id in changeset_ids:
       changeset = changesets_db[changeset_id]
       changeset_graph.add_changeset(changeset)
+      if isinstance(changeset, SymbolChangeset):
+        symbol_changeset_ids.add(changeset.id)
 
     del changeset_ids
 
@@ -1150,7 +1153,8 @@ class TopologicalSortPass(Pass):
     timestamper = Timestamper()
 
     for (changeset_id, time_range) in changeset_graph.consume_graph():
-      timestamp = timestamper.get(time_range.t_max)
+      timestamp = timestamper.get(
+          time_range.t_max, changeset_id in symbol_changeset_ids)
       sorted_changesets.write('%x %08x\n' % (changeset_id, timestamp,))
 
     sorted_changesets.close()

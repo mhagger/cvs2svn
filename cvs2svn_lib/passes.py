@@ -376,7 +376,11 @@ class InitializeChangesetsPass(Pass):
     for cvs_item in cvs_items:
       for next_id in cvs_item.get_succ_ids():
         if next_id in changeset.cvs_item_ids:
+          # Sanity check: a CVSItem should never depend on itself:
+          assert cvs_item.id != next_id
+
           dependencies.append((cvs_item.id, next_id,))
+
     if dependencies:
       # Sort the cvs_items in a defined order (chronological to the
       # extent that the timestamps are correct and unique).

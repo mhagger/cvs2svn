@@ -361,9 +361,11 @@ class InitializeChangesetsPass(Pass):
   def break_internal_dependencies(self, changeset):
     """Split up CHANGESET if necessary to break internal dependencies.
 
-    Return a list containing the resulting changesets.  Iff CHANGESET
-    did not have to be split, then the return value will contain a
-    single value, namely the original CHANGESET."""
+    Return a list containing the resulting changeset(s).  Iff
+    CHANGESET did not have to be split, then the return value will
+    contain a single value, namely the original CHANGESET.  Split
+    CHANGESET at most once, even though the resulting changesets might
+    themselves have internal dependencies."""
 
     cvs_items = changeset.get_cvs_items()
     # We only look for succ dependencies, since by doing so we
@@ -408,17 +410,34 @@ class InitializeChangesetsPass(Pass):
           best_count = breaks[i]
           best_time = cvs_items[i + 1].timestamp - cvs_items[i].timestamp
       # Reuse the old changeset.id for the first of the split changesets.
-      return (
-          self.break_internal_dependencies(
-              RevisionChangeset(
-                  changeset.id,
-                  [cvs_item.id for cvs_item in cvs_items[:best_i + 1]]))
-          + self.break_internal_dependencies(
-              RevisionChangeset(
-                  self.changeset_key_generator.gen_id(),
-                  [cvs_item.id for cvs_item in cvs_items[best_i + 1:]])))
+      return [
+          RevisionChangeset(
+              changeset.id,
+              [cvs_item.id for cvs_item in cvs_items[:best_i + 1]]),
+          RevisionChangeset(
+              self.changeset_key_generator.gen_id(),
+              [cvs_item.id for cvs_item in cvs_items[best_i + 1:]]),
+          ]
     else:
       return [changeset]
+
+  def break_all_internal_dependencies(self, changeset):
+    """Keep breaking CHANGESET up until all internal dependencies are broken.
+
+    Generate the changeset fragments.  This method is written
+    non-recursively to avoid any possible problems with recursion
+    depth."""
+
+    changesets_to_split = [changeset]
+    while changesets_to_split:
+      changesets = self.break_internal_dependencies(changesets_to_split.pop())
+      if len(changesets) == 1:
+        yield changesets[0]
+      else:
+        # The changeset had to be split; see if either of the
+        # fragments have to be split:
+        changesets.reverse()
+        changesets_to_split.extend(changesets)
 
   def store_changeset(self, changeset):
     for cvs_item_id in changeset.cvs_item_ids:
@@ -443,7 +462,7 @@ class InitializeChangesetsPass(Pass):
     self.changeset_key_generator = KeyGenerator(1)
 
     for changeset in self.get_revision_changesets():
-      for split_changeset in self.break_internal_dependencies(changeset):
+      for split_changeset in self.break_all_internal_dependencies(changeset):
         if Log().is_on(Log.DEBUG):
           Log().debug(repr(split_changeset))
         self.store_changeset(split_changeset)

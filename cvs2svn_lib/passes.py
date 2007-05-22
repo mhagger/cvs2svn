@@ -445,7 +445,7 @@ class InitializeChangesetsPass(Pass):
     for changeset in self.get_revision_changesets():
       for split_changeset in self.break_internal_dependencies(changeset):
         if Log().is_on(Log.DEBUG):
-          Log().debug(repr(changeset))
+          Log().debug(repr(split_changeset))
         self.store_changeset(split_changeset)
 
     for changeset in self.get_symbol_changesets():

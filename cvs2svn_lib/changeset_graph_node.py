@@ -47,7 +47,7 @@ class ChangesetGraphNode(object):
   def get_changeset(self):
     """Return the changeset associated with this node."""
 
-    return Ctx()._changesets_db[self.id]
+    return Ctx()._changeset_db[self.id]
 
   def __repr__(self):
     """For convenience only.  The format is subject to change at any time."""

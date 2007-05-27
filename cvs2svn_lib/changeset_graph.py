@@ -134,12 +134,12 @@ class ChangesetGraph(object):
     if ending_node_id not in reachable_changesets:
       return None
 
-    path = [Ctx()._changesets_db[ending_node_id]]
+    path = [Ctx()._changeset_db[ending_node_id]]
     id = reachable_changesets[ending_node_id][1]
     while id != starting_node_id:
-      path.append(Ctx()._changesets_db[id])
+      path.append(Ctx()._changeset_db[id])
       id = reachable_changesets[id][1]
-    path.append(Ctx()._changesets_db[starting_node_id])
+    path.append(Ctx()._changeset_db[starting_node_id])
     return path
 
   _get_path = staticmethod(_get_path)
@@ -272,7 +272,7 @@ class ChangesetGraph(object):
       else:
         seen_nodes = seen_nodes[i:]
         seen_nodes.reverse()
-        return [Ctx()._changesets_db[node.id] for node in seen_nodes]
+        return [Ctx()._changeset_db[node.id] for node in seen_nodes]
 
   def consume_graph(self, cycle_breaker=None):
     """Remove and yield changesets from this graph in dependency order.
@@ -357,7 +357,7 @@ class ChangesetGraph(object):
     for node in self:
       f.write('  subgraph cluster_%x {\n' % (node.id,))
       f.write('    label = "C%x";\n' % (node.id,))
-      changeset = Ctx()._changesets_db[node.id]
+      changeset = Ctx()._changeset_db[node.id]
       for item_id in changeset.cvs_item_ids:
         f.write('    I%x;\n' % (item_id,))
       f.write('    style=filled;\n')
@@ -367,7 +367,7 @@ class ChangesetGraph(object):
       f.write('  }\n\n')
 
     for node in self:
-      changeset = Ctx()._changesets_db[node.id]
+      changeset = Ctx()._changeset_db[node.id]
       for cvs_item in changeset.get_cvs_items():
         for succ_id in cvs_item.get_succ_ids():
           f.write('  I%x -> I%x;\n' % (cvs_item.id, succ_id,))

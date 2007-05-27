@@ -248,8 +248,11 @@ class IndexedDatabase:
     self.f.seek(offset)
     return self.serializer.loadf(self.f)
 
-  def __iter__(self):
-    for offset in self.index_table:
+  def iterkeys(self):
+    return self.index_table.iterkeys()
+
+  def itervalues(self):
+    for offset in self.index_table.itervalues():
       yield self._fetch(offset)
 
   def __getitem__(self, index):

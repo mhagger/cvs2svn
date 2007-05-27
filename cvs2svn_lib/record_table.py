@@ -258,7 +258,17 @@ class RecordTable:
     self[i]
     self._set_packed_record(i, self.packer.empty_value)
 
-  def __iter__(self):
+  def iterkeys(self):
+    """Return the keys in the map in key order."""
+
+    for i in xrange(0, self._limit):
+      try:
+        self[i]
+        yield i
+      except KeyError:
+        pass
+
+  def itervalues(self):
     """Yield the values in the map in key order.
 
     Skip over values that haven't been defined."""
@@ -390,7 +400,17 @@ class MmapRecordTable:
     self[i]
     self._set_packed_record(i, self.packer.empty_value)
 
-  def __iter__(self):
+  def iterkeys(self):
+    """Yield the keys in the map in order."""
+
+    for i in xrange(0, self._limit):
+      try:
+        self[i]
+        yield i
+      except KeyError:
+        pass
+
+  def itervalues(self):
     """Yield the values in the map in key order.
 
     Skip over values that haven't been defined."""

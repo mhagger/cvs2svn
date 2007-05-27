@@ -284,7 +284,8 @@ class InitializeChangesetsPass(Pass):
 
   def register_artifacts(self):
     self._register_temp_file(config.CVS_ITEM_TO_CHANGESET)
-    self._register_temp_file(config.CHANGESETS_DB)
+    self._register_temp_file(config.CHANGESETS_STORE)
+    self._register_temp_file(config.CHANGESETS_INDEX)
     self._register_temp_file_needed(config.SYMBOL_DB)
     self._register_temp_file_needed(config.CVS_FILES_DB)
     self._register_temp_file_needed(config.CVS_ITEMS_FILTERED_STORE)
@@ -462,7 +463,9 @@ class InitializeChangesetsPass(Pass):
         artifact_manager.get_temp_file(config.CVS_ITEM_TO_CHANGESET),
         DB_OPEN_NEW)
     self.changeset_db = ChangesetDatabase(
-        artifact_manager.get_temp_file(config.CHANGESETS_DB), DB_OPEN_NEW)
+        artifact_manager.get_temp_file(config.CHANGESETS_STORE),
+        artifact_manager.get_temp_file(config.CHANGESETS_INDEX),
+        DB_OPEN_NEW)
     self.changeset_key_generator = KeyGenerator(1)
 
     for changeset in self.get_revision_changesets():
@@ -509,13 +512,15 @@ class BreakRevisionChangesetCyclesPass(BreakChangesetCyclesPass):
   """Break up any dependency cycles involving only RevisionChangesets."""
 
   def register_artifacts(self):
-    self._register_temp_file(config.CHANGESETS_REVBROKEN_DB)
+    self._register_temp_file(config.CHANGESETS_REVBROKEN_STORE)
+    self._register_temp_file(config.CHANGESETS_REVBROKEN_INDEX)
     self._register_temp_file(config.CVS_ITEM_TO_CHANGESET_REVBROKEN)
     self._register_temp_file_needed(config.SYMBOL_DB)
     self._register_temp_file_needed(config.CVS_FILES_DB)
     self._register_temp_file_needed(config.CVS_ITEMS_FILTERED_STORE)
     self._register_temp_file_needed(config.CVS_ITEMS_FILTERED_INDEX_TABLE)
-    self._register_temp_file_needed(config.CHANGESETS_DB)
+    self._register_temp_file_needed(config.CHANGESETS_STORE)
+    self._register_temp_file_needed(config.CHANGESETS_INDEX)
     self._register_temp_file_needed(config.CVS_ITEM_TO_CHANGESET)
 
   def log_processed_changesets(self):
@@ -589,11 +594,14 @@ class BreakRevisionChangesetCyclesPass(BreakChangesetCyclesPass):
     Ctx()._cvs_item_to_changeset_id = self.cvs_item_to_changeset_id
 
     old_changeset_db = ChangesetDatabase(
-        artifact_manager.get_temp_file(config.CHANGESETS_DB), DB_OPEN_READ)
+        artifact_manager.get_temp_file(config.CHANGESETS_STORE),
+        artifact_manager.get_temp_file(config.CHANGESETS_INDEX),
+        DB_OPEN_READ)
     Ctx()._changeset_db = old_changeset_db
     self.changeset_db = ChangesetDatabase(
-        artifact_manager.get_temp_file(
-            config.CHANGESETS_REVBROKEN_DB), DB_OPEN_NEW)
+        artifact_manager.get_temp_file(config.CHANGESETS_REVBROKEN_STORE),
+        artifact_manager.get_temp_file(config.CHANGESETS_REVBROKEN_INDEX),
+        DB_OPEN_NEW)
 
     changeset_ids = old_changeset_db.keys()
 
@@ -642,12 +650,14 @@ class RevisionTopologicalSortPass(Pass):
   Also convert them to OrderedChangesets, without changing their ids."""
 
   def register_artifacts(self):
-    self._register_temp_file(config.CHANGESETS_REVSORTED_DB)
+    self._register_temp_file(config.CHANGESETS_REVSORTED_STORE)
+    self._register_temp_file(config.CHANGESETS_REVSORTED_INDEX)
     self._register_temp_file_needed(config.SYMBOL_DB)
     self._register_temp_file_needed(config.CVS_FILES_DB)
     self._register_temp_file_needed(config.CVS_ITEMS_FILTERED_STORE)
     self._register_temp_file_needed(config.CVS_ITEMS_FILTERED_INDEX_TABLE)
-    self._register_temp_file_needed(config.CHANGESETS_REVBROKEN_DB)
+    self._register_temp_file_needed(config.CHANGESETS_REVBROKEN_STORE)
+    self._register_temp_file_needed(config.CHANGESETS_REVBROKEN_INDEX)
     self._register_temp_file_needed(config.CVS_ITEM_TO_CHANGESET_REVBROKEN)
 
   def run(self, stats_keeper):
@@ -661,10 +671,12 @@ class RevisionTopologicalSortPass(Pass):
         DB_OPEN_READ)
 
     changeset_db = ChangesetDatabase(
-        artifact_manager.get_temp_file(config.CHANGESETS_REVBROKEN_DB),
+        artifact_manager.get_temp_file(config.CHANGESETS_REVBROKEN_STORE),
+        artifact_manager.get_temp_file(config.CHANGESETS_REVBROKEN_INDEX),
         DB_OPEN_READ)
     changesets_revordered_db = ChangesetDatabase(
-        artifact_manager.get_temp_file(config.CHANGESETS_REVSORTED_DB),
+        artifact_manager.get_temp_file(config.CHANGESETS_REVSORTED_STORE),
+        artifact_manager.get_temp_file(config.CHANGESETS_REVSORTED_INDEX),
         DB_OPEN_NEW)
     Ctx()._changeset_db = changeset_db
 
@@ -718,13 +730,15 @@ class BreakSymbolChangesetCyclesPass(BreakChangesetCyclesPass):
   """Break up any dependency cycles involving only SymbolChangesets."""
 
   def register_artifacts(self):
-    self._register_temp_file(config.CHANGESETS_SYMBROKEN_DB)
+    self._register_temp_file(config.CHANGESETS_SYMBROKEN_STORE)
+    self._register_temp_file(config.CHANGESETS_SYMBROKEN_INDEX)
     self._register_temp_file(config.CVS_ITEM_TO_CHANGESET_SYMBROKEN)
     self._register_temp_file_needed(config.SYMBOL_DB)
     self._register_temp_file_needed(config.CVS_FILES_DB)
     self._register_temp_file_needed(config.CVS_ITEMS_FILTERED_STORE)
     self._register_temp_file_needed(config.CVS_ITEMS_FILTERED_INDEX_TABLE)
-    self._register_temp_file_needed(config.CHANGESETS_REVSORTED_DB)
+    self._register_temp_file_needed(config.CHANGESETS_REVSORTED_STORE)
+    self._register_temp_file_needed(config.CHANGESETS_REVSORTED_INDEX)
     self._register_temp_file_needed(config.CVS_ITEM_TO_CHANGESET_REVBROKEN)
 
   def log_processed_changesets(self):
@@ -798,11 +812,13 @@ class BreakSymbolChangesetCyclesPass(BreakChangesetCyclesPass):
     Ctx()._cvs_item_to_changeset_id = self.cvs_item_to_changeset_id
 
     old_changeset_db = ChangesetDatabase(
-        artifact_manager.get_temp_file(config.CHANGESETS_REVSORTED_DB),
+        artifact_manager.get_temp_file(config.CHANGESETS_REVSORTED_STORE),
+        artifact_manager.get_temp_file(config.CHANGESETS_REVSORTED_INDEX),
         DB_OPEN_READ)
     Ctx()._changeset_db = old_changeset_db
     self.changeset_db = ChangesetDatabase(
-        artifact_manager.get_temp_file(config.CHANGESETS_SYMBROKEN_DB),
+        artifact_manager.get_temp_file(config.CHANGESETS_SYMBROKEN_STORE),
+        artifact_manager.get_temp_file(config.CHANGESETS_SYMBROKEN_INDEX),
         DB_OPEN_NEW)
 
     changeset_ids = old_changeset_db.keys()
@@ -850,13 +866,15 @@ class BreakAllChangesetCyclesPass(BreakChangesetCyclesPass):
   """Break up any dependency cycles that are closed by SymbolChangesets."""
 
   def register_artifacts(self):
-    self._register_temp_file(config.CHANGESETS_ALLBROKEN_DB)
+    self._register_temp_file(config.CHANGESETS_ALLBROKEN_STORE)
+    self._register_temp_file(config.CHANGESETS_ALLBROKEN_INDEX)
     self._register_temp_file(config.CVS_ITEM_TO_CHANGESET_ALLBROKEN)
     self._register_temp_file_needed(config.SYMBOL_DB)
     self._register_temp_file_needed(config.CVS_FILES_DB)
     self._register_temp_file_needed(config.CVS_ITEMS_FILTERED_STORE)
     self._register_temp_file_needed(config.CVS_ITEMS_FILTERED_INDEX_TABLE)
-    self._register_temp_file_needed(config.CHANGESETS_SYMBROKEN_DB)
+    self._register_temp_file_needed(config.CHANGESETS_SYMBROKEN_STORE)
+    self._register_temp_file_needed(config.CHANGESETS_SYMBROKEN_INDEX)
     self._register_temp_file_needed(config.CVS_ITEM_TO_CHANGESET_SYMBROKEN)
 
   def log_processed_changesets(self, new_changeset_ids):
@@ -1018,11 +1036,13 @@ class BreakAllChangesetCyclesPass(BreakChangesetCyclesPass):
     Ctx()._cvs_item_to_changeset_id = self.cvs_item_to_changeset_id
 
     old_changeset_db = ChangesetDatabase(
-        artifact_manager.get_temp_file(config.CHANGESETS_SYMBROKEN_DB),
+        artifact_manager.get_temp_file(config.CHANGESETS_SYMBROKEN_STORE),
+        artifact_manager.get_temp_file(config.CHANGESETS_SYMBROKEN_INDEX),
         DB_OPEN_READ)
     Ctx()._changeset_db = old_changeset_db
     self.changeset_db = ChangesetDatabase(
-        artifact_manager.get_temp_file(config.CHANGESETS_ALLBROKEN_DB),
+        artifact_manager.get_temp_file(config.CHANGESETS_ALLBROKEN_STORE),
+        artifact_manager.get_temp_file(config.CHANGESETS_ALLBROKEN_INDEX),
         DB_OPEN_NEW)
 
     changeset_ids = old_changeset_db.keys()
@@ -1129,7 +1149,8 @@ class TopologicalSortPass(Pass):
     self._register_temp_file_needed(config.CVS_FILES_DB)
     self._register_temp_file_needed(config.CVS_ITEMS_FILTERED_STORE)
     self._register_temp_file_needed(config.CVS_ITEMS_FILTERED_INDEX_TABLE)
-    self._register_temp_file_needed(config.CHANGESETS_ALLBROKEN_DB)
+    self._register_temp_file_needed(config.CHANGESETS_ALLBROKEN_STORE)
+    self._register_temp_file_needed(config.CHANGESETS_ALLBROKEN_INDEX)
     self._register_temp_file_needed(config.CVS_ITEM_TO_CHANGESET_ALLBROKEN)
 
   def run(self, stats_keeper):
@@ -1143,7 +1164,8 @@ class TopologicalSortPass(Pass):
         DB_OPEN_READ)
 
     changeset_db = ChangesetDatabase(
-        artifact_manager.get_temp_file(config.CHANGESETS_ALLBROKEN_DB),
+        artifact_manager.get_temp_file(config.CHANGESETS_ALLBROKEN_STORE),
+        artifact_manager.get_temp_file(config.CHANGESETS_ALLBROKEN_INDEX),
         DB_OPEN_READ)
     Ctx()._changeset_db = changeset_db
 
@@ -1214,15 +1236,17 @@ class CreateRevsPass(Pass):
     self._register_temp_file_needed(config.CVS_ITEMS_FILTERED_INDEX_TABLE)
     self._register_temp_file_needed(config.SYMBOL_DB)
     self._register_temp_file_needed(config.METADATA_DB)
-    self._register_temp_file_needed(config.CHANGESETS_ALLBROKEN_DB)
+    self._register_temp_file_needed(config.CHANGESETS_ALLBROKEN_STORE)
+    self._register_temp_file_needed(config.CHANGESETS_ALLBROKEN_INDEX)
     self._register_temp_file_needed(config.CHANGESETS_SORTED_DATAFILE)
 
   def get_changesets(self):
     """Generate (changeset,timestamp,) tuples in commit order."""
 
     changeset_db = ChangesetDatabase(
-        artifact_manager.get_temp_file(
-            config.CHANGESETS_ALLBROKEN_DB), DB_OPEN_READ)
+        artifact_manager.get_temp_file(config.CHANGESETS_ALLBROKEN_STORE),
+        artifact_manager.get_temp_file(config.CHANGESETS_ALLBROKEN_INDEX),
+        DB_OPEN_READ)
 
     for line in file(
             artifact_manager.get_temp_file(

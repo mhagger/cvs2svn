@@ -64,23 +64,28 @@ CVS_ITEM_TO_CHANGESET_ALLBROKEN = \
     'cvs2svn-cvs-item-to-changeset-allbroken.dat'
 
 # A mapping from id to Changeset.
-CHANGESETS_DB = 'cvs2svn-changesets.db'
+CHANGESETS_INDEX = 'cvs2svn-changesets-index.dat'
+CHANGESETS_STORE = 'cvs2svn-changesets.pck'
 
 # A mapping from id to Changeset, after the RevisionChangeset loops
 # have been broken.
-CHANGESETS_REVBROKEN_DB = 'cvs2svn-changesets-revbroken.db'
+CHANGESETS_REVBROKEN_INDEX = 'cvs2svn-changesets-revbroken-index.dat'
+CHANGESETS_REVBROKEN_STORE = 'cvs2svn-changesets-revbroken.pck'
 
 # A mapping from id to Changeset, after the RevisionChangesets have
 # been sorted and converted into OrderedChangesets.
-CHANGESETS_REVSORTED_DB = 'cvs2svn-changesets-revsorted.db'
+CHANGESETS_REVSORTED_INDEX = 'cvs2svn-changesets-revsorted-index.dat'
+CHANGESETS_REVSORTED_STORE = 'cvs2svn-changesets-revsorted.pck'
 
 # A mapping from id to Changeset, after the SymbolChangeset loops have
 # been broken.
-CHANGESETS_SYMBROKEN_DB = 'cvs2svn-changesets-symbroken.db'
+CHANGESETS_SYMBROKEN_INDEX = 'cvs2svn-changesets-symbroken-index.dat'
+CHANGESETS_SYMBROKEN_STORE = 'cvs2svn-changesets-symbroken.pck'
 
 # A mapping from id to Changeset, after all Changeset loops have been
 # broken.
-CHANGESETS_ALLBROKEN_DB = 'cvs2svn-changesets-allbroken.db'
+CHANGESETS_ALLBROKEN_INDEX = 'cvs2svn-changesets-allbroken-index.dat'
+CHANGESETS_ALLBROKEN_STORE = 'cvs2svn-changesets-allbroken.pck'
 
 # The RevisionChangesets in commit order.  Each line contains the
 # changeset id and timestamp of one changeset, in hexadecimal, in the

@@ -306,13 +306,14 @@ are grouped into symbol changesets.  (Symbol changesets cannot have
 internal dependencies, so there is no need to break them up at this
 stage.)
 
-The result of this pass is two files:
+The result of this pass is two databases:
 
    - 'cvs2svn-cvs-item-to-changeset.dat', which maps CVSItem ids to
      the id of the changeset containing the item, and
 
-   - 'cvs2svn-changesets.db', which contains the changeset objects
-     themselves, indexed by changeset id.
+   - 'cvs2svn-changesets.pck' and 'cvs2svn-changesets-index.dat',
+     which contain the changeset objects themselves, indexed by
+     changeset id.
 
 
 BreakRevisionChangesetCyclesPass
@@ -352,8 +353,9 @@ way of splitting one or more of the changesets that are involved.
 
 The new changesets are written to
 'cvs2svn-cvs-item-to-changeset-revbroken.dat' and
-'cvs2svn-changesets-revbroken.db', which are in the same format as the
-analogous files produced by InitializeChangesetsPass.
+'cvs2svn-changesets-revbroken.pck' and
+'cvs2svn-changesets-revbroken-index.dat', which are in the same format
+as the analogous files produced by InitializeChangesetsPass.
 
 
 RevisionTopologicalSortPass
@@ -370,7 +372,8 @@ links only to its commit-order predecessor and successor.  This
 simplified graph enforces the commit order that resulted from the
 topological sort, even after the SymbolChangesets are added back into
 the graph later.  Store the OrderedChangesets into
-'cvs2svn-changesets-revsorted.db' along with the unmodified
+'cvs2svn-changesets-revsorted.pck' and
+'cvs2svn-changesets-revsorted-index.dat' along with the unmodified
 SymbolChangesets.
 
 
@@ -397,8 +400,9 @@ in which the symbol changeset commits can be inserted.
 
 The new changesets are written to
 'cvs2svn-cvs-item-to-changeset-symbroken.dat' and
-'cvs2svn-changesets-symbroken.db', which are in the same format as the
-analogous files produced by InitializeChangesetsPass.
+'cvs2svn-changesets-symbroken.pck' and
+'cvs2svn-changesets-symbroken-index.dat', which are in the same format
+as the analogous files produced by InitializeChangesetsPass.
 
 
 TopologicalSortPass

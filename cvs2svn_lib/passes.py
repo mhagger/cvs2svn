@@ -540,6 +540,20 @@ class BreakRevisionChangesetCyclesPass(BreakChangesetCyclesPass):
     self._register_temp_file_needed(config.CHANGESETS_INDEX)
     self._register_temp_file_needed(config.CVS_ITEM_TO_CHANGESET)
 
+  def get_source_changesets(self):
+    old_changeset_db = ChangesetDatabase(
+        artifact_manager.get_temp_file(config.CHANGESETS_STORE),
+        artifact_manager.get_temp_file(config.CHANGESETS_INDEX),
+        DB_OPEN_READ)
+
+    changeset_ids = old_changeset_db.keys()
+
+    for changeset_id in changeset_ids:
+      yield old_changeset_db[changeset_id]
+
+    old_changeset_db.close()
+    del old_changeset_db
+
   def break_cycle(self, cycle):
     """Break up one or more changesets in CYCLE to help break the cycle.
 
@@ -599,30 +613,21 @@ class BreakRevisionChangesetCyclesPass(BreakChangesetCyclesPass):
         DB_OPEN_WRITE)
     Ctx()._cvs_item_to_changeset_id = self.cvs_item_to_changeset_id
 
-    old_changeset_db = ChangesetDatabase(
-        artifact_manager.get_temp_file(config.CHANGESETS_STORE),
-        artifact_manager.get_temp_file(config.CHANGESETS_INDEX),
-        DB_OPEN_READ)
     self.changeset_db = ChangesetDatabase(
         artifact_manager.get_temp_file(config.CHANGESETS_REVBROKEN_STORE),
         artifact_manager.get_temp_file(config.CHANGESETS_REVBROKEN_INDEX),
         DB_OPEN_NEW)
 
-    changeset_ids = old_changeset_db.keys()
-
     self.changeset_graph = ChangesetGraph(self.changeset_db)
 
-    for changeset_id in changeset_ids:
-      changeset = old_changeset_db[changeset_id]
+    max_changeset_id = 0
+    for changeset in self.get_source_changesets():
       self.changeset_db.store(changeset)
       if isinstance(changeset, RevisionChangeset):
         self.changeset_graph.add_changeset(changeset)
+      max_changeset_id = max(max_changeset_id, changeset.id)
 
-    self.changeset_key_generator = KeyGenerator(max(changeset_ids) + 1)
-    del changeset_ids
-
-    old_changeset_db.close()
-    del old_changeset_db
+    self.changeset_key_generator = KeyGenerator(max_changeset_id + 1)
 
     self.processed_changeset_logger = ProcessedChangesetLogger()
 

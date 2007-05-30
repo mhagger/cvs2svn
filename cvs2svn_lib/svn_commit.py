@@ -143,9 +143,7 @@ class SVNRevisionCommit(SVNCommit):
 
     Derived classes must also call the SVNCommit constructor explicitly."""
 
-    self.cvs_revs = []
-    for cvs_rev in cvs_revs:
-      self.cvs_revs.append(cvs_rev)
+    self.cvs_revs = list(cvs_revs)
 
   def get_cvs_items(self):
     return self.cvs_revs

@@ -45,7 +45,8 @@ class NoPredNodeInGraphException(Exception):
 class ChangesetGraph(object):
   """A graph of changesets and their dependencies."""
 
-  def __init__(self):
+  def __init__(self, changeset_db):
+    self._changeset_db = changeset_db
     # A map { id : ChangesetGraphNode }
     self.nodes = {}
 
@@ -118,7 +119,7 @@ class ChangesetGraph(object):
   def __iter__(self):
     return self.nodes.itervalues()
 
-  def _get_path(reachable_changesets, starting_node_id, ending_node_id):
+  def _get_path(self, reachable_changesets, starting_node_id, ending_node_id):
     """Return the shortest path from ENDING_NODE_ID to STARTING_NODE_ID.
 
     Find a path from ENDING_NODE_ID to STARTING_NODE_ID in
@@ -134,15 +135,13 @@ class ChangesetGraph(object):
     if ending_node_id not in reachable_changesets:
       return None
 
-    path = [Ctx()._changeset_db[ending_node_id]]
+    path = [self._changeset_db[ending_node_id]]
     id = reachable_changesets[ending_node_id][1]
     while id != starting_node_id:
-      path.append(Ctx()._changeset_db[id])
+      path.append(self._changeset_db[id])
       id = reachable_changesets[id][1]
-    path.append(Ctx()._changeset_db[starting_node_id])
+    path.append(self._changeset_db[starting_node_id])
     return path
-
-  _get_path = staticmethod(_get_path)
 
   def search_for_path(self, starting_node_id, stop_set):
     """Search for paths to prerequisites of STARTING_NODE_ID.
@@ -215,7 +214,7 @@ class ChangesetGraph(object):
     # Find a list of (node,changeset,) where the node has no
     # predecessors:
     nopred_nodes = [
-        (node, node.get_changeset(),)
+        (node, self._changeset_db[node.id],)
         for node in self.nodes.itervalues()
         if not node.pred_ids]
     nopred_nodes.sort(compare)
@@ -227,7 +226,7 @@ class ChangesetGraph(object):
       for succ_id in node.succ_ids:
         succ = self[succ_id]
         if not succ.pred_ids:
-          nopred_nodes.append( (succ, succ.get_changeset(),) )
+          nopred_nodes.append( (succ, self._changeset_db[succ.id],) )
           new_nodes_found = True
       if new_nodes_found:
         # All this repeated sorting is very wasteful.  We should
@@ -272,7 +271,7 @@ class ChangesetGraph(object):
       else:
         seen_nodes = seen_nodes[i:]
         seen_nodes.reverse()
-        return [Ctx()._changeset_db[node.id] for node in seen_nodes]
+        return [self._changeset_db[node.id] for node in seen_nodes]
 
   def consume_graph(self, cycle_breaker=None):
     """Remove and yield changesets from this graph in dependency order.
@@ -334,8 +333,11 @@ class ChangesetGraph(object):
     f.write('digraph G {\n')
     for node in self:
       f.write(
-          '  C%x [style=filled, fillcolor=%s];\n'
-          % (node.id, self.node_colors[node.get_changeset().__class__],))
+          '  C%x [style=filled, fillcolor=%s];\n' % (
+              node.id,
+              self.node_colors[self._changeset_db[node.id].__class__],
+              )
+          )
     f.write('\n')
 
     for node in self:
@@ -357,17 +359,17 @@ class ChangesetGraph(object):
     for node in self:
       f.write('  subgraph cluster_%x {\n' % (node.id,))
       f.write('    label = "C%x";\n' % (node.id,))
-      changeset = Ctx()._changeset_db[node.id]
+      changeset = self._changeset_db[node.id]
       for item_id in changeset.cvs_item_ids:
         f.write('    I%x;\n' % (item_id,))
       f.write('    style=filled;\n')
       f.write(
           '    fillcolor=%s;\n'
-          % (self.node_colors[node.get_changeset().__class__],))
+          % (self.node_colors[self._changeset_db[node.id].__class__],))
       f.write('  }\n\n')
 
     for node in self:
-      changeset = Ctx()._changeset_db[node.id]
+      changeset = self._changeset_db[node.id]
       for cvs_item in changeset.get_cvs_items():
         for succ_id in cvs_item.get_succ_ids():
           f.write('  I%x -> I%x;\n' % (cvs_item.id, succ_id,))

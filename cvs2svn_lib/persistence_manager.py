@@ -65,11 +65,6 @@ class PersistenceManager:
         artifact_manager.get_temp_file(config.CVS_REVS_TO_SVN_REVNUMS),
         mode, SignedIntegerPacker(SVN_INVALID_REVNUM))
 
-    # A map {Symbol -> [svn_revnum,...]} where svn_revnums are the svn
-    # revision numbers in which the symbol was filled, in numerical
-    # order.
-    self._fills = {}
-
   def get_svn_revnum(self, cvs_rev_id):
     """Return the Subversion revision number in which CVS_REV_ID was
     committed, or SVN_INVALID_REVNUM if there is no mapping for
@@ -102,45 +97,10 @@ class PersistenceManager:
         Log().verbose(' %s %s' % (cvs_rev.cvs_path, cvs_rev.rev,))
         self.cvs2svn_db[cvs_rev.id] = svn_commit.revnum
 
-    # If it is a symbol commit, then record _fills.
-    if isinstance(svn_commit, SVNSymbolCommit):
-      self._fills.setdefault(svn_commit.symbol, []).append(svn_commit.revnum)
-
-  def filled(self, lod):
-    """Return True iff LOD has ever been filled."""
-
-    return lod in self._fills
-
-  def filled_since(self, lod, svn_revnum):
-    """Return True iff LOD has been filled since SVN_REVNUM."""
-
-    return self._fills.get(lod, [0])[-1] >= svn_revnum
-
-  def last_filled(self, symbol):
-    """Return the last svn revision number in which SYMBOL was filled.
-
-    If it has never been filled, return None."""
-
-    return self._fills.get(symbol, [None])[-1]
-
-  def first_fill_after(self, symbol, revnum):
-    """Return the svn revnum of the first fill of SYMBOL after REVNUM.
-
-    Return None if SYMBOL has not been filled since REVNUM."""
-
-    fills = self._fills.get(symbol, [])
-
-    i = bisect.bisect_right(fills, revnum)
-    if i == len(fills):
-      return None
-
-    return fills[i]
-
   def close(self):
     self.cvs2svn_db.close()
     self.cvs2svn_db = None
     self.svn_commit_db.close()
     self.svn_commit_db = None
-    self._fills = None
 
 

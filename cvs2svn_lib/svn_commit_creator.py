@@ -101,48 +101,55 @@ class SVNCommitCreator:
         if self._delete_needed(cvs_rev)
         ]
     cvs_revs = changes + needed_deletes
-    cvs_revs.sort(lambda a, b: cmp(a.cvs_file.filename, b.cvs_file.filename))
-    svn_commit = SVNPrimaryCommit(cvs_revs, timestamp)
+    if cvs_revs:
+      cvs_revs.sort(lambda a, b: cmp(a.cvs_file.filename, b.cvs_file.filename))
+      svn_commit = SVNPrimaryCommit(cvs_revs, timestamp)
 
-    default_branch_cvs_revisions = []
-    for cvs_rev in changes:
-      # Only make a change if we need to:
-      if cvs_rev.rev == "1.1.1.1" and not cvs_rev.deltatext_exists:
-        # When 1.1.1.1 has an empty deltatext, the explanation is almost
-        # always that we're looking at an imported file whose 1.1 and
-        # 1.1.1.1 are identical.  On such imports, CVS creates an RCS
-        # file where 1.1 has the content, and 1.1.1.1 has an empty
-        # deltatext, i.e, the same content as 1.1.  There's no reason to
-        # reflect this non-change in the repository, so we want to do
-        # nothing in this case.  (If we were really paranoid, we could
-        # make sure 1.1's log message is the CVS-generated "Initial
-        # revision\n", but I think the conditions above are strict
-        # enough.)
-        pass
-      else:
+      # default_branch_cvs_revisions is a list of cvs_revs for each
+      # default branch commit that will need to be copied to trunk (or
+      # deleted from trunk) in a generated revision following the
+      # "regular" revision.
+      default_branch_cvs_revisions = []
+      for cvs_rev in changes:
+        # Only make a change if we need to:
+        if cvs_rev.rev == "1.1.1.1" and not cvs_rev.deltatext_exists:
+          # When 1.1.1.1 has an empty deltatext, the explanation is almost
+          # always that we're looking at an imported file whose 1.1 and
+          # 1.1.1.1 are identical.  On such imports, CVS creates an RCS
+          # file where 1.1 has the content, and 1.1.1.1 has an empty
+          # deltatext, i.e, the same content as 1.1.  There's no reason to
+          # reflect this non-change in the repository, so we want to do
+          # nothing in this case.  (If we were really paranoid, we could
+          # make sure 1.1's log message is the CVS-generated "Initial
+          # revision\n", but I think the conditions above are strict
+          # enough.)
+          pass
+        else:
+          if cvs_rev.default_branch_revision:
+            default_branch_cvs_revisions.append(cvs_rev)
+
+      for cvs_rev in needed_deletes:
         if cvs_rev.default_branch_revision:
           default_branch_cvs_revisions.append(cvs_rev)
 
-    for cvs_rev in needed_deletes:
-      if cvs_rev.default_branch_revision:
-        default_branch_cvs_revisions.append(cvs_rev)
-
-    # There is a slight chance that we didn't actually register any
-    # CVSRevisions with our SVNCommit (see loop over deletes above), so
-    # if we have no CVSRevisions, we don't flush the svn_commit to disk
-    # and roll back our revnum.
-    if svn_commit.cvs_revs:
       self._persistence_manager.put_svn_commit(svn_commit)
-    else:
-      # We will not be flushing this SVNCommit, so rollback the
-      # SVNCommit revision counter.
-      SVNCommit.revnum -= 1
 
-    if not Ctx().trunk_only:
-      for cvs_rev in changes + deletes:
-        Ctx()._symbolings_logger.log_revision(cvs_rev, svn_commit.revnum)
+      if not Ctx().trunk_only:
+        for cvs_rev in changes + deletes:
+          Ctx()._symbolings_logger.log_revision(cvs_rev, svn_commit.revnum)
 
-    return svn_commit, default_branch_cvs_revisions
+        # Generate an SVNPostCommit if we have default branch revs:
+        if default_branch_cvs_revisions:
+          # If some of the revisions in this commit happened on a
+          # non-trunk default branch, then those files have to be
+          # copied into trunk manually after being changed on the
+          # branch (because the RCS "default branch" appears as head,
+          # i.e., trunk, in practice).  Unfortunately, Subversion
+          # doesn't support copies with sources in the current txn.
+          # All copies must be based in committed revisions.
+          # Therefore, we generate the copies in a new revision.
+          self._post_commit(
+              default_branch_cvs_revisions, svn_commit.revnum, timestamp)
 
   def _post_commit(self, cvs_revs, motivating_revnum, timestamp):
     """Generate any SVNCommits that we can perform following CVS_REVS.
@@ -188,28 +195,7 @@ class SVNCommitCreator:
           for cvs_rev in cvs_revs
           if not isinstance(cvs_rev.lod, Branch)]
 
-      # When trunk-only, only do the primary commit:
-      self._commit(timestamp, cvs_revs)
-    else:
-      # If some of the commits in this txn happened on a non-trunk
-      # default branch, then those files will have to be copied into
-      # trunk manually after being changed on the branch (because the
-      # RCS "default branch" appears as head, i.e., trunk, in practice).
-      # Unfortunately, Subversion doesn't support copies with sources in
-      # the current txn.  All copies must be based in committed
-      # revisions.  Therefore, we generate the copies in a new revision.
-      #
-      # default_branch_cvs_revisions is a list of cvs_revs for each
-      # default branch commit that will need to be copied to trunk (or
-      # deleted from trunk) in some generated revision following the
-      # "regular" revision.
-      motivating_commit, default_branch_cvs_revisions = self._commit(
-          timestamp, cvs_revs)
-
-      # Only generate an SVNPostCommit if we have default branch revs:
-      if default_branch_cvs_revisions:
-        self._post_commit(
-            default_branch_cvs_revisions, motivating_commit.revnum, timestamp)
+    self._commit(timestamp, cvs_revs)
 
   def close(self):
     self._done_symbols = None

@@ -155,17 +155,15 @@ class SVNCommitCreator:
     in order to copy the path over, we may first need to delete the
     existing trunk there."""
 
-    # Only generate a commit if we have default branch revs
-    if cvs_revs:
-      cvs_revs.sort(
-          lambda a, b: cmp(a.cvs_file.filename, b.cvs_file.filename)
-          )
-      # Generate an SVNCommit for all of our default branch cvs_revs.
-      svn_commit = SVNPostCommit(motivating_revnum, cvs_revs, timestamp)
-      for cvs_rev in cvs_revs:
-        Ctx()._symbolings_logger.log_default_branch_closing(
-            cvs_rev, svn_commit.revnum)
-      self._persistence_manager.put_svn_commit(svn_commit)
+    cvs_revs.sort(
+        lambda a, b: cmp(a.cvs_file.filename, b.cvs_file.filename)
+        )
+    # Generate an SVNCommit for all of our default branch cvs_revs.
+    svn_commit = SVNPostCommit(motivating_revnum, cvs_revs, timestamp)
+    for cvs_rev in cvs_revs:
+      Ctx()._symbolings_logger.log_default_branch_closing(
+          cvs_rev, svn_commit.revnum)
+    self._persistence_manager.put_svn_commit(svn_commit)
 
   def _process_revision_changeset(self, changeset, timestamp):
     """Process CHANGESET, using TIMESTAMP for all of its entries.
@@ -208,8 +206,10 @@ class SVNCommitCreator:
       motivating_commit, default_branch_cvs_revisions = self._commit(
           timestamp, cvs_revs)
 
-      self._post_commit(
-          default_branch_cvs_revisions, motivating_commit.revnum, timestamp)
+      # Only generate an SVNPostCommit if we have default branch revs:
+      if default_branch_cvs_revisions:
+        self._post_commit(
+            default_branch_cvs_revisions, motivating_commit.revnum, timestamp)
 
   def close(self):
     self._done_symbols = None
@@ -224,7 +224,6 @@ class SVNCommitCreator:
         changeset.symbol, changeset.cvs_item_ids, timestamp)
     self._persistence_manager.put_svn_commit(svn_commit)
 
-
   def _process_branch_changeset(self, changeset, timestamp):
     """Process BranchChangeset CHANGESET, producing a SVNSymbolCommit."""
 
@@ -237,7 +236,6 @@ class SVNCommitCreator:
     for cvs_branch in changeset.get_cvs_items():
       Ctx()._symbolings_logger.log_branch_revision(
           cvs_branch, svn_commit.revnum)
-
 
   def process_changeset(self, changeset, timestamp):
     """Process CHANGESET, using TIMESTAMP for all of its entries.

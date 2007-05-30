@@ -444,6 +444,16 @@ class InitializeChangesetsPass(Pass):
         changesets.reverse()
         changesets_to_split.extend(changesets)
 
+  def get_changesets(self):
+    """Return all changesets, with internal dependencies already broken."""
+
+    for changeset in self.get_revision_changesets():
+      for split_changeset in self.break_all_internal_dependencies(changeset):
+        yield split_changeset
+
+    for changeset in self.get_symbol_changesets():
+      yield changeset
+
   def store_changeset(self, changeset):
     for cvs_item_id in changeset.cvs_item_ids:
       self.cvs_item_to_changeset_id[cvs_item_id] = changeset.id
@@ -468,13 +478,7 @@ class InitializeChangesetsPass(Pass):
         DB_OPEN_NEW)
     self.changeset_key_generator = KeyGenerator(1)
 
-    for changeset in self.get_revision_changesets():
-      for split_changeset in self.break_all_internal_dependencies(changeset):
-        if Log().is_on(Log.DEBUG):
-          Log().debug(repr(split_changeset))
-        self.store_changeset(split_changeset)
-
-    for changeset in self.get_symbol_changesets():
+    for changeset in self.get_changesets():
       if Log().is_on(Log.DEBUG):
         Log().debug(repr(changeset))
       self.store_changeset(changeset)

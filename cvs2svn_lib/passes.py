@@ -1142,6 +1142,10 @@ class TopologicalSortPass(Pass):
     self._register_temp_file_needed(config.CHANGESETS_ALLBROKEN_INDEX)
     self._register_temp_file_needed(config.CVS_ITEM_TO_CHANGESET_ALLBROKEN)
 
+  def get_source_changesets(self, changeset_db):
+    for changeset_id in changeset_db.keys():
+      yield changeset_db[changeset_id]
+
   def run(self, stats_keeper):
     Log().quiet("Generating CVSRevisions in commit order...")
 
@@ -1163,13 +1167,10 @@ class TopologicalSortPass(Pass):
             config.CVS_ITEM_TO_CHANGESET_ALLBROKEN),
         DB_OPEN_READ)
 
-    changeset_ids = changeset_db.keys()
-
     changeset_graph = ChangesetGraph(changeset_db)
 
     symbol_changeset_ids = set()
-    for changeset_id in changeset_ids:
-      changeset = changeset_db[changeset_id]
+    for changeset in self.get_source_changesets(changeset_db):
       changeset_graph.add_changeset(changeset)
       for cvs_item in changeset.get_cvs_items():
         stats_keeper.record_cvs_item(cvs_item)
@@ -1179,8 +1180,6 @@ class TopologicalSortPass(Pass):
     stats_keeper.set_stats_reflect_exclude(True)
 
     stats_keeper.archive()
-
-    del changeset_ids
 
     sorted_changesets = open(
         artifact_manager.get_temp_file(config.CHANGESETS_SORTED_DATAFILE),

@@ -488,6 +488,23 @@ class InitializeChangesetsPass(Pass):
     Log().quiet("Done")
 
 
+class ProcessedChangesetLogger:
+  def __init__(self):
+    self.processed_changeset_ids = []
+
+  def log(self, changeset_id):
+    if Log().is_on(Log.DEBUG):
+      self.processed_changeset_ids.append(changeset_id)
+
+  def flush(self):
+    if self.processed_changeset_ids:
+      Log().debug(
+          'Consumed changeset ids %s'
+          % (', '.join(['%x' % id for id in self.processed_changeset_ids]),))
+
+      del self.processed_changset_ids[:]
+
+
 class BreakChangesetCyclesPass(Pass):
   """Abstract base class for classes that break up changeset cycles."""
 
@@ -523,17 +540,6 @@ class BreakRevisionChangesetCyclesPass(BreakChangesetCyclesPass):
     self._register_temp_file_needed(config.CHANGESETS_INDEX)
     self._register_temp_file_needed(config.CVS_ITEM_TO_CHANGESET)
 
-  def log_processed_changesets(self):
-    if Log().is_on(Log.DEBUG):
-      new_changeset_ids = self.processed_changeset_ids[
-          self.logged_changeset_ids:
-          ]
-      if new_changeset_ids:
-        Log().debug(
-            'Consumed changeset ids %s'
-            % (', '.join(['%x' % id for id in new_changeset_ids]),))
-        self.logged_changeset_ids = len(self.processed_changeset_ids)
-
   def break_cycle(self, cycle):
     """Break up one or more changesets in CYCLE to help break the cycle.
 
@@ -547,7 +553,7 @@ class BreakRevisionChangesetCyclesPass(BreakChangesetCyclesPass):
     It is not guaranteed that the cycle will be broken by one call to
     this routine, but at least some progress must be made."""
 
-    self.log_processed_changesets()
+    self.processed_changeset_logger.flush()
     best_i = None
     best_link = None
     for i in range(len(cycle)):
@@ -621,18 +627,15 @@ class BreakRevisionChangesetCyclesPass(BreakChangesetCyclesPass):
 
     Ctx()._changeset_db = self.changeset_db
 
-    # Keep track of the changeset_ids that have been consumed so far
-    # (for logging):
-    self.processed_changeset_ids = []
-    self.logged_changeset_ids = 0
+    self.processed_changeset_logger = ProcessedChangesetLogger()
 
     # Consume the graph, breaking cycles using self.break_cycle():
     for (changeset_id, time_range) in self.changeset_graph.consume_graph(
           cycle_breaker=self.break_cycle):
-      self.processed_changeset_ids.append(changeset_id)
+      self.processed_changeset_logger.log(changeset_id)
 
-    self.log_processed_changesets()
-    del self.processed_changeset_ids
+    self.processed_changeset_logger.flush()
+    del self.processed_changeset_logger
 
     self.changeset_graph = None
     self.changeset_db.close()
@@ -741,17 +744,6 @@ class BreakSymbolChangesetCyclesPass(BreakChangesetCyclesPass):
     self._register_temp_file_needed(config.CHANGESETS_REVSORTED_INDEX)
     self._register_temp_file_needed(config.CVS_ITEM_TO_CHANGESET_REVBROKEN)
 
-  def log_processed_changesets(self):
-    if Log().is_on(Log.DEBUG):
-      new_changeset_ids = self.processed_changeset_ids[
-          self.logged_changeset_ids:
-          ]
-      if new_changeset_ids:
-        Log().debug(
-            'Consumed changeset ids %s'
-            % (', '.join(['%x' % id for id in new_changeset_ids]),))
-        self.logged_changeset_ids = len(self.processed_changeset_ids)
-
   def break_cycle(self, cycle):
     """Break up one or more changesets in CYCLE to help break the cycle.
 
@@ -765,7 +757,7 @@ class BreakSymbolChangesetCyclesPass(BreakChangesetCyclesPass):
     It is not guaranteed that the cycle will be broken by one call to
     this routine, but at least some progress must be made."""
 
-    self.log_processed_changesets()
+    self.processed_changeset_logger.flush()
     best_i = None
     best_link = None
     for i in range(len(cycle)):
@@ -839,18 +831,15 @@ class BreakSymbolChangesetCyclesPass(BreakChangesetCyclesPass):
 
     Ctx()._changeset_db = self.changeset_db
 
-    # Keep track of the changeset_ids that have been consumed so far
-    # (for logging):
-    self.processed_changeset_ids = []
-    self.logged_changeset_ids = 0
+    self.processed_changeset_logger = ProcessedChangesetLogger()
 
     # Consume the graph, breaking cycles using self.break_cycle():
     for (changeset_id, time_range) in self.changeset_graph.consume_graph(
           cycle_breaker=self.break_cycle):
-      self.processed_changeset_ids.append(changeset_id)
+      self.processed_changeset_logger.log(changeset_id)
 
-    self.log_processed_changesets()
-    del self.processed_changeset_ids
+    self.processed_changeset_logger.flush()
+    del self.processed_changeset_logger
 
     self.changeset_graph = None
     self.changeset_db.close()
@@ -876,12 +865,6 @@ class BreakAllChangesetCyclesPass(BreakChangesetCyclesPass):
     self._register_temp_file_needed(config.CHANGESETS_SYMBROKEN_STORE)
     self._register_temp_file_needed(config.CHANGESETS_SYMBROKEN_INDEX)
     self._register_temp_file_needed(config.CVS_ITEM_TO_CHANGESET_SYMBROKEN)
-
-  def log_processed_changesets(self, new_changeset_ids):
-    if Log().is_on(Log.DEBUG) and new_changeset_ids:
-      Log().debug(
-          'Consumed changeset ids %s'
-          % (', '.join(['%x' % id for id in new_changeset_ids]),))
 
   def _split_retrograde_changeset(self, changeset):
     """CHANGESET is retrograde.  Split it into non-retrograde changesets."""
@@ -1092,21 +1075,18 @@ class BreakAllChangesetCyclesPass(BreakChangesetCyclesPass):
 
     next_ordered_changeset = 0
 
-    while self.changeset_graph:
-      # Keep track of the changeset_ids that have been consumed so far
-      # (for logging):
-      processed_changeset_ids = []
+    self.processed_changeset_logger = ProcessedChangesetLogger()
 
+    while self.changeset_graph:
       # Consume any nodes that don't have predecessors:
       for (changeset_id, time_range) \
               in self.changeset_graph.consume_nopred_nodes():
-        processed_changeset_ids.append(changeset_id)
+        self.processed_changeset_logger.log(changeset_id)
         if changeset_id in ordered_changeset_ids:
           next_ordered_changeset += 1
           ordered_changeset_ids.remove(changeset_id)
 
-      self.log_processed_changesets(processed_changeset_ids)
-      del processed_changeset_ids
+      self.processed_changeset_logger.flush()
 
       if not self.changeset_graph:
         break
@@ -1134,6 +1114,7 @@ class BreakAllChangesetCyclesPass(BreakChangesetCyclesPass):
               )
         self.break_cycle(self.changeset_graph.find_cycle(id))
 
+    del self.processed_changeset_logger
     self.cvs_item_to_changeset_id.close()
     self.changeset_db.close()
 

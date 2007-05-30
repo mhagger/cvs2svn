@@ -873,6 +873,19 @@ class BreakAllChangesetCyclesPass(BreakChangesetCyclesPass):
     self._register_temp_file_needed(config.CHANGESETS_SYMBROKEN_INDEX)
     self._register_temp_file_needed(config.CVS_ITEM_TO_CHANGESET_SYMBROKEN)
 
+  def get_source_changesets(self):
+    old_changeset_db = ChangesetDatabase(
+        artifact_manager.get_temp_file(config.CHANGESETS_SYMBROKEN_STORE),
+        artifact_manager.get_temp_file(config.CHANGESETS_SYMBROKEN_INDEX),
+        DB_OPEN_READ)
+
+    changeset_ids = old_changeset_db.keys()
+
+    for changeset_id in changeset_ids:
+      yield old_changeset_db[changeset_id]
+
+    old_changeset_db.close()
+
   def _split_retrograde_changeset(self, changeset):
     """CHANGESET is retrograde.  Split it into non-retrograde changesets."""
 
@@ -1025,16 +1038,10 @@ class BreakAllChangesetCyclesPass(BreakChangesetCyclesPass):
         DB_OPEN_WRITE)
     Ctx()._cvs_item_to_changeset_id = self.cvs_item_to_changeset_id
 
-    old_changeset_db = ChangesetDatabase(
-        artifact_manager.get_temp_file(config.CHANGESETS_SYMBROKEN_STORE),
-        artifact_manager.get_temp_file(config.CHANGESETS_SYMBROKEN_INDEX),
-        DB_OPEN_READ)
     self.changeset_db = ChangesetDatabase(
         artifact_manager.get_temp_file(config.CHANGESETS_ALLBROKEN_STORE),
         artifact_manager.get_temp_file(config.CHANGESETS_ALLBROKEN_INDEX),
         DB_OPEN_NEW)
-
-    changeset_ids = old_changeset_db.keys()
 
     self.changeset_graph = ChangesetGraph(self.changeset_db)
 
@@ -1044,8 +1051,8 @@ class BreakAllChangesetCyclesPass(BreakChangesetCyclesPass):
     ordered_changeset_map = {}
     # A list of all BranchChangeset ids:
     branch_changeset_ids = []
-    for changeset_id in changeset_ids:
-      changeset = old_changeset_db[changeset_id]
+    max_changeset_id = 0
+    for changeset in self.get_source_changesets():
       self.changeset_db.store(changeset)
       self.changeset_graph.add_changeset(changeset)
       if isinstance(changeset, OrderedChangeset):
@@ -1053,6 +1060,7 @@ class BreakAllChangesetCyclesPass(BreakChangesetCyclesPass):
         self.ordinals[changeset.id] = changeset.ordinal
       elif isinstance(changeset, BranchChangeset):
         branch_changeset_ids.append(changeset.id)
+      max_changeset_id = max(max_changeset_id, changeset.id)
 
     # An array of ordered_changeset ids, indexed by ordinal:
     ordered_changesets = []
@@ -1063,11 +1071,7 @@ class BreakAllChangesetCyclesPass(BreakChangesetCyclesPass):
     ordered_changeset_ids = set(ordered_changeset_map.values())
     del ordered_changeset_map
 
-    self.changeset_key_generator = KeyGenerator(max(changeset_ids) + 1)
-    del changeset_ids
-
-    old_changeset_db.close()
-    del old_changeset_db
+    self.changeset_key_generator = KeyGenerator(max_changeset_id + 1)
 
     # First we scan through all BranchChangesets looking for
     # changesets that are individually "retrograde" and splitting

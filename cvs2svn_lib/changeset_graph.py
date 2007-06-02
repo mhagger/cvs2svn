@@ -153,7 +153,7 @@ class ChangesetGraph(object):
     We consider direct and indirect dependencies in the sense that the
     changeset can be reached by following a chain of predecessor nodes.
 
-    When one of the changset_ids in STOP_SET is found, terminate the
+    When one of the changeset_ids in STOP_SET is found, terminate the
     search and return the path from that changeset_id to
     STARTING_NODE_ID.  If no path is found to a node in STOP_SET,
     return None."""

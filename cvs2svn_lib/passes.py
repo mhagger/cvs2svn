@@ -506,7 +506,7 @@ class ProcessedChangesetLogger:
           'Consumed changeset ids %s'
           % (', '.join(['%x' % id for id in self.processed_changeset_ids]),))
 
-      del self.processed_changset_ids[:]
+      del self.processed_changeset_ids[:]
 
 
 class BreakChangesetCyclesPass(Pass):

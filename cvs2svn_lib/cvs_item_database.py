@@ -27,7 +27,9 @@ from cvs2svn_lib.common import DB_OPEN_READ
 from cvs2svn_lib.common import DB_OPEN_WRITE
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.log import Log
-from cvs2svn_lib.cvs_item import CVSRevision
+from cvs2svn_lib.cvs_item import CVSRevisionAdd
+from cvs2svn_lib.cvs_item import CVSRevisionChange
+from cvs2svn_lib.cvs_item import CVSRevisionDelete
 from cvs2svn_lib.cvs_item import CVSBranch
 from cvs2svn_lib.cvs_item import CVSTag
 from cvs2svn_lib.cvs_file_items import CVSFileItems
@@ -51,7 +53,9 @@ class NewCVSItemStore:
 
     self.f = open(filename, 'wb')
 
-    primer = (CVSRevision, CVSBranch, CVSTag,)
+    primer = (
+        CVSRevisionAdd, CVSRevisionChange, CVSRevisionDelete,
+        CVSBranch, CVSTag,)
     self.serializer = PrimedPickleSerializer(primer)
     cPickle.dump(self.serializer, self.f, -1)
 
@@ -142,6 +146,8 @@ class OldCVSItemStore:
 def IndexedCVSItemStore(filename, index_filename, mode):
   return IndexedStore(
       filename, index_filename, mode,
-      PrimedPickleSerializer((CVSRevision, CVSBranch, CVSTag,)))
+      PrimedPickleSerializer((
+          CVSRevisionAdd, CVSRevisionChange, CVSRevisionDelete,
+          CVSBranch, CVSTag,)))
 
 

@@ -72,7 +72,9 @@ from cvs2svn_lib.project import FileInAndOutOfAtticException
 from cvs2svn_lib.cvs_file import CVSFile
 from cvs2svn_lib.symbol import Symbol
 from cvs2svn_lib.symbol import Trunk
-from cvs2svn_lib.cvs_item import CVSRevision
+from cvs2svn_lib.cvs_item import CVSRevisionAdd
+from cvs2svn_lib.cvs_item import CVSRevisionChange
+from cvs2svn_lib.cvs_item import CVSRevisionDelete
 from cvs2svn_lib.cvs_item import CVSBranch
 from cvs2svn_lib.cvs_item import CVSTag
 from cvs2svn_lib.key_generator import KeyGenerator
@@ -876,12 +878,19 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         for tag_data in rev_data.tags_data
         ]
 
-    cvs_rev = CVSRevision(
+    op = self._determine_operation(rev_data)
+    type = {
+        OP_ADD : CVSRevisionAdd,
+        OP_CHANGE : CVSRevisionChange,
+        OP_DELETE : CVSRevisionDelete,
+        }[op]
+
+    cvs_rev = type(
         self._get_rev_id(rev_data.rev), self.cvs_file,
         rev_data.timestamp, rev_data.metadata_id,
         self._get_rev_id(rev_data.parent),
         self._get_rev_id(rev_data.child),
-        self._determine_operation(rev_data),
+        op,
         rev_data.rev,
         rev_data.deltatext_exists,
         self.sdc.rev_to_lod(rev_data.rev),

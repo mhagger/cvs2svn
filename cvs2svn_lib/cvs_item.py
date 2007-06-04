@@ -14,7 +14,33 @@
 # history and logs, available at http://cvs2svn.tigris.org/.
 # ====================================================================
 
-"""This module contains classes to store CVS atomic items."""
+"""This module contains classes to store atomic CVS events.
+
+A CVSItem is a single event, pertaining to a single file, that can be
+determined to have occured based on the information in the CVS
+repository.
+
+The inheritance tree is as follows:
+
+CVSItem
+|
++--CVSRevision
+|  |
+|  +--CVSRevisionModification
+|  |  |
+|  |  +--CVSRevisionAdd
+|  |  |
+|  |  +--CVSRevisionChange
+|  |
+|  +--CVSRevisionDelete
+|
++--CVSSymbol
+   |
+   +--CVSBranch
+   |
+   +--CVSTag
+
+"""
 
 
 from cvs2svn_lib.boolean import *
@@ -287,6 +313,33 @@ class CVSRevision(CVSItem):
     """For convenience only.  The format is subject to change at any time."""
 
     return '%s:%s<%x>' % (self.cvs_file, self.rev, self.id,)
+
+
+class CVSRevisionModification(CVSRevision):
+  """Base class for CVSRevisionAdd or CVSRevisionChange."""
+
+  pass
+
+
+class CVSRevisionAdd(CVSRevisionModification):
+  """A CVSRevision that creates a file that previously didn't exist.
+
+  The file might have never existed on this LOD, or it might have
+  existed previously but been deleted by a CVSRevisionDelete."""
+
+  pass
+
+
+class CVSRevisionChange(CVSRevisionModification):
+  """A CVSRevision that modifies a file that already existed on this LOD."""
+
+  pass
+
+
+class CVSRevisionDelete(CVSRevision):
+  """A CVSRevision that deletes a file that existed on this LOD."""
+
+  pass
 
 
 class CVSSymbol(CVSItem):

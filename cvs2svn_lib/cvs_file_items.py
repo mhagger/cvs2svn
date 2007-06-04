@@ -207,6 +207,41 @@ class CVSFileItems(object):
     else:
       revision_excluder.skip_file(self.cvs_file)
 
+  def _mutate_branch_to_tag(self, cvs_branch):
+    """Mutate the branch CVS_BRANCH into a tag."""
+
+    if cvs_branch.next_id is not None:
+      # This shouldn't happen because it was checked in
+      # CollateSymbolsPass:
+      raise FatalError('Attempt to exclude a branch with commits.')
+    cvs_tag = CVSTag(
+        cvs_branch.id, cvs_branch.cvs_file, cvs_branch.symbol,
+        cvs_branch.source_id)
+    self[cvs_tag.id] = cvs_tag
+    cvs_revision = self[cvs_tag.source_id]
+    cvs_revision.branch_ids.remove(cvs_tag.id)
+    cvs_revision.tag_ids.append(cvs_tag.id)
+
+  def _mutate_tag_to_branch(self, cvs_tag):
+    """Mutate the tag into a branch."""
+
+    cvs_branch = CVSBranch(
+        cvs_tag.id, cvs_tag.cvs_file, cvs_tag.symbol,
+        None, cvs_tag.source_id, None)
+    self[cvs_branch.id] = cvs_branch
+    cvs_revision = self[cvs_branch.source_id]
+    cvs_revision.tag_ids.remove(cvs_branch.id)
+    cvs_revision.branch_ids.append(cvs_branch.id)
+
+  def _mutate_symbol(self, cvs_symbol):
+    """Mutate CVS_SYMBOL if necessary."""
+
+    symbol = cvs_symbol.symbol
+    if isinstance(cvs_symbol, CVSBranch) and isinstance(symbol, Tag):
+      self._mutate_branch_to_tag(cvs_symbol)
+    elif isinstance(cvs_symbol, CVSTag) and isinstance(symbol, Branch):
+      self._mutate_tag_to_branch(cvs_symbol)
+
   def mutate_symbols(self):
     """Force symbols to be tags/branches based on self.symbol_db."""
 
@@ -217,30 +252,7 @@ class CVSFileItems(object):
         # here directly.
         pass
       elif isinstance(cvs_item, CVSSymbol):
-        symbol = cvs_item.symbol
-        if isinstance(cvs_item, CVSBranch) and isinstance(symbol, Tag):
-          # Mutate the branch into a tag.
-          if cvs_item.next_id is not None:
-            # This shouldn't happen because it was checked in
-            # CollateSymbolsPass:
-            raise FatalError('Attempt to exclude a branch with commits.')
-          cvs_item = CVSTag(
-              cvs_item.id, cvs_item.cvs_file, cvs_item.symbol,
-              cvs_item.source_id)
-          self[cvs_item.id] = cvs_item
-          cvs_revision = self[cvs_item.source_id]
-          cvs_revision.branch_ids.remove(cvs_item.id)
-          cvs_revision.tag_ids.append(cvs_item.id)
-        elif isinstance(cvs_item, CVSTag) \
-               and isinstance(symbol, Branch):
-          # Mutate the tag into a branch.
-          cvs_item = CVSBranch(
-              cvs_item.id, cvs_item.cvs_file, cvs_item.symbol,
-              None, cvs_item.source_id, None)
-          self[cvs_item.id] = cvs_item
-          cvs_revision = self[cvs_item.source_id]
-          cvs_revision.tag_ids.remove(cvs_item.id)
-          cvs_revision.branch_ids.append(cvs_item.id)
+        self._mutate_symbol(cvs_item)
       else:
         raise RuntimeError('Unknown cvs item type')
 

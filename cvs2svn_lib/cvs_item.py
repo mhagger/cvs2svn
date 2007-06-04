@@ -313,7 +313,26 @@ class CVSRevision(CVSItem):
 class CVSRevisionModification(CVSRevision):
   """Base class for CVSRevisionAdd or CVSRevisionChange."""
 
-  pass
+  def needs_post_commit(self):
+    """Return True iff a post-commit is needed for this revision.
+
+    A post-commit copies a revision on a non-trunk default branch back
+    to trunk."""
+
+    if self.rev == "1.1.1.1" and not self.deltatext_exists:
+      # When 1.1.1.1 has an empty deltatext, the explanation is almost
+      # always that we're looking at an imported file whose 1.1 and
+      # 1.1.1.1 are identical.  On such imports, CVS creates an RCS
+      # file where 1.1 has the content, and 1.1.1.1 has an empty
+      # deltatext, i.e, the same content as 1.1.  There's no reason to
+      # reflect this non-change in the repository, so we want to do
+      # nothing in this case.  (If we were really paranoid, we could
+      # make sure 1.1's log message is the CVS-generated "Initial
+      # revision\n", but I think the conditions above are strict
+      # enough.)
+      return False
+    else:
+      return self.default_branch_revision
 
 
 class CVSRevisionAdd(CVSRevisionModification):
@@ -334,7 +353,36 @@ class CVSRevisionChange(CVSRevisionModification):
 class CVSRevisionDelete(CVSRevision):
   """A CVSRevision that deletes a file that existed on this LOD."""
 
-  pass
+  def needs_post_commit(self):
+    """Return True iff a post-commit is needed for this revision.
+
+    A post-commit copies a revision on a non-trunk default branch back
+    to trunk."""
+
+    return self.default_branch_revision
+
+  def needs_delete(self):
+    """Return True iff this delete is really needed.
+
+    When a file is added on a branch, CVS not only adds the file on the
+    branch, but generates a trunk revision (typically 1.1) for that file
+    in state 'dead'.  We only want to add this revision if the log
+    message is not the standard cvs fabricated log message."""
+
+    if self.prev_id is not None:
+      return True
+
+    # self.branch_ids may be empty if the originating branch has been
+    # excluded.
+    if not self.branch_ids:
+      return False
+    # FIXME: This message will not match if the RCS file was renamed
+    # manually after it was created.
+    cvs_generated_msg = 'file %s was initially added on branch %s.\n' % (
+        self.cvs_file.basename,
+        Ctx()._cvs_items_db[self.branch_ids[0]].symbol.name,)
+    author, log_msg = Ctx()._metadata_db[self.metadata_id]
+    return log_msg != cvs_generated_msg
 
 
 class CVSSymbol(CVSItem):

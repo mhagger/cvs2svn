@@ -46,29 +46,6 @@ class SVNCommitCreator:
   def __init__(self, persistence_manager):
     self._persistence_manager = persistence_manager
 
-  def _delete_needed(self, cvs_rev):
-    """Return True iff the specified delete CVS_REV is really needed.
-
-    When a file is added on a branch, CVS not only adds the file on the
-    branch, but generates a trunk revision (typically 1.1) for that file
-    in state 'dead'.  We only want to add this revision if the log
-    message is not the standard cvs fabricated log message."""
-
-    if cvs_rev.prev_id is not None:
-      return True
-
-    # cvs_rev.branch_ids may be empty if the originating branch has been
-    # excluded.
-    if not cvs_rev.branch_ids:
-      return False
-    # FIXME: This message will not match if the RCS file was renamed
-    # manually after it was created.
-    cvs_generated_msg = 'file %s was initially added on branch %s.\n' % (
-        cvs_rev.cvs_file.basename,
-        Ctx()._cvs_items_db[cvs_rev.branch_ids[0]].symbol.name,)
-    author, log_msg = Ctx()._metadata_db[cvs_rev.metadata_id]
-    return log_msg != cvs_generated_msg
-
   def _commit(self, timestamp, cvs_revs):
     """Generates the primary SVNCommit for a set of CVSRevisions.
 
@@ -96,7 +73,7 @@ class SVNCommitCreator:
     needed_deletes = [
         cvs_rev
         for cvs_rev in deletes
-        if self._delete_needed(cvs_rev)
+        if cvs_rev.needs_delete()
         ]
     cvs_revs = changes + needed_deletes
     if cvs_revs:
@@ -107,28 +84,10 @@ class SVNCommitCreator:
       # default branch commit that will need to be copied to trunk (or
       # deleted from trunk) in a generated revision following the
       # "regular" revision.
-      default_branch_cvs_revisions = []
-      for cvs_rev in changes:
-        # Only make a change if we need to:
-        if cvs_rev.rev == "1.1.1.1" and not cvs_rev.deltatext_exists:
-          # When 1.1.1.1 has an empty deltatext, the explanation is almost
-          # always that we're looking at an imported file whose 1.1 and
-          # 1.1.1.1 are identical.  On such imports, CVS creates an RCS
-          # file where 1.1 has the content, and 1.1.1.1 has an empty
-          # deltatext, i.e, the same content as 1.1.  There's no reason to
-          # reflect this non-change in the repository, so we want to do
-          # nothing in this case.  (If we were really paranoid, we could
-          # make sure 1.1's log message is the CVS-generated "Initial
-          # revision\n", but I think the conditions above are strict
-          # enough.)
-          pass
-        else:
-          if cvs_rev.default_branch_revision:
-            default_branch_cvs_revisions.append(cvs_rev)
-
-      for cvs_rev in needed_deletes:
-        if cvs_rev.default_branch_revision:
-          default_branch_cvs_revisions.append(cvs_rev)
+      default_branch_cvs_revisions = [
+            cvs_rev
+            for cvs_rev in cvs_revs
+            if cvs_rev.needs_post_commit()]
 
       self._persistence_manager.put_svn_commit(svn_commit)
 

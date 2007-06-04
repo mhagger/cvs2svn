@@ -20,13 +20,14 @@
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.common import format_date
 from cvs2svn_lib.common import warning_prefix
-from cvs2svn_lib.common import OP_ADD
-from cvs2svn_lib.common import OP_CHANGE
-from cvs2svn_lib.common import OP_DELETE
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.symbol import Branch
 from cvs2svn_lib.symbol import Tag
+from cvs2svn_lib.cvs_item import CVSRevisionModification
+from cvs2svn_lib.cvs_item import CVSRevisionAdd
+from cvs2svn_lib.cvs_item import CVSRevisionChange
+from cvs2svn_lib.cvs_item import CVSRevisionDelete
 
 
 class SVNCommit:
@@ -240,7 +241,7 @@ class SVNPrimaryCommit(SVNCommit, SVNRevisionCommit):
     Log().verbose("Committing %d CVSRevision%s"
                   % (len(self.cvs_revs), plural))
     for cvs_rev in self.cvs_revs:
-      if cvs_rev.op == OP_DELETE:
+      if isinstance(cvs_rev, CVSRevisionDelete):
         # FIXME: This test requires a database lookup.  It should be
         # possible to avoid it:
         if repos.path_exists(cvs_rev.get_svn_path()):
@@ -256,10 +257,10 @@ class SVNPrimaryCommit(SVNCommit, SVNRevisionCommit):
         # succeed first.
         repos.skip_path(cvs_rev)
 
-      elif cvs_rev.op == OP_ADD:
+      elif isinstance(cvs_rev, CVSRevisionAdd):
         repos.add_path(cvs_rev)
 
-      elif cvs_rev.op == OP_CHANGE:
+      elif isinstance(cvs_rev, CVSRevisionChange):
         # Fix for Issue #74:
         #
         # Here's the scenario.  You have file FOO that is imported
@@ -271,10 +272,10 @@ class SVNPrimaryCommit(SVNCommit, SVNRevisionCommit):
         # also needs to happen on trunk, so FOO is deleted on
         # trunk.
         #
-        # Along come r1.2, whose op is OP_CHANGE (because r1.1 is
-        # not 'dead', we assume it's a change).  However, since
-        # our trunk file has been deleted, svnadmin blows up--you
-        # can't change a file that doesn't exist!
+        # Along come r1.2, which is a CVSRevisionChange (because r1.1
+        # is not 'dead', we assume it's a change).  However, since our
+        # trunk file has been deleted, svnadmin blows up--you can't
+        # change a file that doesn't exist!
         #
         # Soooo... we just check the path, and if it doesn't
         # exist, we do an add... if the path does exist, it's
@@ -408,7 +409,7 @@ class SVNPostCommit(SVNCommit, SVNRevisionCommit):
     for cvs_rev in self.cvs_revs:
       svn_trunk_path = cvs_rev.cvs_file.project.get_trunk_path(
           cvs_rev.cvs_path)
-      if cvs_rev.op == OP_ADD or cvs_rev.op == OP_CHANGE:
+      if isinstance(cvs_rev, CVSRevisionModification):
         if repos.path_exists(svn_trunk_path):
           # Delete the path on trunk...
           repos.delete_path(svn_trunk_path)
@@ -416,7 +417,7 @@ class SVNPostCommit(SVNCommit, SVNRevisionCommit):
         repos.copy_path(
             cvs_rev.get_svn_path(), svn_trunk_path, self._motivating_revnum)
       else:
-        assert cvs_rev.op == OP_DELETE
+        assert isinstance(cvs_rev, CVSRevisionDelete)
         # delete trunk path
 
         # FIXME: This test requires a database lookup.  It should be

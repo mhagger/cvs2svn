@@ -24,12 +24,12 @@ import cPickle
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib import config
 from cvs2svn_lib.common import DB_OPEN_READ
-from cvs2svn_lib.common import OP_DELETE
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.symbol import Branch
 from cvs2svn_lib.cvs_item import CVSRevision
+from cvs2svn_lib.cvs_item import CVSRevisionDelete
 from cvs2svn_lib.svn_revision_range import SVNRevisionRange
 from cvs2svn_lib.symbol_filling_guide import get_source_set
 
@@ -94,7 +94,7 @@ class SymbolingsLogger:
     for id in cvs_rev.tag_ids + cvs_rev.branch_ids:
       symbol = Ctx()._cvs_items_db[id].symbol
       self._note_default_branch_opening(cvs_rev, symbol.id)
-      if cvs_rev.op != OP_DELETE:
+      if not isinstance(cvs_rev, CVSRevisionDelete):
         self._log_opening(symbol.id, svn_revnum, cvs_rev.cvs_file, branch_id)
 
     for symbol_id in cvs_rev.closed_symbol_ids:
@@ -103,14 +103,14 @@ class SymbolingsLogger:
   def log_branch_revision(self, cvs_branch, svn_revnum):
     """Log any openings and closings found in CVS_BRANCH."""
 
-    # Determine whether the revision originally being branched was an
-    # OP_DELETE, because if it was then it does not count as an
-    # opening:
+    # Determine whether the revision originally being branched was a
+    # CVSRevisionDelete, because if it was then it does not count as
+    # an opening:
     source = Ctx()._cvs_items_db[cvs_branch.source_id]
     while not isinstance(source, CVSRevision):
       source = Ctx()._cvs_items_db[source.source_id]
 
-    if source.op != OP_DELETE:
+    if not isinstance(source, CVSRevisionDelete):
       for id in cvs_branch.tag_ids + cvs_branch.branch_ids:
         cvs_symbol = Ctx()._cvs_items_db[id]
         self._log_opening(

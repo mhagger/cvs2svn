@@ -62,9 +62,6 @@ from cvs2svn_lib.common import DB_OPEN_NEW
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.common import error_prefix
-from cvs2svn_lib.common import OP_ADD
-from cvs2svn_lib.common import OP_CHANGE
-from cvs2svn_lib.common import OP_DELETE
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
@@ -662,11 +659,11 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     prev_rev_data = self._rev_data.get(rev_data.parent)
 
     if rev_data.state == 'dead':
-      op = OP_DELETE
+      type = CVSRevisionDelete
     elif prev_rev_data is None or prev_rev_data.state == 'dead':
-      op = OP_ADD
+      type = CVSRevisionAdd
     else:
-      op = OP_CHANGE
+      type = CVSRevisionChange
 
     # There can be an odd situation where the tip revision of a branch
     # is alive, but every predecessor on the branch is in state 'dead',
@@ -676,9 +673,9 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     # alive while the revision from which it sprouts is dead.)
     #
     # In this odd situation, we must mark the first live revision on
-    # the branch as an OP_CHANGE instead of an OP_ADD, because it
-    # reflects, however indirectly, a change w.r.t. the source
-    # revision from which the branch sprouts.
+    # the branch as a CVSRevisionChange instead of a CVSRevisionAdd,
+    # because it reflects, however indirectly, a change w.r.t. the
+    # source revision from which the branch sprouts.
     #
     # This is issue #89.
     if is_branch_revision(rev_data.rev) and rev_data.state != 'dead':
@@ -691,10 +688,10 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
                                             prev_rev_data.rev)
             and cur_rev_data.state == 'dead'
             and prev_rev_data.state != 'dead'):
-          op = OP_CHANGE
+          type = CVSRevisionChange
         cur_rev_data = prev_rev_data
 
-    return op
+    return type
 
   def set_revision_info(self, revision, log, text):
     """This is a callback method declared in Sink."""
@@ -878,19 +875,13 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         for tag_data in rev_data.tags_data
         ]
 
-    op = self._determine_operation(rev_data)
-    type = {
-        OP_ADD : CVSRevisionAdd,
-        OP_CHANGE : CVSRevisionChange,
-        OP_DELETE : CVSRevisionDelete,
-        }[op]
+    revision_type = self._determine_operation(rev_data)
 
-    cvs_rev = type(
+    cvs_rev = revision_type(
         self._get_rev_id(rev_data.rev), self.cvs_file,
         rev_data.timestamp, rev_data.metadata_id,
         self._get_rev_id(rev_data.parent),
         self._get_rev_id(rev_data.child),
-        op,
         rev_data.rev,
         rev_data.deltatext_exists,
         self.sdc.rev_to_lod(rev_data.rev),

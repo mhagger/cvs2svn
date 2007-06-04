@@ -45,7 +45,6 @@ CVSItem
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.set_support import *
-from cvs2svn_lib.common import OP_DELETE
 from cvs2svn_lib.context import Ctx
 
 
@@ -114,7 +113,7 @@ class CVSRevision(CVSItem):
                id, cvs_file,
                timestamp, metadata_id,
                prev_id, next_id,
-               op, rev, deltatext_exists,
+               rev, deltatext_exists,
                lod, first_on_branch_id, default_branch_revision,
                default_branch_prev_id, default_branch_next_id,
                tag_ids, branch_ids, branch_commit_ids,
@@ -129,7 +128,6 @@ class CVSRevision(CVSItem):
        METADATA_ID     -->  (int) id of author+logmsg record in metadata_db
        PREV_ID         -->  (int) id of the previous cvs revision (or None)
        NEXT_ID         -->  (int) id of the next cvs revision (or None)
-       OP              -->  (char) OP_ADD, OP_CHANGE, or OP_DELETE
        REV             -->  (string) this CVS rev, e.g., '1.3'
        DELTATEXT_EXISTS-->  (bool) true iff non-empty deltatext
        LOD             -->  (LineOfDevelopment) LOD where this rev occurred
@@ -158,7 +156,6 @@ class CVSRevision(CVSItem):
     self.rev = rev
     self.timestamp = timestamp
     self.metadata_id = metadata_id
-    self.op = op
     self.prev_id = prev_id
     self.next_id = next_id
     self.deltatext_exists = deltatext_exists
@@ -191,7 +188,6 @@ class CVSRevision(CVSItem):
         self.id, self.cvs_file.id,
         self.timestamp, self.metadata_id,
         self.prev_id, self.next_id,
-        self.op,
         self.rev,
         self.deltatext_exists,
         self.lod.id,
@@ -207,7 +203,6 @@ class CVSRevision(CVSItem):
     (self.id, cvs_file_id,
      self.timestamp, self.metadata_id,
      self.prev_id, self.next_id,
-     self.op,
      self.rev,
      self.deltatext_exists,
      lod_id,

@@ -105,7 +105,7 @@ class RevisionReader(object):
     actually needed.
 
     This may be used for internal housekeeping.
-    Note that this is not called for OP_DELETE revisions."""
+    Note that this is not called for CVSRevisionDelete revisions."""
 
     raise NotImplementedError
 

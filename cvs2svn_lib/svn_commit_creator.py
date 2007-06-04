@@ -25,14 +25,12 @@ from cvs2svn_lib import config
 from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.common import DB_OPEN_NEW
 from cvs2svn_lib.common import DB_OPEN_READ
-from cvs2svn_lib.common import OP_ADD
-from cvs2svn_lib.common import OP_CHANGE
-from cvs2svn_lib.common import OP_DELETE
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.symbol import Branch
 from cvs2svn_lib.database import Database
+from cvs2svn_lib.cvs_item import CVSRevisionDelete
 from cvs2svn_lib.changeset import OrderedChangeset
 from cvs2svn_lib.changeset import BranchChangeset
 from cvs2svn_lib.changeset import TagChangeset
@@ -83,10 +81,10 @@ class SVNCommitCreator:
     deletes = []
 
     for cvs_rev in cvs_revs:
-      if cvs_rev.op == OP_DELETE:
+      if isinstance(cvs_rev, CVSRevisionDelete):
         deletes.append(cvs_rev)
       else:
-        # OP_CHANGE or OP_ADD
+        # CVSRevisionAdd or CVSRevisionChange:
         changes.append(cvs_rev)
 
     # Generate an SVNCommit unconditionally.  Even if the only change in

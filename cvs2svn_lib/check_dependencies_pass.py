@@ -93,24 +93,20 @@ class CheckItemStoreDependenciesPass(CheckDependenciesPass):
     self._register_temp_file_needed(self.cvs_items_store_file)
 
   def iter_cvs_items(self):
-    for cvs_file_items in self.cvs_item_store.iter_cvs_file_items():
+    cvs_item_store = OldCVSItemStore(
+        artifact_manager.get_temp_file(self.cvs_items_store_file))
+
+    for cvs_file_items in cvs_item_store.iter_cvs_file_items():
       self.current_cvs_file_items = cvs_file_items
       for cvs_item in cvs_file_items.values():
         yield cvs_item
 
     del self.current_cvs_file_items
 
+    cvs_item_store.close()
+
   def get_cvs_item(self, item_id):
     return self.current_cvs_file_items[item_id]
-
-  def run(self, stats_keeper):
-    self.cvs_item_store = OldCVSItemStore(
-        artifact_manager.get_temp_file(self.cvs_items_store_file))
-
-    CheckDependenciesPass.run(self, stats_keeper)
-
-    self.cvs_item_store.close()
-    self.cvs_item_store = None
 
 
 class CheckIndexedItemStoreDependenciesPass(CheckDependenciesPass):

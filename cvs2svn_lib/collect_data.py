@@ -1164,8 +1164,8 @@ class CollectData:
     the CVSItems, and record the CVSItems to self.stats_keeper."""
 
     Ctx()._cvs_file_db.log_file(cvs_file_items.cvs_file)
+    self._cvs_item_store.add(cvs_file_items)
     for cvs_item in cvs_file_items.values():
-      self._cvs_item_store.add(cvs_item)
       self.stats_keeper.record_cvs_item(cvs_item)
 
   def close(self):

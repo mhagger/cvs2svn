@@ -41,9 +41,9 @@ class NewCVSItemStore:
   """A file of sequential CVSItems, grouped by CVSFile.
 
   The file consists of a sequence of pickles.  The zeroth one is a
-  (pickler, unpickler) pair as described in the primed_pickle module.
-  Subsequent ones are pickled lists of CVSItems, each list containing
-  all of the CVSItems for a single file.
+  Serializer as described in the serializer module.  Subsequent ones
+  are pickled lists of CVSItems, each list containing all of the
+  CVSItems for a single file.
 
   We don't use a single pickler for all items because the memo would
   grow too large."""
@@ -59,28 +59,12 @@ class NewCVSItemStore:
     self.serializer = PrimedPickleSerializer(primer)
     cPickle.dump(self.serializer, self.f, -1)
 
-    self.current_file_id = None
-    self.current_file_items = []
+  def add(self, cvs_file_items):
+    """Write CVS_FILE_ITEMS into the database."""
 
-  def _flush(self):
-    """Write the current items to disk."""
-
-    if self.current_file_items:
-      self.serializer.dumpf(self.f, self.current_file_items)
-      self.current_file_id = None
-      self.current_file_items = []
-
-  def add(self, cvs_item):
-    """Write cvs_item into the database."""
-
-    if cvs_item.cvs_file.id != self.current_file_id:
-      self._flush()
-      self.current_file_id = cvs_item.cvs_file.id
-    self.current_file_items.append(cvs_item)
+    self.serializer.dumpf(self.f, cvs_file_items.values())
 
   def close(self):
-    self._flush()
-    self.current_file_items = None
     self.f.close()
     self.f = None
 

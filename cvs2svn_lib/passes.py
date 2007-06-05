@@ -47,7 +47,6 @@ from cvs2svn_lib.symbol_database import create_symbol_database
 from cvs2svn_lib.symbol_statistics import SymbolStatistics
 from cvs2svn_lib.cvs_item import CVSRevision
 from cvs2svn_lib.cvs_item import CVSSymbol
-from cvs2svn_lib.cvs_item_database import NewCVSItemStore
 from cvs2svn_lib.cvs_item_database import OldCVSItemStore
 from cvs2svn_lib.cvs_item_database import IndexedCVSItemStore
 from cvs2svn_lib.key_generator import KeyGenerator
@@ -55,7 +54,6 @@ from cvs2svn_lib.changeset import RevisionChangeset
 from cvs2svn_lib.changeset import OrderedChangeset
 from cvs2svn_lib.changeset import SymbolChangeset
 from cvs2svn_lib.changeset import BranchChangeset
-from cvs2svn_lib.changeset import TagChangeset
 from cvs2svn_lib.changeset import create_symbol_changeset
 from cvs2svn_lib.changeset_graph import ChangesetGraph
 from cvs2svn_lib.changeset_graph_link import ChangesetGraphLink

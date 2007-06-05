@@ -74,6 +74,7 @@ from cvs2svn_lib.cvs_item import CVSRevisionChange
 from cvs2svn_lib.cvs_item import CVSRevisionDelete
 from cvs2svn_lib.cvs_item import CVSBranch
 from cvs2svn_lib.cvs_item import CVSTag
+from cvs2svn_lib.cvs_file_items import CVSFileItems
 from cvs2svn_lib.key_generator import KeyGenerator
 from cvs2svn_lib.cvs_item_database import NewCVSItemStore
 from cvs2svn_lib.symbol_statistics import SymbolStatisticsCollector
@@ -460,6 +461,10 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     # processed in _process_revision_data(), which is called by
     # parse_completed().
     self._revision_data = []
+
+    # When the parse is finished, the CVSItems for this file are
+    # stored here as a CVSFileItems instance.
+    self.cvs_file_items = None
 
     self.collect_data.revision_recorder.start_file(self.cvs_file)
 
@@ -935,16 +940,12 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     self._register_branch_possible_parents()
     self._register_tag_possible_parents()
 
-    self.collect_data.add_cvs_file(self.cvs_file)
+    cvs_items = []
+    cvs_items.extend(self._get_cvs_revisions())
+    cvs_items.extend(self._get_cvs_branches())
+    cvs_items.extend(self._get_cvs_tags())
 
-    for cvs_item in self._get_cvs_revisions():
-      self.collect_data.add_cvs_item(cvs_item)
-
-    for cvs_item in self._get_cvs_branches():
-      self.collect_data.add_cvs_item(cvs_item)
-
-    for cvs_item in self._get_cvs_tags():
-      self.collect_data.add_cvs_item(cvs_item)
+    self.cvs_file_items = CVSFileItems(cvs_items)
 
     self.sdc.register_branch_blockers()
 
@@ -1001,10 +1002,9 @@ class _ProjectDataCollector:
 
   def _process_file(self, cvs_file):
     Log().normal(cvs_file.filename)
+    fdc = _FileDataCollector(self, cvs_file)
     try:
-      cvs2svn_rcsparse.parse(
-          open(cvs_file.filename, 'rb'), _FileDataCollector(self, cvs_file)
-          )
+      cvs2svn_rcsparse.parse(open(cvs_file.filename, 'rb'), fdc)
     except (cvs2svn_rcsparse.common.RCSParseError, ValueError, RuntimeError):
       self.collect_data.record_fatal_error(
           "%r is not a valid ,v file" % (cvs_file.filename,)
@@ -1012,7 +1012,9 @@ class _ProjectDataCollector:
     except:
       Log().warn("Exception occurred while parsing %s" % cvs_file.filename)
       raise
-    self.num_files += 1
+    else:
+      self.collect_data.add_cvs_file_items(fdc.cvs_file_items)
+      self.num_files += 1
 
   def _get_attic_file(self, pathname):
     """Return a CVSFile object for the Attic file at PATHNAME."""
@@ -1155,14 +1157,16 @@ class CollectData:
     self.num_files += pdc.num_files
     Log().verbose('Processed', self.num_files, 'files')
 
-  def add_cvs_file(self, cvs_file):
-    """Store CVS_FILE to _cvs_file_db under its persistent id."""
+  def add_cvs_file_items(self, cvs_file_items):
+    """Record the information from CVS_FILE_ITEMS.
 
-    Ctx()._cvs_file_db.log_file(cvs_file)
+    Store the CVSFile to _cvs_file_db under its persistent id, store
+    the CVSItems, and record the CVSItems to self.stats_keeper."""
 
-  def add_cvs_item(self, cvs_item):
-    self._cvs_item_store.add(cvs_item)
-    self.stats_keeper.record_cvs_item(cvs_item)
+    Ctx()._cvs_file_db.log_file(cvs_file_items.cvs_file)
+    for cvs_item in cvs_file_items.values():
+      self._cvs_item_store.add(cvs_item)
+      self.stats_keeper.record_cvs_item(cvs_item)
 
   def close(self):
     """Close the data structures associated with this instance.

@@ -138,8 +138,6 @@ class _RevisionData:
   def __init__(self, cvs_rev_id, rev, timestamp, author, state):
     # The id of this revision:
     self.cvs_rev_id = cvs_rev_id
-    # The CVSRevision is not yet known.  It will be stored here:
-    self.cvs_rev = None
     self.rev = rev
     self.timestamp = timestamp
     self.author = author
@@ -877,23 +875,22 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
     revision_type = self._determine_operation(rev_data)
 
-    cvs_rev = revision_type(
-        self._get_rev_id(rev_data.rev), self.cvs_file,
-        rev_data.timestamp, rev_data.metadata_id,
-        self._get_rev_id(rev_data.parent),
-        self._get_rev_id(rev_data.child),
-        rev_data.rev,
-        rev_data.deltatext_exists,
-        self.sdc.rev_to_lod(rev_data.rev),
-        rev_data.get_first_on_branch_id(),
-        rev_data.non_trunk_default_branch_revision,
-        self._get_rev_id(rev_data.default_branch_prev),
-        self._get_rev_id(rev_data.default_branch_next),
-        tag_ids, branch_ids, branch_commit_ids,
-        None,
-        rev_data.revision_recorder_token)
-    rev_data.cvs_rev = cvs_rev
-    self.collect_data.add_cvs_item(cvs_rev)
+    self.collect_data.add_cvs_item(
+        revision_type(
+            self._get_rev_id(rev_data.rev), self.cvs_file,
+            rev_data.timestamp, rev_data.metadata_id,
+            self._get_rev_id(rev_data.parent),
+            self._get_rev_id(rev_data.child),
+            rev_data.rev,
+            rev_data.deltatext_exists,
+            self.sdc.rev_to_lod(rev_data.rev),
+            rev_data.get_first_on_branch_id(),
+            rev_data.non_trunk_default_branch_revision,
+            self._get_rev_id(rev_data.default_branch_prev),
+            self._get_rev_id(rev_data.default_branch_next),
+            tag_ids, branch_ids, branch_commit_ids,
+            None,
+            rev_data.revision_recorder_token))
 
   def _process_symbol_data(self):
     """Store information about the accumulated symbols to collect_data."""

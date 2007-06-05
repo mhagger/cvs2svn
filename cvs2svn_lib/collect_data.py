@@ -857,7 +857,9 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         for parent in parent_data.branches_data:
           stats.register_possible_parent(parent.symbol)
 
-  def _process_revision_data(self, rev_data):
+  def _get_cvs_revision(self, rev_data):
+    """Create and return a CVSRevision for REV_DATA."""
+
     branch_ids = [
         branch_data.id
         for branch_data in rev_data.branches_data
@@ -875,49 +877,48 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
     revision_type = self._determine_operation(rev_data)
 
-    self.collect_data.add_cvs_item(
-        revision_type(
-            self._get_rev_id(rev_data.rev), self.cvs_file,
-            rev_data.timestamp, rev_data.metadata_id,
-            self._get_rev_id(rev_data.parent),
-            self._get_rev_id(rev_data.child),
-            rev_data.rev,
-            rev_data.deltatext_exists,
-            self.sdc.rev_to_lod(rev_data.rev),
-            rev_data.get_first_on_branch_id(),
-            rev_data.non_trunk_default_branch_revision,
-            self._get_rev_id(rev_data.default_branch_prev),
-            self._get_rev_id(rev_data.default_branch_next),
-            tag_ids, branch_ids, branch_commit_ids,
-            None,
-            rev_data.revision_recorder_token))
+    return revision_type(
+        self._get_rev_id(rev_data.rev), self.cvs_file,
+        rev_data.timestamp, rev_data.metadata_id,
+        self._get_rev_id(rev_data.parent),
+        self._get_rev_id(rev_data.child),
+        rev_data.rev,
+        rev_data.deltatext_exists,
+        self.sdc.rev_to_lod(rev_data.rev),
+        rev_data.get_first_on_branch_id(),
+        rev_data.non_trunk_default_branch_revision,
+        self._get_rev_id(rev_data.default_branch_prev),
+        self._get_rev_id(rev_data.default_branch_next),
+        tag_ids, branch_ids, branch_commit_ids,
+        None,
+        rev_data.revision_recorder_token)
 
-  def _process_revisions_data(self):
+  def _get_cvs_revisions(self):
+    """Generate the CVSRevisions present in this file."""
+
     for rev_data in self._revision_data:
-      self._process_revision_data(rev_data)
+      yield self._get_cvs_revision(rev_data)
 
-  def _process_branches_data(self):
-    """Store information about the accumulated branches to collect_data."""
+  def _get_cvs_branches(self):
+    """Generate the CVSBranches present in this file."""
 
     for branch_data in self.sdc.branches_data.values():
-      self.collect_data.add_cvs_item(
-          CVSBranch(
-              branch_data.id, self.cvs_file, branch_data.symbol,
-              branch_data.branch_number,
-              self._get_rev_id(branch_data.parent),
-              self._get_rev_id(branch_data.child),
-              ))
+      yield CVSBranch(
+          branch_data.id, self.cvs_file, branch_data.symbol,
+          branch_data.branch_number,
+          self._get_rev_id(branch_data.parent),
+          self._get_rev_id(branch_data.child),
+          )
 
-  def _process_tags_data(self):
-    """Store information about the accumulated tags to collect_data."""
+  def _get_cvs_tags(self):
+    """Generate the CVSTags present in this file."""
 
     for tags_data in self.sdc.tags_data.values():
       for tag_data in tags_data:
-        self.collect_data.add_cvs_item(
-            CVSTag(
-                tag_data.id, self.cvs_file, tag_data.symbol,
-                self._get_rev_id(tag_data.rev),
-                ))
+        yield CVSTag(
+            tag_data.id, self.cvs_file, tag_data.symbol,
+            self._get_rev_id(tag_data.rev),
+            )
 
   def parse_completed(self):
     """Finish the processing of this file.
@@ -936,9 +937,14 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
     self.collect_data.add_cvs_file(self.cvs_file)
 
-    self._process_revisions_data()
-    self._process_branches_data()
-    self._process_tags_data()
+    for cvs_item in self._get_cvs_revisions():
+      self.collect_data.add_cvs_item(cvs_item)
+
+    for cvs_item in self._get_cvs_branches():
+      self.collect_data.add_cvs_item(cvs_item)
+
+    for cvs_item in self._get_cvs_tags():
+      self.collect_data.add_cvs_item(cvs_item)
 
     self.sdc.register_branch_blockers()
 

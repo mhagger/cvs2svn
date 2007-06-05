@@ -72,8 +72,8 @@ class NewCVSItemStore:
 class OldCVSItemStore:
   """Read a file created by NewCVSItemStore.
 
-  The file must be read sequentially, except that it is possible to
-  read old CVSItems from the current CVSFile."""
+  The file must be read sequentially, one CVSFileItems instance at a
+  time."""
 
   def __init__(self, filename):
     self.f = open(filename, 'rb')
@@ -81,50 +81,21 @@ class OldCVSItemStore:
     # Read the memo from the first pickle:
     self.serializer = cPickle.load(self.f)
 
-    # A list of the CVSItems from the current file, in the order that
-    # they were read.
-    self.current_file_items = []
-
-    # The CVSFileItems instance for the current file.
-    self.cvs_file_items = None
-
-  def _read_file_chunk(self):
-    self.current_file_items = self.serializer.loadf(self.f)
-    self.cvs_file_items = CVSFileItems(self.current_file_items)
-
-  def __iter__(self):
-    while True:
-      try:
-        self._read_file_chunk()
-      except EOFError:
-        return
-      for item in self.current_file_items:
-        yield item
-
   def iter_cvs_file_items(self):
     """Iterate through the CVSFileItems instances, one file at a time.
 
     Each time yield a CVSFileItems instance for one CVSFile."""
 
-    while True:
-      try:
-        self._read_file_chunk()
-      except EOFError:
-        return
-      yield self.cvs_file_items.copy()
-
-  def __getitem__(self, id):
     try:
-      return self.cvs_file_items[id]
-    except KeyError:
-      raise FatalError(
-          'Key %r not found within items currently accessible.' % (id,))
+      while True:
+        current_file_items = self.serializer.loadf(self.f)
+        yield CVSFileItems(current_file_items)
+    except EOFError:
+      return
 
   def close(self):
     self.f.close()
     self.f = None
-    self.current_file_items = None
-    self.cvs_file_items = None
 
 
 def IndexedCVSItemStore(filename, index_filename, mode):

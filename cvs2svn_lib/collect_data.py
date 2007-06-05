@@ -892,8 +892,12 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
             None,
             rev_data.revision_recorder_token))
 
-  def _process_symbol_data(self):
-    """Store information about the accumulated symbols to collect_data."""
+  def _process_revisions_data(self):
+    for rev_data in self._revision_data:
+      self._process_revision_data(rev_data)
+
+  def _process_branches_data(self):
+    """Store information about the accumulated branches to collect_data."""
 
     for branch_data in self.sdc.branches_data.values():
       self.collect_data.add_cvs_item(
@@ -903,6 +907,9 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
               self._get_rev_id(branch_data.parent),
               self._get_rev_id(branch_data.child),
               ))
+
+  def _process_tags_data(self):
+    """Store information about the accumulated tags to collect_data."""
 
     for tags_data in self.sdc.tags_data.values():
       for tag_data in tags_data:
@@ -927,12 +934,11 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     self._register_branch_possible_parents()
     self._register_tag_possible_parents()
 
-    for rev_data in self._revision_data:
-      self._process_revision_data(rev_data)
-
     self.collect_data.add_cvs_file(self.cvs_file)
 
-    self._process_symbol_data()
+    self._process_revisions_data()
+    self._process_branches_data()
+    self._process_tags_data()
 
     self.sdc.register_branch_blockers()
 

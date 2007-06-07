@@ -937,20 +937,19 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
     self._process_default_branch_revisions()
 
-    self._register_branch_possible_parents()
-    self._register_tag_possible_parents()
-
     cvs_items = []
     cvs_items.extend(self._get_cvs_revisions())
     cvs_items.extend(self._get_cvs_branches())
     cvs_items.extend(self._get_cvs_tags())
-
     self.cvs_file_items = CVSFileItems(cvs_items)
-
-    self.sdc.register_branch_blockers()
 
     self.collect_data.revision_recorder.finish_file(
         self._rev_data, self._root_rev)
+
+    self._register_branch_possible_parents()
+    self._register_tag_possible_parents()
+
+    self.sdc.register_branch_blockers()
 
     # Break a circular reference loop, allowing the memory for self
     # and sdc to be freed.

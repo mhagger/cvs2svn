@@ -440,10 +440,6 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     # parse_completed().
     self._revision_data = []
 
-    # When the parse is finished, the CVSItems for this file are
-    # stored here as a CVSFileItems instance.
-    self.cvs_file_items = None
-
     self.collect_data.revision_recorder.start_file(self.cvs_file)
 
   def _get_rev_id(self, revision):
@@ -879,12 +875,13 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     cvs_items.extend(self._get_cvs_revisions())
     cvs_items.extend(self._get_cvs_branches())
     cvs_items.extend(self._get_cvs_tags())
-    self.cvs_file_items = CVSFileItems(self.cvs_file, cvs_items)
+    cvs_file_items = CVSFileItems(self.cvs_file, cvs_items)
 
     self.collect_data.revision_recorder.finish_file(
         self._rev_data, self._root_rev)
 
-    self.collect_data.symbol_stats.register(self.cvs_file_items)
+    self.collect_data.add_cvs_file_items(cvs_file_items)
+    self.collect_data.symbol_stats.register(cvs_file_items)
 
     # Break a circular reference loop, allowing the memory for self
     # and sdc to be freed.
@@ -947,7 +944,6 @@ class _ProjectDataCollector:
       Log().warn("Exception occurred while parsing %s" % cvs_file.filename)
       raise
     else:
-      self.collect_data.add_cvs_file_items(fdc.cvs_file_items)
       self.num_files += 1
 
   def _get_attic_file(self, pathname):

@@ -26,12 +26,12 @@ desc
 
 1.1
 log
+@Initial revision
+@
+text
 @The content of this file is unimportant, what matters is that the
 same branch has two different symbolic names, a condition which
 cvs2svn.py should warn about.
-@
-text
-@Nothing to see here.
 @
 
 

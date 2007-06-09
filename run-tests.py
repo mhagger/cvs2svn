@@ -1124,17 +1124,13 @@ def overlapping_branch():
   "ignore a file with a branch with two names"
   conv = ensure_conversion('overlapping-branch',
                            error_re='.*cannot also have name \'vendorB\'')
-  rev = 4
-  conv.logs[rev].check_change('/%(branches)s/vendorA (from /%(trunk)s:3)',
+  rev = 3
+  conv.logs[rev].check_change('/%(branches)s/vendorA (from /%(trunk)s:2)',
                               'A')
-  # We don't know what order the first two commits would be in, since
-  # they have different log messages but the same timestamps.  As only
-  # one of the files would be on the vendorB branch in the regression
-  # case being tested here, we allow for either order.
-  if (conv.logs[rev].get_path_op(
-          '/%(branches)s/vendorB (from /%(trunk)s:2)') == 'A'
-      or conv.logs[rev].get_path_op(
-             '/%(branches)s/vendorB (from /%(trunk)s:3)') == 'A'):
+  # Only one of the files would be on the vendorB branch in the
+  # regression case being tested here.
+  if conv.logs[rev].get_path_op(
+        '/%(branches)s/vendorB (from /%(trunk)s:2)') == 'A':
     raise Failure()
   conv.logs[rev + 1].check_changes(())
   if len(conv.logs) != rev + 1:

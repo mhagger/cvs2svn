@@ -237,6 +237,8 @@ class SymbolStatisticsCollector:
       if lod is not None:
         branch_stats = self[lod.symbol]
 
+        branch_stats.register_branch_creation()
+
         if cvs_revs:
           branch_stats.register_branch_commit()
 

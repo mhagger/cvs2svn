@@ -304,7 +304,6 @@ class _SymbolDataCollector(object):
       return branch_data
 
     symbol = self.pdc.get_symbol(name)
-    self.collect_data.symbol_stats[symbol].register_branch_creation()
     branch_data = _BranchData(
         self.collect_data.key_generator.gen_id(), symbol, branch_number
         )

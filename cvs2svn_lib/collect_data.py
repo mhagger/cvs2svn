@@ -884,8 +884,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     self.collect_data.revision_recorder.finish_file(
         self._rev_data, self._root_rev)
 
-    symbol_stats = self.collect_data.symbol_stats
-    symbol_stats.register(self.cvs_file_items)
+    self.collect_data.symbol_stats.register(self.cvs_file_items)
 
     # Break a circular reference loop, allowing the memory for self
     # and sdc to be freed.

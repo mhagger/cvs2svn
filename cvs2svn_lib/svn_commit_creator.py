@@ -87,7 +87,7 @@ class SVNCommitCreator:
       default_branch_cvs_revisions = [
             cvs_rev
             for cvs_rev in cvs_revs
-            if cvs_rev.needs_post_commit()]
+            if cvs_rev.needs_post_commit]
 
       self._persistence_manager.put_svn_commit(svn_commit)
 

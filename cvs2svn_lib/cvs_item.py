@@ -117,7 +117,7 @@ class CVSRevision(CVSItem):
                lod, first_on_branch_id, default_branch_revision,
                default_branch_prev_id, default_branch_next_id,
                tag_ids, branch_ids, branch_commit_ids,
-               closed_symbol_ids,
+               closed_symbol_ids, needs_post_commit,
                revision_recorder_token):
     """Initialize a new CVSRevision object.
 
@@ -147,6 +147,8 @@ class CVSRevision(CVSItem):
                              in this revision
        CLOSED_SYMBOL_IDS --> (None or list of int) ids of all symbols closed
                              by this revision (set in FilterSymbolsPass)
+       NEEDS_POST_COMMIT --> (bool) True iff a post-commit (copy from default
+                             branch to trunk) is needed after this revision
        REVISION_RECORDER_TOKEN --> (arbitrary) a token that can be used by
                                    RevisionRecorder/RevisionReader.
     """
@@ -168,6 +170,7 @@ class CVSRevision(CVSItem):
     self.branch_ids = branch_ids
     self.branch_commit_ids = branch_commit_ids
     self.closed_symbol_ids = closed_symbol_ids
+    self.needs_post_commit = needs_post_commit
     self.revision_recorder_token = revision_recorder_token
 
   def _get_cvs_path(self):
@@ -195,7 +198,7 @@ class CVSRevision(CVSItem):
         self.default_branch_revision,
         self.default_branch_prev_id, self.default_branch_next_id,
         self.tag_ids, self.branch_ids, self.branch_commit_ids,
-        self.closed_symbol_ids,
+        self.closed_symbol_ids, self.needs_post_commit,
         self.revision_recorder_token,
         )
 
@@ -210,7 +213,7 @@ class CVSRevision(CVSItem):
      self.default_branch_revision,
      self.default_branch_prev_id, self.default_branch_next_id,
      self.tag_ids, self.branch_ids, self.branch_commit_ids,
-     self.closed_symbol_ids,
+     self.closed_symbol_ids, self.needs_post_commit,
      self.revision_recorder_token) = data
     self.cvs_file = Ctx()._cvs_file_db.get_file(cvs_file_id)
     self.lod = Ctx()._symbol_db.get_symbol(lod_id)
@@ -313,26 +316,7 @@ class CVSRevision(CVSItem):
 class CVSRevisionModification(CVSRevision):
   """Base class for CVSRevisionAdd or CVSRevisionChange."""
 
-  def needs_post_commit(self):
-    """Return True iff a post-commit is needed for this revision.
-
-    A post-commit copies a revision on a non-trunk default branch back
-    to trunk."""
-
-    if self.rev == "1.1.1.1" and not self.deltatext_exists:
-      # When 1.1.1.1 has an empty deltatext, the explanation is almost
-      # always that we're looking at an imported file whose 1.1 and
-      # 1.1.1.1 are identical.  On such imports, CVS creates an RCS
-      # file where 1.1 has the content, and 1.1.1.1 has an empty
-      # deltatext, i.e, the same content as 1.1.  There's no reason to
-      # reflect this non-change in the repository, so we want to do
-      # nothing in this case.  (If we were really paranoid, we could
-      # make sure 1.1's log message is the CVS-generated "Initial
-      # revision\n", but I think the conditions above are strict
-      # enough.)
-      return False
-    else:
-      return self.default_branch_revision
+  pass
 
 
 class CVSRevisionAdd(CVSRevisionModification):
@@ -352,14 +336,6 @@ class CVSRevisionChange(CVSRevisionModification):
 
 class CVSRevisionDelete(CVSRevision):
   """A CVSRevision that deletes a file that existed on this LOD."""
-
-  def needs_post_commit(self):
-    """Return True iff a post-commit is needed for this revision.
-
-    A post-commit copies a revision on a non-trunk default branch back
-    to trunk."""
-
-    return self.default_branch_revision
 
   def needs_delete(self):
     """Return True iff this delete is really needed.

@@ -191,6 +191,10 @@ class _RevisionData:
     # at some point (as best we can determine).
     self.non_trunk_default_branch_revision = False
 
+    # True iff this revision needs a post-commit (a copy from the
+    # non-trunk default branch onto trunk).
+    self.needs_post_commit = False
+
     # Iff this is the 1.2 revision at which a non-trunk default branch
     # revision was ended, store the number of the last revision on
     # the default branch here.
@@ -736,14 +740,18 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     after 1.2.  In this case, we should record 1.1.1.96 as the last
     vendor revision to have been the head of the default branch."""
 
+    # Non-trunk default branch _RevisionData instances, in order:
+    ntdbr = []
+
     if self.default_branch:
       # There is still a default branch; that means that all revisions
       # on that branch get marked.
       rev = self.sdc.branches_data[self.default_branch].child
       while rev:
         rev_data = self._rev_data[rev]
-        rev_data.non_trunk_default_branch_revision = True
+        ntdbr.append(rev_data)
         rev = rev_data.child
+
       if self._rev_data.get('1.2') is not None:
         self.collect_data.record_fatal_error(
             'File has default branch=%s but also 1.2 revision'
@@ -782,19 +790,55 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
       prev_rev_data = None
       rev = vendor_branch_data.child
+
       while rev:
         rev_data = self._rev_data[rev]
         if rev_1_2_timestamp is not None \
                and rev_data.timestamp >= rev_1_2_timestamp:
           # That's the end of the once-default branch.
           break
-        rev_data.non_trunk_default_branch_revision = True
+        ntdbr.append(rev_data)
         prev_rev_data = rev_data
         rev = rev_data.child
 
       if rev_1_2 is not None and prev_rev_data is not None:
         rev_1_2.default_branch_prev = prev_rev_data.rev
         prev_rev_data.default_branch_next = rev_1_2.rev
+    else:
+      return
+
+    if ntdbr:
+      # Adjust the records for the non-trunk default branches.
+
+      # The first revision on the default branch is handled
+      # specially.  The trunk 1.1 revision will be filled from trunk
+      # to the branch.  If there is no deltatext between 1.1 and
+      # 1.1.1.1, then there is no need for a post commit to copy the
+      # non-change back to trunk.  A copy is only needed if
+      # deltatext exists for some reason:
+      rev_data = ntdbr[0]
+      rev_data.non_trunk_default_branch_revision = True
+
+      if rev_data.rev == '1.1.1.1' \
+             and rev_data.state != 'dead' \
+             and not rev_data.deltatext_exists:
+        # When 1.1.1.1 has an empty deltatext, the explanation is
+        # almost always that we're looking at an imported file whose
+        # 1.1 and 1.1.1.1 are identical.  On such imports, CVS
+        # creates an RCS file where 1.1 has the content, and 1.1.1.1
+        # has an empty deltatext, i.e, the same content as 1.1.
+        # There's no reason to reflect this non-change in the
+        # repository, so we want to do nothing in this case.  (If we
+        # were really paranoid, we could make sure 1.1's log message
+        # is the CVS-generated "Initial revision\n", but I think the
+        # conditions above are strict enough.)
+        rev_data.needs_post_commit = False
+      else:
+        rev_data.needs_post_commit = True
+
+      for rev_data in ntdbr[1:]:
+        rev_data.non_trunk_default_branch_revision = True
+        rev_data.needs_post_commit = True
 
   def _get_cvs_revision(self, rev_data):
     """Create and return a CVSRevision for REV_DATA."""
@@ -829,7 +873,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         self._get_rev_id(rev_data.default_branch_prev),
         self._get_rev_id(rev_data.default_branch_next),
         tag_ids, branch_ids, branch_commit_ids,
-        None,
+        None, rev_data.needs_post_commit,
         rev_data.revision_recorder_token)
 
   def _get_cvs_revisions(self):

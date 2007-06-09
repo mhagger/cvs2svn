@@ -28,10 +28,10 @@ from cvs2svn_lib.time_range import TimeRange
 class ChangesetGraphNode(object):
   """A node in the changeset dependency graph."""
 
-  def __init__(self, id, time_range, pred_ids, succ_ids):
+  def __init__(self, changeset, time_range, pred_ids, succ_ids):
     # The id of the ChangesetGraphNode is the same as the id of the
     # changeset.
-    self.id = id
+    self.id = changeset.id
 
     # The range of times of CVSItems within this Changeset.
     self.time_range = time_range

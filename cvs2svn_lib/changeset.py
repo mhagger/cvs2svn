@@ -92,7 +92,7 @@ class RevisionChangeset(Changeset):
       for succ_id in cvs_item.get_succ_ids():
         succ_ids.add(Ctx()._cvs_item_to_changeset_id[succ_id])
 
-    return ChangesetGraphNode(self.id, time_range, pred_ids, succ_ids)
+    return ChangesetGraphNode(self, time_range, pred_ids, succ_ids)
 
   def create_split_changeset(self, id, cvs_item_ids):
     return RevisionChangeset(id, cvs_item_ids)
@@ -151,7 +151,7 @@ class OrderedChangeset(Changeset):
       for succ_id in cvs_item.get_symbol_succ_ids():
         succ_ids.add(Ctx()._cvs_item_to_changeset_id[succ_id])
 
-    return ChangesetGraphNode(self.id, time_range, pred_ids, succ_ids)
+    return ChangesetGraphNode(self, time_range, pred_ids, succ_ids)
 
   def __getstate__(self):
     return (
@@ -188,7 +188,7 @@ class SymbolChangeset(Changeset):
       for succ_id in cvs_item.get_succ_ids():
         succ_ids.add(Ctx()._cvs_item_to_changeset_id[succ_id])
 
-    return ChangesetGraphNode(self.id, TimeRange(), pred_ids, succ_ids)
+    return ChangesetGraphNode(self, TimeRange(), pred_ids, succ_ids)
 
   def __cmp__(self, other):
     return cmp(self._sort_order, other._sort_order) \

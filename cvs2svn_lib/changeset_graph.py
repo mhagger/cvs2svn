@@ -26,7 +26,6 @@ from cvs2svn_lib.changeset import RevisionChangeset
 from cvs2svn_lib.changeset import OrderedChangeset
 from cvs2svn_lib.changeset import BranchChangeset
 from cvs2svn_lib.changeset import TagChangeset
-from cvs2svn_lib.changeset_graph_node import ChangesetGraphNode
 
 
 class CycleInGraphException(Exception):

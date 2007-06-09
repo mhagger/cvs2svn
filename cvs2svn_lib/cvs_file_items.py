@@ -35,14 +35,14 @@ from cvs2svn_lib.cvs_item import CVSTag
 
 
 class CVSFileItems(object):
-  def __init__(self, cvs_items):
+  def __init__(self, cvs_file, cvs_items):
+    self.cvs_file = cvs_file
+
     # A map from CVSItem.id to CVSItem:
     self._cvs_items = {}
 
     # The CVSItem.id of the root CVSItem:
     self.root_id = None
-
-    self.cvs_file = cvs_items[0].cvs_file
 
     for cvs_item in cvs_items:
       self.add(cvs_item)
@@ -57,6 +57,13 @@ class CVSFileItems(object):
 
   def __setstate__(self, state):
     CVSFileItems.__init__(self, state)
+
+  def __getstate__(self):
+    return (self.cvs_file, self.values(),)
+
+  def __setstate__(self, state):
+    (cvs_file, cvs_items,) = state
+    CVSFileItems.__init__(self, cvs_file, cvs_items)
 
   def add(self, cvs_item):
     self._cvs_items[cvs_item.id] = cvs_item

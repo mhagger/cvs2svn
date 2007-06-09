@@ -902,7 +902,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     cvs_items.extend(self._get_cvs_revisions())
     cvs_items.extend(self._get_cvs_branches())
     cvs_items.extend(self._get_cvs_tags())
-    self.cvs_file_items = CVSFileItems(cvs_items)
+    self.cvs_file_items = CVSFileItems(self.cvs_file, cvs_items)
 
     self.collect_data.revision_recorder.finish_file(
         self._rev_data, self._root_rev)

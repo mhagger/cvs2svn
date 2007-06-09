@@ -221,14 +221,13 @@ class SymbolStatisticsCollector:
   def register(self, cvs_file_items):
     """Register the possible parents for each symbol in CVS_FILE_ITEMS."""
 
-    for cvs_item in cvs_file_items.values():
-      if isinstance(cvs_item, CVSTag):
-        self[cvs_item.symbol].register_tag_possible_parents(
-            cvs_item, cvs_file_items
-            )
-      elif isinstance(cvs_item, CVSBranch):
-        self[cvs_item.symbol].register_branch_possible_parents(
-            cvs_item, cvs_file_items
+    for (lod, cvs_revs, cvs_branches, cvs_tags) in cvs_file_items.iter_lods():
+      if lod is not None:
+        self[lod.symbol].register_branch_possible_parents(lod, cvs_file_items)
+
+      for cvs_tag in cvs_tags:
+        self[cvs_tag.symbol].register_tag_possible_parents(
+            cvs_tag, cvs_file_items
             )
 
   def purge_ghost_symbols(self):

@@ -95,7 +95,9 @@ USAGE: %(progname)s [-v] [-s svn-repos-path] [-p pass] cvs-repos-path
   --no-prune           don't prune empty directories
   --encoding=ENC       encoding for paths and log messages in CVS repos.
                        If option is specified multiple times, the encoders
-                       will be tried in order until one succeeds.
+                       will be tried in order until one succeeds.  See
+                       http://docs.python.org/lib/standard-encodings.html
+                       for a list of standard Python encodings.
   --fallback-encoding=ENC If all --encodings fail, use lossy encoding with ENC
   --force-branch=REGEXP force symbols matching REGEXP to be branches
   --force-tag=REGEXP   force symbols matching REGEXP to be tags

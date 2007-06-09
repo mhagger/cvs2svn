@@ -230,7 +230,9 @@ class SymbolStatisticsCollector:
         self[lod.symbol].register_branch_possible_parents(lod, cvs_file_items)
 
       for cvs_tag in cvs_tags:
-        self[cvs_tag.symbol].register_tag_possible_parents(
+        tag_stats = self[cvs_tag.symbol]
+        tag_stats.register_tag_creation()
+        tag_stats.register_tag_possible_parents(
             cvs_tag, cvs_file_items
             )
 

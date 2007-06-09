@@ -318,7 +318,6 @@ class _SymbolDataCollector(object):
     """Record that tag NAME refers to the specified REVISION."""
 
     symbol = self.pdc.get_symbol(name)
-    self.collect_data.symbol_stats[symbol].register_tag_creation()
     tag_data = _TagData(
         self.collect_data.key_generator.gen_id(), symbol, revision
         )

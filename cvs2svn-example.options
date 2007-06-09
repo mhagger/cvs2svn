@@ -309,6 +309,20 @@ ctx.tmpdir = r'tmp'
 # option:
 #ctx.skip_cleanup = True
 
+
+# In CVS, it is perfectly possible to make a single commit that
+# affects more than one project or more than one branch of a single
+# project.  Subversion also allows such commits.  Therefore, by
+# default, when cvs2svn sees what looks like a cross-project or
+# cross-branch CVS commit, it converts it into a
+# cross-project/cross-branch Subversion commit.
+#
+# However, other tools and SCMs have trouble representing
+# cross-project or cross-branch commits.  (For example, Trac's Revtree
+# plugin, http://www.trac-hacks.org/wiki/RevtreePlugin is confused by
+# such commits.)  Therefore, we provide the following two options to
+# allow cross-project/cross-branch commits to be suppressed.
+
 # To prevent CVS commits from different projects from being merged
 # into single SVN commits, change this option to False:
 ctx.cross_project_commits = True
@@ -316,6 +330,7 @@ ctx.cross_project_commits = True
 # To prevent CVS commits on different branches from being merged into
 # single SVN commits, change this option to False:
 ctx.cross_branch_commits = True
+
 
 # By default, it is a fatal error for a CVS ",v" file to appear both
 # inside and outside of an "Attic" subdirectory (this should never

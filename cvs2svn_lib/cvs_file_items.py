@@ -45,7 +45,7 @@ class CVSFileItems(object):
     self.cvs_file = cvs_items[0].cvs_file
 
     for cvs_item in cvs_items:
-      self._cvs_items[cvs_item.id] = cvs_item
+      self.add(cvs_item)
       if not cvs_item.get_pred_ids():
         assert self.root_id is None
         self.root_id = cvs_item.id
@@ -58,33 +58,20 @@ class CVSFileItems(object):
   def __setstate__(self, state):
     CVSFileItems.__init__(self, state)
 
+  def add(self, cvs_item):
+    self._cvs_items[cvs_item.id] = cvs_item
+
   def __getitem__(self, id):
     """Return the CVSItem with the specified ID."""
 
     return self._cvs_items[id]
 
-  def __setitem__(self, id, cvs_item):
-    assert id is not self.root_id
-    self._cvs_items[id] = cvs_item
-
   def __delitem__(self, id):
     assert id is not self.root_id
     del self._cvs_items[id]
 
-  def get(self, id, default=None):
-    try:
-      return self[id]
-    except KeyError:
-      return default
-
-  def __contains__(self, id):
-    return id in self._cvs_items
-
   def values(self):
     return self._cvs_items.values()
-
-  def copy(self):
-    return CVSFileItems(self.values())
 
   def iter_lods(self, cvs_branch_id=None):
     """Iterate over LinesOfDevelopment in this file, in depth-first order.
@@ -223,7 +210,7 @@ class CVSFileItems(object):
     cvs_tag = CVSTag(
         cvs_branch.id, cvs_branch.cvs_file, cvs_branch.symbol,
         cvs_branch.source_id)
-    self[cvs_tag.id] = cvs_tag
+    self.add(cvs_tag)
     cvs_revision = self[cvs_tag.source_id]
     cvs_revision.branch_ids.remove(cvs_tag.id)
     cvs_revision.tag_ids.append(cvs_tag.id)
@@ -234,7 +221,7 @@ class CVSFileItems(object):
     cvs_branch = CVSBranch(
         cvs_tag.id, cvs_tag.cvs_file, cvs_tag.symbol,
         None, cvs_tag.source_id, None)
-    self[cvs_branch.id] = cvs_branch
+    self.add(cvs_branch)
     cvs_revision = self[cvs_branch.source_id]
     cvs_revision.tag_ids.remove(cvs_branch.id)
     cvs_revision.branch_ids.append(cvs_branch.id)

@@ -90,6 +90,50 @@ class _Stats:
 
     self.possible_parents[lod] = self.possible_parents.get(lod, 0) + 1
 
+  def register_branch_possible_parents(self, cvs_branch, cvs_file_items):
+    """Register any possible parents of this symbol from CVS_BRANCH."""
+
+    # This routine is a bottleneck.  So we define some local variables
+    # to speed up access to frequently-needed variables.
+    register = self.register_possible_parent
+    parent_cvs_rev = cvs_file_items[cvs_branch.source_id]
+
+    # The "obvious" parent of a branch is the branch holding the
+    # revision where the branch is rooted:
+    register(parent_cvs_rev.lod)
+
+    # Any other branches that are rooted at the same revision and
+    # were committed earlier than the branch are also possible
+    # parents:
+    symbol = cvs_branch.symbol
+    for branch_id in parent_cvs_rev.branch_ids:
+      parent_symbol = cvs_file_items[branch_id].symbol
+      # A branch cannot be its own parent, nor can a branch's
+      # parent be a branch that was created after it.  So we stop
+      # iterating when we reached the branch whose parents we are
+      # collecting:
+      if parent_symbol == symbol:
+        break
+      register(parent_symbol)
+
+  def register_tag_possible_parents(self, cvs_tag, cvs_file_items):
+    """Register any possible parents of this symbol from CVS_TAG."""
+
+    # This routine is a bottleneck.  So use local variables to speed
+    # up access to frequently-needed objects.
+    register = self.register_possible_parent
+    parent_cvs_rev = cvs_file_items[cvs_tag.source_id]
+
+    # The "obvious" parent of a tag is the branch holding the
+    # revision where the branch is rooted:
+    register(parent_cvs_rev.lod)
+
+    # Branches that are rooted at the same revision are also
+    # possible parents:
+    for branch_id in parent_cvs_rev.branch_ids:
+      parent_symbol = cvs_file_items[branch_id].symbol
+      register(parent_symbol)
+
   def is_ghost(self):
     """Return True iff this lod never really existed."""
 
@@ -179,50 +223,18 @@ class SymbolStatisticsCollector:
 
     for cvs_item in cvs_file_items.values():
       if isinstance(cvs_item, CVSBranch):
-        cvs_branch = cvs_item
-        # This routine is a bottleneck.  So we define some local
-        # variables to speed up access to frequently-needed variables.
-        symbol = cvs_branch.symbol
-        register = self[symbol].register_possible_parent
-        parent_cvs_rev = cvs_file_items[cvs_branch.source_id]
-
-        # The "obvious" parent of a branch is the branch holding the
-        # revision where the branch is rooted:
-        register(parent_cvs_rev.lod)
-
-        # Any other branches that are rooted at the same revision and
-        # were committed earlier than the branch are also possible
-        # parents:
-        for branch_id in parent_cvs_rev.branch_ids:
-          parent_symbol = cvs_file_items[branch_id].symbol
-          # A branch cannot be its own parent, nor can a branch's
-          # parent be a branch that was created after it.  So we stop
-          # iterating when we reached the branch whose parents we are
-          # collecting:
-          if parent_symbol == symbol:
-            break
-          register(parent_symbol)
+        self[cvs_item.symbol].register_branch_possible_parents(
+            cvs_item, cvs_file_items
+            )
 
   def register_tag_possible_parents(self, cvs_file_items):
     """Register the possible parents of each tag in CVS_FILE_ITEMS."""
 
     for cvs_item in cvs_file_items.values():
       if isinstance(cvs_item, CVSTag):
-        cvs_tag = cvs_item
-        # This routine is a bottleneck.  So we define some local
-        # variables to speed up access to frequently-needed variables.
-        register = self[cvs_tag.symbol].register_possible_parent
-        parent_cvs_rev = cvs_file_items[cvs_tag.source_id]
-
-        # The "obvious" parent of a tag is the branch holding the
-        # revision where the branch is rooted:
-        register(parent_cvs_rev.lod)
-
-        # Branches that are rooted at the same revision are also
-        # possible parents:
-        for branch_id in parent_cvs_rev.branch_ids:
-          parent_symbol = cvs_file_items[branch_id].symbol
-          register(parent_symbol)
+        self[cvs_item.symbol].register_tag_possible_parents(
+            cvs_item, cvs_file_items
+            )
 
   def purge_ghost_symbols(self):
     """Purge any symbols that don't have any activity.

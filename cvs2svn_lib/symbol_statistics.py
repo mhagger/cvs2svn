@@ -42,13 +42,14 @@ class _Stats:
 
     lod -- the LineOfDevelopment instance of the lod being described
 
-    tag_create_count -- the number of files on which this lod appears
+    tag_create_count -- the number of files in which this lod appears
         as a tag
 
-    branch_create_count -- the number of files on which this lod
+    branch_create_count -- the number of files in which this lod
         appears as a branch
 
-    branch_commit_count -- the number of commits on this lod
+    branch_commit_count -- the number of files in which there were
+        commits on this lod
 
     branch_blockers -- a set of Symbol instances for any symbols that
         sprout from a branch with this name.
@@ -76,7 +77,7 @@ class _Stats:
     self.branch_create_count += 1
 
   def register_branch_commit(self):
-    """Register a commit on this lod as a trunk or branch."""
+    """Register that there were commit(s) on this branch in one file."""
 
     self.branch_commit_count += 1
 
@@ -235,8 +236,13 @@ class SymbolStatisticsCollector:
 
       if lod is not None:
         branch_stats = self[lod.symbol]
+
+        if cvs_revs:
+          branch_stats.register_branch_commit()
+
         for cvs_tag in cvs_tags:
           branch_stats.register_branch_blocker(cvs_tag.symbol)
+
         for cvs_branch in cvs_branches:
           branch_stats.register_branch_blocker(cvs_branch.symbol)
 

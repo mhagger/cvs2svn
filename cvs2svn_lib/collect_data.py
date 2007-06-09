@@ -391,15 +391,6 @@ class _SymbolDataCollector(object):
     else:
       return self.rev_to_branch_data(revision).symbol
 
-  def register_commit(self, rev_data):
-    """If REV_DATA describes a non-trunk revision number, then record
-    it as a commit on the corresponding branch.  This records the
-    commit in symbol_stats, which is used to generate statistics for
-    --force-branch and --force-tag guidance."""
-
-    lod = self.rev_to_lod(rev_data.rev)
-    self.collect_data.symbol_stats[lod].register_branch_commit()
-
 
 class _FileDataCollector(cvs2svn_rcsparse.Sink):
   """Class responsible for collecting RCS data for a particular file.
@@ -514,7 +505,6 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         self.collect_data.key_generator.gen_id(),
         revision, int(timestamp), author, state)
     self._rev_data[revision] = rev_data
-    self.sdc.register_commit(rev_data)
 
     # When on trunk, the RCS 'next' revision number points to what
     # humans might consider to be the 'previous' revision number.  For

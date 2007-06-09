@@ -819,7 +819,8 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       rev_data = ntdbr[0]
       rev_data.non_trunk_default_branch_revision = True
 
-      if rev_data.rev == '1.1.1.1' \
+      if self._file_imported \
+             and rev_data.rev == '1.1.1.1' \
              and rev_data.state != 'dead' \
              and not rev_data.deltatext_exists:
         # When 1.1.1.1 has an empty deltatext, the explanation is
@@ -828,10 +829,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         # creates an RCS file where 1.1 has the content, and 1.1.1.1
         # has an empty deltatext, i.e, the same content as 1.1.
         # There's no reason to reflect this non-change in the
-        # repository, so we want to do nothing in this case.  (If we
-        # were really paranoid, we could make sure 1.1's log message
-        # is the CVS-generated "Initial revision\n", but I think the
-        # conditions above are strict enough.)
+        # repository, so we want to do nothing in this case.
         rev_data.needs_post_commit = False
       else:
         rev_data.needs_post_commit = True

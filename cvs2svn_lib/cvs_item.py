@@ -281,7 +281,7 @@ class CVSRevision(CVSItem):
       # The first CVSRevision on a branch is considered to close the
       # branch:
       retval.append(self.first_on_branch_id)
-    elif self.default_branch_revision and self.first_on_branch_id is None:
+    elif self.default_branch_revision:
       # This could be the special case of a 1.1.1.2 revision, which is
       # considered to close 1.1 in addition to its direct predecessor:
       prev = Ctx()._cvs_items_db[self.prev_id]

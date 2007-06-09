@@ -81,7 +81,10 @@ class _Stats:
     self.branch_commit_count += 1
 
   def register_branch_blocker(self, blocker):
-    """Register BLOCKER as a blocker of this symbol as a trunk or branch."""
+    """Register BLOCKER as preventing this symbol from being deleted.
+
+    BLOCKER is a tag or a branch that springs from a revision on this
+    symbol."""
 
     self.branch_blockers.add(blocker)
 
@@ -229,6 +232,13 @@ class SymbolStatisticsCollector:
         self[cvs_tag.symbol].register_tag_possible_parents(
             cvs_tag, cvs_file_items
             )
+
+      if lod is not None:
+        branch_stats = self[lod.symbol]
+        for cvs_tag in cvs_tags:
+          branch_stats.register_branch_blocker(cvs_tag.symbol)
+        for cvs_branch in cvs_branches:
+          branch_stats.register_branch_blocker(cvs_branch.symbol)
 
   def purge_ghost_symbols(self):
     """Purge any symbols that don't have any activity.

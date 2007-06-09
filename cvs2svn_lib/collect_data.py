@@ -400,17 +400,6 @@ class _SymbolDataCollector(object):
     lod = self.rev_to_lod(rev_data.rev)
     self.collect_data.symbol_stats[lod].register_branch_commit()
 
-  def register_branch_blockers(self):
-    for (revision, tag_data_list) in self.tags_data.items():
-      stats = self.collect_data.symbol_stats[self.rev_to_lod(revision)]
-      for tag_data in tag_data_list:
-        stats.register_branch_blocker(tag_data.symbol)
-
-    for branch_data_child in self.branches_data.values():
-      parent_lod = self.rev_to_lod(branch_data_child.parent)
-      self.collect_data.symbol_stats[parent_lod] \
-          .register_branch_blocker(branch_data_child.symbol)
-
 
 class _FileDataCollector(cvs2svn_rcsparse.Sink):
   """Class responsible for collecting RCS data for a particular file.
@@ -909,8 +898,6 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
     symbol_stats = self.collect_data.symbol_stats
     symbol_stats.register(self.cvs_file_items)
-
-    self.sdc.register_branch_blockers()
 
     # Break a circular reference loop, allowing the memory for self
     # and sdc to be freed.

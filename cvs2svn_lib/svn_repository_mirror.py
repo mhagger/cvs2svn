@@ -35,7 +35,7 @@ from cvs2svn_lib.openings_closings import SymbolingsReader
 from cvs2svn_lib.svn_commit_item import SVNCommitItem
 
 
-class _MirrorNode:
+class _MirrorNode(object):
   """Represent a node within the SVNRepositoryMirror.
 
   Instances of this class act like a map { component : _MirrorNode },

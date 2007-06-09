@@ -823,61 +823,6 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         rev_1_2.default_branch_prev = prev_rev_data.rev
         prev_rev_data.default_branch_next = rev_1_2.rev
 
-  def _register_branch_possible_parents(self):
-    """Register the possible parents of each branch in this file."""
-
-    # This routine is a real bottleneck.  So we define some local
-    # variables to speed up access to frequently-needed variables.
-    cvs_file_items = self.cvs_file_items
-    symbol_stats = self.collect_data.symbol_stats
-    for cvs_item in cvs_file_items.values():
-      if isinstance(cvs_item, CVSBranch):
-        cvs_branch = cvs_item
-        symbol = cvs_branch.symbol
-        register = symbol_stats[symbol].register_possible_parent
-        parent_cvs_rev = cvs_file_items[cvs_branch.source_id]
-
-        # The "obvious" parent of a branch is the branch holding the
-        # revision where the branch is rooted:
-        register(parent_cvs_rev.lod)
-
-        # Any other branches that are rooted at the same revision and
-        # were committed earlier than the branch are also possible
-        # parents:
-        for branch_id in parent_cvs_rev.branch_ids:
-          parent_symbol = cvs_file_items[branch_id].symbol
-          # A branch cannot be its own parent, nor can a branch's
-          # parent be a branch that was created after it.  So we stop
-          # iterating when we reached the branch whose parents we are
-          # collecting:
-          if parent_symbol == symbol:
-            break
-          register(parent_symbol)
-
-  def _register_tag_possible_parents(self):
-    """Register the possible parents of each tag in this file."""
-
-    # This routine is a bottleneck.  So we define some local variables
-    # to speed up access to frequently-needed variables.
-    cvs_file_items = self.cvs_file_items
-    symbol_stats = self.collect_data.symbol_stats
-    for cvs_item in cvs_file_items.values():
-      if isinstance(cvs_item, CVSTag):
-        cvs_tag = cvs_item
-        symbol = cvs_tag.symbol
-        register = symbol_stats[symbol].register_possible_parent
-        parent_cvs_rev = cvs_file_items[cvs_tag.source_id]
-
-        # The "obvious" parent of a tag is the branch holding the
-        # revision where the branch is rooted:
-        register(parent_cvs_rev.lod)
-
-        # Branches that are rooted at the same revision are also
-        # possible parents:
-        for branch_id in parent_cvs_rev.branch_ids:
-          parent_symbol = cvs_file_items[branch_id].symbol
-          register(parent_symbol)
-
   def _get_cvs_revision(self, rev_data):
     """Create and return a CVSRevision for REV_DATA."""
 
@@ -962,8 +907,9 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     self.collect_data.revision_recorder.finish_file(
         self._rev_data, self._root_rev)
 
-    self._register_branch_possible_parents()
-    self._register_tag_possible_parents()
+    symbol_stats = self.collect_data.symbol_stats
+    symbol_stats.register_branch_possible_parents(self.cvs_file_items)
+    symbol_stats.register_tag_possible_parents(self.cvs_file_items)
 
     self.sdc.register_branch_blockers()
 

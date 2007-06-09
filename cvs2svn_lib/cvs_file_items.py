@@ -1,7 +1,7 @@
 # (Be in -*- python -*- mode.)
 #
 # ====================================================================
-# Copyright (c) 2006 CollabNet.  All rights reserved.
+# Copyright (c) 2006-2007 CollabNet.  All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.  The terms
@@ -51,6 +51,12 @@ class CVSFileItems(object):
         self.root_id = cvs_item.id
 
     assert self.root_id is not None
+
+  def __getstate__(self):
+    return self.values()
+
+  def __setstate__(self, state):
+    CVSFileItems.__init__(self, state)
 
   def __getitem__(self, id):
     """Return the CVSItem with the specified ID."""

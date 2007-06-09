@@ -1,7 +1,7 @@
 # (Be in -*- python -*- mode.)
 #
 # ====================================================================
-# Copyright (c) 2000-2006 CollabNet.  All rights reserved.
+# Copyright (c) 2000-2007 CollabNet.  All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.  The terms
@@ -54,6 +54,7 @@ class NewCVSItemStore:
     self.f = open(filename, 'wb')
 
     primer = (
+        CVSFileItems,
         CVSRevisionAdd, CVSRevisionChange, CVSRevisionDelete,
         CVSBranch, CVSTag,)
     self.serializer = PrimedPickleSerializer(primer)
@@ -62,7 +63,7 @@ class NewCVSItemStore:
   def add(self, cvs_file_items):
     """Write CVS_FILE_ITEMS into the database."""
 
-    self.serializer.dumpf(self.f, cvs_file_items.values())
+    self.serializer.dumpf(self.f, cvs_file_items)
 
   def close(self):
     self.f.close()
@@ -88,8 +89,7 @@ class OldCVSItemStore:
 
     try:
       while True:
-        current_file_items = self.serializer.loadf(self.f)
-        yield CVSFileItems(current_file_items)
+        yield self.serializer.loadf(self.f)
     except EOFError:
       return
 

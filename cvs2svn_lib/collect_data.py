@@ -826,41 +826,57 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
   def _register_branch_possible_parents(self):
     """Register the possible parents of each branch in this file."""
 
-    for branch_data in self.sdc.branches_data.values():
-      stats = self.collect_data.symbol_stats[branch_data.symbol]
-      parent_data = self._rev_data[branch_data.parent]
+    # This routine is a real bottleneck.  So we define some local
+    # variables to speed up access to frequently-needed variables.
+    cvs_file_items = self.cvs_file_items
+    symbol_stats = self.collect_data.symbol_stats
+    for cvs_item in cvs_file_items.values():
+      if isinstance(cvs_item, CVSBranch):
+        cvs_branch = cvs_item
+        symbol = cvs_branch.symbol
+        register = symbol_stats[symbol].register_possible_parent
+        parent_cvs_rev = cvs_file_items[cvs_branch.source_id]
 
-      # The "obvious" parent of a branch is the branch holding the
-      # revision where the branch is rooted :
-      stats.register_possible_parent(self.sdc.rev_to_lod(parent_data.rev))
+        # The "obvious" parent of a branch is the branch holding the
+        # revision where the branch is rooted:
+        register(parent_cvs_rev.lod)
 
-      # Any other branches that are rooted at the same revision and
-      # were committed earlier than the branch are also possible
-      # parents:
-      for parent in parent_data.branches_data:
-        # A branch cannot be its own parent, nor can a branch's parent
-        # be a branch that was created after it.  So we stop iterating
-        # when we reached the branch whose parents we are collecting:
-        if parent is branch_data:
-          break
-        stats.register_possible_parent(parent.symbol)
+        # Any other branches that are rooted at the same revision and
+        # were committed earlier than the branch are also possible
+        # parents:
+        for branch_id in parent_cvs_rev.branch_ids:
+          parent_symbol = cvs_file_items[branch_id].symbol
+          # A branch cannot be its own parent, nor can a branch's
+          # parent be a branch that was created after it.  So we stop
+          # iterating when we reached the branch whose parents we are
+          # collecting:
+          if parent_symbol == symbol:
+            break
+          register(parent_symbol)
 
   def _register_tag_possible_parents(self):
     """Register the possible parents of each tag in this file."""
 
-    for tag_data_list in self.sdc.tags_data.values():
-      for tag_data in tag_data_list:
-        stats = self.collect_data.symbol_stats[tag_data.symbol]
-        parent_data = self._rev_data[tag_data.rev]
+    # This routine is a bottleneck.  So we define some local variables
+    # to speed up access to frequently-needed variables.
+    cvs_file_items = self.cvs_file_items
+    symbol_stats = self.collect_data.symbol_stats
+    for cvs_item in cvs_file_items.values():
+      if isinstance(cvs_item, CVSTag):
+        cvs_tag = cvs_item
+        symbol = cvs_tag.symbol
+        register = symbol_stats[symbol].register_possible_parent
+        parent_cvs_rev = cvs_file_items[cvs_tag.source_id]
 
-        # The "obvious" parent of a branch is the branch holding the
-        # revision where the branch is rooted :
-        stats.register_possible_parent(self.sdc.rev_to_lod(parent_data.rev))
+        # The "obvious" parent of a tag is the branch holding the
+        # revision where the branch is rooted:
+        register(parent_cvs_rev.lod)
 
         # Branches that are rooted at the same revision are also
         # possible parents:
-        for parent in parent_data.branches_data:
-          stats.register_possible_parent(parent.symbol)
+        for branch_id in parent_cvs_rev.branch_ids:
+          parent_symbol = cvs_file_items[branch_id].symbol
+          register(parent_symbol)
 
   def _get_cvs_revision(self, rev_data):
     """Create and return a CVSRevision for REV_DATA."""

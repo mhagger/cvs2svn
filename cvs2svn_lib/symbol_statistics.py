@@ -218,21 +218,16 @@ class SymbolStatisticsCollector:
       self._stats[lod] = stats
       return stats
 
-  def register_branch_possible_parents(self, cvs_file_items):
-    """Register the possible parents of each branch in CVS_FILE_ITEMS."""
-
-    for cvs_item in cvs_file_items.values():
-      if isinstance(cvs_item, CVSBranch):
-        self[cvs_item.symbol].register_branch_possible_parents(
-            cvs_item, cvs_file_items
-            )
-
-  def register_tag_possible_parents(self, cvs_file_items):
-    """Register the possible parents of each tag in CVS_FILE_ITEMS."""
+  def register(self, cvs_file_items):
+    """Register the possible parents for each symbol in CVS_FILE_ITEMS."""
 
     for cvs_item in cvs_file_items.values():
       if isinstance(cvs_item, CVSTag):
         self[cvs_item.symbol].register_tag_possible_parents(
+            cvs_item, cvs_file_items
+            )
+      elif isinstance(cvs_item, CVSBranch):
+        self[cvs_item.symbol].register_branch_possible_parents(
             cvs_item, cvs_file_items
             )
 

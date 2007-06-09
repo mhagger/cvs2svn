@@ -908,8 +908,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         self._rev_data, self._root_rev)
 
     symbol_stats = self.collect_data.symbol_stats
-    symbol_stats.register_branch_possible_parents(self.cvs_file_items)
-    symbol_stats.register_tag_possible_parents(self.cvs_file_items)
+    symbol_stats.register(self.cvs_file_items)
 
     self.sdc.register_branch_blockers()
 

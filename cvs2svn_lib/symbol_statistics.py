@@ -227,15 +227,6 @@ class SymbolStatisticsCollector:
 
     for lod_items in cvs_file_items.iter_lods():
       if lod_items.cvs_branch is not None:
-        self[lod_items.lod].register_branch_possible_parents(
-            lod_items.cvs_branch, cvs_file_items)
-
-      for cvs_tag in lod_items.cvs_tags:
-        tag_stats = self[cvs_tag.symbol]
-        tag_stats.register_tag_creation()
-        tag_stats.register_tag_possible_parents(cvs_tag, cvs_file_items)
-
-      if lod_items.cvs_branch is not None:
         branch_stats = self[lod_items.lod]
 
         branch_stats.register_branch_creation()
@@ -248,6 +239,16 @@ class SymbolStatisticsCollector:
 
         for cvs_branch in lod_items.cvs_branches:
           branch_stats.register_branch_blocker(cvs_branch.symbol)
+
+        branch_stats.register_branch_possible_parents(
+            lod_items.cvs_branch, cvs_file_items)
+
+      for cvs_tag in lod_items.cvs_tags:
+        tag_stats = self[cvs_tag.symbol]
+
+        tag_stats.register_tag_creation()
+
+        tag_stats.register_tag_possible_parents(cvs_tag, cvs_file_items)
 
   def purge_ghost_symbols(self):
     """Purge any symbols that don't have any activity.

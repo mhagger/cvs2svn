@@ -159,13 +159,8 @@ class CVSFileItems(object):
   def iter_lods(self):
     """Iterate over LinesOfDevelopment in this file, in depth-first order.
 
-    For each LOD, yield tuples (LOD, CVSBranch, [CVSRevision],
-    [CVSBranch], [CVSTag]).  LOD is the LineOfDevelopment holding the
-    other items.  CVSBranch is the CVSBranch starting this LOD, if
-    any; otherwise it is None.  The remaining elements are lists of
-    CVSRevisions, CVSBranches, and CVSTags based in this LOD.  The
-    traversal will start at the root node and will return the LODs in
-    depth-first order."""
+    For each LOD, yield an LODItems instance.  The traversal starts at
+    each root node but returns the LODs in depth-first order."""
 
     for id in self.root_ids:
       cvs_item = self[id]

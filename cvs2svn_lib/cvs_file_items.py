@@ -34,6 +34,27 @@ from cvs2svn_lib.cvs_item import CVSBranch
 from cvs2svn_lib.cvs_item import CVSTag
 
 
+class LODItems(object):
+  def __init__(self, lod, cvs_branch, cvs_revisions, cvs_branches, cvs_tags):
+    # The LineOfDevelopment described by this instance.
+    self.lod = lod
+
+    # The CVSBranch starting this LOD, if any; otherwise, None.
+    self.cvs_branch = cvs_branch
+
+    # The list of CVSRevisions on this LOD, if any.  The CVSRevisions
+    # are listed in dependency order.
+    self.cvs_revisions = cvs_revisions
+
+    # A list of CVSBranches that sprout from this LOD (either from
+    # cvs_branch or from one of the CVSRevisions).
+    self.cvs_branches = cvs_branches
+
+    # A list of CVSTags that sprout from this LOD (either from
+    # cvs_branch or from one of the CVSRevisions).
+    self.cvs_tags = cvs_tags
+
+
 class CVSFileItems(object):
   def __init__(self, cvs_file, cvs_items):
     self.cvs_file = cvs_file
@@ -96,9 +117,7 @@ class CVSFileItems(object):
     the branch).  Note that CVS_BRANCH and ID cannot simultaneously be
     None.
 
-    Yield tuples (LOD, CVSBranch, [CVSRevision], [CVSBranch],
-    [CVSTag]) for each line of development, as described in the
-    docstring for iter_lods()."""
+    Yield an LODItems instance for each line of development."""
 
     cvs_revisions = []
     cvs_branches = []
@@ -112,10 +131,10 @@ class CVSFileItems(object):
       for branch_id in cvs_item.branch_ids[:]:
         # Recurse into the branch:
         branch = self[branch_id]
-        for lod_info in self._iter_tree(
+        for lod_items in self._iter_tree(
               branch.symbol, branch, branch.next_id
               ):
-          yield lod_info
+          yield lod_items
         # The caller might have deleted the branch that we just
         # yielded.  If it is no longer present, then do not add it to
         # the list of cvs_branches.
@@ -129,20 +148,20 @@ class CVSFileItems(object):
 
     if cvs_branch is not None:
       # Include the symbols sprouting directly from the CVSBranch:
-      for lod_info in process_subitems(cvs_branch):
-        yield lod_info
+      for lod_items in process_subitems(cvs_branch):
+        yield lod_items
 
     id = start_id
     while id is not None:
       cvs_rev = self[id]
       cvs_revisions.append(cvs_rev)
 
-      for lod_info in process_subitems(cvs_rev):
-        yield lod_info
+      for lod_items in process_subitems(cvs_rev):
+        yield lod_items
 
       id = cvs_rev.next_id
 
-    yield (lod, cvs_branch, cvs_revisions, cvs_branches, cvs_tags)
+    yield LODItems(lod, cvs_branch, cvs_revisions, cvs_branches, cvs_tags)
 
   def iter_lods(self):
     """Iterate over LinesOfDevelopment in this file, in depth-first order.
@@ -204,10 +223,12 @@ class CVSFileItems(object):
     is being excluded."""
 
     revision_excluder_started = False
-    for (lod, cvs_branch, cvs_revisions, cvs_branches, cvs_tags) \
-            in self.iter_lods():
+    for lod_items in self.iter_lods():
+
+      # (lod, cvs_branch, cvs_revisions, cvs_branches, cvs_tags)
+
       # Delete any excluded tags:
-      for cvs_tag in cvs_tags[:]:
+      for cvs_tag in lod_items.cvs_tags[:]:
         if isinstance(cvs_tag.symbol, ExcludedSymbol):
           # Notify the revision excluder:
           if not revision_excluder_started:
@@ -217,23 +238,24 @@ class CVSFileItems(object):
 
           self._exclude_tag(cvs_tag)
 
-          cvs_tags.remove(cvs_tag)
+          lod_items.cvs_tags.remove(cvs_tag)
 
       # Delete the whole branch if it is to be excluded:
-      if isinstance(lod, ExcludedSymbol):
+      if isinstance(lod_items.lod, ExcludedSymbol):
         # A symbol can only be excluded if no other symbols spring
         # from it.  This was already checked in CollateSymbolsPass, so
         # these conditions should already be satisfied.
-        assert not cvs_branches
-        assert not cvs_tags
+        assert not lod_items.cvs_branches
+        assert not lod_items.cvs_tags
 
         # Notify the revision excluder:
         if not revision_excluder_started:
           revision_excluder.start_file(self.cvs_file)
           revision_excluder_started = True
-        revision_excluder.exclude_branch(cvs_branch, cvs_revisions)
+        revision_excluder.exclude_branch(
+            lod_items.cvs_branch, lod_items.cvs_revisions)
 
-        self._exclude_branch(cvs_branch, cvs_revisions)
+        self._exclude_branch(lod_items.cvs_branch, lod_items.cvs_revisions)
 
     if revision_excluder_started:
       revision_excluder.finish_file()
@@ -384,12 +406,11 @@ class CVSFileItems(object):
     of the CVSSymbol in this file, then graft the CVSSymbol onto its
     preferred parent."""
 
-    for (lod, containing_branch, cvs_revisions, cvs_branches, cvs_tags) \
-            in self.iter_lods():
-      for cvs_tag in cvs_tags:
+    for lod_items in self.iter_lods():
+      for cvs_tag in lod_items.cvs_tags:
         self._adjust_tag_parent(cvs_tag)
 
-      for cvs_branch in cvs_branches:
+      for cvs_branch in lod_items.cvs_branches:
         self._adjust_branch_parents(cvs_branch)
 
   def record_closed_symbols(self):

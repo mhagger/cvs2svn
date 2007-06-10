@@ -718,12 +718,12 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         self.collect_data.revision_recorder.record_text(
             self._rev_data, revision, log, text)
 
-  def _process_default_branch_revisions(self):
-    """Process any non-trunk default branch revisions.
+  def _get_non_trunk_default_branch_revisions(self):
+    """Determine whether there are any non-trunk default branch revisions.
 
-    If a non-trunk default branch is determined to have existed, set
-    _RevisionData.non_trunk_default_branch_revision for all revisions
-    that were once non-trunk default revisions.
+    If a non-trunk default branch is determined to have existed, yield
+    the _RevisionData for all revisions that were once non-trunk
+    default revisions, in dependency order.
 
     There are two cases to handle:
 
@@ -740,23 +740,23 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     after 1.2.  In this case, we should record 1.1.1.96 as the last
     vendor revision to have been the head of the default branch."""
 
-    # Non-trunk default branch _RevisionData instances, in order:
-    ntdbr = []
-
     if self.default_branch:
       # There is still a default branch; that means that all revisions
       # on that branch get marked.
-      rev = self.sdc.branches_data[self.default_branch].child
-      while rev:
-        rev_data = self._rev_data[rev]
-        ntdbr.append(rev_data)
-        rev = rev_data.child
 
       if self._rev_data.get('1.2') is not None:
         self.collect_data.record_fatal_error(
             'File has default branch=%s but also 1.2 revision'
             % (self.default_branch,)
             )
+        return
+
+      rev = self.sdc.branches_data[self.default_branch].child
+      while rev:
+        rev_data = self._rev_data[rev]
+        yield rev_data
+        rev = rev_data.child
+
     elif self._file_imported:
       # No default branch, but the file appears to have been imported.
       # So our educated guess is that all revisions on the '1.1.1'
@@ -794,20 +794,17 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
                  and rev_data.timestamp >= rev_1_2_timestamp:
             # That's the end of the once-default branch.
             break
-          ntdbr.append(rev_data)
+          yield rev_data
           rev = rev_data.child
 
-        if rev_1_2 is not None and ntdbr:
-          rev_1_2.default_branch_prev = ntdbr[-1].rev
-          ntdbr[-1].default_branch_next = rev_1_2.rev
-
-    return ntdbr
-
-  def _adjust_ntdbr(self, ntdbr):
+  def _adjust_non_trunk_default_branch_revisions(self, ntdbr):
     """Adjust the non-trunk default branch revisions.
 
     NTDBR is a list of _RevisionData instances for the revisions that
-    have been determined to be non-trunk default branch revisions."""
+    have been determined to be non-trunk default branch revisions.
+    Set their non_trunk_default_branch_revision and needs_post_commit
+    members correctly.  Also, if there is a revision 1.2, set it to
+    depend on the last non-trunk default branch revision."""
 
     # The first revision on the default branch is handled
     # specially.  The trunk 1.1 revision will be filled from trunk
@@ -836,6 +833,11 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     for rev_data in ntdbr[1:]:
       rev_data.non_trunk_default_branch_revision = True
       rev_data.needs_post_commit = True
+
+    rev_1_2 = self._rev_data.get('1.2')
+    if rev_1_2 is not None:
+      rev_1_2.default_branch_prev = ntdbr[-1].rev
+      ntdbr[-1].default_branch_next = rev_1_2.rev
 
   def _get_cvs_revision(self, rev_data):
     """Create and return a CVSRevision for REV_DATA."""
@@ -910,9 +912,9 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
     This is a callback method declared in Sink."""
 
-    ntdbr = self._process_default_branch_revisions()
+    ntdbr = list(self._get_non_trunk_default_branch_revisions())
     if ntdbr:
-      self._adjust_ntdbr(ntdbr)
+      self._adjust_non_trunk_default_branch_revisions(ntdbr)
 
     cvs_items = []
     cvs_items.extend(self._get_cvs_revisions())

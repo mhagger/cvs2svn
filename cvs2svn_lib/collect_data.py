@@ -786,7 +786,6 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         else:
           rev_1_2_timestamp = rev_1_2.timestamp
 
-        prev_rev_data = None
         rev = vendor_branch_data.child
 
         while rev:
@@ -796,12 +795,11 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
             # That's the end of the once-default branch.
             break
           ntdbr.append(rev_data)
-          prev_rev_data = rev_data
           rev = rev_data.child
 
-        if rev_1_2 is not None and prev_rev_data is not None:
-          rev_1_2.default_branch_prev = prev_rev_data.rev
-          prev_rev_data.default_branch_next = rev_1_2.rev
+        if rev_1_2 is not None and ntdbr:
+          rev_1_2.default_branch_prev = ntdbr[-1].rev
+          ntdbr[-1].default_branch_next = rev_1_2.rev
 
     return ntdbr
 

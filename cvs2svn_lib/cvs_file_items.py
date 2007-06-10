@@ -20,6 +20,7 @@
 from __future__ import generators
 
 from cvs2svn_lib.boolean import *
+from cvs2svn_lib.set_support import *
 from cvs2svn_lib.common import InternalError
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.context import Ctx
@@ -62,16 +63,14 @@ class CVSFileItems(object):
     # A map from CVSItem.id to CVSItem:
     self._cvs_items = {}
 
-    # The CVSItem.id of the root CVSItem:
-    self.root_id = None
+    # The cvs_item_id of each root in the CVSItem forest.  (A root is
+    # defined to be any CVSItem with no predecessors.)
+    self.root_ids = set()
 
     for cvs_item in cvs_items:
       self.add(cvs_item)
       if not cvs_item.get_pred_ids():
-        assert self.root_id is None
-        self.root_id = cvs_item.id
-
-    assert self.root_id is not None
+        self.root_ids.add(cvs_item.id)
 
   def __getstate__(self):
     return (self.cvs_file, self.values(),)
@@ -89,7 +88,7 @@ class CVSFileItems(object):
     return self._cvs_items[id]
 
   def __delitem__(self, id):
-    assert id is not self.root_id
+    assert id not in self.root_ids
     del self._cvs_items[id]
 
   def values(self):
@@ -168,10 +167,25 @@ class CVSFileItems(object):
     traversal will start at the root node and will return the LODs in
     depth-first order."""
 
-    # This is always the id of a CVSRevision:
-    id = self.root_id
+    for id in self.root_ids:
+      cvs_item = self[id]
+      if isinstance(cvs_item, CVSRevision):
+        # This LOD doesn't have a CVSBranch associated with it.
+        # Either it is Trunk, or it is a branch whose CVSBranch has
+        # been deleted.
+        lod = cvs_item.lod
+        cvs_branch = None
+      elif isinstance(cvs_item, CVSBranch):
+        # This is a Branch that has been severed from the rest of the
+        # tree.
+        lod = cvs_item.symbol
+        id = cvs_item.next_id
+        cvs_branch = cvs_item
+      else:
+        raise InternalError('Unexpected root item: %s' % (cvs_item,))
 
-    return self._iter_tree(self[id].lod, None, id)
+      for lod_items in self._iter_tree(lod, cvs_branch, id):
+        yield lod_items
 
   def _exclude_tag(self, cvs_tag):
     """Exclude the specified CVS_TAG."""

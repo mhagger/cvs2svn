@@ -74,12 +74,6 @@ class CVSFileItems(object):
     assert self.root_id is not None
 
   def __getstate__(self):
-    return self.values()
-
-  def __setstate__(self, state):
-    CVSFileItems.__init__(self, state)
-
-  def __getstate__(self):
     return (self.cvs_file, self.values(),)
 
   def __setstate__(self, state):

@@ -224,9 +224,6 @@ class CVSFileItems(object):
 
     revision_excluder_started = False
     for lod_items in self.iter_lods():
-
-      # (lod, cvs_branch, cvs_revisions, cvs_branches, cvs_tags)
-
       # Delete any excluded tags:
       for cvs_tag in lod_items.cvs_tags[:]:
         if isinstance(cvs_tag.symbol, ExcludedSymbol):

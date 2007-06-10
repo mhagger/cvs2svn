@@ -779,64 +779,65 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       # into determining those timestamps are more accurate.  But that
       # would require an extra pass or two.
       vendor_branch_data = self.sdc.branches_data.get('1.1.1')
-      if vendor_branch_data is None:
-        return
+      if vendor_branch_data is not None:
+        rev_1_2 = self._rev_data.get('1.2')
+        if rev_1_2 is None:
+          rev_1_2_timestamp = None
+        else:
+          rev_1_2_timestamp = rev_1_2.timestamp
 
-      rev_1_2 = self._rev_data.get('1.2')
-      if rev_1_2 is None:
-        rev_1_2_timestamp = None
-      else:
-        rev_1_2_timestamp = rev_1_2.timestamp
+        prev_rev_data = None
+        rev = vendor_branch_data.child
 
-      prev_rev_data = None
-      rev = vendor_branch_data.child
+        while rev:
+          rev_data = self._rev_data[rev]
+          if rev_1_2_timestamp is not None \
+                 and rev_data.timestamp >= rev_1_2_timestamp:
+            # That's the end of the once-default branch.
+            break
+          ntdbr.append(rev_data)
+          prev_rev_data = rev_data
+          rev = rev_data.child
 
-      while rev:
-        rev_data = self._rev_data[rev]
-        if rev_1_2_timestamp is not None \
-               and rev_data.timestamp >= rev_1_2_timestamp:
-          # That's the end of the once-default branch.
-          break
-        ntdbr.append(rev_data)
-        prev_rev_data = rev_data
-        rev = rev_data.child
+        if rev_1_2 is not None and prev_rev_data is not None:
+          rev_1_2.default_branch_prev = prev_rev_data.rev
+          prev_rev_data.default_branch_next = rev_1_2.rev
 
-      if rev_1_2 is not None and prev_rev_data is not None:
-        rev_1_2.default_branch_prev = prev_rev_data.rev
-        prev_rev_data.default_branch_next = rev_1_2.rev
+    return ntdbr
+
+  def _adjust_ntdbr(self, ntdbr):
+    """Adjust the non-trunk default branch revisions.
+
+    NTDBR is a list of _RevisionData instances for the revisions that
+    have been determined to be non-trunk default branch revisions."""
+
+    # The first revision on the default branch is handled
+    # specially.  The trunk 1.1 revision will be filled from trunk
+    # to the branch.  If there is no deltatext between 1.1 and
+    # 1.1.1.1, then there is no need for a post commit to copy the
+    # non-change back to trunk.  A copy is only needed if
+    # deltatext exists for some reason:
+    rev_data = ntdbr[0]
+    rev_data.non_trunk_default_branch_revision = True
+
+    if self._file_imported \
+           and rev_data.rev == '1.1.1.1' \
+           and rev_data.state != 'dead' \
+           and not rev_data.deltatext_exists:
+      # When 1.1.1.1 has an empty deltatext, the explanation is
+      # almost always that we're looking at an imported file whose
+      # 1.1 and 1.1.1.1 are identical.  On such imports, CVS
+      # creates an RCS file where 1.1 has the content, and 1.1.1.1
+      # has an empty deltatext, i.e, the same content as 1.1.
+      # There's no reason to reflect this non-change in the
+      # repository, so we want to do nothing in this case.
+      rev_data.needs_post_commit = False
     else:
-      return
+      rev_data.needs_post_commit = True
 
-    if ntdbr:
-      # Adjust the records for the non-trunk default branches.
-
-      # The first revision on the default branch is handled
-      # specially.  The trunk 1.1 revision will be filled from trunk
-      # to the branch.  If there is no deltatext between 1.1 and
-      # 1.1.1.1, then there is no need for a post commit to copy the
-      # non-change back to trunk.  A copy is only needed if
-      # deltatext exists for some reason:
-      rev_data = ntdbr[0]
+    for rev_data in ntdbr[1:]:
       rev_data.non_trunk_default_branch_revision = True
-
-      if self._file_imported \
-             and rev_data.rev == '1.1.1.1' \
-             and rev_data.state != 'dead' \
-             and not rev_data.deltatext_exists:
-        # When 1.1.1.1 has an empty deltatext, the explanation is
-        # almost always that we're looking at an imported file whose
-        # 1.1 and 1.1.1.1 are identical.  On such imports, CVS
-        # creates an RCS file where 1.1 has the content, and 1.1.1.1
-        # has an empty deltatext, i.e, the same content as 1.1.
-        # There's no reason to reflect this non-change in the
-        # repository, so we want to do nothing in this case.
-        rev_data.needs_post_commit = False
-      else:
-        rev_data.needs_post_commit = True
-
-      for rev_data in ntdbr[1:]:
-        rev_data.non_trunk_default_branch_revision = True
-        rev_data.needs_post_commit = True
+      rev_data.needs_post_commit = True
 
   def _get_cvs_revision(self, rev_data):
     """Create and return a CVSRevision for REV_DATA."""
@@ -911,7 +912,9 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
     This is a callback method declared in Sink."""
 
-    self._process_default_branch_revisions()
+    ntdbr = self._process_default_branch_revisions()
+    if ntdbr:
+      self._adjust_ntdbr(ntdbr)
 
     cvs_items = []
     cvs_items.extend(self._get_cvs_revisions())

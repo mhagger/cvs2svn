@@ -80,49 +80,85 @@ class CVSFileItems(object):
   def values(self):
     return self._cvs_items.values()
 
-  def iter_lods(self, cvs_branch_id=None):
-    """Iterate over LinesOfDevelopment in this file, in depth-first order.
+  def _iter_tree(self, lod, cvs_branch, start_id):
+    """Iterate over the tree that starts at the specified line of development.
 
-    For each LOD, yield tuples (CVSBranch, [CVSRevision], [CVSBranch],
-    [CVSTag]).  CVSBranch is the branch being described, or None for
-    trunk.  The remaining elements are lists of CVSRevisions,
-    CVSBranches, and CVSTags based in this branch.
+    LOD is the LineOfDevelopment where the iteration should start.
+    CVS_BRANCH is the CVSBranch instance that starts the LOD if any;
+    otherwise it is None.  ID is the id of the first CVSRevision on
+    this LOD, or None if there are none.
 
-    If cvs_branch_id is specified, it should be the id of a CVSBranch
-    item, which will be used as the starting point of the traversal
-    (i.e., only the specified branch and its sub-branches will be
-    traversed).  Otherwise the traversal will start at the root node."""
+    There are two cases handled by this routine: trunk (where LOD is a
+    Trunk instance, CVS_BRANCH is None, and ID is the id of the 1.1
+    revision) and a branch (where LOD is a Branch instance, CVS_BRANCH
+    is a CVSBranch instance, and ID is either the id of the first
+    CVSRevision on the branch or None if there are no CVSRevisions on
+    the branch).  Note that CVS_BRANCH and ID cannot simultaneously be
+    None.
 
-    if cvs_branch_id is None:
-      cvs_branch = None
-      id = self.root_id
-    else:
-      cvs_branch = self[cvs_branch_id]
-      id = cvs_branch.next_id
+    Yield tuples (LOD, CVSBranch, [CVSRevision], [CVSBranch],
+    [CVSTag]) for each line of development, as described in the
+    docstring for iter_lods()."""
 
     cvs_revisions = []
     cvs_branches = []
     cvs_tags = []
 
+    def process_subitems(cvs_item):
+      """Process the branches and tags that are rooted in CVS_ITEM.
+
+      CVS_ITEM can be a CVSRevision or a CVSBranch."""
+
+      for branch_id in cvs_item.branch_ids[:]:
+        # Recurse into the branch:
+        branch = self[branch_id]
+        for lod_info in self._iter_tree(
+              branch.symbol, branch, branch.next_id
+              ):
+          yield lod_info
+        # The caller might have deleted the branch that we just
+        # yielded.  If it is no longer present, then do not add it to
+        # the list of cvs_branches.
+        try:
+          cvs_branches.append(self[branch_id])
+        except KeyError:
+          pass
+
+      for tag_id in cvs_item.tag_ids:
+        cvs_tags.append(self[tag_id])
+
+    if cvs_branch is not None:
+      # Include the symbols sprouting directly from the CVSBranch:
+      for lod_info in process_subitems(cvs_branch):
+        yield lod_info
+
+    id = start_id
     while id is not None:
       cvs_rev = self[id]
       cvs_revisions.append(cvs_rev)
 
-      for branch_id in cvs_rev.branch_ids[:]:
-        # Recurse into the branch:
-        for lod_info in self.iter_lods(branch_id):
-          yield lod_info
-        try:
-          cvs_branches.append(self[branch_id])
-        except KeyError:
-          # Branch must have been deleted; just ignore it.
-          pass
-      for tag_id in cvs_rev.tag_ids:
-        cvs_tags.append(self[tag_id])
+      for lod_info in process_subitems(cvs_rev):
+        yield lod_info
 
       id = cvs_rev.next_id
 
-    yield (cvs_branch, cvs_revisions, cvs_branches, cvs_tags)
+    yield (lod, cvs_branch, cvs_revisions, cvs_branches, cvs_tags)
+
+  def iter_lods(self):
+    """Iterate over LinesOfDevelopment in this file, in depth-first order.
+
+    For each LOD, yield tuples (LOD, CVSBranch, [CVSRevision],
+    [CVSBranch], [CVSTag]).  LOD is the LineOfDevelopment holding the
+    other items.  CVSBranch is the CVSBranch starting this LOD, if
+    any; otherwise it is None.  The remaining elements are lists of
+    CVSRevisions, CVSBranches, and CVSTags based in this LOD.  The
+    traversal will start at the root node and will return the LODs in
+    depth-first order."""
+
+    # This is always the id of a CVSRevision:
+    id = self.root_id
+
+    return self._iter_tree(self[id].lod, None, id)
 
   def _exclude_tag(self, cvs_tag):
     """Exclude the specified CVS_TAG."""
@@ -168,7 +204,7 @@ class CVSFileItems(object):
     is being excluded."""
 
     revision_excluder_started = False
-    for (cvs_branch, cvs_revisions, cvs_branches, cvs_tags) \
+    for (lod, cvs_branch, cvs_revisions, cvs_branches, cvs_tags) \
             in self.iter_lods():
       # Delete any excluded tags:
       for cvs_tag in cvs_tags[:]:
@@ -184,10 +220,7 @@ class CVSFileItems(object):
           cvs_tags.remove(cvs_tag)
 
       # Delete the whole branch if it is to be excluded:
-      if cvs_branch is None:
-        continue
-
-      if isinstance(cvs_branch.symbol, ExcludedSymbol):
+      if isinstance(lod, ExcludedSymbol):
         # A symbol can only be excluded if no other symbols spring
         # from it.  This was already checked in CollateSymbolsPass, so
         # these conditions should already be satisfied.
@@ -351,7 +384,7 @@ class CVSFileItems(object):
     of the CVSSymbol in this file, then graft the CVSSymbol onto its
     preferred parent."""
 
-    for (containing_branch, cvs_revisions, cvs_branches, cvs_tags) \
+    for (lod, containing_branch, cvs_revisions, cvs_branches, cvs_tags) \
             in self.iter_lods():
       for cvs_tag in cvs_tags:
         self._adjust_tag_parent(cvs_tag)

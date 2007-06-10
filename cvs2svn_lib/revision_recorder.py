@@ -68,7 +68,7 @@ class RevisionRecorder:
 
     raise NotImplementedError()
 
-  def finish_file(self, revisions_data, root_rev):
+  def finish_file(self, cvs_file_items):
     """The current file is finished; finish and clean up.
 
     REVISIONS_DATA is a map { rev : _RevisionData } containing
@@ -99,7 +99,7 @@ class NullRevisionRecorder(RevisionRecorder):
   def record_text(self, revisions_data, revision, log, text):
     return None
 
-  def finish_file(self, revisions_data, root_rev):
+  def finish_file(self, cvs_file_items):
     pass
 
   def finish(self):

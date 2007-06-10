@@ -139,10 +139,10 @@ class CVSRevision(CVSItem):
                             default branch, id of last rev on default branch
        DEFAULT_BRANCH_NEXT_ID --> (int or None) Iff last rev on default branch
                                   preceding 1.2 rev, id of 1.2 rev
-       TAG_IDS         -->  (list of int) ids of CVSSymbols on this revision
-                            that should be treated as tags
-       BRANCH_IDS      -->  (list of int) ids of all CVSSymbols rooted in this
-                            revision that should be treated as branches
+       TAG_IDS         -->  (list of int) ids of all CVSTags rooted at this
+                            CVSRevision
+       BRANCH_IDS      -->  (list of int) ids of all CVSBranches rooted at
+                            this CVSRevision
        BRANCH_COMMIT_IDS --> (list of int) ids of commits on branches rooted
                              in this revision
        CLOSED_SYMBOL_IDS --> (None or list of int) ids of all symbols closed
@@ -404,12 +404,11 @@ class CVSBranch(CVSSymbol):
        SOURCE_ID       -->  (int) id of CVSRevision or CVSBranch from which
                             this branch sprouts
        NEXT_ID         -->  (int or None) id of first rev on this branch
-       TAG_IDS         -->  (list of int) ids of CVSSymbols on this revision
-                            that should be treated as tags (can be set due to
-                            parent adjustment)
-       BRANCH_IDS      -->  (list of int) ids of all CVSSymbols rooted in this
-                            revision that should be treated as branches (can
-                            be set due to parent adjustment)"""
+       TAG_IDS         -->  (list of int) ids of all CVSTags rooted at this
+                            CVSBranch (can be set due to parent adjustment)
+       BRANCH_IDS      -->  (list of int) ids of all CVSBranches rooted at
+                            this CVSBranch (can be set due to parent
+                            adjustment)"""
 
     CVSSymbol.__init__(self, id, cvs_file, symbol, source_id)
     self.branch_number = branch_number

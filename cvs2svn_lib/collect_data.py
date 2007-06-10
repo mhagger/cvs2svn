@@ -922,15 +922,15 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     cvs_items.extend(self._get_cvs_tags())
     cvs_file_items = CVSFileItems(self.cvs_file, cvs_items)
 
+    # Break a circular reference loop, allowing the memory for self
+    # and sdc to be freed.
+    del self.sdc
+
     self.collect_data.revision_recorder.finish_file(
         self._rev_data, self._root_rev)
 
     self.collect_data.add_cvs_file_items(cvs_file_items)
     self.collect_data.symbol_stats.register(cvs_file_items)
-
-    # Break a circular reference loop, allowing the memory for self
-    # and sdc to be freed.
-    del self.sdc
 
 
 class _ProjectDataCollector:

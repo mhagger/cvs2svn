@@ -215,18 +215,20 @@ class IndexedDatabase:
     SERIALIZER is only used if MODE is DB_OPEN_NEW; otherwise the
     serializer is read from the file."""
 
+    self.filename = filename
+    self.index_filename = index_filename
     self.mode = mode
     if self.mode == DB_OPEN_NEW:
-      self.f = open(filename, 'wb+')
+      self.f = open(self.filename, 'wb+')
     elif self.mode == DB_OPEN_WRITE:
-      self.f = open(filename, 'rb+')
+      self.f = open(self.filename, 'rb+')
     elif self.mode == DB_OPEN_READ:
-      self.f = open(filename, 'rb')
+      self.f = open(self.filename, 'rb')
     else:
       raise RuntimeError('Invalid mode %r' % self.mode)
 
     self.index_table = RecordTable(
-        index_filename, self.mode, FileOffsetPacker())
+        self.index_filename, self.mode, FileOffsetPacker())
 
     if self.mode == DB_OPEN_NEW:
       assert serializer is not None
@@ -274,6 +276,9 @@ class IndexedDatabase:
     self.index_table = None
     self.f.close()
     self.f = None
+
+  def __str__(self):
+    return 'IndexedDatabase(%r)' % (self.filename,)
 
 
 class IndexedStore(IndexedDatabase):

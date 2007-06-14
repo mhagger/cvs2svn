@@ -1256,6 +1256,14 @@ class CreateRevsPass(Pass):
 
     changeset_db.close()
 
+  def get_svn_commits(self):
+    """Generate the SVNCommits, in order."""
+
+    creator = SVNCommitCreator()
+    for (changeset, timestamp) in self.get_changesets():
+      for svn_commit in creator.process_changeset(changeset, timestamp):
+        yield svn_commit
+
   def log_svn_commit(self, svn_commit):
     """Output information about SVN_COMMIT."""
 
@@ -1281,12 +1289,10 @@ class CreateRevsPass(Pass):
       Ctx()._symbolings_logger = SymbolingsLogger()
 
     persistence_manager = PersistenceManager(DB_OPEN_NEW)
-    creator = SVNCommitCreator()
 
-    for (changeset, timestamp) in self.get_changesets():
-      for svn_commit in creator.process_changeset(changeset, timestamp):
-        self.log_svn_commit(svn_commit)
-        persistence_manager.put_svn_commit(svn_commit)
+    for svn_commit in self.get_svn_commits():
+      self.log_svn_commit(svn_commit)
+      persistence_manager.put_svn_commit(svn_commit)
 
     persistence_manager.close()
     if not Ctx().trunk_only:

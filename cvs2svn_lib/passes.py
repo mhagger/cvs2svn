@@ -1402,6 +1402,28 @@ class OutputPass(Pass):
       self._register_temp_file_needed(config.SYMBOL_OFFSETS_DB)
     Ctx().revision_reader.register_artifacts(self)
 
+  def get_svn_commits(self):
+    """Generate the SVNCommits in commit order."""
+
+    persistence_manager = PersistenceManager(DB_OPEN_READ)
+
+    svn_revnum = 2 # The first non-trivial commit
+
+    # Peek at the first revision to find the date to use to initialize
+    # the repository:
+    svn_commit = persistence_manager.get_svn_commit(svn_revnum)
+
+    # Initialize the repository by creating the directories for trunk,
+    # tags, and branches.
+    yield SVNInitialProjectCommit(svn_commit.date, 1)
+
+    while svn_commit:
+      yield svn_commit
+      svn_revnum += 1
+      svn_commit = persistence_manager.get_svn_commit(svn_revnum)
+
+    persistence_manager.close()
+
   def run(self, stats_keeper):
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
     Ctx()._metadata_db = MetadataDatabase(DB_OPEN_READ)
@@ -1411,7 +1433,6 @@ class OutputPass(Pass):
         DB_OPEN_READ)
     Ctx()._symbol_db = SymbolDatabase()
     repos = SVNRepositoryMirror()
-    persistence_manager = PersistenceManager(DB_OPEN_READ)
 
     Ctx().output_option.setup(repos)
 
@@ -1419,29 +1440,14 @@ class OutputPass(Pass):
 
     Ctx().revision_reader.start()
 
-    svn_revnum = 2 # Repository initialization is 1.
-
-    # Peek at the first revision to find the date to use to initialize
-    # the repository:
-    svn_commit = persistence_manager.get_svn_commit(svn_revnum)
-
-    # Initialize the repository by creating the directories for trunk,
-    # tags, and branches.
-    SVNInitialProjectCommit(svn_commit.date, 1).commit(repos)
-
-    while True:
-      svn_commit = persistence_manager.get_svn_commit(svn_revnum)
-      if not svn_commit:
-        break
+    for svn_commit in self.get_svn_commits():
       svn_commit.commit(repos)
-      svn_revnum += 1
 
     repos.close()
 
     Ctx().revision_reader.finish()
 
     Ctx().output_option.cleanup()
-    persistence_manager.close()
     Ctx()._symbol_db.close()
     Ctx()._cvs_items_db.close()
     Ctx()._metadata_db.close()

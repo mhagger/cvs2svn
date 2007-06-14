@@ -121,7 +121,7 @@ class CheckIndexedItemStoreDependenciesPass(CheckDependenciesPass):
     self._register_temp_file_needed(self.cvs_items_store_index_file)
 
   def iter_cvs_items(self):
-    return self.cvs_item_store.__iter__()
+    return self.cvs_item_store.itervalues()
 
   def get_cvs_item(self, item_id):
     return self.cvs_item_store[item_id]

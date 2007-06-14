@@ -1217,7 +1217,8 @@ class CreateRevsPass(Pass):
   This pass was formerly known as pass5."""
 
   def register_artifacts(self):
-    self._register_temp_file(config.SVN_COMMITS_DB)
+    self._register_temp_file(config.SVN_COMMITS_INDEX_TABLE)
+    self._register_temp_file(config.SVN_COMMITS_STORE)
     self._register_temp_file(config.CVS_REVS_TO_SVN_REVNUMS)
     if not Ctx().trunk_only:
       self._register_temp_file(config.SYMBOL_OPENINGS_CLOSINGS)
@@ -1367,7 +1368,8 @@ class OutputPass(Pass):
     self._register_temp_file_needed(config.CVS_ITEMS_FILTERED_INDEX_TABLE)
     self._register_temp_file_needed(config.SYMBOL_DB)
     self._register_temp_file_needed(config.METADATA_DB)
-    self._register_temp_file_needed(config.SVN_COMMITS_DB)
+    self._register_temp_file_needed(config.SVN_COMMITS_INDEX_TABLE)
+    self._register_temp_file_needed(config.SVN_COMMITS_STORE)
     self._register_temp_file_needed(config.CVS_REVS_TO_SVN_REVNUMS)
     if not Ctx().trunk_only:
       self._register_temp_file_needed(config.SYMBOL_OPENINGS_CLOSINGS_SORTED)

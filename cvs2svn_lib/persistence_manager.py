@@ -29,8 +29,8 @@ from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.record_table import SignedIntegerPacker
 from cvs2svn_lib.record_table import RecordTable
-from cvs2svn_lib.database import Database
 from cvs2svn_lib.serializer import PrimedPickleSerializer
+from cvs2svn_lib.database import IndexedDatabase
 from cvs2svn_lib.svn_commit import SVNRevisionCommit
 from cvs2svn_lib.svn_commit import SVNInitialProjectCommit
 from cvs2svn_lib.svn_commit import SVNPrimaryCommit
@@ -57,10 +57,13 @@ class PersistenceManager:
     self.mode = mode
     if mode not in (DB_OPEN_NEW, DB_OPEN_READ):
       raise RuntimeError, "Invalid 'mode' argument to PersistenceManager"
-    self.svn_commit_db = Database(
-        artifact_manager.get_temp_file(config.SVN_COMMITS_DB), mode,
-        PrimedPickleSerializer((SVNInitialProjectCommit, SVNPrimaryCommit,
-            SVNSymbolCommit, SVNPostCommit,)))
+    primer = (SVNInitialProjectCommit, SVNPrimaryCommit, SVNSymbolCommit,
+              SVNPostCommit,)
+    serializer = PrimedPickleSerializer(primer)
+    self.svn_commit_db = IndexedDatabase(
+        artifact_manager.get_temp_file(config.SVN_COMMITS_INDEX_TABLE),
+        artifact_manager.get_temp_file(config.SVN_COMMITS_STORE),
+        mode, serializer)
     self.cvs2svn_db = RecordTable(
         artifact_manager.get_temp_file(config.CVS_REVS_TO_SVN_REVNUMS),
         mode, SignedIntegerPacker(SVN_INVALID_REVNUM))
@@ -77,7 +80,7 @@ class PersistenceManager:
 
     If no SVNCommit exists for revnum SVN_REVNUM, then return None."""
 
-    return self.svn_commit_db.get('%x' % svn_revnum, None)
+    return self.svn_commit_db.get(svn_revnum, None)
 
   def put_svn_commit(self, svn_commit):
     """Record the bidirectional mapping between SVN_REVNUM and
@@ -90,7 +93,7 @@ class PersistenceManager:
       raise RuntimeError, \
           'Write operation attempted on read-only PersistenceManager'
 
-    self.svn_commit_db['%x' % svn_commit.revnum] = svn_commit
+    self.svn_commit_db[svn_commit.revnum] = svn_commit
 
     if isinstance(svn_commit, SVNRevisionCommit):
       for cvs_rev in svn_commit.cvs_revs:

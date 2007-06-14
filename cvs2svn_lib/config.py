@@ -159,7 +159,11 @@ SYMBOL_STATISTICS = 'cvs2svn-symbol-statistics.pck'
 # The second maps Subversion revision numbers (as hex strings) to
 # pickled SVNCommit instances.
 CVS_REVS_TO_SVN_REVNUMS = 'cvs2svn-cvs-revs-to-svn-revnums.dat'
-SVN_COMMITS_DB = 'cvs2svn-svn-commits.db'
+
+# This database maps Subversion revision numbers to pickled SVNCommit
+# instances.
+SVN_COMMITS_INDEX_TABLE = 'cvs2svn-svn-commits-index.dat'
+SVN_COMMITS_STORE = 'cvs2svn-svn-commits.pck'
 
 # How many bytes to read at a time from a pipe.  128 kiB should be
 # large enough to be efficient without wasting too much memory.

@@ -445,9 +445,10 @@ a vendor branch.)
 This pass does the following:
 
 1. Creates a database file to map Subversion revision numbers to
-   SVNCommit instances ('cvs2svn-svn-commits.db').  Creates another
-   database file to map CVS Revisions to their Subversion Revision
-   numbers ('cvs2svn-cvs-revs-to-svn-revnums.db').
+   SVNCommit instances ('cvs2svn-svn-commits-index.dat' and
+   'cvs2svn-svn-commits.pck').  Creates another database file to map
+   CVS Revisions to their Subversion Revision numbers
+   ('cvs2svn-cvs-revs-to-svn-revnums.db').
 
 2. When a file is copied to a symbolic name in cvs2svn, there is a
    range of valid Subversion revisions that we can copy the file from.
@@ -512,11 +513,11 @@ need.
 OutputPass (formerly called pass8)
 ==========
 
-This pass opens the cvs2svn-svn-commits.db and, starting with
-Subversion revision 2 (revision 1 creates /trunk, /tags, and
-/branches), sequentially plays out all the commits to either a
-Subversion repository or to a dumpfile.  It also decides what sources
-to use to fill symbols.
+This pass opens the svn-commits database and, starting with Subversion
+revision 2 (revision 1 creates /trunk, /tags, and /branches),
+sequentially plays out all the commits to either a Subversion
+repository or to a dumpfile.  It also decides what sources to use to
+fill symbols.
 
 In --dumpfile mode, the result of this pass is a Subversion repository
 dumpfile (suitable for input to 'svnadmin load').  The dumpfile is the

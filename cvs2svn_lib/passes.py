@@ -60,6 +60,7 @@ from cvs2svn_lib.changeset_graph_link import ChangesetGraphLink
 from cvs2svn_lib.changeset_database import ChangesetDatabase
 from cvs2svn_lib.changeset_database import CVSItemToChangesetTable
 from cvs2svn_lib.svn_commit import SVNCommit
+from cvs2svn_lib.svn_commit import SVNRevisionCommit
 from cvs2svn_lib.openings_closings import SymbolingsLogger
 from cvs2svn_lib.svn_commit_creator import SVNCommitCreator
 from cvs2svn_lib.svn_repository_mirror import SVNRepositoryMirror
@@ -1255,6 +1256,16 @@ class CreateRevsPass(Pass):
 
     changeset_db.close()
 
+  def log_svn_commit(self, svn_commit):
+    """Output information about SVN_COMMIT."""
+
+    Log().normal("Creating Subversion r%d (%s)"
+                 % (svn_commit.revnum, svn_commit.description))
+
+    if isinstance(svn_commit, SVNRevisionCommit):
+      for cvs_rev in svn_commit.cvs_revs:
+        Log().verbose(' %s %s' % (cvs_rev.cvs_path, cvs_rev.rev,))
+
   def run(self, stats_keeper):
     Log().quiet("Mapping CVS revisions to Subversion commits...")
 
@@ -1274,6 +1285,7 @@ class CreateRevsPass(Pass):
 
     for (changeset, timestamp) in self.get_changesets():
       for svn_commit in creator.process_changeset(changeset, timestamp):
+        self.log_svn_commit(svn_commit)
         persistence_manager.put_svn_commit(svn_commit)
 
     persistence_manager.close()

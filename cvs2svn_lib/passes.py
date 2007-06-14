@@ -1261,9 +1261,11 @@ class CreateRevsPass(Pass):
       Ctx()._symbolings_logger = SymbolingsLogger()
 
     persistence_manager = PersistenceManager(DB_OPEN_NEW)
-    creator = SVNCommitCreator(persistence_manager)
+    creator = SVNCommitCreator()
+
     for (changeset, timestamp) in self.get_changesets():
-      creator.process_changeset(changeset, timestamp)
+      for svn_commit in creator.process_changeset(changeset, timestamp):
+        persistence_manager.put_svn_commit(svn_commit)
 
     creator.close()
     persistence_manager.close()

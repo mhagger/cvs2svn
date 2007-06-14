@@ -17,6 +17,8 @@
 """This module contains the SVNCommitCreator class."""
 
 
+from __future__ import generators
+
 import time
 
 from cvs2svn_lib.boolean import *
@@ -41,13 +43,10 @@ from cvs2svn_lib.svn_commit import SVNPostCommit
 
 
 class SVNCommitCreator:
-  """This class coordinates the committing of changesets and symbols."""
-
-  def __init__(self, persistence_manager):
-    self._persistence_manager = persistence_manager
+  """This class creates and yields SVNCommits via process_changeset()."""
 
   def _commit(self, timestamp, cvs_revs):
-    """Generates the primary SVNCommit for a set of CVSRevisions.
+    """Generate the primary SVNCommit for a set of CVSRevisions.
 
     CHANGES and DELETES are the CVSRevisions to be included.  Use
     TIMESTAMP as the time of the commit (do not use the timestamps
@@ -89,7 +88,7 @@ class SVNCommitCreator:
             for cvs_rev in cvs_revs
             if cvs_rev.needs_post_commit]
 
-      self._persistence_manager.put_svn_commit(svn_commit)
+      yield svn_commit
 
       if not Ctx().trunk_only:
         for cvs_rev in changes + deletes:
@@ -105,8 +104,10 @@ class SVNCommitCreator:
           # doesn't support copies with sources in the current txn.
           # All copies must be based in committed revisions.
           # Therefore, we generate the copies in a new revision.
-          self._post_commit(
-              default_branch_cvs_revisions, svn_commit.revnum, timestamp)
+          for svn_post_commit in self._post_commit(
+                default_branch_cvs_revisions, svn_commit.revnum, timestamp
+                ):
+            yield svn_post_commit
 
   def _post_commit(self, cvs_revs, motivating_revnum, timestamp):
     """Generate any SVNCommits that we can perform following CVS_REVS.
@@ -127,13 +128,13 @@ class SVNCommitCreator:
     for cvs_rev in cvs_revs:
       Ctx()._symbolings_logger.log_default_branch_closing(
           cvs_rev, svn_commit.revnum)
-    self._persistence_manager.put_svn_commit(svn_commit)
+    yield svn_commit
 
   def _process_revision_changeset(self, changeset, timestamp):
     """Process CHANGESET, using TIMESTAMP for all of its entries.
 
-    Creating one or more SVNCommits in the process, and store them to
-    the persistence manager.  CHANGESET must be an OrderedChangeset."""
+    Creating one or more SVNCommits in the process, and yield them.
+    CHANGESET must be an OrderedChangeset."""
 
     if not changeset.cvs_item_ids:
       Log().warn('Changeset has no items: %r' % changeset)
@@ -152,7 +153,8 @@ class SVNCommitCreator:
           for cvs_rev in cvs_revs
           if not isinstance(cvs_rev.lod, Branch)]
 
-    self._commit(timestamp, cvs_revs)
+    for svn_commit in self._commit(timestamp, cvs_revs):
+      yield svn_commit
 
   def close(self):
     self._done_symbols = None
@@ -163,9 +165,7 @@ class SVNCommitCreator:
     if Ctx().trunk_only:
       return
 
-    svn_commit = SVNSymbolCommit(
-        changeset.symbol, changeset.cvs_item_ids, timestamp)
-    self._persistence_manager.put_svn_commit(svn_commit)
+    yield SVNSymbolCommit(changeset.symbol, changeset.cvs_item_ids, timestamp)
 
   def _process_branch_changeset(self, changeset, timestamp):
     """Process BranchChangeset CHANGESET, producing a SVNSymbolCommit."""
@@ -175,7 +175,7 @@ class SVNCommitCreator:
 
     svn_commit = SVNSymbolCommit(
         changeset.symbol, changeset.cvs_item_ids, timestamp)
-    self._persistence_manager.put_svn_commit(svn_commit)
+    yield svn_commit
     for cvs_branch in changeset.get_cvs_items():
       Ctx()._symbolings_logger.log_branch_revision(
           cvs_branch, svn_commit.revnum)
@@ -183,15 +183,17 @@ class SVNCommitCreator:
   def process_changeset(self, changeset, timestamp):
     """Process CHANGESET, using TIMESTAMP for all of its entries.
 
+    Return a generator that generates the resulting SVNCommits.
+
     The changesets must be fed to this function in proper dependency
     order."""
 
     if isinstance(changeset, OrderedChangeset):
-      self._process_revision_changeset(changeset, timestamp)
+      return self._process_revision_changeset(changeset, timestamp)
     elif isinstance(changeset, TagChangeset):
-      self._process_tag_changeset(changeset, timestamp)
+      return self._process_tag_changeset(changeset, timestamp)
     elif isinstance(changeset, BranchChangeset):
-      self._process_branch_changeset(changeset, timestamp)
+      return self._process_branch_changeset(changeset, timestamp)
     else:
       raise TypeError('Illegal changeset %r' % changeset)
 

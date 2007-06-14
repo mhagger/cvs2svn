@@ -1148,6 +1148,29 @@ class TopologicalSortPass(Pass):
     for changeset_id in changeset_db.keys():
       yield changeset_db[changeset_id]
 
+  def get_changesets(self, changeset_db):
+    """Generate (changeset, timestamp) pairs in commit order."""
+
+    changeset_graph = ChangesetGraph(changeset_db)
+    symbol_changeset_ids = set()
+
+    for changeset in self.get_source_changesets(changeset_db):
+      changeset_graph.add_changeset(changeset)
+      if isinstance(changeset, SymbolChangeset):
+        symbol_changeset_ids.add(changeset.id)
+
+    # Ensure a monotonically-increasing timestamp series by keeping
+    # track of the previous timestamp and ensuring that the following
+    # one is larger.
+    timestamper = Timestamper()
+
+    for (changeset_id, time_range) in changeset_graph.consume_graph():
+      changeset = changeset_db[changeset_id]
+      timestamp = timestamper.get(
+          time_range.t_max, changeset.id in symbol_changeset_ids
+          )
+      yield (changeset, timestamp)
+
   def run(self, stats_keeper):
     Log().quiet("Generating CVSRevisions in commit order...")
 
@@ -1169,35 +1192,21 @@ class TopologicalSortPass(Pass):
             config.CVS_ITEM_TO_CHANGESET_ALLBROKEN),
         DB_OPEN_READ)
 
-    changeset_graph = ChangesetGraph(changeset_db)
-
-    symbol_changeset_ids = set()
-    for changeset in self.get_source_changesets(changeset_db):
-      changeset_graph.add_changeset(changeset)
-      for cvs_item in changeset.get_cvs_items():
-        stats_keeper.record_cvs_item(cvs_item)
-      if isinstance(changeset, SymbolChangeset):
-        symbol_changeset_ids.add(changeset.id)
-
-    stats_keeper.set_stats_reflect_exclude(True)
-
-    stats_keeper.archive()
-
     sorted_changesets = open(
         artifact_manager.get_temp_file(config.CHANGESETS_SORTED_DATAFILE),
         'w')
 
-    # Ensure a monotonically-increasing timestamp series by keeping
-    # track of the previous timestamp and ensuring that the following
-    # one is larger.
-    timestamper = Timestamper()
+    for (changeset, timestamp) in self.get_changesets(changeset_db):
+      sorted_changesets.write('%x %08x\n' % (changeset.id, timestamp,))
 
-    for (changeset_id, time_range) in changeset_graph.consume_graph():
-      timestamp = timestamper.get(
-          time_range.t_max, changeset_id in symbol_changeset_ids)
-      sorted_changesets.write('%x %08x\n' % (changeset_id, timestamp,))
+      for cvs_item in changeset.get_cvs_items():
+        stats_keeper.record_cvs_item(cvs_item)
 
     sorted_changesets.close()
+
+    stats_keeper.set_stats_reflect_exclude(True)
+    stats_keeper.archive()
+
     Ctx()._cvs_item_to_changeset_id.close()
     changeset_db.close()
     Ctx()._cvs_items_db.close()

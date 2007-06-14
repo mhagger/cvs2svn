@@ -46,13 +46,55 @@ class SVNCommitCreator:
   """This class creates and yields SVNCommits via process_changeset()."""
 
   def _commit(self, timestamp, cvs_revs):
-    """Generate the primary SVNCommit for a set of CVSRevisions.
+    """Generate the primary SVNCommit for a set of CVSRevisions."""
 
-    CHANGES and DELETES are the CVSRevisions to be included.  Use
-    TIMESTAMP as the time of the commit (do not use the timestamps
-    stored in the CVSRevisions)."""
 
-    # Lists of CVSRevisions
+  def _post_commit(self, cvs_revs, motivating_revnum, timestamp):
+    """Generate any SVNCommits that we can perform following CVS_REVS.
+
+    That is, handle non-trunk default branches.  Sometimes an RCS file
+    has a non-trunk default branch, so a commit on that default branch
+    would be visible in a default CVS checkout of HEAD.  If we don't
+    copy that commit over to Subversion's trunk, then there will be no
+    Subversion tree which corresponds to that CVS checkout.  Of course,
+    in order to copy the path over, we may first need to delete the
+    existing trunk there."""
+
+    cvs_revs.sort(
+        lambda a, b: cmp(a.cvs_file.filename, b.cvs_file.filename)
+        )
+    # Generate an SVNCommit for all of our default branch cvs_revs.
+    svn_commit = SVNPostCommit(motivating_revnum, cvs_revs, timestamp)
+    for cvs_rev in cvs_revs:
+      Ctx()._symbolings_logger.log_default_branch_closing(
+          cvs_rev, svn_commit.revnum)
+    yield svn_commit
+
+  def _process_revision_changeset(self, changeset, timestamp):
+    """Process CHANGESET, using TIMESTAMP as the commit time.
+
+    Create and yield one or more SVNCommits in the process.  CHANGESET
+    must be an OrderedChangeset.  TIMESTAMP is used as the timestamp
+    for any resulting SVNCommits."""
+
+    if not changeset.cvs_item_ids:
+      Log().warn('Changeset has no items: %r' % changeset)
+      return
+
+    Log().verbose('-' * 60)
+    Log().verbose('CVS Revision grouping:')
+    Log().verbose('  Time: %s' % time.ctime(timestamp))
+
+    cvs_revs = list(changeset.get_cvs_items())
+
+    if Ctx().trunk_only:
+      # Filter out non-trunk revisions:
+      cvs_revs = [
+          cvs_rev
+          for cvs_rev in cvs_revs
+          if not isinstance(cvs_rev.lod, Branch)]
+
+    # Lists of CVSRevisions to be included:
     changes = []
     deletes = []
 
@@ -108,53 +150,6 @@ class SVNCommitCreator:
                 default_branch_cvs_revisions, svn_commit.revnum, timestamp
                 ):
             yield svn_post_commit
-
-  def _post_commit(self, cvs_revs, motivating_revnum, timestamp):
-    """Generate any SVNCommits that we can perform following CVS_REVS.
-
-    That is, handle non-trunk default branches.  Sometimes an RCS file
-    has a non-trunk default branch, so a commit on that default branch
-    would be visible in a default CVS checkout of HEAD.  If we don't
-    copy that commit over to Subversion's trunk, then there will be no
-    Subversion tree which corresponds to that CVS checkout.  Of course,
-    in order to copy the path over, we may first need to delete the
-    existing trunk there."""
-
-    cvs_revs.sort(
-        lambda a, b: cmp(a.cvs_file.filename, b.cvs_file.filename)
-        )
-    # Generate an SVNCommit for all of our default branch cvs_revs.
-    svn_commit = SVNPostCommit(motivating_revnum, cvs_revs, timestamp)
-    for cvs_rev in cvs_revs:
-      Ctx()._symbolings_logger.log_default_branch_closing(
-          cvs_rev, svn_commit.revnum)
-    yield svn_commit
-
-  def _process_revision_changeset(self, changeset, timestamp):
-    """Process CHANGESET, using TIMESTAMP for all of its entries.
-
-    Creating one or more SVNCommits in the process, and yield them.
-    CHANGESET must be an OrderedChangeset."""
-
-    if not changeset.cvs_item_ids:
-      Log().warn('Changeset has no items: %r' % changeset)
-      return
-
-    Log().verbose('-' * 60)
-    Log().verbose('CVS Revision grouping:')
-    Log().verbose('  Time: %s' % time.ctime(timestamp))
-
-    cvs_revs = list(changeset.get_cvs_items())
-
-    if Ctx().trunk_only:
-      # Filter out non-trunk revisions:
-      cvs_revs = [
-          cvs_rev
-          for cvs_rev in cvs_revs
-          if not isinstance(cvs_rev.lod, Branch)]
-
-    for svn_commit in self._commit(timestamp, cvs_revs):
-      yield svn_commit
 
   def _process_tag_changeset(self, changeset, timestamp):
     """Process TagChangeset CHANGESET, producing a SVNSymbolCommit."""

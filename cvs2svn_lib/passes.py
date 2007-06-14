@@ -1185,7 +1185,6 @@ class TopologicalSortPass(Pass):
         artifact_manager.get_temp_file(config.CHANGESETS_ALLBROKEN_STORE),
         artifact_manager.get_temp_file(config.CHANGESETS_ALLBROKEN_INDEX),
         DB_OPEN_READ)
-    Ctx()._changeset_db = changeset_db
 
     Ctx()._cvs_item_to_changeset_id = CVSItemToChangesetTable(
         artifact_manager.get_temp_file(

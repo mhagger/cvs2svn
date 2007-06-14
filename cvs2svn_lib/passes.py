@@ -1267,7 +1267,6 @@ class CreateRevsPass(Pass):
       for svn_commit in creator.process_changeset(changeset, timestamp):
         persistence_manager.put_svn_commit(svn_commit)
 
-    creator.close()
     persistence_manager.close()
     if not Ctx().trunk_only:
       Ctx()._symbolings_logger.close()

@@ -156,9 +156,6 @@ class SVNCommitCreator:
     for svn_commit in self._commit(timestamp, cvs_revs):
       yield svn_commit
 
-  def close(self):
-    self._done_symbols = None
-
   def _process_tag_changeset(self, changeset, timestamp):
     """Process TagChangeset CHANGESET, producing a SVNSymbolCommit."""
 

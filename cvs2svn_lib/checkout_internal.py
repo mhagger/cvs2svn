@@ -64,6 +64,7 @@ from cvs2svn_lib.revision_reader import RevisionReader
 from cvs2svn_lib.serializer import StringSerializer
 from cvs2svn_lib.serializer import CompressingSerializer
 
+
 class InternalRevisionRecorder(RevisionRecorder):
   """A RevisionRecorder that reconstructs the full text internally."""
 
@@ -95,21 +96,44 @@ class InternalRevisionRecorder(RevisionRecorder):
   def record_text(self, revisions_data, revision, log, text):
     revision_data = revisions_data[revision]
     if is_trunk_revision(revision):
-      # On trunk, deltas are inverted.
-      if revision_data.child is None: # HEAD has no children.
-        # HEAD is the first revision to be delivered - as full text.
+      # On trunk, revisions are encountered in reverse order (1.<N>
+      # ... 1.1) and deltas are inverted.  The first text that we see
+      # is the fulltext for the HEAD revision.  After that, the text
+      # corresponding to revision 1.N is the delta (1.<N+1> ->
+      # 1.<N>)).  We have to invert the deltas here so that we can
+      # read the revisions out in dependency order; that is, for
+      # revision 1.1 we want the fulltext, and for revision 1.<N> we
+      # want the delta (1.<N-1> -> 1.<N>).  This means that we can't
+      # compute the delta for a revision until we see its logical
+      # parent.  When we finally see revision 1.1 (which is recognized
+      # because it doesn't have a parent), we can record the diff (1.1
+      # -> 1.2) for revision 1.2, and also the fulltext for 1.1.
+
+      if revision_data.child is None:
+        # This is HEAD, as full text.  Initialize the RCSStream so
+        # that we can compute deltas backwards in time.
         self._stream = RCSStream(text)
       else:
-        # Any other trunk revision is a backward delta.
-        self._writeout(
-            revisions_data[revision_data.child],
-            self._stream.invert_diff(text))
+        # Any other trunk revision is a backward delta.  Apply the
+        # delta to the RCSStream to mutate it to the contents of this
+        # revision, and also to get the reverse delta, which we store
+        # as the forward delta of our child revision.
+        deltatext = self._stream.invert_diff(text)
+        self._writeout(revisions_data[revision_data.child], deltatext)
+
       if revision_data.parent is None:
+        # This is revision 1.1.  Write its fulltext:
         self._writeout(revision_data, self._stream.get_text())
-        # There will be no further trunk revisions delivered.
+
+        # There will be no more trunk revisions delivered, so free the
+        # RCSStream.
         del self._stream
+
     elif not Ctx().trunk_only:
-      # On branches, we have forward deltas.
+      # On branches, revisions are encountered in logical order
+      # (<BRANCH>.1 ... <BRANCH>.<N>) and the text corresponding to
+      # revision <BRANCH>.<N> is the forward delta (<BRANCH>.<N-1> ->
+      # <BRANCH>.<N>).  That's what we need, so just store it.
       self._writeout(revision_data, text)
 
     return None

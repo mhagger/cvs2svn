@@ -195,15 +195,23 @@ class CVSFileItems(object):
   def _exclude_branch(self, lod_items):
     """Exclude the branch described by LOD_ITEMS, including its revisions."""
 
-    cvs_branch = lod_items.cvs_branch
+    if lod_items.cvs_branch is not None:
+      # Delete the CVSBranch itself:
+      cvs_branch = lod_items.cvs_branch
 
-    del self[cvs_branch.id]
+      del self[cvs_branch.id]
+
+      # A CVSBranch is the successor of the CVSRevision that it
+      # sprouts from.  Delete this branch from that revision's
+      # branch_ids:
+      self[cvs_branch.source_id].branch_ids.remove(cvs_branch.id)
 
     if lod_items.cvs_revisions:
       # The first CVSRevision on a branch has to be detached from
       # the revision from which the branch sprang:
       cvs_rev = lod_items.cvs_revisions[0]
-      self[cvs_rev.prev_id].branch_commit_ids.remove(cvs_rev.id)
+      if cvs_rev.prev_id is not None:
+        self[cvs_rev.prev_id].branch_commit_ids.remove(cvs_rev.id)
       for cvs_rev in lod_items.cvs_revisions:
         del self[cvs_rev.id]
         # If cvs_rev is the last default revision on a non-trunk
@@ -213,11 +221,6 @@ class CVSFileItems(object):
           next = self[cvs_rev.default_branch_next_id]
           assert next.default_branch_prev_id == cvs_rev.id
           next.default_branch_prev_id = None
-
-    # A CVSBranch is the successor of the CVSRevision that it
-    # sprouts from.  Delete this branch from that revision's
-    # branch_ids:
-    self[cvs_branch.source_id].branch_ids.remove(cvs_branch.id)
 
   def filter_excluded_symbols(self, revision_excluder):
     """Delete any excluded symbols and references to them.

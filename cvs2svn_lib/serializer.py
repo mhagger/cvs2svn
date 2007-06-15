@@ -54,7 +54,7 @@ class StringSerializer(Serializer):
   """This class serializes/deserializes strings.
 
   Dumps and loads are simple pass-throughs, while dumpf and loadf use
-  marshal (so the serialized values know their own lenght in the file).
+  marshal (so the serialized values know their own length in the file).
   As a consequence, the two storage methods must not be mixed."""
 
   def dumpf(self, f, object):

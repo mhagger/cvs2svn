@@ -193,9 +193,7 @@ class CVSFileItems(object):
     self[cvs_tag.source_id].tag_ids.remove(cvs_tag.id)
 
   def _exclude_branch(self, lod_items):
-    """Exclude the specified CVS_BRANCH.
-
-    Also exclude CVS_REVISIONS, which are on CVS_BRANCH."""
+    """Exclude the branch described by LOD_ITEMS, including its revisions."""
 
     cvs_branch = lod_items.cvs_branch
 

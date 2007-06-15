@@ -167,9 +167,14 @@ class CollateSymbolsPass(Pass):
       if symbol in preferred_parents:
         preferred_parent = preferred_parents[symbol]
         del preferred_parents[symbol]
-        symbol.preferred_parent_id = preferred_parent.id
-        Log().debug(
-            'The preferred parent of %s is %s' % (symbol, preferred_parent,))
+        if preferred_parent is None:
+          symbol.preferred_parent_id = None
+          Log().debug('%s has no preferred parent' % (symbol,))
+        else:
+          symbol.preferred_parent_id = preferred_parent.id
+          Log().debug(
+              'The preferred parent of %s is %s' % (symbol, preferred_parent,)
+              )
 
     if preferred_parents:
       raise InternalError('Some symbols unaccounted for')

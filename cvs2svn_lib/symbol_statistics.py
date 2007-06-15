@@ -226,7 +226,7 @@ class SymbolStatisticsCollector:
     """Register the possible parents for each symbol in CVS_FILE_ITEMS."""
 
     for lod_items in cvs_file_items.iter_lods():
-      if lod_items.cvs_branch is not None:
+      if lod_items.lod is not None:
         branch_stats = self[lod_items.lod]
 
         branch_stats.register_branch_creation()
@@ -240,8 +240,9 @@ class SymbolStatisticsCollector:
         for cvs_branch in lod_items.cvs_branches:
           branch_stats.register_branch_blocker(cvs_branch.symbol)
 
-        branch_stats.register_branch_possible_parents(
-            lod_items.cvs_branch, cvs_file_items)
+        if lod_items.cvs_branch is not None:
+          branch_stats.register_branch_possible_parents(
+              lod_items.cvs_branch, cvs_file_items)
 
       for cvs_tag in lod_items.cvs_tags:
         tag_stats = self[cvs_tag.symbol]
@@ -456,7 +457,9 @@ class SymbolStatistics:
 
     Return a map {Symbol : LineOfDevelopment} giving the LOD that
     appears most often as a possible parent for each symbol.  Do not
-    include entries for Trunk objects."""
+    include entries for Trunk objects.  If a symbol has no possible
+    parents because it never exists as a CVSBranch or a CVSTag, then
+    the associated value is None."""
 
     retval = {}
     for stats in self._stats.itervalues():
@@ -465,9 +468,12 @@ class SymbolStatistics:
         pass
       else:
         (parents, count) = stats.get_preferred_parents()
-        parents = list(parents)
-        parents.sort()
-        retval[stats.lod] = parents[0]
+        if not parents:
+          retval[stats.lod] = None
+        else:
+          parents = list(parents)
+          parents.sort()
+          retval[stats.lod] = parents[0]
 
     return retval
 

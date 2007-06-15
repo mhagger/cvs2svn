@@ -98,7 +98,11 @@ class Symbol:
     self.name = name
 
     # If this symbol has a preferred parent, this member is the id of
-    # the LineOfDevelopment instance representing it.
+    # the LineOfDevelopment instance representing it.  If the symbol
+    # never appeared in a CVSTag or CVSBranch (for example, because
+    # all of the branches on this LOD have been detached from the
+    # dependency tree), then this field is set to None.  This field is
+    # set during FilterSymbolsPass.
     self.preferred_parent_id = None
 
   def __getstate__(self):

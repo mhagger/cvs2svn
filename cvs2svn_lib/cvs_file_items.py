@@ -160,9 +160,15 @@ class CVSFileItems(object):
     """Iterate over LinesOfDevelopment in this file, in depth-first order.
 
     For each LOD, yield an LODItems instance.  The traversal starts at
-    each root node but returns the LODs in depth-first order."""
+    each root node but returns the LODs in depth-first order.
 
-    for id in self.root_ids:
+    It is allowed to modify the CVSFileItems instance while the
+    traversal is occurring, but only in ways that don't affect the
+    tree structure above (i.e., towards the trunk from) the current
+    LOD."""
+
+    # Make a list out of root_ids so that callers can change it:
+    for id in list(self.root_ids):
       cvs_item = self[id]
       if isinstance(cvs_item, CVSRevision):
         # This LOD doesn't have a CVSBranch associated with it.

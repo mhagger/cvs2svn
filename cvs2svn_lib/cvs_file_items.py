@@ -193,7 +193,9 @@ class CVSFileItems(object):
     self[cvs_tag.source_id].tag_ids.remove(cvs_tag.id)
 
   def _exclude_branch(self, lod_items):
-    """Exclude the branch described by LOD_ITEMS, including its revisions."""
+    """Exclude the branch described by LOD_ITEMS, including its revisions.
+
+    (Do not update the LOD_ITEMS instance itself.)"""
 
     if lod_items.cvs_branch is not None:
       # Delete the CVSBranch itself:
@@ -207,11 +209,15 @@ class CVSFileItems(object):
       self[cvs_branch.source_id].branch_ids.remove(cvs_branch.id)
 
     if lod_items.cvs_revisions:
-      # The first CVSRevision on a branch has to be detached from
-      # the revision from which the branch sprang:
+      # The first CVSRevision on the branch has to be either detached
+      # from the revision from which the branch sprang, or removed
+      # from self.root_ids:
       cvs_rev = lod_items.cvs_revisions[0]
-      if cvs_rev.prev_id is not None:
+      if cvs_rev.prev_id is None:
+        self.root_ids.remove(cvs_rev.id)
+      else:
         self[cvs_rev.prev_id].branch_commit_ids.remove(cvs_rev.id)
+
       for cvs_rev in lod_items.cvs_revisions:
         del self[cvs_rev.id]
         # If cvs_rev is the last default revision on a non-trunk

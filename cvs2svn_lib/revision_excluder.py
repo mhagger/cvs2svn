@@ -53,45 +53,11 @@ class RevisionExcluder:
 
     raise NotImplementedError()
 
-  def exclude_tag(self, cvs_tag):
-    """CVS_TAG is being excluded from CVS_FILE.
-
-    This callback is called once for each tag that is to be excluded
-    for CVS_FILE.  This method is called before CVS_TAG has been
-    extracted from the dependencies graph."""
-
-    raise NotImplementedError()
-
-  def exclude_branch(self, cvs_branch, cvs_revisions):
-    """CVS_BRANCH is being excluded from CVS_FILE.
-
-    This callback is called once for each branch that is to be
-    excluded for CVS_FILE.  CVS_BRANCH is the CVSBranch object for the
-    branch that is being excluded.  CVS_REVISIONS is a list of
-    CVSRevisions on that branch, ordered by increasing revision number.
-    Callbacks are always called in the following sequence:
-
-        revision_excluder.start()
-        for cvs_file in files_with_excluded_branches:
-          for ...:
-            revision_excluder.exclude_tag(cvs_tag)
-            revision_excluder.exclude_branch(cvs_branch, cvs_revisions)
-          revision_excluder.finish_file()
-        revision_excluder.finish()
-
-    Moreover, the callback is called for branches in order from leaves
-    towards trunk; this guarantees that a branch has no sub-branches
-    by the time it is excluded.  This method is called before
-    CVS_BRANCH has been extracted from the dependencies graph."""
-
-    raise NotImplementedError()
-
   def finish_file(self, cvs_file_items):
     """Called after all branches have been excluded from CVS_FILE.
 
-    This callback is called once for each CVSFile from which branches
-    had to be excluded.  It is called after all exclude_tag() and
-    exclude_branch() calls for that file."""
+    This callback is called once for each CVSFile whose topology was
+    modified in FilterSymbolsPass."""
 
     raise NotImplementedError()
 
@@ -113,12 +79,6 @@ class NullRevisionExcluder(RevisionExcluder):
     pass
 
   def start(self):
-    pass
-
-  def exclude_tag(self, cvs_tag):
-    pass
-
-  def exclude_branch(self, cvs_branch, cvs_revisions):
     pass
 
   def finish_file(self, cvs_file_items):

@@ -259,10 +259,7 @@ class CVSFileItems(object):
       # Delete any excluded tags:
       for cvs_tag in lod_items.cvs_tags[:]:
         if isinstance(cvs_tag.symbol, ExcludedSymbol):
-          # Notify the revision excluder:
-          if not revision_excluder_started:
-            revision_excluder_started = True
-          revision_excluder.exclude_tag(cvs_tag)
+          revision_excluder_started = True
 
           self._exclude_tag(cvs_tag)
 
@@ -276,11 +273,7 @@ class CVSFileItems(object):
         assert not lod_items.cvs_branches
         assert not lod_items.cvs_tags
 
-        # Notify the revision excluder:
-        if not revision_excluder_started:
-          revision_excluder_started = True
-        revision_excluder.exclude_branch(
-            lod_items.cvs_branch, lod_items.cvs_revisions)
+        revision_excluder_started = True
 
         self._exclude_branch(lod_items)
 

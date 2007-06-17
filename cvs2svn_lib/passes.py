@@ -382,7 +382,8 @@ class InitializeChangesetsPass(Pass):
       for next_id in cvs_item.get_succ_ids():
         if next_id in changeset.cvs_item_ids:
           # Sanity check: a CVSItem should never depend on itself:
-          assert cvs_item.id != next_id
+          if next_id == cvs_item.id:
+            raise InternalError('Item depends on itself: %s' % (cvs_item,))
 
           dependencies.append((cvs_item.id, next_id,))
 

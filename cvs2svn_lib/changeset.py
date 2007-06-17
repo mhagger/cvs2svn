@@ -19,6 +19,7 @@
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.set_support import *
+from cvs2svn_lib.common import InternalError
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.symbol import Branch
 from cvs2svn_lib.symbol import Tag
@@ -239,6 +240,6 @@ def create_symbol_changeset(id, symbol, cvs_item_ids):
   if isinstance(symbol, Tag):
     return TagChangeset(id, symbol, cvs_item_ids)
   else:
-    raise 'Unknown symbol type'
+    raise InternalError('Unknown symbol type %s' % (symbol,))
 
 

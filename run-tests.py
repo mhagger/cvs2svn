@@ -2657,6 +2657,12 @@ def branch_from_empty_dir():
   conv = ensure_conversion('branch-from-empty-dir')
 
 
+def trunk_readd():
+  "add a file on a branch then on trunk"
+
+  conv = ensure_conversion('trunk-readd')
+
+
 ########################################################################
 # Run the tests
 
@@ -2801,6 +2807,7 @@ test_list = [
     preferred_parent_cycle,
 # 120:
     branch_from_empty_dir,
+    trunk_readd,
     ]
 
 if __name__ == '__main__':

@@ -1,0 +1,55 @@
+head	1.2;
+access;
+symbols
+	mytag:1.1.2.1
+	mybranch:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2007.06.17.18.48.11;	author mhagger;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.06.05.14.14.45;	author max;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2004.06.05.14.14.45;	author max;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Re-adding b_file on trunk
+@
+text
+@b_file 1.2
+@
+
+
+1.1
+log
+@file b_file was initially added on branch mybranch.
+@
+text
+@d1 1
+@
+
+
+1.1.2.1
+log
+@Add b_file
+@
+text
+@@
+

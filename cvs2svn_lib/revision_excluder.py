@@ -96,7 +96,7 @@ class RevisionExcluder:
 
     raise NotImplementedError()
 
-  def finish_file(self):
+  def finish_file(self, cvs_file_items):
     """Called after all branches have been excluded from CVS_FILE.
 
     This callback is called once for each CVSFile from which branches
@@ -135,7 +135,7 @@ class NullRevisionExcluder(RevisionExcluder):
   def exclude_branch(self, cvs_branch, cvs_revisions):
     pass
 
-  def finish_file(self):
+  def finish_file(self, cvs_file_items):
     pass
 
   def skip_file(self, cvs_file):

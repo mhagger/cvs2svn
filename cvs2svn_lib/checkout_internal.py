@@ -239,7 +239,7 @@ class InternalRevisionExcluder(RevisionExcluder):
         # "leftover_revs" test fail.
         return
 
-  def finish_file(self):
+  def finish_file(self, cvs_file_items):
     self._new_tree_db[self._id] = self._lods.values()
 
   def skip_file(self, cvs_file):

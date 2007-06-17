@@ -377,11 +377,12 @@ class SVNRepositoryMirror:
     skipped revisions symmetrically."""
     self._invoke_delegates('skip_path', cvs_rev)
 
-  def copy_path(self, src_path, dest_path, src_revnum):
+  def copy_path(self, src_path, dest_path, src_revnum, create_parent=False):
     """Copy SRC_PATH at subversion revision number SRC_REVNUM to DEST_PATH.
 
     In the youngest revision of the repository, DEST_PATH's parent
-    *must* exist, but DEST_PATH *must not* exist.
+    *must* exist unless create_parent is specified.  DEST_PATH itself
+    *must not* exist.
 
     Return the new node at DEST_PATH.  Note that this node is not
     necessarily writable, though its parent node necessarily is."""
@@ -391,7 +392,7 @@ class SVNRepositoryMirror:
 
     # Get the parent path and the base path of the dest_path
     (dest_parent, dest_basename,) = path_split(dest_path)
-    dest_parent_node = self._open_writable_node(dest_parent, False)
+    dest_parent_node = self._open_writable_node(dest_parent, create_parent)
 
     if dest_parent_node is None:
       raise self.SVNRepositoryMirrorParentMissingError(

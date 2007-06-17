@@ -517,7 +517,7 @@ class InternalRevisionExcluder(RevisionExcluder):
         artifact_manager.get_temp_file(config.RCS_TREES_FILTERED_INDEX_TABLE),
         DB_OPEN_NEW, PrimedPickleSerializer(primer))
 
-  def finish_file(self, cvs_file_items):
+  def process_file(self, cvs_file_items):
     text_record_db = self._tree_db[cvs_file_items.cvs_file.id]
     text_record_db.recompute_refcounts(cvs_file_items)
     text_record_db.free_unused()

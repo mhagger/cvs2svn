@@ -278,7 +278,7 @@ class CVSFileItems(object):
         self._exclude_branch(lod_items)
 
     if revision_excluder_started:
-      revision_excluder.finish_file(self)
+      revision_excluder.process_file(self)
     else:
       revision_excluder.skip_file(self.cvs_file)
 

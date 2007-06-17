@@ -53,8 +53,8 @@ class RevisionExcluder:
 
     raise NotImplementedError()
 
-  def finish_file(self, cvs_file_items):
-    """Called after all branches have been excluded from CVS_FILE.
+  def process_file(self, cvs_file_items):
+    """Called for files whose trees were modified in FilterSymbolsPass.
 
     This callback is called once for each CVSFile whose topology was
     modified in FilterSymbolsPass."""
@@ -81,7 +81,7 @@ class NullRevisionExcluder(RevisionExcluder):
   def start(self):
     pass
 
-  def finish_file(self, cvs_file_items):
+  def process_file(self, cvs_file_items):
     pass
 
   def skip_file(self, cvs_file):

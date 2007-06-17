@@ -273,7 +273,7 @@ class CVSFileItems(object):
         if cvs_item.next_id is not None:
           cvs_rev_next = self[cvs_item.next_id]
           cvs_rev_next.prev_id = None
-          self.root_ids.add(cvs_item_next.id)
+          self.root_ids.add(cvs_rev_next.id)
 
         # Delete the CVSBranch where the file was created.  This
         # leaves the first CVSRevision on that branch, which should be

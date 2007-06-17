@@ -517,9 +517,6 @@ class InternalRevisionExcluder(RevisionExcluder):
         artifact_manager.get_temp_file(config.RCS_TREES_FILTERED_INDEX_TABLE),
         DB_OPEN_NEW, PrimedPickleSerializer(primer))
 
-  def start_file(self, cvs_file):
-    pass
-
   def exclude_tag(self, cvs_tag):
     pass
 

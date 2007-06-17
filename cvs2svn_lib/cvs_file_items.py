@@ -261,7 +261,6 @@ class CVSFileItems(object):
         if isinstance(cvs_tag.symbol, ExcludedSymbol):
           # Notify the revision excluder:
           if not revision_excluder_started:
-            revision_excluder.start_file(self.cvs_file)
             revision_excluder_started = True
           revision_excluder.exclude_tag(cvs_tag)
 
@@ -279,7 +278,6 @@ class CVSFileItems(object):
 
         # Notify the revision excluder:
         if not revision_excluder_started:
-          revision_excluder.start_file(self.cvs_file)
           revision_excluder_started = True
         revision_excluder.exclude_branch(
             lod_items.cvs_branch, lod_items.cvs_revisions)

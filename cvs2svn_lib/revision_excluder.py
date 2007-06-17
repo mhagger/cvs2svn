@@ -53,15 +53,6 @@ class RevisionExcluder:
 
     raise NotImplementedError()
 
-  def start_file(self, cvs_file):
-    """Branches will be excluded from CVS_FILE.
-
-    This callback is called once for each CVSFile for which some
-    branches will have to be excluded.  It is called before
-    exclude_tag() or exclude_branch()."""
-
-    raise NotImplementedError()
-
   def exclude_tag(self, cvs_tag):
     """CVS_TAG is being excluded from CVS_FILE.
 
@@ -82,7 +73,6 @@ class RevisionExcluder:
 
         revision_excluder.start()
         for cvs_file in files_with_excluded_branches:
-          revision_excluder.start_file(cvs_file)
           for ...:
             revision_excluder.exclude_tag(cvs_tag)
             revision_excluder.exclude_branch(cvs_branch, cvs_revisions)
@@ -106,8 +96,7 @@ class RevisionExcluder:
     raise NotImplementedError()
 
   def skip_file(self, cvs_file):
-    """When start_file/finish_file have not been called on a file,
-    this is called instead."""
+    """Called when a file's dependency topology didn't have to be changed."""
 
     raise NotImplementedError()
 
@@ -124,9 +113,6 @@ class NullRevisionExcluder(RevisionExcluder):
     pass
 
   def start(self):
-    pass
-
-  def start_file(self, cvs_file):
     pass
 
   def exclude_tag(self, cvs_tag):

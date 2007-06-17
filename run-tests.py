@@ -2793,7 +2793,7 @@ test_list = [
     internal_co,
     internal_co_exclude,
     internal_co_trunk_only,
-    XFail(leftover_revs),
+    leftover_revs,
     requires_internal_co,
     timestamp_chaos,
     symlinks,

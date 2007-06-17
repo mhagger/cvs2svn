@@ -189,6 +189,53 @@ class CVSFileItems(object):
       for lod_items in self._iter_tree(lod, cvs_branch, id):
         yield lod_items
 
+  def adjust_non_trunk_default_branch_revisions(
+      self, file_imported, ntdbr, rev_1_2_id):
+    """Adjust the non-trunk default branch revisions.
+
+    FILE_IMPORTED is a boolean indicating whether this file appears to
+    have been imported.  NTDBR is a list of cvs_rev_ids for the
+    revisions that have been determined to be non-trunk default branch
+    revisions.  Set their default_branch_revision and
+    needs_post_commit members correctly.  Also, if REV_1_2_ID is not
+    None, then it is the id of revision 1.2.  Set that revision to
+    depend on the last non-trunk default branch revision."""
+
+    # The first revision on the default branch is handled
+    # specially.  The trunk 1.1 revision will be filled from trunk
+    # to the branch.  If there is no deltatext between 1.1 and
+    # 1.1.1.1, then there is no need for a post commit to copy the
+    # non-change back to trunk.  A copy is only needed if
+    # deltatext exists for some reason:
+    cvs_rev = self[ntdbr[0]]
+
+    cvs_rev.default_branch_revision = True
+
+    if file_imported \
+           and cvs_rev.rev == '1.1.1.1' \
+           and not isinstance(cvs_rev, CVSRevisionDelete) \
+           and not cvs_rev.deltatext_exists:
+      # When 1.1.1.1 has an empty deltatext, the explanation is
+      # almost always that we're looking at an imported file whose
+      # 1.1 and 1.1.1.1 are identical.  On such imports, CVS
+      # creates an RCS file where 1.1 has the content, and 1.1.1.1
+      # has an empty deltatext, i.e, the same content as 1.1.
+      # There's no reason to reflect this non-change in the
+      # repository, so we want to do nothing in this case.
+      cvs_rev.needs_post_commit = False
+    else:
+      cvs_rev.needs_post_commit = True
+
+    for cvs_rev_id in ntdbr[1:]:
+      cvs_rev = self[cvs_rev_id]
+      cvs_rev.default_branch_revision = True
+      cvs_rev.needs_post_commit = True
+
+    if rev_1_2_id is not None:
+      rev_1_2 = self[rev_1_2_id]
+      rev_1_2.default_branch_prev_id = ntdbr[-1]
+      self[ntdbr[-1]].default_branch_next_id = rev_1_2.id
+
   def _delete_unneeded(self, cvs_rev, metadata_db):
     if cvs_rev.rev == '1.1' \
            and isinstance(cvs_rev.lod, Trunk) \

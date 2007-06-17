@@ -722,7 +722,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     """Determine whether there are any non-trunk default branch revisions.
 
     If a non-trunk default branch is determined to have existed, yield
-    the _RevisionData for all revisions that were once non-trunk
+    the _RevisionData.ids for all revisions that were once non-trunk
     default revisions, in dependency order.
 
     There are two cases to handle:
@@ -754,7 +754,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       rev = self.sdc.branches_data[self.default_branch].child
       while rev:
         rev_data = self._rev_data[rev]
-        yield rev_data
+        yield rev_data.cvs_rev_id
         rev = rev_data.child
 
     elif self._file_imported:
@@ -794,50 +794,8 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
                  and rev_data.timestamp >= rev_1_2_timestamp:
             # That's the end of the once-default branch.
             break
-          yield rev_data
+          yield rev_data.cvs_rev_id
           rev = rev_data.child
-
-  def _adjust_non_trunk_default_branch_revisions(self, ntdbr):
-    """Adjust the non-trunk default branch revisions.
-
-    NTDBR is a list of _RevisionData instances for the revisions that
-    have been determined to be non-trunk default branch revisions.
-    Set their non_trunk_default_branch_revision and needs_post_commit
-    members correctly.  Also, if there is a revision 1.2, set it to
-    depend on the last non-trunk default branch revision."""
-
-    # The first revision on the default branch is handled
-    # specially.  The trunk 1.1 revision will be filled from trunk
-    # to the branch.  If there is no deltatext between 1.1 and
-    # 1.1.1.1, then there is no need for a post commit to copy the
-    # non-change back to trunk.  A copy is only needed if
-    # deltatext exists for some reason:
-    rev_data = ntdbr[0]
-    rev_data.non_trunk_default_branch_revision = True
-
-    if self._file_imported \
-           and rev_data.rev == '1.1.1.1' \
-           and rev_data.state != 'dead' \
-           and not rev_data.deltatext_exists:
-      # When 1.1.1.1 has an empty deltatext, the explanation is
-      # almost always that we're looking at an imported file whose
-      # 1.1 and 1.1.1.1 are identical.  On such imports, CVS
-      # creates an RCS file where 1.1 has the content, and 1.1.1.1
-      # has an empty deltatext, i.e, the same content as 1.1.
-      # There's no reason to reflect this non-change in the
-      # repository, so we want to do nothing in this case.
-      rev_data.needs_post_commit = False
-    else:
-      rev_data.needs_post_commit = True
-
-    for rev_data in ntdbr[1:]:
-      rev_data.non_trunk_default_branch_revision = True
-      rev_data.needs_post_commit = True
-
-    rev_1_2 = self._rev_data.get('1.2')
-    if rev_1_2 is not None:
-      rev_1_2.default_branch_prev = ntdbr[-1].rev
-      ntdbr[-1].default_branch_next = rev_1_2.rev
 
   def _get_cvs_revision(self, rev_data):
     """Create and return a CVSRevision for REV_DATA."""
@@ -913,8 +871,6 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     This is a callback method declared in Sink."""
 
     ntdbr = list(self._get_non_trunk_default_branch_revisions())
-    if ntdbr:
-      self._adjust_non_trunk_default_branch_revisions(ntdbr)
 
     cvs_items = []
     cvs_items.extend(self._get_cvs_revisions())
@@ -925,6 +881,15 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     # Break a circular reference loop, allowing the memory for self
     # and sdc to be freed.
     del self.sdc
+
+    if ntdbr:
+      rev_1_2 = self._rev_data.get('1.2')
+      if rev_1_2 is not None:
+        rev_1_2_id = rev_1_2.cvs_rev_id
+      else:
+        rev_1_2_id = None
+      cvs_file_items.adjust_non_trunk_default_branch_revisions(
+          self._file_imported, ntdbr, rev_1_2_id)
 
     # Remove CVSRevisionDeletes that are not needed:
     cvs_file_items.remove_unneeded_deletes(self.collect_data.metadata_db)

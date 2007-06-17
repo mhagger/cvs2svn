@@ -234,6 +234,20 @@ class CVSFileItems(object):
           assert next.default_branch_prev_id == cvs_rev.id
           next.default_branch_prev_id = None
 
+  def exclude_non_trunk(self):
+    """Delete all tags and branches."""
+
+    for lod_items in self.iter_lods():
+      for cvs_tag in lod_items.cvs_tags[:]:
+        self._exclude_tag(cvs_tag)
+        lod_items.cvs_tags.remove(cvs_tag)
+
+      assert not lod_items.cvs_branches
+      assert not lod_items.cvs_tags
+
+      if not isinstance(lod_items.lod, Trunk):
+        self._exclude_branch(lod_items)
+
   def filter_excluded_symbols(self, revision_excluder):
     """Delete any excluded symbols and references to them.
 

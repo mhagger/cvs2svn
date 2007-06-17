@@ -926,6 +926,11 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     # and sdc to be freed.
     del self.sdc
 
+    # If this is a --trunk-only conversion, discard all branches and
+    # tags:
+    if Ctx().trunk_only:
+      cvs_file_items.exclude_non_trunk()
+
     self.collect_data.revision_recorder.finish_file(cvs_file_items)
     self.collect_data.add_cvs_file_items(cvs_file_items)
     self.collect_data.symbol_stats.register(cvs_file_items)

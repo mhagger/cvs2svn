@@ -2765,7 +2765,7 @@ test_list = [
     multiple_tags,
     double_branch_delete,
     symbol_mismatches,
-    XFail(overlook_symbol_mismatches),
+    overlook_symbol_mismatches,
 # 90:
     force_symbols,
     commit_blocks_tags,

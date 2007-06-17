@@ -290,6 +290,8 @@ class RunOptions:
     tags_base = config.DEFAULT_TAGS_BASE
     encodings = ['ascii']
     fallback_encoding = None
+    force_branch = False
+    force_tag = False
     symbol_transforms = []
 
     ctx.symbol_strategy = RuleBasedSymbolStrategy()
@@ -321,8 +323,10 @@ class RunOptions:
         fallback_encoding = value
       elif opt == '--force-branch':
         ctx.symbol_strategy.add_rule(ForceBranchRegexpStrategyRule(value))
+        force_branch = True
       elif opt == '--force-tag':
         ctx.symbol_strategy.add_rule(ForceTagRegexpStrategyRule(value))
+        force_tag = True
       elif opt == '--exclude':
         ctx.symbol_strategy.add_rule(ExcludeRegexpStrategyRule(value))
       elif opt == '--symbol-default':
@@ -424,6 +428,12 @@ class RunOptions:
 
     not_both(use_cvs, '--use-cvs',
              use_internal_co, '--use-internal-co')
+
+    not_both(ctx.trunk_only, '--trunk-only',
+             force_branch, '--force-branch')
+
+    not_both(ctx.trunk_only, '--trunk-only',
+             force_tag, '--force-tag')
 
     if fs_type and fs_type != 'bdb' and bdb_txn_nosync:
       raise FatalError("cannot pass --bdb-txn-nosync with --fs-type=%s."

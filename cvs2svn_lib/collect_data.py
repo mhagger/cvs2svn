@@ -926,6 +926,9 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     # and sdc to be freed.
     del self.sdc
 
+    # Remove CVSRevisionDeletes that are not needed:
+    cvs_file_items.remove_unneeded_deletes(self.collect_data.metadata_db)
+
     # If this is a --trunk-only conversion, discard all branches and
     # tags:
     if Ctx().trunk_only:

@@ -86,29 +86,14 @@ class SVNCommitCreator:
     Log().verbose('CVS Revision grouping:')
     Log().verbose('  Time: %s' % time.ctime(timestamp))
 
-    # Lists of CVSRevisions to be included:
-    changes = []
-    deletes = []
-
-    for cvs_rev in changeset.get_cvs_items():
-      if isinstance(cvs_rev, CVSRevisionDelete):
-        deletes.append(cvs_rev)
-      else:
-        # CVSRevisionAdd or CVSRevisionChange:
-        changes.append(cvs_rev)
-
     # Generate an SVNCommit unconditionally.  Even if the only change in
     # this group of CVSRevisions is a deletion of an already-deleted
     # file (that is, a CVS revision in state 'dead' whose predecessor
     # was also in state 'dead'), the conversion will still generate a
     # Subversion revision containing the log message for the second dead
     # revision, because we don't want to lose that information.
-    needed_deletes = [
-        cvs_rev
-        for cvs_rev in deletes
-        if cvs_rev.needs_delete()
-        ]
-    cvs_revs = changes + needed_deletes
+
+    cvs_revs = list(changeset.get_cvs_items())
     if cvs_revs:
       cvs_revs.sort(lambda a, b: cmp(a.cvs_file.filename, b.cvs_file.filename))
       svn_commit = SVNPrimaryCommit(cvs_revs, timestamp)
@@ -124,7 +109,7 @@ class SVNCommitCreator:
 
       yield svn_commit
 
-      for cvs_rev in changes + deletes:
+      for cvs_rev in cvs_revs:
         Ctx()._symbolings_logger.log_revision(cvs_rev, svn_commit.revnum)
 
       # Generate an SVNPostCommit if we have default branch revs:

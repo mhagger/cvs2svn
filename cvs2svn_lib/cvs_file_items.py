@@ -30,6 +30,7 @@ from cvs2svn_lib.symbol import Branch
 from cvs2svn_lib.symbol import Tag
 from cvs2svn_lib.symbol import ExcludedSymbol
 from cvs2svn_lib.cvs_item import CVSRevision
+from cvs2svn_lib.cvs_item import CVSRevisionDelete
 from cvs2svn_lib.cvs_item import CVSSymbol
 from cvs2svn_lib.cvs_item import CVSBranch
 from cvs2svn_lib.cvs_item import CVSTag
@@ -187,6 +188,59 @@ class CVSFileItems(object):
 
       for lod_items in self._iter_tree(lod, cvs_branch, id):
         yield lod_items
+
+  def _delete_unneeded(self, cvs_rev, metadata_db):
+    if cvs_rev.rev == '1.1' \
+           and isinstance(cvs_rev.lod, Trunk) \
+           and len(cvs_rev.branch_ids) == 1 \
+           and self[cvs_rev.branch_ids[0]].next_id is not None \
+           and not cvs_rev.tag_ids \
+           and not cvs_rev.closed_symbol_ids \
+           and not cvs_rev.needs_post_commit:
+      # FIXME: This message will not match if the RCS file was renamed
+      # manually after it was created.
+      author, log_msg = metadata_db[cvs_rev.metadata_id]
+      cvs_generated_msg = 'file %s was initially added on branch %s.\n' % (
+          self.cvs_file.basename,
+          self[cvs_rev.branch_ids[0]].symbol.name,)
+      return log_msg == cvs_generated_msg
+    else:
+      return False
+
+  def remove_unneeded_deletes(self, metadata_db):
+    """Remove unneeded deletes for this file.
+
+    If a file is added on a branch, then a trunk revision is added at
+    the same time in the 'Dead' state.  This revision doesn't do
+    anything useful, so delete it."""
+
+    for id in self.root_ids:
+      cvs_item = self[id]
+      if isinstance(cvs_item, CVSRevisionDelete) \
+             and self._delete_unneeded(cvs_item, metadata_db):
+        Log().debug('Removing unnecessary delete %s' % (cvs_item,))
+
+        # Delete cvs_item:
+        self.root_ids.remove(cvs_item.id)
+        del self[id]
+        if cvs_item.next_id is not None:
+          cvs_rev_next = self[cvs_item.next_id]
+          cvs_rev_next.prev_id = None
+          self.root_ids.add(cvs_item_next.id)
+
+        # Delete the CVSBranch where the file was created.  This
+        # leaves the first CVSRevision on that branch, which should be
+        # an add.
+        cvs_branch = self[cvs_item.branch_ids[0]]
+        del self[cvs_branch.id]
+
+        cvs_branch_next = self[cvs_branch.next_id]
+        cvs_branch_next.first_on_branch_id = None
+        cvs_branch_next.prev_id = None
+        self.root_ids.add(cvs_branch_next.id)
+
+        # This can only happen once per file, so exit:
+        break
 
   def _exclude_tag(self, cvs_tag):
     """Exclude the specified CVS_TAG."""

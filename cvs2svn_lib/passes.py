@@ -1234,8 +1234,7 @@ class CreateRevsPass(Pass):
     self._register_temp_file(config.SVN_COMMITS_INDEX_TABLE)
     self._register_temp_file(config.SVN_COMMITS_STORE)
     self._register_temp_file(config.CVS_REVS_TO_SVN_REVNUMS)
-    if not Ctx().trunk_only:
-      self._register_temp_file(config.SYMBOL_OPENINGS_CLOSINGS)
+    self._register_temp_file(config.SYMBOL_OPENINGS_CLOSINGS)
     self._register_temp_file_needed(config.CVS_FILES_DB)
     self._register_temp_file_needed(config.CVS_ITEMS_FILTERED_STORE)
     self._register_temp_file_needed(config.CVS_ITEMS_FILTERED_INDEX_TABLE)
@@ -1290,8 +1289,7 @@ class CreateRevsPass(Pass):
         artifact_manager.get_temp_file(config.CVS_ITEMS_FILTERED_INDEX_TABLE),
         DB_OPEN_READ)
 
-    if not Ctx().trunk_only:
-      Ctx()._symbolings_logger = SymbolingsLogger()
+    Ctx()._symbolings_logger = SymbolingsLogger()
 
     persistence_manager = PersistenceManager(DB_OPEN_NEW)
 
@@ -1300,8 +1298,7 @@ class CreateRevsPass(Pass):
       persistence_manager.put_svn_commit(svn_commit)
 
     persistence_manager.close()
-    if not Ctx().trunk_only:
-      Ctx()._symbolings_logger.close()
+    Ctx()._symbolings_logger.close()
     Ctx()._cvs_items_db.close()
     Ctx()._metadata_db.close()
     Ctx()._symbol_db.close()
@@ -1317,19 +1314,17 @@ class SortSymbolsPass(Pass):
   """This pass was formerly known as pass6."""
 
   def register_artifacts(self):
-    if not Ctx().trunk_only:
-      self._register_temp_file(config.SYMBOL_OPENINGS_CLOSINGS_SORTED)
-      self._register_temp_file_needed(config.SYMBOL_OPENINGS_CLOSINGS)
+    self._register_temp_file(config.SYMBOL_OPENINGS_CLOSINGS_SORTED)
+    self._register_temp_file_needed(config.SYMBOL_OPENINGS_CLOSINGS)
 
   def run(self, stats_keeper):
     Log().quiet("Sorting symbolic name source revisions...")
 
-    if not Ctx().trunk_only:
-      sort_file(
-          artifact_manager.get_temp_file(config.SYMBOL_OPENINGS_CLOSINGS),
-          artifact_manager.get_temp_file(
-              config.SYMBOL_OPENINGS_CLOSINGS_SORTED),
-          options='-k 1,1 -k 2,2n -k 3')
+    sort_file(
+        artifact_manager.get_temp_file(config.SYMBOL_OPENINGS_CLOSINGS),
+        artifact_manager.get_temp_file(
+            config.SYMBOL_OPENINGS_CLOSINGS_SORTED),
+        options='-k 1,1 -k 2,2n -k 3')
     Log().quiet("Done")
 
 
@@ -1337,10 +1332,9 @@ class IndexSymbolsPass(Pass):
   """This pass was formerly known as pass7."""
 
   def register_artifacts(self):
-    if not Ctx().trunk_only:
-      self._register_temp_file(config.SYMBOL_OFFSETS_DB)
-      self._register_temp_file_needed(config.SYMBOL_DB)
-      self._register_temp_file_needed(config.SYMBOL_OPENINGS_CLOSINGS_SORTED)
+    self._register_temp_file(config.SYMBOL_OFFSETS_DB)
+    self._register_temp_file_needed(config.SYMBOL_DB)
+    self._register_temp_file_needed(config.SYMBOL_OPENINGS_CLOSINGS_SORTED)
 
   def generate_offsets_for_symbolings(self):
     """This function iterates through all the lines in
@@ -1377,14 +1371,11 @@ class IndexSymbolsPass(Pass):
     offsets_db.close()
 
   def run(self, stats_keeper):
-    if Ctx().trunk_only:
-      Log().quiet("Trunk-only conversion--nothing to do.")
-    else:
-      Log().quiet("Determining offsets for all symbolic names...")
-      Ctx()._symbol_db = SymbolDatabase()
-      self.generate_offsets_for_symbolings()
-      Ctx()._symbol_db.close()
-      Log().quiet("Done.")
+    Log().quiet("Determining offsets for all symbolic names...")
+    Ctx()._symbol_db = SymbolDatabase()
+    self.generate_offsets_for_symbolings()
+    Ctx()._symbol_db.close()
+    Log().quiet("Done.")
 
 
 class OutputPass(Pass):
@@ -1402,9 +1393,8 @@ class OutputPass(Pass):
     self._register_temp_file_needed(config.SVN_COMMITS_INDEX_TABLE)
     self._register_temp_file_needed(config.SVN_COMMITS_STORE)
     self._register_temp_file_needed(config.CVS_REVS_TO_SVN_REVNUMS)
-    if not Ctx().trunk_only:
-      self._register_temp_file_needed(config.SYMBOL_OPENINGS_CLOSINGS_SORTED)
-      self._register_temp_file_needed(config.SYMBOL_OFFSETS_DB)
+    self._register_temp_file_needed(config.SYMBOL_OPENINGS_CLOSINGS_SORTED)
+    self._register_temp_file_needed(config.SYMBOL_OFFSETS_DB)
     Ctx().revision_reader.register_artifacts(self)
 
   def get_svn_commits(self):

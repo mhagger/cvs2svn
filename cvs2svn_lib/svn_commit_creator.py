@@ -25,6 +25,7 @@ from cvs2svn_lib.boolean import *
 from cvs2svn_lib.set_support import *
 from cvs2svn_lib import config
 from cvs2svn_lib.common import warning_prefix
+from cvs2svn_lib.common import InternalError
 from cvs2svn_lib.common import DB_OPEN_NEW
 from cvs2svn_lib.common import DB_OPEN_READ
 from cvs2svn_lib.log import Log
@@ -85,20 +86,11 @@ class SVNCommitCreator:
     Log().verbose('CVS Revision grouping:')
     Log().verbose('  Time: %s' % time.ctime(timestamp))
 
-    cvs_revs = list(changeset.get_cvs_items())
-
-    if Ctx().trunk_only:
-      # Filter out non-trunk revisions:
-      cvs_revs = [
-          cvs_rev
-          for cvs_rev in cvs_revs
-          if not isinstance(cvs_rev.lod, Branch)]
-
     # Lists of CVSRevisions to be included:
     changes = []
     deletes = []
 
-    for cvs_rev in cvs_revs:
+    for cvs_rev in changeset.get_cvs_items():
       if isinstance(cvs_rev, CVSRevisionDelete):
         deletes.append(cvs_rev)
       else:
@@ -132,30 +124,30 @@ class SVNCommitCreator:
 
       yield svn_commit
 
-      if not Ctx().trunk_only:
-        for cvs_rev in changes + deletes:
-          Ctx()._symbolings_logger.log_revision(cvs_rev, svn_commit.revnum)
+      for cvs_rev in changes + deletes:
+        Ctx()._symbolings_logger.log_revision(cvs_rev, svn_commit.revnum)
 
-        # Generate an SVNPostCommit if we have default branch revs:
-        if default_branch_cvs_revisions:
-          # If some of the revisions in this commit happened on a
-          # non-trunk default branch, then those files have to be
-          # copied into trunk manually after being changed on the
-          # branch (because the RCS "default branch" appears as head,
-          # i.e., trunk, in practice).  Unfortunately, Subversion
-          # doesn't support copies with sources in the current txn.
-          # All copies must be based in committed revisions.
-          # Therefore, we generate the copies in a new revision.
-          for svn_post_commit in self._post_commit(
-                default_branch_cvs_revisions, svn_commit.revnum, timestamp
-                ):
-            yield svn_post_commit
+      # Generate an SVNPostCommit if we have default branch revs:
+      if default_branch_cvs_revisions:
+        # If some of the revisions in this commit happened on a
+        # non-trunk default branch, then those files have to be
+        # copied into trunk manually after being changed on the
+        # branch (because the RCS "default branch" appears as head,
+        # i.e., trunk, in practice).  Unfortunately, Subversion
+        # doesn't support copies with sources in the current txn.
+        # All copies must be based in committed revisions.
+        # Therefore, we generate the copies in a new revision.
+        for svn_post_commit in self._post_commit(
+              default_branch_cvs_revisions, svn_commit.revnum, timestamp
+              ):
+          yield svn_post_commit
 
   def _process_tag_changeset(self, changeset, timestamp):
     """Process TagChangeset CHANGESET, producing a SVNSymbolCommit."""
 
     if Ctx().trunk_only:
-      return
+      raise InternalError(
+          'TagChangeset encountered during a --trunk-only conversion')
 
     yield SVNSymbolCommit(changeset.symbol, changeset.cvs_item_ids, timestamp)
 
@@ -163,7 +155,8 @@ class SVNCommitCreator:
     """Process BranchChangeset CHANGESET, producing a SVNSymbolCommit."""
 
     if Ctx().trunk_only:
-      return
+      raise InternalError(
+          'BranchChangeset encountered during a --trunk-only conversion')
 
     svn_commit = SVNSymbolCommit(
         changeset.symbol, changeset.cvs_item_ids, timestamp)

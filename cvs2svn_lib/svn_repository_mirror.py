@@ -176,8 +176,7 @@ class SVNRepositoryMirror:
     # by _open_writable_root_node.
     self._youngest = 0
 
-    if not Ctx().trunk_only:
-      self._symbolings_reader = SymbolingsReader()
+    self._symbolings_reader = SymbolingsReader()
 
   def start_commit(self, revnum, revprops):
     """Start a new commit."""

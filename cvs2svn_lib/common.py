@@ -56,7 +56,7 @@ class FatalException(Exception):
   pass
 
 
-class InternalError(FatalException):
+class InternalError(Exception):
   """Exception thrown in the case of a cvs2svn internal error (aka, bug)."""
 
   pass

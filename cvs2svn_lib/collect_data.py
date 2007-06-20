@@ -876,7 +876,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     cvs_items.extend(self._get_cvs_revisions())
     cvs_items.extend(self._get_cvs_branches())
     cvs_items.extend(self._get_cvs_tags())
-    cvs_file_items = CVSFileItems(self.cvs_file, cvs_items)
+    cvs_file_items = CVSFileItems(self.cvs_file, self.pdc.trunk, cvs_items)
 
     # Break a circular reference loop, allowing the memory for self
     # and sdc to be freed.

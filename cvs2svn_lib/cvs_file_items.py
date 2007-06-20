@@ -58,8 +58,12 @@ class LODItems(object):
 
 
 class CVSFileItems(object):
-  def __init__(self, cvs_file, cvs_items):
+  def __init__(self, cvs_file, trunk, cvs_items):
+    # The file whose data this instance holds.
     self.cvs_file = cvs_file
+
+    # The symbol that represents "Trunk" in this file.
+    self.trunk = trunk
 
     # A map from CVSItem.id to CVSItem:
     self._cvs_items = {}
@@ -74,11 +78,11 @@ class CVSFileItems(object):
         self.root_ids.add(cvs_item.id)
 
   def __getstate__(self):
-    return (self.cvs_file, self.values(),)
+    return (self.cvs_file, self.trunk, self.values(),)
 
   def __setstate__(self, state):
-    (cvs_file, cvs_items,) = state
-    CVSFileItems.__init__(self, cvs_file, cvs_items)
+    (cvs_file, trunk, cvs_items,) = state
+    CVSFileItems.__init__(self, cvs_file, trunk, cvs_items)
 
   def add(self, cvs_item):
     self._cvs_items[cvs_item.id] = cvs_item

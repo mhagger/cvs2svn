@@ -153,15 +153,26 @@ class TextRecord(object):
 
     raise NotImplementedError()
 
+  def free(self, text_record_db):
+    """This instance will never again be checked out; free it.
+
+    Also free any associated resources and decrement the refcounts of
+    any other TextRecords that this one depends on."""
+
+    raise NotImplementedError()
+
   def discard(self, text_record_db):
-    """This instance will never again be checked out; discard it."""
+    """This instance will never again be checked out; discard it.
+
+    This involves calling its free() method and also removing it from
+    TEXT_RECORD_DB."""
 
     if self.refcount != 0:
       raise InternalError(
           '%s.discard() called with refcount = %d'
           % (self.__class__, self.refcount,)
           )
-
+    self.free(text_record_db)
     del text_record_db[self.id]
 
 
@@ -171,8 +182,7 @@ class FullTextRecord(TextRecord):
     self.decrement_refcount(text_record_db)
     return text
 
-  def discard(self, text_record_db):
-    TextRecord.discard(self, text_record_db)
+  def free(self, text_record_db):
     del text_record_db.delta_db[self.id]
 
   def __str__(self):
@@ -211,8 +221,7 @@ class DeltaTextRecord(TextRecord):
       text_record_db.replace(new_text_record)
     return text
 
-  def discard(self, text_record_db):
-    TextRecord.discard(self, text_record_db)
+  def free(self, text_record_db):
     del text_record_db.delta_db[self.id]
     text_record_db[self.pred_id].decrement_refcount(text_record_db)
 
@@ -230,8 +239,7 @@ class CheckedOutTextRecord(TextRecord):
     self.decrement_refcount(text_record_db)
     return text
 
-  def discard(self, text_record_db):
-    TextRecord.discard(self, text_record_db)
+  def free(self, text_record_db):
     del text_record_db.checkout_db['%x' % self.id]
 
   def __str__(self):

@@ -142,7 +142,7 @@ class TextRecord(object):
 
     self.refcount -= 1
     if self.refcount == 0:
-      self.discard(text_record_db)
+      text_record_db.discard(self.id)
 
   def checkout(self, text_record_db):
     """Workhorse of the checkout process.
@@ -160,20 +160,6 @@ class TextRecord(object):
     any other TextRecords that this one depends on."""
 
     raise NotImplementedError()
-
-  def discard(self, text_record_db):
-    """This instance will never again be checked out; discard it.
-
-    This involves calling its free() method and also removing it from
-    TEXT_RECORD_DB."""
-
-    if self.refcount != 0:
-      raise InternalError(
-          '%s.discard() called with refcount = %d'
-          % (self.__class__, self.refcount,)
-          )
-    self.free(text_record_db)
-    del text_record_db[self.id]
 
 
 class FullTextRecord(TextRecord):
@@ -329,6 +315,21 @@ class TextRecordDatabase:
     assert self.text_records.has_key(text_record.id)
     self.text_records[text_record.id] = text_record
 
+  def discard(self, id):
+    """The text record with ID will never again be checked out; discard it.
+
+    This involves calling its free() method and also removing it from
+    SELF."""
+
+    text_record = self[id]
+    if text_record.refcount != 0:
+      raise InternalError(
+          'TextRecordDatabase.discard(%s) called with refcount = %d'
+          % (text_record, text_record.refcount,)
+          )
+    text_record.free(self)
+    del self[id]
+
   def itervalues(self):
     return self.text_records.itervalues()
 
@@ -371,7 +372,7 @@ class TextRecordDatabase:
         ]
 
     for text_record in unused:
-      text_record.discard(self)
+      self.discard(text_record.id)
 
   def log_leftovers(self):
     """If any TextRecords still exist, log them."""

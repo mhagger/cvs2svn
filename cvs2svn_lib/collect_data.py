@@ -863,20 +863,28 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
   def parse_completed(self):
     """Finish the processing of this file.
 
-    - Create CVSRevisions for all rev_data seen.
-
-    - Walk through all branches and tags and register them with their
-      parent branch in the symbol database.
-
     This is a callback method declared in Sink."""
 
-    ntdbr = list(self._get_non_trunk_default_branch_revisions())
+    pass
+
+  def get_cvs_file_items(self):
+    """Finish up and return a CVSFileItems instance for this file.
+
+    Also fix up any non-trunk default branch revisions (if present) by
+    setting their default_branch_revision members to True and
+    connecting the last one with revision 1.2.
+
+    This method must only be called once.
+
+    """
 
     cvs_items = []
     cvs_items.extend(self._get_cvs_revisions())
     cvs_items.extend(self._get_cvs_branches())
     cvs_items.extend(self._get_cvs_tags())
     cvs_file_items = CVSFileItems(self.cvs_file, self.pdc.trunk, cvs_items)
+
+    ntdbr = list(self._get_non_trunk_default_branch_revisions())
 
     # Break a circular reference loop, allowing the memory for self
     # and sdc to be freed.
@@ -891,17 +899,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       cvs_file_items.adjust_non_trunk_default_branch_revisions(
           self._file_imported, ntdbr, rev_1_2_id)
 
-    # Remove CVSRevisionDeletes that are not needed:
-    cvs_file_items.remove_unneeded_deletes(self.collect_data.metadata_db)
-
-    # If this is a --trunk-only conversion, discard all branches and
-    # tags:
-    if Ctx().trunk_only:
-      cvs_file_items.exclude_non_trunk()
-
-    self.collect_data.revision_recorder.finish_file(cvs_file_items)
-    self.collect_data.add_cvs_file_items(cvs_file_items)
-    self.collect_data.symbol_stats.register(cvs_file_items)
+    return cvs_file_items
 
 
 class _ProjectDataCollector:
@@ -961,6 +959,22 @@ class _ProjectDataCollector:
       raise
     else:
       self.num_files += 1
+
+    cvs_file_items = fdc.get_cvs_file_items()
+
+    del fdc
+
+    # Remove CVSRevisionDeletes that are not needed:
+    cvs_file_items.remove_unneeded_deletes(self.collect_data.metadata_db)
+
+    # If this is a --trunk-only conversion, discard all branches and
+    # tags:
+    if Ctx().trunk_only:
+      cvs_file_items.exclude_non_trunk()
+
+    self.collect_data.revision_recorder.finish_file(cvs_file_items)
+    self.collect_data.add_cvs_file_items(cvs_file_items)
+    self.collect_data.symbol_stats.register(cvs_file_items)
 
   def _get_attic_file(self, pathname):
     """Return a CVSFile object for the Attic file at PATHNAME."""

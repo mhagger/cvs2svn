@@ -280,6 +280,13 @@ class TextRecordDatabase:
     # OutputPass.
     self.checkout_db = checkout_db
 
+    # If this is set to a list, then the list holds the ids of
+    # text_records that have to be deleted; when discard() is called,
+    # it adds the requested id to the list but does not delete it.  If
+    # this member is set to None, then text_records are deleted
+    # immediately when discard() is called.
+    self.deferred_deletes = None
+
   def __getstate__(self):
     return self.text_records.values()
 
@@ -289,6 +296,7 @@ class TextRecordDatabase:
       self.add(text_record)
     self.delta_db = NullDatabase()
     self.checkout_db = NullDatabase()
+    self.deferred_deletes = None
 
   def add(self, text_record):
     """Add TEXT_RECORD to our database.
@@ -315,20 +323,35 @@ class TextRecordDatabase:
     assert self.text_records.has_key(text_record.id)
     self.text_records[text_record.id] = text_record
 
-  def discard(self, id):
-    """The text record with ID will never again be checked out; discard it.
+  def discard(self, *ids):
+    """The text records with IDS are no longer needed; discard them.
 
-    This involves calling its free() method and also removing it from
-    SELF."""
+    This involves calling their free() methods and also removing them
+    from SELF.
 
-    text_record = self[id]
-    if text_record.refcount != 0:
-      raise InternalError(
-          'TextRecordDatabase.discard(%s) called with refcount = %d'
-          % (text_record, text_record.refcount,)
-          )
-    text_record.free(self)
-    del self[id]
+    If SELF.deferred_deletes is not None, then the ids to be deleted
+    are added to the list instead of deleted immediately.  This
+    mechanism is to prevent a stack overflow from the avalanche of
+    deletes that can result from deleting a long chain of revisions."""
+
+    if self.deferred_deletes is None:
+      # This is an outer-level delete.
+      self.deferred_deletes = list(ids)
+      while self.deferred_deletes:
+        id = self.deferred_deletes.pop()
+        text_record = self[id]
+        if text_record.refcount != 0:
+          raise InternalError(
+              'TextRecordDatabase.discard(%s) called with refcount = %d'
+              % (text_record, text_record.refcount,)
+              )
+        # This call might cause other text_record ids to be added to
+        # self.deferred_deletes:
+        text_record.free(self)
+        del self[id]
+      self.deferred_deletes = None
+    else:
+      self.deferred_deletes.extend(ids)
 
   def itervalues(self):
     return self.text_records.itervalues()
@@ -366,13 +389,12 @@ class TextRecordDatabase:
     # whole unused list before starting the loop.
 
     unused = [
-        text_record
+        text_record.id
         for text_record in self.itervalues()
         if text_record.refcount == 0
         ]
 
-    for text_record in unused:
-      self.discard(text_record.id)
+    self.discard(*unused)
 
   def log_leftovers(self):
     """If any TextRecords still exist, log them."""

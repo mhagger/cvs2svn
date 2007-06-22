@@ -69,12 +69,12 @@ class CVSFileItems(object):
     self._cvs_items = {}
 
     # The cvs_item_id of each root in the CVSItem forest.  (A root is
-    # defined to be any CVSItem with no predecessors.)
+    # defined to be any CVSRevision with no prev_id.)
     self.root_ids = set()
 
     for cvs_item in cvs_items:
       self.add(cvs_item)
-      if not cvs_item.get_pred_ids():
+      if isinstance(cvs_item, CVSRevision) and cvs_item.prev_id is None:
         self.root_ids.add(cvs_item.id)
 
   def __getstate__(self):

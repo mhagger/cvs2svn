@@ -628,33 +628,6 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         prev_rev_data is not None and prev_rev_data.state != 'dead',
         )]
 
-    # There can be an odd situation where the tip revision of a branch
-    # is alive, but every predecessor on the branch is in state 'dead',
-    # yet the revision from which the branch sprouts is alive.  (This
-    # is sort of a mirror image of the more common case of adding a
-    # file on a branch, in which the first revision on the branch is
-    # alive while the revision from which it sprouts is dead.)
-    #
-    # In this odd situation, we must mark the first live revision on
-    # the branch as a CVSRevisionChange instead of a CVSRevisionAdd,
-    # because it reflects, however indirectly, a change w.r.t. the
-    # source revision from which the branch sprouts.
-    #
-    # This is issue #89.
-    if is_branch_revision(rev_data.rev) \
-           and issubclass(type, CVSRevisionModification):
-      cur_rev_data = rev_data
-      while True:
-        if cur_rev_data.parent is None:
-          break
-        prev_rev_data = self._rev_data[cur_rev_data.parent]
-        if (not is_same_line_of_development(cur_rev_data.rev,
-                                            prev_rev_data.rev)
-            and cur_rev_data.state == 'dead'
-            and prev_rev_data.state != 'dead'):
-          type = CVSRevisionChange
-        cur_rev_data = prev_rev_data
-
     return type
 
   def set_revision_info(self, revision, log, text):

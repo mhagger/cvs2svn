@@ -1206,18 +1206,18 @@ def double_delete():
   # bugs in cvs2svn's svn path construction for top-level files); and
   # the --no-prune option.
   conv = ensure_conversion(
-    'double-delete', args=['--trunk-only', '--no-prune'])
+      'double-delete', args=['--trunk-only', '--no-prune'])
 
   path = '/%(trunk)s/twice-removed'
   rev = 2
-  conv.logs[rev].check_change(path, 'A')
-  conv.logs[rev].check_msg('Initial revision')
-
-  conv.logs[rev + 1].check_change(path, 'D')
-  conv.logs[rev + 1].check_msg('Remove this file for the first time.')
-
-  if conv.logs[rev + 1].get_path_op('/%(trunk)s') is not None:
-    raise Failure()
+  conv.logs[rev].check('Updated CVS', (
+    (path, 'A'),
+    ))
+  conv.logs[rev + 1].check('Remove this file for the first time.', (
+    (path, 'D'),
+    ))
+  conv.logs[rev + 2].check('Remove this file for the second time,', (
+    ))
 
 
 def split_branch():
@@ -1631,6 +1631,56 @@ def default_branches():
     ('/%(tags)s/vtag-4 (from /%(branches)s/vbranchA:14)', 'A'),
     ('/%(tags)s/vtag-4/proj/d.txt '
      '(from /%(branches)s/unlabeled-1.1.1/proj/d.txt:14)', 'A'),
+    ))
+
+
+def default_branches_trunk_only():
+  "handle default branches with --trunk-only"
+
+  conv = ensure_conversion('default-branches', args=['--trunk-only'])
+
+  conv.logs[2].check("Import (vbranchA, vtag-1).", (
+    ('/%(trunk)s/proj', 'A'),
+    ('/%(trunk)s/proj/a.txt', 'A'),
+    ('/%(trunk)s/proj/b.txt', 'A'),
+    ('/%(trunk)s/proj/c.txt', 'A'),
+    ('/%(trunk)s/proj/d.txt', 'A'),
+    ('/%(trunk)s/proj/e.txt', 'A'),
+    ('/%(trunk)s/proj/deleted-on-vendor-branch.txt', 'A'),
+    ))
+
+  conv.logs[3].check("Import (vbranchA, vtag-2).", (
+    ('/%(trunk)s/proj/a.txt', 'M'),
+    ('/%(trunk)s/proj/b.txt', 'M'),
+    ('/%(trunk)s/proj/c.txt', 'M'),
+    ('/%(trunk)s/proj/d.txt', 'M'),
+    ('/%(trunk)s/proj/e.txt', 'M'),
+    ('/%(trunk)s/proj/deleted-on-vendor-branch.txt', 'M'),
+    ))
+
+  conv.logs[4].check("Import (vbranchA, vtag-3).", (
+    ('/%(trunk)s/proj/a.txt', 'M'),
+    ('/%(trunk)s/proj/b.txt', 'M'),
+    ('/%(trunk)s/proj/c.txt', 'M'),
+    ('/%(trunk)s/proj/d.txt', 'M'),
+    ('/%(trunk)s/proj/e.txt', 'M'),
+    ('/%(trunk)s/proj/deleted-on-vendor-branch.txt', 'D'),
+    ))
+
+  conv.logs[5].check("First regular commit, to a.txt, on vtag-3.", (
+    ('/%(trunk)s/proj/a.txt', 'M'),
+    ))
+
+  conv.logs[6].check("Add a file to the working copy.", (
+    ('/%(trunk)s/proj/added-then-imported.txt', 'A'),
+    ))
+
+  conv.logs[7].check("Import (vbranchA, vtag-4).", (
+    ('/%(trunk)s/proj/b.txt', 'M'),
+    ('/%(trunk)s/proj/c.txt', 'M'),
+    ('/%(trunk)s/proj/d.txt', 'M'),
+    ('/%(trunk)s/proj/e.txt', 'M'),
+    ('/%(trunk)s/proj/deleted-on-vendor-branch.txt', 'A'),
     ))
 
 
@@ -2721,7 +2771,7 @@ test_list = [
     NoTrunkPrune(variant=2, trunk='a/1', branches='b/1', tags='c/1'),
     NoTrunkPrune(variant=3, trunk='a/1', branches='a/2', tags='a/3'),
 # 30:
-    XFail(double_delete),
+    double_delete,
     split_branch,
     resync_misgroups,
     TaggedBranchAndTrunk(),
@@ -2742,12 +2792,13 @@ test_list = [
         variant='fallback-encoding', args=['--fallback-encoding=utf_8']),
     vendor_branch_sameness,
     default_branches,
+    default_branches_trunk_only,
     compose_tag_three_sources,
     pass5_when_to_fill,
     PeerPathPruning(),
     PeerPathPruning(variant=1, trunk='a/1', branches='a/2', tags='a/3'),
-    EmptyTrunk(),
 # 50:
+    EmptyTrunk(),
     EmptyTrunk(variant=1, trunk='a', branches='b', tags='c'),
     EmptyTrunk(variant=2, trunk='a/1', branches='a/2', tags='a/3'),
     XFail(no_spurious_svn_commits),
@@ -2757,8 +2808,8 @@ test_list = [
     XFail(branch_from_default_branch),
     file_in_attic_too,
     retain_file_in_attic_too,
-    symbolic_name_filling_guide,
 # 60:
+    symbolic_name_filling_guide,
     eol_mime1,
     eol_mime2,
     eol_mime3,
@@ -2768,8 +2819,8 @@ test_list = [
     keywords,
     ignore,
     requires_cvs,
-    questionable_branch_names,
 # 70:
+    questionable_branch_names,
     questionable_tag_names,
     revision_reorder_bug,
     exclude,
@@ -2779,8 +2830,8 @@ test_list = [
     double_fill,
     resync_pass2_push_backward,
     double_add,
-    bogus_branch_copy,
 # 80:
+    bogus_branch_copy,
     nested_ttb_directories,
     auto_props_ignore_case,
     auto_props,
@@ -2790,8 +2841,8 @@ test_list = [
     multiple_tags,
     double_branch_delete,
     symbol_mismatches,
-    overlook_symbol_mismatches,
 # 90:
+    overlook_symbol_mismatches,
     force_symbols,
     commit_blocks_tags,
     blocked_excludes,
@@ -2801,8 +2852,8 @@ test_list = [
     branch_symbol_default,
     tag_symbol_default,
     symbol_transform,
-    issue_99,
 # 100:
+    issue_99,
     issue_100,
     issue_106,
     options_option,
@@ -2812,8 +2863,8 @@ test_list = [
     nasty_graphs,
     XFail(tagging_after_delete),
     crossed_branches,
-    file_directory_conflict,
 # 110:
+    file_directory_conflict,
     attic_directory_conflict,
     internal_co,
     internal_co_exclude,
@@ -2823,8 +2874,8 @@ test_list = [
     timestamp_chaos,
     symlinks,
     empty_trunk_path,
-    preferred_parent_cycle,
 # 120:
+    preferred_parent_cycle,
     branch_from_empty_dir,
     trunk_readd,
     ]

@@ -345,47 +345,105 @@ class CVSFileItems(object):
   def _exclude_branch(self, lod_items):
     """Exclude the branch described by LOD_ITEMS, including its revisions.
 
-    (Do not update the LOD_ITEMS instance itself.)"""
+    (Do not update the LOD_ITEMS instance itself.)
 
-    if lod_items.cvs_branch is not None:
-      # Delete the CVSBranch itself:
-      cvs_branch = lod_items.cvs_branch
+    If the LOD starts with non-trunk default branch revisions, leave
+    them in place and do not delete the branch.  In this case, return
+    True; otherwise return False"""
 
-      del self[cvs_branch.id]
-
-      # A CVSBranch is the successor of the CVSRevision that it
-      # sprouts from.  Delete this branch from that revision's
-      # branch_ids:
-      self[cvs_branch.source_id].branch_ids.remove(cvs_branch.id)
-
-    if lod_items.cvs_revisions:
-      # The first CVSRevision on the branch has to be either detached
-      # from the revision from which the branch sprang, or removed
-      # from self.root_ids:
-      cvs_rev = lod_items.cvs_revisions[0]
-      if cvs_rev.prev_id is None:
-        self.root_ids.remove(cvs_rev.id)
-      else:
-        self[cvs_rev.prev_id].branch_commit_ids.remove(cvs_rev.id)
-
+    if lod_items.cvs_revisions \
+           and lod_items.cvs_revisions[0].default_branch_revision:
       for cvs_rev in lod_items.cvs_revisions:
-        del self[cvs_rev.id]
-        # If cvs_rev is the last default revision on a non-trunk
-        # default branch followed by a 1.2 revision, then the 1.2
-        # revision depends on this one.  FIXME: This handling is
-        # wrong, because the non-trunk default branch revisions affect
-        # trunk and should therefore not just be discarded even if
-        # --trunk-only.
-        if cvs_rev.default_branch_next_id is not None:
-          next = self[cvs_rev.default_branch_next_id]
-          assert next.default_branch_prev_id == cvs_rev.id
-          next.default_branch_prev_id = None
-          if next.prev_id is None:
-            self.root_ids.add(next.id)
+        if not cvs_rev.default_branch_revision:
+          # We've found the first non-NTDBR, and it's stored in cvs_rev:
+          break
+      else:
+        # There was no revision following the NTDBRs:
+        cvs_rev = None
+
+      if cvs_rev:
+        last_ntdbr = self[cvs_rev.prev_id]
+        last_ntdbr.next_id = None
+        while True:
+          del self[cvs_rev.id]
+          if cvs_rev.next_id is None:
+            break
+          cvs_rev = self[cvs_rev.next_id]
+
+      return True
+
+    else:
+      if lod_items.cvs_branch is not None:
+        # Delete the CVSBranch itself:
+        cvs_branch = lod_items.cvs_branch
+
+        del self[cvs_branch.id]
+
+        # A CVSBranch is the successor of the CVSRevision that it
+        # sprouts from.  Delete this branch from that revision's
+        # branch_ids:
+        self[cvs_branch.source_id].branch_ids.remove(cvs_branch.id)
+
+      if lod_items.cvs_revisions:
+        # The first CVSRevision on the branch has to be either detached
+        # from the revision from which the branch sprang, or removed
+        # from self.root_ids:
+        cvs_rev = lod_items.cvs_revisions[0]
+        if cvs_rev.prev_id is None:
+          self.root_ids.remove(cvs_rev.id)
+        else:
+          self[cvs_rev.prev_id].branch_commit_ids.remove(cvs_rev.id)
+
+        for cvs_rev in lod_items.cvs_revisions:
+          del self[cvs_rev.id]
+          # If cvs_rev is the last default revision on a non-trunk
+          # default branch followed by a 1.2 revision, then the 1.2
+          # revision depends on this one.  FIXME: It is questionable
+          # whether this handling is correct, since the non-trunk
+          # default branch revisions affect trunk and should therefore
+          # not just be discarded even if --trunk-only.
+          if cvs_rev.default_branch_next_id is not None:
+            next = self[cvs_rev.default_branch_next_id]
+            assert next.default_branch_prev_id == cvs_rev.id
+            next.default_branch_prev_id = None
+            if next.prev_id is None:
+              self.root_ids.add(next.id)
+
+      return False
+
+  def graft_ntdbr_to_trunk(self):
+    """Graft the non-trunk default branch revisions to trunk.
+
+    They should already be alone on a CVSBranch-less branch."""
+
+    ntdbr_lod_items = None
+    for lod_items in self.iter_lods():
+      if lod_items.cvs_revisions \
+             and lod_items.cvs_revisions[0].default_branch_revision:
+        assert lod_items.cvs_branch is None
+        assert not lod_items.cvs_branches
+        assert not lod_items.cvs_tags
+
+        last_rev = lod_items.cvs_revisions[-1]
+
+        if last_rev.default_branch_next_id is not None:
+          rev_1_2 = self[last_rev.default_branch_next_id]
+          rev_1_2.default_branch_prev_id = None
+          rev_1_2.prev_id = last_rev.id
+          self.root_ids.remove(rev_1_2.id)
+          last_rev.default_branch_next_id = None
+          last_rev.next_id = rev_1_2.id
+
+        for cvs_rev in lod_items.cvs_revisions:
+          cvs_rev.default_branch_revision = False
+          cvs_rev.lod = self.trunk
+
+        return
 
   def exclude_non_trunk(self):
     """Delete all tags and branches."""
 
+    ntdbr_excluded = False
     for lod_items in self.iter_lods():
       for cvs_tag in lod_items.cvs_tags[:]:
         self._exclude_tag(cvs_tag)
@@ -395,7 +453,10 @@ class CVSFileItems(object):
       assert not lod_items.cvs_tags
 
       if not isinstance(lod_items.lod, Trunk):
-        self._exclude_branch(lod_items)
+        ntdbr_excluded |= self._exclude_branch(lod_items)
+
+    if ntdbr_excluded:
+      self.graft_ntdbr_to_trunk()
 
   def filter_excluded_symbols(self, revision_excluder):
     """Delete any excluded symbols and references to them.
@@ -404,6 +465,7 @@ class CVSFileItems(object):
     is being excluded."""
 
     revision_excluder_started = False
+    ntdbr_excluded = False
     for lod_items in self.iter_lods():
       # Delete any excluded tags:
       for cvs_tag in lod_items.cvs_tags[:]:
@@ -424,7 +486,10 @@ class CVSFileItems(object):
 
         revision_excluder_started = True
 
-        self._exclude_branch(lod_items)
+        ntdbr_excluded |= self._exclude_branch(lod_items)
+
+    if ntdbr_excluded:
+      self.graft_ntdbr_to_trunk()
 
     if revision_excluder_started:
       revision_excluder.process_file(self)

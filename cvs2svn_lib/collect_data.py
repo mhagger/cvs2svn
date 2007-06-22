@@ -964,7 +964,8 @@ class _ProjectDataCollector:
     cvs_file_items.remove_unneeded_deletes(self.collect_data.metadata_db)
 
     # If this is a --trunk-only conversion, discard all branches and
-    # tags:
+    # tags, then draft any non-trunk default branch revisions to
+    # trunk:
     if Ctx().trunk_only:
       cvs_file_items.exclude_non_trunk()
 

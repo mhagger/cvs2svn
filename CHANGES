@@ -30,6 +30,7 @@ Version x.x.x (not yet released)
  * Improve checks for illegal filenames.
  * Check if a directory name conflicts with a filename.
  * When file is imported, omit the empty revision 1.1.
+ * If a non-trunk default branch is excluded, graft its contents to trunk.
 
  Miscellaneous:
  * Add a simple (nonportable) script to log cvs2svn memory usage.

@@ -263,29 +263,7 @@ class SVNPrimaryCommit(SVNCommit, SVNRevisionCommit):
         repos.add_path(cvs_rev)
 
       elif isinstance(cvs_rev, CVSRevisionChange):
-        # Fix for Issue #74:
-        #
-        # Here's the scenario.  You have file FOO that is imported
-        # on a non-trunk vendor branch.  So in r1.1 and r1.1.1.1,
-        # the file exists.
-        #
-        # Moving forward in time, FOO is deleted on the default
-        # branch (r1.1.1.2).  cvs2svn determines that this delete
-        # also needs to happen on trunk, so FOO is deleted on
-        # trunk.
-        #
-        # Along come r1.2, which is a CVSRevisionChange (because r1.1
-        # is not 'dead', we assume it's a change).  However, since our
-        # trunk file has been deleted, svnadmin blows up--you can't
-        # change a file that doesn't exist!
-        #
-        # Soooo... we just check the path, and if it doesn't
-        # exist, we do an add... if the path does exist, it's
-        # business as usual.
-        if not repos.path_exists(cvs_rev.get_svn_path()):
-          repos.add_path(cvs_rev)
-        else:
-          repos.change_path(cvs_rev)
+        repos.change_path(cvs_rev)
 
     repos.end_commit()
 

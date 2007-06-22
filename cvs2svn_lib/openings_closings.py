@@ -29,7 +29,7 @@ from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.symbol import Branch
 from cvs2svn_lib.cvs_item import CVSRevision
-from cvs2svn_lib.cvs_item import CVSRevisionDelete
+from cvs2svn_lib.cvs_item import CVSRevisionModification
 from cvs2svn_lib.svn_revision_range import SVNRevisionRange
 from cvs2svn_lib.symbol_filling_guide import get_source_set
 
@@ -94,7 +94,7 @@ class SymbolingsLogger:
     for id in cvs_rev.tag_ids + cvs_rev.branch_ids:
       symbol = Ctx()._cvs_items_db[id].symbol
       self._note_default_branch_opening(cvs_rev, symbol.id)
-      if not isinstance(cvs_rev, CVSRevisionDelete):
+      if isinstance(cvs_rev, CVSRevisionModification):
         self._log_opening(symbol.id, svn_revnum, cvs_rev.cvs_file, branch_id)
 
     for symbol_id in cvs_rev.closed_symbol_ids:
@@ -110,7 +110,7 @@ class SymbolingsLogger:
     while not isinstance(source, CVSRevision):
       source = Ctx()._cvs_items_db[source.source_id]
 
-    if not isinstance(source, CVSRevisionDelete):
+    if isinstance(source, CVSRevisionModification):
       for id in cvs_branch.tag_ids + cvs_branch.branch_ids:
         cvs_symbol = Ctx()._cvs_items_db[id]
         self._log_opening(

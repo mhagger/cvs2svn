@@ -30,10 +30,12 @@ from cvs2svn_lib.symbol import Branch
 from cvs2svn_lib.symbol import Tag
 from cvs2svn_lib.symbol import ExcludedSymbol
 from cvs2svn_lib.cvs_item import CVSRevision
-from cvs2svn_lib.cvs_item import CVSRevisionDelete
+from cvs2svn_lib.cvs_item import CVSRevisionModification
+from cvs2svn_lib.cvs_item import CVSRevisionNoop
 from cvs2svn_lib.cvs_item import CVSSymbol
 from cvs2svn_lib.cvs_item import CVSBranch
 from cvs2svn_lib.cvs_item import CVSTag
+from cvs2svn_lib.cvs_item import cvs_revision_type_map
 
 
 class LODItems(object):
@@ -203,7 +205,7 @@ class CVSFileItems(object):
     revisions.  Set their default_branch_revision members correctly.
     Also, if REV_1_2_ID is not None, then it is the id of revision
     1.2.  Set that revision to depend on the last non-trunk default
-    branch revision.
+    branch revision and possibly adjust its type accordingly.
 
     The first revision on the default branch is handled strangely by
     CVS.  If a file is imported (as opposed to being added), CVS
@@ -232,7 +234,7 @@ class CVSFileItems(object):
 
     if file_imported \
            and cvs_rev.rev == '1.1.1.1' \
-           and not isinstance(cvs_rev, CVSRevisionDelete) \
+           and isinstance(cvs_rev, CVSRevisionModification) \
            and not cvs_rev.deltatext_exists:
       rev_1_1 = self[cvs_rev.prev_id]
       Log().debug('Removing unnecessary revision %s' % (rev_1_1,))
@@ -275,9 +277,17 @@ class CVSFileItems(object):
       cvs_rev.default_branch_revision = True
 
     if rev_1_2_id is not None:
+      # Revision 1.2 logically follows the imported revisions, not
+      # 1.1.  Accordingly, connect it to the last NTDBR and possibly
+      # change its type.
       rev_1_2 = self[rev_1_2_id]
-      rev_1_2.default_branch_prev_id = ntdbr[-1]
-      self[ntdbr[-1]].default_branch_next_id = rev_1_2.id
+      last_ntdbr = self[ntdbr[-1]]
+      rev_1_2.default_branch_prev_id = last_ntdbr.id
+      last_ntdbr.default_branch_next_id = rev_1_2.id
+      rev_1_2.__class__ = cvs_revision_type_map[(
+          isinstance(rev_1_2, CVSRevisionModification),
+          isinstance(last_ntdbr, CVSRevisionModification),
+          )]
 
   def _delete_unneeded(self, cvs_rev, metadata_db):
     if cvs_rev.rev == '1.1' \
@@ -306,7 +316,7 @@ class CVSFileItems(object):
 
     for id in self.root_ids:
       cvs_item = self[id]
-      if isinstance(cvs_item, CVSRevisionDelete) \
+      if isinstance(cvs_item, CVSRevisionNoop) \
              and self._delete_unneeded(cvs_item, metadata_db):
         Log().debug('Removing unnecessary delete %s' % (cvs_item,))
 
@@ -433,6 +443,9 @@ class CVSFileItems(object):
           self.root_ids.remove(rev_1_2.id)
           last_rev.default_branch_next_id = None
           last_rev.next_id = rev_1_2.id
+          # The type of rev_1_2 was already adjusted in
+          # adjust_non_trunk_default_branch_revisions(), so we don't
+          # have to change its type here.
 
         for cvs_rev in lod_items.cvs_revisions:
           cvs_rev.default_branch_revision = False

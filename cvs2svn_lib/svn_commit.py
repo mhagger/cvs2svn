@@ -18,6 +18,7 @@
 
 
 from cvs2svn_lib.boolean import *
+from cvs2svn_lib.common import InternalError
 from cvs2svn_lib.common import format_date
 from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.context import Ctx
@@ -28,6 +29,7 @@ from cvs2svn_lib.cvs_item import CVSRevisionModification
 from cvs2svn_lib.cvs_item import CVSRevisionAdd
 from cvs2svn_lib.cvs_item import CVSRevisionChange
 from cvs2svn_lib.cvs_item import CVSRevisionDelete
+from cvs2svn_lib.cvs_item import CVSRevisionNoop
 
 
 class SVNCommit:
@@ -241,7 +243,10 @@ class SVNPrimaryCommit(SVNCommit, SVNRevisionCommit):
     Log().verbose("Committing %d CVSRevision%s"
                   % (len(self.cvs_revs), plural))
     for cvs_rev in self.cvs_revs:
-      if isinstance(cvs_rev, CVSRevisionDelete):
+      if isinstance(cvs_rev, CVSRevisionNoop):
+        pass
+
+      elif isinstance(cvs_rev, CVSRevisionDelete):
         # FIXME: This test requires a database lookup.  It should be
         # possible to avoid it:
         if repos.path_exists(cvs_rev.get_svn_path()):
@@ -418,14 +423,18 @@ class SVNPostCommit(SVNCommit, SVNRevisionCommit):
             cvs_rev.get_svn_path(), svn_trunk_path,
             self._motivating_revnum, True
             )
-      else:
-        assert isinstance(cvs_rev, CVSRevisionDelete)
+      elif isinstance(cvs_rev, CVSRevisionDelete):
         # delete trunk path
 
         # FIXME: This test requires a database lookup.  It should be
         # possible to avoid it:
         if repos.path_exists(svn_trunk_path):
           repos.delete_path(svn_trunk_path)
+      elif isinstance(cvs_rev, CVSRevisionNoop):
+        # Do nothing
+        pass
+      else:
+        raise InternalError('Unexpected CVSRevision type: %s' % (cvs_rev,))
 
     repos.end_commit()
 

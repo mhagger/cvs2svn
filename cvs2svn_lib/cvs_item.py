@@ -337,6 +337,16 @@ class CVSRevisionDelete(CVSRevision):
   pass
 
 
+class CVSRevisionNoop(CVSRevision):
+  """A CVSRevision that doesn't do anything.
+
+  These revisions can't necessarily be thrown away because (1) they
+  impose ordering constraints on other items; (2) they might have a
+  nontrivial log message that we don't want to throw away."""
+
+  pass
+
+
 # A map
 #
 #   {(nondead(cvs_rev), nondead(prev_cvs_rev)) : cvs_revision_subtype}
@@ -345,11 +355,12 @@ class CVSRevisionDelete(CVSRevision):
 # 'dead', and CVS_REVISION_SUBTYPE is the subtype of CVSRevision that
 # should be used for CVS_REV.
 cvs_revision_type_map = {
-  (False, False) : CVSRevisionDelete,
-  (False, True) : CVSRevisionDelete,
-  (True, False) : CVSRevisionAdd,
-  (True, True) : CVSRevisionChange,
-  }
+    (False, False) : CVSRevisionNoop,
+    (False, True) : CVSRevisionDelete,
+    (True, False) : CVSRevisionAdd,
+    (True, True) : CVSRevisionChange,
+    }
+
 
 class CVSSymbol(CVSItem):
   """Represent a symbol on a particular CVSFile.

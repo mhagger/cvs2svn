@@ -247,10 +247,7 @@ class SVNPrimaryCommit(SVNCommit, SVNRevisionCommit):
         pass
 
       elif isinstance(cvs_rev, CVSRevisionDelete):
-        # FIXME: This test requires a database lookup.  It should be
-        # possible to avoid it:
-        if repos.path_exists(cvs_rev.get_svn_path()):
-          repos.delete_path(cvs_rev.get_svn_path(), Ctx().prune)
+        repos.delete_path(cvs_rev.get_svn_path(), Ctx().prune)
 
       elif (cvs_rev.rev == "1.1.1.1"
           and not cvs_rev.deltatext_exists

@@ -337,6 +337,20 @@ class CVSRevisionDelete(CVSRevision):
   pass
 
 
+# A map
+#
+#   {(nondead(cvs_rev), nondead(prev_cvs_rev)) : cvs_revision_subtype}
+#
+# , where nondead() means that the cvs revision exists and is not
+# 'dead', and CVS_REVISION_SUBTYPE is the subtype of CVSRevision that
+# should be used for CVS_REV.
+cvs_revision_type_map = {
+  (False, False) : CVSRevisionDelete,
+  (False, True) : CVSRevisionDelete,
+  (True, False) : CVSRevisionAdd,
+  (True, True) : CVSRevisionChange,
+  }
+
 class CVSSymbol(CVSItem):
   """Represent a symbol on a particular CVSFile.
 

@@ -75,6 +75,7 @@ from cvs2svn_lib.cvs_item import CVSRevisionChange
 from cvs2svn_lib.cvs_item import CVSRevisionDelete
 from cvs2svn_lib.cvs_item import CVSBranch
 from cvs2svn_lib.cvs_item import CVSTag
+from cvs2svn_lib.cvs_item import cvs_revision_type_map
 from cvs2svn_lib.cvs_file_items import CVSFileItems
 from cvs2svn_lib.key_generator import KeyGenerator
 from cvs2svn_lib.cvs_item_database import NewCVSItemStore
@@ -622,41 +623,12 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     self._resolve_tag_dependencies()
     self._determine_root_rev()
 
-  # A map
-  #
-  #   {(rev_data.state != 'dead', prev_rev_present) : cvs_revision_subtype}
-  #
-  # , where cvs_revision_subtype is one of the concrete classes in the
-  # CVSRevision class hierarchy.
-  #
-  # How to tell if a CVSRevision is an add, a change, or a deletion:
-  #
-  # It's a NOOP if RCS state is 'dead' and
-  #      - we either have no previous revision
-  #        or
-  #      - we have a previous revision whose state is 'dead'
-  #
-  # Otherwise it's a delete if RCS state is 'dead'
-  #
-  # It's an add if RCS state is 'Exp' and
-  #      - we either have no previous revision
-  #        or
-  #      - we have a previous revision whose state is 'dead'
-  #
-  # Anything else is a change.
-  _revision_type_map = {
-    (False, False) : CVSRevisionDelete,
-    (False, True) : CVSRevisionDelete,
-    (True, False) : CVSRevisionAdd,
-    (True, True) : CVSRevisionChange,
-    }
-
   def _determine_operation(self, rev_data):
     prev_rev_data = self._rev_data.get(rev_data.parent)
     prev_rev_present = (prev_rev_data is not None
                         and prev_rev_data.state != 'dead')
 
-    type = self._revision_type_map[
+    type = cvs_revision_type_map[
         (rev_data.state != 'dead', prev_rev_present)
         ]
 

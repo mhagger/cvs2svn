@@ -338,6 +338,8 @@ class CVSFileItems(object):
           next = self[cvs_rev.default_branch_next_id]
           assert next.default_branch_prev_id == cvs_rev.id
           next.default_branch_prev_id = None
+          if next.prev_id is None:
+            self.root_ids.add(next.id)
 
   def exclude_non_trunk(self):
     """Delete all tags and branches."""

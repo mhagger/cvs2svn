@@ -404,12 +404,8 @@ class SVNPostCommit(SVNCommit, SVNRevisionCommit):
             self._motivating_revnum, True
             )
       elif isinstance(cvs_rev, CVSRevisionDelete):
-        # delete trunk path
-
-        # FIXME: This test requires a database lookup.  It should be
-        # possible to avoid it:
-        if repos.path_exists(svn_trunk_path):
-          repos.delete_path(svn_trunk_path)
+        # Delete trunk path:
+        repos.delete_path(svn_trunk_path)
       elif isinstance(cvs_rev, CVSRevisionNoop):
         # Do nothing
         pass

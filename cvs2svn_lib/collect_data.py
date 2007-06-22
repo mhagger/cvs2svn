@@ -69,6 +69,7 @@ from cvs2svn_lib.project import FileInAndOutOfAtticException
 from cvs2svn_lib.cvs_file import CVSFile
 from cvs2svn_lib.symbol import Symbol
 from cvs2svn_lib.symbol import Trunk
+from cvs2svn_lib.cvs_item import CVSRevisionModification
 from cvs2svn_lib.cvs_item import CVSRevisionAdd
 from cvs2svn_lib.cvs_item import CVSRevisionChange
 from cvs2svn_lib.cvs_item import CVSRevisionDelete
@@ -672,7 +673,8 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     # source revision from which the branch sprouts.
     #
     # This is issue #89.
-    if is_branch_revision(rev_data.rev) and rev_data.state != 'dead':
+    if is_branch_revision(rev_data.rev) \
+           and issubclass(type, CVSRevisionModification):
       cur_rev_data = rev_data
       while True:
         if cur_rev_data.parent is None:

@@ -70,9 +70,7 @@ from cvs2svn_lib.cvs_file import CVSFile
 from cvs2svn_lib.symbol import Symbol
 from cvs2svn_lib.symbol import Trunk
 from cvs2svn_lib.cvs_item import CVSRevisionModification
-from cvs2svn_lib.cvs_item import CVSRevisionAdd
 from cvs2svn_lib.cvs_item import CVSRevisionChange
-from cvs2svn_lib.cvs_item import CVSRevisionDelete
 from cvs2svn_lib.cvs_item import CVSBranch
 from cvs2svn_lib.cvs_item import CVSTag
 from cvs2svn_lib.cvs_item import cvs_revision_type_map
@@ -625,12 +623,10 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
   def _determine_operation(self, rev_data):
     prev_rev_data = self._rev_data.get(rev_data.parent)
-    prev_rev_present = (prev_rev_data is not None
-                        and prev_rev_data.state != 'dead')
-
-    type = cvs_revision_type_map[
-        (rev_data.state != 'dead', prev_rev_present)
-        ]
+    type = cvs_revision_type_map[(
+        rev_data.state != 'dead',
+        prev_rev_data is not None and prev_rev_data.state != 'dead',
+        )]
 
     # There can be an odd situation where the tip revision of a branch
     # is alive, but every predecessor on the branch is in state 'dead',

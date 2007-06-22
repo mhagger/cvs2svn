@@ -258,6 +258,12 @@ class CVSFileItems(object):
         cvs_rev.first_on_branch_id = None
         self.root_ids.add(cvs_rev.id)
 
+      # Change the type of cvs_rev (typically from Change to Add):
+      cvs_rev.__class__ = cvs_revision_type_map[(
+          isinstance(cvs_rev, CVSRevisionModification),
+          False,
+          )]
+
       # Move any tags and branches from rev_1_1 to cvs_rev:
       cvs_rev.tag_ids.extend(rev_1_1.tag_ids)
       for id in rev_1_1.tag_ids:

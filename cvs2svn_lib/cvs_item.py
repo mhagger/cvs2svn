@@ -117,7 +117,7 @@ class CVSRevision(CVSItem):
                lod, first_on_branch_id, default_branch_revision,
                default_branch_prev_id, default_branch_next_id,
                tag_ids, branch_ids, branch_commit_ids,
-               closed_symbol_ids, needs_post_commit,
+               closed_symbol_ids,
                revision_recorder_token):
     """Initialize a new CVSRevision object.
 
@@ -147,8 +147,6 @@ class CVSRevision(CVSItem):
                              in this revision
        CLOSED_SYMBOL_IDS --> (None or list of int) ids of all symbols closed
                              by this revision (set in FilterSymbolsPass)
-       NEEDS_POST_COMMIT --> (bool) True iff a post-commit (copy from default
-                             branch to trunk) is needed after this revision
        REVISION_RECORDER_TOKEN --> (arbitrary) a token that can be used by
                                    RevisionRecorder/RevisionReader.
     """
@@ -170,7 +168,6 @@ class CVSRevision(CVSItem):
     self.branch_ids = branch_ids
     self.branch_commit_ids = branch_commit_ids
     self.closed_symbol_ids = closed_symbol_ids
-    self.needs_post_commit = needs_post_commit
     self.revision_recorder_token = revision_recorder_token
 
   def _get_cvs_path(self):
@@ -198,7 +195,7 @@ class CVSRevision(CVSItem):
         self.default_branch_revision,
         self.default_branch_prev_id, self.default_branch_next_id,
         self.tag_ids, self.branch_ids, self.branch_commit_ids,
-        self.closed_symbol_ids, self.needs_post_commit,
+        self.closed_symbol_ids,
         self.revision_recorder_token,
         )
 
@@ -213,7 +210,7 @@ class CVSRevision(CVSItem):
      self.default_branch_revision,
      self.default_branch_prev_id, self.default_branch_next_id,
      self.tag_ids, self.branch_ids, self.branch_commit_ids,
-     self.closed_symbol_ids, self.needs_post_commit,
+     self.closed_symbol_ids,
      self.revision_recorder_token) = data
     self.cvs_file = Ctx()._cvs_file_db.get_file(cvs_file_id)
     self.lod = Ctx()._symbol_db.get_symbol(lod_id)

@@ -415,7 +415,9 @@ class SVNPostCommit(SVNCommit, SVNRevisionCommit):
           repos.delete_path(svn_trunk_path)
         # ...and copy over from branch
         repos.copy_path(
-            cvs_rev.get_svn_path(), svn_trunk_path, self._motivating_revnum)
+            cvs_rev.get_svn_path(), svn_trunk_path,
+            self._motivating_revnum, True
+            )
       else:
         assert isinstance(cvs_rev, CVSRevisionDelete)
         # delete trunk path

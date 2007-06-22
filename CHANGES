@@ -29,6 +29,7 @@ Version x.x.x (not yet released)
  * Be more careful about only processing reasonable *,v files.
  * Improve checks for illegal filenames.
  * Check if a directory name conflicts with a filename.
+ * When file is imported, omit the empty revision 1.1.
 
  Miscellaneous:
  * Add a simple (nonportable) script to log cvs2svn memory usage.

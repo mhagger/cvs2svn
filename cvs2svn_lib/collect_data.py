@@ -191,10 +191,6 @@ class _RevisionData:
     # at some point (as best we can determine).
     self.non_trunk_default_branch_revision = False
 
-    # True iff this revision needs a post-commit (a copy from the
-    # non-trunk default branch onto trunk).
-    self.needs_post_commit = False
-
     # Iff this is the 1.2 revision at which a non-trunk default branch
     # revision was ended, store the number of the last revision on
     # the default branch here.
@@ -830,7 +826,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         self._get_rev_id(rev_data.default_branch_prev),
         self._get_rev_id(rev_data.default_branch_next),
         tag_ids, branch_ids, branch_commit_ids,
-        None, rev_data.needs_post_commit,
+        None,
         rev_data.revision_recorder_token)
 
   def _get_cvs_revisions(self):

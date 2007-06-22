@@ -194,46 +194,85 @@ class CVSFileItems(object):
         yield lod_items
 
   def adjust_non_trunk_default_branch_revisions(
-      self, file_imported, ntdbr, rev_1_2_id):
+        self, file_imported, ntdbr, rev_1_2_id):
     """Adjust the non-trunk default branch revisions.
 
     FILE_IMPORTED is a boolean indicating whether this file appears to
     have been imported.  NTDBR is a list of cvs_rev_ids for the
     revisions that have been determined to be non-trunk default branch
-    revisions.  Set their default_branch_revision and
-    needs_post_commit members correctly.  Also, if REV_1_2_ID is not
-    None, then it is the id of revision 1.2.  Set that revision to
-    depend on the last non-trunk default branch revision."""
+    revisions.  Set their default_branch_revision members correctly.
+    Also, if REV_1_2_ID is not None, then it is the id of revision
+    1.2.  Set that revision to depend on the last non-trunk default
+    branch revision.
 
-    # The first revision on the default branch is handled
-    # specially.  The trunk 1.1 revision will be filled from trunk
-    # to the branch.  If there is no deltatext between 1.1 and
-    # 1.1.1.1, then there is no need for a post commit to copy the
-    # non-change back to trunk.  A copy is only needed if
-    # deltatext exists for some reason:
+    The first revision on the default branch is handled strangely by
+    CVS.  If a file is imported (as opposed to being added), CVS
+    creates a 1.1 revision, then creates a vendor branch 1.1.1 based
+    on 1.1, then creates a 1.1.1.1 revision that is identical to the
+    1.1 revision (i.e., its deltatext is empty).  The log message that
+    the user typed when importing is stored with the 1.1.1.1 revision.
+    The 1.1 revision always contains a standard, generated log
+    message, 'Initial revision\n'.
+
+    When we detect a straightforward import like this, we want to
+    handle it by deleting the 1.1 revision (which doesn't contain any
+    useful information) and making 1.1.1.1 into an independent root in
+    the file's dependency tree.  1.1.1.1 will be added directly to the
+    vendor branch with its initial content.  Then in a special
+    'post-commit', the 1.1.1.1 revision is copied back to trunk.
+
+    If the user imports again to the same vendor branch, then CVS
+    creates revisions 1.1.1.2, 1.1.1.3, etc. on the vendor branch,
+    *without* counterparts in trunk (even though these revisions
+    effectively play the role of trunk revisions).  So after we add
+    such revisions to the vendor branch, we also copy them back to
+    trunk in post-commits."""
+
     cvs_rev = self[ntdbr[0]]
-
-    cvs_rev.default_branch_revision = True
 
     if file_imported \
            and cvs_rev.rev == '1.1.1.1' \
            and not isinstance(cvs_rev, CVSRevisionDelete) \
            and not cvs_rev.deltatext_exists:
-      # When 1.1.1.1 has an empty deltatext, the explanation is
-      # almost always that we're looking at an imported file whose
-      # 1.1 and 1.1.1.1 are identical.  On such imports, CVS
-      # creates an RCS file where 1.1 has the content, and 1.1.1.1
-      # has an empty deltatext, i.e, the same content as 1.1.
-      # There's no reason to reflect this non-change in the
-      # repository, so we want to do nothing in this case.
-      cvs_rev.needs_post_commit = False
-    else:
-      cvs_rev.needs_post_commit = True
+      rev_1_1 = self[cvs_rev.prev_id]
+      Log().debug('Removing unnecessary revision %s' % (rev_1_1,))
 
-    for cvs_rev_id in ntdbr[1:]:
+      # Delete rev_1_1:
+      self.root_ids.remove(rev_1_1.id)
+      del self[rev_1_1.id]
+      cvs_rev.prev_id = None
+      if rev_1_2_id is not None:
+        rev_1_2 = self[rev_1_2_id]
+        rev_1_2.prev_id = None
+        self.root_ids.add(rev_1_2.id)
+
+      # Delete the 1.1.1 CVSBranch:
+      assert cvs_rev.first_on_branch_id is not None
+      cvs_branch = self[cvs_rev.first_on_branch_id]
+      if cvs_branch.source_id == rev_1_1.id:
+        del self[cvs_branch.id]
+        rev_1_1.branch_ids.remove(cvs_branch.id)
+        rev_1_1.branch_commit_ids.remove(cvs_rev.id)
+        cvs_rev.first_on_branch_id = None
+        self.root_ids.add(cvs_rev.id)
+
+      # Move any tags and branches from rev_1_1 to cvs_rev:
+      cvs_rev.tag_ids.extend(rev_1_1.tag_ids)
+      for id in rev_1_1.tag_ids:
+        cvs_tag = self[id]
+        cvs_tag.source_id = cvs_rev.id
+      cvs_rev.branch_ids[0:0] = rev_1_1.branch_ids
+      for id in rev_1_1.branch_ids:
+        cvs_branch = self[id]
+        cvs_branch.source_id = cvs_rev.id
+      cvs_rev.branch_commit_ids[0:0] = rev_1_1.branch_commit_ids
+      for id in rev_1_1.branch_commit_ids:
+        cvs_rev2 = self[id]
+        cvs_rev2.prev_id = cvs_rev.id
+
+    for cvs_rev_id in ntdbr:
       cvs_rev = self[cvs_rev_id]
       cvs_rev.default_branch_revision = True
-      cvs_rev.needs_post_commit = True
 
     if rev_1_2_id is not None:
       rev_1_2 = self[rev_1_2_id]
@@ -247,7 +286,7 @@ class CVSFileItems(object):
            and self[cvs_rev.branch_ids[0]].next_id is not None \
            and not cvs_rev.tag_ids \
            and not cvs_rev.closed_symbol_ids \
-           and not cvs_rev.needs_post_commit:
+           and not cvs_rev.default_branch_revision:
       # FIXME: This message will not match if the RCS file was renamed
       # manually after it was created.
       author, log_msg = metadata_db[cvs_rev.metadata_id]

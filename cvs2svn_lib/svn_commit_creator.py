@@ -105,7 +105,7 @@ class SVNCommitCreator:
       default_branch_cvs_revisions = [
             cvs_rev
             for cvs_rev in cvs_revs
-            if cvs_rev.needs_post_commit]
+            if cvs_rev.default_branch_revision]
 
       yield svn_commit
 

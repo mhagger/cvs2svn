@@ -389,11 +389,16 @@ class SVNPostCommit(SVNCommit, SVNRevisionCommit):
     for cvs_rev in self.cvs_revs:
       svn_trunk_path = cvs_rev.cvs_file.project.get_trunk_path(
           cvs_rev.cvs_path)
-      if isinstance(cvs_rev, CVSRevisionModification):
-        if repos.path_exists(svn_trunk_path):
-          # Delete the path on trunk...
-          repos.delete_path(svn_trunk_path)
-        # ...and copy over from branch
+      if isinstance(cvs_rev, CVSRevisionAdd):
+        # Copy from branch to trunk:
+        repos.copy_path(
+            cvs_rev.get_svn_path(), svn_trunk_path,
+            self._motivating_revnum, True
+            )
+      elif isinstance(cvs_rev, CVSRevisionChange):
+        # Delete old version of the path on trunk...
+        repos.delete_path(svn_trunk_path)
+        # ...and copy the new version over from branch:
         repos.copy_path(
             cvs_rev.get_svn_path(), svn_trunk_path,
             self._motivating_revnum, True

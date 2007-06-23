@@ -112,6 +112,9 @@ class CVSItem(object):
 
     raise NotImplementedError()
 
+  def __repr__(self):
+    return '%s(%s)' % (self.__class__.__name__, self,)
+
 
 class CVSRevision(CVSItem):
   """Information about a single CVS revision.

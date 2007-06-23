@@ -70,11 +70,7 @@ class SVNCommitCreator:
           lambda a, b: cmp(a.cvs_file.filename, b.cvs_file.filename)
           )
       # Generate an SVNCommit for all of our default branch cvs_revs.
-      svn_commit = SVNPostCommit(motivating_revnum, cvs_revs, timestamp)
-      for cvs_rev in cvs_revs:
-        Ctx()._symbolings_logger.log_default_branch_closing(
-            cvs_rev, svn_commit.revnum)
-      yield svn_commit
+      yield SVNPostCommit(motivating_revnum, cvs_revs, timestamp)
 
   def _process_revision_changeset(self, changeset, timestamp):
     """Process CHANGESET, using TIMESTAMP as the commit time.

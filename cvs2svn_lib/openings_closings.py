@@ -78,11 +78,6 @@ class SymbolingsLogger:
     self.symbolings = open(
         artifact_manager.get_temp_file(config.SYMBOL_OPENINGS_CLOSINGS), 'w')
 
-    # This keys of this dictionary are *source* cvs_file.ids for which
-    # we've encountered an 'opening' on the default branch.  The
-    # values are the ids of symbols that this path has opened.
-    self._open_files_with_default_branches = { }
-
   def log_revision(self, cvs_rev, svn_revnum):
     """Log any openings and closings found in CVS_REV."""
 
@@ -93,7 +88,6 @@ class SymbolingsLogger:
 
     for cvs_symbol_id in cvs_rev.get_cvs_symbol_ids_opened():
       symbol = Ctx()._cvs_items_db[cvs_symbol_id].symbol
-      self._note_default_branch_opening(cvs_rev, symbol.id)
       if isinstance(cvs_rev, CVSRevisionModification):
         self._log_opening(symbol.id, svn_revnum, cvs_rev.cvs_file, branch_id)
 
@@ -155,27 +149,6 @@ class SymbolingsLogger:
   def close(self):
     self.symbolings.close()
     self.symbolings = None
-
-  def _note_default_branch_opening(self, cvs_rev, symbol_id):
-    """If CVS_REV is a default branch revision, log
-    CVS_REV.cvs_file.id as an opening for SYMBOL_ID."""
-
-    self._open_files_with_default_branches.setdefault(
-        cvs_rev.cvs_file.id, []).append(symbol_id)
-
-  def log_default_branch_closing(self, cvs_rev, svn_revnum):
-    """If self._open_files_with_default_branches contains
-    CVS_REV.cvs_file.id, then log a closing for each symbol in
-    self._open_files_with_default_branches[CVS_REV.cvs_file.id] with
-    SVN_REVNUM as the closing revision number."""
-
-    cvs_file_id = cvs_rev.cvs_file.id
-    if cvs_file_id in self._open_files_with_default_branches:
-      # log each symbol as a closing
-      for symbol_id in self._open_files_with_default_branches[cvs_file_id]:
-        self._log_closing(symbol_id, svn_revnum, cvs_rev.cvs_file, None)
-      # Remove them from the openings list as we're done with them.
-      del self._open_files_with_default_branches[cvs_file_id]
 
 
 class SymbolingsReader:

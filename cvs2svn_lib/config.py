@@ -206,14 +206,10 @@ CVS_CHECKOUT_DB = "cvs2svn-cvs-checkout.db"
 
 # End of DBs related to --use-internal-co.
 
-# If this run's output is a repository, then (in the tmpdir) we use
-# a dumpfile of this name for repository loads.
-#
-# If this run's output is a dumpfile, then this is default name of
-# that dumpfile, but in the current directory (unless the user has
-# specified a dumpfile path, of course, in which case it will be
-# wherever the user said).
-DUMPFILE = 'cvs2svn-dump'
+# If this run will output directly to a Subversion repository, then
+# this is the name of the file that each revision will temporarily be
+# written to prior to writing it into the repository.
+DUMPFILE = 'cvs2svn-svn.dump'
 
 # flush a commit if a 5 minute gap occurs.
 COMMIT_THRESHOLD = 5 * 60

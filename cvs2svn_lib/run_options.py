@@ -125,7 +125,7 @@ USAGE: %(progname)s [-v] [-s svn-repos-path] [-p pass] cvs-repos-path
   --keywords-off       don't set svn:keywords on any files (by default,
                        cvs2svn sets svn:keywords on non-binary files to
                        "%(svn_keywords_value)s")
-  --tmpdir=PATH        directory to use for tmp data (default to cwd)
+  --tmpdir=PATH        directory to use for tmp data (default "cvs2svn-tmp")
   --skip-cleanup       prevent the deletion of intermediate files
   --profile            profile with 'hotshot' (into file cvs2svn.hotshot)
   --svnadmin=PATH      path to the "svnadmin" program

@@ -8,6 +8,6 @@
 execfile('cvs2svn-example.options')
 
 ctx.output_option = NewRepositoryOutputOption(
-    'tmp/main--options=cvs2svn.options-svnrepos',
+    'cvs2svn-tmp/main--options=cvs2svn.options-svnrepos',
     )
 

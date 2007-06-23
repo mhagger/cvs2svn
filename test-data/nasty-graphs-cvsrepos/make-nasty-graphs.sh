@@ -8,7 +8,7 @@ CVSROOT=`pwd`/nasty-graphs-cvsrepos
 export CVSROOT
 rm -rf $CVSROOT
 
-WC=`pwd`/tmp
+WC=`pwd`/cvs2svn-tmp
 rm -rf $WC
 
 cvs init

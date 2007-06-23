@@ -7,7 +7,7 @@
 # The script should be started from the main cvs2svn directory.
 
 repo=`pwd`/test-data/symbol-mess-cvsrepos
-wc=`pwd`/tmp/symbol-mess-wc
+wc=`pwd`/cvs2svn-tmp/symbol-mess-wc
 [ -e $repo/CVSROOT ] && rm -rf $repo/CVSROOT
 [ -e $repo/dir ] && rm -rf $repo/dir
 [ -e $wc ] && rm -rf $wc

@@ -52,7 +52,7 @@ class Ctx:
     self.symbol_strategy = None
     self.username = None
     self.svn_property_setters = []
-    self.tmpdir = '.'
+    self.tmpdir = 'cvs2svn-tmp'
     self.skip_cleanup = False
     # A list of Project instances for all projects being converted.
     self.projects = []

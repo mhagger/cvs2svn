@@ -12,7 +12,7 @@
 
 name=branch-from-empty-dir
 repo=`pwd`/test-data/$name-cvsrepos
-wc=`pwd`/tmp/$name-wc
+wc=`pwd`/cvs2svn-tmp/$name-wc
 [ -e $repo/CVSROOT ] && rm -rf $repo/CVSROOT
 [ -e $repo/proj ] && rm -rf $repo/proj
 [ -e $wc ] && rm -rf $wc

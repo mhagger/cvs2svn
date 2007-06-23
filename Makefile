@@ -30,7 +30,7 @@ pycheck:
 	pychecker cvs2svn_lib/*.py
 
 clean:
-	-rm -rf cvs2svn-*.tar.gz build tmp
+	-rm -rf cvs2svn-*.tar.gz build cvs2svn-tmp
 	-for d in . cvs2svn_lib cvs2svn_rcsparse svntest ; \
 	do \
 		rm -f $$d/*.pyc $$d/*.pyo; \

@@ -72,7 +72,7 @@ svn = 'svn'
 svnlook = 'svnlook'
 
 test_data_dir = 'test-data'
-tmp_dir = 'tmp'
+tmp_dir = 'cvs2svn-tmp'
 
 
 #----------------------------------------------------------------------
@@ -487,9 +487,12 @@ class Conversion:
 
     if options_file is None:
       self.options_file = None
+      if tmp_dir != 'cvs2svn-tmp':
+        # Only include this argument if it differs from cvs2svn's default:
+        args.extend([
+            '--tmpdir=%s' % tmp_dir,
+            ])
       args.extend([
-          '--tmpdir=%s' % tmp_dir,
-          '--bdb-txn-nosync',
           '-s', self.repos,
           cvsrepos,
           ])
@@ -606,8 +609,8 @@ def ensure_conversion(name, error_re=None, passbypass=None,
 
   NAME is just one word.  For example, 'main' would mean to convert
   './test-data/main-cvsrepos', and after the conversion, the resulting
-  Subversion repository would be in './tmp/main-svnrepos', and a
-  checked out head working copy in './tmp/main-wc'.
+  Subversion repository would be in './cvs2svn-tmp/main-svnrepos', and
+  a checked out head working copy in './cvs2svn-tmp/main-wc'.
 
   Any other options to pass to cvs2svn should be in ARGS, each element
   being one option, e.g., '--trunk-only'.  If the option takes an

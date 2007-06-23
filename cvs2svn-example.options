@@ -303,7 +303,7 @@ ctx.svn_property_setters.extend([
     ])
 
 # The directory to use for temporary files:
-ctx.tmpdir = r'tmp'
+ctx.tmpdir = r'cvs2svn-tmp'
 
 # To skip the cleanup of temporary files, uncomment the following
 # option:

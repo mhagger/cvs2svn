@@ -968,8 +968,8 @@ cvs2svn --symbol-transform='([0-9])-(.*):release-\1.\2' -q -s SVN RCS
   <tr>
     <td align="right"><tt>--tmpdir=PATH</tt></td>
     <td>Use the directory PATH for all of cvs2svn's temporary data
-      (which can be a <i>lot</i> of data).  The default value is the
-      current working directory.</td>
+      (which can be a <i>lot</i> of data).  The default value is
+      "cvs2svn-tmp" in the current working directory.</td>
   </tr>
 
   <tr>
@@ -1045,12 +1045,13 @@ specify <tt>--options</tt>:</p>
    $ cvs2svn --options OPTIONSFILE
 </pre>
 
-<p>As it works, cvs2svn will create many temporary files in the
-current directory (or the directory specified with <tt>--tmpdir</tt>).
-This is normal.  If the entire conversion is successful, however,
-those tempfiles will be automatically removed.  If the conversion is
-not successful, or if you specify the '--skip-cleanup' option, cvs2svn
-will leave the temporary files behind for possible debugging.</p>
+<p>As it works, cvs2svn will create many temporary files in a
+temporary directory called "cvs2svn-tmp" (or the directory specified
+with <tt>--tmpdir</tt>).  This is normal.  If the entire conversion is
+successful, however, those tempfiles will be automatically removed.
+If the conversion is not successful, or if you specify the
+'--skip-cleanup' option, cvs2svn will leave the temporary files behind
+for possible debugging.</p>
 
 </div>
 </body>

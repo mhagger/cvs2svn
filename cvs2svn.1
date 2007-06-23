@@ -224,8 +224,8 @@ svn:keywords for any file.  While this will not touch the keywords in
 the contents of your files, Subversion will not expand them.
 .TP
 \fB--tmpdir\fR=\fIpath\fR
-Set the \fIpath\fR to use for temporary data.  Default is the current
-directory.
+Set the \fIpath\fR to use for temporary data.  Default is a directory
+called \fIcvs2svn-tmp\fR under the current directory.
 .TP
 \fB--skip-cleanup\fR
 Prevent the deletion of temporary files.
@@ -247,9 +247,8 @@ Path to the \fIcvs\fR program.  (\fIcvs\fR is needed if
 \fB--sort\fR=\fIpath\fR
 Path to the GNU \fIsort\fR program.  (cvs2svn requires GNU sort.)
 .SH FILES
-The current directory (or the directory specified by \fB--tmpdir\fR)
-is used as scratch space for data files of the form
-\fIcvs2svn-data.*\fR and a dumpfile named \fIcvs2svn-dump\fR.
+A directory called \fIcvs2svn-tmp\fR (or the directory specified by
+\fB--tmpdir\fR) is used as scratch space for temporary data files.
 .SH AUTHORS
 Main authors are:
 .br

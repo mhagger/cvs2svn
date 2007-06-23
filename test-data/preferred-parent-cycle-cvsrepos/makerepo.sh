@@ -52,7 +52,7 @@
 # A.
 
 repo=`pwd`/test-data/preferred-parent-cycle-cvsrepos
-wc=`pwd`/tmp/preferred-parent-cycle-wc
+wc=`pwd`/cvs2svn-tmp/preferred-parent-cycle-wc
 [ -e $repo/CVSROOT ] && rm -rf $repo/CVSROOT
 [ -e $repo/dir ] && rm -rf $repo/dir
 [ -e $wc ] && rm -rf $wc

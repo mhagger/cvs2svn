@@ -675,7 +675,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         self.collect_data.revision_recorder.record_text(
             self._rev_data, revision, log, text)
 
-  def _get_non_trunk_default_branch_revisions(self):
+  def _get_ntdbr_ids(self):
     """Determine whether there are any non-trunk default branch revisions.
 
     If a non-trunk default branch is determined to have existed, yield
@@ -842,20 +842,19 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     cvs_items.extend(self._get_cvs_tags())
     cvs_file_items = CVSFileItems(self.cvs_file, self.pdc.trunk, cvs_items)
 
-    ntdbr = list(self._get_non_trunk_default_branch_revisions())
+    ntdbr_ids = list(self._get_ntdbr_ids())
 
     # Break a circular reference loop, allowing the memory for self
     # and sdc to be freed.
     del self.sdc
 
-    if ntdbr:
+    if ntdbr_ids:
       rev_1_2 = self._rev_data.get('1.2')
       if rev_1_2 is not None:
         rev_1_2_id = rev_1_2.cvs_rev_id
       else:
         rev_1_2_id = None
-      cvs_file_items.adjust_non_trunk_default_branch_revisions(
-          self._file_imported, ntdbr, rev_1_2_id)
+      cvs_file_items.adjust_ntdbrs(self._file_imported, ntdbr_ids, rev_1_2_id)
 
     return cvs_file_items
 

@@ -195,17 +195,14 @@ class CVSFileItems(object):
       for lod_items in self._iter_tree(lod, cvs_branch, id):
         yield lod_items
 
-  def adjust_non_trunk_default_branch_revisions(
-        self, file_imported, ntdbr, rev_1_2_id):
-    """Adjust the non-trunk default branch revisions.
+  def adjust_ntdbrs(self, file_imported, ntdbr_ids, rev_1_2_id):
+    """Adjust the non-trunk default branch revisions listed in NTDBR_IDS.
 
     FILE_IMPORTED is a boolean indicating whether this file appears to
-    have been imported.  NTDBR is a list of cvs_rev_ids for the
-    revisions that have been determined to be non-trunk default branch
-    revisions.  Set their default_branch_revision members correctly.
-    Also, if REV_1_2_ID is not None, then it is the id of revision
-    1.2.  Set that revision to depend on the last non-trunk default
-    branch revision and possibly adjust its type accordingly.
+    have been imported, which also means that revision 1.1 has a
+    generated log message that need not be preserved.  NTDBR_IDS is a
+    list of cvs_rev_ids for the revisions that have been determined to
+    be non-trunk default branch revisions.
 
     The first revision on the default branch is handled strangely by
     CVS.  If a file is imported (as opposed to being added), CVS
@@ -219,18 +216,25 @@ class CVSFileItems(object):
     When we detect a straightforward import like this, we want to
     handle it by deleting the 1.1 revision (which doesn't contain any
     useful information) and making 1.1.1.1 into an independent root in
-    the file's dependency tree.  1.1.1.1 will be added directly to the
-    vendor branch with its initial content.  Then in a special
-    'post-commit', the 1.1.1.1 revision is copied back to trunk.
+    the file's dependency tree.  In SVN, 1.1.1.1 will be added
+    directly to the vendor branch with its initial content.  Then in a
+    special 'post-commit', the 1.1.1.1 revision is copied back to
+    trunk.
 
     If the user imports again to the same vendor branch, then CVS
     creates revisions 1.1.1.2, 1.1.1.3, etc. on the vendor branch,
     *without* counterparts in trunk (even though these revisions
     effectively play the role of trunk revisions).  So after we add
     such revisions to the vendor branch, we also copy them back to
-    trunk in post-commits."""
+    trunk in post-commits.
 
-    cvs_rev = self[ntdbr[0]]
+    Set the default_branch_revision members of the revisions listed in
+    NTDBR_IDS to True.  Also, if REV_1_2_ID is not None, then it is
+    the id of revision 1.2.  Set that revision to depend on the last
+    non-trunk default branch revision and possibly adjust its type
+    accordingly."""
+
+    cvs_rev = self[ntdbr_ids[0]]
 
     if file_imported \
            and cvs_rev.rev == '1.1.1.1' \
@@ -278,7 +282,7 @@ class CVSFileItems(object):
         cvs_rev2 = self[id]
         cvs_rev2.prev_id = cvs_rev.id
 
-    for cvs_rev_id in ntdbr:
+    for cvs_rev_id in ntdbr_ids:
       cvs_rev = self[cvs_rev_id]
       cvs_rev.default_branch_revision = True
 
@@ -287,7 +291,7 @@ class CVSFileItems(object):
       # 1.1.  Accordingly, connect it to the last NTDBR and possibly
       # change its type.
       rev_1_2 = self[rev_1_2_id]
-      last_ntdbr = self[ntdbr[-1]]
+      last_ntdbr = self[ntdbr_ids[-1]]
       rev_1_2.default_branch_prev_id = last_ntdbr.id
       last_ntdbr.default_branch_next_id = rev_1_2.id
       rev_1_2.__class__ = cvs_revision_type_map[(
@@ -450,8 +454,7 @@ class CVSFileItems(object):
           last_rev.default_branch_next_id = None
           last_rev.next_id = rev_1_2.id
           # The type of rev_1_2 was already adjusted in
-          # adjust_non_trunk_default_branch_revisions(), so we don't
-          # have to change its type here.
+          # adjust_ntdbrs(), so we don't have to change its type here.
 
         for cvs_rev in lod_items.cvs_revisions:
           cvs_rev.default_branch_revision = False

@@ -165,9 +165,9 @@ class SymbolingsLogger:
 
   def log_default_branch_closing(self, cvs_rev, svn_revnum):
     """If self._open_files_with_default_branches contains
-    CVS_REV.cvs_file.id, then call log each symbol in
-    self._open_files_with_default_branches[CVS_REV.cvs_file.id] as a
-    closing with SVN_REVNUM as the closing revision number."""
+    CVS_REV.cvs_file.id, then log a closing for each symbol in
+    self._open_files_with_default_branches[CVS_REV.cvs_file.id] with
+    SVN_REVNUM as the closing revision number."""
 
     cvs_file_id = cvs_rev.cvs_file.id
     if cvs_file_id in self._open_files_with_default_branches:

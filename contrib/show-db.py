@@ -8,6 +8,8 @@ import getopt
 import cPickle as pickle
 from cStringIO import StringIO
 
+sys.path.insert(0, os.path.dirname(os.path.dirname(sys.argv[0])))
+
 from cvs2svn_lib import config
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.common import DB_OPEN_READ

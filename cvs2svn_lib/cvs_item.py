@@ -43,6 +43,8 @@ CVSItem
 """
 
 
+from __future__ import generators
+
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.set_support import *
 from cvs2svn_lib.context import Ctx
@@ -90,15 +92,14 @@ class CVSItem(object):
     raise NotImplementedError()
 
   def get_ids_closed(self):
-    """Return the list of CVSItem.ids of CVSItems closed by this one.
+    """Return an iterable over the CVSItem.ids of CVSItems closed by this one.
 
-    The definition of 'close' is as follows: When CVSItem A closes
-    CVSItem B, that means that the SVN revision when A is committed is
-    the end of the lifetime of B.  This is interesting because it sets
-    the last SVN revision number from which the contents of B can be
-    copied (for example, to fill a symbol).  See the concrete
-    implementations of this method for the exact rules about what
-    closes what."""
+    A CVSItem A is said to close a CVSItem B if committing A causes B
+    to be overwritten or deleted (no longer available) in the SVN
+    repository.  This is interesting because it sets the last SVN
+    revision number from which the contents of B can be copied (for
+    example, to fill a symbol).  See the concrete implementations of
+    this method for the exact rules about what closes what."""
 
     raise NotImplementedError()
 
@@ -306,15 +307,14 @@ class CVSRevision(CVSItem):
     #
     # * 1.1.1.2 closes 1.1.1.1
 
-    retval = []
     if self.first_on_branch_id is not None:
       # The first CVSRevision on a branch is considered to close the
       # branch:
-      retval.append(self.first_on_branch_id)
+      yield self.first_on_branch_id
       if self.default_branch_revision:
         # If the 1.1 revision was not deleted, the 1.1.1.1 revision is
         # considered to close it:
-        retval.append(self.prev_id)
+        yield self.prev_id
     elif self.default_branch_prev_id is not None:
       # This is the special case of a 1.2 revision that follows a
       # non-trunk default branch.  Either 1.1 was deleted or the first
@@ -327,9 +327,7 @@ class CVSRevision(CVSItem):
     elif self.prev_id is not None:
       # Since this CVSRevision is not the first on a branch, its
       # prev_id is on the same LOD and this item closes that one:
-      retval.append(self.prev_id)
-
-    return retval
+      yield self.prev_id
 
   def __str__(self):
     """For convenience only.  The format is subject to change at any time."""

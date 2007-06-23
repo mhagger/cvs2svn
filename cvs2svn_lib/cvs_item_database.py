@@ -32,7 +32,9 @@ from cvs2svn_lib.cvs_item import CVSRevisionChange
 from cvs2svn_lib.cvs_item import CVSRevisionDelete
 from cvs2svn_lib.cvs_item import CVSRevisionNoop
 from cvs2svn_lib.cvs_item import CVSBranch
+from cvs2svn_lib.cvs_item import CVSBranchNoop
 from cvs2svn_lib.cvs_item import CVSTag
+from cvs2svn_lib.cvs_item import CVSTagNoop
 from cvs2svn_lib.cvs_file_items import CVSFileItems
 from cvs2svn_lib.serializer import PrimedPickleSerializer
 from cvs2svn_lib.database import IndexedStore
@@ -41,7 +43,8 @@ from cvs2svn_lib.database import IndexedStore
 _cvs_item_primer = (
     CVSRevisionAdd, CVSRevisionChange,
     CVSRevisionDelete, CVSRevisionNoop,
-    CVSBranch, CVSTag,
+    CVSBranch, CVSBranchNoop,
+    CVSTag, CVSTagNoop,
     )
 
 

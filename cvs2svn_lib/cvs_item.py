@@ -489,6 +489,25 @@ class CVSBranch(CVSSymbol):
            % (self.cvs_file, self.symbol, self.branch_number, self.id,)
 
 
+class CVSBranchNoop(CVSBranch):
+  """A CVSBranch whose source is a CVSRevisionDelete or CVSRevisionNoop."""
+
+  pass
+
+
+# A map
+#
+#   {nondead(source_cvs_rev) : cvs_branch_subtype}
+#
+# , where nondead() means that the cvs revision exists and is not
+# 'dead', and CVS_BRANCH_SUBTYPE is the subtype of CVSBranch that
+# should be used.
+cvs_branch_type_map = {
+    False : CVSBranchNoop,
+    True : CVSBranch,
+    }
+
+
 class CVSTag(CVSSymbol):
   """Represent the creation of a tag on a particular CVSFile."""
 
@@ -526,5 +545,24 @@ class CVSTag(CVSSymbol):
 
     return '%s:%s<%x>' \
            % (self.cvs_file, self.symbol, self.id,)
+
+
+class CVSTagNoop(CVSTag):
+  """A CVSTag whose source is a CVSRevisionDelete or CVSRevisionNoop."""
+
+  pass
+
+
+# A map
+#
+#   {nondead(source_cvs_rev) : cvs_tag_subtype}
+#
+# , where nondead() means that the cvs revision exists and is not
+# 'dead', and CVS_TAG_SUBTYPE is the subtype of CVSTag that should be
+# used.
+cvs_tag_type_map = {
+    False : CVSTagNoop,
+    True : CVSTag,
+    }
 
 

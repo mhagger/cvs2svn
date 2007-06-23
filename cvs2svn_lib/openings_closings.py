@@ -91,8 +91,8 @@ class SymbolingsLogger:
     else:
       branch_id = None
 
-    for id in cvs_rev.tag_ids + cvs_rev.branch_ids:
-      symbol = Ctx()._cvs_items_db[id].symbol
+    for cvs_symbol_id in cvs_rev.get_cvs_symbol_ids_opened():
+      symbol = Ctx()._cvs_items_db[cvs_symbol_id].symbol
       self._note_default_branch_opening(cvs_rev, symbol.id)
       if isinstance(cvs_rev, CVSRevisionModification):
         self._log_opening(symbol.id, svn_revnum, cvs_rev.cvs_file, branch_id)

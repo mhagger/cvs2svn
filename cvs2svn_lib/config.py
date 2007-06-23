@@ -36,66 +36,63 @@ SORT_EXECUTABLE = 'sort'
 # The first file contains enough information about each CVSRevision to
 # deduce preliminary Changesets.  The second file is a sorted version
 # of the first.
-CVS_REVS_SUMMARY_DATAFILE = 'cvs2svn-revs-summary.txt'
-CVS_REVS_SUMMARY_SORTED_DATAFILE = 'cvs2svn-revs-summary-s.txt'
+CVS_REVS_SUMMARY_DATAFILE = 'revs-summary.txt'
+CVS_REVS_SUMMARY_SORTED_DATAFILE = 'revs-summary-s.txt'
 
 # The first file contains enough information about each CVSSymbol to
 # deduce preliminary Changesets.  The second file is a sorted version
 # of the first.
-CVS_SYMBOLS_SUMMARY_DATAFILE = 'cvs2svn-symbols-summary.txt'
-CVS_SYMBOLS_SUMMARY_SORTED_DATAFILE = 'cvs2svn-symbols-summary-s.txt'
+CVS_SYMBOLS_SUMMARY_DATAFILE = 'symbols-summary.txt'
+CVS_SYMBOLS_SUMMARY_SORTED_DATAFILE = 'symbols-summary-s.txt'
 
 # A mapping from CVSItem id to Changeset id.
-CVS_ITEM_TO_CHANGESET = 'cvs2svn-cvs-item-to-changeset.dat'
+CVS_ITEM_TO_CHANGESET = 'cvs-item-to-changeset.dat'
 
 # A mapping from CVSItem id to Changeset id, after the
 # RevisionChangeset loops have been broken.
-CVS_ITEM_TO_CHANGESET_REVBROKEN = \
-    'cvs2svn-cvs-item-to-changeset-revbroken.dat'
+CVS_ITEM_TO_CHANGESET_REVBROKEN = 'cvs-item-to-changeset-revbroken.dat'
 
 # A mapping from CVSItem id to Changeset id, after the SymbolChangeset
 # loops have been broken.
-CVS_ITEM_TO_CHANGESET_SYMBROKEN = \
-    'cvs2svn-cvs-item-to-changeset-symbroken.dat'
+CVS_ITEM_TO_CHANGESET_SYMBROKEN = 'cvs-item-to-changeset-symbroken.dat'
 
 # A mapping from CVSItem id to Changeset id, after all Changeset
 # loops have been broken.
-CVS_ITEM_TO_CHANGESET_ALLBROKEN = \
-    'cvs2svn-cvs-item-to-changeset-allbroken.dat'
+CVS_ITEM_TO_CHANGESET_ALLBROKEN = 'cvs-item-to-changeset-allbroken.dat'
 
 # A mapping from id to Changeset.
-CHANGESETS_INDEX = 'cvs2svn-changesets-index.dat'
-CHANGESETS_STORE = 'cvs2svn-changesets.pck'
+CHANGESETS_INDEX = 'changesets-index.dat'
+CHANGESETS_STORE = 'changesets.pck'
 
 # A mapping from id to Changeset, after the RevisionChangeset loops
 # have been broken.
-CHANGESETS_REVBROKEN_INDEX = 'cvs2svn-changesets-revbroken-index.dat'
-CHANGESETS_REVBROKEN_STORE = 'cvs2svn-changesets-revbroken.pck'
+CHANGESETS_REVBROKEN_INDEX = 'changesets-revbroken-index.dat'
+CHANGESETS_REVBROKEN_STORE = 'changesets-revbroken.pck'
 
 # A mapping from id to Changeset, after the RevisionChangesets have
 # been sorted and converted into OrderedChangesets.
-CHANGESETS_REVSORTED_INDEX = 'cvs2svn-changesets-revsorted-index.dat'
-CHANGESETS_REVSORTED_STORE = 'cvs2svn-changesets-revsorted.pck'
+CHANGESETS_REVSORTED_INDEX = 'changesets-revsorted-index.dat'
+CHANGESETS_REVSORTED_STORE = 'changesets-revsorted.pck'
 
 # A mapping from id to Changeset, after the SymbolChangeset loops have
 # been broken.
-CHANGESETS_SYMBROKEN_INDEX = 'cvs2svn-changesets-symbroken-index.dat'
-CHANGESETS_SYMBROKEN_STORE = 'cvs2svn-changesets-symbroken.pck'
+CHANGESETS_SYMBROKEN_INDEX = 'changesets-symbroken-index.dat'
+CHANGESETS_SYMBROKEN_STORE = 'changesets-symbroken.pck'
 
 # A mapping from id to Changeset, after all Changeset loops have been
 # broken.
-CHANGESETS_ALLBROKEN_INDEX = 'cvs2svn-changesets-allbroken-index.dat'
-CHANGESETS_ALLBROKEN_STORE = 'cvs2svn-changesets-allbroken.pck'
+CHANGESETS_ALLBROKEN_INDEX = 'changesets-allbroken-index.dat'
+CHANGESETS_ALLBROKEN_STORE = 'changesets-allbroken.pck'
 
 # The RevisionChangesets in commit order.  Each line contains the
 # changeset id and timestamp of one changeset, in hexadecimal, in the
 # order that the changesets should be committed to svn.
-CHANGESETS_SORTED_DATAFILE = 'cvs2svn-changesets-s.txt'
+CHANGESETS_SORTED_DATAFILE = 'changesets-s.txt'
 
 # This file contains a marshalled copy of all the statistics that we
 # gather throughout the various runs of cvs2svn.  The data stored as a
 # marshalled dictionary.
-STATISTICS_FILE = 'cvs2svn-statistics.pck'
+STATISTICS_FILE = 'statistics.pck'
 
 # This text file contains records (1 per line) that describe svn
 # filesystem paths that are the opening and closing source revisions
@@ -109,45 +106,45 @@ STATISTICS_FILE = 'cvs2svn-statistics.pck'
 # id of the branch where this opening or closing happened (in hex), or
 # '*' for the default branch.  CVS_FILE_ID is the id of the
 # corresponding CVSFile (in hex).
-SYMBOL_OPENINGS_CLOSINGS = 'cvs2svn-symbolic-names.txt'
+SYMBOL_OPENINGS_CLOSINGS = 'symbolic-names.txt'
 # A sorted version of the above file.
-SYMBOL_OPENINGS_CLOSINGS_SORTED = 'cvs2svn-symbolic-names-s.txt'
+SYMBOL_OPENINGS_CLOSINGS_SORTED = 'symbolic-names-s.txt'
 
 # Skeleton version of an svn filesystem.  See class
 # SVNRepositoryMirror for how these work.
-SVN_MIRROR_REVISIONS_TABLE = 'cvs2svn-svn-revisions.dat'
-SVN_MIRROR_NODES_INDEX_TABLE = 'cvs2svn-svn-nodes-index.dat'
-SVN_MIRROR_NODES_STORE = 'cvs2svn-svn-nodes.pck'
+SVN_MIRROR_REVISIONS_TABLE = 'svn-revisions.dat'
+SVN_MIRROR_NODES_INDEX_TABLE = 'svn-nodes-index.dat'
+SVN_MIRROR_NODES_STORE = 'svn-nodes.pck'
 
 # Offsets pointing to the beginning of each symbol's records in
 # SYMBOL_OPENINGS_CLOSINGS_SORTED.  This file contains a pickled map
 # from symbol_id to file offset.
-SYMBOL_OFFSETS_DB = 'cvs2svn-symbol-offsets.pck'
+SYMBOL_OFFSETS_DB = 'symbol-offsets.pck'
 
 # Pickled map of CVSFile.id to instance.
-CVS_FILES_DB = 'cvs2svn-cvs-files.pck'
+CVS_FILES_DB = 'cvs-files.pck'
 
 # A series of records.  The first is a pickled serializer.  Each
 # subsequent record is a serialized list of all CVSItems applying to a
 # CVSFile.
-CVS_ITEMS_STORE = 'cvs2svn-cvs-items.pck'
+CVS_ITEMS_STORE = 'cvs-items.pck'
 
 # A database of filtered CVSItems.  Excluded symbols have been
 # discarded (and the dependencies of the remaining CVSItems fixed up).
 # These two files are used within an IndexedCVSItemStore; the first is
 # a map id-> offset, and the second contains the pickled CVSItems at
 # the specified offsets.
-CVS_ITEMS_FILTERED_INDEX_TABLE = 'cvs2svn-cvs-items-filtered-index.pck'
-CVS_ITEMS_FILTERED_STORE = 'cvs2svn-cvs-items-filtered.pck'
+CVS_ITEMS_FILTERED_INDEX_TABLE = 'cvs-items-filtered-index.pck'
+CVS_ITEMS_FILTERED_STORE = 'cvs-items-filtered.pck'
 
 # A record of all symbolic names that will be processed in the
 # conversion.  This file contains a pickled list of TypedSymbol
 # objects.
-SYMBOL_DB = 'cvs2svn-symbols.pck'
+SYMBOL_DB = 'symbols.pck'
 
 # A pickled list of the statistics for all symbols.  Each entry in the
 # list is an instance of cvs2svn_lib.symbol_statistics._Stats.
-SYMBOL_STATISTICS = 'cvs2svn-symbol-statistics.pck'
+SYMBOL_STATISTICS = 'symbol-statistics.pck'
 
 # These two databases provide a bidirectional mapping between
 # CVSRevision.ids (in hex) and Subversion revision numbers.
@@ -158,12 +155,12 @@ SYMBOL_STATISTICS = 'cvs2svn-symbol-statistics.pck'
 #
 # The second maps Subversion revision numbers (as hex strings) to
 # pickled SVNCommit instances.
-CVS_REVS_TO_SVN_REVNUMS = 'cvs2svn-cvs-revs-to-svn-revnums.dat'
+CVS_REVS_TO_SVN_REVNUMS = 'cvs-revs-to-svn-revnums.dat'
 
 # This database maps Subversion revision numbers to pickled SVNCommit
 # instances.
-SVN_COMMITS_INDEX_TABLE = 'cvs2svn-svn-commits-index.dat'
-SVN_COMMITS_STORE = 'cvs2svn-svn-commits.pck'
+SVN_COMMITS_INDEX_TABLE = 'svn-commits-index.dat'
+SVN_COMMITS_STORE = 'svn-commits.pck'
 
 # How many bytes to read at a time from a pipe.  128 kiB should be
 # large enough to be efficient without wasting too much memory.
@@ -175,14 +172,14 @@ PIPE_READ_SIZE = 128 * 1024
 # is assigned the same id.  Note that the (author, logmessage) pairs
 # are not necessarily all distinct; other data are taken into account
 # when constructing ids.
-METADATA_DB = "cvs2svn-metadata.db"
+METADATA_DB = 'metadata.db'
 
 # The following four databases are used in conjunction with --use-internal-co.
 
 # Records the RCS deltas for all CVS revisions.  The deltas are to be
 # applied forward, i.e. those from trunk are reversed wrt RCS.
-RCS_DELTAS_INDEX_TABLE = "cvs2svn-rcs-deltas-index.dat"
-RCS_DELTAS_STORE = "cvs2svn-rcs-deltas.pck"
+RCS_DELTAS_INDEX_TABLE = 'rcs-deltas-index.dat'
+RCS_DELTAS_STORE = 'rcs-deltas.pck'
 
 # Records the revision tree of each RCS file.  The format is a list of
 # list of integers.  The outer list holds lines of development, the inner list
@@ -190,26 +187,26 @@ RCS_DELTAS_STORE = "cvs2svn-rcs-deltas.pck"
 # to the trunk" appear later.  Revisions are sorted by reverse chronological
 # order.  The last revision of each branch is the revision it sprouts from.
 # Revisions that represent deletions at the end of a branch are omitted.
-RCS_TREES_INDEX_TABLE = "cvs2svn-rcs-trees-index.dat"
-RCS_TREES_STORE = "cvs2svn-rcs-trees.pck"
+RCS_TREES_INDEX_TABLE = 'rcs-trees-index.dat'
+RCS_TREES_STORE = 'rcs-trees.pck'
 
 # Records the revision tree of each RCS file after removing revisions
 # belonging to excluded branches.  Note that the branch ordering is arbitrary
 # in this file.
-RCS_TREES_FILTERED_INDEX_TABLE = "cvs2svn-rcs-trees-filtered-index.dat"
-RCS_TREES_FILTERED_STORE = "cvs2svn-rcs-trees-filtered.pck"
+RCS_TREES_FILTERED_INDEX_TABLE = 'rcs-trees-filtered-index.dat'
+RCS_TREES_FILTERED_STORE = 'rcs-trees-filtered.pck'
 
 # At any given time during OutputPass, holds the full text of each CVS
 # revision that was checked out already and still has descendants that will
 # be checked out.
-CVS_CHECKOUT_DB = "cvs2svn-cvs-checkout.db"
+CVS_CHECKOUT_DB = 'cvs-checkout.db'
 
 # End of DBs related to --use-internal-co.
 
 # If this run will output directly to a Subversion repository, then
 # this is the name of the file that each revision will temporarily be
 # written to prior to writing it into the repository.
-DUMPFILE = 'cvs2svn-svn.dump'
+DUMPFILE = 'svn.dump'
 
 # flush a commit if a 5 minute gap occurs.
 COMMIT_THRESHOLD = 5 * 60

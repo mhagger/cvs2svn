@@ -123,12 +123,12 @@ def prime_ctx():
   from cvs2svn_lib.symbol_database import SymbolDatabase
   from cvs2svn_lib.cvs_file_database import CVSFileDatabase
   from cvs2svn_lib.artifact_manager import artifact_manager
-  artifact_manager.register_temp_file("cvs2svn-cvs-files.pck", None)
-  artifact_manager.register_temp_file("cvs2svn-symbols.pck", None)
-  artifact_manager.register_temp_file("cvs2svn-cvs-files.db", None)
+  artifact_manager.register_temp_file("cvs-files.pck", None)
+  artifact_manager.register_temp_file("symbols.pck", None)
+  artifact_manager.register_temp_file("cvs-files.db", None)
   from cvs2svn_lib.cvs_item_database import OldCVSItemStore
   from cvs2svn_lib.metadata_database import MetadataDatabase
-  artifact_manager.register_temp_file("cvs2svn-metadata.db", None)
+  artifact_manager.register_temp_file("metadata.db", None)
   artifact_manager.pass_started(None)
 
   Ctx().projects = ProjectList()
@@ -151,35 +151,35 @@ def main():
 
   for o, a in opts:
     if o == "-R":
-      show_int2str_db("cvs2svn-svn-revisions.db")
+      show_int2str_db("svn-revisions.db")
     elif o == "-N":
-      show_str2marshal_db("cvs2svn-svn-nodes.db")
+      show_str2marshal_db("svn-nodes.db")
     elif o == "-r":
       try:
         revnum = int(a)
       except ValueError:
         sys.stderr.write('Option -r requires a valid revision number\n')
         sys.exit(1)
-      db = anydbm.open("cvs2svn-svn-revisions.db", 'r')
+      db = anydbm.open("svn-revisions.db", 'r')
       key = db[str(revnum)]
       db.close()
-      db = anydbm.open("cvs2svn-svn-nodes.db", 'r')
+      db = anydbm.open("svn-nodes.db", 'r')
       print_node_tree(db, key, "Revision %d" % revnum)
     elif o == "-m":
-      show_str2marshal_db("cvs2svn-metadata.db")
+      show_str2marshal_db("metadata.db")
     elif o == "-f":
-      show_str2pickle_db("cvs2svn-cvs-files.db")
+      show_str2pickle_db("cvs-files.db")
     elif o == "-c":
       prime_ctx()
-      show_str2ppickle_db("cvs2svn-svn-commits.db")
+      show_str2ppickle_db("svn-commits.db")
     elif o == "-C":
-      show_str2marshal_db("cvs2svn-cvs-revs-to-svn-revnums.db")
+      show_str2marshal_db("cvs-revs-to-svn-revnums.db")
     elif o == "-i":
       prime_ctx()
       show_cvsitemstore()
     elif o == "-I":
       prime_ctx()
-      show_resynccvsitemstore("cvs2svn-cvs-items-resync.pck")
+      show_resynccvsitemstore("cvs-items-resync.pck")
     elif o == "-p":
       obj = pickle.load(open(a))
       print repr(obj)

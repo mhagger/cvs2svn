@@ -249,16 +249,6 @@ class SVNPrimaryCommit(SVNCommit, SVNRevisionCommit):
       elif isinstance(cvs_rev, CVSRevisionDelete):
         repos.delete_path(cvs_rev.get_svn_path(), Ctx().prune)
 
-      elif (cvs_rev.rev == "1.1.1.1"
-          and not cvs_rev.deltatext_exists
-          and repos.path_exists(cvs_rev.get_svn_path())):
-        # This change can be omitted.  See comment in
-        # SVNCommitCreator._commit() for what this is all about.  Note
-        # that although asking repos.path_exists() is somewhat
-        # expensive, we only do it if the first two (cheap) tests
-        # succeed first.
-        repos.skip_path(cvs_rev)
-
       elif isinstance(cvs_rev, CVSRevisionAdd):
         repos.add_path(cvs_rev)
 

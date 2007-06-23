@@ -88,7 +88,7 @@ def show_cvsitemstore():
     items = cvs_file_items.values()
     items.sort(key=lambda i: i.id)
     for item in items:
-      print    "%6x: %s" % (item.id, item,)
+      print    "%6x: %r" % (item.id, item,)
 
 
 def show_resynccvsitemstore(fname):

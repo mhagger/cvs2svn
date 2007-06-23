@@ -675,6 +675,17 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         self.collect_data.revision_recorder.record_text(
             self._rev_data, revision, log, text)
 
+  def _get_rev_1_2(self):
+    """Return the _RevisionData for the revision playing the role of '1.2'.
+
+    Return None if there is no such revision."""
+
+    rev_1_1 = self._rev_data[self._root_rev]
+    if rev_1_1.child is None:
+      return None
+    else:
+      return self._rev_data[rev_1_1.child]
+
   def _get_ntdbr_ids(self):
     """Determine whether there are any non-trunk default branch revisions.
 
@@ -701,11 +712,11 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       # There is still a default branch; that means that all revisions
       # on that branch get marked.
 
-      rev_1_1 = self._rev_data[self._root_rev]
-      if rev_1_1.child is not None:
+      rev_1_2 = self._get_rev_1_2()
+      if rev_1_2 is not None:
         self.collect_data.record_fatal_error(
             'File has default branch=%s but also a revision %s'
-            % (self.default_branch, rev_1_1.child,)
+            % (self.default_branch, rev_1_2.rev,)
             )
         return
 
@@ -738,7 +749,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       # would require an extra pass or two.
       vendor_branch_data = self.sdc.branches_data.get('1.1.1')
       if vendor_branch_data is not None:
-        rev_1_2 = self._rev_data.get('1.2')
+        rev_1_2 = self._get_rev_1_2()
         if rev_1_2 is None:
           rev_1_2_timestamp = None
         else:
@@ -849,7 +860,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     del self.sdc
 
     if ntdbr_ids:
-      rev_1_2 = self._rev_data.get('1.2')
+      rev_1_2 = self._get_rev_1_2()
       if rev_1_2 is not None:
         rev_1_2_id = rev_1_2.cvs_rev_id
       else:

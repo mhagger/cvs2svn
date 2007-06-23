@@ -51,25 +51,30 @@ class SVNCommitCreator:
 
 
   def _post_commit(self, cvs_revs, motivating_revnum, timestamp):
-    """Generate any SVNCommits that we can perform following CVS_REVS.
+    """Generate any SVNCommits needed to follow CVS_REVS.
 
-    That is, handle non-trunk default branches.  Sometimes an RCS file
-    has a non-trunk default branch, so a commit on that default branch
-    would be visible in a default CVS checkout of HEAD.  If we don't
-    copy that commit over to Subversion's trunk, then there will be no
-    Subversion tree which corresponds to that CVS checkout.  Of course,
-    in order to copy the path over, we may first need to delete the
-    existing trunk there."""
+    That is, handle non-trunk default branches.  A revision on a CVS
+    non-trunk default branch is visible in a default CVS checkout of
+    HEAD.  So we copy such commits over to Subversion's trunk so that
+    checking out SVN trunk gives the same output as checking out of
+    CVS's default branch."""
 
-    cvs_revs.sort(
-        lambda a, b: cmp(a.cvs_file.filename, b.cvs_file.filename)
-        )
-    # Generate an SVNCommit for all of our default branch cvs_revs.
-    svn_commit = SVNPostCommit(motivating_revnum, cvs_revs, timestamp)
-    for cvs_rev in cvs_revs:
-      Ctx()._symbolings_logger.log_default_branch_closing(
-          cvs_rev, svn_commit.revnum)
-    yield svn_commit
+    cvs_revs = [
+          cvs_rev
+          for cvs_rev in cvs_revs
+          if cvs_rev.default_branch_revision
+          ]
+
+    if cvs_revs:
+      cvs_revs.sort(
+          lambda a, b: cmp(a.cvs_file.filename, b.cvs_file.filename)
+          )
+      # Generate an SVNCommit for all of our default branch cvs_revs.
+      svn_commit = SVNPostCommit(motivating_revnum, cvs_revs, timestamp)
+      for cvs_rev in cvs_revs:
+        Ctx()._symbolings_logger.log_default_branch_closing(
+            cvs_rev, svn_commit.revnum)
+      yield svn_commit
 
   def _process_revision_changeset(self, changeset, timestamp):
     """Process CHANGESET, using TIMESTAMP as the commit time.
@@ -98,34 +103,24 @@ class SVNCommitCreator:
       cvs_revs.sort(lambda a, b: cmp(a.cvs_file.filename, b.cvs_file.filename))
       svn_commit = SVNPrimaryCommit(cvs_revs, timestamp)
 
-      # default_branch_cvs_revisions is a list of cvs_revs for each
-      # default branch commit that will need to be copied to trunk (or
-      # deleted from trunk) in a generated revision following the
-      # "regular" revision.
-      default_branch_cvs_revisions = [
-            cvs_rev
-            for cvs_rev in cvs_revs
-            if cvs_rev.default_branch_revision]
-
       yield svn_commit
 
       for cvs_rev in cvs_revs:
         Ctx()._symbolings_logger.log_revision(cvs_rev, svn_commit.revnum)
 
-      # Generate an SVNPostCommit if we have default branch revs:
-      if default_branch_cvs_revisions:
-        # If some of the revisions in this commit happened on a
-        # non-trunk default branch, then those files have to be
-        # copied into trunk manually after being changed on the
-        # branch (because the RCS "default branch" appears as head,
-        # i.e., trunk, in practice).  Unfortunately, Subversion
-        # doesn't support copies with sources in the current txn.
-        # All copies must be based in committed revisions.
-        # Therefore, we generate the copies in a new revision.
-        for svn_post_commit in self._post_commit(
-              default_branch_cvs_revisions, svn_commit.revnum, timestamp
-              ):
-          yield svn_post_commit
+      # Generate an SVNPostCommit if we have default branch revs.  If
+      # some of the revisions in this commit happened on a non-trunk
+      # default branch, then those files have to be copied into trunk
+      # manually after being changed on the branch (because the RCS
+      # "default branch" appears as head, i.e., trunk, in practice).
+      # Unfortunately, Subversion doesn't support copies with sources
+      # in the current txn.  All copies must be based in committed
+      # revisions.  Therefore, we generate the copies in a new
+      # revision.
+      for svn_post_commit in self._post_commit(
+            cvs_revs, svn_commit.revnum, timestamp
+            ):
+        yield svn_post_commit
 
   def _process_tag_changeset(self, changeset, timestamp):
     """Process TagChangeset CHANGESET, producing a SVNSymbolCommit."""

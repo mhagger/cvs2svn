@@ -675,16 +675,11 @@ class CVSFileItems(object):
     for cvs_item in self.values():
       if isinstance(cvs_item, CVSRevision):
         cvs_item.closed_symbol_ids = []
-
-    for cvs_item in self.values():
-      if isinstance(cvs_item, (CVSRevision, CVSBranch)):
-        if cvs_item.next_id is None:
-          continue
-        next_item = self[cvs_item.next_id]
-        cvs_symbols = [
-            self[cvs_symbol_id]
-            for cvs_symbol_id in cvs_item.get_cvs_symbol_ids_opened()]
-        for cvs_symbol in cvs_symbols:
-          next_item.closed_symbol_ids.append(cvs_symbol.symbol.id)
+        for cvs_item_closed_id in cvs_item.get_ids_closed():
+          cvs_item_closed = self[cvs_item_closed_id]
+          cvs_item.closed_symbol_ids.extend([
+              self[cvs_symbol_id].symbol.id
+              for cvs_symbol_id in cvs_item_closed.get_cvs_symbol_ids_opened()
+              ])
 
 

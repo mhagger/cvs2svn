@@ -10,6 +10,8 @@ from cStringIO import StringIO
 
 from cvs2svn_lib import config
 from cvs2svn_lib.context import Ctx
+from cvs2svn_lib.common import DB_OPEN_READ
+from cvs2svn_lib.artifact_manager import artifact_manager
 
 
 def usage():
@@ -28,7 +30,7 @@ def usage():
       '  -c      PersistenceManager SVNCommit table\n'
       '  -C      PersistenceManager cvs-revs-to-svn-revnums table\n'
       '  -i      CVSItemDatabase (normal)\n'
-      '  -I      CVSItemDatabase (resync)\n'
+      '  -I      CVSItemDatabase (filtered)\n'
       '  -p file Show the given file, assuming it contains a pickle.\n'
       '\n'
       'DIRECTORY is the directory containing the temporary database files.\n'
@@ -91,20 +93,18 @@ def show_cvsitemstore():
       print    "%6x: %r" % (item.id, item,)
 
 
-def show_resynccvsitemstore(fname):
-  f = open(fname, 'rb')
+def show_filtered_cvs_item_store():
+  from cvs2svn_lib.cvs_item_database import IndexedCVSItemStore
+  db = IndexedCVSItemStore(
+      artifact_manager.get_temp_file(config.CVS_ITEMS_FILTERED_STORE),
+      artifact_manager.get_temp_file(config.CVS_ITEMS_FILTERED_INDEX_TABLE),
+      DB_OPEN_READ)
 
-  u = pickle.Unpickler(f)
-  (pickler_memo, unpickler_memo,) = u.load()
-
-  while True:
-    u = pickle.Unpickler(f)
-    u.memo = unpickler_memo.copy()
-    try:
-      item = u.load()
-    except EOFError:
-      break
-    print    "%6s: %s" % (item.id, item,)
+  ids = list(db.iterkeys())
+  ids.sort()
+  for id in ids:
+    cvs_item = db[id]
+    print    "%6x: %r" % (cvs_item.id, cvs_item,)
 
 
 
@@ -119,25 +119,34 @@ class ProjectList:
 
 
 def prime_ctx():
+  am = artifact_manager
+
+  def rf(filename):
+    am.register_temp_file(filename, None)
+
   from cvs2svn_lib.common import DB_OPEN_READ
   from cvs2svn_lib.symbol_database import SymbolDatabase
   from cvs2svn_lib.cvs_file_database import CVSFileDatabase
-  from cvs2svn_lib.artifact_manager import artifact_manager
-  artifact_manager.register_temp_file("cvs-files.pck", None)
-  artifact_manager.register_temp_file("symbols.pck", None)
-  artifact_manager.register_temp_file("cvs-files.db", None)
+  rf(config.CVS_FILES_DB)
+  rf(config.SYMBOL_DB)
   from cvs2svn_lib.cvs_item_database import OldCVSItemStore
   from cvs2svn_lib.metadata_database import MetadataDatabase
-  artifact_manager.register_temp_file("metadata.db", None)
+  rf(config.METADATA_DB)
+  rf(config.CVS_ITEMS_STORE)
+  rf(config.CVS_ITEMS_FILTERED_STORE)
+  rf(config.CVS_ITEMS_FILTERED_INDEX_TABLE)
   artifact_manager.pass_started(None)
 
   Ctx().projects = ProjectList()
   Ctx()._symbol_db = SymbolDatabase()
   Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
-  Ctx()._cvs_items_db = OldCVSItemStore(config.CVS_ITEMS_STORE)
+  Ctx()._cvs_items_db = OldCVSItemStore(
+      am.get_temp_file(config.CVS_ITEMS_STORE)
+      )
   Ctx()._metadata_db = MetadataDatabase(DB_OPEN_READ)
 
 def main():
+  am = artifact_manager
   try:
     opts, args = getopt.getopt(sys.argv[1:], "RNr:mlfcCiIp:")
   except getopt.GetoptError:
@@ -147,39 +156,44 @@ def main():
     usage()
 
   if len(args) == 1:
-    os.chdir(args[0])
+    Ctx().tmpdir = args[0]
 
   for o, a in opts:
     if o == "-R":
-      show_int2str_db("svn-revisions.db")
+      show_int2str_db(config.SVN_MIRROR_REVISIONS_TABLE)
     elif o == "-N":
-      show_str2marshal_db("svn-nodes.db")
+      show_str2marshal_db(
+          config.SVN_MIRROR_NODES_STORE,
+          config.SVN_MIRROR_NODES_INDEX_TABLE
+          )
     elif o == "-r":
       try:
         revnum = int(a)
       except ValueError:
         sys.stderr.write('Option -r requires a valid revision number\n')
         sys.exit(1)
-      db = anydbm.open("svn-revisions.db", 'r')
+      db = anydbm.open(config.SVN_MIRROR_REVISIONS_TABLE, 'r')
       key = db[str(revnum)]
       db.close()
-      db = anydbm.open("svn-nodes.db", 'r')
+      db = anydbm.open(config.SVN_MIRROR_NODES_STORE, 'r')
       print_node_tree(db, key, "Revision %d" % revnum)
     elif o == "-m":
-      show_str2marshal_db("metadata.db")
+      show_str2marshal_db(config.METADATA_DB)
     elif o == "-f":
-      show_str2pickle_db("cvs-files.db")
+      show_str2pickle_db(config.CVS_FILES_DB)
     elif o == "-c":
       prime_ctx()
-      show_str2ppickle_db("svn-commits.db")
+      show_str2ppickle_db(
+          config.SVN_COMMITS_INDEX_TABLE, config.SVN_COMMITS_STORE
+          )
     elif o == "-C":
-      show_str2marshal_db("cvs-revs-to-svn-revnums.db")
+      show_str2marshal_db(config.CVS_REVS_TO_SVN_REVNUMS)
     elif o == "-i":
       prime_ctx()
       show_cvsitemstore()
     elif o == "-I":
       prime_ctx()
-      show_resynccvsitemstore("cvs-items-resync.pck")
+      show_filtered_cvs_item_store()
     elif o == "-p":
       obj = pickle.load(open(a))
       print repr(obj)

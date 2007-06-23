@@ -251,52 +251,79 @@ class CVSRevision(CVSItem):
 
   def get_ids_closed(self):
     # Special handling is needed in the case of non-trunk default
-    # branches.  If a file is first imported on a vendor branch, then
-    # revisions 1.1 and 1.1.1.1 are created but the default branch is
-    # set to 1.1.1.  Later imports become versions 1.1.1.2, etc., and
-    # are used when the default branch is checked out.  If the user
-    # later creates a (non-import) version of the file, it gets
-    # version number 1.2 and the default branch is discarded (going
-    # back to the default value, 1).
+    # branches.  The following cases have to be handled:
     #
-    # - If the file is then branched from trunk right after being
-    #   imported via 'cvs tag -b BRANCH', the branch (surprisingly)
-    #   sprouts from 1.1.1.1, not 1.1.
+    # Case 1: Revision 1.1 not deleted; revision 1.2 exists:
     #
-    # - If the file is tagged from version 1.1 explicitly via 'cvs tag
-    #   -r 1.1 -b BRANCH', then the branch sprouts from 1.1.
+    #         1.1 -----------------> 1.2
+    #           \    ^          ^    /
+    #            \   |          |   /
+    #             1.1.1.1 -> 1.1.1.2
     #
-    # Therefore, if there is a revision 1.1.1.2 that is still on the
-    # default branch, then it should be considered to close both 1.1
-    # and 1.1.1.1.  Then the 1.x branch should remain closed until 1.2
-    # is committed.  1.2 shouldn't actually close anything (because
-    # 1.1 was already closed by 1.1.1.2).
+    # * 1.1.1.1 closes 1.1 (because its post-commit overwrites 1.1
+    #   on trunk)
     #
-    # On the other hand, if there is no 1.1.1.2, but instead 1.1.1.1
-    # is followed directly by 1.2, then no special treatment is needed
-    # because 1.1 is closed by 1.2.
+    # * 1.1.1.2 closes 1.1.1.1
+    #
+    # * 1.2 doesn't close anything (the post-commit from 1.1.1.1
+    #   already closed 1.1, and no symbols can sprout from the
+    #   post-commit of 1.1.1.2)
+    #
+    # Case 2: Revision 1.1 not deleted; revision 1.2 does not exist:
+    #
+    #         1.1 ..................
+    #           \    ^          ^
+    #            \   |          |
+    #             1.1.1.1 -> 1.1.1.2
+    #
+    # * 1.1.1.1 closes 1.1 (because its post-commit overwrites 1.1
+    #   on trunk)
+    #
+    # * 1.1.1.2 closes 1.1.1.1
+    #
+    # Case 3: Revision 1.1 deleted; revision 1.2 exists:
+    #
+    #                ............... 1.2
+    #                ^          ^    /
+    #                |          |   /
+    #             1.1.1.1 -> 1.1.1.2
+    #
+    # * 1.1.1.1 doesn't close anything
+    #
+    # * 1.1.1.2 closes 1.1.1.1
+    #
+    # * 1.2 doesn't close anything (no symbols can sprout from the
+    #   post-commit of 1.1.1.2)
+    #
+    # Case 4: Revision 1.1 deleted; revision 1.2 doesn't exist:
+    #
+    #                ...............
+    #                ^          ^
+    #                |          |
+    #             1.1.1.1 -> 1.1.1.2
+    #
+    # * 1.1.1.1 doesn't close anything
+    #
+    # * 1.1.1.2 closes 1.1.1.1
 
     retval = []
     if self.first_on_branch_id is not None:
       # The first CVSRevision on a branch is considered to close the
       # branch:
       retval.append(self.first_on_branch_id)
-    elif self.default_branch_revision:
-      # This could be the special case of a 1.1.1.2 revision, which is
-      # considered to close 1.1 in addition to its direct predecessor:
-      prev = Ctx()._cvs_items_db[self.prev_id]
-      if prev.first_on_branch_id is not None:
-        retval.append(prev.prev_id)
-      # The direct predecessor is included in any case:
-      retval.append(self.prev_id)
+      if self.default_branch_revision:
+        # If the 1.1 revision was not deleted, the 1.1.1.1 revision is
+        # considered to close it:
+        retval.append(self.prev_id)
     elif self.default_branch_prev_id is not None:
       # This is the special case of a 1.2 revision that follows a
-      # non-trunk default branch.  If there was a 1.1.1.2 revision,
-      # then it closed 1.1 and we don't have to.  If there was only a
-      # 1.1.1.1 revision, it did not close 1.1, so we have to.
-      default_branch_prev = Ctx()._cvs_items_db[self.default_branch_prev_id]
-      if default_branch_prev.first_on_branch_id is not None:
-        retval.append(self.prev_id)
+      # non-trunk default branch.  Either 1.1 was deleted or the first
+      # default branch revision closed 1.1, so we don't have to close
+      # 1.1.  Technically, we close the revision on trunk that was
+      # copied from the last non-trunk default branch revision in a
+      # post-commit, but for now no symbols can sprout from that
+      # revision so we ignore that one, too.
+      pass
     elif self.prev_id is not None:
       # Since this CVSRevision is not the first on a branch, its
       # prev_id is on the same LOD and this item closes that one:

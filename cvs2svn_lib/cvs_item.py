@@ -91,6 +91,15 @@ class CVSItem(object):
 
     raise NotImplementedError()
 
+  def get_cvs_symbol_ids_opened(self):
+    """Return an iterable over the ids of CVSSymbols that this item opens.
+
+    The definition of 'open' is that the path corresponding to this
+    CVSItem will have to be copied when filling the corresponding
+    symbol."""
+
+    raise NotImplementedError()
+
   def get_ids_closed(self):
     """Return an iterable over the CVSItem.ids of CVSItems closed by this one.
 
@@ -249,6 +258,9 @@ class CVSRevision(CVSItem):
     for id in self.branch_commit_ids:
       retval.add(id)
     return retval
+
+  def get_cvs_symbol_ids_opened(self):
+    return self.tag_ids + self.branch_ids
 
   def get_ids_closed(self):
     # Special handling is needed in the case of non-trunk default
@@ -464,6 +476,9 @@ class CVSBranch(CVSSymbol):
       retval.add(self.next_id)
     return retval
 
+  def get_cvs_symbol_ids_opened(self):
+    return self.tag_ids + self.branch_ids
+
   def __str__(self):
     """For convenience only.  The format is subject to change at any time."""
 
@@ -499,6 +514,9 @@ class CVSTag(CVSSymbol):
 
   def get_succ_ids(self):
     return set()
+
+  def get_cvs_symbol_ids_opened(self):
+    return []
 
   def __str__(self):
     """For convenience only.  The format is subject to change at any time."""

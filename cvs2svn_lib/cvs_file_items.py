@@ -682,8 +682,8 @@ class CVSFileItems(object):
           continue
         next_item = self[cvs_item.next_id]
         cvs_symbols = [
-            self[symbol_id]
-            for symbol_id in (cvs_item.tag_ids + cvs_item.branch_ids)]
+            self[cvs_symbol_id]
+            for cvs_symbol_id in cvs_item.get_cvs_symbol_ids_opened()]
         for cvs_symbol in cvs_symbols:
           next_item.closed_symbol_ids.append(cvs_symbol.symbol.id)
 

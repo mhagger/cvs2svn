@@ -53,6 +53,7 @@ def main(progname, cmd_args):
   # tempfiles.  But if we *did* want check if it were empty, we'd do
   # something like os.stat(ctx.tmpdir)[stat.ST_NLINK], of course :-).
   if not os.path.exists(ctx.tmpdir):
+    erase_tmpdir = True
     os.mkdir(ctx.tmpdir)
   elif not os.path.isdir(ctx.tmpdir):
     raise FatalError(
@@ -60,6 +61,8 @@ def main(progname, cmd_args):
         "  exists and is not a directory.  Please make it be a directory,\n"
         "  or specify some other directory for temporary files."
         % (ctx.tmpdir,))
+  else:
+    erase_tmpdir = False
 
   # But do lock the tmpdir, to avoid process clash.
   try:
@@ -93,4 +96,9 @@ def main(progname, cmd_args):
     except:
       pass
 
+    if erase_tmpdir:
+      try:
+        os.rmdir(ctx.tmpdir)
+      except:
+        pass
 

@@ -38,6 +38,13 @@ from cvs2svn_lib.serializer import PrimedPickleSerializer
 from cvs2svn_lib.database import IndexedStore
 
 
+_cvs_item_primer = (
+    CVSRevisionAdd, CVSRevisionChange,
+    CVSRevisionDelete, CVSRevisionNoop,
+    CVSBranch, CVSTag,
+    )
+
+
 class NewCVSItemStore:
   """A file of sequential CVSItems, grouped by CVSFile.
 
@@ -54,12 +61,9 @@ class NewCVSItemStore:
 
     self.f = open(filename, 'wb')
 
-    primer = (
-        CVSFileItems,
-        CVSRevisionAdd, CVSRevisionChange,
-        CVSRevisionDelete, CVSRevisionNoop,
-        CVSBranch, CVSTag,)
-    self.serializer = PrimedPickleSerializer(primer)
+    self.serializer = PrimedPickleSerializer(
+        _cvs_item_primer + (CVSFileItems,)
+        )
     cPickle.dump(self.serializer, self.f, -1)
 
   def add(self, cvs_file_items):
@@ -103,9 +107,7 @@ class OldCVSItemStore:
 def IndexedCVSItemStore(filename, index_filename, mode):
   return IndexedStore(
       filename, index_filename, mode,
-      PrimedPickleSerializer((
-          CVSRevisionAdd, CVSRevisionChange,
-          CVSRevisionDelete, CVSRevisionNoop,
-          CVSBranch, CVSTag,)))
+      PrimedPickleSerializer(_cvs_item_primer)
+      )
 
 

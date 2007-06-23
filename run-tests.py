@@ -1684,6 +1684,17 @@ def default_branches_trunk_only():
     ))
 
 
+def default_branch_and_1_2():
+  "do not allow 1.2 revision with default branch"
+
+  conv = ensure_conversion(
+      'default-branch-and-1-2',
+      error_re=(
+          r'.*File has default branch=1\.1\.1 but also a revision 1\.2'
+          ),
+      )
+
+
 def compose_tag_three_sources():
   "compose a tag from three sources"
   conv = ensure_conversion('compose-tag-three-sources')
@@ -2793,11 +2804,12 @@ test_list = [
     vendor_branch_sameness,
     default_branches,
     default_branches_trunk_only,
+    default_branch_and_1_2,
     compose_tag_three_sources,
     pass5_when_to_fill,
     PeerPathPruning(),
-    PeerPathPruning(variant=1, trunk='a/1', branches='a/2', tags='a/3'),
 # 50:
+    PeerPathPruning(variant=1, trunk='a/1', branches='a/2', tags='a/3'),
     EmptyTrunk(),
     EmptyTrunk(variant=1, trunk='a', branches='b', tags='c'),
     EmptyTrunk(variant=2, trunk='a/1', branches='a/2', tags='a/3'),
@@ -2807,8 +2819,8 @@ test_list = [
     resync_bug,
     XFail(branch_from_default_branch),
     file_in_attic_too,
-    retain_file_in_attic_too,
 # 60:
+    retain_file_in_attic_too,
     symbolic_name_filling_guide,
     eol_mime1,
     eol_mime2,
@@ -2818,8 +2830,8 @@ test_list = [
     cvs_revnums_on,
     keywords,
     ignore,
-    requires_cvs,
 # 70:
+    requires_cvs,
     questionable_branch_names,
     questionable_tag_names,
     revision_reorder_bug,
@@ -2829,8 +2841,8 @@ test_list = [
     native_eol,
     double_fill,
     resync_pass2_push_backward,
-    double_add,
 # 80:
+    double_add,
     bogus_branch_copy,
     nested_ttb_directories,
     auto_props_ignore_case,
@@ -2840,8 +2852,8 @@ test_list = [
     show_help_passes,
     multiple_tags,
     double_branch_delete,
-    symbol_mismatches,
 # 90:
+    symbol_mismatches,
     overlook_symbol_mismatches,
     force_symbols,
     commit_blocks_tags,
@@ -2851,8 +2863,8 @@ test_list = [
     heuristic_symbol_default,
     branch_symbol_default,
     tag_symbol_default,
-    symbol_transform,
 # 100:
+    symbol_transform,
     issue_99,
     issue_100,
     issue_106,
@@ -2862,8 +2874,8 @@ test_list = [
     repeated_deltatext,
     nasty_graphs,
     XFail(tagging_after_delete),
-    crossed_branches,
 # 110:
+    crossed_branches,
     file_directory_conflict,
     attic_directory_conflict,
     internal_co,
@@ -2873,8 +2885,8 @@ test_list = [
     requires_internal_co,
     timestamp_chaos,
     symlinks,
-    empty_trunk_path,
 # 120:
+    empty_trunk_path,
     preferred_parent_cycle,
     branch_from_empty_dir,
     trunk_readd,

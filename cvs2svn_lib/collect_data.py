@@ -701,10 +701,11 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       # There is still a default branch; that means that all revisions
       # on that branch get marked.
 
-      if self._rev_data.get('1.2') is not None:
+      rev_1_1 = self._rev_data[self._root_rev]
+      if rev_1_1.child is not None:
         self.collect_data.record_fatal_error(
-            'File has default branch=%s but also 1.2 revision'
-            % (self.default_branch,)
+            'File has default branch=%s but also a revision %s'
+            % (self.default_branch, rev_1_1.child,)
             )
         return
 

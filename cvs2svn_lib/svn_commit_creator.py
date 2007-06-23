@@ -34,6 +34,7 @@ from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.symbol import Branch
 from cvs2svn_lib.database import Database
 from cvs2svn_lib.cvs_item import CVSRevisionDelete
+from cvs2svn_lib.cvs_item import CVSRevisionNoop
 from cvs2svn_lib.changeset import OrderedChangeset
 from cvs2svn_lib.changeset import BranchChangeset
 from cvs2svn_lib.changeset import TagChangeset
@@ -62,7 +63,8 @@ class SVNCommitCreator:
     cvs_revs = [
           cvs_rev
           for cvs_rev in cvs_revs
-          if cvs_rev.default_branch_revision
+          if (cvs_rev.default_branch_revision
+              and not isinstance(cvs_rev, CVSRevisionNoop))
           ]
 
     if cvs_revs:

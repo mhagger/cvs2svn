@@ -671,6 +671,16 @@ class CVSFileItems(object):
       for cvs_branch in lod_items.cvs_branches:
         self._adjust_branch_parents(cvs_branch)
 
+  def _get_revision_source(self, cvs_symbol):
+    """Return the CVSRevision that is the ultimate source of CVS_SYMBOL."""
+
+    while True:
+      cvs_item = self[cvs_symbol.source_id]
+      if isinstance(cvs_item, CVSRevision):
+        return cvs_item
+      else:
+        cvs_symbol = cvs_item
+
   def refine_symbols(self):
     """Refine the types of the CVSSymbols in this file.
 
@@ -679,13 +689,13 @@ class CVSFileItems(object):
 
     for lod_items in self.iter_lods():
       for cvs_tag in lod_items.cvs_tags:
-        source = self[cvs_tag.source_id]
+        source = self._get_revision_source(cvs_tag)
         cvs_tag.__class__ = cvs_tag_type_map[
             isinstance(source, CVSRevisionModification)
             ]
 
       for cvs_branch in lod_items.cvs_branches:
-        source = self[cvs_branch.source_id]
+        source = self._get_revision_source(cvs_branch)
         cvs_branch.__class__ = cvs_branch_type_map[
             isinstance(source, CVSRevisionModification)
             ]

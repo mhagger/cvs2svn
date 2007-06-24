@@ -35,6 +35,8 @@ from cvs2svn_lib.symbol import Branch
 from cvs2svn_lib.database import Database
 from cvs2svn_lib.cvs_item import CVSRevisionDelete
 from cvs2svn_lib.cvs_item import CVSRevisionNoop
+from cvs2svn_lib.cvs_item import CVSBranchNoop
+from cvs2svn_lib.cvs_item import CVSTagNoop
 from cvs2svn_lib.changeset import OrderedChangeset
 from cvs2svn_lib.changeset import BranchChangeset
 from cvs2svn_lib.changeset import TagChangeset
@@ -121,27 +123,57 @@ class SVNCommitCreator:
         yield svn_post_commit
 
   def _process_tag_changeset(self, changeset, timestamp):
-    """Process TagChangeset CHANGESET, producing a SVNSymbolCommit."""
+    """Process TagChangeset CHANGESET, producing a SVNSymbolCommit.
+
+    Filter out CVSTagNoops.  If no CVSTags are left, don't generate a
+    SVNSymbolCommit."""
 
     if Ctx().trunk_only:
       raise InternalError(
           'TagChangeset encountered during a --trunk-only conversion')
 
-    yield SVNSymbolCommit(changeset.symbol, changeset.cvs_item_ids, timestamp)
+    cvs_tag_ids = [
+        cvs_tag.id
+        for cvs_tag in changeset.get_cvs_items()
+        if not isinstance(cvs_tag, CVSTagNoop)
+        ]
+    if cvs_tag_ids:
+      yield SVNSymbolCommit(changeset.symbol, cvs_tag_ids, timestamp)
+    else:
+      Log().debug(
+          'Omitting %r because it contains only CVSTagNoops' % (changeset,)
+          )
 
   def _process_branch_changeset(self, changeset, timestamp):
-    """Process BranchChangeset CHANGESET, producing a SVNSymbolCommit."""
+    """Process BranchChangeset CHANGESET, producing a SVNSymbolCommit.
+
+    Filter out CVSBranchNoops.  If no CVSBranches are left, don't
+    generate a SVNSymbolCommit."""
 
     if Ctx().trunk_only:
       raise InternalError(
           'BranchChangeset encountered during a --trunk-only conversion')
 
-    svn_commit = SVNSymbolCommit(
-        changeset.symbol, changeset.cvs_item_ids, timestamp)
-    yield svn_commit
-    for cvs_branch in changeset.get_cvs_items():
-      Ctx()._symbolings_logger.log_branch_revision(
-          cvs_branch, svn_commit.revnum)
+    cvs_branches = [
+        cvs_branch
+        for cvs_branch in changeset.get_cvs_items()
+        if not isinstance(cvs_branch, CVSBranchNoop)
+        ]
+    if cvs_branches:
+      svn_commit = SVNSymbolCommit(
+          changeset.symbol,
+          [cvs_branch.id for cvs_branch in cvs_branches],
+          timestamp,
+          )
+      yield svn_commit
+      for cvs_branch in cvs_branches:
+        Ctx()._symbolings_logger.log_branch_revision(
+            cvs_branch, svn_commit.revnum
+            )
+    else:
+      Log().debug(
+          'Omitting %r because it contains only CVSBranchNoops' % (changeset,)
+          )
 
   def process_changeset(self, changeset, timestamp):
     """Process CHANGESET, using TIMESTAMP for all of its entries.

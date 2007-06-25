@@ -1,0 +1,50 @@
+head	1.1;
+access;
+symbols
+	BRANCH2:1.1.0.8
+	BRANCH1:1.1.0.2;
+locks; strict;
+comment	@// @;
+
+
+1.1
+date	2005.10.03.17.35.55;	author author8;	state Exp;
+branches
+	1.1.2.1
+	1.1.8.1;
+next	;
+
+1.1.2.1
+date	2005.10.04.10.54.11;	author author8;	state Exp;
+branches;
+next	;
+
+1.1.8.1
+date	2005.10.05.20.46.30;	author author6;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@log 17@
+text
+@@
+
+
+1.1.8.1
+log
+@log 18@
+text
+@@
+
+
+1.1.2.1
+log
+@log 19@
+text
+@@

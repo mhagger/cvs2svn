@@ -2154,6 +2154,20 @@ def double_fill():
   # conversion doesn't fail.
 
 
+def double_fill2():
+  "reveal a second bug that created a branch twice"
+  conv = ensure_conversion('double-fill2')
+  conv.logs[6].check_msg(sym_log_msg('BRANCH1'))
+  conv.logs[7].check_msg(sym_log_msg('BRANCH2'))
+  try:
+    # This check should fail:
+    conv.logs[8].check_msg(sym_log_msg('BRANCH2'))
+  except Failure:
+    pass
+  else:
+    raise Failure('Symbol filled twice in a row')
+
+
 def resync_pass2_push_backward():
   "ensure pass2 doesn't push rev too far backward"
   conv = ensure_conversion('resync-pass2-push-backward')
@@ -2843,8 +2857,9 @@ test_list = [
     resync_pass2_pull_forward,
     native_eol,
     double_fill,
-    resync_pass2_push_backward,
+    XFail(double_fill2),
 # 80:
+    resync_pass2_push_backward,
     double_add,
     bogus_branch_copy,
     nested_ttb_directories,
@@ -2854,8 +2869,8 @@ test_list = [
     commit_dependencies,
     show_help_passes,
     multiple_tags,
-    double_branch_delete,
 # 90:
+    double_branch_delete,
     symbol_mismatches,
     overlook_symbol_mismatches,
     force_symbols,
@@ -2865,8 +2880,8 @@ test_list = [
     regexp_force_symbols,
     heuristic_symbol_default,
     branch_symbol_default,
-    tag_symbol_default,
 # 100:
+    tag_symbol_default,
     symbol_transform,
     issue_99,
     issue_100,
@@ -2876,8 +2891,8 @@ test_list = [
     XFail(delete_cvsignore),
     repeated_deltatext,
     nasty_graphs,
-    XFail(tagging_after_delete),
 # 110:
+    XFail(tagging_after_delete),
     crossed_branches,
     file_directory_conflict,
     attic_directory_conflict,
@@ -2887,8 +2902,8 @@ test_list = [
     leftover_revs,
     requires_internal_co,
     timestamp_chaos,
-    symlinks,
 # 120:
+    symlinks,
     empty_trunk_path,
     preferred_parent_cycle,
     branch_from_empty_dir,

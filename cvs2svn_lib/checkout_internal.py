@@ -122,6 +122,8 @@ from cvs2svn_lib.serializer import PrimedPickleSerializer
 class TextRecord(object):
   """Bookkeeping data for the text of a single CVSRevision."""
 
+  __slots__ = ['id', 'refcount']
+
   def __init__(self, id):
     # The cvs_rev_id of the revision whose text this is.
     self.id = id
@@ -169,6 +171,14 @@ class TextRecord(object):
 
 
 class FullTextRecord(TextRecord):
+  __slots__ = []
+
+  def __getstate__(self):
+    return (self.id, self.refcount,)
+
+  def __setstate__(self, state):
+    (self.id, self.refcount,) = state
+
   def checkout(self, text_record_db):
     text = text_record_db.delta_db[self.id]
     self.decrement_refcount(text_record_db)
@@ -182,11 +192,7 @@ class FullTextRecord(TextRecord):
 
 
 class DeltaTextRecord(TextRecord):
-  def __getstate__(self):
-    return (self.id, self.refcount, self.pred_id,)
-
-  def __setstate__(self, state):
-    (self.id, self.refcount, self.pred_id,) = state
+  __slots__ = ['pred_id']
 
   def __init__(self, id, pred_id):
     TextRecord.__init__(self, id)
@@ -194,6 +200,12 @@ class DeltaTextRecord(TextRecord):
     # The cvs_rev_id of the revision relative to which this delta is
     # defined.
     self.pred_id = pred_id
+
+  def __getstate__(self):
+    return (self.id, self.refcount, self.pred_id,)
+
+  def __setstate__(self, state):
+    (self.id, self.refcount, self.pred_id,) = state
 
   def increment_dependency_refcounts(self, text_record_db):
     text_record_db[self.pred_id].refcount += 1
@@ -229,8 +241,13 @@ class DeltaTextRecord(TextRecord):
 
 
 class CheckedOutTextRecord(TextRecord):
-  def __init__(self, id):
-    TextRecord.__init__(self, id)
+  __slots__ = []
+
+  def __getstate__(self):
+    return (self.id, self.refcount,)
+
+  def __setstate__(self, state):
+    (self.id, self.refcount,) = state
 
   def checkout(self, text_record_db):
     text = text_record_db.checkout_db['%x' % self.id]

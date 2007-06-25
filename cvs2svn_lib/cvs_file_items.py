@@ -305,9 +305,8 @@ class CVSFileItems(object):
     if isinstance(cvs_item, CVSRevisionNoop) \
            and cvs_item.rev == '1.1' \
            and isinstance(cvs_item.lod, Trunk) \
-           and len(cvs_item.branch_ids) == 1 \
+           and len(cvs_item.branch_ids) >= 1 \
            and self[cvs_item.branch_ids[0]].next_id is not None \
-           and not cvs_item.tag_ids \
            and not cvs_item.closed_symbol_ids \
            and not cvs_item.default_branch_revision:
       # FIXME: This message will not match if the RCS file was renamed
@@ -340,18 +339,26 @@ class CVSFileItems(object):
           cvs_rev_next.prev_id = None
           self.root_ids.add(cvs_rev_next.id)
 
-        # Delete the CVSBranch where the file was created.  This
-        # leaves the first CVSRevision on that branch, which should be
-        # an add.
-        cvs_branch = self[cvs_item.branch_ids[0]]
-        del self[cvs_branch.id]
+        # Delete all CVSBranches rooted at this revision.  If there is
+        # a CVSRevision on the branch, it should already be an add so
+        # it doesn't have to be changed.
+        for cvs_branch_id in cvs_item.branch_ids:
+          cvs_branch = self[cvs_branch_id]
+          del self[cvs_branch.id]
 
-        cvs_branch_next = self[cvs_branch.next_id]
-        cvs_branch_next.first_on_branch_id = None
-        cvs_branch_next.prev_id = None
-        self.root_ids.add(cvs_branch_next.id)
+          if cvs_branch.next_id is not None:
+            cvs_branch_next = self[cvs_branch.next_id]
+            cvs_branch_next.first_on_branch_id = None
+            cvs_branch_next.prev_id = None
+            self.root_ids.add(cvs_branch_next.id)
 
-        # This can only happen once per file, so exit:
+        # Tagging a dead revision doesn't do anything, so remove any
+        # tags that were set on 1.1:
+        for cvs_tag_id in cvs_item.tag_ids:
+          del self[cvs_tag_id]
+
+        # This can only happen once per file, and we might have just
+        # changed self.root_ids, so break out of the loop:
         break
 
   def _exclude_tag(self, cvs_tag):

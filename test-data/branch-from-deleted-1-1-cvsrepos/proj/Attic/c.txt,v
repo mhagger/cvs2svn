@@ -1,0 +1,60 @@
+head	1.1;
+access;
+symbols
+	TAG1:1.1
+	BRANCH3:1.1.0.6
+	BRANCH2:1.1.0.4
+	BRANCH1:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2007.06.25.22.20.19;	author mhagger;	state dead;
+branches
+	1.1.2.1
+	1.1.4.1;
+next	;
+
+1.1.2.1
+date	2007.06.25.22.20.19;	author mhagger;	state Exp;
+branches;
+next	;
+
+1.1.4.1
+date	2007.06.25.22.20.21;	author mhagger;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@file c.txt was initially added on branch BRANCH1.
+@
+text
+@@
+
+
+1.1.4.1
+log
+@Adding c.txt:1.1.4.1
+@
+text
+@a0 1
+1.1.4.1
+@
+
+
+1.1.2.1
+log
+@Adding c.txt:1.1.2.1
+@
+text
+@a0 1
+1.1.2.1
+@
+

@@ -1,0 +1,26 @@
+head	1.1;
+access;
+symbols
+	BRANCH2:1.1.0.4
+	BRANCH1:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2007.06.25.22.20.14;	author mhagger;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Adding a.txt:1.1
+@
+text
+@1.1
+@

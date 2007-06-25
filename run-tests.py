@@ -2760,6 +2760,28 @@ def trunk_readd():
   conv = ensure_conversion('trunk-readd')
 
 
+def branch_from_deleted_1_1():
+  "branch from a 1.1 revision that will be deleted"
+
+  conv = ensure_conversion('branch-from-deleted-1-1')
+  conv.logs[5].check('Adding b.txt:1.1.2.1', (
+    ('/%(branches)s/BRANCH1/proj/b.txt', 'A'),
+    ))
+  conv.logs[6].check('Adding b.txt:1.1.4.1', (
+    ('/%(branches)s/BRANCH2/proj/b.txt', 'A'),
+    ))
+  conv.logs[7].check('Adding b.txt:1.2', (
+    ('/%(trunk)s/proj/b.txt', 'A'),
+    ))
+
+  conv.logs[8].check('Adding c.txt:1.1.2.1', (
+    ('/%(branches)s/BRANCH1/proj/c.txt', 'A'),
+    ))
+  conv.logs[9].check('Adding c.txt:1.1.4.1', (
+    ('/%(branches)s/BRANCH2/proj/c.txt', 'A'),
+    ))
+
+
 ########################################################################
 # Run the tests
 
@@ -2908,6 +2930,7 @@ test_list = [
     preferred_parent_cycle,
     branch_from_empty_dir,
     trunk_readd,
+    branch_from_deleted_1_1,
     ]
 
 if __name__ == '__main__':

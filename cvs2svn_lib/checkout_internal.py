@@ -130,6 +130,12 @@ class TextRecord(object):
     # retrieved.
     self.refcount = 0
 
+  def __getstate__(self):
+    return (self.id, self.refcount,)
+
+  def __setstate__(self, state):
+    (self.id, self.refcount,) = state
+
   def increment_dependency_refcounts(self, text_record_db):
     """Increment the refcounts of any records that this one depends on."""
 
@@ -176,6 +182,12 @@ class FullTextRecord(TextRecord):
 
 
 class DeltaTextRecord(TextRecord):
+  def __getstate__(self):
+    return (self.id, self.refcount, self.pred_id,)
+
+  def __setstate__(self, state):
+    (self.id, self.refcount, self.pred_id,) = state
+
   def __init__(self, id, pred_id):
     TextRecord.__init__(self, id)
 

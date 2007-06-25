@@ -301,20 +301,21 @@ class CVSFileItems(object):
           isinstance(last_ntdbr, CVSRevisionModification),
           )]
 
-  def _delete_unneeded(self, cvs_rev, metadata_db):
-    if cvs_rev.rev == '1.1' \
-           and isinstance(cvs_rev.lod, Trunk) \
-           and len(cvs_rev.branch_ids) == 1 \
-           and self[cvs_rev.branch_ids[0]].next_id is not None \
-           and not cvs_rev.tag_ids \
-           and not cvs_rev.closed_symbol_ids \
-           and not cvs_rev.default_branch_revision:
+  def _delete_unneeded(self, cvs_item, metadata_db):
+    if isinstance(cvs_item, CVSRevisionNoop) \
+           and cvs_item.rev == '1.1' \
+           and isinstance(cvs_item.lod, Trunk) \
+           and len(cvs_item.branch_ids) == 1 \
+           and self[cvs_item.branch_ids[0]].next_id is not None \
+           and not cvs_item.tag_ids \
+           and not cvs_item.closed_symbol_ids \
+           and not cvs_item.default_branch_revision:
       # FIXME: This message will not match if the RCS file was renamed
       # manually after it was created.
-      author, log_msg = metadata_db[cvs_rev.metadata_id]
+      author, log_msg = metadata_db[cvs_item.metadata_id]
       cvs_generated_msg = 'file %s was initially added on branch %s.\n' % (
           self.cvs_file.basename,
-          self[cvs_rev.branch_ids[0]].symbol.name,)
+          self[cvs_item.branch_ids[0]].symbol.name,)
       return log_msg == cvs_generated_msg
     else:
       return False
@@ -328,8 +329,7 @@ class CVSFileItems(object):
 
     for id in self.root_ids:
       cvs_item = self[id]
-      if isinstance(cvs_item, CVSRevisionNoop) \
-             and self._delete_unneeded(cvs_item, metadata_db):
+      if self._delete_unneeded(cvs_item, metadata_db):
         Log().debug('Removing unnecessary delete %s' % (cvs_item,))
 
         # Delete cvs_item:

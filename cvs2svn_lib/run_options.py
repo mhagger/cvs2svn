@@ -69,69 +69,103 @@ from cvs2svn_lib.property_setters import SVNBinaryFileKeywordsPropertySetter
 
 
 usage_message_template = """\
-USAGE: %(progname)s [-v] [-s svn-repos-path] [-p pass] cvs-repos-path
-  --help, -h           print this usage message and exit with success
-  --help-passes        list the available passes and their numbers
-  --version            print the version number
-  --verbose, -v        verbose
-  --quiet, -q          quiet
-  --options=PATH       read the conversion options from the specified path
-  -s PATH              path for SVN repos
-  -p PASS              execute only specified PASS
-  -p [START]:[END]     execute passes START through END, inclusive
-                       (PASS, START, and END can be pass names or numbers)
-  --existing-svnrepos  load into existing SVN repository
-  --dumpfile=PATH      just produce a dumpfile; don't commit to a repos
-  --dry-run            do not create a repository or a dumpfile;
-                       just print what would happen.
-  --use-cvs            use CVS instead of RCS 'co' to extract data
-                       (only use this if having problems with RCS)
-  --use-internal-co    use internal implementation of RCS 'co' to extract data
-                       (very fast but disk space intensive)
-  --trunk-only         convert only trunk commits, not tags nor branches
-  --trunk=PATH         path for trunk (default: %(trunk_base)s)
-  --branches=PATH      path for branches (default: %(branches_base)s)
-  --tags=PATH          path for tags (default: %(tags_base)s)
-  --no-prune           don't prune empty directories
-  --encoding=ENC       encoding for paths and log messages in CVS repos.
-                       If option is specified multiple times, the encoders
-                       will be tried in order until one succeeds.  See
-                       http://docs.python.org/lib/standard-encodings.html
-                       for a list of standard Python encodings.
-  --fallback-encoding=ENC If all --encodings fail, use lossy encoding with ENC
-  --force-branch=REGEXP force symbols matching REGEXP to be branches
-  --force-tag=REGEXP   force symbols matching REGEXP to be tags
-  --exclude=REGEXP     exclude branches and tags matching REGEXP
-  --symbol-default=OPT choose how ambiguous symbols are converted.  OPT is
-                       "branch", "tag", or "heuristic", or "strict" (default)
-  --no-cross-branch-commits Prevent the creation of cross-branch commits
-  --retain-conflicting-attic-files if a file appears both in and out of the
-                       CVS Attic, then leave the attic version in a SVN
-                       directory called "Attic".
-  --symbol-transform=P:S transform symbol names from P to S where P and S
-                       use Python regexp and reference syntax respectively
-  --username=NAME      username for cvs2svn-synthesized commits
-  --fs-type=TYPE       pass --fs-type=TYPE to "svnadmin create"
-  --bdb-txn-nosync     pass --bdb-txn-nosync to "svnadmin create"
-  --cvs-revnums        record CVS revision numbers as file properties
-  --mime-types=FILE    specify an apache-style mime.types file for
-                       setting svn:mime-type
-  --auto-props=FILE    set file properties from the auto-props section
-                       of a file in svn config format
-  --auto-props-ignore-case Ignore case when matching auto-props patterns
-  --eol-from-mime-type set svn:eol-style from mime type if known
-  --no-default-eol     don't set svn:eol-style to 'native' for
-                       non-binary files with undetermined mime types
-  --keywords-off       don't set svn:keywords on any files (by default,
-                       cvs2svn sets svn:keywords on non-binary files to
-                       "%(svn_keywords_value)s")
-  --tmpdir=PATH        directory to use for tmp data (default "cvs2svn-tmp")
-  --skip-cleanup       prevent the deletion of intermediate files
-  --profile            profile with 'hotshot' (into file cvs2svn.hotshot)
-  --svnadmin=PATH      path to the "svnadmin" program
-  --co=PATH            path to the "co" program (required if not --use-cvs)
-  --cvs=PATH           path to the "cvs" program (required if --use-cvs)
-  --sort=PATH          path to the GNU "sort" program
+Usage: %(progname)s --options OPTIONFILE
+       %(progname)s [OPTION...] OUTPUT-OPTION CVS-REPOS-PATH
+%(progname)s converts a CVS repository into a Subversion repository, including
+history.
+
+ Configuration via options file:
+
+      --options=PATH         read the conversion options from PATH.  This
+                             method allows more flexibility than using
+                             command-line options.  See documentation for info
+
+ Output options:
+
+  -s, --svnrepos=PATH        path where SVN repos should be created
+      --existing-svnrepos    load into existing SVN repository (for use with
+                             --svnrepos)
+      --fs-type=TYPE         pass --fs-type=TYPE to "svnadmin create" (for use
+                             with --svnrepos)
+      --bdb-txn-nosync       pass --bdb-txn-nosync to "svnadmin create" (for
+                             use with --svnrepos)
+      --dumpfile=PATH        just produce a dumpfile; don't commit to a repos
+      --dry-run              do not create a repository or a dumpfile;
+                             just print what would happen.
+
+ Conversion options:
+
+      --trunk-only           convert only trunk commits, not tags nor branches
+      --trunk=PATH           path for trunk (default: %(trunk_base)s)
+      --branches=PATH        path for branches (default: %(branches_base)s)
+      --tags=PATH            path for tags (default: %(tags_base)s)
+      --no-prune             don't prune empty directories
+      --encoding=ENC         encoding for paths and log messages in CVS repos.
+                             If option is specified multiple times, encoders
+                             are tried in order until one succeeds.  See
+                             http://docs.python.org/lib/standard-encodings.html
+                             for a list of standard Python encodings.
+      --fallback-encoding=ENC   If all --encodings fail, use lossy encoding
+                             with ENC
+      --symbol-transform=P:S transform symbol names from P to S, where P and S
+                             use Python regexp and reference syntax
+                             respectively
+      --force-branch=REGEXP  force symbols matching REGEXP to be branches
+      --force-tag=REGEXP     force symbols matching REGEXP to be tags
+      --exclude=REGEXP       exclude branches and tags matching REGEXP
+      --symbol-default=OPT   specify how ambiguous symbols are converted.
+                             OPT is "branch", "tag", "heuristic", or
+                             "strict" (default)
+      --no-cross-branch-commits   Prevent the creation of cross-branch commits
+      --retain-conflicting-attic-files   if a file appears both in and out of
+                             the CVS Attic, then leave the attic version in a
+                             SVN directory called "Attic".
+      --username=NAME        username for cvs2svn-synthesized commits
+      --cvs-revnums          record CVS revision numbers as file properties
+      --mime-types=FILE      specify an apache-style mime.types file for
+                             setting svn:mime-type
+      --eol-from-mime-type   set svn:eol-style from mime type if known
+      --auto-props=FILE      set file properties from the auto-props section
+                             of a file in svn config format
+      --auto-props-ignore-case   Ignore case when matching auto-props patterns
+      --no-default-eol       don't set svn:eol-style to 'native' for
+                             non-binary files with undetermined mime types
+      --keywords-off         don't set svn:keywords on any files (by default,
+                             cvs2svn sets svn:keywords on non-binary files to
+                             "%(svn_keywords_value)s")
+
+ Extraction options:
+
+      --use-rcs              use RCS to extract revision contents (default)
+      --use-cvs              use CVS to extract revision contents
+                             (only use this if having problems with RCS)
+      --use-internal-co      use internal code to extract revision contents
+                             (very fast but disk space intensive)
+
+ Environment options:
+
+      --tmpdir=PATH          directory to use for temporary data files
+                             (default "cvs2svn-tmp")
+      --svnadmin=PATH        path to the "svnadmin" program
+      --co=PATH              path to the "co" program (required if --use-rcs)
+      --cvs=PATH             path to the "cvs" program (required if --use-cvs)
+      --sort=PATH            path to the GNU "sort" program
+
+ Partial conversions:
+
+  -p, --pass PASS            execute only specified PASS of conversion
+  -p, --passes [START]:[END] execute passes START through END, inclusive (PASS,
+                             START, and END can be pass names or numbers)
+
+ Information options:
+
+      --version              print the version number
+  -h, --help                 print this usage message and exit with success
+      --help-passes          list the available passes and their numbers
+  -v, --verbose              verbose (may be specified twice for debug output)
+  -q, --quiet                quiet (may be specified twice for very quiet)
+      --skip-cleanup         prevent the deletion of intermediate files
+      --profile              profile with 'hotshot' (into file cvs2svn.hotshot)
 """
 
 class RunOptions:
@@ -153,31 +187,42 @@ class RunOptions:
 
     try:
       self.opts, self.args = my_getopt(cmd_args, 'hvqs:p:', [
-          "help", "help-passes", "version",
-          "verbose", "quiet",
-          "existing-svnrepos", "dumpfile=", "dry-run",
-          "use-cvs", "use-internal-co",
+          "options=",
+
+          "svnrepos=", "existing-svnrepos", "fs-type=", "bdb-txn-nosync",
+          "dumpfile=",
+          "dry-run",
+
           "trunk-only",
           "trunk=", "branches=", "tags=",
           "no-prune",
           "encoding=", "fallback-encoding=",
+          "symbol-transform=",
           "force-branch=", "force-tag=", "exclude=", "symbol-default=",
           "no-cross-branch-commits",
           "retain-conflicting-attic-files",
-          "symbol-transform=",
           "username=",
-          "fs-type=", "bdb-txn-nosync",
           "cvs-revnums",
           "mime-types=",
           "auto-props=", "auto-props-ignore-case",
           "eol-from-mime-type", "no-default-eol",
           "keywords-off",
+
+          "use-rcs", "use-cvs", "use-internal-co",
+
           "tmpdir=",
+          "svnadmin=", "co=", "cvs=", "sort=",
+
+          "pass=", "passes=",
+
+          "version", "help", "help-passes",
+          "verbose", "quiet",
           "skip-cleanup",
           "profile",
-          "svnadmin=", "co=", "cvs=", "sort=",
+
+          # These options are deprecated and are only included for
+          # backwards compatibility:
           "dump-only", "create",
-          "options=",
           ])
     except getopt.GetoptError, e:
       sys.stderr.write(error_prefix + ': ' + str(e) + '\n\n')
@@ -244,7 +289,7 @@ class RunOptions:
     for (opt, value) in self.get_options('--quiet', '-q'):
       Log().decrease_verbosity()
 
-    for (opt, value) in self.get_options('-p'):
+    for (opt, value) in self.get_options('--pass', '--passes', '-p'):
       if value.find(':') >= 0:
         start_pass, end_pass = value.split(':')
         self.start_pass = self.pass_manager.get_pass_number(
@@ -274,6 +319,7 @@ class RunOptions:
     bdb_txn_nosync = False
     dump_only = False
     dumpfile = None
+    use_rcs = False
     use_cvs = False
     use_internal_co = False
     symbol_strategy_default = 'strict'
@@ -297,12 +343,14 @@ class RunOptions:
     ctx.symbol_strategy = RuleBasedSymbolStrategy()
 
     for opt, value in self.opts:
-      if opt == '-s':
+      if opt  in ['-s', '--svnrepos']:
         target = value
       elif opt == '--existing-svnrepos':
         existing_svnrepos = True
       elif opt == '--dumpfile':
         dumpfile = value
+      elif opt == '--use-rcs':
+        use_rcs = True
       elif opt == '--use-cvs':
         use_cvs = True
       elif opt == '--use-internal-co':
@@ -425,6 +473,12 @@ class RunOptions:
 
     not_both(fs_type, '--fs-type',
              existing_svnrepos, '--existing-svnrepos')
+
+    not_both(use_rcs, '--use-rcs',
+             use_cvs, '--use-cvs')
+
+    not_both(use_rcs, '--use-rcs',
+             use_internal_co, '--use-internal-co')
 
     not_both(use_cvs, '--use-cvs',
              use_internal_co, '--use-internal-co')

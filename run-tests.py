@@ -746,7 +746,7 @@ def show_usage():
     print 'cvs2svn cannot execute due to lack of proper DBM module.'
     print 'Exiting without running any further tests.'
     sys.exit(1)
-  if out[0].find('USAGE') < 0:
+  if out[0].find('Usage:') < 0:
     raise Failure('Basic cvs2svn invocation failed.')
 
 

@@ -480,7 +480,8 @@ this:</p>
 <p>Only the following options are allowed in combination with
 <tt>--options</tt>: <tt>-h/--help</tt>, <tt>--help-passes</tt>,
 <tt>--version</tt>, <tt>-v/--verbose</tt>, <tt>-q/--quiet</tt>,
-<tt>-p</tt>, <tt>--dry-run</tt>, and <tt>--profile</tt>.</p>
+<tt>-p/--pass/--passes</tt>, <tt>--dry-run</tt>, and
+<tt>--profile</tt>.</p>
 
 <hr />
 
@@ -611,7 +612,7 @@ default to be used for other ambiguous symbols.</p>
 
   <tr>
     <td colspan="2">
-      USAGE:<br/>
+      <strong>USAGE:</strong><br/>
       <tt>cvs2svn [OPTIONS]... [-s SVN-REPOS-PATH|--dumpfile=PATH|--dry-run]
       CVS-REPOS-PATH</tt><br/>
       <tt>cvs2svn [OPTIONS]... --options=PATH</tt><br/>
@@ -632,32 +633,9 @@ default to be used for other ambiguous symbols.</p>
   </tr>
 
   <tr>
-    <td align="right"><tt>--help</tt>, <tt>-h</tt></td>
-    <td>Print the usage message and exit with success.</td>
-  </tr>
-
-  <tr>
-    <td align="right"><tt>--help-passes</tt></td>
-    <td>Print the numbers and names of the conversion passes and exit
-    with success.</td>
-  </tr>
-
-  <tr>
-    <td align="right"><tt>--version</tt></td>
-    <td>Print the version number.</td>
-  </tr>
-
-  <tr>
-    <td align="right"><tt>--verbose</tt>, <tt>-v</tt></td>
-    <td>Tell cvs2svn to print <i>tons</i> of information about what
-      it's doing to STDOUT.</td>
-  </tr>
-
-  <tr>
-    <td align="right"><tt>--quiet</tt>, <tt>-q</tt></td>
-    <td>Tell cvs2svn to operate in quiet mode, printing little more
-      than pass starts and stops to STDOUT.  This option may be
-      specified twice to suppress all non-error output.</td>
+    <th colspan="2">
+      Configuration via options file
+    </th>
   </tr>
 
   <tr>
@@ -668,30 +646,34 @@ default to be used for other ambiguous symbols.</p>
   </tr>
 
   <tr>
-    <td align="right"><tt>-s PATH</tt></td>
+    <th colspan="2">
+      Output options
+    </th>
+  </tr>
+
+  <tr>
+    <td align="right"><tt>-s PATH</tt><br><tt>--svnrepos PATH</tt></td>
     <td>Load CVS repository into the Subversion repository located
       at PATH.  If there is no Subversion repository at PATH, create a
       new one.</td>
   </tr>
 
   <tr>
-    <td align="right"><tt>-p PASS</tt></td>
-    <td>Execute only pass PASS of the conversion.  PASS can be
-    specified by name or by number (see <tt>--help-passes</tt>)</td>
-  </tr>
-
-  <tr>
-    <td align="right"><tt>-p [START]:[END]</tt></td>
-    <td>Execute passes START through END of the conversion
-    (inclusive).  START and END can be specified by name or by number
-    (see <tt>--help-passes</tt>).  If START or END is missing, it
-    defaults to the first or last pass, respectively.</td>
-  </tr>
-
-  <tr>
     <td align="right"><tt>--existing-svnrepos</tt></td>
     <td>Load the converted CVS repository into an existing Subversion
     repository, instead of creating a new repository.</td>
+  </tr>
+
+  <tr>
+    <td align="right"><tt>--fs-type=TYPE</tt></td>
+    <td>Pass the <tt>--fs-type=TYPE</tt> option to "svnadmin
+      create" when creating a new repository.</td>
+  </tr>
+
+  <tr>
+    <td align="right"><tt>--bdb-txn-nosync</tt></td>
+    <td>Pass the <tt>--bdb-txn-nosync</tt> switch to "svnadmin
+      create" when creating a new repository.</td>
   </tr>
 
   <tr>
@@ -710,41 +692,9 @@ default to be used for other ambiguous symbols.</p>
   </tr>
 
   <tr>
-    <td align="right"><a name="use-cvs"><tt>--use-cvs</tt></a></td>
-    <td>If RCS <b><tt>co</tt></b> is having trouble extracting certain
-      revisions, you may need to pass this flag, which causes cvs2svn
-      to use CVS instead of RCS to read the repository.  RCS is much
-      faster, so it's the default, but in certain rare cases it has
-      problems with data that CVS doesn't have problems with.
-      Specifically:
-      <ul>
-        <li>RCS can't handle spaces in author names:<br/>
-          <a href="http://cvs2svn.tigris.org/issues/show_bug.cgi?id=4"
-                  >http://cvs2svn.tigris.org/issues/show_bug.cgi?id=4</a>
-        </li>
-        <li>"Unterminated keyword" misread by RCS:<br/>
-          <a href="http://cvs2svn.tigris.org/issues/show_bug.cgi?id=11"
-                  >http://cvs2svn.tigris.org/issues/show_bug.cgi?id=11</a>
-        </li>
-        <li>RCS handles the "$Log$" keyword differently from CVS:<br/>
-          <a href="http://cvs2svn.tigris.org/issues/show_bug.cgi?id=29"
-                  >http://cvs2svn.tigris.org/issues/show_bug.cgi?id=29</a>
-        </li>
-      </ul>
-    </td>
-  </tr>
-
-  <tr>
-    <td align="right">
-      <a name="use-internal-co"><tt>--use-internal-co</tt></a>
-    </td>
-    <td>Use internal replacement for RCS <b><tt>co</tt></b> to extract data.
-      This is up to 50% faster than using <b><tt>co</tt></b>, but needs a lot
-      of disk space: Roughly the size of your CVS repository plus the peak
-      size of a complete checkout of the repository with all branches that
-      existed and still had commits pending at a given time.
-      The $Log$ keyword is (not) handled like in RCS.
-    </td>
+    <th colspan="2">
+      Conversion options
+    </th>
   </tr>
 
   <tr>
@@ -796,6 +746,35 @@ default to be used for other ambiguous symbols.</p>
       of this option may cause information to be lost, but at least it
       allows the conversion to run to completion.  Default:
       disabled.</td>
+  </tr>
+
+  <tr>
+    <td align="right"><tt>--symbol-transform=PAT:SUB</tt></td>
+    <td><p>Transform RCS/CVS symbol names before entering them into
+      Subversion.  PAT is a Python regexp pattern and SUB is a
+      replacement pattern using Python's reference syntax.  You may
+      specify any number of these options; they will be
+      applied in the order given on the command line.</p>
+
+      <p>This option can be useful if you're converting a repository in
+      which the developer used directory-wide symbol names like 1_0, 1_1
+      and 2_1 as a kludgy form of release tagging (the C-x v s command
+      in Emacs VC mode encourages this practice).  A command like</p>
+
+<pre>
+cvs2svn --symbol-transform='([0-9])-(.*):release-\1.\2' -q -s SVN RCS
+</pre>
+
+      <p>will transform a local CVS repository into a local SVN repository,
+      performing the following sort of mappings of RCS symbolic names to
+      SVN tags:</p>
+
+<pre>
+1-0 &rarr; release-1.0
+1-1 &rarr; release-1.1
+2-0 &rarr; release-2.0
+</pre>
+    </td>
   </tr>
 
   <tr>
@@ -854,50 +833,9 @@ default to be used for other ambiguous symbols.</p>
   </tr>
 
   <tr>
-    <td align="right"><tt>--symbol-transform=PAT:SUB</tt></td>
-    <td><p>Transform RCS/CVS symbol names before entering them into
-      Subversion.  PAT is a Python regexp pattern and SUB is a
-      replacement pattern using Python's reference syntax.  You may
-      specify any number of these options; they will be
-      applied in the order given on the command line.</p>
-
-      <p>This option can be useful if you're converting a repository in
-      which the developer used directory-wide symbol names like 1_0, 1_1
-      and 2_1 as a kludgy form of release tagging (the C-x v s command
-      in Emacs VC mode encourages this practice).  A command like</p>
-
-<pre>
-cvs2svn --symbol-transform='([0-9])-(.*):release-\1.\2' -q -s SVN RCS
-</pre>
-
-      <p>will transform a local CVS repository into a local SVN repository,
-      performing the following sort of mappings of RCS symbolic names to
-      SVN tags:</p>
-
-<pre>
-1-0 &rarr; release-1.0
-1-1 &rarr; release-1.1
-2-0 &rarr; release-2.0
-</pre>
-    </td>
-  </tr>
-
-  <tr>
     <td align="right"><tt>--username=NAME</tt></td>
     <td>Use NAME as the author for cvs2svn-synthesized commits (the
       default value is no author at all.</td>
-  </tr>
-
-  <tr>
-    <td align="right"><tt>--fs-type=TYPE</tt></td>
-    <td>Pass the <tt>--fs-type=TYPE</tt> option to "svnadmin
-      create" when creating a new repository.</td>
-  </tr>
-
-  <tr>
-    <td align="right"><tt>--bdb-txn-nosync</tt></td>
-    <td>Pass the <tt>--bdb-txn-nosync</tt> switch to "svnadmin
-      create" when creating a new repository.</td>
   </tr>
 
   <tr>
@@ -917,6 +855,18 @@ cvs2svn --symbol-transform='([0-9])-(.*):release-\1.\2' -q -s SVN RCS
   </tr>
 
   <tr>
+    <td align="right"><tt>--eol-from-mime-type</tt></td>
+    <td>For files that don't have the <tt>kb</tt> expansion mode but
+      have a known mime type, set the eol-style based on the mime
+      type.  For such files, set the <tt>svn:eol-style</tt> property
+      to "native" if the mime type begins with "text/", and leave it
+      unset (i.e., no EOL translation) otherwise.  Files with unknown
+      mime types are not affected by this option.  This option has no
+      effect unless the <tt>--mime-types</tt> option is also
+      specified.</td>
+  </tr>
+
+  <tr>
     <td align="right"><tt>--auto-props=FILE</tt></td>
     <td>Specify a file in the format of Subversion's config file,
       whose <tt>[auto-props]</tt> section can be used to set arbitrary
@@ -931,18 +881,6 @@ cvs2svn --symbol-transform='([0-9])-(.*):release-\1.\2' -q -s SVN RCS
   <tr>
     <td align="right"><tt>--auto-props-ignore-case</tt></td>
     <td>Ignore case when pattern-matching auto-props patterns.</td>
-  </tr>
-
-  <tr>
-    <td align="right"><tt>--eol-from-mime-type</tt></td>
-    <td>For files that don't have the <tt>kb</tt> expansion mode but
-      have a known mime type, set the eol-style based on the mime
-      type.  For such files, set the <tt>svn:eol-style</tt> property
-      to "native" if the mime type begins with "text/", and leave it
-      unset (i.e., no EOL translation) otherwise.  Files with unknown
-      mime types are not affected by this option.  This option has no
-      effect unless the <tt>--mime-types</tt> option is also
-      specified.</td>
   </tr>
 
   <tr>
@@ -966,10 +904,159 @@ cvs2svn --symbol-transform='([0-9])-(.*):release-\1.\2' -q -s SVN RCS
   </tr>
 
   <tr>
+    <th colspan="2">
+      Extraction options
+    </th>
+  </tr>
+
+  <tr>
+    <td align="right"><a name="use-rcs"><tt>--use-rcs</tt></a></td>
+    <td>Use RCS's <b><tt>co</tt></b> to extract the contents of CVS
+      revisions.  This is the default extraction option.  RCS is much
+      faster than CVS, so it's the default, but in certain rare cases
+      it has problems with data that CVS doesn't have problems with.
+      Specifically:
+      <ul>
+        <li>RCS can't handle spaces in author names:<br/>
+          <a href="http://cvs2svn.tigris.org/issues/show_bug.cgi?id=4"
+                  >http://cvs2svn.tigris.org/issues/show_bug.cgi?id=4</a>
+        </li>
+        <li>"Unterminated keyword" misread by RCS:<br/>
+          <a href="http://cvs2svn.tigris.org/issues/show_bug.cgi?id=11"
+                  >http://cvs2svn.tigris.org/issues/show_bug.cgi?id=11</a>
+        </li>
+        <li>RCS handles the "$Log$" keyword differently from CVS:<br/>
+          <a href="http://cvs2svn.tigris.org/issues/show_bug.cgi?id=29"
+                  >http://cvs2svn.tigris.org/issues/show_bug.cgi?id=29</a>
+        </li>
+      </ul>
+      If you are having trouble in <tt>OutputPass</tt> of a
+      conversion, the first thing to try is using the
+      <tt>--use-cvs</tt> option.
+    </td>
+  </tr>
+
+  <tr>
+    <td align="right"><a name="use-cvs"><tt>--use-cvs</tt></a></td>
+    <td>If RCS <b><tt>co</tt></b> is having trouble extracting CVS
+      revisions, you may need to pass this flag, which causes cvs2svn
+      to use CVS instead of RCS to read the repository.  See <a
+      href="#use-rcs"><tt>--use-rcs</tt></a> for more information.
+    </td>
+  </tr>
+
+  <tr>
+    <td align="right">
+      <a name="use-internal-co"><tt>--use-internal-co</tt></a>
+    </td>
+    <td>Use internal code to extract the contents of CVS revisions.
+      This is up to 50% faster than using <b><tt>co</tt></b>, but
+      needs a lot of disk space: Roughly the size of your CVS
+      repository plus the peak size of a complete checkout of the
+      repository with all branches that existed and still had commits
+      pending at a given time.  If this option is used, the
+      <tt>$Log$</tt> keyword is not handled.
+    </td>
+  </tr>
+
+  <tr>
+    <th colspan="2">
+      Environment options
+    </th>
+  </tr>
+
+  <tr>
     <td align="right"><tt>--tmpdir=PATH</tt></td>
     <td>Use the directory PATH for all of cvs2svn's temporary data
       (which can be a <i>lot</i> of data).  The default value is
-      "cvs2svn-tmp" in the current working directory.</td>
+      <tt>cvs2svn-tmp</tt> in the current working directory.</td>
+  </tr>
+
+  <tr>
+    <td align="right"><tt>--svnadmin=PATH</tt></td>
+    <td>If the <tt>svnadmin</tt> program is not in your $PATH you
+      should specify its absolute path with this switch.
+      <tt>svnadmin</tt> is needed when the <tt>-s/--svnrepos</tt>
+      output option is used</td>
+  </tr>
+
+  <tr>
+    <td align="right"><tt>--co=PATH</tt></td>
+    <td>If the <tt>co</tt> program (a part of RCS) is not in your
+      $PATH you should specify its absolute path with this switch.
+      (<tt>co</tt> is needed if the <tt>--use-rcs</tt> option is
+      used.)</td>
+  </tr>
+
+  <tr>
+    <td align="right"><tt>--cvs=PATH</tt></td>
+    <td>If the cvs program is not in your $PATH you should
+      specify its absolute path with this switch.  (<tt>cvs</tt> is
+      needed if the <tt>--use-cvs</tt> option is used.)</td>
+  </tr>
+
+  <tr>
+    <td align="right"><tt>--sort=PATH</tt></td>
+    <td>If the GNU <tt>sort</tt> program is not in your $PATH you
+      should specify its absolute path with this switch.  cvs2svn
+      requires GNU <tt>sort</tt>; Windows <tt>sort.exe</tt> is
+      <b>not</b> adequate.</td>
+  </tr>
+
+  <tr>
+    <th colspan="2">
+      Partial conversions
+    </th>
+  </tr>
+
+  <tr>
+    <td align="right"><tt>-p PASS</tt><br><tt>--pass PASS</tt></td>
+    <td>Execute only pass PASS of the conversion.  PASS can be
+    specified by name or by number (see <tt>--help-passes</tt>)</td>
+  </tr>
+
+  <tr>
+    <td align="right"><tt>-p [START]:[END]</tt><br><tt>--passes [START]:[END]</tt></td>
+    <td>Execute passes START through END of the conversion
+    (inclusive).  START and END can be specified by name or by number
+    (see <tt>--help-passes</tt>).  If START or END is missing, it
+    defaults to the first or last pass, respectively.</td>
+  </tr>
+
+  <tr>
+    <th colspan="2">
+      Information options
+    </th>
+  </tr>
+
+  <tr>
+    <td align="right"><tt>--version</tt></td>
+    <td>Print the version number.</td>
+  </tr>
+
+  <tr>
+    <td align="right"><tt>--help</tt>, <tt>-h</tt></td>
+    <td>Print the usage message and exit with success.</td>
+  </tr>
+
+  <tr>
+    <td align="right"><tt>--help-passes</tt></td>
+    <td>Print the numbers and names of the conversion passes and exit
+    with success.</td>
+  </tr>
+
+  <tr>
+    <td align="right"><tt>--verbose</tt>, <tt>-v</tt></td>
+    <td>Tell cvs2svn to print lots of information about what
+      it's doing to STDOUT.  This option can be specified twice to get
+      debug-level output.</td>
+  </tr>
+
+  <tr>
+    <td align="right"><tt>--quiet</tt>, <tt>-q</tt></td>
+    <td>Tell cvs2svn to operate in quiet mode, printing little more
+      than pass starts and stops to STDOUT.  This option may be
+      specified twice to suppress all non-error output.</td>
   </tr>
 
   <tr>
@@ -984,33 +1071,6 @@ cvs2svn --symbol-transform='([0-9])-(.*):release-\1.\2' -q -s SVN RCS
         >Hotshot</a> profiling data to the file <tt>cvs2svn.hotshot</tt>.</td>
   </tr>
 
-  <tr>
-    <td align="right"><tt>--svnadmin=PATH</tt></td>
-    <td>If the svnadmin program is not in your $PATH you should
-      specify its absolute path with this switch.</td>
-  </tr>
-
-  <tr>
-    <td align="right"><tt>--co=PATH</tt></td>
-    <td>If the co program (a part of RCS) is not in your $PATH you should
-      specify its absolute path with this switch.  (co is needed if
-      <tt>--use-cvs</tt> is not specified.)</td>
-  </tr>
-
-  <tr>
-    <td align="right"><tt>--cvs=PATH</tt></td>
-    <td>If the cvs program is not in your $PATH you should
-      specify its absolute path with this switch.  (cvs is needed if
-      <tt>--use-cvs</tt> is specified.)</td>
-  </tr>
-
-  <tr>
-    <td align="right"><tt>--sort=PATH</tt></td>
-    <td>If the GNU sort program is not in your $PATH you should
-      specify its absolute path with this switch.  cvs2svn requires
-      GNU sort; Windows <tt>sort.exe</tt> is <b>not</b> adequate.</td>
-  </tr>
-
 </table>
 
 <hr />
@@ -1021,14 +1081,14 @@ cvs2svn --symbol-transform='([0-9])-(.*):release-\1.\2' -q -s SVN RCS
 repository, run the script like this:</p>
 
 <pre>
-   $ cvs2svn -s NEW_SVNREPOS CVSREPOS
+   $ cvs2svn --svnrepos NEW_SVNREPOS CVSREPOS
 </pre>
 
 <p>To create a new Subversion repository containing only trunk commits,
 and omitting all branches and tags from the CVS repository, do</p>
 
 <pre>
-   $ cvs2svn --trunk-only -s NEW_SVNREPOS CVSREPOS
+   $ cvs2svn --trunk-only --svnrepos NEW_SVNREPOS CVSREPOS
 </pre>
 
 <p>To create a Subversion dumpfile (suitable for 'svnadmin load') from

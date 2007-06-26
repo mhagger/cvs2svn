@@ -33,7 +33,7 @@ class SymbolTransform:
     Return the transformed symbol name.  If this SymbolTransform
     doesn't apply, return the original SYMBOL_NAME.
 
-    This method is free to use the information inf CVS_FILE (including
+    This method is free to use the information in CVS_FILE (including
     CVS_FILE.project) to decide whether and/or how to transform
     SYMBOL_NAME."""
 

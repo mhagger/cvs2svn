@@ -732,11 +732,14 @@ default to be used for other ambiguous symbols.</p>
   <tr>
     <td align="right"><tt>--encoding=ENC</tt></td>
     <td>Use ENC as the encoding for filenames, log messages, and
-      author names in the CVS repos.  This option may be specified
-      multiple times, in which case the encodings are tried in order
-      until one succeeds.  Default: ascii.  A list of standard
-      encodings can be found <a
-      href="http://docs.python.org/lib/standard-encodings.html">here</a>.</td>
+      author names in the CVS repos.  (By using an <tt>--options</tt>
+      file, it is possible to specify one set of encodings to use for
+      filenames and a second set for log messages and author names.)
+      This option may be specified multiple times, in which case the
+      encodings are tried in order until one succeeds.  Default:
+      ascii.  Other possible values include the <a
+      href="http://docs.python.org/lib/standard-encodings.html">standard
+      Python encodings</a>.</td>
   </tr>
 
   <tr>
@@ -744,8 +747,11 @@ default to be used for other ambiguous symbols.</p>
     <td>If all of the encodings specified with <tt>--encoding</tt>
       fail, then fall back to using ENC in lossy 'replace' mode.  Use
       of this option may cause information to be lost, but at least it
-      allows the conversion to run to completion.  Default:
-      disabled.</td>
+      allows the conversion to run to completion.  This option only
+      affects the encoding of log messages and author names; there is
+      no fallback encoding for filenames.  (By using an <tt>--options</tt>
+      file, it is possible to specify a fallback encoding for
+      filenames.)  Default: disabled.</td>
   </tr>
 
   <tr>

@@ -60,6 +60,8 @@
     command '['co', '-q', '-x,v', '-p1.1', '-kk',
     '/home/cvsroot/myfile,v']' failed" in pass 8.</a></li>
 
+  <li><a href="#gdbm-nfs">gdbm.error: (45, 'Operation not supported')</a></li>
+
 </ol>
 
 <p><strong>Getting help:</strong></p>
@@ -573,6 +575,16 @@ documentation.)  The solution to this problem is either to install
 RCS, or to ensure that CVS is installed and use cvs2svn's
 <a href="cvs2svn.html#use-cvs"><tt>--use-cvs</tt></a> option.
 </p>
+
+<h3><a name="gdbm-nfs" title="#gdbm-nfs">gdbm.error: (45, 'Operation
+    not supported')</a></h3>
+
+<p>This has been reported to be caused by trying to create gdbm
+databases on an NFS partition.  Apparently gdbm does not support
+databases on NFS partitions.  The workaround is to use the
+<tt>--tmpdir</tt> option to choose a local partition for cvs2svn to
+write its temporary files.</p>
+
 
 <h2>Getting help:</h2>
 

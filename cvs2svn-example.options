@@ -377,9 +377,9 @@ ctx.add_project(
         'branches',
         'tags',
         symbol_transforms=[
-            #RegexpSymbolTransform(r'^release-(\d+)_(\d+)$',
+            #RegexpSymbolTransform(r'release-(\d+)_(\d+)',
             #                      r'release-\1.\2'),
-            #RegexpSymbolTransform(r'^release-(\d+)_(\d+)_(\d+)$',
+            #RegexpSymbolTransform(r'release-(\d+)_(\d+)_(\d+)',
             #                      r'release-\1.\2.\3'),
             ],
         )
@@ -394,9 +394,9 @@ ctx.add_project(
 #        'projA/branches',
 #        'projA/tags',
 #        symbol_transforms=[
-#            #RegexpSymbolTransform(r'^release-(\d+)_(\d+)$',
+#            #RegexpSymbolTransform(r'release-(\d+)_(\d+)',
 #            #                      r'release-\1.\2'),
-#            #RegexpSymbolTransform(r'^release-(\d+)_(\d+)_(\d+)$',
+#            #RegexpSymbolTransform(r'release-(\d+)_(\d+)_(\d+)',
 #            #                      r'release-\1.\2.\3'),
 #            ],
 #        )

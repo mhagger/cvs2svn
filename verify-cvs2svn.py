@@ -374,12 +374,13 @@ def main(argv):
     elif (opt == '--skip-cleanup'):
       ctx.skip_cleanup = 1
     elif opt == '--symbol-transform':
+      # This is broken!
       [pattern, replacement] = value.split(":")
       try:
-        pattern = re.compile(pattern)
-      except re.error, e:
+        symbol_transforms.append(
+            RegexpSymbolTransform(pattern, replacement))
+      except re.error:
         raise FatalError("'%s' is not a valid regexp." % (pattern,))
-      ctx.symbol_transforms.append((pattern, replacement,))
 
   # Consistency check for options and arguments.
   if len(args) != 2:

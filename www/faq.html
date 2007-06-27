@@ -420,7 +420,7 @@ for subdir in ['project1', 'project2', 'project3']:
     symbol_transforms.append(
         MySymbolTransform(
             subdir,
-            r'^release-(\d+)_(\d+)$',
+            r'release-(\d+)_(\d+)',
             r'%s-release-\1.\2' % subdir))
 
 # Now register the project, using our own symbol transforms:

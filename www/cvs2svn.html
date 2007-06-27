@@ -751,10 +751,12 @@ default to be used for other ambiguous symbols.</p>
   <tr>
     <td align="right"><tt>--symbol-transform=PAT:SUB</tt></td>
     <td><p>Transform RCS/CVS symbol names before entering them into
-      Subversion.  PAT is a Python regexp pattern and SUB is a
-      replacement pattern using Python's reference syntax.  You may
-      specify any number of these options; they will be
-      applied in the order given on the command line.</p>
+      Subversion.  PAT is a Python regular expression pattern that is
+      matched against the entire symbol name.  If it matches, the
+      symbol is replaced with SUB, which is a replacement pattern
+      using Python's reference syntax.  You may specify any number of
+      these options; they will be applied in the order given on the
+      command line.</p>
 
       <p>This option can be useful if you're converting a repository in
       which the developer used directory-wide symbol names like 1_0, 1_1
@@ -762,7 +764,7 @@ default to be used for other ambiguous symbols.</p>
       in Emacs VC mode encourages this practice).  A command like</p>
 
 <pre>
-cvs2svn --symbol-transform='([0-9])-(.*):release-\1.\2' -q -s SVN RCS
+cvs2svn --symbol-transform='([0-9])-(.*):release-\1.\2' -s SVN RCS
 </pre>
 
       <p>will transform a local CVS repository into a local SVN repository,

@@ -104,10 +104,10 @@ the conversion to run to completion.  Default: disabled.
 .TP
 \fB--symbol-transform\fR=\fIpattern\fR:\fIreplacement\fR
 Transform RCS/CVS symbol names before entering them into Subversion.
-\fIpattern\fR is a Python regexp pattern and \fIreplacement\fR is a
-replacement using Python's regexp reference syntax.  You may specify any
-number of these options; they will be applied in the order given on
-the command line.
+\fIpattern\fR is a Python regexp pattern that is matches against the
+entire symbol name; \fIreplacement\fR is a replacement using Python's
+regexp reference syntax.  You may specify any number of these options;
+they will be applied in the order given on the command line.
 .TP
 \fB--force-branch\fR=\fIregexp\fR
 Force symbols whose names match \fIregexp\fR to be branches.

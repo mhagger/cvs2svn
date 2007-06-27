@@ -2496,9 +2496,9 @@ def symbol_transform():
       'symbol-mess',
       args=[
           '--symbol-default=heuristic',
-          '--symbol-transform=^BRANCH:branch',
-          '--symbol-transform=^TAG:tag',
-          '--symbol-transform=^MOSTLY_(BRANCH|TAG):MOSTLY.\\1',
+          '--symbol-transform=BRANCH:branch',
+          '--symbol-transform=TAG:tag',
+          '--symbol-transform=MOSTLY_(BRANCH|TAG):MOSTLY.\\1',
           ])
   if not conv.path_exists('branches', 'branch'):
      raise Failure()

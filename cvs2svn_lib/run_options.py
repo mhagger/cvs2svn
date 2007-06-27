@@ -109,7 +109,7 @@ history.
                              with ENC
       --symbol-transform=P:S transform symbol names from P to S, where P and S
                              use Python regexp and reference syntax
-                             respectively
+                             respectively.  P must match the whole symbol name
       --force-branch=REGEXP  force symbols matching REGEXP to be branches
       --force-tag=REGEXP     force symbols matching REGEXP to be tags
       --exclude=REGEXP       exclude branches and tags matching REGEXP

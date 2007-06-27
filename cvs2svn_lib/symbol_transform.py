@@ -41,8 +41,18 @@ class SymbolTransform:
 
 
 class RegexpSymbolTransform(SymbolTransform):
+  """Transform symbols by using a regexp textual substitution."""
+
   def __init__(self, pattern, replacement):
-    self.pattern = re.compile(pattern)
+    """Create a SymbolTransform that transforms symbols matching PATTERN.
+
+    PATTERN is a regular expression that should match the whole symbol
+    name.  REPLACEMENT is the replacement text, which may include
+    patterns like r'\1' or r'\g<1>' or r'\g<name>' (where 'name' is a
+    reference to a named substring in the pattern of the form
+    r'(?P<name>...)')."""
+
+    self.pattern = re.compile('^' + pattern + '$')
     self.replacement = replacement
 
   def transform(self, cvs_file, symbol_name):

@@ -12,12 +12,8 @@
 
 """common.py: common classes and functions for the RCS parsing tools."""
 
-import time
+import calendar
 import string
-
-### compat isn't in vclib right now. need to work up a solution
-import compat
-
 
 class Sink:
   def set_head_revision(self, revision):
@@ -78,7 +74,7 @@ class RCSStopParser(Exception):
 #
 
 class _Parser:
-  stream_class = None	# subclasses need to define this
+  stream_class = None   # subclasses need to define this
 
   def parse_rcs_admin(self):
     while 1:
@@ -185,7 +181,7 @@ class _Parser:
           if date_fields[0] < EPOCH:
               raise ValueError, 'invalid year'
 
-      timestamp = compat.timegm(tuple(date_fields))
+      timestamp = calendar.timegm(tuple(date_fields))
 
       # Parse author
       ### NOTE: authors containing whitespace are violations of the
@@ -198,7 +194,7 @@ class _Parser:
         if token == ';':
           break
         author = author + token + ' '
-      author = author[:-1]	# toss the trailing space
+      author = author[:-1]   # toss the trailing space
 
       # Parse state
       self.ts.match('state')
@@ -208,7 +204,7 @@ class _Parser:
         if token == ';':
           break
         state = state + token + ' '
-      state = state[:-1]	# toss the trailing space
+      state = state[:-1]   # toss the trailing space
 
       # Parse branches
       self.ts.match('branches')

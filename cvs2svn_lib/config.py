@@ -134,7 +134,7 @@ CVS_ITEMS_STORE = 'cvs-items.pck'
 # These two files are used within an IndexedCVSItemStore; the first is
 # a map id-> offset, and the second contains the pickled CVSItems at
 # the specified offsets.
-CVS_ITEMS_FILTERED_INDEX_TABLE = 'cvs-items-filtered-index.pck'
+CVS_ITEMS_FILTERED_INDEX_TABLE = 'cvs-items-filtered-index.dat'
 CVS_ITEMS_FILTERED_STORE = 'cvs-items-filtered.pck'
 
 # A record of all symbolic names that will be processed in the

@@ -239,6 +239,15 @@ class RecordTable:
 
     return self.packer.unpack(s)
 
+  def get_many(self, indexes):
+    """Generate the items for the specified INDEXES in arbitrary order."""
+
+    indexes = list(indexes)
+    # Sort the indexes to reduce disk seeking:
+    indexes.sort()
+    for i in indexes:
+      yield self[i]
+
   def get(self, i, default=None):
     try:
       return self[i]

@@ -38,9 +38,7 @@ class Changeset(object):
   def get_cvs_items(self):
     """Return the set of CVSItems within this Changeset."""
 
-    return set([
-        Ctx()._cvs_items_db[cvs_item_id]
-        for cvs_item_id in self.cvs_item_ids])
+    return set(Ctx()._cvs_items_db.get_many(self.cvs_item_ids))
 
   def create_graph_node(self):
     """Return a ChangesetGraphNode for this Changeset."""

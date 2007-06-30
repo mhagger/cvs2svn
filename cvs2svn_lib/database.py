@@ -267,6 +267,15 @@ class IndexedDatabase:
     except KeyError:
       return default
 
+  def get_many(self, indexes):
+    """Generate the items with the specified INDEXES in arbitrary order."""
+
+    offsets = list(self.index_table.get_many(indexes))
+    # Sort the offsets to reduce disk seeking:
+    offsets.sort()
+    for offset in offsets:
+      yield self._fetch(offset)
+
   def __delitem__(self, index):
     self.index_table[index]
     self.index_table[index] = 0

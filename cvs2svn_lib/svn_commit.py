@@ -162,11 +162,8 @@ class SVNRevisionCommit(SVNCommit):
     cvs_rev_keys = state
 
     cvs_revs = []
-    for key in cvs_rev_keys:
-      cvs_rev_id = int(key, 16)
-      cvs_rev = Ctx()._cvs_items_db[cvs_rev_id]
-      cvs_revs.append(cvs_rev)
-
+    keys = [int(key, 16) for key in cvs_rev_keys]
+    cvs_revs = Ctx()._cvs_items_db.get_many(keys)
     SVNRevisionCommit.__init__(self, cvs_revs)
 
     # Set the author and log message for this commit from the first
@@ -277,7 +274,7 @@ class SVNSymbolCommit(SVNCommit):
     self.cvs_symbol_ids = cvs_symbol_ids
 
   def get_cvs_items(self):
-    return [Ctx()._cvs_items_db[id] for id in self.cvs_symbol_ids]
+    return list(Ctx()._cvs_items_db.get_many(self.cvs_symbol_ids))
 
   def _get_log_msg(self):
     """Return a manufactured log message for this commit."""

@@ -97,7 +97,7 @@ repository's history as possible.</p>
     are binary and which are text.  (This is mostly important if the
     repository is used on non-Unix systems.)  cvs2svn provides a
     number of ways to infer this information
-    (<tt>--eol-from-mime-type</tt>, <tt>--no-default-eol</tt>,
+    (<tt>--eol-from-mime-type</tt>, <tt>--default-eol</tt>,
     <tt>--keywords-off</tt>, <tt>--auto-props</tt>).</dd>
 
   <dt>Subversion file properties</dt>
@@ -389,29 +389,33 @@ when the file is checked out.  However, if line-end translation or
 keyword expansion is applied to a binary file, the file will usually
 be corrupted.</p>
 
-<p>By default, CVS treats a file as text unless you specifically tell
-it that the file is binary.  You can tell CVS that a file is binary by
-using the command <tt>cvs admin -kb <i>filename</i></tt>.  But often
-CVS users forget to specify which files are binary, and as long as the
-repository is only used under Unix, they may never notice a problem,
-because the internal format of CVS is the same as the Unix format.</p>
+<p>For this reason, CVS treats a file as binary unless you
+specifically tell it that the file is text.  You can tell CVS that a
+file is binary by using the command <tt>cvs admin -kb
+<i>filename</i></tt>.  But often CVS users forget to specify which
+files are binary, and as long as the repository is only used under
+Unix, they may never notice a problem, because the internal format of
+CVS is the same as the Unix format.  But Subversion is not as
+forgiving as CVS if you tell it to treat a binary file as text.</p>
 
 <p>If you have been conscientious about marking files as binary in
-CVS, then cvs2svn shouldn't have any problem.  But if you have been
-sloppy, you need to do something now <strong>or you will have
-problems</strong>.  Subversion is not as forgiving as CVS if you tell
-it to treat a binary file as text.  Your choices are:</p>
-
+CVS, then you should be able to use <tt>--default-eol=native</tt>.  If
+you have been sloppy, then you have a few choices:</p>
 <ul>
+  <li>Convert your repository with cvs2svn's default options.  Your
+    text files will be treated as binary, but that usually isn't very
+    harmful (at least no information will be lost).</li>
 
-  <li>Fix your CVS repository <em>before</em> conversion by running
-    <tt>cvs admin -kb <i>filename</i></tt> for each binary file in the
-    repository.</li>
+  <li>Mend your slovenly ways by fixing your CVS repository
+    <em>before</em> conversion: run <tt>cvs admin -kb
+    <i>filename</i></tt> for each binary file in the repository.  Then
+    you can use <tt>--default-eol=native</tt> along with the
+    anal-retentive folks.</li>
 
-  <li>Use cvs2svn options to let cvs2svn deduce which files are binary
-    <em>during</em> the conversion.  The useful options are
-    <tt>--eol-from-mime-type</tt>, <tt>--no-default-eol</tt>,
-    <tt>--keywords-off</tt>, and <tt>--auto-props</tt>.  See the <a
+  <li>Use cvs2svn options to help cvs2svn deduce which files are
+    binary <em>during</em> the conversion.  The useful options are
+    <tt>--eol-from-mime-type</tt>, <tt>--keywords-off</tt>,
+    <tt>--auto-props</tt>, and <tt>--default-eol</tt>.  See the <a
     href="faq.html#eol-fixup">FAQ</a> for more information.</li>
 
 </ul>
@@ -892,12 +896,12 @@ cvs2svn --symbol-transform='([0-9])-(.*):release-\1.\2' -s SVN RCS
   </tr>
 
   <tr>
-    <td align="right"><tt>--no-default-eol</tt></td>
-    <td>Files that don't have the <tt>kb</tt> expansion mode and (if
-      <tt>--eol-from-mime-type</tt> is set) unknown mime type usually
-      have their <tt>svn:eol-style</tt> property to "native".  If this
-      option is specified, such files are left with no eol-style
-      (i.e., no EOL translation).</td>
+    <td align="right"><tt>--default-eol=STYLE</tt></td>
+    <td>Set <tt>svn:eol-style</tt> to STYLE for files that don't have
+      the <tt>kb</tt> expansion mode and whose end-of-line translation
+      mode hasn't been determined by one of the other options.  STYLE
+      can be "<tt>binary</tt>" (default), "<tt>native</tt>",
+      "<tt>CRLF</tt>", "<tt>LF</tt>", or "<tt>CR</tt>".</td>
   </tr>
 
   <tr>

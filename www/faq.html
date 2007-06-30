@@ -266,41 +266,51 @@ ctx.add_project(
 <h3><a name="eol-fixup" title="#eol-fixup">How do I fix up end-of-line
   translation problems?</a></h3>
 
-  <p>If binary files are marked as such in CVS, then cvs2svn usually
-    doesn't have any problems.  If not, then you need to take action
-    to prevent future problems.</p>
+  <p>Warning: cvs2svn's handling of end-of-line options changed
+    between version 1.5.x and version 2.0.x.  <strong>This
+    documentation applies to version 2.0.x and later.</strong>  The
+    documentation applying to an earlier version can be found in the
+    <tt>www</tt> directory of that release of cvs2svn.</p>
 
-  <p>One possibility is to tell CVS which files are binary
-    <em>before</em> the conversion, by running <tt>cvs admin -kb
-    <i>filename</i></tt> for each binary file in the repository.</p>
+  <p>Starting with version 2.0, the default behavior of cvs2svn is to
+    treat all files as binary except those explicitly determined to be
+    text.  (Previous versions treated files as text unless they were
+    determined to be binary.)  This behavior was changed because,
+    generally speaking, it is safer to treat a text file as binary
+    than vice versa.</p>
 
-  <p>Alternatively, cvs2svn has a number of options that can help set
-    up the correct end-of-line translation parameters during the
+  <p>However, it is often preferred to set
+    <tt>svn:eol-style=native</tt> for text files, so that their
+    end-of-file format is converted to that of the client platform
+    when the file is checked out.  This section describes how to
+    get the settings that you want.</p>
+
+  <p>If a file is marked as binary in CVS (with <tt>cvs admin
+    -kb</tt>, then cvs2svn will always treat the file as binary.  For
+    other files, cvs2svn has a number of options that can help choose
+    the correct end-of-line translation parameters during the
     conversion:</p>
 
     <table border="1" cellpadding="10" cellspacing="3" width="80%">
 
       <tr>
-        <td align="right"><tt>--no-default-eol</tt></td>
-        <td>Usually cvs2svn treats a file as text unless one of the
-          other rules determines that it is binary or if it is marked
-          as binary in CVS.  But if this option is specified, then
-          cvs2svn assumes that a file is binary unless it is
-          specifically determined to be text.</td>
-      </tr>
-
-      <tr>
         <td align="right"><tt>--auto-props=FILE</tt></td>
         <td><p>Set arbitrary Subversion properties on files based on the
           auto-props section of a file in svn config format.  The
-	  auto-props file might have content like this:</p>
+          auto-props file might have content like this:</p>
 <pre>
 [auto-props]
 *.txt = svn:mime-type=text/plain;svn:eol-style=native
 *.doc = svn:mime-type=application/msword;svn:eol-style=
 </pre>
-	  <p>This option can also be used in combination with
-	  <tt>--eol-from-mime-type</tt>.</p></td>
+          <p>This option can also be used in combination with
+          <tt>--eol-from-mime-type</tt>.</p>
+	  <p>Please note that cvs2svn treats auto-props directives a
+          bit differently than Subversion: if cvs2svn sees a setting
+          like <tt>svn:eol-style=</tt> (with no value), it forces the
+          property to remain <em>unset</em>, even if later rules would
+          otherwise set the property.  Subversion, in this situation,
+          would try to set the property to the empty string.</p></td>
       </tr>
 
       <tr>
@@ -319,8 +329,8 @@ ctx.add_project(
 text/plain              txt
 application/msword      doc
 </pre>
-          <p>This option only has an effect on svn:eol-style if it is
-          used in combination with
+          <p>This option only has an effect on <tt>svn:eol-style</tt>
+          if it is used in combination with
           <tt>--eol-from-mime-type</tt>.</p></td>
       </tr>
 
@@ -333,17 +343,28 @@ application/msword      doc
           <tt>--auto-props</tt> or <tt>--mime-types</tt>.</td>
       </tr>
 
+      <tr>
+        <td align="right"><tt>--default-eol=STYLE</tt></td>
+        <td>Usually cvs2svn treats a file as binary unless one of the
+          other rules determines that it is binary or if it is marked
+          as binary in CVS.  But if this option is specified, then
+          cvs2svn uses the specified style as the default.  STYLE can
+          be 'binary' (default), 'native', 'CRLF', 'LF', or 'CR'.  If
+          you have been diligent about annotating binary files in CVS,
+          or if you are confident that the above options will catch
+          all of your binary files, then this option may be just the
+          thing you need.</td>
+      </tr>
+
     </table>
 
-  <p>The nuclear weapon of this ensemble is <tt>--no-default-eol</tt>,
-    which prevents line-end translation altogether (at least in the
-    absence of other options).  <tt>--no-default-eol</tt> forces the
-    file contents in the SVN repository to be the same as the contents
-    you would get if checking out with CVS on the machine on which
-    cvs2svn is run.  This also means that the EOL characters of text
-    files will be the same no matter where the SVN data are checked
-    out (i.e., not translated to the checkout machine's EOL
-    format).</p>
+  <p>If you don't use any of these options, then cvs2svn will not
+    arrange any line-end translation whatsoever.  The file contents in
+    the SVN repository should be the same as the contents you would
+    get if checking out with CVS on the machine on which cvs2svn is
+    run.  This also means that the EOL characters of text files will
+    be the same no matter where the SVN data are checked out (i.e.,
+    not translated to the checkout machine's EOL format).</p>
 
   <p>To do a better job, you can use <tt>--auto-props</tt>,
     <tt>--mime-types</tt>, and <tt>--eol-from-mime-type</tt> to

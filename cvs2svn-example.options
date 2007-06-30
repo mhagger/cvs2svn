@@ -277,12 +277,22 @@ ctx.svn_property_setters.extend([
     # the following line:
     #EOLStyleFromMimeTypeSetter(),
 
-    # Choose one of the following lines to set the default svn:eol-style
-    # if none of the above rules applied.  The argument is the
-    # svn:eol-style that should be applied, or None if no svn:eol-style
-    # should be set.
-    #DefaultEOLStyleSetter(None)
-    DefaultEOLStyleSetter('native'),
+    # Choose one of the following lines to set the default
+    # svn:eol-style if none of the above rules applied.  The argument
+    # is the svn:eol-style that should be applied, or None if no
+    # svn:eol-style should be set (i.e., the file should be treated as
+    # binary).
+    #
+    # The default is to treat all files as binary unless one of the
+    # previous rules has determined otherwise, because this is the
+    # safest approach.  However, if you have been diligent about
+    # marking binary files with -kb in CVS and/or you have used the
+    # above rules to definitely mark binary files as binary, then you
+    # might prefer to use 'native' as the default, as it is usually
+    # the most convenient setting for text files.  Other possible
+    # options: 'CRLF', 'CR', 'LF'.
+    DefaultEOLStyleSetter(None),
+    #DefaultEOLStyleSetter('native'),
 
     # Prevent svn:keywords from being set on files that have
     # svn:eol-style unset.

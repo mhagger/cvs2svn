@@ -5,6 +5,7 @@ Version x.x.x (not yet released)
  * Add --use-internal-co option to accelerate conversion up to 50%.
  * Add --retain-conflicting-attic-files option.
  * Add --no-cross-branch-commits option.
+ * Add --default-eol option and deprecate --no-default-eol.
  * RevisionRecorder hook allows file text/deltas to be recorded in pass 1.
  * RevisionReader hook allow file text to be retrieved from RevisionRecorder.
  * Slightly changed the order that properties are set, for more flexibility.
@@ -32,6 +33,7 @@ Version x.x.x (not yet released)
  * When file is imported, omit the empty revision 1.1.
  * If a non-trunk default branch is excluded, graft its contents to trunk.
  * Require --symbol-transform pattern to match entire symbol name.
+ * Treat files as binary by default instead of as text.
 
  Miscellaneous:
  * Add a simple (nonportable) script to log cvs2svn memory usage.

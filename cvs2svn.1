@@ -177,12 +177,11 @@ the --auto-props-ignore-case option is specified.
 \fB--auto-props-ignore-case\fR
 Ignore case when pattern-matching auto-props patterns.
 .TP
-\fB--no-default-eol\fR
-Files that don't have the kb expansion mode and (if
-\fB--eol-from-mime-type\fR is set) unknown mime type usually have
-their svn:eol-style property to "native".  If this option is
-specified, such files are left with no eol-style (i.e., no EOL
-translation).
+\fB--default-eol\fR=\fIstyle\fR
+Set svn:eol-style to \fIstyle\fR for files that don't have the CVS
+`kb' expansion mode and whose end-of-line translation mode hasn't been
+determined by one of the other options.  \fIstyle\fR must be `binary'
+(default), `native', `CRLF', `LF', or `CR'.
 .TP
 \fB--keywords-off\fR
 By default, cvs2svn sets svn:keywords on CVS files to "author id date"

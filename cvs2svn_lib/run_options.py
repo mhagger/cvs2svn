@@ -128,8 +128,9 @@ history.
       --auto-props=FILE      set file properties from the auto-props section
                              of a file in svn config format
       --auto-props-ignore-case   Ignore case when matching auto-props patterns
-      --no-default-eol       don't set svn:eol-style to 'native' for
-                             non-binary files with undetermined mime types
+      --default-eol=VALUE    default svn:eol-style for non-binary files with
+                             undetermined mime types.  VALUE is "binary"
+                             (default), "native", "CRLF", "LF", or "CR"
       --keywords-off         don't set svn:keywords on any files (by default,
                              cvs2svn sets svn:keywords on non-binary files to
                              "%(svn_keywords_value)s")
@@ -205,7 +206,7 @@ class RunOptions:
           "cvs-revnums",
           "mime-types=",
           "auto-props=", "auto-props-ignore-case",
-          "eol-from-mime-type", "no-default-eol",
+          "eol-from-mime-type", "default-eol=",
           "keywords-off",
 
           "use-rcs", "use-cvs", "use-internal-co",
@@ -222,7 +223,7 @@ class RunOptions:
 
           # These options are deprecated and are only included for
           # backwards compatibility:
-          "dump-only", "create",
+          "dump-only", "create", "no-default-eol",
           ])
     except getopt.GetoptError, e:
       sys.stderr.write(error_prefix + ': ' + str(e) + '\n\n')
@@ -327,7 +328,7 @@ class RunOptions:
     auto_props_file = None
     auto_props_ignore_case = False
     eol_from_mime_type = False
-    no_default_eol = False
+    default_eol = None
     keywords_off = False
     co_executable = config.CO_EXECUTABLE
     cvs_executable = config.CVS_EXECUTABLE
@@ -409,8 +410,20 @@ class RunOptions:
         auto_props_ignore_case = True
       elif opt == '--eol-from-mime-type':
         eol_from_mime_type = True
+      elif opt == '--default-eol':
+        try:
+          # Check that value is valid, and translate it to the proper case
+          default_eol = {
+              'binary' : None, 'native' : 'native',
+              'crlf' : 'CRLF', 'lf' : 'LF', 'cr' : 'CR',
+              }[value.lower()]
+        except KeyError:
+          raise FatalError(
+              'Illegal value specified for --default-eol: %s' % (value,)
+              )
       elif opt == '--no-default-eol':
-        no_default_eol = True
+        # For backwards compatibility:
+        default_eol = None
       elif opt == '--keywords-off':
         keywords_off = True
       elif opt == '--tmpdir':
@@ -549,10 +562,7 @@ class RunOptions:
     if eol_from_mime_type:
       ctx.svn_property_setters.append(EOLStyleFromMimeTypeSetter())
 
-    if no_default_eol:
-      ctx.svn_property_setters.append(DefaultEOLStyleSetter(None))
-    else:
-      ctx.svn_property_setters.append(DefaultEOLStyleSetter('native'))
+    ctx.svn_property_setters.append(DefaultEOLStyleSetter(default_eol))
 
     ctx.svn_property_setters.append(SVNBinaryFileKeywordsPropertySetter())
 

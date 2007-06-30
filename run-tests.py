@@ -1945,7 +1945,7 @@ class EOLMime(Cvs2SvnPropertiesTestCase):
 
 
 # We do four conversions.  Each time, we pass --mime-types=FILE with
-# the same FILE, but vary --no-default-eol and --eol-from-mime-type.
+# the same FILE, but vary --default-eol and --eol-from-mime-type.
 # Thus there's one conversion with neither flag, one with just the
 # former, one with just the latter, and one with both.
 
@@ -1955,9 +1955,9 @@ eol_mime1 = EOLMime(
     variant=1,
     args=[],
     expected_props=[
-        ('trunk/foo.txt', ['native', None, KEYWORDS]),
-        ('trunk/foo.xml', ['native', 'text/xml', KEYWORDS]),
-        ('trunk/foo.zip', ['native', 'application/zip', KEYWORDS]),
+        ('trunk/foo.txt', [None, None, None]),
+        ('trunk/foo.xml', [None, 'text/xml', None]),
+        ('trunk/foo.zip', [None, 'application/zip', None]),
         ('trunk/foo.bin', [None, 'application/octet-stream', None]),
         ('trunk/foo.csv', [None, 'text/csv', None]),
         ('trunk/foo.dbf', [None, 'application/what-is-dbf', None]),
@@ -1967,11 +1967,11 @@ eol_mime1 = EOLMime(
 # Just --no-default-eol, not --eol-from-mime-type:
 eol_mime2 = EOLMime(
     variant=2,
-    args=['--no-default-eol'],
+    args=['--default-eol=native'],
     expected_props=[
-        ('trunk/foo.txt', [None, None, None]),
-        ('trunk/foo.xml', [None, 'text/xml', None]),
-        ('trunk/foo.zip', [None, 'application/zip', None]),
+        ('trunk/foo.txt', ['native', None, KEYWORDS]),
+        ('trunk/foo.xml', ['native', 'text/xml', KEYWORDS]),
+        ('trunk/foo.zip', ['native', 'application/zip', KEYWORDS]),
         ('trunk/foo.bin', [None, 'application/octet-stream', None]),
         ('trunk/foo.csv', [None, 'text/csv', None]),
         ('trunk/foo.dbf', [None, 'application/what-is-dbf', None]),
@@ -1983,7 +1983,7 @@ eol_mime3 = EOLMime(
     variant=3,
     args=['--eol-from-mime-type'],
     expected_props=[
-        ('trunk/foo.txt', ['native', None, KEYWORDS]),
+        ('trunk/foo.txt', [None, None, None]),
         ('trunk/foo.xml', ['native', 'text/xml', KEYWORDS]),
         ('trunk/foo.zip', [None, 'application/zip', None]),
         ('trunk/foo.bin', [None, 'application/octet-stream', None]),
@@ -1995,9 +1995,9 @@ eol_mime3 = EOLMime(
 # Both --no-default-eol and --eol-from-mime-type:
 eol_mime4 = EOLMime(
     variant=4,
-    args=['--eol-from-mime-type', '--no-default-eol'],
+    args=['--eol-from-mime-type', '--default-eol=native'],
     expected_props=[
-        ('trunk/foo.txt', [None, None, None]),
+        ('trunk/foo.txt', ['native', None, KEYWORDS]),
         ('trunk/foo.xml', ['native', 'text/xml', KEYWORDS]),
         ('trunk/foo.zip', [None, 'application/zip', None]),
         ('trunk/foo.bin', [None, 'application/octet-stream', None]),
@@ -2039,6 +2039,7 @@ cvs_revnums_on = Cvs2SvnPropertiesTestCase(
 keywords = Cvs2SvnPropertiesTestCase(
     'keywords',
     description='test setting of svn:keywords property among others',
+    args=['--default-eol=native'],
     props_to_test=['svn:keywords', 'svn:eol-style', 'svn:mime-type'],
     expected_props=[
         ('trunk/foo.default', [KEYWORDS, 'native', None]),
@@ -2135,7 +2136,7 @@ def resync_pass2_pull_forward():
 
 def native_eol():
   "only LFs for svn:eol-style=native files"
-  conv = ensure_conversion('native-eol')
+  conv = ensure_conversion('native-eol', args=['--default-eol=native'])
   lines = run_program(svntest.main.svnadmin_binary, None, 'dump', '-q',
                       conv.repos)
   # Verify that all files in the dump have LF EOLs.  We're actually
@@ -2246,7 +2247,7 @@ class AutoProps(Cvs2SvnPropertiesTestCase):
 
 auto_props_ignore_case = AutoProps(
     description="test auto-props (case-insensitive)",
-    args=['--auto-props-ignore-case'],
+    args=['--auto-props-ignore-case', '--default-eol=native'],
     expected_props=[
         ('trunk/foo.txt', ['txt', 'native', None, KEYWORDS]),
         ('trunk/foo.xml', ['xml', 'CRLF', 'text/xml', KEYWORDS]),
@@ -2261,7 +2262,7 @@ auto_props_ignore_case = AutoProps(
 
 auto_props = AutoProps(
     description="test auto-props (case-sensitive)",
-    args=[],
+    args=['--default-eol=native'],
     expected_props=[
         ('trunk/foo.txt', ['txt', 'native', None, KEYWORDS]),
         ('trunk/foo.xml', ['xml', 'CRLF', 'text/xml', KEYWORDS]),
@@ -2617,10 +2618,10 @@ def internal_co():
   "verify that --use-internal-co works"
 
   org_conv = ensure_conversion(
-      'main',
+      'main', args=['--default-eol=native'],
       )
   conv = ensure_conversion(
-      'main', args=['--use-internal-co'],
+      'main', args=['--use-internal-co', '--default-eol=native'],
       )
   if conv.output_found(r'WARNING\: internal problem\: leftover revisions'):
     raise Failure()
@@ -2639,10 +2640,11 @@ def internal_co_exclude():
   "verify that --use-internal-co --exclude=... works"
 
   org_conv = ensure_conversion(
-      'internal-co', args=['--exclude=BRANCH'],
+      'internal-co', args=['--exclude=BRANCH', '--default-eol=native'],
       )
   conv = ensure_conversion(
-      'internal-co', args=['--use-internal-co', '--exclude=BRANCH'],
+      'internal-co',
+      args=['--use-internal-co', '--exclude=BRANCH', '--default-eol=native'],
       )
   if conv.output_found(r'WARNING\: internal problem\: leftover revisions'):
     raise Failure()
@@ -2661,7 +2663,8 @@ def internal_co_trunk_only():
   "verify that --use-internal-co --trunk-only works"
 
   conv = ensure_conversion(
-      'internal-co', args=['--use-internal-co', '--trunk-only'],
+      'internal-co',
+      args=['--use-internal-co', '--trunk-only', '--default-eol=native'],
       )
   if conv.output_found(r'WARNING\: internal problem\: leftover revisions'):
     raise Failure()
@@ -2671,7 +2674,8 @@ def leftover_revs():
   "check for leftover checked-out revisions"
 
   conv = ensure_conversion(
-      'leftover-revs', args=['--use-internal-co', '--exclude=BRANCH'],
+      'leftover-revs',
+      args=['--use-internal-co', '--exclude=BRANCH', '--default-eol=native'],
       )
   if conv.output_found(r'WARNING\: internal problem\: leftover revisions'):
     raise Failure()

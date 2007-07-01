@@ -171,11 +171,7 @@ Specify a file in the format of Subversion's config file, whose
 in the Subversion repository based on their filenames.  (The
 [auto-props] section header must be present; other sections of the
 config file, including the enable-auto-props setting, are ignored.)
-Filenames are matched to the filename patterns case-sensitively unless
-the --auto-props-ignore-case option is specified.
-.TP
-\fB--auto-props-ignore-case\fR
-Ignore case when pattern-matching auto-props patterns.
+Filenames are matched to the filename patterns case-insensitively.
 .TP
 \fB--default-eol\fR=\fIstyle\fR
 Set svn:eol-style to \fIstyle\fR for files that don't have the CVS

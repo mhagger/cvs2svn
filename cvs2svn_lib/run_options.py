@@ -127,7 +127,6 @@ history.
       --eol-from-mime-type   set svn:eol-style from mime type if known
       --auto-props=FILE      set file properties from the auto-props section
                              of a file in svn config format
-      --auto-props-ignore-case   Ignore case when matching auto-props patterns
       --default-eol=VALUE    default svn:eol-style for non-binary files with
                              undetermined mime types.  VALUE is "binary"
                              (default), "native", "CRLF", "LF", or "CR"
@@ -205,7 +204,7 @@ class RunOptions:
           "username=",
           "cvs-revnums",
           "mime-types=",
-          "auto-props=", "auto-props-ignore-case",
+          "auto-props=",
           "eol-from-mime-type", "default-eol=",
           "keywords-off",
 
@@ -223,7 +222,7 @@ class RunOptions:
 
           # These options are deprecated and are only included for
           # backwards compatibility:
-          "dump-only", "create", "no-default-eol",
+          "dump-only", "create", "no-default-eol", "auto-props-ignore-case",
           ])
     except getopt.GetoptError, e:
       sys.stderr.write(error_prefix + ': ' + str(e) + '\n\n')
@@ -326,7 +325,7 @@ class RunOptions:
     symbol_strategy_default = 'strict'
     mime_types_file = None
     auto_props_file = None
-    auto_props_ignore_case = False
+    auto_props_ignore_case = True
     eol_from_mime_type = False
     default_eol = None
     keywords_off = False
@@ -407,6 +406,8 @@ class RunOptions:
       elif opt == '--auto-props':
         auto_props_file = value
       elif opt == '--auto-props-ignore-case':
+        # "ignore case" is now the default, so this option doesn't
+        # affect anything.
         auto_props_ignore_case = True
       elif opt == '--eol-from-mime-type':
         eol_from_mime_type = True

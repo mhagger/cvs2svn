@@ -2246,22 +2246,7 @@ class AutoProps(Cvs2SvnPropertiesTestCase):
 
 
 auto_props_ignore_case = AutoProps(
-    description="test auto-props (case-insensitive)",
-    args=['--auto-props-ignore-case', '--default-eol=native'],
-    expected_props=[
-        ('trunk/foo.txt', ['txt', 'native', None, KEYWORDS]),
-        ('trunk/foo.xml', ['xml', 'CRLF', 'text/xml', KEYWORDS]),
-        ('trunk/foo.zip', ['zip', None, 'application/zip', None]),
-        ('trunk/foo.bin', ['bin', None, 'application/octet-stream', None]),
-        ('trunk/foo.csv', ['csv', 'CRLF', 'text/csv', None]),
-        ('trunk/foo.dbf', ['dbf', None, 'application/what-is-dbf', None]),
-        ('trunk/foo.UPCASE1', ['UPCASE1', 'native', None, KEYWORDS]),
-        ('trunk/foo.UPCASE2', ['UPCASE2', 'native', None, KEYWORDS]),
-        ])
-
-
-auto_props = AutoProps(
-    description="test auto-props (case-sensitive)",
+    description="test auto-props",
     args=['--default-eol=native'],
     expected_props=[
         ('trunk/foo.txt', ['txt', 'native', None, KEYWORDS]),
@@ -2271,7 +2256,7 @@ auto_props = AutoProps(
         ('trunk/foo.csv', ['csv', 'CRLF', 'text/csv', None]),
         ('trunk/foo.dbf', ['dbf', None, 'application/what-is-dbf', None]),
         ('trunk/foo.UPCASE1', ['UPCASE1', 'native', None, KEYWORDS]),
-        ('trunk/foo.UPCASE2', [None, 'native', None, KEYWORDS]),
+        ('trunk/foo.UPCASE2', ['UPCASE2', 'native', None, KEYWORDS]),
         ])
 
 
@@ -2890,13 +2875,12 @@ test_list = [
     bogus_branch_copy,
     nested_ttb_directories,
     auto_props_ignore_case,
-    auto_props,
     ctrl_char_in_filename,
     commit_dependencies,
     show_help_passes,
     multiple_tags,
-# 90:
     double_branch_delete,
+# 90:
     symbol_mismatches,
     overlook_symbol_mismatches,
     force_symbols,
@@ -2906,8 +2890,8 @@ test_list = [
     regexp_force_symbols,
     heuristic_symbol_default,
     branch_symbol_default,
-# 100:
     tag_symbol_default,
+# 100:
     symbol_transform,
     issue_99,
     issue_100,
@@ -2917,8 +2901,8 @@ test_list = [
     XFail(delete_cvsignore),
     repeated_deltatext,
     nasty_graphs,
-# 110:
     XFail(tagging_after_delete),
+# 110:
     crossed_branches,
     file_directory_conflict,
     attic_directory_conflict,
@@ -2928,8 +2912,8 @@ test_list = [
     leftover_revs,
     requires_internal_co,
     timestamp_chaos,
-# 120:
     symlinks,
+# 120:
     empty_trunk_path,
     preferred_parent_cycle,
     branch_from_empty_dir,

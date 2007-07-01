@@ -886,13 +886,7 @@ cvs2svn --symbol-transform='([0-9])-(.*):release-\1.\2' -s SVN RCS
       filenames.  (The <tt>[auto-props]</tt> section header must be
       present; other sections of the config file, including the
       <tt>enable-auto-props</tt> setting, are ignored.)  Filenames are
-      matched to the filename patterns case-sensitively unless the
-      <tt>--auto-props-ignore-case</tt> option is specified.</td>
-  </tr>
-
-  <tr>
-    <td align="right"><tt>--auto-props-ignore-case</tt></td>
-    <td>Ignore case when pattern-matching auto-props patterns.</td>
+      matched to the filename patterns case-insensitively.</td>
   </tr>
 
   <tr>

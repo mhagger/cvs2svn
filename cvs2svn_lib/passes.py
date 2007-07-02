@@ -1225,7 +1225,7 @@ class TopologicalSortPass(Pass):
     stats_keeper.set_stats_reflect_exclude(True)
     stats_keeper.archive()
 
-    Ctx()._cvs_item_to_changeset_id.close()
+    self.cvs_item_to_changeset_id.close()
     changeset_db.close()
     Ctx()._cvs_items_db.close()
     Ctx()._symbol_db.close()

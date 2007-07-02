@@ -44,8 +44,9 @@ class NoPredNodeInGraphException(Exception):
 class ChangesetGraph(object):
   """A graph of changesets and their dependencies."""
 
-  def __init__(self, changeset_db):
+  def __init__(self, changeset_db, cvs_item_to_changeset_id):
     self._changeset_db = changeset_db
+    self._cvs_item_to_changeset_id = cvs_item_to_changeset_id
     # A map { id : ChangesetGraphNode }
     self.nodes = {}
 

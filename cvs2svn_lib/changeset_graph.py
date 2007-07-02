@@ -22,6 +22,7 @@ from __future__ import generators
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.set_support import *
 from cvs2svn_lib.context import Ctx
+from cvs2svn_lib.log import Log
 from cvs2svn_lib.changeset import RevisionChangeset
 from cvs2svn_lib.changeset import OrderedChangeset
 from cvs2svn_lib.changeset import BranchChangeset
@@ -54,7 +55,7 @@ class ChangesetGraph(object):
     """Add CHANGESET to this graph.
 
     Determine and record any dependencies to changesets that are
-    already in the graph."""
+    already in the graph.  This method does not affect the databases."""
 
     node = changeset.create_graph_node(self._cvs_item_to_changeset_id)
 
@@ -79,6 +80,31 @@ class ChangesetGraph(object):
 
     self.nodes[node.id] = node
 
+  def add_new_changeset(self, changeset):
+    """Add the new CHANGESET to the graph and also to the databases."""
+
+    if Log().is_on(Log.DEBUG):
+      Log().debug('Adding changeset %r' % (changeset,))
+
+    self.add_changeset(changeset)
+    self._changeset_db.store(changeset)
+    for item_id in changeset.cvs_item_ids:
+      self._cvs_item_to_changeset_id[item_id] = changeset.id
+
+  def delete_changeset(self, changeset):
+    """Remove CHANGESET from the graph and also from the databases.
+
+    In fact, we don't remove CHANGESET from
+    self._cvs_item_to_changeset_id, because in practice the CVSItems
+    in CHANGESET are always added again as part of a new CHANGESET,
+    which will cause the old values to be overwritten."""
+
+    if Log().is_on(Log.DEBUG):
+      Log().debug('Removing changeset %r' % (changeset,))
+
+    del self[changeset.id]
+    del self._changeset_db[changeset.id]
+
   def __nonzero__(self):
     """Instances are considered True iff they contain any nodes."""
 
@@ -99,7 +125,8 @@ class ChangesetGraph(object):
     """Remove the node corresponding to ID.
 
     Also remove references to it from other nodes.  This method does
-    not change pred_ids or succ_ids of the node being deleted."""
+    not change pred_ids or succ_ids of the node being deleted, nor
+    does it affect the databases."""
 
     node = self[id]
 

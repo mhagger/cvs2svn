@@ -519,20 +519,10 @@ class BreakChangesetCyclesPass(Pass):
   """Abstract base class for classes that break up changeset cycles."""
 
   def _delete_changeset(self, changeset):
-    if Log().is_on(Log.DEBUG):
-      Log().debug('Removing changeset %r' % (changeset,))
-
-    del self.changeset_graph[changeset.id]
-    del self.changeset_db[changeset.id]
+    self.changeset_graph.delete_changeset(changeset)
 
   def _add_changeset(self, changeset):
-    if Log().is_on(Log.DEBUG):
-      Log().debug('Adding changeset %r' % (changeset,))
-
-    self.changeset_graph.add_changeset(changeset)
-    self.changeset_db.store(changeset)
-    for item_id in changeset.cvs_item_ids:
-      self.cvs_item_to_changeset_id[item_id] = changeset.id
+    self.changeset_graph.add_new_changeset(changeset)
 
 
 class BreakRevisionChangesetCyclesPass(BreakChangesetCyclesPass):

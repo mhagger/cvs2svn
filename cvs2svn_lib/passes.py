@@ -912,19 +912,18 @@ class BreakAllChangesetCyclesPass(BreakChangesetCyclesPass):
 
     # A map { cvs_branch_id : (max_pred_ordinal, min_succ_ordinal) }
     ordinal_limits = {}
-    cvs_item_to_changeset_id = Ctx()._cvs_item_to_changeset_id
     for cvs_branch in changeset.get_cvs_items():
       max_pred_ordinal = 0
       min_succ_ordinal = sys.maxint
 
       for pred_id in cvs_branch.get_pred_ids():
         pred_ordinal = self.ordinals.get(
-            cvs_item_to_changeset_id[pred_id], 0)
+            self.cvs_item_to_changeset_id[pred_id], 0)
         max_pred_ordinal = max(max_pred_ordinal, pred_ordinal)
 
       for succ_id in cvs_branch.get_succ_ids():
         succ_ordinal = self.ordinals.get(
-            cvs_item_to_changeset_id[succ_id], sys.maxint)
+            self.cvs_item_to_changeset_id[succ_id], sys.maxint)
         min_succ_ordinal = min(min_succ_ordinal, succ_ordinal)
 
       assert max_pred_ordinal < min_succ_ordinal

@@ -515,17 +515,7 @@ class ProcessedChangesetLogger:
       del self.processed_changeset_ids[:]
 
 
-class BreakChangesetCyclesPass(Pass):
-  """Abstract base class for classes that break up changeset cycles."""
-
-  def _delete_changeset(self, changeset):
-    self.changeset_graph.delete_changeset(changeset)
-
-  def _add_changeset(self, changeset):
-    self.changeset_graph.add_new_changeset(changeset)
-
-
-class BreakRevisionChangesetCyclesPass(BreakChangesetCyclesPass):
+class BreakRevisionChangesetCyclesPass(Pass):
   """Break up any dependency cycles involving only RevisionChangesets."""
 
   def register_artifacts(self):
@@ -587,10 +577,10 @@ class BreakRevisionChangesetCyclesPass(BreakChangesetCyclesPass):
 
     new_changesets = best_link.break_changeset(self.changeset_key_generator)
 
-    self._delete_changeset(best_link.changeset)
+    self.changeset_graph.delete_changeset(best_link.changeset)
 
     for changeset in new_changesets:
-      self._add_changeset(changeset)
+      self.changeset_graph.add_new_changeset(changeset)
 
   def run(self, stats_keeper):
     Log().quiet("Breaking revision changeset dependency cycles...")
@@ -738,7 +728,7 @@ class RevisionTopologicalSortPass(Pass):
     Log().quiet("Done")
 
 
-class BreakSymbolChangesetCyclesPass(BreakChangesetCyclesPass):
+class BreakSymbolChangesetCyclesPass(Pass):
   """Break up any dependency cycles involving only SymbolChangesets."""
 
   def register_artifacts(self):
@@ -799,10 +789,10 @@ class BreakSymbolChangesetCyclesPass(BreakChangesetCyclesPass):
 
     new_changesets = best_link.break_changeset(self.changeset_key_generator)
 
-    self._delete_changeset(best_link.changeset)
+    self.changeset_graph.delete_changeset(best_link.changeset)
 
     for changeset in new_changesets:
-      self._add_changeset(changeset)
+      self.changeset_graph.add_new_changeset(changeset)
 
   def run(self, stats_keeper):
     Log().quiet("Breaking symbol changeset dependency cycles...")
@@ -862,7 +852,7 @@ class BreakSymbolChangesetCyclesPass(BreakChangesetCyclesPass):
     Log().quiet("Done")
 
 
-class BreakAllChangesetCyclesPass(BreakChangesetCyclesPass):
+class BreakAllChangesetCyclesPass(Pass):
   """Break up any dependency cycles that are closed by SymbolChangesets."""
 
   def register_artifacts(self):
@@ -895,7 +885,7 @@ class BreakAllChangesetCyclesPass(BreakChangesetCyclesPass):
 
     Log().debug('Breaking retrograde changeset %x' % (changeset.id,))
 
-    self._delete_changeset(changeset)
+    self.changeset_graph.delete_changeset(changeset)
 
     # A map { cvs_branch_id : (max_pred_ordinal, min_succ_ordinal) }
     ordinal_limits = {}
@@ -937,8 +927,8 @@ class BreakAllChangesetCyclesPass(BreakChangesetCyclesPass):
     late_changeset = changeset.create_split_changeset(
         self.changeset_key_generator.gen_id(), late_item_ids)
 
-    self._add_changeset(early_changeset)
-    self._add_changeset(late_changeset)
+    self.changeset_graph.add_new_changeset(early_changeset)
+    self.changeset_graph.add_new_changeset(late_changeset)
 
     early_split = self._split_if_retrograde(early_changeset.id)
 
@@ -992,10 +982,10 @@ class BreakAllChangesetCyclesPass(BreakChangesetCyclesPass):
 
     new_changesets = best_link.break_changeset(self.changeset_key_generator)
 
-    self._delete_changeset(best_link.changeset)
+    self.changeset_graph.delete_changeset(best_link.changeset)
 
     for changeset in new_changesets:
-      self._add_changeset(changeset)
+      self.changeset_graph.add_new_changeset(changeset)
 
   def break_cycle(self, cycle):
     """Break up one or more SymbolChangesets in CYCLE to help break the cycle.

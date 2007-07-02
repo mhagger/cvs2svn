@@ -56,7 +56,7 @@ class ChangesetGraph(object):
     Determine and record any dependencies to changesets that are
     already in the graph."""
 
-    node = changeset.create_graph_node()
+    node = changeset.create_graph_node(self._cvs_item_to_changeset_id)
 
     # Now tie the node into our graph.  If a changeset referenced by
     # node is already in our graph, then add the backwards connection

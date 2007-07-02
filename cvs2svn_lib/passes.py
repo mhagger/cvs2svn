@@ -621,7 +621,6 @@ class BreakRevisionChangesetCyclesPass(BreakChangesetCyclesPass):
         artifact_manager.get_temp_file(
             config.CVS_ITEM_TO_CHANGESET_REVBROKEN),
         DB_OPEN_WRITE)
-    Ctx()._cvs_item_to_changeset_id = self.cvs_item_to_changeset_id
 
     self.changeset_db = ChangesetDatabase(
         artifact_manager.get_temp_file(config.CHANGESETS_REVBROKEN_STORE),
@@ -735,7 +734,6 @@ class RevisionTopologicalSortPass(Pass):
         artifact_manager.get_temp_file(
             config.CVS_ITEM_TO_CHANGESET_REVBROKEN),
         DB_OPEN_READ)
-    Ctx()._cvs_item_to_changeset_id = self.cvs_item_to_changeset_id
 
     for changeset in self.get_changesets():
       changesets_revordered_db.store(changeset)
@@ -835,7 +833,6 @@ class BreakSymbolChangesetCyclesPass(BreakChangesetCyclesPass):
         artifact_manager.get_temp_file(
             config.CVS_ITEM_TO_CHANGESET_SYMBROKEN),
         DB_OPEN_WRITE)
-    Ctx()._cvs_item_to_changeset_id = self.cvs_item_to_changeset_id
 
     self.changeset_db = ChangesetDatabase(
         artifact_manager.get_temp_file(config.CHANGESETS_SYMBROKEN_STORE),
@@ -1052,7 +1049,6 @@ class BreakAllChangesetCyclesPass(BreakChangesetCyclesPass):
         artifact_manager.get_temp_file(
             config.CVS_ITEM_TO_CHANGESET_ALLBROKEN),
         DB_OPEN_WRITE)
-    Ctx()._cvs_item_to_changeset_id = self.cvs_item_to_changeset_id
 
     self.changeset_db = ChangesetDatabase(
         artifact_manager.get_temp_file(config.CHANGESETS_ALLBROKEN_STORE),
@@ -1208,7 +1204,6 @@ class TopologicalSortPass(Pass):
         artifact_manager.get_temp_file(
             config.CVS_ITEM_TO_CHANGESET_ALLBROKEN),
         DB_OPEN_READ)
-    Ctx()._cvs_item_to_changeset_id = self.cvs_item_to_changeset_id
 
     sorted_changesets = open(
         artifact_manager.get_temp_file(config.CHANGESETS_SORTED_DATAFILE),

@@ -40,7 +40,7 @@ class Changeset(object):
 
     return set(Ctx()._cvs_items_db.get_many(self.cvs_item_ids))
 
-  def create_graph_node(self):
+  def create_graph_node(self, cvs_item_to_changeset_id):
     """Return a ChangesetGraphNode for this Changeset."""
 
     raise NotImplementedError()
@@ -77,7 +77,7 @@ class RevisionChangeset(Changeset):
 
   _sort_order = 3
 
-  def create_graph_node(self):
+  def create_graph_node(self, cvs_item_to_changeset_id):
     time_range = TimeRange()
     pred_ids = set()
     succ_ids = set()
@@ -86,10 +86,10 @@ class RevisionChangeset(Changeset):
       time_range.add(cvs_item.timestamp)
 
       for pred_id in cvs_item.get_pred_ids():
-        pred_ids.add(Ctx()._cvs_item_to_changeset_id[pred_id])
+        pred_ids.add(cvs_item_to_changeset_id[pred_id])
 
       for succ_id in cvs_item.get_succ_ids():
-        succ_ids.add(Ctx()._cvs_item_to_changeset_id[succ_id])
+        succ_ids.add(cvs_item_to_changeset_id[succ_id])
 
     return ChangesetGraphNode(self, time_range, pred_ids, succ_ids)
 
@@ -129,7 +129,7 @@ class OrderedChangeset(Changeset):
     # is the last OrderedChangeset:
     self.next_id = next_id
 
-  def create_graph_node(self):
+  def create_graph_node(self, cvs_item_to_changeset_id):
     time_range = TimeRange()
 
     pred_ids = set()
@@ -145,10 +145,10 @@ class OrderedChangeset(Changeset):
       time_range.add(cvs_item.timestamp)
 
       for pred_id in cvs_item.get_symbol_pred_ids():
-        pred_ids.add(Ctx()._cvs_item_to_changeset_id[pred_id])
+        pred_ids.add(cvs_item_to_changeset_id[pred_id])
 
       for succ_id in cvs_item.get_symbol_succ_ids():
-        succ_ids.add(Ctx()._cvs_item_to_changeset_id[succ_id])
+        succ_ids.add(cvs_item_to_changeset_id[succ_id])
 
     return ChangesetGraphNode(self, time_range, pred_ids, succ_ids)
 
@@ -176,16 +176,16 @@ class SymbolChangeset(Changeset):
     Changeset.__init__(self, id, cvs_item_ids)
     self.symbol = symbol
 
-  def create_graph_node(self):
+  def create_graph_node(self, cvs_item_to_changeset_id):
     pred_ids = set()
     succ_ids = set()
 
     for cvs_item in self.get_cvs_items():
       for pred_id in cvs_item.get_pred_ids():
-        pred_ids.add(Ctx()._cvs_item_to_changeset_id[pred_id])
+        pred_ids.add(cvs_item_to_changeset_id[pred_id])
 
       for succ_id in cvs_item.get_succ_ids():
-        succ_ids.add(Ctx()._cvs_item_to_changeset_id[succ_id])
+        succ_ids.add(cvs_item_to_changeset_id[succ_id])
 
     return ChangesetGraphNode(self, TimeRange(), pred_ids, succ_ids)
 

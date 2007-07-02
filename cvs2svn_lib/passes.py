@@ -677,10 +677,10 @@ class RevisionTopologicalSortPass(Pass):
     self._register_temp_file_needed(config.CVS_ITEM_TO_CHANGESET_REVBROKEN)
 
   def get_source_changesets(self, changeset_db):
-    changeset_ids = self.changeset_db.keys()
+    changeset_ids = changeset_db.keys()
 
     for changeset_id in changeset_ids:
-      yield self.changeset_db[changeset_id]
+      yield changeset_db[changeset_id]
 
   def get_changesets(self):
     changeset_graph = ChangesetGraph(

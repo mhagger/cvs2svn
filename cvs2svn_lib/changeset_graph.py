@@ -80,6 +80,11 @@ class ChangesetGraph(object):
 
     self.nodes[node.id] = node
 
+  def store_changeset(self, changeset):
+    for cvs_item_id in changeset.cvs_item_ids:
+      self._cvs_item_to_changeset_id[cvs_item_id] = changeset.id
+    self._changeset_db.store(changeset)
+
   def add_new_changeset(self, changeset):
     """Add the new CHANGESET to the graph and also to the databases."""
 
@@ -87,9 +92,7 @@ class ChangesetGraph(object):
       Log().debug('Adding changeset %r' % (changeset,))
 
     self.add_changeset(changeset)
-    self._changeset_db.store(changeset)
-    for item_id in changeset.cvs_item_ids:
-      self._cvs_item_to_changeset_id[item_id] = changeset.id
+    self.store_changeset(changeset)
 
   def delete_changeset(self, changeset):
     """Remove CHANGESET from the graph and also from the databases.

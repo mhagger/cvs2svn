@@ -51,6 +51,12 @@ class ChangesetGraph(object):
     # A map { id : ChangesetGraphNode }
     self.nodes = {}
 
+  def close(self):
+    self._cvs_item_to_changeset_id.close()
+    self._cvs_item_to_changeset_id = None
+    self._changeset_db.close()
+    self._changeset_db = None
+
   def add_changeset(self, changeset):
     """Add CHANGESET to this graph.
 

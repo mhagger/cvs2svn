@@ -470,15 +470,16 @@ class InitializeChangesetsPass(Pass):
         artifact_manager.get_temp_file(config.CVS_ITEMS_FILTERED_INDEX_TABLE),
         DB_OPEN_READ)
 
-    cvs_item_to_changeset_id = CVSItemToChangesetTable(
-        artifact_manager.get_temp_file(config.CVS_ITEM_TO_CHANGESET),
-        DB_OPEN_NEW)
-    changeset_db = ChangesetDatabase(
-        artifact_manager.get_temp_file(config.CHANGESETS_STORE),
-        artifact_manager.get_temp_file(config.CHANGESETS_INDEX),
-        DB_OPEN_NEW)
     changeset_graph = ChangesetGraph(
-        changeset_db, cvs_item_to_changeset_id
+        ChangesetDatabase(
+            artifact_manager.get_temp_file(config.CHANGESETS_STORE),
+            artifact_manager.get_temp_file(config.CHANGESETS_INDEX),
+            DB_OPEN_NEW,
+            ),
+        CVSItemToChangesetTable(
+            artifact_manager.get_temp_file(config.CVS_ITEM_TO_CHANGESET),
+            DB_OPEN_NEW,
+            ),
         )
 
     self.changeset_key_generator = KeyGenerator(1)
@@ -488,8 +489,7 @@ class InitializeChangesetsPass(Pass):
         Log().debug(repr(changeset))
       changeset_graph.store_changeset(changeset)
 
-    changeset_db.close()
-    cvs_item_to_changeset_id.close()
+    changeset_graph.close()
     Ctx()._cvs_items_db.close()
     Ctx()._symbol_db.close()
     Ctx()._cvs_file_db.close()
@@ -629,9 +629,8 @@ class BreakRevisionChangesetCyclesPass(Pass):
     self.processed_changeset_logger.flush()
     del self.processed_changeset_logger
 
+    self.changeset_graph.close()
     self.changeset_graph = None
-    changeset_db.close()
-    cvs_item_to_changeset_id.close()
     Ctx()._cvs_items_db.close()
     Ctx()._symbol_db.close()
     Ctx()._cvs_file_db.close()
@@ -665,15 +664,17 @@ class RevisionTopologicalSortPass(Pass):
     changeset_db = ChangesetDatabase(
         artifact_manager.get_temp_file(config.CHANGESETS_REVBROKEN_STORE),
         artifact_manager.get_temp_file(config.CHANGESETS_REVBROKEN_INDEX),
-        DB_OPEN_READ)
-
-    cvs_item_to_changeset_id = CVSItemToChangesetTable(
-        artifact_manager.get_temp_file(
-            config.CVS_ITEM_TO_CHANGESET_REVBROKEN),
-        DB_OPEN_READ)
+        DB_OPEN_READ,
+        )
 
     changeset_graph = ChangesetGraph(
-        changeset_db, cvs_item_to_changeset_id
+        changeset_db,
+        CVSItemToChangesetTable(
+            artifact_manager.get_temp_file(
+                config.CVS_ITEM_TO_CHANGESET_REVBROKEN
+                ),
+            DB_OPEN_READ,
+            )
         )
 
     for changeset in self.get_source_changesets(changeset_db):
@@ -699,8 +700,7 @@ class RevisionTopologicalSortPass(Pass):
           changeset.id, changeset.cvs_item_ids, i - 1,
           changeset_ids[i - 1], changeset_ids[i + 1])
 
-    cvs_item_to_changeset_id.close()
-    changeset_db.close()
+    changeset_graph.close()
 
   def run(self, stats_keeper):
     Log().quiet("Generating CVSRevisions in commit order...")
@@ -842,9 +842,8 @@ class BreakSymbolChangesetCyclesPass(Pass):
     self.processed_changeset_logger.flush()
     del self.processed_changeset_logger
 
+    self.changeset_graph.close()
     self.changeset_graph = None
-    changeset_db.close()
-    cvs_item_to_changeset_id.close()
     Ctx()._cvs_items_db.close()
     Ctx()._symbol_db.close()
     Ctx()._cvs_file_db.close()
@@ -1117,8 +1116,10 @@ class BreakAllChangesetCyclesPass(Pass):
         self.break_cycle(self.changeset_graph.find_cycle(id))
 
     del self.processed_changeset_logger
-    self.cvs_item_to_changeset_id.close()
-    self.changeset_db.close()
+    self.changeset_graph.close()
+    self.changeset_graph = None
+    self.cvs_item_to_changeset_id = None
+    self.changeset_db = None
 
     Log().quiet("Done")
 
@@ -1148,14 +1149,15 @@ class TopologicalSortPass(Pass):
         artifact_manager.get_temp_file(config.CHANGESETS_ALLBROKEN_INDEX),
         DB_OPEN_READ)
 
-    cvs_item_to_changeset_id = CVSItemToChangesetTable(
-        artifact_manager.get_temp_file(
-            config.CVS_ITEM_TO_CHANGESET_ALLBROKEN
+    changeset_graph = ChangesetGraph(
+        changeset_db,
+        CVSItemToChangesetTable(
+            artifact_manager.get_temp_file(
+                config.CVS_ITEM_TO_CHANGESET_ALLBROKEN
+                ),
+            DB_OPEN_READ,
             ),
-        DB_OPEN_READ,
         )
-
-    changeset_graph = ChangesetGraph(changeset_db, cvs_item_to_changeset_id)
     symbol_changeset_ids = set()
 
     for changeset in self.get_source_changesets(changeset_db):
@@ -1175,8 +1177,7 @@ class TopologicalSortPass(Pass):
           )
       yield (changeset, timestamp)
 
-    cvs_item_to_changeset_id.close()
-    changeset_db.close()
+    changeset_graph.close()
 
   def run(self, stats_keeper):
     Log().quiet("Generating CVSRevisions in commit order...")

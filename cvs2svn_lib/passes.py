@@ -477,7 +477,7 @@ class InitializeChangesetsPass(Pass):
         artifact_manager.get_temp_file(config.CHANGESETS_STORE),
         artifact_manager.get_temp_file(config.CHANGESETS_INDEX),
         DB_OPEN_NEW)
-    self.changeset_graph = ChangesetGraph(
+    changeset_graph = ChangesetGraph(
         changeset_db, cvs_item_to_changeset_id
         )
 
@@ -486,7 +486,7 @@ class InitializeChangesetsPass(Pass):
     for changeset in self.get_changesets():
       if Log().is_on(Log.DEBUG):
         Log().debug(repr(changeset))
-      self.changeset_graph.store_changeset(changeset)
+      changeset_graph.store_changeset(changeset)
 
     changeset_db.close()
     cvs_item_to_changeset_id.close()

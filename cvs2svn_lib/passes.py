@@ -662,11 +662,21 @@ class RevisionTopologicalSortPass(Pass):
       yield changeset_db[changeset_id]
 
   def get_changesets(self):
+    changeset_db = ChangesetDatabase(
+        artifact_manager.get_temp_file(config.CHANGESETS_REVBROKEN_STORE),
+        artifact_manager.get_temp_file(config.CHANGESETS_REVBROKEN_INDEX),
+        DB_OPEN_READ)
+
+    cvs_item_to_changeset_id = CVSItemToChangesetTable(
+        artifact_manager.get_temp_file(
+            config.CVS_ITEM_TO_CHANGESET_REVBROKEN),
+        DB_OPEN_READ)
+
     changeset_graph = ChangesetGraph(
-        self.changeset_db, self.cvs_item_to_changeset_id
+        changeset_db, cvs_item_to_changeset_id
         )
 
-    for changeset in self.get_source_changesets(self.changeset_db):
+    for changeset in self.get_source_changesets(changeset_db):
       if isinstance(changeset, RevisionChangeset):
         changeset_graph.add_changeset(changeset)
       else:
@@ -684,10 +694,13 @@ class RevisionTopologicalSortPass(Pass):
     changeset_ids.append(None)
 
     for i in range(1, len(changeset_ids) - 1):
-      changeset = self.changeset_db[changeset_ids[i]]
+      changeset = changeset_db[changeset_ids[i]]
       yield OrderedChangeset(
           changeset.id, changeset.cvs_item_ids, i - 1,
           changeset_ids[i - 1], changeset_ids[i + 1])
+
+    cvs_item_to_changeset_id.close()
+    changeset_db.close()
 
   def run(self, stats_keeper):
     Log().quiet("Generating CVSRevisions in commit order...")
@@ -699,27 +712,15 @@ class RevisionTopologicalSortPass(Pass):
         artifact_manager.get_temp_file(config.CVS_ITEMS_FILTERED_INDEX_TABLE),
         DB_OPEN_READ)
 
-    self.changeset_db = ChangesetDatabase(
-        artifact_manager.get_temp_file(config.CHANGESETS_REVBROKEN_STORE),
-        artifact_manager.get_temp_file(config.CHANGESETS_REVBROKEN_INDEX),
-        DB_OPEN_READ)
-
     changesets_revordered_db = ChangesetDatabase(
         artifact_manager.get_temp_file(config.CHANGESETS_REVSORTED_STORE),
         artifact_manager.get_temp_file(config.CHANGESETS_REVSORTED_INDEX),
         DB_OPEN_NEW)
 
-    self.cvs_item_to_changeset_id = CVSItemToChangesetTable(
-        artifact_manager.get_temp_file(
-            config.CVS_ITEM_TO_CHANGESET_REVBROKEN),
-        DB_OPEN_READ)
-
     for changeset in self.get_changesets():
       changesets_revordered_db.store(changeset)
 
-    self.cvs_item_to_changeset_id.close()
     changesets_revordered_db.close()
-    self.changeset_db.close()
     Ctx()._cvs_items_db.close()
     Ctx()._symbol_db.close()
     Ctx()._cvs_file_db.close()

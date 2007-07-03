@@ -1140,12 +1140,22 @@ class TopologicalSortPass(Pass):
     for changeset_id in changeset_db.keys():
       yield changeset_db[changeset_id]
 
-  def get_changesets(self, changeset_db):
+  def get_changesets(self):
     """Generate (changeset, timestamp) pairs in commit order."""
 
-    changeset_graph = ChangesetGraph(
-        changeset_db, self.cvs_item_to_changeset_id
+    changeset_db = ChangesetDatabase(
+        artifact_manager.get_temp_file(config.CHANGESETS_ALLBROKEN_STORE),
+        artifact_manager.get_temp_file(config.CHANGESETS_ALLBROKEN_INDEX),
+        DB_OPEN_READ)
+
+    cvs_item_to_changeset_id = CVSItemToChangesetTable(
+        artifact_manager.get_temp_file(
+            config.CVS_ITEM_TO_CHANGESET_ALLBROKEN
+            ),
+        DB_OPEN_READ,
         )
+
+    changeset_graph = ChangesetGraph(changeset_db, cvs_item_to_changeset_id)
     symbol_changeset_ids = set()
 
     for changeset in self.get_source_changesets(changeset_db):
@@ -1165,6 +1175,9 @@ class TopologicalSortPass(Pass):
           )
       yield (changeset, timestamp)
 
+    cvs_item_to_changeset_id.close()
+    changeset_db.close()
+
   def run(self, stats_keeper):
     Log().quiet("Generating CVSRevisions in commit order...")
 
@@ -1175,21 +1188,11 @@ class TopologicalSortPass(Pass):
         artifact_manager.get_temp_file(config.CVS_ITEMS_FILTERED_INDEX_TABLE),
         DB_OPEN_READ)
 
-    changeset_db = ChangesetDatabase(
-        artifact_manager.get_temp_file(config.CHANGESETS_ALLBROKEN_STORE),
-        artifact_manager.get_temp_file(config.CHANGESETS_ALLBROKEN_INDEX),
-        DB_OPEN_READ)
-
-    self.cvs_item_to_changeset_id = CVSItemToChangesetTable(
-        artifact_manager.get_temp_file(
-            config.CVS_ITEM_TO_CHANGESET_ALLBROKEN),
-        DB_OPEN_READ)
-
     sorted_changesets = open(
         artifact_manager.get_temp_file(config.CHANGESETS_SORTED_DATAFILE),
         'w')
 
-    for (changeset, timestamp) in self.get_changesets(changeset_db):
+    for (changeset, timestamp) in self.get_changesets():
       sorted_changesets.write('%x %08x\n' % (changeset.id, timestamp,))
 
       for cvs_item in changeset.get_cvs_items():
@@ -1200,8 +1203,6 @@ class TopologicalSortPass(Pass):
     stats_keeper.set_stats_reflect_exclude(True)
     stats_keeper.archive()
 
-    self.cvs_item_to_changeset_id.close()
-    changeset_db.close()
     Ctx()._cvs_items_db.close()
     Ctx()._symbol_db.close()
     Ctx()._cvs_file_db.close()

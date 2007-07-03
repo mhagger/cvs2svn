@@ -809,23 +809,23 @@ class BreakSymbolChangesetCyclesPass(Pass):
             config.CVS_ITEM_TO_CHANGESET_REVBROKEN),
         artifact_manager.get_temp_file(
             config.CVS_ITEM_TO_CHANGESET_SYMBROKEN))
-    self.cvs_item_to_changeset_id = CVSItemToChangesetTable(
+    cvs_item_to_changeset_id = CVSItemToChangesetTable(
         artifact_manager.get_temp_file(
             config.CVS_ITEM_TO_CHANGESET_SYMBROKEN),
         DB_OPEN_WRITE)
 
-    self.changeset_db = ChangesetDatabase(
+    changeset_db = ChangesetDatabase(
         artifact_manager.get_temp_file(config.CHANGESETS_SYMBROKEN_STORE),
         artifact_manager.get_temp_file(config.CHANGESETS_SYMBROKEN_INDEX),
         DB_OPEN_NEW)
 
     self.changeset_graph = ChangesetGraph(
-        self.changeset_db, self.cvs_item_to_changeset_id
+        changeset_db, cvs_item_to_changeset_id
         )
 
     max_changeset_id = 0
     for changeset in self.get_source_changesets():
-      self.changeset_db.store(changeset)
+      changeset_db.store(changeset)
       if isinstance(changeset, SymbolChangeset):
         self.changeset_graph.add_changeset(changeset)
       max_changeset_id = max(max_changeset_id, changeset.id)
@@ -843,8 +843,8 @@ class BreakSymbolChangesetCyclesPass(Pass):
     del self.processed_changeset_logger
 
     self.changeset_graph = None
-    self.changeset_db.close()
-    self.cvs_item_to_changeset_id.close()
+    changeset_db.close()
+    cvs_item_to_changeset_id.close()
     Ctx()._cvs_items_db.close()
     Ctx()._symbol_db.close()
     Ctx()._cvs_file_db.close()

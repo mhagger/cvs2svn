@@ -460,11 +460,6 @@ class InitializeChangesetsPass(Pass):
     for changeset in self.get_symbol_changesets():
       yield changeset
 
-  def store_changeset(self, changeset):
-    for cvs_item_id in changeset.cvs_item_ids:
-      self.cvs_item_to_changeset_id[cvs_item_id] = changeset.id
-    self.changeset_db.store(changeset)
-
   def run(self, stats_keeper):
     Log().quiet("Creating preliminary commit sets...")
 
@@ -475,22 +470,26 @@ class InitializeChangesetsPass(Pass):
         artifact_manager.get_temp_file(config.CVS_ITEMS_FILTERED_INDEX_TABLE),
         DB_OPEN_READ)
 
-    self.cvs_item_to_changeset_id = CVSItemToChangesetTable(
+    cvs_item_to_changeset_id = CVSItemToChangesetTable(
         artifact_manager.get_temp_file(config.CVS_ITEM_TO_CHANGESET),
         DB_OPEN_NEW)
-    self.changeset_db = ChangesetDatabase(
+    changeset_db = ChangesetDatabase(
         artifact_manager.get_temp_file(config.CHANGESETS_STORE),
         artifact_manager.get_temp_file(config.CHANGESETS_INDEX),
         DB_OPEN_NEW)
+    self.changeset_graph = ChangesetGraph(
+        changeset_db, cvs_item_to_changeset_id
+        )
+
     self.changeset_key_generator = KeyGenerator(1)
 
     for changeset in self.get_changesets():
       if Log().is_on(Log.DEBUG):
         Log().debug(repr(changeset))
-      self.store_changeset(changeset)
+      self.changeset_graph.store_changeset(changeset)
 
-    self.changeset_db.close()
-    self.cvs_item_to_changeset_id.close()
+    changeset_db.close()
+    cvs_item_to_changeset_id.close()
     Ctx()._cvs_items_db.close()
     Ctx()._symbol_db.close()
     Ctx()._cvs_file_db.close()

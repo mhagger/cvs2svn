@@ -26,13 +26,17 @@ CVSItem
 |
 +--CVSRevision
 |  |
-|  +--CVSRevisionModification
+|  +--CVSRevisionModification (* -> 'Exp')
 |  |  |
-|  |  +--CVSRevisionAdd
+|  |  +--CVSRevisionAdd ('dead' -> 'Exp')
 |  |  |
-|  |  +--CVSRevisionChange
+|  |  +--CVSRevisionChange ('Exp' -> 'Exp')
 |  |
-|  +--CVSRevisionDelete
+|  +--CVSRevisionAbsent (* -> 'dead')
+|     |
+|     +--CVSRevisionDelete ('Exp' -> 'dead')
+|     |
+|     +--CVSRevisionNoop ('dead' -> 'dead')
 |
 +--CVSSymbol
    |
@@ -371,18 +375,26 @@ class CVSRevisionChange(CVSRevisionModification):
   pass
 
 
-class CVSRevisionDelete(CVSRevision):
+class CVSRevisionAbsent(CVSRevision):
+  """A CVSRevision for which the file is nonexistent on this LOD."""
+
+  pass
+
+
+class CVSRevisionDelete(CVSRevisionAbsent):
   """A CVSRevision that deletes a file that existed on this LOD."""
 
   pass
 
 
-class CVSRevisionNoop(CVSRevision):
+class CVSRevisionNoop(CVSRevisionAbsent):
   """A CVSRevision that doesn't do anything.
 
-  These revisions can't necessarily be thrown away because (1) they
-  impose ordering constraints on other items; (2) they might have a
-  nontrivial log message that we don't want to throw away."""
+  The revision was 'dead' and the predecessor either didn't exist or
+  was also 'dead'.  These revisions can't necessarily be thrown away
+  because (1) they impose ordering constraints on other items; (2)
+  they might have a nontrivial log message that we don't want to throw
+  away."""
 
   pass
 

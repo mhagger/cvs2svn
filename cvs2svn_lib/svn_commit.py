@@ -25,7 +25,6 @@ from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.symbol import Branch
 from cvs2svn_lib.symbol import Tag
-from cvs2svn_lib.cvs_item import CVSRevisionModification
 from cvs2svn_lib.cvs_item import CVSRevisionAdd
 from cvs2svn_lib.cvs_item import CVSRevisionChange
 from cvs2svn_lib.cvs_item import CVSRevisionDelete

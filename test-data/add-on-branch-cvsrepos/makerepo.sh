@@ -1,10 +1,9 @@
 #! /bin/sh
 
-# This is the script used to create the readd-on-branch CVS
-# repository.  (The repository is checked into svn; this script is
-# only here for its documentation value.)
-#
-# The script should be started from the main cvs2svn directory.
+# This is the script used to create the add-on-branch CVS repository.
+# (The repository is checked into svn; this script is only here for
+# its documentation value.)  The script should be started from the
+# main cvs2svn directory.
 
 # The output of this script depends on the CVS version.  Newer CVS
 # versions add dead revisions (b.txt:1.1.2.1 and c.txt:1.2.2.1) on the

@@ -19,9 +19,11 @@ Version x.x.x (not yet released)
  * Fix issue #105: Conflict between directory and Attic file causes crash.
  * Fix issue #106: SVNRepositoryMirrorParentMissingError.
  * Fix missing command-line handling of --fallback-encoding option.
+ * Fix issue #85: Disable symbol sanity checks with in --trunk-only mode.
 
  Improvements and output changes:
  * Analyze CVS revision dependency graph, giving a more robust conversion.
+ * Improve choice of symbol parents when CVS history is ambiguous.
  * In the case of clock skew to the past, resync forwards, not backwards.
  * Treat timestamps that lie in the future as bogus, and adjust backwards.
  * Gracefully handle tags that refer to nonexistent revisions.
@@ -33,11 +35,13 @@ Version x.x.x (not yet released)
  * When file is imported, omit the empty revision 1.1.
  * If a non-trunk default branch is excluded, graft its contents to trunk.
  * Require --symbol-transform pattern to match entire symbol name.
- * Treat files as binary by default instead of as text.
+ * Treat files as binary by default instead of as text, because it is safer.
  * Treat auto-props case-insensitively; deprecate --auto-props-ignore-case.
 
  Miscellaneous:
  * Add a simple (nonportable) script to log cvs2svn memory usage.
+ * Allow contrib/shrink_test_case.py script to try deleting tags and branches.
+ * Add --skip-initial-test option to contrib/shrink_test_case.py script.
 
 
 Version 1.5.1 (28 January 2007)

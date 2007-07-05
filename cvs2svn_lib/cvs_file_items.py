@@ -19,6 +19,8 @@
 
 from __future__ import generators
 
+import re
+
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.set_support import *
 from cvs2svn_lib.common import InternalError
@@ -31,6 +33,7 @@ from cvs2svn_lib.symbol import Tag
 from cvs2svn_lib.symbol import ExcludedSymbol
 from cvs2svn_lib.cvs_item import CVSRevision
 from cvs2svn_lib.cvs_item import CVSRevisionModification
+from cvs2svn_lib.cvs_item import CVSRevisionAbsent
 from cvs2svn_lib.cvs_item import CVSRevisionNoop
 from cvs2svn_lib.cvs_item import CVSSymbol
 from cvs2svn_lib.cvs_item import CVSBranch
@@ -360,6 +363,60 @@ class CVSFileItems(object):
         # This can only happen once per file, and we might have just
         # changed self.root_ids, so break out of the loop:
         break
+
+  def _initial_branch_delete_unneeded(self, lod_items, metadata_db):
+    """Return True iff the initial revision in LOD_ITEMS can be deleted."""
+
+    if lod_items.cvs_branch is not None \
+           and lod_items.cvs_branch.source_id is not None \
+           and len(lod_items.cvs_revisions) >= 2:
+      cvs_revision = lod_items.cvs_revisions[0]
+      cvs_rev_source = self[lod_items.cvs_branch.source_id]
+      if isinstance(cvs_revision, CVSRevisionAbsent) \
+             and not cvs_revision.tag_ids \
+             and not cvs_revision.branch_ids \
+             and abs(cvs_revision.timestamp - cvs_rev_source.timestamp) <= 2:
+        # FIXME: This message will not match if the RCS file was renamed
+        # manually after it was created.
+        author, log_msg = metadata_db[cvs_revision.metadata_id]
+        return bool(re.match(
+            r'file %s was added on branch .* on '
+            r'\d{4}\-\d{2}\-\d{2} \d{2}\:\d{2}\:\d{2}( [\+\-]\d{4})?'
+            '\n' % (re.escape(self.cvs_file.basename),),
+            log_msg,
+            ))
+    return False
+
+  def remove_initial_branch_deletes(self, metadata_db):
+    """If the first revision on a branch is an unnecessary delete, remove it.
+
+    If a file is added on a branch (whether or not it already existed
+    on trunk), then new versions of CVS add a first branch revision in
+    the 'dead' state (to indicate that the file did not exist on the
+    branch when the branch was created) followed by the second branch
+    revision, which is an add.  When we encounter this situation, we
+    sever the branch from trunk and delete the first branch
+    revision."""
+
+    for lod_items in self.iter_lods():
+      if self._initial_branch_delete_unneeded(lod_items, metadata_db):
+        cvs_revision = lod_items.cvs_revisions[0]
+        Log().debug(
+            'Removing unnecessary initial branch delete %s' % (cvs_revision,)
+            )
+        cvs_branch = lod_items.cvs_branch
+        cvs_rev_source = self[cvs_branch.source_id]
+        cvs_rev_next = lod_items.cvs_revisions[1]
+
+        # Delete cvs_revision:
+        del self[cvs_revision.id]
+        cvs_rev_next.prev_id = None
+        self.root_ids.add(cvs_rev_next.id)
+        cvs_rev_source.branch_commit_ids.remove(cvs_revision.id)
+
+        # Delete the CVSBranch on which it is located:
+        del self[cvs_branch.id]
+        cvs_rev_source.branch_ids.remove(cvs_branch.id)
 
   def _exclude_tag(self, cvs_tag):
     """Exclude the specified CVS_TAG."""

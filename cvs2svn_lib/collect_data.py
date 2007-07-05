@@ -933,6 +933,11 @@ class _ProjectDataCollector:
     # Remove CVSRevisionDeletes that are not needed:
     cvs_file_items.remove_unneeded_deletes(self.collect_data.metadata_db)
 
+    # Remove initial branch deletes that are not needed:
+    cvs_file_items.remove_initial_branch_deletes(
+        self.collect_data.metadata_db
+        )
+
     # If this is a --trunk-only conversion, discard all branches and
     # tags, then draft any non-trunk default branch revisions to
     # trunk:

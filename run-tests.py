@@ -2332,17 +2332,12 @@ def double_branch_delete():
   # modification, the file will end up live on the branch instead of
   # dead!  Make sure it happens at the right time.
 
-  conv.logs[6].check(sym_log_msg('Branch_4_0'), (
-    ('/%(branches)s/Branch_4_0/IMarshalledValue.java '
-     '(from /%(trunk)s/IMarshalledValue.java:5)', 'A'),
-    ));
-
-  conv.logs[7].check('file IMarshalledValue.java was added on branch', (
-    ('/%(branches)s/Branch_4_0/IMarshalledValue.java', 'D'),
-    ));
-
-  conv.logs[8].check('JBAS-2436 - Adding LGPL Header2', (
+  conv.logs[6].check('JBAS-2436 - Adding LGPL Header2', (
     ('/%(branches)s/Branch_4_0/IMarshalledValue.java', 'A'),
+    ));
+
+  conv.logs[7].check('JBAS-3025 - Removing dependency', (
+    ('/%(branches)s/Branch_4_0/IMarshalledValue.java', 'D'),
     ));
 
 
@@ -2775,6 +2770,27 @@ def add_on_branch():
   "add a file on a branch using newer CVS"
 
   conv = ensure_conversion('add-on-branch')
+  conv.logs[6].check('Adding b.txt:1.1', (
+    ('/%(trunk)s/proj/b.txt', 'A'),
+    ))
+  conv.logs[7].check('Adding b.txt:1.1.2.2', (
+    ('/%(branches)s/BRANCH1/proj/b.txt', 'A'),
+    ))
+  conv.logs[8].check('Adding c.txt:1.1', (
+    ('/%(trunk)s/proj/c.txt', 'A'),
+    ))
+  conv.logs[9].check('Removing c.txt:1.2', (
+    ('/%(trunk)s/proj/c.txt', 'D'),
+    ))
+  conv.logs[10].check('Adding c.txt:1.2.2.2', (
+    ('/%(branches)s/BRANCH2/proj/c.txt', 'A'),
+    ))
+  conv.logs[11].check('Adding d.txt:1.1', (
+    ('/%(trunk)s/proj/d.txt', 'A'),
+    ))
+  conv.logs[12].check('Adding d.txt:1.1.2.2', (
+    ('/%(branches)s/BRANCH3/proj/d.txt', 'A'),
+    ))
 
 
 ########################################################################

@@ -423,8 +423,9 @@ class SVNRepositoryMirror:
     symbol = svn_symbol_commit.symbol
 
     # Get the set of sources for the symbolic name:
-    source_set = \
-        self._symbolings_reader.get_source_set(symbol, self._youngest)
+    source_set = self._symbolings_reader.get_source_set(
+        svn_symbol_commit, self._youngest
+        )
 
     if not source_set:
       # We can only get here for a branch whose first commit is an add

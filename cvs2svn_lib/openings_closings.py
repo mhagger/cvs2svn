@@ -219,13 +219,14 @@ class SymbolingsReader:
 
         yield (revnum, type, branch_id, cvs_file_id)
 
-  def get_source_set(self, symbol, svn_revnum):
-    """Return the list of possible sources for SYMBOL.
+  def get_source_set(self, svn_symbol_commit, svn_revnum):
+    """Return the list of possible sources for SVN_SYMBOL_COMMIT.
 
-    SYMBOL is a TypedSymbol instance and SVN_REVNUM is an SVN revision
-    number.  The symbol sources will contain all openings and closings
-    for SYMBOL between the SVN_REVNUM parameter passed to the last
-    call to this method and value of SVN_REVNUM passed to this call.
+    SVN_SYMBOL_COMMIT is an SVNSymbolCommit instance and SVN_REVNUM is
+    an SVN revision number.  The symbol sources will contain all
+    openings and closings for SYMBOL between the SVN_REVNUM parameter
+    passed to the last call to this method and value of SVN_REVNUM
+    passed to this call.
 
     Note that if we encounter an opening rev in this fill, but the
     corresponding closing rev takes place later than SVN_REVNUM, the
@@ -233,6 +234,8 @@ class SymbolingsReader:
     will be discarded when encountered in a later fill).  This is
     perfectly fine, because we can still do a valid fill without the
     closing--we always try to fill what we can as soon as we can."""
+
+    symbol = svn_symbol_commit.symbol
 
     # A map {svn_path : SVNRevisionRange}:
     openings_closings_map = {}

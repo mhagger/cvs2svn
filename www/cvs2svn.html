@@ -81,6 +81,12 @@ repository's history as possible.</p>
     to convert such "mixed" symbols (<tt>--force-branch</tt>,
     <tt>--force-tag</tt>, <tt>--symbol-default</tt>).</dd>
 
+  <dt>Branch and tag parents</dt>
+  <dd>In many cases, the CVS history is ambiguous about which branch
+    served as the parent of another branch or tag.  cvs2svn determines
+    the most plausible parent for symbols using cross-file
+    information.</dd>
+
   <dt>Branch and tag creation times</dt>
   <dd>CVS does not record when branches and tags are created.  cvs2svn
     creates branches and tags at a reasonable time, consistent with
@@ -128,6 +134,13 @@ repository's history as possible.</p>
     cvs2svn provides options to convert this text into UTF-8 as used
     by Subversion (<tt>--encoding</tt>,
     <tt>--fallback-encoding</tt>).</dd>
+
+  <dt>Scalable</dt>
+  <dd>cvs2svn stores most intermediate data to on-disk databases so
+    that it can convert very large CVS repositories using a reasonable
+    amount of RAM.  Conversions are organized as multiple passes and
+    can be restarted at an arbitrary pass in the case of
+    problems.</dd>
 
 </dl>
 

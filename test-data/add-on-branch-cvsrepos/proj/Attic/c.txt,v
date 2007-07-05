@@ -1,0 +1,69 @@
+head	1.2;
+access;
+symbols
+	BRANCH2:1.2.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2007.07.05.18.27.28;	author mhagger;	state dead;
+branches
+	1.2.2.1;
+next	1.1;
+
+1.1
+date	2007.07.05.18.27.27;	author mhagger;	state Exp;
+branches;
+next	;
+
+1.2.2.1
+date	2007.07.05.18.27.28;	author mhagger;	state dead;
+branches;
+next	1.2.2.2;
+
+1.2.2.2
+date	2007.07.05.18.27.30;	author mhagger;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@Removing c.txt:1.2
+@
+text
+@1.1
+@
+
+
+1.2.2.1
+log
+@file c.txt was added on branch BRANCH2 on 2007-07-05 18:27:30 +0000
+@
+text
+@d1 1
+@
+
+
+1.2.2.2
+log
+@Adding c.txt:1.2.2.2
+@
+text
+@a0 1
+1.2.2.2
+@
+
+
+1.1
+log
+@Adding c.txt:1.1
+@
+text
+@@
+

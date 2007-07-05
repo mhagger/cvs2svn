@@ -2771,6 +2771,12 @@ def branch_from_deleted_1_1():
     ))
 
 
+def add_on_branch():
+  "add a file on a branch using newer CVS"
+
+  conv = ensure_conversion('add-on-branch')
+
+
 ########################################################################
 # Run the tests
 
@@ -2919,6 +2925,7 @@ test_list = [
     branch_from_empty_dir,
     trunk_readd,
     branch_from_deleted_1_1,
+    add_on_branch,
     ]
 
 if __name__ == '__main__':

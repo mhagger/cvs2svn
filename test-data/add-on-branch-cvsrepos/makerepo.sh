@@ -109,9 +109,9 @@ $cvs up -r $b
 
 # Ensure that times are distinct:
 sleep 2
-echo "1.2.2.2" >$f
+echo "1.1.2.2" >$f
 $cvs add $f
-$cvs commit -m "Adding $f:1.2.2.2"
+$cvs commit -m "Adding $f:1.1.2.2"
 
 
 echo "Modify file $f on trunk:"

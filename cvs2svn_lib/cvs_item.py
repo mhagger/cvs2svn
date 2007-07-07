@@ -41,8 +41,12 @@ CVSItem
 +--CVSSymbol
    |
    +--CVSBranch
+   |  |
+   |  +--CVSBranchNoop
    |
    +--CVSTag
+      |
+      +--CVSTagNoop
 
 """
 
@@ -124,7 +128,42 @@ class CVSRevision(CVSItem):
   """Information about a single CVS revision.
 
   A CVSRevision holds the information known about a single version of
-  a single file."""
+  a single file.
+
+  Members:
+    ID -- (string) unique ID for this revision.
+    CVS_FILE -- (CVSFile) CVSFile affected by this revision.
+    TIMESTAMP -- (int) date stamp for this revision.
+    METADATA_ID -- (int) id of author + log message record in metadata_db.
+    PREV_ID -- (int) id of the logically previous CVSRevision, either on the
+        same or the source branch (or None).
+    NEXT_ID -- (int) id of the logically next CVSRevision (or None).
+    REV -- (string) the CVS revision number, e.g., '1.3'.
+    DELTATEXT_EXISTS -- (bool) true iff this revision's deltatext is not
+        empty.
+    LOD -- (LineOfDevelopment) LOD on which this revision occurred.
+    FIRST_ON_BRANCH_ID -- (int or None) if this revision is the first on its
+        branch, the cvs_branch_id of that branch; else, None.
+    DEFAULT_BRANCH_REVISION -- (bool) true iff this is a default branch
+        revision.
+    DEFAULT_BRANCH_PREV_ID -- (int or None) Iff this is the 1.2 revision after
+        the end of a default branch, the id of the last rev on the default
+        branch; else, None.
+    DEFAULT_BRANCH_NEXT_ID -- (int or None) Iff this is the last revision on
+        a default branch preceding a 1.2 rev, the id of the 1.2 revision;
+        else, None.
+    TAG_IDS -- (list of int) ids of all CVSTags rooted at this CVSRevision.
+    BRANCH_IDS -- (list of int) ids of all CVSBranches rooted at this
+        CVSRevision.
+    BRANCH_COMMIT_IDS -- (list of int) ids of first CVSRevision committed on
+        each branch rooted in this revision (for branches with commits).
+    CLOSED_SYMBOL_IDS -- (None or list of int) ids of all symbols closed by
+        this revision.  This member is set in FilterSymbolsPass; before then,
+        it is None.
+    REVISION_RECORDER_TOKEN -- (arbitrary) a token that can be set by
+        RevisionRecorder for the later use of RevisionReader.
+
+  """
 
   def __init__(self,
                id, cvs_file,
@@ -136,45 +175,15 @@ class CVSRevision(CVSItem):
                tag_ids, branch_ids, branch_commit_ids,
                closed_symbol_ids,
                revision_recorder_token):
-    """Initialize a new CVSRevision object.
-
-    Arguments:
-       ID              -->  (string) unique ID for this revision.
-       CVS_FILE        -->  (CVSFile) CVSFile affected by this revision
-       TIMESTAMP       -->  (int) date stamp for this cvs revision
-       METADATA_ID     -->  (int) id of author+logmsg record in metadata_db
-       PREV_ID         -->  (int) id of the previous cvs revision (or None)
-       NEXT_ID         -->  (int) id of the next cvs revision (or None)
-       REV             -->  (string) this CVS rev, e.g., '1.3'
-       DELTATEXT_EXISTS-->  (bool) true iff non-empty deltatext
-       LOD             -->  (LineOfDevelopment) LOD where this rev occurred
-       FIRST_ON_BRANCH_ID -->  (int or None) if the first rev on its branch,
-                               the branch_id of that branch; else, None
-       DEFAULT_BRANCH_REVISION --> (bool) true iff this is a default branch
-                                   revision
-       DEFAULT_BRANCH_PREV_ID --> (int or None) Iff 1.2 revision after end of
-                            default branch, id of last rev on default branch
-       DEFAULT_BRANCH_NEXT_ID --> (int or None) Iff last rev on default branch
-                                  preceding 1.2 rev, id of 1.2 rev
-       TAG_IDS         -->  (list of int) ids of all CVSTags rooted at this
-                            CVSRevision
-       BRANCH_IDS      -->  (list of int) ids of all CVSBranches rooted at
-                            this CVSRevision
-       BRANCH_COMMIT_IDS --> (list of int) ids of commits on branches rooted
-                             in this revision
-       CLOSED_SYMBOL_IDS --> (None or list of int) ids of all symbols closed
-                             by this revision (set in FilterSymbolsPass)
-       REVISION_RECORDER_TOKEN --> (arbitrary) a token that can be used by
-                                   RevisionRecorder/RevisionReader.
-    """
+    """Initialize a new CVSRevision object."""
 
     CVSItem.__init__(self, id, cvs_file)
 
-    self.rev = rev
     self.timestamp = timestamp
     self.metadata_id = metadata_id
     self.prev_id = prev_id
     self.next_id = next_id
+    self.rev = rev
     self.deltatext_exists = deltatext_exists
     self.lod = lod
     self.first_on_branch_id = first_on_branch_id
@@ -417,17 +426,19 @@ cvs_revision_type_map = {
 class CVSSymbol(CVSItem):
   """Represent a symbol on a particular CVSFile.
 
-  This is the base class for CVSBranch and CVSTag."""
+  This is the base class for CVSBranch and CVSTag.
+
+  Members:
+    ID -- (string) unique ID for this item.
+    CVS_FILE -- (CVSFile) CVSFile affected by this item.
+    SYMBOL -- (Symbol) the symbol affected by this CVSSymbol.
+    SOURCE_ID -- (int) the ID of the CVSRevision or CVSBranch that is the
+        source for this item.
+
+  """
 
   def __init__(self, id, cvs_file, symbol, source_id):
-    """Initialize a CVSSymbol object.
-
-    Arguments:
-       ID              -->  (string) unique ID for this item
-       CVS_FILE        -->  (CVSFile) CVSFile affected by this revision
-       SYMBOL          -->  (Symbol) the corresponding symbol
-       SOURCE_ID       -->  (int) the ID of the CVSRevision or CVSBranch that
-                            is the source for this item"""
+    """Initialize a CVSSymbol object."""
 
     CVSItem.__init__(self, id, cvs_file)
 
@@ -443,25 +454,27 @@ class CVSSymbol(CVSItem):
 
 
 class CVSBranch(CVSSymbol):
-  """Represent the creation of a branch in a particular CVSFile."""
+  """Represent the creation of a branch in a particular CVSFile.
+
+  Members:
+    ID -- (string) unique ID for this item.
+    CVS_FILE -- (CVSFile) CVSFile affected by this item.
+    SYMBOL -- (Symbol) the symbol affected by this CVSSymbol.
+    BRANCH_NUMBER -- (string) the number of this branch (e.g., '1.3.4'), or
+        None if this is a converted CVSTag.
+    SOURCE_ID -- (int) id of the CVSRevision or CVSBranch from which this
+        branch sprouts.
+    NEXT_ID -- (int or None) id of first CVSRevision on this branch, if any;
+        else, None.
+    TAG_IDS -- (list of int) ids of all CVSTags rooted at this CVSBranch (can
+        be set due to parent adjustment in FilterSymbolsPass).
+    BRANCH_IDS -- (list of int) ids of all CVSBranches rooted at this
+        CVSBranch (can be set due to parent adjustment in FilterSymbolsPass).
+
+  """
 
   def __init__(self, id, cvs_file, symbol, branch_number, source_id, next_id):
-    """Initialize a CVSBranch.
-
-    Arguments:
-       ID              -->  (string) unique ID for this item
-       CVS_FILE        -->  (CVSFile) CVSFile affected by this revision
-       SYMBOL          -->  (Symbol) the corresponding symbol
-       BRANCH_NUMBER   -->  (string) the number of this branch (e.g., "1.3.4")
-                            or None if this is a converted tag
-       SOURCE_ID       -->  (int) id of CVSRevision or CVSBranch from which
-                            this branch sprouts
-       NEXT_ID         -->  (int or None) id of first rev on this branch
-       TAG_IDS         -->  (list of int) ids of all CVSTags rooted at this
-                            CVSBranch (can be set due to parent adjustment)
-       BRANCH_IDS      -->  (list of int) ids of all CVSBranches rooted at
-                            this CVSBranch (can be set due to parent
-                            adjustment)"""
+    """Initialize a CVSBranch."""
 
     CVSSymbol.__init__(self, id, cvs_file, symbol, source_id)
     self.branch_number = branch_number
@@ -502,7 +515,7 @@ class CVSBranch(CVSSymbol):
 
 
 class CVSBranchNoop(CVSBranch):
-  """A CVSBranch whose source is a CVSRevisionDelete or CVSRevisionNoop."""
+  """A CVSBranch whose source is a CVSRevisionAbsent."""
 
   pass
 
@@ -521,17 +534,19 @@ cvs_branch_type_map = {
 
 
 class CVSTag(CVSSymbol):
-  """Represent the creation of a tag on a particular CVSFile."""
+  """Represent the creation of a tag on a particular CVSFile.
+
+  Members:
+    ID -- (string) unique ID for this item.
+    CVS_FILE -- (CVSFile) CVSFile affected by this item.
+    SYMBOL -- (Symbol) the symbol affected by this CVSSymbol.
+    SOURCE_ID -- (int) the ID of the CVSRevision or CVSBranch that is being
+        tagged.
+
+  """
 
   def __init__(self, id, cvs_file, symbol, source_id):
-    """Initialize a CVSTag.
-
-    Arguments:
-       ID              -->  (string) unique ID for this item
-       CVS_FILE        -->  (CVSFile) CVSFile affected by this revision
-       SYMBOL          -->  (Symbol) the corresponding symbol
-       SOURCE_ID       -->  (int) id of CVSRevision or CVSBranch being
-                            tagged"""
+    """Initialize a CVSTag."""
 
     CVSSymbol.__init__(self, id, cvs_file, symbol, source_id)
 
@@ -560,7 +575,7 @@ class CVSTag(CVSSymbol):
 
 
 class CVSTagNoop(CVSTag):
-  """A CVSTag whose source is a CVSRevisionDelete or CVSRevisionNoop."""
+  """A CVSTag whose source is a CVSRevisionAbsent."""
 
   pass
 

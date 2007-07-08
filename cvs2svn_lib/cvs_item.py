@@ -157,9 +157,9 @@ class CVSRevision(CVSItem):
         CVSRevision.
     BRANCH_COMMIT_IDS -- (list of int) ids of first CVSRevision committed on
         each branch rooted in this revision (for branches with commits).
-    CLOSED_SYMBOL_IDS -- (None or list of int) ids of all symbols closed by
-        this revision.  This member is set in FilterSymbolsPass; before then,
-        it is None.
+    CLOSED_SYMBOLS -- (None or list of (symbol_id, cvs_symbol_id) tuples)
+        information about all CVSSymbols closed by this revision.  This member
+        is set in FilterSymbolsPass; before then, it is None.
     REVISION_RECORDER_TOKEN -- (arbitrary) a token that can be set by
         RevisionRecorder for the later use of RevisionReader.
 
@@ -192,7 +192,7 @@ class CVSRevision(CVSItem):
     self.tag_ids = tag_ids
     self.branch_ids = branch_ids
     self.branch_commit_ids = branch_commit_ids
-    self.closed_symbol_ids = None
+    self.closed_symbols = None
     self.revision_recorder_token = revision_recorder_token
 
   def _get_cvs_path(self):
@@ -220,7 +220,7 @@ class CVSRevision(CVSItem):
         self.default_branch_revision,
         self.default_branch_prev_id, self.default_branch_next_id,
         self.tag_ids, self.branch_ids, self.branch_commit_ids,
-        self.closed_symbol_ids,
+        self.closed_symbols,
         self.revision_recorder_token,
         )
 
@@ -235,7 +235,7 @@ class CVSRevision(CVSItem):
      self.default_branch_revision,
      self.default_branch_prev_id, self.default_branch_next_id,
      self.tag_ids, self.branch_ids, self.branch_commit_ids,
-     self.closed_symbol_ids,
+     self.closed_symbols,
      self.revision_recorder_token) = data
     self.cvs_file = Ctx()._cvs_file_db.get_file(cvs_file_id)
     self.lod = Ctx()._symbol_db.get_symbol(lod_id)

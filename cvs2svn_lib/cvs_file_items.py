@@ -312,7 +312,7 @@ class CVSFileItems(object):
            and isinstance(cvs_item.lod, Trunk) \
            and len(cvs_item.branch_ids) >= 1 \
            and self[cvs_item.branch_ids[0]].next_id is not None \
-           and not cvs_item.closed_symbol_ids \
+           and not cvs_item.closed_symbols \
            and not cvs_item.default_branch_revision:
       # FIXME: This message will not match if the RCS file was renamed
       # manually after it was created.
@@ -777,17 +777,22 @@ class CVSFileItems(object):
             ]
 
   def record_closed_symbols(self):
-    """Populate CVSRevision.closed_symbol_ids for the surviving revisions."""
+    """Set CVSRevision.closed_symbols for the surviving revisions.
+
+    A CVSRevision closes the symbols that were opened by the CVSItems
+    that the CVSRevision closes.  Got it?"""
 
     for cvs_item in self.values():
       if isinstance(cvs_item, CVSRevision):
-        cvs_item.closed_symbol_ids = []
+        cvs_item.closed_symbols = []
         for cvs_item_closed_id in cvs_item.get_ids_closed():
           cvs_item_closed = self[cvs_item_closed_id]
-          cvs_item.closed_symbol_ids.extend([
-              self[cvs_symbol_id].symbol.id
-              for cvs_symbol_id in cvs_item_closed.get_cvs_symbol_ids_opened()
-              ])
+          for cvs_symbol_closed_id \
+                  in cvs_item_closed.get_cvs_symbol_ids_opened():
+            cvs_symbol_closed = self[cvs_symbol_closed_id]
+            cvs_item.closed_symbols.append(
+                (cvs_symbol_closed.symbol.id, cvs_symbol_closed.id,)
+                )
 
   def check_symbol_parent_lods(self):
     """Do a consistency check that CVSSymbol.source_lod is set correctly."""

@@ -94,8 +94,10 @@ class SymbolingsLogger:
             cvs_symbol.symbol.id, svn_revnum, cvs_rev.cvs_file, branch_id
             )
 
-    for symbol_id in cvs_rev.closed_symbol_ids:
-      self._log_closing(symbol_id, svn_revnum, cvs_rev.cvs_file, branch_id)
+    for (symbol_id, cvs_symbol_id) in cvs_rev.closed_symbols:
+      self._log_closing(
+          symbol_id, svn_revnum, cvs_rev.cvs_file, branch_id
+          )
 
   def log_branch_revision(self, cvs_branch, svn_revnum):
     """Log any openings and closings found in CVS_BRANCH."""

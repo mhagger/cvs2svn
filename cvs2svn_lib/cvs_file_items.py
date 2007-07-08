@@ -776,6 +776,18 @@ class CVSFileItems(object):
             isinstance(source, CVSRevisionModification)
             ]
 
+  def record_opened_symbols(self):
+    """Set CVSRevision.opened_symbols for the surviving revisions."""
+
+    for cvs_item in self.values():
+      if isinstance(cvs_item, (CVSRevision, CVSBranch)):
+        cvs_item.opened_symbols = []
+        for cvs_symbol_opened_id in cvs_item.get_cvs_symbol_ids_opened():
+          cvs_symbol_opened = self[cvs_symbol_opened_id]
+          cvs_item.opened_symbols.append(
+              (cvs_symbol_opened.symbol.id, cvs_symbol_opened.id,)
+              )
+
   def record_closed_symbols(self):
     """Set CVSRevision.closed_symbols for the surviving revisions.
 

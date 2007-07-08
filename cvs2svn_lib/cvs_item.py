@@ -157,6 +157,9 @@ class CVSRevision(CVSItem):
         CVSRevision.
     BRANCH_COMMIT_IDS -- (list of int) ids of first CVSRevision committed on
         each branch rooted in this revision (for branches with commits).
+    OPENED_SYMBOLS -- (None or list of (symbol_id, cvs_symbol_id) tuples)
+        information about all CVSSymbols opened by this revision.  This member
+        is set in FilterSymbolsPass; before then, it is None.
     CLOSED_SYMBOLS -- (None or list of (symbol_id, cvs_symbol_id) tuples)
         information about all CVSSymbols closed by this revision.  This member
         is set in FilterSymbolsPass; before then, it is None.
@@ -192,6 +195,7 @@ class CVSRevision(CVSItem):
     self.tag_ids = tag_ids
     self.branch_ids = branch_ids
     self.branch_commit_ids = branch_commit_ids
+    self.opened_symbols = None
     self.closed_symbols = None
     self.revision_recorder_token = revision_recorder_token
 
@@ -220,7 +224,7 @@ class CVSRevision(CVSItem):
         self.default_branch_revision,
         self.default_branch_prev_id, self.default_branch_next_id,
         self.tag_ids, self.branch_ids, self.branch_commit_ids,
-        self.closed_symbols,
+        self.opened_symbols, self.closed_symbols,
         self.revision_recorder_token,
         )
 
@@ -235,7 +239,7 @@ class CVSRevision(CVSItem):
      self.default_branch_revision,
      self.default_branch_prev_id, self.default_branch_next_id,
      self.tag_ids, self.branch_ids, self.branch_commit_ids,
-     self.closed_symbols,
+     self.opened_symbols, self.closed_symbols,
      self.revision_recorder_token) = data
     self.cvs_file = Ctx()._cvs_file_db.get_file(cvs_file_id)
     self.lod = Ctx()._symbol_db.get_symbol(lod_id)
@@ -474,6 +478,9 @@ class CVSBranch(CVSSymbol):
         be set due to parent adjustment in FilterSymbolsPass).
     BRANCH_IDS -- (list of int) ids of all CVSBranches rooted at this
         CVSBranch (can be set due to parent adjustment in FilterSymbolsPass).
+    OPENED_SYMBOLS -- (None or list of (symbol_id, cvs_symbol_id) tuples)
+        information about all CVSSymbols opened by this branch.  This member
+        is set in FilterSymbolsPass; before then, it is None.
 
   """
 
@@ -488,19 +495,25 @@ class CVSBranch(CVSSymbol):
     self.next_id = next_id
     self.tag_ids = []
     self.branch_ids = []
+    self.opened_symbols = None
 
   def __getstate__(self):
     return (
         self.id, self.cvs_file.id,
         self.symbol.id, self.branch_number,
         self.source_lod.id, self.source_id, self.next_id,
-        self.tag_ids, self.branch_ids)
+        self.tag_ids, self.branch_ids,
+        self.opened_symbols,
+        )
 
   def __setstate__(self, data):
-    (self.id, cvs_file_id,
-     symbol_id, self.branch_number,
-     source_lod_id, self.source_id, self.next_id,
-     self.tag_ids, self.branch_ids) = data
+    (
+        self.id, cvs_file_id,
+        symbol_id, self.branch_number,
+        source_lod_id, self.source_id, self.next_id,
+        self.tag_ids, self.branch_ids,
+        self.opened_symbols
+        ) = data
     self.cvs_file = Ctx()._cvs_file_db.get_file(cvs_file_id)
     self.symbol = Ctx()._symbol_db.get_symbol(symbol_id)
     self.source_lod = Ctx()._symbol_db.get_symbol(source_lod_id)

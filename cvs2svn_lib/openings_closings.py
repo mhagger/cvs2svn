@@ -87,12 +87,8 @@ class SymbolingsLogger:
       branch_id = None
 
     if isinstance(cvs_rev, CVSRevisionModification):
-      for cvs_symbol in Ctx()._cvs_items_db.get_many(
-          cvs_rev.get_cvs_symbol_ids_opened()
-          ):
-        self._log_opening(
-            cvs_symbol.symbol.id, svn_revnum, cvs_rev.cvs_file, branch_id
-            )
+      for (symbol_id, cvs_symbol_id,) in cvs_rev.opened_symbols:
+        self._log_opening(symbol_id, svn_revnum, cvs_rev.cvs_file, branch_id)
 
     for (symbol_id, cvs_symbol_id) in cvs_rev.closed_symbols:
       self._log_closing(
@@ -110,12 +106,10 @@ class SymbolingsLogger:
       source = Ctx()._cvs_items_db[source.source_id]
 
     if isinstance(source, CVSRevisionModification):
-      for cvs_symbol in Ctx()._cvs_items_db.get_many(
-          cvs_branch.tag_ids + cvs_branch.branch_ids
-          ):
+      for (symbol_id, cvs_symbol_id,) in cvs_branch.opened_symbols:
         self._log_opening(
-            cvs_symbol.symbol.id,
-            svn_revnum, cvs_branch.cvs_file, cvs_branch.symbol.id)
+            symbol_id, svn_revnum, cvs_branch.cvs_file, cvs_branch.symbol.id
+            )
 
   def _log(self, symbol_id, svn_revnum, cvs_file, branch_id, type):
     """Log an opening or closing to self.symbolings.

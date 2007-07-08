@@ -227,6 +227,7 @@ class FilterSymbolsPass(Pass):
       cvs_file_items.mutate_symbols()
       cvs_file_items.adjust_parents()
       cvs_file_items.refine_symbols()
+      cvs_file_items.record_opened_symbols()
       cvs_file_items.record_closed_symbols()
 
       if Log().is_on(Log.DEBUG):

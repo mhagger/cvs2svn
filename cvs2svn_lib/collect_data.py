@@ -797,7 +797,6 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         self._get_rev_id(rev_data.default_branch_prev),
         self._get_rev_id(rev_data.default_branch_next),
         tag_ids, branch_ids, branch_commit_ids,
-        None,
         rev_data.revision_recorder_token)
 
   def _get_cvs_revisions(self):

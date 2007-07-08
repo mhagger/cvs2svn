@@ -173,7 +173,6 @@ class CVSRevision(CVSItem):
                lod, first_on_branch_id, default_branch_revision,
                default_branch_prev_id, default_branch_next_id,
                tag_ids, branch_ids, branch_commit_ids,
-               closed_symbol_ids,
                revision_recorder_token):
     """Initialize a new CVSRevision object."""
 
@@ -193,7 +192,7 @@ class CVSRevision(CVSItem):
     self.tag_ids = tag_ids
     self.branch_ids = branch_ids
     self.branch_commit_ids = branch_commit_ids
-    self.closed_symbol_ids = closed_symbol_ids
+    self.closed_symbol_ids = None
     self.revision_recorder_token = revision_recorder_token
 
   def _get_cvs_path(self):

@@ -90,6 +90,9 @@ class Trunk(LineOfDevelopment):
 
     return 'Trunk'
 
+  def __repr__(self):
+    return '%s<%x>' % (self, self.id,)
+
 
 class Symbol:
   def __init__(self, id, project, name):

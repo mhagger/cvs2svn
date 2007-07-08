@@ -812,6 +812,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       yield CVSBranch(
           branch_data.id, self.cvs_file, branch_data.symbol,
           branch_data.branch_number,
+          self.sdc.rev_to_lod(branch_data.parent),
           self._get_rev_id(branch_data.parent),
           self._get_rev_id(branch_data.child),
           )
@@ -823,6 +824,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       for tag_data in tags_data:
         yield CVSTag(
             tag_data.id, self.cvs_file, tag_data.symbol,
+            self.sdc.rev_to_lod(tag_data.rev),
             self._get_rev_id(tag_data.rev),
             )
 
@@ -850,6 +852,9 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     cvs_items.extend(self._get_cvs_tags())
     cvs_file_items = CVSFileItems(self.cvs_file, self.pdc.trunk, cvs_items)
 
+    if Log().is_on(Log.DEBUG):
+      cvs_file_items.check_symbol_parent_lods()
+
     ntdbr_ids = list(self._get_ntdbr_ids())
 
     # Break a circular reference loop, allowing the memory for self
@@ -863,6 +868,9 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       else:
         rev_1_2_id = None
       cvs_file_items.adjust_ntdbrs(self._file_imported, ntdbr_ids, rev_1_2_id)
+
+      if Log().is_on(Log.DEBUG):
+        cvs_file_items.check_symbol_parent_lods()
 
     return cvs_file_items
 

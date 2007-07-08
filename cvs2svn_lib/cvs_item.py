@@ -431,17 +431,20 @@ class CVSSymbol(CVSItem):
     ID -- (string) unique ID for this item.
     CVS_FILE -- (CVSFile) CVSFile affected by this item.
     SYMBOL -- (Symbol) the symbol affected by this CVSSymbol.
+    SOURCE_LOD -- (LineOfDevelopment) the LOD that is the source for this
+        CVSSymbol.
     SOURCE_ID -- (int) the ID of the CVSRevision or CVSBranch that is the
         source for this item.
 
   """
 
-  def __init__(self, id, cvs_file, symbol, source_id):
+  def __init__(self, id, cvs_file, symbol, source_lod, source_id):
     """Initialize a CVSSymbol object."""
 
     CVSItem.__init__(self, id, cvs_file)
 
     self.symbol = symbol
+    self.source_lod = source_lod
     self.source_id = source_id
 
   def get_svn_path(self):
@@ -461,6 +464,8 @@ class CVSBranch(CVSSymbol):
     SYMBOL -- (Symbol) the symbol affected by this CVSSymbol.
     BRANCH_NUMBER -- (string) the number of this branch (e.g., '1.3.4'), or
         None if this is a converted CVSTag.
+    SOURCE_LOD -- (LineOfDevelopment) the LOD that is the source for this
+        CVSSymbol.
     SOURCE_ID -- (int) id of the CVSRevision or CVSBranch from which this
         branch sprouts.
     NEXT_ID -- (int or None) id of first CVSRevision on this branch, if any;
@@ -472,10 +477,13 @@ class CVSBranch(CVSSymbol):
 
   """
 
-  def __init__(self, id, cvs_file, symbol, branch_number, source_id, next_id):
+  def __init__(
+      self, id, cvs_file, symbol, branch_number,
+      source_lod, source_id, next_id
+      ):
     """Initialize a CVSBranch."""
 
-    CVSSymbol.__init__(self, id, cvs_file, symbol, source_id)
+    CVSSymbol.__init__(self, id, cvs_file, symbol, source_lod, source_id)
     self.branch_number = branch_number
     self.next_id = next_id
     self.tag_ids = []
@@ -484,15 +492,18 @@ class CVSBranch(CVSSymbol):
   def __getstate__(self):
     return (
         self.id, self.cvs_file.id,
-        self.symbol.id, self.branch_number, self.source_id, self.next_id,
+        self.symbol.id, self.branch_number,
+        self.source_lod.id, self.source_id, self.next_id,
         self.tag_ids, self.branch_ids)
 
   def __setstate__(self, data):
     (self.id, cvs_file_id,
-     symbol_id, self.branch_number, self.source_id, self.next_id,
+     symbol_id, self.branch_number,
+     source_lod_id, self.source_id, self.next_id,
      self.tag_ids, self.branch_ids) = data
     self.cvs_file = Ctx()._cvs_file_db.get_file(cvs_file_id)
     self.symbol = Ctx()._symbol_db.get_symbol(symbol_id)
+    self.source_lod = Ctx()._symbol_db.get_symbol(source_lod_id)
 
   def get_pred_ids(self):
     return set([self.source_id])
@@ -539,23 +550,29 @@ class CVSTag(CVSSymbol):
     ID -- (string) unique ID for this item.
     CVS_FILE -- (CVSFile) CVSFile affected by this item.
     SYMBOL -- (Symbol) the symbol affected by this CVSSymbol.
+    SOURCE_LOD -- (LineOfDevelopment) the LOD that is the source for this
+        CVSSymbol.
     SOURCE_ID -- (int) the ID of the CVSRevision or CVSBranch that is being
         tagged.
 
   """
 
-  def __init__(self, id, cvs_file, symbol, source_id):
+  def __init__(self, id, cvs_file, symbol, source_lod, source_id):
     """Initialize a CVSTag."""
 
-    CVSSymbol.__init__(self, id, cvs_file, symbol, source_id)
+    CVSSymbol.__init__(self, id, cvs_file, symbol, source_lod, source_id)
 
   def __getstate__(self):
-    return (self.id, self.cvs_file.id, self.symbol.id, self.source_id)
+    return (
+        self.id, self.cvs_file.id, self.symbol.id,
+        self.source_lod.id, self.source_id,
+        )
 
   def __setstate__(self, data):
-    (self.id, cvs_file_id, symbol_id, self.source_id) = data
+    (self.id, cvs_file_id, symbol_id, source_lod_id, self.source_id) = data
     self.cvs_file = Ctx()._cvs_file_db.get_file(cvs_file_id)
     self.symbol = Ctx()._symbol_db.get_symbol(symbol_id)
+    self.source_lod = Ctx()._symbol_db.get_symbol(source_lod_id)
 
   def get_pred_ids(self):
     return set([self.source_id])

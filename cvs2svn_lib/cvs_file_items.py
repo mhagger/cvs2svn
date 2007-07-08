@@ -277,10 +277,12 @@ class CVSFileItems(object):
       cvs_rev.tag_ids.extend(rev_1_1.tag_ids)
       for id in rev_1_1.tag_ids:
         cvs_tag = self[id]
+        cvs_tag.source_lod = cvs_rev.lod
         cvs_tag.source_id = cvs_rev.id
       cvs_rev.branch_ids[0:0] = rev_1_1.branch_ids
       for id in rev_1_1.branch_ids:
         cvs_branch = self[id]
+        cvs_branch.source_lod = cvs_rev.lod
         cvs_branch.source_id = cvs_rev.id
       cvs_rev.branch_commit_ids[0:0] = rev_1_1.branch_commit_ids
       for id in rev_1_1.branch_commit_ids:
@@ -526,6 +528,12 @@ class CVSFileItems(object):
           cvs_rev.default_branch_revision = False
           cvs_rev.lod = self.trunk
 
+        for cvs_branch in lod_items.cvs_branches:
+          cvs_branch.source_lod = self.trunk
+
+        for cvs_tag in lod_items.cvs_tags:
+          cvs_tag.source_lod = self.trunk
+
         return
 
   def exclude_non_trunk(self):
@@ -593,7 +601,7 @@ class CVSFileItems(object):
       raise FatalError('Attempt to exclude a branch with commits.')
     cvs_tag = CVSTag(
         cvs_branch.id, cvs_branch.cvs_file, cvs_branch.symbol,
-        cvs_branch.source_id)
+        cvs_branch.source_lod, cvs_branch.source_id)
     self.add(cvs_tag)
     cvs_revision = self[cvs_tag.source_id]
     cvs_revision.branch_ids.remove(cvs_tag.id)
@@ -604,7 +612,7 @@ class CVSFileItems(object):
 
     cvs_branch = CVSBranch(
         cvs_tag.id, cvs_tag.cvs_file, cvs_tag.symbol,
-        None, cvs_tag.source_id, None)
+        None, cvs_tag.source_lod, cvs_tag.source_id, None)
     self.add(cvs_branch)
     cvs_revision = self[cvs_branch.source_id]
     cvs_revision.tag_ids.remove(cvs_branch.id)
@@ -642,13 +650,14 @@ class CVSFileItems(object):
     # The Symbol that cvs_tag would like to have as a parent:
     preferred_parent = Ctx()._symbol_db.get_symbol(
         cvs_tag.symbol.preferred_parent_id)
+
+    if cvs_tag.source_lod == preferred_parent:
+      # The preferred parent is already the parent.
+      return
+
     # The CVSRevision that is its direct parent:
     source = self[cvs_tag.source_id]
     assert isinstance(source, CVSRevision)
-
-    if preferred_parent == source.lod:
-      # The preferred parent is already the parent.
-      return
 
     if isinstance(preferred_parent, Trunk):
       # It is not possible to graft *onto* Trunk:
@@ -671,6 +680,7 @@ class CVSFileItems(object):
     # Switch parent:
     source.tag_ids.remove(cvs_tag.id)
     parent.tag_ids.append(cvs_tag.id)
+    cvs_tag.source_lod = parent.symbol
     cvs_tag.source_id = parent.id
 
   def _adjust_branch_parents(self, cvs_branch):
@@ -682,14 +692,15 @@ class CVSFileItems(object):
     # The Symbol that cvs_branch would like to have as a parent:
     preferred_parent = Ctx()._symbol_db.get_symbol(
         cvs_branch.symbol.preferred_parent_id)
+
+    if cvs_branch.source_lod == preferred_parent:
+      # The preferred parent is already the parent.
+      return
+
     # The CVSRevision that is its direct parent:
     source = self[cvs_branch.source_id]
     # This is always a CVSRevision because we haven't adjusted it yet:
     assert isinstance(source, CVSRevision)
-
-    if preferred_parent == source.lod:
-      # The preferred parent is already the parent.
-      return
 
     if isinstance(preferred_parent, Trunk):
       # It is not possible to graft *onto* Trunk:
@@ -718,6 +729,7 @@ class CVSFileItems(object):
     # Switch parent:
     source.branch_ids.remove(cvs_branch.id)
     parent.branch_ids.append(cvs_branch.id)
+    cvs_branch.source_lod = parent.symbol
     cvs_branch.source_id = parent.id
 
   def adjust_parents(self):
@@ -776,5 +788,22 @@ class CVSFileItems(object):
               self[cvs_symbol_id].symbol.id
               for cvs_symbol_id in cvs_item_closed.get_cvs_symbol_ids_opened()
               ])
+
+  def check_symbol_parent_lods(self):
+    """Do a consistency check that CVSSymbol.source_lod is set correctly."""
+
+    for cvs_item in self.values():
+      if isinstance(cvs_item, CVSSymbol):
+        source = self[cvs_item.source_id]
+        if isinstance(source, CVSRevision):
+          source_lod = source.lod
+        else:
+          source_lod = source.symbol
+
+        if cvs_item.source_lod != source_lod:
+          raise FatalError(
+              'source_lod discrepancy for %r: %s != %s'
+              % (cvs_item, cvs_item.source_lod, source_lod,)
+              )
 
 

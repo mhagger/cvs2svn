@@ -83,25 +83,32 @@ class SymbolingsLogger:
       branch_id = None
 
     for (symbol_id, cvs_symbol_id,) in cvs_rev.opened_symbols:
-      self._log_opening(symbol_id, svn_revnum, cvs_rev.cvs_file, branch_id)
+      self._log_opening(
+          symbol_id, cvs_symbol_id, svn_revnum, cvs_rev.cvs_file, branch_id
+          )
 
     for (symbol_id, cvs_symbol_id) in cvs_rev.closed_symbols:
-      self._log_closing(symbol_id, svn_revnum, cvs_rev.cvs_file, branch_id)
+      self._log_closing(
+          symbol_id, cvs_symbol_id, svn_revnum, cvs_rev.cvs_file, branch_id
+          )
 
   def log_branch_revision(self, cvs_branch, svn_revnum):
     """Log any openings and closings found in CVS_BRANCH."""
 
     for (symbol_id, cvs_symbol_id,) in cvs_branch.opened_symbols:
       self._log_opening(
-          symbol_id, svn_revnum, cvs_branch.cvs_file, cvs_branch.symbol.id
+          symbol_id, cvs_symbol_id, svn_revnum,
+          cvs_branch.cvs_file, cvs_branch.symbol.id
           )
 
-  def _log(self, symbol_id, svn_revnum, cvs_file, branch_id, type):
+  def _log(
+        self, symbol_id, cvs_symbol_id, svn_revnum, cvs_file, branch_id, type
+        ):
     """Log an opening or closing to self.symbolings.
 
     Write out a single line to the symbol_openings_closings file
     representing that SVN_REVNUM of SVN_FILE on BRANCH_ID is either
-    the opening or closing (TYPE) of the symbol with id SYMBOL_ID.
+    the opening or closing (TYPE) of CVS_SYMBOL_ID for SYMBOL_ID.
 
     TYPE should be one of the following constants: OPENING or CLOSING.
 
@@ -114,22 +121,31 @@ class SymbolingsLogger:
     else:
       branch_id = '%x' % branch_id
     self.symbolings.write(
-        '%x %d %s %s %x\n'
-        % (symbol_id, svn_revnum, type, branch_id, cvs_file.id))
+        '%x %d %s %x %s %x\n'
+        % (symbol_id, svn_revnum, type, cvs_symbol_id, branch_id, cvs_file.id)
+        )
 
-  def _log_opening(self, symbol_id, svn_revnum, cvs_file, branch_id):
+  def _log_opening(
+        self, symbol_id, cvs_symbol_id, svn_revnum, cvs_file, branch_id
+        ):
     """Log an opening to self.symbolings.
 
     See _log() for more information."""
 
-    self._log(symbol_id, svn_revnum, cvs_file, branch_id, OPENING)
+    self._log(
+        symbol_id, cvs_symbol_id, svn_revnum, cvs_file, branch_id, OPENING
+        )
 
-  def _log_closing(self, symbol_id, svn_revnum, cvs_file, branch_id):
+  def _log_closing(
+        self, symbol_id, cvs_symbol_id, svn_revnum, cvs_file, branch_id
+        ):
     """Log a closing to self.symbolings.
 
     See _log() for more information."""
 
-    self._log(symbol_id, svn_revnum, cvs_file, branch_id, CLOSING)
+    self._log(
+        symbol_id, cvs_symbol_id, svn_revnum, cvs_file, branch_id, CLOSING
+        )
 
   def close(self):
     self.symbolings.close()
@@ -166,10 +182,10 @@ class SymbolingsReader:
     """Generate the lines for SYMBOL with SVN revisions <= SVN_REVNUM.
 
     SYMBOL is a TypedSymbol instance and SVN_REVNUM is an SVN revision
-    number.  Yield the tuple (revnum, type, branch_id, cvs_file_id)
-    for all openings and closings for SYMBOL between the SVN_REVNUM
-    parameter passed to the last call to this method() and the value
-    of SVN_REVNUM passed to this call.
+    number.  Yield the tuple (revnum, type, cvs_symbol_id, branch_id,
+    cvs_file_id) for all openings and closings for SYMBOL between the
+    SVN_REVNUM parameter passed to the last call to this method() and
+    the value of SVN_REVNUM passed to this call.
 
     Adjust self.offsets[SUMBOL.id] to point past the lines that are
     generated.  This generator should always be allowed to run to
@@ -186,7 +202,7 @@ class SymbolingsReader:
         if not line:
           del self.offsets[symbol.id]
           break
-        id, revnum, type, branch_id, cvs_file_id = line.split()
+        id, revnum, type, cvs_symbol_id, branch_id, cvs_file_id = line.split()
         id = int(id, 16)
         revnum = int(revnum)
         if id != symbol.id:
@@ -196,9 +212,10 @@ class SymbolingsReader:
           # Update offset for this symbol to the first unused line:
           self.offsets[symbol.id] = fpos
           break
+        cvs_symbol_id = int(cvs_symbol_id, 16)
         cvs_file_id = int(cvs_file_id, 16)
 
-        yield (revnum, type, branch_id, cvs_file_id)
+        yield (revnum, type, cvs_symbol_id, branch_id, cvs_file_id)
 
   def get_source_set(self, svn_symbol_commit, svn_revnum):
     """Return the list of possible sources for SVN_SYMBOL_COMMIT.
@@ -221,7 +238,7 @@ class SymbolingsReader:
     # A map {svn_path : SVNRevisionRange}:
     openings_closings_map = {}
 
-    for (revnum, type, branch_id, cvs_file_id) \
+    for (revnum, type, cvs_symbol_id, branch_id, cvs_file_id) \
             in self._generate_lines(symbol, svn_revnum):
       cvs_file = Ctx()._cvs_file_db.get_file(cvs_file_id)
 

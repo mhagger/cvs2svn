@@ -26,8 +26,6 @@ from cvs2svn_lib import config
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.symbol import Branch
-from cvs2svn_lib.cvs_item import CVSRevision
-from cvs2svn_lib.cvs_item import CVSRevisionModification
 from cvs2svn_lib.svn_revision_range import SVNRevisionRange
 from cvs2svn_lib.symbol_filling_guide import get_source_set
 
@@ -84,30 +82,19 @@ class SymbolingsLogger:
     else:
       branch_id = None
 
-    if isinstance(cvs_rev, CVSRevisionModification):
-      for (symbol_id, cvs_symbol_id,) in cvs_rev.opened_symbols:
-        self._log_opening(symbol_id, svn_revnum, cvs_rev.cvs_file, branch_id)
+    for (symbol_id, cvs_symbol_id,) in cvs_rev.opened_symbols:
+      self._log_opening(symbol_id, svn_revnum, cvs_rev.cvs_file, branch_id)
 
     for (symbol_id, cvs_symbol_id) in cvs_rev.closed_symbols:
-      self._log_closing(
-          symbol_id, svn_revnum, cvs_rev.cvs_file, branch_id
-          )
+      self._log_closing(symbol_id, svn_revnum, cvs_rev.cvs_file, branch_id)
 
   def log_branch_revision(self, cvs_branch, svn_revnum):
     """Log any openings and closings found in CVS_BRANCH."""
 
-    # Determine whether the revision originally being branched was a
-    # CVSRevisionDelete, because if it was then it does not count as
-    # an opening:
-    source = Ctx()._cvs_items_db[cvs_branch.source_id]
-    while not isinstance(source, CVSRevision):
-      source = Ctx()._cvs_items_db[source.source_id]
-
-    if isinstance(source, CVSRevisionModification):
-      for (symbol_id, cvs_symbol_id,) in cvs_branch.opened_symbols:
-        self._log_opening(
-            symbol_id, svn_revnum, cvs_branch.cvs_file, cvs_branch.symbol.id
-            )
+    for (symbol_id, cvs_symbol_id,) in cvs_branch.opened_symbols:
+      self._log_opening(
+          symbol_id, svn_revnum, cvs_branch.cvs_file, cvs_branch.symbol.id
+          )
 
   def _log(self, symbol_id, svn_revnum, cvs_file, branch_id, type):
     """Log an opening or closing to self.symbolings.

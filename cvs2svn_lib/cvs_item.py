@@ -278,9 +278,6 @@ class CVSRevision(CVSItem):
       retval.add(id)
     return retval
 
-  def get_cvs_symbol_ids_opened(self):
-    return self.tag_ids + self.branch_ids
-
   def get_ids_closed(self):
     # Special handling is needed in the case of non-trunk default
     # branches.  The following cases have to be handled:
@@ -369,7 +366,8 @@ class CVSRevision(CVSItem):
 class CVSRevisionModification(CVSRevision):
   """Base class for CVSRevisionAdd or CVSRevisionChange."""
 
-  pass
+  def get_cvs_symbol_ids_opened(self):
+    return self.tag_ids + self.branch_ids
 
 
 class CVSRevisionAdd(CVSRevisionModification):
@@ -390,7 +388,8 @@ class CVSRevisionChange(CVSRevisionModification):
 class CVSRevisionAbsent(CVSRevision):
   """A CVSRevision for which the file is nonexistent on this LOD."""
 
-  pass
+  def get_cvs_symbol_ids_opened(self):
+    return []
 
 
 class CVSRevisionDelete(CVSRevisionAbsent):
@@ -540,7 +539,8 @@ class CVSBranch(CVSSymbol):
 class CVSBranchNoop(CVSBranch):
   """A CVSBranch whose source is a CVSRevisionAbsent."""
 
-  pass
+  def get_cvs_symbol_ids_opened(self):
+    return []
 
 
 # A map

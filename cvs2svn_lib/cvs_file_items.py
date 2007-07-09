@@ -792,19 +792,16 @@ class CVSFileItems(object):
     """Set CVSRevision.closed_symbols for the surviving revisions.
 
     A CVSRevision closes the symbols that were opened by the CVSItems
-    that the CVSRevision closes.  Got it?"""
+    that the CVSRevision closes.  Got it?
+
+    This method must be called after record_opened_symbols()."""
 
     for cvs_item in self.values():
       if isinstance(cvs_item, CVSRevision):
         cvs_item.closed_symbols = []
         for cvs_item_closed_id in cvs_item.get_ids_closed():
           cvs_item_closed = self[cvs_item_closed_id]
-          for cvs_symbol_closed_id \
-                  in cvs_item_closed.get_cvs_symbol_ids_opened():
-            cvs_symbol_closed = self[cvs_symbol_closed_id]
-            cvs_item.closed_symbols.append(
-                (cvs_symbol_closed.symbol.id, cvs_symbol_closed.id,)
-                )
+          cvs_item.closed_symbols.extend(cvs_item_closed.opened_symbols)
 
   def check_symbol_parent_lods(self):
     """Do a consistency check that CVSSymbol.source_lod is set correctly."""

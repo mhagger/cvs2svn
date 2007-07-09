@@ -94,20 +94,20 @@ CHANGESETS_SORTED_DATAFILE = 'changesets-s.txt'
 # marshalled dictionary.
 STATISTICS_FILE = 'statistics.pck'
 
-# This text file contains records (1 per line) that describe svn
-# filesystem paths that are the opening and closing source revisions
-# for copies to tags and branches.  The format is as follows:
+# This text file contains records (1 per line) that describe openings
+# and closings for copies to tags and branches.  The format is as
+# follows:
 #
-#     SYMBOL_ID SVN_REVNUM TYPE BRANCH_ID CVS_FILE_ID
+#     SYMBOL_ID SVN_REVNUM TYPE CVS_SYMBOL_ID
 #
-# Where type is either OPENING or CLOSING.  The SYMBOL_ID and
-# SVN_REVNUM are the primary and secondary sorting criteria for
-# creating SYMBOL_OPENINGS_CLOSINGS_SORTED.  BRANCH_ID is the symbol
-# id of the branch where this opening or closing happened (in hex), or
-# '*' for the default branch.  CVS_FILE_ID is the id of the
-# corresponding CVSFile (in hex).
+# where type is either OPENING or CLOSING.  CVS_SYMBOL_ID is the id of
+# the CVSSymbol whose opening or closing is being described (in hex).
 SYMBOL_OPENINGS_CLOSINGS = 'symbolic-names.txt'
-# A sorted version of the above file.
+# A sorted version of the above file.  SYMBOL_ID and SVN_REVNUM are
+# the primary and secondary sorting criteria.  It is important that
+# SYMBOL_IDs be located together to make it quick to read them at
+# once.  The order of SVN_REVNUM is only important because it is
+# assumed by some internal consistency checks.
 SYMBOL_OPENINGS_CLOSINGS_SORTED = 'symbolic-names-s.txt'
 
 # Skeleton version of an svn filesystem.  See class

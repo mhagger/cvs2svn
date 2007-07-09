@@ -442,41 +442,46 @@ This pass does the following:
    Revisions to their Subversion Revision numbers
    ('cvs-revs-to-svn-revnums.db').
 
-2. When a file is copied to a symbolic name in cvs2svn, there is a
-   range of valid Subversion revisions that we can copy the file from.
-   The first valid Subversion revision number for a symbolic name is
-   called the "opening", and the first *invalid* Subversion revision
-   number encountered after the "opening" is called the "closing".  In
-   this pass, the SymbolingsLogger class writes out a line to
-   'symbolic-names.txt' for each symbol opening or closing.  Note that
-   not every opening will have a corresponding closing.
+2. When a file is copied to a symbolic name in cvs2svn, it is copied
+   from a specific source: either a CVSRevision, or a copy created by
+   a previous CVSBranch of the file.  The copy has to be made from an
+   SVN revision that is during the lifetime of the source.  The SVN
+   revision when the source was created is called the symbol's
+   "opening", and the SVN revision when it was deleted or overwritten
+   is called the symbol's "closing".  In this pass, the
+   SymbolingsLogger class writes out a line to 'symbolic-names.txt'
+   for each symbol opening or closing.  Note that some openings do not
+   have closings, namely if the corresponding source is still present
+   at the HEAD revision.
 
    The format of each line is:
 
-       SYMBOL_ID SVN_REVNUM TYPE BRANCH_ID CVS_FILE_ID
+       SYMBOL_ID SVN_REVNUM TYPE CVS_SYMBOL_ID
 
    For example:
 
-       1c 234 O * 1a7
-       34 245 O * 1a9
-       18a 241 C 34 1a7
-       122 201 O 7e 1b3
+       1c 234 O 1a7
+       34 245 O 1a9
+       18a 241 C 1a7
+       122 201 O 1b3
 
    Here is what the columns mean:
 
-   SYMBOL_ID: The id of the branch or tag that starts or ends in this
-              CVS Revision (there can be multiples per CVS rev).
+   SYMBOL_ID: The id of the branch or tag that has an opening in this
+              SVN_REVNUM, in hexadecimal.
 
-   SVN_REVNUM: The Subversion revision number that is the opening or
-               closing for this SYMBOLIC_NAME.
+   SVN_REVNUM: The Subversion revision number in which the opening or
+               closing occurred.  (There can be multiple openings and
+               closings per SVN_REVNUM).
 
    TYPE: "O" for openings and "C" for closings.
 
-   BRANCH_ID: The id of the branch where this opening or closing
-              happened.  '*' denotes the default branch.
+   CVS_SYMBOL_ID: The id of the CVSSymbol instance whose opening or
+                  closing is being described, in hexadecimal.
 
-   CVS_FILE_ID: The ID of the CVS file where this opening or closing
-                happened, in hexadecimal.
+   Each CVSSymbol that tags a non-dead file has exactly one opening
+   and either zero or one closing.  The closing, if it exists, always
+   occurs in a later SVN revision than the opening.
 
    See SymbolingsLogger for more details.
 

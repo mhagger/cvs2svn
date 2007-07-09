@@ -41,35 +41,39 @@ class SymbolingsLogger:
 
   This data will later be used to determine valid SVNRevision ranges
   from which a file can be copied when creating a branch or tag in
-  Subversion.  Do this by finding "Openings" and "Closings" for each
+  Subversion.  Do this by finding 'Openings' and 'Closings' for each
   file copied onto a branch or tag.
 
-  An "Opening" is the CVSRevision from which a given branch/tag
-  sprouts on a path.
+  An 'Opening' is the beginning of the lifetime of the source
+  (CVSRevision or CVSBranch) from which a given CVSSymbol sprouts.
 
-  The "Closing" for that branch/tag and path is the next CVSRevision
-  on the same line of development as the opening.
+  The 'Closing' is the SVN revision when the source is deleted or
+  overwritten.
 
   For example, on file 'foo.c', branch BEE has branch number 1.2.2 and
-  obviously sprouts from revision 1.2.  Therefore, 1.2 is the opening
-  for BEE on path 'foo.c', and 1.3 is the closing for BEE on path
-  'foo.c'.  Note that there may be many revisions chronologically
+  obviously sprouts from revision 1.2.  Therefore, the SVN revision
+  when 1.2 is committed is the opening for BEE on path 'foo.c', and
+  the SVN revision when 1.3 is committed is the closing for BEE on
+  path 'foo.c'.  Note that there may be many revisions chronologically
   between 1.2 and 1.3, for example, revisions on branches of 'foo.c',
   perhaps even including on branch BEE itself.  But 1.3 is the next
   revision *on the same line* as 1.2, that is why it is the closing
   revision for those symbolic names of which 1.2 is the opening.
 
-  The reason for doing all this hullabaloo is to make branch and tag
-  creation as efficient as possible by minimizing the number of copies
-  and deletes per creation.  For example, revisions 1.2 and 1.3 of
-  foo.c might correspond to revisions 17 and 30 in Subversion.  That
-  means that when creating branch BEE, there is some motivation to do
-  the copy from one of 17-30.  Now if there were another file,
-  'bar.c', whose opening and closing CVSRevisions for BEE corresponded
-  to revisions 24 and 39 in Subversion, we would know that the ideal
-  thing would be to copy the branch from somewhere between 24 and 29,
-  inclusive.
-  """
+  The reason for doing all this hullabaloo is (1) to determine what
+  range of SVN revision numbers can be used as the source of a copy of
+  a particular file onto a branch/tag, and (2) to minimize the number
+  of copies and deletes per creation by choosing source SVN revision
+  numbers that can be used for as many files as possible.
+
+  For example, revisions 1.2 and 1.3 of foo.c might correspond to
+  revisions 17 and 30 in Subversion.  That means that when creating
+  branch BEE, foo.c has to be copied from a Subversion revision number
+  in the range 17 <= revnum < 30.  Now if there were another file,
+  'bar.c', in the same directory, and 'bar.c's opening and closing for
+  BEE correspond to revisions 24 and 39 in Subversion, then we can
+  kill two birds with one stone by copying the whole directory from
+  somewhere in the range 24 <= revnum < 30."""
 
   def __init__(self):
     self.symbolings = open(
@@ -78,75 +82,44 @@ class SymbolingsLogger:
   def log_revision(self, cvs_rev, svn_revnum):
     """Log any openings and closings found in CVS_REV."""
 
-    if isinstance(cvs_rev.lod, Branch):
-      branch_id = cvs_rev.lod.id
-    else:
-      branch_id = None
-
     for (symbol_id, cvs_symbol_id,) in cvs_rev.opened_symbols:
-      self._log_opening(
-          symbol_id, cvs_symbol_id, svn_revnum, cvs_rev.cvs_file, branch_id
-          )
+      self._log_opening(symbol_id, cvs_symbol_id, svn_revnum)
 
     for (symbol_id, cvs_symbol_id) in cvs_rev.closed_symbols:
-      self._log_closing(
-          symbol_id, cvs_symbol_id, svn_revnum, cvs_rev.cvs_file, branch_id
-          )
+      self._log_closing(symbol_id, cvs_symbol_id, svn_revnum)
 
   def log_branch_revision(self, cvs_branch, svn_revnum):
     """Log any openings and closings found in CVS_BRANCH."""
 
     for (symbol_id, cvs_symbol_id,) in cvs_branch.opened_symbols:
-      self._log_opening(
-          symbol_id, cvs_symbol_id, svn_revnum,
-          cvs_branch.cvs_file, cvs_branch.symbol.id
-          )
+      self._log_opening(symbol_id, cvs_symbol_id, svn_revnum)
 
-  def _log(
-        self, symbol_id, cvs_symbol_id, svn_revnum, cvs_file, branch_id, type
-        ):
+  def _log(self, symbol_id, cvs_symbol_id, svn_revnum, type):
     """Log an opening or closing to self.symbolings.
 
     Write out a single line to the symbol_openings_closings file
-    representing that SVN_REVNUM of SVN_FILE on BRANCH_ID is either
-    the opening or closing (TYPE) of CVS_SYMBOL_ID for SYMBOL_ID.
+    representing that SVN_REVNUM is either the opening or closing
+    (TYPE) of CVS_SYMBOL_ID for SYMBOL_ID.
 
-    TYPE should be one of the following constants: OPENING or CLOSING.
+    TYPE should be one of the following constants: OPENING or CLOSING."""
 
-    BRANCH_ID is the symbol id of the branch on which the opening or
-    closing occurred, or None if the opening/closing occurred on the
-    default branch."""
-
-    if branch_id is None:
-      branch_id = '*'
-    else:
-      branch_id = '%x' % branch_id
     self.symbolings.write(
-        '%x %d %s %x %s %x\n'
-        % (symbol_id, svn_revnum, type, cvs_symbol_id, branch_id, cvs_file.id)
+        '%x %d %s %x\n' % (symbol_id, svn_revnum, type, cvs_symbol_id)
         )
 
-  def _log_opening(
-        self, symbol_id, cvs_symbol_id, svn_revnum, cvs_file, branch_id
-        ):
+  def _log_opening(self, symbol_id, cvs_symbol_id, svn_revnum):
     """Log an opening to self.symbolings.
 
     See _log() for more information."""
 
-    self._log(
-        symbol_id, cvs_symbol_id, svn_revnum, cvs_file, branch_id, OPENING
-        )
+    self._log(symbol_id, cvs_symbol_id, svn_revnum, OPENING)
 
-  def _log_closing(
-        self, symbol_id, cvs_symbol_id, svn_revnum, cvs_file, branch_id
-        ):
+  def _log_closing(self, symbol_id, cvs_symbol_id, svn_revnum):
     """Log a closing to self.symbolings.
 
     See _log() for more information."""
 
-    self._log(
-        symbol_id, cvs_symbol_id, svn_revnum, cvs_file, branch_id, CLOSING
-        )
+    self._log(symbol_id, cvs_symbol_id, svn_revnum, CLOSING)
 
   def close(self):
     self.symbolings.close()
@@ -183,8 +156,7 @@ class SymbolingsReader:
     """Generate the lines for SYMBOL.
 
     SYMBOL is a TypedSymbol instance.  Yield the tuple (revnum, type,
-    cvs_symbol_id, branch_id, cvs_file_id) for all openings and
-    closings for SYMBOL."""
+    cvs_symbol_id) for all openings and closings for SYMBOL."""
 
     if symbol.id in self.offsets:
       # Set our read offset for self.symbolings to the offset for this
@@ -195,15 +167,14 @@ class SymbolingsReader:
         line = self.symbolings.readline().rstrip()
         if not line:
           break
-        id, revnum, type, cvs_symbol_id, branch_id, cvs_file_id = line.split()
+        (id, revnum, type, cvs_symbol_id) = line.split()
         id = int(id, 16)
         revnum = int(revnum)
         if id != symbol.id:
           break
         cvs_symbol_id = int(cvs_symbol_id, 16)
-        cvs_file_id = int(cvs_file_id, 16)
 
-        yield (revnum, type, cvs_symbol_id, branch_id, cvs_file_id)
+        yield (revnum, type, cvs_symbol_id)
 
   def get_source_set(self, svn_symbol_commit, svn_revnum):
     """Return the list of possible sources for SVN_SYMBOL_COMMIT.
@@ -219,8 +190,7 @@ class SymbolingsReader:
     # A map {svn_path : SVNRevisionRange}:
     openings_closings_map = {}
 
-    for (revnum, type, cvs_symbol_id, branch_id, cvs_file_id) \
-            in self._generate_lines(symbol):
+    for (revnum, type, cvs_symbol_id) in self._generate_lines(symbol):
       if cvs_symbol_id in svn_symbol_commit.cvs_symbol_ids:
         cvs_symbol = Ctx()._cvs_items_db[cvs_symbol_id]
 

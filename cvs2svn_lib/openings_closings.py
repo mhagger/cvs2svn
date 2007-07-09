@@ -23,6 +23,7 @@ import cPickle
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib import config
+from cvs2svn_lib.common import InternalError
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.symbol import Branch
@@ -178,18 +179,12 @@ class SymbolingsReader:
     self.offsets = cPickle.load(offsets_db)
     offsets_db.close()
 
-  def _generate_lines(self, symbol, svn_revnum):
-    """Generate the lines for SYMBOL with SVN revisions <= SVN_REVNUM.
+  def _generate_lines(self, symbol):
+    """Generate the lines for SYMBOL.
 
-    SYMBOL is a TypedSymbol instance and SVN_REVNUM is an SVN revision
-    number.  Yield the tuple (revnum, type, cvs_symbol_id, branch_id,
-    cvs_file_id) for all openings and closings for SYMBOL between the
-    SVN_REVNUM parameter passed to the last call to this method() and
-    the value of SVN_REVNUM passed to this call.
-
-    Adjust self.offsets[SUMBOL.id] to point past the lines that are
-    generated.  This generator should always be allowed to run to
-    completion."""
+    SYMBOL is a TypedSymbol instance.  Yield the tuple (revnum, type,
+    cvs_symbol_id, branch_id, cvs_file_id) for all openings and
+    closings for SYMBOL."""
 
     if symbol.id in self.offsets:
       # Set our read offset for self.symbolings to the offset for this
@@ -197,20 +192,13 @@ class SymbolingsReader:
       self.symbolings.seek(self.offsets[symbol.id])
 
       while True:
-        fpos = self.symbolings.tell()
         line = self.symbolings.readline().rstrip()
         if not line:
-          del self.offsets[symbol.id]
           break
         id, revnum, type, cvs_symbol_id, branch_id, cvs_file_id = line.split()
         id = int(id, 16)
         revnum = int(revnum)
         if id != symbol.id:
-          del self.offsets[symbol.id]
-          break
-        elif revnum > svn_revnum:
-          # Update offset for this symbol to the first unused line:
-          self.offsets[symbol.id] = fpos
           break
         cvs_symbol_id = int(cvs_symbol_id, 16)
         cvs_file_id = int(cvs_file_id, 16)
@@ -222,16 +210,9 @@ class SymbolingsReader:
 
     SVN_SYMBOL_COMMIT is an SVNSymbolCommit instance and SVN_REVNUM is
     an SVN revision number.  The symbol sources will contain all
-    openings and closings for SYMBOL between the SVN_REVNUM parameter
-    passed to the last call to this method and value of SVN_REVNUM
-    passed to this call.
-
-    Note that if we encounter an opening rev in this fill, but the
-    corresponding closing rev takes place later than SVN_REVNUM, the
-    closing will not be passed to get_source_set() in this fill (and
-    will be discarded when encountered in a later fill).  This is
-    perfectly fine, because we can still do a valid fill without the
-    closing--we always try to fill what we can as soon as we can."""
+    openings and closings for CVSSymbols that occur in
+    SVN_SYMBOL_COMMIT.  SVN_REVNUM is only used for an internal
+    consistency check."""
 
     symbol = svn_symbol_commit.symbol
 
@@ -239,25 +220,36 @@ class SymbolingsReader:
     openings_closings_map = {}
 
     for (revnum, type, cvs_symbol_id, branch_id, cvs_file_id) \
-            in self._generate_lines(symbol, svn_revnum):
-      cvs_file = Ctx()._cvs_file_db.get_file(cvs_file_id)
+            in self._generate_lines(symbol):
+      if cvs_symbol_id in svn_symbol_commit.cvs_symbol_ids:
+        cvs_symbol = Ctx()._cvs_items_db[cvs_symbol_id]
 
-      if branch_id == '*':
-        svn_path = cvs_file.project.get_trunk_path(cvs_file.cvs_path)
-      else:
-        branch_id = int(branch_id, 16)
-        branch = Ctx()._symbol_db.get_symbol(branch_id)
-        svn_path = cvs_file.project.get_branch_path(branch, cvs_file.cvs_path)
+        svn_path = cvs_symbol.source_lod.get_path(
+            cvs_symbol.cvs_file.cvs_path
+            )
 
-      if type == OPENING:
-        # Always log an OPENING, even if it overwrites a previous
-        # OPENING/CLOSING:
-        openings_closings_map[svn_path] = SVNRevisionRange(revnum)
-      else:
-        # Only register a CLOSING if a corresponding OPENING has
-        # already been recorded:
         range = openings_closings_map.get(svn_path)
-        if range is not None:
+        if type == OPENING:
+          if revnum >= svn_revnum:
+            raise InternalError(
+                'Opening in r%d not ready for %s' % (revnum, cvs_symbol,)
+                )
+          if svn_path in openings_closings_map:
+            raise InternalError(
+                'Multiple openings logged for %s' % (cvs_symbol,)
+                )
+          openings_closings_map[svn_path] = SVNRevisionRange(revnum)
+        else:
+          try:
+            range = openings_closings_map[svn_path]
+          except KeyError:
+            raise InternalError(
+                'Closing precedes opening for %s' % (cvs_symbol,)
+                )
+          if range.closing_revnum is not None:
+            raise InternalError(
+                'Multiple closings logged for %s' % (cvs_symbol,)
+                )
           range.add_closing(revnum)
 
     return get_source_set(symbol, openings_closings_map)

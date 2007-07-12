@@ -85,11 +85,14 @@ class CVSFileItems(object):
         self.root_ids.add(cvs_item.id)
 
   def __getstate__(self):
-    return (self.cvs_file, self.trunk, self.values(),)
+    return (self.cvs_file.id, self.trunk.id, self.values(),)
 
   def __setstate__(self, state):
-    (cvs_file, trunk, cvs_items,) = state
-    CVSFileItems.__init__(self, cvs_file, trunk, cvs_items)
+    (cvs_file_id, trunk_id, cvs_items,) = state
+    CVSFileItems.__init__(
+        self, Ctx()._cvs_file_db.get_file(cvs_file_id),
+        Ctx()._symbol_db.get_symbol(trunk_id), cvs_items,
+        )
 
   def add(self, cvs_item):
     self._cvs_items[cvs_item.id] = cvs_item

@@ -56,10 +56,11 @@ class Changeset(object):
     raise NotImplementedError()
 
   def __getstate__(self):
-    return (self.id, self.cvs_item_ids,)
+    return (self.id, list(self.cvs_item_ids),)
 
   def __setstate__(self, state):
-    (self.id, self.cvs_item_ids,) = state
+    (self.id, cvs_item_ids,) = state
+    self.cvs_item_ids = set(cvs_item_ids)
 
   def __cmp__(self, other):
     raise NotImplementedError()

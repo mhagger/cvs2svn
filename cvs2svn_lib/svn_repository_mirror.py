@@ -19,6 +19,7 @@
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib import config
+from cvs2svn_lib.common import InternalError
 from cvs2svn_lib.common import DB_OPEN_NEW
 from cvs2svn_lib.common import DB_OPEN_READ
 from cvs2svn_lib.common import path_join
@@ -428,38 +429,12 @@ class SVNRepositoryMirror:
         )
 
     if not source_set:
-      # We can only get here for a branch whose first commit is an add
-      # (as opposed to a copy).  This case is covered by test 16.
-      self._fill_empty_branch(symbol)
-    else:
-      dest_node = self._open_writable_node(symbol.get_path(), False)
-      self._fill(symbol, dest_node, source_set)
-
-  def _fill_empty_branch(self, symbol):
-    """Fill a branch without any contents.
-
-    The first commit to a branch was to add a file on the branch.
-    Create the branch by copying trunk from our current revision
-    number minus 1."""
-
-    dest_path = symbol.get_path()
-
-    if self.path_exists(dest_path):
-      Log().warn(
-          "Error filling branch '%s'.\n"
-          "Received an empty SymbolFillingGuide and\n"
-          "attempted to create a branch that already exists."
-          % symbol.get_clean_name()
+      raise InternalError(
+          'fill_symbol() called for %s with empty source set' % (symbol,)
           )
-      return
 
-    source_path = symbol.project.trunk_path
-    node = self.copy_path(source_path, dest_path, self._youngest - 1)
-    # Now since we've just copied trunk to a branch that's *supposed*
-    # to be empty, we delete any entries in the copied directory.
-    for component in node:
-      # Delete but don't prune.
-      self.delete_path(dest_path + '/' + component)
+    dest_node = self._open_writable_node(symbol.get_path(), False)
+    self._fill(symbol, dest_node, source_set)
 
   def _prune_extra_entries(self, dest_path, dest_node, src_entries):
     """Delete any entries in DEST_NODE that are not in SRC_ENTRIES.

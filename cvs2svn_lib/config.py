@@ -137,6 +137,13 @@ CVS_ITEMS_STORE = 'cvs-items.pck'
 CVS_ITEMS_FILTERED_INDEX_TABLE = 'cvs-items-filtered-index.dat'
 CVS_ITEMS_FILTERED_STORE = 'cvs-items-filtered.pck'
 
+# The same as above, but with the CVSItems ordered in groups based on
+# their initial changesets.  CVSItems will usually be accessed one
+# changeset at a time, so this ordering helps disk locality (even
+# though some of the changesets will later be broken up).
+CVS_ITEMS_SORTED_INDEX_TABLE = 'cvs-items-sorted-index.dat'
+CVS_ITEMS_SORTED_STORE = 'cvs-items-sorted.pck'
+
 # A record of all symbolic names that will be processed in the
 # conversion.  This file contains a pickled list of TypedSymbol
 # objects.

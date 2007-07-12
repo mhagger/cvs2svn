@@ -147,12 +147,6 @@ class SVNRepositoryMirror:
 
     pass
 
-  class SVNRepositoryMirrorInvalidFillOperationError(Exception):
-    """Exception raised if an empty SymbolFillingGuide is returned
-    during a fill where the branch in question already exists."""
-
-    pass
-
   def __init__(self):
     """Set up the SVNRepositoryMirror and prepare it for SVNCommits."""
 

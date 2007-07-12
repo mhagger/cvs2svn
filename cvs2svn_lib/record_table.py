@@ -176,30 +176,33 @@ class RecordTable:
 
   def flush(self):
     Log().debug('Flushing cache for %s' % (self,))
-    pairs = self._cache.items()
-    pairs.sort()
-    old_i = None
-    f = self.f
-    for (i, (dirty, s)) in pairs:
-      if not dirty:
-        continue
-      if i == old_i:
-        # No seeking needed
-        pass
-      elif i <= self._limit_written:
-        # Just jump there:
-        f.seek(i * self.packer.record_len)
-      else:
-        # Jump to the end of the file then write _empty_values until
-        # we reach the correct location:
-        f.seek(self._limit_written * self.packer.record_len)
-        while self._limit_written < i:
-          f.write(self.packer.empty_value)
-          self._limit_written += 1
-      f.write(s)
-      old_i = i + 1
-      self._limit_written = max(self._limit_written, old_i)
-    self.f.flush()
+
+    pairs = [(i, s) for (i, (dirty, s)) in self._cache.items() if dirty]
+
+    if pairs:
+      pairs.sort()
+      old_i = None
+      f = self.f
+      for (i, s) in pairs:
+        if i == old_i:
+          # No seeking needed
+          pass
+        elif i <= self._limit_written:
+          # Just jump there:
+          f.seek(i * self.packer.record_len)
+        else:
+          # Jump to the end of the file then write _empty_values until
+          # we reach the correct location:
+          f.seek(self._limit_written * self.packer.record_len)
+          while self._limit_written < i:
+            f.write(self.packer.empty_value)
+            self._limit_written += 1
+        f.write(s)
+        old_i = i + 1
+        self._limit_written = max(self._limit_written, old_i)
+
+      self.f.flush()
+
     self._cache.clear()
 
   def _set_packed_record(self, i, s):

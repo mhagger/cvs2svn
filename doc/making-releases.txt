@@ -6,6 +6,8 @@ Making releases
    B. Update CHANGES.
    C. Run the testsuite, check everything is OK.
    D. Trial-run ./dist.sh, check the output is sane.
+   E. Run "www/validate.sh www/*.html" to make sure that the
+      documentation HTML is valid.
 
  Notes for specific releases:
 

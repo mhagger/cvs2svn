@@ -1,5 +1,5 @@
-Version x.x.x (not yet released)
---------------------------------
+Version 2.0.0 (13 July 2007)
+----------------------------
 
  New features:
  * Add --use-internal-co option to accelerate conversion up to 50%.

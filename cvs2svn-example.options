@@ -136,20 +136,43 @@ ctx.output_option = NewRepositoryOutputOption(
 # can be set to True to suppress cvs2svn output altogether:
 ctx.dry_run = False
 
-# Change the following to CVSRevisionReader() if cvs2svn should use
-# "cvs" to read file versions out of *,v files.  (The default is to
-# use "co", which is part of RCS, and is much faster.)  The arguments
-# can be used to specify an alternative path where the corresponding
-# program can be found.
-# The third alternative is using a built-in version of "co" that is
-# up to 50% faster but requires lots of disk space.  Setting compress
-# to True cuts the additional space requirements by half for the price
-# of a CPU time increase around 35% - however, the total conversion
-# time is still lower due to the reduced I/O pressure - unless --tmpdir
-# is on a RAM disk:
-ctx.revision_reader = RCSRevisionReader(co_executable=r'co')
+# The following option specifies how the revision contents of the RCS
+# files should be read.
+#
+# The default selection is InternalRevisionReader, which uses built-in
+# code that reads the RCS deltas while parsing the files in
+# CollectRevsPass.  This method is very fast but requires lots of
+# temporary disk space.  The disk space is required for (1) storing
+# all of the RCS deltas, and (2) during OutputPass, keeping a copy of
+# the full text of every revision that still has a descendant that
+# hasn't yet been committed.  Since this can includes multiple
+# revisions of each file (i.e., on multiple branches), the required
+# amount of temporary space can potentially be many times the size of
+# a checked out copy of the whole repository.  Setting compress=True
+# cuts the disk space requirements by about 50% at the price of
+# increased CPU usage.  Using compression usually speeds up the
+# conversion due to the reduced I/O pressure, unless --tmpdir is on a
+# RAM disk.  This method does not expand CVS's "Log" keywords.
+#
+# The second possibility is RCSRevisionReader, which uses RCS's "co"
+# program to extract the revision contents of the RCS files during
+# OutputPass.  This option doesn't require any temporary space, but it
+# is relatively slow because (1) "co" has to be executed very many
+# times; and (2) "co" itself has to assemble many file deltas to
+# compute the contents of a particular revision.  The constructor
+# argument specifies how to invoke the "co" executable.
+#
+# The third possibility is CVSRevisionReader, which uses the "cvs"
+# program to extract the revision contents out of the RCS files during
+# OutputPass.  This option doesn't require any temporary space, but it
+# is the slowest of all, because "cvs" is considerably slower than
+# "co".  However, it works in some situations where RCSRevisionReader
+# fails; see the HTML documentation of the "--use-cvs" option for
+# details.  The constructor argument specifies how to invoke the "co"
+# executable.
+ctx.revision_reader = InternalRevisionReader(compress=True)
+#ctx.revision_reader = RCSRevisionReader(co_executable=r'co')
 #ctx.revision_reader = CVSRevisionReader(cvs_executable=r'cvs')
-#ctx.revision_reader = InternalRevisionReader(compress=True)
 
 # Set the name (and optionally the path) of some other executables
 # required by cvs2svn:

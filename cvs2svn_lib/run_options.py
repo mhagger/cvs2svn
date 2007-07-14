@@ -516,12 +516,13 @@ class RunOptions:
     else:
       ctx.output_option = DumpfileOutputOption(dumpfile)
 
-    if use_internal_co:
-      ctx.revision_reader = InternalRevisionReader(compress=True)
+    if use_rcs:
+      ctx.revision_reader = RCSRevisionReader(co_executable)
     elif use_cvs:
       ctx.revision_reader = CVSRevisionReader(cvs_executable)
     else:
-      ctx.revision_reader = RCSRevisionReader(co_executable)
+      # --use-internal-co is the default:
+      ctx.revision_reader = InternalRevisionReader(compress=True)
 
     # Create the default project (using ctx.trunk, ctx.branches, and
     # ctx.tags):

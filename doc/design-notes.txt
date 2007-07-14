@@ -585,10 +585,10 @@ This pass does the following:
 SortSymbolsPass (formerly called pass6)
 ===============
 
-This pass merely sorts 'symbolic-names.txt' into
-'symbolic-names-s.txt'.  This orders the file first by symbolic name,
-and second by Subversion revision number, thus grouping all openings
-and closings for each symbolic name together.
+This pass sorts 'symbolic-names.txt' into 'symbolic-names-s.txt'.
+This orders the file first by symbol ID, and second by Subversion
+revision number, thus grouping all openings and closings for each
+symbolic name together.
 
 
 IndexSymbolsPass (formerly called pass7)

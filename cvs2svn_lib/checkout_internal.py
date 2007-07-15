@@ -48,13 +48,13 @@ zero, then the fulltext is deleted from the checkout database.
 
 The administrative data for managing this consists of one TextRecord
 entry for each revision.  Each TextRecord has an id, which is the same
-number as used for the corresponding CVSRevision instance.  It also
-maintains a reference count of the times it is expected to be
-retrieved.  TextRecords come in several varieties:
+id as used for the corresponding CVSRevision instance.  It also
+maintains a count of the times it is expected to be retrieved.
+TextRecords come in several varieties:
 
-FullTextRecord -- Used for revisions whose fulltext is generated
-    during CollectRevsPass (i.e., typically revision 1.1 of each
-    file).
+FullTextRecord -- Used for revisions whose fulltext is contained
+    directly in the RCS file, and therefore available during
+    CollectRevsPass (i.e., typically revision 1.1 of each file).
 
 DeltaTextRecord -- Used for revisions that are defined via a delta
     relative to some other TextRecord.  These records record the id of
@@ -69,8 +69,8 @@ CheckedOutTextRecord -- Used during OutputPass for a revision that
 
 While a file is being processed during CollectRevsPass, the fulltext
 and deltas are stored to the delta database, and TextRecord instances
-are created to describe keep track of things.  The reference counts
-are all initialized to zero.
+are created to keep track of things.  The reference counts are all
+initialized to zero.
 
 After CollectRevsPass has done any preliminary tree mangling, its
 _FileDataCollector.parse_completed(), method calls
@@ -661,7 +661,8 @@ class InternalRevisionReader(RevisionReader):
     Return the text wrapped in a readable file object.  If
     SUPPRESS_KEYWORD_SUBSTITUTION is True, any RCS keywords will be
     _un_expanded prior to returning the file content.  Note that $Log$
-    never actually generates a log (makes test 68 fail).
+    never actually generates a log (which makes test 'requires_cvs()'
+    fail).
 
     Revisions may be requested in any order, but if they are not
     requested in dependency order the checkout database will become

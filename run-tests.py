@@ -23,7 +23,7 @@
 #  See http://subversion.tigris.org for more information.
 #
 # ====================================================================
-# Copyright (c) 2000-2004 CollabNet.  All rights reserved.
+# Copyright (c) 2000-2007 CollabNet.  All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.  The terms
@@ -2597,45 +2597,46 @@ def attic_directory_conflict():
 def internal_co():
   "verify that --use-internal-co works"
 
-  org_conv = ensure_conversion(
-      'main', args=['--default-eol=native'],
+  rcs_conv = ensure_conversion(
+      'main', args=['--use-rcs', '--default-eol=native'],
       )
   conv = ensure_conversion(
-      'main', args=['--use-internal-co', '--default-eol=native'],
+      'main', args=['--default-eol=native'],
       )
   if conv.output_found(r'WARNING\: internal problem\: leftover revisions'):
     raise Failure()
-  org_lines = run_program(
+  rcs_lines = run_program(
       svntest.main.svnadmin_binary, None, 'dump', '-q', '-r', '1:HEAD',
-      org_conv.repos)
+      rcs_conv.repos)
   lines = run_program(
       svntest.main.svnadmin_binary, None, 'dump', '-q', '-r', '1:HEAD',
       conv.repos)
   # Compare all lines following the repository UUID:
-  if lines[3:] != org_lines[3:]:
+  if lines[3:] != rcs_lines[3:]:
     raise Failure()
 
 
 def internal_co_exclude():
   "verify that --use-internal-co --exclude=... works"
 
-  org_conv = ensure_conversion(
-      'internal-co', args=['--exclude=BRANCH', '--default-eol=native'],
+  rcs_conv = ensure_conversion(
+      'internal-co',
+      args=['--use-rcs', '--exclude=BRANCH', '--default-eol=native'],
       )
   conv = ensure_conversion(
       'internal-co',
-      args=['--use-internal-co', '--exclude=BRANCH', '--default-eol=native'],
+      args=['--exclude=BRANCH', '--default-eol=native'],
       )
   if conv.output_found(r'WARNING\: internal problem\: leftover revisions'):
     raise Failure()
-  org_lines = run_program(
+  rcs_lines = run_program(
       svntest.main.svnadmin_binary, None, 'dump', '-q', '-r', '1:HEAD',
-      org_conv.repos)
+      rcs_conv.repos)
   lines = run_program(
       svntest.main.svnadmin_binary, None, 'dump', '-q', '-r', '1:HEAD',
       conv.repos)
   # Compare all lines following the repository UUID:
-  if lines[3:] != org_lines[3:]:
+  if lines[3:] != rcs_lines[3:]:
     raise Failure()
 
 
@@ -2644,7 +2645,7 @@ def internal_co_trunk_only():
 
   conv = ensure_conversion(
       'internal-co',
-      args=['--use-internal-co', '--trunk-only', '--default-eol=native'],
+      args=['--trunk-only', '--default-eol=native'],
       )
   if conv.output_found(r'WARNING\: internal problem\: leftover revisions'):
     raise Failure()
@@ -2655,7 +2656,7 @@ def leftover_revs():
 
   conv = ensure_conversion(
       'leftover-revs',
-      args=['--use-internal-co', '--exclude=BRANCH', '--default-eol=native'],
+      args=['--exclude=BRANCH', '--default-eol=native'],
       )
   if conv.output_found(r'WARNING\: internal problem\: leftover revisions'):
     raise Failure()
@@ -2665,7 +2666,7 @@ def requires_internal_co():
   "test that internal co can do more than RCS"
   # See issues 4, 11 for the bugs whose regression we're testing for.
   # Unlike in requires_rcs above, issue 29 is not covered.
-  conv = ensure_conversion('requires-cvs', args=["--use-internal-co"])
+  conv = ensure_conversion('requires-cvs')
 
   atsign_contents = file(conv.get_wc("trunk", "atsign-add")).read()
 

@@ -187,20 +187,21 @@ svn:keywords for any file.  While this will not touch the keywords in
 the contents of your files, Subversion will not expand them.
 .SH "EXTRACTION OPTIONS"
 .TP
-\fB--use-rcs\fR
-Use RCS 'co' to extract revision contents.
-.TP
-\fB--use-cvs\fR
-Use CVS to extract revision contents (only use this if having
-problems with \fB--use-rcs\fR or \fB--use-internal-co\fR, as those
-options are much faster).
-.TP
 \fB--use-internal-co\fR
 Use internal code to extract revision contents.  This is up to 50%
 faster than using \fB--use-rcs\fR, but needs a lot of disk space:
 Roughly the size of your CVS repository plus the peak size of a
 complete checkout of the repository with all branches that existed and
-still had commits pending at a given time.
+still had commits pending at a given time.  This option is the
+default.
+.TP
+\fB--use-rcs\fR
+Use RCS 'co' to extract revision contents.
+.TP
+\fB--use-cvs\fR
+Use CVS to extract revision contents (only use this if having
+problems with \fB--use-internal-co\fR or \fB--use-rcs\fR, as those
+options are much faster).
 .SH "ENVIRONMENT OPTIONS"
 .TP
 \fB--tmpdir\fR=\fIpath\fR

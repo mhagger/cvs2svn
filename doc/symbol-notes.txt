@@ -2,29 +2,135 @@ This is a description of how symbols (tags and branches) are handled
 by cvs2svn, determined by reading the code.
 
 
+Notation
+========
+
+    CVSFile -- a single file within the CVS repository.  This object
+        basically only records the filename of the corresponding RCS
+        file, and the relative filename that this file will have
+        within the SVN repository.  A single CVSFile object is used
+        for all of the CVSItems on all lines of development related to
+        that file.
+
+
+The following terms and the corresponding classes represent
+project-wide concepts.  For example, a project will only have a single
+Branch named "foo" even if many files appear on that branch.  Each of
+these objects is assigned a unique integer ID during CollectRevsPass
+which is preserved during the entire conversion (even if, say, a
+Branch is mutated into a Tag).
+
+    Trunk -- the main line of development for a particular Project in
+        CVS.  The Trunk class inherits from LineOfDevelopment.
+
+    Symbol -- a Branch or a Tag within a particular Project (see
+        below).  Instances of this class are also used to represent
+        symbols early in the conversion, before it has been decided
+        whether to convert the symbol as a Branch or as a Tag.  A
+        Symbol contains an id, a Project, and a name.
+
+    Branch -- a symbol within a particular Project that will be
+        treated as a branch in SVN.  Usually corresponds to a branch
+        tag in CVS, but might be a non-branch tag that was mutated in
+        CollateSymbolsPass.  In SVN, this will correspond to a
+        subdirectory of the project's "branches" directory.  The
+        Branch class inherits from Symbol and from LineOfDevelopment.
+
+    Tag -- a symbol within a particular Project that will be treated
+        as a tag in SVN.  Usually corresponds to a non-branch tag in
+        CVS, but might be a branch tag that was mutated in
+        CollateSymbolsPass.  In SVN, this will correspond to a
+        subdirectory of the project's "tags" directory.  The Tags
+        class inherits from Symbol and from LineOfDevelopment.
+
+    ExcludedSymbol -- a CVS symbol that will be excluded from the
+        cvs2svn output.
+
+    LineOfDevelopment -- a Trunk, Branch, or Tag.
+
+
+The following terms and the corresponding classes represent particular
+CVS events in particular CVS files.  For example, the CVSBranch
+representing the creation of Branch "foo" in one file will be distinct
+from the CVSBranch representing the creation of branch "foo" in
+another file, even if the two files are in the same Project.  Each
+CVSItem is assigned a unique integer ID during CollectRevsPass which
+is preserved during the entire conversion (even if, say, a CVSBranch
+is mutated into a CVSTag).
+
+    CVSItem -- abstract base class representing any discernible event
+        within a single RCS file, for example the creation of revision
+        1.6, or the tagging of the file with tag "bar".  Each CVSItem
+        has a unique integer ID.
+
+    CVSRevision -- a particular revision within a particular file
+        (e.g., file.txt:1.6).  A CVSRevision occurs on a particular
+        LineOfDevelopment.  CVSRevision inherits from CVSItem.
+
+    CVSSymbol -- a CVSBranch or CVSTag (see below).  CVSSymbol
+        inherits from CVSItem.
+
+    CVSBranch -- the creation of a particular Branch on a particular
+        file.  A CVSBranch has a Symbol instance telling the Symbol
+        associated with the branch, and also records the
+        LineOfDevelopment from which the branch was created.  In the
+        SVN repository, a CVSBranch corresponds to an "svn copy" of a
+        file to a subdirectory of the project's "branches" directory.
+        CVSBranch inherits from CVSSymbol.
+
+    CVSTag -- the creation of a particular Tag on a particular file.
+        A CVSTag has a Symbol instance telling the Symbol associated
+        with the tag, and also records the LineOfDevelopment from
+        which the tag was created.  In the SVN repository, a CVSTag
+        corresponds to an "svn copy" of a file to a subdirectory of
+        the project's "tags" directory.  CVSTag inherits from
+        CVSSymbol.
+
+
 CollectRevsPass
 ===============
 
 Collect all information about CVS tags and branches from the CVS
 repository.
 
-For each symbol name seen in each project, create a Symbol object.
-The Symbol object has an id, project, and name.
+For each project, create a Trunk object to represent the trunk line of
+development for that project.  The Trunk object for one Project is
+distinct from the Trunk objects for other Projects.  For each symbol
+name seen in each project, create a Symbol object.  The Symbol object
+contains its id, project, and name.
 
-For each Symbol object, collect statistics about how often is was used
-as a branch vs tag, how often there was a commit on a branch with that
-name, and which other symbols branched off of a branch with that name.
+For each Symbol object, collect the following statistics:
+
+  * In how many files was the symbol used as a branch and in how many
+    was it used as a tag.
+
+  * In how many files was there a commit on a branch with that name.
+
+  * Which other symbols branched off of a branch with that name.
+
+  * In how many files could each other line of development have served
+    as the source of this symbol.  These are called the "possible
+    parents" of the symbol.
+
 These statistics are used in CollateSymbolsPass to determine which
 symbols can be excluded or converted from tags to branches or vice
 versa.
 
-For each Symbol object, also count in how many files each branch (or
-trunk) could have served as the symbol's parent.  This information is
-stored to the symbol statistics database but is otherwise still
-unused.
+The possible parents information is important because CVS is ambiguous
+about what line of development was the source of a branch.  A branch
+numbered 1.3.6 might have been created from trunk (revision 1.3), from
+branch 1.3.2, or from branch 1.3.4; it is simply impossible to tell
+based on the information in a single RCS file.
+
+[Actually, the situation is even more confusing.  If a branch tag is
+deleted from CVS, the branch number is recycled.  So it is even
+possible that branch 1.3.6 was created from branch 1.3.8 or 1.3.10 or
+...  We address this confusion by noting the order that the branches
+were listed in the RCS file header.  It appears that CVS lists
+branches in the header in reverse chronological order of creation.]
 
 For each tag seen within each file, create a CVSTag object recording
-an id, CVSFile, Symbol, and the id of the CVSRevision being tagged.
+its id, CVSFile, Symbol, and the id of the CVSRevision being tagged.
 
 For each branch seen within each file, create a CVSBranch object
 recording an id, CVSFile, Symbol, the branch number (e.g., '1.4.2'),
@@ -32,10 +138,18 @@ the id of the CVSRevision from which the branch sprouts, and the id of
 the first CVSRevision on the branch (if any).
 
 For each revision seen within each file, create a CVSRevision object
-recording (among other things) the line of development (trunk or
-branch) on which the revision appeared, a list of ids of CVSTags
+recording (among other things) and id, the line of development (trunk
+or branch) on which the revision appeared, a list of ids of CVSTags
 tagging the revision, and a list of ids of CVSBranches sprouting from
 the revision.
+
+This pass also adjusts the CVS dependency tree to work around some CVS
+quirks.  (See design-notes.txt for the details.)  These adjustments
+can result in CVSBranches being deleted, for example, if a file was
+added on a branch.  In such a case, any CVSRevisions that were
+previously on the branch will be created by adding the file to the
+branch directory, rather than copying the file from the source
+directory to the branch directory.
 
 
 CollateSymbolsPass
@@ -52,9 +166,14 @@ This pass creates the symbol database, SYMBOL_DB, which is accessed in
 later passes via the SymbolDatabase class.  The SymbolDatabase
 contains TypedSymbol (Branch, Tag, or ExcludedSymbol) instances
 indicating how each symbol should be processed in the conversion.  The
-IDs used for a TypedSymbol is the same as the ID allocated to the
+ID used for a TypedSymbol is the same as the ID allocated to the
 corresponding symbol in CollectRevsPass, so references in CVSItems do
 not have to be updated.
+
+This pass also chooses and records the preferred parent for each
+Symbol.  The preferred parent of a Symbol is the line of development
+that appeared as a possible parent of this symbol in the most
+CVSFiles.
 
 
 FilterSymbolsPass
@@ -62,23 +181,27 @@ FilterSymbolsPass
 
 Iterate through all of the CVSItems, mutating CVSTags to CVSBranches
 and vice versa and excluding other CVSSymbols as specified by the
-SymbolDatabase.  Additionally, filter out any CVSRevisions that reside
-on excluded CVSBranches.
+types of the TypedSymbols in the SymbolDatabase.  Additionally, filter
+out any CVSRevisions that reside on excluded CVSBranches.
 
-Additionally, write a record to CVS_SYMBOLS_SUMMARY_DATAFILE for each
-surviving CVSSymbol, listing the Symbol id and the CVSItem id for each
-one on a line of text.  (This file will be sorted in
-SortSymbolSummaryPass then used in InitializeChangesetsPass to create
-SymbolChangesets.)
+Write a line of text to CVS_SYMBOLS_SUMMARY_DATAFILE for each
+surviving CVSSymbol, containing its Symbol id and CVSItem id.  (This
+file will be sorted in SortSymbolSummaryPass then used in
+InitializeChangesetsPass to create SymbolChangesets.)
 
-Finally, record a list of ids of all symbols "closed" by each
-CVSRevision.
+Also adjust the file's dependency tree by grafting CVSSymbols onto
+their preferred parents.  This is not always possible; if not, leave
+the CVSSymbol where it was.
 
-A symbol is considered "closed" by a CVSRevision if the CVSRevision
-follows the CVSRevision from which the symbol sprouted.  (Currently,
-each symbol is considered to sprout from a single, definite revision,
-so it is uniquely closed by that revision's successor.  Eventually we
-want to consider multiple possible roots for a symbol.)
+Finally, record symbol "openings" and "closings".  A CVSSymbol is
+considered "opened" by the CVSRevision or CVSBranch from which the
+CVSSymbol sprouts.  A CVSSymbol is considered "closed" by the
+CVSRevision that overwrites or deletes the CVSSymbol's opening.
+(Every CVSSymbol has an opening, but not all of them have closings;
+for example, the opening CVSRevision might still exist at HEAD.)
+Record in each CVSRevision and CVSBranch a list of all of the
+CVSSymbols that it opens.  Record in each CVSRevision a list of all of
+the CVSSymbols that it closes (CVSBranches cannot close CVSSymbols).
 
 
 SortRevisionSummaryPass
@@ -99,11 +222,11 @@ InitializeChangesetsPass
 ========================
 
 Read CVS_SYMBOLS_SUMMARY_SORTED_DATAFILE, grouping CVSSymbol items
-with the same Symbol id into SymbolChangesets.  (The SymbolChangesets
-are currently unused.)
+with the same Symbol id into SymbolChangesets.  The SymbolChangesets
+are currently unused.
 
 
-BreakCVSRevisionChangesetLoopsPass
+BreakCVSRevisionChangesetCyclesPass
 ==================================
 
 N/A
@@ -115,11 +238,18 @@ RevisionTopologicalSortPass
 N/A
 
 
-BreakCVSSymbolChangesetLoopsPass
+BreakCVSSymbolChangesetCyclesPass
 ================================
 
-Read in the complete changeset graph and break any loops that are
-found by breaking up symbol changesets.
+Read in the changeset graph consisting only of SymbolChangesets and
+break any cycles that are found by breaking up symbol changesets.
+
+
+BreakAllChangesetCyclesPass
+================================
+
+Read in the entire changeset graph and break any cycles that are found
+by breaking up symbol changesets.
 
 
 TopologicalSortPass
@@ -137,38 +267,66 @@ and another (CVS_REVS_TO_SVN_REVNUMS) to map each CVSRevision id to
 the number of the svn revision containing it.
 
 Also, SymbolingsLogger writes a line to SYMBOL_OPENINGS_CLOSINGS for
-each opening or closing svn revision for each CVSSymbol.
+each opening or closing for each CVSSymbol, noting in what SVN
+revision the opening or closing occurred.
 
 
 SortSymbolsPass
 ===============
 
-This pass merely sorts SYMBOL_OPENINGS_CLOSINGS into
-SYMBOL_OPENINGS_CLOSINGS_SORTED.  This orders the file first by
-symbolic name, and second by Subversion revision number, thus grouping
-all openings and closings for each symbolic name together.
+This pass sorts SYMBOL_OPENINGS_CLOSINGS into
+SYMBOL_OPENINGS_CLOSINGS_SORTED.  This orders the file first by symbol
+ID, and second by Subversion revision number, thus grouping all
+openings and closings for each symbolic name together.
 
 
 IndexSymbolsPass
 ================
 
 Iterate through all the lines in SYMBOL_OPENINGS_CLOSINGS_SORTED,
-writing out a pickled map to SYMBOL_OFFSETS_DB mapping the Symbol id
-to the file offset in SYMBOL_OPENINGS_CLOSINGS_SORTED where the Symbol
-id is first encountered.  This will allow us to seek to the various
-offsets in the file and sequentially read only the openings and
-closings that we need.
+writing out a pickled map to SYMBOL_OFFSETS_DB telling at what offset
+in SYMBOL_OPENINGS_CLOSINGS_SORTED the lines corresponding to each
+Symbol begin.  This will allow us to seek to the various offsets in
+the file and sequentially read only the openings and closings that we
+need.
 
 
 OutputPass
 ==========
 
 The filling of a symbol is triggered when SVNSymbolCommit.commit()
-calls SVNRepositoryMirror.fill_symbol().  A filling guide is obtained
-from SymbolingsReader.filling_guide_for_symbol() and from the filling
-guide a list of sources (FillSource objects) is obtained via
-SymbolFillingGuide.get_sources().
+calls SVNRepositoryMirror.fill_symbol().  The SVNSymbolCommit contains
+the list of CVSSymbols that have to be copied to a symbol directory in
+this revision.  However, we still have to do a lot of work to figure
+out what SVN revision number to use as the source of these copies, and
+also to group file copies together into directory copies when
+possible.
 
-...still incomplete...
+The SYMBOL_OPENINGS_CLOSINGS_SORTED file lists the opening and closing
+SVN revision of each revision that has to be copied to the symbol
+directory.  We use this information to try to find SVN revision
+numbers that can serve as the source for as many files as possible, to
+avoid having to pick and choose sources from many SVN revisions.
+
+Furthermore, when a bunch of files in a directory have to be copied at
+the same time, it is cheaper to copy the directory as a whole.  But if
+not *all* of the files within the directory had to be copied, then the
+unneeded files have to be deleted again from the copied directory.  Or
+if some of the files have to be copied from different source SVN
+revision numbers, then those files have to be overwritten in the
+copied directory with the correct versions.
+
+Finally, it can happen that a single Symbol has to be filled multiple
+times (because the initial SymbolChangeset had to be broken up).  In
+this case, the first fill can copy the source directory to the
+destination directory (maybe with fixups), but subsequent copies have
+to copy individual files to avoid overwriting content that is already
+present in the destination directory.
+
+To figure all of this out, we need to know all of the files that
+existed in every previous SVN revision, in every line of development.
+This is done using the SVNRepositoryMirror class, which keeps a
+skeleton record of the entire SVN history in a database using data
+structures similar to those used by SVN itself.
 
 

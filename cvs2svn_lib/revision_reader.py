@@ -21,35 +21,12 @@ import os
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.common import FatalError
-from cvs2svn_lib.common import CommandError
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.process import check_command_runs
-from cvs2svn_lib.process import SimplePopen
+from cvs2svn_lib.process import PipeStream
 from cvs2svn_lib.process import CommandFailedException
 from cvs2svn_lib.revision_recorder import NullRevisionRecorder
 from cvs2svn_lib.revision_excluder import NullRevisionExcluder
-
-
-class PipeStream(object):
-  """A file-like object from which revision contents can be read."""
-
-  def __init__(self, pipe_command):
-    self.pipe_command = ' '.join(pipe_command)
-    self.pipe = SimplePopen(pipe_command, True)
-    self.pipe.stdin.close()
-
-  def read(self, size=None):
-    if size is None:
-      return self.pipe.stdout.read()
-    else:
-      return self.pipe.stdout.read(size)
-
-  def close(self):
-    self.pipe.stdout.close()
-    error_output = self.pipe.stderr.read()
-    exit_status = self.pipe.wait()
-    if exit_status:
-      raise CommandError(self.pipe_command, exit_status, error_output)
 
 
 class RevisionReader(object):

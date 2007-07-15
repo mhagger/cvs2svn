@@ -1431,20 +1431,22 @@ class OutputPass(Pass):
         artifact_manager.get_temp_file(config.CVS_ITEMS_SORTED_INDEX_TABLE),
         DB_OPEN_READ)
     Ctx()._symbol_db = SymbolDatabase()
-    repos = SVNRepositoryMirror()
 
-    Ctx().output_option.setup(repos)
+    repos = SVNRepositoryMirror()
+    revision_reader = Ctx().revision_reader
+
+    Ctx().output_option.setup(revision_reader, repos)
 
     repos.add_delegate(StdoutDelegate(stats_keeper.svn_rev_count()))
 
-    Ctx().revision_reader.start()
+    revision_reader.start()
 
     for svn_commit in self.get_svn_commits():
       svn_commit.commit(repos)
 
     repos.close()
 
-    Ctx().revision_reader.finish()
+    revision_reader.finish()
 
     Ctx().output_option.cleanup()
     Ctx()._symbol_db.close()

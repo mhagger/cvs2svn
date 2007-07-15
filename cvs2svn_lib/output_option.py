@@ -42,10 +42,11 @@ class OutputOption:
 
     raise NotImplementedError()
 
-  def setup(self, repos):
+  def setup(self, revision_reader, repos):
     """Prepare this output option.
 
-    This might include registering a delegate to repos."""
+    REVISION_READER can be used as a resource.  This might include
+    registering a delegate to REPOS."""
 
     raise NotImplementedError()
 
@@ -64,7 +65,7 @@ class DumpfileOutputOption(OutputOption):
   def check(self):
     pass
 
-  def setup(self, repos):
+  def setup(self, revision_reader, repos):
     Log().quiet("Starting Subversion Dumpfile.")
     if not Ctx().dry_run:
       repos.add_delegate(DumpfileDelegate(self.dumpfile_path))
@@ -91,7 +92,7 @@ class RepositoryOutputOption(OutputOption):
             'svnadmin could not be executed.  Please ensure that it is\n'
             'installed and/or use the --svnadmin option.' % (e,))
 
-  def setup(self, repos):
+  def setup(self, revision_reader, repos):
     Log().quiet("Starting Subversion Repository.")
     if not Ctx().dry_run:
       repos.add_delegate(RepositoryDelegate(self.target))
@@ -115,7 +116,7 @@ class NewRepositoryOutputOption(RepositoryOutputOption):
                        "Remove it, or pass '--existing-svnrepos'."
                        % self.target)
 
-  def setup(self, repos):
+  def setup(self, revision_reader, repos):
     Log().normal("Creating new repository '%s'" % (self.target))
     if Ctx().dry_run:
       # Do not actually create repository:
@@ -148,7 +149,7 @@ class NewRepositoryOutputOption(RepositoryOutputOption):
                      "--fs-type=%s" % self.fs_type,
                      self.target))
 
-    RepositoryOutputOption.setup(self, repos)
+    RepositoryOutputOption.setup(self, revision_reader, repos)
 
   def cleanup(self):
     RepositoryOutputOption.cleanup(self)
@@ -187,8 +188,8 @@ class ExistingRepositoryOutputOption(RepositoryOutputOption):
       raise FatalError("the svn-repos-path '%s' is not an "
                        "existing directory." % self.target)
 
-  def setup(self, repos):
-    RepositoryOutputOption.setup(self, repos)
+  def setup(self, revision_reader, repos):
+    RepositoryOutputOption.setup(self, revision_reader, repos)
 
   def cleanup(self):
     RepositoryOutputOption.cleanup(self)

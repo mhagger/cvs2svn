@@ -68,7 +68,9 @@ class DumpfileOutputOption(OutputOption):
   def setup(self, revision_reader, repos):
     Log().quiet("Starting Subversion Dumpfile.")
     if not Ctx().dry_run:
-      repos.add_delegate(DumpfileDelegate(self.dumpfile_path))
+      repos.add_delegate(
+          DumpfileDelegate(revision_reader, self.dumpfile_path)
+          )
 
   def cleanup(self):
     pass
@@ -95,7 +97,7 @@ class RepositoryOutputOption(OutputOption):
   def setup(self, revision_reader, repos):
     Log().quiet("Starting Subversion Repository.")
     if not Ctx().dry_run:
-      repos.add_delegate(RepositoryDelegate(self.target))
+      repos.add_delegate(RepositoryDelegate(revision_reader, self.target))
 
   def cleanup(self):
     pass

@@ -33,10 +33,11 @@ from cvs2svn_lib.svn_repository_mirror import SVNRepositoryMirrorDelegate
 class DumpfileDelegate(SVNRepositoryMirrorDelegate):
   """Create a Subversion dumpfile."""
 
-  def __init__(self, dumpfile_path):
+  def __init__(self, revision_reader, dumpfile_path):
     """Return a new DumpfileDelegate instance, attached to a dumpfile
     DUMPFILE_PATH, using Ctx().filename_utf8_encoder()."""
 
+    self._revision_reader = revision_reader
     self.dumpfile_path = dumpfile_path
 
     self.dumpfile = open(self.dumpfile_path, 'wb')
@@ -208,8 +209,9 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     # If the file has keywords, we must prevent CVS/RCS from expanding
     # the keywords because they must be unexpanded in the repository,
     # or Subversion will get confused.
-    stream = Ctx().revision_reader.get_content_stream(
-        cvs_rev, suppress_keyword_substitution=s_item.has_keywords())
+    stream = self._revision_reader.get_content_stream(
+        cvs_rev, suppress_keyword_substitution=s_item.has_keywords()
+        )
 
     # Insert a filter to convert all EOLs to LFs if neccessary
     if s_item.needs_eol_filter():
@@ -307,7 +309,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
 
   def skip_path(self, cvs_rev):
     """Ensure that the unneeded revisions are accounted for as well."""
-    Ctx().revision_reader.skip_content(cvs_rev)
+    self._revision_reader.skip_content(cvs_rev)
 
   def delete_path(self, path):
     """Emit the deletion of PATH."""

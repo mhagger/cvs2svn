@@ -33,14 +33,16 @@ class RepositoryDelegate(DumpfileDelegate):
   """Creates a new Subversion Repository.  DumpfileDelegate does all
   of the heavy lifting."""
 
-  def __init__(self, target):
+  def __init__(self, revision_reader, target):
     self.target = target
 
     # Since the output of this run is a repository, not a dumpfile,
     # the temporary dumpfiles we create should go in the tmpdir.  But
     # since we delete it ourselves, we don't want to use
     # artifact_manager.
-    DumpfileDelegate.__init__(self, Ctx().get_temp_filename(DUMPFILE))
+    DumpfileDelegate.__init__(
+        self, revision_reader, Ctx().get_temp_filename(DUMPFILE)
+        )
 
     self.dumpfile = open(self.dumpfile_path, 'w+b')
     self.loader_pipe = SimplePopen([ Ctx().svnadmin_executable, 'load', '-q',

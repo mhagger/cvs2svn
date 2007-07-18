@@ -264,14 +264,14 @@ class CVSFileItems(object):
       for lod_items in self._iter_tree(lod, cvs_branch, id):
         yield lod_items
 
-  def adjust_ntdbrs(self, file_imported, ntdbr_ids, rev_1_2_id):
-    """Adjust the non-trunk default branch revisions listed in NTDBR_IDS.
+  def adjust_ntdbrs(self, file_imported, ntdbr_cvs_revs, rev_1_2_id):
+    """Adjust the specified non-trunk default branch revisions.
 
     FILE_IMPORTED is a boolean indicating whether this file appears to
     have been imported, which also means that revision 1.1 has a
-    generated log message that need not be preserved.  NTDBR_IDS is a
-    list of cvs_rev_ids for the revisions that have been determined to
-    be non-trunk default branch revisions.
+    generated log message that need not be preserved.  NTDBR_CVS_REVS
+    is a list of CVSRevision instances in this file that have been
+    determined to be non-trunk default branch revisions.
 
     The first revision on the default branch is handled strangely by
     CVS.  If a file is imported (as opposed to being added), CVS
@@ -298,12 +298,12 @@ class CVSFileItems(object):
     trunk in post-commits.
 
     Set the default_branch_revision members of the revisions listed in
-    NTDBR_IDS to True.  Also, if REV_1_2_ID is not None, then it is
-    the id of revision 1.2.  Set that revision to depend on the last
-    non-trunk default branch revision and possibly adjust its type
-    accordingly."""
+    NTDBR_CVS_REVS to True.  Also, if REV_1_2_ID is not None, then it
+    is the id of revision 1.2.  Set that revision to depend on the
+    last non-trunk default branch revision and possibly adjust its
+    type accordingly."""
 
-    cvs_rev = self[ntdbr_ids[0]]
+    cvs_rev = ntdbr_cvs_revs[0]
 
     if file_imported \
            and cvs_rev.rev == '1.1.1.1' \
@@ -353,8 +353,7 @@ class CVSFileItems(object):
         cvs_rev2 = self[id]
         cvs_rev2.prev_id = cvs_rev.id
 
-    for cvs_rev_id in ntdbr_ids:
-      cvs_rev = self[cvs_rev_id]
+    for cvs_rev in ntdbr_cvs_revs:
       cvs_rev.default_branch_revision = True
 
     if rev_1_2_id is not None:
@@ -362,7 +361,7 @@ class CVSFileItems(object):
       # 1.1.  Accordingly, connect it to the last NTDBR and possibly
       # change its type.
       rev_1_2 = self[rev_1_2_id]
-      last_ntdbr = self[ntdbr_ids[-1]]
+      last_ntdbr = ntdbr_cvs_revs[-1]
       rev_1_2.default_branch_prev_id = last_ntdbr.id
       last_ntdbr.default_branch_next_id = rev_1_2.id
       rev_1_2.__class__ = cvs_revision_type_map[(

@@ -751,7 +751,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     else:
       return self._cvs_file_items[cvs_rev_1_1.next_id]
 
-  def _get_ntdbr_ids(self):
+  def _get_ntdbr_cvs_revs(self):
     """Determine whether there are any non-trunk default branch revisions.
 
     If a non-trunk default branch is determined to have existed, yield
@@ -785,11 +785,12 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
             )
         return
 
-      rev = self.sdc.branches_data[self.default_branch].child
-      while rev:
-        rev_data = self._rev_data[rev]
-        yield rev_data.cvs_rev_id
-        rev = rev_data.child
+      vendor_cvs_branch_id = self.sdc.branches_data[self.default_branch].id
+      lod_items = self._cvs_file_items.get_lod_items(
+          self._cvs_file_items[vendor_cvs_branch_id]
+          )
+      for cvs_rev in lod_items.cvs_revisions:
+        yield cvs_rev
 
     elif self._file_imported:
       # No default branch, but the file appears to have been imported.
@@ -820,16 +821,15 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         else:
           rev_1_2_timestamp = cvs_rev_1_2.timestamp
 
-        rev = vendor_branch_data.child
-
-        while rev:
-          rev_data = self._rev_data[rev]
+        lod_items = self._cvs_file_items.get_lod_items(
+            self._cvs_file_items[vendor_branch_data.id]
+            )
+        for cvs_rev in lod_items.cvs_revisions:
           if rev_1_2_timestamp is not None \
-                 and rev_data.timestamp >= rev_1_2_timestamp:
+                 and cvs_rev.timestamp >= rev_1_2_timestamp:
             # That's the end of the once-default branch.
             break
-          yield rev_data.cvs_rev_id
-          rev = rev_data.child
+          yield cvs_rev
 
   def parse_completed(self):
     """Finish the processing of this file.
@@ -849,20 +849,20 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
     """
 
-    ntdbr_ids = list(self._get_ntdbr_ids())
+    ntdbr_cvs_revs = list(self._get_ntdbr_cvs_revs())
 
     # Break a circular reference loop, allowing the memory for self
     # and sdc to be freed.
     del self.sdc
 
-    if ntdbr_ids:
+    if ntdbr_cvs_revs:
       cvs_rev_1_2 = self._get_cvs_rev_1_2()
       if cvs_rev_1_2 is not None:
         rev_1_2_id = cvs_rev_1_2.id
       else:
         rev_1_2_id = None
       self._cvs_file_items.adjust_ntdbrs(
-          self._file_imported, ntdbr_ids, rev_1_2_id
+          self._file_imported, ntdbr_cvs_revs, rev_1_2_id
           )
 
       if Log().is_on(Log.DEBUG):

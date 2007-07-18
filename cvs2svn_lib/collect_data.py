@@ -409,11 +409,6 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     # line of development.
     self._primary_dependencies = []
 
-    # The revision number of the root revision in the dependency tree.
-    # This is usually '1.1', but could be something else due to
-    # cvsadmin -o
-    self._root_rev = None
-
     # If set, this is an RCS branch number -- rcsparse calls this the
     # "principal branch", but CVS and RCS refer to it as the "default
     # branch", so that's what we call it, even though the rcsparse API
@@ -579,17 +574,6 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
           # The tag_data's rev has the tag as a child:
           parent_data.tags_data.append(tag_data)
 
-  def _determine_root_rev(self):
-    """Determine self.root_rev.
-
-    We use the fact that it is the only revision without a parent."""
-
-    for rev_data in self._rev_data.values():
-      if rev_data.parent is None:
-        assert self._root_rev is None
-        self._root_rev = rev_data.rev
-    assert self._root_rev is not None
-
   def tree_completed(self):
     """The revision tree has been parsed.
 
@@ -601,7 +585,6 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     self._resolve_branch_dependencies()
     self._sort_branches()
     self._resolve_tag_dependencies()
-    self._determine_root_rev()
 
     # Compute the preliminary CVSFileItems for this file:
     cvs_items = []
@@ -670,16 +653,34 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     cvs_rev.revision_recorder_token = \
         self.collect_data.revision_recorder.record_text(cvs_rev, log, text)
 
-  def _get_rev_1_2(self):
+  def _get_cvs_rev_1_1(self):
+    """Return the CVSRevision for the revision playing the role of '1.1'.
+
+    By definition, this is the revision on trunk that does not have
+    any predecessors (i.e., it might not literally be '1.1')."""
+
+    for lod_items in self._cvs_file_items.iter_lods():
+      if isinstance(lod_items.lod, Trunk):
+        return lod_items.cvs_revisions[0]
+    else:
+      raise FatalError(
+          'File %r does not contain a root revision.'
+          % (self.cvs_file.filename,)
+          )
+
+  def _get_cvs_rev_1_2(self):
     """Return the _RevisionData for the revision playing the role of '1.2'.
 
-    Return None if there is no such revision."""
+    By definition, this is the revision that follows the '1.1'
+    revision as defined in the docstring for _get_cvs_rev_1_1() (i.e.,
+    it might not literally be '1.2').  Return None if there is no such
+    revision."""
 
-    rev_1_1 = self._rev_data[self._root_rev]
-    if rev_1_1.child is None:
+    cvs_rev_1_1 = self._get_cvs_rev_1_1()
+    if cvs_rev_1_1.next_id is None:
       return None
     else:
-      return self._rev_data[rev_1_1.child]
+      return self._cvs_file_items[cvs_rev_1_1.next_id]
 
   def _get_ntdbr_ids(self):
     """Determine whether there are any non-trunk default branch revisions.
@@ -707,11 +708,11 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       # There is still a default branch; that means that all revisions
       # on that branch get marked.
 
-      rev_1_2 = self._get_rev_1_2()
-      if rev_1_2 is not None:
+      cvs_rev_1_2 = self._get_cvs_rev_1_2()
+      if cvs_rev_1_2 is not None:
         self.collect_data.record_fatal_error(
             'File has default branch=%s but also a revision %s'
-            % (self.default_branch, rev_1_2.rev,)
+            % (self.default_branch, cvs_rev_1_2.rev,)
             )
         return
 
@@ -744,11 +745,11 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       # would require an extra pass or two.
       vendor_branch_data = self.sdc.branches_data.get('1.1.1')
       if vendor_branch_data is not None:
-        rev_1_2 = self._get_rev_1_2()
-        if rev_1_2 is None:
+        cvs_rev_1_2 = self._get_cvs_rev_1_2()
+        if cvs_rev_1_2 is None:
           rev_1_2_timestamp = None
         else:
-          rev_1_2_timestamp = rev_1_2.timestamp
+          rev_1_2_timestamp = cvs_rev_1_2.timestamp
 
         rev = vendor_branch_data.child
 
@@ -850,9 +851,9 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     del self.sdc
 
     if ntdbr_ids:
-      rev_1_2 = self._get_rev_1_2()
-      if rev_1_2 is not None:
-        rev_1_2_id = rev_1_2.cvs_rev_id
+      cvs_rev_1_2 = self._get_cvs_rev_1_2()
+      if cvs_rev_1_2 is not None:
+        rev_1_2_id = cvs_rev_1_2.id
       else:
         rev_1_2_id = None
       self._cvs_file_items.adjust_ntdbrs(

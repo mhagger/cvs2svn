@@ -470,8 +470,8 @@ class InternalRevisionRecorder(RevisionRecorder):
         artifact_manager.get_temp_file(config.RCS_TREES_INDEX_TABLE),
         DB_OPEN_NEW, PrimedPickleSerializer(primer))
 
-  def start_file(self, cvs_file):
-    self._cvs_file = cvs_file
+  def start_file(self, cvs_file_items):
+    self._cvs_file_items = cvs_file_items
 
     # A map from cvs_rev_id to TextRecord instance:
     self.text_record_db = TextRecordDatabase(self._rcs_deltas, NullDatabase())
@@ -546,10 +546,12 @@ class InternalRevisionRecorder(RevisionRecorder):
     that are unneeded, and store the text records for the file to the
     _rcs_trees database."""
 
+    # Delete our copy of the preliminary CVSFileItems:
+    del self._cvs_file_items
+
     self.text_record_db.recompute_refcounts(cvs_file_items)
     self.text_record_db.free_unused()
-    self._rcs_trees[self._cvs_file.id] = self.text_record_db
-    del self._cvs_file
+    self._rcs_trees[cvs_file_items.cvs_file.id] = self.text_record_db
     del self.text_record_db
 
   def finish(self):

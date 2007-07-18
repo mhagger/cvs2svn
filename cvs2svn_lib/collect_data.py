@@ -424,8 +424,6 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     # (as opposed to added normally).
     self._file_imported = False
 
-    self.collect_data.revision_recorder.start_file(self.cvs_file)
-
   def _get_rev_id(self, revision):
     if revision is None:
       return None
@@ -616,6 +614,9 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
     if Log().is_on(Log.DEBUG):
       self._cvs_file_items.check_symbol_parent_lods()
+
+    # Tell the revision recorder about the file dependency tree.
+    self.collect_data.revision_recorder.start_file(self._cvs_file_items)
 
   def _determine_operation(self, rev_data):
     prev_rev_data = self._rev_data.get(rev_data.parent)

@@ -59,10 +59,14 @@ class RevisionRecorder:
 
     raise NotImplementedError()
 
-  def start_file(self, cvs_file):
-    """Prepare to receive data for the specified file.
+  def start_file(self, cvs_file_items):
+    """Prepare to receive data for the file with the specified CVS_FILE_ITEMS.
 
-    CVS_FILE is an instance of CVSFile."""
+    CVS_FILE_ITEMS is an instance of CVSFileItems describing the file
+    dependency topology right after the file tree was parsed out of
+    the RCS file.  (I.e., it reflects the original CVS dependency
+    structure.)  Please note that the CVSFileItems instance will be
+    changed later."""
 
     raise NotImplementedError()
 
@@ -81,10 +85,11 @@ class RevisionRecorder:
   def finish_file(self, cvs_file_items):
     """The current file is finished; finish and clean up.
 
-    REVISIONS_DATA is a map { rev : _RevisionData } containing
-    _RevisionData instances for all revisions in this file.  ROOT_REV
-    is the revision number of the revision that is the root of the
-    dependency tree (usually '1.1')."""
+    CVS_FILE_ITEMS is a CVSFileItems instance describing the file's
+    items at the end of processing of the RCS file in CollectRevsPass.
+    It may be modified relative to the CVS_FILE_ITEMS instance passed
+    to the corresponding start_file() call (revisions might be
+    deleted, topology changed, etc)."""
 
     raise NotImplementedError()
 
@@ -103,7 +108,7 @@ class NullRevisionRecorder(RevisionRecorder):
   def start(self):
     pass
 
-  def start_file(self, cvs_file):
+  def start_file(self, cvs_file_items):
     pass
 
   def record_text(self, revisions_data, revision, log, text):

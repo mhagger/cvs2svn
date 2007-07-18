@@ -574,6 +574,79 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
           # The tag_data's rev has the tag as a child:
           parent_data.tags_data.append(tag_data)
 
+  def _determine_operation(self, rev_data):
+    prev_rev_data = self._rev_data.get(rev_data.parent)
+    type = cvs_revision_type_map[(
+        rev_data.state != 'dead',
+        prev_rev_data is not None and prev_rev_data.state != 'dead',
+        )]
+
+    return type
+
+  def _get_cvs_revision(self, rev_data):
+    """Create and return a CVSRevision for REV_DATA."""
+
+    branch_ids = [
+        branch_data.id
+        for branch_data in rev_data.branches_data
+        ]
+
+    branch_commit_ids = [
+        self._get_rev_id(rev)
+        for rev in rev_data.branches_revs_data
+        ]
+
+    tag_ids = [
+        tag_data.id
+        for tag_data in rev_data.tags_data
+        ]
+
+    revision_type = self._determine_operation(rev_data)
+
+    return revision_type(
+        self._get_rev_id(rev_data.rev), self.cvs_file,
+        rev_data.timestamp, None,
+        self._get_rev_id(rev_data.parent),
+        self._get_rev_id(rev_data.child),
+        rev_data.rev,
+        True,
+        self.sdc.rev_to_lod(rev_data.rev),
+        rev_data.get_first_on_branch_id(),
+        rev_data.non_trunk_default_branch_revision,
+        self._get_rev_id(rev_data.default_branch_prev),
+        self._get_rev_id(rev_data.default_branch_next),
+        tag_ids, branch_ids, branch_commit_ids,
+        rev_data.revision_recorder_token)
+
+  def _get_cvs_revisions(self):
+    """Generate the CVSRevisions present in this file."""
+
+    for rev_data in self._rev_data.itervalues():
+      yield self._get_cvs_revision(rev_data)
+
+  def _get_cvs_branches(self):
+    """Generate the CVSBranches present in this file."""
+
+    for branch_data in self.sdc.branches_data.values():
+      yield CVSBranch(
+          branch_data.id, self.cvs_file, branch_data.symbol,
+          branch_data.branch_number,
+          self.sdc.rev_to_lod(branch_data.parent),
+          self._get_rev_id(branch_data.parent),
+          self._get_rev_id(branch_data.child),
+          )
+
+  def _get_cvs_tags(self):
+    """Generate the CVSTags present in this file."""
+
+    for tags_data in self.sdc.tags_data.values():
+      for tag_data in tags_data:
+        yield CVSTag(
+            tag_data.id, self.cvs_file, tag_data.symbol,
+            self.sdc.rev_to_lod(tag_data.rev),
+            self._get_rev_id(tag_data.rev),
+            )
+
   def tree_completed(self):
     """The revision tree has been parsed.
 
@@ -600,15 +673,6 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
     # Tell the revision recorder about the file dependency tree.
     self.collect_data.revision_recorder.start_file(self._cvs_file_items)
-
-  def _determine_operation(self, rev_data):
-    prev_rev_data = self._rev_data.get(rev_data.parent)
-    type = cvs_revision_type_map[(
-        rev_data.state != 'dead',
-        prev_rev_data is not None and prev_rev_data.state != 'dead',
-        )]
-
-    return type
 
   def set_revision_info(self, revision, log, text):
     """This is a callback method declared in Sink."""
@@ -761,70 +825,6 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
             break
           yield rev_data.cvs_rev_id
           rev = rev_data.child
-
-  def _get_cvs_revision(self, rev_data):
-    """Create and return a CVSRevision for REV_DATA."""
-
-    branch_ids = [
-        branch_data.id
-        for branch_data in rev_data.branches_data
-        ]
-
-    branch_commit_ids = [
-        self._get_rev_id(rev)
-        for rev in rev_data.branches_revs_data
-        ]
-
-    tag_ids = [
-        tag_data.id
-        for tag_data in rev_data.tags_data
-        ]
-
-    revision_type = self._determine_operation(rev_data)
-
-    return revision_type(
-        self._get_rev_id(rev_data.rev), self.cvs_file,
-        rev_data.timestamp, None,
-        self._get_rev_id(rev_data.parent),
-        self._get_rev_id(rev_data.child),
-        rev_data.rev,
-        True,
-        self.sdc.rev_to_lod(rev_data.rev),
-        rev_data.get_first_on_branch_id(),
-        rev_data.non_trunk_default_branch_revision,
-        self._get_rev_id(rev_data.default_branch_prev),
-        self._get_rev_id(rev_data.default_branch_next),
-        tag_ids, branch_ids, branch_commit_ids,
-        rev_data.revision_recorder_token)
-
-  def _get_cvs_revisions(self):
-    """Generate the CVSRevisions present in this file."""
-
-    for rev_data in self._rev_data.itervalues():
-      yield self._get_cvs_revision(rev_data)
-
-  def _get_cvs_branches(self):
-    """Generate the CVSBranches present in this file."""
-
-    for branch_data in self.sdc.branches_data.values():
-      yield CVSBranch(
-          branch_data.id, self.cvs_file, branch_data.symbol,
-          branch_data.branch_number,
-          self.sdc.rev_to_lod(branch_data.parent),
-          self._get_rev_id(branch_data.parent),
-          self._get_rev_id(branch_data.child),
-          )
-
-  def _get_cvs_tags(self):
-    """Generate the CVSTags present in this file."""
-
-    for tags_data in self.sdc.tags_data.values():
-      for tag_data in tags_data:
-        yield CVSTag(
-            tag_data.id, self.cvs_file, tag_data.symbol,
-            self.sdc.rev_to_lod(tag_data.rev),
-            self._get_rev_id(tag_data.rev),
-            )
 
   def parse_completed(self):
     """Finish the processing of this file.

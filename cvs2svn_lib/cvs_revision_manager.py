@@ -14,58 +14,17 @@
 # history and logs, available at http://cvs2svn.tigris.org/.
 # ====================================================================
 
-"""This module provides access to the CVS repository for cvs2svn."""
+"""Access the CVS repository via CVS's 'cvs' command."""
 
-
-import os
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.common import FatalError
-from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.process import check_command_runs
 from cvs2svn_lib.process import PipeStream
 from cvs2svn_lib.process import CommandFailedException
 from cvs2svn_lib.revision_manager import RevisionReader
 from cvs2svn_lib.revision_manager import NullRevisionRecorder
 from cvs2svn_lib.revision_manager import NullRevisionExcluder
-
-
-class RCSRevisionReader(RevisionReader):
-  """A RevisionReader that reads the contents via RCS."""
-
-  def __init__(self, co_executable):
-    self.co_executable = co_executable
-    try:
-      check_command_runs([self.co_executable, '-V'], self.co_executable)
-    except CommandFailedException, e:
-      raise FatalError('%s\n'
-                       'Please check that co is installed and in your PATH\n'
-                       '(it is a part of the RCS software).' % (e,))
-
-  def register_artifacts(self, which_pass):
-    pass
-
-  def get_revision_recorder(self):
-    return NullRevisionRecorder()
-
-  def get_revision_excluder(self):
-    return NullRevisionExcluder()
-
-  def start(self):
-    pass
-
-  def get_content_stream(self, cvs_rev, suppress_keyword_substitution=False):
-    pipe_cmd = [self.co_executable, '-q', '-x,v', '-p' + cvs_rev.rev]
-    if suppress_keyword_substitution:
-      pipe_cmd.append('-kk')
-    pipe_cmd.append(cvs_rev.cvs_file.filename)
-    return PipeStream(pipe_cmd)
-
-  def skip_content(self, cvs_rev):
-    pass
-
-  def finish(self):
-    pass
 
 
 class CVSRevisionReader(RevisionReader):

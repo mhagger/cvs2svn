@@ -43,8 +43,8 @@ from cvs2svn_lib.output_option import NewRepositoryOutputOption
 from cvs2svn_lib.output_option import ExistingRepositoryOutputOption
 from cvs2svn_lib.project import Project
 from cvs2svn_lib.pass_manager import InvalidPassError
-from cvs2svn_lib.revision_reader import RCSRevisionReader
-from cvs2svn_lib.revision_reader import CVSRevisionReader
+from cvs2svn_lib.rcs_revision_manager import RCSRevisionReader
+from cvs2svn_lib.cvs_revision_manager import CVSRevisionReader
 from cvs2svn_lib.checkout_internal import InternalRevisionReader
 from cvs2svn_lib.symbol_strategy import AllBranchRule
 from cvs2svn_lib.symbol_strategy import AllTagRule

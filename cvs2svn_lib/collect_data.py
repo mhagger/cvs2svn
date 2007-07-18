@@ -717,40 +717,6 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     cvs_rev.revision_recorder_token = \
         self.collect_data.revision_recorder.record_text(cvs_rev, log, text)
 
-  def _get_trunk_lod_items(self):
-    """Return the LODItems instance for trunk."""
-
-    for lod_items in self._cvs_file_items.iter_root_lods():
-      if isinstance(lod_items.lod, Trunk):
-        return lod_items
-    else:
-      raise FatalError(
-          'File %r does not contain a root revision.'
-          % (self.cvs_file.filename,)
-          )
-
-  def _get_cvs_rev_1_1(self):
-    """Return the CVSRevision for the revision playing the role of '1.1'.
-
-    By definition, this is the revision on trunk that does not have
-    any predecessors (i.e., it might not literally be '1.1')."""
-
-    return self._get_trunk_lod_items().cvs_revisions[0]
-
-  def _get_cvs_rev_1_2(self):
-    """Return the _RevisionData for the revision playing the role of '1.2'.
-
-    By definition, this is the revision that follows the '1.1'
-    revision as defined in the docstring for _get_cvs_rev_1_1() (i.e.,
-    it might not literally be '1.2').  Return None if there is no such
-    revision."""
-
-    cvs_rev_1_1 = self._get_cvs_rev_1_1()
-    if cvs_rev_1_1.next_id is None:
-      return None
-    else:
-      return self._cvs_file_items[cvs_rev_1_1.next_id]
-
   def _get_ntdbr_cvs_revs(self):
     """Determine whether there are any non-trunk default branch revisions.
 
@@ -777,19 +743,21 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       # There is still a default branch; that means that all revisions
       # on that branch get marked.
 
-      cvs_rev_1_2 = self._get_cvs_rev_1_2()
-      if cvs_rev_1_2 is not None:
+      vendor_cvs_branch_id = self.sdc.branches_data[self.default_branch].id
+      vendor_lod_items = self._cvs_file_items.get_lod_items(
+          self._cvs_file_items[vendor_cvs_branch_id]
+          )
+
+      rev_1_1 = self._cvs_file_items[vendor_lod_items.cvs_branch.source_id]
+      rev_1_2_id = rev_1_1.next_id
+      if rev_1_2_id is not None:
         self.collect_data.record_fatal_error(
             'File has default branch=%s but also a revision %s'
-            % (self.default_branch, cvs_rev_1_2.rev,)
+            % (self.default_branch, self._cvs_file_items[rev_1_2_id].rev,)
             )
         return
 
-      vendor_cvs_branch_id = self.sdc.branches_data[self.default_branch].id
-      lod_items = self._cvs_file_items.get_lod_items(
-          self._cvs_file_items[vendor_cvs_branch_id]
-          )
-      for cvs_rev in lod_items.cvs_revisions:
+      for cvs_rev in vendor_lod_items.cvs_revisions:
         yield cvs_rev
 
     elif self._file_imported:
@@ -815,16 +783,19 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       # would require an extra pass or two.
       vendor_branch_data = self.sdc.branches_data.get('1.1.1')
       if vendor_branch_data is not None:
-        cvs_rev_1_2 = self._get_cvs_rev_1_2()
-        if cvs_rev_1_2 is None:
-          rev_1_2_timestamp = None
-        else:
-          rev_1_2_timestamp = cvs_rev_1_2.timestamp
-
-        lod_items = self._cvs_file_items.get_lod_items(
+        vendor_lod_items = self._cvs_file_items.get_lod_items(
             self._cvs_file_items[vendor_branch_data.id]
             )
-        for cvs_rev in lod_items.cvs_revisions:
+
+        rev_1_1 = self._cvs_file_items[vendor_lod_items.cvs_branch.source_id]
+        rev_1_2_id = rev_1_1.next_id
+
+        if rev_1_2_id is None:
+          rev_1_2_timestamp = None
+        else:
+          rev_1_2_timestamp = self._cvs_file_items[rev_1_2_id].timestamp
+
+        for cvs_rev in vendor_lod_items.cvs_revisions:
           if rev_1_2_timestamp is not None \
                  and cvs_rev.timestamp >= rev_1_2_timestamp:
             # That's the end of the once-default branch.

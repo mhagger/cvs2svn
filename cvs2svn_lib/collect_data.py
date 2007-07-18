@@ -72,6 +72,7 @@ from cvs2svn_lib.symbol import Trunk
 from cvs2svn_lib.cvs_item import CVSBranch
 from cvs2svn_lib.cvs_item import CVSTag
 from cvs2svn_lib.cvs_item import cvs_revision_type_map
+from cvs2svn_lib.cvs_file_items import VendorBranchError
 from cvs2svn_lib.cvs_file_items import CVSFileItems
 from cvs2svn_lib.key_generator import KeyGenerator
 from cvs2svn_lib.cvs_item_database import NewCVSItemStore
@@ -717,73 +718,6 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     cvs_rev.revision_recorder_token = \
         self.collect_data.revision_recorder.record_text(cvs_rev, log, text)
 
-  def _process_live_ntdb(self, vendor_lod_items):
-    """VENDOR_LOD_ITEMS is a live default branch; process it.
-
-    In this case, all revisions on the default branch are NTDBRs and
-    it is an error if there is also a 1.2 revision."""
-
-    rev_1_1 = self._cvs_file_items[vendor_lod_items.cvs_branch.source_id]
-    rev_1_2_id = rev_1_1.next_id
-    if rev_1_2_id is not None:
-      self.collect_data.record_fatal_error(
-          'File has default branch=%s but also a revision %s'
-          % (vendor_lod_items.cvs_branch.branch_number,
-             self._cvs_file_items[rev_1_2_id].rev,)
-          )
-      return False
-
-    ntdbr_cvs_revs = list(vendor_lod_items.cvs_revisions)
-
-    if ntdbr_cvs_revs:
-      self._cvs_file_items.adjust_ntdbrs(ntdbr_cvs_revs)
-      return True
-    else:
-      return False
-
-  def _process_historical_ntdb(self, vendor_lod_items):
-    # No default branch, but the file appears to have been imported.
-    # So our educated guess is that all revisions on the '1.1.1'
-    # branch with timestamps prior to the timestamp of '1.2' were
-    # non-trunk default branch revisions.
-    #
-    # This really only processes standard '1.1.1.*'-style vendor
-    # revisions.  One could conceivably have a file whose default
-    # branch is 1.1.3 or whatever, or was that at some point in
-    # time, with vendor revisions 1.1.3.1, 1.1.3.2, etc.  But with
-    # the default branch gone now, we'd have no basis for assuming
-    # that the non-standard vendor branch had ever been the default
-    # branch anyway.
-    #
-    # Note that we rely on comparisons between the timestamps of the
-    # revisions on the vendor branch and that of revision 1.2, even
-    # though the timestamps might be incorrect due to clock skew.
-    # We could do a slightly better job if we used the changeset
-    # timestamps, as it is possible that the dependencies that went
-    # into determining those timestamps are more accurate.  But that
-    # would require an extra pass or two.
-    rev_1_1 = self._cvs_file_items[vendor_lod_items.cvs_branch.source_id]
-    rev_1_2_id = rev_1_1.next_id
-
-    if rev_1_2_id is None:
-      rev_1_2_timestamp = None
-    else:
-      rev_1_2_timestamp = self._cvs_file_items[rev_1_2_id].timestamp
-
-    ntdbr_cvs_revs = []
-    for cvs_rev in vendor_lod_items.cvs_revisions:
-      if rev_1_2_timestamp is not None \
-             and cvs_rev.timestamp >= rev_1_2_timestamp:
-        # That's the end of the once-default branch.
-        break
-      ntdbr_cvs_revs.append(cvs_rev)
-
-    if ntdbr_cvs_revs:
-      self._cvs_file_items.adjust_ntdbrs(ntdbr_cvs_revs)
-      return True
-    else:
-      return False
-
   def parse_completed(self):
     """Finish the processing of this file.
 
@@ -823,24 +757,30 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
     """
 
-    if self.default_branch:
-      vendor_cvs_branch_id = self.sdc.branches_data[self.default_branch].id
-      vendor_lod_items = self._cvs_file_items.get_lod_items(
-          self._cvs_file_items[vendor_cvs_branch_id]
-          )
-      if not self._process_live_ntdb(vendor_lod_items):
-        return
-    elif self._file_imported:
-      vendor_branch_data = self.sdc.branches_data.get('1.1.1')
-      if vendor_branch_data is None:
-        return
-      else:
+    try:
+      if self.default_branch:
+        vendor_cvs_branch_id = self.sdc.branches_data[self.default_branch].id
         vendor_lod_items = self._cvs_file_items.get_lod_items(
-            self._cvs_file_items[vendor_branch_data.id]
+            self._cvs_file_items[vendor_cvs_branch_id]
             )
-        if not self._process_historical_ntdb(vendor_lod_items):
+        if not self._cvs_file_items._process_live_ntdb(vendor_lod_items):
           return
-    else:
+      elif self._file_imported:
+        vendor_branch_data = self.sdc.branches_data.get('1.1.1')
+        if vendor_branch_data is None:
+          return
+        else:
+          vendor_lod_items = self._cvs_file_items.get_lod_items(
+              self._cvs_file_items[vendor_branch_data.id]
+              )
+          if not self._cvs_file_items._process_historical_ntdb(
+                vendor_lod_items
+                ):
+            return
+      else:
+        return
+    except VendorBranchError, e:
+      self.collect_data.record_fatal_error(str(e))
       return
 
     if self._file_imported:

@@ -43,6 +43,12 @@ from cvs2svn_lib.cvs_item import cvs_branch_type_map
 from cvs2svn_lib.cvs_item import cvs_tag_type_map
 
 
+class VendorBranchError(Exception):
+  """There is an error in the structure of the file revision tree."""
+
+  pass
+
+
 class LODItems(object):
   def __init__(self, lod, cvs_branch, cvs_revisions, cvs_branches, cvs_tags):
     # The LineOfDevelopment described by this instance.
@@ -321,6 +327,80 @@ class CVSFileItems(object):
           isinstance(rev_1_2, CVSRevisionModification),
           isinstance(last_ntdbr, CVSRevisionModification),
           )]
+
+  def _process_live_ntdb(self, vendor_lod_items):
+    """VENDOR_LOD_ITEMS is a live default branch; process it.
+
+    In this case, all revisions on the default branch are NTDBRs and
+    it is an error if there is also a '1.2' revision.
+
+    Return True iff this transformation really does something.  Raise
+    a VendorBranchError if there is a '1.2' revision."""
+
+    rev_1_1 = self[vendor_lod_items.cvs_branch.source_id]
+    rev_1_2_id = rev_1_1.next_id
+    if rev_1_2_id is not None:
+      raise VendorBranchError(
+          'File has default branch=%s but also a revision %s'
+          % (vendor_lod_items.cvs_branch.branch_number, self[rev_1_2_id].rev,)
+          )
+
+    ntdbr_cvs_revs = list(vendor_lod_items.cvs_revisions)
+
+    if ntdbr_cvs_revs:
+      self.adjust_ntdbrs(ntdbr_cvs_revs)
+      return True
+    else:
+      return False
+
+  def _process_historical_ntdb(self, vendor_lod_items):
+    """There appears to have been a non-trunk default branch in the past.
+
+    There is currently no default branch, but the branch described by
+    file appears to have been imported.  So our educated guess is that
+    all revisions on the '1.1.1' branch (described by
+    VENDOR_LOD_ITEMS) with timestamps prior to the timestamp of '1.2'
+    were non-trunk default branch revisions.
+
+    Return True iff this transformation really does something.
+
+    This really only handles standard '1.1.1.*'-style vendor
+    revisions.  One could conceivably have a file whose default branch
+    is 1.1.3 or whatever, or was that at some point in time, with
+    vendor revisions 1.1.3.1, 1.1.3.2, etc.  But with the default
+    branch gone now, we'd have no basis for assuming that the
+    non-standard vendor branch had ever been the default branch
+    anyway.
+
+    Note that we rely on comparisons between the timestamps of the
+    revisions on the vendor branch and that of revision 1.2, even
+    though the timestamps might be incorrect due to clock skew.  We
+    could do a slightly better job if we used the changeset
+    timestamps, as it is possible that the dependencies that went into
+    determining those timestamps are more accurate.  But that would
+    require an extra pass or two."""
+
+    rev_1_1 = self[vendor_lod_items.cvs_branch.source_id]
+    rev_1_2_id = rev_1_1.next_id
+
+    if rev_1_2_id is None:
+      rev_1_2_timestamp = None
+    else:
+      rev_1_2_timestamp = self[rev_1_2_id].timestamp
+
+    ntdbr_cvs_revs = []
+    for cvs_rev in vendor_lod_items.cvs_revisions:
+      if rev_1_2_timestamp is not None \
+             and cvs_rev.timestamp >= rev_1_2_timestamp:
+        # That's the end of the once-default branch.
+        break
+      ntdbr_cvs_revs.append(cvs_rev)
+
+    if ntdbr_cvs_revs:
+      self.adjust_ntdbrs(ntdbr_cvs_revs)
+      return True
+    else:
+      return False
 
   def imported_remove_1_1(self, cvs_rev):
     """This file was imported.  Remove the 1.1 revision if possible.

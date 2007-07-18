@@ -861,9 +861,11 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         rev_1_2_id = cvs_rev_1_2.id
       else:
         rev_1_2_id = None
-      self._cvs_file_items.adjust_ntdbrs(
-          self._file_imported, ntdbr_cvs_revs, rev_1_2_id
-          )
+
+      self._cvs_file_items.adjust_ntdbrs(ntdbr_cvs_revs, rev_1_2_id)
+
+      if self._file_imported:
+        self._cvs_file_items.imported_remove_1_1(ntdbr_cvs_revs[0])
 
       if Log().is_on(Log.DEBUG):
         self._cvs_file_items.check_symbol_parent_lods()

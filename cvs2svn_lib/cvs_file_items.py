@@ -264,7 +264,7 @@ class CVSFileItems(object):
       for lod_items in self._iter_tree(lod, cvs_branch, id):
         yield lod_items
 
-  def adjust_ntdbrs(self, file_imported, ntdbr_cvs_revs, rev_1_2_id):
+  def adjust_ntdbrs(self, ntdbr_cvs_revs, rev_1_2_id):
     """Adjust the specified non-trunk default branch revisions.
 
     FILE_IMPORTED is a boolean indicating whether this file appears to
@@ -303,10 +303,29 @@ class CVSFileItems(object):
     last non-trunk default branch revision and possibly adjust its
     type accordingly."""
 
-    cvs_rev = ntdbr_cvs_revs[0]
+    for cvs_rev in ntdbr_cvs_revs:
+      cvs_rev.default_branch_revision = True
 
-    if file_imported \
-           and cvs_rev.rev == '1.1.1.1' \
+    if rev_1_2_id is not None:
+      # Revision 1.2 logically follows the imported revisions, not
+      # 1.1.  Accordingly, connect it to the last NTDBR and possibly
+      # change its type.
+      rev_1_2 = self[rev_1_2_id]
+      last_ntdbr = ntdbr_cvs_revs[-1]
+      rev_1_2.default_branch_prev_id = last_ntdbr.id
+      last_ntdbr.default_branch_next_id = rev_1_2.id
+      rev_1_2.__class__ = cvs_revision_type_map[(
+          isinstance(rev_1_2, CVSRevisionModification),
+          isinstance(last_ntdbr, CVSRevisionModification),
+          )]
+
+  def imported_remove_1_1(self, cvs_rev):
+    """This file was imported.  Remove the 1.1 revision if possible.
+
+    CVS_REV is the CVSRevision instance for the first revision on the
+    vendor branch.  See adjust_ntdbrs() for more information."""
+
+    if cvs_rev.rev == '1.1.1.1' \
            and isinstance(cvs_rev, CVSRevisionModification) \
            and not cvs_rev.deltatext_exists:
       rev_1_1 = self[cvs_rev.prev_id]
@@ -316,6 +335,7 @@ class CVSFileItems(object):
       self.root_ids.remove(rev_1_1.id)
       del self[rev_1_1.id]
       cvs_rev.prev_id = None
+      rev_1_2_id = rev_1_1.next_id
       if rev_1_2_id is not None:
         rev_1_2 = self[rev_1_2_id]
         rev_1_2.prev_id = None
@@ -352,22 +372,6 @@ class CVSFileItems(object):
       for id in rev_1_1.branch_commit_ids:
         cvs_rev2 = self[id]
         cvs_rev2.prev_id = cvs_rev.id
-
-    for cvs_rev in ntdbr_cvs_revs:
-      cvs_rev.default_branch_revision = True
-
-    if rev_1_2_id is not None:
-      # Revision 1.2 logically follows the imported revisions, not
-      # 1.1.  Accordingly, connect it to the last NTDBR and possibly
-      # change its type.
-      rev_1_2 = self[rev_1_2_id]
-      last_ntdbr = ntdbr_cvs_revs[-1]
-      rev_1_2.default_branch_prev_id = last_ntdbr.id
-      last_ntdbr.default_branch_next_id = rev_1_2.id
-      rev_1_2.__class__ = cvs_revision_type_map[(
-          isinstance(rev_1_2, CVSRevisionModification),
-          isinstance(last_ntdbr, CVSRevisionModification),
-          )]
 
   def _delete_unneeded(self, cvs_item, metadata_db):
     if isinstance(cvs_item, CVSRevisionNoop) \

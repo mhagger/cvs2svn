@@ -829,28 +829,27 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
           self._cvs_file_items[vendor_cvs_branch_id]
           )
       if not self._process_live_ntdb(vendor_lod_items):
-        vendor_lod_items = None
+        return
     elif self._file_imported:
       vendor_branch_data = self.sdc.branches_data.get('1.1.1')
       if vendor_branch_data is None:
-        vendor_lod_items = None
+        return
       else:
         vendor_lod_items = self._cvs_file_items.get_lod_items(
             self._cvs_file_items[vendor_branch_data.id]
             )
         if not self._process_historical_ntdb(vendor_lod_items):
-          vendor_lod_items = None
+          return
     else:
-      vendor_lod_items = None
+      return
 
-    if vendor_lod_items:
-      if self._file_imported:
-        self._cvs_file_items.imported_remove_1_1(
-            vendor_lod_items.cvs_revisions[0]
-            )
+    if self._file_imported:
+      self._cvs_file_items.imported_remove_1_1(
+          vendor_lod_items.cvs_revisions[0]
+          )
 
-      if Log().is_on(Log.DEBUG):
-        self._cvs_file_items.check_symbol_parent_lods()
+    if Log().is_on(Log.DEBUG):
+      self._cvs_file_items.check_symbol_parent_lods()
 
   def get_cvs_file_items(self):
     """Finish up and return a CVSFileItems instance for this file.

@@ -809,22 +809,13 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
     pass
 
-  def get_cvs_file_items(self):
-    """Finish up and return a CVSFileItems instance for this file.
+  def _process_ntdbrs(self):
+    """Fix up any non-trunk default branch revisions (if present).
 
-    Also fix up any non-trunk default branch revisions (if present) by
-    setting their default_branch_revision members to True and
-    connecting the last one with revision 1.2.
-
-    This method must only be called once.
-
-    """
+    Set their default_branch_revision members to True.  Connect the
+    last one with revision 1.2.  Remove revision 1.1 if not needed."""
 
     ntdbr_cvs_revs = list(self._get_ntdbr_cvs_revs())
-
-    # Break a circular reference loop, allowing the memory for self
-    # and sdc to be freed.
-    del self.sdc
 
     if ntdbr_cvs_revs:
       self._cvs_file_items.adjust_ntdbrs(ntdbr_cvs_revs)
@@ -834,6 +825,17 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
       if Log().is_on(Log.DEBUG):
         self._cvs_file_items.check_symbol_parent_lods()
+
+  def get_cvs_file_items(self):
+    """Finish up and return a CVSFileItems instance for this file.
+
+    This method must only be called once."""
+
+    self._process_ntdbrs()
+
+    # Break a circular reference loop, allowing the memory for self
+    # and sdc to be freed.
+    del self.sdc
 
     return self._cvs_file_items
 

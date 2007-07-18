@@ -574,7 +574,6 @@ class CVSFileItems(object):
 
     They should already be alone on a CVSBranch-less branch."""
 
-    ntdbr_lod_items = None
     for lod_items in self.iter_lods():
       if lod_items.cvs_revisions \
              and lod_items.cvs_revisions[0].default_branch_revision:

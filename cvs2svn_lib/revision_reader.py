@@ -25,72 +25,9 @@ from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.process import check_command_runs
 from cvs2svn_lib.process import PipeStream
 from cvs2svn_lib.process import CommandFailedException
-from cvs2svn_lib.revision_recorder import NullRevisionRecorder
-from cvs2svn_lib.revision_excluder import NullRevisionExcluder
-
-
-class RevisionReader(object):
-  """An object that can read the contents of CVSRevisions."""
-
-  def register_artifacts(self, which_pass):
-    """Register artifacts that will be needed during branch exclusion.
-
-    WHICH_PASS is the pass that will call our callbacks, so it should
-    be used to do the registering (e.g., call
-    WHICH_PASS.register_temp_file() and/or
-    WHICH_PASS.register_temp_file_needed())."""
-
-    raise NotImplementedError()
-
-  def get_revision_recorder(self):
-    """Return a RevisionRecorder instance that can gather revision info.
-
-    The object returned by this method will be passed to CollectData,
-    and its callback methods called as the CVS files are parsed.  If
-    no data collection is necessary, this method can return an
-    instance of NullRevisionRecorder."""
-
-    raise NotImplementedError
-
-  def get_revision_excluder(self):
-    """Return a RevisionExcluder instance to collect exclusion info.
-
-    The object returned by this method will have its callback methods
-    called as branches are excluded.  If such information is not
-    needed, this method can return an instance of
-    NullRevisionExcluder."""
-
-    raise NotImplementedError
-
-  def start(self):
-    """Prepare for calls to get_content_stream."""
-
-    raise NotImplementedError
-
-  def get_content_stream(self, cvs_rev, suppress_keyword_substitution=False):
-    """Return a file-like object from which the contents of CVS_REV
-    can be read.
-
-    CVS_REV is a CVSRevision.  If SUPPRESS_KEYWORD_SUBSTITUTION is
-    True, then suppress the substitution of RCS/CVS keywords in the
-    output."""
-
-    raise NotImplementedError
-
-  def skip_content(self, cvs_rev):
-    """Inform the reader that CVS_REV would be fetched now, but isn't
-    actually needed.
-
-    This may be used for internal housekeeping.
-    Note that this is not called for CVSRevisionDelete revisions."""
-
-    raise NotImplementedError
-
-  def finish(self):
-    """Inform the reader that all calls to get_content_stream are done.
-    Start may be called again at a later point."""
-
-    raise NotImplementedError
+from cvs2svn_lib.revision_manager import RevisionReader
+from cvs2svn_lib.revision_manager import NullRevisionRecorder
+from cvs2svn_lib.revision_manager import NullRevisionExcluder
 
 
 class RCSRevisionReader(RevisionReader):

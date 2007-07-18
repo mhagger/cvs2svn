@@ -111,9 +111,9 @@ from cvs2svn_lib.collect_data import is_trunk_revision
 from cvs2svn_lib.database import Database
 from cvs2svn_lib.database import IndexedDatabase
 from cvs2svn_lib.rcs_stream import RCSStream
-from cvs2svn_lib.revision_recorder import RevisionRecorder
-from cvs2svn_lib.revision_excluder import RevisionExcluder
-from cvs2svn_lib.revision_reader import RevisionReader
+from cvs2svn_lib.revision_manager import RevisionRecorder
+from cvs2svn_lib.revision_manager import RevisionExcluder
+from cvs2svn_lib.revision_manager import RevisionReader
 from cvs2svn_lib.serializer import StringSerializer
 from cvs2svn_lib.serializer import CompressingSerializer
 from cvs2svn_lib.serializer import PrimedPickleSerializer

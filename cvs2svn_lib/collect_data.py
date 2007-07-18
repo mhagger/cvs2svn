@@ -182,9 +182,6 @@ class _RevisionData:
     # revision.
     self.tags_data = []
 
-    # The id of the metadata record associated with this revision.
-    self.metadata_id = None
-
     # True iff this revision was the head revision on a default branch
     # at some point (as best we can determine).
     self.non_trunk_default_branch_revision = False
@@ -198,10 +195,6 @@ class _RevisionData:
     # the branch is followed by a 1.2 revision, then this holds the
     # number of the 1.2 revision (namely, '1.2').
     self.default_branch_next = None
-
-    # A boolean value indicating whether deltatext was associated with
-    # this revision.
-    self.deltatext_exists = None
 
     # A token that may be returned from
     # RevisionRecorder.record_text().  It can be used by
@@ -612,6 +605,18 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     self._resolve_tag_dependencies()
     self._determine_root_rev()
 
+    # Compute the preliminary CVSFileItems for this file:
+    cvs_items = []
+    cvs_items.extend(self._get_cvs_revisions())
+    cvs_items.extend(self._get_cvs_branches())
+    cvs_items.extend(self._get_cvs_tags())
+    self._cvs_file_items = CVSFileItems(
+        self.cvs_file, self.pdc.trunk, cvs_items
+        )
+
+    if Log().is_on(Log.DEBUG):
+      self._cvs_file_items.check_symbol_parent_lods()
+
   def _determine_operation(self, rev_data):
     prev_rev_data = self._rev_data.get(rev_data.parent)
     type = cvs_revision_type_map[(
@@ -625,8 +630,9 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     """This is a callback method declared in Sink."""
 
     rev_data = self._rev_data[revision]
+    cvs_rev = self._cvs_file_items[rev_data.cvs_rev_id]
 
-    if rev_data.metadata_id is not None:
+    if cvs_rev.metadata_id is not None:
       # Users have reported problems with repositories in which the
       # deltatext block for revision 1.1 appears twice.  It is not
       # known whether this results from a CVS/RCS bug, or from botched
@@ -648,9 +654,9 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     else:
       branch_name = None
 
-    rev_data.metadata_id = self.collect_data.metadata_db.get_key(
+    cvs_rev.metadata_id = self.collect_data.metadata_db.get_key(
         self.project, branch_name, rev_data.author, log)
-    rev_data.deltatext_exists = bool(text)
+    cvs_rev.deltatext_exists = bool(text)
 
     # If this is revision 1.1, determine whether the file appears to
     # have been created via 'cvs add' instead of 'cvs import'.  The
@@ -662,7 +668,8 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
     rev_data.revision_recorder_token = \
         self.collect_data.revision_recorder.record_text(
-            self._rev_data, revision, log, text)
+            self._rev_data, revision, log, text
+            )
 
   def _get_rev_1_2(self):
     """Return the _RevisionData for the revision playing the role of '1.2'.
@@ -777,11 +784,11 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
     return revision_type(
         self._get_rev_id(rev_data.rev), self.cvs_file,
-        rev_data.timestamp, rev_data.metadata_id,
+        rev_data.timestamp, None,
         self._get_rev_id(rev_data.parent),
         self._get_rev_id(rev_data.child),
         rev_data.rev,
-        rev_data.deltatext_exists,
+        True,
         self.sdc.rev_to_lod(rev_data.rev),
         rev_data.get_first_on_branch_id(),
         rev_data.non_trunk_default_branch_revision,
@@ -837,15 +844,6 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
     """
 
-    cvs_items = []
-    cvs_items.extend(self._get_cvs_revisions())
-    cvs_items.extend(self._get_cvs_branches())
-    cvs_items.extend(self._get_cvs_tags())
-    cvs_file_items = CVSFileItems(self.cvs_file, self.pdc.trunk, cvs_items)
-
-    if Log().is_on(Log.DEBUG):
-      cvs_file_items.check_symbol_parent_lods()
-
     ntdbr_ids = list(self._get_ntdbr_ids())
 
     # Break a circular reference loop, allowing the memory for self
@@ -858,12 +856,14 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         rev_1_2_id = rev_1_2.cvs_rev_id
       else:
         rev_1_2_id = None
-      cvs_file_items.adjust_ntdbrs(self._file_imported, ntdbr_ids, rev_1_2_id)
+      self._cvs_file_items.adjust_ntdbrs(
+          self._file_imported, ntdbr_ids, rev_1_2_id
+          )
 
       if Log().is_on(Log.DEBUG):
-        cvs_file_items.check_symbol_parent_lods()
+        self._cvs_file_items.check_symbol_parent_lods()
 
-    return cvs_file_items
+    return self._cvs_file_items
 
 
 class _ProjectDataCollector:

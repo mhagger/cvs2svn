@@ -264,7 +264,7 @@ class CVSFileItems(object):
       for lod_items in self._iter_tree(lod, cvs_branch, id):
         yield lod_items
 
-  def adjust_ntdbrs(self, ntdbr_cvs_revs, rev_1_2_id):
+  def adjust_ntdbrs(self, ntdbr_cvs_revs):
     """Adjust the specified non-trunk default branch revisions.
 
     FILE_IMPORTED is a boolean indicating whether this file appears to
@@ -298,13 +298,16 @@ class CVSFileItems(object):
     trunk in post-commits.
 
     Set the default_branch_revision members of the revisions listed in
-    NTDBR_CVS_REVS to True.  Also, if REV_1_2_ID is not None, then it
-    is the id of revision 1.2.  Set that revision to depend on the
-    last non-trunk default branch revision and possibly adjust its
-    type accordingly."""
+    NTDBR_CVS_REVS to True.  Also, if there is a 1.2 revision, then
+    set that revision to depend on the last non-trunk default branch
+    revision and possibly adjust its type accordingly."""
 
     for cvs_rev in ntdbr_cvs_revs:
       cvs_rev.default_branch_revision = True
+
+    # Look for a 1.2 revision:
+    rev_1_1 = self[ntdbr_cvs_revs[0].prev_id]
+    rev_1_2_id = rev_1_1.next_id
 
     if rev_1_2_id is not None:
       # Revision 1.2 logically follows the imported revisions, not

@@ -856,13 +856,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     del self.sdc
 
     if ntdbr_cvs_revs:
-      cvs_rev_1_2 = self._get_cvs_rev_1_2()
-      if cvs_rev_1_2 is not None:
-        rev_1_2_id = cvs_rev_1_2.id
-      else:
-        rev_1_2_id = None
-
-      self._cvs_file_items.adjust_ntdbrs(ntdbr_cvs_revs, rev_1_2_id)
+      self._cvs_file_items.adjust_ntdbrs(ntdbr_cvs_revs)
 
       if self._file_imported:
         self._cvs_file_items.imported_remove_1_1(ntdbr_cvs_revs[0])

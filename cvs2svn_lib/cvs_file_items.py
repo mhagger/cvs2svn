@@ -153,6 +153,23 @@ class CVSFileItems(object):
 
     return self._get_lod(cvs_branch.symbol, cvs_branch, cvs_branch.next_id)
 
+  def iter_root_lods(self):
+    """Iterate over the LODItems for all root LODs (non-recursively)."""
+
+    for id in list(self.root_ids):
+      cvs_item = self[id]
+      if isinstance(cvs_item, CVSRevision):
+        # This LOD doesn't have a CVSBranch associated with it.
+        # Either it is Trunk, or it is a branch whose CVSBranch has
+        # been deleted.
+        yield self._get_lod(cvs_item.lod, None, id)
+      elif isinstance(cvs_item, CVSBranch):
+        # This is a Branch that has been severed from the rest of the
+        # tree.
+        yield self._get_lod(cvs_item.symbol, cvs_item, cvs_item.next_id)
+      else:
+        raise InternalError('Unexpected root item: %s' % (cvs_item,))
+
   def _iter_tree(self, lod, cvs_branch, start_id):
     """Iterate over the tree that starts at the specified line of development.
 

@@ -801,7 +801,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
   def _get_cvs_revisions(self):
     """Generate the CVSRevisions present in this file."""
 
-    for rev_data in self._rev_data.values():
+    for rev_data in self._rev_data.itervalues():
       yield self._get_cvs_revision(rev_data)
 
   def _get_cvs_branches(self):

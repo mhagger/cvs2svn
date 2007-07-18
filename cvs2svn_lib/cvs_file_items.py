@@ -109,6 +109,41 @@ class CVSFileItems(object):
   def values(self):
     return self._cvs_items.values()
 
+  def get_lod_items(self, cvs_branch):
+    """Return an LODItems describing the branch that starts at CVS_BRANCH.
+
+    CVS_BRANCH must be an instance of CVSBranch contained in this
+    CVSFileItems."""
+
+    cvs_revisions = []
+    cvs_branches = []
+    cvs_tags = []
+
+    def process_subitems(cvs_item):
+      """Process the branches and tags that are rooted in CVS_ITEM.
+
+      CVS_ITEM can be a CVSRevision or a CVSBranch."""
+
+      for branch_id in cvs_item.branch_ids[:]:
+        cvs_branches.append(self[branch_id])
+
+      for tag_id in cvs_item.tag_ids:
+        cvs_tags.append(self[tag_id])
+
+    # Include the symbols sprouting directly from the CVSBranch:
+    process_subitems(cvs_branch)
+
+    id = cvs_branch.next_id
+    while id is not None:
+      cvs_rev = self[id]
+      cvs_revisions.append(cvs_rev)
+      process_subitems(cvs_rev)
+      id = cvs_rev.next_id
+
+    return LODItems(
+        cvs_branch.symbol, cvs_branch, cvs_revisions, cvs_branches, cvs_tags
+        )
+
   def _iter_tree(self, lod, cvs_branch, start_id):
     """Iterate over the tree that starts at the specified line of development.
 

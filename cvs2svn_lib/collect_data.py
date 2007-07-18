@@ -431,13 +431,6 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     # (as opposed to added normally).
     self._file_imported = False
 
-    # A list of rev_data for each revision, in the order that the
-    # corresponding set_revision_info() callback was called.  This
-    # information is collected while the file is being parsed then
-    # processed in _process_revision_data(), which is called by
-    # parse_completed().
-    self._revision_data = []
-
     self.collect_data.revision_recorder.start_file(self.cvs_file)
 
   def _get_rev_id(self, revision):
@@ -667,8 +660,6 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     if revision == '1.1':
       self._file_imported = (log == 'Initial revision\n')
 
-    self._revision_data.append(rev_data)
-
     self.revision_recorder_token = \
         self.collect_data.revision_recorder.record_text(
             self._rev_data, revision, log, text)
@@ -802,7 +793,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
   def _get_cvs_revisions(self):
     """Generate the CVSRevisions present in this file."""
 
-    for rev_data in self._revision_data:
+    for rev_data in self._rev_data.values():
       yield self._get_cvs_revision(rev_data)
 
   def _get_cvs_branches(self):

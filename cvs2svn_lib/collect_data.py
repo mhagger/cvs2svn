@@ -717,8 +717,82 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     cvs_rev.revision_recorder_token = \
         self.collect_data.revision_recorder.record_text(cvs_rev, log, text)
 
-  def _get_ntdbr_cvs_revs(self):
-    """Determine whether there are any non-trunk default branch revisions.
+  def _process_live_ntdb(self, vendor_lod_items):
+    """VENDOR_LOD_ITEMS is a live default branch; process it.
+
+    In this case, all revisions on the default branch are NTDBRs and
+    it is an error if there is also a 1.2 revision."""
+
+    rev_1_1 = self._cvs_file_items[vendor_lod_items.cvs_branch.source_id]
+    rev_1_2_id = rev_1_1.next_id
+    if rev_1_2_id is not None:
+      self.collect_data.record_fatal_error(
+          'File has default branch=%s but also a revision %s'
+          % (vendor_lod_items.cvs_branch.branch_number,
+             self._cvs_file_items[rev_1_2_id].rev,)
+          )
+      return False
+
+    ntdbr_cvs_revs = list(vendor_lod_items.cvs_revisions)
+
+    if ntdbr_cvs_revs:
+      self._cvs_file_items.adjust_ntdbrs(ntdbr_cvs_revs)
+      return True
+    else:
+      return False
+
+  def _process_historical_ntdb(self, vendor_lod_items):
+    # No default branch, but the file appears to have been imported.
+    # So our educated guess is that all revisions on the '1.1.1'
+    # branch with timestamps prior to the timestamp of '1.2' were
+    # non-trunk default branch revisions.
+    #
+    # This really only processes standard '1.1.1.*'-style vendor
+    # revisions.  One could conceivably have a file whose default
+    # branch is 1.1.3 or whatever, or was that at some point in
+    # time, with vendor revisions 1.1.3.1, 1.1.3.2, etc.  But with
+    # the default branch gone now, we'd have no basis for assuming
+    # that the non-standard vendor branch had ever been the default
+    # branch anyway.
+    #
+    # Note that we rely on comparisons between the timestamps of the
+    # revisions on the vendor branch and that of revision 1.2, even
+    # though the timestamps might be incorrect due to clock skew.
+    # We could do a slightly better job if we used the changeset
+    # timestamps, as it is possible that the dependencies that went
+    # into determining those timestamps are more accurate.  But that
+    # would require an extra pass or two.
+    rev_1_1 = self._cvs_file_items[vendor_lod_items.cvs_branch.source_id]
+    rev_1_2_id = rev_1_1.next_id
+
+    if rev_1_2_id is None:
+      rev_1_2_timestamp = None
+    else:
+      rev_1_2_timestamp = self._cvs_file_items[rev_1_2_id].timestamp
+
+    ntdbr_cvs_revs = []
+    for cvs_rev in vendor_lod_items.cvs_revisions:
+      if rev_1_2_timestamp is not None \
+             and cvs_rev.timestamp >= rev_1_2_timestamp:
+        # That's the end of the once-default branch.
+        break
+      ntdbr_cvs_revs.append(cvs_rev)
+
+    if ntdbr_cvs_revs:
+      self._cvs_file_items.adjust_ntdbrs(ntdbr_cvs_revs)
+      return True
+    else:
+      return False
+
+  def parse_completed(self):
+    """Finish the processing of this file.
+
+    This is a callback method declared in Sink."""
+
+    pass
+
+  def _process_ntdbrs(self):
+    """Fix up any non-trunk default branch revisions (if present).
 
     If a non-trunk default branch is determined to have existed, yield
     the _RevisionData.ids for all revisions that were once non-trunk
@@ -737,91 +811,43 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     file has vendor revisions 1.1.1.1 -> 1.1.1.96, all of which are
     dated before 1.2, and then it has 1.1.1.97 -> 1.1.1.100 dated
     after 1.2.  In this case, we should record 1.1.1.96 as the last
-    vendor revision to have been the head of the default branch."""
+    vendor revision to have been the head of the default branch.
+
+    If any non-trunk default branch revisions are found:
+
+    - Set their default_branch_revision members to True.
+
+    - Connect the last one with revision 1.2.
+
+    - Remove revision 1.1 if it is not needed.
+
+    """
 
     if self.default_branch:
-      # There is still a default branch; that means that all revisions
-      # on that branch get marked.
-
       vendor_cvs_branch_id = self.sdc.branches_data[self.default_branch].id
       vendor_lod_items = self._cvs_file_items.get_lod_items(
           self._cvs_file_items[vendor_cvs_branch_id]
           )
-
-      rev_1_1 = self._cvs_file_items[vendor_lod_items.cvs_branch.source_id]
-      rev_1_2_id = rev_1_1.next_id
-      if rev_1_2_id is not None:
-        self.collect_data.record_fatal_error(
-            'File has default branch=%s but also a revision %s'
-            % (self.default_branch, self._cvs_file_items[rev_1_2_id].rev,)
-            )
-        return
-
-      for cvs_rev in vendor_lod_items.cvs_revisions:
-        yield cvs_rev
-
+      if not self._process_live_ntdb(vendor_lod_items):
+        vendor_lod_items = None
     elif self._file_imported:
-      # No default branch, but the file appears to have been imported.
-      # So our educated guess is that all revisions on the '1.1.1'
-      # branch with timestamps prior to the timestamp of '1.2' were
-      # non-trunk default branch revisions.
-      #
-      # This really only processes standard '1.1.1.*'-style vendor
-      # revisions.  One could conceivably have a file whose default
-      # branch is 1.1.3 or whatever, or was that at some point in
-      # time, with vendor revisions 1.1.3.1, 1.1.3.2, etc.  But with
-      # the default branch gone now, we'd have no basis for assuming
-      # that the non-standard vendor branch had ever been the default
-      # branch anyway.
-      #
-      # Note that we rely on comparisons between the timestamps of the
-      # revisions on the vendor branch and that of revision 1.2, even
-      # though the timestamps might be incorrect due to clock skew.
-      # We could do a slightly better job if we used the changeset
-      # timestamps, as it is possible that the dependencies that went
-      # into determining those timestamps are more accurate.  But that
-      # would require an extra pass or two.
       vendor_branch_data = self.sdc.branches_data.get('1.1.1')
-      if vendor_branch_data is not None:
+      if vendor_branch_data is None:
+        vendor_lod_items = None
+      else:
         vendor_lod_items = self._cvs_file_items.get_lod_items(
             self._cvs_file_items[vendor_branch_data.id]
             )
+        if not self._process_historical_ntdb(vendor_lod_items):
+          vendor_lod_items = None
+    else:
+      vendor_lod_items = None
 
-        rev_1_1 = self._cvs_file_items[vendor_lod_items.cvs_branch.source_id]
-        rev_1_2_id = rev_1_1.next_id
-
-        if rev_1_2_id is None:
-          rev_1_2_timestamp = None
-        else:
-          rev_1_2_timestamp = self._cvs_file_items[rev_1_2_id].timestamp
-
-        for cvs_rev in vendor_lod_items.cvs_revisions:
-          if rev_1_2_timestamp is not None \
-                 and cvs_rev.timestamp >= rev_1_2_timestamp:
-            # That's the end of the once-default branch.
-            break
-          yield cvs_rev
-
-  def parse_completed(self):
-    """Finish the processing of this file.
-
-    This is a callback method declared in Sink."""
-
-    pass
-
-  def _process_ntdbrs(self):
-    """Fix up any non-trunk default branch revisions (if present).
-
-    Set their default_branch_revision members to True.  Connect the
-    last one with revision 1.2.  Remove revision 1.1 if not needed."""
-
-    ntdbr_cvs_revs = list(self._get_ntdbr_cvs_revs())
-
-    if ntdbr_cvs_revs:
-      self._cvs_file_items.adjust_ntdbrs(ntdbr_cvs_revs)
-
+    if vendor_lod_items:
       if self._file_imported:
-        self._cvs_file_items.imported_remove_1_1(ntdbr_cvs_revs[0])
+        self._cvs_file_items.imported_remove_1_1(
+            vendor_lod_items.cvs_revisions[0]
+            )
 
       if Log().is_on(Log.DEBUG):
         self._cvs_file_items.check_symbol_parent_lods()

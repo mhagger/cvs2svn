@@ -717,20 +717,25 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     cvs_rev.revision_recorder_token = \
         self.collect_data.revision_recorder.record_text(cvs_rev, log, text)
 
+  def _get_trunk_lod_items(self):
+    """Return the LODItems instance for trunk."""
+
+    for lod_items in self._cvs_file_items.iter_root_lods():
+      if isinstance(lod_items.lod, Trunk):
+        return lod_items
+    else:
+      raise FatalError(
+          'File %r does not contain a root revision.'
+          % (self.cvs_file.filename,)
+          )
+
   def _get_cvs_rev_1_1(self):
     """Return the CVSRevision for the revision playing the role of '1.1'.
 
     By definition, this is the revision on trunk that does not have
     any predecessors (i.e., it might not literally be '1.1')."""
 
-    for lod_items in self._cvs_file_items.iter_lods():
-      if isinstance(lod_items.lod, Trunk):
-        return lod_items.cvs_revisions[0]
-    else:
-      raise FatalError(
-          'File %r does not contain a root revision.'
-          % (self.cvs_file.filename,)
-          )
+    return self._get_trunk_lod_items().cvs_revisions[0]
 
   def _get_cvs_rev_1_2(self):
     """Return the _RevisionData for the revision playing the role of '1.2'.

@@ -105,6 +105,7 @@ from cvs2svn_lib.common import InternalError
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.symbol import Symbol
+from cvs2svn_lib.symbol import Trunk
 from cvs2svn_lib.cvs_item import CVSRevisionModification
 from cvs2svn_lib.cvs_item import CVSRevisionDelete
 from cvs2svn_lib.collect_data import is_trunk_revision
@@ -476,9 +477,8 @@ class InternalRevisionRecorder(RevisionRecorder):
     # A map from cvs_rev_id to TextRecord instance:
     self.text_record_db = TextRecordDatabase(self._rcs_deltas, NullDatabase())
 
-  def record_text(self, revisions_data, revision, log, text):
-    revision_data = revisions_data[revision]
-    if is_trunk_revision(revision):
+  def record_text(self, cvs_rev, log, text):
+    if isinstance(cvs_rev.lod, Trunk):
       # On trunk, revisions are encountered in reverse order (1.<N>
       # ... 1.1) and deltas are inverted.  The first text that we see
       # is the fulltext for the HEAD revision.  After that, the text
@@ -492,7 +492,7 @@ class InternalRevisionRecorder(RevisionRecorder):
       # because it doesn't have a parent), we can record the diff (1.1
       # -> 1.2) for revision 1.2, and also the fulltext for 1.1.
 
-      if revision_data.child is None:
+      if cvs_rev.next_id is None:
         # This is HEAD, as fulltext.  Initialize the RCSStream so
         # that we can compute deltas backwards in time.
         self._stream = RCSStream(text)
@@ -502,15 +502,12 @@ class InternalRevisionRecorder(RevisionRecorder):
         # revision, and also to get the reverse delta, which we store
         # as the forward delta of our child revision.
         text = self._stream.invert_diff(text)
-        text_record = DeltaTextRecord(
-            revisions_data[revision_data.child].cvs_rev_id,
-            revision_data.cvs_rev_id
-            )
+        text_record = DeltaTextRecord(cvs_rev.next_id, cvs_rev.id)
         self._writeout(text_record, text)
 
-      if revision_data.parent is None:
+      if cvs_rev.prev_id is None:
         # This is revision 1.1.  Write its fulltext:
-        text_record = FullTextRecord(revision_data.cvs_rev_id)
+        text_record = FullTextRecord(cvs_rev.id)
         self._writeout(text_record, self._stream.get_text())
 
         # There will be no more trunk revisions delivered, so free the
@@ -527,10 +524,7 @@ class InternalRevisionRecorder(RevisionRecorder):
       # when --trunk-only.  (They will be deleted when finish_file()
       # is called, but if the delta db is in an IndexedDatabase the
       # deletions won't actually recover any disk space.)
-      text_record = DeltaTextRecord(
-          revision_data.cvs_rev_id,
-          revisions_data[revision_data.parent].cvs_rev_id
-          )
+      text_record = DeltaTextRecord(cvs_rev.id, cvs_rev.prev_id)
       self._writeout(text_record, text)
 
     return None

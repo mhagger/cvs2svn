@@ -667,10 +667,8 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     if revision == '1.1':
       self._file_imported = (log == 'Initial revision\n')
 
-    rev_data.revision_recorder_token = \
-        self.collect_data.revision_recorder.record_text(
-            self._rev_data, revision, log, text
-            )
+    cvs_rev.revision_recorder_token = \
+        self.collect_data.revision_recorder.record_text(cvs_rev, log, text)
 
   def _get_rev_1_2(self):
     """Return the _RevisionData for the revision playing the role of '1.2'.

@@ -70,15 +70,13 @@ class RevisionRecorder:
 
     raise NotImplementedError()
 
-  def record_text(self, revisions_data, revision, log, text):
+  def record_text(self, cvs_rev, log, text):
     """Record information about a revision and optionally return a token.
 
-    REVISIONS_DATA is a map { rev : _RevisionData } containing
-    collect_data._RevisionData instances for all revisions in this
-    file.  REVISION is the revision number of the current revision.
-    LOG and TEXT are the log message and text (as retrieved from the
-    RCS file) for that revision.  (TEXT is full text for the HEAD
-    revision, and deltas for other revisions.)"""
+    CVS_REV is a CVSRevision instance describing a revision that has
+    log message LOG and text TEXT (as retrieved from the RCS file).
+    (TEXT is full text for the HEAD revision, and deltas for other
+    revisions.)"""
 
     raise NotImplementedError()
 
@@ -111,7 +109,7 @@ class NullRevisionRecorder(RevisionRecorder):
   def start_file(self, cvs_file_items):
     pass
 
-  def record_text(self, revisions_data, revision, log, text):
+  def record_text(self, cvs_rev, log, text):
     return None
 
   def finish_file(self, cvs_file_items):

@@ -669,7 +669,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
     self._revision_data.append(rev_data)
 
-    self.revision_recorder_token = \
+    rev_data.revision_recorder_token = \
         self.collect_data.revision_recorder.record_text(
             self._rev_data, revision, log, text)
 

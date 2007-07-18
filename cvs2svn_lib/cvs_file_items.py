@@ -109,11 +109,13 @@ class CVSFileItems(object):
   def values(self):
     return self._cvs_items.values()
 
-  def get_lod_items(self, cvs_branch):
-    """Return an LODItems describing the branch that starts at CVS_BRANCH.
+  def _get_lod(self, lod, cvs_branch, start_id):
+    """Return the indicated LODItems.
 
-    CVS_BRANCH must be an instance of CVSBranch contained in this
-    CVSFileItems."""
+    LOD is the corresponding LineOfDevelopment.  CVS_BRANCH is the
+    CVSBranch instance that starts the LOD if any; otherwise it is
+    None.  START_ID is the id of the first CVSRevision on this LOD, or
+    None if there are none."""
 
     cvs_revisions = []
     cvs_branches = []
@@ -130,19 +132,26 @@ class CVSFileItems(object):
       for tag_id in cvs_item.tag_ids:
         cvs_tags.append(self[tag_id])
 
-    # Include the symbols sprouting directly from the CVSBranch:
-    process_subitems(cvs_branch)
+    if cvs_branch is not None:
+      # Include the symbols sprouting directly from the CVSBranch:
+      process_subitems(cvs_branch)
 
-    id = cvs_branch.next_id
+    id = start_id
     while id is not None:
       cvs_rev = self[id]
       cvs_revisions.append(cvs_rev)
       process_subitems(cvs_rev)
       id = cvs_rev.next_id
 
-    return LODItems(
-        cvs_branch.symbol, cvs_branch, cvs_revisions, cvs_branches, cvs_tags
-        )
+    return LODItems(lod, cvs_branch, cvs_revisions, cvs_branches, cvs_tags)
+
+  def get_lod_items(self, cvs_branch):
+    """Return an LODItems describing the branch that starts at CVS_BRANCH.
+
+    CVS_BRANCH must be an instance of CVSBranch contained in this
+    CVSFileItems."""
+
+    return self._get_lod(cvs_branch.symbol, cvs_branch, cvs_branch.next_id)
 
   def _iter_tree(self, lod, cvs_branch, start_id):
     """Iterate over the tree that starts at the specified line of development.

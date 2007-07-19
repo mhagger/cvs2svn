@@ -579,10 +579,6 @@ class InternalRevisionExcluder(RevisionExcluder):
     text_record_db.free_unused()
     self._new_tree_db[cvs_file_items.cvs_file.id] = text_record_db
 
-  def skip_file(self, cvs_file):
-    text_record_db = self._tree_db[cvs_file.id]
-    self._new_tree_db[cvs_file.id] = text_record_db
-
   def finish(self):
     self._tree_db.close()
     self._new_tree_db.close()

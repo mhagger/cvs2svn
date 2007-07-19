@@ -164,11 +164,6 @@ class RevisionExcluder:
 
     raise NotImplementedError()
 
-  def skip_file(self, cvs_file):
-    """Called when a file's dependency topology didn't have to be changed."""
-
-    raise NotImplementedError()
-
   def finish(self):
     """Called after all branch exclusions for all files are done."""
 
@@ -185,9 +180,6 @@ class NullRevisionExcluder(RevisionExcluder):
     pass
 
   def process_file(self, cvs_file_items):
-    pass
-
-  def skip_file(self, cvs_file):
     pass
 
   def finish(self):

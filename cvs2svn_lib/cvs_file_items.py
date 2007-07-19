@@ -709,14 +709,11 @@ class CVSFileItems(object):
     Call the revision_excluder's callback methods to let it know what
     is being excluded."""
 
-    revision_excluder_started = False
     ntdbr_excluded = False
     for lod_items in self.iter_lods():
       # Delete any excluded tags:
       for cvs_tag in lod_items.cvs_tags[:]:
         if isinstance(cvs_tag.symbol, ExcludedSymbol):
-          revision_excluder_started = True
-
           self._exclude_tag(cvs_tag)
 
           lod_items.cvs_tags.remove(cvs_tag)
@@ -729,17 +726,12 @@ class CVSFileItems(object):
         assert not lod_items.cvs_branches
         assert not lod_items.cvs_tags
 
-        revision_excluder_started = True
-
         ntdbr_excluded |= self._exclude_branch(lod_items)
 
     if ntdbr_excluded:
       self.graft_ntdbr_to_trunk()
 
-    if revision_excluder_started:
-      revision_excluder.process_file(self)
-    else:
-      revision_excluder.skip_file(self.cvs_file)
+    revision_excluder.process_file(self)
 
   def _mutate_branch_to_tag(self, cvs_branch):
     """Mutate the branch CVS_BRANCH into a tag."""

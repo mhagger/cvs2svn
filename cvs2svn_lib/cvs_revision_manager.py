@@ -50,12 +50,6 @@ class CVSRevisionReader(RevisionReader):
             '%s\n'
             'Please check that cvs is installed and in your PATH.' % (e,))
 
-  def register_artifacts(self, which_pass):
-    pass
-
-  def start(self):
-    pass
-
   def get_content_stream(self, cvs_rev, suppress_keyword_substitution=False):
     project = cvs_rev.cvs_file.project
     pipe_cmd = [self.cvs_executable] + self.global_arguments + \
@@ -66,6 +60,4 @@ class CVSRevisionReader(RevisionReader):
     pipe_cmd.append(project.cvs_module + cvs_rev.cvs_path)
     return PipeStream(pipe_cmd)
 
-  def finish(self):
-    pass
 

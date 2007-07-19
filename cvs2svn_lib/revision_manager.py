@@ -50,14 +50,14 @@ class RevisionRecorder:
     WHICH_PASS.register_temp_file() and/or
     WHICH_PASS.register_temp_file_needed())."""
 
-    raise NotImplementedError()
+    pass
 
   def start(self):
     """Data will soon start being collected.
 
     Any non-idempotent initialization should be done here."""
 
-    raise NotImplementedError()
+    pass
 
   def start_file(self, cvs_file_items):
     """Prepare to receive data for the file with the specified CVS_FILE_ITEMS.
@@ -68,7 +68,7 @@ class RevisionRecorder:
     structure.)  Please note that the CVSFileItems instance will be
     changed later."""
 
-    raise NotImplementedError()
+    pass
 
   def record_text(self, cvs_rev, log, text):
     """Record information about a revision and optionally return a token.
@@ -89,34 +89,19 @@ class RevisionRecorder:
     to the corresponding start_file() call (revisions might be
     deleted, topology changed, etc)."""
 
-    raise NotImplementedError()
+    pass
 
   def finish(self):
     """All recording is done; clean up."""
 
-    raise NotImplementedError()
+    pass
 
 
 class NullRevisionRecorder(RevisionRecorder):
   """A do-nothing variety of RevisionRecorder."""
 
-  def register_artifacts(self, which_pass):
-    pass
-
-  def start(self):
-    pass
-
-  def start_file(self, cvs_file_items):
-    pass
-
   def record_text(self, cvs_rev, log, text):
     return None
-
-  def finish_file(self, cvs_file_items):
-    pass
-
-  def finish(self):
-    pass
 
 
 class RevisionExcluder:
@@ -149,12 +134,12 @@ class RevisionExcluder:
     WHICH_PASS.register_temp_file() and/or
     WHICH_PASS.register_temp_file_needed())."""
 
-    raise NotImplementedError()
+    pass
 
   def start(self):
     """Prepare to handle branch exclusions."""
 
-    raise NotImplementedError()
+    pass
 
   def process_file(self, cvs_file_items):
     """Called for files whose trees were modified in FilterSymbolsPass.
@@ -167,22 +152,13 @@ class RevisionExcluder:
   def finish(self):
     """Called after all branch exclusions for all files are done."""
 
-    raise NotImplementedError()
+    pass
 
 
 class NullRevisionExcluder(RevisionExcluder):
   """A do-nothing variety of RevisionExcluder."""
 
-  def register_artifacts(self, which_pass):
-    pass
-
-  def start(self):
-    pass
-
   def process_file(self, cvs_file_items):
-    pass
-
-  def finish(self):
     pass
 
 
@@ -197,12 +173,12 @@ class RevisionReader(object):
     WHICH_PASS.register_temp_file() and/or
     WHICH_PASS.register_temp_file_needed())."""
 
-    raise NotImplementedError()
+    pass
 
   def start(self):
     """Prepare for calls to get_content_stream."""
 
-    raise NotImplementedError
+    pass
 
   def get_content_stream(self, cvs_rev, suppress_keyword_substitution=False):
     """Return a file-like object from which the contents of CVS_REV
@@ -218,6 +194,6 @@ class RevisionReader(object):
     """Inform the reader that all calls to get_content_stream are done.
     Start may be called again at a later point."""
 
-    raise NotImplementedError
+    pass
 
 

@@ -665,9 +665,6 @@ class InternalRevisionReader(RevisionReader):
 
     return cStringIO.StringIO(text)
 
-  def skip_content(self, cvs_rev):
-    self._get_text_record(cvs_rev).decrement_refcount(self._text_record_db)
-
   def finish(self):
     self._text_record_db.log_leftovers()
 

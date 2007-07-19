@@ -367,11 +367,6 @@ class SVNRepositoryMirror:
 
     self._invoke_delegates('add_path', SVNCommitItem(cvs_rev, True))
 
-  def skip_path(self, cvs_rev):
-    """This does nothing, except for allowing the delegate to handle
-    skipped revisions symmetrically."""
-    self._invoke_delegates('skip_path', cvs_rev)
-
   def copy_path(self, src_path, dest_path, src_revnum, create_parent=False):
     """Copy SRC_PATH at subversion revision number SRC_REVNUM to DEST_PATH.
 
@@ -586,12 +581,6 @@ class SVNRepositoryMirrorDelegate:
 
   def change_path(self, s_item):
     """S_ITEM is an SVNCommitItem; see subclass implementation for
-    details."""
-
-    raise NotImplementedError
-
-  def skip_path(self, cvs_rev):
-    """CVS_REV is a CVSRevision; see subclass implementation for
     details."""
 
     raise NotImplementedError

@@ -66,9 +66,6 @@ class CVSRevisionReader(RevisionReader):
     pipe_cmd.append(project.cvs_module + cvs_rev.cvs_path)
     return PipeStream(pipe_cmd)
 
-  def skip_content(self, cvs_rev):
-    pass
-
   def finish(self):
     pass
 

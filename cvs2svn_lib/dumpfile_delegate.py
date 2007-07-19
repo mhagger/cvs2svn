@@ -307,10 +307,6 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
 
     self._add_or_change_path(s_item, OP_CHANGE)
 
-  def skip_path(self, cvs_rev):
-    """Ensure that the unneeded revisions are accounted for as well."""
-    self._revision_reader.skip_content(cvs_rev)
-
   def delete_path(self, path):
     """Emit the deletion of PATH."""
 

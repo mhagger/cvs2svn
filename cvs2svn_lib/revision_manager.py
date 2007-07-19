@@ -222,15 +222,6 @@ class RevisionReader(object):
 
     raise NotImplementedError
 
-  def skip_content(self, cvs_rev):
-    """Inform the reader that CVS_REV would be fetched now, but isn't
-    actually needed.
-
-    This may be used for internal housekeeping.
-    Note that this is not called for CVSRevisionDelete revisions."""
-
-    raise NotImplementedError
-
   def finish(self):
     """Inform the reader that all calls to get_content_stream are done.
     Start may be called again at a later point."""

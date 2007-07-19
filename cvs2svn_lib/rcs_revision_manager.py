@@ -52,9 +52,6 @@ class RCSRevisionReader(RevisionReader):
     pipe_cmd.append(cvs_rev.cvs_file.filename)
     return PipeStream(pipe_cmd)
 
-  def skip_content(self, cvs_rev):
-    pass
-
   def finish(self):
     pass
 

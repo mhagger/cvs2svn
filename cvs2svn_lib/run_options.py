@@ -43,8 +43,12 @@ from cvs2svn_lib.output_option import NewRepositoryOutputOption
 from cvs2svn_lib.output_option import ExistingRepositoryOutputOption
 from cvs2svn_lib.project import Project
 from cvs2svn_lib.pass_manager import InvalidPassError
+from cvs2svn_lib.revision_manager import NullRevisionRecorder
+from cvs2svn_lib.revision_manager import NullRevisionExcluder
 from cvs2svn_lib.rcs_revision_manager import RCSRevisionReader
 from cvs2svn_lib.cvs_revision_manager import CVSRevisionReader
+from cvs2svn_lib.checkout_internal import InternalRevisionRecorder
+from cvs2svn_lib.checkout_internal import InternalRevisionExcluder
 from cvs2svn_lib.checkout_internal import InternalRevisionReader
 from cvs2svn_lib.symbol_strategy import AllBranchRule
 from cvs2svn_lib.symbol_strategy import AllTagRule
@@ -517,11 +521,17 @@ class RunOptions:
       ctx.output_option = DumpfileOutputOption(dumpfile)
 
     if use_rcs:
+      ctx.revision_recorder = NullRevisionRecorder()
+      ctx.revision_excluder = NullRevisionExcluder()
       ctx.revision_reader = RCSRevisionReader(co_executable)
     elif use_cvs:
+      ctx.revision_recorder = NullRevisionRecorder()
+      ctx.revision_excluder = NullRevisionExcluder()
       ctx.revision_reader = CVSRevisionReader(cvs_executable)
     else:
       # --use-internal-co is the default:
+      ctx.revision_recorder = InternalRevisionRecorder(compress=True)
+      ctx.revision_excluder = InternalRevisionExcluder()
       ctx.revision_reader = InternalRevisionReader(compress=True)
 
     # Create the default project (using ctx.trunk, ctx.branches, and

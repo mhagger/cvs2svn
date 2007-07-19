@@ -114,13 +114,12 @@ class CollectRevsPass(Pass):
     self._register_temp_file(config.METADATA_DB)
     self._register_temp_file(config.CVS_FILES_DB)
     self._register_temp_file(config.CVS_ITEMS_STORE)
-    Ctx().revision_reader.get_revision_recorder().register_artifacts(self)
+    Ctx().revision_recorder.register_artifacts(self)
 
   def run(self, stats_keeper):
     Log().quiet("Examining all CVS ',v' files...")
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_NEW)
-    cd = CollectData(
-        Ctx().revision_reader.get_revision_recorder(), stats_keeper)
+    cd = CollectData(Ctx().revision_recorder, stats_keeper)
     for project in Ctx().projects:
       cd.process_project(project)
 
@@ -198,7 +197,7 @@ class FilterSymbolsPass(Pass):
     self._register_temp_file_needed(config.SYMBOL_DB)
     self._register_temp_file_needed(config.CVS_FILES_DB)
     self._register_temp_file_needed(config.CVS_ITEMS_STORE)
-    Ctx().revision_reader.get_revision_excluder().register_artifacts(self)
+    Ctx().revision_excluder.register_artifacts(self)
 
   def run(self, stats_keeper):
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
@@ -216,7 +215,7 @@ class FilterSymbolsPass(Pass):
         artifact_manager.get_temp_file(config.CVS_SYMBOLS_SUMMARY_DATAFILE),
         'w')
 
-    revision_excluder = Ctx().revision_reader.get_revision_excluder()
+    revision_excluder = Ctx().revision_excluder
 
     Log().quiet("Filtering out excluded symbols and summarizing items...")
 

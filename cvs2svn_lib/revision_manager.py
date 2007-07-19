@@ -207,26 +207,6 @@ class RevisionReader(object):
 
     raise NotImplementedError()
 
-  def get_revision_recorder(self):
-    """Return a RevisionRecorder instance that can gather revision info.
-
-    The object returned by this method will be passed to CollectData,
-    and its callback methods called as the CVS files are parsed.  If
-    no data collection is necessary, this method can return an
-    instance of NullRevisionRecorder."""
-
-    raise NotImplementedError
-
-  def get_revision_excluder(self):
-    """Return a RevisionExcluder instance to collect exclusion info.
-
-    The object returned by this method will have its callback methods
-    called as branches are excluded.  If such information is not
-    needed, this method can return an instance of
-    NullRevisionExcluder."""
-
-    raise NotImplementedError
-
   def start(self):
     """Prepare for calls to get_content_stream."""
 

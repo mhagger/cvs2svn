@@ -53,12 +53,6 @@ class CVSRevisionReader(RevisionReader):
   def register_artifacts(self, which_pass):
     pass
 
-  def get_revision_recorder(self):
-    return NullRevisionRecorder()
-
-  def get_revision_excluder(self):
-    return NullRevisionExcluder()
-
   def start(self):
     pass
 

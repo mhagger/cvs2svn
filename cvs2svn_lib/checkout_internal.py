@@ -607,12 +607,6 @@ class InternalRevisionReader(RevisionReader):
     which_pass._register_temp_file_needed(
         config.RCS_TREES_FILTERED_INDEX_TABLE)
 
-  def get_revision_recorder(self):
-    return InternalRevisionRecorder(self._compress)
-
-  def get_revision_excluder(self):
-    return InternalRevisionExcluder()
-
   def start(self):
     self._delta_db = IndexedDatabase(
         artifact_manager.get_temp_file(config.RCS_DELTAS_STORE),

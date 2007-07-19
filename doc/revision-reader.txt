@@ -17,8 +17,7 @@ CollectRevsPass then output the contents during OutputPass.  (Indeed,
 for non-SVN backends, OutputPass might not even require the file
 contents.)
 
-Specifically, the RevisionReader instance can supply instances of two
-other classes to help it out:
+The following two other types of classes can help the RevisionReader:
 
     RevisionRecorder -- can record the CVS revisions' text during
         CollectRevsPass to avoid having to parse the RCS files again
@@ -33,6 +32,8 @@ The type of RevisionReader to be used for a run of cvs2svn can be set
 using --use-internal-co, --use-rcs, or --use-cvs, or via the --options
 file with a line like:
 
+    ctx.revision_recorder = MyRevisionRecorder()
+    ctx.revision_excluder = MyRevisionExcluder()
     ctx.revision_reader = MyRevisionReader()
 
 The following RevisionReaders are supplied with cvs2svn:
@@ -62,24 +63,19 @@ The following RevisionReaders are supplied with cvs2svn:
 
 
 It is possible to write your own RevisionReader if you would like to
-do things differently.  A RevisionReader that wants to record
-information during CollectRevsPass should define a method
-get_revision_recorder(), which should return an instance of
-RevisionRecorder.  A RevisionRecorder has callback methods that are
-invoked as the CVS files are parsed.  For example,
+do things differently.  A RevisionRecorder, with callback methods that
+are invoked as the CVS files are parsed, can be used to collect
+information during CollectRevsPass.  For example,
 RevisionRecorder.record_text() is passed the log message and text
 (full text or delta) for each file revision.  The record_text() method
 is allowed to return an arbitrary token (for example, a content hash),
 and that token is stored into CVSRevision.revision_recorder_token and
 carried along by cvs2svn.
 
-A RevisionReader that wants to be informed about revisions that will
-be excluded from the conversion should define a method
-get_revision_excluder(), which returns an instance of
-RevisionExcluder.  The RevisionExcluder's callbacks are invoked during
-FilterSymbolsPass to tell it which CVS revisions will actually be
-needed by the conversion.  The RevisionExcluder has the opportunity to
-use this information to delete unneeded temporary data.
+A RevisionExcluder, with callbacks that are invoked during
+FilterSymbolsPass, can be used to learn which CVS revisions will
+actually be needed by the conversion.  The RevisionExcluder has the
+opportunity to use this information to delete unneeded temporary data.
 
 Later, when OutputPass requires the file contents, it calls
 RevisionReader.get_content_stream(), which is passed a CVSRevision

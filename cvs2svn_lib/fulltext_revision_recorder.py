@@ -78,7 +78,8 @@ class FulltextRevisionRecorderAdapter(RevisionRecorder):
     """This method should be overwritten.
 
     It should determine the fulltext of CVS_REV, then pass it to
-    self.fulltext_revision_recorder.record_fulltext()."""
+    self.fulltext_revision_recorder.record_fulltext() and return the
+    result."""
 
     raise NotImplementedError()
 

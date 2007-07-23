@@ -35,6 +35,16 @@ from cvs2svn_lib.repository_delegate import RepositoryDelegate
 class OutputOption:
   """Represents an output choice for a run of cvs2svn."""
 
+  def register_artifacts(self, which_pass):
+    """Register artifacts that will be needed for this output option.
+
+    WHICH_PASS is the pass that will call our callbacks, so it should
+    be used to do the registering (e.g., call
+    WHICH_PASS.register_temp_file() and/or
+    WHICH_PASS.register_temp_file_needed())."""
+
+    pass
+
   def check(self):
     """Check that the options stored in SELF are sensible.
 
@@ -42,11 +52,8 @@ class OutputOption:
 
     raise NotImplementedError()
 
-  def setup(self, revision_reader, repos):
-    """Prepare this output option.
-
-    REVISION_READER can be used as a resource.  This might include
-    registering a delegate to REPOS."""
+  def setup(self, repos):
+    """Prepare this output option."""
 
     raise NotImplementedError()
 
@@ -56,30 +63,46 @@ class OutputOption:
     raise NotImplementedError()
 
 
-class DumpfileOutputOption(OutputOption):
+class SVNOutputOption(OutputOption):
+  """An OutputOption appropriate for output to Subversion."""
+
+  def __init__(self):
+    pass
+
+  def register_artifacts(self, which_pass):
+    Ctx().revision_reader.register_artifacts(which_pass)
+
+  def setup(self, repos):
+    Ctx().revision_reader.start()
+
+  def cleanup(self):
+    Ctx().revision_reader.finish()
+
+
+class DumpfileOutputOption(SVNOutputOption):
   """Output the result of the conversion into a dumpfile."""
 
   def __init__(self, dumpfile_path):
+    SVNOutputOption.__init__(self)
     self.dumpfile_path = dumpfile_path
 
   def check(self):
     pass
 
-  def setup(self, revision_reader, repos):
+  def setup(self, repos):
     Log().quiet("Starting Subversion Dumpfile.")
+    SVNOutputOption.setup(self, repos)
     if not Ctx().dry_run:
       repos.add_delegate(
-          DumpfileDelegate(revision_reader, self.dumpfile_path)
+          DumpfileDelegate(Ctx().revision_reader, self.dumpfile_path)
           )
 
-  def cleanup(self):
-    pass
 
-
-class RepositoryOutputOption(OutputOption):
+class RepositoryOutputOption(SVNOutputOption):
   """Output the result of the conversion into an SVN repository."""
 
   def __init__(self, target):
+    SVNOutputOption.__init__(self)
     self.target = target
 
   def check(self):
@@ -94,13 +117,13 @@ class RepositoryOutputOption(OutputOption):
             'svnadmin could not be executed.  Please ensure that it is\n'
             'installed and/or use the --svnadmin option.' % (e,))
 
-  def setup(self, revision_reader, repos):
+  def setup(self, repos):
     Log().quiet("Starting Subversion Repository.")
+    SVNOutputOption.setup(self, repos)
     if not Ctx().dry_run:
-      repos.add_delegate(RepositoryDelegate(revision_reader, self.target))
-
-  def cleanup(self):
-    pass
+      repos.add_delegate(
+          RepositoryDelegate(Ctx().revision_reader, self.target)
+          )
 
 
 class NewRepositoryOutputOption(RepositoryOutputOption):
@@ -118,7 +141,7 @@ class NewRepositoryOutputOption(RepositoryOutputOption):
                        "Remove it, or pass '--existing-svnrepos'."
                        % self.target)
 
-  def setup(self, revision_reader, repos):
+  def setup(self, repos):
     Log().normal("Creating new repository '%s'" % (self.target))
     if Ctx().dry_run:
       # Do not actually create repository:
@@ -151,7 +174,7 @@ class NewRepositoryOutputOption(RepositoryOutputOption):
                      "--fs-type=%s" % self.fs_type,
                      self.target))
 
-    RepositoryOutputOption.setup(self, revision_reader, repos)
+    RepositoryOutputOption.setup(self, repos)
 
   def cleanup(self):
     RepositoryOutputOption.cleanup(self)
@@ -189,11 +212,5 @@ class ExistingRepositoryOutputOption(RepositoryOutputOption):
     if not os.path.isdir(self.target):
       raise FatalError("the svn-repos-path '%s' is not an "
                        "existing directory." % self.target)
-
-  def setup(self, revision_reader, repos):
-    RepositoryOutputOption.setup(self, revision_reader, repos)
-
-  def cleanup(self):
-    RepositoryOutputOption.cleanup(self)
 
 

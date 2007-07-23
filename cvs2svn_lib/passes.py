@@ -1398,7 +1398,7 @@ class OutputPass(Pass):
     self._register_temp_file_needed(config.CVS_REVS_TO_SVN_REVNUMS)
     self._register_temp_file_needed(config.SYMBOL_OPENINGS_CLOSINGS_SORTED)
     self._register_temp_file_needed(config.SYMBOL_OFFSETS_DB)
-    Ctx().revision_reader.register_artifacts(self)
+    Ctx().output_option.register_artifacts(self)
 
   def get_svn_commits(self):
     """Generate the SVNCommits in commit order."""
@@ -1432,20 +1432,15 @@ class OutputPass(Pass):
     Ctx()._symbol_db = SymbolDatabase()
 
     repos = SVNRepositoryMirror()
-    revision_reader = Ctx().revision_reader
 
-    Ctx().output_option.setup(revision_reader, repos)
+    Ctx().output_option.setup(repos)
 
     repos.add_delegate(StdoutDelegate(stats_keeper.svn_rev_count()))
-
-    revision_reader.start()
 
     for svn_commit in self.get_svn_commits():
       svn_commit.commit(repos)
 
     repos.close()
-
-    revision_reader.finish()
 
     Ctx().output_option.cleanup()
     Ctx()._symbol_db.close()

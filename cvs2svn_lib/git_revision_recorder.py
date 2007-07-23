@@ -42,7 +42,7 @@ class GitRevisionRecorder(FulltextRevisionRecorder):
   """Output file revisions to git-fast-import."""
 
   def register_artifacts(self, which_pass):
-    which_pass._register_temp_file(GIT_DUMP_FILE)
+    artifact_manager.register_temp_file(GIT_DUMP_FILE, which_pass)
 
   def start(self):
     self.dump_file = open(artifact_manager.get_temp_file(GIT_DUMP_FILE), 'wb')

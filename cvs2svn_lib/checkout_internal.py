@@ -452,10 +452,14 @@ class InternalRevisionRecorder(RevisionRecorder):
     self._compress = compress
 
   def register_artifacts(self, which_pass):
-    which_pass._register_temp_file(config.RCS_DELTAS_INDEX_TABLE)
-    which_pass._register_temp_file(config.RCS_DELTAS_STORE)
-    which_pass._register_temp_file(config.RCS_TREES_INDEX_TABLE)
-    which_pass._register_temp_file(config.RCS_TREES_STORE)
+    artifact_manager.register_temp_file(
+        config.RCS_DELTAS_INDEX_TABLE, which_pass
+        )
+    artifact_manager.register_temp_file(config.RCS_DELTAS_STORE, which_pass)
+    artifact_manager.register_temp_file(
+        config.RCS_TREES_INDEX_TABLE, which_pass
+        )
+    artifact_manager.register_temp_file(config.RCS_TREES_STORE, which_pass)
 
   def start(self):
     ser = StringSerializer()
@@ -557,10 +561,18 @@ class InternalRevisionExcluder(RevisionExcluder):
   """The RevisionExcluder used by InternalRevisionReader."""
 
   def register_artifacts(self, which_pass):
-    which_pass._register_temp_file_needed(config.RCS_TREES_STORE)
-    which_pass._register_temp_file_needed(config.RCS_TREES_INDEX_TABLE)
-    which_pass._register_temp_file(config.RCS_TREES_FILTERED_STORE)
-    which_pass._register_temp_file(config.RCS_TREES_FILTERED_INDEX_TABLE)
+    artifact_manager.register_temp_file_needed(
+        config.RCS_TREES_STORE, which_pass
+        )
+    artifact_manager.register_temp_file_needed(
+        config.RCS_TREES_INDEX_TABLE, which_pass
+        )
+    artifact_manager.register_temp_file(
+        config.RCS_TREES_FILTERED_STORE, which_pass
+        )
+    artifact_manager.register_temp_file(
+        config.RCS_TREES_FILTERED_INDEX_TABLE, which_pass
+        )
 
   def start(self):
     self._tree_db = IndexedDatabase(
@@ -596,12 +608,19 @@ class InternalRevisionReader(RevisionReader):
     self._compress = compress
 
   def register_artifacts(self, which_pass):
-    which_pass._register_temp_file(config.CVS_CHECKOUT_DB)
-    which_pass._register_temp_file_needed(config.RCS_DELTAS_STORE)
-    which_pass._register_temp_file_needed(config.RCS_DELTAS_INDEX_TABLE)
-    which_pass._register_temp_file_needed(config.RCS_TREES_FILTERED_STORE)
-    which_pass._register_temp_file_needed(
-        config.RCS_TREES_FILTERED_INDEX_TABLE)
+    artifact_manager.register_temp_file(config.CVS_CHECKOUT_DB, which_pass)
+    artifact_manager.register_temp_file_needed(
+        config.RCS_DELTAS_STORE, which_pass
+        )
+    artifact_manager.register_temp_file_needed(
+        config.RCS_DELTAS_INDEX_TABLE, which_pass
+        )
+    artifact_manager.register_temp_file_needed(
+        config.RCS_TREES_FILTERED_STORE, which_pass
+        )
+    artifact_manager.register_temp_file_needed(
+        config.RCS_TREES_FILTERED_INDEX_TABLE, which_pass
+        )
 
   def start(self):
     self._delta_db = IndexedDatabase(

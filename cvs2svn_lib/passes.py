@@ -66,7 +66,6 @@ from cvs2svn_lib.svn_commit_creator import SVNCommitCreator
 from cvs2svn_lib.svn_repository_mirror import SVNRepositoryMirror
 from cvs2svn_lib.svn_commit import SVNInitialProjectCommit
 from cvs2svn_lib.persistence_manager import PersistenceManager
-from cvs2svn_lib.stdout_delegate import StdoutDelegate
 from cvs2svn_lib.collect_data import CollectData
 from cvs2svn_lib.process import run_command
 from cvs2svn_lib.check_dependencies_pass \
@@ -1435,9 +1434,7 @@ class OutputPass(Pass):
 
     self.repos.open()
 
-    Ctx().output_option.setup(self.repos)
-
-    self.repos.add_delegate(StdoutDelegate(stats_keeper.svn_rev_count()))
+    Ctx().output_option.setup(stats_keeper.svn_rev_count(), self.repos)
 
     for svn_commit in self.get_svn_commits():
       svn_commit.commit(self.repos)

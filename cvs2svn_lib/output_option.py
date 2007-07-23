@@ -28,6 +28,7 @@ from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.process import CommandFailedException
 from cvs2svn_lib.process import check_command_runs
 from cvs2svn_lib.process import run_command
+from cvs2svn_lib.stdout_delegate import StdoutDelegate
 from cvs2svn_lib.dumpfile_delegate import DumpfileDelegate
 from cvs2svn_lib.repository_delegate import RepositoryDelegate
 
@@ -52,7 +53,7 @@ class OutputOption:
 
     raise NotImplementedError()
 
-  def setup(self, repos):
+  def setup(self, svn_rev_count, repos):
     """Prepare this output option."""
 
     raise NotImplementedError()
@@ -72,7 +73,8 @@ class SVNOutputOption(OutputOption):
   def register_artifacts(self, which_pass):
     Ctx().revision_reader.register_artifacts(which_pass)
 
-  def setup(self, repos):
+  def setup(self, svn_rev_count, repos):
+    repos.add_delegate(StdoutDelegate(svn_rev_count))
     Ctx().revision_reader.start()
 
   def cleanup(self):
@@ -89,9 +91,9 @@ class DumpfileOutputOption(SVNOutputOption):
   def check(self):
     pass
 
-  def setup(self, repos):
+  def setup(self, svn_rev_count, repos):
     Log().quiet("Starting Subversion Dumpfile.")
-    SVNOutputOption.setup(self, repos)
+    SVNOutputOption.setup(self, svn_rev_count, repos)
     if not Ctx().dry_run:
       repos.add_delegate(
           DumpfileDelegate(Ctx().revision_reader, self.dumpfile_path)
@@ -117,9 +119,9 @@ class RepositoryOutputOption(SVNOutputOption):
             'svnadmin could not be executed.  Please ensure that it is\n'
             'installed and/or use the --svnadmin option.' % (e,))
 
-  def setup(self, repos):
+  def setup(self, svn_rev_count, repos):
     Log().quiet("Starting Subversion Repository.")
-    SVNOutputOption.setup(self, repos)
+    SVNOutputOption.setup(self, svn_rev_count, repos)
     if not Ctx().dry_run:
       repos.add_delegate(
           RepositoryDelegate(Ctx().revision_reader, self.target)
@@ -141,7 +143,7 @@ class NewRepositoryOutputOption(RepositoryOutputOption):
                        "Remove it, or pass '--existing-svnrepos'."
                        % self.target)
 
-  def setup(self, repos):
+  def setup(self, svn_rev_count, repos):
     Log().normal("Creating new repository '%s'" % (self.target))
     if Ctx().dry_run:
       # Do not actually create repository:
@@ -174,7 +176,7 @@ class NewRepositoryOutputOption(RepositoryOutputOption):
                      "--fs-type=%s" % self.fs_type,
                      self.target))
 
-    RepositoryOutputOption.setup(self, repos)
+    RepositoryOutputOption.setup(self, svn_rev_count, repos)
 
   def cleanup(self):
     RepositoryOutputOption.cleanup(self)

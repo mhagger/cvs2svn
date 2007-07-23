@@ -1429,7 +1429,7 @@ class OutputPass(Pass):
     Ctx().output_option.setup(stats_keeper.svn_rev_count())
 
     for svn_commit in self.get_svn_commits():
-      svn_commit.commit(Ctx().output_option.repos)
+      Ctx().output_option.process(svn_commit)
 
     Ctx().output_option.cleanup()
 

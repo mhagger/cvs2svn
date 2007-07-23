@@ -59,6 +59,11 @@ class OutputOption:
 
     raise NotImplementedError()
 
+  def process(self, svn_commit):
+    """Process SVN_COMMIT, which is an instance of SVNCommit."""
+
+    raise NotImplementedError()
+
   def cleanup(self):
     """Perform any required cleanup related to this output option."""
 
@@ -79,6 +84,9 @@ class SVNOutputOption(OutputOption):
     self.repos.open()
     Ctx().revision_reader.start()
     self.repos.add_delegate(StdoutDelegate(svn_rev_count))
+
+  def process(self, svn_commit):
+    svn_commit.commit(self.repos)
 
   def cleanup(self):
     self.repos.close()

@@ -63,7 +63,6 @@ from cvs2svn_lib.svn_commit import SVNCommit
 from cvs2svn_lib.svn_commit import SVNRevisionCommit
 from cvs2svn_lib.openings_closings import SymbolingsLogger
 from cvs2svn_lib.svn_commit_creator import SVNCommitCreator
-from cvs2svn_lib.svn_repository_mirror import SVNRepositoryMirror
 from cvs2svn_lib.svn_commit import SVNInitialProjectCommit
 from cvs2svn_lib.persistence_manager import PersistenceManager
 from cvs2svn_lib.collect_data import CollectData
@@ -1383,10 +1382,6 @@ class IndexSymbolsPass(Pass):
 class OutputPass(Pass):
   """This pass was formerly known as pass8."""
 
-  def __init__(self):
-    Pass.__init__(self)
-    self.repos = SVNRepositoryMirror()
-
   def register_artifacts(self):
     self._register_temp_file_needed(config.CVS_FILES_DB)
     self._register_temp_file_needed(config.CVS_ITEMS_SORTED_STORE)
@@ -1398,7 +1393,6 @@ class OutputPass(Pass):
     self._register_temp_file_needed(config.CVS_REVS_TO_SVN_REVNUMS)
     self._register_temp_file_needed(config.SYMBOL_OPENINGS_CLOSINGS_SORTED)
     self._register_temp_file_needed(config.SYMBOL_OFFSETS_DB)
-    self.repos.register_artifacts(self)
     Ctx().output_option.register_artifacts(self)
 
   def get_svn_commits(self):
@@ -1432,16 +1426,13 @@ class OutputPass(Pass):
         DB_OPEN_READ)
     Ctx()._symbol_db = SymbolDatabase()
 
-    self.repos.open()
-
-    Ctx().output_option.setup(stats_keeper.svn_rev_count(), self.repos)
+    Ctx().output_option.setup(stats_keeper.svn_rev_count())
 
     for svn_commit in self.get_svn_commits():
-      svn_commit.commit(self.repos)
-
-    self.repos.close()
+      svn_commit.commit(Ctx().output_option.repos)
 
     Ctx().output_option.cleanup()
+
     Ctx()._symbol_db.close()
     Ctx()._cvs_items_db.close()
     Ctx()._metadata_db.close()

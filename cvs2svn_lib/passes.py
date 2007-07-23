@@ -1384,10 +1384,11 @@ class IndexSymbolsPass(Pass):
 class OutputPass(Pass):
   """This pass was formerly known as pass8."""
 
+  def __init__(self):
+    Pass.__init__(self)
+    self.repos = SVNRepositoryMirror()
+
   def register_artifacts(self):
-    self._register_temp_file(config.SVN_MIRROR_REVISIONS_TABLE)
-    self._register_temp_file(config.SVN_MIRROR_NODES_INDEX_TABLE)
-    self._register_temp_file(config.SVN_MIRROR_NODES_STORE)
     self._register_temp_file_needed(config.CVS_FILES_DB)
     self._register_temp_file_needed(config.CVS_ITEMS_SORTED_STORE)
     self._register_temp_file_needed(config.CVS_ITEMS_SORTED_INDEX_TABLE)
@@ -1398,6 +1399,7 @@ class OutputPass(Pass):
     self._register_temp_file_needed(config.CVS_REVS_TO_SVN_REVNUMS)
     self._register_temp_file_needed(config.SYMBOL_OPENINGS_CLOSINGS_SORTED)
     self._register_temp_file_needed(config.SYMBOL_OFFSETS_DB)
+    self.repos.register_artifacts(self)
     Ctx().output_option.register_artifacts(self)
 
   def get_svn_commits(self):
@@ -1431,16 +1433,16 @@ class OutputPass(Pass):
         DB_OPEN_READ)
     Ctx()._symbol_db = SymbolDatabase()
 
-    repos = SVNRepositoryMirror()
+    self.repos.open()
 
-    Ctx().output_option.setup(repos)
+    Ctx().output_option.setup(self.repos)
 
-    repos.add_delegate(StdoutDelegate(stats_keeper.svn_rev_count()))
+    self.repos.add_delegate(StdoutDelegate(stats_keeper.svn_rev_count()))
 
     for svn_commit in self.get_svn_commits():
-      svn_commit.commit(repos)
+      svn_commit.commit(self.repos)
 
-    repos.close()
+    self.repos.close()
 
     Ctx().output_option.cleanup()
     Ctx()._symbol_db.close()

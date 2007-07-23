@@ -147,7 +147,20 @@ class SVNRepositoryMirror:
 
     pass
 
-  def __init__(self):
+  def register_artifacts(self, which_pass):
+    """Register the artifacts that will be needed for this object."""
+
+    artifact_manager.register_temp_file(
+        config.SVN_MIRROR_REVISIONS_TABLE, which_pass
+        )
+    artifact_manager.register_temp_file(
+        config.SVN_MIRROR_NODES_INDEX_TABLE, which_pass
+        )
+    artifact_manager.register_temp_file(
+        config.SVN_MIRROR_NODES_STORE, which_pass
+        )
+
+  def open(self):
     """Set up the SVNRepositoryMirror and prepare it for SVNCommits."""
 
     self._key_generator = KeyGenerator()

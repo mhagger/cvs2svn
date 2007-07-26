@@ -104,7 +104,9 @@ class SVNCommitCreator:
     cvs_revs = list(changeset.get_cvs_items())
     if cvs_revs:
       cvs_revs.sort(lambda a, b: cmp(a.cvs_file.filename, b.cvs_file.filename))
-      svn_commit = SVNPrimaryCommit(cvs_revs, timestamp)
+      svn_commit = SVNPrimaryCommit(
+          cvs_revs, timestamp, SVNCommit.revnum_generator.gen_id()
+          )
 
       yield svn_commit
 

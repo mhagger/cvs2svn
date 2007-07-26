@@ -213,7 +213,7 @@ class SVNInitialProjectCommit(SVNCommit):
 
 
 class SVNPrimaryCommit(SVNCommit, SVNRevisionCommit):
-  def __init__(self, cvs_revs, date, revnum=None):
+  def __init__(self, cvs_revs, date, revnum):
     SVNCommit.__init__(self, 'commit', date, revnum)
     SVNRevisionCommit.__init__(self, cvs_revs)
 

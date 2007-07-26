@@ -174,8 +174,9 @@ class SVNRevisionCommit(SVNCommit):
 
 
 class SVNInitialProjectCommit(SVNCommit):
-  def __init__(self, date, revnum):
+  def __init__(self, date, projects, revnum):
     SVNCommit.__init__(self, 'Initialization', date, revnum)
+    self.projects = list(projects)
 
   def get_cvs_items(self):
     return []
@@ -189,7 +190,7 @@ class SVNInitialProjectCommit(SVNCommit):
 
     repos.start_commit(self.revnum, self._get_revprops())
 
-    for project in Ctx().projects:
+    for project in self.projects:
       # For a trunk-only conversion, trunk_path might be ''.
       if project.trunk_path:
         repos.mkdir(project.trunk_path)
@@ -198,6 +199,16 @@ class SVNInitialProjectCommit(SVNCommit):
         repos.mkdir(project.tags_path)
 
     repos.end_commit()
+
+  def __getstate__(self):
+    return (
+        self.description, self.date, self.revnum,
+        [project.id for project in self.projects],
+        )
+
+  def __setstate__(self, state):
+    (self.description, self.date, self.revnum, project_ids,) = state
+    self.projects = [Ctx().projects[project_id] for project_id in project_ids]
 
 
 class SVNPrimaryCommit(SVNCommit, SVNRevisionCommit):

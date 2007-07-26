@@ -1305,7 +1305,7 @@ class CreateRevsPass(Pass):
     Ctx()._symbol_db.close()
     Ctx()._cvs_file_db.close()
 
-    stats_keeper.set_svn_rev_count(SVNCommit.revnum - 1)
+    stats_keeper.set_svn_rev_count(SVNCommit.revnum_generator.get_last_id())
     stats_keeper.archive()
 
     Log().quiet("Done")

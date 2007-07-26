@@ -29,6 +29,7 @@ from cvs2svn_lib.cvs_item import CVSRevisionAdd
 from cvs2svn_lib.cvs_item import CVSRevisionChange
 from cvs2svn_lib.cvs_item import CVSRevisionDelete
 from cvs2svn_lib.cvs_item import CVSRevisionNoop
+from cvs2svn_lib.key_generator import KeyGenerator
 
 
 class SVNCommit:
@@ -45,7 +46,7 @@ class SVNCommit:
   # The revision number to assign to the next new SVNCommit.
   # We start at 2 because SVNRepositoryMirror uses the first commit
   # to create trunk, tags, and branches.
-  revnum = 2
+  revnum_generator = KeyGenerator(2)
 
   def __init__(self, description, date, revnum=None):
     """Instantiate an SVNCommit.  DESCRIPTION is for debugging only.
@@ -79,8 +80,7 @@ class SVNCommit:
     if revnum:
       self.revnum = revnum
     else:
-      self.revnum = SVNCommit.revnum
-      SVNCommit.revnum += 1
+      self.revnum = SVNCommit.revnum_generator.gen_id()
 
   def get_cvs_items(self):
     """Return a list containing the CVSItems in this commit."""

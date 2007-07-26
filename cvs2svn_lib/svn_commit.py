@@ -324,8 +324,8 @@ class SVNSymbolCommit(SVNCommit):
 
 
 class SVNPostCommit(SVNCommit, SVNRevisionCommit):
-  def __init__(self, motivating_revnum, cvs_revs, date):
-    SVNCommit.__init__(self, 'post-commit default branch(es)', date)
+  def __init__(self, motivating_revnum, cvs_revs, date, revnum):
+    SVNCommit.__init__(self, 'post-commit default branch(es)', date, revnum)
     SVNRevisionCommit.__init__(self, cvs_revs)
 
     # The subversion revision number of the *primary* commit where the

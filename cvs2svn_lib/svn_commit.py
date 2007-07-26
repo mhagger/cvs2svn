@@ -177,10 +177,12 @@ class SVNRevisionCommit(SVNCommit):
     Derived classes should append the output of this method to the
     output of SVNCommit.__str__()."""
 
-    ret = "   cvs_revs:\n"
+    ret = []
+    ret.append(SVNCommit.__str__(self))
+    ret.append('   cvs_revs:\n')
     for cvs_rev in self.cvs_revs:
-      ret += "     %x\n" % (cvs_rev.id,)
-    return ret
+      ret.append('     %x\n' % (cvs_rev.id,))
+    return ''.join(ret)
 
 
 class SVNInitialProjectCommit(SVNCommit):
@@ -219,7 +221,7 @@ class SVNPrimaryCommit(SVNCommit, SVNRevisionCommit):
     return SVNRevisionCommit.get_cvs_items(self)
 
   def __str__(self):
-    return SVNCommit.__str__(self) + SVNRevisionCommit.__str__(self)
+    return SVNRevisionCommit.__str__(self)
 
   def _get_log_msg(self):
     """Return the actual log message for this commit."""
@@ -348,7 +350,7 @@ class SVNPostCommit(SVNCommit, SVNRevisionCommit):
     return []
 
   def __str__(self):
-    return SVNCommit.__str__(self) + SVNRevisionCommit.__str__(self)
+    return SVNRevisionCommit.__str__(self)
 
   def _get_log_msg(self):
     """Return a manufactured log message for this commit."""

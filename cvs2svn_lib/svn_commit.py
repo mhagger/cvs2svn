@@ -48,7 +48,7 @@ class SVNCommit:
   # to create trunk, tags, and branches.
   revnum_generator = KeyGenerator(2)
 
-  def __init__(self, description, date, revnum=None):
+  def __init__(self, description, date, revnum):
     """Instantiate an SVNCommit.  DESCRIPTION is for debugging only.
     If REVNUM, the SVNCommit will correspond to that revision number;
     and if CVS_REVS, then they must be the exact set of CVSRevisions for
@@ -76,11 +76,7 @@ class SVNCommit:
     # self._get_revprops() is used to to get them, in dictionary form.
     self._author = Ctx().username
     self._log_msg = "This log message means an SVNCommit was used too soon."
-
-    if revnum:
-      self.revnum = revnum
-    else:
-      self.revnum = SVNCommit.revnum_generator.gen_id()
+    self.revnum = revnum
 
   def get_cvs_items(self):
     """Return a list containing the CVSItems in this commit."""

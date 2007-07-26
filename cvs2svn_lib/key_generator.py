@@ -1,7 +1,7 @@
 # (Be in -*- python -*- mode.)
 #
 # ====================================================================
-# Copyright (c) 2000-2006 CollabNet.  All rights reserved.
+# Copyright (c) 2000-2007 CollabNet.  All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.  The terms
@@ -23,19 +23,19 @@ from cvs2svn_lib.boolean import *
 class KeyGenerator:
   """Generate a series of unique keys."""
 
-  def __init__(self, key_base=1L):
-    """Initialize a KeyGenerator with the specified KEY_BASE.
+  def __init__(self, first_id=1L):
+    """Initialize a KeyGenerator with the specified FIRST_ID.
 
-    KEY_BASE should be an int or long, and the generated keys will be
+    FIRST_ID should be an int or long, and the generated keys will be
     of the same type."""
 
-    self.key_base = key_base
+    self._key_base = first_id
 
   def gen_id(self):
     """Generate and return a previously-unused key, as an integer."""
 
-    id = self.key_base
-    self.key_base += 1
+    id = self._key_base
+    self._key_base += 1
 
     return id
 

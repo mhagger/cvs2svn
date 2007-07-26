@@ -1228,7 +1228,7 @@ class TopologicalSortPass(Pass):
 class CreateRevsPass(Pass):
   """Generate the SVNCommit <-> CVSRevision mapping databases.
 
-  SVNCommitCreator._commit also calls SymbolingsLogger to register
+  SVNCommitCreator also calls SymbolingsLogger to register
   CVSRevisions that represent an opening or closing for a path on a
   branch or tag.  See SymbolingsLogger for more details.
 

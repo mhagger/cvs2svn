@@ -49,10 +49,6 @@ from cvs2svn_lib.svn_commit import SVNPostCommit
 class SVNCommitCreator:
   """This class creates and yields SVNCommits via process_changeset()."""
 
-  def _commit(self, timestamp, cvs_revs):
-    """Generate the primary SVNCommit for a set of CVSRevisions."""
-
-
   def _post_commit(self, cvs_revs, motivating_revnum, timestamp):
     """Generate any SVNCommits needed to follow CVS_REVS.
 

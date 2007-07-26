@@ -49,14 +49,10 @@ class SVNCommit:
   revnum_generator = KeyGenerator(2)
 
   def __init__(self, description, date, revnum):
-    """Instantiate an SVNCommit.  DESCRIPTION is for debugging only.
-    If REVNUM, the SVNCommit will correspond to that revision number;
-    and if CVS_REVS, then they must be the exact set of CVSRevisions for
-    REVNUM.
+    """Instantiate an SVNCommit.
 
-    It is an error to pass CVS_REVS without REVNUM, but you may pass
-    REVNUM without CVS_REVS, and then add a revision at a time by
-    invoking add_revision()."""
+    DESCRIPTION is for debugging only.  REVNUM is the SVN revision
+    number of this commit."""
 
     self.description = description
 
@@ -64,6 +60,9 @@ class SVNCommit:
     # being built up, this contains the latest date seen so far.  This
     # member is set externally.
     self.date = date
+
+    # The SVN revision number of this commit, as an integer.
+    self.revnum = revnum
 
     # Revprop metadata for this commit.
     #
@@ -76,7 +75,6 @@ class SVNCommit:
     # self._get_revprops() is used to to get them, in dictionary form.
     self._author = Ctx().username
     self._log_msg = "This log message means an SVNCommit was used too soon."
-    self.revnum = revnum
 
   def get_cvs_items(self):
     """Return a list containing the CVSItems in this commit."""

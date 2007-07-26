@@ -56,10 +56,6 @@ class SVNCommitCreator:
     # to create trunk, tags, and branches.
     self.revnum_generator = KeyGenerator(2)
 
-  def _commit(self, timestamp, cvs_revs):
-    """Generate the primary SVNCommit for a set of CVSRevisions."""
-
-
   def _post_commit(self, cvs_revs, motivating_revnum, timestamp):
     """Generate any SVNCommits needed to follow CVS_REVS.
 

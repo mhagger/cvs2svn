@@ -141,7 +141,10 @@ class SVNCommitCreator:
         if not isinstance(cvs_tag, CVSTagNoop)
         ]
     if cvs_tag_ids:
-      yield SVNSymbolCommit(changeset.symbol, cvs_tag_ids, timestamp)
+      yield SVNSymbolCommit(
+          changeset.symbol, cvs_tag_ids, timestamp,
+          SVNCommit.revnum_generator.gen_id(),
+          )
     else:
       Log().debug(
           'Omitting %r because it contains only CVSTagNoops' % (changeset,)
@@ -167,6 +170,7 @@ class SVNCommitCreator:
           changeset.symbol,
           [cvs_branch.id for cvs_branch in cvs_branches],
           timestamp,
+          SVNCommit.revnum_generator.gen_id(),
           )
       yield svn_commit
       for cvs_branch in cvs_branches:

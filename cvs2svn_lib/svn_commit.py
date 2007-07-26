@@ -265,9 +265,10 @@ class SVNPrimaryCommit(SVNCommit, SVNRevisionCommit):
 
 
 class SVNSymbolCommit(SVNCommit):
-  def __init__(self, symbol, cvs_symbol_ids, date, revnum=None):
+  def __init__(self, symbol, cvs_symbol_ids, date, revnum):
     SVNCommit.__init__(
-        self, 'copying to tag/branch %r' % symbol.name, date, revnum)
+        self, 'copying to tag/branch %r' % symbol.name, date, revnum
+        )
 
     # The TypedSymbol that is filled in this SVNCommit.
     self.symbol = symbol

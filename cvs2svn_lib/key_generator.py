@@ -30,18 +30,24 @@ class KeyGenerator:
     of the same type."""
 
     self._key_base = first_id
+    self._last_id = None
 
   def gen_id(self):
     """Generate and return a previously-unused key, as an integer."""
 
-    id = self._key_base
+    self._last_id = self._key_base
     self._key_base += 1
 
-    return id
+    return self._last_id
 
   def gen_key(self):
     """Generate and return a previously-unused key, as a string."""
 
     return '%x' % self.gen_id()
+
+  def get_last_id(self):
+    """Return the last id that was generated, as an integer."""
+
+    return self._last_id
 
 

@@ -186,7 +186,7 @@ class SVNRevisionCommit(SVNCommit):
 
 
 class SVNInitialProjectCommit(SVNCommit):
-  def __init__(self, date, revnum=None):
+  def __init__(self, date, revnum):
     SVNCommit.__init__(self, 'Initialization', date, revnum)
 
   def get_cvs_items(self):

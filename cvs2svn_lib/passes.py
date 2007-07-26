@@ -1261,10 +1261,9 @@ class CreateRevsPass(Pass):
 
     changeset_db.close()
 
-  def get_svn_commits(self):
+  def get_svn_commits(self, creator):
     """Generate the SVNCommits, in order."""
 
-    creator = SVNCommitCreator()
     for (changeset, timestamp) in self.get_changesets():
       for svn_commit in creator.process_changeset(changeset, timestamp):
         yield svn_commit
@@ -1294,9 +1293,13 @@ class CreateRevsPass(Pass):
 
     persistence_manager = PersistenceManager(DB_OPEN_NEW)
 
-    for svn_commit in self.get_svn_commits():
+    creator = SVNCommitCreator()
+    for svn_commit in self.get_svn_commits(creator):
       self.log_svn_commit(svn_commit)
       persistence_manager.put_svn_commit(svn_commit)
+
+    stats_keeper.set_svn_rev_count(creator.revnum_generator.get_last_id())
+    del creator
 
     persistence_manager.close()
     Ctx()._symbolings_logger.close()
@@ -1305,7 +1308,6 @@ class CreateRevsPass(Pass):
     Ctx()._symbol_db.close()
     Ctx()._cvs_file_db.close()
 
-    stats_keeper.set_svn_rev_count(SVNCommit.revnum_generator.get_last_id())
     stats_keeper.archive()
 
     Log().quiet("Done")

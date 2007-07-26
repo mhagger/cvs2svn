@@ -29,7 +29,6 @@ from cvs2svn_lib.cvs_item import CVSRevisionAdd
 from cvs2svn_lib.cvs_item import CVSRevisionChange
 from cvs2svn_lib.cvs_item import CVSRevisionDelete
 from cvs2svn_lib.cvs_item import CVSRevisionNoop
-from cvs2svn_lib.key_generator import KeyGenerator
 
 
 class SVNCommit:
@@ -42,11 +41,6 @@ class SVNCommit:
 
   3. Updates trunk to reflect the contents of a particular branch
      (this is to handle RCS default branches)."""
-
-  # The revision number to assign to the next new SVNCommit.
-  # We start at 2 because SVNRepositoryMirror uses the first commit
-  # to create trunk, tags, and branches.
-  revnum_generator = KeyGenerator(2)
 
   def __init__(self, description, date, revnum):
     """Instantiate an SVNCommit.

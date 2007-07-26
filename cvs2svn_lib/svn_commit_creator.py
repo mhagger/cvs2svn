@@ -44,10 +44,17 @@ from cvs2svn_lib.svn_commit import SVNCommit
 from cvs2svn_lib.svn_commit import SVNPrimaryCommit
 from cvs2svn_lib.svn_commit import SVNSymbolCommit
 from cvs2svn_lib.svn_commit import SVNPostCommit
+from cvs2svn_lib.key_generator import KeyGenerator
 
 
 class SVNCommitCreator:
   """This class creates and yields SVNCommits via process_changeset()."""
+
+  def __init__(self):
+    # The revision number to assign to the next new SVNCommit.
+    # We start at 2 because SVNRepositoryMirror uses the first commit
+    # to create trunk, tags, and branches.
+    self.revnum_generator = KeyGenerator(2)
 
   def _commit(self, timestamp, cvs_revs):
     """Generate the primary SVNCommit for a set of CVSRevisions."""
@@ -76,7 +83,7 @@ class SVNCommitCreator:
       # Generate an SVNCommit for all of our default branch cvs_revs.
       yield SVNPostCommit(
           motivating_revnum, cvs_revs, timestamp,
-          SVNCommit.revnum_generator.gen_id(),
+          self.revnum_generator.gen_id(),
           )
 
   def _process_revision_changeset(self, changeset, timestamp):
@@ -105,7 +112,7 @@ class SVNCommitCreator:
     if cvs_revs:
       cvs_revs.sort(lambda a, b: cmp(a.cvs_file.filename, b.cvs_file.filename))
       svn_commit = SVNPrimaryCommit(
-          cvs_revs, timestamp, SVNCommit.revnum_generator.gen_id()
+          cvs_revs, timestamp, self.revnum_generator.gen_id()
           )
 
       yield svn_commit
@@ -145,7 +152,7 @@ class SVNCommitCreator:
     if cvs_tag_ids:
       yield SVNSymbolCommit(
           changeset.symbol, cvs_tag_ids, timestamp,
-          SVNCommit.revnum_generator.gen_id(),
+          self.revnum_generator.gen_id(),
           )
     else:
       Log().debug(
@@ -172,7 +179,7 @@ class SVNCommitCreator:
           changeset.symbol,
           [cvs_branch.id for cvs_branch in cvs_branches],
           timestamp,
-          SVNCommit.revnum_generator.gen_id(),
+          self.revnum_generator.gen_id(),
           )
       yield svn_commit
       for cvs_branch in cvs_branches:

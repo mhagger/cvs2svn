@@ -133,14 +133,14 @@ class SVNRepositoryMirror:
   *** WARNING *** Path arguments to methods in this class MUST NOT
       have leading or trailing slashes."""
 
-  class SVNRepositoryMirrorParentMissingError(Exception):
+  class ParentMissingError(Exception):
     """Exception raised if an attempt is made to add a path to the
     repository mirror but the parent's path doesn't exist in the
     youngest revision of the repository."""
 
     pass
 
-  class SVNRepositoryMirrorPathExistsError(Exception):
+  class PathExistsError(Exception):
     """Exception raised if an attempt is made to add a path to the
     repository mirror and that path already exists in the youngest
     revision of the repository."""
@@ -398,13 +398,14 @@ class SVNRepositoryMirror:
     dest_parent_node = self._open_writable_node(dest_parent, create_parent)
 
     if dest_parent_node is None:
-      raise self.SVNRepositoryMirrorParentMissingError(
+      raise self.ParentMissingError(
           "Attempt to add path '%s' to repository mirror, "
           "but its parent directory doesn't exist in the mirror." % dest_path)
     elif dest_basename in dest_parent_node:
-      raise self.SVNRepositoryMirrorPathExistsError(
+      raise self.PathExistsError(
           "Attempt to add path '%s' to repository mirror "
-          "when it already exists in the mirror." % dest_path)
+          "when it already exists in the mirror." % dest_path
+          )
 
     dest_parent_node[dest_basename] = src_node
     self._invoke_delegates('copy_path', src_path, dest_path, src_revnum)

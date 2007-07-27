@@ -80,12 +80,12 @@ class OutputOption:
     raise NotImplementedError()
 
   def process_branch_commit(self, svn_commit):
-    """Process SVN_COMMIT, which is an SVNSymbolCommit."""
+    """Process SVN_COMMIT, which is an SVNBranchCommit."""
 
     raise NotImplementedError()
 
   def process_tag_commit(self, svn_commit):
-    """Process SVN_COMMIT, which is an SVNSymbolCommit."""
+    """Process SVN_COMMIT, which is an SVNTagCommit."""
 
     raise NotImplementedError()
 

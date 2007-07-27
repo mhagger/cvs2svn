@@ -16,7 +16,7 @@
 
 """This module contains the SVNCommit classes.
 
-There are four types of SVNCommits:
+There are five types of SVNCommits:
 
   SVNInitialProjectCommit -- Initializes a project (creates its trunk,
       branches, and tags directories).
@@ -24,9 +24,11 @@ There are four types of SVNCommits:
   SVNPrimaryCommit -- Commits one or more CVSRevisions on one or more
       lines of development.
 
-  SVNSymbolCommit -- Creates or fills a symbolic name; that is, copies
-      files from a source line of development to a target branch or
-      tag.
+  SVNBranchCommit -- Creates or fills a branch; that is, copies files
+      from a source line of development to a target branch.
+
+  SVNTagCommit -- Creates or fills a tag; that is, copies files from a
+      source line of development to a target tag.
 
   SVNPostCommit -- Updates trunk to reflect changes on a non-trunk
       default branch.
@@ -327,18 +329,16 @@ class SVNSymbolCommit(SVNCommit):
   def get_cvs_items(self):
     return list(Ctx()._cvs_items_db.get_many(self.cvs_symbol_ids))
 
+  def _get_symbol_type(self):
+    """Return the type of the self.symbol ('branch' or 'tag')."""
+
+    raise NotImplementedError()
+
   def _get_author(self):
     return Ctx().username
 
   def _get_log_msg(self):
     """Return a manufactured log message for this commit."""
-
-    # Determine whether self.symbol is a tag.
-    if isinstance(self.symbol, Tag):
-      type = 'tag'
-    else:
-      assert isinstance(self.symbol, Branch)
-      type = 'branch'
 
     # In Python 2.2.3, we could use textwrap.fill().  Oh well :-).
     space_or_newline = ' '
@@ -346,19 +346,13 @@ class SVNSymbolCommit(SVNCommit):
     if len(cleaned_symbolic_name) >= 13:
       space_or_newline = '\n'
 
-    return "This commit was manufactured by cvs2svn to create %s%s'%s'." \
-           % (type, space_or_newline, cleaned_symbolic_name)
+    return (
+        "This commit was manufactured by cvs2svn to create %s%s'%s'."
+        % (self._get_symbol_type(), space_or_newline, cleaned_symbolic_name)
+        )
 
   def get_description(self):
-    return 'copying to tag/branch %r' % self.symbol.name
-
-  def output(self, output_option):
-    if isinstance(self.symbol, Branch):
-      output_option.process_branch_commit(self)
-    elif isinstance(self.symbol, Tag):
-      output_option.process_tag_commit(self)
-    else:
-      raise InternalError('Unexpected symbol type %r' % (self.symbol,))
+    return 'copying to %s %r' % (self._get_symbol_type(), self.symbol.name,)
 
   def __str__(self):
     """ Print a human-readable description of this SVNCommit.
@@ -368,5 +362,33 @@ class SVNSymbolCommit(SVNCommit):
     return (
         SVNCommit.__str__(self)
         + "   symbolic name: %s\n" % self.symbol.get_clean_name())
+
+
+class SVNBranchCommit(SVNSymbolCommit):
+  def __init__(self, symbol, cvs_symbol_ids, date, revnum):
+    if not isinstance(symbol, Branch):
+      raise InternalError('Incorrect symbol type %r' % (symbol,))
+
+    SVNSymbolCommit.__init__(self, symbol, cvs_symbol_ids, date, revnum)
+
+  def _get_symbol_type(self):
+    return 'branch'
+
+  def output(self, output_option):
+    output_option.process_branch_commit(self)
+
+
+class SVNTagCommit(SVNSymbolCommit):
+  def __init__(self, symbol, cvs_symbol_ids, date, revnum):
+    if not isinstance(symbol, Tag):
+      raise InternalError('Incorrect symbol type %r' % (symbol,))
+
+    SVNSymbolCommit.__init__(self, symbol, cvs_symbol_ids, date, revnum)
+
+  def _get_symbol_type(self):
+    return 'tag'
+
+  def output(self, output_option):
+    output_option.process_tag_commit(self)
 
 

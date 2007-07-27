@@ -42,8 +42,9 @@ from cvs2svn_lib.changeset import BranchChangeset
 from cvs2svn_lib.changeset import TagChangeset
 from cvs2svn_lib.svn_commit import SVNCommit
 from cvs2svn_lib.svn_commit import SVNPrimaryCommit
-from cvs2svn_lib.svn_commit import SVNSymbolCommit
 from cvs2svn_lib.svn_commit import SVNPostCommit
+from cvs2svn_lib.svn_commit import SVNBranchCommit
+from cvs2svn_lib.svn_commit import SVNTagCommit
 from cvs2svn_lib.key_generator import KeyGenerator
 
 
@@ -131,10 +132,10 @@ class SVNCommitCreator:
         yield svn_post_commit
 
   def _process_tag_changeset(self, changeset, timestamp):
-    """Process TagChangeset CHANGESET, producing a SVNSymbolCommit.
+    """Process TagChangeset CHANGESET, producing a SVNTagCommit.
 
     Filter out CVSTagNoops.  If no CVSTags are left, don't generate a
-    SVNSymbolCommit."""
+    SVNTagCommit."""
 
     if Ctx().trunk_only:
       raise InternalError(
@@ -146,7 +147,7 @@ class SVNCommitCreator:
         if not isinstance(cvs_tag, CVSTagNoop)
         ]
     if cvs_tag_ids:
-      yield SVNSymbolCommit(
+      yield SVNTagCommit(
           changeset.symbol, cvs_tag_ids, timestamp,
           self.revnum_generator.gen_id(),
           )
@@ -156,10 +157,10 @@ class SVNCommitCreator:
           )
 
   def _process_branch_changeset(self, changeset, timestamp):
-    """Process BranchChangeset CHANGESET, producing a SVNSymbolCommit.
+    """Process BranchChangeset CHANGESET, producing a SVNBranchCommit.
 
     Filter out CVSBranchNoops.  If no CVSBranches are left, don't
-    generate a SVNSymbolCommit."""
+    generate a SVNBranchCommit."""
 
     if Ctx().trunk_only:
       raise InternalError(
@@ -171,7 +172,7 @@ class SVNCommitCreator:
         if not isinstance(cvs_branch, CVSBranchNoop)
         ]
     if cvs_branches:
-      svn_commit = SVNSymbolCommit(
+      svn_commit = SVNBranchCommit(
           changeset.symbol,
           [cvs_branch.id for cvs_branch in cvs_branches],
           timestamp,

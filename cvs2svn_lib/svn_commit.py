@@ -129,6 +129,12 @@ class SVNCommit:
     ret += "   debug description: " + self.get_description() + "\n"
     return ret
 
+  def __getstate__(self):
+    return (self.date, self.revnum,)
+
+  def __setstate__(self, state):
+    (self.date, self.revnum,) = state
+
 
 class SVNRevisionCommit(SVNCommit):
   """A mixin for a SVNCommit that includes actual CVS revisions."""
@@ -228,11 +234,13 @@ class SVNInitialProjectCommit(SVNCommit):
 
   def __getstate__(self):
     return (
-        self.date, self.revnum, [project.id for project in self.projects],
+        SVNCommit.__getstate__(self),
+        [project.id for project in self.projects],
         )
 
   def __setstate__(self, state):
-    (self.date, self.revnum, project_ids,) = state
+    (svn_commit_state, project_ids,) = state
+    SVNCommit.__setstate__(self, svn_commit_state)
     self.projects = [Ctx().projects[project_id] for project_id in project_ids]
 
 
@@ -286,11 +294,13 @@ class SVNPrimaryCommit(SVNCommit, SVNRevisionCommit):
     repos.end_commit()
 
   def __getstate__(self):
-    return (self.revnum, self.date, SVNRevisionCommit.__getstate__(self),)
+    return (
+        SVNCommit.__getstate__(self), SVNRevisionCommit.__getstate__(self),
+        )
 
   def __setstate__(self, state):
-    (revnum, date, rev_state,) = state
-    SVNCommit.__init__(self, date, revnum)
+    (svn_commit_state, rev_state,) = state
+    SVNCommit.__setstate__(self, svn_commit_state)
     SVNRevisionCommit.__setstate__(self, rev_state)
 
 
@@ -341,12 +351,15 @@ class SVNSymbolCommit(SVNCommit):
     repos.end_commit()
 
   def __getstate__(self):
-    return (self.revnum, self.symbol.id, self.cvs_symbol_ids, self.date)
+    return (
+        SVNCommit.__getstate__(self),
+        self.symbol.id, self.cvs_symbol_ids,
+        )
 
   def __setstate__(self, state):
-    (revnum, symbol_id, cvs_symbol_ids, date) = state
-    symbol = Ctx()._symbol_db.get_symbol(symbol_id)
-    SVNSymbolCommit.__init__(self, symbol, cvs_symbol_ids, date, revnum)
+    (svn_commit_state, symbol_id, self.cvs_symbol_ids) = state
+    SVNCommit.__setstate__(self, svn_commit_state)
+    self.symbol = Ctx()._symbol_db.get_symbol(symbol_id)
 
   def __str__(self):
     """ Print a human-readable description of this SVNCommit.
@@ -445,14 +458,14 @@ class SVNPostCommit(SVNCommit, SVNRevisionCommit):
 
   def __getstate__(self):
     return (
-        self.revnum, self._motivating_revnum, self.date,
-        SVNRevisionCommit.__getstate__(self),)
+        SVNCommit.__getstate__(self),
+        SVNRevisionCommit.__getstate__(self),
+        self._motivating_revnum,
+        )
 
   def __setstate__(self, state):
-    (revnum, motivating_revnum, date, rev_state,) = state
-    SVNCommit.__init__(self, date, revnum)
+    (svn_commit_state, rev_state, self._motivating_revnum,) = state
+    SVNCommit.__setstate__(self, svn_commit_state)
     SVNRevisionCommit.__setstate__(self, rev_state)
-
-    self._motivating_revnum = motivating_revnum
 
 

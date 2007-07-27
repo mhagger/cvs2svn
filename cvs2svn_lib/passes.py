@@ -1271,8 +1271,10 @@ class CreateRevsPass(Pass):
   def log_svn_commit(self, svn_commit):
     """Output information about SVN_COMMIT."""
 
-    Log().normal("Creating Subversion r%d (%s)"
-                 % (svn_commit.revnum, svn_commit.description))
+    Log().normal(
+        'Creating Subversion r%d (%s)'
+        % (svn_commit.revnum, svn_commit.get_description(),)
+        )
 
     if isinstance(svn_commit, SVNRevisionCommit):
       for cvs_rev in svn_commit.cvs_revs:

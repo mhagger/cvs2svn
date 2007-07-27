@@ -48,7 +48,7 @@ class SVNCommit:
     DESCRIPTION is for debugging only.  REVNUM is the SVN revision
     number of this commit."""
 
-    self.description = description
+    self._description = description
 
     # The date of the commit, as an integer.  While the SVNCommit is
     # being built up, this contains the latest date seen so far.  This
@@ -115,13 +115,16 @@ class SVNCommit:
                'svn:log'    : log_msg,
                'svn:date'   : date }
 
+  def get_description(self):
+    return self._description
+
   def __str__(self):
     """ Print a human-readable description of this SVNCommit.
 
     This description is not intended to be machine-parseable."""
 
     ret = "SVNCommit #: " + str(self.revnum) + "\n"
-    ret += "   debug description: " + self.description + "\n"
+    ret += "   debug description: " + self._description + "\n"
     return ret
 
 
@@ -202,12 +205,12 @@ class SVNInitialProjectCommit(SVNCommit):
 
   def __getstate__(self):
     return (
-        self.description, self.date, self.revnum,
+        self._description, self.date, self.revnum,
         [project.id for project in self.projects],
         )
 
   def __setstate__(self, state):
-    (self.description, self.date, self.revnum, project_ids,) = state
+    (self._description, self.date, self.revnum, project_ids,) = state
     self.projects = [Ctx().projects[project_id] for project_id in project_ids]
 
 

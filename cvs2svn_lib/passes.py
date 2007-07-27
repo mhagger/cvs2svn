@@ -1395,8 +1395,6 @@ class OutputPass(Pass):
     self._register_temp_file_needed(config.SVN_COMMITS_INDEX_TABLE)
     self._register_temp_file_needed(config.SVN_COMMITS_STORE)
     self._register_temp_file_needed(config.CVS_REVS_TO_SVN_REVNUMS)
-    self._register_temp_file_needed(config.SYMBOL_OPENINGS_CLOSINGS_SORTED)
-    self._register_temp_file_needed(config.SYMBOL_OFFSETS_DB)
     Ctx().output_option.register_artifacts(self)
 
   def get_svn_commits(self):

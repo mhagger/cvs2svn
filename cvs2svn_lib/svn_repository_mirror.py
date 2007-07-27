@@ -160,6 +160,14 @@ class SVNRepositoryMirror:
         config.SVN_MIRROR_NODES_STORE, which_pass
         )
 
+    # These artifacts are needed for SymbolingsReader:
+    artifact_manager.register_temp_file_needed(
+        config.SYMBOL_OPENINGS_CLOSINGS_SORTED, which_pass
+        )
+    artifact_manager.register_temp_file_needed(
+        config.SYMBOL_OFFSETS_DB, which_pass
+        )
+
   def open(self):
     """Set up the SVNRepositoryMirror and prepare it for SVNCommits."""
 
@@ -555,6 +563,8 @@ class SVNRepositoryMirror:
     self._svn_revs_root_nodes = None
     self._nodes_db.close()
     self._nodes_db = None
+    self._symbolings_reader.close()
+    self._symbolings_reader = None
 
 
 class SVNRepositoryMirrorDelegate:

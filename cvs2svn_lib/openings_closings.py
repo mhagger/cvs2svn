@@ -152,6 +152,11 @@ class SymbolingsReader:
     self.offsets = cPickle.load(offsets_db)
     offsets_db.close()
 
+  def close(self):
+    self.symbolings.close()
+    del self.symbolings
+    del self.offsets
+
   def _generate_lines(self, symbol):
     """Generate the lines for SYMBOL.
 

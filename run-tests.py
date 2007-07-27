@@ -2518,6 +2518,14 @@ def options_option():
   conv = ensure_conversion('main', options_file='cvs2svn.options')
 
 
+def multiproject():
+  "multiproject conversoin"
+
+  conv = ensure_conversion(
+      'main', options_file='cvs2svn-multiproject.options'
+      )
+
+
 def tag_with_no_revision():
   "tag defined but revision is deleted"
 
@@ -2920,12 +2928,13 @@ test_list = [
     issue_100,
     issue_106,
     options_option,
+    multiproject,
     tag_with_no_revision,
     XFail(delete_cvsignore),
     repeated_deltatext,
     nasty_graphs,
-    XFail(tagging_after_delete),
 # 110:
+    XFail(tagging_after_delete),
     crossed_branches,
     file_directory_conflict,
     attic_directory_conflict,
@@ -2935,8 +2944,8 @@ test_list = [
     leftover_revs,
     requires_internal_co,
     timestamp_chaos,
-    symlinks,
 # 120:
+    symlinks,
     empty_trunk_path,
     preferred_parent_cycle,
     branch_from_empty_dir,

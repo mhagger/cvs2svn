@@ -22,15 +22,18 @@ from __future__ import generators
 import os
 
 from cvs2svn_lib.boolean import *
+from cvs2svn_lib import config
 from cvs2svn_lib.common import InternalError
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.common import format_date
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
+from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.process import CommandFailedException
 from cvs2svn_lib.process import check_command_runs
 from cvs2svn_lib.process import run_command
+from cvs2svn_lib.openings_closings import SymbolingsReader
 from cvs2svn_lib.svn_repository_mirror import SVNRepositoryMirror
 from cvs2svn_lib.stdout_delegate import StdoutDelegate
 from cvs2svn_lib.dumpfile_delegate import DumpfileDelegate
@@ -104,10 +107,19 @@ class SVNOutputOption(OutputOption):
     self.repos = SVNRepositoryMirror()
 
   def register_artifacts(self, which_pass):
+    # These artifacts are needed for SymbolingsReader:
+    artifact_manager.register_temp_file_needed(
+        config.SYMBOL_OPENINGS_CLOSINGS_SORTED, which_pass
+        )
+    artifact_manager.register_temp_file_needed(
+        config.SYMBOL_OFFSETS_DB, which_pass
+        )
+
     self.repos.register_artifacts(which_pass)
     Ctx().revision_reader.register_artifacts(which_pass)
 
   def setup(self, svn_rev_count):
+    self._symbolings_reader = SymbolingsReader()
     self.repos.open()
     Ctx().revision_reader.start()
     self.repos.add_delegate(StdoutDelegate(svn_rev_count))
@@ -224,7 +236,13 @@ class SVNOutputOption(OutputOption):
     Log().verbose(
         'Filling symbolic name:', svn_commit.symbol.get_clean_name()
         )
-    self.repos.fill_symbol(svn_commit)
+
+    # Get the set of sources for the symbolic name:
+    source_set = self._symbolings_reader.get_source_set(
+        svn_commit, self.repos._youngest
+        )
+
+    self.repos.fill_symbol(svn_commit, source_set)
 
     self.repos.end_commit()
 
@@ -233,13 +251,21 @@ class SVNOutputOption(OutputOption):
     Log().verbose(
         'Filling symbolic name:', svn_commit.symbol.get_clean_name()
         )
-    self.repos.fill_symbol(svn_commit)
+
+    # Get the set of sources for the symbolic name:
+    source_set = self._symbolings_reader.get_source_set(
+        svn_commit, self.repos._youngest
+        )
+
+    self.repos.fill_symbol(svn_commit, source_set)
 
     self.repos.end_commit()
 
   def cleanup(self):
     self.repos.close()
     Ctx().revision_reader.finish()
+    self._symbolings_reader.close()
+    del self._symbolings_reader
 
 
 class DumpfileOutputOption(SVNOutputOption):

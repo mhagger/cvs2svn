@@ -32,7 +32,6 @@ from cvs2svn_lib.serializer import MarshalSerializer
 from cvs2svn_lib.database import IndexedDatabase
 from cvs2svn_lib.record_table import UnsignedIntegerPacker
 from cvs2svn_lib.record_table import RecordTable
-from cvs2svn_lib.openings_closings import SymbolingsReader
 from cvs2svn_lib.svn_commit_item import SVNCommitItem
 
 
@@ -160,14 +159,6 @@ class SVNRepositoryMirror:
         config.SVN_MIRROR_NODES_STORE, which_pass
         )
 
-    # These artifacts are needed for SymbolingsReader:
-    artifact_manager.register_temp_file_needed(
-        config.SYMBOL_OPENINGS_CLOSINGS_SORTED, which_pass
-        )
-    artifact_manager.register_temp_file_needed(
-        config.SYMBOL_OFFSETS_DB, which_pass
-        )
-
   def open(self):
     """Set up the SVNRepositoryMirror and prepare it for SVNCommits."""
 
@@ -191,8 +182,6 @@ class SVNRepositoryMirror:
     # Start at revision 0 without a root node.  It will be created
     # by _open_writable_root_node.
     self._youngest = 0
-
-    self._symbolings_reader = SymbolingsReader()
 
   def start_commit(self, revnum, revprops):
     """Start a new commit."""
@@ -423,7 +412,7 @@ class SVNRepositoryMirror:
     # node again so that its path is correct.
     return dest_parent_node[dest_basename]
 
-  def fill_symbol(self, svn_symbol_commit):
+  def fill_symbol(self, svn_symbol_commit, source_set):
     """Perform all copies necessary to create as much of the the tag
     or branch SYMBOL as possible given the current revision of the
     repository mirror.  SYMBOL is an instance of TypedSymbol.
@@ -433,11 +422,6 @@ class SVNRepositoryMirror:
     under it."""
 
     symbol = svn_symbol_commit.symbol
-
-    # Get the set of sources for the symbolic name:
-    source_set = self._symbolings_reader.get_source_set(
-        svn_symbol_commit, self._youngest
-        )
 
     if not source_set:
       raise InternalError(
@@ -563,8 +547,6 @@ class SVNRepositoryMirror:
     self._svn_revs_root_nodes = None
     self._nodes_db.close()
     self._nodes_db = None
-    self._symbolings_reader.close()
-    self._symbolings_reader = None
 
 
 class SVNRepositoryMirrorDelegate:

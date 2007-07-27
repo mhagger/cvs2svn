@@ -55,20 +55,13 @@ class SVNCommit:
     # The SVN revision number of this commit, as an integer.
     self.revnum = revnum
 
-    # Revprop metadata for this commit.
-    #
-    # These initial values are placeholders.  At least the log and the
-    # date should be different by the time these are used.
-    #
-    # They are private because their values should be returned encoded
-    # in UTF8, but callers aren't required to set them in UTF8.
-    # Therefore, accessor methods are used to set them, and
-    # self._get_revprops() is used to to get them, in dictionary form.
-    self._author = Ctx().username
-    self._log_msg = "This log message means an SVNCommit was used too soon."
-
   def get_cvs_items(self):
     """Return a list containing the CVSItems in this commit."""
+
+    raise NotImplementedError()
+
+  def _get_author(self):
+    """Return the author or this commit, or None if none is to be used."""
 
     raise NotImplementedError()
 
@@ -84,8 +77,9 @@ class SVNCommit:
     log_msg = self._get_log_msg()
     try:
       utf8_author = None
-      if self._author is not None:
-        utf8_author = Ctx().utf8_encoder(self._author)
+      author = self._get_author()
+      if author is not None:
+        utf8_author = Ctx().utf8_encoder(author)
       utf8_log = Ctx().utf8_encoder(log_msg)
       return { 'svn:author' : utf8_author,
                'svn:log'    : utf8_log,
@@ -93,7 +87,7 @@ class SVNCommit:
     except UnicodeError:
       Log().warn('%s: problem encoding author or log message:'
                  % warning_prefix)
-      Log().warn("  author: '%s'" % self._author)
+      Log().warn("  author: '%s'" % self._get_author())
       Log().warn("  log:    '%s'" % log_msg.rstrip())
       Log().warn("  date:   '%s'" % date)
       if isinstance(self, SVNRevisionCommit):
@@ -108,7 +102,7 @@ class SVNCommit:
           "with '--fallback-encoding'.\n")
       # It's better to fall back to the original (unknown encoding) data
       # than to either 1) quit or 2) record nothing at all.
-      return { 'svn:author' : self._author,
+      return { 'svn:author' : self._get_author(),
                'svn:log'    : log_msg,
                'svn:date'   : date }
 
@@ -137,8 +131,29 @@ class SVNRevisionCommit(SVNCommit):
 
     self.cvs_revs = list(cvs_revs)
 
+    # These values are set lazily by _get_metadata():
+    self._author = None
+    self._log_msg = None
+
   def get_cvs_items(self):
     return self.cvs_revs
+
+  def _get_metadata(self):
+    """Return the tuple (author, log_msg,) for this commit."""
+
+    if self._author is None:
+      # Set self._author and self._log_msg for this commit from that
+      # of the first cvs revision.
+      if not self.cvs_revs:
+        raise InternalError('SVNPrimaryCommit contains no CVS revisions')
+
+      metadata_id = self.cvs_revs[0].metadata_id
+      self._author, self._log_msg = Ctx()._metadata_db[metadata_id]
+
+    return self._author, self._log_msg
+
+  def _get_author(self):
+    return self._get_metadata()[0]
 
   def __getstate__(self):
     """Return the part of the state represented by this mixin."""
@@ -154,12 +169,6 @@ class SVNRevisionCommit(SVNCommit):
     keys = [int(key, 16) for key in cvs_rev_keys]
     cvs_revs = Ctx()._cvs_items_db.get_many(keys)
     SVNRevisionCommit.__init__(self, cvs_revs)
-
-    # Set the author and log message for this commit from the first
-    # cvs revision.
-    if self.cvs_revs:
-      metadata_id = self.cvs_revs[0].metadata_id
-      self._author, self._log_msg = Ctx()._metadata_db[metadata_id]
 
   def __str__(self):
     """Return the revision part of a description of this SVNCommit.
@@ -182,6 +191,9 @@ class SVNInitialProjectCommit(SVNCommit):
 
   def get_cvs_items(self):
     return []
+
+  def _get_author(self):
+    return Ctx().username
 
   def _get_log_msg(self):
     return 'New repository initialized by cvs2svn.'
@@ -226,10 +238,13 @@ class SVNPrimaryCommit(SVNCommit, SVNRevisionCommit):
   def __str__(self):
     return SVNRevisionCommit.__str__(self)
 
+  def _get_author(self):
+    return SVNRevisionCommit._get_author(self)
+
   def _get_log_msg(self):
     """Return the actual log message for this commit."""
 
-    return self._log_msg
+    return self._get_metadata()[1]
 
   def get_description(self):
     return 'commit'
@@ -281,6 +296,9 @@ class SVNSymbolCommit(SVNCommit):
 
   def get_cvs_items(self):
     return list(Ctx()._cvs_items_db.get_many(self.cvs_symbol_ids))
+
+  def _get_author(self):
+    return Ctx().username
 
   def _get_log_msg(self):
     """Return a manufactured log message for this commit."""
@@ -359,6 +377,9 @@ class SVNPostCommit(SVNCommit, SVNRevisionCommit):
 
   def __str__(self):
     return SVNRevisionCommit.__str__(self)
+
+  def _get_author(self):
+    return SVNRevisionCommit._get_author(self)
 
   def _get_log_msg(self):
     """Return a manufactured log message for this commit."""

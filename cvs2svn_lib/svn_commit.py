@@ -14,7 +14,24 @@
 # history and logs, available at http://cvs2svn.tigris.org/.
 # ====================================================================
 
-"""This module contains the SVNCommit classes."""
+"""This module contains the SVNCommit classes.
+
+There are four types of SVNCommits:
+
+  SVNInitialProjectCommit -- Initializes a project (creates its trunk,
+      branches, and tags directories).
+
+  SVNPrimaryCommit -- Commits one or more CVSRevisions on one or more
+      lines of development.
+
+  SVNSymbolCommit -- Creates or fills a symbolic name; that is, copies
+      files from a source line of development to a target branch or
+      tag.
+
+  SVNPostCommit -- Updates trunk to reflect changes on a non-trunk
+      default branch.
+
+"""
 
 
 from cvs2svn_lib.boolean import *
@@ -32,15 +49,7 @@ from cvs2svn_lib.cvs_item import CVSRevisionNoop
 
 
 class SVNCommit:
-  """This represents one commit to the Subversion Repository.  There
-  are three types of SVNCommits:
-
-  1. Commits one or more CVSRevisions (cannot fill a symbolic name).
-
-  2. Creates or fills a symbolic name (cannot commit CVSRevisions).
-
-  3. Updates trunk to reflect the contents of a particular branch
-     (this is to handle RCS default branches)."""
+  """This represents one commit to the Subversion Repository."""
 
   def __init__(self, date, revnum):
     """Instantiate an SVNCommit.

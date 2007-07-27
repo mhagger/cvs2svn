@@ -38,7 +38,6 @@ There are five types of SVNCommits:
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.common import InternalError
-from cvs2svn_lib.common import format_date
 from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.log import Log
@@ -73,13 +72,19 @@ class SVNCommit:
 
     raise NotImplementedError()
 
-  def _get_author(self):
-    """Return the author or this commit, or None if none is to be used."""
+  def get_author(self):
+    """Return the author or this commit, or None if none is to be used.
+
+    The return value is exactly as the author appeared in the RCS
+    file, with undefined character encoding."""
 
     raise NotImplementedError()
 
-  def _get_log_msg(self):
-    """Return a log message for this commit."""
+  def get_log_msg(self):
+    """Return a log message for this commit.
+
+    The return value is exactly as the log message appeared in the RCS
+    file, with undefined character encoding."""
 
     raise NotImplementedError()
 
@@ -87,36 +92,6 @@ class SVNCommit:
     """Return a summary of this commit that can be used in warnings."""
 
     return '(subversion rev %s)' % (self.revnum,)
-
-  def get_revprops(self):
-    """Return the Subversion revprops for this SVNCommit."""
-
-    date = format_date(self.date)
-    log_msg = self._get_log_msg()
-    try:
-      utf8_author = None
-      author = self._get_author()
-      if author is not None:
-        utf8_author = Ctx().utf8_encoder(author)
-      utf8_log = Ctx().utf8_encoder(log_msg)
-      return { 'svn:author' : utf8_author,
-               'svn:log'    : utf8_log,
-               'svn:date'   : date }
-    except UnicodeError:
-      Log().warn('%s: problem encoding author or log message:'
-                 % warning_prefix)
-      Log().warn("  author: '%s'" % self._get_author())
-      Log().warn("  log:    '%s'" % log_msg.rstrip())
-      Log().warn("  date:   '%s'" % date)
-      Log().warn(self.get_warning_summary())
-      Log().warn(
-          "Consider rerunning with one or more '--encoding' parameters or\n"
-          "with '--fallback-encoding'.\n")
-      # It's better to fall back to the original (unknown encoding) data
-      # than to either 1) quit or 2) record nothing at all.
-      return { 'svn:author' : self._get_author(),
-               'svn:log'    : log_msg,
-               'svn:date'   : date }
 
   def get_description(self):
     """Return a partial description of this SVNCommit, for logging."""
@@ -161,10 +136,10 @@ class SVNInitialProjectCommit(SVNCommit):
   def get_cvs_items(self):
     return []
 
-  def _get_author(self):
+  def get_author(self):
     return Ctx().username
 
-  def _get_log_msg(self):
+  def get_log_msg(self):
     return 'New repository initialized by cvs2svn.'
 
   def get_description(self):
@@ -221,7 +196,7 @@ class SVNRevisionCommit(SVNCommit):
 
     return self._author, self._log_msg
 
-  def _get_author(self):
+  def get_author(self):
     return self._get_metadata()[0]
 
   def get_warning_summary(self):
@@ -249,7 +224,7 @@ class SVNPrimaryCommit(SVNRevisionCommit):
   def __init__(self, cvs_revs, date, revnum):
     SVNRevisionCommit.__init__(self, cvs_revs, date, revnum)
 
-  def _get_log_msg(self):
+  def get_log_msg(self):
     """Return the actual log message for this commit."""
 
     return self._get_metadata()[1]
@@ -296,7 +271,7 @@ class SVNPostCommit(SVNRevisionCommit):
     # commits to those.
     return []
 
-  def _get_log_msg(self):
+  def get_log_msg(self):
     """Return a manufactured log message for this commit."""
 
     return (
@@ -340,10 +315,10 @@ class SVNSymbolCommit(SVNCommit):
 
     raise NotImplementedError()
 
-  def _get_author(self):
+  def get_author(self):
     return Ctx().username
 
-  def _get_log_msg(self):
+  def get_log_msg(self):
     """Return a manufactured log message for this commit."""
 
     # In Python 2.2.3, we could use textwrap.fill().  Oh well :-).

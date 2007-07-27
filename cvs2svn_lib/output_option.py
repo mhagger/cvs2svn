@@ -24,6 +24,7 @@ import os
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.common import InternalError
 from cvs2svn_lib.common import FatalError
+from cvs2svn_lib.common import format_date
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.process import CommandFailedException
@@ -110,11 +111,41 @@ class SVNOutputOption(OutputOption):
     Ctx().revision_reader.start()
     self.repos.add_delegate(StdoutDelegate(svn_rev_count))
 
+  def _get_revprops(self, svn_commit):
+    """Return the Subversion revprops for this SVNCommit."""
+
+    date = format_date(svn_commit.date)
+    log_msg = svn_commit.get_log_msg()
+    try:
+      utf8_author = None
+      author = svn_commit.get_author()
+      if author is not None:
+        utf8_author = Ctx().utf8_encoder(author)
+      utf8_log = Ctx().utf8_encoder(log_msg)
+      return { 'svn:author' : utf8_author,
+               'svn:log'    : utf8_log,
+               'svn:date'   : date }
+    except UnicodeError:
+      Log().warn('%s: problem encoding author or log message:'
+                 % warning_prefix)
+      Log().warn("  author: '%s'" % svn_commit.get_author())
+      Log().warn("  log:    '%s'" % log_msg.rstrip())
+      Log().warn("  date:   '%s'" % date)
+      Log().warn(svn_commit.get_warning_summary())
+      Log().warn(
+          "Consider rerunning with one or more '--encoding' parameters or\n"
+          "with '--fallback-encoding'.\n")
+      # It's better to fall back to the original (unknown encoding) data
+      # than to either 1) quit or 2) record nothing at all.
+      return { 'svn:author' : svn_commit.get_author(),
+               'svn:log'    : log_msg,
+               'svn:date'   : date }
+
   def process_initial_project_commit(self, svn_commit):
     # FIXME: It would be nicer to create a project's TTB directories
     # only after the first commit to the project.
 
-    self.repos.start_commit(svn_commit.revnum, svn_commit.get_revprops())
+    self.repos.start_commit(svn_commit.revnum, self._get_revprops(svn_commit))
 
     for project in svn_commit.projects:
       # For a trunk-only conversion, trunk_path might be ''.
@@ -127,7 +158,7 @@ class SVNOutputOption(OutputOption):
     self.repos.end_commit()
 
   def process_primary_commit(self, svn_commit):
-    self.repos.start_commit(svn_commit.revnum, svn_commit.get_revprops())
+    self.repos.start_commit(svn_commit.revnum, self._get_revprops(svn_commit))
 
     # This actually commits CVSRevisions
     if len(svn_commit.cvs_revs) > 1:
@@ -152,7 +183,7 @@ class SVNOutputOption(OutputOption):
     self.repos.end_commit()
 
   def process_post_commit(self, svn_commit):
-    self.repos.start_commit(svn_commit.revnum, svn_commit.get_revprops())
+    self.repos.start_commit(svn_commit.revnum, self._get_revprops(svn_commit))
 
     Log().verbose(
         'Synchronizing default_branch motivated by %d'
@@ -188,7 +219,7 @@ class SVNOutputOption(OutputOption):
     self.repos.end_commit()
 
   def process_branch_commit(self, svn_commit):
-    self.repos.start_commit(svn_commit.revnum, svn_commit.get_revprops())
+    self.repos.start_commit(svn_commit.revnum, self._get_revprops(svn_commit))
     Log().verbose(
         'Filling symbolic name:', svn_commit.symbol.get_clean_name()
         )
@@ -197,7 +228,7 @@ class SVNOutputOption(OutputOption):
     self.repos.end_commit()
 
   def process_tag_commit(self, svn_commit):
-    self.repos.start_commit(svn_commit.revnum, svn_commit.get_revprops())
+    self.repos.start_commit(svn_commit.revnum, self._get_revprops(svn_commit))
     Log().verbose(
         'Filling symbolic name:', svn_commit.symbol.get_clean_name()
         )

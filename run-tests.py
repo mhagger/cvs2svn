@@ -2519,10 +2519,18 @@ def options_option():
 
 
 def multiproject():
-  "multiproject conversoin"
+  "multiproject conversion"
 
   conv = ensure_conversion(
       'main', options_file='cvs2svn-multiproject.options'
+      )
+
+
+def crossproject():
+  "multiproject conversion with cross-project commits"
+
+  conv = ensure_conversion(
+      'main', options_file='cvs2svn-crossproject.options'
       )
 
 
@@ -2929,11 +2937,12 @@ test_list = [
     issue_106,
     options_option,
     multiproject,
+    crossproject,
     tag_with_no_revision,
     XFail(delete_cvsignore),
     repeated_deltatext,
-    nasty_graphs,
 # 110:
+    nasty_graphs,
     XFail(tagging_after_delete),
     crossed_branches,
     file_directory_conflict,
@@ -2943,8 +2952,8 @@ test_list = [
     internal_co_trunk_only,
     leftover_revs,
     requires_internal_co,
-    timestamp_chaos,
 # 120:
+    timestamp_chaos,
     symlinks,
     empty_trunk_path,
     preferred_parent_cycle,

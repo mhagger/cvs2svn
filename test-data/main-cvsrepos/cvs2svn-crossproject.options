@@ -1,0 +1,37 @@
+# (Be in -*- python -*- mode.)
+
+# As a partial check that the example options file is functional, we
+# use it as the basis for this test.  We only need to overwrite the
+# output option to get the output repository in the location expected
+# by the test infrastructure.
+
+import os
+
+execfile('cvs2svn-example.options')
+
+ctx.output_option = NewRepositoryOutputOption(
+    'cvs2svn-tmp/main--options=cvs2svn-crossproject.options-svnrepos',
+    )
+
+ctx.cross_project_commits = True
+ctx.cross_branch_commits = False
+
+del ctx.projects[:]
+
+for project in [
+    'full-prune',
+    'full-prune-reappear',
+    'interleaved',
+    'partial-prune',
+    'proj',
+    'single-files',
+    ]:
+    ctx.add_project(
+        Project(
+            os.path.join(r'test-data/main-cvsrepos', project),
+            '%s/trunk' % (project,),
+            '%s/branches' % (project,),
+            '%s/tags' % (project,),
+            )
+        )
+

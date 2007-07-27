@@ -22,6 +22,7 @@ from __future__ import generators
 import os
 
 from cvs2svn_lib.boolean import *
+from cvs2svn_lib.common import InternalError
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
@@ -32,6 +33,10 @@ from cvs2svn_lib.svn_repository_mirror import SVNRepositoryMirror
 from cvs2svn_lib.stdout_delegate import StdoutDelegate
 from cvs2svn_lib.dumpfile_delegate import DumpfileDelegate
 from cvs2svn_lib.repository_delegate import RepositoryDelegate
+from cvs2svn_lib.cvs_item import CVSRevisionAdd
+from cvs2svn_lib.cvs_item import CVSRevisionChange
+from cvs2svn_lib.cvs_item import CVSRevisionDelete
+from cvs2svn_lib.cvs_item import CVSRevisionNoop
 
 
 class OutputOption:
@@ -59,8 +64,28 @@ class OutputOption:
 
     raise NotImplementedError()
 
-  def process(self, svn_commit):
-    """Process SVN_COMMIT, which is an instance of SVNCommit."""
+  def process_initial_project_commit(self, svn_commit):
+    """Process SVN_COMMIT, which is an SVNInitialProjectCommit."""
+
+    raise NotImplementedError()
+
+  def process_primary_commit(self, svn_commit):
+    """Process SVN_COMMIT, which is an SVNInitialProjectCommit."""
+
+    raise NotImplementedError()
+
+  def process_post_commit(self, svn_commit):
+    """Process SVN_COMMIT, which is an SVNPostCommit."""
+
+    raise NotImplementedError()
+
+  def process_branch_commit(self, svn_commit):
+    """Process SVN_COMMIT, which is an SVNSymbolCommit."""
+
+    raise NotImplementedError()
+
+  def process_tag_commit(self, svn_commit):
+    """Process SVN_COMMIT, which is an SVNSymbolCommit."""
 
     raise NotImplementedError()
 
@@ -85,8 +110,100 @@ class SVNOutputOption(OutputOption):
     Ctx().revision_reader.start()
     self.repos.add_delegate(StdoutDelegate(svn_rev_count))
 
-  def process(self, svn_commit):
-    svn_commit.commit(self.repos)
+  def process_initial_project_commit(self, svn_commit):
+    # FIXME: It would be nicer to create a project's TTB directories
+    # only after the first commit to the project.
+
+    self.repos.start_commit(svn_commit.revnum, svn_commit.get_revprops())
+
+    for project in svn_commit.projects:
+      # For a trunk-only conversion, trunk_path might be ''.
+      if project.trunk_path:
+        self.repos.mkdir(project.trunk_path)
+      if not Ctx().trunk_only:
+        self.repos.mkdir(project.branches_path)
+        self.repos.mkdir(project.tags_path)
+
+    self.repos.end_commit()
+
+  def process_primary_commit(self, svn_commit):
+    self.repos.start_commit(svn_commit.revnum, svn_commit.get_revprops())
+
+    # This actually commits CVSRevisions
+    if len(svn_commit.cvs_revs) > 1:
+      plural = "s"
+    else:
+      plural = ""
+    Log().verbose("Committing %d CVSRevision%s"
+                  % (len(svn_commit.cvs_revs), plural))
+    for cvs_rev in svn_commit.cvs_revs:
+      if isinstance(cvs_rev, CVSRevisionNoop):
+        pass
+
+      elif isinstance(cvs_rev, CVSRevisionDelete):
+        self.repos.delete_path(cvs_rev.get_svn_path(), Ctx().prune)
+
+      elif isinstance(cvs_rev, CVSRevisionAdd):
+        self.repos.add_path(cvs_rev)
+
+      elif isinstance(cvs_rev, CVSRevisionChange):
+        self.repos.change_path(cvs_rev)
+
+    self.repos.end_commit()
+
+  def process_post_commit(self, svn_commit):
+    self.repos.start_commit(svn_commit.revnum, svn_commit.get_revprops())
+
+    Log().verbose(
+        'Synchronizing default_branch motivated by %d'
+        % (svn_commit.motivating_revnum,)
+        )
+
+    for cvs_rev in svn_commit.cvs_revs:
+      svn_trunk_path = cvs_rev.cvs_file.project.get_trunk_path(
+          cvs_rev.cvs_path)
+      if isinstance(cvs_rev, CVSRevisionAdd):
+        # Copy from branch to trunk:
+        self.repos.copy_path(
+            cvs_rev.get_svn_path(), svn_trunk_path,
+            svn_commit.motivating_revnum, True
+            )
+      elif isinstance(cvs_rev, CVSRevisionChange):
+        # Delete old version of the path on trunk...
+        self.repos.delete_path(svn_trunk_path)
+        # ...and copy the new version over from branch:
+        self.repos.copy_path(
+            cvs_rev.get_svn_path(), svn_trunk_path,
+            svn_commit.motivating_revnum, True
+            )
+      elif isinstance(cvs_rev, CVSRevisionDelete):
+        # Delete trunk path:
+        self.repos.delete_path(svn_trunk_path)
+      elif isinstance(cvs_rev, CVSRevisionNoop):
+        # Do nothing
+        pass
+      else:
+        raise InternalError('Unexpected CVSRevision type: %s' % (cvs_rev,))
+
+    self.repos.end_commit()
+
+  def process_branch_commit(self, svn_commit):
+    self.repos.start_commit(svn_commit.revnum, svn_commit.get_revprops())
+    Log().verbose(
+        'Filling symbolic name:', svn_commit.symbol.get_clean_name()
+        )
+    self.repos.fill_symbol(svn_commit)
+
+    self.repos.end_commit()
+
+  def process_tag_commit(self, svn_commit):
+    self.repos.start_commit(svn_commit.revnum, svn_commit.get_revprops())
+    Log().verbose(
+        'Filling symbolic name:', svn_commit.symbol.get_clean_name()
+        )
+    self.repos.fill_symbol(svn_commit)
+
+    self.repos.end_commit()
 
   def cleanup(self):
     self.repos.close()

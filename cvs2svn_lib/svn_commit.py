@@ -83,6 +83,11 @@ class SVNCommit:
 
     raise NotImplementedError()
 
+  def get_warning_summary(self):
+    """Return a summary of this commit that can be used in warnings."""
+
+    return '(subversion rev %s)' % (self.revnum,)
+
   def get_revprops(self):
     """Return the Subversion revprops for this SVNCommit."""
 
@@ -103,13 +108,7 @@ class SVNCommit:
       Log().warn("  author: '%s'" % self._get_author())
       Log().warn("  log:    '%s'" % log_msg.rstrip())
       Log().warn("  date:   '%s'" % date)
-      if isinstance(self, SVNRevisionCommit):
-        Log().warn("(subversion rev %s)  Related files:" % self.revnum)
-        for cvs_rev in self.cvs_revs:
-          Log().warn(" ", cvs_rev.cvs_file.filename)
-      else:
-        Log().warn("(subversion rev %s)" % self.revnum)
-
+      Log().warn(self.get_warning_summary())
       Log().warn(
           "Consider rerunning with one or more '--encoding' parameters or\n"
           "with '--fallback-encoding'.\n")
@@ -224,6 +223,13 @@ class SVNRevisionCommit(SVNCommit):
 
   def _get_author(self):
     return self._get_metadata()[0]
+
+  def get_warning_summary(self):
+    retval = []
+    retval.append(SVNCommit.get_warning_summary(self) + '  Related files:')
+    for cvs_rev in self.cvs_revs:
+      retval.append('  ' + cvs_rev.cvs_file.filename)
+    return '\n'.join(retval)
 
   def __str__(self):
     """Return the revision part of a description of this SVNCommit.

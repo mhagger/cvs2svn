@@ -1410,7 +1410,9 @@ class OutputPass(Pass):
 
     # Initialize the repository by creating the directories for trunk,
     # tags, and branches.
-    yield SVNInitialProjectCommit(svn_commit.date, Ctx().projects, 1)
+    yield SVNInitialProjectCommit(
+        'Initialization', svn_commit.date, Ctx().projects, 1
+        )
 
     while svn_commit:
       yield svn_commit

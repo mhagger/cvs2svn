@@ -137,12 +137,10 @@ class SVNCommit:
 
 
 class SVNRevisionCommit(SVNCommit):
-  """A mixin for a SVNCommit that includes actual CVS revisions."""
+  """A SVNCommit that includes actual CVS revisions."""
 
-  def __init__(self, cvs_revs):
-    """Initialize the cvs_revs member.
-
-    Derived classes must also call the SVNCommit constructor explicitly."""
+  def __init__(self, cvs_revs, date, revnum):
+    SVNCommit.__init__(self, date, revnum)
 
     self.cvs_revs = list(cvs_revs)
 
@@ -173,17 +171,20 @@ class SVNRevisionCommit(SVNCommit):
   def __getstate__(self):
     """Return the part of the state represented by this mixin."""
 
-    return ['%x' % (x.id,) for x in self.cvs_revs]
+    return (
+        SVNCommit.__getstate__(self),
+        [cvs_rev.id for cvs_rev in self.cvs_revs],
+        )
 
   def __setstate__(self, state):
     """Restore the part of the state represented by this mixin."""
 
-    cvs_rev_keys = state
+    (svn_commit_state, cvs_rev_ids) = state
+    SVNCommit.__setstate__(self, svn_commit_state)
 
-    cvs_revs = []
-    keys = [int(key, 16) for key in cvs_rev_keys]
-    cvs_revs = Ctx()._cvs_items_db.get_many(keys)
-    SVNRevisionCommit.__init__(self, cvs_revs)
+    self.cvs_revs = list(Ctx()._cvs_items_db.get_many(cvs_rev_ids))
+    self._author = None
+    self._log_msg = None
 
   def __str__(self):
     """Return the revision part of a description of this SVNCommit.
@@ -244,19 +245,9 @@ class SVNInitialProjectCommit(SVNCommit):
     self.projects = [Ctx().projects[project_id] for project_id in project_ids]
 
 
-class SVNPrimaryCommit(SVNCommit, SVNRevisionCommit):
+class SVNPrimaryCommit(SVNRevisionCommit):
   def __init__(self, cvs_revs, date, revnum):
-    SVNCommit.__init__(self, date, revnum)
-    SVNRevisionCommit.__init__(self, cvs_revs)
-
-  def get_cvs_items(self):
-    return SVNRevisionCommit.get_cvs_items(self)
-
-  def __str__(self):
-    return SVNRevisionCommit.__str__(self)
-
-  def _get_author(self):
-    return SVNRevisionCommit._get_author(self)
+    SVNRevisionCommit.__init__(self, cvs_revs, date, revnum)
 
   def _get_log_msg(self):
     """Return the actual log message for this commit."""
@@ -292,16 +283,6 @@ class SVNPrimaryCommit(SVNCommit, SVNRevisionCommit):
         repos.change_path(cvs_rev)
 
     repos.end_commit()
-
-  def __getstate__(self):
-    return (
-        SVNCommit.__getstate__(self), SVNRevisionCommit.__getstate__(self),
-        )
-
-  def __setstate__(self, state):
-    (svn_commit_state, rev_state,) = state
-    SVNCommit.__setstate__(self, svn_commit_state)
-    SVNRevisionCommit.__setstate__(self, rev_state)
 
 
 class SVNSymbolCommit(SVNCommit):
@@ -371,10 +352,9 @@ class SVNSymbolCommit(SVNCommit):
         + "   symbolic name: %s\n" % self.symbol.get_clean_name())
 
 
-class SVNPostCommit(SVNCommit, SVNRevisionCommit):
+class SVNPostCommit(SVNRevisionCommit):
   def __init__(self, motivating_revnum, cvs_revs, date, revnum):
-    SVNCommit.__init__(self, date, revnum)
-    SVNRevisionCommit.__init__(self, cvs_revs)
+    SVNRevisionCommit.__init__(self, cvs_revs, date, revnum)
 
     # The subversion revision number of the *primary* commit where the
     # default branch changes actually happened.  (NOTE: Secondary
@@ -396,12 +376,6 @@ class SVNPostCommit(SVNCommit, SVNRevisionCommit):
     # doesn't really include those CVSItems, but rather followup
     # commits to those.
     return []
-
-  def __str__(self):
-    return SVNRevisionCommit.__str__(self)
-
-  def _get_author(self):
-    return SVNRevisionCommit._get_author(self)
 
   def _get_log_msg(self):
     """Return a manufactured log message for this commit."""
@@ -458,14 +432,12 @@ class SVNPostCommit(SVNCommit, SVNRevisionCommit):
 
   def __getstate__(self):
     return (
-        SVNCommit.__getstate__(self),
         SVNRevisionCommit.__getstate__(self),
         self._motivating_revnum,
         )
 
   def __setstate__(self, state):
-    (svn_commit_state, rev_state, self._motivating_revnum,) = state
-    SVNCommit.__setstate__(self, svn_commit_state)
+    (rev_state, self._motivating_revnum,) = state
     SVNRevisionCommit.__setstate__(self, rev_state)
 
 

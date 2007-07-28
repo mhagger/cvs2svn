@@ -34,11 +34,16 @@ class Changeset(object):
   def __init__(self, id, cvs_item_ids):
     self.id = id
     self.cvs_item_ids = set(cvs_item_ids)
+    # This member is set lazily when get_cvs_items() is called.  When
+    # set, it is a list of CVSItem instances.
+    self._cvs_items = None
 
   def get_cvs_items(self):
     """Return the set of CVSItems within this Changeset."""
 
-    return set(Ctx()._cvs_items_db.get_many(self.cvs_item_ids))
+    if self._cvs_items is None:
+      self._cvs_items = list(Ctx()._cvs_items_db.get_many(self.cvs_item_ids))
+    return set(self._cvs_items)
 
   def create_graph_node(self, cvs_item_to_changeset_id):
     """Return a ChangesetGraphNode for this Changeset."""
@@ -61,6 +66,7 @@ class Changeset(object):
   def __setstate__(self, state):
     (self.id, cvs_item_ids,) = state
     self.cvs_item_ids = set(cvs_item_ids)
+    self._cvs_items = None
 
   def __cmp__(self, other):
     raise NotImplementedError()

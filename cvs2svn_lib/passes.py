@@ -63,7 +63,6 @@ from cvs2svn_lib.svn_commit import SVNCommit
 from cvs2svn_lib.svn_commit import SVNRevisionCommit
 from cvs2svn_lib.openings_closings import SymbolingsLogger
 from cvs2svn_lib.svn_commit_creator import SVNCommitCreator
-from cvs2svn_lib.svn_commit import SVNInitialProjectCommit
 from cvs2svn_lib.persistence_manager import PersistenceManager
 from cvs2svn_lib.collect_data import CollectData
 from cvs2svn_lib.process import run_command
@@ -1402,15 +1401,11 @@ class OutputPass(Pass):
 
     persistence_manager = PersistenceManager(DB_OPEN_READ)
 
-    svn_revnum = 2 # The first non-trivial commit
+    svn_revnum = 1 # The first non-trivial commit
 
     # Peek at the first revision to find the date to use to initialize
     # the repository:
     svn_commit = persistence_manager.get_svn_commit(svn_revnum)
-
-    # Initialize the repository by creating the directories for trunk,
-    # tags, and branches.
-    yield SVNInitialProjectCommit(svn_commit.date, Ctx().projects, 1)
 
     while svn_commit:
       yield svn_commit

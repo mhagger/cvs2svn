@@ -45,6 +45,11 @@ class Changeset(object):
       self._cvs_items = list(Ctx()._cvs_items_db.get_many(self.cvs_item_ids))
     return set(self._cvs_items)
 
+  def get_projects_opened(self):
+    """Return the set of projects that might be opened by this changeset."""
+
+    raise NotImplementedError()
+
   def create_graph_node(self, cvs_item_to_changeset_id):
     """Return a ChangesetGraphNode for this Changeset."""
 
@@ -136,6 +141,12 @@ class OrderedChangeset(Changeset):
     # is the last OrderedChangeset:
     self.next_id = next_id
 
+  def get_projects_opened(self):
+    retval = set()
+    for cvs_item in self.get_cvs_items():
+      retval.add(cvs_item.cvs_file.project)
+    return retval
+
   def create_graph_node(self, cvs_item_to_changeset_id):
     time_range = TimeRange()
 
@@ -182,6 +193,10 @@ class SymbolChangeset(Changeset):
   def __init__(self, id, symbol, cvs_item_ids):
     Changeset.__init__(self, id, cvs_item_ids)
     self.symbol = symbol
+
+  def get_projects_opened(self):
+    # A SymbolChangeset can never open a project.
+    return set()
 
   def create_graph_node(self, cvs_item_to_changeset_id):
     pred_ids = set()

@@ -41,6 +41,7 @@ from cvs2svn_lib.changeset import OrderedChangeset
 from cvs2svn_lib.changeset import BranchChangeset
 from cvs2svn_lib.changeset import TagChangeset
 from cvs2svn_lib.svn_commit import SVNCommit
+from cvs2svn_lib.svn_commit import SVNInitialProjectCommit
 from cvs2svn_lib.svn_commit import SVNPrimaryCommit
 from cvs2svn_lib.svn_commit import SVNPostCommit
 from cvs2svn_lib.svn_commit import SVNBranchCommit
@@ -53,9 +54,11 @@ class SVNCommitCreator:
 
   def __init__(self):
     # The revision number to assign to the next new SVNCommit.
-    # We start at 2 because SVNRepositoryMirror uses the first commit
-    # to create trunk, tags, and branches.
-    self.revnum_generator = KeyGenerator(2)
+    self.revnum_generator = KeyGenerator(1)
+
+    # A set containing the Projects that have already been
+    # initialized:
+    self._initialized_projects = set()
 
   def _post_commit(self, cvs_revs, motivating_revnum, timestamp):
     """Generate any SVNCommits needed to follow CVS_REVS.
@@ -196,12 +199,32 @@ class SVNCommitCreator:
     The changesets must be fed to this function in proper dependency
     order."""
 
+    # First create any new projects that might be opened by the
+    # changeset:
+    projects_opened = \
+        changeset.get_projects_opened() - self._initialized_projects
+    if projects_opened:
+      if Ctx().cross_project_commits:
+        yield SVNInitialProjectCommit(
+            timestamp, projects_opened, self.revnum_generator.gen_id()
+            )
+      else:
+        for project in projects_opened:
+          yield SVNInitialProjectCommit(
+              timestamp, [project], self.revnum_generator.gen_id()
+              )
+      self._initialized_projects.update(projects_opened)
+
     if isinstance(changeset, OrderedChangeset):
-      return self._process_revision_changeset(changeset, timestamp)
+      for svn_commit \
+              in self._process_revision_changeset(changeset, timestamp):
+        yield svn_commit
     elif isinstance(changeset, TagChangeset):
-      return self._process_tag_changeset(changeset, timestamp)
+      for svn_commit in self._process_tag_changeset(changeset, timestamp):
+        yield svn_commit
     elif isinstance(changeset, BranchChangeset):
-      return self._process_branch_changeset(changeset, timestamp)
+      for svn_commit in self._process_branch_changeset(changeset, timestamp):
+        yield svn_commit
     else:
       raise TypeError('Illegal changeset %r' % changeset)
 

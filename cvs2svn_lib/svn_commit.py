@@ -139,10 +139,10 @@ class SVNInitialProjectCommit(SVNCommit):
     return Ctx().username
 
   def get_log_msg(self):
-    return 'New repository initialized by cvs2svn.'
+    return 'Standard project directories initialized by cvs2svn.'
 
   def get_description(self):
-    return 'Initialization'
+    return 'Project initialization'
 
   def output(self, output_option):
     output_option.process_initial_project_commit(self)

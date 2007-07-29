@@ -46,7 +46,7 @@ class GitRevisionRecorder(FulltextRevisionRecorder):
   def start_file(self, cvs_file_items):
     self._cvs_file_items = cvs_file_items
 
-  def _get_original_source_id(self, cvs_rev):
+  def _get_original_source(self, cvs_rev):
     """Return the id of the first CVSRevision with the content of CVS_REV.
 
     'First' here refers to deltatext order; i.e., the very first
@@ -58,12 +58,12 @@ class GitRevisionRecorder(FulltextRevisionRecorder):
 
     while True:
       if cvs_rev.deltatext_exists:
-        return cvs_rev.id
+        return cvs_rev
       if isinstance(cvs_rev.lod, Trunk):
         if cvs_rev.next_id is None:
           # The HEAD revision on trunk is always its own source, even
           # if its deltatext (i.e., its fulltext) is empty:
-          return cvs_rev.id
+          return cvs_rev
         else:
           cvs_rev = self._cvs_file_items[cvs_rev.next_id]
       else:
@@ -79,9 +79,9 @@ class GitRevisionRecorder(FulltextRevisionRecorder):
     that don't have deltatexts (as, for example, happens with dead
     revisions and imported revisions)."""
 
-    source_id = self._get_original_source_id(cvs_rev)
+    source = self._get_original_source(cvs_rev)
 
-    if source_id == cvs_rev.id:
+    if source.id == cvs_rev.id:
       # Revision is its own source; write it out:
       self.dump_file.write('blob\n')
       self.dump_file.write('mark :%d\n' % (cvs_rev.id,))
@@ -91,7 +91,7 @@ class GitRevisionRecorder(FulltextRevisionRecorder):
 
     # Return as revision_recorder_token the CVSRevision.id of the
     # original source revision:
-    return source_id
+    return source.id
 
   def finish_file(self, cvs_file_items):
     del self._cvs_file_items

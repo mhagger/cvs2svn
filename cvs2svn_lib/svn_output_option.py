@@ -14,7 +14,7 @@
 # history and logs, available at http://cvs2svn.tigris.org/.
 # ====================================================================
 
-"""This module contains classes that hold the cvs2svn output options."""
+"""Classes for outputting the converted repository to SVN."""
 
 
 from __future__ import generators
@@ -100,9 +100,6 @@ class SVNOutputOption(OutputOption):
                'svn:date'   : date }
 
   def process_initial_project_commit(self, svn_commit):
-    # FIXME: It would be nicer to create a project's TTB directories
-    # only after the first commit to the project.
-
     self.repos.start_commit(svn_commit.revnum, self._get_revprops(svn_commit))
 
     for project in svn_commit.projects:

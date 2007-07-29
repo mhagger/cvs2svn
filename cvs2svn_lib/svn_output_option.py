@@ -175,9 +175,7 @@ class SVNOutputOption(OutputOption):
 
   def process_branch_commit(self, svn_commit):
     self.repos.start_commit(svn_commit.revnum, self._get_revprops(svn_commit))
-    Log().verbose(
-        'Filling symbolic name:', svn_commit.symbol.get_clean_name()
-        )
+    Log().verbose('Filling branch:', svn_commit.symbol.get_clean_name())
 
     # Get the set of sources for the symbolic name:
     source_set = self._symbolings_reader.get_source_set(
@@ -190,9 +188,7 @@ class SVNOutputOption(OutputOption):
 
   def process_tag_commit(self, svn_commit):
     self.repos.start_commit(svn_commit.revnum, self._get_revprops(svn_commit))
-    Log().verbose(
-        'Filling symbolic name:', svn_commit.symbol.get_clean_name()
-        )
+    Log().verbose('Filling tag:', svn_commit.symbol.get_clean_name())
 
     # Get the set of sources for the symbolic name:
     source_set = self._symbolings_reader.get_source_set(

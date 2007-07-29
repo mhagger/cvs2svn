@@ -2810,6 +2810,24 @@ def add_on_branch():
     ))
 
 
+def main_git():
+  "test output in git-fast-import format"
+
+  # Note: To test importing into git, do
+  #
+  #     ./run-tests 128
+  #     rm -rf .git
+  #     git-init
+  #     cat cvs2svn-tmp/git-blob.dat \
+  #         | git-fast-import --export-marks=cvs2svn-tmp/git-marks.dat
+  #     cat cvs2svn-tmp/git-dump.dat \
+  #         | git-fast-import --import-marks=cvs2svn-tmp/git-marks.dat
+  #
+  # Then "gitk", "git log", etc.
+
+  conv = ensure_conversion('main', options_file='cvs2svn-git.options')
+
+
 ########################################################################
 # Run the tests
 
@@ -2961,6 +2979,7 @@ test_list = [
     trunk_readd,
     branch_from_deleted_1_1,
     add_on_branch,
+    XFail(main_git),
     ]
 
 if __name__ == '__main__':

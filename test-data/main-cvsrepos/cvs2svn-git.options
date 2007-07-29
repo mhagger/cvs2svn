@@ -1,0 +1,27 @@
+# (Be in -*- python -*- mode.)
+
+# As a partial check that the example options file is functional, we
+# use it as the basis for this test.  We only need to overwrite the
+# output option to get the output repository in the location expected
+# by the test infrastructure.
+
+execfile('cvs2svn-example.options')
+
+from cvs2svn_lib.fulltext_revision_recorder \
+     import SimpleFulltextRevisionRecorderAdapter
+from cvs2svn_lib.git_revision_recorder import GitRevisionRecorder
+from cvs2svn_lib.git_output_option import GitOutputOption
+
+
+ctx.trunk_only = True
+
+ctx.output_option = GitOutputOption('cvs2svn-tmp/git-dump.dat')
+
+ctx.revision_recorder = SimpleFulltextRevisionRecorderAdapter(
+    RCSRevisionReader('co'), GitRevisionRecorder(),
+    )
+ctx.revision_excluder = NullRevisionExcluder()
+ctx.revision_reader = None
+
+ctx.skip_cleanup = True
+

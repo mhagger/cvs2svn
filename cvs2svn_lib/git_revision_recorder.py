@@ -47,14 +47,14 @@ class GitRevisionRecorder(FulltextRevisionRecorder):
     self._cvs_file_items = cvs_file_items
 
   def _get_original_source(self, cvs_rev):
-    """Return the id of the first CVSRevision with the content of CVS_REV.
+    """Return the first CVSRevision with the content of CVS_REV.
 
     'First' here refers to deltatext order; i.e., the very first
     revision is HEAD on trunk, then backwards to the root of a branch,
     then out to the tip of a branch.
 
     If there is no other CVSRevision that have the same content,
-    return CVS_REV.id."""
+    return CVS_REV itself."""
 
     while True:
       if cvs_rev.deltatext_exists:

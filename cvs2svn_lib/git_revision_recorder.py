@@ -29,6 +29,7 @@ from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.symbol import Trunk
 from cvs2svn_lib.cvs_item import CVSRevisionAbsent
 from cvs2svn_lib.fulltext_revision_recorder import FulltextRevisionRecorder
+from cvs2svn_lib.key_generator import KeyGenerator
 
 
 GIT_BLOB_FILE = 'git-blob.dat'
@@ -42,6 +43,7 @@ class GitRevisionRecorder(FulltextRevisionRecorder):
 
   def start(self):
     self.dump_file = open(artifact_manager.get_temp_file(GIT_BLOB_FILE), 'wb')
+    self._mark_generator = KeyGenerator(1)
 
   def start_file(self, cvs_file_items):
     self._cvs_file_items = cvs_file_items
@@ -83,15 +85,17 @@ class GitRevisionRecorder(FulltextRevisionRecorder):
 
     if source.id == cvs_rev.id:
       # Revision is its own source; write it out:
+      mark = self._mark_generator.gen_id()
       self.dump_file.write('blob\n')
-      self.dump_file.write('mark :%d\n' % (cvs_rev.id,))
+      self.dump_file.write('mark :%d\n' % (mark,))
       self.dump_file.write('data %d\n' % (len(fulltext),))
       self.dump_file.write(fulltext)
       self.dump_file.write('\n')
-
-    # Return as revision_recorder_token the CVSRevision.id of the
-    # original source revision:
-    return source.id
+      return mark
+    else:
+      # Return as revision_recorder_token the CVSRevision.id of the
+      # original source revision:
+      return source.revision_recorder_token
 
   def finish_file(self, cvs_file_items):
     del self._cvs_file_items

@@ -31,7 +31,7 @@ from cvs2svn_lib.cvs_item import CVSRevisionAbsent
 from cvs2svn_lib.fulltext_revision_recorder import FulltextRevisionRecorder
 
 
-GIT_DUMP_FILE = 'git-dump.dat'
+GIT_BLOB_FILE = 'git-blob.dat'
 
 
 def write_date(f, timestamp):
@@ -42,10 +42,10 @@ class GitRevisionRecorder(FulltextRevisionRecorder):
   """Output file revisions to git-fast-import."""
 
   def register_artifacts(self, which_pass):
-    artifact_manager.register_temp_file(GIT_DUMP_FILE, which_pass)
+    artifact_manager.register_temp_file(GIT_BLOB_FILE, which_pass)
 
   def start(self):
-    self.dump_file = open(artifact_manager.get_temp_file(GIT_DUMP_FILE), 'wb')
+    self.dump_file = open(artifact_manager.get_temp_file(GIT_BLOB_FILE), 'wb')
 
   def start_file(self, cvs_file_items):
     self._cvs_file_items = cvs_file_items

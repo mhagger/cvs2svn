@@ -34,10 +34,6 @@ from cvs2svn_lib.fulltext_revision_recorder import FulltextRevisionRecorder
 GIT_BLOB_FILE = 'git-blob.dat'
 
 
-def write_date(f, timestamp):
-  f.write('%d +0000' % (timestamp,))
-
-
 class GitRevisionRecorder(FulltextRevisionRecorder):
   """Output file revisions to git-fast-import."""
 

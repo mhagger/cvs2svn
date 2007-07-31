@@ -25,7 +25,6 @@ from __future__ import generators
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.set_support import *
-from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.symbol import Trunk
 from cvs2svn_lib.cvs_item import CVSRevision
 from cvs2svn_lib.cvs_item import CVSRevisionAbsent
@@ -34,17 +33,14 @@ from cvs2svn_lib.fulltext_revision_recorder import FulltextRevisionRecorder
 from cvs2svn_lib.key_generator import KeyGenerator
 
 
-GIT_BLOB_FILE = 'git-blob.dat'
-
-
 class GitRevisionRecorder(FulltextRevisionRecorder):
   """Output file revisions to git-fast-import."""
 
-  def register_artifacts(self, which_pass):
-    artifact_manager.register_temp_file(GIT_BLOB_FILE, which_pass)
+  def __init__(self, blob_filename):
+    self.blob_filename = blob_filename
 
   def start(self):
-    self.dump_file = open(artifact_manager.get_temp_file(GIT_BLOB_FILE), 'wb')
+    self.dump_file = open(self.blob_filename, 'wb')
     self._mark_generator = KeyGenerator(1)
 
   def start_file(self, cvs_file_items):

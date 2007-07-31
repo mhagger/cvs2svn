@@ -21,7 +21,8 @@ ctx.username = 'cvs2svn'
 ctx.output_option = GitOutputOption('cvs2svn-tmp/git-dump.dat')
 
 ctx.revision_recorder = SimpleFulltextRevisionRecorderAdapter(
-    RCSRevisionReader('co'), GitRevisionRecorder(),
+    RCSRevisionReader('co'),
+    GitRevisionRecorder('cvs2svn-tmp/git-blob.dat'),
     )
 ctx.revision_excluder = NullRevisionExcluder()
 ctx.revision_reader = None

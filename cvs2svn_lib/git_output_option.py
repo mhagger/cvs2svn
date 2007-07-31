@@ -36,6 +36,11 @@ from cvs2svn_lib.output_option import OutputOption
 class GitOutputOption(OutputOption):
   """An OutputOption that outputs to a git-fast-import formatted file."""
 
+  # The offset added to svn revision numbers to create a number to use
+  # as a git-fast-import commit mark.  This value needs to be large to
+  # avoid conflicts with blob marks.
+  _mark_offset = 1000000000
+
   def __init__(self, dump_filename):
     # The file to which to write the git-fast-import commands:
     self.dump_filename = dump_filename
@@ -59,6 +64,17 @@ class GitOutputOption(OutputOption):
   def setup(self, svn_rev_count):
     self._symbolings_reader = SymbolingsReader()
     self.f = open(self.dump_filename, 'wb')
+    # Pick a big starting number here to avoid conflicts with blob
+    # marks:
+    self._youngest = GitOutputOption._mark_offset
+    self._marks = {}
+
+  def _create_commit_mark(self, revnum):
+    assert revnum not in self._marks
+    mark = GitOutputOption._mark_offset + revnum
+    self._marks[revnum] = mark
+    self._youngest = revnum
+    return mark
 
   def process_initial_project_commit(self, svn_commit):
     pass
@@ -80,6 +96,9 @@ class GitOutputOption(OutputOption):
 
     # FIXME: is this correct?:
     self.f.write('commit refs/heads/master\n')
+    self.f.write(
+        'mark :%d\n' % (self._create_commit_mark(svn_commit.revnum),)
+        )
     self.f.write(
         'committer %s <%s> %d +0000\n' % (author, author, svn_commit.date,)
         )

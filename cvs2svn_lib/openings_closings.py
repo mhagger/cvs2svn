@@ -238,7 +238,8 @@ class SymbolingsReader:
             % (range.opening_revnum, cvs_symbol, svn_symbol_commit.revnum,)
             )
 
-      if range.closing_revnum > svn_symbol_commit.revnum:
+      if range.closing_revnum is not None \
+             and range.closing_revnum > svn_symbol_commit.revnum:
         range.closing_revnum = None
 
       openings_closings_map[svn_path] = range

@@ -27,5 +27,3 @@ ctx.revision_recorder = SimpleFulltextRevisionRecorderAdapter(
 ctx.revision_excluder = NullRevisionExcluder()
 ctx.revision_reader = None
 
-ctx.skip_cleanup = True
-

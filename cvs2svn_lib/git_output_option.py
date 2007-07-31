@@ -84,10 +84,13 @@ class GitOutputOption(OutputOption):
 
     # A map {lod : [(revnum, mark)]} giving each of the revision
     # numbers in which there was a commit to lod, and the
-    # corresponding mark.
+    # corresponding mark.  The entry for Trunk is stored under key
+    # None.
     self._marks = {}
 
   def _create_commit_mark(self, lod, revnum):
+    if isinstance(lod, Trunk):
+      lod = None
     assert revnum >= self._youngest
     mark = GitOutputOption._mark_offset + revnum
     self._marks.setdefault(lod, []).append((revnum, mark))
@@ -195,6 +198,8 @@ class GitOutputOption(OutputOption):
   def _get_source_mark(self, source_lod, revnum):
     """Return the mark active at REVNUM on SOURCE_LOD."""
 
+    if isinstance(source_lod, Trunk):
+      source_lod = None
     modifications = self._marks[source_lod]
     i = bisect.bisect_left(modifications, (revnum + 1,)) - 1
     (revnum, mark) = modifications[i]

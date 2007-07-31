@@ -157,6 +157,14 @@ class GitOutputOption(OutputOption):
   def process_post_commit(self, svn_commit):
     raise NotImplementedError() # FIXME
 
+  def _get_source_mark(self, source_lod, revnum):
+    """Return the mark active at REVNUM on SOURCE_LOD."""
+
+    modifications = self._marks[source_lod]
+    i = bisect.bisect_left(modifications, (revnum + 1,)) - 1
+    (revnum, mark) = modifications[i]
+    return mark
+
   def process_branch_commit(self, svn_commit):
     raise NotImplementedError() # FIXME
 

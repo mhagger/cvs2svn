@@ -27,7 +27,9 @@ from cvs2svn_lib.boolean import *
 from cvs2svn_lib.set_support import *
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.symbol import Trunk
+from cvs2svn_lib.cvs_item import CVSRevision
 from cvs2svn_lib.cvs_item import CVSRevisionAbsent
+from cvs2svn_lib.cvs_item import CVSSymbol
 from cvs2svn_lib.fulltext_revision_recorder import FulltextRevisionRecorder
 from cvs2svn_lib.key_generator import KeyGenerator
 
@@ -98,6 +100,15 @@ class GitRevisionRecorder(FulltextRevisionRecorder):
       return source.revision_recorder_token
 
   def finish_file(self, cvs_file_items):
+    # Determine the original source of each CVSSymbol, and store it as
+    # the symbol's revision_recorder_token.
+    for cvs_item in cvs_file_items.values():
+      if isinstance(cvs_item, CVSSymbol):
+        cvs_source = cvs_file_items[cvs_item.source_id]
+        while not isinstance(cvs_source, CVSRevision):
+          cvs_source = cvs_file_items[cvs_source.source_id]
+        cvs_item.revision_recorder_token = cvs_source.revision_recorder_token
+
     del self._cvs_file_items
 
   def finish(self):

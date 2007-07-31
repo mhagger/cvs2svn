@@ -34,6 +34,7 @@ from cvs2svn_lib.process import CommandFailedException
 from cvs2svn_lib.process import check_command_runs
 from cvs2svn_lib.process import run_command
 from cvs2svn_lib.openings_closings import SymbolingsReader
+from cvs2svn_lib.symbol_filling_guide import get_source_set
 from cvs2svn_lib.svn_repository_mirror import SVNRepositoryMirror
 from cvs2svn_lib.stdout_delegate import StdoutDelegate
 from cvs2svn_lib.dumpfile_delegate import DumpfileDelegate
@@ -178,7 +179,10 @@ class SVNOutputOption(OutputOption):
     Log().verbose('Filling branch:', svn_commit.symbol.get_clean_name())
 
     # Get the set of sources for the symbolic name:
-    source_set = self._symbolings_reader.get_source_set(svn_commit)
+    source_set = get_source_set(
+        svn_commit.symbol,
+        self._symbolings_reader.get_openings_closings_map(svn_commit),
+        )
 
     self.repos.fill_symbol(svn_commit, source_set)
 
@@ -189,7 +193,10 @@ class SVNOutputOption(OutputOption):
     Log().verbose('Filling tag:', svn_commit.symbol.get_clean_name())
 
     # Get the set of sources for the symbolic name:
-    source_set = self._symbolings_reader.get_source_set(svn_commit)
+    source_set = get_source_set(
+        svn_commit.symbol,
+        self._symbolings_reader.get_openings_closings_map(svn_commit),
+        )
 
     self.repos.fill_symbol(svn_commit, source_set)
 

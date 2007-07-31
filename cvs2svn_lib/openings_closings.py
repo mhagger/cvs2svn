@@ -28,7 +28,6 @@ from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.symbol import Branch
 from cvs2svn_lib.svn_revision_range import SVNRevisionRange
-from cvs2svn_lib.symbol_filling_guide import get_source_set
 
 
 # Constants used in SYMBOL_OPENINGS_CLOSINGS
@@ -245,15 +244,5 @@ class SymbolingsReader:
       openings_closings_map[svn_path] = range
 
     return openings_closings_map
-
-  def get_source_set(self, svn_symbol_commit):
-    """Return the list of possible sources for SVN_SYMBOL_COMMIT.
-
-    SVN_SYMBOL_COMMIT is an SVNSymbolCommit instance.  The symbol
-    sources will contain all openings and closings for CVSSymbols that
-    occur in SVN_SYMBOL_COMMIT."""
-
-    openings_closings_map = self.get_openings_closings_map(svn_symbol_commit)
-    return get_source_set(svn_symbol_commit.symbol, openings_closings_map)
 
 

@@ -16,6 +16,7 @@ from cvs2svn_lib.git_output_option import GitOutputOption
 ctx.trunk_only = True
 ctx.cross_project_commits = False
 ctx.cross_branch_commits = False
+ctx.username = 'cvs2svn'
 
 ctx.output_option = GitOutputOption('cvs2svn-tmp/git-dump.dat')
 

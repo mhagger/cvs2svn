@@ -60,6 +60,18 @@ class GitOutputOption(OutputOption):
       raise FatalError(
           'Git output is currently only supported with --trunk-only'
           )
+    if Ctx().cross_project_commits:
+      raise FatalError(
+          'Git output is not supported with cross-project commits'
+          )
+    if Ctx().cross_branch_commits:
+      raise FatalError(
+          'Git output is not supported with cross-branch commits'
+          )
+    if Ctx().username is None:
+      raise FatalError(
+          'Git output requires a default commit username'
+          )
 
   def setup(self, svn_rev_count):
     self._symbolings_reader = SymbolingsReader()

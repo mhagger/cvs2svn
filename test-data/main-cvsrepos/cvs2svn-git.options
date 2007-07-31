@@ -13,10 +13,13 @@ from cvs2svn_lib.git_revision_recorder import GitRevisionRecorder
 from cvs2svn_lib.git_output_option import GitOutputOption
 
 
-ctx.trunk_only = True
+ctx.trunk_only = False
 ctx.cross_project_commits = False
 ctx.cross_branch_commits = False
 ctx.username = 'cvs2svn'
+
+ctx.symbol_strategy = RuleBasedSymbolStrategy()
+ctx.symbol_strategy.add_rule(ForceBranchRegexpStrategyRule(r'.*'))
 
 ctx.output_option = GitOutputOption('cvs2svn-tmp/git-dump.dat')
 

@@ -158,7 +158,64 @@ class GitOutputOption(OutputOption):
     self.f.write('\n')
 
   def process_post_commit(self, svn_commit):
-    pass # @@@ raise NotImplementedError() # FIXME
+    author = svn_commit.get_author()
+    try:
+      author = Ctx().utf8_encoder(author)
+    except UnicodeError:
+      Log().warn('%s: problem encoding author:' % warning_prefix)
+      Log().warn("  author: '%s'" % (author,))
+
+    log_msg = svn_commit.get_log_msg()
+    try:
+      log_msg = Ctx().utf8_encoder(log_msg)
+    except UnicodeError:
+      Log().warn('%s: problem encoding log message:' % warning_prefix)
+      Log().warn("  log:    '%s'" % log_msg.rstrip())
+
+    source_lods = set()
+    for cvs_rev in svn_commit.cvs_revs:
+      source_lods.add(cvs_rev.lod)
+    if len(source_lods) != 1:
+      raise InternalError('Commit is from %d LODs' % (len(source_lods),))
+    source_lod = source_lods.pop()
+    # FIXME: is this correct?:
+    self.f.write('commit refs/heads/master\n')
+    self.f.write(
+        'mark :%d\n'
+        % (self._create_commit_mark(None, svn_commit.revnum),)
+        )
+    self.f.write(
+        'committer %s <%s> %d +0000\n' % (author, author, svn_commit.date,)
+        )
+    self.f.write('data %d\n' % (len(log_msg),))
+    self.f.write('%s\n' % (log_msg,))
+    self.f.write(
+        'merge :%d\n'
+        % (self._get_source_mark(source_lod, svn_commit.revnum),)
+        )
+    for cvs_rev in svn_commit.cvs_revs:
+      if isinstance(cvs_rev, CVSRevisionNoop):
+        pass
+
+      elif isinstance(cvs_rev, CVSRevisionDelete):
+        self.f.write('D %s\n' % (cvs_rev.cvs_file.cvs_path,))
+
+      elif isinstance(cvs_rev, CVSRevisionModification):
+        if cvs_rev.cvs_file.executable:
+          mode = '100755'
+        else:
+          mode = '100644'
+
+        self.f.write(
+            'M %s :%d %s\n'
+            % (mode, cvs_rev.revision_recorder_token,
+               cvs_rev.cvs_file.cvs_path,)
+            )
+
+      else:
+        raise InternalError('Unexpected CVSRevision type: %s' % (cvs_rev,))
+
+    self.f.write('\n')
 
   def _get_source_groups(self, svn_commit):
     """Return groups of sources for SVN_COMMIT.

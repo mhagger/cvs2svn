@@ -297,7 +297,7 @@ class _SymbolFillingGuide:
   revnum' differs from their parent's and if it does, take appropriate
   actions to 'patch up' the subtrees."""
 
-  def __init__(self, symbol, openings_closings_map):
+  def __init__(self, symbol, range_map):
     """Initializes a _SymbolFillingGuide for SYMBOL.
 
     SYMBOL is either a Branch or a Tag.  Record the openings and
@@ -312,7 +312,8 @@ class _SymbolFillingGuide:
     # the same form.
     self._node_tree = { }
 
-    for svn_path, svn_revision_range in openings_closings_map.items():
+    for cvs_symbol, svn_revision_range in range_map.items():
+      svn_path = cvs_symbol.source_lod.get_path(cvs_symbol.cvs_file.cvs_path)
       (head, tail) = path_split(svn_path)
       self._get_node_for_path(head)[tail] = svn_revision_range
 
@@ -383,7 +384,7 @@ class _SymbolFillingGuide:
         self.print_node_tree(value, key, (indent_depth + 1))
 
 
-def get_source_set(symbol, openings_closings_map):
-  return _SymbolFillingGuide(symbol, openings_closings_map).get_source_set()
+def get_source_set(symbol, range_map):
+  return _SymbolFillingGuide(symbol, range_map).get_source_set()
 
 

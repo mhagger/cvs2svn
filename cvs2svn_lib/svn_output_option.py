@@ -181,7 +181,7 @@ class SVNOutputOption(OutputOption):
     # Get the set of sources for the symbolic name:
     source_set = get_source_set(
         svn_commit.symbol,
-        self._symbolings_reader.get_openings_closings_map(svn_commit),
+        self._symbolings_reader.get_range_map(svn_commit),
         )
 
     self.repos.fill_symbol(svn_commit, source_set)
@@ -195,7 +195,7 @@ class SVNOutputOption(OutputOption):
     # Get the set of sources for the symbolic name:
     source_set = get_source_set(
         svn_commit.symbol,
-        self._symbolings_reader.get_openings_closings_map(svn_commit),
+        self._symbolings_reader.get_range_map(svn_commit),
         )
 
     self.repos.fill_symbol(svn_commit, source_set)

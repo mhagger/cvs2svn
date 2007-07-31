@@ -180,7 +180,7 @@ class SymbolingsReader:
 
         yield (revnum, type, cvs_symbol_id)
 
-  def _get_range_map(self, svn_symbol_commit):
+  def get_range_map(self, svn_symbol_commit):
     """Return the ranges of all CVSSymbols related to SVN_SYMBOL_COMMIT.
 
     Return a map {CVSSymbol : SVNRevisionRange}."""
@@ -234,24 +234,5 @@ class SymbolingsReader:
         range.closing_revnum = None
 
     return range_map
-
-  def get_openings_closings_map(self, svn_symbol_commit):
-    """Return a map of openings/closings for items in SVN_SYMBOL_COMMIT.
-
-    Return a map {svn_path : SVNRevisionRange}."""
-
-    symbol = svn_symbol_commit.symbol
-
-    range_map = self._get_range_map(svn_symbol_commit)
-
-    # A map {svn_path : SVNRevisionRange}:
-    openings_closings_map = {}
-
-    for (cvs_symbol, range) in range_map.iteritems():
-      openings_closings_map[
-          cvs_symbol.source_lod.get_path(cvs_symbol.cvs_file.cvs_path)
-          ] = range
-
-    return openings_closings_map
 
 

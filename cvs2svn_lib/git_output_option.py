@@ -97,11 +97,7 @@ class GitOutputOption(OutputOption):
     self._youngest = revnum
     return mark
 
-  def process_initial_project_commit(self, svn_commit):
-    # Nothing to do.
-    pass
-
-  def process_primary_commit(self, svn_commit):
+  def _get_author(svn_commit):
     author = svn_commit.get_author()
     try:
       author = Ctx().utf8_encoder(author)
@@ -109,12 +105,29 @@ class GitOutputOption(OutputOption):
       Log().warn('%s: problem encoding author:' % warning_prefix)
       Log().warn("  author: '%s'" % (author,))
 
+    return author
+
+  _get_author = staticmethod(_get_author)
+
+  def _get_log_msg(svn_commit):
     log_msg = svn_commit.get_log_msg()
     try:
       log_msg = Ctx().utf8_encoder(log_msg)
     except UnicodeError:
       Log().warn('%s: problem encoding log message:' % warning_prefix)
       Log().warn("  log:    '%s'" % log_msg.rstrip())
+
+    return log_msg
+
+  _get_log_msg = staticmethod(_get_log_msg)
+
+  def process_initial_project_commit(self, svn_commit):
+    # Nothing to do.
+    pass
+
+  def process_primary_commit(self, svn_commit):
+    author = self._get_author(svn_commit)
+    log_msg = self._get_log_msg(svn_commit)
 
     lods = set()
     for cvs_rev in svn_commit.get_cvs_items():
@@ -158,19 +171,8 @@ class GitOutputOption(OutputOption):
     self.f.write('\n')
 
   def process_post_commit(self, svn_commit):
-    author = svn_commit.get_author()
-    try:
-      author = Ctx().utf8_encoder(author)
-    except UnicodeError:
-      Log().warn('%s: problem encoding author:' % warning_prefix)
-      Log().warn("  author: '%s'" % (author,))
-
-    log_msg = svn_commit.get_log_msg()
-    try:
-      log_msg = Ctx().utf8_encoder(log_msg)
-    except UnicodeError:
-      Log().warn('%s: problem encoding log message:' % warning_prefix)
-      Log().warn("  log:    '%s'" % log_msg.rstrip())
+    author = self._get_author(svn_commit)
+    log_msg = self._get_log_msg(svn_commit)
 
     source_lods = set()
     for cvs_rev in svn_commit.cvs_revs:
@@ -263,21 +265,8 @@ class GitOutputOption(OutputOption):
     return mark
 
   def process_branch_commit(self, svn_commit):
-    author = svn_commit.get_author()
-    if author is None:
-      author = Ctx().username
-    try:
-      author = Ctx().utf8_encoder(author)
-    except UnicodeError:
-      Log().warn('%s: problem encoding author:' % warning_prefix)
-      Log().warn("  author: '%s'" % (author,))
-
-    log_msg = svn_commit.get_log_msg()
-    try:
-      log_msg = Ctx().utf8_encoder(log_msg)
-    except UnicodeError:
-      Log().warn('%s: problem encoding log message:' % warning_prefix)
-      Log().warn("  log:    '%s'" % log_msg.rstrip())
+    author = self._get_author(svn_commit)
+    log_msg = self._get_log_msg(svn_commit)
 
     self.f.write('commit refs/heads/%s\n' % (svn_commit.symbol.name,))
     self.f.write(

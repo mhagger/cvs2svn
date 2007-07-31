@@ -77,6 +77,7 @@ class GitOutputOption(OutputOption):
     return mark
 
   def process_initial_project_commit(self, svn_commit):
+    # Nothing to do.
     pass
 
   def process_primary_commit(self, svn_commit):
@@ -126,13 +127,13 @@ class GitOutputOption(OutputOption):
     self.f.write('\n')
 
   def process_post_commit(self, svn_commit):
-    pass
+    raise NotImplementedError() # FIXME
 
   def process_branch_commit(self, svn_commit):
-    pass
+    raise NotImplementedError() # FIXME
 
   def process_tag_commit(self, svn_commit):
-    pass
+    raise NotImplementedError() # FIXME
 
   def cleanup(self):
     self.f.close()

@@ -742,7 +742,9 @@ class CVSFileItems(object):
       raise FatalError('Attempt to exclude a branch with commits.')
     cvs_tag = CVSTag(
         cvs_branch.id, cvs_branch.cvs_file, cvs_branch.symbol,
-        cvs_branch.source_lod, cvs_branch.source_id)
+        cvs_branch.source_lod, cvs_branch.source_id,
+        cvs_branch.revision_recorder_token,
+        )
     self.add(cvs_tag)
     cvs_revision = self[cvs_tag.source_id]
     cvs_revision.branch_ids.remove(cvs_tag.id)
@@ -753,7 +755,9 @@ class CVSFileItems(object):
 
     cvs_branch = CVSBranch(
         cvs_tag.id, cvs_tag.cvs_file, cvs_tag.symbol,
-        None, cvs_tag.source_lod, cvs_tag.source_id, None)
+        None, cvs_tag.source_lod, cvs_tag.source_id, None,
+        cvs_tag.revision_recorder_token,
+        )
     self.add(cvs_branch)
     cvs_revision = self[cvs_branch.source_id]
     cvs_revision.tag_ids.remove(cvs_branch.id)

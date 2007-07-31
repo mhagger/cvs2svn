@@ -635,6 +635,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
           self.sdc.rev_to_lod(branch_data.parent),
           self._get_rev_id(branch_data.parent),
           self._get_rev_id(branch_data.child),
+          None,
           )
 
   def _get_cvs_tags(self):
@@ -646,6 +647,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
             tag_data.id, self.cvs_file, tag_data.symbol,
             self.sdc.rev_to_lod(tag_data.rev),
             self._get_rev_id(tag_data.rev),
+            None,
             )
 
   def tree_completed(self):

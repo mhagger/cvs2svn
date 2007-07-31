@@ -20,6 +20,7 @@
 from __future__ import generators
 
 from cvs2svn_lib.boolean import *
+from cvs2svn_lib.set_support import *
 from cvs2svn_lib import config
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import warning_prefix
@@ -27,6 +28,7 @@ from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.openings_closings import SymbolingsReader
+from cvs2svn_lib.symbol import Trunk
 from cvs2svn_lib.cvs_item import CVSRevisionModification
 from cvs2svn_lib.cvs_item import CVSRevisionDelete
 from cvs2svn_lib.cvs_item import CVSRevisionNoop
@@ -80,12 +82,15 @@ class GitOutputOption(OutputOption):
     # The youngest revnum that has been committed so far:
     self._youngest = 0
 
+    # A map {lod : [(revnum, mark)]} giving each of the revision
+    # numbers in which there was a commit to lod, and the
+    # corresponding mark.
     self._marks = {}
 
-  def _create_commit_mark(self, revnum):
-    assert revnum not in self._marks
+  def _create_commit_mark(self, lod, revnum):
+    assert revnum >= self._youngest
     mark = GitOutputOption._mark_offset + revnum
-    self._marks[revnum] = mark
+    self._marks.setdefault(lod, []).append((revnum, mark))
     self._youngest = revnum
     return mark
 
@@ -108,10 +113,20 @@ class GitOutputOption(OutputOption):
       Log().warn('%s: problem encoding log message:' % warning_prefix)
       Log().warn("  log:    '%s'" % log_msg.rstrip())
 
-    # FIXME: is this correct?:
-    self.f.write('commit refs/heads/master\n')
+    lods = set()
+    for cvs_rev in svn_commit.get_cvs_items():
+      lods.add(cvs_rev.lod)
+    if len(lods) != 1:
+      raise InternalError('Commit affects %d LODs' % (len(lods),))
+    lod = lods.pop()
+    if isinstance(lod, Trunk):
+      # FIXME: is this correct?:
+      self.f.write('commit refs/heads/master\n')
+    else:
+      self.f.write('commit refs/heads/%s\n' % (lod.name,))
     self.f.write(
-        'mark :%d\n' % (self._create_commit_mark(svn_commit.revnum),)
+        'mark :%d\n'
+        % (self._create_commit_mark(lod, svn_commit.revnum),)
         )
     self.f.write(
         'committer %s <%s> %d +0000\n' % (author, author, svn_commit.date,)

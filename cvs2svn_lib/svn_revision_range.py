@@ -41,6 +41,14 @@ class SVNRevisionRange:
     if self.closing_revnum is None:
       self.closing_revnum = closing_revnum
 
+  def __contains__(self, revnum):
+    """Return True iff REVNUM is contained in the range."""
+
+    return (
+        self.opening_revnum <= revnum \
+        and (self.closing_revnum is None or revnum < self.closing_revnum)
+        )
+
   def __str__(self):
     if self.closing_revnum is None:
       return '[%d:]' % (self.opening_revnum,)

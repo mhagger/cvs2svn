@@ -247,10 +247,10 @@ class SymbolingsReader:
     # A map {svn_path : SVNRevisionRange}:
     openings_closings_map = {}
 
-    for cvs_symbol in svn_symbol_commit.get_cvs_items():
+    for (cvs_symbol, range) in range_map.iteritems():
       openings_closings_map[
           cvs_symbol.source_lod.get_path(cvs_symbol.cvs_file.cvs_path)
-          ] = range_map[cvs_symbol]
+          ] = range
 
     return openings_closings_map
 

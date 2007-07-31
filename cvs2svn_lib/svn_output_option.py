@@ -178,9 +178,7 @@ class SVNOutputOption(OutputOption):
     Log().verbose('Filling branch:', svn_commit.symbol.get_clean_name())
 
     # Get the set of sources for the symbolic name:
-    source_set = self._symbolings_reader.get_source_set(
-        svn_commit, self.repos._youngest
-        )
+    source_set = self._symbolings_reader.get_source_set(svn_commit)
 
     self.repos.fill_symbol(svn_commit, source_set)
 
@@ -191,9 +189,7 @@ class SVNOutputOption(OutputOption):
     Log().verbose('Filling tag:', svn_commit.symbol.get_clean_name())
 
     # Get the set of sources for the symbolic name:
-    source_set = self._symbolings_reader.get_source_set(
-        svn_commit, self.repos._youngest
-        )
+    source_set = self._symbolings_reader.get_source_set(svn_commit)
 
     self.repos.fill_symbol(svn_commit, source_set)
 

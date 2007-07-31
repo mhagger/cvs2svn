@@ -212,7 +212,7 @@ class SymbolingsReader:
 
     return range_map
 
-  def get_source_set(self, svn_symbol_commit, svn_revnum):
+  def get_source_set(self, svn_symbol_commit):
     """Return the list of possible sources for SVN_SYMBOL_COMMIT.
 
     SVN_SYMBOL_COMMIT is an SVNSymbolCommit instance and SVN_REVNUM is
@@ -237,13 +237,13 @@ class SymbolingsReader:
       except KeyError:
         raise InternalError('No opening for %s' % (cvs_symbol,))
 
-      if range.opening_revnum >= svn_revnum:
+      if range.opening_revnum >= svn_symbol_commit.revnum:
         raise InternalError(
             'Opening in r%d not ready for %s in r%d'
-            % (range.opening_revnum, cvs_symbol, svn_revnum,)
+            % (range.opening_revnum, cvs_symbol, svn_symbol_commit.revnum,)
             )
 
-      if range.closing_revnum > svn_revnum:
+      if range.closing_revnum > svn_symbol_commit.revnum:
         range.closing_revnum = None
 
       openings_closings_map[svn_path] = range

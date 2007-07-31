@@ -19,8 +19,6 @@
 
 from __future__ import generators
 
-import bisect
-
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.set_support import *
 from cvs2svn_lib.common import path_join
@@ -28,102 +26,7 @@ from cvs2svn_lib.common import path_split
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import SVN_INVALID_REVNUM
 from cvs2svn_lib.svn_revision_range import SVNRevisionRange
-
-
-class _RevisionScores:
-  """Represent the scores for a range of revisions."""
-
-  def __init__(self, svn_revision_ranges):
-    """Initialize based on SVN_REVISION_RANGES.
-
-    SVN_REVISION_RANGES is a list of SVNRevisionRange objects.
-
-    The score of an svn revision is defined to be the number of
-    SVNRevisionRanges that include the revision.  A score thus
-    indicates that copying the corresponding revision (or any
-    following revision up to the next revision in the list) of the
-    object in question would yield that many correct paths at or
-    underneath the object.  There may be other paths underneath it
-    which are not correct and would need to be deleted or recopied;
-    those can only be detected by descending and examining their
-    scores.
-
-    If SVN_REVISION_RANGES is empty, then all scores are undefined."""
-
-    # A list that looks like:
-    #
-    #    [(REV1 SCORE1), (REV2 SCORE2), (REV3 SCORE3), ...]
-    #
-    # where the tuples are sorted by revision number and the revision
-    # numbers are distinct.  Score is the number of correct paths that
-    # would result from using the specified revision number (or any
-    # other revision preceding the next revision listed) as a source.
-    # For example, the score of any revision REV in the range REV2 <=
-    # REV < REV3 is equal to SCORE2.
-    self.scores = []
-
-    # First look for easy out.
-    if not svn_revision_ranges:
-      return
-
-    # Create lists of opening and closing revisions along with the
-    # corresponding delta to the total score:
-    openings = [ (x.opening_revnum, +1)
-                 for x in svn_revision_ranges ]
-    closings = [ (x.closing_revnum, -1)
-                 for x in svn_revision_ranges
-                 if x.closing_revnum is not None ]
-
-    things = openings + closings
-    # Sort by revision number:
-    things.sort()
-    # Initialize output list with zeroth element of things.  This
-    # element must exist, because it was verified that
-    # svn_revision_ranges (and therefore openings) is not empty.
-    self.scores = [ things[0] ]
-    total = things[0][1]
-    for (rev, change) in things[1:]:
-      total += change
-      if rev == self.scores[-1][0]:
-        # Same revision as last entry; modify last entry:
-        self.scores[-1] = (rev, total)
-      else:
-        # Previously-unseen revision; create new entry:
-        self.scores.append((rev, total))
-
-  def get_score(self, rev):
-    """Return the score for svn revision REV.
-
-    If REV doesn't appear explicitly in self.scores, use the score of
-    the higest revision preceding REV.  If there are no preceding
-    revisions, then the score for REV is unknown; in this case, return
-    -1."""
-
-    # Remember, according to the tuple sorting rules,
-    #
-    #    (rev, anything,) < (rev+1,) < (rev+1, anything,)
-    predecessor_index = bisect.bisect(self.scores, (rev+1,)) - 1
-
-    if predecessor_index < 0:
-      # raise ValueError('Score for revision %s is unknown' % rev)
-      return -1
-
-    return self.scores[predecessor_index][1]
-
-  def get_best_revnum(self):
-    """Find the revnum with the highest score.
-
-    Return (revnum, score) for the revnum with the highest score.  If
-    the highest score is shared by multiple revisions, select the
-    oldest revision."""
-
-    best_revnum = SVN_INVALID_REVNUM
-    best_score = 0
-    for revnum, score in self.scores:
-      if score > best_score:
-        best_score = score
-        best_revnum = revnum
-    return best_revnum, best_score
+from cvs2svn_lib.svn_revision_range import RevisionScores
 
 
 class FillSource:
@@ -172,7 +75,7 @@ class FillSource:
     svn_revision_ranges = self._get_revision_ranges(self.node)
 
     # Score the lists
-    revision_scores = _RevisionScores(svn_revision_ranges)
+    revision_scores = RevisionScores(svn_revision_ranges)
 
     best_revnum, best_score = revision_scores.get_best_revnum()
 

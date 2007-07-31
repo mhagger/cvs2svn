@@ -212,14 +212,10 @@ class SymbolingsReader:
 
     return range_map
 
-  def get_source_set(self, svn_symbol_commit):
-    """Return the list of possible sources for SVN_SYMBOL_COMMIT.
+  def get_openings_closings_map(self, svn_symbol_commit):
+    """Return a map of openings/closings for items in SVN_SYMBOL_COMMIT.
 
-    SVN_SYMBOL_COMMIT is an SVNSymbolCommit instance and SVN_REVNUM is
-    an SVN revision number.  The symbol sources will contain all
-    openings and closings for CVSSymbols that occur in
-    SVN_SYMBOL_COMMIT.  SVN_REVNUM is only used for an internal
-    consistency check."""
+    Return a map {svn_path : SVNRevisionRange}."""
 
     symbol = svn_symbol_commit.symbol
 
@@ -248,6 +244,16 @@ class SymbolingsReader:
 
       openings_closings_map[svn_path] = range
 
+    return openings_closings_map
+
+  def get_source_set(self, svn_symbol_commit):
+    """Return the list of possible sources for SVN_SYMBOL_COMMIT.
+
+    SVN_SYMBOL_COMMIT is an SVNSymbolCommit instance.  The symbol
+    sources will contain all openings and closings for CVSSymbols that
+    occur in SVN_SYMBOL_COMMIT."""
+
+    openings_closings_map = self.get_openings_closings_map(svn_symbol_commit)
     return get_source_set(svn_symbol_commit.symbol, openings_closings_map)
 
 

@@ -64,9 +64,10 @@ class GitOutputOption(OutputOption):
   def setup(self, svn_rev_count):
     self._symbolings_reader = SymbolingsReader()
     self.f = open(self.dump_filename, 'wb')
-    # Pick a big starting number here to avoid conflicts with blob
-    # marks:
-    self._youngest = GitOutputOption._mark_offset
+
+    # The youngest revnum that has been committed so far:
+    self._youngest = 0
+
     self._marks = {}
 
   def _create_commit_mark(self, revnum):

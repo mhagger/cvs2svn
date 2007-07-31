@@ -264,15 +264,12 @@ class GitOutputOption(OutputOption):
     (revnum, mark) = modifications[i]
     return mark
 
-  def process_branch_commit(self, svn_commit):
+  def _process_symbol_commit(self, svn_commit, git_branch, mark):
     author = self._get_author(svn_commit)
     log_msg = self._get_log_msg(svn_commit)
 
-    self.f.write('commit refs/heads/%s\n' % (svn_commit.symbol.name,))
-    self.f.write(
-        'mark :%d\n'
-        % (self._create_commit_mark(svn_commit.symbol, svn_commit.revnum),)
-        )
+    self.f.write('commit %s\n' % (git_branch,))
+    self.f.write('mark :%d\n' % (mark,))
     self.f.write(
         'committer %s <%s> %d +0000\n' % (author, author, svn_commit.date,)
         )
@@ -280,29 +277,53 @@ class GitOutputOption(OutputOption):
     self.f.write('%s\n' % (log_msg,))
 
     source_groups = list(self._get_source_groups(svn_commit))
-    for (source_lod, source_revnum, cvs_branches,) in source_groups:
+    for (source_lod, source_revnum, cvs_symbols,) in source_groups:
       self.f.write(
           'merge :%d\n'
           % (self._get_source_mark(source_lod, source_revnum),)
           )
 
-    for (source_lod, source_revnum, cvs_branches,) in source_groups:
-      for cvs_branch in cvs_branches:
-        if cvs_branch.cvs_file.executable:
+    for (source_lod, source_revnum, cvs_symbols,) in source_groups:
+      for cvs_symbol in cvs_symbols:
+        if cvs_symbol.cvs_file.executable:
           mode = '100755'
         else:
           mode = '100644'
 
         self.f.write(
             'M %s :%d %s\n'
-            % (mode, cvs_branch.revision_recorder_token,
-               cvs_branch.cvs_file.cvs_path,)
+            % (mode, cvs_symbol.revision_recorder_token,
+               cvs_symbol.cvs_file.cvs_path,)
             )
 
     self.f.write('\n')
 
+  def process_branch_commit(self, svn_commit):
+    self._process_symbol_commit(
+        svn_commit, 'refs/heads/%s' % (svn_commit.symbol.name,),
+        self._create_commit_mark(svn_commit.symbol, svn_commit.revnum),
+        )
+
   def process_tag_commit(self, svn_commit):
-    raise NotImplementedError() # FIXME
+    # FIXME: For now we create a fixup branch with the same name as
+    # the tag, then the tag.  We never delete the fixup branch.  Also,
+    # a fixup branch is created even if the tag could be created from
+    # a single source.
+    author = self._get_author(svn_commit)
+    log_msg = self._get_log_msg(svn_commit)
+
+    mark = self._create_commit_mark(svn_commit.symbol, svn_commit.revnum)
+    self._process_symbol_commit(
+        svn_commit, 'refs/heads/%s' % (svn_commit.symbol.name,),
+        mark,
+        )
+    self.f.write('tag %s\n' % (svn_commit.symbol.name,))
+    self.f.write('from :%d\n' % (mark,))
+    self.f.write(
+        'tagger %s <%s> %d +0000\n' % (author, author, svn_commit.date,)
+        )
+    self.f.write('data %d\n' % (len(log_msg),))
+    self.f.write('%s\n' % (log_msg,))
 
   def cleanup(self):
     self.f.close()

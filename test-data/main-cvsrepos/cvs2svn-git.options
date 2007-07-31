@@ -18,9 +18,6 @@ ctx.cross_project_commits = False
 ctx.cross_branch_commits = False
 ctx.username = 'cvs2svn'
 
-ctx.symbol_strategy = RuleBasedSymbolStrategy()
-ctx.symbol_strategy.add_rule(ForceBranchRegexpStrategyRule(r'.*'))
-
 ctx.output_option = GitOutputOption('cvs2svn-tmp/git-dump.dat')
 
 ctx.revision_recorder = SimpleFulltextRevisionRecorderAdapter(

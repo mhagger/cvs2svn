@@ -32,7 +32,7 @@ Version 2.0.0 (13 July 2007)
  * Fix issue #105: Conflict between directory and Attic file causes crash.
  * Fix issue #106: SVNRepositoryMirrorParentMissingError.
  * Fix missing command-line handling of --fallback-encoding option.
- * Fix issue #85: Disable symbol sanity checks with in --trunk-only mode.
+ * Fix issue #85: Disable symbol sanity checks when in --trunk-only mode.
 
  Improvements and output changes:
  * Analyze CVS revision dependency graph, giving a more robust conversion.

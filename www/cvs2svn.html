@@ -59,7 +59,7 @@ cvs2svn attempts to infer from CVS's incomplete information what
 second goal of cvs2svn is to reconstruct as much of your CVS
 repository's history as possible.</p>
 
-<h2>cvs2svn features</h2>
+<h2><a name="features">cvs2svn features</a></h2>
 
 <dl>
 
@@ -72,14 +72,28 @@ repository's history as possible.</p>
   <dd>CVS records modifications file-by-file, and does not keep track
     of what files were modified at the same time.  cvs2svn uses
     information like the file modification times, log messages, and
-    dependency information to reconstruct the original
-    changesets.</dd>
+    dependency information to deduce the original changesets.  cvs2svn
+    allows changesets that affect multiple branches and/or multiple
+    projects (as is allowed by CVS), or it can be configured to split
+    such changesets up into separate commits
+    (<tt>--no-cross-branch-commits</tt>; see also options file).</dd>
 
   <dt>Branch vs. tag</dt>
   <dd>CVS allows the same symbol name to be used sometimes as a
     branch, sometimes as a tag.  cvs2svn has heuristics to decide how
     to convert such "mixed" symbols (<tt>--force-branch</tt>,
     <tt>--force-tag</tt>, <tt>--symbol-default</tt>).</dd>
+
+  <dt>Branch/tag exclusion</dt>
+  <dd>cvs2svn allows the user to specify branches and/or tags that
+    should be excluded from the conversion altogether
+    (<tt>--exclude</tt>).  It checks that the exclusions are
+    self-consistent (e.g., it doesn't allow a branch to be excluded if
+    a branch that sprouts from it is not excluded).</dd>
+
+  <dt>Branch/tag renaming</dt>
+  <dd>cvs2svn can rename branches and tags during the conversion using
+    regular-expression patterns (<tt>--symbol-transform</tt>).</dd>
 
   <dt>Branch and tag parents</dt>
   <dd>In many cases, the CVS history is ambiguous about which branch
@@ -99,8 +113,8 @@ repository's history as possible.</p>
     (<tt>--mime-types</tt>, <tt>--auto-props</tt>).</dd>
 
   <dt>Binary vs. text</dt>
-  <dd>Many CVS repositories do not systematically record which files
-    are binary and which are text.  (This is mostly important if the
+  <dd>Many CVS users do not systematically record which files are
+    binary and which are text.  (This is mostly important if the
     repository is used on non-Unix systems.)  cvs2svn provides a
     number of ways to infer this information
     (<tt>--eol-from-mime-type</tt>, <tt>--default-eol</tt>,
@@ -110,14 +124,8 @@ repository's history as possible.</p>
   <dd>Subversion allows arbitrary text properties to be attached to
     files.  cvs2svn provides a mechanism to set such properties when a
     file is first added to the repository
-    (<tt>--auto-props</tt>).</dd>
-
-  <dt>Timestamp error correction</dt>
-  <dd>Many CVS repositories contain timestamp errors due to servers'
-    clocks being set incorrectly during part of the repository's
-    history.  cvs2svn's history reconstruction is relatively robust
-    against timestamp errors and it writes monotonic timestamps to the
-    Subversion repository.</dd>
+    (<tt>--auto-props</tt>) as well as a hook that users can use to
+    set arbitrary file properties via Python code.</dd>
 
   <dt>Subversion repository customization</dt>
   <dd>cvs2svn provides many options that allow you to customize the
@@ -131,9 +139,69 @@ repository's history as possible.</p>
   <dt>Support for multiple character encodings</dt>
   <dd>CVS does not record which character encoding was used to store
     metainformation like file names, author names and log messages.
-    cvs2svn provides options to convert this text into UTF-8 as used
-    by Subversion (<tt>--encoding</tt>,
-    <tt>--fallback-encoding</tt>).</dd>
+    cvs2svn provides options to help convert such text into UTF-8
+    (<tt>--encoding</tt>, <tt>--fallback-encoding</tt>).</dd>
+
+  <dt>Vendor branches</dt>
+  <dd>CVS supports "vendor branches", which (under some circumstances)
+    affect the contents of the main line of development.  cvs2svn
+    tries to detect vendor branches whenever possible, and explicitly
+    copies vendor branch contents to trunk so that a checkout of trunk
+    gives the same results under SVN as under CVS.  If a vendor branch
+    is excluded from the conversion, cvs2svn grafts the relevant
+    vendor branch revisions onto trunk.  cvs2svn also discards
+    spurious "1.1" revisions on files that were imported.</dd>
+
+  <dt>CVS quirks</dt>
+  <dd>cvs2svn goes to great length to deal with CVS's many quirks.
+    For example,
+    <ul>
+
+      <li>CVS introduces spurious "1.1" revisions when a file is added
+        on a branch.  cvs2svn discards these revisions.</li>
+
+      <li>If a file is added on a branch, CVS introduces a spurious
+        "dead" revision at the beginning of the branch to indicate
+        that the file did not exist when the branch was created.
+        cvs2svn deletes these spurious revisions and adds the file on
+        the branch at the correct time.</li>
+
+    </ul>
+  </dd>
+
+  <dt>Robust against repository corruption</dt>
+  <dd>cvs2svn knows how to handle several types of CVS repository
+    corruption that have been reported frequently, and gives
+    informative error messages in other cases:
+    <ul>
+
+      <li>An RCS file that exists both in and out of the "Attic"
+        directory.</li>
+
+      <li>Multiple deltatext blocks for a single CVS file
+        revision.</li>
+
+      <li>Multiple revision headers for the same CVS file
+        revision.</li>
+
+      <li>Tags that refer to non-existent revisions.</li>
+
+      <li>Branches that have no associated labels.</li>
+
+      <li>A directory name that conflicts with a file name (in or out
+        of the Attic).</li>
+
+      <li>Filenames that contain forbidden characters.</li>
+
+    </ul>
+  </dd>
+
+  <dt>Timestamp error correction</dt>
+  <dd>Many CVS repositories contain timestamp errors due to servers'
+    clocks being set incorrectly during part of the repository's
+    history.  cvs2svn's history reconstruction is relatively robust
+    against timestamp errors and it writes monotonic timestamps to the
+    Subversion repository.</dd>
 
   <dt>Scalable</dt>
   <dd>cvs2svn stores most intermediate data to on-disk databases so

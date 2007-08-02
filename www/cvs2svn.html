@@ -404,14 +404,14 @@ when the file is checked out.  However, if line-end translation or
 keyword expansion is applied to a binary file, the file will usually
 be corrupted.</p>
 
-<p>For this reason, CVS treats a file as binary unless you
-specifically tell it that the file is text.  You can tell CVS that a
-file is binary by using the command <tt>cvs admin -kb
-<i>filename</i></tt>.  But often CVS users forget to specify which
-files are binary, and as long as the repository is only used under
-Unix, they may never notice a problem, because the internal format of
-CVS is the same as the Unix format.  But Subversion is not as
-forgiving as CVS if you tell it to treat a binary file as text.</p>
+<p>CVS treats a file as text unless you specifically tell it that the
+file is binary.  You can tell CVS that a file is binary by using the
+command <tt>cvs admin -kb <i>filename</i></tt>.  But often CVS users
+forget to specify which files are binary, and as long as the
+repository is only used under Unix, they may never notice a problem,
+because the internal format of CVS is the same as the Unix format.
+But Subversion is not as forgiving as CVS if you tell it to treat a
+binary file as text.</p>
 
 <p>If you have been conscientious about marking files as binary in
 CVS, then you should be able to use <tt>--default-eol=native</tt>.  If
@@ -508,10 +508,8 @@ this:</p>
 <h1><a name="symbols">Symbol handling</a></h1>
 
 <p>cvs2svn converts CVS tags and branches into Subversion tags and
-branches following the <a
-href="http://svnbook.red-bean.com/en/1.2/svn.branchmerge.using.html">standard
-Subversion convention</a>.  This section discusses issues related to
-symbol handling.</p>
+branches.  This section discusses issues related to symbol
+handling.</p>
 
 <p><strong>HINT:</strong> If there are problems with symbol usage in
 your repository, they are usually reported during
@@ -523,6 +521,22 @@ adjust the symbol-handling options then re-start cvs2svn starting at
 CollateSymbolsPass:</tt>".  This trick can save a lot of time if you
 have a large repository, as it might take a few iterations before you
 find the best set of options to convert your repository.</p>
+
+
+<h2><a name="symbol-layout">Placement of trunk, branches, and tags
+directories</a></h2>
+
+<p>cvs2svn converts CVS branches and tags into Subversion branches and
+tags following the <a
+href="http://svnbook.red-bean.com/en/1.2/svn.branchmerge.maint.html#svn.branchmerge.maint.layout">standard
+Subversion convention</a>.  For single-project conversions, the
+default is to put the trunk, branches, and tags directories at the top
+level of the repository tree, though this behavior can be changed by
+using the <tt>--trunk</tt>, <tt>--branches</tt>, and <tt>--tags</tt>
+options.  For multiproject conversions, you must specify the location
+of each project's trunk, branches, and tags directory in the options
+file, but you are encouraged to use the standard Subversion
+multiproject layout.</p>
 
 
 <h2><a name="symbol-exclusion">Excluding tags and branches</a></h2>

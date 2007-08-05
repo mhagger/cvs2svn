@@ -259,7 +259,7 @@ class SymbolStatisticsCollector:
           branch_stats.register_branch_possible_parents(
               lod_items.cvs_branch, cvs_file_items)
 
-        if lod_items.is_pure_import_branch():
+        if lod_items.is_pure_ntdb():
           branch_stats.register_pure_import_branch_count()
 
       for cvs_tag in lod_items.cvs_tags:

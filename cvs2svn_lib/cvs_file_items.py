@@ -707,13 +707,16 @@ class CVSFileItems(object):
   def graft_ntdbr_to_trunk(self):
     """Graft the non-trunk default branch revisions to trunk.
 
-    They should already be alone on a CVSBranch-less branch."""
+    They should already be alone on a branch that may or may not have
+    a CVSBranch connecting it to trunk."""
 
     for lod_items in self.iter_lods():
       if lod_items.cvs_revisions and lod_items.cvs_revisions[0].ntdbr:
-        assert lod_items.cvs_branch is None
         assert not lod_items.cvs_branches
         assert not lod_items.cvs_tags
+
+        if lod_items.cvs_branch is not None:
+          self._sever_branch(lod_items)
 
         last_rev = lod_items.cvs_revisions[-1]
 

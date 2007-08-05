@@ -72,8 +72,7 @@ class SVNCommitCreator:
     cvs_revs = [
           cvs_rev
           for cvs_rev in cvs_revs
-          if (cvs_rev.default_branch_revision
-              and not isinstance(cvs_rev, CVSRevisionNoop))
+          if cvs_rev.ntdbr and not isinstance(cvs_rev, CVSRevisionNoop)
           ]
 
     if cvs_revs:

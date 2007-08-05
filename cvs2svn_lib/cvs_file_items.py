@@ -79,7 +79,7 @@ class LODItems(object):
 
     return (
         self.cvs_revisions
-        and self.cvs_revisions[-1].default_branch_revision
+        and self.cvs_revisions[-1].ntdbr
         )
 
 
@@ -316,13 +316,13 @@ class CVSFileItems(object):
     such revisions to the vendor branch, we also copy them back to
     trunk in post-commits.
 
-    Set the default_branch_revision members of the revisions listed in
-    NTDBR_CVS_REVS to True.  Also, if there is a 1.2 revision, then
-    set that revision to depend on the last non-trunk default branch
-    revision and possibly adjust its type accordingly."""
+    Set the ntdbr members of the revisions listed in NTDBR_CVS_REVS to
+    True.  Also, if there is a 1.2 revision, then set that revision to
+    depend on the last non-trunk default branch revision and possibly
+    adjust its type accordingly."""
 
     for cvs_rev in ntdbr_cvs_revs:
-      cvs_rev.default_branch_revision = True
+      cvs_rev.ntdbr = True
 
     # Look for a 1.2 revision:
     rev_1_1 = self[ntdbr_cvs_revs[0].prev_id]
@@ -334,8 +334,8 @@ class CVSFileItems(object):
       # change its type.
       rev_1_2 = self[rev_1_2_id]
       last_ntdbr = ntdbr_cvs_revs[-1]
-      rev_1_2.default_branch_prev_id = last_ntdbr.id
-      last_ntdbr.default_branch_next_id = rev_1_2.id
+      rev_1_2.ntdbr_prev_id = last_ntdbr.id
+      last_ntdbr.ntdbr_next_id = rev_1_2.id
       rev_1_2.__class__ = cvs_revision_type_map[(
           isinstance(rev_1_2, CVSRevisionModification),
           isinstance(last_ntdbr, CVSRevisionModification),
@@ -475,7 +475,7 @@ class CVSFileItems(object):
            and len(cvs_item.branch_ids) >= 1 \
            and self[cvs_item.branch_ids[0]].next_id is not None \
            and not cvs_item.closed_symbols \
-           and not cvs_item.default_branch_revision:
+           and not cvs_item.ntdbr:
       # FIXME: This message will not match if the RCS file was renamed
       # manually after it was created.
       author, log_msg = metadata_db[cvs_item.metadata_id]
@@ -602,10 +602,9 @@ class CVSFileItems(object):
     subsequent revisions that are not NTDB revisions.  In this case,
     return True; otherwise return False"""
 
-    if lod_items.cvs_revisions \
-           and lod_items.cvs_revisions[0].default_branch_revision:
+    if lod_items.cvs_revisions and lod_items.cvs_revisions[0].ntdbr:
       for cvs_rev in lod_items.cvs_revisions:
-        if not cvs_rev.default_branch_revision:
+        if not cvs_rev.ntdbr:
           # We've found the first non-NTDBR, and it's stored in cvs_rev:
           break
       else:
@@ -653,10 +652,10 @@ class CVSFileItems(object):
           # whether this handling is correct, since the non-trunk
           # default branch revisions affect trunk and should therefore
           # not just be discarded even if --trunk-only.
-          if cvs_rev.default_branch_next_id is not None:
-            next = self[cvs_rev.default_branch_next_id]
-            assert next.default_branch_prev_id == cvs_rev.id
-            next.default_branch_prev_id = None
+          if cvs_rev.ntdbr_next_id is not None:
+            next = self[cvs_rev.ntdbr_next_id]
+            assert next.ntdbr_prev_id == cvs_rev.id
+            next.ntdbr_prev_id = None
             if next.prev_id is None:
               self.root_ids.add(next.id)
 
@@ -668,26 +667,25 @@ class CVSFileItems(object):
     They should already be alone on a CVSBranch-less branch."""
 
     for lod_items in self.iter_lods():
-      if lod_items.cvs_revisions \
-             and lod_items.cvs_revisions[0].default_branch_revision:
+      if lod_items.cvs_revisions and lod_items.cvs_revisions[0].ntdbr:
         assert lod_items.cvs_branch is None
         assert not lod_items.cvs_branches
         assert not lod_items.cvs_tags
 
         last_rev = lod_items.cvs_revisions[-1]
 
-        if last_rev.default_branch_next_id is not None:
-          rev_1_2 = self[last_rev.default_branch_next_id]
-          rev_1_2.default_branch_prev_id = None
+        if last_rev.ntdbr_next_id is not None:
+          rev_1_2 = self[last_rev.ntdbr_next_id]
+          rev_1_2.ntdbr_prev_id = None
           rev_1_2.prev_id = last_rev.id
           self.root_ids.remove(rev_1_2.id)
-          last_rev.default_branch_next_id = None
+          last_rev.ntdbr_next_id = None
           last_rev.next_id = rev_1_2.id
           # The type of rev_1_2 was already adjusted in
           # adjust_ntdbrs(), so we don't have to change its type here.
 
         for cvs_rev in lod_items.cvs_revisions:
-          cvs_rev.default_branch_revision = False
+          cvs_rev.ntdbr = False
           cvs_rev.lod = self.trunk
 
         for cvs_branch in lod_items.cvs_branches:

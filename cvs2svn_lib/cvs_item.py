@@ -145,14 +145,12 @@ class CVSRevision(CVSItem):
     LOD -- (LineOfDevelopment) LOD on which this revision occurred.
     FIRST_ON_BRANCH_ID -- (int or None) if this revision is the first on its
         branch, the cvs_branch_id of that branch; else, None.
-    DEFAULT_BRANCH_REVISION -- (bool) true iff this is a default branch
-        revision.
-    DEFAULT_BRANCH_PREV_ID -- (int or None) Iff this is the 1.2 revision after
-        the end of a default branch, the id of the last rev on the default
-        branch; else, None.
-    DEFAULT_BRANCH_NEXT_ID -- (int or None) Iff this is the last revision on
-        a default branch preceding a 1.2 rev, the id of the 1.2 revision;
+    NTDBR -- (bool) true iff this is a non-trunk default branch revision.
+    NTDBR_PREV_ID -- (int or None) Iff this is the 1.2 revision after the end
+        of a default branch, the id of the last rev on the default branch;
         else, None.
+    NTDBR_NEXT_ID -- (int or None) Iff this is the last revision on a default
+        branch preceding a 1.2 rev, the id of the 1.2 revision; else, None.
     TAG_IDS -- (list of int) ids of all CVSTags rooted at this CVSRevision.
     BRANCH_IDS -- (list of int) ids of all CVSBranches rooted at this
         CVSRevision.
@@ -174,8 +172,8 @@ class CVSRevision(CVSItem):
                timestamp, metadata_id,
                prev_id, next_id,
                rev, deltatext_exists,
-               lod, first_on_branch_id, default_branch_revision,
-               default_branch_prev_id, default_branch_next_id,
+               lod, first_on_branch_id, ntdbr,
+               ntdbr_prev_id, ntdbr_next_id,
                tag_ids, branch_ids, branch_commit_ids,
                revision_recorder_token):
     """Initialize a new CVSRevision object."""
@@ -190,9 +188,9 @@ class CVSRevision(CVSItem):
     self.deltatext_exists = deltatext_exists
     self.lod = lod
     self.first_on_branch_id = first_on_branch_id
-    self.default_branch_revision = default_branch_revision
-    self.default_branch_prev_id = default_branch_prev_id
-    self.default_branch_next_id = default_branch_next_id
+    self.ntdbr = ntdbr
+    self.ntdbr_prev_id = ntdbr_prev_id
+    self.ntdbr_next_id = ntdbr_next_id
     self.tag_ids = tag_ids
     self.branch_ids = branch_ids
     self.branch_commit_ids = branch_commit_ids
@@ -221,8 +219,8 @@ class CVSRevision(CVSItem):
         self.deltatext_exists,
         self.lod.id,
         self.first_on_branch_id,
-        self.default_branch_revision,
-        self.default_branch_prev_id, self.default_branch_next_id,
+        self.ntdbr,
+        self.ntdbr_prev_id, self.ntdbr_next_id,
         self.tag_ids, self.branch_ids, self.branch_commit_ids,
         self.opened_symbols, self.closed_symbols,
         self.revision_recorder_token,
@@ -236,8 +234,8 @@ class CVSRevision(CVSItem):
      self.deltatext_exists,
      lod_id,
      self.first_on_branch_id,
-     self.default_branch_revision,
-     self.default_branch_prev_id, self.default_branch_next_id,
+     self.ntdbr,
+     self.ntdbr_prev_id, self.ntdbr_next_id,
      self.tag_ids, self.branch_ids, self.branch_commit_ids,
      self.opened_symbols, self.closed_symbols,
      self.revision_recorder_token) = data
@@ -256,8 +254,8 @@ class CVSRevision(CVSItem):
     retval = self.get_symbol_pred_ids()
     if self.prev_id is not None:
       retval.add(self.prev_id)
-    if self.default_branch_prev_id is not None:
-      retval.add(self.default_branch_prev_id)
+    if self.ntdbr_prev_id is not None:
+      retval.add(self.ntdbr_prev_id)
     return retval
 
   def get_symbol_succ_ids(self):
@@ -272,8 +270,8 @@ class CVSRevision(CVSItem):
     retval = self.get_symbol_succ_ids()
     if self.next_id is not None:
       retval.add(self.next_id)
-    if self.default_branch_next_id is not None:
-      retval.add(self.default_branch_next_id)
+    if self.ntdbr_next_id is not None:
+      retval.add(self.ntdbr_next_id)
     for id in self.branch_commit_ids:
       retval.add(id)
     return retval
@@ -339,11 +337,11 @@ class CVSRevision(CVSItem):
       # The first CVSRevision on a branch is considered to close the
       # branch:
       yield self.first_on_branch_id
-      if self.default_branch_revision:
+      if self.ntdbr:
         # If the 1.1 revision was not deleted, the 1.1.1.1 revision is
         # considered to close it:
         yield self.prev_id
-    elif self.default_branch_prev_id is not None:
+    elif self.ntdbr_prev_id is not None:
       # This is the special case of a 1.2 revision that follows a
       # non-trunk default branch.  Either 1.1 was deleted or the first
       # default branch revision closed 1.1, so we don't have to close

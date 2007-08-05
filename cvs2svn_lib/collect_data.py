@@ -747,7 +747,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
     If any non-trunk default branch revisions are found:
 
-    - Set their default_branch_revision members to True.
+    - Set their ntdbr members to True.
 
     - Connect the last one with revision 1.2.
 

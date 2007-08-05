@@ -598,8 +598,9 @@ class CVSFileItems(object):
     (Do not update the LOD_ITEMS instance itself.)
 
     If the LOD starts with non-trunk default branch revisions, leave
-    them in place and do not delete the branch.  In this case, return
-    True; otherwise return False"""
+    the branch and the NTDB revisions in place, but delete any
+    subsequent revisions that are not NTDB revisions.  In this case,
+    return True; otherwise return False"""
 
     if lod_items.cvs_revisions \
            and lod_items.cvs_revisions[0].default_branch_revision:

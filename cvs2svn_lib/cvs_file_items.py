@@ -283,6 +283,58 @@ class CVSFileItems(object):
       for lod_items in self._iter_tree(lod, cvs_branch, id):
         yield lod_items
 
+  def _sever_branch(self, lod_items):
+    """Sever the branch from its source and discard the CVSBranch.
+
+    LOD_ITEMS describes a branch that should be severed from its
+    source, deleting the CVSBranch and creating a new root.  Also set
+    LOD_ITEMS.cvs_branch to none.
+
+    This method can only be used before symbols have been grafted onto
+    CVSBranches.  It does not adjust NTDBR, NTDBR_PREV_ID or
+    NTDBR_NEXT_ID even if LOD_ITEMS describes a NTDB."""
+
+    cvs_branch = lod_items.cvs_branch
+    assert cvs_branch is not None
+    assert not cvs_branch.tag_ids
+    assert not cvs_branch.branch_ids
+    source_rev = self[cvs_branch.source_id]
+
+    # We only cover the following case, even though after
+    # FilterSymbolsPass cvs_branch.source_id might refer to another
+    # CVSBranch.
+    assert isinstance(source_rev, CVSRevision)
+
+    # Delete the CVSBranch itself:
+    lod_items.cvs_branch = None
+    del self[cvs_branch.id]
+
+    # Delete the reference from the source revision to the CVSBranch:
+    source_rev.branch_ids.remove(cvs_branch.id)
+
+    # Delete the reference from the first revision on the branch to
+    # the CVSBranch:
+    if lod_items.cvs_revisions:
+      first_rev = lod_items.cvs_revisions[0]
+
+      # Delete the reference from first_rev to the CVSBranch:
+      first_rev.first_on_branch_id = None
+
+      # Delete the reference from the source revision to the first
+      # revision on the branch:
+      source_rev.branch_commit_ids.remove(first_rev.id)
+
+      # ...and vice versa:
+      first_rev.prev_id = None
+
+      # Change the type of first_rev (e.g., from Change to Add):
+      first_rev.__class__ = cvs_revision_type_map[
+          (isinstance(first_rev, CVSRevisionModification), False,)
+          ]
+
+      # Now first_rev is a new root:
+      self.root_ids.add(first_rev.id)
+
   def adjust_ntdbrs(self, ntdbr_cvs_revs):
     """Adjust the specified non-trunk default branch revisions.
 
@@ -431,6 +483,9 @@ class CVSFileItems(object):
       assert isinstance(rev_1_1, CVSRevision)
       Log().debug('Removing unnecessary revision %s' % (rev_1_1,))
 
+      # Delete the 1.1.1 CVSBranch and sever the vendor branch from trunk:
+      self._sever_branch(vendor_lod_items)
+
       # Delete rev_1_1:
       self.root_ids.remove(rev_1_1.id)
       del self[rev_1_1.id]
@@ -439,21 +494,6 @@ class CVSFileItems(object):
         rev_1_2 = self[rev_1_2_id]
         rev_1_2.prev_id = None
         self.root_ids.add(rev_1_2.id)
-
-      # Delete the 1.1.1 CVSBranch:
-      vendor_lod_items.cvs_branch = None
-      del self[cvs_branch.id]
-      rev_1_1.branch_ids.remove(cvs_branch.id)
-      rev_1_1.branch_commit_ids.remove(cvs_rev.id)
-      cvs_rev.first_on_branch_id = None
-      cvs_rev.prev_id = None
-      self.root_ids.add(cvs_rev.id)
-
-      # Change the type of cvs_rev (typically from Change to Add):
-      cvs_rev.__class__ = cvs_revision_type_map[(
-          isinstance(cvs_rev, CVSRevisionModification),
-          False,
-          )]
 
       # Move any tags and branches from rev_1_1 to cvs_rev:
       cvs_rev.tag_ids.extend(rev_1_1.tag_ids)

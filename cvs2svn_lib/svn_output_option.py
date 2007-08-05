@@ -142,7 +142,7 @@ class SVNOutputOption(OutputOption):
     self.repos.start_commit(svn_commit.revnum, self._get_revprops(svn_commit))
 
     Log().verbose(
-        'Synchronizing default_branch motivated by %d'
+        'Synchronizing default branch motivated by %d'
         % (svn_commit.motivating_revnum,)
         )
 

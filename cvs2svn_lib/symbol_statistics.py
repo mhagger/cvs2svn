@@ -51,8 +51,8 @@ class _Stats:
     branch_commit_count -- the number of files in which there were
         commits on this lod
 
-    pure_import_branch_count -- the number of files in which this
-        branch was purely an import branch (consisting only of
+    pure_ntdb_count -- the number of files in which this branch was
+        purely a non-trunk default branch (consisting only of
         non-trunk default branch revisions).
 
     branch_blockers -- a set of Symbol instances for any symbols that
@@ -68,7 +68,7 @@ class _Stats:
     self.branch_create_count = 0
     self.branch_commit_count = 0
     self.branch_blockers = set()
-    self.pure_import_branch_count = 0
+    self.pure_ntdb_count = 0
     self.possible_parents = { }
 
   def register_tag_creation(self):
@@ -94,10 +94,10 @@ class _Stats:
 
     self.branch_blockers.add(blocker)
 
-  def register_pure_import_branch_count(self):
+  def register_pure_ntdb(self):
     """Register that this branch is a pure import branch in one file."""
 
-    self.pure_import_branch_count += 1
+    self.pure_ntdb_count += 1
 
   def register_possible_parent(self, lod):
     """Register that LOD was a possible parent for SELF.lod in a file."""
@@ -184,7 +184,7 @@ class _Stats:
         '\'%s\' is a tag in %d files, a branch in %d files, '
         'a pure import in %d files, and has commits in %d files'
         % (self.lod, self.tag_create_count, self.branch_create_count,
-           self.pure_import_branch_count, self.branch_commit_count))
+           self.pure_ntdb_count, self.branch_commit_count))
 
   def __repr__(self):
     retval = ['%s\n  possible parents:\n' % (self,)]
@@ -260,7 +260,7 @@ class SymbolStatisticsCollector:
               lod_items.cvs_branch, cvs_file_items)
 
         if lod_items.is_pure_ntdb():
-          branch_stats.register_pure_import_branch_count()
+          branch_stats.register_pure_ntdb()
 
       for cvs_tag in lod_items.cvs_tags:
         tag_stats = self[cvs_tag.symbol]

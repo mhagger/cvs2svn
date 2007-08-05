@@ -749,10 +749,9 @@ class CVSFileItems(object):
         self._exclude_tag(cvs_tag)
         lod_items.cvs_tags.remove(cvs_tag)
 
-      assert not lod_items.cvs_branches
-      assert not lod_items.cvs_tags
-
       if not isinstance(lod_items.lod, Trunk):
+        assert not lod_items.cvs_branches
+
         ntdbr_excluded |= self._exclude_branch(lod_items)
 
     if ntdbr_excluded:

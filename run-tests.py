@@ -1479,6 +1479,13 @@ def vendor_branch_sameness():
     ))
 
 
+def vendor_branch_trunk_only():
+  "handle vendor branches with --trunk-only"
+  conv = ensure_conversion('vendor-branch-sameness', args=['--trunk-only'])
+
+  # TODO: Check conversion results.
+
+
 def default_branches():
   "handle default branches correctly"
   conv = ensure_conversion('default-branches')
@@ -2905,13 +2912,14 @@ test_list = [
         warning_expected=0,
         variant='fallback-encoding', args=['--fallback-encoding=utf_8']),
     vendor_branch_sameness,
+    XFail(vendor_branch_trunk_only),
     default_branches,
     default_branches_trunk_only,
     default_branch_and_1_2,
     compose_tag_three_sources,
     pass5_when_to_fill,
-    PeerPathPruning(),
 # 50:
+    PeerPathPruning(),
     PeerPathPruning(variant=1, trunk='a/1', branches='a/2', tags='a/3'),
     EmptyTrunk(),
     EmptyTrunk(variant=1, trunk='a', branches='b', tags='c'),
@@ -2921,8 +2929,8 @@ test_list = [
     individual_passes,
     resync_bug,
     branch_from_default_branch,
-    file_in_attic_too,
 # 60:
+    file_in_attic_too,
     retain_file_in_attic_too,
     symbolic_name_filling_guide,
     eol_mime1,
@@ -2932,8 +2940,8 @@ test_list = [
     cvs_revnums_off,
     cvs_revnums_on,
     keywords,
-    ignore,
 # 70:
+    ignore,
     requires_cvs,
     questionable_branch_names,
     questionable_tag_names,
@@ -2943,8 +2951,8 @@ test_list = [
     resync_pass2_pull_forward,
     native_eol,
     double_fill,
-    XFail(double_fill2),
 # 80:
+    XFail(double_fill2),
     resync_pass2_push_backward,
     double_add,
     bogus_branch_copy,
@@ -2954,8 +2962,8 @@ test_list = [
     commit_dependencies,
     show_help_passes,
     multiple_tags,
-    double_branch_delete,
 # 90:
+    double_branch_delete,
     symbol_mismatches,
     overlook_symbol_mismatches,
     force_symbols,
@@ -2965,8 +2973,8 @@ test_list = [
     regexp_force_symbols,
     heuristic_symbol_default,
     branch_symbol_default,
-    tag_symbol_default,
 # 100:
+    tag_symbol_default,
     symbol_transform,
     issue_99,
     issue_100,
@@ -2976,8 +2984,8 @@ test_list = [
     crossproject,
     tag_with_no_revision,
     XFail(delete_cvsignore),
-    repeated_deltatext,
 # 110:
+    repeated_deltatext,
     nasty_graphs,
     XFail(tagging_after_delete),
     crossed_branches,
@@ -2987,8 +2995,8 @@ test_list = [
     internal_co_exclude,
     internal_co_trunk_only,
     leftover_revs,
-    requires_internal_co,
 # 120:
+    requires_internal_co,
     timestamp_chaos,
     symlinks,
     empty_trunk_path,

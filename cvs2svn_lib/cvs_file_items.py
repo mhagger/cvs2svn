@@ -338,11 +338,9 @@ class CVSFileItems(object):
   def adjust_ntdbrs(self, ntdbr_cvs_revs):
     """Adjust the specified non-trunk default branch revisions.
 
-    FILE_IMPORTED is a boolean indicating whether this file appears to
-    have been imported, which also means that revision 1.1 has a
-    generated log message that need not be preserved.  NTDBR_CVS_REVS
-    is a list of CVSRevision instances in this file that have been
-    determined to be non-trunk default branch revisions.
+    NTDBR_CVS_REVS is a list of CVSRevision instances in this file
+    that have been determined to be non-trunk default branch
+    revisions.
 
     The first revision on the default branch is handled strangely by
     CVS.  If a file is imported (as opposed to being added), CVS

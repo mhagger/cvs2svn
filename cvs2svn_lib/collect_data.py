@@ -761,7 +761,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         vendor_lod_items = self._cvs_file_items.get_lod_items(
             self._cvs_file_items[vendor_cvs_branch_id]
             )
-        if not self._cvs_file_items._process_live_ntdb(vendor_lod_items):
+        if not self._cvs_file_items.process_live_ntdb(vendor_lod_items):
           return
       elif self._file_imported:
         vendor_branch_data = self.sdc.branches_data.get('1.1.1')
@@ -771,7 +771,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
           vendor_lod_items = self._cvs_file_items.get_lod_items(
               self._cvs_file_items[vendor_branch_data.id]
               )
-          if not self._cvs_file_items._process_historical_ntdb(
+          if not self._cvs_file_items.process_historical_ntdb(
                 vendor_lod_items
                 ):
             return

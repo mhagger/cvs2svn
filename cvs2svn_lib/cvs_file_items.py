@@ -341,7 +341,7 @@ class CVSFileItems(object):
           isinstance(last_ntdbr, CVSRevisionModification),
           )]
 
-  def _process_live_ntdb(self, vendor_lod_items):
+  def process_live_ntdb(self, vendor_lod_items):
     """VENDOR_LOD_ITEMS is a live default branch; process it.
 
     In this case, all revisions on the default branch are NTDBRs and
@@ -366,7 +366,7 @@ class CVSFileItems(object):
     else:
       return False
 
-  def _process_historical_ntdb(self, vendor_lod_items):
+  def process_historical_ntdb(self, vendor_lod_items):
     """There appears to have been a non-trunk default branch in the past.
 
     There is currently no default branch, but the branch described by

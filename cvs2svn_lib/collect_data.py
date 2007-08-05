@@ -183,16 +183,6 @@ class _RevisionData:
     # revision.
     self.tags_data = []
 
-    # Iff this is the 1.2 revision at which a non-trunk default branch
-    # revision was ended, store the number of the last revision on
-    # the default branch here.
-    self.default_branch_prev = None
-
-    # Iff this is the last revision of a non-trunk default branch, and
-    # the branch is followed by a 1.2 revision, then this holds the
-    # number of the 1.2 revision (namely, '1.2').
-    self.default_branch_next = None
-
     # A token that may be returned from
     # RevisionRecorder.record_text().  It can be used by
     # RevisionReader to obtain the text again.
@@ -609,9 +599,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         True,
         self.sdc.rev_to_lod(rev_data.rev),
         rev_data.get_first_on_branch_id(),
-        False,
-        self._get_rev_id(rev_data.default_branch_prev),
-        self._get_rev_id(rev_data.default_branch_next),
+        False, None, None,
         tag_ids, branch_ids, branch_commit_ids,
         rev_data.revision_recorder_token)
 

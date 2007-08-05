@@ -183,10 +183,6 @@ class _RevisionData:
     # revision.
     self.tags_data = []
 
-    # True iff this revision was the head revision on a default branch
-    # at some point (as best we can determine).
-    self.non_trunk_default_branch_revision = False
-
     # Iff this is the 1.2 revision at which a non-trunk default branch
     # revision was ended, store the number of the last revision on
     # the default branch here.
@@ -613,7 +609,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         True,
         self.sdc.rev_to_lod(rev_data.rev),
         rev_data.get_first_on_branch_id(),
-        rev_data.non_trunk_default_branch_revision,
+        False,
         self._get_rev_id(rev_data.default_branch_prev),
         self._get_rev_id(rev_data.default_branch_next),
         tag_ids, branch_ids, branch_commit_ids,

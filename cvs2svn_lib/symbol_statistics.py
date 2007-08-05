@@ -177,8 +177,7 @@ class _Stats:
            self.branch_create_count, self.branch_commit_count))
 
   def __repr__(self):
-    retval = ['%s; %d possible parents:\n'
-              % (self, len(self.possible_parents))]
+    retval = ['%s\n  possible parents:\n' % (self,)]
     parent_counts = self.possible_parents.items()
     parent_counts.sort(lambda a,b: - cmp(a[1], b[1]))
     for (symbol, count) in parent_counts:
@@ -186,6 +185,12 @@ class _Stats:
         retval.append('    trunk : %d\n' % count)
       else:
         retval.append('    \'%s\' : %d\n' % (symbol.name, count))
+    if self.branch_blockers:
+      blockers = list(self.branch_blockers)
+      blockers.sort()
+      retval.append('  blockers:\n')
+      for blocker in blockers:
+        retval.append('    \'%s\'\n' % (blocker,))
     return ''.join(retval)
 
 

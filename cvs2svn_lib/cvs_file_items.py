@@ -408,8 +408,7 @@ class CVSFileItems(object):
     CVS_REV is the CVSRevision instance for the first revision on the
     vendor branch.  See adjust_ntdbrs() for more information."""
 
-    if cvs_rev.rev == '1.1.1.1' \
-           and isinstance(cvs_rev, CVSRevisionModification) \
+    if isinstance(cvs_rev, CVSRevisionModification) \
            and not cvs_rev.deltatext_exists:
       rev_1_1 = self[cvs_rev.prev_id]
       Log().debug('Removing unnecessary revision %s' % (rev_1_1,))

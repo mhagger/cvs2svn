@@ -770,9 +770,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       return
 
     if self._file_imported:
-      self._cvs_file_items.imported_remove_1_1(
-          vendor_lod_items.cvs_revisions[0]
-          )
+      self._cvs_file_items.imported_remove_1_1(vendor_lod_items)
 
     if Log().is_on(Log.DEBUG):
       self._cvs_file_items.check_symbol_parent_lods()

@@ -415,21 +415,25 @@ class CVSFileItems(object):
     else:
       return False
 
-  def imported_remove_1_1(self, cvs_rev):
+  def imported_remove_1_1(self, vendor_lod_items):
     """This file was imported.  Remove the 1.1 revision if possible.
 
-    CVS_REV is the CVSRevision instance for the first revision on the
-    vendor branch.  See adjust_ntdbrs() for more information."""
+    VENDOR_LOD_ITEMS is the LODItems instance for the vendor branch.
+    See adjust_ntdbrs() for more information."""
+
+    assert vendor_lod_items.cvs_revisions
+    cvs_rev = vendor_lod_items.cvs_revisions[0]
 
     if isinstance(cvs_rev, CVSRevisionModification) \
            and not cvs_rev.deltatext_exists:
-      rev_1_1 = self[cvs_rev.prev_id]
+      cvs_branch = vendor_lod_items.cvs_branch
+      rev_1_1 = self[cvs_branch.source_id]
+      assert isinstance(rev_1_1, CVSRevision)
       Log().debug('Removing unnecessary revision %s' % (rev_1_1,))
 
       # Delete rev_1_1:
       self.root_ids.remove(rev_1_1.id)
       del self[rev_1_1.id]
-      cvs_rev.prev_id = None
       rev_1_2_id = rev_1_1.next_id
       if rev_1_2_id is not None:
         rev_1_2 = self[rev_1_2_id]
@@ -437,14 +441,13 @@ class CVSFileItems(object):
         self.root_ids.add(rev_1_2.id)
 
       # Delete the 1.1.1 CVSBranch:
-      assert cvs_rev.first_on_branch_id is not None
-      cvs_branch = self[cvs_rev.first_on_branch_id]
-      if cvs_branch.source_id == rev_1_1.id:
-        del self[cvs_branch.id]
-        rev_1_1.branch_ids.remove(cvs_branch.id)
-        rev_1_1.branch_commit_ids.remove(cvs_rev.id)
-        cvs_rev.first_on_branch_id = None
-        self.root_ids.add(cvs_rev.id)
+      vendor_lod_items.cvs_branch = None
+      del self[cvs_branch.id]
+      rev_1_1.branch_ids.remove(cvs_branch.id)
+      rev_1_1.branch_commit_ids.remove(cvs_rev.id)
+      cvs_rev.first_on_branch_id = None
+      cvs_rev.prev_id = None
+      self.root_ids.add(cvs_rev.id)
 
       # Change the type of cvs_rev (typically from Change to Add):
       cvs_rev.__class__ = cvs_revision_type_map[(

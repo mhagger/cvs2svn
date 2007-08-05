@@ -69,6 +69,19 @@ class LODItems(object):
     # cvs_branch or from one of the CVSRevisions).
     self.cvs_tags = cvs_tags
 
+  def is_pure_import_branch(self):
+    """Return True iff this LOD is a pure import branch in this file.
+
+    A pure import branch is defined to be a branch that contains only
+    non-trunk default branch revisions (and at least one of them).
+    Such branches are eligible for being grafted onto trunk, even if
+    it has branch blockers."""
+
+    return (
+        self.cvs_revisions
+        and self.cvs_revisions[-1].default_branch_revision
+        )
+
 
 class CVSFileItems(object):
   def __init__(self, cvs_file, trunk, cvs_items):

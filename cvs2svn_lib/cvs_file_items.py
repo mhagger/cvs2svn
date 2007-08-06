@@ -121,6 +121,9 @@ class CVSFileItems(object):
 
     return self._cvs_items[id]
 
+  def get(self, id, default=None):
+    return self._cvs_items.get(id, default)
+
   def __delitem__(self, id):
     assert id not in self.root_ids
     del self._cvs_items[id]

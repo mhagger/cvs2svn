@@ -121,6 +121,15 @@ class CVSItem(object):
 
     raise NotImplementedError()
 
+  def check_links(self, cvs_file_items):
+    """Check for consistency of links to other CVSItems.
+
+    Other items can be looked up in CVS_FILE_ITEMS, which is an
+    instance of CVSFileItems.  Raise an AssertionError if there is a
+    problem."""
+
+    raise NotImplementedError()
+
   def __repr__(self):
     return '%s(%s)' % (self.__class__.__name__, self,)
 
@@ -355,6 +364,9 @@ class CVSRevision(CVSItem):
       # prev_id is on the same LOD and this item closes that one:
       yield self.prev_id
 
+  def check_links(self, cvs_file_items):
+    pass # FIXME
+
   def __str__(self):
     """For convenience only.  The format is subject to change at any time."""
 
@@ -540,6 +552,9 @@ class CVSBranch(CVSSymbol):
   def get_cvs_symbol_ids_opened(self):
     return self.tag_ids + self.branch_ids
 
+  def check_links(self, cvs_file_items):
+    pass # FIXME
+
   def __str__(self):
     """For convenience only.  The format is subject to change at any time."""
 
@@ -618,6 +633,9 @@ class CVSTag(CVSSymbol):
 
   def get_cvs_symbol_ids_opened(self):
     return []
+
+  def check_links(self, cvs_file_items):
+    pass # FIXME
 
   def __str__(self):
     """For convenience only.  The format is subject to change at any time."""

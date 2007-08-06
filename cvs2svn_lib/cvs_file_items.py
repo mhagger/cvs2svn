@@ -131,6 +131,16 @@ class CVSFileItems(object):
   def values(self):
     return self._cvs_items.values()
 
+  def check_link_consistency(self):
+    """Check that the CVSItems are linked correctly with each other."""
+
+    for cvs_item in self.values():
+      try:
+        cvs_item.check_links(self)
+      except AssertionError:
+        Log().warn('Link consistency error in %s\n' % (cvs_item,))
+        raise
+
   def _get_lod(self, lod, cvs_branch, start_id):
     """Return the indicated LODItems.
 

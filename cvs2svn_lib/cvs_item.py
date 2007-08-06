@@ -251,6 +251,17 @@ class CVSRevision(CVSItem):
     self.cvs_file = Ctx()._cvs_file_db.get_file(cvs_file_id)
     self.lod = Ctx()._symbol_db.get_symbol(lod_id)
 
+  def get_effective_prev_id(self):
+    """Return the ID of the effective predecessor of this item.
+
+    This is the ID of the item that determines whether the object
+    existed before this CVSRevision."""
+
+    if self.ntdbr_prev_id is not None:
+      return self.ntdbr_prev_id
+    else:
+      return self.prev_id
+
   def get_symbol_pred_ids(self):
     """Return the pred_ids for symbol predecessors."""
 

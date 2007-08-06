@@ -700,18 +700,6 @@ class CVSFileItems(object):
 
         for cvs_rev in lod_items.cvs_revisions:
           del self[cvs_rev.id]
-          # If cvs_rev is the last default revision on a non-trunk
-          # default branch followed by a 1.2 revision, then the 1.2
-          # revision depends on this one.  FIXME: It is questionable
-          # whether this handling is correct, since the non-trunk
-          # default branch revisions affect trunk and should therefore
-          # not just be discarded even if --trunk-only.
-          if cvs_rev.ntdbr_next_id is not None:
-            next = self[cvs_rev.ntdbr_next_id]
-            assert next.ntdbr_prev_id == cvs_rev.id
-            next.ntdbr_prev_id = None
-            if next.prev_id is None:
-              self.root_ids.add(next.id)
 
       return False
 

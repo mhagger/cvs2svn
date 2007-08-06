@@ -389,13 +389,12 @@ class CVSFileItems(object):
 
     # Look for a 1.2 revision:
     rev_1_1 = self[ntdbr_cvs_revs[0].prev_id]
-    rev_1_2_id = rev_1_1.next_id
 
-    if rev_1_2_id is not None:
+    rev_1_2 = self.get(rev_1_1.next_id)
+    if rev_1_2 is not None:
       # Revision 1.2 logically follows the imported revisions, not
       # 1.1.  Accordingly, connect it to the last NTDBR and possibly
       # change its type.
-      rev_1_2 = self[rev_1_2_id]
       last_ntdbr = ntdbr_cvs_revs[-1]
       rev_1_2.ntdbr_prev_id = last_ntdbr.id
       last_ntdbr.ntdbr_next_id = rev_1_2.id

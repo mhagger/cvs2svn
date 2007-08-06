@@ -56,6 +56,7 @@ from __future__ import generators
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.set_support import *
 from cvs2svn_lib.context import Ctx
+from cvs2svn_lib.symbol import Trunk
 
 
 class CVSItem(object):
@@ -376,7 +377,63 @@ class CVSRevision(CVSItem):
       yield self.prev_id
 
   def check_links(self, cvs_file_items):
-    pass # FIXME
+    assert self.cvs_file == cvs_file_items.cvs_file
+
+    prev = cvs_file_items.get(self.prev_id)
+    next = cvs_file_items.get(self.next_id)
+    first_on_branch = cvs_file_items.get(self.first_on_branch_id)
+    ntdbr_next = cvs_file_items.get(self.ntdbr_next_id)
+    ntdbr_prev = cvs_file_items.get(self.ntdbr_prev_id)
+    effective_prev = cvs_file_items.get(self.get_effective_prev_id())
+
+    if prev is None:
+      # This is the first CVSRevision on trunk or a detached branch:
+      assert self.id in cvs_file_items.root_ids
+    elif first_on_branch is not None:
+      # This is the first CVSRevision on an existing branch:
+      assert isinstance(first_on_branch, CVSBranch)
+      assert first_on_branch.symbol == self.lod
+      assert first_on_branch.next_id == self.id
+      assert first_on_branch.source_id == prev.id
+      assert self.id in prev.branch_commit_ids
+    else:
+      # This revision follows another revision on the same LOD:
+      assert prev.next_id == self.id
+      assert prev.lod == self.lod
+
+    if next is not None:
+      assert next.prev_id == self.id
+      assert next.lod == self.lod
+
+    if ntdbr_next is not None:
+      assert self.ntdbr
+      assert ntdbr_next.ntdbr_prev_id == self.id
+
+    if ntdbr_prev is not None:
+      assert ntdbr_prev.ntdbr_next_id == self.id
+
+    for tag_id in self.tag_ids:
+      tag = cvs_file_items[tag_id]
+      assert isinstance(tag, CVSTag)
+      assert tag.source_id == self.id
+      assert tag.source_lod == self.lod
+
+    branch_commit_ids = list(self.branch_commit_ids)
+    for branch_id in self.branch_ids:
+      branch = cvs_file_items[branch_id]
+      assert isinstance(branch, CVSBranch)
+      assert branch.source_id == self.id
+      assert branch.source_lod == self.lod
+      if branch.next_id is not None:
+        assert branch.next_id in branch_commit_ids
+        branch_commit_ids.remove(branch.next_id)
+    assert not branch_commit_ids
+
+    assert self.__class__ == cvs_revision_type_map[(
+        isinstance(self, CVSRevisionModification),
+        effective_prev is not None
+            and isinstance(effective_prev, CVSRevisionModification),
+        )]
 
   def __str__(self):
     """For convenience only.  The format is subject to change at any time."""

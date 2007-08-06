@@ -621,7 +621,33 @@ class CVSBranch(CVSSymbol):
     return self.tag_ids + self.branch_ids
 
   def check_links(self, cvs_file_items):
-    pass # FIXME
+    source = cvs_file_items.get(self.source_id)
+    next = cvs_file_items.get(self.next_id)
+
+    assert self.id in source.branch_ids
+    if isinstance(source, CVSRevision):
+      assert self.source_lod == source.lod
+    elif isinstance(source, CVSBranch):
+      assert self.source_lod == source.symbol
+    else:
+      assert False
+
+    if next is not None:
+      assert isinstance(next, CVSRevision)
+      assert next.lod == self.symbol
+      assert next.first_on_branch_id == self.id
+
+    for tag_id in self.tag_ids:
+      tag = cvs_file_items[tag_id]
+      assert isinstance(tag, CVSTag)
+      assert tag.source_id == self.id
+      assert tag.source_lod == self.symbol
+
+    for branch_id in self.branch_ids:
+      branch = cvs_file_items[branch_id]
+      assert isinstance(branch, CVSBranch)
+      assert branch.source_id == self.id
+      assert branch.source_lod == self.symbol
 
   def __str__(self):
     """For convenience only.  The format is subject to change at any time."""
@@ -703,7 +729,15 @@ class CVSTag(CVSSymbol):
     return []
 
   def check_links(self, cvs_file_items):
-    pass # FIXME
+    source = cvs_file_items.get(self.source_id)
+
+    assert self.id in source.tag_ids
+    if isinstance(source, CVSRevision):
+      assert self.source_lod == source.lod
+    elif isinstance(source, CVSBranch):
+      assert self.source_lod == source.symbol
+    else:
+      assert False
 
   def __str__(self):
     """For convenience only.  The format is subject to change at any time."""

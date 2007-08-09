@@ -1002,21 +1002,4 @@ class CVSFileItems(object):
           cvs_item_closed = self[cvs_item_closed_id]
           cvs_item.closed_symbols.extend(cvs_item_closed.opened_symbols)
 
-  def check_symbol_parent_lods(self):
-    """Do a consistency check that CVSSymbol.source_lod is set correctly."""
-
-    for cvs_item in self.values():
-      if isinstance(cvs_item, CVSSymbol):
-        source = self[cvs_item.source_id]
-        if isinstance(source, CVSRevision):
-          source_lod = source.lod
-        else:
-          source_lod = source.symbol
-
-        if cvs_item.source_lod != source_lod:
-          raise FatalError(
-              'source_lod discrepancy for %r: %s != %s'
-              % (cvs_item, cvs_item.source_lod, source_lod,)
-              )
-
 

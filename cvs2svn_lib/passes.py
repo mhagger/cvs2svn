@@ -227,7 +227,7 @@ class FilterSymbolsPass(Pass):
       cvs_file_items.record_closed_symbols()
 
       if Log().is_on(Log.DEBUG):
-        cvs_file_items.check_symbol_parent_lods()
+        cvs_file_items.check_link_consistency()
 
       # Store whatever is left to the new file:
       for cvs_item in cvs_file_items.values():

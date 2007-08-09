@@ -656,7 +656,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         )
 
     if Log().is_on(Log.DEBUG):
-      self._cvs_file_items.check_symbol_parent_lods()
+      self._cvs_file_items.check_link_consistency()
 
     # Tell the revision recorder about the file dependency tree.
     self.collect_data.revision_recorder.start_file(self._cvs_file_items)
@@ -773,7 +773,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       self._cvs_file_items.imported_remove_1_1(vendor_lod_items)
 
     if Log().is_on(Log.DEBUG):
-      self._cvs_file_items.check_symbol_parent_lods()
+      self._cvs_file_items.check_link_consistency()
 
   def get_cvs_file_items(self):
     """Finish up and return a CVSFileItems instance for this file.

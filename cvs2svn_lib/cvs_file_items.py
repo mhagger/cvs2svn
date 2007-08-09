@@ -713,13 +713,13 @@ class CVSFileItems(object):
         assert not lod_items.cvs_branches
         assert not lod_items.cvs_tags
 
+        last_rev = lod_items.cvs_revisions[-1]
+        rev_1_2 = self.get(last_rev.ntdbr_next_id)
+
         if lod_items.cvs_branch is not None:
           self._sever_branch(lod_items)
 
-        last_rev = lod_items.cvs_revisions[-1]
-
-        if last_rev.ntdbr_next_id is not None:
-          rev_1_2 = self[last_rev.ntdbr_next_id]
+        if rev_1_2 is not None:
           rev_1_2.ntdbr_prev_id = None
           rev_1_2.prev_id = last_rev.id
           self.root_ids.remove(rev_1_2.id)

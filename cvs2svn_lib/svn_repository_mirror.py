@@ -370,7 +370,12 @@ class SVNRepositoryMirror:
     (parent_path, component,) = path_split(cvs_rev.get_svn_path())
     parent_node = self._open_writable_node(parent_path, True)
 
-    assert component not in parent_node
+    if component in parent_node:
+      raise self.PathExistsError(
+          'Attempt to add path \'%s\' to repository mirror '
+          'when it already exists in the mirror.'
+          % (cvs_rev.get_svn_path(),)
+          )
 
     parent_node[component] = \
         self._create_node(path_join(parent_node.path, component))

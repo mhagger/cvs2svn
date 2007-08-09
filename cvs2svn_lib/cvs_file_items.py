@@ -710,6 +710,7 @@ class CVSFileItems(object):
 
     for lod_items in self.iter_lods():
       if lod_items.cvs_revisions and lod_items.cvs_revisions[0].ntdbr:
+        assert lod_items.is_pure_ntdb()
         assert not lod_items.cvs_branches
         assert not lod_items.cvs_tags
 

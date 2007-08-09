@@ -1484,7 +1484,27 @@ def vendor_branch_trunk_only():
   "handle vendor branches with --trunk-only"
   conv = ensure_conversion('vendor-branch-sameness', args=['--trunk-only'])
 
-  # TODO: Check conversion results.
+  rev = 2
+  conv.logs[rev].check('Initial revision', (
+    ('/%(trunk)s/proj', 'A'),
+    ('/%(trunk)s/proj/b.txt', 'A'),
+    ('/%(trunk)s/proj/c.txt', 'A'),
+    ('/%(trunk)s/proj/d.txt', 'A'),
+    ))
+
+  conv.logs[rev + 1].check('First vendor branch revision', (
+    ('/%(trunk)s/proj/a.txt', 'A'),
+    ('/%(trunk)s/proj/b.txt', 'M'),
+    ('/%(trunk)s/proj/c.txt', 'D'),
+    ))
+
+  conv.logs[rev + 2].check('This log message is not the standard', (
+    ('/%(trunk)s/proj/e.txt', 'A'),
+    ))
+
+  conv.logs[rev + 3].check('First vendor branch revision', (
+    ('/%(trunk)s/proj/e.txt', 'M'),
+    ))
 
 
 def default_branches():
@@ -2913,7 +2933,7 @@ test_list = [
         warning_expected=0,
         variant='fallback-encoding', args=['--fallback-encoding=utf_8']),
     vendor_branch_sameness,
-    XFail(vendor_branch_trunk_only),
+    vendor_branch_trunk_only,
     default_branches,
     default_branches_trunk_only,
     default_branch_and_1_2,

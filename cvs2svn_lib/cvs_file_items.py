@@ -713,20 +713,37 @@ class CVSFileItems(object):
         assert not lod_items.cvs_branches
         assert not lod_items.cvs_tags
 
+        first_rev = lod_items.cvs_revisions[0]
         last_rev = lod_items.cvs_revisions[-1]
+        rev_1_1 = self.get(first_rev.prev_id)
         rev_1_2 = self.get(last_rev.ntdbr_next_id)
 
         if lod_items.cvs_branch is not None:
           self._sever_branch(lod_items)
 
+        if rev_1_1 is not None:
+          rev_1_1.next_id = first_rev.id
+          first_rev.prev_id = rev_1_1.id
+
+          self.root_ids.remove(first_rev.id)
+
+          first_rev.__class__ = cvs_revision_type_map[(
+              isinstance(first_rev, CVSRevisionModification),
+              isinstance(rev_1_1, CVSRevisionModification),
+              )]
+
         if rev_1_2 is not None:
           rev_1_2.ntdbr_prev_id = None
-          rev_1_2.prev_id = last_rev.id
-          self.root_ids.remove(rev_1_2.id)
           last_rev.ntdbr_next_id = None
+
+          if rev_1_2.prev_id is None:
+            self.root_ids.remove(rev_1_2.id)
+
+          rev_1_2.prev_id = last_rev.id
           last_rev.next_id = rev_1_2.id
-          # The type of rev_1_2 was already adjusted in
-          # adjust_ntdbrs(), so we don't have to change its type here.
+
+          # The effective_pred_id of rev_1_2 was not changed, so we
+          # don't have to change rev_1_2's type.
 
         for cvs_rev in lod_items.cvs_revisions:
           cvs_rev.ntdbr = False

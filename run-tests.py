@@ -485,6 +485,7 @@ class Conversion:
     erase(self.repos)
     erase(self._wc)
 
+    args = list(args)
     if options_file is None:
       self.options_file = None
       if tmp_dir != 'cvs2svn-tmp':

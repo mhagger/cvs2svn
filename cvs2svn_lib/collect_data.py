@@ -873,7 +873,7 @@ class _ProjectDataCollector:
     """Return a CVSFile object for the Attic file at PATHNAME."""
 
     try:
-      return self.project.get_cvs_file(pathname)
+      return self.project.get_cvs_file(pathname, True)
     except FileInAndOutOfAtticException, e:
       if Ctx().retain_conflicting_attic_files:
         Log().warn(
@@ -886,7 +886,7 @@ class _ProjectDataCollector:
 
       # Either way, return a CVSFile object so that the rest of the
       # file processing can proceed:
-      return self.project.get_cvs_file(pathname, leave_in_attic=True)
+      return self.project.get_cvs_file(pathname, True, leave_in_attic=True)
 
   def _visit_attic_directory(self, dirname):
     # Maps { fname[:-2] : pathname }:
@@ -906,7 +906,7 @@ class _ProjectDataCollector:
   def _get_non_attic_file(self, pathname):
     """Return a CVSFile object for the non-Attic file at PATHNAME."""
 
-    return self.project.get_cvs_file(pathname)
+    return self.project.get_cvs_file(pathname, False)
 
   def _visit_non_attic_directory(self, dirname):
     files = os.listdir(dirname)

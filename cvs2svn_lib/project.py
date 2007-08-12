@@ -240,16 +240,7 @@ class Project(object):
       tail = tail[:-2]
     return tail.replace(os.sep, '/')
 
-  def is_file_in_attic(self, filename):
-    """Return True iff FILENAME is in an Attic subdirectory.
-
-    FILENAME is the filesystem path to a '*,v' file."""
-
-    dirname = os.path.dirname(filename)
-    (dirname2, basename2,) = os.path.split(dirname)
-    return basename2 == 'Attic' and self.project_prefix_re.match(dirname2)
-
-  def get_cvs_file(self, filename, leave_in_attic=False):
+  def get_cvs_file(self, filename, file_in_attic, leave_in_attic=False):
     """Return a CVSFile describing the file with name FILENAME.
 
     FILENAME must be a *,v file within this project.  The CVSFile is
@@ -257,19 +248,21 @@ class Project(object):
     filled in except mode (which can only be determined by parsing the
     file).
 
-    If LEAVE_IN_ATTIC is True, then leave the 'Attic' component in the
-    filename.  Otherwise, raise FileInAndOutOfAtticException if the
-    file is in Attic, and a file with the same filename appears
-    outside of Attic.
+    FILE_IN_ATTIC is a boolean telling whether the specified file is
+    in an Attic subdirectory.  If FILE_IN_ATTIC is True, then:
+
+    - If LEAVE_IN_ATTIC is True, then leave the 'Attic' component in
+      the filename.
+
+    - Otherwise, raise FileInAndOutOfAtticException if a file with the
+      same filename appears outside of Attic.
 
     Raise FatalError if the resulting filename would not be legal in
     SVN."""
 
     self.verify_filename_legal(filename, os.path.basename(filename)[:-2])
 
-    if leave_in_attic or not self.is_file_in_attic(filename):
-      canonical_filename = filename
-    else:
+    if file_in_attic and not leave_in_attic:
       (dirname, basename,) = os.path.split(filename)
       # If this file also exists outside of the attic, it's a fatal error
       non_attic_filename = os.path.join(os.path.dirname(dirname), basename)
@@ -278,6 +271,8 @@ class Project(object):
 
       # drop the 'Attic' portion from the filename for the canonical name:
       canonical_filename = non_attic_filename
+    else:
+      canonical_filename = filename
 
     file_stat = os.stat(filename)
 

@@ -265,3 +265,31 @@ def get_maybe_apple_single_stream(stream):
       return CompoundStream(string_io, stream)
 
 
+if __name__ == '__main__':
+  # For fun and testing, allow use of this file as a pipe if it is
+  # invoked as a script.  Specifically, if stdin is in AppleSingle
+  # format, then output only its data fork; otherwise, output it
+  # unchanged.
+  #
+  # This might not work on systems where sys.stdin is opened in text
+  # mode.
+  #
+  # Remember to set PYTHONPATH to point to the main cvs2svn directory.
+
+  import sys
+
+  #CHUNK_SIZE = -1
+  CHUNK_SIZE = 100
+
+  f = get_maybe_apple_single_stream(sys.stdin)
+
+  if CHUNK_SIZE < 0:
+    sys.stdout.write(f.read())
+  else:
+    while True:
+      s = f.read(CHUNK_SIZE)
+      if not s:
+        break
+      sys.stdout.write(s)
+
+

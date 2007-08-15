@@ -215,16 +215,14 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
 
     # Insert a filter to convert all EOLs to LFs if neccessary
     if s_item.needs_eol_filter():
-      data_reader = LF_EOL_Filter(stream)
-    else:
-      data_reader = stream
+      stream = LF_EOL_Filter(stream)
 
     buf = None
 
     # treat .cvsignore as a directory property
     dir_path, basename = os.path.split(cvs_rev.get_svn_path())
     if basename == ".cvsignore":
-      buf = data_reader.read()
+      buf = stream.read()
       ignore_vals = generate_ignores(buf)
       ignore_contents = '\n'.join(ignore_vals)
       if ignore_contents:
@@ -267,12 +265,12 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     checksum = md5.new()
     length = 0
     if buf is None:
-      buf = data_reader.read(config.PIPE_READ_SIZE)
+      buf = stream.read(config.PIPE_READ_SIZE)
     while buf != '':
       checksum.update(buf)
       length += len(buf)
       self.dumpfile.write(buf)
-      buf = data_reader.read(config.PIPE_READ_SIZE)
+      buf = stream.read(config.PIPE_READ_SIZE)
 
     stream.close()
 
@@ -370,5 +368,9 @@ class LF_EOL_Filter:
       buf = buf.replace('\r', '\n')
       if buf or self.eof:
         return buf
+
+  def close(self):
+    self.stream.close()
+    self.stream = None
 
 

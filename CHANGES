@@ -1,8 +1,8 @@
-Version 2.0.0 (13 July 2007)
-----------------------------
+Version 2.0.0 (15 August 2007)
+------------------------------
 
  New features:
- * Add --use-internal-co option to accelerate conversion up to 50%.
+ * Add --use-internal-co to speed conversions, and make it the default.
  * Add --retain-conflicting-attic-files option.
  * Add --no-cross-branch-commits option.
  * Add --default-eol option and deprecate --no-default-eol.

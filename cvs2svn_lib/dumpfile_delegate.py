@@ -28,6 +28,7 @@ from cvs2svn_lib.common import OP_ADD
 from cvs2svn_lib.common import OP_CHANGE
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.svn_repository_mirror import SVNRepositoryMirrorDelegate
+from cvs2svn_lib.apple_single_filter import get_maybe_apple_single_stream
 
 
 class DumpfileDelegate(SVNRepositoryMirrorDelegate):
@@ -212,6 +213,11 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     stream = self._revision_reader.get_content_stream(
         cvs_rev, suppress_keyword_substitution=s_item.has_keywords()
         )
+
+    if Ctx().decode_apple_single:
+      # Insert a filter to decode any files that are in AppleSingle
+      # format:
+      stream = get_maybe_apple_single_stream(stream)
 
     # Insert a filter to convert all EOLs to LFs if neccessary
     if s_item.needs_eol_filter():

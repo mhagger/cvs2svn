@@ -229,6 +229,20 @@ ctx.filename_utf8_encoder = UTF8Encoder(
     #fallback_encoder='ascii'
     )
 
+# Some CVS clients for MacOS store resource fork data into CVS along
+# with the file contents itself by wrapping it all up in a container
+# format called "AppleSingle".  Subversion currently does not support
+# MacOS resource forks.  Nevertheless, sometimes the resource fork
+# information is not necessary and can be discarded.  Set the
+# following option to True if you would like cvs2svn to identify files
+# whose contents are encoded in AppleSingle format, and discard all
+# but the data fork for such files before committing them to
+# Subversion.  (Please note that AppleSingle contents are identified
+# by the AppleSingle magic number as the first four bytes of the file.
+# This check is not failproof, so only set this option if you think
+# you need it.)
+ctx.decode_apple_single = False
+
 # The basic strategy for converting symbols (this should usually be
 # left unchanged).  A CVS symbol might be used as a tag in one file
 # and as a branch in another file.  The purpose of ctx.symbol_strategy

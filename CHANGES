@@ -2,6 +2,7 @@ Version x.x.x (not yet released)
 --------------------------------
 
  New features:
+ * Add option ctx.decode_apple_single for handling AppleSingle-encoded files.
 
  Bugs fixed:
 

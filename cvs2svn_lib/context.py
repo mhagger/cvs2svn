@@ -51,6 +51,7 @@ class Ctx:
     self.prune = True
     self.utf8_encoder = lambda s: s.decode('ascii').encode('utf8')
     self.filename_utf8_encoder = lambda s: s.decode('ascii').encode('utf8')
+    self.decode_apple_single = False
     self.symbol_strategy = None
     self.username = None
     self.svn_property_setters = []

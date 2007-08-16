@@ -130,95 +130,29 @@ class RecordTableAccessError(RuntimeError):
   pass
 
 
-class RecordTable:
-  # The approximate amount of memory that should be used for the cache
-  # for each instance of this class:
-  CACHE_MEMORY = 4 * 1024 * 1024
-
-  # Empirically, each entry in the cache table has an overhead of
-  # about 96 bytes on a 32-bit computer.
-  CACHE_OVERHEAD_PER_ENTRY = 96
-
-  def __init__(self, filename, mode, packer, cache_memory=CACHE_MEMORY):
+class AbstractRecordTable:
+  def __init__(self, filename, mode, packer):
     self.filename = filename
     self.mode = mode
-    if self.mode == DB_OPEN_NEW:
-      self.f = open(self.filename, 'wb+')
-    elif self.mode == DB_OPEN_WRITE:
-      self.f = open(self.filename, 'rb+')
-    elif self.mode == DB_OPEN_READ:
-      self.f = open(self.filename, 'rb')
-    else:
-      raise RuntimeError('Invalid mode %r' % self.mode)
     self.packer = packer
-    self.cache_memory = cache_memory
-
-    # Number of items that can be stored in the write cache.
-    self._max_memory_cache = (
-        self.cache_memory
-        / (self.CACHE_OVERHEAD_PER_ENTRY + self.packer.record_len))
-
-    # Read and write cache; a map {i : (dirty, s)}, where i is an
-    # index, dirty indicates whether the value has to be written to
-    # disk, and s is the packed value for the index.  Up to
-    # self._max_memory_cache items can be stored here.  When the cache
-    # fills up, it is written to disk in one go and then cleared.
-    self._cache = {}
-
-    # The index just beyond the last record ever written:
-    self._limit = os.path.getsize(self.filename) // self.packer.record_len
-
-    # The index just beyond the last record ever written to disk:
-    self._limit_written = self._limit
 
   def __str__(self):
-    return 'RecordTable(%r)' % (self.filename,)
-
-  def flush(self):
-    Log().debug('Flushing cache for %s' % (self,))
-
-    pairs = [(i, s) for (i, (dirty, s)) in self._cache.items() if dirty]
-
-    if pairs:
-      pairs.sort()
-      old_i = None
-      f = self.f
-      for (i, s) in pairs:
-        if i == old_i:
-          # No seeking needed
-          pass
-        elif i <= self._limit_written:
-          # Just jump there:
-          f.seek(i * self.packer.record_len)
-        else:
-          # Jump to the end of the file then write _empty_values until
-          # we reach the correct location:
-          f.seek(self._limit_written * self.packer.record_len)
-          while self._limit_written < i:
-            f.write(self.packer.empty_value)
-            self._limit_written += 1
-        f.write(s)
-        old_i = i + 1
-        self._limit_written = max(self._limit_written, old_i)
-
-      self.f.flush()
-
-    self._cache.clear()
+    return '%s(%r)' % (self.__class__.__name__, self.filename,)
 
   def _set_packed_record(self, i, s):
     """Set the value for index I to the packed value S."""
 
-    if self.mode == DB_OPEN_READ:
-      raise RecordTableAccessError()
-    if i < 0:
-      raise KeyError()
-    self._cache[i] = (True, s)
-    if len(self._cache) >= self._max_memory_cache:
-      self.flush()
-    self._limit = max(self._limit, i + 1)
+    raise NotImplementedError()
 
   def __setitem__(self, i, v):
     self._set_packed_record(i, self.packer.pack(v))
+
+  def _get_packed_record(self, i):
+    """Return the packed record for index I.
+
+    Raise KeyError if it is not present."""
+
+    raise NotImplementedError()
 
   def __getitem__(self, i):
     """Return the item for index I.
@@ -226,16 +160,7 @@ class RecordTable:
     Raise KeyError if that item has never been set (or if it was set
     to self.packer.empty_value)."""
 
-    try:
-      s = self._cache[i][1]
-    except KeyError:
-      if not 0 <= i < self._limit_written:
-        raise KeyError(i)
-      self.f.seek(i * self.packer.record_len)
-      s = self.f.read(self.packer.record_len)
-      self._cache[i] = (False, s)
-      if len(self._cache) >= self._max_memory_cache:
-        self.flush()
+    s = self._get_packed_record(i)
 
     if s == self.packer.empty_value:
       raise KeyError(i)
@@ -271,7 +196,7 @@ class RecordTable:
     self._set_packed_record(i, self.packer.empty_value)
 
   def iterkeys(self):
-    """Return the keys in the map in key order."""
+    """Yield the keys in the map in key order."""
 
     for i in xrange(0, self._limit):
       try:
@@ -291,6 +216,101 @@ class RecordTable:
       except KeyError:
         pass
 
+
+class RecordTable(AbstractRecordTable):
+  # The approximate amount of memory that should be used for the cache
+  # for each instance of this class:
+  CACHE_MEMORY = 4 * 1024 * 1024
+
+  # Empirically, each entry in the cache table has an overhead of
+  # about 96 bytes on a 32-bit computer.
+  CACHE_OVERHEAD_PER_ENTRY = 96
+
+  def __init__(self, filename, mode, packer, cache_memory=CACHE_MEMORY):
+    AbstractRecordTable.__init__(self, filename, mode, packer)
+    if self.mode == DB_OPEN_NEW:
+      self.f = open(self.filename, 'wb+')
+    elif self.mode == DB_OPEN_WRITE:
+      self.f = open(self.filename, 'rb+')
+    elif self.mode == DB_OPEN_READ:
+      self.f = open(self.filename, 'rb')
+    else:
+      raise RuntimeError('Invalid mode %r' % self.mode)
+    self.cache_memory = cache_memory
+
+    # Number of items that can be stored in the write cache.
+    self._max_memory_cache = (
+        self.cache_memory
+        / (self.CACHE_OVERHEAD_PER_ENTRY + self.packer.record_len))
+
+    # Read and write cache; a map {i : (dirty, s)}, where i is an
+    # index, dirty indicates whether the value has to be written to
+    # disk, and s is the packed value for the index.  Up to
+    # self._max_memory_cache items can be stored here.  When the cache
+    # fills up, it is written to disk in one go and then cleared.
+    self._cache = {}
+
+    # The index just beyond the last record ever written:
+    self._limit = os.path.getsize(self.filename) // self.packer.record_len
+
+    # The index just beyond the last record ever written to disk:
+    self._limit_written = self._limit
+
+  def flush(self):
+    Log().debug('Flushing cache for %s' % (self,))
+
+    pairs = [(i, s) for (i, (dirty, s)) in self._cache.items() if dirty]
+
+    if pairs:
+      pairs.sort()
+      old_i = None
+      f = self.f
+      for (i, s) in pairs:
+        if i == old_i:
+          # No seeking needed
+          pass
+        elif i <= self._limit_written:
+          # Just jump there:
+          f.seek(i * self.packer.record_len)
+        else:
+          # Jump to the end of the file then write _empty_values until
+          # we reach the correct location:
+          f.seek(self._limit_written * self.packer.record_len)
+          while self._limit_written < i:
+            f.write(self.packer.empty_value)
+            self._limit_written += 1
+        f.write(s)
+        old_i = i + 1
+        self._limit_written = max(self._limit_written, old_i)
+
+      self.f.flush()
+
+    self._cache.clear()
+
+  def _set_packed_record(self, i, s):
+    if self.mode == DB_OPEN_READ:
+      raise RecordTableAccessError()
+    if i < 0:
+      raise KeyError()
+    self._cache[i] = (True, s)
+    if len(self._cache) >= self._max_memory_cache:
+      self.flush()
+    self._limit = max(self._limit, i + 1)
+
+  def _get_packed_record(self, i):
+    try:
+      return self._cache[i][1]
+    except KeyError:
+      if not 0 <= i < self._limit_written:
+        raise KeyError(i)
+      self.f.seek(i * self.packer.record_len)
+      s = self.f.read(self.packer.record_len)
+      self._cache[i] = (False, s)
+      if len(self._cache) >= self._max_memory_cache:
+        self.flush()
+
+      return s
+
   def close(self):
     self.flush()
     self._cache = None
@@ -298,13 +318,11 @@ class RecordTable:
     self.f = None
 
 
-class MmapRecordTable:
+class MmapRecordTable(AbstractRecordTable):
   GROWTH_INCREMENT = 65536
 
   def __init__(self, filename, mode, packer):
-    self.filename = filename
-    self.mode = mode
-    self.packer = packer
+    AbstractRecordTable.__init__(self, filename, mode, packer)
     if self.mode == DB_OPEN_NEW:
       self.python_file = open(self.filename, 'wb+')
       self.python_file.write('\0' * self.GROWTH_INCREMENT)
@@ -340,15 +358,10 @@ class MmapRecordTable:
     else:
       raise RuntimeError('Invalid mode %r' % self.mode)
 
-  def __str__(self):
-    return 'MmapRecordTable(%r)' % (self.filename,)
-
   def flush(self):
     self.f.flush()
 
   def _set_packed_record(self, i, s):
-    """Set the value for index I to the packed value S."""
-
     if self.mode == DB_OPEN_READ:
       raise RecordTableAccessError()
     if i < 0:
@@ -374,64 +387,11 @@ class MmapRecordTable:
       self.f.seek(i * self.packer.record_len)
       self.f.write(s)
 
-  def __setitem__(self, i, v):
-    self._set_packed_record(i, self.packer.pack(v))
-
-  def __getitem__(self, i):
-    """Return the item for index I.
-
-    Raise KeyError if that item has never been set (or if it was set
-    to self.packer.empty_value)."""
-
+  def _get_packed_record(self, i):
     if not 0 <= i < self._limit:
       raise KeyError(i)
     self.f.seek(i * self.packer.record_len)
-    s = self.f.read(self.packer.record_len)
-
-    if s == self.packer.empty_value:
-      raise KeyError(i)
-
-    return self.packer.unpack(s)
-
-  def get(self, i, default=None):
-    try:
-      return self[i]
-    except KeyError:
-      return default
-
-  def __delitem__(self, i):
-    """Delete the item for index I.
-
-    Raise KeyError if that item has never been set (or if it was set
-    to self.packer.empty_value)."""
-
-    if self.mode == DB_OPEN_READ:
-      raise RecordTableAccessError()
-
-    # Check that the value was set (otherwise raise KeyError):
-    self[i]
-    self._set_packed_record(i, self.packer.empty_value)
-
-  def iterkeys(self):
-    """Yield the keys in the map in order."""
-
-    for i in xrange(0, self._limit):
-      try:
-        self[i]
-        yield i
-      except KeyError:
-        pass
-
-  def itervalues(self):
-    """Yield the values in the map in key order.
-
-    Skip over values that haven't been defined."""
-
-    for i in xrange(0, self._limit):
-      try:
-        yield self[i]
-      except KeyError:
-        pass
+    return self.f.read(self.packer.record_len)
 
   def close(self):
     self.flush()

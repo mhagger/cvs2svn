@@ -112,6 +112,17 @@ except NameError:
       def __ior__(self, other):
         return self.update(other)
 
+      def __or__(self, other):
+        if len(self) <= len(other):
+          s1, s2 = self, other
+        else:
+          s1, s2 = other, self
+
+        retval = set(s1)
+        retval |= s2
+
+        return retval
+
       def __repr__(self):
         return 'Set(%r)' % (self._dict.keys(),)
 

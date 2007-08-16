@@ -38,7 +38,13 @@ class Changeset(object):
   def get_cvs_items(self):
     """Return the set of CVSItems within this Changeset."""
 
-    return set(Ctx()._cvs_items_db.get_many(self.cvs_item_ids))
+    return set(
+        [
+            cvs_item
+            for (id, cvs_item)
+                in Ctx()._cvs_items_db.get_many(self.cvs_item_ids)
+            ]
+        )
 
   def get_projects_opened(self):
     """Return the set of projects that might be opened by this changeset."""

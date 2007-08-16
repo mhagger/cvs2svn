@@ -268,13 +268,19 @@ class IndexedDatabase:
       return default
 
   def get_many(self, indexes):
-    """Generate the items with the specified INDEXES in arbitrary order."""
+    """Yield (index,item) tuples for INDEXES, in arbitrary order.
 
-    offsets = list(self.index_table.get_many(indexes))
+    Yield (index,None) for indexes with no defined values."""
+
+    offsets = [
+        (offset, index)
+        for (index, offset) in self.index_table.get_many(indexes)
+        if offset is not None
+        ]
     # Sort the offsets to reduce disk seeking:
     offsets.sort()
-    for offset in offsets:
-      yield self._fetch(offset)
+    for (offset,index) in offsets:
+      yield (index, self._fetch(offset))
 
   def __delitem__(self, index):
     self.index_table[index]

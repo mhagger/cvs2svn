@@ -174,7 +174,7 @@ class AbstractRecordTable:
     # Sort the indexes to reduce disk seeking:
     indexes.sort()
     for i in indexes:
-      yield self[i]
+      yield (i, self[i])
 
   def get(self, i, default=None):
     try:

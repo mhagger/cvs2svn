@@ -174,7 +174,10 @@ class SVNRevisionCommit(SVNCommit):
     (svn_commit_state, cvs_rev_ids) = state
     SVNCommit.__setstate__(self, svn_commit_state)
 
-    self.cvs_revs = list(Ctx()._cvs_items_db.get_many(cvs_rev_ids))
+    self.cvs_revs = [
+        cvs_rev
+        for (id, cvs_rev) in Ctx()._cvs_items_db.get_many(cvs_rev_ids)
+        ]
     self._author = None
     self._log_msg = None
 
@@ -307,7 +310,11 @@ class SVNSymbolCommit(SVNCommit):
     self.symbol = Ctx()._symbol_db.get_symbol(symbol_id)
 
   def get_cvs_items(self):
-    return list(Ctx()._cvs_items_db.get_many(self.cvs_symbol_ids))
+    return [
+        cvs_symbol
+        for (id, cvs_symbol)
+            in Ctx()._cvs_items_db.get_many(self.cvs_symbol_ids)
+        ]
 
   def _get_symbol_type(self):
     """Return the type of the self.symbol ('branch' or 'tag')."""

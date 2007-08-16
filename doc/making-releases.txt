@@ -42,7 +42,7 @@ Making releases
       go to "Downloads", then "Releases" folder, then "Add new file").
    2. Move old releases into the 'Old' folder of the download area
       (click on the "Edit" link next to the files, then change
-      Status -> "Obsolete" and Folder -> "Old").
+      Status -> "Archival" and Folder -> "Old").
    3. Create a project announcement on the website.  See example
       template below.
    4. Send an announcement to announce@cvs2svn.tigris.org.

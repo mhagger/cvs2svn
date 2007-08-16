@@ -318,11 +318,12 @@ class TextRecordDatabase:
     self.deferred_deletes = None
 
   def __getstate__(self):
-    return self.text_records.values()
+    return (self.text_records.values(),)
 
   def __setstate__(self, state):
+    (text_records,) = state
     self.text_records = {}
-    for text_record in state:
+    for text_record in text_records:
       self.add(text_record)
     self.delta_db = NullDatabase()
     self.checkout_db = NullDatabase()

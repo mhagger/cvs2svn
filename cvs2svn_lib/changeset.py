@@ -35,7 +35,7 @@ class Changeset(object):
 
   def __init__(self, id, cvs_item_ids):
     self.id = id
-    self.cvs_item_ids = set(cvs_item_ids)
+    self.cvs_item_ids = list(cvs_item_ids)
 
   def get_cvs_items(self):
     """Yield the CVSItems within this Changeset."""
@@ -65,11 +65,10 @@ class Changeset(object):
     raise NotImplementedError()
 
   def __getstate__(self):
-    return (self.id, list(self.cvs_item_ids),)
+    return (self.id, self.cvs_item_ids,)
 
   def __setstate__(self, state):
-    (self.id, cvs_item_ids,) = state
-    self.cvs_item_ids = set(cvs_item_ids)
+    (self.id, self.cvs_item_ids,) = state
 
   def __cmp__(self, other):
     raise NotImplementedError()

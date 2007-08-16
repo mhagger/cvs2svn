@@ -381,9 +381,10 @@ class InitializeChangesetsPass(Pass):
     # list of tuples (pred, succ) of id pairs for CVSItems that depend
     # on each other.
     dependencies = []
+    changeset_cvs_item_ids = set(changeset.cvs_item_ids)
     for cvs_item in cvs_items:
       for next_id in cvs_item.get_succ_ids():
-        if next_id in changeset.cvs_item_ids:
+        if next_id in changeset_cvs_item_ids:
           # Sanity check: a CVSItem should never depend on itself:
           if next_id == cvs_item.id:
             raise InternalError('Item depends on itself: %s' % (cvs_item,))

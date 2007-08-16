@@ -122,7 +122,9 @@ class StatsKeeper:
 
   def archive(self):
     filename = artifact_manager.get_temp_file(config.STATISTICS_FILE)
-    open(filename, 'wb').write(cPickle.dumps(self))
+    f = open(filename, 'wb')
+    cPickle.dump(self, f)
+    f.close()
 
   def __str__(self):
     svn_revs_str = ""
@@ -193,6 +195,8 @@ def read_stats_keeper():
   otherwise, create and return a new instance."""
 
   filename = artifact_manager.get_temp_file(config.STATISTICS_FILE)
-  return cPickle.loads(open(filename, 'rb').read())
-
+  f = open(filename, 'rb')
+  retval = cPickle.load(f)
+  f.close()
+  return retval
 

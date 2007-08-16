@@ -267,16 +267,18 @@ class IndexedDatabase:
     except KeyError:
       return default
 
-  def get_many(self, indexes):
+  def get_many(self, indexes, default=None):
     """Yield (index,item) tuples for INDEXES, in arbitrary order.
 
     Yield (index,None) for indexes with no defined values."""
 
-    offsets = [
-        (offset, index)
-        for (index, offset) in self.index_table.get_many(indexes)
-        if offset is not None
-        ]
+    offsets = []
+    for (index, offset) in self.index_table.get_many(indexes):
+      if offset is None:
+        yield (index, None)
+      else:
+        offsets.append((offset, index))
+
     # Sort the offsets to reduce disk seeking:
     offsets.sort()
     for (offset,index) in offsets:

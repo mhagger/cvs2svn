@@ -167,14 +167,16 @@ class AbstractRecordTable:
 
     return self.packer.unpack(s)
 
-  def get_many(self, indexes):
-    """Generate the items for the specified INDEXES in arbitrary order."""
+  def get_many(self, indexes, default=None):
+    """Yield (index, item) typles for INDEXES in arbitrary order.
+
+    Yield (index,default) for indices for which not item is defined."""
 
     indexes = list(indexes)
     # Sort the indexes to reduce disk seeking:
     indexes.sort()
     for i in indexes:
-      yield (i, self[i])
+      yield (i, self.get(i, default))
 
   def get(self, i, default=None):
     try:

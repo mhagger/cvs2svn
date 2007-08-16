@@ -375,7 +375,7 @@ class InitializeChangesetsPass(Pass):
     CHANGESET at most once, even though the resulting changesets might
     themselves have internal dependencies."""
 
-    cvs_items = changeset.get_cvs_items()
+    cvs_items = list(changeset.get_cvs_items())
     # We only look for succ dependencies, since by doing so we
     # automatically cover pred dependencies as well.  First create a
     # list of tuples (pred, succ) of id pairs for CVSItems that depend
@@ -393,7 +393,6 @@ class InitializeChangesetsPass(Pass):
     if dependencies:
       # Sort the cvs_items in a defined order (chronological to the
       # extent that the timestamps are correct and unique).
-      cvs_items = list(cvs_items)
       cvs_items.sort(self.compare_items)
       indexes = {}
       for i in range(len(cvs_items)):

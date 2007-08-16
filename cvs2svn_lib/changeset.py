@@ -17,6 +17,8 @@
 """Manage change sets."""
 
 
+from __future__ import generators
+
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.set_support import *
 from cvs2svn_lib.common import InternalError
@@ -36,15 +38,11 @@ class Changeset(object):
     self.cvs_item_ids = set(cvs_item_ids)
 
   def get_cvs_items(self):
-    """Return the set of CVSItems within this Changeset."""
+    """Yield the CVSItems within this Changeset."""
 
-    return set(
-        [
-            cvs_item
-            for (id, cvs_item)
-                in Ctx()._cvs_items_db.get_many(self.cvs_item_ids)
-            ]
-        )
+    for (id, cvs_item) in Ctx()._cvs_items_db.get_many(self.cvs_item_ids):
+      assert cvs_item is not None
+      yield cvs_item
 
   def get_projects_opened(self):
     """Return the set of projects that might be opened by this changeset."""

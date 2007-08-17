@@ -182,7 +182,15 @@ def main():
     elif o == "-m":
       show_str2marshal_db(config.METADATA_DB)
     elif o == "-f":
-      show_str2pickle_db(config.CVS_FILES_DB)
+      prime_ctx()
+      from cvs2svn_lib.cvs_file_database import CVSFileDatabase
+      db = CVSFileDatabase(DB_OPEN_READ)
+      ids = db._cvs_files.keys()
+      ids.sort()
+      for id in ids:
+        cvs_file = db.get_file(id)
+        print '%6x: %s' % (cvs_file.id, cvs_file,)
+      db.close()
     elif o == "-c":
       prime_ctx()
       show_str2ppickle_db(

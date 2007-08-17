@@ -187,7 +187,7 @@ class Project(object):
 
   determine_repository_root = staticmethod(determine_repository_root)
 
-  def _get_cvs_path(self, filename):
+  def get_cvs_path(self, filename):
     """Return the path to FILENAME relative to project_cvs_repos_path.
 
     FILENAME is a filesystem name that has to be within
@@ -198,7 +198,7 @@ class Project(object):
     (tail, n) = self.project_prefix_re.subn('', filename, 1)
     if n != 1:
       raise FatalError(
-          "Project._get_cvs_path: '%s' is not a sub-path of '%s'"
+          "Project.get_cvs_path: '%s' is not a sub-path of '%s'"
           % (filename, self.project_cvs_repos_path,))
     if tail.endswith(',v'):
       tail = tail[:-2]
@@ -248,7 +248,7 @@ class Project(object):
 
     # mode is not known, so we temporarily set it to None.
     return CVSFile(
-        None, self, filename, self._get_cvs_path(canonical_filename),
+        None, self, filename, self.get_cvs_path(canonical_filename),
         file_executable, file_size, None
         )
 

@@ -20,14 +20,11 @@ import os
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.common import path_split
-from cvs2svn_lib.key_generator import KeyGenerator
 from cvs2svn_lib.context import Ctx
 
 
 class CVSFile(object):
   """Represent a CVS file."""
-
-  key_generator = KeyGenerator(1)
 
   def __init__(self, id, project, filename, cvs_path,
                executable, file_size, mode):
@@ -35,8 +32,7 @@ class CVSFile(object):
 
     Arguments:
 
-      ID          --> (int or None) unique id for this file.  If None, a new
-                      id is generated.
+      ID          --> (int) unique id for this file.
       PROJECT     --> (Project) the project containing this file
       FILENAME    --> (string) the filesystem path to the CVS file
       CVS_PATH    --> (string) the canonical path within the CVS project (no
@@ -50,11 +46,7 @@ class CVSFile(object):
     out of Attic and the --retain-conflicting-attic-files option was
     specified."""
 
-    if id is None:
-      self.id = self.key_generator.gen_id()
-    else:
-      self.id = id
-
+    self.id = id
     self.project = project
     self.filename = filename
     self.cvs_path = cvs_path

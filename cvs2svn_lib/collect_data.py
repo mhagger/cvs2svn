@@ -915,7 +915,8 @@ class _ProjectDataCollector:
 
     # mode is not known, so we temporarily set it to None.
     return CVSFile(
-        None, self.project, filename,
+        self.collect_data.file_key_generator.gen_id(),
+        self.project, filename,
         self.project.get_cvs_path(canonical_filename),
         file_executable, file_size, None
         )
@@ -1037,6 +1038,9 @@ class CollectData:
     self.num_files = 0
     self.symbol_stats = SymbolStatisticsCollector()
     self.stats_keeper = stats_keeper
+
+    # Key generator for CVSFiles:
+    self.file_key_generator = KeyGenerator(1)
 
     # Key generator for CVSItems:
     self.item_key_generator = KeyGenerator()

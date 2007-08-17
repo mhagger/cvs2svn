@@ -68,6 +68,7 @@ from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.project import FileInAndOutOfAtticException
+from cvs2svn_lib.cvs_file import CVSDirectory
 from cvs2svn_lib.cvs_file import CVSFile
 from cvs2svn_lib.symbol import Symbol
 from cvs2svn_lib.symbol import Trunk
@@ -871,6 +872,18 @@ class _ProjectDataCollector:
     self.collect_data.add_cvs_file_items(cvs_file_items)
     self.collect_data.symbol_stats.register(cvs_file_items)
 
+  def _get_cvs_directory(self, path):
+    """Return a CVSDirectory instance describing the directory at PATH.
+
+    The CVSDirectory is assigned a new unique id and recorded in
+    self.collect_data."""
+
+    # mode is not known, so we temporarily set it to None.
+    return CVSDirectory(
+        self.collect_data.file_key_generator.gen_id(),
+        self.project, path, self.project.get_cvs_path(path),
+        )
+
   def _get_cvs_file(self, filename, file_in_attic, leave_in_attic=False):
     """Return a CVSFile describing the file with name FILENAME.
 
@@ -922,10 +935,14 @@ class _ProjectDataCollector:
         )
 
   def _get_attic_file(self, pathname):
-    """Return a CVSFile object for the Attic file at PATHNAME."""
+    """Return a CVSFile object for the Attic file at PATHNAME.
+
+    Return (CVSFile, retained_in_attic), where RETAINED_IN_ATTIC is a
+    boolean that is True iff CVSFile will remain in the Attic
+    directory."""
 
     try:
-      return self._get_cvs_file(pathname, True)
+      return (self._get_cvs_file(pathname, True), False)
     except FileInAndOutOfAtticException, e:
       if Ctx().retain_conflicting_attic_files:
         Log().warn(
@@ -938,11 +955,15 @@ class _ProjectDataCollector:
 
       # Either way, return a CVSFile object so that the rest of the
       # file processing can proceed:
-      return self._get_cvs_file(pathname, True, leave_in_attic=True)
+      return (self._get_cvs_file(pathname, True, leave_in_attic=True), True)
 
   def _visit_attic_directory(self, dirname):
+    cvs_directory = self._get_cvs_directory(dirname)
+
     # Maps { fname[:-2] : pathname }:
     rcsfiles = {}
+
+    retained_attic_file = False
 
     for fname in os.listdir(dirname):
       pathname = os.path.join(dirname, fname)
@@ -951,7 +972,14 @@ class _ProjectDataCollector:
       elif fname.endswith(',v'):
         self.found_rcs_file = True
         rcsfiles[fname[:-2]] = pathname
-        self._process_file(self._get_attic_file(pathname))
+        (cvs_file, retained_in_attic) = self._get_attic_file(pathname)
+        retained_attic_file |= retained_in_attic
+        self._process_file(cvs_file)
+
+    if retained_attic_file:
+      # If any files were retained in the Attic directory, then write
+      # the Attic directory to CVSFileDatabase:
+      self.collect_data.add_cvs_directory(cvs_directory)
 
     return rcsfiles
 
@@ -961,6 +989,9 @@ class _ProjectDataCollector:
     return self._get_cvs_file(pathname, False)
 
   def _visit_non_attic_directory(self, dirname):
+    cvs_directory = self._get_cvs_directory(dirname)
+    self.collect_data.add_cvs_directory(cvs_directory)
+
     files = os.listdir(dirname)
 
     # Map { fname[:-2] : pathname }:
@@ -1065,6 +1096,11 @@ class CollectData:
     pdc = _ProjectDataCollector(self, project)
     self.num_files += pdc.num_files
     Log().verbose('Processed', self.num_files, 'files')
+
+  def add_cvs_directory(self, cvs_directory):
+    """Record CVS_DIRECTORY."""
+
+    Ctx()._cvs_file_db.log_file(cvs_directory)
 
   def add_cvs_file_items(self, cvs_file_items):
     """Record the information from CVS_FILE_ITEMS.

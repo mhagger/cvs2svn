@@ -1040,13 +1040,13 @@ class CollectData:
     self.stats_keeper = stats_keeper
 
     # Key generator for CVSFiles:
-    self.file_key_generator = KeyGenerator(1)
+    self.file_key_generator = KeyGenerator()
 
     # Key generator for CVSItems:
     self.item_key_generator = KeyGenerator()
 
     # Key generator for Symbols:
-    self.symbol_key_generator = KeyGenerator(1)
+    self.symbol_key_generator = KeyGenerator()
 
     self.revision_recorder.start()
 

@@ -66,7 +66,7 @@ class MetadataDatabase:
 
       # A key_generator to generate keys for metadata that haven't
       # been seen yet:
-      self.key_generator = KeyGenerator(1)
+      self.key_generator = KeyGenerator()
     elif self.mode == DB_OPEN_READ:
       # In this case, we don't need key_generator or _digest_to_id.
       pass

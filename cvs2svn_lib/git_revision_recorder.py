@@ -41,7 +41,7 @@ class GitRevisionRecorder(FulltextRevisionRecorder):
 
   def start(self):
     self.dump_file = open(self.blob_filename, 'wb')
-    self._mark_generator = KeyGenerator(1)
+    self._mark_generator = KeyGenerator()
 
   def start_file(self, cvs_file_items):
     self._cvs_file_items = cvs_file_items

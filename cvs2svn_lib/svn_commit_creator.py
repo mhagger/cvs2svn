@@ -54,7 +54,7 @@ class SVNCommitCreator:
 
   def __init__(self):
     # The revision number to assign to the next new SVNCommit.
-    self.revnum_generator = KeyGenerator(1)
+    self.revnum_generator = KeyGenerator()
 
     # A set containing the Projects that have already been
     # initialized:

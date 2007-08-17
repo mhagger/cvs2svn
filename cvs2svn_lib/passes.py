@@ -489,7 +489,7 @@ class InitializeChangesetsPass(Pass):
         artifact_manager.get_temp_file(config.CVS_ITEMS_SORTED_INDEX_TABLE),
         DB_OPEN_NEW)
 
-    self.changeset_key_generator = KeyGenerator(1)
+    self.changeset_key_generator = KeyGenerator()
 
     for changeset in self.get_changesets():
       if Log().is_on(Log.DEBUG):

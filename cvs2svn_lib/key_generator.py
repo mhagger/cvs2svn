@@ -23,7 +23,7 @@ from cvs2svn_lib.boolean import *
 class KeyGenerator:
   """Generate a series of unique keys."""
 
-  def __init__(self, first_id=1L):
+  def __init__(self, first_id=1):
     """Initialize a KeyGenerator with the specified FIRST_ID.
 
     FIRST_ID should be an int or long, and the generated keys will be

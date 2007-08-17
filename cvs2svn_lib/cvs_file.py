@@ -29,15 +29,18 @@ class CVSPath(object):
   Members:
     ID -- (int) unique ID for this CVSPath.
     PROJECT -- (Project) the project containing this CVSPath.
+    PARENT_DIRECTORY -- (CVSDirectory or None) the CVSDirectory
+        containing this CVSPath.
     FILENAME -- (string) the filesystem path to this CVSPath.
     CVS_PATH -- (string) the canonical path within the Project (no
         'Attic', no ',v', forward slashes).
 
   """
 
-  def __init__(self, id, project, filename, cvs_path):
+  def __init__(self, id, project, parent_directory, filename, cvs_path):
     self.id = id
     self.project = project
+    self.parent_directory = parent_directory
     self.filename = filename
     self.cvs_path = cvs_path
 
@@ -57,6 +60,8 @@ class CVSDirectory(CVSPath):
     ID -- (int or None) unique id for this file.  If None, a new id is
         generated.
     PROJECT -- (Project) the project containing this file.
+    PARENT_DIRECTORY -- (CVSDirectory or None) the CVSDirectory containing
+        this CVSPath.
     FILENAME -- (string) the filesystem path to the CVS file.
     CVS_PATH -- (string) the canonical path within the CVS project (no
         'Attic', no ',v', forward slashes).
@@ -68,16 +73,22 @@ class CVSDirectory(CVSPath):
 
   """
 
-  def __init__(self, id, project, filename, cvs_path):
+  def __init__(self, id, project, parent_directory, filename, cvs_path):
     """Initialize a new CVSDirectory object."""
 
-    CVSPath.__init__(self, id, project, filename, cvs_path)
+    CVSPath.__init__(self, id, project, parent_directory, filename, cvs_path)
 
   def __getstate__(self):
-    return (self.id, self.project.id, self.filename, self.cvs_path,)
+    return (
+        self.id, self.project.id, self.parent_directory,
+        self.filename, self.cvs_path,
+        )
 
   def __setstate__(self, state):
-    (self.id, project_id, self.filename, self.cvs_path,) = state
+    (
+        self.id, project_id, self.parent_directory,
+        self.filename, self.cvs_path,
+        ) = state
     self.project = Ctx().projects[project_id]
 
   def __str__(self):
@@ -93,6 +104,8 @@ class CVSFile(CVSPath):
 
     ID -- (int) unique id for this file.
     PROJECT -- (Project) the project containing this file.
+    PARENT_DIRECTORY -- (CVSDirectory or None) the CVSDirectory containing
+        this CVSPath.
     FILENAME -- (string) the filesystem path to the CVS file.
     CVS_PATH -- (string) the canonical path within the CVS project (no
         'Attic', no ',v', forward slashes).
@@ -107,24 +120,27 @@ class CVSFile(CVSPath):
   """
 
   def __init__(
-        self, id, project, filename, cvs_path, executable, file_size, mode
+        self, id, project, parent_directory, filename, cvs_path,
+        executable, file_size, mode
         ):
     """Initialize a new CVSFile object."""
 
-    CVSPath.__init__(self, id, project, filename, cvs_path)
+    CVSPath.__init__(self, id, project, parent_directory, filename, cvs_path)
     self.executable = executable
     self.file_size = file_size
     self.mode = mode
 
   def __getstate__(self):
     return (
-        self.id, self.project.id, self.filename, self.cvs_path,
+        self.id, self.project.id,
+        self.parent_directory, self.filename, self.cvs_path,
         self.executable, self.file_size, self.mode,
         )
 
   def __setstate__(self, state):
     (
-        self.id, project_id, self.filename, self.cvs_path,
+        self.id, project_id,
+        self.parent_directory, self.filename, self.cvs_path,
         self.executable, self.file_size, self.mode,
         ) = state
     self.project = Ctx().projects[project_id]

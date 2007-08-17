@@ -811,7 +811,7 @@ class _ProjectDataCollector:
     # and a tag in another.
     self.symbols = {}
 
-    self._visit_non_attic_directory(self.project.project_cvs_repos_path)
+    self._visit_non_attic_directory(None, self.project.project_cvs_repos_path)
 
     if not self.found_rcs_file:
       self.collect_data.record_fatal_error(
@@ -872,7 +872,7 @@ class _ProjectDataCollector:
     self.collect_data.add_cvs_file_items(cvs_file_items)
     self.collect_data.symbol_stats.register(cvs_file_items)
 
-  def _get_cvs_directory(self, path):
+  def _get_cvs_directory(self, parent_directory, path):
     """Return a CVSDirectory instance describing the directory at PATH.
 
     The CVSDirectory is assigned a new unique id and recorded in
@@ -881,11 +881,17 @@ class _ProjectDataCollector:
     # mode is not known, so we temporarily set it to None.
     return CVSDirectory(
         self.collect_data.file_key_generator.gen_id(),
-        self.project, path, self.project.get_cvs_path(path),
+        self.project, parent_directory,
+        path, self.project.get_cvs_path(path),
         )
 
-  def _get_cvs_file(self, filename, file_in_attic, leave_in_attic=False):
+  def _get_cvs_file(
+        self, parent_directory, filename, file_in_attic, leave_in_attic=False
+        ):
     """Return a CVSFile describing the file with name FILENAME.
+
+    PARENT_DIRECTORY is the CVSDirectory instance describing the
+    directory that will hold this file in Subversion.
 
     FILENAME must be a *,v file within this project.  The CVSFile is
     assigned a new unique id.  All of the CVSFile information is
@@ -929,20 +935,30 @@ class _ProjectDataCollector:
     # mode is not known, so we temporarily set it to None.
     return CVSFile(
         self.collect_data.file_key_generator.gen_id(),
-        self.project, filename,
+        self.project, parent_directory, filename,
         self.project.get_cvs_path(canonical_filename),
         file_executable, file_size, None
         )
 
-  def _get_attic_file(self, pathname):
+  def _get_attic_file(self, parent_directory, pathname):
     """Return a CVSFile object for the Attic file at PATHNAME.
+
+    PARENT_DIRECTORY is the CVSDirectory that physically contains the
+    file on the filesystem (i.e., the Attic directory).  It is not
+    necessarily the parent_directory of the CVSFile that will be
+    returned.
 
     Return (CVSFile, retained_in_attic), where RETAINED_IN_ATTIC is a
     boolean that is True iff CVSFile will remain in the Attic
     directory."""
 
     try:
-      return (self._get_cvs_file(pathname, True), False)
+      return (
+          self._get_cvs_file(
+              parent_directory.parent_directory, pathname, True
+              ),
+          False,
+          )
     except FileInAndOutOfAtticException, e:
       if Ctx().retain_conflicting_attic_files:
         Log().warn(
@@ -955,10 +971,15 @@ class _ProjectDataCollector:
 
       # Either way, return a CVSFile object so that the rest of the
       # file processing can proceed:
-      return (self._get_cvs_file(pathname, True, leave_in_attic=True), True)
+      return (
+          self._get_cvs_file(
+              parent_directory, pathname, True, leave_in_attic=True
+              ),
+          True,
+          )
 
-  def _visit_attic_directory(self, dirname):
-    cvs_directory = self._get_cvs_directory(dirname)
+  def _visit_attic_directory(self, parent_directory, dirname):
+    cvs_directory = self._get_cvs_directory(parent_directory, dirname)
 
     # Maps { fname[:-2] : pathname }:
     rcsfiles = {}
@@ -972,7 +993,9 @@ class _ProjectDataCollector:
       elif fname.endswith(',v'):
         self.found_rcs_file = True
         rcsfiles[fname[:-2]] = pathname
-        (cvs_file, retained_in_attic) = self._get_attic_file(pathname)
+        (cvs_file, retained_in_attic) = self._get_attic_file(
+            cvs_directory, pathname
+            )
         retained_attic_file |= retained_in_attic
         self._process_file(cvs_file)
 
@@ -983,13 +1006,13 @@ class _ProjectDataCollector:
 
     return rcsfiles
 
-  def _get_non_attic_file(self, pathname):
+  def _get_non_attic_file(self, parent_directory, pathname):
     """Return a CVSFile object for the non-Attic file at PATHNAME."""
 
-    return self._get_cvs_file(pathname, False)
+    return self._get_cvs_file(parent_directory, pathname, False)
 
-  def _visit_non_attic_directory(self, dirname):
-    cvs_directory = self._get_cvs_directory(dirname)
+  def _visit_non_attic_directory(self, parent_directory, dirname):
+    cvs_directory = self._get_cvs_directory(parent_directory, dirname)
     self.collect_data.add_cvs_directory(cvs_directory)
 
     files = os.listdir(dirname)
@@ -1011,14 +1034,14 @@ class _ProjectDataCollector:
       elif fname.endswith(',v'):
         self.found_rcs_file = True
         rcsfiles[fname[:-2]] = pathname
-        self._process_file(self._get_non_attic_file(pathname))
+        self._process_file(self._get_non_attic_file(cvs_directory, pathname))
       else:
         # Silently ignore other files:
         pass
 
     if attic_dir is not None:
       pathname = os.path.join(dirname, attic_dir)
-      attic_rcsfiles = self._visit_attic_directory(pathname)
+      attic_rcsfiles = self._visit_attic_directory(cvs_directory, pathname)
       alldirs = dirs + [attic_dir]
     else:
       alldirs = dirs
@@ -1049,7 +1072,7 @@ class _ProjectDataCollector:
       # characters:
       verify_svn_filename_legal(pathname, fname)
 
-      self._visit_non_attic_directory(pathname)
+      self._visit_non_attic_directory(cvs_directory, pathname)
 
 
 class CollectData:

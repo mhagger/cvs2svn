@@ -19,7 +19,6 @@
 
 import re
 import os
-import stat
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.context import Ctx
@@ -28,7 +27,6 @@ from cvs2svn_lib.common import path_join
 from cvs2svn_lib.common import path_split
 from cvs2svn_lib.common import verify_svn_filename_legal
 from cvs2svn_lib.log import Log
-from cvs2svn_lib.cvs_file import CVSFile
 
 
 def verify_paths_disjoint(*paths):
@@ -203,54 +201,6 @@ class Project(object):
     if tail.endswith(',v'):
       tail = tail[:-2]
     return tail.replace(os.sep, '/')
-
-  def get_cvs_file(self, filename, file_in_attic, leave_in_attic=False):
-    """Return a CVSFile describing the file with name FILENAME.
-
-    FILENAME must be a *,v file within this project.  The CVSFile is
-    assigned a new unique id.  All of the CVSFile information is
-    filled in except mode (which can only be determined by parsing the
-    file).
-
-    FILE_IN_ATTIC is a boolean telling whether the specified file is
-    in an Attic subdirectory.  If FILE_IN_ATTIC is True, then:
-
-    - If LEAVE_IN_ATTIC is True, then leave the 'Attic' component in
-      the filename.
-
-    - Otherwise, raise FileInAndOutOfAtticException if a file with the
-      same filename appears outside of Attic.
-
-    Raise FatalError if the resulting filename would not be legal in
-    SVN."""
-
-    verify_svn_filename_legal(filename, os.path.basename(filename)[:-2])
-
-    if file_in_attic and not leave_in_attic:
-      (dirname, basename,) = os.path.split(filename)
-      # If this file also exists outside of the attic, it's a fatal error
-      non_attic_filename = os.path.join(os.path.dirname(dirname), basename)
-      if os.path.exists(non_attic_filename):
-        raise FileInAndOutOfAtticException(non_attic_filename, filename)
-
-      # drop the 'Attic' portion from the filename for the canonical name:
-      canonical_filename = non_attic_filename
-    else:
-      canonical_filename = filename
-
-    file_stat = os.stat(filename)
-
-    # The size of the file in bytes:
-    file_size = file_stat[stat.ST_SIZE]
-
-    # Whether or not the executable bit is set:
-    file_executable = bool(file_stat[0] & stat.S_IXUSR)
-
-    # mode is not known, so we temporarily set it to None.
-    return CVSFile(
-        None, self, filename, self.get_cvs_path(canonical_filename),
-        file_executable, file_size, None
-        )
 
   def is_source(self, svn_path):
     """Return True iff SVN_PATH is a legitimate source for this project.

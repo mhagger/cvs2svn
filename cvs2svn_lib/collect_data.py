@@ -52,6 +52,7 @@ from __future__ import generators
 
 import sys
 import os
+import stat
 import re
 import time
 
@@ -870,11 +871,60 @@ class _ProjectDataCollector:
     self.collect_data.add_cvs_file_items(cvs_file_items)
     self.collect_data.symbol_stats.register(cvs_file_items)
 
+  def _get_cvs_file(self, filename, file_in_attic, leave_in_attic=False):
+    """Return a CVSFile describing the file with name FILENAME.
+
+    FILENAME must be a *,v file within this project.  The CVSFile is
+    assigned a new unique id.  All of the CVSFile information is
+    filled in except mode (which can only be determined by parsing the
+    file).
+
+    FILE_IN_ATTIC is a boolean telling whether the specified file is
+    in an Attic subdirectory.  If FILE_IN_ATTIC is True, then:
+
+    - If LEAVE_IN_ATTIC is True, then leave the 'Attic' component in
+      the filename.
+
+    - Otherwise, raise FileInAndOutOfAtticException if a file with the
+      same filename appears outside of Attic.
+
+    Raise FatalError if the resulting filename would not be legal in
+    SVN."""
+
+    verify_svn_filename_legal(filename, os.path.basename(filename)[:-2])
+
+    if file_in_attic and not leave_in_attic:
+      (dirname, basename,) = os.path.split(filename)
+      # If this file also exists outside of the attic, it's a fatal error
+      non_attic_filename = os.path.join(os.path.dirname(dirname), basename)
+      if os.path.exists(non_attic_filename):
+        raise FileInAndOutOfAtticException(non_attic_filename, filename)
+
+      # drop the 'Attic' portion from the filename for the canonical name:
+      canonical_filename = non_attic_filename
+    else:
+      canonical_filename = filename
+
+    file_stat = os.stat(filename)
+
+    # The size of the file in bytes:
+    file_size = file_stat[stat.ST_SIZE]
+
+    # Whether or not the executable bit is set:
+    file_executable = bool(file_stat[0] & stat.S_IXUSR)
+
+    # mode is not known, so we temporarily set it to None.
+    return CVSFile(
+        None, self.project, filename,
+        self.project.get_cvs_path(canonical_filename),
+        file_executable, file_size, None
+        )
+
   def _get_attic_file(self, pathname):
     """Return a CVSFile object for the Attic file at PATHNAME."""
 
     try:
-      return self.project.get_cvs_file(pathname, True)
+      return self._get_cvs_file(pathname, True)
     except FileInAndOutOfAtticException, e:
       if Ctx().retain_conflicting_attic_files:
         Log().warn(
@@ -887,7 +937,7 @@ class _ProjectDataCollector:
 
       # Either way, return a CVSFile object so that the rest of the
       # file processing can proceed:
-      return self.project.get_cvs_file(pathname, True, leave_in_attic=True)
+      return self._get_cvs_file(pathname, True, leave_in_attic=True)
 
   def _visit_attic_directory(self, dirname):
     # Maps { fname[:-2] : pathname }:
@@ -907,7 +957,7 @@ class _ProjectDataCollector:
   def _get_non_attic_file(self, pathname):
     """Return a CVSFile object for the non-Attic file at PATHNAME."""
 
-    return self.project.get_cvs_file(pathname, False)
+    return self._get_cvs_file(pathname, False)
 
   def _visit_non_attic_directory(self, dirname):
     files = os.listdir(dirname)

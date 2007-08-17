@@ -50,24 +50,26 @@ class CVSPath(object):
 
 
 class CVSDirectory(CVSPath):
-  """Represent a CVS directory."""
+  """Represent a CVS directory.
+
+  Members:
+
+    ID -- (int or None) unique id for this file.  If None, a new id is
+        generated.
+    PROJECT -- (Project) the project containing this file.
+    FILENAME -- (string) the filesystem path to the CVS file.
+    CVS_PATH -- (string) the canonical path within the CVS project (no
+        'Attic', no ',v', forward slashes).
+
+  CVS_PATH might contain an 'Attic' component if it should be retained
+  as an Attic directory in the SVN repository; i.e., if a filename
+  exists in and out of Attic and the --retain-conflicting-attic-files
+  option was specified.
+
+  """
 
   def __init__(self, id, project, filename, cvs_path):
-    """Initialize a new CVSDirectory object.
-
-    Arguments:
-
-      ID          --> (int or None) unique id for this file.  If None, a new
-                      id is generated.
-      PROJECT     --> (Project) the project containing this file
-      FILENAME    --> (string) the filesystem path to the CVS file
-      CVS_PATH    --> (string) the canonical path within the CVS project (no
-                      'Attic', no ',v', forward slashes)
-
-    CVS_PATH might contain an 'Attic' component if it should be
-    retained as an Attic directory in the SVN repository; i.e., if a
-    filename exists in and out of Attic and the
-    --retain-conflicting-attic-files option was specified."""
+    """Initialize a new CVSDirectory object."""
 
     CVSPath.__init__(self, id, project, filename, cvs_path)
 
@@ -85,27 +87,29 @@ class CVSDirectory(CVSPath):
 
 
 class CVSFile(CVSPath):
-  """Represent a CVS file."""
+  """Represent a CVS file.
 
-  def __init__(self, id, project, filename, cvs_path,
-               executable, file_size, mode):
-    """Initialize a new CVSFile object.
+  Members:
 
-    Arguments:
+    ID -- (int) unique id for this file.
+    PROJECT -- (Project) the project containing this file.
+    FILENAME -- (string) the filesystem path to the CVS file.
+    CVS_PATH -- (string) the canonical path within the CVS project (no
+        'Attic', no ',v', forward slashes).
+    EXECUTABLE -- (bool) True iff RCS file has executable bit set.
+    FILE_SIZE -- (long) size of the RCS file in bytes.
+    MODE -- (string or None) 'kkv', 'kb', etc.
 
-      ID          --> (int) unique id for this file.
-      PROJECT     --> (Project) the project containing this file
-      FILENAME    --> (string) the filesystem path to the CVS file
-      CVS_PATH    --> (string) the canonical path within the CVS project (no
-                      'Attic', no ',v', forward slashes)
-      EXECUTABLE  --> (bool) True iff RCS file has executable bit set
-      FILE_SIZE   --> (long) size of the RCS file in bytes
-      MODE        --> (string or None) 'kkv', 'kb', etc.
+  CVS_PATH might contain an 'Attic' component if it should be retained
+  in the SVN repository; i.e., if the same filename exists out of
+  Attic and the --retain-conflicting-attic-files option was specified.
 
-    CVS_PATH might contain an 'Attic' component if it should be
-    retained in the SVN repository; i.e., if the same filename exists
-    out of Attic and the --retain-conflicting-attic-files option was
-    specified."""
+  """
+
+  def __init__(
+        self, id, project, filename, cvs_path, executable, file_size, mode
+        ):
+    """Initialize a new CVSFile object."""
 
     CVSPath.__init__(self, id, project, filename, cvs_path)
     self.executable = executable
@@ -113,12 +117,16 @@ class CVSFile(CVSPath):
     self.mode = mode
 
   def __getstate__(self):
-    return (self.id, self.project.id, self.filename, self.cvs_path,
-            self.executable, self.file_size, self.mode,)
+    return (
+        self.id, self.project.id, self.filename, self.cvs_path,
+        self.executable, self.file_size, self.mode,
+        )
 
   def __setstate__(self, state):
-    (self.id, project_id, self.filename, self.cvs_path,
-     self.executable, self.file_size, self.mode,) = state
+    (
+        self.id, project_id, self.filename, self.cvs_path,
+        self.executable, self.file_size, self.mode,
+        ) = state
     self.project = Ctx().projects[project_id]
 
   def __str__(self):

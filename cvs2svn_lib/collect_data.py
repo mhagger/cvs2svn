@@ -62,6 +62,7 @@ from cvs2svn_lib.common import DB_OPEN_NEW
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.common import error_prefix
+from cvs2svn_lib.common import verify_svn_filename_legal
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
@@ -964,7 +965,7 @@ class _ProjectDataCollector:
 
       # Verify that the directory name does not contain any illegal
       # characters:
-      self.project.verify_filename_legal(pathname, fname)
+      verify_svn_filename_legal(pathname, fname)
 
       self._visit_non_attic_directory(pathname)
 

@@ -17,6 +17,7 @@
 """This module contains common facilities used by cvs2svn."""
 
 
+import re
 import time
 import codecs
 
@@ -92,6 +93,43 @@ class CommandError(FatalError):
           self,
           'The command %r failed with exit status=%s and no output'
           % (self.command, self.exit_status))
+
+
+# Control characters (characters not allowed in Subversion filenames):
+ctrl_characters_regexp = re.compile('[\\\x00-\\\x1f\\\x7f]')
+
+
+def verify_svn_filename_legal(path, filename):
+  """Verify that FILENAME is a legal filename.
+
+  FILENAME is a path component of a CVS path.  Check that it won't
+  choke SVN:
+
+  - Check that it is not empty.
+
+  - Check that it is not equal to '.' or '..'.
+
+  - Check that the filename does not include any control characters.
+
+  If any of these tests fail, raise a FatalError.  PATH is the full
+  filesystem path from which FILENAME was derived; it can be used in
+  error messages."""
+
+  if filename == '':
+    raise FatalError("File %s would result in an empty filename." % (path,))
+
+  if filename in ['.', '..']:
+    raise FatalError(
+        "File %s would result in an illegal filename '%s'."
+        % (path, filename,)
+        )
+
+  m = ctrl_characters_regexp.search(filename)
+  if m:
+    raise FatalError(
+        "Character %r in filename %r is not supported by Subversion."
+        % (m.group(), filename,)
+        )
 
 
 def path_join(*components):

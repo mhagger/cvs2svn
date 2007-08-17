@@ -23,9 +23,10 @@ import stat
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.context import Ctx
+from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import path_join
 from cvs2svn_lib.common import path_split
-from cvs2svn_lib.common import FatalError
+from cvs2svn_lib.common import verify_svn_filename_legal
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.cvs_file import CVSFile
 
@@ -186,43 +187,6 @@ class Project(object):
 
   determine_repository_root = staticmethod(determine_repository_root)
 
-  ctrl_characters_regexp = re.compile('[\\\x00-\\\x1f\\\x7f]')
-
-  def verify_filename_legal(path, filename):
-    """Verify that FILENAME is a legal filename.
-
-    FILENAME is a path component of a CVS path.  Check that it won't
-    choke SVN:
-
-    - Check that it is not empty.
-
-    - Check that it is not equal to '.' or '..'.
-
-    - Check that the filename does not include any control characters.
-
-    If any of these tests fail, raise a FatalError.  PATH is the full
-    filesystem path from which FILENAME was derived; it can be used in
-    error messages."""
-
-    if filename == '':
-      raise FatalError(
-          "File %s would result in an empty filename." % (path,)
-          )
-
-    if filename in ['.', '..']:
-      raise FatalError(
-          "File %s would result in an illegal filename '%s'."
-          % (path, filename,)
-          )
-
-    m = Project.ctrl_characters_regexp.search(filename)
-    if m:
-      raise FatalError(
-          "Character %r in filename %r is not supported by Subversion."
-          % (m.group(), filename,))
-
-  verify_filename_legal = staticmethod(verify_filename_legal)
-
   def _get_cvs_path(self, filename):
     """Return the path to FILENAME relative to project_cvs_repos_path.
 
@@ -260,7 +224,7 @@ class Project(object):
     Raise FatalError if the resulting filename would not be legal in
     SVN."""
 
-    self.verify_filename_legal(filename, os.path.basename(filename)[:-2])
+    verify_svn_filename_legal(filename, os.path.basename(filename)[:-2])
 
     if file_in_attic and not leave_in_attic:
       (dirname, basename,) = os.path.split(filename)

@@ -285,7 +285,7 @@ class _SymbolDataCollector(object):
 
     symbol = self.pdc.get_symbol(name)
     branch_data = _BranchData(
-        self.collect_data.key_generator.gen_id(), symbol, branch_number
+        self.collect_data.item_key_generator.gen_id(), symbol, branch_number
         )
     self.branches_data[branch_number] = branch_data
     return branch_data
@@ -299,7 +299,7 @@ class _SymbolDataCollector(object):
 
     symbol = self.pdc.get_symbol(name)
     tag_data = _TagData(
-        self.collect_data.key_generator.gen_id(), symbol, revision
+        self.collect_data.item_key_generator.gen_id(), symbol, revision
         )
     self.tags_data.setdefault(revision, []).append(tag_data)
     return tag_data
@@ -462,7 +462,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
     # Record basic information about the revision:
     rev_data = _RevisionData(
-        self.collect_data.key_generator.gen_id(),
+        self.collect_data.item_key_generator.gen_id(),
         revision, int(timestamp), author, state)
     self._rev_data[revision] = rev_data
 
@@ -1038,9 +1038,10 @@ class CollectData:
     self.symbol_stats = SymbolStatisticsCollector()
     self.stats_keeper = stats_keeper
 
-    # Key generator to generate unique keys for each CVSRevision object:
-    self.key_generator = KeyGenerator()
+    # Key generator for CVSItems:
+    self.item_key_generator = KeyGenerator()
 
+    # Key generator for Symbols:
     self.symbol_key_generator = KeyGenerator(1)
 
     self.revision_recorder.start()

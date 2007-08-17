@@ -31,7 +31,7 @@ pycheck:
 
 clean:
 	-rm -rf cvs2svn-*.tar.gz build cvs2svn-tmp
-	-for d in . cvs2svn_lib cvs2svn_rcsparse svntest ; \
+	-for d in . cvs2svn_lib cvs2svn_rcsparse svntest contrib ; \
 	do \
 		rm -f $$d/*.pyc $$d/*.pyo; \
 	done

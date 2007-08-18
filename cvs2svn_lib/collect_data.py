@@ -800,9 +800,12 @@ class _ProjectDataCollector:
     self.found_rcs_file = False
     self.num_files = 0
 
+    Ctx()._projects[project.id] = project
+
     # The Trunk LineOfDevelopment object for this project.
     self.trunk = Trunk(
-        self.collect_data.symbol_key_generator.gen_id(), self.project)
+        self.collect_data.symbol_key_generator.gen_id(), self.project
+        )
     # This causes a record for self.trunk to spring into existence:
     self.collect_data.symbol_stats[self.trunk]
 

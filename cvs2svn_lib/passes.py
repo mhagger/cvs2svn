@@ -131,8 +131,8 @@ class CollectRevsPass(Pass):
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_NEW)
     cd = CollectData(Ctx().revision_recorder, stats_keeper)
     for project in run_options.projects:
-      Ctx()._projects[project.id] = project
       cd.process_project(project)
+    run_options.projects = None
 
     fatal_errors = cd.close()
 

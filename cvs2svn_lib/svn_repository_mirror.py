@@ -312,13 +312,6 @@ class SVNRepositoryMirror:
 
     return node
 
-  def path_exists(self, path):
-    """Return True iff PATH exists in self._youngest of the repository mirror.
-
-    PATH must not start with '/'."""
-
-    return self._open_readonly_node(path, self._youngest) is not None
-
   def delete_path(self, svn_path, should_prune=False):
     """Delete SVN_PATH from the tree.
 

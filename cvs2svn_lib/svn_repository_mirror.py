@@ -343,6 +343,11 @@ class SVNRepositoryMirror:
     if should_prune and len(parent_node.entries) == 0:
       self.delete_path(parent_path, True)
 
+  def delete_path2(self, cvs_path, lod, should_prune=False):
+    """Delete CVS_PATH from LOD."""
+
+    self.delete_path(lod.get_path(cvs_path.cvs_path), should_prune)
+
   def mkdir(self, path):
     """Create PATH in the repository mirror at the youngest revision."""
 
@@ -495,7 +500,7 @@ class SVNRepositoryMirror:
       # The parent path was copied from a different source than we
       # need to use, so we have to delete the version that was copied
       # with the parent before we can re-copy from the correct source:
-      self.delete_path(dest_path)
+      self.delete_path2(source_set.cvs_path, symbol)
       do_copy = True
     else:
       do_copy = False

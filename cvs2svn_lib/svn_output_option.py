@@ -128,7 +128,7 @@ class SVNOutputOption(OutputOption):
         pass
 
       elif isinstance(cvs_rev, CVSRevisionDelete):
-        self.repos.delete_path(cvs_rev.get_svn_path(), Ctx().prune)
+        self.repos.delete_path2(cvs_rev.cvs_file, cvs_rev.lod, Ctx().prune)
 
       elif isinstance(cvs_rev, CVSRevisionAdd):
         self.repos.add_path(cvs_rev)
@@ -157,7 +157,7 @@ class SVNOutputOption(OutputOption):
             )
       elif isinstance(cvs_rev, CVSRevisionChange):
         # Delete old version of the path on trunk...
-        self.repos.delete_path(svn_trunk_path)
+        self.repos.delete_path2(cvs_rev.cvs_file, trunk)
         # ...and copy the new version over from branch:
         self.repos.copy_path(
             cvs_rev.get_svn_path(), svn_trunk_path,
@@ -165,7 +165,7 @@ class SVNOutputOption(OutputOption):
             )
       elif isinstance(cvs_rev, CVSRevisionDelete):
         # Delete trunk path:
-        self.repos.delete_path(svn_trunk_path)
+        self.repos.delete_path2(cvs_rev.cvs_file, trunk)
       elif isinstance(cvs_rev, CVSRevisionNoop):
         # Do nothing
         pass

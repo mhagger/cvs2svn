@@ -241,10 +241,8 @@ class SVNRepositoryMirror:
     else:
       return _ReadOnlyMirrorNode(self, path, key, self._nodes_db[key])
 
-  def _open_readonly_node(self, path, revnum):
-    """Open a readonly node for PATH at revision REVNUM.
-
-    Return an instance of _MirrorNode if the path exists, else None."""
+  def _open_readonly_root_node(self, revnum):
+    """Return a read-only root node for REVNUM."""
 
     # Get the root key
     if revnum == self._youngest:
@@ -255,7 +253,14 @@ class SVNRepositoryMirror:
     else:
       node_key = self._svn_revs_root_nodes[revnum]
 
-    node = self._get_node('', node_key)
+    return self._get_node('', node_key)
+
+  def _open_readonly_node(self, path, revnum):
+    """Open a readonly node for PATH at revision REVNUM.
+
+    Return an instance of _MirrorNode if the path exists, else None."""
+
+    node = self._open_readonly_root_node(revnum)
     for component in path.split('/'):
       node = node[component]
       if node is None:

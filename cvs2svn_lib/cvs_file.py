@@ -112,6 +112,12 @@ class CVSDirectory(CVSPath):
   def __setstate__(self, state):
     CVSPath.__setstate__(self, state)
 
+  def __cmp__(self, other):
+    if isinstance(other, CVSDirectory):
+      return cmp(self.cvs_path, other.cvs_path)
+    else:
+      return -1
+
   def __str__(self):
     """For convenience only.  The format is subject to change at any time."""
 
@@ -165,6 +171,12 @@ class CVSFile(CVSPath):
         self.executable, self.file_size, self.mode,
         ) = state
     CVSPath.__setstate__(self, cvs_path_state)
+
+  def __cmp__(self, other):
+    if isinstance(other, CVSFile):
+      return cmp(self.cvs_path, other.cvs_path)
+    else:
+      return +1
 
   def __str__(self):
     """For convenience only.  The format is subject to change at any time."""

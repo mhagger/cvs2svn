@@ -815,7 +815,12 @@ class _ProjectDataCollector:
     # and a tag in another.
     self.symbols = {}
 
-    self._visit_non_attic_directory(None, '')
+    root_cvs_directory = CVSDirectory(
+        self.collect_data.file_key_generator.gen_id(),
+        self.project, None, '',
+        self.project.project_cvs_repos_path,
+        )
+    self._visit_non_attic_directory(root_cvs_directory)
 
     if not self.found_rcs_file:
       self.collect_data.record_fatal_error(
@@ -966,22 +971,16 @@ class _ProjectDataCollector:
           True,
           )
 
-  def _visit_attic_directory(self, parent_directory):
-    """Visit the Attic directory under PARENT_DIRECTORY."""
-
-    dirname = os.path.join(parent_directory.filename, 'Attic')
-    cvs_directory = CVSDirectory(
-        self.collect_data.file_key_generator.gen_id(),
-        self.project, parent_directory, 'Attic', dirname,
-        )
+  def _visit_attic_directory(self, cvs_directory):
+    """Visit the Attic directory CVS_DIRECTORY."""
 
     # Maps { fname[:-2] : pathname }:
     rcsfiles = {}
 
     retained_attic_file = False
 
-    for fname in os.listdir(dirname):
-      pathname = os.path.join(dirname, fname)
+    for fname in os.listdir(cvs_directory.filename):
+      pathname = os.path.join(cvs_directory.filename, fname)
       if os.path.isdir(pathname):
         Log().warn("Directory %s found within Attic; ignoring" % (pathname,))
       elif fname.endswith(',v'):
@@ -1005,21 +1004,8 @@ class _ProjectDataCollector:
 
     return self._get_cvs_file(parent_directory, basename, False)
 
-  def _visit_non_attic_directory(self, parent_directory, basename):
-    """Visit a non-Attic directory.
-
-    Visit the non-Attic directory under PARENT_DIRECTORY with base
-    filename BASENAME."""
-
-    if parent_directory is None:
-      dirname = os.path.join(self.project.project_cvs_repos_path, basename)
-    else:
-      dirname = os.path.join(parent_directory.filename, basename)
-
-    cvs_directory = CVSDirectory(
-        self.collect_data.file_key_generator.gen_id(),
-        self.project, parent_directory, basename, dirname,
-        )
+  def _visit_non_attic_directory(self, cvs_directory):
+    """Visit the non-Attic directory CVS_DIRECTORY."""
 
     self.collect_data.add_cvs_directory(cvs_directory)
 
@@ -1048,7 +1034,13 @@ class _ProjectDataCollector:
         pass
 
     if attic_dir is not None:
-      attic_rcsfiles = self._visit_attic_directory(cvs_directory)
+      attic_directory = CVSDirectory(
+          self.collect_data.file_key_generator.gen_id(),
+          self.project, cvs_directory, 'Attic',
+          os.path.join(cvs_directory.filename, 'Attic'),
+          )
+
+      attic_rcsfiles = self._visit_attic_directory(attic_directory)
       alldirs = dirs + [attic_dir]
     else:
       alldirs = dirs
@@ -1073,13 +1065,18 @@ class _ProjectDataCollector:
 
     # Now recurse into the other subdirectories:
     for fname in dirs:
-      pathname = os.path.join(cvs_directory.filename, fname)
+      dirname = os.path.join(cvs_directory.filename, fname)
 
       # Verify that the directory name does not contain any illegal
       # characters:
-      verify_svn_filename_legal(pathname, fname)
+      verify_svn_filename_legal(dirname, fname)
 
-      self._visit_non_attic_directory(cvs_directory, fname)
+      sub_directory = CVSDirectory(
+          self.collect_data.file_key_generator.gen_id(),
+          self.project, cvs_directory, fname, dirname,
+          )
+
+      self._visit_non_attic_directory(sub_directory)
 
 
 class CollectData:

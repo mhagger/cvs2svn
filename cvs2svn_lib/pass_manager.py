@@ -128,7 +128,7 @@ class PassManager:
           return i + 1
       raise InvalidPassError('Unknown pass name (%r).' % (pass_name,))
 
-  def run(self, start_pass, end_pass):
+  def run(self, run_options):
     """Run the specified passes, one after another.
 
     START_PASS is the number of the first pass that should be run.
@@ -139,8 +139,8 @@ class PassManager:
     # to execute, using the Python index range convention (i.e., first
     # pass executed and first pass *after* the ones that should be
     # executed).
-    index_start = start_pass - 1
-    index_end = end_pass
+    index_start = run_options.start_pass - 1
+    index_end = run_options.end_pass
 
     artifact_manager.register_temp_file(config.STATISTICS_FILE, self)
 

@@ -85,11 +85,10 @@ def main(progname, cmd_args):
     if run_options.profiling:
       import hotshot
       prof = hotshot.Profile('cvs2svn.hotshot')
-      prof.runcall(
-          pass_manager.run, run_options.start_pass, run_options.end_pass)
+      prof.runcall(pass_manager.run, run_options)
       prof.close()
     else:
-      pass_manager.run(run_options.start_pass, run_options.end_pass)
+      pass_manager.run(run_options)
   finally:
     try:
       os.rmdir(os.path.join(ctx.tmpdir, 'cvs2svn.lock'))

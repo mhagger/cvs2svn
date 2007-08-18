@@ -57,7 +57,7 @@ class CVSPath(object):
         self.id, project_id, self.parent_directory,
         self.basename, self.filename,
         ) = state
-    self.project = Ctx().projects[project_id]
+    self.project = Ctx()._projects[project_id]
 
   def get_cvs_path(self):
     """Return the canonical path within the Project.

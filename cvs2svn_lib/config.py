@@ -33,6 +33,9 @@ CO_EXECUTABLE = 'co'
 CVS_EXECUTABLE = 'cvs'
 SORT_EXECUTABLE = 'sort'
 
+# A pickled list of the projects defined for this conversion.
+PROJECTS = 'projects.pck'
+
 # The first file contains enough information about each CVSRevision to
 # deduce preliminary Changesets.  The second file is a sorted version
 # of the first.

@@ -111,7 +111,7 @@ def show_filtered_cvs_item_store():
 
 
 class ProjectList:
-  """A mock project-list that can be assigned to Ctx().projects."""
+  """A mock project-list that can be assigned to Ctx()._projects."""
 
   def __init__(self):
     self.projects = {}
@@ -139,7 +139,7 @@ def prime_ctx():
   rf(config.CVS_ITEMS_FILTERED_INDEX_TABLE)
   artifact_manager.pass_started(None)
 
-  Ctx().projects = ProjectList()
+  Ctx()._projects = ProjectList()
   Ctx()._symbol_db = SymbolDatabase()
   Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
   Ctx()._cvs_items_db = OldCVSItemStore(

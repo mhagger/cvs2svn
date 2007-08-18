@@ -272,11 +272,6 @@ class RunOptions:
     # Check for problems with the options:
     self.check_options()
 
-    # Set Ctx().projects from self.projects:
-    for project in self.projects:
-      Ctx().projects[project.id] = project
-    self.projects = None
-
   def add_project(self, project):
     """Add a project to be converted."""
 

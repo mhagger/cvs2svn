@@ -41,6 +41,7 @@ class CheckDependenciesPass(Pass):
     Pass.__init__(self)
 
   def register_artifacts(self):
+    self._register_temp_file_needed(config.PROJECTS)
     self._register_temp_file_needed(config.SYMBOL_DB)
     self._register_temp_file_needed(config.CVS_FILES_DB)
 
@@ -51,6 +52,9 @@ class CheckDependenciesPass(Pass):
     raise NotImplementedError()
 
   def run(self, run_options, stats_keeper):
+    Ctx()._projects = read_projects(
+        artifact_manager.get_temp_file(config.PROJECTS)
+        )
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
     self.symbol_db = SymbolDatabase()
     Ctx()._symbol_db = self.symbol_db

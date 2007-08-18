@@ -130,7 +130,9 @@ class SVNInitialProjectCommit(SVNCommit):
   def __setstate__(self, state):
     (svn_commit_state, project_ids,) = state
     SVNCommit.__setstate__(self, svn_commit_state)
-    self.projects = [Ctx().projects[project_id] for project_id in project_ids]
+    self.projects = [
+        Ctx()._projects[project_id] for project_id in project_ids
+        ]
 
   def get_cvs_items(self):
     return []

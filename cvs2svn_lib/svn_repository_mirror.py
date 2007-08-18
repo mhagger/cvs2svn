@@ -327,7 +327,7 @@ class SVNRepositoryMirror:
 
     if svn_path == '':
       return
-    for project in Ctx().projects.itervalues():
+    for project in Ctx()._projects.itervalues():
       if project.is_unremovable(svn_path):
         return
 

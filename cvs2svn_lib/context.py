@@ -57,10 +57,6 @@ class Ctx:
     self.svn_property_setters = []
     self.tmpdir = 'cvs2svn-tmp'
     self.skip_cleanup = False
-
-    # A map { project_id : Project } for all projects being converted.
-    self.projects = {}
-
     self.cross_project_commits = True
     self.cross_branch_commits = True
     self.retain_conflicting_attic_files = False

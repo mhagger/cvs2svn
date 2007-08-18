@@ -67,7 +67,7 @@ class Trunk(LineOfDevelopment):
 
   def __setstate__(self, state):
     (self.id, project_id,) = state
-    self.project = Ctx().projects[project_id]
+    self.project = Ctx()._projects[project_id]
 
   def __eq__(self, other):
     return isinstance(other, Trunk) and self.project == other.project
@@ -113,7 +113,7 @@ class Symbol:
 
   def __setstate__(self, state):
     (self.id, project_id, self.name, self.preferred_parent_id,) = state
-    self.project = Ctx().projects[project_id]
+    self.project = Ctx()._projects[project_id]
 
   def __eq__(self, other):
     return isinstance(other, Symbol) and self.id == other.id

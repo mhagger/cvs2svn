@@ -106,9 +106,7 @@ class MimeMapper(SVNPropertySetter):
     if self.propname in s_item.svn_props:
       return
 
-    basename, extension = os.path.splitext(
-        os.path.basename(s_item.cvs_rev.cvs_path)
-        )
+    basename, extension = os.path.splitext(s_item.cvs_rev.cvs_file.basename)
 
     # Extension includes the dot, so strip it (will leave extension
     # empty if filename ends with a dot, which is ok):
@@ -187,8 +185,8 @@ class AutoPropsPropertySetter(SVNPropertySetter):
     self.patterns.append(
         self.Pattern(self.transform_case(pattern), propdict))
 
-  def get_propdict(self, path):
-    basename = self.transform_case(os.path.basename(path))
+  def get_propdict(self, cvs_file):
+    basename = self.transform_case(cvs_file.basename)
     propdict = {}
     for pattern in self.patterns:
       if pattern.match(basename):
@@ -197,14 +195,14 @@ class AutoPropsPropertySetter(SVNPropertySetter):
             if propdict[key] != value:
               Log().warn(
                   "Contradictory values set for property '%s' for file %s."
-                  % (key, path,))
+                  % (key, cvs_file,))
           else:
             propdict[key] = value
 
     return propdict
 
   def set_properties(self, s_item):
-    propdict = self.get_propdict(s_item.cvs_rev.cvs_path)
+    propdict = self.get_propdict(s_item.cvs_rev.cvs_file)
     for (k,v) in propdict.items():
       if k in s_item.svn_props:
         if s_item.svn_props[k] != v:

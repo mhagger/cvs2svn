@@ -46,6 +46,19 @@ class CVSPath(object):
     self.basename = basename
     self.filename = filename
 
+  def __getstate__(self):
+    return (
+        self.id, self.project.id, self.parent_directory,
+        self.basename, self.filename,
+        )
+
+  def __setstate__(self, state):
+    (
+        self.id, project_id, self.parent_directory,
+        self.basename, self.filename,
+        ) = state
+    self.project = Ctx().projects[project_id]
+
   def get_cvs_path(self):
     """Return the canonical path within the Project.
 
@@ -94,17 +107,10 @@ class CVSDirectory(CVSPath):
     CVSPath.__init__(self, id, project, parent_directory, basename, filename)
 
   def __getstate__(self):
-    return (
-        self.id, self.project.id, self.parent_directory,
-        self.basename, self.filename,
-        )
+    return CVSPath.__getstate__(self)
 
   def __setstate__(self, state):
-    (
-        self.id, project_id, self.parent_directory,
-        self.basename, self.filename,
-        ) = state
-    self.project = Ctx().projects[project_id]
+    CVSPath.__setstate__(self, state)
 
   def __str__(self):
     """For convenience only.  The format is subject to change at any time."""
@@ -149,18 +155,16 @@ class CVSFile(CVSPath):
 
   def __getstate__(self):
     return (
-        self.id, self.project.id,
-        self.parent_directory, self.basename, self.filename,
+        CVSPath.__getstate__(self),
         self.executable, self.file_size, self.mode,
         )
 
   def __setstate__(self, state):
     (
-        self.id, project_id,
-        self.parent_directory, self.basename, self.filename,
+        cvs_path_state,
         self.executable, self.file_size, self.mode,
         ) = state
-    self.project = Ctx().projects[project_id]
+    CVSPath.__setstate__(self, cvs_path_state)
 
   def __str__(self):
     """For convenience only.  The format is subject to change at any time."""

@@ -874,17 +874,14 @@ class _ProjectDataCollector:
     self.collect_data.symbol_stats.register(cvs_file_items)
 
   def _get_cvs_file(
-        self, parent_directory, filename, file_in_attic, leave_in_attic=False
+        self, parent_directory, basename, file_in_attic, leave_in_attic=False
         ):
-    """Return a CVSFile describing the file with name FILENAME.
+    """Return a CVSFile describing the file with name BASENAME.
 
     PARENT_DIRECTORY is the CVSDirectory instance describing the
-    directory that will hold this file in Subversion.
-
-    FILENAME must be a *,v file within this project.  The CVSFile is
-    assigned a new unique id.  All of the CVSFile information is
-    filled in except mode (which can only be determined by parsing the
-    file).
+    directory that physically holds this file in the filesystem.
+    BASENAME must be the base name of a *,v file within
+    PARENT_DIRECTORY.
 
     FILE_IN_ATTIC is a boolean telling whether the specified file is
     in an Attic subdirectory.  If FILE_IN_ATTIC is True, then:
@@ -895,22 +892,28 @@ class _ProjectDataCollector:
     - Otherwise, raise FileInAndOutOfAtticException if a file with the
       same filename appears outside of Attic.
 
+    The CVSFile is assigned a new unique id.  All of the CVSFile
+    information is filled in except mode (which can only be determined
+    by parsing the file).
+
     Raise FatalError if the resulting filename would not be legal in
     SVN."""
 
-    verify_svn_filename_legal(filename, os.path.basename(filename)[:-2])
+    filename = os.path.join(parent_directory.filename, basename)
+    verify_svn_filename_legal(filename, basename[:-2])
 
     if file_in_attic and not leave_in_attic:
-      (dirname, basename,) = os.path.split(filename)
-      # If this file also exists outside of the attic, it's a fatal error
-      non_attic_filename = os.path.join(os.path.dirname(dirname), basename)
+      logical_parent_directory = parent_directory.parent_directory
+
+      # If this file also exists outside of the attic, it's a fatal
+      # error:
+      non_attic_filename = os.path.join(
+          logical_parent_directory.filename, basename,
+          )
       if os.path.exists(non_attic_filename):
         raise FileInAndOutOfAtticException(non_attic_filename, filename)
-
-      # drop the 'Attic' portion from the filename for the canonical name:
-      canonical_filename = non_attic_filename
     else:
-      canonical_filename = filename
+      logical_parent_directory = parent_directory
 
     file_stat = os.stat(filename)
 
@@ -923,13 +926,12 @@ class _ProjectDataCollector:
     # mode is not known, so we temporarily set it to None.
     return CVSFile(
         self.collect_data.file_key_generator.gen_id(),
-        self.project, parent_directory,
-        path_split(self.project.get_cvs_path(filename))[1], filename,
+        self.project, logical_parent_directory, basename[:-2], filename,
         file_executable, file_size, None
         )
 
-  def _get_attic_file(self, parent_directory, pathname):
-    """Return a CVSFile object for the Attic file at PATHNAME.
+  def _get_attic_file(self, parent_directory, basename):
+    """Return a CVSFile object for the Attic file at BASENAME.
 
     PARENT_DIRECTORY is the CVSDirectory that physically contains the
     file on the filesystem (i.e., the Attic directory).  It is not
@@ -941,12 +943,7 @@ class _ProjectDataCollector:
     directory."""
 
     try:
-      return (
-          self._get_cvs_file(
-              parent_directory.parent_directory, pathname, True
-              ),
-          False,
-          )
+      return (self._get_cvs_file(parent_directory, basename, True), False)
     except FileInAndOutOfAtticException, e:
       if Ctx().retain_conflicting_attic_files:
         Log().warn(
@@ -961,7 +958,7 @@ class _ProjectDataCollector:
       # file processing can proceed:
       return (
           self._get_cvs_file(
-              parent_directory, pathname, True, leave_in_attic=True
+              parent_directory, basename, True, leave_in_attic=True
               ),
           True,
           )
@@ -988,7 +985,7 @@ class _ProjectDataCollector:
         self.found_rcs_file = True
         rcsfiles[fname[:-2]] = pathname
         (cvs_file, retained_in_attic) = self._get_attic_file(
-            cvs_directory, pathname
+            cvs_directory, fname
             )
         retained_attic_file |= retained_in_attic
         self._process_file(cvs_file)
@@ -1000,10 +997,10 @@ class _ProjectDataCollector:
 
     return rcsfiles
 
-  def _get_non_attic_file(self, parent_directory, pathname):
-    """Return a CVSFile object for the non-Attic file at PATHNAME."""
+  def _get_non_attic_file(self, parent_directory, basename):
+    """Return a CVSFile object for the non-Attic file at BASENAME."""
 
-    return self._get_cvs_file(parent_directory, pathname, False)
+    return self._get_cvs_file(parent_directory, basename, False)
 
   def _visit_non_attic_directory(self, parent_directory, basename):
     """Visit a non-Attic directory.
@@ -1023,7 +1020,7 @@ class _ProjectDataCollector:
 
     self.collect_data.add_cvs_directory(cvs_directory)
 
-    files = os.listdir(dirname)
+    files = os.listdir(cvs_directory.filename)
 
     # Map { fname[:-2] : pathname }:
     rcsfiles = {}
@@ -1033,7 +1030,7 @@ class _ProjectDataCollector:
     dirs = []
 
     for fname in files[:]:
-      pathname = os.path.join(dirname, fname)
+      pathname = os.path.join(cvs_directory.filename, fname)
       if os.path.isdir(pathname):
         if fname == 'Attic':
           attic_dir = fname
@@ -1042,7 +1039,7 @@ class _ProjectDataCollector:
       elif fname.endswith(',v'):
         self.found_rcs_file = True
         rcsfiles[fname[:-2]] = pathname
-        self._process_file(self._get_non_attic_file(cvs_directory, pathname))
+        self._process_file(self._get_non_attic_file(cvs_directory, fname))
       else:
         # Silently ignore other files:
         pass
@@ -1059,7 +1056,7 @@ class _ProjectDataCollector:
     # in attic).  (We recurse into the subdirectories nevertheless, to
     # try to detect more problems.)
     for fname in alldirs:
-      pathname = os.path.join(dirname, fname)
+      pathname = os.path.join(cvs_directory.filename, fname)
       for rcsfile_list in [rcsfiles, attic_rcsfiles]:
         if fname in rcsfile_list:
           self.collect_data.record_fatal_error(
@@ -1073,7 +1070,7 @@ class _ProjectDataCollector:
 
     # Now recurse into the other subdirectories:
     for fname in dirs:
-      pathname = os.path.join(dirname, fname)
+      pathname = os.path.join(cvs_directory.filename, fname)
 
       # Verify that the directory name does not contain any illegal
       # characters:

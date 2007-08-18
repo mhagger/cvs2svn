@@ -19,6 +19,7 @@
 import os
 
 from cvs2svn_lib.boolean import *
+from cvs2svn_lib.common import path_join
 from cvs2svn_lib.common import path_split
 from cvs2svn_lib.context import Ctx
 
@@ -32,8 +33,7 @@ class CVSPath(object):
     PARENT_DIRECTORY -- (CVSDirectory or None) the CVSDirectory
         containing this CVSPath.
     FILENAME -- (string) the filesystem path to this CVSPath.
-    CVS_PATH -- (string) the canonical path within the Project (no
-        'Attic', no ',v', forward slashes).
+    BASENAME -- (string) the base name of this CVSDirectory (no ',v').
 
   """
 
@@ -42,14 +42,30 @@ class CVSPath(object):
     self.project = project
     self.parent_directory = parent_directory
     self.filename = filename
-    self.cvs_path = cvs_path
+    self.basename = path_split(cvs_path)[1]
 
-  def get_basename(self):
-    """Return the last path component of self.cvs_path."""
+  def get_cvs_path(self):
+    """Return the canonical path within the Project.
 
-    return path_split(self.cvs_path)[1]
+    The canonical path:
 
-  basename = property(get_basename)
+    - Uses forward slashes
+
+    - Doesn't include ',v' for files
+
+    - This doesn't include the 'Attic' segment of the path unless the
+      file is to be left in an Attic directory in the SVN repository;
+      i.e., if a filename exists in and out of Attic and the
+      --retain-conflicting-attic-files option was specified.
+
+    """
+
+    if self.parent_directory is None:
+      return self.basename
+    else:
+      return path_join(self.parent_directory.cvs_path, self.basename)
+
+  cvs_path = property(get_cvs_path)
 
 
 class CVSDirectory(CVSPath):
@@ -63,13 +79,7 @@ class CVSDirectory(CVSPath):
     PARENT_DIRECTORY -- (CVSDirectory or None) the CVSDirectory containing
         this CVSPath.
     FILENAME -- (string) the filesystem path to the CVS file.
-    CVS_PATH -- (string) the canonical path within the CVS project (no
-        'Attic', no ',v', forward slashes).
-
-  CVS_PATH might contain an 'Attic' component if it should be retained
-  as an Attic directory in the SVN repository; i.e., if a filename
-  exists in and out of Attic and the --retain-conflicting-attic-files
-  option was specified.
+    BASENAME -- (string) the base name of this CVSDirectory (no ',v').
 
   """
 
@@ -81,13 +91,13 @@ class CVSDirectory(CVSPath):
   def __getstate__(self):
     return (
         self.id, self.project.id, self.parent_directory,
-        self.filename, self.cvs_path,
+        self.filename, self.basename,
         )
 
   def __setstate__(self, state):
     (
         self.id, project_id, self.parent_directory,
-        self.filename, self.cvs_path,
+        self.filename, self.basename,
         ) = state
     self.project = Ctx().projects[project_id]
 
@@ -107,8 +117,7 @@ class CVSFile(CVSPath):
     PARENT_DIRECTORY -- (CVSDirectory or None) the CVSDirectory containing
         this CVSPath.
     FILENAME -- (string) the filesystem path to the CVS file.
-    CVS_PATH -- (string) the canonical path within the CVS project (no
-        'Attic', no ',v', forward slashes).
+    BASENAME -- (string) the base name of this CVSDirectory (no ',v').
     EXECUTABLE -- (bool) True iff RCS file has executable bit set.
     FILE_SIZE -- (long) size of the RCS file in bytes.
     MODE -- (string or None) 'kkv', 'kb', etc.
@@ -133,14 +142,14 @@ class CVSFile(CVSPath):
   def __getstate__(self):
     return (
         self.id, self.project.id,
-        self.parent_directory, self.filename, self.cvs_path,
+        self.parent_directory, self.filename, self.basename,
         self.executable, self.file_size, self.mode,
         )
 
   def __setstate__(self, state):
     (
         self.id, project_id,
-        self.parent_directory, self.filename, self.cvs_path,
+        self.parent_directory, self.filename, self.basename,
         self.executable, self.file_size, self.mode,
         ) = state
     self.project = Ctx().projects[project_id]

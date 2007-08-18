@@ -151,16 +151,16 @@ class SVNOutputOption(OutputOption):
       svn_trunk_path = trunk.get_path(cvs_rev.cvs_path)
       if isinstance(cvs_rev, CVSRevisionAdd):
         # Copy from branch to trunk:
-        self.repos.copy_path(
-            cvs_rev.get_svn_path(), svn_trunk_path,
+        self.repos.copy_path2(
+            cvs_rev.cvs_file, cvs_rev.lod, trunk,
             svn_commit.motivating_revnum, True
             )
       elif isinstance(cvs_rev, CVSRevisionChange):
         # Delete old version of the path on trunk...
         self.repos.delete_path2(cvs_rev.cvs_file, trunk)
         # ...and copy the new version over from branch:
-        self.repos.copy_path(
-            cvs_rev.get_svn_path(), svn_trunk_path,
+        self.repos.copy_path2(
+            cvs_rev.cvs_file, cvs_rev.lod, trunk,
             svn_commit.motivating_revnum, True
             )
       elif isinstance(cvs_rev, CVSRevisionDelete):

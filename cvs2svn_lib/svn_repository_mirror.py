@@ -384,7 +384,7 @@ class SVNRepositoryMirror:
     """Copy SRC_PATH at subversion revision number SRC_REVNUM to DEST_PATH.
 
     In the youngest revision of the repository, DEST_PATH's parent
-    *must* exist unless create_parent is specified.  DEST_PATH itself
+    *must* exist unless CREATE_PARENT is specified.  DEST_PATH itself
     *must not* exist.
 
     Return the new node at DEST_PATH.  Note that this node is not
@@ -414,6 +414,18 @@ class SVNRepositoryMirror:
     # new destination node.  But we have to get it from its parent
     # node again so that its path is correct.
     return dest_parent_node[dest_basename]
+
+  def copy_path2(
+        self, cvs_path, src_lod, dst_lod, src_revnum,
+        create_parent=False
+        ):
+    """Copy CVS_PATH from SRC_LOD at SRC_REVNUM to DST_LOD."""
+
+    return self.copy_path(
+        src_lod.get_path(cvs_path.cvs_path),
+        dst_lod.get_path(cvs_path.cvs_path),
+        src_revnum, create_parent,
+        )
 
   def fill_symbol(self, svn_symbol_commit, source_set):
     """Perform all copies necessary to create as much of the the tag
@@ -506,7 +518,9 @@ class SVNRepositoryMirror:
       do_copy = False
 
     if do_copy:
-      dest_node = self.copy_path(src_path, dest_path, copy_source.revnum)
+      dest_node = self.copy_path2(
+          source_set.cvs_path, copy_source.lod, symbol, copy_source.revnum
+          )
       prune_ok = True
 
     # Get the map {entry : FillSourceSet} for entries within this

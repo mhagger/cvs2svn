@@ -142,6 +142,14 @@ class Project(object):
     else:
       self.symbol_transforms = symbol_transforms
 
+    # The ID of the Trunk instance for this Project.  This member is
+    # filled in during CollectRevsPass.
+    self.trunk_id = None
+
+    # The ID of the CVSDirectory representing the root directory of
+    # this project.  This member is filled in during CollectRevsPass.
+    self.root_cvs_directory_id = None
+
   def __eq__(self, other):
     return self.id == other.id
 

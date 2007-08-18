@@ -806,6 +806,8 @@ class _ProjectDataCollector:
     self.trunk = Trunk(
         self.collect_data.symbol_key_generator.gen_id(), self.project
         )
+    self.project.trunk_id = self.trunk.id
+
     # This causes a record for self.trunk to spring into existence:
     self.collect_data.symbol_stats[self.trunk]
 
@@ -820,6 +822,9 @@ class _ProjectDataCollector:
         self.project, None, '',
         self.project.project_cvs_repos_path,
         )
+
+    self.project.root_cvs_directory_id = root_cvs_directory.id
+
     self._visit_non_attic_directory(root_cvs_directory)
 
     if not self.found_rcs_file:

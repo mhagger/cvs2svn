@@ -479,7 +479,7 @@ class SVNRepositoryMirror:
 
     copy_source = source_set.get_best_source()
 
-    src_path = path_join(copy_source.prefix, source_set.path)
+    src_path = copy_source.lod.get_path(source_set.path)
     dest_path = symbol.get_path(source_set.path)
 
     # Figure out if we shall copy to this destination and delete any
@@ -490,7 +490,7 @@ class SVNRepositoryMirror:
       do_copy = True
     elif prune_ok and (
           parent_source is None
-          or copy_source.prefix != parent_source.prefix
+          or copy_source.lod != parent_source.lod
           or copy_source.revnum != parent_source.revnum):
       # The parent path was copied from a different source than we
       # need to use, so we have to delete the version that was copied

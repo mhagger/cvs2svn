@@ -20,7 +20,6 @@ import os
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.common import path_join
-from cvs2svn_lib.common import path_split
 from cvs2svn_lib.context import Ctx
 
 
@@ -32,17 +31,18 @@ class CVSPath(object):
     PROJECT -- (Project) the project containing this CVSPath.
     PARENT_DIRECTORY -- (CVSDirectory or None) the CVSDirectory
         containing this CVSPath.
-    FILENAME -- (string) the filesystem path to this CVSPath.
     BASENAME -- (string) the base name of this CVSDirectory (no ',v').
+    FILENAME -- (string) the filesystem path to this CVSPath in the
+        CVS repository.
 
   """
 
-  def __init__(self, id, project, parent_directory, filename, cvs_path):
+  def __init__(self, id, project, parent_directory, basename, filename):
     self.id = id
     self.project = project
     self.parent_directory = parent_directory
+    self.basename = basename
     self.filename = filename
-    self.basename = path_split(cvs_path)[1]
 
   def get_cvs_path(self):
     """Return the canonical path within the Project.
@@ -78,26 +78,27 @@ class CVSDirectory(CVSPath):
     PROJECT -- (Project) the project containing this file.
     PARENT_DIRECTORY -- (CVSDirectory or None) the CVSDirectory containing
         this CVSPath.
-    FILENAME -- (string) the filesystem path to the CVS file.
     BASENAME -- (string) the base name of this CVSDirectory (no ',v').
+    FILENAME -- (string) the filesystem path to this CVSPath in the
+        CVS repository.
 
   """
 
-  def __init__(self, id, project, parent_directory, filename, cvs_path):
+  def __init__(self, id, project, parent_directory, basename, filename):
     """Initialize a new CVSDirectory object."""
 
-    CVSPath.__init__(self, id, project, parent_directory, filename, cvs_path)
+    CVSPath.__init__(self, id, project, parent_directory, basename, filename)
 
   def __getstate__(self):
     return (
         self.id, self.project.id, self.parent_directory,
-        self.filename, self.basename,
+        self.basename, self.filename,
         )
 
   def __setstate__(self, state):
     (
         self.id, project_id, self.parent_directory,
-        self.filename, self.basename,
+        self.basename, self.filename,
         ) = state
     self.project = Ctx().projects[project_id]
 
@@ -116,8 +117,9 @@ class CVSFile(CVSPath):
     PROJECT -- (Project) the project containing this file.
     PARENT_DIRECTORY -- (CVSDirectory or None) the CVSDirectory containing
         this CVSPath.
-    FILENAME -- (string) the filesystem path to the CVS file.
     BASENAME -- (string) the base name of this CVSDirectory (no ',v').
+    FILENAME -- (string) the filesystem path to this CVSPath in the
+        CVS repository.
     EXECUTABLE -- (bool) True iff RCS file has executable bit set.
     FILE_SIZE -- (long) size of the RCS file in bytes.
     MODE -- (string or None) 'kkv', 'kb', etc.
@@ -129,12 +131,12 @@ class CVSFile(CVSPath):
   """
 
   def __init__(
-        self, id, project, parent_directory, filename, cvs_path,
+        self, id, project, parent_directory, basename, filename,
         executable, file_size, mode
         ):
     """Initialize a new CVSFile object."""
 
-    CVSPath.__init__(self, id, project, parent_directory, filename, cvs_path)
+    CVSPath.__init__(self, id, project, parent_directory, basename, filename)
     self.executable = executable
     self.file_size = file_size
     self.mode = mode
@@ -142,14 +144,14 @@ class CVSFile(CVSPath):
   def __getstate__(self):
     return (
         self.id, self.project.id,
-        self.parent_directory, self.filename, self.basename,
+        self.parent_directory, self.basename, self.filename,
         self.executable, self.file_size, self.mode,
         )
 
   def __setstate__(self, state):
     (
         self.id, project_id,
-        self.parent_directory, self.filename, self.basename,
+        self.parent_directory, self.basename, self.filename,
         self.executable, self.file_size, self.mode,
         ) = state
     self.project = Ctx().projects[project_id]

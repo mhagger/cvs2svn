@@ -64,6 +64,7 @@ from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.common import verify_svn_filename_legal
+from cvs2svn_lib.common import path_split
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
@@ -882,7 +883,7 @@ class _ProjectDataCollector:
     return CVSDirectory(
         self.collect_data.file_key_generator.gen_id(),
         self.project, parent_directory,
-        path, self.project.get_cvs_path(path),
+        path_split(self.project.get_cvs_path(path))[1], path,
         )
 
   def _get_cvs_file(
@@ -935,8 +936,8 @@ class _ProjectDataCollector:
     # mode is not known, so we temporarily set it to None.
     return CVSFile(
         self.collect_data.file_key_generator.gen_id(),
-        self.project, parent_directory, filename,
-        self.project.get_cvs_path(canonical_filename),
+        self.project, parent_directory,
+        path_split(self.project.get_cvs_path(filename))[1], filename,
         file_executable, file_size, None
         )
 

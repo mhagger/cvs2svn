@@ -57,18 +57,13 @@ class Ctx:
     self.svn_property_setters = []
     self.tmpdir = 'cvs2svn-tmp'
     self.skip_cleanup = False
-    # A list of Project instances for all projects being converted.
-    self.projects = []
+
+    # A map { project_id : Project } for all projects being converted.
+    self.projects = {}
+
     self.cross_project_commits = True
     self.cross_branch_commits = True
     self.retain_conflicting_attic_files = False
-
-  def add_project(self, project):
-    """Add a project to be converted."""
-
-    assert project.id is None
-    project.id = len(self.projects)
-    self.projects.append(project)
 
   def get_temp_filename(self, basename):
     return os.path.join(self.tmpdir, basename)

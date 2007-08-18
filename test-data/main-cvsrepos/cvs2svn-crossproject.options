@@ -16,7 +16,7 @@ ctx.output_option = NewRepositoryOutputOption(
 ctx.cross_project_commits = True
 ctx.cross_branch_commits = False
 
-del ctx.projects[:]
+del run_options.projects[:]
 
 for project in [
     'full-prune',
@@ -26,7 +26,7 @@ for project in [
     'proj',
     'single-files',
     ]:
-    ctx.add_project(
+    run_options.add_project(
         Project(
             os.path.join(r'test-data/main-cvsrepos', project),
             '%s/trunk' % (project,),

@@ -431,7 +431,7 @@ ctx.retain_conflicting_attic_files = False
 #   those strings.
 
 # Create the default project (using ctx.trunk, ctx.branches, and ctx.tags):
-ctx.add_project(
+run_options.add_project(
     Project(
         r'test-data/main-cvsrepos',
         'trunk',
@@ -448,7 +448,7 @@ ctx.add_project(
 
 # Add a second project, to be stored to projA/trunk, projA/branches,
 # and projA/tags:
-#ctx.add_project(
+#run_options.add_project(
 #    Project(
 #        r'my/cvsrepo/projA',
 #        'projA/trunk',

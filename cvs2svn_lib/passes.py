@@ -117,7 +117,10 @@ class CollectRevsPass(Pass):
     Log().quiet("Examining all CVS ',v' files...")
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_NEW)
     cd = CollectData(Ctx().revision_recorder, stats_keeper)
-    for project in Ctx().projects:
+    project_ids = Ctx().projects.keys()
+    project_ids.sort()
+    for project_id in project_ids:
+      project = Ctx().projects[project_id]
       cd.process_project(project)
 
     fatal_errors = cd.close()

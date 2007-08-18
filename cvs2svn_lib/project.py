@@ -103,8 +103,8 @@ class Project(object):
     SYMBOL_TRANSFORMS is a list of SymbolTransform instances which
     will be used to transform any symbol names within this project."""
 
-    # A unique id for this project, also used as its index in
-    # Ctx().projects.  This field is filled in by Ctx.add_project().
+    # A unique id for this project.  This field is filled in by
+    # RunOptions.add_project().
     self.id = None
 
     self.project_cvs_repos_path = os.path.normpath(project_cvs_repos_path)

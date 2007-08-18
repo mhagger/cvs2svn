@@ -189,6 +189,8 @@ class RunOptions:
     self.profiling = False
     self.progname = progname
 
+    self.projects = []
+
     try:
       self.opts, self.args = my_getopt(cmd_args, 'hvqs:p:', [
           "options=",
@@ -269,6 +271,18 @@ class RunOptions:
 
     # Check for problems with the options:
     self.check_options()
+
+    # Set Ctx().projects from self.projects:
+    for project in self.projects:
+      Ctx().projects[project.id] = project
+    self.projects = None
+
+  def add_project(self, project):
+    """Add a project to be converted."""
+
+    assert project.id is None
+    project.id = len(self.projects)
+    self.projects.append(project)
 
   def process_help_options(self):
     """Process any help-type options."""
@@ -536,9 +550,12 @@ class RunOptions:
 
     # Create the default project (using ctx.trunk, ctx.branches, and
     # ctx.tags):
-    ctx.add_project(Project(
-        cvsroot, trunk_base, branches_base, tags_base,
-        symbol_transforms=symbol_transforms))
+    self.add_project(
+        Project(
+            cvsroot, trunk_base, branches_base, tags_base,
+            symbol_transforms=symbol_transforms
+            )
+        )
 
     try:
       ctx.utf8_encoder = UTF8Encoder(encodings, fallback_encoding)
@@ -602,7 +619,7 @@ class RunOptions:
     if ctx.output_option is not None:
       ctx.output_option.check()
 
-    if not ctx.projects:
+    if not self.projects:
       raise FatalError('No project specified.')
 
   def get_options(self, *names):

@@ -812,7 +812,7 @@ class _ProjectDataCollector:
     # and a tag in another.
     self.symbols = {}
 
-    self._visit_non_attic_directory(None, self.project.project_cvs_repos_path)
+    self._visit_non_attic_directory(None, '')
 
     if not self.found_rcs_file:
       self.collect_data.record_fatal_error(
@@ -872,19 +872,6 @@ class _ProjectDataCollector:
     self.collect_data.revision_recorder.finish_file(cvs_file_items)
     self.collect_data.add_cvs_file_items(cvs_file_items)
     self.collect_data.symbol_stats.register(cvs_file_items)
-
-  def _get_cvs_directory(self, parent_directory, path):
-    """Return a CVSDirectory instance describing the directory at PATH.
-
-    The CVSDirectory is assigned a new unique id and recorded in
-    self.collect_data."""
-
-    # mode is not known, so we temporarily set it to None.
-    return CVSDirectory(
-        self.collect_data.file_key_generator.gen_id(),
-        self.project, parent_directory,
-        path_split(self.project.get_cvs_path(path))[1], path,
-        )
 
   def _get_cvs_file(
         self, parent_directory, filename, file_in_attic, leave_in_attic=False
@@ -979,8 +966,14 @@ class _ProjectDataCollector:
           True,
           )
 
-  def _visit_attic_directory(self, parent_directory, dirname):
-    cvs_directory = self._get_cvs_directory(parent_directory, dirname)
+  def _visit_attic_directory(self, parent_directory):
+    """Visit the Attic directory under PARENT_DIRECTORY."""
+
+    dirname = os.path.join(parent_directory.filename, 'Attic')
+    cvs_directory = CVSDirectory(
+        self.collect_data.file_key_generator.gen_id(),
+        self.project, parent_directory, 'Attic', dirname,
+        )
 
     # Maps { fname[:-2] : pathname }:
     rcsfiles = {}
@@ -1012,8 +1005,22 @@ class _ProjectDataCollector:
 
     return self._get_cvs_file(parent_directory, pathname, False)
 
-  def _visit_non_attic_directory(self, parent_directory, dirname):
-    cvs_directory = self._get_cvs_directory(parent_directory, dirname)
+  def _visit_non_attic_directory(self, parent_directory, basename):
+    """Visit a non-Attic directory.
+
+    Visit the non-Attic directory under PARENT_DIRECTORY with base
+    filename BASENAME."""
+
+    if parent_directory is None:
+      dirname = os.path.join(self.project.project_cvs_repos_path, basename)
+    else:
+      dirname = os.path.join(parent_directory.filename, basename)
+
+    cvs_directory = CVSDirectory(
+        self.collect_data.file_key_generator.gen_id(),
+        self.project, parent_directory, basename, dirname,
+        )
+
     self.collect_data.add_cvs_directory(cvs_directory)
 
     files = os.listdir(dirname)
@@ -1041,8 +1048,7 @@ class _ProjectDataCollector:
         pass
 
     if attic_dir is not None:
-      pathname = os.path.join(dirname, attic_dir)
-      attic_rcsfiles = self._visit_attic_directory(cvs_directory, pathname)
+      attic_rcsfiles = self._visit_attic_directory(cvs_directory)
       alldirs = dirs + [attic_dir]
     else:
       alldirs = dirs
@@ -1073,7 +1079,7 @@ class _ProjectDataCollector:
       # characters:
       verify_svn_filename_legal(pathname, fname)
 
-      self._visit_non_attic_directory(cvs_directory, pathname)
+      self._visit_non_attic_directory(cvs_directory, fname)
 
 
 class CollectData:

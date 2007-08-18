@@ -37,6 +37,8 @@ class CVSPath(object):
 
   """
 
+  __slots__ = ['id', 'project', 'parent_directory', 'basename', 'filename']
+
   def __init__(self, id, project, parent_directory, basename, filename):
     self.id = id
     self.project = project
@@ -84,6 +86,8 @@ class CVSDirectory(CVSPath):
 
   """
 
+  __slots__ = []
+
   def __init__(self, id, project, parent_directory, basename, filename):
     """Initialize a new CVSDirectory object."""
 
@@ -129,6 +133,8 @@ class CVSFile(CVSPath):
   Attic and the --retain-conflicting-attic-files option was specified.
 
   """
+
+  __slots__ = ['executable', 'file_size', 'mode']
 
   def __init__(
         self, id, project, parent_directory, basename, filename,

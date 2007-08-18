@@ -113,7 +113,7 @@ class CollectRevsPass(Pass):
     self._register_temp_file(config.CVS_ITEMS_STORE)
     Ctx().revision_recorder.register_artifacts(self)
 
-  def run(self, stats_keeper):
+  def run(self, run_options, stats_keeper):
     Log().quiet("Examining all CVS ',v' files...")
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_NEW)
     cd = CollectData(Ctx().revision_recorder, stats_keeper)
@@ -145,7 +145,7 @@ class CollateSymbolsPass(Pass):
     self._register_temp_file(config.SYMBOL_DB)
     self._register_temp_file_needed(config.SYMBOL_STATISTICS)
 
-  def run(self, stats_keeper):
+  def run(self, run_options, stats_keeper):
     symbol_stats = SymbolStatistics(
         artifact_manager.get_temp_file(config.SYMBOL_STATISTICS)
         )
@@ -199,7 +199,7 @@ class FilterSymbolsPass(Pass):
     self._register_temp_file_needed(config.CVS_ITEMS_STORE)
     Ctx().revision_excluder.register_artifacts(self)
 
-  def run(self, stats_keeper):
+  def run(self, run_options, stats_keeper):
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
     Ctx()._symbol_db = SymbolDatabase()
     cvs_item_store = OldCVSItemStore(
@@ -262,7 +262,7 @@ class SortRevisionSummaryPass(Pass):
     self._register_temp_file(config.CVS_REVS_SUMMARY_SORTED_DATAFILE)
     self._register_temp_file_needed(config.CVS_REVS_SUMMARY_DATAFILE)
 
-  def run(self, stats_keeper):
+  def run(self, run_options, stats_keeper):
     Log().quiet("Sorting CVS revision summaries...")
     sort_file(
         artifact_manager.get_temp_file(config.CVS_REVS_SUMMARY_DATAFILE),
@@ -278,7 +278,7 @@ class SortSymbolSummaryPass(Pass):
     self._register_temp_file(config.CVS_SYMBOLS_SUMMARY_SORTED_DATAFILE)
     self._register_temp_file_needed(config.CVS_SYMBOLS_SUMMARY_DATAFILE)
 
-  def run(self, stats_keeper):
+  def run(self, run_options, stats_keeper):
     Log().quiet("Sorting CVS symbol summaries...")
     sort_file(
         artifact_manager.get_temp_file(config.CVS_SYMBOLS_SUMMARY_DATAFILE),
@@ -465,7 +465,7 @@ class InitializeChangesetsPass(Pass):
     for changeset in self.get_symbol_changesets():
       yield changeset
 
-  def run(self, stats_keeper):
+  def run(self, run_options, stats_keeper):
     Log().quiet("Creating preliminary commit sets...")
 
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
@@ -594,7 +594,7 @@ class BreakRevisionChangesetCyclesPass(Pass):
     for changeset in new_changesets:
       self.changeset_graph.add_new_changeset(changeset)
 
-  def run(self, stats_keeper):
+  def run(self, run_options, stats_keeper):
     Log().quiet("Breaking revision changeset dependency cycles...")
 
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
@@ -715,7 +715,7 @@ class RevisionTopologicalSortPass(Pass):
 
     changeset_graph.close()
 
-  def run(self, stats_keeper):
+  def run(self, run_options, stats_keeper):
     Log().quiet("Generating CVSRevisions in commit order...")
 
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
@@ -807,7 +807,7 @@ class BreakSymbolChangesetCyclesPass(Pass):
     for changeset in new_changesets:
       self.changeset_graph.add_new_changeset(changeset)
 
-  def run(self, stats_keeper):
+  def run(self, run_options, stats_keeper):
     Log().quiet("Breaking symbol changeset dependency cycles...")
 
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
@@ -1022,7 +1022,7 @@ class BreakAllChangesetCyclesPass(Pass):
     # Unwrap the cycle into a segment then break the segment:
     self.break_segment([cycle[-1]] + cycle + [cycle[0]])
 
-  def run(self, stats_keeper):
+  def run(self, run_options, stats_keeper):
     Log().quiet("Breaking CVSSymbol dependency loops...")
 
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
@@ -1192,7 +1192,7 @@ class TopologicalSortPass(Pass):
 
     changeset_graph.close()
 
-  def run(self, stats_keeper):
+  def run(self, run_options, stats_keeper):
     Log().quiet("Generating CVSRevisions in commit order...")
 
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
@@ -1282,7 +1282,7 @@ class CreateRevsPass(Pass):
       for cvs_rev in svn_commit.cvs_revs:
         Log().verbose(' %s %s' % (cvs_rev.cvs_path, cvs_rev.rev,))
 
-  def run(self, stats_keeper):
+  def run(self, run_options, stats_keeper):
     Log().quiet("Mapping CVS revisions to Subversion commits...")
 
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
@@ -1324,7 +1324,7 @@ class SortSymbolsPass(Pass):
     self._register_temp_file(config.SYMBOL_OPENINGS_CLOSINGS_SORTED)
     self._register_temp_file_needed(config.SYMBOL_OPENINGS_CLOSINGS)
 
-  def run(self, stats_keeper):
+  def run(self, run_options, stats_keeper):
     Log().quiet("Sorting symbolic name source revisions...")
 
     sort_file(
@@ -1377,7 +1377,7 @@ class IndexSymbolsPass(Pass):
     cPickle.dump(offsets, offsets_db, -1)
     offsets_db.close()
 
-  def run(self, stats_keeper):
+  def run(self, run_options, stats_keeper):
     Log().quiet("Determining offsets for all symbolic names...")
     Ctx()._symbol_db = SymbolDatabase()
     self.generate_offsets_for_symbolings()
@@ -1417,7 +1417,7 @@ class OutputPass(Pass):
 
     persistence_manager.close()
 
-  def run(self, stats_keeper):
+  def run(self, run_options, stats_keeper):
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
     Ctx()._metadata_db = MetadataDatabase(DB_OPEN_READ)
     Ctx()._cvs_items_db = IndexedCVSItemStore(

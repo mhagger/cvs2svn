@@ -50,7 +50,7 @@ class CheckDependenciesPass(Pass):
   def get_cvs_item(self, item_id):
     raise NotImplementedError()
 
-  def run(self, stats_keeper):
+  def run(self, run_options, stats_keeper):
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
     self.symbol_db = SymbolDatabase()
     Ctx()._symbol_db = self.symbol_db
@@ -126,7 +126,7 @@ class CheckIndexedItemStoreDependenciesPass(CheckDependenciesPass):
   def get_cvs_item(self, item_id):
     return self.cvs_item_store[item_id]
 
-  def run(self, stats_keeper):
+  def run(self, run_options, stats_keeper):
     self.cvs_item_store = IndexedCVSItemStore(
         artifact_manager.get_temp_file(self.cvs_items_store_file),
         artifact_manager.get_temp_file(self.cvs_items_store_index_file),

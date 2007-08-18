@@ -77,9 +77,11 @@ class Pass(object):
 
     artifact_manager.register_temp_file_needed(basename, self)
 
-  def run(self, stats_keeper):
+  def run(self, run_options, stats_keeper):
     """Carry out this step of the conversion.
-    STATS_KEEPER is a StatsKeeper instance."""
+
+    RUN_OPTIONS is an instance of RunOptions.  STATS_KEEPER is an
+    instance of StatsKeeper."""
 
     raise NotImplementedError
 
@@ -168,7 +170,7 @@ class PassManager:
       the_pass = self.passes[i]
       Log().quiet('----- pass %d (%s) -----' % (i + 1, the_pass.name,))
       artifact_manager.pass_started(the_pass)
-      the_pass.run(stats_keeper)
+      the_pass.run(run_options, stats_keeper)
       end_time = time.time()
       stats_keeper.log_duration_for_pass(
           end_time - start_time, i + 1, the_pass.name)

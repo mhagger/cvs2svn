@@ -479,8 +479,8 @@ class SVNRepositoryMirror:
 
     copy_source = source_set.get_best_source()
 
-    src_path = copy_source.lod.get_path(source_set.path)
-    dest_path = symbol.get_path(source_set.path)
+    src_path = copy_source.lod.get_path(source_set.get_path())
+    dest_path = symbol.get_path(source_set.get_path())
 
     # Figure out if we shall copy to this destination and delete any
     # destination path that is in the way.

@@ -139,17 +139,19 @@ class FillSource:
 class FillSourceSet:
   """A set of FillSources for a given symbol and path."""
 
-  def __init__(self, symbol, path, sources):
+  def __init__(self, symbol, cvs_path, sources):
     # The symbol that the sources are for:
     self._symbol = symbol
 
-    # The path, relative to the source base paths, that is being
-    # processed:
-    self.path = path
+    # The CVSPath that is being processed:
+    self.cvs_path = cvs_path
 
     # A list of sources, sorted in descending order of score.
     self._sources = sources
     self._sources.sort()
+
+  def get_path(self):
+    return self.cvs_path.get_cvs_path()
 
   def __nonzero__(self):
     return bool(self._sources)
@@ -172,7 +174,7 @@ class FillSourceSet:
     retval = {}
     for (cvs_path, source_list) in source_entries.items():
       retval[cvs_path.basename] = FillSourceSet(
-          self._symbol, cvs_path.cvs_path, source_list
+          self._symbol, cvs_path, source_list
           )
 
     return retval
@@ -244,11 +246,14 @@ class _SymbolFillingGuide:
     each source that is present in the node tree.  Raise an exception
     if a change occurred outside of the source directories."""
 
+    root_cvs_directory = Ctx()._cvs_file_db.get_file(
+        self.symbol.project.root_cvs_directory_id
+        )
     sources = [
         FillSource(self.symbol, lod, self._node_trees[lod])
         for lod in self._node_trees.iterkeys()
         ]
-    return FillSourceSet(self.symbol, '', sources)
+    return FillSourceSet(self.symbol, root_cvs_directory, sources)
 
   def print_node_trees(self):
     print "TREE", "=" * 75

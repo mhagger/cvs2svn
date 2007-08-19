@@ -581,7 +581,7 @@ class SVNRepositoryMirror:
     dest_node = self._open_writable_lod_node(symbol, False)
     self._fill(symbol, dest_node, source_set)
 
-  def _prune_extra_entries(self, dest_path, dest_node, src_entries):
+  def _prune_extra_entries(self, cvs_path, symbol, dest_node, src_entries):
     """Delete any entries in DEST_NODE that are not in SRC_ENTRIES.
 
     This might require creating a new writable node, so return a
@@ -593,7 +593,7 @@ class SVNRepositoryMirror:
         if component not in src_entries]
     if delete_list:
       if not isinstance(dest_node, _WritableMirrorNode):
-        dest_node = self._open_writable_node_raw(dest_path, False)
+        dest_node = self._open_writable_node(cvs_path, symbol, False)
       # Sort the delete list so that the output is in a consistent
       # order:
       delete_list.sort()
@@ -662,7 +662,9 @@ class SVNRepositoryMirror:
 
     if prune_ok:
       dest_path = symbol.get_path(source_set.cvs_path.get_cvs_path())
-      dest_node = self._prune_extra_entries(dest_path, dest_node, src_entries)
+      dest_node = self._prune_extra_entries(
+          source_set.cvs_path, symbol, dest_node, src_entries
+          )
 
     # Recurse into the SRC_ENTRIES keys sorted in alphabetical order.
     entries = src_entries.keys()

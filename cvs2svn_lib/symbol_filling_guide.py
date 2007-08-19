@@ -183,14 +183,13 @@ class FillSourceSet:
 class _SymbolFillingGuide:
   """A tree holding the sources that can be copied to fill a symbol.
 
-  The class holds a node tree representing any parts of the svn
-  directory structure that can be used to incrementally fill the
-  symbol in the current SVNCommit.  The directory nodes in the tree
-  are dictionaries mapping CVSPaths to subnodes.  A leaf node exists
-  for any potential source that has had an opening since the last fill
-  of this symbol, and thus can be filled in this commit.  The leaves
-  themselves are SVNRevisionRange objects telling for what range of
-  revisions the leaf could serve as a source.
+  The class holds a node tree for each LineOfDevelopment that is the
+  source LOD of a CVSSymbol in an SVNCommit.  The directory nodes in
+  each tree are dictionaries mapping CVSPaths to subnodes.  A leaf
+  node exists for the source of each CVSSymbol, and thus should be
+  copied to the symbol in this commit.  The leaves themselves are
+  SVNRevisionRange objects telling for what range of revisions the
+  leaf could serve as a source.
 
   self._node_trees holds the root nodes of one directory tree per
   LineOfDevelopment.  By walking self._node_trees and calling
@@ -203,17 +202,17 @@ class _SymbolFillingGuide:
   actions to 'patch up' the subtrees."""
 
   def __init__(self, symbol, range_map):
-    """Initializes a _SymbolFillingGuide for SYMBOL.
+    """Initialize a _SymbolFillingGuide for SYMBOL.
 
     SYMBOL is either a Branch or a Tag.  Record the openings and
-    closings from OPENINGS_CLOSINGS_MAP, which is a map { SVNPath :
+    closings from RANGE_MAP, which is a map { CVSSymbol :
     SVNRevisionRange } containing the openings and closings for
-    svn_paths."""
+    CVSSymbol instances in a SymbolCommit."""
 
     self.symbol = symbol
 
-    # A map { LOD : node } for each LOD, where node is a map { CVSPath
-    # : node }.  Subnodes have the same form.  Leaves are
+    # A map { LOD : tree } for each LOD, where tree is a map { CVSPath
+    # : node }, and subnodes have the same form.  Leaves are
     # SVNRevisionRange instances.
     self._node_trees = { }
 
@@ -238,13 +237,10 @@ class _SymbolFillingGuide:
       return parent_node.setdefault(cvs_path, {})
 
   def get_source_set(self):
-    """Return the list of FillSources for this symbolic name.
+    """Return a FillSourceSet for the root path for this symbolic name.
 
-    The Project instance defines what are legitimate sources
-    (basically, the project's trunk or any directory directly under
-    its branches path).  Return a list of FillSource objects, one for
-    each source that is present in the node tree.  Raise an exception
-    if a change occurred outside of the source directories."""
+    Return a FillSourceSet describing each source that is present in
+    the node tree."""
 
     root_cvs_directory = Ctx()._cvs_file_db.get_file(
         self.symbol.project.root_cvs_directory_id
@@ -261,7 +257,7 @@ class _SymbolFillingGuide:
     lods.sort()
     for lod in lods:
       print 'TREE LOD = %s' % (lod,)
-      self.print_node_tree(
+      self._print_node_tree(
           self._node_trees[lod],
           Ctx()._cvs_file_db.get_file(
               self.symbol.project.root_cvs_directory_id
@@ -269,7 +265,7 @@ class _SymbolFillingGuide:
           )
       print "TREE", "-" * 75
 
-  def print_node_tree(self, node, cvs_directory, indent_depth=0):
+  def _print_node_tree(self, node, cvs_directory, indent_depth=0):
     """Print all nodes that are rooted at NODE to sys.stdout.
 
     INDENT_DEPTH is used to indent the output of recursive calls.
@@ -280,10 +276,15 @@ class _SymbolFillingGuide:
     else:
       print "TREE:", " " * (indent_depth * 2), cvs_directory
       for sub_directory, sub_node in node.items():
-        self.print_node_tree(sub_node, sub_directory, (indent_depth + 1))
+        self._print_node_tree(sub_node, sub_directory, (indent_depth + 1))
 
 
 def get_source_set(symbol, range_map):
+  """Return a FillSourceSet describing the fill sources for RANGE_MAP.
+
+  RANGE_MAP is a map { CVSSymbol : SVNRevisionRange } as returned by
+  SymbolingsReader.get_range_map()."""
+
   return _SymbolFillingGuide(symbol, range_map).get_source_set()
 
 

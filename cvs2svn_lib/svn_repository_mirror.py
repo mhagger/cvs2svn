@@ -565,9 +565,7 @@ class SVNRepositoryMirror:
     return dest_parent_node[cvs_path.basename]
 
   def fill_symbol(self, svn_symbol_commit, source_set):
-    """Perform all copies necessary to create as much of the the tag
-    or branch SYMBOL as possible given the current revision of the
-    repository mirror.  SYMBOL is an instance of TypedSymbol.
+    """Perform all copies for the CVSSymbols in SVN_SYMBOL_COMMIT.
 
     The symbolic name is guaranteed to exist in the Subversion
     repository by the end of this call, even if there are no paths
@@ -603,8 +601,10 @@ class SVNRepositoryMirror:
         dest_node.delete_component(component)
     return dest_node
 
-  def _fill(self, symbol, dest_node, source_set,
-            parent_source=None, prune_ok=False):
+  def _fill(
+        self, symbol, dest_node, source_set,
+        parent_source=None, prune_ok=False
+        ):
     """Fill the tag or branch SYMBOL at the path indicated by SOURCE_SET.
 
     Use items from SOURCE_SET, and recurse into the child items.
@@ -625,8 +625,7 @@ class SVNRepositoryMirror:
     happened yet).
 
     PRUNE_OK means that a copy has been made in this recursion, and
-    it's safe to prune directories that are not in
-    SYMBOL_FILL._node_tree.
+    it's safe to prune directories that are not in SOURCE_SET.
 
     PARENT_SOURCE, and PRUNE_OK should only be passed in by recursive
     calls."""

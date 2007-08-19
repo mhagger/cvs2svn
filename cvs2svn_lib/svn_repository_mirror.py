@@ -632,9 +632,6 @@ class SVNRepositoryMirror:
 
     copy_source = source_set.get_best_source()
 
-    src_path = copy_source.lod.get_path(source_set.get_path())
-    dest_path = symbol.get_path(source_set.get_path())
-
     # Figure out if we shall copy to this destination and delete any
     # destination path that is in the way.
     if dest_node is None:
@@ -664,6 +661,7 @@ class SVNRepositoryMirror:
     src_entries = source_set.get_subsource_sets(copy_source)
 
     if prune_ok:
+      dest_path = symbol.get_path(source_set.cvs_path.get_cvs_path())
       dest_node = self._prune_extra_entries(dest_path, dest_node, src_entries)
 
     # Recurse into the SRC_ENTRIES keys sorted in alphabetical order.

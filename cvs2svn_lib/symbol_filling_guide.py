@@ -150,9 +150,6 @@ class FillSourceSet:
     self._sources = sources
     self._sources.sort()
 
-  def get_path(self):
-    return self.cvs_path.get_cvs_path()
-
   def __nonzero__(self):
     return bool(self._sources)
 

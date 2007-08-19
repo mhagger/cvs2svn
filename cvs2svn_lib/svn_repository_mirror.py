@@ -433,6 +433,16 @@ class SVNRepositoryMirror:
     if should_prune and len(parent_node.entries) == 0:
       self.delete_path(cvs_path.parent_directory, lod, True)
 
+  def initialize_project(self, project):
+    """Create the basic structure for PROJECT."""
+
+    # For a trunk-only conversion, trunk_path might be ''.
+    if project.trunk_path:
+      self.mkdir(project.trunk_path)
+    if not Ctx().trunk_only:
+      self.mkdir(project.branches_path)
+      self.mkdir(project.tags_path)
+
   def mkdir(self, path):
     """Create PATH in the repository mirror at the youngest revision."""
 

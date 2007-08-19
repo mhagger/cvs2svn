@@ -104,12 +104,7 @@ class SVNOutputOption(OutputOption):
     self.repos.start_commit(svn_commit.revnum, self._get_revprops(svn_commit))
 
     for project in svn_commit.projects:
-      # For a trunk-only conversion, trunk_path might be ''.
-      if project.trunk_path:
-        self.repos.mkdir(project.trunk_path)
-      if not Ctx().trunk_only:
-        self.repos.mkdir(project.branches_path)
-        self.repos.mkdir(project.tags_path)
+      self.repos.initialize_project(project)
 
     self.repos.end_commit()
 

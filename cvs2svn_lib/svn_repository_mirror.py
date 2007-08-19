@@ -195,7 +195,7 @@ class SVNRepositoryMirror:
     if revnum == 1:
       # For the first revision, we have to create the root directory
       # out of thin air:
-      self._new_root_node = self._create_node('')
+      self._new_root_node = self._create_node_raw('')
 
   def end_commit(self):
     """Called at the end of each commit.  This method copies the newly
@@ -217,17 +217,33 @@ class SVNRepositoryMirror:
 
     self._invoke_delegates('end_commit')
 
-  def _create_node(self, path, entries=None):
+  def _create_node_raw(self, path, entries=None):
     if entries is None:
       entries = {}
     else:
       entries = entries.copy()
 
     node = _WritableMirrorNode(
-        self, path, self._key_generator.gen_id(), entries)
+        self, path, self._key_generator.gen_id(), entries
+        )
 
     self._new_nodes[node.key] = node.entries
     return node
+
+  def _create_node(self, cvs_path, lod, entries=None):
+    if entries is None:
+      entries = {}
+    else:
+      entries = entries.copy()
+
+    node = _WritableMirrorNode(
+        self, lod.get_path(cvs_path.cvs_path),
+        self._key_generator.gen_id(), entries
+        )
+
+    self._new_nodes[node.key] = node.entries
+    return node
+
 
   def _get_node(self, path, key):
     """Returns the node for PATH and key KEY.
@@ -241,8 +257,10 @@ class SVNRepositoryMirror:
     else:
       return _ReadOnlyMirrorNode(self, path, key, self._nodes_db[key])
 
-  def _open_readonly_root_node(self, revnum):
-    """Return a read-only root node for REVNUM."""
+  def _open_readonly_lod_node(self, lod, revnum):
+    """Open a readonly node for the root path of LOD at revision REVNUM.
+
+    Return an instance of _MirrorNode if the path exists, else None."""
 
     # Get the root key
     if revnum == self._youngest:
@@ -253,44 +271,44 @@ class SVNRepositoryMirror:
     else:
       node_key = self._svn_revs_root_nodes[revnum]
 
-    return self._get_node('', node_key)
+    node = self._get_node('', node_key)
 
-  def _open_readonly_node(self, path, revnum):
-    """Open a readonly node for PATH at revision REVNUM.
-
-    Return an instance of _MirrorNode if the path exists, else None."""
-
-    node = self._open_readonly_root_node(revnum)
-    for component in path.split('/'):
+    for component in lod.get_path().split('/'):
       node = node[component]
       if node is None:
         return None
 
     return node
 
-  def _open_writable_root_node(self):
-    """Open and return a writable root node.
+  def _open_readonly_node(self, cvs_path, lod, revnum):
+    """Open a readonly node for CVS_PATH from LOD at REVNUM."""
 
-    The current root node is returned immeditely if it is already
-    writable.  If not, create a new one by copying the contents of the
-    root node of the previous version."""
+    if cvs_path.parent_directory is None:
+      return self._open_readonly_lod_node(lod, revnum)
+    else:
+      parent_node = self._open_readonly_node(
+          cvs_path.parent_directory, lod, revnum
+          )
+      if parent_node is None:
+        return None
+      else:
+        return parent_node[cvs_path.basename]
 
-    if self._new_root_node is None:
-      # Root node still has to be created for this revision:
-      old_root_node = self._get_node(
-          '', self._svn_revs_root_nodes[self._youngest - 1])
-      self._new_root_node = self._create_node('', old_root_node.entries)
-
-    return self._new_root_node
-
-  def _open_writable_node(self, svn_path, create):
+  def _open_writable_node_raw(self, svn_path, create):
     """Open a writable node for the path SVN_PATH.
 
     Iff CREATE is True, create a directory node at SVN_PATH and any
     missing directories.  Return an instance of _WritableMirrorNode,
     or None if SVN_PATH doesn't exist and CREATE is not set."""
 
-    node = self._open_writable_root_node()
+    # First, get a writable root node:
+    if self._new_root_node is None:
+      # Root node still has to be created for this revision:
+      old_root_node = self._get_node(
+          '', self._svn_revs_root_nodes[self._youngest - 1]
+          )
+      self._new_root_node = self._create_node_raw('', old_root_node.entries)
+    node = self._new_root_node
 
     if svn_path:
       # Walk down the path, one node at a time.
@@ -301,11 +319,11 @@ class SVNRepositoryMirror:
           if not isinstance(new_node, _WritableMirrorNode):
             # Create a new node, with entries initialized to be the same
             # as those of the old node:
-            new_node = self._create_node(new_node.path, new_node.entries)
+            new_node = self._create_node_raw(new_node.path, new_node.entries)
             node[component] = new_node
         elif create:
           # The component does not exist, so we create it.
-          new_node = self._create_node(path_join(node.path, component))
+          new_node = self._create_node_raw(path_join(node.path, component))
           node[component] = new_node
           self._invoke_delegates('mkdir', new_node.path)
         else:
@@ -317,7 +335,48 @@ class SVNRepositoryMirror:
 
     return node
 
-  def delete_path(self, svn_path, should_prune=False):
+  def _open_writable_lod_node(self, lod, create):
+    """Open a writable node for the root path in LOD.
+
+    Iff CREATE is True, create the path and any missing directories.
+    Return an instance of _WritableMirrorNode, or None if the path
+    doesn't already exist and CREATE is not set."""
+
+    return self._open_writable_node_raw(lod.get_path(), create)
+
+  def _open_writable_node(self, cvs_path, lod, create):
+    """Open a writable node for CVS_PATH in LOD.
+
+    Iff CREATE is True, create a directory node at SVN_PATH and any
+    missing directories.  Return an instance of _WritableMirrorNode,
+    or None if SVN_PATH doesn't exist and CREATE is not set."""
+
+    if cvs_path.parent_directory is None:
+      return self._open_writable_lod_node(lod, create)
+
+    parent_node = self._open_writable_node(
+        cvs_path.parent_directory, lod, create
+        )
+    if parent_node is None:
+      return None
+
+    node = parent_node[cvs_path.basename]
+    if isinstance(node, _WritableMirrorNode):
+      return node
+    elif isinstance(node, _ReadOnlyMirrorNode):
+      new_node = self._create_node(cvs_path, lod, node.entries)
+      parent_node[cvs_path.basename] = new_node
+      return new_node
+    elif create:
+      # The component does not exist, so we create it.
+      new_node = self._create_node(cvs_path, lod)
+      parent_node[cvs_path.basename] = new_node
+      self._invoke_delegates('mkdir', new_node.path)
+      return new_node
+    else:
+      return None
+
+  def _delete_path_raw(self, svn_path, should_prune=False):
     """Delete SVN_PATH from the tree.
 
     SVN_PATH must currently exist.
@@ -337,7 +396,7 @@ class SVNRepositoryMirror:
         return
 
     (parent_path, entry,) = path_split(svn_path)
-    parent_node = self._open_writable_node(parent_path, False)
+    parent_node = self._open_writable_node_raw(parent_path, False)
 
     parent_node.delete_component(entry)
     # The following recursion makes pruning an O(n^2) operation in the
@@ -346,17 +405,38 @@ class SVNRepositoryMirror:
     # drawback is that we issue a delete for each path and not just
     # a single delete for the topmost directory pruned.
     if should_prune and len(parent_node.entries) == 0:
-      self.delete_path(parent_path, True)
+      self._delete_path_raw(parent_path, True)
 
-  def delete_path2(self, cvs_path, lod, should_prune=False):
+  def delete_lod(self, lod):
+    self._delete_path_raw(lod.get_path(), should_prune=False)
+
+  def delete_path(self, cvs_path, lod, should_prune=False):
     """Delete CVS_PATH from LOD."""
 
-    self.delete_path(lod.get_path(cvs_path.cvs_path), should_prune)
+    svn_path = lod.get_path(cvs_path.cvs_path)
+
+    if cvs_path.parent_directory is None:
+      if should_prune:
+        self.delete_lod(lod)
+      return
+
+    parent_node = self._open_writable_node(
+        cvs_path.parent_directory, lod, False
+        )
+    parent_node.delete_component(cvs_path.basename)
+
+    # The following recursion makes pruning an O(n^2) operation in the
+    # worst case (where n is the depth of SVN_PATH), but the worst case
+    # is probably rare, and the constant cost is pretty low.  Another
+    # drawback is that we issue a delete for each path and not just
+    # a single delete for the topmost directory pruned.
+    if should_prune and len(parent_node.entries) == 0:
+      self.delete_path(cvs_path.parent_directory, lod, True)
 
   def mkdir(self, path):
     """Create PATH in the repository mirror at the youngest revision."""
 
-    self._open_writable_node(path, True)
+    self._open_writable_node_raw(path, True)
 
   def change_path(self, cvs_rev):
     """Register a change in self._youngest for the CVS_REV's svn_path
@@ -370,42 +450,47 @@ class SVNRepositoryMirror:
   def add_path(self, cvs_rev):
     """Add the CVS_REV's svn_path to the repository mirror."""
 
-    (parent_path, component,) = path_split(cvs_rev.get_svn_path())
-    parent_node = self._open_writable_node(parent_path, True)
+    cvs_file = cvs_rev.cvs_file
+    parent_node = self._open_writable_node(
+        cvs_file.parent_directory, cvs_rev.lod, True
+        )
 
-    if component in parent_node:
+    if cvs_file.basename in parent_node:
       raise self.PathExistsError(
           'Attempt to add path \'%s\' to repository mirror '
           'when it already exists in the mirror.'
           % (cvs_rev.get_svn_path(),)
           )
 
-    parent_node[component] = \
-        self._create_node(path_join(parent_node.path, component))
+    parent_node[cvs_file.basename] = self._create_node(cvs_file, cvs_rev.lod)
 
     self._invoke_delegates('add_path', SVNCommitItem(cvs_rev, True))
 
-  def copy_path(self, src_path, dest_path, src_revnum, create_parent=False):
-    """Copy SRC_PATH at subversion revision number SRC_REVNUM to DEST_PATH.
+  def copy_lod(self, src_lod, dest_lod, src_revnum):
+    """Copy all of SRC_LOD at SRC_REVNUM to DST_LOD.
 
-    In the youngest revision of the repository, DEST_PATH's parent
-    *must* exist unless CREATE_PARENT is specified.  DEST_PATH itself
-    *must not* exist.
+    In the youngest revision of the repository, the destination's
+    parent *must* exist, but the destination itself *must not* exist.
 
-    Return the new node at DEST_PATH.  Note that this node is not
+    Return the new node at DEST_LOD.  Note that this node is not
     necessarily writable, though its parent node necessarily is."""
 
+    src_path = src_lod.get_path()
+    dest_path = dest_lod.get_path()
+
     # Get the node of our src_path
-    src_node = self._open_readonly_node(src_path, src_revnum)
+    src_node = self._open_readonly_lod_node(src_lod, src_revnum)
 
     # Get the parent path and the base path of the dest_path
     (dest_parent, dest_basename,) = path_split(dest_path)
-    dest_parent_node = self._open_writable_node(dest_parent, create_parent)
+    dest_parent_node = self._open_writable_node_raw(dest_parent, False)
 
     if dest_parent_node is None:
       raise self.ParentMissingError(
           "Attempt to add path '%s' to repository mirror, "
-          "but its parent directory doesn't exist in the mirror." % dest_path)
+          "but its parent directory doesn't exist in the mirror."
+          % dest_path
+          )
     elif dest_basename in dest_parent_node:
       raise self.PathExistsError(
           "Attempt to add path '%s' to repository mirror "
@@ -420,17 +505,54 @@ class SVNRepositoryMirror:
     # node again so that its path is correct.
     return dest_parent_node[dest_basename]
 
-  def copy_path2(
-        self, cvs_path, src_lod, dst_lod, src_revnum,
-        create_parent=False
+  def copy_path(
+        self, cvs_path, src_lod, dest_lod, src_revnum, create_parent=False
         ):
-    """Copy CVS_PATH from SRC_LOD at SRC_REVNUM to DST_LOD."""
+    """Copy CVS_PATH from SRC_LOD at SRC_REVNUM to DST_LOD.
 
-    return self.copy_path(
-        src_lod.get_path(cvs_path.cvs_path),
-        dst_lod.get_path(cvs_path.cvs_path),
-        src_revnum, create_parent,
+    In the youngest revision of the repository, the destination's
+    parent *must* exist unless CREATE_PARENT is specified.  But the
+    destination itself *must not* exist.
+
+    Return the new node at (CVS_PATH, DEST_LOD).  Note that this node
+    is not necessarily writable, though its parent node necessarily
+    is."""
+
+    if cvs_path.parent_directory is None:
+      return self.copy_lod(src_lod, dest_lod, src_revnum)
+
+    # Get the node of our source:
+    src_node = self._open_readonly_node(cvs_path, src_lod, src_revnum)
+
+    # Get the parent path of the destination:
+    dest_parent_node = self._open_writable_node(
+        cvs_path.parent_directory, dest_lod, create_parent
         )
+
+    if dest_parent_node is None:
+      raise self.ParentMissingError(
+          'Attempt to add path \'%s\' to repository mirror, '
+          'but its parent directory doesn\'t exist in the mirror.'
+          % (dest_lod.get_path(cvs_path.cvs_path),))
+    elif cvs_path.basename in dest_parent_node:
+      raise self.PathExistsError(
+          'Attempt to add path \'%s\' to repository mirror '
+          'when it already exists in the mirror.'
+          % (dest_lod.get_path(cvs_path.cvs_path),)
+          )
+
+    dest_parent_node[cvs_path.basename] = src_node
+    self._invoke_delegates(
+        'copy_path',
+        src_lod.get_path(cvs_path.cvs_path),
+        dest_lod.get_path(cvs_path.cvs_path),
+        src_revnum
+        )
+
+    # This is a cheap copy, so src_node has the same contents as the
+    # new destination node.  But we have to get it from its parent
+    # node again so that its path is correct.
+    return dest_parent_node[cvs_path.basename]
 
   def fill_symbol(self, svn_symbol_commit, source_set):
     """Perform all copies necessary to create as much of the the tag
@@ -448,7 +570,7 @@ class SVNRepositoryMirror:
           'fill_symbol() called for %s with empty source set' % (symbol,)
           )
 
-    dest_node = self._open_writable_node(symbol.get_path(), False)
+    dest_node = self._open_writable_lod_node(symbol, False)
     self._fill(symbol, dest_node, source_set)
 
   def _prune_extra_entries(self, dest_path, dest_node, src_entries):
@@ -463,7 +585,7 @@ class SVNRepositoryMirror:
         if component not in src_entries]
     if delete_list:
       if not isinstance(dest_node, _WritableMirrorNode):
-        dest_node = self._open_writable_node(dest_path, False)
+        dest_node = self._open_writable_node_raw(dest_path, False)
       # Sort the delete list so that the output is in a consistent
       # order:
       delete_list.sort()
@@ -517,13 +639,13 @@ class SVNRepositoryMirror:
       # The parent path was copied from a different source than we
       # need to use, so we have to delete the version that was copied
       # with the parent before we can re-copy from the correct source:
-      self.delete_path2(source_set.cvs_path, symbol)
+      self.delete_path(source_set.cvs_path, symbol)
       do_copy = True
     else:
       do_copy = False
 
     if do_copy:
-      dest_node = self.copy_path2(
+      dest_node = self.copy_path(
           source_set.cvs_path, copy_source.lod, symbol, copy_source.revnum
           )
       prune_ok = True

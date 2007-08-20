@@ -45,11 +45,11 @@ class ArtifactManager:
   - Call artifact_manager.set_artifact(name, artifact) once for each
     known artifact.
 
-  - Call artifact_manager.creates(which_pass, name) to indicate that
-    WHICH_PASS is the pass that creates the artifact named NAME.
+  - Call artifact_manager.creates(which_pass, artifact) to indicate
+    that WHICH_PASS is the pass that creates ARTIFACT.
 
-  - Call artifact_manager.uses(which_pass, name) to indicate that
-    WHICH_PASS needs to use the artifact named NAME.
+  - Call artifact_manager.uses(which_pass, artifact) to indicate that
+    WHICH_PASS needs to use ARTIFACT.
 
   There are also helper methods register_temp_file(),
   register_artifact_needed(), and register_temp_file_needed() which
@@ -111,23 +111,20 @@ class ArtifactManager:
     else:
       raise ArtifactNotActiveError(name)
 
-  def creates(self, which_pass, name):
-    """Register that WHICH_PASS creates the artifact named NAME.
+  def creates(self, which_pass, artifact):
+    """Register that WHICH_PASS creates ARTIFACT.
 
-    An artifact with this name must already have been registered."""
-
-    artifact = self._artifacts[name]
+    ARTIFACT must already have been registered."""
 
     # An artifact is automatically "needed" in the pass in which it is
     # created:
-    self.uses(which_pass, name)
+    self.uses(which_pass, artifact)
 
-  def uses(self, which_pass, name):
-    """Register that WHICH_PASS uses the artifact named NAME.
+  def uses(self, which_pass, artifact):
+    """Register that WHICH_PASS uses ARTIFACT.
 
-    An artifact with this name must already have been registered."""
+    ARTIFACT must already have been registered."""
 
-    artifact = self._artifacts[name]
     artifact._passes_needed.add(which_pass)
     if which_pass in self._pass_needs:
       self._pass_needs[which_pass].add(artifact)
@@ -141,7 +138,7 @@ class ArtifactManager:
 
     artifact = TempFileArtifact(basename)
     self.set_artifact(basename, artifact)
-    self.creates(which_pass, basename)
+    self.creates(which_pass, artifact)
     return artifact.filename
 
   def get_temp_file(self, basename):

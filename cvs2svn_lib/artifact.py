@@ -25,7 +25,7 @@ from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.log import Log
 
 
-class Artifact:
+class Artifact(object):
   """An object that is created, used across passes, then cleaned up."""
 
   def __init__(self):

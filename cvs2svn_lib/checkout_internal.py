@@ -94,7 +94,6 @@ from __future__ import generators
 
 import cStringIO
 import re
-import types
 
 from cvs2svn_lib.set_support import *
 from cvs2svn_lib import config
@@ -450,6 +449,7 @@ class InternalRevisionRecorder(RevisionRecorder):
   """A RevisionRecorder that reconstructs the fulltext internally."""
 
   def __init__(self, compress):
+    RevisionRecorder.__init__(self)
     self._compress = compress
 
   def register_artifacts(self, which_pass):

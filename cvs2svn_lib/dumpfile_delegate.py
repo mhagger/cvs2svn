@@ -136,6 +136,9 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
   def end_commit(self):
     pass
 
+  def initialize_project(self, project):
+    pass
+
   def mkdir(self, path):
     """Emit the creation of directory PATH."""
 

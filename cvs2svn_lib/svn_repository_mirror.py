@@ -436,6 +436,8 @@ class SVNRepositoryMirror:
   def initialize_project(self, project):
     """Create the basic structure for PROJECT."""
 
+    self._invoke_delegates('initialize_project', project)
+
     # For a trunk-only conversion, trunk_path might be ''.
     if project.trunk_path:
       self.mkdir(project.trunk_path)
@@ -724,6 +726,14 @@ class SVNRepositoryMirrorDelegate:
 
   def end_commit(self):
     """This method is called at the end of each SVN commit."""
+
+    raise NotImplementedError
+
+  def initialize_project(self, project):
+    """Create the basic infrastructure for PROJECT.
+
+    For Subversion, this means the trunk, branches, and tags
+    directories."""
 
     raise NotImplementedError
 

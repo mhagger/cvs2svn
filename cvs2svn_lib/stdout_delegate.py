@@ -42,6 +42,9 @@ class StdoutDelegate(SVNRepositoryMirrorDelegate):
   def end_commit(self):
     pass
 
+  def initialize_project(self, project):
+    Log().verbose("  Initializing project %s" % (project,))
+
   def mkdir(self, path):
     """Print a line stating that we are creating directory PATH."""
 

@@ -228,7 +228,8 @@ class IndexedDatabase:
       raise RuntimeError('Invalid mode %r' % self.mode)
 
     self.index_table = RecordTable(
-        self.index_filename, self.mode, FileOffsetPacker())
+        self.index_filename, self.mode, FileOffsetPacker()
+        )
 
     if self.mode == DB_OPEN_NEW:
       assert serializer is not None
@@ -270,12 +271,12 @@ class IndexedDatabase:
   def get_many(self, indexes, default=None):
     """Yield (index,item) tuples for INDEXES, in arbitrary order.
 
-    Yield (index,None) for indexes with no defined values."""
+    Yield (index,default) for indexes with no defined values."""
 
     offsets = []
     for (index, offset) in self.index_table.get_many(indexes):
       if offset is None:
-        yield (index, None)
+        yield (index, default)
       else:
         offsets.append((offset, index))
 
@@ -285,8 +286,8 @@ class IndexedDatabase:
       yield (index, self._fetch(offset))
 
   def __delitem__(self, index):
-    self.index_table[index]
-    self.index_table[index] = 0
+    # We don't actually free the data in self.f.
+    del self.index_table[index]
 
   def close(self):
     self.index_table.close()

@@ -127,7 +127,6 @@ class FillSource:
     that is on trunk.  If all those are equal then use alphabetical
     order by path (to stabilize testsuite results)."""
 
-    trunk_id = self._symbol.project.trunk_id
     return cmp(other.score, self.score) \
            or cmp(other._preferred_source is not None
                   and other.lod == other._preferred_source.lod,

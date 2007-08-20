@@ -52,6 +52,7 @@ class AppleSingleIncorrectMagicError(AppleSingleFormatError):
   """The file didn't start with the correct magic number."""
 
   def __init__(self, data_read, eof):
+    AppleSingleFormatError.__init__(self)
     self.data_read = data_read
     self.eof = eof
 

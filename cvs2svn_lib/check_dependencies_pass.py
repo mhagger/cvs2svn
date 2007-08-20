@@ -136,7 +136,7 @@ class CheckIndexedItemStoreDependenciesPass(CheckDependenciesPass):
         artifact_manager.get_temp_file(self.cvs_items_store_index_file),
         DB_OPEN_READ)
 
-    CheckDependenciesPass.run(self, stats_keeper)
+    CheckDependenciesPass.run(self, run_options, stats_keeper)
 
     self.cvs_item_store.close()
     self.cvs_item_store = None

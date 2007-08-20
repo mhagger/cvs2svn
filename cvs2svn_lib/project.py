@@ -123,17 +123,12 @@ class Project(object):
     self.trunk_path = normalize_ttb_path(
         '--trunk', trunk_path, allow_empty=Ctx().trunk_only
         )
-    if Ctx().trunk_only:
-      self._unremovable_paths = [self.trunk_path]
-    else:
+    if not Ctx().trunk_only:
       self.branches_path = normalize_ttb_path('--branches', branches_path)
       self.tags_path = normalize_ttb_path('--tags', tags_path)
       verify_paths_disjoint(
           self.trunk_path, self.branches_path, self.tags_path
           )
-      self._unremovable_paths = [
-          self.trunk_path, self.branches_path, self.tags_path
-          ]
 
     # A list of transformation rules (regexp, replacement) applied to
     # symbol names in this project.
@@ -209,11 +204,6 @@ class Project(object):
       return True
 
     return False
-
-  def is_unremovable(self, svn_path):
-    """Return True iff the specified path must not be removed."""
-
-    return svn_path in self._unremovable_paths
 
   def get_trunk_path(self, *components):
     """Return the trunk path.

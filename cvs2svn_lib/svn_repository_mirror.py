@@ -64,9 +64,6 @@ class _MirrorNode(object):
     # node):
     self.entries = entries
 
-  def get_subpath(self, *components):
-    return path_join(self.path, *components)
-
   def __getitem__(self, component):
     """Return the _MirrorNode associated with the specified subnode.
 
@@ -76,7 +73,7 @@ class _MirrorNode(object):
     if key is None:
       return None
     else:
-      return self.repo._get_node(self.get_subpath(component), key)
+      return self.repo._get_node(path_join(self.path, component), key)
 
   def __contains__(self, component):
     return component in self.entries
@@ -105,8 +102,9 @@ class _WritableMirrorNode(_MirrorNode):
 
     COMPONENT must exist in this node."""
 
+    node = self[component]
     del self[component]
-    self.repo._invoke_delegates('delete_path', self.get_subpath(component))
+    self.repo._invoke_delegates('delete_path', node.path)
 
 
 class SVNRepositoryMirror:

@@ -32,6 +32,7 @@ from cvs2svn_lib.serializer import MarshalSerializer
 from cvs2svn_lib.database import IndexedDatabase
 from cvs2svn_lib.record_table import UnsignedIntegerPacker
 from cvs2svn_lib.record_table import RecordTable
+from cvs2svn_lib.symbol import Trunk
 from cvs2svn_lib.svn_commit_item import SVNCommitItem
 
 
@@ -387,39 +388,22 @@ class SVNRepositoryMirror:
     else:
       return None
 
-  def _delete_path_raw(self, svn_path, should_prune=False):
-    """Delete SVN_PATH from the tree.
+  def delete_lod(self, lod):
+    """Delete the main path for LOD from the tree.
 
-    SVN_PATH must currently exist.
+    The path must currently exist.  Silently refuse to delete trunk
+    paths."""
 
-    If SHOULD_PRUNE is true, then delete all ancestor directories that
-    are made empty when SVN_PATH is deleted.  In other words,
-    SHOULD_PRUNE is like the -P option to 'cvs checkout'.
-
-    This function ignores requests to delete the root directory or any
-    directory for which any project's is_unremovable() method returns
-    True, either directly or by pruning."""
-
-    if svn_path == '':
+    if isinstance(lod, Trunk):
+      # Never delete a Trunk path.
       return
-    for project in Ctx()._projects.itervalues():
-      if project.is_unremovable(svn_path):
-        return
+
+    svn_path = lod.get_path()
 
     (parent_path, entry,) = path_split(svn_path)
     parent_node = self._open_writable_node_raw(parent_path, create=False)
 
     parent_node.delete_component(entry)
-    # The following recursion makes pruning an O(n^2) operation in the
-    # worst case (where n is the depth of SVN_PATH), but the worst case
-    # is probably rare, and the constant cost is pretty low.  Another
-    # drawback is that we issue a delete for each path and not just
-    # a single delete for the topmost directory pruned.
-    if should_prune and len(parent_node.entries) == 0:
-      self._delete_path_raw(parent_path, True)
-
-  def delete_lod(self, lod):
-    self._delete_path_raw(lod.get_path(), should_prune=False)
 
   def delete_path(self, cvs_path, lod, should_prune=False):
     """Delete CVS_PATH from LOD."""

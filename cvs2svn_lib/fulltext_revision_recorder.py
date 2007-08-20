@@ -63,6 +63,7 @@ class FulltextRevisionRecorderAdapter(RevisionRecorder):
   the fulltext to a fulltext_revision_recorder."""
 
   def __init__(self, fulltext_revision_recorder):
+    RevisionRecorder.__init__(self)
     self.fulltext_revision_recorder = fulltext_revision_recorder
 
   def register_artifacts(self, which_pass):

@@ -567,12 +567,10 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
   def _determine_operation(self, rev_data):
     prev_rev_data = self._rev_data.get(rev_data.parent)
-    type = cvs_revision_type_map[(
+    return cvs_revision_type_map[(
         rev_data.state != 'dead',
         prev_rev_data is not None and prev_rev_data.state != 'dead',
         )]
-
-    return type
 
   def _get_cvs_revision(self, rev_data):
     """Create and return a CVSRevision for REV_DATA."""

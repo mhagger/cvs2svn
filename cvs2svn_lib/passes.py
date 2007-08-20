@@ -23,7 +23,6 @@ import sys
 import os
 import shutil
 import cPickle
-import bisect
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.set_support import *

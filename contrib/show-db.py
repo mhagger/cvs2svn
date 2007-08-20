@@ -121,10 +121,8 @@ class ProjectList:
 
 
 def prime_ctx():
-  am = artifact_manager
-
   def rf(filename):
-    am.register_temp_file(filename, None)
+    artifact_manager.register_temp_file(filename, None)
 
   from cvs2svn_lib.common import DB_OPEN_READ
   from cvs2svn_lib.symbol_database import SymbolDatabase
@@ -143,12 +141,11 @@ def prime_ctx():
   Ctx()._symbol_db = SymbolDatabase()
   Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
   Ctx()._cvs_items_db = OldCVSItemStore(
-      am.get_temp_file(config.CVS_ITEMS_STORE)
+      artifact_manager.get_temp_file(config.CVS_ITEMS_STORE)
       )
   Ctx()._metadata_db = MetadataDatabase(DB_OPEN_READ)
 
 def main():
-  am = artifact_manager
   try:
     opts, args = getopt.getopt(sys.argv[1:], "RNr:mlfcCiIp:")
   except getopt.GetoptError:

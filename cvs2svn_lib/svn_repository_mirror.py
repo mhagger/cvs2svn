@@ -294,7 +294,9 @@ class SVNRepositoryMirror:
       else:
         return parent_node[cvs_path.basename]
 
-  def _open_writable_node_raw(self, svn_path, create):
+  def _open_writable_node_raw(
+        self, svn_path, create=False, invoke_delegates=True
+        ):
     """Open a writable node for the path SVN_PATH.
 
     Iff CREATE is True, create a directory node at SVN_PATH and any
@@ -325,7 +327,8 @@ class SVNRepositoryMirror:
           # The component does not exist, so we create it.
           new_node = self._create_node_raw(path_join(node.path, component))
           node[component] = new_node
-          self._invoke_delegates('mkdir', new_node.path)
+          if invoke_delegates:
+            self._invoke_delegates('mkdir', new_node.path)
         else:
           # The component does not exist and we are not instructed to
           # create it, so we give up.
@@ -396,7 +399,7 @@ class SVNRepositoryMirror:
         return
 
     (parent_path, entry,) = path_split(svn_path)
-    parent_node = self._open_writable_node_raw(parent_path, False)
+    parent_node = self._open_writable_node_raw(parent_path, create=False)
 
     parent_node.delete_component(entry)
     # The following recursion makes pruning an O(n^2) operation in the
@@ -440,15 +443,16 @@ class SVNRepositoryMirror:
 
     # For a trunk-only conversion, trunk_path might be ''.
     if project.trunk_path:
-      self.mkdir(project.trunk_path)
+      self._open_writable_node_raw(
+          project.trunk_path, create=True, invoke_delegates=False
+          )
     if not Ctx().trunk_only:
-      self.mkdir(project.branches_path)
-      self.mkdir(project.tags_path)
-
-  def mkdir(self, path):
-    """Create PATH in the repository mirror at the youngest revision."""
-
-    self._open_writable_node_raw(path, True)
+      self._open_writable_node_raw(
+          project.branches_path, create=True, invoke_delegates=False
+          )
+      self._open_writable_node_raw(
+          project.tags_path, create=True, invoke_delegates=False
+          )
 
   def change_path(self, cvs_rev):
     """Register a change in self._youngest for the CVS_REV's svn_path

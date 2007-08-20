@@ -21,11 +21,13 @@ import os
 import md5
 
 from cvs2svn_lib.boolean import *
+from cvs2svn_lib.set_support import *
 from cvs2svn_lib import config
 from cvs2svn_lib.common import CommandError
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import OP_ADD
 from cvs2svn_lib.common import OP_CHANGE
+from cvs2svn_lib.common import path_split
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.svn_repository_mirror import SVNRepositoryMirrorDelegate
 from cvs2svn_lib.apple_single_filter import get_maybe_apple_single_stream
@@ -43,6 +45,11 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
 
     self.dumpfile = open(self.dumpfile_path, 'wb')
     self._write_dumpfile_header(self.dumpfile)
+
+    # A set of the basic project infrastructure project directories
+    # that have been created so far, as SVN paths.  (The root
+    # directory is considered to be present at initialization.)
+    self._basic_directories = set([''])
 
   def _write_dumpfile_header(self, dumpfile):
     # Initialize the dumpfile with the standard headers.
@@ -136,8 +143,31 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
   def end_commit(self):
     pass
 
+  def _create_basic_directory(self, path):
+    """Create PATH in the repository if it is not already there.
+
+    This method should only be used for the basic project TTB
+    directories, not for directories with a project."""
+
+    if path not in self._basic_directories:
+      # Make sure that the parent directory is present:
+      self._create_basic_directory(path_split(path)[0])
+      self.mkdir(path)
+      self._basic_directories.add(path)
+
   def initialize_project(self, project):
-    pass
+    """Create the TTB directories for the project.
+
+    Be sure not to create parent directories that already exist (e.g.,
+    because two directories share part of their paths either within or
+    across projects)."""
+
+    # For a trunk-only conversion, trunk_path might be ''.
+    if project.trunk_path:
+      self._create_basic_directory(project.trunk_path)
+    if not Ctx().trunk_only:
+      self._create_basic_directory(project.branches_path)
+      self._create_basic_directory(project.tags_path)
 
   def mkdir(self, path):
     """Emit the creation of directory PATH."""

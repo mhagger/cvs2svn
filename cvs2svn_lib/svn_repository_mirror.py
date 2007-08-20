@@ -98,7 +98,7 @@ class _WritableMirrorNode(_MirrorNode):
     del self.entries[component]
 
   def delete_component(self, component):
-    """Delete the COMPONENT from this directory and notify delagates.
+    """Delete the COMPONENT from this directory and notify delegates.
 
     COMPONENT must exist in this node."""
 
@@ -108,11 +108,13 @@ class _WritableMirrorNode(_MirrorNode):
 
 
 class SVNRepositoryMirror:
-  """Mirror a Subversion Repository as it is constructed, one
-  SVNCommit at a time.  The mirror is skeletal; it does not contain
-  file contents.  The creation of a dumpfile or Subversion repository
-  is handled by delegates.  See self.add_delegate method for how to
-  set delegates.
+  """Mirror a Subversion repository and its history.
+
+  Mirror a Subversion repository as it is constructed, one SVNCommit
+  at a time.  The mirror is skeletal; it does not contain file
+  contents.  The creation of a dumpfile or Subversion repository is
+  handled by delegates.  See the add_delegate() method for how to set
+  delegates.
 
   The structure of the repository is kept in two databases and one
   hash.  The _svn_revs_root_nodes database maps revisions to root node
@@ -121,7 +123,7 @@ class SVNRepositoryMirror:
   and the _nodes_db are stored on disk and each access is expensive.
 
   The _nodes_db database only has the keys for old revisions.  The
-  revision that is being contructed is kept in memory in the
+  revision that is being constructed is kept in memory in the
   _new_nodes map, which is cheap to access.
 
   You must invoke start_commit() before each SVNCommit and
@@ -131,14 +133,18 @@ class SVNRepositoryMirror:
       have leading or trailing slashes."""
 
   class ParentMissingError(Exception):
-    """Exception raised if an attempt is made to add a path to the
+    """The parent of a path is missing.
+
+    Exception raised if an attempt is made to add a path to the
     repository mirror but the parent's path doesn't exist in the
     youngest revision of the repository."""
 
     pass
 
   class PathExistsError(Exception):
-    """Exception raised if an attempt is made to add a path to the
+    """The path already exists in the repository.
+
+    Exception raised if an attempt is made to add a path to the
     repository mirror and that path already exists in the youngest
     revision of the repository."""
 
@@ -167,7 +173,8 @@ class SVNRepositoryMirror:
     # A map from SVN revision number to root node number:
     self._svn_revs_root_nodes = RecordTable(
         artifact_manager.get_temp_file(config.SVN_MIRROR_REVISIONS_TABLE),
-        DB_OPEN_NEW, UnsignedIntegerPacker())
+        DB_OPEN_NEW, UnsignedIntegerPacker()
+        )
 
     # This corresponds to the 'nodes' table in a Subversion fs.  (We
     # don't need a 'representations' or 'strings' table because we
@@ -175,7 +182,8 @@ class SVNRepositoryMirror:
     self._nodes_db = IndexedDatabase(
         artifact_manager.get_temp_file(config.SVN_MIRROR_NODES_STORE),
         artifact_manager.get_temp_file(config.SVN_MIRROR_NODES_INDEX_TABLE),
-        DB_OPEN_NEW, serializer=MarshalSerializer())
+        DB_OPEN_NEW, serializer=MarshalSerializer()
+        )
 
     # Start at revision 0 without a root node.  It will be created
     # by _open_writable_root_node.
@@ -196,8 +204,10 @@ class SVNRepositoryMirror:
       self._new_root_node = self._create_node_raw('')
 
   def end_commit(self):
-    """Called at the end of each commit.  This method copies the newly
-    created nodes to the on-disk nodes db."""
+    """Called at the end of each commit.
+
+    This method copies the newly created nodes to the on-disk nodes
+    db."""
 
     if self._new_root_node is None:
       # No changes were made in this revision, so we make the root node
@@ -244,7 +254,7 @@ class SVNRepositoryMirror:
 
 
   def _get_node(self, path, key):
-    """Returns the node for PATH and key KEY.
+    """Return the node for PATH and key KEY.
 
     The node might be read from either self._nodes_db or
     self._new_nodes.  Return an instance of _MirrorNode."""
@@ -451,8 +461,7 @@ class SVNRepositoryMirror:
           )
 
   def change_path(self, cvs_rev):
-    """Register a change in self._youngest for the CVS_REV's svn_path
-    in the repository mirror."""
+    """Register a change in self._youngest for the CVS_REV's svn_path."""
 
     # We do not have to update the nodes because our mirror is only
     # concerned with the presence or absence of paths, and a file
@@ -545,7 +554,8 @@ class SVNRepositoryMirror:
       raise self.ParentMissingError(
           'Attempt to add path \'%s\' to repository mirror, '
           'but its parent directory doesn\'t exist in the mirror.'
-          % (dest_lod.get_path(cvs_path.cvs_path),))
+          % (dest_lod.get_path(cvs_path.cvs_path),)
+          )
     elif cvs_path.basename in dest_parent_node:
       raise self.PathExistsError(
           'Attempt to add path \'%s\' to repository mirror '
@@ -686,8 +696,10 @@ class SVNRepositoryMirror:
     self._delegates.append(delegate)
 
   def _invoke_delegates(self, method, *args):
-    """Iterate through each of our delegates, in the order that they
-    were added, and call the delegate's method named METHOD with the
+    """Invoke a method on each delegate.
+
+    Iterate through each of our delegates, in the order that they were
+    added, and call the delegate's method named METHOD with the
     arguments in ARGS."""
 
     for delegate in self._delegates:
@@ -705,28 +717,30 @@ class SVNRepositoryMirror:
 
 class SVNRepositoryMirrorDelegate:
   """Abstract superclass for any delegate to SVNRepositoryMirror.
+
   Subclasses must implement all of the methods below.
 
   For each method, a subclass implements, in its own way, the
   Subversion operation implied by the method's name.  For example, for
   the add_path method, the DumpfileDelegate would write out a
-  "Node-add:" command to a Subversion dumpfile, the StdoutDelegate
+  'Node-add:' command to a Subversion dumpfile, the StdoutDelegate
   would merely print that the path is being added to the repository,
   and the RepositoryDelegate would actually cause the path to be added
-  to the Subversion repository that it is creating.
-  """
+  to the Subversion repository that it is creating."""
 
   def start_commit(self, revnum, revprops):
-    """Perform any actions needed to start an SVN commit with revision
+    """An SVN commit is starting.
+
+    Perform any actions needed to start an SVN commit with revision
     number REVNUM and revision properties REVPROPS; see subclass
     implementation for details."""
 
-    raise NotImplementedError
+    raise NotImplementedError()
 
   def end_commit(self):
-    """This method is called at the end of each SVN commit."""
+    """An SVN commit is ending."""
 
-    raise NotImplementedError
+    raise NotImplementedError()
 
   def initialize_project(self, project):
     """Create the basic infrastructure for PROJECT.
@@ -734,42 +748,50 @@ class SVNRepositoryMirrorDelegate:
     For Subversion, this means the trunk, branches, and tags
     directories."""
 
-    raise NotImplementedError
+    raise NotImplementedError()
 
   def mkdir(self, path):
     """PATH is a string; see subclass implementation for details."""
 
-    raise NotImplementedError
+    raise NotImplementedError()
 
   def add_path(self, s_item):
-    """S_ITEM is an SVNCommitItem; see subclass implementation for
+    """The path corresponding to S_ITEM is being added to the repository.
+
+    S_ITEM is an SVNCommitItem; see subclass implementation for
     details."""
 
-    raise NotImplementedError
+    raise NotImplementedError()
 
   def change_path(self, s_item):
-    """S_ITEM is an SVNCommitItem; see subclass implementation for
+    """The path corresponding to S_ITEM is being changed in the repository.
+
+    S_ITEM is an SVNCommitItem; see subclass implementation for
     details."""
 
-    raise NotImplementedError
+    raise NotImplementedError()
 
   def delete_path(self, path):
-    """PATH is a string; see subclass implementation for
-    details."""
+    """PATH is being deleted from the repository.
 
-    raise NotImplementedError
+    PATH is a string; see subclass implementation for details."""
+
+    raise NotImplementedError()
 
   def copy_path(self, src_path, dest_path, src_revnum):
-    """SRC_PATH and DEST_PATH are both strings, and SRC_REVNUM is a
+    """SRC_PATH in SRC_REVNUM is being copied to DEST_PATH.
+
+    SRC_PATH and DEST_PATH are both strings, and SRC_REVNUM is a
     subversion revision number (int); see subclass implementation for
     details."""
 
-    raise NotImplementedError
+    raise NotImplementedError()
 
   def finish(self):
-    """Perform any cleanup necessary after all revisions have been
-    committed."""
+    """All SVN revisions have been committed.
 
-    raise NotImplementedError
+    Perform any necessary cleanup."""
+
+    raise NotImplementedError()
 
 

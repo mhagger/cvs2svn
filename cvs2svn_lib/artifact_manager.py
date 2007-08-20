@@ -17,8 +17,6 @@
 """This module manages the artifacts produced by conversion passes."""
 
 
-import os
-
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.set_support import *
 from cvs2svn_lib.context import Ctx
@@ -44,8 +42,8 @@ class ArtifactManager:
 
   To use this class:
 
-  - Call artifact_manager[name] = artifact once for each known
-    artifact.
+  - Call artifact_manager.set_artifact(name, artifact) once for each
+    known artifact.
 
   - Call artifact_manager.creates(which_pass, name) to indicate that
     WHICH_PASS is the pass that creates the artifact named NAME.
@@ -90,7 +88,7 @@ class ArtifactManager:
     # A set of passes that are currently being executed.
     self._active_passes = set()
 
-  def __setitem__(self, name, artifact):
+  def set_artifact(self, name, artifact):
     """Add ARTIFACT to the list of artifacts that we manage.
 
     Store it under NAME."""
@@ -98,7 +96,7 @@ class ArtifactManager:
     assert name not in self._artifacts
     self._artifacts[name] = artifact
 
-  def __getitem__(self, name):
+  def get_artifact(self, name):
     """Return the artifact with the specified name.
 
     If the artifact does not currently exist, raise a KeyError.  If it
@@ -142,12 +140,9 @@ class ArtifactManager:
     Return the filename of the temporary file."""
 
     artifact = TempFileArtifact(basename)
-    self[basename] = artifact
+    self.set_artifact(basename, artifact)
     self.creates(which_pass, basename)
     return artifact.filename
-
-  def get_artifact(self, artifact_name):
-    return self[artifact_name]
 
   def get_temp_file(self, basename):
     """Return the filename of the temporary file with the specified BASENAME.

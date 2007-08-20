@@ -39,7 +39,7 @@ class Artifact:
     pass
 
 
-class TempFileArtifact(Artifact):
+class TempFile(Artifact):
   """A temporary file that can be used across cvs2svn passes."""
 
   def __init__(self, basename):

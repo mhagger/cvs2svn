@@ -21,7 +21,7 @@ from cvs2svn_lib.boolean import *
 from cvs2svn_lib.set_support import *
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.log import Log
-from cvs2svn_lib.artifact import TempFileArtifact
+from cvs2svn_lib.artifact import TempFile
 
 
 class ArtifactNotActiveError(Exception):
@@ -136,15 +136,15 @@ class ArtifactManager:
 
     Return the filename of the temporary file."""
 
-    artifact = TempFileArtifact(basename)
+    artifact = TempFile(basename)
     self.set_artifact(basename, artifact)
     self.creates(which_pass, artifact)
 
   def get_temp_file(self, basename):
     """Return the filename of the temporary file with the specified BASENAME.
 
-    If the temporary file is not an existing, registered
-    TempFileArtifact, raise a KeyError."""
+    If the temporary file is not an existing, registered TempFile,
+    raise a KeyError."""
 
     return self.get_artifact(basename).filename
 

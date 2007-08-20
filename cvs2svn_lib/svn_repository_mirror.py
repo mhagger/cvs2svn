@@ -416,8 +416,6 @@ class SVNRepositoryMirror:
   def delete_path(self, cvs_path, lod, should_prune=False):
     """Delete CVS_PATH from LOD."""
 
-    svn_path = lod.get_path(cvs_path.cvs_path)
-
     if cvs_path.parent_directory is None:
       if should_prune:
         self.delete_lod(lod)
@@ -667,7 +665,6 @@ class SVNRepositoryMirror:
     src_entries = source_set.get_subsource_sets(copy_source)
 
     if prune_ok:
-      dest_path = symbol.get_path(source_set.cvs_path.get_cvs_path())
       dest_node = self._prune_extra_entries(
           source_set.cvs_path, symbol, dest_node, src_entries
           )

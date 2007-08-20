@@ -44,13 +44,18 @@ class TempFileArtifact(Artifact):
 
   def __init__(self, basename):
     Artifact.__init__(self)
-    self.filename = Ctx().get_temp_filename(basename)
+    self.basename = basename
+
+  def _get_filename(self):
+    return Ctx().get_temp_filename(self.basename)
+
+  filename = property(_get_filename)
 
   def cleanup(self):
     Log().verbose("Deleting", self.filename)
     os.unlink(self.filename)
 
   def __str__(self):
-    return 'Temporary file %r' % self.filename
+    return 'Temporary file %r' % (self.filename,)
 
 

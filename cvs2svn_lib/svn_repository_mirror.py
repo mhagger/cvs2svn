@@ -98,15 +98,6 @@ class _WritableMirrorNode(_MirrorNode):
   def __delitem__(self, component):
     del self.entries[component]
 
-  def delete_component(self, component):
-    """Delete the COMPONENT from this directory and notify delegates.
-
-    COMPONENT must exist in this node."""
-
-    node = self[component]
-    del self[component]
-    self.repo._invoke_delegates('delete_path', node.path)
-
 
 class SVNRepositoryMirror:
   """Mirror a Subversion repository and its history.
@@ -402,8 +393,8 @@ class SVNRepositoryMirror:
 
     (parent_path, entry,) = path_split(svn_path)
     parent_node = self._open_writable_node_raw(parent_path, create=False)
-
-    parent_node.delete_component(entry)
+    del parent_node[entry]
+    self._invoke_delegates('delete_path', svn_path)
 
   def delete_path(self, cvs_path, lod, should_prune=False):
     """Delete CVS_PATH from LOD."""
@@ -416,7 +407,8 @@ class SVNRepositoryMirror:
     parent_node = self._open_writable_node(
         cvs_path.parent_directory, lod, False
         )
-    parent_node.delete_component(cvs_path.basename)
+    del parent_node[cvs_path.basename]
+    self._invoke_delegates('delete_path', lod.get_path(cvs_path.cvs_path))
 
     # The following recursion makes pruning an O(n^2) operation in the
     # worst case (where n is the depth of SVN_PATH), but the worst case
@@ -586,7 +578,8 @@ class SVNRepositoryMirror:
     delete_list = [
         component
         for component in dest_node
-        if component not in src_entries]
+        if component not in src_entries
+        ]
     if delete_list:
       if not isinstance(dest_node, _WritableMirrorNode):
         dest_node = self._open_writable_node(cvs_path, symbol, False)
@@ -594,7 +587,11 @@ class SVNRepositoryMirror:
       # order:
       delete_list.sort()
       for component in delete_list:
-        dest_node.delete_component(component)
+        del dest_node[component]
+        self._invoke_delegates(
+            'delete_path', symbol.get_path(cvs_path.cvs_path, component)
+            )
+
     return dest_node
 
   def _fill(

@@ -256,4 +256,7 @@ class Project(object):
 
     return name
 
+  def __str__(self):
+    return self.trunk_path
+
 

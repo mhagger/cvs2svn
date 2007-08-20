@@ -23,36 +23,7 @@ from cvs2svn_lib.boolean import *
 from cvs2svn_lib.set_support import *
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.log import Log
-
-
-class Artifact:
-  """An artifact that can be created, used across cvs2svn passes, then
-  cleaned up."""
-
-  def __init__(self):
-    # A set of passes that need this artifact.  This field is
-    # maintained by ArtifactManager.
-    self._passes_needed = set()
-
-  def cleanup(self):
-    """This artifact is no longer needed; clean it up."""
-
-    pass
-
-
-class TempFileArtifact(Artifact):
-  """A temporary file that can be used across cvs2svn passes."""
-
-  def __init__(self, basename):
-    Artifact.__init__(self)
-    self.filename = Ctx().get_temp_filename(basename)
-
-  def cleanup(self):
-    Log().verbose("Deleting", self.filename)
-    os.unlink(self.filename)
-
-  def __str__(self):
-    return 'Temporary file %r' % self.filename
+from cvs2svn_lib.artifact import TempFileArtifact
 
 
 class ArtifactNotActiveError(Exception):

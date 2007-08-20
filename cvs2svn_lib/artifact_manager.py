@@ -139,7 +139,6 @@ class ArtifactManager:
     artifact = TempFileArtifact(basename)
     self.set_artifact(basename, artifact)
     self.creates(which_pass, artifact)
-    return artifact.filename
 
   def get_temp_file(self, basename):
     """Return the filename of the temporary file with the specified BASENAME.

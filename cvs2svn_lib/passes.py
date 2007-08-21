@@ -521,7 +521,7 @@ class InitializeChangesetsPass(Pass):
       if Log().is_on(Log.DEBUG):
         Log().debug(repr(changeset))
       changeset_graph.store_changeset(changeset)
-      for cvs_item in changeset.get_cvs_items():
+      for cvs_item in list(changeset.get_cvs_items()):
         self.sorted_cvs_items_db.add(cvs_item)
 
     self.sorted_cvs_items_db.close()

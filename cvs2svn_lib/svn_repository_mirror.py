@@ -61,13 +61,16 @@ class _MirrorNode(object):
   def __getitem__(self, component):
     """Return the _MirrorNode associated with the specified subnode.
 
-    Return None if the specified subnode does not exist."""
+    Raise KeyError if the specified subnode does not exist."""
 
-    id = self.entries.get(component, None)
-    if id is None:
-      return None
-    else:
-      return self.repo._get_node(id)
+    id = self.entries[component]
+    return self.repo._get_node(id)
+
+  def get(self, component, default=None):
+    try:
+      return self[component]
+    except KeyError:
+      return default
 
   def __contains__(self, component):
     return component in self.entries
@@ -262,7 +265,7 @@ class SVNRepositoryMirror:
     node = self._get_node(node_id)
 
     for component in lod.get_path().split('/'):
-      node = node[component]
+      node = node.get(component)
       if node is None:
         return None
 
@@ -280,7 +283,7 @@ class SVNRepositoryMirror:
       if parent_node is None:
         return None
       else:
-        return parent_node[cvs_path.basename]
+        return parent_node.get(cvs_path.basename)
 
   def _open_writable_node_raw(
         self, svn_path, create=False, invoke_delegates=True
@@ -305,7 +308,7 @@ class SVNRepositoryMirror:
     if svn_path:
       # Walk down the path, one node at a time.
       for component in svn_path.split('/'):
-        new_node = node[component]
+        new_node = node.get(component)
         new_node_path = path_join(node_path, component)
         if new_node is not None:
           # The component exists.
@@ -355,7 +358,7 @@ class SVNRepositoryMirror:
     if parent_node is None:
       return None
 
-    node = parent_node[cvs_path.basename]
+    node = parent_node.get(cvs_path.basename)
     if isinstance(node, _WritableMirrorNode):
       return node
     elif isinstance(node, _ReadOnlyMirrorNode):
@@ -652,7 +655,7 @@ class SVNRepositoryMirror:
     entries = src_entries.keys()
     entries.sort()
     for entry in entries:
-      self._fill(symbol, dest_node[entry], src_entries[entry],
+      self._fill(symbol, dest_node.get(entry), src_entries[entry],
                  copy_source, prune_ok)
 
   def add_delegate(self, delegate):

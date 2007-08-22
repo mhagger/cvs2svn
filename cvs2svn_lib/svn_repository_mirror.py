@@ -334,13 +334,10 @@ class SVNRepositoryMirror:
     """Open a writable node for the root path in LOD.
 
     Iff CREATE is True, create the path and any missing directories.
-    Return an instance of _WritableMirrorNode, or None if the path
-    doesn't already exist and CREATE is not set."""
+    Return an instance of _WritableMirrorNode.  Raise KeyError if the
+    path doesn't already exist and CREATE is not set."""
 
-    try:
-      return self._open_writable_node_raw(lod.get_path(), create)
-    except KeyError:
-      return None
+    return self._open_writable_node_raw(lod.get_path(), create)
 
   def _open_writable_node(self, cvs_path, lod, create):
     """Open a writable node for CVS_PATH in LOD.
@@ -352,10 +349,11 @@ class SVNRepositoryMirror:
     if cvs_path.parent_directory is None:
       return self._open_writable_lod_node(lod, create)
 
-    parent_node = self._open_writable_node(
-        cvs_path.parent_directory, lod, create
-        )
-    if parent_node is None:
+    try:
+      parent_node = self._open_writable_node(
+          cvs_path.parent_directory, lod, create
+          )
+    except KeyError:
       return None
 
     node = parent_node.get(cvs_path.basename)
@@ -560,7 +558,10 @@ class SVNRepositoryMirror:
           'fill_symbol() called for %s with empty source set' % (symbol,)
           )
 
-    dest_node = self._open_writable_lod_node(symbol, False)
+    try:
+      dest_node = self._open_writable_lod_node(symbol, False)
+    except KeyError:
+      dest_node = None
     self._fill(symbol, dest_node, source_set)
 
   def _prune_extra_entries(self, cvs_path, symbol, dest_node, src_entries):

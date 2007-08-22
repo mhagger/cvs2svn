@@ -288,8 +288,8 @@ class SVNRepositoryMirror:
     """Open a writable node for the path SVN_PATH.
 
     Iff CREATE is True, create a directory node at SVN_PATH and any
-    missing directories.  Return an instance of _WritableMirrorNode,
-    or None if SVN_PATH doesn't exist and CREATE is not set."""
+    missing directories.  Return an instance of _WritableMirrorNode.
+    Raise KeyError if SVN_PATH doesn't exist and CREATE is not set."""
 
     # First, get a writable root node:
     if self._new_root_node is None:
@@ -337,7 +337,10 @@ class SVNRepositoryMirror:
     Return an instance of _WritableMirrorNode, or None if the path
     doesn't already exist and CREATE is not set."""
 
-    return self._open_writable_node_raw(lod.get_path(), create)
+    try:
+      return self._open_writable_node_raw(lod.get_path(), create)
+    except KeyError:
+      return None
 
   def _open_writable_node(self, cvs_path, lod, create):
     """Open a writable node for CVS_PATH in LOD.
@@ -472,15 +475,16 @@ class SVNRepositoryMirror:
 
     # Get the parent path and the base path of the dest_path
     (dest_parent, dest_basename,) = path_split(dest_path)
-    dest_parent_node = self._open_writable_node_raw(dest_parent, False)
-
-    if dest_parent_node is None:
+    try:
+      dest_parent_node = self._open_writable_node_raw(dest_parent, False)
+    except KeyError:
       raise self.ParentMissingError(
           "Attempt to add path '%s' to repository mirror, "
           "but its parent directory doesn't exist in the mirror."
           % dest_path
           )
-    elif dest_basename in dest_parent_node:
+
+    if dest_basename in dest_parent_node:
       raise self.PathExistsError(
           "Attempt to add path '%s' to repository mirror "
           "when it already exists in the mirror." % dest_path

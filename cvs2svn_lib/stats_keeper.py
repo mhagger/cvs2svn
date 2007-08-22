@@ -174,6 +174,15 @@ class StatsKeeper:
 
   _get_timing_format = staticmethod(_get_timing_format)
 
+  def single_pass_timing(self, pass_num):
+    (pass_name, duration,) = self._pass_timings[pass_num]
+    format = self._get_timing_format(duration)
+    time_string = format % (duration,)
+    return (
+        'Time for pass%d (%s): %s seconds.'
+        % (pass_num, pass_name, time_string,)
+        )
+
   def timings(self):
     passes = self._pass_timings.keys()
     passes.sort()

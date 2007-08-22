@@ -173,7 +173,9 @@ class PassManager:
       the_pass.run(run_options, stats_keeper)
       end_time = time.time()
       stats_keeper.log_duration_for_pass(
-          end_time - start_time, i + 1, the_pass.name)
+          end_time - start_time, i + 1, the_pass.name
+          )
+      Log().normal(stats_keeper.single_pass_timing(i + 1))
       start_time = end_time
       Ctx().clean()
       # Allow the artifact manager to clean up artifacts that are no

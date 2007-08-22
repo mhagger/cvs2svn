@@ -242,10 +242,9 @@ class SVNRepositoryMirror:
     The node might be read from either self._nodes_db or
     self._new_nodes.  Return an instance of _MirrorNode."""
 
-    contents = self._new_nodes.get(id, None)
-    if contents is not None:
-      return _WritableMirrorNode(self, id, contents)
-    else:
+    try:
+      return _WritableMirrorNode(self, id, self._new_nodes[id])
+    except KeyError:
       return _ReadOnlyMirrorNode(self, id, self._nodes_db[id])
 
   def _open_readonly_lod_node(self, lod, revnum):

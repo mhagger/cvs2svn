@@ -270,21 +270,17 @@ class SVNRepositoryMirror:
     return node
 
   def _open_readonly_node(self, cvs_path, lod, revnum):
-    """Open a readonly node for CVS_PATH from LOD at REVNUM."""
+    """Open a readonly node for CVS_PATH from LOD at REVNUM.
+
+    Raise KeyError if the node does not exist."""
 
     if cvs_path.parent_directory is None:
-      try:
-        return self._open_readonly_lod_node(lod, revnum)
-      except KeyError:
-        return None
+      return self._open_readonly_lod_node(lod, revnum)
     else:
       parent_node = self._open_readonly_node(
           cvs_path.parent_directory, lod, revnum
           )
-      if parent_node is None:
-        return None
-      else:
-        return parent_node.get(cvs_path.basename)
+      return parent_node.get(cvs_path.basename)
 
   def _open_writable_node_raw(
         self, svn_path, create=False, invoke_delegates=True

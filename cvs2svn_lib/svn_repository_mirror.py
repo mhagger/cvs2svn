@@ -43,20 +43,13 @@ class _MirrorNode(object):
   where component is the path name component of an item within this
   node (i.e., a file within this directory).
 
-  Instances also have a particular path, even though the same node
-  content can have multiple paths within the same repository.  The
-  path member indicates via what path the node was accessed.
-
   For space efficiency, SVNRepositoryMirror does not actually use this
   class to store the data internally, but rather constructs instances
   of this class on demand."""
 
-  def __init__(self, repo, path, key, entries):
+  def __init__(self, repo, key, entries):
     # The SVNRepositoryMirror containing this directory:
     self.repo = repo
-
-    # The path of this node within the repository:
-    self.path = path
 
     # The key of this directory:
     self.key = key
@@ -74,7 +67,7 @@ class _MirrorNode(object):
     if key is None:
       return None
     else:
-      return self.repo._get_node(path_join(self.path, component), key)
+      return self.repo._get_node(key)
 
   def __contains__(self, component):
     return component in self.entries
@@ -193,7 +186,7 @@ class SVNRepositoryMirror:
     if revnum == 1:
       # For the first revision, we have to create the root directory
       # out of thin air:
-      self._new_root_node = self._create_node_raw('')
+      self._new_root_node = self._create_node_raw()
 
   def end_commit(self):
     """Called at the end of each commit.
@@ -217,45 +210,40 @@ class SVNRepositoryMirror:
 
     self._invoke_delegates('end_commit')
 
-  def _create_node_raw(self, path, entries=None):
+  def _create_node_raw(self, entries=None):
     if entries is None:
       entries = {}
     else:
       entries = entries.copy()
 
-    node = _WritableMirrorNode(
-        self, path, self._key_generator.gen_id(), entries
-        )
+    node = _WritableMirrorNode(self, self._key_generator.gen_id(), entries)
 
     self._new_nodes[node.key] = node.entries
     return node
 
-  def _create_node(self, cvs_path, lod, entries=None):
+  def _create_node(self, entries=None):
     if entries is None:
       entries = {}
     else:
       entries = entries.copy()
 
-    node = _WritableMirrorNode(
-        self, lod.get_path(cvs_path.cvs_path),
-        self._key_generator.gen_id(), entries
-        )
+    node = _WritableMirrorNode(self, self._key_generator.gen_id(), entries)
 
     self._new_nodes[node.key] = node.entries
     return node
 
 
-  def _get_node(self, path, key):
-    """Return the node for PATH and key KEY.
+  def _get_node(self, key):
+    """Return the node for key KEY.
 
     The node might be read from either self._nodes_db or
     self._new_nodes.  Return an instance of _MirrorNode."""
 
     contents = self._new_nodes.get(key, None)
     if contents is not None:
-      return _WritableMirrorNode(self, path, key, contents)
+      return _WritableMirrorNode(self, key, contents)
     else:
-      return _ReadOnlyMirrorNode(self, path, key, self._nodes_db[key])
+      return _ReadOnlyMirrorNode(self, key, self._nodes_db[key])
 
   def _open_readonly_lod_node(self, lod, revnum):
     """Open a readonly node for the root path of LOD at revision REVNUM.
@@ -271,7 +259,7 @@ class SVNRepositoryMirror:
     else:
       node_key = self._svn_revs_root_nodes[revnum]
 
-    node = self._get_node('', node_key)
+    node = self._get_node(node_key)
 
     for component in lod.get_path().split('/'):
       node = node[component]
@@ -307,9 +295,9 @@ class SVNRepositoryMirror:
     if self._new_root_node is None:
       # Root node still has to be created for this revision:
       old_root_node = self._get_node(
-          '', self._svn_revs_root_nodes[self._youngest - 1]
+          self._svn_revs_root_nodes[self._youngest - 1]
           )
-      self._new_root_node = self._create_node_raw('', old_root_node.entries)
+      self._new_root_node = self._create_node_raw(old_root_node.entries)
 
     node = self._new_root_node
     node_path = ''
@@ -324,11 +312,11 @@ class SVNRepositoryMirror:
           if not isinstance(new_node, _WritableMirrorNode):
             # Create a new node, with entries initialized to be the same
             # as those of the old node:
-            new_node = self._create_node_raw(new_node_path, new_node.entries)
+            new_node = self._create_node_raw(new_node.entries)
             node[component] = new_node
         elif create:
           # The component does not exist, so we create it.
-          new_node = self._create_node_raw(new_node_path)
+          new_node = self._create_node_raw()
           node[component] = new_node
           if invoke_delegates:
             self._invoke_delegates('mkdir', new_node_path)
@@ -371,12 +359,12 @@ class SVNRepositoryMirror:
     if isinstance(node, _WritableMirrorNode):
       return node
     elif isinstance(node, _ReadOnlyMirrorNode):
-      new_node = self._create_node(cvs_path, lod, node.entries)
+      new_node = self._create_node(node.entries)
       parent_node[cvs_path.basename] = new_node
       return new_node
     elif create:
       # The component does not exist, so we create it.
-      new_node = self._create_node(cvs_path, lod)
+      new_node = self._create_node()
       parent_node[cvs_path.basename] = new_node
       self._invoke_delegates('mkdir', lod.get_path(cvs_path.cvs_path))
       return new_node
@@ -463,7 +451,7 @@ class SVNRepositoryMirror:
           % (cvs_rev.get_svn_path(),)
           )
 
-    parent_node[cvs_file.basename] = self._create_node(cvs_file, cvs_rev.lod)
+    parent_node[cvs_file.basename] = self._create_node()
 
     self._invoke_delegates('add_path', SVNCommitItem(cvs_rev, True))
 
@@ -502,9 +490,8 @@ class SVNRepositoryMirror:
     self._invoke_delegates('copy_path', src_path, dest_path, src_revnum)
 
     # This is a cheap copy, so src_node has the same contents as the
-    # new destination node.  But we have to get it from its parent
-    # node again so that its path is correct.
-    return dest_parent_node[dest_basename]
+    # new destination node.
+    return src_node
 
   def copy_path(
         self, cvs_path, src_lod, dest_lod, src_revnum, create_parent=False
@@ -552,9 +539,8 @@ class SVNRepositoryMirror:
         )
 
     # This is a cheap copy, so src_node has the same contents as the
-    # new destination node.  But we have to get it from its parent
-    # node again so that its path is correct.
-    return dest_parent_node[cvs_path.basename]
+    # new destination node.
+    return src_node
 
   def fill_symbol(self, svn_symbol_commit, source_set):
     """Perform all copies for the CVSSymbols in SVN_SYMBOL_COMMIT.

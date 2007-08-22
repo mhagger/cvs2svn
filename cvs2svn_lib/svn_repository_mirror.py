@@ -310,31 +310,35 @@ class SVNRepositoryMirror:
           '', self._svn_revs_root_nodes[self._youngest - 1]
           )
       self._new_root_node = self._create_node_raw('', old_root_node.entries)
+
     node = self._new_root_node
+    node_path = ''
 
     if svn_path:
       # Walk down the path, one node at a time.
       for component in svn_path.split('/'):
         new_node = node[component]
+        new_node_path = path_join(node_path, component)
         if new_node is not None:
           # The component exists.
           if not isinstance(new_node, _WritableMirrorNode):
             # Create a new node, with entries initialized to be the same
             # as those of the old node:
-            new_node = self._create_node_raw(new_node.path, new_node.entries)
+            new_node = self._create_node_raw(new_node_path, new_node.entries)
             node[component] = new_node
         elif create:
           # The component does not exist, so we create it.
-          new_node = self._create_node_raw(path_join(node.path, component))
+          new_node = self._create_node_raw(new_node_path)
           node[component] = new_node
           if invoke_delegates:
-            self._invoke_delegates('mkdir', new_node.path)
+            self._invoke_delegates('mkdir', new_node_path)
         else:
           # The component does not exist and we are not instructed to
           # create it, so we give up.
           return None
 
         node = new_node
+        node_path = new_node_path
 
     return node
 
@@ -374,7 +378,7 @@ class SVNRepositoryMirror:
       # The component does not exist, so we create it.
       new_node = self._create_node(cvs_path, lod)
       parent_node[cvs_path.basename] = new_node
-      self._invoke_delegates('mkdir', new_node.path)
+      self._invoke_delegates('mkdir', lod.get_path(cvs_path.cvs_path))
       return new_node
     else:
       return None

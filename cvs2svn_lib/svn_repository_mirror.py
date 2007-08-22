@@ -47,12 +47,12 @@ class _MirrorNode(object):
   class to store the data internally, but rather constructs instances
   of this class on demand."""
 
-  def __init__(self, repo, key, entries):
+  def __init__(self, repo, id, entries):
     # The SVNRepositoryMirror containing this directory:
     self.repo = repo
 
-    # The key of this directory:
-    self.key = key
+    # The id of this node:
+    self.id = id
 
     # The entries within this directory (a map from component name to
     # node):
@@ -63,11 +63,11 @@ class _MirrorNode(object):
 
     Return None if the specified subnode does not exist."""
 
-    key = self.entries.get(component, None)
-    if key is None:
+    id = self.entries.get(component, None)
+    if id is None:
       return None
     else:
-      return self.repo._get_node(key)
+      return self.repo._get_node(id)
 
   def __contains__(self, component):
     return component in self.entries
@@ -86,7 +86,7 @@ class _WritableMirrorNode(_MirrorNode):
   """Represent a writable node within the SVNRepositoryMirror."""
 
   def __setitem__(self, component, node):
-    self.entries[component] = node.key
+    self.entries[component] = node.id
 
   def __delitem__(self, component):
     del self.entries[component]
@@ -103,11 +103,11 @@ class SVNRepositoryMirror:
 
   The structure of the repository is kept in two databases and one
   hash.  The _svn_revs_root_nodes database maps revisions to root node
-  keys, and the _nodes_db database maps node keys to nodes.  A node is
-  a hash from directory names to keys.  Both the _svn_revs_root_nodes
-  and the _nodes_db are stored on disk and each access is expensive.
+  ids, and the _nodes_db database maps node ids to nodes.  A node is a
+  hash from directory names to ids.  Both the _svn_revs_root_nodes and
+  the _nodes_db are stored on disk and each access is expensive.
 
-  The _nodes_db database only has the keys for old revisions.  The
+  The _nodes_db database only has the ids for old revisions.  The
   revision that is being constructed is kept in memory in the
   _new_nodes map, which is cheap to access.
 
@@ -200,10 +200,10 @@ class SVNRepositoryMirror:
       self._svn_revs_root_nodes[self._youngest] = \
           self._svn_revs_root_nodes[self._youngest - 1]
     else:
-      self._svn_revs_root_nodes[self._youngest] = self._new_root_node.key
+      self._svn_revs_root_nodes[self._youngest] = self._new_root_node.id
       # Copy the new nodes to the _nodes_db
-      for key, value in self._new_nodes.items():
-        self._nodes_db[key] = value
+      for id, value in self._new_nodes.items():
+        self._nodes_db[id] = value
 
     del self._new_root_node
     del self._new_nodes
@@ -218,7 +218,7 @@ class SVNRepositoryMirror:
 
     node = _WritableMirrorNode(self, self._key_generator.gen_id(), entries)
 
-    self._new_nodes[node.key] = node.entries
+    self._new_nodes[node.id] = node.entries
     return node
 
   def _create_node(self, entries=None):
@@ -229,37 +229,37 @@ class SVNRepositoryMirror:
 
     node = _WritableMirrorNode(self, self._key_generator.gen_id(), entries)
 
-    self._new_nodes[node.key] = node.entries
+    self._new_nodes[node.id] = node.entries
     return node
 
 
-  def _get_node(self, key):
-    """Return the node for key KEY.
+  def _get_node(self, id):
+    """Return the node for id ID.
 
     The node might be read from either self._nodes_db or
     self._new_nodes.  Return an instance of _MirrorNode."""
 
-    contents = self._new_nodes.get(key, None)
+    contents = self._new_nodes.get(id, None)
     if contents is not None:
-      return _WritableMirrorNode(self, key, contents)
+      return _WritableMirrorNode(self, id, contents)
     else:
-      return _ReadOnlyMirrorNode(self, key, self._nodes_db[key])
+      return _ReadOnlyMirrorNode(self, id, self._nodes_db[id])
 
   def _open_readonly_lod_node(self, lod, revnum):
     """Open a readonly node for the root path of LOD at revision REVNUM.
 
     Return an instance of _MirrorNode if the path exists, else None."""
 
-    # Get the root key
+    # Get the root id
     if revnum == self._youngest:
       if self._new_root_node is None:
-        node_key = self._svn_revs_root_nodes[self._youngest - 1]
+        node_id = self._svn_revs_root_nodes[self._youngest - 1]
       else:
-        node_key = self._new_root_node.key
+        node_id = self._new_root_node.id
     else:
-      node_key = self._svn_revs_root_nodes[revnum]
+      node_id = self._svn_revs_root_nodes[revnum]
 
-    node = self._get_node(node_key)
+    node = self._get_node(node_id)
 
     for component in lod.get_path().split('/'):
       node = node[component]
@@ -648,7 +648,7 @@ class SVNRepositoryMirror:
           source_set.cvs_path, symbol, dest_node, src_entries
           )
 
-    # Recurse into the SRC_ENTRIES keys sorted in alphabetical order.
+    # Recurse into the SRC_ENTRIES ids sorted in alphabetical order.
     entries = src_entries.keys()
     entries.sort()
     for entry in entries:

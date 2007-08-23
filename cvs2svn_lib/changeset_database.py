@@ -27,13 +27,13 @@ from cvs2svn_lib.changeset import SymbolChangeset
 from cvs2svn_lib.changeset import BranchChangeset
 from cvs2svn_lib.changeset import TagChangeset
 from cvs2svn_lib.record_table import UnsignedIntegerPacker
-from cvs2svn_lib.record_table import RecordTable
+from cvs2svn_lib.record_table import MmapRecordTable
 from cvs2svn_lib.database import IndexedStore
 from cvs2svn_lib.serializer import PrimedPickleSerializer
 
 
 def CVSItemToChangesetTable(filename, mode):
-  return RecordTable(filename, mode, UnsignedIntegerPacker())
+  return MmapRecordTable(filename, mode, UnsignedIntegerPacker())
 
 
 class ChangesetDatabase(IndexedStore):

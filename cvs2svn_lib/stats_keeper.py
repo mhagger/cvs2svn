@@ -22,6 +22,7 @@ includes a function to read a StatsKeeper from STATISTICS_FILE."""
 
 import time
 import cPickle
+from cStringIO import StringIO
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.set_support import *
@@ -127,44 +128,37 @@ class StatsKeeper:
     f.close()
 
   def __str__(self):
-    svn_revs_str = ""
-    if self._svn_rev_count is not None:
-      svn_revs_str = ('Total SVN Commits:      %10s\n'
-                      % self._svn_rev_count)
+    f = StringIO()
+    f.write('\n')
+    f.write('cvs2svn Statistics:\n')
+    f.write('------------------\n')
+    f.write('Total CVS Files:        %10i\n' % (self._repos_file_count,))
+    f.write('Total CVS Revisions:    %10i\n' % (self._cvs_revs_count,))
+    f.write('Total CVS Branches:     %10i\n' % (self._cvs_branches_count,))
+    f.write('Total CVS Tags:         %10i\n' % (self._cvs_tags_count,))
+    f.write('Total Unique Tags:      %10i\n' % (len(self._tag_ids),))
+    f.write('Total Unique Branches:  %10i\n' % (len(self._branch_ids),))
+    f.write('CVS Repos Size in KB:   %10i\n' % ((self._repos_size / 1024),))
 
-    caveat_str = ''
+    if self._svn_rev_count is not None:
+      f.write('Total SVN Commits:      %10i\n' % self._svn_rev_count)
+
+    f.write(
+        'First Revision Date:    %s\n' % (time.ctime(self._first_rev_date),)
+        )
+    f.write(
+        'Last Revision Date:     %s\n' % (time.ctime(self._last_rev_date),)
+        )
+    f.write('------------------')
+
     if not self._stats_reflect_exclude:
-      caveat_str = (
+      f.write(
           '\n'
           '(These are unaltered CVS repository stats and do not\n'
-          ' reflect tags or branches excluded via --exclude)\n')
-    return ('\n'                                \
-            'cvs2svn Statistics:\n'             \
-            '------------------\n'              \
-            'Total CVS Files:        %10i\n'    \
-            'Total CVS Revisions:    %10i\n'    \
-            'Total CVS Branches:     %10i\n'    \
-            'Total CVS Tags:         %10i\n'    \
-            'Total Unique Tags:      %10i\n'    \
-            'Total Unique Branches:  %10i\n'    \
-            'CVS Repos Size in KB:   %10i\n'    \
-            '%s'                                \
-            'First Revision Date:    %s\n'      \
-            'Last Revision Date:     %s\n'      \
-            '------------------'                \
-            '%s'
-            % (self._repos_file_count,
-               self._cvs_revs_count,
-               self._cvs_branches_count,
-               self._cvs_tags_count,
-               len(self._tag_ids),
-               len(self._branch_ids),
-               (self._repos_size / 1024),
-               svn_revs_str,
-               time.ctime(self._first_rev_date),
-               time.ctime(self._last_rev_date),
-               caveat_str,
-               ))
+          ' reflect tags or branches excluded via --exclude)\n'
+          )
+
+    return f.getvalue()
 
   def _get_timing_format(value):
     # Output times with up to 3 decimal places:

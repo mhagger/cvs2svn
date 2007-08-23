@@ -343,18 +343,15 @@ class SVNRepositoryMirror:
     """Open a writable node for CVS_PATH in LOD.
 
     Iff CREATE is True, create a directory node at SVN_PATH and any
-    missing directories.  Return an instance of _WritableMirrorNode,
-    or None if SVN_PATH doesn't exist and CREATE is not set."""
+    missing directories.  Return an instance of _WritableMirrorNode.
+    Raise KeyError if SVN_PATH doesn't exist and CREATE is not set."""
 
     if cvs_path.parent_directory is None:
       return self._open_writable_lod_node(lod, create)
 
-    try:
-      parent_node = self._open_writable_node(
-          cvs_path.parent_directory, lod, create
-          )
-    except KeyError:
-      return None
+    parent_node = self._open_writable_node(
+        cvs_path.parent_directory, lod, create
+        )
 
     node = parent_node.get(cvs_path.basename)
     if isinstance(node, _WritableMirrorNode):
@@ -370,7 +367,7 @@ class SVNRepositoryMirror:
       self._invoke_delegates('mkdir', lod.get_path(cvs_path.cvs_path))
       return new_node
     else:
-      return None
+      raise KeyError()
 
   def delete_lod(self, lod):
     """Delete the main path for LOD from the tree.
@@ -515,17 +512,18 @@ class SVNRepositoryMirror:
     src_node = self._open_readonly_node(cvs_path, src_lod, src_revnum)
 
     # Get the parent path of the destination:
-    dest_parent_node = self._open_writable_node(
-        cvs_path.parent_directory, dest_lod, create_parent
-        )
-
-    if dest_parent_node is None:
+    try:
+      dest_parent_node = self._open_writable_node(
+          cvs_path.parent_directory, dest_lod, create_parent
+          )
+    except KeyError:
       raise self.ParentMissingError(
           'Attempt to add path \'%s\' to repository mirror, '
           'but its parent directory doesn\'t exist in the mirror.'
           % (dest_lod.get_path(cvs_path.cvs_path),)
           )
-    elif cvs_path.basename in dest_parent_node:
+
+    if cvs_path.basename in dest_parent_node:
       raise self.PathExistsError(
           'Attempt to add path \'%s\' to repository mirror '
           'when it already exists in the mirror.'

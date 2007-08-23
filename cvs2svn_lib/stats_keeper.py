@@ -180,7 +180,9 @@ class StatsKeeper:
   def timings(self):
     passes = self._pass_timings.keys()
     passes.sort()
-    output = 'Timings (seconds):\n------------------\n'
+    f = StringIO()
+    f.write('Timings (seconds):\n')
+    f.write('------------------\n')
 
     total = self._end_time - self._start_time
 
@@ -188,12 +190,12 @@ class StatsKeeper:
 
     for pass_num in passes:
       (pass_name, duration,) = self._pass_timings[pass_num]
-      p_str = ((format + '   pass%-2d   %s\n')
-               % (duration, pass_num, pass_name,))
-      output += p_str
+      f.write(
+          (format + '   pass%-2d   %s\n') % (duration, pass_num, pass_name,)
+          )
 
-    output += ((format + '   total') % total)
-    return output
+    f.write((format + '   total') % total)
+    return f.getvalue()
 
 
 def read_stats_keeper():

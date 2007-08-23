@@ -280,7 +280,7 @@ class SVNRepositoryMirror:
       parent_node = self._open_readonly_node(
           cvs_path.parent_directory, lod, revnum
           )
-      return parent_node.get(cvs_path.basename)
+      return parent_node[cvs_path.basename]
 
   def _open_writable_node_raw(
         self, svn_path, create=False, invoke_delegates=True

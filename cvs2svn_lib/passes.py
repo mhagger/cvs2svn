@@ -144,7 +144,6 @@ class CollectRevsPass(Pass):
 
     Ctx()._cvs_file_db.close()
     write_projects(artifact_manager.get_temp_file(config.PROJECTS))
-    stats_keeper.reset_cvs_rev_info()
     stats_keeper.archive()
     Log().quiet("Done")
 
@@ -238,6 +237,7 @@ class FilterSymbolsPass(Pass):
 
     Log().quiet("Filtering out excluded symbols and summarizing items...")
 
+    stats_keeper.reset_cvs_rev_info()
     revision_excluder.start()
     # Process the cvs items store one file at a time:
     for cvs_file_items in cvs_item_store.iter_cvs_file_items():

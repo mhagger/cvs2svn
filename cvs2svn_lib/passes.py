@@ -144,7 +144,6 @@ class CollectRevsPass(Pass):
 
     Ctx()._cvs_file_db.close()
     write_projects(artifact_manager.get_temp_file(config.PROJECTS))
-    stats_keeper.archive()
     Log().quiet("Done")
 
 
@@ -1258,7 +1257,6 @@ class TopologicalSortPass(Pass):
     sorted_changesets.close()
 
     stats_keeper.set_stats_reflect_exclude(True)
-    stats_keeper.archive()
 
     Ctx()._cvs_items_db.close()
     Ctx()._symbol_db.close()
@@ -1358,8 +1356,6 @@ class CreateRevsPass(Pass):
     Ctx()._metadata_db.close()
     Ctx()._symbol_db.close()
     Ctx()._cvs_file_db.close()
-
-    stats_keeper.archive()
 
     Log().quiet("Done")
 

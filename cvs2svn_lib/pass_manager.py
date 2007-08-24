@@ -175,6 +175,7 @@ class PassManager:
       stats_keeper.log_duration_for_pass(
           end_time - start_time, i + 1, the_pass.name
           )
+      stats_keeper.archive()
       Log().normal(stats_keeper.single_pass_timing(i + 1))
       start_time = end_time
       Ctx().clean()

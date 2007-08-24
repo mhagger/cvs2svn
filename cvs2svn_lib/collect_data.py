@@ -1140,6 +1140,8 @@ class CollectData:
 
     Ctx()._cvs_file_db.log_file(cvs_file_items.cvs_file)
     self._cvs_item_store.add(cvs_file_items)
+
+    self.stats_keeper.record_cvs_file(cvs_file_items.cvs_file)
     for cvs_item in cvs_file_items.values():
       self.stats_keeper.record_cvs_item(cvs_item)
 

@@ -74,7 +74,7 @@ class StatsKeeper:
     # A set of branch_ids seen:
     self._branch_ids = set()
 
-  def _record_cvs_file(self, cvs_file):
+  def record_cvs_file(self, cvs_file):
     # Only add the size if this is the first time we see the file.
     if cvs_file.id not in self._repos_files:
       self._repos_size += cvs_file.file_size
@@ -90,8 +90,6 @@ class StatsKeeper:
 
     if cvs_rev.timestamp > self._last_rev_date:
       self._last_rev_date = cvs_rev.timestamp
-
-    self._record_cvs_file(cvs_rev.cvs_file)
 
   def _record_cvs_branch(self, cvs_branch):
     self._cvs_branches_count += 1
@@ -120,7 +118,6 @@ class StatsKeeper:
   def __getstate__(self):
     state = self.__dict__.copy()
     # This can get kinda large, so we don't store it:
-    state['_repos_files'] = set()
     return state
 
   def archive(self):

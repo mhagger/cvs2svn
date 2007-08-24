@@ -251,6 +251,7 @@ class FilterSymbolsPass(Pass):
         cvs_file_items.check_link_consistency()
 
       # Store whatever is left to the new file and update statistics:
+      stats_keeper.record_cvs_file(cvs_file_items.cvs_file)
       for cvs_item in cvs_file_items.values():
         stats_keeper.record_cvs_item(cvs_item)
         cvs_items_db.add(cvs_item)

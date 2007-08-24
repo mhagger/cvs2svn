@@ -35,15 +35,6 @@ from cvs2svn_lib.cvs_item import CVSTag
 
 class StatsKeeper:
   def __init__(self):
-    self._cvs_revs_count = 0
-    self._cvs_branches_count = 0
-    self._cvs_tags_count = 0
-    # A set of tag_ids seen:
-    self._tag_ids = set()
-    # A set of branch_ids seen:
-    self._branch_ids = set()
-    self._repos_size = 0
-    self._repos_file_count = 0
     self._svn_rev_count = None
     self._first_rev_date = 1L<<32
     self._last_rev_date = 0
@@ -51,7 +42,7 @@ class StatsKeeper:
     self._start_time = 0
     self._end_time = 0
     self._stats_reflect_exclude = False
-    self._repos_files = set()
+    self.reset_cvs_rev_info()
 
   def log_duration_for_pass(self, duration, pass_num, pass_name):
     self._pass_timings[pass_num] = (pass_name, duration,)
@@ -66,10 +57,17 @@ class StatsKeeper:
     self._stats_reflect_exclude = value
 
   def reset_cvs_rev_info(self):
+    self._repos_files = set()
+    self._repos_file_count = 0
+    self._repos_size = 0
     self._cvs_revs_count = 0
     self._cvs_branches_count = 0
     self._cvs_tags_count = 0
+
+    # A set of tag_ids seen:
     self._tag_ids = set()
+
+    # A set of branch_ids seen:
     self._branch_ids = set()
 
   def _record_cvs_file(self, cvs_file):

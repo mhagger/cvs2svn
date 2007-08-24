@@ -86,6 +86,7 @@ class RepositoryDelegate(DumpfileDelegate):
     self.loader_pipe.stdin.close()
     error_output = self.loader_pipe.stderr.read()
     exit_status = self.loader_pipe.wait()
+    del self.loader_pipe
     if exit_status:
       raise CommandError('svnadmin load', exit_status, error_output)
     os.remove(self.dumpfile_path)

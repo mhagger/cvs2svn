@@ -165,6 +165,10 @@ class PassManager:
     for the_pass in self.passes[0:index_start]:
       artifact_manager.pass_skipped(the_pass)
 
+    # Clear the pass timings for passes that will have to be redone:
+    for i in range(index_end, len(self.passes)):
+      stats_keeper.clear_duration_for_pass(i)
+
     start_time = time.time()
     for i in range(index_start, index_end):
       the_pass = self.passes[i]

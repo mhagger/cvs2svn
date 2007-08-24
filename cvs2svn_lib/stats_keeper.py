@@ -44,6 +44,10 @@ class StatsKeeper:
     self._stats_reflect_exclude = False
     self.reset_cvs_rev_info()
 
+  def clear_duration_for_pass(self, pass_num):
+    if pass_num in self._pass_timings:
+      del self._pass_timings[pass_num]
+
   def log_duration_for_pass(self, duration, pass_num, pass_name):
     self._pass_timings[pass_num] = (pass_name, duration,)
 

@@ -250,8 +250,9 @@ class FilterSymbolsPass(Pass):
       if Log().is_on(Log.DEBUG):
         cvs_file_items.check_link_consistency()
 
-      # Store whatever is left to the new file:
+      # Store whatever is left to the new file and update statistics:
       for cvs_item in cvs_file_items.values():
+        stats_keeper.record_cvs_item(cvs_item)
         cvs_items_db.add(cvs_item)
 
         if isinstance(cvs_item, CVSRevision):
@@ -261,6 +262,8 @@ class FilterSymbolsPass(Pass):
         elif isinstance(cvs_item, CVSSymbol):
           symbols_summary_file.write(
               '%x %x\n' % (cvs_item.symbol.id, cvs_item.id,))
+
+    stats_keeper.set_stats_reflect_exclude(True)
 
     revision_excluder.finish()
     symbols_summary_file.close()
@@ -1251,12 +1254,7 @@ class TopologicalSortPass(Pass):
     for (changeset, timestamp) in self.get_changesets():
       sorted_changesets.write('%x %08x\n' % (changeset.id, timestamp,))
 
-      for cvs_item in changeset.get_cvs_items():
-        stats_keeper.record_cvs_item(cvs_item)
-
     sorted_changesets.close()
-
-    stats_keeper.set_stats_reflect_exclude(True)
 
     Ctx()._cvs_items_db.close()
     Ctx()._symbol_db.close()

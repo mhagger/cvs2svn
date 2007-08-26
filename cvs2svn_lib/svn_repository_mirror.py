@@ -390,23 +390,22 @@ class SVNRepositoryMirror:
     """Delete CVS_PATH from LOD."""
 
     if cvs_path.parent_directory is None:
-      if should_prune:
-        self.delete_lod(lod)
+      self.delete_lod(lod)
       return
+    else:
+      parent_node = self._open_writable_node(
+          cvs_path.parent_directory, lod, False
+          )
+      del parent_node[cvs_path.basename]
+      self._invoke_delegates('delete_path', lod.get_path(cvs_path.cvs_path))
 
-    parent_node = self._open_writable_node(
-        cvs_path.parent_directory, lod, False
-        )
-    del parent_node[cvs_path.basename]
-    self._invoke_delegates('delete_path', lod.get_path(cvs_path.cvs_path))
-
-    # The following recursion makes pruning an O(n^2) operation in the
-    # worst case (where n is the depth of SVN_PATH), but the worst case
-    # is probably rare, and the constant cost is pretty low.  Another
-    # drawback is that we issue a delete for each path and not just
-    # a single delete for the topmost directory pruned.
-    if should_prune and len(parent_node.entries) == 0:
-      self.delete_path(cvs_path.parent_directory, lod, True)
+      # The following recursion makes pruning an O(n^2) operation in the
+      # worst case (where n is the depth of SVN_PATH), but the worst case
+      # is probably rare, and the constant cost is pretty low.  Another
+      # drawback is that we issue a delete for each path and not just
+      # a single delete for the topmost directory pruned.
+      if should_prune and len(parent_node.entries) == 0:
+        self.delete_path(cvs_path.parent_directory, lod, True)
 
   def initialize_project(self, project):
     """Create the basic structure for PROJECT."""

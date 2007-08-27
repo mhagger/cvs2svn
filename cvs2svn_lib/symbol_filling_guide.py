@@ -41,11 +41,12 @@ class FillSource:
 
   These objects are used by the symbol filler in SVNRepositoryMirror."""
 
-  def __init__(self, symbol, lod, node_tree, preferred_source=None):
+  def __init__(self, cvs_path, symbol, lod, node_tree, preferred_source=None):
     """Create a scored fill source.
 
     Members:
 
+      _CVS_PATH -- (CVSPath): the CVSPath described by this FillSource.
       _SYMBOL -- (Symbol) the symbol to be filled.
       LOD -- (LineOfDevelopment) is the LOD of the source.
       _NODE_TREE -- (dict) a tree stored as a map { CVSPath : node }, where
@@ -60,6 +61,7 @@ class FillSource:
 
     """
 
+    self._cvs_path = cvs_path
     self._symbol = symbol
     self.lod = lod
     self._node_tree = node_tree
@@ -110,17 +112,19 @@ class FillSource:
         revision_ranges.extend(self._get_revision_ranges(subnode))
       return revision_ranges
 
-  def _get_subsource(self, node, preferred_source):
+  def _get_subsource(self, cvs_path, node, preferred_source):
     """Return the FillSource for the specified NODE."""
 
-    return FillSource(self._symbol, self.lod, node, preferred_source)
+    return FillSource(
+        cvs_path, self._symbol, self.lod, node, preferred_source
+        )
 
   def get_subsources(self, preferred_source):
     """Generate (entry, FillSource) for all direct subsources."""
 
     if not isinstance(self._node_tree, SVNRevisionRange):
       for cvs_path, node in self._node_tree.items():
-        yield cvs_path, self._get_subsource(node, preferred_source)
+        yield cvs_path, self._get_subsource(cvs_path, node, preferred_source)
 
   def __cmp__(self, other):
     """Comparison operator that sorts FillSources in descending score order.
@@ -245,7 +249,7 @@ class _SymbolFillingGuide:
         self.symbol.project.root_cvs_directory_id
         )
     sources = [
-        FillSource(self.symbol, lod, node_tree)
+        FillSource(root_cvs_directory, self.symbol, lod, node_tree)
         for (lod, node_tree) in self._node_trees.iteritems()
         ]
     return FillSourceSet(self.symbol, root_cvs_directory, sources)

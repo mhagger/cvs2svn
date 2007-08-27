@@ -242,8 +242,8 @@ class _SymbolFillingGuide:
         self.symbol.project.root_cvs_directory_id
         )
     sources = [
-        FillSource(self.symbol, lod, self._node_trees[lod])
-        for lod in self._node_trees.iterkeys()
+        FillSource(self.symbol, lod, node_tree)
+        for (lod, node_tree) in self._node_trees.iteritems()
         ]
     return FillSourceSet(self.symbol, root_cvs_directory, sources)
 

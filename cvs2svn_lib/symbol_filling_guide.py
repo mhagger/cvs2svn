@@ -41,14 +41,17 @@ class FillSource:
 
   These objects are used by the symbol filler in SVNRepositoryMirror."""
 
-  def __init__(self, symbol, lod, node, preferred_source=None):
+  def __init__(self, symbol, lod, node_tree, preferred_source=None):
     """Create a scored fill source.
 
     Members:
 
       _SYMBOL -- (Symbol) the symbol to be filled.
       LOD -- (LineOfDevelopment) is the LOD of the source.
-      NODE -- (dict) the corresponding node in the _SymbolFillingGuide.
+      _NODE_TREE -- (dict) a tree stored as a map { CVSPath : node }, where
+          subnodes have the same form.  Leaves are SVNRevisionRange instances
+          telling the range of SVN revision numbers from which the CVSPath
+          can be copied.
       _PREFERRED_SOURCE -- the source that we should prefer to use, or
           None if there is no preference.
       REVNUM -- (int) the SVN revision number with the best score.
@@ -59,7 +62,7 @@ class FillSource:
 
     self._symbol = symbol
     self.lod = lod
-    self.node = node
+    self._node_tree = node_tree
     self._preferred_source = preferred_source
     self.revnum, self.score = self._get_best_revnum()
 
@@ -73,7 +76,7 @@ class FillSource:
     otherwise, return the oldest such revision."""
 
     # Aggregate openings and closings from our rev tree
-    svn_revision_ranges = self._get_revision_ranges(self.node)
+    svn_revision_ranges = self._get_revision_ranges(self._node_tree)
 
     # Score the lists
     revision_scores = RevisionScores(svn_revision_ranges)
@@ -115,8 +118,8 @@ class FillSource:
   def get_subsources(self, preferred_source):
     """Generate (entry, FillSource) for all direct subsources."""
 
-    if not isinstance(self.node, SVNRevisionRange):
-      for cvs_path, node in self.node.items():
+    if not isinstance(self._node_tree, SVNRevisionRange):
+      for cvs_path, node in self._node_tree.items():
         yield cvs_path, self._get_subsource(node, preferred_source)
 
   def __cmp__(self, other):

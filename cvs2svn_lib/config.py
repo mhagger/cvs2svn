@@ -115,7 +115,6 @@ SYMBOL_OPENINGS_CLOSINGS_SORTED = 'symbolic-names-s.txt'
 
 # Skeleton version of an svn filesystem.  See class
 # SVNRepositoryMirror for how these work.
-SVN_MIRROR_REVISIONS_TABLE = 'svn-revisions.dat'
 SVN_MIRROR_NODES_INDEX_TABLE = 'svn-nodes-index.dat'
 SVN_MIRROR_NODES_STORE = 'svn-nodes.pck'
 

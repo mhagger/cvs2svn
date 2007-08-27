@@ -17,6 +17,9 @@
 """This module contains the SVNRepositoryMirror class."""
 
 
+import sys
+import bisect
+
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib import config
 from cvs2svn_lib.common import InternalError
@@ -95,22 +98,84 @@ class _WritableMirrorNode(_MirrorNode):
     del self.entries[component]
 
 
+class LODHistory(object):
+  """The history of root nodes for a line of development.
+
+  Members:
+
+    REVNUMS -- (list of int) the SVN revision numbers in which the id
+        changed, in numerical order.
+
+    IDS -- (list of (int or None)) the ID of the node describing the
+        root of this LOD starting at the corresponding SVN revision
+        number, or None if the LOD did not exist in that revision.
+
+  To find the root id for a given SVN revision number, a binary search
+  is done within REVNUMS to find the index of the most recent revision
+  at the time of REVNUM, then that index is used to read the id out of
+  IDS.
+
+  A sentry is written at the zeroth index of both arrays to describe
+  the initial situation, namely, that the LOD doesn't exist in SVN
+  revision r0."""
+
+  __slots__ = ['revnums', 'ids']
+
+  def __init__(self):
+    self.revnums = [0]
+    self.ids = [None]
+
+  def get_id(self, revnum=sys.maxint):
+    """Get the ID of the root path for the specified LOD in REVNUM.
+
+    Raise KeyError if the LOD didn't exist in REVNUM."""
+
+    index = bisect.bisect_right(self.revnums, revnum) - 1
+    id = self.ids[index]
+
+    if id is None:
+      raise KeyError()
+
+    return id
+
+  def exists(self):
+    """Return True iff LOD exists at the end of history."""
+
+    return self.ids[-1] is not None
+
+  def update(self, revnum, id):
+    if revnum < self.revnums[-1]:
+      raise KeyError()
+    elif revnum == self.revnums[-1]:
+      # Overwrite old entry (which was presumably read-only):
+      self.ids[-1] = id
+    else:
+      self.revnums.append(revnum)
+      self.ids.append(id)
+
+
 class SVNRepositoryMirror:
   """Mirror a Subversion repository and its history.
 
   Mirror a Subversion repository as it is constructed, one SVNCommit
-  at a time.  The mirror is skeletal; it does not contain file
-  contents.  The creation of a dumpfile or Subversion repository is
-  handled by delegates.  See the add_delegate() method for how to set
-  delegates.
+  at a time.  For each LineOfDevelopment we store a skeleton of the
+  directory structure within that LOD for each SVN revision number in
+  which it changed.  The creation of a dumpfile or Subversion
+  repository is handled by delegates.  See the add_delegate() method
+  for how to set delegates.
 
-  The structure of the repository is kept in two databases and one
-  hash.  The _svn_revs_root_nodes database maps revisions to root node
-  ids, and the _nodes_db database maps node ids to nodes.  A node is a
-  hash from directory names to ids.  Both the _svn_revs_root_nodes and
-  the _nodes_db are stored on disk and each access is expensive.
+  For each LOD that has been seen so far, an LODHistory instance is
+  stored in self._lod_histories.  An LODHistory keeps track of each
+  SVNRevision in which files were added to or deleted from that LOD,
+  as well as the node id of the node tree describing the LOD contents
+  at that SVN revision.
 
-  The _nodes_db database only has the ids for old revisions.  The
+  The LOD trees themselves are stored in the _nodes_db database, which
+  maps node ids to nodes.  A node is a map from directory/file names
+  to ids of the corresponding subnodes.  The _nodes_db is stored on
+  disk and each access is expensive.
+
+  The _nodes_db database only holds the nodes for old revisions.  The
   revision that is being constructed is kept in memory in the
   _new_nodes map, which is cheap to access.
 
@@ -142,9 +207,6 @@ class SVNRepositoryMirror:
     """Register the artifacts that will be needed for this object."""
 
     artifact_manager.register_temp_file(
-        config.SVN_MIRROR_REVISIONS_TABLE, which_pass
-        )
-    artifact_manager.register_temp_file(
         config.SVN_MIRROR_NODES_INDEX_TABLE, which_pass
         )
     artifact_manager.register_temp_file(
@@ -158,11 +220,9 @@ class SVNRepositoryMirror:
 
     self._delegates = [ ]
 
-    # A map from SVN revision number to root node number:
-    self._svn_revs_root_nodes = RecordTable(
-        artifact_manager.get_temp_file(config.SVN_MIRROR_REVISIONS_TABLE),
-        DB_OPEN_NEW, UnsignedIntegerPacker()
-        )
+    # A map from LOD to LODHistory instance for all LODs that have
+    # been defines so far:
+    self._lod_histories = {}
 
     # This corresponds to the 'nodes' table in a Subversion fs.  (We
     # don't need a 'representations' or 'strings' table because we
@@ -181,15 +241,9 @@ class SVNRepositoryMirror:
     """Start a new commit."""
 
     self._youngest = revnum
-    self._new_root_node = None
-    self._new_nodes = { }
+    self._new_nodes = {}
 
     self._invoke_delegates('start_commit', revnum, revprops)
-
-    if revnum == 1:
-      # For the first revision, we have to create the root directory
-      # out of thin air:
-      self._new_root_node = self._create_node_raw()
 
   def end_commit(self):
     """Called at the end of each commit.
@@ -197,32 +251,25 @@ class SVNRepositoryMirror:
     This method copies the newly created nodes to the on-disk nodes
     db."""
 
-    if self._new_root_node is None:
-      # No changes were made in this revision, so we make the root node
-      # of the new revision be the same as the last one.
-      self._svn_revs_root_nodes[self._youngest] = \
-          self._svn_revs_root_nodes[self._youngest - 1]
-    else:
-      self._svn_revs_root_nodes[self._youngest] = self._new_root_node.id
-      # Copy the new nodes to the _nodes_db
-      for id, value in self._new_nodes.items():
-        self._nodes_db[id] = value
+    # Copy the new nodes to the _nodes_db
+    for id, value in self._new_nodes.items():
+      self._nodes_db[id] = value
 
-    del self._new_root_node
     del self._new_nodes
 
     self._invoke_delegates('end_commit')
 
-  def _create_node_raw(self, entries=None):
-    if entries is None:
-      entries = {}
-    else:
-      entries = entries.copy()
+  def _get_lod_history(self, lod):
+    """Return the LODHistory instance describing LOD.
 
-    node = _WritableMirrorNode(self, self._key_generator.gen_id(), entries)
+    Create a new (empty) LODHistory if it doesn't yet exist."""
 
-    self._new_nodes[node.id] = node.entries
-    return node
+    try:
+      return self._lod_histories[lod]
+    except KeyError:
+      lod_history = LODHistory()
+      self._lod_histories[lod] = lod_history
+      return lod_history
 
   def _create_node(self, entries=None):
     if entries is None:
@@ -234,7 +281,6 @@ class SVNRepositoryMirror:
 
     self._new_nodes[node.id] = node.entries
     return node
-
 
   def _get_node(self, id):
     """Return the node for id ID.
@@ -253,21 +299,9 @@ class SVNRepositoryMirror:
     Return an instance of _MirrorNode if the path exists; otherwise,
     raise KeyError."""
 
-    # Get the root id
-    if revnum == self._youngest:
-      if self._new_root_node is None:
-        node_id = self._svn_revs_root_nodes[self._youngest - 1]
-      else:
-        node_id = self._new_root_node.id
-    else:
-      node_id = self._svn_revs_root_nodes[revnum]
-
-    node = self._get_node(node_id)
-
-    for component in lod.get_path().split('/'):
-      node = node[component]
-
-    return node
+    lod_history = self._get_lod_history(lod)
+    node_id = lod_history.get_id(revnum)
+    return self._get_node(node_id)
 
   def _open_readonly_node(self, cvs_path, lod, revnum):
     """Open a readonly node for CVS_PATH from LOD at REVNUM.
@@ -282,62 +316,34 @@ class SVNRepositoryMirror:
           )
       return parent_node[cvs_path.basename]
 
-  def _open_writable_node_raw(
-        self, svn_path, create=False, invoke_delegates=True
-        ):
-    """Open a writable node for the path SVN_PATH.
-
-    Iff CREATE is True, create a directory node at SVN_PATH and any
-    missing directories.  Return an instance of _WritableMirrorNode.
-    Raise KeyError if SVN_PATH doesn't exist and CREATE is not set."""
-
-    # First, get a writable root node:
-    if self._new_root_node is None:
-      # Root node still has to be created for this revision:
-      old_root_node = self._get_node(
-          self._svn_revs_root_nodes[self._youngest - 1]
-          )
-      self._new_root_node = self._create_node_raw(old_root_node.entries)
-
-    node = self._new_root_node
-    node_path = ''
-
-    if svn_path:
-      # Walk down the path, one node at a time.
-      for component in svn_path.split('/'):
-        new_node = node.get(component)
-        new_node_path = path_join(node_path, component)
-        if new_node is not None:
-          # The component exists.
-          if not isinstance(new_node, _WritableMirrorNode):
-            # Create a new node, with entries initialized to be the same
-            # as those of the old node:
-            new_node = self._create_node_raw(new_node.entries)
-            node[component] = new_node
-        elif create:
-          # The component does not exist, so we create it.
-          new_node = self._create_node_raw()
-          node[component] = new_node
-          if invoke_delegates:
-            self._invoke_delegates('mkdir', new_node_path)
-        else:
-          # The component does not exist and we are not instructed to
-          # create it, so we give up.
-          return None
-
-        node = new_node
-        node_path = new_node_path
-
-    return node
-
-  def _open_writable_lod_node(self, lod, create):
+  def _open_writable_lod_node(self, lod, create, invoke_delegates=True):
     """Open a writable node for the root path in LOD.
 
     Iff CREATE is True, create the path and any missing directories.
     Return an instance of _WritableMirrorNode.  Raise KeyError if the
     path doesn't already exist and CREATE is not set."""
 
-    return self._open_writable_node_raw(lod.get_path(), create)
+    lod_history = self._get_lod_history(lod)
+    try:
+      id = lod_history.get_id()
+    except KeyError:
+      if create:
+        node = self._create_node()
+        lod_history.update(self._youngest, node.id)
+        lod_path = lod.get_path()
+        if lod_path and invoke_delegates:
+          self._invoke_delegates('mkdir', lod_path)
+      else:
+        raise
+    else:
+      node = self._get_node(id)
+      if not isinstance(node, _WritableMirrorNode):
+        # Node was created in an earlier revision, so we have to copy
+        # it to make it writable:
+        node = self._create_node(node.entries)
+        lod_history.update(self._youngest, node.id)
+
+    return node
 
   def _open_writable_node(self, cvs_path, lod, create):
     """Open a writable node for CVS_PATH in LOD.
@@ -379,12 +385,11 @@ class SVNRepositoryMirror:
       # Never delete a Trunk path.
       return
 
-    svn_path = lod.get_path()
-
-    (parent_path, entry,) = path_split(svn_path)
-    parent_node = self._open_writable_node_raw(parent_path, create=False)
-    del parent_node[entry]
-    self._invoke_delegates('delete_path', svn_path)
+    lod_history = self._get_lod_history(lod)
+    if not lod_history.exists():
+      raise KeyError()
+    lod_history.update(self._youngest, None)
+    self._invoke_delegates('delete_path', lod.get_path())
 
   def delete_path(self, cvs_path, lod, should_prune=False):
     """Delete CVS_PATH from LOD."""
@@ -412,18 +417,10 @@ class SVNRepositoryMirror:
 
     self._invoke_delegates('initialize_project', project)
 
-    # For a trunk-only conversion, trunk_path might be ''.
-    if project.trunk_path:
-      self._open_writable_node_raw(
-          project.trunk_path, create=True, invoke_delegates=False
-          )
-    if not Ctx().trunk_only:
-      self._open_writable_node_raw(
-          project.branches_path, create=True, invoke_delegates=False
-          )
-      self._open_writable_node_raw(
-          project.tags_path, create=True, invoke_delegates=False
-          )
+    self._open_writable_lod_node(
+        Ctx()._symbol_db.get_symbol(project.trunk_id),
+        create=True, invoke_delegates=False
+        )
 
   def change_path(self, cvs_rev):
     """Register a change in self._youngest for the CVS_REV's svn_path."""
@@ -455,8 +452,8 @@ class SVNRepositoryMirror:
   def copy_lod(self, src_lod, dest_lod, src_revnum):
     """Copy all of SRC_LOD at SRC_REVNUM to DST_LOD.
 
-    In the youngest revision of the repository, the destination's
-    parent *must* exist, but the destination itself *must not* exist.
+    In the youngest revision of the repository, the destination LOD
+    *must not* already exist.
 
     Return the new node at DEST_LOD.  Note that this node is not
     necessarily writable, though its parent node necessarily is."""
@@ -467,24 +464,15 @@ class SVNRepositoryMirror:
     # Get the node of our src_path
     src_node = self._open_readonly_lod_node(src_lod, src_revnum)
 
-    # Get the parent path and the base path of the dest_path
-    (dest_parent, dest_basename,) = path_split(dest_path)
-    try:
-      dest_parent_node = self._open_writable_node_raw(dest_parent, False)
-    except KeyError:
-      raise self.ParentMissingError(
-          "Attempt to add path '%s' to repository mirror, "
-          "but its parent directory doesn't exist in the mirror."
-          % dest_path
-          )
-
-    if dest_basename in dest_parent_node:
+    dest_lod_history = self._get_lod_history(dest_lod)
+    if dest_lod_history.exists():
       raise self.PathExistsError(
           "Attempt to add path '%s' to repository mirror "
           "when it already exists in the mirror." % dest_path
           )
 
-    dest_parent_node[dest_basename] = src_node
+    dest_lod_history.update(self._youngest, src_node.id)
+
     self._invoke_delegates('copy_path', src_path, dest_path, src_revnum)
 
     # This is a cheap copy, so src_node has the same contents as the
@@ -682,8 +670,7 @@ class SVNRepositoryMirror:
     """Call the delegate finish methods and close databases."""
 
     self._invoke_delegates('finish')
-    self._svn_revs_root_nodes.close()
-    self._svn_revs_root_nodes = None
+    self._lod_histories = None
     self._nodes_db.close()
     self._nodes_db = None
 

@@ -621,10 +621,11 @@ loaded into the repository, and then removed.
 In both modes, the dumpfile revisions are created by walking through
 'data.s-revs.txt'.
 
-The databases 'svn-nodes.db' and 'svn-revisions.db' form a skeletal
-(metadata only, no content) mirror of the repository structure that
-cvs2svn is creating.  They provide data about previous revisions that
-cvs2svn requires while constructing the dumpstream.
+The database 'svn-nodes.db' holds a skeletal mirror of the repository
+structure at each SVN revision.  This mirror keeps track of which
+files existed on each LOD, but does not record any file contents.
+cvs2svn requires this information to decide which paths to copy when
+filling branches and tags.
 
 
                   ===============================
@@ -656,17 +657,15 @@ In order to make the "best" set of copies/deletes when creating a
 branch, cvs2svn keeps track of two sets of trees while it's making
 commits:
 
-   1. A skeleton mirror of the subversion repository, that is, an
-      array of revisions, with a tree hanging off each revision.  (The
-      "array" is actually implemented as an anydbm database itself,
-      mapping string representations of numbers to root keys.)
+   1. A skeleton mirror of the subversion repository, that is, a
+      record of which file existed on which LOD for each SVN revision.
 
    2. A tree for each CVS symbolic name, and the svn file/directory
       revisions from which various parts of that tree could be copied.
 
-Both tree sets live in anydbm databases, using the same basic schema:
-unique keys map to marshal.dumps() representations of dictionaries,
-which in turn map entry names to other unique keys:
+Each LOD is recorded as a tree using the following schema: unique keys
+map to marshal.dumps() representations of dictionaries, which in turn
+map path component names to other unique keys:
 
    root_key  ==> { entryname1 : entrykey1, entryname2 : entrykey2, ... }
    entrykey1 ==> { entrynameX : entrykeyX, ... }

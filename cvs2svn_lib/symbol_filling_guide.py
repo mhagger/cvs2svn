@@ -173,7 +173,9 @@ class FillSource:
 
     This method is included for debugging purposes."""
 
+    print 'TREE LOD = %s' % (self.lod,)
     self._print_subtree(self._node_tree, self._cvs_path, indent_depth=0)
+    print 'TREE', '-' * 75
 
   def _print_subtree(self, node, cvs_path, indent_depth=0):
     """Print all nodes that are rooted at NODE to sys.stdout.
@@ -239,6 +241,13 @@ class FillSourceSet:
 
     return retval
 
+  def print_fill_sources(self):
+    print "TREE", "=" * 75
+    fill_sources = list(self._sources)
+    fill_sources.sort(lambda a, b: cmp(a.lod, b.lod))
+    for fill_source in fill_sources:
+      fill_source.print_tree()
+
 
 class _SymbolFillingGuide:
   """A description of the sources that can be copied to fill a symbol.
@@ -278,7 +287,7 @@ class _SymbolFillingGuide:
     self._source_set = FillSourceSet(
         self.symbol, root_cvs_directory, self._fill_sources.values()
         )
-    #self.print_fill_sources()
+    #self._source_set.print_fill_sources()
 
   def get_source_set(self):
     """Return a FillSourceSet for the root path for this symbolic name.
@@ -287,15 +296,6 @@ class _SymbolFillingGuide:
     the node tree."""
 
     return self._source_set
-
-  def print_fill_sources(self):
-    print "TREE", "=" * 75
-    lods = self._fill_sources.keys()
-    lods.sort()
-    for lod in lods:
-      print 'TREE LOD = %s' % (lod,)
-      self._fill_sources[lod].print_tree()
-      print "TREE", "-" * 75
 
 
 def get_source_set(symbol, range_map):

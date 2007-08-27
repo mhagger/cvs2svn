@@ -301,9 +301,30 @@ class _SymbolFillingGuide:
 def get_source_set(symbol, range_map):
   """Return a FillSourceSet describing the fill sources for RANGE_MAP.
 
-  RANGE_MAP is a map { CVSSymbol : SVNRevisionRange } as returned by
-  SymbolingsReader.get_range_map()."""
+  SYMBOL is either a Branch or a Tag.  RANGE_MAP is a map { CVSSymbol
+  : SVNRevisionRange } as returned by
+  SymbolingsReader.get_range_map().
 
-  return _SymbolFillingGuide(symbol, range_map).get_source_set()
+  Use the SVNRevisionRanges from RANGE_MAP to create a FillSourceSet
+  instance describing the sources for filling SYMBOL."""
+
+  # A map { LOD : FillSource } for each LOD containing sources that
+  # need to be filled.
+  fill_sources = {}
+
+  root_cvs_directory = Ctx()._cvs_file_db.get_file(
+      symbol.project.root_cvs_directory_id
+      )
+  for cvs_symbol, svn_revision_range in range_map.items():
+    source_lod = cvs_symbol.source_lod
+    try:
+      fill_source = fill_sources[source_lod]
+    except KeyError:
+      fill_source = FillSource(root_cvs_directory, symbol, source_lod, {})
+      fill_sources[source_lod] = fill_source
+
+    fill_source._set_node(cvs_symbol.cvs_file, svn_revision_range)
+
+  return FillSourceSet(symbol, root_cvs_directory, fill_sources.values())
 
 

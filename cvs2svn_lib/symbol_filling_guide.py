@@ -275,6 +275,9 @@ class _SymbolFillingGuide:
 
       fill_source._set_node(cvs_symbol.cvs_file, svn_revision_range)
 
+    self._source_set = FillSourceSet(
+        self.symbol, root_cvs_directory, self._fill_sources.values()
+        )
     #self.print_fill_sources()
 
   def get_source_set(self):
@@ -283,11 +286,7 @@ class _SymbolFillingGuide:
     Return a FillSourceSet describing each source that is present in
     the node tree."""
 
-    root_cvs_directory = Ctx()._cvs_file_db.get_file(
-        self.symbol.project.root_cvs_directory_id
-        )
-    sources = self._fill_sources.values()
-    return FillSourceSet(self.symbol, root_cvs_directory, sources)
+    return self._source_set
 
   def print_fill_sources(self):
     print "TREE", "=" * 75

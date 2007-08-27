@@ -247,55 +247,6 @@ class FillSourceSet:
       fill_source.print_tree()
 
 
-class _SymbolFillingGuide:
-  """A description of the sources that can be copied to fill a symbol.
-
-  The class holds a FillSource instance for each LineOfDevelopment
-  that is the source LOD of a CVSSymbol in an SVNCommit."""
-
-  def __init__(self, symbol, range_map):
-    """Initialize a _SymbolFillingGuide for SYMBOL.
-
-    SYMBOL is either a Branch or a Tag.  Record the openings and
-    closings from RANGE_MAP, which is a map { CVSSymbol :
-    SVNRevisionRange } containing the openings and closings for
-    CVSSymbol instances in a SymbolCommit."""
-
-    self.symbol = symbol
-
-    # A map { LOD : FillSource } for each LOD containing sources that
-    # need to be filled.
-    self._fill_sources = {}
-
-    root_cvs_directory = Ctx()._cvs_file_db.get_file(
-        self.symbol.project.root_cvs_directory_id
-        )
-    for cvs_symbol, svn_revision_range in range_map.items():
-      source_lod = cvs_symbol.source_lod
-      try:
-        fill_source = self._fill_sources[source_lod]
-      except KeyError:
-        fill_source = FillSource(
-            root_cvs_directory, self.symbol, source_lod, {}
-            )
-        self._fill_sources[source_lod] = fill_source
-
-      fill_source._set_node(cvs_symbol.cvs_file, svn_revision_range)
-
-    self._source_set = FillSourceSet(
-        self.symbol, root_cvs_directory, self._fill_sources.values()
-        )
-    #self._source_set.print_fill_sources()
-
-  def get_source_set(self):
-    """Return a FillSourceSet for the root path for this symbolic name.
-
-    Return a FillSourceSet describing each source that is present in
-    the node tree."""
-
-    return self._source_set
-
-
 def get_source_set(symbol, range_map):
   """Return a FillSourceSet describing the fill sources for RANGE_MAP.
 

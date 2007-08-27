@@ -69,12 +69,6 @@ class _MirrorNode(object):
     id = self.entries[component]
     return self.repo._get_node(id)
 
-  def get(self, component, default=None):
-    try:
-      return self[component]
-    except KeyError:
-      return default
-
   def __contains__(self, component):
     return component in self.entries
 
@@ -359,21 +353,26 @@ class SVNRepositoryMirror:
         cvs_path.parent_directory, lod, create
         )
 
-    node = parent_node.get(cvs_path.basename)
-    if isinstance(node, _WritableMirrorNode):
-      return node
-    elif isinstance(node, _ReadOnlyMirrorNode):
-      new_node = self._create_node(node.entries)
-      parent_node[cvs_path.basename] = new_node
-      return new_node
-    elif create:
-      # The component does not exist, so we create it.
-      new_node = self._create_node()
-      parent_node[cvs_path.basename] = new_node
-      self._invoke_delegates('mkdir', lod.get_path(cvs_path.cvs_path))
-      return new_node
+    try:
+      node = parent_node[cvs_path.basename]
+    except KeyError:
+      if create:
+        # The component does not exist, so we create it.
+        new_node = self._create_node()
+        parent_node[cvs_path.basename] = new_node
+        self._invoke_delegates('mkdir', lod.get_path(cvs_path.cvs_path))
+        return new_node
+      else:
+        raise
     else:
-      raise KeyError()
+      if isinstance(node, _WritableMirrorNode):
+        return node
+      elif isinstance(node, _ReadOnlyMirrorNode):
+        new_node = self._create_node(node.entries)
+        parent_node[cvs_path.basename] = new_node
+        return new_node
+      else:
+        raise InternalError()
 
   def delete_lod(self, lod):
     """Delete the main path for LOD from the tree.
@@ -642,8 +641,13 @@ class SVNRepositoryMirror:
     entries = src_entries.keys()
     entries.sort()
     for entry in entries:
-      self._fill(symbol, dest_node.get(entry), src_entries[entry],
-                 copy_source, prune_ok)
+      try:
+        dest_subnode = dest_node[entry]
+      except KeyError:
+        dest_subnode = None
+      self._fill(
+          symbol, dest_subnode, src_entries[entry], copy_source, prune_ok
+          )
 
   def add_delegate(self, delegate):
     """Adds DELEGATE to self._delegates.

@@ -34,7 +34,7 @@ from cvs2svn_lib.process import CommandFailedException
 from cvs2svn_lib.process import check_command_runs
 from cvs2svn_lib.process import run_command
 from cvs2svn_lib.openings_closings import SymbolingsReader
-from cvs2svn_lib.symbol_filling_guide import get_source_set
+from cvs2svn_lib.fill_source import get_source_set
 from cvs2svn_lib.svn_repository_mirror import SVNRepositoryMirror
 from cvs2svn_lib.stdout_delegate import StdoutDelegate
 from cvs2svn_lib.dumpfile_delegate import DumpfileDelegate

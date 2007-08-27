@@ -14,7 +14,7 @@
 # history and logs, available at http://cvs2svn.tigris.org/.
 # ====================================================================
 
-"""This module contains classes to help choose symbol sources."""
+"""This module contains classes describing the sources of symbol fills."""
 
 
 from __future__ import generators

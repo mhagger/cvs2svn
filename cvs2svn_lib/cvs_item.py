@@ -60,6 +60,12 @@ from cvs2svn_lib.symbol import Trunk
 
 
 class CVSItem(object):
+  __slots__ = [
+      'id',
+      'cvs_file',
+      'revision_recorder_token',
+      ]
+
   def __init__(self, id, cvs_file, revision_recorder_token):
     self.id = id
     self.cvs_file = cvs_file
@@ -176,6 +182,25 @@ class CVSRevision(CVSItem):
         RevisionRecorder for the later use of RevisionReader.
 
   """
+
+  __slots__ = [
+      'timestamp',
+      'metadata_id',
+      'prev_id',
+      'next_id',
+      'rev',
+      'deltatext_exists',
+      'lod',
+      'first_on_branch_id',
+      'ntdbr',
+      'ntdbr_prev_id',
+      'ntdbr_next_id',
+      'tag_ids',
+      'branch_ids',
+      'branch_commit_ids',
+      'opened_symbols',
+      'closed_symbols',
+      ]
 
   def __init__(self,
                id, cvs_file,
@@ -444,6 +469,12 @@ class CVSRevision(CVSItem):
 class CVSRevisionModification(CVSRevision):
   """Base class for CVSRevisionAdd or CVSRevisionChange."""
 
+  __slots__ = []
+
+  # Explicitly define pickle methods to get around a Python 2.2 bug:
+  __setstate__ = CVSRevision.__setstate__
+  __getstate__ = CVSRevision.__getstate__
+
   def get_cvs_symbol_ids_opened(self):
     return self.tag_ids + self.branch_ids
 
@@ -454,17 +485,31 @@ class CVSRevisionAdd(CVSRevisionModification):
   The file might have never existed on this LOD, or it might have
   existed previously but been deleted by a CVSRevisionDelete."""
 
-  pass
+  __slots__ = []
+
+  # Explicitly define pickle methods to get around a Python 2.2 bug:
+  __setstate__ = CVSRevisionModification.__setstate__
+  __getstate__ = CVSRevisionModification.__getstate__
 
 
 class CVSRevisionChange(CVSRevisionModification):
   """A CVSRevision that modifies a file that already existed on this LOD."""
 
-  pass
+  __slots__ = []
+
+  # Explicitly define pickle methods to get around a Python 2.2 bug:
+  __setstate__ = CVSRevisionModification.__setstate__
+  __getstate__ = CVSRevisionModification.__getstate__
 
 
 class CVSRevisionAbsent(CVSRevision):
   """A CVSRevision for which the file is nonexistent on this LOD."""
+
+  __slots__ = []
+
+  # Explicitly define pickle methods to get around a Python 2.2 bug:
+  __setstate__ = CVSRevision.__setstate__
+  __getstate__ = CVSRevision.__getstate__
 
   def get_cvs_symbol_ids_opened(self):
     return []
@@ -473,7 +518,11 @@ class CVSRevisionAbsent(CVSRevision):
 class CVSRevisionDelete(CVSRevisionAbsent):
   """A CVSRevision that deletes a file that existed on this LOD."""
 
-  pass
+  __slots__ = []
+
+  # Explicitly define pickle methods to get around a Python 2.2 bug:
+  __setstate__ = CVSRevisionAbsent.__setstate__
+  __getstate__ = CVSRevisionAbsent.__getstate__
 
 
 class CVSRevisionNoop(CVSRevisionAbsent):
@@ -485,7 +534,11 @@ class CVSRevisionNoop(CVSRevisionAbsent):
   they might have a nontrivial log message that we don't want to throw
   away."""
 
-  pass
+  __slots__ = []
+
+  # Explicitly define pickle methods to get around a Python 2.2 bug:
+  __setstate__ = CVSRevisionAbsent.__setstate__
+  __getstate__ = CVSRevisionAbsent.__getstate__
 
 
 # A map
@@ -520,6 +573,12 @@ class CVSSymbol(CVSItem):
         RevisionRecorder for the later use of RevisionReader.
 
   """
+
+  __slots__ = [
+      'symbol',
+      'source_lod',
+      'source_id',
+      ]
 
   def __init__(
       self, id, cvs_file, symbol, source_lod, source_id,
@@ -567,6 +626,14 @@ class CVSBranch(CVSSymbol):
         RevisionRecorder for the later use of RevisionReader.
 
   """
+
+  __slots__ = [
+      'branch_number',
+      'next_id',
+      'tag_ids',
+      'branch_ids',
+      'opened_symbols',
+      ]
 
   def __init__(
       self, id, cvs_file, symbol, branch_number,
@@ -659,6 +726,12 @@ class CVSBranch(CVSSymbol):
 class CVSBranchNoop(CVSBranch):
   """A CVSBranch whose source is a CVSRevisionAbsent."""
 
+  __slots__ = []
+
+  # Explicitly define pickle methods to get around a Python 2.2 bug:
+  __setstate__ = CVSBranch.__setstate__
+  __getstate__ = CVSBranch.__getstate__
+
   def get_cvs_symbol_ids_opened(self):
     return []
 
@@ -691,6 +764,8 @@ class CVSTag(CVSSymbol):
         RevisionRecorder for the later use of RevisionReader.
 
   """
+
+  __slots__ = []
 
   def __init__(
       self, id, cvs_file, symbol, source_lod, source_id,
@@ -749,7 +824,11 @@ class CVSTag(CVSSymbol):
 class CVSTagNoop(CVSTag):
   """A CVSTag whose source is a CVSRevisionAbsent."""
 
-  pass
+  __slots__ = []
+
+  # Explicitly define pickle methods to get around a Python 2.2 bug:
+  __setstate__ = CVSTag.__setstate__
+  __getstate__ = CVSTag.__getstate__
 
 
 # A map

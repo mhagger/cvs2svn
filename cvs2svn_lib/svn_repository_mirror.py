@@ -42,9 +42,9 @@ from cvs2svn_lib.svn_commit_item import SVNCommitItem
 class _MirrorNode(object):
   """Represent a node within the SVNRepositoryMirror.
 
-  Instances of this class act like a map { component : _MirrorNode },
-  where component is the path name component of an item within this
-  node (i.e., a file within this directory).
+  Instances of this class act like a map { CVSPath : _MirrorNode },
+  where CVSPath is an item within this node (i.e., a file or
+  subdirectory within this directory).
 
   For space efficiency, SVNRepositoryMirror does not actually use this
   class to store the data internally, but rather constructs instances
@@ -57,20 +57,19 @@ class _MirrorNode(object):
     # The id of this node:
     self.id = id
 
-    # The entries within this directory (a map from component name to
-    # node):
+    # The entries within this directory (a map from CVSPath to node_id):
     self.entries = entries
 
-  def __getitem__(self, component):
+  def __getitem__(self, cvs_path):
     """Return the _MirrorNode associated with the specified subnode.
 
     Raise KeyError if the specified subnode does not exist."""
 
-    id = self.entries[component]
+    id = self.entries[cvs_path]
     return self.repo._get_node(id)
 
-  def __contains__(self, component):
-    return component in self.entries
+  def __contains__(self, cvs_path):
+    return cvs_path in self.entries
 
   def __iter__(self):
     return self.entries.__iter__()
@@ -85,11 +84,11 @@ class _ReadOnlyMirrorNode(_MirrorNode):
 class _WritableMirrorNode(_MirrorNode):
   """Represent a writable node within the SVNRepositoryMirror."""
 
-  def __setitem__(self, component, node):
-    self.entries[component] = node.id
+  def __setitem__(self, cvs_path, node):
+    self.entries[cvs_path] = node.id
 
-  def __delitem__(self, component):
-    del self.entries[component]
+  def __delitem__(self, cvs_path):
+    del self.entries[cvs_path]
 
 
 class LODHistory(object):
@@ -148,6 +147,35 @@ class LODHistory(object):
       self.ids.append(id)
 
 
+class _NodeSerializer(MarshalSerializer):
+  def __init__(self):
+    self.cvs_file_db = Ctx()._cvs_file_db
+
+  def _dump(self, node):
+    return [
+        (cvs_path.id, value)
+        for (cvs_path, value) in node.iteritems()
+        ]
+
+  def dumpf(self, f, node):
+    MarshalSerializer.dumpf(self, f, self._dump(node))
+
+  def dumps(self, node):
+    return MarshalSerializer.dumps(self, self._dump(node))
+
+  def _load(self, items):
+    retval = {}
+    for (id, value) in items:
+      retval[self.cvs_file_db.get_file(id)] = value
+    return retval
+
+  def loadf(self, f):
+    return self._load(MarshalSerializer.loadf(self, f))
+
+  def loads(self, s):
+    return self._load(MarshalSerializer.loads(self, s))
+
+
 class SVNRepositoryMirror:
   """Mirror a Subversion repository and its history.
 
@@ -165,9 +193,9 @@ class SVNRepositoryMirror:
   at that SVN revision.
 
   The LOD trees themselves are stored in the _nodes_db database, which
-  maps node ids to nodes.  A node is a map from directory/file names
-  to ids of the corresponding subnodes.  The _nodes_db is stored on
-  disk and each access is expensive.
+  maps node ids to nodes.  A node is a map from CVSPath.id to ids of
+  the corresponding subnodes.  The _nodes_db is stored on disk and
+  each access is expensive.
 
   The _nodes_db database only holds the nodes for old revisions.  The
   revision that is being constructed is kept in memory in the
@@ -224,7 +252,7 @@ class SVNRepositoryMirror:
     self._nodes_db = IndexedDatabase(
         artifact_manager.get_temp_file(config.SVN_MIRROR_NODES_STORE),
         artifact_manager.get_temp_file(config.SVN_MIRROR_NODES_INDEX_TABLE),
-        DB_OPEN_NEW, serializer=MarshalSerializer()
+        DB_OPEN_NEW, serializer=_NodeSerializer()
         )
 
     # Start at revision 0 without a root node.  It will be created
@@ -235,6 +263,8 @@ class SVNRepositoryMirror:
     """Start a new commit."""
 
     self._youngest = revnum
+
+    # A map {node_id : {CVSPath : node_id}}.
     self._new_nodes = {}
 
     self._invoke_delegates('start_commit', revnum, revprops)
@@ -308,7 +338,7 @@ class SVNRepositoryMirror:
       parent_node = self._open_readonly_node(
           cvs_path.parent_directory, lod, revnum
           )
-      return parent_node[cvs_path.basename]
+      return parent_node[cvs_path]
 
   def _open_writable_lod_node(self, lod, create, invoke_delegates=True):
     """Open a writable node for the root path in LOD.
@@ -354,12 +384,12 @@ class SVNRepositoryMirror:
         )
 
     try:
-      node = parent_node[cvs_path.basename]
+      node = parent_node[cvs_path]
     except KeyError:
       if create:
         # The component does not exist, so we create it.
         new_node = self._create_node()
-        parent_node[cvs_path.basename] = new_node
+        parent_node[cvs_path] = new_node
         self._invoke_delegates('mkdir', lod.get_path(cvs_path.cvs_path))
         return new_node
       else:
@@ -369,7 +399,7 @@ class SVNRepositoryMirror:
         return node
       elif isinstance(node, _ReadOnlyMirrorNode):
         new_node = self._create_node(node.entries)
-        parent_node[cvs_path.basename] = new_node
+        parent_node[cvs_path] = new_node
         return new_node
       else:
         raise InternalError()
@@ -400,7 +430,7 @@ class SVNRepositoryMirror:
       parent_node = self._open_writable_node(
           cvs_path.parent_directory, lod, False
           )
-      del parent_node[cvs_path.basename]
+      del parent_node[cvs_path]
       self._invoke_delegates('delete_path', lod.get_path(cvs_path.cvs_path))
 
       # The following recursion makes pruning an O(n^2) operation in the
@@ -437,14 +467,14 @@ class SVNRepositoryMirror:
         cvs_file.parent_directory, cvs_rev.lod, True
         )
 
-    if cvs_file.basename in parent_node:
+    if cvs_file in parent_node:
       raise self.PathExistsError(
           'Attempt to add path \'%s\' to repository mirror '
           'when it already exists in the mirror.'
           % (cvs_rev.get_svn_path(),)
           )
 
-    parent_node[cvs_file.basename] = self._create_node()
+    parent_node[cvs_file] = self._create_node()
 
     self._invoke_delegates('add_path', SVNCommitItem(cvs_rev, True))
 
@@ -509,14 +539,14 @@ class SVNRepositoryMirror:
           % (dest_lod.get_path(cvs_path.cvs_path),)
           )
 
-    if cvs_path.basename in dest_parent_node:
+    if cvs_path in dest_parent_node:
       raise self.PathExistsError(
           'Attempt to add path \'%s\' to repository mirror '
           'when it already exists in the mirror.'
           % (dest_lod.get_path(cvs_path.cvs_path),)
           )
 
-    dest_parent_node[cvs_path.basename] = src_node
+    dest_parent_node[cvs_path] = src_node
     self._invoke_delegates(
         'copy_path',
         src_lod.get_path(cvs_path.cvs_path),
@@ -548,27 +578,30 @@ class SVNRepositoryMirror:
       dest_node = None
     self._fill(symbol, dest_node, source_set)
 
-  def _prune_extra_entries(self, cvs_path, symbol, dest_node, src_entries):
+  def _prune_extra_entries(
+        self, dest_cvs_path, symbol, dest_node, src_entries
+        ):
     """Delete any entries in DEST_NODE that are not in SRC_ENTRIES.
 
     This might require creating a new writable node, so return a
     possibly-modified dest_node."""
 
     delete_list = [
-        component
-        for component in dest_node
-        if component not in src_entries
+        cvs_path
+        for cvs_path in dest_node
+        if cvs_path not in src_entries
         ]
     if delete_list:
       if not isinstance(dest_node, _WritableMirrorNode):
-        dest_node = self._open_writable_node(cvs_path, symbol, False)
+        dest_node = self._open_writable_node(dest_cvs_path, symbol, False)
       # Sort the delete list so that the output is in a consistent
       # order:
       delete_list.sort()
-      for component in delete_list:
-        del dest_node[component]
+      for cvs_path in delete_list:
+        del dest_node[cvs_path]
         self._invoke_delegates(
-            'delete_path', symbol.get_path(cvs_path.cvs_path, component)
+            'delete_path',
+            symbol.get_path(dest_cvs_path.cvs_path, cvs_path.basename)
             )
 
     return dest_node
@@ -638,15 +671,15 @@ class SVNRepositoryMirror:
           )
 
     # Recurse into the SRC_ENTRIES ids sorted in alphabetical order.
-    entries = src_entries.keys()
-    entries.sort()
-    for entry in entries:
+    cvs_paths = src_entries.keys()
+    cvs_paths.sort()
+    for cvs_path in cvs_paths:
       try:
-        dest_subnode = dest_node[entry]
+        dest_subnode = dest_node[cvs_path]
       except KeyError:
         dest_subnode = None
       self._fill(
-          symbol, dest_subnode, src_entries[entry], copy_source, prune_ok
+          symbol, dest_subnode, src_entries[cvs_path], copy_source, prune_ok
           )
 
   def add_delegate(self, delegate):

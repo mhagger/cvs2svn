@@ -233,9 +233,7 @@ class FillSourceSet:
 
     retval = {}
     for (cvs_path, source_list) in source_entries.items():
-      retval[cvs_path.basename] = FillSourceSet(
-          self._symbol, cvs_path, source_list
-          )
+      retval[cvs_path] = FillSourceSet(self._symbol, cvs_path, source_list)
 
     return retval
 

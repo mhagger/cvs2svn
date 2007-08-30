@@ -34,10 +34,24 @@ class CVSPath(object):
     BASENAME -- (string) the base name of this CVSDirectory (no ',v').
     FILENAME -- (string) the filesystem path to this CVSPath in the
         CVS repository.
+    ORDINAL -- (int) the order that this instance should be sorted
+        relative to other CVSPath instances.  This member is
+        initialized to 0 for CVSDirectories and 1 for CVSFiles; if two
+        instances have the same ordinal then the comparision falls
+        back to comparing CVS paths.  Later, CVSFileDatabase sets
+        unique ordinals for all CVSPath instances to avoid having to
+        construct and compare the CVS paths.
 
   """
 
-  __slots__ = ['id', 'project', 'parent_directory', 'basename', 'filename']
+  __slots__ = [
+      'id',
+      'project',
+      'parent_directory',
+      'basename',
+      'filename',
+      'ordinal',
+      ]
 
   def __init__(self, id, project, parent_directory, basename, filename):
     self.id = id
@@ -45,17 +59,18 @@ class CVSPath(object):
     self.parent_directory = parent_directory
     self.basename = basename
     self.filename = filename
+    self.ordinal = int(isinstance(self, CVSFile))
 
   def __getstate__(self):
     return (
         self.id, self.project.id, self.parent_directory,
-        self.basename, self.filename,
+        self.basename, self.filename, self.ordinal,
         )
 
   def __setstate__(self, state):
     (
         self.id, project_id, self.parent_directory,
-        self.basename, self.filename,
+        self.basename, self.filename, self.ordinal,
         ) = state
     self.project = Ctx()._projects[project_id]
 
@@ -81,6 +96,12 @@ class CVSPath(object):
       return path_join(self.parent_directory.cvs_path, self.basename)
 
   cvs_path = property(get_cvs_path)
+
+  def __cmp__(self, other):
+    return (
+        cmp(self.ordinal, other.ordinal)
+        or cmp(self.cvs_path, other.cvs_path)
+        )
 
 
 class CVSDirectory(CVSPath):
@@ -111,12 +132,6 @@ class CVSDirectory(CVSPath):
 
   def __setstate__(self, state):
     CVSPath.__setstate__(self, state)
-
-  def __cmp__(self, other):
-    if isinstance(other, CVSDirectory):
-      return cmp(self.cvs_path, other.cvs_path)
-    else:
-      return -1
 
   def __str__(self):
     """For convenience only.  The format is subject to change at any time."""
@@ -171,12 +186,6 @@ class CVSFile(CVSPath):
         self.executable, self.file_size, self.mode,
         ) = state
     CVSPath.__setstate__(self, cvs_path_state)
-
-  def __cmp__(self, other):
-    if isinstance(other, CVSFile):
-      return cmp(self.cvs_path, other.cvs_path)
-    else:
-      return +1
 
   def __str__(self):
     """For convenience only.  The format is subject to change at any time."""

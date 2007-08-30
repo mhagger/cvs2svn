@@ -66,7 +66,11 @@ class CVSFileDatabase:
   def close(self):
     if self.mode == DB_OPEN_NEW:
       f = open(artifact_manager.get_temp_file(config.CVS_FILES_DB), 'wb')
-      cPickle.dump(self._cvs_files.values(), f, -1)
+      cvs_files = self._cvs_files.values()
+      cvs_files.sort()
+      for i in range(len(cvs_files)):
+        cvs_files[i].ordinal = i
+      cPickle.dump(cvs_files, f, -1)
       f.close()
 
     self._cvs_files = None

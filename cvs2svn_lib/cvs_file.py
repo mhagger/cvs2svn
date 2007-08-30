@@ -138,6 +138,9 @@ class CVSDirectory(CVSPath):
 
     return self.cvs_path + '/'
 
+  def __repr__(self):
+    return 'CVSDirectory<%d>(%r)' % (self.id, str(self),)
+
 
 class CVSFile(CVSPath):
   """Represent a CVS file.
@@ -191,5 +194,8 @@ class CVSFile(CVSPath):
     """For convenience only.  The format is subject to change at any time."""
 
     return self.cvs_path
+
+  def __repr__(self):
+    return 'CVSFile<%d>(%r)' % (self.id, str(self),)
 
 

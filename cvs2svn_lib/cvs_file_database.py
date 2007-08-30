@@ -37,12 +37,16 @@ class CVSFileDatabase:
 
     self.mode = mode
 
+    # A map { id : CVSFile }
+    self._cvs_files = {}
+
     if self.mode == DB_OPEN_NEW:
-      # A map { id : CVSFile }
-      self._cvs_files = {}
+      pass
     elif self.mode == DB_OPEN_READ:
       f = open(artifact_manager.get_temp_file(config.CVS_FILES_DB), 'rb')
-      self._cvs_files = cPickle.load(f)
+      cvs_files = cPickle.load(f)
+      for cvs_file in cvs_files:
+        self._cvs_files[cvs_file.id] = cvs_file
     else:
       raise RuntimeError('Invalid mode %r' % self.mode)
 
@@ -62,7 +66,7 @@ class CVSFileDatabase:
   def close(self):
     if self.mode == DB_OPEN_NEW:
       f = open(artifact_manager.get_temp_file(config.CVS_FILES_DB), 'wb')
-      cPickle.dump(self._cvs_files, f, -1)
+      cPickle.dump(self._cvs_files.values(), f, -1)
       f.close()
 
     self._cvs_files = None

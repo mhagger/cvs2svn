@@ -213,8 +213,8 @@ class FillSourceSet:
       source.compute_best_revnum()
     self._sources.sort()
 
-  def __nonzero__(self):
-    return bool(self._sources)
+  def __len__(self):
+    return len(self._sources)
 
   def get_best_source(self):
     return self._sources[0]

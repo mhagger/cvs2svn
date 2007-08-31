@@ -608,7 +608,7 @@ class SVNRepositoryMirror:
 
   def _fill(
         self, symbol, dest_node, source_set,
-        parent_source=None, prune_ok=False
+        parent_source=None, path_copied=False
         ):
     """Fill the tag or branch SYMBOL at the path indicated by SOURCE_SET.
 
@@ -629,11 +629,12 @@ class SVNRepositoryMirror:
     preferable to any other (which probably means that no copies have
     happened yet).
 
-    PRUNE_OK means that a copy has been made in this recursion, and
-    it's safe to prune directories that are not in SOURCE_SET.
+    PATH_COPIED means that the parent directory is the result of a
+    copy in this revision, and therefore any objects that are not in
+    source_set should be deleted.
 
-    PARENT_SOURCE, and PRUNE_OK should only be passed in by recursive
-    calls."""
+    PARENT_SOURCE, and PATH_COPIED should only be passed in by
+    recursive calls."""
 
     copy_source = source_set.get_best_source()
 
@@ -643,7 +644,7 @@ class SVNRepositoryMirror:
       # The destination does not exist at all, so it definitely has to
       # be copied:
       do_copy = True
-    elif prune_ok and (
+    elif path_copied and (
           parent_source is None
           or copy_source.lod != parent_source.lod
           or copy_source.revnum != parent_source.revnum):
@@ -659,13 +660,13 @@ class SVNRepositoryMirror:
       dest_node = self.copy_path(
           source_set.cvs_path, copy_source.lod, symbol, copy_source.revnum
           )
-      prune_ok = True
+      path_copied = True
 
     # Get the map {entry : FillSourceSet} for entries within this
     # directory that need filling.
     src_entries = source_set.get_subsource_sets(copy_source)
 
-    if prune_ok:
+    if path_copied:
       dest_node = self._prune_extra_entries(
           source_set.cvs_path, symbol, dest_node, src_entries
           )
@@ -679,7 +680,8 @@ class SVNRepositoryMirror:
       except KeyError:
         dest_subnode = None
       self._fill(
-          symbol, dest_subnode, src_entries[cvs_path], copy_source, prune_ok
+          symbol, dest_subnode, src_entries[cvs_path],
+          copy_source, path_copied
           )
 
   def add_delegate(self, delegate):

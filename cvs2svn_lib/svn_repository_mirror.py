@@ -35,6 +35,7 @@ from cvs2svn_lib.serializer import MarshalSerializer
 from cvs2svn_lib.database import IndexedDatabase
 from cvs2svn_lib.record_table import UnsignedIntegerPacker
 from cvs2svn_lib.record_table import RecordTable
+from cvs2svn_lib.cvs_file import CVSDirectory
 from cvs2svn_lib.symbol import Trunk
 from cvs2svn_lib.svn_commit_item import SVNCommitItem
 
@@ -66,7 +67,11 @@ class _MirrorNode(object):
     Raise KeyError if the specified subnode does not exist."""
 
     id = self.entries[cvs_path]
-    return self.repo._get_node(id)
+    if id is None:
+      # This represents a leaf node.
+      return None
+    else:
+      return self.repo._get_node(id)
 
   def __contains__(self, cvs_path):
     return cvs_path in self.entries
@@ -85,7 +90,10 @@ class _WritableMirrorNode(_MirrorNode):
   """Represent a writable node within the SVNRepositoryMirror."""
 
   def __setitem__(self, cvs_path, node):
-    self.entries[cvs_path] = node.id
+    if node is None:
+      self.entries[cvs_path] = None
+    else:
+      self.entries[cvs_path] = node.id
 
   def __delitem__(self, cvs_path):
     del self.entries[cvs_path]
@@ -330,6 +338,8 @@ class SVNRepositoryMirror:
   def _open_readonly_node(self, cvs_path, lod, revnum):
     """Open a readonly node for CVS_PATH from LOD at REVNUM.
 
+    If cvs_path refers to a leaf node, return None.
+
     Raise KeyError if the node does not exist."""
 
     if cvs_path.parent_directory is None:
@@ -478,7 +488,7 @@ class SVNRepositoryMirror:
           % (cvs_rev.get_svn_path(),)
           )
 
-    parent_node[cvs_file] = self._create_node()
+    parent_node[cvs_file] = None
 
     self._invoke_delegates('add_path', SVNCommitItem(cvs_rev, True))
 
@@ -528,7 +538,7 @@ class SVNRepositoryMirror:
     if cvs_path.parent_directory is None:
       return self.copy_lod(src_lod, dest_lod, src_revnum)
 
-    # Get the node of our source:
+    # Get the node of our source, or None if it is a file:
     src_node = self._open_readonly_node(cvs_path, src_lod, src_revnum)
 
     # Get the parent path of the destination:
@@ -580,7 +590,7 @@ class SVNRepositoryMirror:
       dest_node = self._open_writable_lod_node(symbol, False)
     except KeyError:
       dest_node = None
-    self._fill(symbol, dest_node, source_set)
+    self._fill_directory(symbol, dest_node, source_set)
 
   def _prune_extra_entries(
         self, dest_cvs_path, symbol, dest_node, src_entries
@@ -610,7 +620,7 @@ class SVNRepositoryMirror:
 
     return dest_node
 
-  def _fill(
+  def _fill_directory(
         self, symbol, dest_node, source_set,
         parent_source=None, path_copied=False
         ):
@@ -637,7 +647,7 @@ class SVNRepositoryMirror:
     copy in this revision, and therefore any objects that are not in
     source_set should be deleted.
 
-    PARENT_SOURCE, and PATH_COPIED should only be passed in by
+    PARENT_SOURCE and PATH_COPIED should only be passed in by
     recursive calls."""
 
     copy_source = source_set.get_best_source()
@@ -679,13 +689,82 @@ class SVNRepositoryMirror:
     cvs_paths = src_entries.keys()
     cvs_paths.sort()
     for cvs_path in cvs_paths:
-      try:
-        dest_subnode = dest_node[cvs_path]
-      except KeyError:
-        dest_subnode = None
-      self._fill(
-          symbol, dest_subnode, src_entries[cvs_path],
-          copy_source, path_copied
+      if isinstance(cvs_path, CVSDirectory):
+        # Path is a CVSDirectory:
+        try:
+          dest_subnode = dest_node[cvs_path]
+        except KeyError:
+          # Path didn't exist at all; it has to be created:
+          dest_subnode = None
+        self._fill_directory(
+            symbol, dest_subnode, src_entries[cvs_path],
+            copy_source, path_copied
+            )
+      else:
+        # Path is a CVSFile:
+        self._fill_file(
+            symbol, cvs_path in dest_node, src_entries[cvs_path],
+            copy_source, path_copied
+            )
+
+  def _fill_file(
+        self, symbol, dest_existed, source_set,
+        parent_source=None, path_copied=False
+        ):
+    """Fill the tag or branch SYMBOL at the directory indicated by SOURCE_SET.
+
+    Use items from SOURCE_SET.
+
+    Fill SYMBOL starting at the path SYMBOL.get_path(SOURCE_SET.path).
+    DEST_NODE is the node of this destination path, or None if the
+    destination does not yet exist.  All directories above this path
+    have already been filled as needed.  SOURCE_SET is a list of
+    FillSource classes that are candidates to be copied to the
+    destination.
+
+    PARENT_SOURCE is the source that was best for the parent
+    directory.  (Note that the parent directory wasn't necessarily
+    copied in this commit, but PARENT_SOURCE was chosen anyway.)  We
+    prefer to copy from PARENT_SOURCE, since it typically requires
+    less touching-up.  If PARENT_SOURCE is None, then this is the
+    top-level directory, and no source is preferred.
+
+    PATH_COPIED means that the parent directory is the result of a
+    copy in this revision, and therefore any objects that are not in
+    source_set should be deleted.
+
+    PARENT_SOURCE and PATH_COPIED should only be passed in by
+    recursive calls."""
+
+    if len(source_set) != 1:
+      raise InternalError(
+          'FillSourceSet for %r has more than one entry'
+          % (source_set.cvs_path,)
+          )
+
+    copy_source = source_set.get_best_source()
+
+    # Figure out if we shall copy to this destination and delete any
+    # destination path that is in the way.
+    if not dest_existed:
+      # The destination does not exist at all, so it definitely has to
+      # be copied:
+      do_copy = True
+    elif path_copied and (
+          parent_source is None
+          or copy_source.lod != parent_source.lod
+          or copy_source.revnum != parent_source.revnum):
+      # The parent path was copied from a different source than we
+      # need to use, so we have to delete the version that was copied
+      # with the parent before we can re-copy from the correct source:
+      self.delete_path(source_set.cvs_path, symbol)
+      do_copy = True
+    else:
+      do_copy = False
+
+    if do_copy:
+      self.copy_path(
+          source_set.cvs_path, copy_source.lod, symbol, copy_source.revnum
           )
 
   def add_delegate(self, delegate):

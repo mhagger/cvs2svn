@@ -180,14 +180,10 @@ def main():
       show_str2marshal_db(config.METADATA_DB)
     elif o == "-f":
       prime_ctx()
-      from cvs2svn_lib.cvs_file_database import CVSFileDatabase
-      db = CVSFileDatabase(DB_OPEN_READ)
-      ids = db._cvs_files.keys()
-      ids.sort()
-      for id in ids:
-        cvs_file = db.get_file(id)
+      cvs_files = list(Ctx()._cvs_file_db.itervalues())
+      cvs_files.sort()
+      for cvs_file in cvs_files:
         print '%6x: %s' % (cvs_file.id, cvs_file,)
-      db.close()
     elif o == "-c":
       prime_ctx()
       show_str2ppickle_db(

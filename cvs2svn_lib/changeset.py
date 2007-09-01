@@ -95,10 +95,14 @@ class RevisionChangeset(Changeset):
       time_range.add(cvs_item.timestamp)
 
       for pred_id in cvs_item.get_pred_ids():
-        pred_ids.add(cvs_item_to_changeset_id[pred_id])
+        changeset_id = cvs_item_to_changeset_id.get(pred_id)
+        if changeset_id is not None:
+          pred_ids.add(changeset_id)
 
       for succ_id in cvs_item.get_succ_ids():
-        succ_ids.add(cvs_item_to_changeset_id[succ_id])
+        changeset_id = cvs_item_to_changeset_id.get(succ_id)
+        if changeset_id is not None:
+          succ_ids.add(changeset_id)
 
     return ChangesetGraphNode(self, time_range, pred_ids, succ_ids)
 

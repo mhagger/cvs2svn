@@ -306,16 +306,22 @@ class SVNRepositoryMirror:
       self._lod_histories[lod] = lod_history
       return lod_history
 
-  def _create_node(self, entries=None):
-    if entries is None:
-      entries = {}
-    else:
-      entries = entries.copy()
+  def _create_empty_node(self):
+    """Create and return a new, empty, writable node."""
 
-    node = _WritableMirrorNode(self, self._key_generator.gen_id(), entries)
+    new_node = _WritableMirrorNode(self, self._key_generator.gen_id(), {})
+    self._new_nodes[new_node.id] = new_node.entries
+    return new_node
 
-    self._new_nodes[node.id] = node.entries
-    return node
+  def _copy_node(self, old_node):
+    """Create and return a new, writable node that is a copy of OLD_NODE."""
+
+    new_node = _WritableMirrorNode(
+        self, self._key_generator.gen_id(), old_node.entries.copy()
+        )
+
+    self._new_nodes[new_node.id] = new_node.entries
+    return new_node
 
   def _get_node(self, id):
     """Return the node for id ID.
@@ -365,7 +371,7 @@ class SVNRepositoryMirror:
       id = lod_history.get_id()
     except KeyError:
       if create:
-        node = self._create_node()
+        node = self._create_empty_node()
         lod_history.update(self._youngest, node.id)
         lod_path = lod.get_path()
         if lod_path and invoke_delegates:
@@ -377,7 +383,7 @@ class SVNRepositoryMirror:
       if not isinstance(node, _WritableMirrorNode):
         # Node was created in an earlier revision, so we have to copy
         # it to make it writable:
-        node = self._create_node(node.entries)
+        node = self._copy_node(node)
         lod_history.update(self._youngest, node.id)
 
     return node
@@ -403,7 +409,7 @@ class SVNRepositoryMirror:
     except KeyError:
       if create:
         # The component does not exist, so we create it.
-        new_node = self._create_node()
+        new_node = self._create_empty_node()
         parent_node[cvs_directory] = new_node
         self._invoke_delegates('mkdir', lod.get_path(cvs_directory.cvs_path))
         return new_node
@@ -413,7 +419,7 @@ class SVNRepositoryMirror:
       if isinstance(node, _WritableMirrorNode):
         return node
       elif isinstance(node, _ReadOnlyMirrorNode):
-        new_node = self._create_node(node.entries)
+        new_node = self._copy_node(node)
         parent_node[cvs_directory] = new_node
         return new_node
       else:

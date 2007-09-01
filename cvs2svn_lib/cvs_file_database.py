@@ -17,6 +17,8 @@
 """This module contains database facilities used by cvs2svn."""
 
 
+from __future__ import generators
+
 import cPickle
 
 from cvs2svn_lib.boolean import *
@@ -57,6 +59,10 @@ class CVSFileDatabase:
       raise RuntimeError('Cannot write items in mode %r' % self.mode)
 
     self._cvs_files[cvs_file.id] = cvs_file
+
+  def itervalues(self):
+    for value in self._cvs_files.itervalues():
+      yield value
 
   def get_file(self, id):
     """Return the CVSFile with the specified ID."""

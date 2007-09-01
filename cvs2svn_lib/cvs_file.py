@@ -36,11 +36,11 @@ class CVSPath(object):
         CVS repository.
     ORDINAL -- (int) the order that this instance should be sorted
         relative to other CVSPath instances.  This member is
-        initialized to 0 for CVSDirectories and 1 for CVSFiles; if two
-        instances have the same ordinal then the comparision falls
-        back to comparing CVS paths.  Later, CVSFileDatabase sets
-        unique ordinals for all CVSPath instances to avoid having to
-        construct and compare the CVS paths.
+        initialized to None.  So at first the ordinals are all the
+        same, in which case the comparision falls back to an expensive
+        comparison of members and pathname components.  Later,
+        CVSFileDatabase sets unique ordinals for all CVSPath instances
+        so that the comparison becomes a trivial integer compare.
 
   """
 
@@ -59,7 +59,7 @@ class CVSPath(object):
     self.parent_directory = parent_directory
     self.basename = basename
     self.filename = filename
-    self.ordinal = int(isinstance(self, CVSFile))
+    self.ordinal = None
 
   def __getstate__(self):
     return (
@@ -97,10 +97,22 @@ class CVSPath(object):
 
   cvs_path = property(get_cvs_path)
 
-  def __cmp__(self, other):
+  def _get_dir_components(self):
+    if self.parent_directory is None:
+      return [self.basename]
+    else:
+      retval = self.parent_directory._get_dir_components()
+      retval.extend(self.basename)
+      return retval
+
+  def __cmp__(a, b):
     return (
-        cmp(self.ordinal, other.ordinal)
-        or cmp(self.cvs_path, other.cvs_path)
+        # If ordinal has been set, use it.  This is very cheap:
+        cmp(a.ordinal, b.ordinal)
+        # Otherwise, sort first by project:
+        or cmp(a.project, b.project)
+        # Then by directory components:
+        or cmp(a._get_dir_components(), b._get_dir_components())
         )
 
 

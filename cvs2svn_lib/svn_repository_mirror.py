@@ -369,28 +369,30 @@ class SVNRepositoryMirror:
 
     return node
 
-  def _open_writable_node(self, cvs_path, lod, create):
-    """Open a writable node for CVS_PATH in LOD.
+  def _open_writable_node(self, cvs_directory, lod, create):
+    """Open a writable node for CVS_DIRECTORY in LOD.
 
     Iff CREATE is True, create a directory node at SVN_PATH and any
     missing directories.  Return an instance of _WritableMirrorNode.
-    Raise KeyError if SVN_PATH doesn't exist and CREATE is not set."""
 
-    if cvs_path.parent_directory is None:
+    Raise KeyError if CVS_DIRECTORY doesn't exist and CREATE is not
+    set."""
+
+    if cvs_directory.parent_directory is None:
       return self._open_writable_lod_node(lod, create)
 
     parent_node = self._open_writable_node(
-        cvs_path.parent_directory, lod, create
+        cvs_directory.parent_directory, lod, create
         )
 
     try:
-      node = parent_node[cvs_path]
+      node = parent_node[cvs_directory]
     except KeyError:
       if create:
         # The component does not exist, so we create it.
         new_node = self._create_node()
-        parent_node[cvs_path] = new_node
-        self._invoke_delegates('mkdir', lod.get_path(cvs_path.cvs_path))
+        parent_node[cvs_directory] = new_node
+        self._invoke_delegates('mkdir', lod.get_path(cvs_directory.cvs_path))
         return new_node
       else:
         raise
@@ -399,10 +401,12 @@ class SVNRepositoryMirror:
         return node
       elif isinstance(node, _ReadOnlyMirrorNode):
         new_node = self._create_node(node.entries)
-        parent_node[cvs_path] = new_node
+        parent_node[cvs_directory] = new_node
         return new_node
       else:
-        raise InternalError()
+        raise InternalError(
+            'Attempt to modify file at %s in mirror' % (cvs_directory,)
+            )
 
   def delete_lod(self, lod):
     """Delete the main path for LOD from the tree.

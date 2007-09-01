@@ -73,6 +73,9 @@ class _MirrorNode(object):
     else:
       return self.repo._get_node(id)
 
+  def __len__(self):
+    return len(self.entries)
+
   def __contains__(self, cvs_path):
     return cvs_path in self.entries
 
@@ -452,7 +455,7 @@ class SVNRepositoryMirror:
       # is probably rare, and the constant cost is pretty low.  Another
       # drawback is that we issue a delete for each path and not just
       # a single delete for the topmost directory pruned.
-      if should_prune and len(parent_node.entries) == 0:
+      if should_prune and len(parent_node) == 0:
         self.delete_path(cvs_path.parent_directory, lod, True)
 
   def initialize_project(self, project):

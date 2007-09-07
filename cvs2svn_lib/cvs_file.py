@@ -35,12 +35,10 @@ class CVSPath(object):
     FILENAME -- (string) the filesystem path to this CVSPath in the
         CVS repository.
     ORDINAL -- (int) the order that this instance should be sorted
-        relative to other CVSPath instances.  This member is
-        initialized to None.  So at first the ordinals are all the
-        same, in which case the comparision falls back to an expensive
-        comparison of members and pathname components.  Later,
-        CVSFileDatabase sets unique ordinals for all CVSPath instances
-        so that the comparison becomes a trivial integer compare.
+        relative to other CVSPath instances.  This member is set by
+        CVSFileDatabase after all CVSFiles have been processed based
+        on the ordering imposed by slow_compare().  Comparisons of
+        CVSPath using __cmp__() simply compare the ordinals.
 
   """
 
@@ -59,9 +57,10 @@ class CVSPath(object):
     self.parent_directory = parent_directory
     self.basename = basename
     self.filename = filename
-    self.ordinal = None
 
   def __getstate__(self):
+    """This method must only be called after ordinal has been set."""
+
     return (
         self.id, self.project.id, self.parent_directory,
         self.basename, self.filename, self.ordinal,
@@ -105,15 +104,18 @@ class CVSPath(object):
       retval.extend(self.basename)
       return retval
 
-  def __cmp__(a, b):
+  def slow_compare(a, b):
     return (
-        # If ordinal has been set, use it.  This is very cheap:
-        cmp(a.ordinal, b.ordinal)
-        # Otherwise, sort first by project:
-        or cmp(a.project, b.project)
+        # Sort first by project:
+        cmp(a.project, b.project)
         # Then by directory components:
         or cmp(a._get_dir_components(), b._get_dir_components())
         )
+
+  def __cmp__(a, b):
+    """This method must only be called after ordinal has been set."""
+
+    return cmp(a.ordinal, b.ordinal)
 
 
 class CVSDirectory(CVSPath):

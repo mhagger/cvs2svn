@@ -28,6 +28,7 @@ from cvs2svn_lib.common import DB_OPEN_WRITE
 from cvs2svn_lib.common import DB_OPEN_NEW
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.artifact_manager import artifact_manager
+from cvs2svn_lib.cvs_file import CVSPath
 
 
 class CVSFileDatabase:
@@ -73,7 +74,7 @@ class CVSFileDatabase:
     if self.mode == DB_OPEN_NEW:
       f = open(artifact_manager.get_temp_file(config.CVS_FILES_DB), 'wb')
       cvs_files = self._cvs_files.values()
-      cvs_files.sort()
+      cvs_files.sort(CVSPath.slow_compare)
       for i in range(len(cvs_files)):
         cvs_files[i].ordinal = i
       cPickle.dump(cvs_files, f, -1)

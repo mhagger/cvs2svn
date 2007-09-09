@@ -69,6 +69,7 @@ from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.project import FileInAndOutOfAtticException
+from cvs2svn_lib.cvs_file import CVSPath
 from cvs2svn_lib.cvs_file import CVSDirectory
 from cvs2svn_lib.cvs_file import CVSFile
 from cvs2svn_lib.symbol import Symbol
@@ -1145,6 +1146,12 @@ class CollectData:
     for cvs_item in cvs_file_items.values():
       self.stats_keeper.record_cvs_item(cvs_item)
 
+  def _set_cvs_path_ordinals(self):
+    cvs_files = list(Ctx()._cvs_file_db.itervalues())
+    cvs_files.sort(CVSPath.slow_compare)
+    for i in range(len(cvs_files)):
+      cvs_files[i].ordinal = i
+
   def close(self):
     """Close the data structures associated with this instance.
 
@@ -1159,6 +1166,7 @@ class CollectData:
     self.metadata_db = None
     self._cvs_item_store.close()
     self._cvs_item_store = None
+    self._set_cvs_path_ordinals()
     self.revision_recorder = None
     retval = self.fatal_errors
     self.fatal_errors = None

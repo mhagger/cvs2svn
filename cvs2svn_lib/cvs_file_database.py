@@ -40,16 +40,15 @@ class CVSFileDatabase:
 
     self.mode = mode
 
-    # A map { id : CVSFile }
-    self._cvs_files = {}
-
     if self.mode == DB_OPEN_NEW:
-      pass
+      # A list of CVSFile instances where _cvs_files[cvs_file.id] ==
+      # cvs_file.  If there are any gaps in the numerical sequence,
+      # the corresponding array positions are None.
+      self._cvs_files = []
     elif self.mode == DB_OPEN_READ:
       f = open(artifact_manager.get_temp_file(config.CVS_FILES_DB), 'rb')
-      cvs_files = cPickle.load(f)
-      for cvs_file in cvs_files:
-        self._cvs_files[cvs_file.id] = cvs_file
+      self._cvs_files = cPickle.load(f)
+      f.close()
     else:
       raise RuntimeError('Invalid mode %r' % self.mode)
 
@@ -59,21 +58,29 @@ class CVSFileDatabase:
     if self.mode == DB_OPEN_READ:
       raise RuntimeError('Cannot write items in mode %r' % self.mode)
 
+    # Extend array if necessary:
+    while cvs_file.id >= len(self._cvs_files):
+      self._cvs_files.append(None)
+
     self._cvs_files[cvs_file.id] = cvs_file
 
   def itervalues(self):
-    for value in self._cvs_files.itervalues():
-      yield value
+    for cvs_file in self._cvs_files:
+      if cvs_file is not None:
+        yield cvs_file
 
   def get_file(self, id):
     """Return the CVSFile with the specified ID."""
 
-    return self._cvs_files[id]
+    retval = self._cvs_files[id]
+    if retval is None:
+      raise KeyError(id)
+    return retval
 
   def close(self):
     if self.mode == DB_OPEN_NEW:
       f = open(artifact_manager.get_temp_file(config.CVS_FILES_DB), 'wb')
-      cPickle.dump(self._cvs_files.values(), f, -1)
+      cPickle.dump(self._cvs_files, f, -1)
       f.close()
 
     self._cvs_files = None

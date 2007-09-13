@@ -31,7 +31,7 @@ class CVSPath(object):
     PROJECT -- (Project) the project containing this CVSPath.
     PARENT_DIRECTORY -- (CVSDirectory or None) the CVSDirectory
         containing this CVSPath.
-    BASENAME -- (string) the base name of this CVSDirectory (no ',v').
+    BASENAME -- (string) the base name of this CVSPath (no ',v').
     FILENAME -- (string) the filesystem path to this CVSPath in the
         CVS repository.
     ORDINAL -- (int) the order that this instance should be sorted
@@ -127,9 +127,9 @@ class CVSDirectory(CVSPath):
         generated.
     PROJECT -- (Project) the project containing this file.
     PARENT_DIRECTORY -- (CVSDirectory or None) the CVSDirectory containing
-        this CVSPath.
+        this CVSDirectory.
     BASENAME -- (string) the base name of this CVSDirectory (no ',v').
-    FILENAME -- (string) the filesystem path to this CVSPath in the
+    FILENAME -- (string) the filesystem path to this CVSDirectory in the
         CVS repository.
 
   """
@@ -164,17 +164,17 @@ class CVSFile(CVSPath):
     ID -- (int) unique id for this file.
     PROJECT -- (Project) the project containing this file.
     PARENT_DIRECTORY -- (CVSDirectory or None) the CVSDirectory containing
-        this CVSPath.
-    BASENAME -- (string) the base name of this CVSDirectory (no ',v').
-    FILENAME -- (string) the filesystem path to this CVSPath in the
+        this CVSFile.
+    BASENAME -- (string) the base name of this CVSFile (no ',v').
+    FILENAME -- (string) the filesystem path to this CVSFile in the
         CVS repository.
     EXECUTABLE -- (bool) True iff RCS file has executable bit set.
     FILE_SIZE -- (long) size of the RCS file in bytes.
     MODE -- (string or None) 'kkv', 'kb', etc.
 
-  CVS_PATH might contain an 'Attic' component if it should be retained
-  in the SVN repository; i.e., if the same filename exists out of
-  Attic and the --retain-conflicting-attic-files option was specified.
+  PARENT_DIRECTORY might contain an 'Attic' component if it should be
+  retained in the SVN repository; i.e., if the same filename exists out
+  of Attic and the --retain-conflicting-attic-files option was specified.
 
   """
 

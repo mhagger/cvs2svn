@@ -1,0 +1,26 @@
+head	1.1;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+expand	@o@;
+
+
+1.1
+date	2007.09.13.14.34.25;	author ossi;	state Exp;
+branches;
+next	;
+commitid	e7E4xRVK9dgJfAxs;
+
+
+desc
+@@
+
+
+1.1
+log
+@add
+@
+text
+@some text $Id: literal blunder$ more text
+@

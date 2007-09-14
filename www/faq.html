@@ -58,6 +58,10 @@
 
   <li><a href="#gdbm-nfs">gdbm.error: (45, 'Operation not supported')</a></li>
 
+  <li><a href="#apple-single">When converting a CVS repository that
+    was used on a Macintosh, some files have incorrect contents in
+    SVN.</a></li>
+
   <li><a href="#rcsmissing">Using cvs2svn 1.3.x, I get an error "The
     command '['co', '-q', '-x,v', '-p1.1', '-kk',
     '/home/cvsroot/myfile,v']' failed" in pass 8.</a></li>
@@ -587,6 +591,37 @@ databases on an NFS partition.  Apparently gdbm does not support
 databases on NFS partitions.  The workaround is to use the
 <tt>--tmpdir</tt> option to choose a local partition for cvs2svn to
 write its temporary files.</p>
+
+<h3><a name="apple-single" title="#apple-single">When converting a CVS
+    repository that was used on a Macintosh, the contents of some
+    files are incorrect in SVN.</a></h3>
+
+<p>Some Macintosh CVS clients use a nonstandard trick to store the
+resource fork of files in CVS: instead of storing the file contents
+directly, store an <a
+href="http://rfc.net/rfc1740.html">AppleSingle</a> data stream
+containing both the data fork and resource fork.  When checking the
+file out, the client unpacks the AppleSingle data and writes the two
+forks separately to disk.  By default, cvs2svn treats the file
+contents literally, so when you check the file out of Subversion, the
+file contains the combined data in AppleSingle format rather than only
+the data fork of the file as expected.</p>
+
+<p>Subversion does not have any special facilities for dealing with
+Macintosh resource forks, so there is nothing cvs2svn can do to
+preserve both forks of your data.  However, sometimes the resource
+fork is not needed.  If you would like to discard the resource fork
+and only record the data fork in Subversion, then start your
+conversion using the <a
+href="cvs2svn.html#options-file-method">options file method</a> and
+set the following option to <tt>True</tt> in your options file:</p>
+
+<pre>
+      ctx.decode_apple_single = True
+</pre>
+
+<p>There is more information about this option in the comments in
+<tt>cvs2svn-example.options</tt>.</p>
 
 <h3><a name="rcsmissing" title="#installrcs">Using cvs2svn 1.3.x, I
     get an error "The command '['co', '-q', '-x,v', '-p1.1', '-kk',

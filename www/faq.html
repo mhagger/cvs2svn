@@ -454,7 +454,7 @@ run_options.add_project(
     "release-3_12" to be transformed into a symbol named
     "project1-release-3.12", whereas if the same symbol appears under
     "project2" it will be transformed into
-    "project1-release-3.12".</p>
+    "project2-release-3.12".</p>
 
 
 <h3><a name="cvsnt" title="#cvsnt">How can I convert a CVSNT
@@ -654,14 +654,15 @@ efficiently.</p>
 
 <p>The first question is whether the problem you are experiencing is
 caused by a cvs2svn bug at all.  A large fraction of reported "bugs"
-are caused by problems with the user's CVS repository, especially <a
-href="#cvsnt">trying to convert a CVSNT repository with cvs2svn</a>.
-Please also double-check the <a href="cvs2svn.html">manual</a> to be
-sure that you are using the command-line options correctly.</p>
+are caused by problems with the user's CVS repository, especially mild
+forms of repository corruption or <a href="#cvsnt">trying to convert a
+CVSNT repository with cvs2svn</a>.  Please also double-check the <a
+href="cvs2svn.html">manual</a> to be sure that you are using the
+command-line options correctly.</p>
 
-<p>A good way to locate potential repository corruption is to use the
-<tt>shrink_test_case.py</tt> script (which is located in the
-<tt>contrib</tt> directory of the cvs2svn source tree.  This script
+<p>A good way to localize potential repository corruption is to use
+the <tt>shrink_test_case.py</tt> script (which is located in the
+<tt>contrib</tt> directory of the cvs2svn source tree).  This script
 tries to find the minimum subset of files in your repository that
 still shows the same problem.  <b>Warning: Only apply this script to a
 backup copy of your repository, as it destroys the repository that it
@@ -696,7 +697,8 @@ message:</p>
   are using.  If you have modified cvs2svn, please tell us exactly
   what you have changed.</li>
 
-  <li>What platform are you using (Linux, BSD, Windows, etc.)?</li>
+  <li>What platform are you using (Linux, BSD, Windows, etc.)?  What
+  python version (e.g., type <tt>python --version</tt>)?</li>
 
   <li>What is the <em>exact command line</em> that you used to start
   the conversion?  If you used the <tt>--options</tt> option, please

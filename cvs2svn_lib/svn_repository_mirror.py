@@ -682,6 +682,8 @@ class SVNRepositoryMirror:
       dest_node = self.copy_path(
           source_set.cvs_path, copy_source.lod, symbol, copy_source.revnum
           )
+    else:
+      copy_source = parent_source
 
     # Get the map {entry : FillSourceSet} for entries within this
     # directory that need filling.

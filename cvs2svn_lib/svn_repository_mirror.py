@@ -666,24 +666,22 @@ class SVNRepositoryMirror:
     if dest_node is None:
       # The destination does not exist at all, so it definitely has to
       # be copied:
-      do_copy = True
-    elif path_copied and (
-          parent_source is None
-          or copy_source.lod != parent_source.lod
-          or copy_source.revnum != parent_source.revnum):
-      # The parent path was copied from a different source than we
-      # need to use, so we have to delete the version that was copied
-      # with the parent before we can re-copy from the correct source:
-      self.delete_path(source_set.cvs_path, symbol)
-      do_copy = True
-    else:
-      do_copy = False
-
-    if do_copy:
       dest_node = self.copy_path(
           source_set.cvs_path, copy_source.lod, symbol, copy_source.revnum
           )
       path_copied = True
+    elif path_copied and (
+          parent_source is None
+          or copy_source.lod != parent_source.lod
+          or copy_source.revnum != parent_source.revnum
+          ):
+      # The parent path was copied from a different source than we
+      # need to use, so we have to delete the version that was copied
+      # with the parent then re-copy from the correct source:
+      self.delete_path(source_set.cvs_path, symbol)
+      dest_node = self.copy_path(
+          source_set.cvs_path, copy_source.lod, symbol, copy_source.revnum
+          )
 
     # Get the map {entry : FillSourceSet} for entries within this
     # directory that need filling.
@@ -758,20 +756,18 @@ class SVNRepositoryMirror:
     if not dest_existed:
       # The destination does not exist at all, so it definitely has to
       # be copied:
-      do_copy = True
+      self.copy_path(
+          source_set.cvs_path, copy_source.lod, symbol, copy_source.revnum
+          )
     elif path_copied and (
           parent_source is None
           or copy_source.lod != parent_source.lod
-          or copy_source.revnum != parent_source.revnum):
+          or copy_source.revnum != parent_source.revnum
+          ):
       # The parent path was copied from a different source than we
       # need to use, so we have to delete the version that was copied
       # with the parent before we can re-copy from the correct source:
       self.delete_path(source_set.cvs_path, symbol)
-      do_copy = True
-    else:
-      do_copy = False
-
-    if do_copy:
       self.copy_path(
           source_set.cvs_path, copy_source.lod, symbol, copy_source.revnum
           )

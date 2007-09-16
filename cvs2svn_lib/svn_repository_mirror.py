@@ -599,7 +599,7 @@ class SVNRepositoryMirror:
       dest_node = self._open_writable_lod_node(symbol, False)
     except KeyError:
       dest_node = None
-    self._fill_directory(symbol, dest_node, source_set)
+    self._fill_directory(symbol, dest_node, source_set, None)
 
   def _prune_extra_entries(
         self, dest_cvs_path, symbol, dest_node, src_entries
@@ -629,10 +629,7 @@ class SVNRepositoryMirror:
 
     return dest_node
 
-  def _fill_directory(
-        self, symbol, dest_node, source_set,
-        parent_source=None, path_copied=False
-        ):
+  def _fill_directory(self, symbol, dest_node, source_set, parent_source):
     """Fill the tag or branch SYMBOL at the path indicated by SOURCE_SET.
 
     Use items from SOURCE_SET, and recurse into the child items.
@@ -643,21 +640,12 @@ class SVNRepositoryMirror:
     have already been filled.  SOURCE_SET is a list of FillSource
     classes that are candidates to be copied to the destination.
 
-    PARENT_SOURCE is the source that was best for the parent
-    directory.  (Note that the parent directory wasn't necessarily
-    copied in this commit, but PARENT_SOURCE was chosen anyway.)  We
-    prefer to copy from the same source as was used for the parent,
-    since it typically requires less touching-up.  If PARENT_SOURCE is
-    None, then this is the top-level directory, and no revision is
-    preferable to any other (which probably means that no copies have
-    happened yet).
-
-    PATH_COPIED means that the parent directory is the result of a
-    copy in this revision, and therefore any objects that are not in
-    source_set should be deleted.
-
-    PARENT_SOURCE and PATH_COPIED should only be passed in by
-    recursive calls."""
+    PARENT_SOURCE is the source that was used to copy the parent
+    directory, if it was copied in this commit.  We prefer to copy
+    from the same source as was used for the parent, since it
+    typically requires less touching-up.  If PARENT_SOURCE is None,
+    then the parent directory was not copied in this commit, so no
+    revision is preferable to any other."""
 
     copy_source = source_set.get_best_source()
 
@@ -669,10 +657,8 @@ class SVNRepositoryMirror:
       dest_node = self.copy_path(
           source_set.cvs_path, copy_source.lod, symbol, copy_source.revnum
           )
-      path_copied = True
-    elif path_copied and (
-          parent_source is None
-          or copy_source.lod != parent_source.lod
+    elif (parent_source is not None) and (
+          copy_source.lod != parent_source.lod
           or copy_source.revnum != parent_source.revnum
           ):
       # The parent path was copied from a different source than we
@@ -689,7 +675,7 @@ class SVNRepositoryMirror:
     # directory that need filling.
     src_entries = source_set.get_subsource_sets(copy_source)
 
-    if path_copied:
+    if copy_source is not None:
       dest_node = self._prune_extra_entries(
           source_set.cvs_path, symbol, dest_node, src_entries
           )
@@ -706,19 +692,15 @@ class SVNRepositoryMirror:
           # Path didn't exist at all; it has to be created:
           dest_subnode = None
         self._fill_directory(
-            symbol, dest_subnode, src_entries[cvs_path],
-            copy_source, path_copied
+            symbol, dest_subnode, src_entries[cvs_path], copy_source
             )
       else:
         # Path is a CVSFile:
         self._fill_file(
-            symbol, cvs_path in dest_node, src_entries[cvs_path],
-            copy_source, path_copied
+            symbol, cvs_path in dest_node, src_entries[cvs_path], copy_source
             )
 
-  def _fill_file(
-        self, symbol, dest_existed, source_set, parent_source, path_copied
-        ):
+  def _fill_file(self, symbol, dest_existed, source_set, parent_source):
     """Fill the tag or branch SYMBOL at the directory indicated by SOURCE_SET.
 
     Use items from SOURCE_SET.
@@ -735,11 +717,7 @@ class SVNRepositoryMirror:
     copied in this commit, but PARENT_SOURCE was chosen anyway.)  We
     prefer to copy from PARENT_SOURCE, since it typically requires
     less touching-up.  If PARENT_SOURCE is None, then this is the
-    top-level directory, and no source is preferred.
-
-    PATH_COPIED means that the parent directory is the result of a
-    copy in this revision, and therefore any objects that are not in
-    source_set should be deleted."""
+    top-level directory, and no source is preferred."""
 
     if len(source_set) != 1:
       raise InternalError(
@@ -757,9 +735,8 @@ class SVNRepositoryMirror:
       self.copy_path(
           source_set.cvs_path, copy_source.lod, symbol, copy_source.revnum
           )
-    elif path_copied and (
-          parent_source is None
-          or copy_source.lod != parent_source.lod
+    elif (parent_source is not None) and (
+          copy_source.lod != parent_source.lod
           or copy_source.revnum != parent_source.revnum
           ):
       # The parent path was copied from a different source than we

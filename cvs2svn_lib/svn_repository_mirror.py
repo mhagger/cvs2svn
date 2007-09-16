@@ -712,12 +712,10 @@ class SVNRepositoryMirror:
     FillSource classes that are candidates to be copied to the
     destination.
 
-    PARENT_SOURCE is the source that was best for the parent
-    directory.  (Note that the parent directory wasn't necessarily
-    copied in this commit, but PARENT_SOURCE was chosen anyway.)  We
-    prefer to copy from PARENT_SOURCE, since it typically requires
-    less touching-up.  If PARENT_SOURCE is None, then this is the
-    top-level directory, and no source is preferred."""
+    PARENT_SOURCE is the source from which the parent directory was
+    copied, or None if the parent directory was not copied during this
+    commit.  We prefer to copy from PARENT_SOURCE, since it typically
+    requires less touching-up."""
 
     if len(source_set) != 1:
       raise InternalError(
@@ -741,7 +739,7 @@ class SVNRepositoryMirror:
           ):
       # The parent path was copied from a different source than we
       # need to use, so we have to delete the version that was copied
-      # with the parent before we can re-copy from the correct source:
+      # with the parent and then re-copy from the correct source:
       self.delete_path(source_set.cvs_path, symbol)
       self.copy_path(
           source_set.cvs_path, copy_source.lod, symbol, copy_source.revnum

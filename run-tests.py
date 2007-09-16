@@ -1053,7 +1053,7 @@ def mixed_time_branch_with_added_file():
     ('/%(branches)s/B_MIXED/partial-prune', 'D'),
     ('/%(branches)s/B_MIXED/single-files', 'D'),
     ('/%(branches)s/B_MIXED/proj/sub2/subsubA '
-     '(from /%(branches)s/vendorbranch/proj/sub2/subsubA:25)', 'R'),
+     '(from /%(branches)s/vendorbranch/proj/sub2/subsubA:18)', 'R'),
     ('/%(branches)s/B_MIXED/proj/sub3 (from /%(trunk)s/proj/sub3:24)', 'R'),
     ))
 
@@ -1749,9 +1749,9 @@ def compose_tag_three_sources():
   conv = ensure_conversion('compose-tag-three-sources')
 
   conv.logs[2].check("Add on trunk", (
+    ('/%(trunk)s/tagged-on-trunk-1.1', 'A'),
     ('/%(trunk)s/tagged-on-trunk-1.2-a', 'A'),
     ('/%(trunk)s/tagged-on-trunk-1.2-b', 'A'),
-    ('/%(trunk)s/tagged-on-trunk-1.1', 'A'),
     ('/%(trunk)s/tagged-on-b1', 'A'),
     ('/%(trunk)s/tagged-on-b2', 'A'),
     ))
@@ -1765,17 +1765,17 @@ def compose_tag_three_sources():
     ))
 
   conv.logs[5].check("Commit on branch b1", (
+    ('/%(branches)s/b1/tagged-on-trunk-1.1', 'M'),
     ('/%(branches)s/b1/tagged-on-trunk-1.2-a', 'M'),
     ('/%(branches)s/b1/tagged-on-trunk-1.2-b', 'M'),
-    ('/%(branches)s/b1/tagged-on-trunk-1.1', 'M'),
     ('/%(branches)s/b1/tagged-on-b1', 'M'),
     ('/%(branches)s/b1/tagged-on-b2', 'M'),
     ))
 
   conv.logs[6].check("Commit on branch b2", (
+    ('/%(branches)s/b2/tagged-on-trunk-1.1', 'M'),
     ('/%(branches)s/b2/tagged-on-trunk-1.2-a', 'M'),
     ('/%(branches)s/b2/tagged-on-trunk-1.2-b', 'M'),
-    ('/%(branches)s/b2/tagged-on-trunk-1.1', 'M'),
     ('/%(branches)s/b2/tagged-on-b1', 'M'),
     ('/%(branches)s/b2/tagged-on-b2', 'M'),
     ))
@@ -1790,10 +1790,10 @@ def compose_tag_three_sources():
 
   conv.logs[8].check(sym_log_msg('T',1), (
     ('/%(tags)s/T (from /%(trunk)s:7)', 'A'),
-    ('/%(tags)s/T/tagged-on-b2 (from /%(branches)s/b2/tagged-on-b2:7)', 'R'),
     ('/%(tags)s/T/tagged-on-trunk-1.1 '
      '(from /%(trunk)s/tagged-on-trunk-1.1:2)', 'R'),
-    ('/%(tags)s/T/tagged-on-b1 (from /%(branches)s/b1/tagged-on-b1:7)', 'R'),
+    ('/%(tags)s/T/tagged-on-b1 (from /%(branches)s/b1/tagged-on-b1:5)', 'R'),
+    ('/%(tags)s/T/tagged-on-b2 (from /%(branches)s/b2/tagged-on-b2:6)', 'R'),
     ))
 
 

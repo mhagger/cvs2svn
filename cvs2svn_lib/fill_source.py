@@ -137,19 +137,17 @@ class FillSource:
         revision_ranges.extend(self._get_revision_ranges(subnode))
       return revision_ranges
 
-  def _get_subsource(self, cvs_path, node, preferred_source):
-    """Return the FillSource for the specified NODE."""
-
-    return FillSource(
-        cvs_path, self._symbol, self.lod, node, preferred_source
-        )
-
   def get_subsources(self, preferred_source):
     """Generate (entry, FillSource) for all direct subsources."""
 
     if not isinstance(self._node_tree, SVNRevisionRange):
       for cvs_path, node in self._node_tree.items():
-        yield cvs_path, self._get_subsource(cvs_path, node, preferred_source)
+        yield (
+            cvs_path,
+            FillSource(
+                cvs_path, self._symbol, self.lod, node, preferred_source
+                ),
+            )
 
   def __cmp__(self, other):
     """Comparison operator that sorts FillSources in descending score order.

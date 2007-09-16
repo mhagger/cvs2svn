@@ -3037,7 +3037,7 @@ test_list = [
     internal_co,
     internal_co_exclude,
     internal_co_trunk_only,
-    XFail(internal_co_keywords),
+    internal_co_keywords,
 # 120:
     leftover_revs,
     requires_internal_co,

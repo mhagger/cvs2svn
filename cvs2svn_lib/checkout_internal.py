@@ -94,6 +94,7 @@ from __future__ import generators
 
 import cStringIO
 import re
+import time
 
 from cvs2svn_lib.set_support import *
 from cvs2svn_lib import config
@@ -101,6 +102,7 @@ from cvs2svn_lib.common import DB_OPEN_NEW
 from cvs2svn_lib.common import DB_OPEN_READ
 from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.common import InternalError
+from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.symbol import Symbol
@@ -597,13 +599,77 @@ class InternalRevisionExcluder(RevisionExcluder):
     self._new_tree_db.close()
 
 
+class _KeywordExpander:
+  """A class whose instances provide substitutions for CVS keywords.
+
+  This class is used via its __call__() method, which should be called
+  with a match object representing a match for a CVS keyword string.
+  The method returns the replacement for the matched text.
+
+  The __call__() method works by calling the method with the same name
+  as that of the CVS keyword (converted to lower case).
+
+  Instances of this class can be passed as the REPL argument to
+  re.sub()."""
+
+  def __init__(self, cvs_rev):
+    self.cvs_rev = cvs_rev
+
+  def __call__(self, match):
+    return '$%s: %s $' % \
+           (match.group(1), getattr(self, match.group(1).lower())(),)
+
+  def author(self):
+    return Ctx()._metadata_db[self.cvs_rev.metadata_id][0]
+
+  def date(self):
+    return time.strftime("%Y-%m-%d %H:%M:%S",
+                         time.gmtime(self.cvs_rev.timestamp))
+
+  def header(self):
+    return '%s %s %s %s Exp' % \
+           (self.source(), self.cvs_rev.rev, self.date(), self.author())
+
+  def id(self):
+    return '%s %s %s %s Exp' % \
+           (self.rcsfile(), self.cvs_rev.rev, self.date(), self.author())
+
+  def locker(self):
+    # Handle kvl like kv, as a converted repo is supposed to have no
+    # locks.
+    return ''
+
+  def log(self):
+    # Would need some special handling.
+    return 'not supported by cvs2svn'
+
+  def name(self):
+    # Cannot work, as just creating a new symbol does not check out
+    # the revision again.
+    return 'not supported by cvs2svn'
+
+  def rcsfile(self):
+    return self.cvs_rev.cvs_file.basename + ",v"
+
+  def revision(self):
+    return self.cvs_rev.rev
+
+  def source(self):
+    project = self.cvs_rev.cvs_file.project
+    return project.cvs_repository_root + '/' + project.cvs_module + \
+        self.cvs_rev.cvs_file.cvs_path + ",v"
+
+  def state(self):
+    # We check out only live revisions.
+    return 'Exp'
+
+
 class InternalRevisionReader(RevisionReader):
   """A RevisionReader that reads the contents from an own delta store."""
 
-  _kw_re = re.compile(
-      r'\$(' +
-      r'Author|Date|Header|Id|Name|Locker|Log|RCSfile|Revision|Source|State' +
-      r'):[^$\n]*\$')
+  _kws = 'Author|Date|Header|Id|Locker|Log|Name|RCSfile|Revision|Source|State'
+  _kw_re = re.compile(r'\$(' + _kws + r'):[^$\n]*\$')
+  _kwo_re = re.compile(r'\$(' + _kws + r')(:[^$\n]*)?\$')
 
   def __init__(self, compress):
     self._compress = compress
@@ -676,8 +742,11 @@ class InternalRevisionReader(RevisionReader):
     requested only once."""
 
     text = self._get_text_record(cvs_rev).checkout(self._text_record_db)
-    if suppress_keyword_substitution:
-      text = re.sub(self._kw_re, r'$\1$', text)
+    if cvs_rev.cvs_file.mode != 'b' and cvs_rev.cvs_file.mode != 'o':
+      if suppress_keyword_substitution or cvs_rev.cvs_file.mode == 'k':
+        text = self._kw_re.sub(r'$\1$', text)
+      else:
+        text = self._kwo_re.sub(_KeywordExpander(cvs_rev), text)
 
     return cStringIO.StringIO(text)
 

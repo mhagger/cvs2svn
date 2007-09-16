@@ -715,8 +715,7 @@ class SVNRepositoryMirror:
             )
 
   def _fill_file(
-        self, symbol, dest_existed, source_set,
-        parent_source=None, path_copied=False
+        self, symbol, dest_existed, source_set, parent_source, path_copied
         ):
     """Fill the tag or branch SYMBOL at the directory indicated by SOURCE_SET.
 
@@ -738,10 +737,7 @@ class SVNRepositoryMirror:
 
     PATH_COPIED means that the parent directory is the result of a
     copy in this revision, and therefore any objects that are not in
-    source_set should be deleted.
-
-    PARENT_SOURCE and PATH_COPIED should only be passed in by
-    recursive calls."""
+    source_set should be deleted."""
 
     if len(source_set) != 1:
       raise InternalError(

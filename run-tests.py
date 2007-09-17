@@ -2665,7 +2665,7 @@ def leftover_revs():
 def requires_internal_co():
   "test that internal co can do more than RCS"
   # See issues 4, 11 for the bugs whose regression we're testing for.
-  # Unlike in requires_rcs above, issue 29 is not covered.
+  # Unlike in requires_cvs above, issue 29 is not covered.
   conv = ensure_conversion('requires-cvs')
 
   atsign_contents = file(conv.get_wc("trunk", "atsign-add")).read()
@@ -2675,6 +2675,28 @@ def requires_internal_co():
 
   if not (conv.logs[21].author == "William Lyon Phelps III" and
           conv.logs[20].author == "j random"):
+    raise Failure()
+
+
+def internal_co_keywords():
+  "test that internal co handles keywords correctly"
+  conv_ic = ensure_conversion('internal-co-keywords',
+                              args=["--keywords-off"])
+  conv_cvs = ensure_conversion('internal-co-keywords',
+                               args=["--use-cvs", "--keywords-off"])
+
+  ko_ic = file(conv_ic.get_wc("trunk", "dir/ko.txt")).read()
+  ko_cvs = file(conv_cvs.get_wc("trunk", "dir/ko.txt")).read()
+  kk_ic = file(conv_ic.get_wc("trunk", "dir/kk.txt")).read()
+  kk_cvs = file(conv_cvs.get_wc("trunk", "dir/kk.txt")).read()
+  kv_ic = file(conv_ic.get_wc("trunk", "dir/kv.txt")).read()
+  kv_cvs = file(conv_cvs.get_wc("trunk", "dir/kv.txt")).read()
+
+  if ko_ic != ko_cvs:
+    raise Failure()
+  if kk_ic != kk_cvs:
+    raise Failure()
+  if kv_ic != kv_cvs:
     raise Failure()
 
 
@@ -2932,11 +2954,12 @@ test_list = [
     internal_co,
     internal_co_exclude,
     internal_co_trunk_only,
+    internal_co_keywords,
     leftover_revs,
     requires_internal_co,
     timestamp_chaos,
-    symlinks,
 # 120:
+    symlinks,
     empty_trunk_path,
     preferred_parent_cycle,
     branch_from_empty_dir,

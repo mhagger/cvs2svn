@@ -169,6 +169,11 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
       self._create_basic_directory(project.branches_path)
       self._create_basic_directory(project.tags_path)
 
+  def initialize_lod(self, lod):
+    lod_path = lod.get_path()
+    if lod_path:
+      self.mkdir(lod_path)
+
   def mkdir(self, path):
     """Emit the creation of directory PATH."""
 

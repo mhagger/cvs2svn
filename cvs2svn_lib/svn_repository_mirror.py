@@ -373,9 +373,8 @@ class SVNRepositoryMirror:
       if create:
         node = self._create_empty_node()
         lod_history.update(self._youngest, node.id)
-        lod_path = lod.get_path()
-        if lod_path and invoke_delegates:
-          self._invoke_delegates('mkdir', lod_path)
+        if invoke_delegates:
+          self._invoke_delegates('initialize_lod', lod)
       else:
         raise
     else:
@@ -803,10 +802,17 @@ class SVNRepositoryMirrorDelegate:
     raise NotImplementedError()
 
   def initialize_project(self, project):
-    """Create the basic infrastructure for PROJECT.
+    """Initialize PROJECT.
 
-    For Subversion, this means the trunk, branches, and tags
-    directories."""
+    For Subversion, this means to create the trunk, branches, and tags
+    directories for PROJECT."""
+
+    raise NotImplementedError()
+
+  def initialize_lod(self, lod):
+    """Initialize LOD.
+
+    LOD is an instance of LineOfDevelopment."""
 
     raise NotImplementedError()
 

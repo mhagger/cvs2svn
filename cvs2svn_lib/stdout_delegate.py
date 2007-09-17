@@ -45,6 +45,9 @@ class StdoutDelegate(SVNRepositoryMirrorDelegate):
   def initialize_project(self, project):
     Log().verbose("  Initializing project %s" % (project,))
 
+  def initialize_lod(self, lod):
+    Log().verbose("  Initializing %s" % (lod,))
+
   def mkdir(self, path):
     """Print a line stating that we are creating directory PATH."""
 

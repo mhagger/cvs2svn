@@ -32,8 +32,6 @@ class CVSPath(object):
     PARENT_DIRECTORY -- (CVSDirectory or None) the CVSDirectory
         containing this CVSPath.
     BASENAME -- (string) the base name of this CVSPath (no ',v').
-    FILENAME -- (string) the filesystem path to this CVSPath in the
-        CVS repository.
     ORDINAL -- (int) the order that this instance should be sorted
         relative to other CVSPath instances.  This member is set based
         on the ordering imposed by slow_compare() by CollectData after
@@ -47,29 +45,29 @@ class CVSPath(object):
       'project',
       'parent_directory',
       'basename',
-      'filename',
       'ordinal',
       ]
 
-  def __init__(self, id, project, parent_directory, basename, filename):
+  def __init__(self, id, project, parent_directory, basename):
     self.id = id
     self.project = project
     self.parent_directory = parent_directory
     self.basename = basename
-    self.filename = filename
 
   def __getstate__(self):
     """This method must only be called after ordinal has been set."""
 
     return (
-        self.id, self.project.id, self.parent_directory,
-        self.basename, self.filename, self.ordinal,
+        self.id, self.project.id,
+        self.parent_directory, self.basename,
+        self.ordinal,
         )
 
   def __setstate__(self, state):
     (
-        self.id, project_id, self.parent_directory,
-        self.basename, self.filename, self.ordinal,
+        self.id, project_id,
+        self.parent_directory, self.basename,
+        self.ordinal,
         ) = state
     self.project = Ctx()._projects[project_id]
 
@@ -129,17 +127,27 @@ class CVSDirectory(CVSPath):
     PARENT_DIRECTORY -- (CVSDirectory or None) the CVSDirectory containing
         this CVSDirectory.
     BASENAME -- (string) the base name of this CVSDirectory (no ',v').
-    FILENAME -- (string) the filesystem path to this CVSDirectory in the
-        CVS repository.
 
   """
 
   __slots__ = []
 
-  def __init__(self, id, project, parent_directory, basename, filename):
+  def __init__(self, id, project, parent_directory, basename):
     """Initialize a new CVSDirectory object."""
 
-    CVSPath.__init__(self, id, project, parent_directory, basename, filename)
+    CVSPath.__init__(self, id, project, parent_directory, basename)
+
+  def get_filename(self):
+    """Return the filesystem path to this CVSPath in the CVS repository."""
+
+    if self.parent_directory is None:
+      return self.project.project_cvs_repos_path
+    else:
+      return os.path.join(
+          self.parent_directory.get_filename(), self.basename
+          )
+
+  filename = property(get_filename)
 
   def __getstate__(self):
     return CVSPath.__getstate__(self)
@@ -163,11 +171,14 @@ class CVSFile(CVSPath):
 
     ID -- (int) unique id for this file.
     PROJECT -- (Project) the project containing this file.
-    PARENT_DIRECTORY -- (CVSDirectory or None) the CVSDirectory containing
+    PARENT_DIRECTORY -- (CVSDirectory) the CVSDirectory containing
         this CVSFile.
     BASENAME -- (string) the base name of this CVSFile (no ',v').
-    FILENAME -- (string) the filesystem path to this CVSFile in the
-        CVS repository.
+    _IN_ATTIC -- (bool) True if RCS file is in an Attic subdirectory
+        that is not considered the parent directory.  (If a file is
+        in-and-out-of-attic and one copy is to be left in Attic after
+        the conversion, then the Attic directory is that file's
+        PARENT_DIRECTORY and _IN_ATTIC is False.)
     EXECUTABLE -- (bool) True iff RCS file has executable bit set.
     FILE_SIZE -- (long) size of the RCS file in bytes.
     MODE -- (string or None) 'kkv', 'kb', etc.
@@ -178,29 +189,51 @@ class CVSFile(CVSPath):
 
   """
 
-  __slots__ = ['executable', 'file_size', 'mode']
+  __slots__ = [
+      '_in_attic',
+      'executable',
+      'file_size',
+      'mode',
+      ]
 
   def __init__(
-        self, id, project, parent_directory, basename, filename,
+        self, id, project, parent_directory, basename, in_attic,
         executable, file_size, mode
         ):
     """Initialize a new CVSFile object."""
 
-    CVSPath.__init__(self, id, project, parent_directory, basename, filename)
+    CVSPath.__init__(self, id, project, parent_directory, basename)
+    self._in_attic = in_attic
     self.executable = executable
     self.file_size = file_size
     self.mode = mode
 
+    assert self.parent_directory is not None
+
+  def get_filename(self):
+    """Return the filesystem path to this CVSPath in the CVS repository."""
+
+    if self._in_attic:
+      return os.path.join(
+          self.parent_directory.filename, 'Attic', self.basename + ',v'
+          )
+    else:
+      return os.path.join(
+          self.parent_directory.filename, self.basename + ',v'
+          )
+
+  filename = property(get_filename)
+
   def __getstate__(self):
     return (
         CVSPath.__getstate__(self),
-        self.executable, self.file_size, self.mode,
+        self._in_attic, self.executable, self.file_size, self.mode,
         )
 
   def __setstate__(self, state):
     (
         cvs_path_state,
-        self.executable, self.file_size, self.mode,
+        self._in_attic, self.executable, self.file_size, self.mode,
         ) = state
     CVSPath.__setstate__(self, cvs_path_state)
 

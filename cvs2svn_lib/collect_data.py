@@ -817,9 +817,7 @@ class _ProjectDataCollector:
     self.symbols = {}
 
     root_cvs_directory = CVSDirectory(
-        self.collect_data.file_key_generator.gen_id(),
-        self.project, None, '',
-        self.project.project_cvs_repos_path,
+        self.collect_data.file_key_generator.gen_id(), self.project, None, ''
         )
 
     self.project.root_cvs_directory_id = root_cvs_directory.id
@@ -915,6 +913,7 @@ class _ProjectDataCollector:
     verify_svn_filename_legal(filename, basename[:-2])
 
     if file_in_attic and not leave_in_attic:
+      in_attic = True
       logical_parent_directory = parent_directory.parent_directory
 
       # If this file also exists outside of the attic, it's a fatal
@@ -925,6 +924,7 @@ class _ProjectDataCollector:
       if os.path.exists(non_attic_filename):
         raise FileInAndOutOfAtticException(non_attic_filename, filename)
     else:
+      in_attic = False
       logical_parent_directory = parent_directory
 
     file_stat = os.stat(filename)
@@ -938,7 +938,7 @@ class _ProjectDataCollector:
     # mode is not known, so we temporarily set it to None.
     return CVSFile(
         self.collect_data.file_key_generator.gen_id(),
-        self.project, logical_parent_directory, basename[:-2], filename,
+        self.project, logical_parent_directory, basename[:-2], in_attic,
         file_executable, file_size, None
         )
 
@@ -1041,7 +1041,6 @@ class _ProjectDataCollector:
       attic_directory = CVSDirectory(
           self.collect_data.file_key_generator.gen_id(),
           self.project, cvs_directory, 'Attic',
-          os.path.join(cvs_directory.filename, 'Attic'),
           )
 
       attic_rcsfiles = self._visit_attic_directory(attic_directory)
@@ -1077,7 +1076,7 @@ class _ProjectDataCollector:
 
       sub_directory = CVSDirectory(
           self.collect_data.file_key_generator.gen_id(),
-          self.project, cvs_directory, fname, dirname,
+          self.project, cvs_directory, fname,
           )
 
       self._visit_non_attic_directory(sub_directory)

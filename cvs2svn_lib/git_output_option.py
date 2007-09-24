@@ -246,7 +246,8 @@ class GitOutputOption(OutputOption):
     for (lod, lod_range_map) in lod_range_maps.iteritems():
       while lod_range_map:
         revision_scores = RevisionScores(lod_range_map.values())
-        (revnum, score) = revision_scores.get_best_revnum()
+        (source_lod, revnum, score) = revision_scores.get_best_revnum()
+        assert source_lod == lod
         cvs_symbols = []
         for (cvs_symbol, range) in lod_range_map.items():
           if revnum in range:

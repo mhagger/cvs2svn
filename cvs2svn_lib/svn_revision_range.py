@@ -65,77 +65,85 @@ class RevisionScores:
 
     SVN_REVISION_RANGES is a list of SVNRevisionRange objects.
 
-    The score of an svn revision is defined to be the number of
-    SVNRevisionRanges that include the revision.  A score thus
-    indicates that copying the corresponding revision (or any
+    The score of an svn source is defined to be the number of
+    SVNRevisionRanges on that LOD that include the revision.  A score
+    thus indicates that copying the corresponding revision (or any
     following revision up to the next revision in the list) of the
     object in question would yield that many correct paths at or
     underneath the object.  There may be other paths underneath it
-    which are not correct and would need to be deleted or recopied;
+    that are not correct and would need to be deleted or recopied;
     those can only be detected by descending and examining their
     scores.
 
     If SVN_REVISION_RANGES is empty, then all scores are undefined."""
 
-    # A list that looks like:
+    deltas_map = {}
+
+    for range in svn_revision_ranges:
+      source_lod = range.source_lod
+      try:
+        deltas = deltas_map[source_lod]
+      except:
+        deltas = []
+        deltas_map[source_lod] = deltas
+      deltas.append((range.opening_revnum, +1))
+      if range.closing_revnum is not None:
+        deltas.append((range.closing_revnum, -1))
+
+    # A map:
     #
-    #    [(REV1 SCORE1), (REV2 SCORE2), (REV3 SCORE3), ...]
+    #    {SOURCE_LOD : [(REV1 SCORE1), (REV2 SCORE2), (REV3 SCORE3), ...]}
     #
     # where the tuples are sorted by revision number and the revision
     # numbers are distinct.  Score is the number of correct paths that
-    # would result from using the specified revision number (or any
-    # other revision preceding the next revision listed) as a source.
-    # For example, the score of any revision REV in the range REV2 <=
-    # REV < REV3 is equal to SCORE2.
-    self.scores = []
+    # would result from using the specified SOURCE_LOD and revision
+    # number (or any other revision preceding the next revision
+    # listed) as a source.  For example, the score of any revision REV
+    # in the range REV2 <= REV < REV3 is equal to SCORE2.
+    self._scores_map = {}
 
-    # First look for easy out.
-    if not svn_revision_ranges:
-      return
+    for (source_lod,deltas) in deltas_map.items():
+      # Sort by revision number:
+      deltas.sort()
 
-    # Create lists of opening and closing revisions along with the
-    # corresponding delta to the total score:
-    openings = [ (x.opening_revnum, +1)
-                 for x in svn_revision_ranges ]
-    closings = [ (x.closing_revnum, -1)
-                 for x in svn_revision_ranges
-                 if x.closing_revnum is not None ]
+      # Initialize output list with zeroth element of deltas.  This
+      # element must exist, because it was verified that
+      # svn_revision_ranges (and therefore openings) is not empty.
+      scores = [ deltas[0] ]
+      total = deltas[0][1]
+      for (rev, change) in deltas[1:]:
+        total += change
+        if rev == scores[-1][0]:
+          # Same revision as last entry; modify last entry:
+          scores[-1] = (rev, total)
+        else:
+          # Previously-unseen revision; create new entry:
+          scores.append((rev, total))
+      self._scores_map[source_lod] = scores
 
-    things = openings + closings
-    # Sort by revision number:
-    things.sort()
-    # Initialize output list with zeroth element of things.  This
-    # element must exist, because it was verified that
-    # svn_revision_ranges (and therefore openings) is not empty.
-    self.scores = [ things[0] ]
-    total = things[0][1]
-    for (rev, change) in things[1:]:
-      total += change
-      if rev == self.scores[-1][0]:
-        # Same revision as last entry; modify last entry:
-        self.scores[-1] = (rev, total)
-      else:
-        # Previously-unseen revision; create new entry:
-        self.scores.append((rev, total))
-
-  def get_score(self, rev):
-    """Return the score for svn revision REV.
+  def get_score(self, source_lod, rev):
+    """Return the score for SOURCE_LOD and svn revision REV.
 
     If REV doesn't appear explicitly in self.scores, use the score of
     the higest revision preceding REV.  If there are no preceding
     revisions, then the score for REV is unknown; in this case, return
     -1."""
 
+    try:
+      scores = self._scores_map[source_lod]
+    except KeyError:
+      return -1
+
     # Remember, according to the tuple sorting rules,
     #
     #    (rev, anything,) < (rev+1,) < (rev+1, anything,)
-    predecessor_index = bisect.bisect(self.scores, (rev+1,)) - 1
+    predecessor_index = bisect.bisect(scores, (rev+1,)) - 1
 
     if predecessor_index < 0:
       # raise ValueError('Score for revision %s is unknown' % rev)
       return -1
 
-    return self.scores[predecessor_index][1]
+    return scores[predecessor_index][1]
 
   def get_best_revnum(self):
     """Find the revnum with the highest score.
@@ -144,12 +152,18 @@ class RevisionScores:
     the highest score is shared by multiple revisions, select the
     oldest revision."""
 
+    best_source_lod = None
     best_revnum = SVN_INVALID_REVNUM
     best_score = 0
-    for revnum, score in self.scores:
-      if score > best_score:
-        best_score = score
-        best_revnum = revnum
-    return best_revnum, best_score
+
+    source_lods = self._scores_map.keys()
+    source_lods.sort()
+    for source_lod in source_lods:
+      for revnum, score in self._scores_map[source_lod]:
+        if score > best_score:
+          best_source_lod = source_lod
+          best_score = score
+          best_revnum = revnum
+    return best_source_lod, best_revnum, best_score
 
 

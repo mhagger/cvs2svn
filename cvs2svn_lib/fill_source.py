@@ -108,10 +108,14 @@ class FillSource:
     # Score the lists
     revision_scores = RevisionScores(svn_revision_ranges)
 
-    best_revnum, best_score = revision_scores.get_best_revnum()
+    source_lod, best_revnum, best_score = revision_scores.get_best_revnum()
+    assert source_lod == self.lod
 
-    if self._preferred_revnum is not None \
-          and revision_scores.get_score(self._preferred_revnum) == best_score:
+    if (
+        self._preferred_revnum is not None
+        and revision_scores.get_score(self.lod, self._preferred_revnum)
+            == best_score
+        ):
       best_revnum = self._preferred_revnum
 
     if best_revnum == SVN_INVALID_REVNUM:

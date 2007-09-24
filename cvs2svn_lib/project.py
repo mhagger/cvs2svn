@@ -249,7 +249,11 @@ class Project(object):
       newname = symbol_transform.transform(
           cvs_file, name, revision, is_branch
           )
-      if newname != name:
+      if newname is None:
+        Log().warn("   symbol '%s' ignored" % (name,))
+        # Don't continue with other symbol transforms:
+        return None
+      elif newname != name:
         Log().warn("   symbol '%s' transformed to '%s'" % (name, newname))
         name = newname
 

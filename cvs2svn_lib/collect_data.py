@@ -329,22 +329,23 @@ class _SymbolDataCollector(object):
         self.cvs_file, name, revision, is_branch
         )
 
-    # Check that the symbol is not already defined, which can easily
-    # happen when --symbol-transform is used:
-    if name in self._known_symbols:
+    if name is None:
+      # Ignore this symbol
+      pass
+    elif name in self._known_symbols:
+      # The symbol is already defined.  This can easily happen when
+      # --symbol-transform is used:
       self.collect_data.record_fatal_error(
           "Multiple definitions of the symbol '%s' in '%s'"
           % (name, self.cvs_file.filename)
           )
-      return
-
-    self._known_symbols.add(name)
-
-    # Add it:
-    if is_branch:
-      self._add_branch(name, revision)
     else:
-      self._add_tag(name, revision)
+      # Add symbol to our records:
+      self._known_symbols.add(name)
+      if is_branch:
+        self._add_branch(name, revision)
+      else:
+        self._add_tag(name, revision)
 
   def rev_to_branch_number(revision):
     """Return the branch_number of the branch on which REVISION lies.

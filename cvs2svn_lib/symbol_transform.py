@@ -31,7 +31,11 @@ class SymbolTransform:
     """Possibly transform SYMBOL_NAME, which was found in CVS_FILE.
 
     Return the transformed symbol name.  If this SymbolTransform
-    doesn't apply, return the original SYMBOL_NAME.
+    doesn't apply, return the original SYMBOL_NAME.  If this symbol
+    should be ignored entirely, return None.  (Please note that
+    ignoring a branch via this mechanism only causes the branch *name*
+    to be ignored; the branch contents will still be converted.
+    Usually branches should be excluded using --exclude.)
 
     REVISION contains the CVS revision number to which the symbol was
     attached in the file as a string (with zeros removed).  IS_BRANCH

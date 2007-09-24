@@ -121,26 +121,27 @@ class RevisionScores:
           scores.append((rev, total))
       self._scores_map[source_lod] = scores
 
-  def get_score(self, source_lod, rev):
-    """Return the score for SOURCE_LOD and svn revision REV.
+  def get_score(self, range):
+    """Return the score for RANGE's opening revision.
 
-    If REV doesn't appear explicitly in self.scores, use the score of
-    the higest revision preceding REV.  If there are no preceding
-    revisions, then the score for REV is unknown; in this case, return
-    -1."""
+    If RANGE doesn't appear explicitly in self.scores, use the score
+    of the higest revision preceding RANGE.  If there are no preceding
+    revisions, then the score for RANGE is unknown; in this case,
+    return -1."""
 
     try:
-      scores = self._scores_map[source_lod]
+      scores = self._scores_map[range.source_lod]
     except KeyError:
       return -1
 
     # Remember, according to the tuple sorting rules,
     #
-    #    (rev, anything,) < (rev+1,) < (rev+1, anything,)
-    predecessor_index = bisect.bisect(scores, (rev+1,)) - 1
+    #    (revnum, anything,) < (revnum+1,) < (revnum+1, anything,)
+    predecessor_index = bisect.bisect_right(
+        scores, (range.opening_revnum + 1,)
+        ) - 1
 
     if predecessor_index < 0:
-      # raise ValueError('Score for revision %s is unknown' % rev)
       return -1
 
     return scores[predecessor_index][1]

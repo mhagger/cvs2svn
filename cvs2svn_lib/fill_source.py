@@ -113,10 +113,7 @@ class FillSource:
 
     if (
         self._preferred_range is not None
-        and revision_scores.get_score(
-            self._preferred_range.source_lod,
-            self._preferred_range.opening_revnum,
-            ) == best_score
+        and revision_scores.get_score(self._preferred_range,) == best_score
         ):
       best_source_lod = self._preferred_range.source_lod
       best_revnum = self._preferred_range.opening_revnum

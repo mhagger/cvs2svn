@@ -38,6 +38,7 @@ from cvs2svn_lib.record_table import RecordTable
 from cvs2svn_lib.cvs_file import CVSDirectory
 from cvs2svn_lib.symbol import Trunk
 from cvs2svn_lib.svn_commit_item import SVNCommitItem
+from cvs2svn_lib.svn_revision_range import SVNRevisionRange
 
 
 class _MirrorNode(object):
@@ -672,7 +673,12 @@ class SVNRepositoryMirror:
 
     # Get the map {entry : FillSourceSet} for entries within this
     # directory that need filling.
-    src_entries = source_set.get_subsource_sets(copy_source)
+    if copy_source is None:
+      src_entries = source_set.get_subsource_sets(None)
+    else:
+      src_entries = source_set.get_subsource_sets(
+          SVNRevisionRange(copy_source.lod, copy_source.revnum)
+          )
 
     if copy_source is not None:
       dest_node = self._prune_extra_entries(

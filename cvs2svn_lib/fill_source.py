@@ -48,20 +48,20 @@ class FillSource:
 
   These objects are used by the symbol filler in SVNRepositoryMirror."""
 
-  def __init__(self, cvs_path, symbol, lod, node_tree, preferred_revnum=None):
+  def __init__(self, cvs_path, symbol, lod, node_tree, preferred_range=None):
     """Create a scored fill source.
 
     Members:
 
       _CVS_PATH -- (CVSPath): the CVSPath described by this FillSource.
       _SYMBOL -- (Symbol) the symbol to be filled.
+      _PREFERRED_RANGE -- the SVNRevisionRange that we should prefer
+          to use, or None if there is no preference.
       LOD -- (LineOfDevelopment) is the LOD of the source.
       _NODE_TREE -- (dict) a tree stored as a map { CVSPath : node }, where
           subnodes have the same form.  Leaves are SVNRevisionRange instances
           telling the range of SVN revision numbers from which the CVSPath
           can be copied.
-      _PREFERRED_REVNUM -- the source revision number that we should
-          prefer to use, or None if there is no preference.
       REVNUM -- (int) the SVN revision number with the best score.
       SCORE -- (int) the score of the best revision number and thus of this
           source.
@@ -72,7 +72,7 @@ class FillSource:
     self._symbol = symbol
     self.lod = lod
     self._node_tree = node_tree
-    self._preferred_revnum = preferred_revnum
+    self._preferred_range = preferred_range
 
   def _set_node(self, cvs_file, svn_revision_range):
     parent_node = self._get_node(cvs_file.parent_directory, create=True)
@@ -98,7 +98,7 @@ class FillSource:
     copying the source tree beginning at this source.
 
     Return (revnum, score) for the best revision found.  If
-    SELF._preferred_revnum is not None and its revision number is
+    SELF._preferred_range is not None and its revision number is
     among the revision numbers with the best scores, return it;
     otherwise, return the oldest such revision."""
 
@@ -112,11 +112,14 @@ class FillSource:
     assert source_lod == self.lod
 
     if (
-        self._preferred_revnum is not None
-        and revision_scores.get_score(self.lod, self._preferred_revnum)
-            == best_score
+        self._preferred_range is not None
+        and revision_scores.get_score(
+            self._preferred_range.source_lod,
+            self._preferred_range.opening_revnum,
+            ) == best_score
         ):
-      best_revnum = self._preferred_revnum
+      best_source_lod = self._preferred_range.source_lod
+      best_revnum = self._preferred_range.opening_revnum
 
     if best_revnum == SVN_INVALID_REVNUM:
       raise FatalError(
@@ -140,7 +143,7 @@ class FillSource:
         revision_ranges.extend(self._get_revision_ranges(subnode))
       return revision_ranges
 
-  def get_subsources(self, preferred_revnum):
+  def get_subsources(self, preferred_range):
     """Generate (entry, FillSource) for all direct subsources."""
 
     if not isinstance(self._node_tree, SVNRevisionRange):
@@ -148,7 +151,7 @@ class FillSource:
         yield (
             cvs_path,
             FillSource(
-                cvs_path, self._symbol, self.lod, node, preferred_revnum
+                cvs_path, self._symbol, self.lod, node, preferred_range
                 ),
             )
 
@@ -156,15 +159,15 @@ class FillSource:
     """Comparison operator that sorts FillSources in descending score order.
 
     If the scores are the same, prefer the source that is taken from
-    its preferred_revnum (if any); otherwise, prefer the one that is
+    its preferred_range (if any); otherwise, prefer the one that is
     on trunk.  If all those are equal then use alphabetical order by
     path (to stabilize testsuite results)."""
 
     return cmp(other.score, self.score) \
-           or cmp(other._preferred_revnum is not None
-                  and other.revnum == other._preferred_revnum,
-                  self._preferred_revnum is not None
-                  and self.revnum == self._preferred_revnum) \
+           or cmp(other._preferred_range is not None
+                  and other.revnum == other._preferred_range.opening_revnum,
+                  self._preferred_range is not None
+                  and self.revnum == self._preferred_range.opening_revnum) \
            or cmp(self.lod, other.lod)
 
   def print_tree(self):
@@ -220,7 +223,7 @@ class FillSourceSet:
   def get_best_source(self):
     return self._sources[0]
 
-  def get_subsource_sets(self, preferred_source):
+  def get_subsource_sets(self, preferred_range):
     """Return a FillSourceSet for each subentry that still needs filling.
 
     The return value is a map {CVSPath : FillSourceSet} for subentries
@@ -228,18 +231,9 @@ class FillSourceSet:
     by SELF."""
 
     source_entries = {}
-    if preferred_source is None:
-      preferred_lod = None
-    else:
-      preferred_lod = preferred_source.lod
 
     for source in self._sources:
-      if source.lod == preferred_lod:
-        preferred_revnum = preferred_source.revnum
-      else:
-        preferred_revnum = None
-
-      for cvs_path, subsource in source.get_subsources(preferred_revnum):
+      for cvs_path, subsource in source.get_subsources(preferred_range):
         source_entries.setdefault(cvs_path, []).append(subsource)
 
     retval = {}

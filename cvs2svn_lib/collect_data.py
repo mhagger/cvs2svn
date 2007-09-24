@@ -316,7 +316,18 @@ class _SymbolDataCollector(object):
     determine by inspection whether it is a branch or a tag, and
     record it in the right places."""
 
-    name = self.cvs_file.project.transform_symbol(self.cvs_file, name)
+    # Determine whether it is a branch or tag, and canonicalize the
+    # revision number:
+    m = branch_tag_re.match(revision)
+    if m:
+      is_branch = True
+      revision = m.group(1) + m.group(2)
+    else:
+      is_branch = False
+
+    name = self.cvs_file.project.transform_symbol(
+        self.cvs_file, name, revision, is_branch
+        )
 
     # Check that the symbol is not already defined, which can easily
     # happen when --symbol-transform is used:
@@ -329,10 +340,9 @@ class _SymbolDataCollector(object):
 
     self._known_symbols.add(name)
 
-    # Determine whether it is a branch or tag, then add it:
-    m = branch_tag_re.match(revision)
-    if m:
-      self._add_branch(name, m.group(1) + m.group(2))
+    # Add it:
+    if is_branch:
+      self._add_branch(name, revision)
     else:
       self._add_tag(name, revision)
 

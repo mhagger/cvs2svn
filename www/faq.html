@@ -404,9 +404,9 @@ ctx.svn_property_setters.append(MyPropertySetter())
   <p>When a symbol is encountered, cvs2svn iterates through the list
     of <tt>SymbolTransform</tt> objects defined for the project.  For
     each one, it calls <tt>symbol_transform.transform(cvs_file,
-    symbol_name)</tt>.  That method can return any legal symbol name,
-    which will be used in the conversion instead of the original
-    name.</p>
+    symbol_name, revision, is_branch)</tt>.  That method can return
+    any legal symbol name, which will be used in the conversion
+    instead of the original name.</p>
 
   <p>To use this feature, you will have to use an <a
     href="cvs2svn.html#options-file-method">options file</a> to start
@@ -425,7 +425,7 @@ class MySymbolTransform(RegexpSymbolTransform):
         self.path = path
         RegexpSymbolTransform.__init__(self, pattern, replacement)
 
-    def transform(self, cvs_file, symbol_name):
+    def transform(self, cvs_file, symbol_name, revision, is_branch):
         # Is the file is within the path we are interested in?
         if cvs_file.cvs_path.startswith(path + '/'):
             # Yes -> Allow RegexpSymbolTransform to transform the symbol:

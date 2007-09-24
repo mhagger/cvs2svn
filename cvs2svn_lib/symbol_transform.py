@@ -27,11 +27,15 @@ from cvs2svn_lib.boolean import *
 class SymbolTransform:
   """Transform symbol names arbitrarily."""
 
-  def transform(self, cvs_file, symbol_name):
+  def transform(self, cvs_file, symbol_name, revision, is_branch):
     """Possibly transform SYMBOL_NAME, which was found in CVS_FILE.
 
     Return the transformed symbol name.  If this SymbolTransform
     doesn't apply, return the original SYMBOL_NAME.
+
+    REVISION contains the CVS revision number to which the symbol was
+    attached in the file as a string (with zeros removed).  IS_BRANCH
+    is True iff REVISION is a branch revision number.
 
     This method is free to use the information in CVS_FILE (including
     CVS_FILE.project) to decide whether and/or how to transform
@@ -55,7 +59,7 @@ class RegexpSymbolTransform(SymbolTransform):
     self.pattern = re.compile('^' + pattern + '$')
     self.replacement = replacement
 
-  def transform(self, cvs_file, symbol_name):
+  def transform(self, cvs_file, symbol_name, revision, is_branch):
     return self.pattern.sub(self.replacement, symbol_name)
 
 

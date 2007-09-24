@@ -31,7 +31,8 @@ class SVNRevisionRange:
   the last such revision.  If self.closing_revnum is None, then no
   closings were registered."""
 
-  def __init__(self, opening_revnum):
+  def __init__(self, source_lod, opening_revnum):
+    self.source_lod = source_lod
     self.opening_revnum = opening_revnum
     self.closing_revnum = None
 

@@ -204,7 +204,9 @@ class SymbolingsReader:
           raise InternalError(
               'Multiple openings logged for %r' % (cvs_symbol,)
               )
-        range_map[cvs_symbol] = SVNRevisionRange(revnum)
+        range_map[cvs_symbol] = SVNRevisionRange(
+            cvs_symbol.source_lod, revnum
+            )
       else:
         if range is None:
           raise InternalError(

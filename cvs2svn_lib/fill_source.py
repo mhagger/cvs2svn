@@ -270,7 +270,7 @@ def get_source_set(symbol, range_map):
       symbol.project.root_cvs_directory_id
       )
   for cvs_symbol, svn_revision_range in range_map.items():
-    source_lod = cvs_symbol.source_lod
+    source_lod = svn_revision_range.source_lod
     try:
       fill_source = fill_sources[source_lod]
     except KeyError:

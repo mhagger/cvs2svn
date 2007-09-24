@@ -237,10 +237,10 @@ class GitOutputOption(OutputOption):
     lod_range_maps = {}
 
     for (cvs_symbol, range) in range_map.iteritems():
-      lod_range_map = lod_range_maps.get(cvs_symbol.source_lod)
+      lod_range_map = lod_range_maps.get(range.source_lod)
       if lod_range_map is None:
         lod_range_map = {}
-        lod_range_maps[cvs_symbol.source_lod] = lod_range_map
+        lod_range_maps[range.source_lod] = lod_range_map
       lod_range_map[cvs_symbol] = range
 
     for (lod, lod_range_map) in lod_range_maps.iteritems():

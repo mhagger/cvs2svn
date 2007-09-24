@@ -581,7 +581,7 @@ class SVNRepositoryMirror:
     # new destination node.
     return src_node
 
-  def fill_symbol(self, svn_symbol_commit, source_set):
+  def fill_symbol(self, svn_symbol_commit, fill_source):
     """Perform all copies for the CVSSymbols in SVN_SYMBOL_COMMIT.
 
     The symbolic name is guaranteed to exist in the Subversion
@@ -590,16 +590,11 @@ class SVNRepositoryMirror:
 
     symbol = svn_symbol_commit.symbol
 
-    if not source_set:
-      raise InternalError(
-          'fill_symbol() called for %s with empty source set' % (symbol,)
-          )
-
     try:
       dest_node = self._open_writable_lod_node(symbol, False)
     except KeyError:
       dest_node = None
-    self._fill_directory(symbol, dest_node, source_set, None)
+    self._fill_directory(symbol, dest_node, fill_source, None)
 
   def _prune_extra_entries(
         self, dest_cvs_path, symbol, dest_node, src_entries
@@ -629,25 +624,25 @@ class SVNRepositoryMirror:
 
     return dest_node
 
-  def _fill_directory(self, symbol, dest_node, source_set, parent_source):
+  def _fill_directory(self, symbol, dest_node, fill_source, parent_source):
     """Fill the tag or branch SYMBOL at the path indicated by SOURCE_SET.
 
     Use items from SOURCE_SET, and recurse into the child items.
 
-    Fill SYMBOL starting at the path SYMBOL.get_path(SOURCE_SET.path).
-    DEST_NODE is the node of this destination path, or None if the
-    destination does not yet exist.  All directories above this path
-    have already been filled.  SOURCE_SET is a list of FillSource
-    classes that are candidates to be copied to the destination.
+    Fill SYMBOL starting at the path SOURCE_SET.cvs_path.  DEST_NODE
+    is the node of this destination path, or None if the destination
+    does not yet exist.  All directories above this path have already
+    been filled.  SOURCE_SET is a FillSource instance describing the
+    items that still need to be copied to the destination.
 
-    PARENT_SOURCE is the source that was used to copy the parent
+    PARENT_SOURCE is the FillSource that was used to copy the parent
     directory, if it was copied in this commit.  We prefer to copy
     from the same source as was used for the parent, since it
     typically requires less touching-up.  If PARENT_SOURCE is None,
     then the parent directory was not copied in this commit, so no
     revision is preferable to any other."""
 
-    copy_source = source_set.get_best_source()
+    copy_source = fill_source
 
     # Figure out if we shall copy to this destination and delete any
     # destination path that is in the way.
@@ -655,7 +650,7 @@ class SVNRepositoryMirror:
       # The destination does not exist at all, so it definitely has to
       # be copied:
       dest_node = self.copy_path(
-          source_set.cvs_path, copy_source.lod, symbol, copy_source.revnum
+          fill_source.cvs_path, copy_source.lod, symbol, copy_source.revnum
           )
     elif (parent_source is not None) and (
           copy_source.lod != parent_source.lod
@@ -664,25 +659,28 @@ class SVNRepositoryMirror:
       # The parent path was copied from a different source than we
       # need to use, so we have to delete the version that was copied
       # with the parent then re-copy from the correct source:
-      self.delete_path(source_set.cvs_path, symbol)
+      self.delete_path(fill_source.cvs_path, symbol)
       dest_node = self.copy_path(
-          source_set.cvs_path, copy_source.lod, symbol, copy_source.revnum
+          fill_source.cvs_path, copy_source.lod, symbol, copy_source.revnum
           )
     else:
       copy_source = parent_source
 
-    # Get the map {entry : FillSourceSet} for entries within this
+    # Get the map {entry : FillSource} for entries within this
     # directory that need filling.
+    src_entries = {}
     if copy_source is None:
-      src_entries = source_set.get_subsource_sets(None)
+      for (cvs_path, fill_subsource) in fill_source.get_subsources(None):
+        src_entries[cvs_path] = fill_subsource
     else:
-      src_entries = source_set.get_subsource_sets(
+      for (cvs_path, fill_subsource) in fill_source.get_subsources(
           SVNRevisionRange(copy_source.lod, copy_source.revnum)
-          )
+          ):
+        src_entries[cvs_path] = fill_subsource
 
     if copy_source is not None:
       dest_node = self._prune_extra_entries(
-          source_set.cvs_path, symbol, dest_node, src_entries
+          fill_source.cvs_path, symbol, dest_node, src_entries
           )
 
     # Recurse into the SRC_ENTRIES ids sorted in alphabetical order.
@@ -705,7 +703,7 @@ class SVNRepositoryMirror:
             symbol, cvs_path in dest_node, src_entries[cvs_path], copy_source
             )
 
-  def _fill_file(self, symbol, dest_existed, source_set, parent_source):
+  def _fill_file(self, symbol, dest_existed, fill_source, parent_source):
     """Fill the tag or branch SYMBOL at the directory indicated by SOURCE_SET.
 
     Use items from SOURCE_SET.
@@ -722,13 +720,7 @@ class SVNRepositoryMirror:
     commit.  We prefer to copy from PARENT_SOURCE, since it typically
     requires less touching-up."""
 
-    if len(source_set) != 1:
-      raise InternalError(
-          'FillSourceSet for %r has more than one entry'
-          % (source_set.cvs_path,)
-          )
-
-    copy_source = source_set.get_best_source()
+    copy_source = fill_source
 
     # Figure out if we shall copy to this destination and delete any
     # destination path that is in the way.
@@ -736,7 +728,7 @@ class SVNRepositoryMirror:
       # The destination does not exist at all, so it definitely has to
       # be copied:
       self.copy_path(
-          source_set.cvs_path, copy_source.lod, symbol, copy_source.revnum
+          fill_source.cvs_path, copy_source.lod, symbol, copy_source.revnum
           )
     elif (parent_source is not None) and (
           copy_source.lod != parent_source.lod
@@ -745,9 +737,9 @@ class SVNRepositoryMirror:
       # The parent path was copied from a different source than we
       # need to use, so we have to delete the version that was copied
       # with the parent and then re-copy from the correct source:
-      self.delete_path(source_set.cvs_path, symbol)
+      self.delete_path(fill_source.cvs_path, symbol)
       self.copy_path(
-          source_set.cvs_path, copy_source.lod, symbol, copy_source.revnum
+          fill_source.cvs_path, copy_source.lod, symbol, copy_source.revnum
           )
 
   def add_delegate(self, delegate):

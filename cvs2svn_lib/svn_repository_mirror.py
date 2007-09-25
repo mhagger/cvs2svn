@@ -650,18 +650,22 @@ class SVNRepositoryMirror:
       # The destination does not exist at all, so it definitely has to
       # be copied:
       dest_node = self.copy_path(
-          fill_source.cvs_path, copy_source.lod, symbol, copy_source.revnum
+          fill_source.cvs_path, copy_source.best_range.source_lod,
+          symbol, copy_source.best_range.opening_revnum
           )
     elif (parent_source is not None) and (
-          copy_source.lod != parent_source.lod
-          or copy_source.revnum != parent_source.revnum
+          copy_source.best_range.source_lod
+          != parent_source.best_range.source_lod
+          or copy_source.best_range.opening_revnum
+          != parent_source.best_range.opening_revnum
           ):
       # The parent path was copied from a different source than we
       # need to use, so we have to delete the version that was copied
       # with the parent then re-copy from the correct source:
       self.delete_path(fill_source.cvs_path, symbol)
       dest_node = self.copy_path(
-          fill_source.cvs_path, copy_source.lod, symbol, copy_source.revnum
+          fill_source.cvs_path, copy_source.best_range.source_lod,
+          symbol, copy_source.best_range.opening_revnum
           )
     else:
       copy_source = parent_source
@@ -674,7 +678,7 @@ class SVNRepositoryMirror:
         src_entries[cvs_path] = fill_subsource
     else:
       for (cvs_path, fill_subsource) in fill_source.get_subsources(
-          SVNRevisionRange(copy_source.lod, copy_source.revnum)
+          copy_source.best_range
           ):
         src_entries[cvs_path] = fill_subsource
 
@@ -728,18 +732,22 @@ class SVNRepositoryMirror:
       # The destination does not exist at all, so it definitely has to
       # be copied:
       self.copy_path(
-          fill_source.cvs_path, copy_source.lod, symbol, copy_source.revnum
+          fill_source.cvs_path, copy_source.best_range.source_lod,
+          symbol, copy_source.best_range.opening_revnum
           )
     elif (parent_source is not None) and (
-          copy_source.lod != parent_source.lod
-          or copy_source.revnum != parent_source.revnum
+          copy_source.best_range.source_lod
+          != parent_source.best_range.source_lod
+          or copy_source.best_range.opening_revnum
+          != parent_source.best_range.opening_revnum
           ):
       # The parent path was copied from a different source than we
       # need to use, so we have to delete the version that was copied
       # with the parent and then re-copy from the correct source:
       self.delete_path(fill_source.cvs_path, symbol)
       self.copy_path(
-          fill_source.cvs_path, copy_source.lod, symbol, copy_source.revnum
+          fill_source.cvs_path, copy_source.best_range.source_lod,
+          symbol, copy_source.best_range.opening_revnum
           )
 
   def add_delegate(self, delegate):

@@ -51,7 +51,8 @@ class FillSource:
   def __init__(self, cvs_path, symbol, node_tree, preferred_range=None):
     """Create a fill source.
 
-    It can be scored by calling compute_best_revnum().
+    The best LOD and SVN REVNUM to use as the copy source can be
+    determined by calling compute_best_revnum().
 
     Members:
 
@@ -64,8 +65,9 @@ class FillSource:
           SVNRevisionRange instances telling the source_lod and range
           of SVN revision numbers from which the CVSPath can be
           copied.
-      LOD -- (LineOfDevelopment) the LOD with the best score.
-      REVNUM -- (int) the SVN revision number with the best score.
+      BEST_RANGE -- (SVNRevisionRange) the SVNRevisionRange whose
+          source_lod and opening_revision have the best score.  This
+          member is set when compute_best_revnum() is called.
 
     """
 
@@ -100,7 +102,7 @@ class FillSource:
   def compute_best_revnum(self):
     """Determine the best source_lod and subversion revision number to copy.
 
-    Set self.lod and self.revnum to the best source found.  If
+    Set self.best_range to the best source found.  If
     SELF._preferred_range is not None and its opening is among the
     sources with the best scores, return it; otherwise, return the
     oldest such revision on the first such source_lod (ordered by the
@@ -128,8 +130,7 @@ class FillSource:
           % self._symbol.name
           )
 
-    self.lod = best_source_lod
-    self.revnum = best_revnum
+    self.best_range = SVNRevisionRange(best_source_lod, best_revnum)
 
   def _get_revision_ranges(self, node):
     """Return a list of all the SVNRevisionRanges at and under NODE.
@@ -163,7 +164,7 @@ class FillSource:
 
     This method is included for debugging purposes."""
 
-    print 'TREE LOD = %s' % (self.lod,)
+    print 'TREE LOD = %s' % (self.best_range.source_lod,)
     self._print_subtree(self._node_tree, self.cvs_path, indent_depth=0)
     print 'TREE', '-' * 75
 

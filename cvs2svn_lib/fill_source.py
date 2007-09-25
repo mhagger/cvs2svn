@@ -48,33 +48,27 @@ class FillSource:
 
   These objects are used by the symbol filler in SVNRepositoryMirror."""
 
-  def __init__(self, cvs_path, symbol, node_tree, preferred_range=None):
+  def __init__(self, cvs_path, symbol, node_tree):
     """Create a fill source.
 
     The best LOD and SVN REVNUM to use as the copy source can be
-    determined by calling compute_best_revnum().
+    determined by calling compute_best_source().
 
     Members:
 
       CVS_PATH -- (CVSPath): the CVSPath described by this FillSource.
       _SYMBOL -- (Symbol) the symbol to be filled.
-      _PREFERRED_RANGE -- the SVNRevisionRange that we should prefer
-          to use, or None if there is no preference.
       _NODE_TREE -- (dict) a tree stored as a map { CVSPath : node },
           where subnodes have the same form.  Leaves are
           SVNRevisionRange instances telling the source_lod and range
           of SVN revision numbers from which the CVSPath can be
           copied.
-      BEST_RANGE -- (SVNRevisionRange) the SVNRevisionRange whose
-          source_lod and opening_revision have the best score.  This
-          member is set when compute_best_revnum() is called.
 
     """
 
     self.cvs_path = cvs_path
     self._symbol = symbol
     self._node_tree = node_tree
-    self._preferred_range = preferred_range
 
   def _set_node(self, cvs_file, svn_revision_range):
     parent_node = self._get_node(cvs_file.parent_directory, create=True)
@@ -99,14 +93,15 @@ class FillSource:
         else:
           raise
 
-  def compute_best_revnum(self):
+  def compute_best_source(self, preferred_source):
     """Determine the best source_lod and subversion revision number to copy.
 
-    Set self.best_range to the best source found.  If
-    SELF._preferred_range is not None and its opening is among the
-    sources with the best scores, return it; otherwise, return the
-    oldest such revision on the first such source_lod (ordered by the
-    natural LOD sort order)."""
+    Return the best source found, as an SVNRevisionRange instance.  If
+    PREFERRED_SOURCE is not None and its opening is among the sources
+    with the best scores, return it; otherwise, return the oldest such
+    revision on the first such source_lod (ordered by the natural LOD
+    sort order).  The return value's source_lod is the best LOD to
+    copy from, and its opening_revnum is the best SVN revision."""
 
     # Aggregate openings and closings from our rev tree
     svn_revision_ranges = self._get_revision_ranges(self._node_tree)
@@ -118,11 +113,11 @@ class FillSource:
         revision_scores.get_best_revnum()
 
     if (
-        self._preferred_range is not None
-        and revision_scores.get_score(self._preferred_range,) == best_score
+        preferred_source is not None
+        and revision_scores.get_score(preferred_source) == best_score
         ):
-      best_source_lod = self._preferred_range.source_lod
-      best_revnum = self._preferred_range.opening_revnum
+      best_source_lod = preferred_source.source_lod
+      best_revnum = preferred_source.opening_revnum
 
     if best_revnum == SVN_INVALID_REVNUM:
       raise FatalError(
@@ -130,13 +125,13 @@ class FillSource:
           % self._symbol.name
           )
 
-    self.best_range = SVNRevisionRange(best_source_lod, best_revnum)
+    return SVNRevisionRange(best_source_lod, best_revnum)
 
   def _get_revision_ranges(self, node):
     """Return a list of all the SVNRevisionRanges at and under NODE.
 
     Include duplicates.  This is a helper method used by
-    compute_best_revnum()."""
+    compute_best_source()."""
 
     if isinstance(node, SVNRevisionRange):
       # It is a leaf node.
@@ -148,38 +143,13 @@ class FillSource:
         revision_ranges.extend(self._get_revision_ranges(subnode))
       return revision_ranges
 
-  def get_subsources(self, preferred_range):
+  def get_subsources(self):
     """Generate (cvs_path, FillSource) for all direct subsources."""
 
     if not isinstance(self._node_tree, SVNRevisionRange):
       for cvs_path, node in self._node_tree.items():
-        fill_source = FillSource(
-            cvs_path, self._symbol, node, preferred_range
-            )
-        fill_source.compute_best_revnum()
+        fill_source = FillSource(cvs_path, self._symbol, node)
         yield (cvs_path, fill_source)
-
-  def print_tree(self):
-    """Print all nodes to sys.stdout.
-
-    This method is included for debugging purposes."""
-
-    print 'TREE LOD = %s' % (self.best_range.source_lod,)
-    self._print_subtree(self._node_tree, self.cvs_path, indent_depth=0)
-    print 'TREE', '-' * 75
-
-  def _print_subtree(self, node, cvs_path, indent_depth=0):
-    """Print all nodes that are rooted at NODE to sys.stdout.
-
-    INDENT_DEPTH is used to indent the output of recursive calls.
-    This method is included for debugging purposes."""
-
-    if isinstance(node, SVNRevisionRange):
-      print "TREE:", " " * (indent_depth * 2), cvs_path, node
-    else:
-      print "TREE:", " " * (indent_depth * 2), cvs_path
-      for sub_path, sub_node in node.items():
-        self._print_subtree(sub_node, sub_path, indent_depth + 1)
 
 
 def get_source_set(symbol, range_map):
@@ -199,8 +169,6 @@ def get_source_set(symbol, range_map):
 
   for cvs_symbol, svn_revision_range in range_map.items():
     fill_source._set_node(cvs_symbol.cvs_file, svn_revision_range)
-
-  fill_source.compute_best_revnum()
 
   return fill_source
 

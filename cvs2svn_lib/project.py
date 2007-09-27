@@ -247,11 +247,17 @@ class Project(object):
     for symbol_transform in self.symbol_transforms:
       newname = symbol_transform.transform(cvs_file, name, revision)
       if newname is None:
-        Log().warn("   symbol '%s' ignored" % (name,))
+        Log().warn(
+            "   symbol '%s'=%s ignored in %s"
+            % (name, revision, cvs_file.filename,)
+            )
         # Don't continue with other symbol transforms:
         return None
       elif newname != name:
-        Log().warn("   symbol '%s' transformed to '%s'" % (name, newname))
+        Log().warn(
+            "   symbol '%s'=%s transformed to '%s' in %s"
+            % (name, revision, newname, cvs_file.filename,)
+            )
         name = newname
 
     return name

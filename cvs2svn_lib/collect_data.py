@@ -268,10 +268,6 @@ class _SymbolDataCollector(object):
     # process_symbols().
     self._symbol_defs = []
 
-    # A set containing the names of each known symbol in this file,
-    # used to check for duplicates.
-    self._known_symbols = set()
-
     # Map { branch_number : _BranchData }, where branch_number has an
     # odd number of digits.
     self.branches_data = { }
@@ -344,7 +340,11 @@ class _SymbolDataCollector(object):
     example: '1.7', '1.7.2', or '1.1.1' or '1.1.1.1'.  NAME is a
     transformed branch or tag name."""
 
-    if name in self._known_symbols:
+    # A set containing the names of each known symbol in this file,
+    # used to check for duplicates.
+    known_symbols = set()
+
+    if name in known_symbols:
       # The symbol is already defined.  This can easily happen when
       # --symbol-transform is used:
       self.collect_data.record_fatal_error(
@@ -353,7 +353,7 @@ class _SymbolDataCollector(object):
           )
     else:
       # Add symbol to our records:
-      self._known_symbols.add(name)
+      known_symbols.add(name)
       if is_branch_revision_number(revision):
         self._add_branch(name, revision)
       else:

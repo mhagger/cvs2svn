@@ -234,21 +234,18 @@ class Project(object):
         self.tags_path, tag_symbol.get_clean_name(), *components
         )
 
-  def transform_symbol(self, cvs_file, name, revision, is_branch):
+  def transform_symbol(self, cvs_file, name, revision):
     """Transform the symbol NAME.
 
     NAME refers to revision number REVISION in CVS_FILE.  REVISION is
     the CVS revision number as a string, with zeros removed (e.g.,
-    '1.7' or '1.7.2').  IS_BRANCH is True iff REVISION is a branch
-    revision number.  Use the renaming rules specified with
+    '1.7' or '1.7.2').  Use the renaming rules specified with
     --symbol-transform to possibly rename the symbol.  Return the
     transformed symbol name, or the original name if it should not be
     transformed."""
 
     for symbol_transform in self.symbol_transforms:
-      newname = symbol_transform.transform(
-          cvs_file, name, revision, is_branch
-          )
+      newname = symbol_transform.transform(cvs_file, name, revision)
       if newname is None:
         Log().warn("   symbol '%s' ignored" % (name,))
         # Don't continue with other symbol transforms:

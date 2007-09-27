@@ -113,6 +113,16 @@ def is_trunk_revision(rev):
   return rev.count('.') == 1
 
 
+def is_branch_revision_number(rev):
+  """Return True iff REV is a branch revision number.
+
+  REV is a CVS revision number in canonical form (i.e., with zeros
+  removed).  Return True iff it refers to a whole branch, as opposed
+  to a single revision."""
+
+  return rev.count('.') % 2 == 0
+
+
 def is_same_line_of_development(rev1, rev2):
   """Return True if rev1 and rev2 are on the same line of
   development (i.e., both on trunk, or both on the same branch);
@@ -317,13 +327,10 @@ class _SymbolDataCollector(object):
     # revision number:
     m = branch_tag_re.match(revision)
     if m:
-      is_branch = True
       revision = m.group(1) + m.group(2)
-    else:
-      is_branch = False
 
     name = self.cvs_file.project.transform_symbol(
-        self.cvs_file, name, revision, is_branch
+        self.cvs_file, name, revision
         )
 
     if name is None:
@@ -339,7 +346,7 @@ class _SymbolDataCollector(object):
     else:
       # Add symbol to our records:
       self._known_symbols.add(name)
-      if is_branch:
+      if is_branch_revision_number(revision):
         self._add_branch(name, revision)
       else:
         self._add_tag(name, revision)

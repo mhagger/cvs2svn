@@ -1124,6 +1124,29 @@ def multiple_tags():
         'tags', 'T_ALL_INITIAL_FILES_BUT_ONE', 'proj', 'default'):
     raise Failure()
 
+
+def multiply_defined_symbols():
+  "multiple definitions of symbol names"
+
+  # We can only check one line of the error output at a time, so test
+  # twice.  (The conversion only have to be done once because the
+  # results are cached.)
+  conv = ensure_conversion(
+      'multiply-defined-symbols',
+      error_re=(
+          r"ERROR\: Multiple definitions of the symbol \'BRANCH\' .*\: "
+          r"1\.2\.4\, 1\.2\.2"
+          ),
+      )
+  conv = ensure_conversion(
+      'multiply-defined-symbols',
+      error_re=(
+          r"ERROR\: Multiple definitions of the symbol \'TAG\' .*\: "
+          r"1\.2\, 1\.1"
+          ),
+      )
+
+
 def bogus_tag():
   "conversion of invalid symbolic names"
   conv = ensure_conversion('bogus-tag')
@@ -3006,6 +3029,7 @@ test_list = [
     show_help_passes,
     multiple_tags,
 # 90:
+    multiply_defined_symbols,
     double_branch_delete,
     symbol_mismatches,
     overlook_symbol_mismatches,
@@ -3015,8 +3039,8 @@ test_list = [
     unblock_blocked_excludes,
     regexp_force_symbols,
     heuristic_symbol_default,
-    branch_symbol_default,
 # 100:
+    branch_symbol_default,
     tag_symbol_default,
     symbol_transform,
     issue_99,
@@ -3026,8 +3050,8 @@ test_list = [
     multiproject,
     crossproject,
     tag_with_no_revision,
-    XFail(delete_cvsignore),
 # 110:
+    XFail(delete_cvsignore),
     repeated_deltatext,
     nasty_graphs,
     XFail(tagging_after_delete),
@@ -3037,8 +3061,8 @@ test_list = [
     internal_co,
     internal_co_exclude,
     internal_co_trunk_only,
-    internal_co_keywords,
 # 120:
+    internal_co_keywords,
     leftover_revs,
     requires_internal_co,
     timestamp_chaos,
@@ -3048,8 +3072,8 @@ test_list = [
     branch_from_empty_dir,
     trunk_readd,
     branch_from_deleted_1_1,
-    add_on_branch,
 # 130:
+    add_on_branch,
     XFail(main_git),
     ]
 

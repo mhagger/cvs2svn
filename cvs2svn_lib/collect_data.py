@@ -333,6 +333,45 @@ class _SymbolDataCollector(object):
       # Record it for later processing:
       self._symbol_defs.append( (name, revision) )
 
+  def _process_duplicate_names(self):
+    """Look for and process duplicate names in SELF._symbol_defs.
+
+    Duplicate definitions of symbol names have been seen in the wild,
+    and they can also happen when --symbol-transform is used."""
+
+    # A map {name : [index,...]} mapping the names of symbols to a
+    # list of their definitions' indexes in self._symbol_defs:
+    known_symbols = {}
+
+    for i in range(len(self._symbol_defs)):
+      (name, revision) = self._symbol_defs[i]
+      if name in known_symbols:
+        known_symbols[name].append(i)
+      else:
+        known_symbols[name] = [i]
+
+    names = known_symbols.keys()
+    names.sort()
+    dup_indexes = set()
+    for name in names:
+      indexes = known_symbols[name]
+      if len(indexes) > 1:
+        # This symbol was defined multiple times.
+        self.collect_data.record_fatal_error(
+            "Multiple definitions of the symbol '%s' in '%s': %s" % (
+                name, self.cvs_file.filename,
+                ', '.join([self._symbol_defs[i][1] for i in indexes]),
+                )
+            )
+        # Ignore all but the last definition:
+        dup_indexes.update(indexes[1:])
+
+    self._symbol_defs = [
+        self._symbol_defs[i]
+        for i in range(len(self._symbol_defs))
+        if i not in dup_indexes
+        ]
+
   def _process_symbol(self, name, revision):
     """Process a symbol called NAME, which is associated with REVISON.
 
@@ -340,27 +379,16 @@ class _SymbolDataCollector(object):
     example: '1.7', '1.7.2', or '1.1.1' or '1.1.1.1'.  NAME is a
     transformed branch or tag name."""
 
-    # A set containing the names of each known symbol in this file,
-    # used to check for duplicates.
-    known_symbols = set()
-
-    if name in known_symbols:
-      # The symbol is already defined.  This can easily happen when
-      # --symbol-transform is used:
-      self.collect_data.record_fatal_error(
-          "Multiple definitions of the symbol '%s' in '%s'"
-          % (name, self.cvs_file.filename)
-          )
+    # Add symbol to our records:
+    if is_branch_revision_number(revision):
+      self._add_branch(name, revision)
     else:
-      # Add symbol to our records:
-      known_symbols.add(name)
-      if is_branch_revision_number(revision):
-        self._add_branch(name, revision)
-      else:
-        self._add_tag(name, revision)
+      self._add_tag(name, revision)
 
   def process_symbols(self):
     """Process the symbol definitions from SELF._symbol_defs."""
+
+    self._process_duplicate_names()
 
     for (name, revision) in self._symbol_defs:
       self._process_symbol(name, revision)

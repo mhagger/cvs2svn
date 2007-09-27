@@ -401,6 +401,11 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     self.collect_data = self.pdc.collect_data
     self.project = self.cvs_file.project
 
+    # A list [(name, revision), ...] of symbols defined in the header
+    # of the file.  This list is processed then deleted in
+    # admin_completed().
+    self._symbol_defs = []
+
     # A place to store information about the symbols in this file:
     self.sdc = _SymbolDataCollector(self, self.cvs_file)
 
@@ -442,12 +447,15 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
     This is a callback method declared in Sink."""
 
-    self.sdc.define_symbol(name, revision)
+    self._symbol_defs.append((name, revision))
 
   def admin_completed(self):
     """This is a callback method declared in Sink."""
 
-    pass
+    for (name, revision) in self._symbol_defs:
+      self.sdc.define_symbol(name, revision)
+
+    del self._symbol_defs
 
   def define_revision(self, revision, timestamp, author, state,
                       branches, next):

@@ -1,0 +1,35 @@
+# (Be in -*- python -*- mode.)
+
+# Fix a problem with multiply-defined symbols by renaming one copy of
+# each symbol.
+
+from cvs2svn_lib.symbol_transform import SymbolMapper
+
+execfile('cvs2svn-example.options')
+
+name = 'multiply-defined-symbols'
+
+ctx.output_option = NewRepositoryOutputOption(
+    'cvs2svn-tmp/%s--options=cvs2svn-rename.options-svnrepos' % (name,),
+    )
+
+del run_options.projects[:]
+
+filename = 'test-data/%s-cvsrepos/proj/default,v' % (name,)
+symbol_mapper = SymbolMapper([
+    (filename, 'BRANCH', '1.2.4', 'BRANCH2'),
+    (filename, 'TAG', '1.2', 'TAG2'),
+    ])
+
+run_options.add_project(
+    Project(
+        r'test-data/%s-cvsrepos' % (name,),
+        'trunk',
+        'branches',
+        'tags',
+        symbol_transforms=[
+            symbol_mapper,
+            ],
+        )
+    )
+

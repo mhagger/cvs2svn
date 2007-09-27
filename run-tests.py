@@ -1147,6 +1147,24 @@ def multiply_defined_symbols():
       )
 
 
+def multiply_defined_symbols_renamed():
+  "rename multiply defined symbols"
+
+  conv = ensure_conversion(
+      'multiply-defined-symbols',
+      options_file='cvs2svn-rename.options',
+      )
+
+
+def multiply_defined_symbols_ignored():
+  "ignore multiply defined symbols"
+
+  conv = ensure_conversion(
+      'multiply-defined-symbols',
+      options_file='cvs2svn-ignore.options',
+      )
+
+
 def bogus_tag():
   "conversion of invalid symbolic names"
   conv = ensure_conversion('bogus-tag')
@@ -3030,6 +3048,8 @@ test_list = [
     multiple_tags,
 # 90:
     multiply_defined_symbols,
+    multiply_defined_symbols_renamed,
+    multiply_defined_symbols_ignored,
     double_branch_delete,
     symbol_mismatches,
     overlook_symbol_mismatches,
@@ -3037,9 +3057,9 @@ test_list = [
     commit_blocks_tags,
     blocked_excludes,
     unblock_blocked_excludes,
+# 100:
     regexp_force_symbols,
     heuristic_symbol_default,
-# 100:
     branch_symbol_default,
     tag_symbol_default,
     symbol_transform,
@@ -3048,9 +3068,9 @@ test_list = [
     issue_106,
     options_option,
     multiproject,
+# 110:
     crossproject,
     tag_with_no_revision,
-# 110:
     XFail(delete_cvsignore),
     repeated_deltatext,
     nasty_graphs,
@@ -3059,9 +3079,9 @@ test_list = [
     file_directory_conflict,
     attic_directory_conflict,
     internal_co,
+# 120:
     internal_co_exclude,
     internal_co_trunk_only,
-# 120:
     internal_co_keywords,
     leftover_revs,
     requires_internal_co,
@@ -3070,9 +3090,9 @@ test_list = [
     empty_trunk_path,
     preferred_parent_cycle,
     branch_from_empty_dir,
+# 130:
     trunk_readd,
     branch_from_deleted_1_1,
-# 130:
     add_on_branch,
     XFail(main_git),
     ]

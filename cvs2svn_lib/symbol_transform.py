@@ -66,3 +66,34 @@ class RegexpSymbolTransform(SymbolTransform):
     return self.pattern.sub(self.replacement, symbol_name)
 
 
+class SymbolMapper(SymbolTransform):
+  """A SymbolTransform that transforms specific symbol definitions.
+
+  The user has to specify the exact CVS filename, symbol name, and
+  revision number to be transformed, and the new name (or None if the
+  symbol should be ignored).  The mappings can be set via a
+  constructor argument or by calling __setitem__()."""
+
+  def __init__(self, items=[]):
+    """Initialize the mapper.
+
+    ITEMS is a list of tuples (cvs_filename, symbol_name, revision,
+    new_name) which will be set as mappings."""
+
+    # A map {(cvs_filename, symbol_name, revision) : new_name}:
+    self._map = {}
+
+    for (cvs_filename, symbol_name, revision, new_name) in items:
+      self._map[cvs_filename, symbol_name, revision] = new_name
+
+  def __setitem__(self, (cvs_filename, symbol_name, revision), new_name):
+    """Set a mapping for a particular file, symbol, and revision."""
+
+    self._map[cvs_filename, symbol_name, revision] = new_name
+
+  def transform(self, cvs_file, symbol_name, revision):
+    return self._map.get(
+        (cvs_file.filename, symbol_name, revision), symbol_name
+        )
+
+

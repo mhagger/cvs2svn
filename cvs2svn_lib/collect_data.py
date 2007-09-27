@@ -260,6 +260,14 @@ class _SymbolDataCollector(object):
     self.pdc = self.fdc.pdc
     self.collect_data = self.fdc.collect_data
 
+    # A list [(name, revision), ...] of symbols defined in the header
+    # of the file.  The name has already been transformed using the
+    # symbol transform rules.  If the symbol transform rules indicate
+    # that the symbol should be ignored, then it is never added to
+    # this list.  This list is processed then deleted in
+    # process_symbols().
+    self._symbol_defs = []
+
     # A set containing the names of each known symbol in this file,
     # used to check for duplicates.
     self._known_symbols = set()
@@ -315,28 +323,28 @@ class _SymbolDataCollector(object):
     return tag_data
 
   def define_symbol(self, name, revision):
-    """Record a symbol called NAME, which is associated with REVISON.
+    """Record a symbol definition for later processing."""
 
-    REVISION is an unprocessed revision number from the RCS file's
-    header, for example: '1.7', '1.7.0.2', or '1.1.1' or '1.1.1.1'.
-    NAME is an untransformed branch or tag name.  This function will
-    determine by inspection whether it is a branch or a tag, and
-    record it in the right places."""
-
-    # Determine whether it is a branch or tag, and canonicalize the
-    # revision number:
-    m = branch_tag_re.match(revision)
-    if m:
-      revision = m.group(1) + m.group(2)
+    # Canonicalize the revision number:
+    revision = branch_tag_re.sub(r'\1\2', revision)
 
     name = self.cvs_file.project.transform_symbol(
         self.cvs_file, name, revision
         )
 
-    if name is None:
-      # Ignore this symbol
-      pass
-    elif name in self._known_symbols:
+    # If the name transformed to None, then we ignore it:
+    if name is not None:
+      # Record it for later processing:
+      self._symbol_defs.append( (name, revision) )
+
+  def _process_symbol(self, name, revision):
+    """Process a symbol called NAME, which is associated with REVISON.
+
+    REVISION is a canonical revision number with zeros removed, for
+    example: '1.7', '1.7.2', or '1.1.1' or '1.1.1.1'.  NAME is a
+    transformed branch or tag name."""
+
+    if name in self._known_symbols:
       # The symbol is already defined.  This can easily happen when
       # --symbol-transform is used:
       self.collect_data.record_fatal_error(
@@ -350,6 +358,14 @@ class _SymbolDataCollector(object):
         self._add_branch(name, revision)
       else:
         self._add_tag(name, revision)
+
+  def process_symbols(self):
+    """Process the symbol definitions from SELF._symbol_defs."""
+
+    for (name, revision) in self._symbol_defs:
+      self._process_symbol(name, revision)
+
+    del self._symbol_defs
 
   def rev_to_branch_number(revision):
     """Return the branch_number of the branch on which REVISION lies.
@@ -405,11 +421,6 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     self.collect_data = self.pdc.collect_data
     self.project = self.cvs_file.project
 
-    # A list [(name, revision), ...] of symbols defined in the header
-    # of the file.  This list is processed then deleted in
-    # admin_completed().
-    self._symbol_defs = []
-
     # A place to store information about the symbols in this file:
     self.sdc = _SymbolDataCollector(self, self.cvs_file)
 
@@ -451,15 +462,12 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
     This is a callback method declared in Sink."""
 
-    self._symbol_defs.append((name, revision))
+    self.sdc.define_symbol(name, revision)
 
   def admin_completed(self):
     """This is a callback method declared in Sink."""
 
-    for (name, revision) in self._symbol_defs:
-      self.sdc.define_symbol(name, revision)
-
-    del self._symbol_defs
+    self.sdc.process_symbols()
 
   def define_revision(self, revision, timestamp, author, state,
                       branches, next):

@@ -105,15 +105,12 @@ def rev_tuple(rev):
 
 
 def is_trunk_revision(rev):
-  """Return True iff REV is a trunk revision."""
+  """Return True iff REV is a trunk revision.
+
+  REV is a revision number corresponding to a specific revision (i.e.,
+  not a whole branch)."""
 
   return rev.count('.') == 1
-
-
-def is_branch_revision(rev):
-  """Return True iff REV is a branch revision."""
-
-  return rev.count('.') >= 3
 
 
 def is_same_line_of_development(rev1, rev2):
@@ -706,10 +703,10 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
           )
       return
 
-    if is_branch_revision(revision):
-      branch_name = self.sdc.rev_to_branch_data(revision).symbol.name
-    else:
+    if is_trunk_revision(revision):
       branch_name = None
+    else:
+      branch_name = self.sdc.rev_to_branch_data(revision).symbol.name
 
     cvs_rev.metadata_id = self.collect_data.metadata_db.get_key(
         self.project, branch_name, rev_data.author, log)

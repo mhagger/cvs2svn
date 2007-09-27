@@ -333,7 +333,7 @@ class _SymbolDataCollector(object):
       # Record it for later processing:
       self._symbol_defs.append( (name, revision) )
 
-  def _process_duplicate_names(self):
+  def _process_duplicate_defs(self):
     """Look for and process duplicate names in SELF._symbol_defs.
 
     Duplicate definitions of symbol names have been seen in the wild,
@@ -363,8 +363,9 @@ class _SymbolDataCollector(object):
                 ', '.join([self._symbol_defs[i][1] for i in indexes]),
                 )
             )
-        # Ignore all but the last definition:
-        dup_indexes.update(indexes[1:])
+        # Ignore all but the last definition for now, to allow the
+        # conversion to proceed:
+        dup_indexes.update(indexes[:-1])
 
     self._symbol_defs = [
         self._symbol_defs[i]
@@ -388,7 +389,7 @@ class _SymbolDataCollector(object):
   def process_symbols(self):
     """Process the symbol definitions from SELF._symbol_defs."""
 
-    self._process_duplicate_names()
+    self._process_duplicate_defs()
 
     for (name, revision) in self._symbol_defs:
       self._process_symbol(name, revision)

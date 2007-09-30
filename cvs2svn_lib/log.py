@@ -59,7 +59,7 @@ class Log:
     self.log_level = Log.NORMAL
     # Set this to True if you want to see timestamps on each line output.
     self.use_timestamps = False
-    self.logger = sys.stdout
+    self._out = sys.stdout
     # Lock to serialize writes to the log:
     self.lock = threading.Lock()
 
@@ -121,41 +121,41 @@ class Log:
       self.lock.release()
 
   def write(self, *args):
-    """Write a message to SELF.logger.
+    """Write a message to SELF._out.
 
     This is a public method to use for writing to the output log
     unconditionally."""
 
-    self._write(self.logger, *args)
+    self._write(self._out, *args)
 
   def warn(self, *args):
     """Log a message at the WARN level."""
 
     if self.is_on(Log.WARN):
-      self._write(self.logger, *args)
+      self._write(self._out, *args)
 
   def quiet(self, *args):
     """Log a message at the QUIET level."""
 
     if self.is_on(Log.QUIET):
-      self._write(self.logger, *args)
+      self._write(self._out, *args)
 
   def normal(self, *args):
     """Log a message at the NORMAL level."""
 
     if self.is_on(Log.NORMAL):
-      self._write(self.logger, *args)
+      self._write(self._out, *args)
 
   def verbose(self, *args):
     """Log a message at the VERBOSE level."""
 
     if self.is_on(Log.VERBOSE):
-      self._write(self.logger, *args)
+      self._write(self._out, *args)
 
   def debug(self, *args):
     """Log a message at the DEBUG level."""
 
     if self.is_on(Log.DEBUG):
-      self._write(self.logger, *args)
+      self._write(self._out, *args)
 
 

@@ -97,13 +97,12 @@ class Log:
 
     return ''.join(retval)
 
-  def write(self, *args):
-    """Write a message to the log.
+  def _write(self, out, *args):
+    """Write a message to OUT.
 
-    This is the public method to use for writing to a file.  If there
-    are multiple ARGS, they will be separated by spaces.  If there are
-    multiple lines, they will be output one by one with the same
-    timestamp prefix."""
+    If there are multiple ARGS, they will be separated by spaces.  If
+    there are multiple lines, they will be output one by one with the
+    same timestamp prefix."""
 
     timestamp = self._timestamp()
     s = ' '.join(map(str, args))
@@ -114,41 +113,49 @@ class Log:
     self.lock.acquire()
     try:
       for s in lines:
-        self.logger.write('%s%s\n' % (timestamp, s,))
+        out.write('%s%s\n' % (timestamp, s,))
       # Ensure that log output doesn't get out-of-order with respect to
       # stderr output.
-      self.logger.flush()
+      out.flush()
     finally:
       self.lock.release()
+
+  def write(self, *args):
+    """Write a message to SELF.logger.
+
+    This is a public method to use for writing to the output log
+    unconditionally."""
+
+    self._write(self.logger, *args)
 
   def warn(self, *args):
     """Log a message at the WARN level."""
 
     if self.is_on(Log.WARN):
-      self.write(*args)
+      self._write(self.logger, *args)
 
   def quiet(self, *args):
     """Log a message at the QUIET level."""
 
     if self.is_on(Log.QUIET):
-      self.write(*args)
+      self._write(self.logger, *args)
 
   def normal(self, *args):
     """Log a message at the NORMAL level."""
 
     if self.is_on(Log.NORMAL):
-      self.write(*args)
+      self._write(self.logger, *args)
 
   def verbose(self, *args):
     """Log a message at the VERBOSE level."""
 
     if self.is_on(Log.VERBOSE):
-      self.write(*args)
+      self._write(self.logger, *args)
 
   def debug(self, *args):
     """Log a message at the DEBUG level."""
 
     if self.is_on(Log.DEBUG):
-      self.write(*args)
+      self._write(self.logger, *args)
 
 

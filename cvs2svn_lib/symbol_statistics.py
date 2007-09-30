@@ -349,13 +349,21 @@ class SymbolStatistics:
     # development:
     self._stats = { }
 
+    # A map { LineOfDevelopment.id -> _Stats } for all lines of
+    # development:
+    self._stats_by_id = { }
+
     stats_list = cPickle.load(open(filename, 'rb'))
 
     for stats in stats_list:
       self._stats[stats.lod] = stats
+      self._stats_by_id[stats.lod.id] = stats
 
   def __len__(self):
     return len(self._stats)
+
+  def __getitem__(self, lod_id):
+    return self._stats_by_id[lod_id]
 
   def get_stats(self, lod):
     """Return the _Stats object for LineOfDevelopment instance LOD.
@@ -475,6 +483,7 @@ class SymbolStatistics:
     """SYMBOL has been excluded; remove it from our statistics."""
 
     del self._stats[symbol]
+    del self._stats_by_id[symbol.id]
 
     # Remove references to this symbol from other statistics objects:
     for stats in self._stats.itervalues():

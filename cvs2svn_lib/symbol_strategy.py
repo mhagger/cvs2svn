@@ -213,7 +213,7 @@ class HeuristicPreferredParentRule(StrategyRule):
       return best_symbol
 
   def get_symbol(self, symbol, stats):
-    if isinstance(symbol, TypedSymbol):
+    if isinstance(symbol, TypedSymbol) and symbol.preferred_parent_id is None:
       preferred_parent = self._get_preferred_parent(stats)
       if preferred_parent is None:
         Log().debug('%s has no preferred parent' % (symbol,))

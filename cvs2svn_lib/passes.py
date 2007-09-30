@@ -156,21 +156,27 @@ class CollateSymbolsPass(Pass):
     self._register_temp_file_needed(config.PROJECTS)
     self._register_temp_file_needed(config.SYMBOL_STATISTICS)
 
+  class IndeterminateSymbolException(Exception):
+    def __init__(self, stats):
+      self.stats = stats
+
   def get_symbol(self, stats):
     """Use StrategyRules to decide what to do with a symbol.
 
-    STATS is an instance of symbol_statistics._Stats describing a Symbol
-    (i.e., not a Trunk instance).  To determine how the symbol is to be
-    converted, consult the StrategyRules in Ctx().symbol_strategy_rules.
-    The first rule that applies determines how the symbol is to be
-    converted."""
+    STATS is an instance of symbol_statistics._Stats describing a
+    Symbol (i.e., not a Trunk instance).  To determine how the symbol
+    is to be converted, consult the StrategyRules in
+    Ctx().symbol_strategy_rules.  The first rule that applies
+    determines how the symbol is to be converted.  If no rules apply,
+    raise IndeterminateSymbolException."""
 
     for rule in Ctx().symbol_strategy_rules:
       symbol = rule.get_symbol(stats)
       if symbol is not None:
         return symbol
     else:
-      return None
+      # None of the rules covered this symbol.
+      raise self.IndeterminateSymbolException(stats)
 
   def get_symbols(self, symbol_stats):
     """Return a list of TypedSymbol objects telling how to convert symbols.
@@ -189,12 +195,12 @@ class CollateSymbolsPass(Pass):
       if isinstance(stats.lod, Trunk):
         symbols.append(stats.lod)
       else:
-        symbol = self.get_symbol(stats)
-        if symbol is not None:
-          symbols.append(symbol)
+        try:
+          symbol = self.get_symbol(stats)
+        except self.IndeterminateSymbolException, e:
+          mismatches.append(e.stats)
         else:
-          # None of the rules covered this symbol.
-          mismatches.append(stats)
+          symbols.append(symbol)
 
     if mismatches:
       s = []

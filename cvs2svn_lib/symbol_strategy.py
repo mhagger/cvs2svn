@@ -23,6 +23,7 @@ from cvs2svn_lib.boolean import *
 from cvs2svn_lib.set_support import *
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import error_prefix
+from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.symbol import Trunk
 from cvs2svn_lib.symbol import Branch
 from cvs2svn_lib.symbol import Tag
@@ -164,33 +165,21 @@ class AllTagRule(StrategyRule):
     return Tag(stats.lod)
 
 
-class RuleBasedSymbolStrategy:
-  """A strategy that uses StrategyRules to decide what to do with a symbol.
+def get_symbol_for_stats(stats):
+  """Use StrategyRules to decide what to do with a symbol.
 
-  To determine how a symbol is to be converted, first check the
-  StrategyRules in self._rules.  The first rule that applies
-  determines how the symbol is to be converted.  It is an error if
-  there are any symbols that are not covered by the rules."""
+  To determine how a symbol is to be converted, consult the
+  StrategyRules in Ctx().symbol_strategy_rules.  The first rule that
+  applies determines how the symbol is to be converted."""
 
-  def __init__(self):
-    """Initialize an instance."""
-
-    # A list of StrategyRule objects, applied in order to determine
-    # how symbols should be converted.
-    self._rules = []
-
-  def add_rule(self, rule):
-    self._rules.append(rule)
-
-  def get_symbol(self, stats):
-    if isinstance(stats.lod, Trunk):
-      return stats.lod
+  if isinstance(stats.lod, Trunk):
+    return stats.lod
+  else:
+    for rule in Ctx().symbol_strategy_rules:
+      symbol = rule.get_symbol(stats)
+      if symbol is not None:
+        return symbol
     else:
-      for rule in self._rules:
-        symbol = rule.get_symbol(stats)
-        if symbol is not None:
-          return symbol
-      else:
-        return None
+      return None
 
 

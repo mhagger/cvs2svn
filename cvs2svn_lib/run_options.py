@@ -57,7 +57,6 @@ from cvs2svn_lib.symbol_strategy import ExcludeRegexpStrategyRule
 from cvs2svn_lib.symbol_strategy import ForceBranchRegexpStrategyRule
 from cvs2svn_lib.symbol_strategy import ForceTagRegexpStrategyRule
 from cvs2svn_lib.symbol_strategy import HeuristicStrategyRule
-from cvs2svn_lib.symbol_strategy import RuleBasedSymbolStrategy
 from cvs2svn_lib.symbol_strategy import UnambiguousUsageRule
 from cvs2svn_lib.symbol_transform import RegexpSymbolTransform
 from cvs2svn_lib.property_setters import AutoPropsPropertySetter
@@ -353,8 +352,6 @@ class RunOptions:
     force_tag = False
     symbol_transforms = []
 
-    ctx.symbol_strategy = RuleBasedSymbolStrategy()
-
     for opt, value in self.opts:
       if opt  in ['-s', '--svnrepos']:
         target = value
@@ -383,13 +380,13 @@ class RunOptions:
       elif opt == '--fallback-encoding':
         fallback_encoding = value
       elif opt == '--force-branch':
-        ctx.symbol_strategy.add_rule(ForceBranchRegexpStrategyRule(value))
+        ctx.symbol_strategy_rules.append(ForceBranchRegexpStrategyRule(value))
         force_branch = True
       elif opt == '--force-tag':
-        ctx.symbol_strategy.add_rule(ForceTagRegexpStrategyRule(value))
+        ctx.symbol_strategy_rules.append(ForceTagRegexpStrategyRule(value))
         force_tag = True
       elif opt == '--exclude':
-        ctx.symbol_strategy.add_rule(ExcludeRegexpStrategyRule(value))
+        ctx.symbol_strategy_rules.append(ExcludeRegexpStrategyRule(value))
       elif opt == '--symbol-default':
         if value not in ['branch', 'tag', 'heuristic', 'strict']:
           raise FatalError(
@@ -562,16 +559,16 @@ class RunOptions:
     except LookupError, e:
       raise FatalError(str(e))
 
-    ctx.symbol_strategy.add_rule(UnambiguousUsageRule())
+    ctx.symbol_strategy_rules.append(UnambiguousUsageRule())
     if symbol_strategy_default == 'strict':
       pass
     elif symbol_strategy_default == 'branch':
-      ctx.symbol_strategy.add_rule(AllBranchRule())
+      ctx.symbol_strategy_rules.append(AllBranchRule())
     elif symbol_strategy_default == 'tag':
-      ctx.symbol_strategy.add_rule(AllTagRule())
+      ctx.symbol_strategy_rules.append(AllTagRule())
     elif symbol_strategy_default == 'heuristic':
-      ctx.symbol_strategy.add_rule(BranchIfCommitsRule())
-      ctx.symbol_strategy.add_rule(HeuristicStrategyRule())
+      ctx.symbol_strategy_rules.append(BranchIfCommitsRule())
+      ctx.symbol_strategy_rules.append(HeuristicStrategyRule())
     else:
       assert False
 

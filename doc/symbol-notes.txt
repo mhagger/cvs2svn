@@ -156,9 +156,9 @@ CollateSymbolsPass
 ==================
 
 Use the symbol statistics collected in CollectRevsPass and
-Ctx().symbol_strategy to decide which symbols should be treated as
-branches, which as tags, and which symbols should be excluded from the
-conversion altogether.  Consistency checks prevent, for example, a
+Ctx().symbol_strategy_rules to decide which symbols should be treated
+as branches, which as tags, and which symbols should be excluded from
+the conversion altogether.  Consistency checks prevent, for example, a
 branch from being converted into a tag if there were commits on the
 branch.
 

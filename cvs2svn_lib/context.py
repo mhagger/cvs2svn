@@ -52,7 +52,7 @@ class Ctx:
     self.utf8_encoder = lambda s: s.decode('ascii').encode('utf8')
     self.filename_utf8_encoder = lambda s: s.decode('ascii').encode('utf8')
     self.decode_apple_single = False
-    self.symbol_strategy = None
+    self.symbol_strategy_rules = []
     self.username = None
     self.svn_property_setters = []
     self.tmpdir = 'cvs2svn-tmp'

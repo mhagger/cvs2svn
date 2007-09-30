@@ -44,6 +44,7 @@ from cvs2svn_lib.symbol import ExcludedSymbol
 from cvs2svn_lib.symbol_database import SymbolDatabase
 from cvs2svn_lib.symbol_database import create_symbol_database
 from cvs2svn_lib.symbol_statistics import SymbolStatistics
+from cvs2svn_lib.symbol_strategy import get_symbol_for_stats
 from cvs2svn_lib.cvs_item import CVSRevision
 from cvs2svn_lib.cvs_item import CVSSymbol
 from cvs2svn_lib.cvs_item_database import OldCVSItemStore
@@ -169,7 +170,7 @@ class CollateSymbolsPass(Pass):
     symbols = []
     mismatches = []
     for stats in symbol_stats:
-      symbol = Ctx().symbol_strategy.get_symbol(stats)
+      symbol = get_symbol_for_stats(stats)
       if symbol is not None:
         symbols.append(symbol)
       else:

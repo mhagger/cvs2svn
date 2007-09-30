@@ -189,13 +189,12 @@ class CollateSymbolsPass(Pass):
 
     Raise FatalError if there was an error."""
 
-    symbols = []
     errors = []
     mismatches = []
 
     for stats in symbol_stats:
       if isinstance(stats.lod, Trunk):
-        symbols.append(stats.lod)
+        yield stats.lod
       else:
         try:
           symbol = self.get_symbol(stats)
@@ -204,7 +203,7 @@ class CollateSymbolsPass(Pass):
         except SymbolPlanException, e:
           errors.append(e)
         else:
-          symbols.append(symbol)
+          yield symbol
 
     if errors or mismatches:
       s = ['Problems determining how symbols should be converted:\n']
@@ -222,8 +221,6 @@ class CollateSymbolsPass(Pass):
           s.append('    %s\n' % (stats,))
       raise FatalError(''.join(s))
 
-    return symbols
-
   def run(self, run_options, stats_keeper):
     Ctx()._projects = read_projects(
         artifact_manager.get_temp_file(config.PROJECTS)
@@ -232,7 +229,7 @@ class CollateSymbolsPass(Pass):
         artifact_manager.get_temp_file(config.SYMBOL_STATISTICS)
         )
 
-    symbols = self.get_symbols(symbol_stats)
+    symbols = list(self.get_symbols(symbol_stats))
 
     # Check the symbols for consistency and bail out if there were errors:
     if symbol_stats.check_consistency(symbols):

@@ -41,10 +41,10 @@ from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.cvs_file_database import CVSFileDatabase
 from cvs2svn_lib.metadata_database import MetadataDatabase
 from cvs2svn_lib.symbol import Trunk
-from cvs2svn_lib.symbol import TypedSymbol
 from cvs2svn_lib.symbol import ExcludedSymbol
 from cvs2svn_lib.symbol_database import SymbolDatabase
 from cvs2svn_lib.symbol_database import create_symbol_database
+from cvs2svn_lib.symbol_statistics import IndeterminateSymbolException
 from cvs2svn_lib.symbol_statistics import SymbolStatistics
 from cvs2svn_lib.cvs_item import CVSRevision
 from cvs2svn_lib.cvs_item import CVSSymbol
@@ -157,10 +157,6 @@ class CollateSymbolsPass(Pass):
     self._register_temp_file_needed(config.PROJECTS)
     self._register_temp_file_needed(config.SYMBOL_STATISTICS)
 
-  class IndeterminateSymbolException(Exception):
-    def __init__(self, stats):
-      self.stats = stats
-
   def get_symbol(self, stats):
     """Use StrategyRules to decide what to do with a symbol.
 
@@ -177,9 +173,7 @@ class CollateSymbolsPass(Pass):
       symbol = rule.get_symbol(symbol, stats)
       assert symbol is not None
 
-    if not isinstance(symbol, TypedSymbol):
-      # None of the rules covered this symbol.
-      raise self.IndeterminateSymbolException(stats)
+    stats.check_consistency(symbol)
 
     return symbol
 
@@ -202,7 +196,7 @@ class CollateSymbolsPass(Pass):
       else:
         try:
           symbol = self.get_symbol(stats)
-        except self.IndeterminateSymbolException, e:
+        except IndeterminateSymbolException, e:
           mismatches.append(e.stats)
         else:
           symbols.append(symbol)

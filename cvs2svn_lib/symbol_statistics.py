@@ -29,10 +29,22 @@ from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.symbol import Trunk
 from cvs2svn_lib.symbol import Symbol
 from cvs2svn_lib.symbol import Tag
+from cvs2svn_lib.symbol import TypedSymbol
 from cvs2svn_lib.symbol import IncludedSymbol
 from cvs2svn_lib.symbol import ExcludedSymbol
 from cvs2svn_lib.cvs_item import CVSBranch
 from cvs2svn_lib.cvs_item import CVSTag
+
+
+class SymbolPlanException(Exception):
+  def __init__(self, stats, symbol):
+    self.stats = stats
+    self.symbol = symbol
+
+
+class IndeterminateSymbolException(SymbolPlanException):
+  def __init__(self, stats, symbol):
+    SymbolPlanException.__init__(self, stats, symbol)
 
 
 class _Stats:
@@ -178,6 +190,15 @@ class _Stats:
         best_symbols.add(symbol)
 
     return (best_symbols, best_count)
+
+  def check_consistency(self, symbol):
+    """Check whether the symbol described by SELF can be converted as SYMBOL.
+
+    It is planned to convert SELF.lod as SYMBOL.  If there are any
+    problems with that plan, raise a SymbolPlanException."""
+
+    if not isinstance(symbol, TypedSymbol):
+      raise self.IndeterminateSymbolException(stats, symbol)
 
   def __str__(self):
     return (

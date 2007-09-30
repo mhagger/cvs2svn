@@ -29,8 +29,8 @@ from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.symbol import Trunk
 from cvs2svn_lib.symbol import Symbol
 from cvs2svn_lib.symbol import Tag
+from cvs2svn_lib.symbol import IncludedSymbol
 from cvs2svn_lib.symbol import ExcludedSymbol
-from cvs2svn_lib.symbol import TypedSymbol
 from cvs2svn_lib.cvs_item import CVSBranch
 from cvs2svn_lib.cvs_item import CVSTag
 
@@ -439,19 +439,20 @@ class SymbolStatistics:
         if lod in self._stats:
           raise InternalError(
               'Symbol %s appeared twice in the symbol conversion table'
-              % (lod,))
+              % (lod,)
+              )
         else:
           raise InternalError('Symbol %s is unknown' % (lod,))
 
       if isinstance(lod, Trunk):
         # Trunk is not processed any further.
         pass
+      elif isinstance(lod, IncludedSymbol):
+        # Symbol included; include it in the symbol check.
+        symbols_by_name[lod.name] = lod
       elif isinstance(lod, ExcludedSymbol):
         # Symbol excluded; don't process it any further.
         pass
-      elif isinstance(lod, TypedSymbol):
-        # This is an included symbol.  Include it in the symbol check.
-        symbols_by_name[lod.name] = lod
       else:
         raise InternalError('Symbol %s is of unexpected type' % (lod,))
 

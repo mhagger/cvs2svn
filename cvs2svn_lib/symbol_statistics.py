@@ -175,6 +175,21 @@ class _Stats:
         and not self.possible_parents
         )
 
+  def _check_preferred_parent_allowed(self, symbol):
+    """Check that the selected preferred parent is a possible parent."""
+
+    if isinstance(symbol, IncludedSymbol) \
+           and symbol.preferred_parent_id is not None:
+      for pp in self.possible_parents.keys():
+        if pp.id == symbol.preferred_parent_id:
+          return
+      else:
+        raise SymbolPlanException(
+            self, symbol,
+            'The selected parent is not among the symbol\'s '
+            'possible parents.'
+            )
+
   def check_consistency(self, symbol):
     """Check whether the symbol described by SELF can be converted as SYMBOL.
 
@@ -192,6 +207,8 @@ class _Stats:
 
     if symbol.name != self.lod.name:
       raise SymbolPlanException(self, symbol, 'Names must match')
+
+    self._check_preferred_parent_allowed(symbol)
 
   def __str__(self):
     return (

@@ -461,24 +461,10 @@ class SymbolStatistics:
     how each line of development is to be converted.  Return True iff
     any problems were detected."""
 
-    # Keep track of which symbols have not yet been processed:
-    unprocessed_lods = set(self._stats.keys())
-
     # Create a map { symbol_name : Symbol } including only
     # non-excluded symbols:
     symbols_by_name = {}
     for lod in lods:
-      try:
-        unprocessed_lods.remove(lod)
-      except KeyError:
-        if lod in self._stats:
-          raise InternalError(
-              'Symbol %s appeared twice in the symbol conversion table'
-              % (lod,)
-              )
-        else:
-          raise InternalError('Symbol %s is unknown' % (lod,))
-
       if isinstance(lod, Trunk):
         # Trunk is not processed any further.
         pass
@@ -490,13 +476,6 @@ class SymbolStatistics:
         pass
       else:
         raise InternalError('Symbol %s is of unexpected type' % (lod,))
-
-    # Make sure that all symbols were processed:
-    if unprocessed_lods:
-        raise InternalError(
-            'The following symbols did not appear in the symbol conversion '
-            'table: %s'
-            % (', '.join([str(s) for s in unprocessed_lods]),))
 
     # It is important that we not short-circuit here:
     return (

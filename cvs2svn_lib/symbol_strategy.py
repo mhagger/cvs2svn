@@ -23,6 +23,7 @@ from cvs2svn_lib.boolean import *
 from cvs2svn_lib.set_support import *
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import error_prefix
+from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.symbol import Trunk
 from cvs2svn_lib.symbol import TypedSymbol
@@ -181,5 +182,47 @@ class AllTagRule(StrategyRule):
       return symbol
     else:
       return Tag(symbol)
+
+
+class HeuristicPreferredParentRule(StrategyRule):
+  """Use a heuristic rule to pick preferred parents.
+
+  Pick the parent that should be preferred for any TypedSymbols.  As
+  parent, use the symbol that appeared most often as a possible parent
+  of the symbol in question.  If multiple symbols are tied, choose the
+  one that comes first according to the Symbol class's natural sort
+  order."""
+
+  def _get_preferred_parent(self, stats):
+    """Return the LODs that are most often possible parents in STATS.
+
+    Return the set of LinesOfDevelopment that appeared most often as
+    possible parents.  The return value might contain multiple symbols
+    if multiple LinesOfDevelopment appeared the same number of times."""
+
+    best_count = -1
+    best_symbol = None
+    for (symbol, count) in stats.possible_parents.items():
+      if count > best_count or (count == best_count and symbol < best_symbol):
+        best_count = count
+        best_symbol = symbol
+
+    if best_symbol is None:
+      return None
+    else:
+      return best_symbol
+
+  def get_symbol(self, symbol, stats):
+    if isinstance(symbol, TypedSymbol):
+      preferred_parent = self._get_preferred_parent(stats)
+      if preferred_parent is None:
+        Log().debug('%s has no preferred parent' % (symbol,))
+      else:
+        symbol.preferred_parent_id = preferred_parent.id
+        Log().debug(
+            'The preferred parent of %s is %s' % (symbol, preferred_parent,)
+            )
+
+    return symbol
 
 

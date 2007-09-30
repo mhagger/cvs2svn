@@ -58,6 +58,7 @@ from cvs2svn_lib.symbol_strategy import ForceBranchRegexpStrategyRule
 from cvs2svn_lib.symbol_strategy import ForceTagRegexpStrategyRule
 from cvs2svn_lib.symbol_strategy import HeuristicStrategyRule
 from cvs2svn_lib.symbol_strategy import UnambiguousUsageRule
+from cvs2svn_lib.symbol_strategy import HeuristicPreferredParentRule
 from cvs2svn_lib.symbol_transform import RegexpSymbolTransform
 from cvs2svn_lib.property_setters import AutoPropsPropertySetter
 from cvs2svn_lib.property_setters import CVSBinaryFileDefaultMimeTypeSetter
@@ -571,6 +572,10 @@ class RunOptions:
       ctx.symbol_strategy_rules.append(HeuristicStrategyRule())
     else:
       assert False
+
+    # Now add a rule whose job it is to pick the preferred parents of
+    # branches and tags:
+    ctx.symbol_strategy_rules.append(HeuristicPreferredParentRule())
 
     if auto_props_file:
       ctx.svn_property_setters.append(AutoPropsPropertySetter(

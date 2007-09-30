@@ -175,27 +175,6 @@ class _Stats:
         and not self.possible_parents
         )
 
-  def get_preferred_parents(self):
-    """Return the LinesOfDevelopment preferred as parents for this lod.
-
-    Return the tuple (BEST_SYMBOLS, BEST_COUNT), where BEST_SYMBOLS is
-    the set of LinesOfDevelopment that appeared most often as possible
-    parents, and BEST_COUNT is the number of times those symbols
-    appeared.  BEST_SYMBOLS might contain multiple symbols if multiple
-    LinesOfDevelopment have the same count."""
-
-    best_count = -1
-    best_symbols = set()
-    for (symbol, count) in self.possible_parents.items():
-      if count > best_count:
-        best_count = count
-        best_symbols.clear()
-        best_symbols.add(symbol)
-      elif count == best_count:
-        best_symbols.add(symbol)
-
-    return (best_symbols, best_count)
-
   def check_consistency(self, symbol):
     """Check whether the symbol described by SELF can be converted as SYMBOL.
 
@@ -485,31 +464,5 @@ class SymbolStatistics:
       stats.branch_blockers.discard(symbol)
       if symbol in stats.possible_parents:
         del stats.possible_parents[symbol]
-
-  def get_preferred_parents(self):
-    """Return the LinesOfDevelopment preferred as parents for each symbol.
-
-    Return a map {Symbol : LineOfDevelopment} giving the LOD that
-    appears most often as a possible parent for each symbol.  Do not
-    include entries for Trunk objects.  If a symbol has no possible
-    parents (because it never exists as a CVSBranch or a CVSTag, which
-    can happen if it has been severed from its parent), then the
-    associated value is None."""
-
-    retval = {}
-    for stats in self._stats.itervalues():
-      if isinstance(stats.lod, Trunk):
-        # Trunk entries don't have any parents.
-        pass
-      else:
-        (parents, count) = stats.get_preferred_parents()
-        if not parents:
-          retval[stats.lod] = None
-        else:
-          parents = list(parents)
-          parents.sort()
-          retval[stats.lod] = parents[0]
-
-    return retval
 
 

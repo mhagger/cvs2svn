@@ -162,6 +162,11 @@ the conversion altogether.  Consistency checks prevent, for example, a
 branch from being converted into a tag if there were commits on the
 branch.
 
+The symbol_strategy_rules are also used to determine the preferred
+parent of each symbol.  The preferred parent of a Symbol is the line
+of development that appeared as a possible parent of this symbol in
+the most CVSFiles.
+
 This pass creates the symbol database, SYMBOL_DB, which is accessed in
 later passes via the SymbolDatabase class.  The SymbolDatabase
 contains TypedSymbol (Branch, Tag, or ExcludedSymbol) instances
@@ -169,11 +174,6 @@ indicating how each symbol should be processed in the conversion.  The
 ID used for a TypedSymbol is the same as the ID allocated to the
 corresponding symbol in CollectRevsPass, so references in CVSItems do
 not have to be updated.
-
-This pass also chooses and records the preferred parent for each
-Symbol.  The preferred parent of a Symbol is the line of development
-that appeared as a possible parent of this symbol in the most
-CVSFiles.
 
 
 FilterSymbolsPass

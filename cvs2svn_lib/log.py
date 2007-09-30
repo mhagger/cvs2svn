@@ -42,6 +42,7 @@ class Log:
   # These constants represent the log levels that this class supports.
   # The increase_verbosity() and decrease_verbosity() methods rely on
   # these constants being consecutive integers:
+  ERROR = -2
   WARN = -1
   QUIET = 0
   NORMAL = 1
@@ -56,10 +57,18 @@ class Log:
     self.__dict__ = self.__shared_state
     if self.__dict__:
       return
+
     self.log_level = Log.NORMAL
+
     # Set this to True if you want to see timestamps on each line output.
     self.use_timestamps = False
+
+    # The output file to use for errors:
+    self._err = sys.stderr
+
+    # The output file to use for lower-priority messages:
     self._out = sys.stdout
+
     # Lock to serialize writes to the log:
     self.lock = threading.Lock()
 
@@ -73,7 +82,7 @@ class Log:
   def decrease_verbosity(self):
     self.lock.acquire()
     try:
-      self.log_level = max(self.log_level - 1, Log.WARN)
+      self.log_level = max(self.log_level - 1, Log.ERROR)
     finally:
       self.lock.release()
 
@@ -127,6 +136,12 @@ class Log:
     unconditionally."""
 
     self._write(self._out, *args)
+
+  def error(self, *args):
+    """Log a message at the ERROR level."""
+
+    if self.is_on(Log.ERROR):
+      self._write(self._err, *args)
 
   def warn(self, *args):
     """Log a message at the WARN level."""

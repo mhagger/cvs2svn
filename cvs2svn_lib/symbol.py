@@ -52,8 +52,6 @@ LineOfDevelopment
        +--Branch
        |
        +--Tag
-       |
-       +--Branch
 
 Symbol
   |
@@ -64,8 +62,6 @@ Symbol
        |    +--Branch
        |    |
        |    +--Tag
-       |    |
-       |    +--Branch
        |
        +--ExcludedSymbol
 """

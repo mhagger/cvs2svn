@@ -178,7 +178,7 @@ class CollateSymbolsPass(Pass):
 
     return symbol
 
-  def get_symbols(self, symbol_stats):
+  def get_symbols(self):
     """Return a list of TypedSymbol objects telling how to convert symbols.
 
     The return value is a list of TypedSymbol objects (Branch, Tag, or
@@ -192,7 +192,7 @@ class CollateSymbolsPass(Pass):
     errors = []
     mismatches = []
 
-    for stats in symbol_stats:
+    for stats in Ctx()._symbol_stats:
       if isinstance(stats.lod, Trunk):
         yield stats.lod
       else:
@@ -225,19 +225,19 @@ class CollateSymbolsPass(Pass):
     Ctx()._projects = read_projects(
         artifact_manager.get_temp_file(config.PROJECTS)
         )
-    symbol_stats = SymbolStatistics(
+    Ctx()._symbol_stats = SymbolStatistics(
         artifact_manager.get_temp_file(config.SYMBOL_STATISTICS)
         )
 
-    symbols = list(self.get_symbols(symbol_stats))
+    symbols = list(self.get_symbols())
 
     # Check the symbols for consistency and bail out if there were errors:
-    if symbol_stats.check_consistency(symbols):
+    if Ctx()._symbol_stats.check_consistency(symbols):
       sys.exit(1)
 
     for symbol in symbols:
       if isinstance(symbol, ExcludedSymbol):
-        symbol_stats.exclude_symbol(symbol)
+        Ctx()._symbol_stats.exclude_symbol(symbol)
 
     create_symbol_database(symbols)
 

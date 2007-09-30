@@ -476,8 +476,9 @@ class SymbolStatistics:
     Return a map {Symbol : LineOfDevelopment} giving the LOD that
     appears most often as a possible parent for each symbol.  Do not
     include entries for Trunk objects.  If a symbol has no possible
-    parents because it never exists as a CVSBranch or a CVSTag, then
-    the associated value is None."""
+    parents (because it never exists as a CVSBranch or a CVSTag, which
+    can happen if it has been severed from its parent), then the
+    associated value is None."""
 
     retval = {}
     for stats in self._stats.itervalues():

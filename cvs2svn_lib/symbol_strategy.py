@@ -216,14 +216,17 @@ class RuleBasedSymbolStrategy:
         mismatches.append(stats)
 
     if mismatches:
-      sys.stderr.write(
-          error_prefix + ": It is not clear how the following symbols "
-          "should be converted.\n"
-          "Use --force-tag, --force-branch, --exclude, and/or "
-          "--symbol-default to\n"
-          "resolve the ambiguity.\n")
+      s = []
+      s.append(
+          error_prefix + ': It is not clear how the following symbols '
+          'should be converted.\n'
+          'Use --force-tag, --force-branch, --exclude, and/or '
+          '--symbol-default to\n'
+          'resolve the ambiguity.\n'
+          )
       for stats in mismatches:
-        sys.stderr.write("    %s\n" % stats)
+        s.append('    %s\n' % (stats,))
+      Log().error(''.join(s))
       return None
     else:
       return symbols

@@ -372,13 +372,18 @@ class SymbolStatistics:
     if not blocked_excludes:
       return False
 
+    s = []
     for branch, branch_blockers in blocked_excludes.items():
-      sys.stderr.write(error_prefix + ": The branch '%s' cannot be "
-                       "excluded because the following symbols depend "
-                       "on it:\n" % (branch))
+      s.append(
+          error_prefix + ": The branch '%s' cannot be "
+          "excluded because the following symbols depend "
+          "on it:\n" % (branch)
+          )
       for blocker in branch_blockers:
-        sys.stderr.write("    '%s'\n" % (blocker))
-    sys.stderr.write("\n")
+        s.append("    '%s'\n" % (blocker,))
+    s.append('\n')
+    Log().error(''.join(s))
+
     return True
 
   def _check_invalid_tags(self, symbols):
@@ -402,11 +407,15 @@ class SymbolStatistics:
       # No problems found:
       return False
 
-    sys.stderr.write(error_prefix + ": The following branches cannot be "
-                     "forced to be tags because they have commits:\n")
+    s = []
+    s.append(
+        error_prefix + ": The following branches cannot be "
+        "forced to be tags because they have commits:\n"
+        )
     for tag in invalid_tags:
-      sys.stderr.write("    '%s'\n" % (tag))
-    sys.stderr.write("\n")
+      s.append("    '%s'\n" % (tag))
+    s.append('\n')
+    Log().error(''.join(s))
 
     return True
 

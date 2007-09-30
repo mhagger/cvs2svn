@@ -1179,7 +1179,7 @@ class CollectData:
     output again in a summary at the end of CollectRevsPass."""
 
     err = '%s: %s' % (error_prefix, err,)
-    sys.stderr.write(err + '\n')
+    Log().error(err + '\n')
     self.fatal_errors.append(err)
 
   def process_project(self, project):

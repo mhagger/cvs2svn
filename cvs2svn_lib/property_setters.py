@@ -98,8 +98,10 @@ class MimeMapper(SVNPropertySetter):
       type = extensions.pop(0)
       for ext in extensions:
         if ext in self.mappings and self.mappings[ext] != type:
-          sys.stderr.write("%s: ambiguous MIME mapping for *.%s (%s or %s)\n"
-                           % (warning_prefix, ext, self.mappings[ext], type))
+          Log().error(
+              "%s: ambiguous MIME mapping for *.%s (%s or %s)\n"
+              % (warning_prefix, ext, self.mappings[ext], type)
+              )
         self.mappings[ext] = type
 
   def set_properties(self, s_item):

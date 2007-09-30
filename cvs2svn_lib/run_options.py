@@ -231,7 +231,7 @@ class RunOptions:
           "dump-only", "create", "no-default-eol", "auto-props-ignore-case",
           ])
     except getopt.GetoptError, e:
-      sys.stderr.write(error_prefix + ': ' + str(e) + '\n\n')
+      Log().error('%s: %s\n\n' % (error_prefix, e))
       self.usage()
       sys.exit(1)
 
@@ -454,13 +454,17 @@ class RunOptions:
         ctx.sort_executable = value
       elif opt == '--dump-only':
         dump_only = True
-        sys.stderr.write(warning_prefix +
+        Log().error(
+            warning_prefix +
             ': The --dump-only option is deprecated (it is implied\n'
-            'by --dumpfile).\n')
+            'by --dumpfile).\n'
+            )
       elif opt == '--create':
-        sys.stderr.write(warning_prefix +
+        Log().error(
+            warning_prefix +
             ': The behaviour produced by the --create option is now the '
-            'default,\nand passing the option is deprecated.\n')
+            'default,\nand passing the option is deprecated.\n'
+            )
 
     # Consistency check for options and arguments.
     if len(self.args) == 0:
@@ -468,8 +472,7 @@ class RunOptions:
       sys.exit(1)
 
     if len(self.args) > 1:
-      sys.stderr.write(error_prefix +
-                       ": must pass only one CVS repository.\n")
+      Log().error(error_prefix + ": must pass only one CVS repository.\n")
       self.usage()
       sys.exit(1)
 
@@ -645,18 +648,22 @@ class RunOptions:
 
     if self.opts or self.args:
       if self.opts:
-        sys.stderr.write(
+        Log().error(
             '%s: The following options cannot be used in combination with '
             'the --options\n'
             'option:\n'
             '    %s\n'
-            % (error_prefix,
-               '\n    '.join([opt for (opt,value) in self.opts])))
+            % (
+                error_prefix,
+                '\n    '.join([opt for (opt,value) in self.opts])
+                )
+            )
       if self.args:
-        sys.stderr.write(
+        Log().error(
             '%s: No cvs-repos-path arguments are allowed with the --options '
             'option.\n'
-            % (error_prefix,))
+            % (error_prefix,)
+            )
       sys.exit(1)
 
   def process_options_file(self, options_filename):
@@ -672,7 +679,7 @@ class RunOptions:
     execfile(options_filename, g, l)
 
   def usage(self):
-    sys.stdout.write(usage_message_template % {
+    Log().write(usage_message_template % {
         'progname' : self.progname,
         'trunk_base' : config.DEFAULT_TRUNK_BASE,
         'branches_base' : config.DEFAULT_BRANCHES_BASE,

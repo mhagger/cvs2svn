@@ -38,7 +38,37 @@ it is possible that a Symbol, Branch, and Tag instance all have the
 same id, in which case they are all considered equal.
 
 Trunk instances do not have ids, but Trunk objects can be compared to
-Symbol objects (trunks always compare less than symbols)."""
+Symbol objects (trunks always compare less than symbols).
+
+The classes in this module are organized into two overlapping class
+hierarchies as follows:
+
+LineOfDevelopment
+  |
+  +--Trunk
+  |
+  +--IncludedSymbol (also inherits from TypedSymbol)
+       |
+       +--Branch
+       |
+       +--Tag
+       |
+       +--Branch
+
+Symbol
+  |
+  +--TypedSymbol
+       |
+       +--IncludedSymbol (also inherits from LineOfDevelopment)
+       |    |
+       |    +--Branch
+       |    |
+       |    +--Tag
+       |    |
+       |    +--Branch
+       |
+       +--ExcludedSymbol
+"""
 
 
 from cvs2svn_lib.boolean import *

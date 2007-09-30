@@ -168,6 +168,8 @@ history.
       --help-passes          list the available passes and their numbers
   -v, --verbose              verbose (may be specified twice for debug output)
   -q, --quiet                quiet (may be specified twice for very quiet)
+      --write-symbol-info=PATH write information and statistics about CVS
+                             symbols to PATH.
       --skip-cleanup         prevent the deletion of intermediate files
       --profile              profile with 'hotshot' (into file cvs2svn.hotshot)
 """
@@ -223,6 +225,7 @@ class RunOptions:
 
           "version", "help", "help-passes",
           "verbose", "quiet",
+          "write-symbol-info=",
           "skip-cleanup",
           "profile",
 
@@ -440,6 +443,8 @@ class RunOptions:
         keywords_off = True
       elif opt == '--tmpdir':
         ctx.tmpdir = value
+      elif opt == '--write-symbol-info':
+        ctx.symbol_info_filename = value
       elif opt == '--skip-cleanup':
         ctx.skip_cleanup = True
       elif opt == '--svnadmin':

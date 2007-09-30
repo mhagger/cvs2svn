@@ -2,6 +2,7 @@ Version x.x.x (not yet released)
 --------------------------------
 
  New features:
+ * Add option --write-symbol-info to write info and stats about CVS symbols.
  * Add option ctx.decode_apple_single for handling AppleSingle-encoded files.
 
  Bugs fixed:

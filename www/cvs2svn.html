@@ -1163,6 +1163,12 @@ cvs2svn --symbol-transform='([0-9])-(.*):release-\1.\2' -s SVN RCS
   </tr>
 
   <tr>
+    <td align="right"><tt>--write-symbol-info=PATH</tt></td>
+    <td>Write symbol statistics and information about how symbols were
+      converted to PATH during CollateSymbolsPass.</td>
+  </tr>
+
+  <tr>
     <td align="right"><tt>--skip-cleanup</tt></td>
     <td>Prevent the deletion of the temporary files that cvs2svn
       creates in the process of conversion.</td>

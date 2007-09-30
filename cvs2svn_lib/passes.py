@@ -41,6 +41,9 @@ from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.cvs_file_database import CVSFileDatabase
 from cvs2svn_lib.metadata_database import MetadataDatabase
 from cvs2svn_lib.symbol import Trunk
+from cvs2svn_lib.symbol import Symbol
+from cvs2svn_lib.symbol import Branch
+from cvs2svn_lib.symbol import Tag
 from cvs2svn_lib.symbol import ExcludedSymbol
 from cvs2svn_lib.symbol_database import SymbolDatabase
 from cvs2svn_lib.symbol_database import create_symbol_database
@@ -153,6 +156,13 @@ class CollectRevsPass(Pass):
 class CollateSymbolsPass(Pass):
   """Divide symbols into branches, tags, and excludes."""
 
+  conversion_names = {
+      Branch : 'branch',
+      Tag : 'tag',
+      ExcludedSymbol : 'excluded',
+      Symbol : '.',
+      }
+
   def register_artifacts(self):
     self._register_temp_file(config.SYMBOL_DB)
     self._register_temp_file_needed(config.PROJECTS)
@@ -178,6 +188,35 @@ class CollateSymbolsPass(Pass):
 
     return symbol
 
+  def log_symbol_summary(self, stats, symbol):
+    if self.symbol_info_file:
+      if symbol.preferred_parent_id is None:
+        preferred_parent_name = '.'
+      else:
+        preferred_parent = Ctx()._symbol_stats[symbol.preferred_parent_id].lod
+        if isinstance(preferred_parent, Trunk):
+          preferred_parent_name = '.trunk.'
+        else:
+          preferred_parent_name = preferred_parent.name
+      self.symbol_info_file.write(
+          '%-5d %-30s %-10s %s\n'
+          % (stats.lod.project.id, stats.lod.name,
+             self.conversion_names[symbol.__class__], preferred_parent_name)
+          )
+      self.symbol_info_file.write('      # %s\n' % (stats,))
+      self.symbol_info_file.write('      # Possible parents:\n')
+      parent_counts = stats.possible_parents.items()
+      parent_counts.sort(lambda a,b: cmp((b[1], a[0]), (a[1], b[0])))
+      for (pp, count) in parent_counts:
+        if isinstance(pp, Trunk):
+          self.symbol_info_file.write(
+              '      #     .trunk. : %d\n' % (count,)
+              )
+        else:
+          self.symbol_info_file.write(
+              '      #     %s : %d\n' % (pp.name, count,)
+              )
+
   def get_symbols(self):
     """Return a list of TypedSymbol objects telling how to convert symbols.
 
@@ -192,6 +231,14 @@ class CollateSymbolsPass(Pass):
     errors = []
     mismatches = []
 
+    if Ctx().symbol_info_filename is not None:
+      self.symbol_info_file = open(Ctx().symbol_info_filename, 'w')
+      self.symbol_info_file.write(
+          '# Columns: project_id symbol_name conversion preferred_parent\n'
+          )
+    else:
+      self.symbol_info_file = None
+
     for stats in Ctx()._symbol_stats:
       if isinstance(stats.lod, Trunk):
         yield stats.lod
@@ -199,11 +246,19 @@ class CollateSymbolsPass(Pass):
         try:
           symbol = self.get_symbol(stats)
         except IndeterminateSymbolException, e:
+          self.log_symbol_summary(stats, stats.lod)
           mismatches.append(e.stats)
         except SymbolPlanException, e:
+          self.log_symbol_summary(stats, stats.lod)
           errors.append(e)
         else:
+          self.log_symbol_summary(stats, symbol)
           yield symbol
+
+    if self.symbol_info_file:
+      self.symbol_info_file.close()
+
+    del self.symbol_info_file
 
     if errors or mismatches:
       s = ['Problems determining how symbols should be converted:\n']

@@ -243,6 +243,11 @@ ctx.filename_utf8_encoder = UTF8Encoder(
 # you need it.)
 ctx.decode_apple_single = False
 
+# This option can be set to the name of a filename to which are stored
+# statistics and conversion decisions about the CVS symbols.
+ctx.symbol_info_filename = None
+#ctx.symbol_info_filename = 'symbol-info.txt'
+
 # cvs2svn uses "symbol strategy rules" to help decide how to handle
 # CVS symbols.  The rules in ctx.symbol_strategy_rules are applied in
 # order, and each rule is allowed to modify the symbol.  The result

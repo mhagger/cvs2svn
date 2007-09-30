@@ -465,17 +465,9 @@ class SymbolStatistics:
     # non-excluded symbols:
     symbols_by_name = {}
     for lod in lods:
-      if isinstance(lod, Trunk):
-        # Trunk is not processed any further.
-        pass
-      elif isinstance(lod, IncludedSymbol):
+      if isinstance(lod, IncludedSymbol):
         # Symbol included; include it in the symbol check.
         symbols_by_name[lod.name] = lod
-      elif isinstance(lod, ExcludedSymbol):
-        # Symbol excluded; don't process it any further.
-        pass
-      else:
-        raise InternalError('Symbol %s is of unexpected type' % (lod,))
 
     # It is important that we not short-circuit here:
     return (

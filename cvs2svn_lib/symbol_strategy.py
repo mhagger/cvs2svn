@@ -165,23 +165,6 @@ class AllTagRule(StrategyRule):
     return Tag(stats.lod)
 
 
-class SymbolStrategy:
-  """A strategy class, used to decide how to convert CVS symbols."""
-
-  def get_symbols(self, symbol_stats):
-    """Return a list of TypedSymbol objects telling how to convert symbols.
-
-    The list values are TypedSymbol objects (Branch, Tag, or
-    ExcludedSymbol), indicating how each symbol should be converted.
-    Trunk objects in SYMBOL_STATS should be passed through unchanged.
-    One object must be included in the return value for each line of
-    development described in SYMBOL_STATS.
-
-    Return None if there was an error."""
-
-    raise NotImplementedError
-
-
 class RuleBasedSymbolStrategy:
   """A strategy that uses StrategyRules to decide what to do with a symbol.
 
@@ -212,6 +195,16 @@ class RuleBasedSymbolStrategy:
         return None
 
   def get_symbols(self, symbol_stats):
+    """Return a list of TypedSymbol objects telling how to convert symbols.
+
+    The return value is a list of TypedSymbol objects (Branch, Tag, or
+    ExcludedSymbol), indicating how each symbol should be converted.
+    Trunk objects in SYMBOL_STATS are passed through unchanged.  One
+    object must be included in the return value for each line of
+    development described in SYMBOL_STATS.
+
+    Return None if there was an error."""
+
     symbols = []
     mismatches = []
     for stats in symbol_stats:

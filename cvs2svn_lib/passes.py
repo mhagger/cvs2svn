@@ -45,7 +45,6 @@ from cvs2svn_lib.symbol import ExcludedSymbol
 from cvs2svn_lib.symbol_database import SymbolDatabase
 from cvs2svn_lib.symbol_database import create_symbol_database
 from cvs2svn_lib.symbol_statistics import SymbolStatistics
-from cvs2svn_lib.symbol_strategy import get_symbol_for_stats
 from cvs2svn_lib.cvs_item import CVSRevision
 from cvs2svn_lib.cvs_item import CVSSymbol
 from cvs2svn_lib.cvs_item_database import OldCVSItemStore
@@ -157,6 +156,22 @@ class CollateSymbolsPass(Pass):
     self._register_temp_file_needed(config.PROJECTS)
     self._register_temp_file_needed(config.SYMBOL_STATISTICS)
 
+  def get_symbol(self, stats):
+    """Use StrategyRules to decide what to do with a symbol.
+
+    STATS is an instance of symbol_statistics._Stats describing a Symbol
+    (i.e., not a Trunk instance).  To determine how the symbol is to be
+    converted, consult the StrategyRules in Ctx().symbol_strategy_rules.
+    The first rule that applies determines how the symbol is to be
+    converted."""
+
+    for rule in Ctx().symbol_strategy_rules:
+      symbol = rule.get_symbol(stats)
+      if symbol is not None:
+        return symbol
+    else:
+      return None
+
   def get_symbols(self, symbol_stats):
     """Return a list of TypedSymbol objects telling how to convert symbols.
 
@@ -174,7 +189,7 @@ class CollateSymbolsPass(Pass):
       if isinstance(stats.lod, Trunk):
         symbols.append(stats.lod)
       else:
-        symbol = get_symbol_for_stats(stats)
+        symbol = self.get_symbol(stats)
         if symbol is not None:
           symbols.append(symbol)
         else:

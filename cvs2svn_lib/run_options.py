@@ -59,6 +59,7 @@ from cvs2svn_lib.symbol_strategy import ForceTagRegexpStrategyRule
 from cvs2svn_lib.symbol_strategy import HeuristicStrategyRule
 from cvs2svn_lib.symbol_strategy import UnambiguousUsageRule
 from cvs2svn_lib.symbol_strategy import HeuristicPreferredParentRule
+from cvs2svn_lib.symbol_strategy import ManualRule
 from cvs2svn_lib.symbol_transform import RegexpSymbolTransform
 from cvs2svn_lib.property_setters import AutoPropsPropertySetter
 from cvs2svn_lib.property_setters import CVSBinaryFileDefaultMimeTypeSetter
@@ -114,6 +115,7 @@ history.
       --symbol-transform=P:S transform symbol names from P to S, where P and S
                              use Python regexp and reference syntax
                              respectively.  P must match the whole symbol name
+      --symbol-hints=PATH    read symbol conversion hints from PATH.
       --force-branch=REGEXP  force symbols matching REGEXP to be branches
       --force-tag=REGEXP     force symbols matching REGEXP to be tags
       --exclude=REGEXP       exclude branches and tags matching REGEXP
@@ -206,6 +208,7 @@ class RunOptions:
           "no-prune",
           "encoding=", "fallback-encoding=",
           "symbol-transform=",
+          "symbol-hints=",
           "force-branch=", "force-tag=", "exclude=", "symbol-default=",
           "no-cross-branch-commits",
           "retain-conflicting-attic-files",
@@ -383,6 +386,8 @@ class RunOptions:
         encodings.insert(-1, value)
       elif opt == '--fallback-encoding':
         fallback_encoding = value
+      elif opt == '--symbol-hints':
+        ctx.symbol_strategy_rules.append(ManualRule(value))
       elif opt == '--force-branch':
         ctx.symbol_strategy_rules.append(ForceBranchRegexpStrategyRule(value))
         force_branch = True

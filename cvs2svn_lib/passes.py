@@ -268,9 +268,9 @@ class CollateSymbolsPass(Pass):
         s.append(
             'It is not clear how the following symbols '
             'should be converted.\n'
-            'Use --force-tag, --force-branch, --exclude, and/or '
-            '--symbol-default to\n'
-            'resolve the ambiguity.\n'
+            'Use --symbol-hints, --force-tag, --force-branch, --exclude, '
+            'and/or\n'
+            '--symbol-default to resolve the ambiguity.\n'
             )
         for stats in mismatches:
           s.append('    %s\n' % (stats,))

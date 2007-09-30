@@ -226,3 +226,112 @@ class HeuristicPreferredParentRule(StrategyRule):
     return symbol
 
 
+class ManualRule(StrategyRule):
+  """Use manual symbol configurations read from a file.
+
+  The input file is line-oriented with the following format:
+
+      <project-id> <symbol-name> <conversion> [<parent-lod-name>]
+
+  Where the fields are separated by whitespace and
+
+      project-id -- the numerical id of the Project to which the
+          symbol belongs (numbered starting with 0).  This field can
+          be '.' if the rule is not project-specific.
+
+      symbol-name -- the name of the symbol being specified.
+
+      conversion -- how the symbol should be treated in the
+          conversion.  This is one of the following values: 'branch',
+          'tag', or 'exclude'.  This field can be '.' if the rule
+          shouldn't affect how the symbol is treated in the
+          conversion.
+
+      parent-lod-name -- the name of the LOD that should serve as this
+          symbol's parent.  This field can be omitted or '.'  if the
+          rule shouldn't affect the symbol's parent, or it can be
+          '.trunk.' to indicate that the symbol should sprout from the
+          project's trunk."""
+
+  comment_re = re.compile(r'^(\#|$)')
+
+  conversion_map = {
+      'branch' : Branch,
+      'tag' : Tag,
+      'exclude' : ExcludedSymbol,
+      '.' : None,
+      }
+
+  def __init__(self, filename):
+    self._hints = []
+
+    f = open(filename, 'r')
+    for l in f:
+      s = l.strip()
+      if self.comment_re.match(s):
+        continue
+      fields = s.split()
+      if len(fields) == 3:
+        [project_id, symbol_name, conversion] = fields
+        parent_lod_name = None
+      elif len(fields) == 4:
+        [project_id, symbol_name, conversion, parent_lod_name] = fields
+        if parent_lod_name == '.':
+          parent_lod_name = None
+      else:
+        raise FatalError(
+            'The following line in "%s" cannot be parsed:\n    "%s"' % (l,)
+            )
+
+      if project_id == '.':
+        project_id = None
+      else:
+        try:
+          project_id = int(project_id)
+        except ValueError:
+          raise FatalError(
+              'Illegal project_id in the following line:\n    "%s"' % (l,)
+              )
+
+      try:
+        conversion = self.conversion_map[conversion]
+      except KeyError:
+        raise FatalError(
+            'Illegal conversion in the following line:\n    "%s"' % (l,)
+            )
+
+      self._hints.append(
+          (project_id, symbol_name, conversion, parent_lod_name)
+          )
+
+  def get_symbol(self, symbol, stats):
+    if isinstance(symbol, Trunk):
+      return symbol
+
+    for (project_id, name, conversion, parent_lod_name) in self._hints:
+      if (project_id is None or project_id == stats.lod.project.id) \
+             and (name == stats.lod.name):
+        if conversion is not None:
+          symbol = conversion(symbol)
+        if parent_lod_name is None:
+          pass
+        elif parent_lod_name == '.trunk.':
+          symbol.preferred_parent_id = stats.lod.project.trunk_id
+        else:
+          # We only have the parent symbol's name; we have to find its
+          # id:
+          for pp in stats.possible_parents.keys():
+            if isinstance(pp, Trunk):
+              pass
+            elif pp.name == parent_lod_name:
+              symbol.preferred_parent_id = pp.id
+              break
+          else:
+            raise FatalError(
+                'Symbol named %s not among possible parents'
+                % (parent_lod_name,)
+                )
+
+    return symbol
+
+

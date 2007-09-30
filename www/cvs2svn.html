@@ -80,16 +80,17 @@ repository's history as possible.</p>
 
   <dt>Branch vs. tag</dt>
   <dd>CVS allows the same symbol name to be used sometimes as a
-    branch, sometimes as a tag.  cvs2svn has heuristics to decide how
-    to convert such "mixed" symbols (<tt>--force-branch</tt>,
+    branch, sometimes as a tag.  cvs2svn has options and heuristics to
+    decide how to convert such "mixed" symbols
+    (<tt>--symbol-hints</tt>, <tt>--force-branch</tt>,
     <tt>--force-tag</tt>, <tt>--symbol-default</tt>).</dd>
 
   <dt>Branch/tag exclusion</dt>
   <dd>cvs2svn allows the user to specify branches and/or tags that
     should be excluded from the conversion altogether
-    (<tt>--exclude</tt>).  It checks that the exclusions are
-    self-consistent (e.g., it doesn't allow a branch to be excluded if
-    a branch that sprouts from it is not excluded).</dd>
+    (<tt>--symbol-hints</tt>, <tt>--exclude</tt>).  It checks that the
+    exclusions are self-consistent (e.g., it doesn't allow a branch to
+    be excluded if a branch that sprouts from it is not excluded).</dd>
 
   <dt>Branch/tag renaming</dt>
   <dd>cvs2svn can rename branches and tags during the conversion using
@@ -99,7 +100,8 @@ repository's history as possible.</p>
   <dd>In many cases, the CVS history is ambiguous about which branch
     served as the parent of another branch or tag.  cvs2svn determines
     the most plausible parent for symbols using cross-file
-    information.</dd>
+    information.  You can override cvs2svn's choices on a case-by-case
+    basis by using the <tt>--symbol-hints</tt> option.</dd>
 
   <dt>Branch and tag creation times</dt>
   <dd>CVS does not record when branches and tags are created.  cvs2svn
@@ -658,8 +660,8 @@ conversion.  The error message looks like this:</p>
 
 <pre>
    ERROR: It is not clear how the following symbols should be converted.
-   Use --force-tag, --force-branch, --exclude, and/or --symbol-default to
-   resolve the ambiguity.
+   Use --symbol-hints, --force-tag, --force-branch, --exclude, and/or
+   --symbol-default to resolve the ambiguity.
        'SYMBOL1' is a tag in 1 files, a branch in 2 files and has commits in 0 files
        'SYMBOL2' is a tag in 2 files, a branch in 1 files and has commits in 0 files
        'SYMBOL3' is a tag in 1 files, a branch in 2 files and has commits in 1 files
@@ -703,6 +705,15 @@ in CVS).  You can use the <tt>--force-branch</tt> and
 <tt>--force-tag</tt> options to specify the treatment of particular
 symbols, in combination with <tt>--symbol-default</tt> to specify the
 default to be used for other ambiguous symbols.</p>
+
+<p>Finally, you can have cvs2svn write a text file showing how each
+symbol was converted by using the <tt>--show-symbol-info</tt> option.
+If you disagree with any of cvs2svn's choices, you can make a copy of
+this file, edit it, then pass it to cvs2svn by using the
+<tt>--symbol-hints</tt> option.  In this manner you can influence how
+each symbol is converted and also the parent line of development of
+each symbol (the line of development from which the symbol
+sprouts).</p>
 
 <hr />
 
@@ -887,6 +898,38 @@ cvs2svn --symbol-transform='([0-9])-(.*):release-\1.\2' -s SVN RCS
   </tr>
 
   <tr>
+    <td align="right"><tt>--symbol-hints=PATH</tt></td>
+    <td><p>Read symbol conversion hints from PATH.  The format of PATH is
+      the same as the format output by <tt>--write-symbol-info</tt>,
+      namely a text file with four whitespace-separated columns:</p>
+
+<pre>
+project-id symbol conversion parent-lod-name
+</pre>
+
+      <p><i>project-id</i> is the numerical ID of the project to which
+      the symbol belongs, counting from 0.  <i>project-id</i> can be
+      set to '.' if project-specificity is not needed.
+      <i>symbol-name</i> is the name of the symbol being specified.
+      <i>conversion</i> specifies how the symbol should be converted,
+      and can be one of the values 'branch', 'tag', or 'exclude'.  If
+      <i>conversion</i> is '.', then this rule does not affect how the
+      symbol is converted.  <i>parent-lod-name</i> is the name of the
+      symbol from which this symbol should sprout, or '.trunk.' if the
+      symbol should sprout from trunk.  If <i>parent-lod-name</i> is
+      omitted or '.', then this rule does not affect the preferred
+      parent of this symbol.  The file may contain blank lines or
+      comment lines (lines whose first non-whitespace character is
+      '#').</p>
+
+      <p>The simplest way to use this option is to run the conversion
+      through CollateSymbolsPass with <tt>--write-symbol-info</tt>
+      option, copy the symbol info and edit it to create a hints file,
+      then re-start the conversion at <tt>CollateSymbolsPass</tt> with
+      this option enabled.</p></td>
+  </tr>
+
+  <tr>
     <td align="right"><tt>--force-branch=REGEXP</tt></td>
     <td>Force symbols whose names match REGEXP to be branches.</td>
   </tr>
@@ -920,8 +963,9 @@ cvs2svn --symbol-transform='([0-9])-(.*):release-\1.\2' -s SVN RCS
 
         <li>"<tt>strict</tt>": No default; every ambiguous
           symbol has to be resolved manually using
-          <tt>--force-branch</tt>, <tt>--force-tag</tt>, or
-          <tt>--exclude</tt>.  (This is the default behavior.)</li>
+          <tt>--symbol-hints</tt>, <tt>--force-branch</tt>,
+          <tt>--force-tag</tt>, or <tt>--exclude</tt>.  (This is the
+          default behavior.)</li>
 
       </ul>
     </td>

@@ -23,7 +23,6 @@ from cvs2svn_lib.boolean import *
 from cvs2svn_lib.set_support import *
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import error_prefix
-from cvs2svn_lib.log import Log
 from cvs2svn_lib.symbol import Trunk
 from cvs2svn_lib.symbol import Branch
 from cvs2svn_lib.symbol import Tag
@@ -183,7 +182,7 @@ class RuleBasedSymbolStrategy:
   def add_rule(self, rule):
     self._rules.append(rule)
 
-  def _get_symbol(self, stats):
+  def get_symbol(self, stats):
     if isinstance(stats.lod, Trunk):
       return stats.lod
     else:
@@ -193,42 +192,5 @@ class RuleBasedSymbolStrategy:
           return symbol
       else:
         return None
-
-  def get_symbols(self, symbol_stats):
-    """Return a list of TypedSymbol objects telling how to convert symbols.
-
-    The return value is a list of TypedSymbol objects (Branch, Tag, or
-    ExcludedSymbol), indicating how each symbol should be converted.
-    Trunk objects in SYMBOL_STATS are passed through unchanged.  One
-    object must be included in the return value for each line of
-    development described in SYMBOL_STATS.
-
-    Return None if there was an error."""
-
-    symbols = []
-    mismatches = []
-    for stats in symbol_stats:
-      symbol = self._get_symbol(stats)
-      if symbol is not None:
-        symbols.append(symbol)
-      else:
-        # None of the rules covered this symbol.
-        mismatches.append(stats)
-
-    if mismatches:
-      s = []
-      s.append(
-          error_prefix + ': It is not clear how the following symbols '
-          'should be converted.\n'
-          'Use --force-tag, --force-branch, --exclude, and/or '
-          '--symbol-default to\n'
-          'resolve the ambiguity.\n'
-          )
-      for stats in mismatches:
-        s.append('    %s\n' % (stats,))
-      Log().error(''.join(s))
-      return None
-    else:
-      return symbols
 
 

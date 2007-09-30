@@ -155,6 +155,42 @@ class CollateSymbolsPass(Pass):
     self._register_temp_file_needed(config.PROJECTS)
     self._register_temp_file_needed(config.SYMBOL_STATISTICS)
 
+  def get_symbols(self, symbol_stats):
+    """Return a list of TypedSymbol objects telling how to convert symbols.
+
+    The return value is a list of TypedSymbol objects (Branch, Tag, or
+    ExcludedSymbol), indicating how each symbol should be converted.
+    Trunk objects in SYMBOL_STATS are passed through unchanged.  One
+    object must be included in the return value for each line of
+    development described in SYMBOL_STATS.
+
+    Raise FatalError if there was an error."""
+
+    symbols = []
+    mismatches = []
+    for stats in symbol_stats:
+      symbol = Ctx().symbol_strategy.get_symbol(stats)
+      if symbol is not None:
+        symbols.append(symbol)
+      else:
+        # None of the rules covered this symbol.
+        mismatches.append(stats)
+
+    if mismatches:
+      s = []
+      s.append(
+          'It is not clear how the following symbols '
+          'should be converted.\n'
+          'Use --force-tag, --force-branch, --exclude, and/or '
+          '--symbol-default to\n'
+          'resolve the ambiguity.\n'
+          )
+      for stats in mismatches:
+        s.append('    %s\n' % (stats,))
+      raise FatalError(''.join(s))
+
+    return symbols
+
   def run(self, run_options, stats_keeper):
     Ctx()._projects = read_projects(
         artifact_manager.get_temp_file(config.PROJECTS)
@@ -163,10 +199,10 @@ class CollateSymbolsPass(Pass):
         artifact_manager.get_temp_file(config.SYMBOL_STATISTICS)
         )
 
-    symbols = Ctx().symbol_strategy.get_symbols(symbol_stats)
+    symbols = self.get_symbols(symbol_stats)
 
     # Check the symbols for consistency and bail out if there were errors:
-    if symbols is None or symbol_stats.check_consistency(symbols):
+    if symbol_stats.check_consistency(symbols):
       sys.exit(1)
 
     for symbol in symbols:

@@ -44,6 +44,7 @@ from cvs2svn_lib.symbol import Trunk
 from cvs2svn_lib.symbol import ExcludedSymbol
 from cvs2svn_lib.symbol_database import SymbolDatabase
 from cvs2svn_lib.symbol_database import create_symbol_database
+from cvs2svn_lib.symbol_statistics import SymbolPlanException
 from cvs2svn_lib.symbol_statistics import IndeterminateSymbolException
 from cvs2svn_lib.symbol_statistics import SymbolStatistics
 from cvs2svn_lib.cvs_item import CVSRevision
@@ -189,7 +190,9 @@ class CollateSymbolsPass(Pass):
     Raise FatalError if there was an error."""
 
     symbols = []
+    errors = []
     mismatches = []
+
     for stats in symbol_stats:
       if isinstance(stats.lod, Trunk):
         symbols.append(stats.lod)
@@ -198,20 +201,25 @@ class CollateSymbolsPass(Pass):
           symbol = self.get_symbol(stats)
         except IndeterminateSymbolException, e:
           mismatches.append(e.stats)
+        except SymbolPlanException, e:
+          errors.append(e)
         else:
           symbols.append(symbol)
 
-    if mismatches:
-      s = []
-      s.append(
-          'It is not clear how the following symbols '
-          'should be converted.\n'
-          'Use --force-tag, --force-branch, --exclude, and/or '
-          '--symbol-default to\n'
-          'resolve the ambiguity.\n'
-          )
-      for stats in mismatches:
-        s.append('    %s\n' % (stats,))
+    if errors or mismatches:
+      s = ['Problems determining how symbols should be converted:\n']
+      for e in errors:
+        s.append('%s\n' % (e,))
+      if mismatches:
+        s.append(
+            'It is not clear how the following symbols '
+            'should be converted.\n'
+            'Use --force-tag, --force-branch, --exclude, and/or '
+            '--symbol-default to\n'
+            'resolve the ambiguity.\n'
+            )
+        for stats in mismatches:
+          s.append('    %s\n' % (stats,))
       raise FatalError(''.join(s))
 
     return symbols

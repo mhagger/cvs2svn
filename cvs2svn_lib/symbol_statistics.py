@@ -37,14 +37,19 @@ from cvs2svn_lib.cvs_item import CVSTag
 
 
 class SymbolPlanException(Exception):
-  def __init__(self, stats, symbol):
+  def __init__(self, stats, symbol, msg):
     self.stats = stats
     self.symbol = symbol
+    Exception.__init__(
+        self,
+        'Cannot convert the following symbol to %s: %s\n    %s'
+        % (symbol, msg, self.stats,)
+        )
 
 
 class IndeterminateSymbolException(SymbolPlanException):
   def __init__(self, stats, symbol):
-    SymbolPlanException.__init__(self, stats, symbol)
+    SymbolPlanException.__init__(self, stats, symbol, 'Indeterminate type')
 
 
 class _Stats:
@@ -198,7 +203,16 @@ class _Stats:
     problems with that plan, raise a SymbolPlanException."""
 
     if not isinstance(symbol, TypedSymbol):
-      raise self.IndeterminateSymbolException(stats, symbol)
+      raise IndeterminateSymbolException(self, symbol)
+
+    if symbol.id != self.lod.id:
+      raise SymbolPlanException(self, symbol, 'IDs must match')
+
+    if symbol.project != self.lod.project:
+      raise SymbolPlanException(self, symbol, 'Projects must match')
+
+    if symbol.name != self.lod.name:
+      raise SymbolPlanException(self, symbol, 'Names must match')
 
   def __str__(self):
     return (

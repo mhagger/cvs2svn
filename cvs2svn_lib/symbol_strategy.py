@@ -168,18 +168,17 @@ class AllTagRule(StrategyRule):
 def get_symbol_for_stats(stats):
   """Use StrategyRules to decide what to do with a symbol.
 
-  To determine how a symbol is to be converted, consult the
-  StrategyRules in Ctx().symbol_strategy_rules.  The first rule that
-  applies determines how the symbol is to be converted."""
+  STATS is an instance of symbol_statistics._Stats describing a Symbol
+  (i.e., not a Trunk instance).  To determine how the symbol is to be
+  converted, consult the StrategyRules in Ctx().symbol_strategy_rules.
+  The first rule that applies determines how the symbol is to be
+  converted."""
 
-  if isinstance(stats.lod, Trunk):
-    return stats.lod
+  for rule in Ctx().symbol_strategy_rules:
+    symbol = rule.get_symbol(stats)
+    if symbol is not None:
+      return symbol
   else:
-    for rule in Ctx().symbol_strategy_rules:
-      symbol = rule.get_symbol(stats)
-      if symbol is not None:
-        return symbol
-    else:
-      return None
+    return None
 
 

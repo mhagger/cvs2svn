@@ -40,6 +40,7 @@ from cvs2svn_lib.pass_manager import Pass
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.cvs_file_database import CVSFileDatabase
 from cvs2svn_lib.metadata_database import MetadataDatabase
+from cvs2svn_lib.symbol import Trunk
 from cvs2svn_lib.symbol import ExcludedSymbol
 from cvs2svn_lib.symbol_database import SymbolDatabase
 from cvs2svn_lib.symbol_database import create_symbol_database
@@ -170,12 +171,15 @@ class CollateSymbolsPass(Pass):
     symbols = []
     mismatches = []
     for stats in symbol_stats:
-      symbol = get_symbol_for_stats(stats)
-      if symbol is not None:
-        symbols.append(symbol)
+      if isinstance(stats.lod, Trunk):
+        symbols.append(stats.lod)
       else:
-        # None of the rules covered this symbol.
-        mismatches.append(stats)
+        symbol = get_symbol_for_stats(stats)
+        if symbol is not None:
+          symbols.append(symbol)
+        else:
+          # None of the rules covered this symbol.
+          mismatches.append(stats)
 
     if mismatches:
       s = []

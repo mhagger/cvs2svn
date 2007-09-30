@@ -41,6 +41,7 @@ from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.cvs_file_database import CVSFileDatabase
 from cvs2svn_lib.metadata_database import MetadataDatabase
 from cvs2svn_lib.symbol import Trunk
+from cvs2svn_lib.symbol import TypedSymbol
 from cvs2svn_lib.symbol import ExcludedSymbol
 from cvs2svn_lib.symbol_database import SymbolDatabase
 from cvs2svn_lib.symbol_database import create_symbol_database
@@ -166,17 +167,21 @@ class CollateSymbolsPass(Pass):
     STATS is an instance of symbol_statistics._Stats describing a
     Symbol (i.e., not a Trunk instance).  To determine how the symbol
     is to be converted, consult the StrategyRules in
-    Ctx().symbol_strategy_rules.  The first rule that applies
-    determines how the symbol is to be converted.  If no rules apply,
-    raise IndeterminateSymbolException."""
+    Ctx().symbol_strategy_rules.  Each rule is allowed a chance to
+    change the way the symbol will be converted.  If the symbol is not
+    a TypedSymbol after all rules have run, raise
+    IndeterminateSymbolException."""
 
+    symbol = stats.lod
     for rule in Ctx().symbol_strategy_rules:
-      symbol = rule.get_symbol(stats)
-      if symbol is not None:
-        return symbol
-    else:
+      symbol = rule.get_symbol(symbol, stats)
+      assert symbol is not None
+
+    if not isinstance(symbol, TypedSymbol):
       # None of the rules covered this symbol.
       raise self.IndeterminateSymbolException(stats)
+
+    return symbol
 
   def get_symbols(self, symbol_stats):
     """Return a list of TypedSymbol objects telling how to convert symbols.

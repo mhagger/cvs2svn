@@ -244,11 +244,15 @@ ctx.decode_apple_single = False
 
 # A CVS symbol might be used as a tag in one file and as a branch in
 # another file.  cvs2svn has to determine whether to convert a
-# particular symbol as a tag or as a branch.  The basic strategy for
-# converting symbols is to consult each of a series of rules listed in
-# ctx.symbol_strategy_rules; the first rule that applies to a symbol
-# is used.  It is a fatal error if no rule matches a symbol.  The
-# rules themselves should each inherit from StrategyRule.
+# particular symbol as a tag or as a branch, or to exclude it.  The
+# basic strategy for converting symbols is to consult each of a series
+# of rules listed in ctx.symbol_strategy_rules, allowing each rule to
+# modify the symbol.  The rules themselves should each inherit from
+# StrategyRule.  It is a fatal error if the symbol is not a
+# TypedSymbol after all rules have been applied.  The standard
+# StrategyRules do not change a symbol that has already been processed
+# by an earlier rule, so in effect the first matching rule is the one
+# that is used.
 
 # To force all symbols matching a regular expression to be converted
 # as branches, add rules like the following:

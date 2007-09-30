@@ -25,6 +25,7 @@ from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.symbol import Trunk
+from cvs2svn_lib.symbol import TypedSymbol
 from cvs2svn_lib.symbol import Branch
 from cvs2svn_lib.symbol import Tag
 from cvs2svn_lib.symbol import ExcludedSymbol
@@ -33,22 +34,25 @@ from cvs2svn_lib.symbol import ExcludedSymbol
 class StrategyRule:
   """A single rule that might determine how to convert a symbol."""
 
-  def get_symbol(self, stats):
+  def get_symbol(self, symbol, stats):
     """Return an object describing what to do with the symbol in STATS.
 
-    If this rule applies to the symbol whose statistics are collected
-    in STATS, then return an object of type Branch, Tag, or
-    ExcludedSymbol as appropriate.  If this rule doesn't apply, return
-    None."""
+    SYMBOL holds a Symbol object as it has been determined so far.
+    Initially it is a naked Symbol instance, but hopefully one of
+    these method calls will turn it into a TypedSymbol.
 
-    raise NotImplementedError
+    If this rule applies to the symbol (whose statistics are collected
+    in STATS), then return the appropriate TypedSymbol object.  If
+    this rule doesn't apply, return SYMBOL unchanged."""
+
+    raise NotImplementedError()
 
 
 class _RegexpStrategyRule(StrategyRule):
   """A Strategy rule that bases its decisions on regexp matches.
 
   If self.regexp matches a symbol name, return self.action(symbol);
-  otherwise, return None."""
+  otherwise, return the symbol unchanged."""
 
   def __init__(self, pattern, action):
     """Initialize a _RegexpStrategyRule.
@@ -62,7 +66,7 @@ class _RegexpStrategyRule(StrategyRule):
     ExcludedSymbol.
 
     If PATTERN matches a symbol name, then get_symbol() returns
-    ACTION(name, id); otherwise it returns None."""
+    ACTION(name, id); otherwise it returns SYMBOL unchanged."""
 
     try:
       self.regexp = re.compile('^' + pattern + '$')
@@ -71,11 +75,13 @@ class _RegexpStrategyRule(StrategyRule):
 
     self.action = action
 
-  def get_symbol(self, stats):
-    if self.regexp.match(stats.lod.name):
-      return self.action(stats.lod)
+  def get_symbol(self, symbol, stats):
+    if isinstance(symbol, TypedSymbol):
+      return symbol
+    elif self.regexp.match(symbol.name):
+      return self.action(symbol)
     else:
-      return None
+      return symbol
 
 
 class ForceBranchRegexpStrategyRule(_RegexpStrategyRule):
@@ -102,29 +108,33 @@ class ExcludeRegexpStrategyRule(_RegexpStrategyRule):
 class UnambiguousUsageRule(StrategyRule):
   """If a symbol is used unambiguously as a tag/branch, convert it as such."""
 
-  def get_symbol(self, stats):
+  def get_symbol(self, symbol, stats):
+    if isinstance(symbol, TypedSymbol):
+      return symbol
     is_tag = stats.tag_create_count > 0
     is_branch = stats.branch_create_count > 0 or stats.branch_commit_count > 0
     if is_tag and is_branch:
       # Can't decide
-      return None
+      return symbol
     elif is_branch:
-      return Branch(stats.lod)
+      return Branch(symbol)
     elif is_tag:
-      return Tag(stats.lod)
+      return Tag(symbol)
     else:
       # The symbol didn't appear at all:
-      return None
+      return symbol
 
 
 class BranchIfCommitsRule(StrategyRule):
   """If there was ever a commit on the symbol, convert it as a branch."""
 
-  def get_symbol(self, stats):
-    if stats.branch_commit_count > 0:
-      return Branch(stats.lod)
+  def get_symbol(self, symbol, stats):
+    if isinstance(symbol, TypedSymbol):
+      return symbol
+    elif stats.branch_commit_count > 0:
+      return Branch(symbol)
     else:
-      return None
+      return symbol
 
 
 class HeuristicStrategyRule(StrategyRule):
@@ -133,11 +143,13 @@ class HeuristicStrategyRule(StrategyRule):
   Whichever happened more often determines how the symbol is
   converted."""
 
-  def get_symbol(self, stats):
-    if stats.tag_create_count >= stats.branch_create_count:
-      return Tag(stats.lod)
+  def get_symbol(self, symbol, stats):
+    if isinstance(symbol, TypedSymbol):
+      return symbol
+    elif stats.tag_create_count >= stats.branch_create_count:
+      return Tag(symbol)
     else:
-      return Branch(stats.lod)
+      return Branch(symbol)
 
 
 class AllBranchRule(StrategyRule):
@@ -147,8 +159,11 @@ class AllBranchRule(StrategyRule):
   (including a general rule like UnambiguousUsageRule) and will
   therefore only apply to the symbols not handled earlier."""
 
-  def get_symbol(self, stats):
-    return Branch(stats.lod)
+  def get_symbol(self, symbol, stats):
+    if isinstance(symbol, TypedSymbol):
+      return symbol
+    else:
+      return Branch(symbol)
 
 
 class AllTagRule(StrategyRule):
@@ -161,7 +176,10 @@ class AllTagRule(StrategyRule):
   (including a general rule like UnambiguousUsageRule) and will
   therefore only apply to the symbols not handled earlier."""
 
-  def get_symbol(self, stats):
-    return Tag(stats.lod)
+  def get_symbol(self, symbol, stats):
+    if isinstance(symbol, TypedSymbol):
+      return symbol
+    else:
+      return Tag(symbol)
 
 

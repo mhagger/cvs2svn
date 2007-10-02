@@ -2437,6 +2437,47 @@ def symbol_mismatches():
       )
 
 
+def write_symbol_info():
+  "test --write-symbol-info"
+
+  expected_lines = [
+      ['0', 'BLOCKED_BY_UNNAMED',   'branch', '.trunk.'           ],
+      ['0', 'BLOCKING_COMMIT',      'branch', 'BLOCKED_BY_COMMIT' ],
+      ['0', 'BLOCKED_BY_COMMIT',    'branch', '.trunk.'           ],
+      ['0', 'BLOCKING_BRANCH',      'branch', 'BLOCKED_BY_BRANCH' ],
+      ['0', 'BLOCKED_BY_BRANCH',    'branch', '.trunk.'           ],
+      ['0', 'MOSTLY_BRANCH',        '.',      '.'                 ],
+      ['0', 'MOSTLY_TAG',           '.',      '.'                 ],
+      ['0', 'BRANCH_WITH_COMMIT',   'branch', '.trunk.'           ],
+      ['0', 'BRANCH',               'branch', '.trunk.'           ],
+      ['0', 'TAG',                  'tag',    '.trunk.'           ],
+      ['0', 'unlabeled-1.1.12.1.2', 'branch', 'BLOCKED_BY_UNNAMED'],
+      ]
+  expected_lines.sort()
+
+  symbol_info_file = os.path.join(tmp_dir, 'symbol-mess-symbol-info.txt')
+  try:
+    ensure_conversion(
+        'symbol-mess',
+        args=[
+            '--write-symbol-info=%s' % (symbol_info_file,),
+            '--passes=:CollateSymbolsPass',
+            ],
+      )
+    raise MissingErrorException()
+  except Failure:
+    pass
+  lines = []
+  comment_re = re.compile(r'^\s*\#')
+  for l in open(symbol_info_file, 'r'):
+    if comment_re.match(l):
+      continue
+    lines.append(l.strip().split())
+  lines.sort()
+  if lines != expected_lines:
+    raise Failure('Symbol info incorrect')
+
+
 def overlook_symbol_mismatches():
   "overlook conflicting tag/branch when --trunk-only"
 
@@ -3062,12 +3103,13 @@ test_list = [
     branch_symbol_default,
     tag_symbol_default,
     symbol_transform,
+    write_symbol_info,
     issue_99,
     issue_100,
     issue_106,
     options_option,
-    multiproject,
 # 110:
+    multiproject,
     crossproject,
     tag_with_no_revision,
     XFail(delete_cvsignore),
@@ -3077,8 +3119,8 @@ test_list = [
     crossed_branches,
     file_directory_conflict,
     attic_directory_conflict,
-    internal_co,
 # 120:
+    internal_co,
     internal_co_exclude,
     internal_co_trunk_only,
     internal_co_keywords,
@@ -3088,8 +3130,8 @@ test_list = [
     symlinks,
     empty_trunk_path,
     preferred_parent_cycle,
-    branch_from_empty_dir,
 # 130:
+    branch_from_empty_dir,
     trunk_readd,
     branch_from_deleted_1_1,
     add_on_branch,

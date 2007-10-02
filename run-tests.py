@@ -2495,6 +2495,25 @@ def symbol_hints():
     raise Failure()
 
 
+def parent_hints():
+  "test --symbol-hints for setting parent"
+
+  symbol_hints_file = os.path.join(tmp_dir, 'symbol-mess-parent-hints.txt')
+  # BRANCH_WITH_COMMIT is usually determined to branch from .trunk.;
+  # set the preferred parent to BRANCH instead:
+  open(symbol_hints_file, 'w').write(
+      '0 MOSTLY_BRANCH      branch .\n'
+      '0 MOSTLY_TAG         tag    .\n'
+      '0 BRANCH_WITH_COMMIT branch BRANCH'
+      )
+  conv = ensure_conversion(
+      'symbol-mess', args=['--symbol-hints=%s' % (symbol_hints_file,)],
+      )
+  conv.logs[9].check(sym_log_msg('BRANCH_WITH_COMMIT'), (
+    ('/%(branches)s/BRANCH_WITH_COMMIT (from /branches/BRANCH:8)', 'A'),
+    ))
+
+
 def overlook_symbol_mismatches():
   "overlook conflicting tag/branch when --trunk-only"
 
@@ -3122,10 +3141,11 @@ test_list = [
     symbol_transform,
     write_symbol_info,
     symbol_hints,
+    parent_hints,
     issue_99,
     issue_100,
-    issue_106,
 # 110:
+    issue_106,
     options_option,
     multiproject,
     crossproject,
@@ -3135,8 +3155,8 @@ test_list = [
     nasty_graphs,
     XFail(tagging_after_delete),
     crossed_branches,
-    file_directory_conflict,
 # 120:
+    file_directory_conflict,
     attic_directory_conflict,
     internal_co,
     internal_co_exclude,
@@ -3146,8 +3166,8 @@ test_list = [
     requires_internal_co,
     timestamp_chaos,
     symlinks,
-    empty_trunk_path,
 # 130:
+    empty_trunk_path,
     preferred_parent_cycle,
     branch_from_empty_dir,
     trunk_readd,

@@ -24,6 +24,8 @@ from cvs2svn_lib.set_support import *
 from cvs2svn_lib import config
 from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.common import FatalException
+from cvs2svn_lib.common import PathsNotDisjointException
+from cvs2svn_lib.common import verify_paths_disjoint
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.symbol import Trunk
@@ -458,6 +460,23 @@ class SymbolStatistics:
 
     raise FatalException()
 
+  def _check_paths_disjoint(self, lods):
+    """Check that the SVN paths of all LODS are disjoint.
+
+    If not, describe the problem to Log().error() and raise a
+    FatalException."""
+
+    paths = [
+        lod.get_path()
+        for lod in lods
+        if not isinstance(lod, ExcludedSymbol)
+        ]
+    try:
+      verify_paths_disjoint(*paths)
+    except PathsNotDisjointException, e:
+      Log().error(str(e))
+      raise FatalException()
+
   def check_consistency(self, lods):
     """Check the plan for how to convert symbols for consistency.
 
@@ -484,6 +503,11 @@ class SymbolStatistics:
 
     try:
       self._check_invalid_tags(symbols_by_name)
+    except FatalException:
+      error_found = True
+
+    try:
+      self._check_paths_disjoint(lods)
     except FatalException:
       error_found = True
 

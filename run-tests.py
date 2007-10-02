@@ -2644,7 +2644,26 @@ def parent_hints():
   open(symbol_hints_file, 'w').write(
       '0 MOSTLY_BRANCH      branch .\n'
       '0 MOSTLY_TAG         tag    .\n'
-      '0 BRANCH_WITH_COMMIT branch BRANCH'
+      '0 BRANCH_WITH_COMMIT branch BRANCH\n'
+      )
+  conv = ensure_conversion(
+      'symbol-mess', args=['--symbol-hints=%s' % (symbol_hints_file,)],
+      )
+  conv.logs[9].check(sym_log_msg('BRANCH_WITH_COMMIT'), (
+    ('/%(branches)s/BRANCH_WITH_COMMIT (from /branches/BRANCH:8)', 'A'),
+    ))
+
+
+def parent_hints_wildcards():
+  "test --symbol-hints wildcards"
+
+  symbol_hints_file = os.path.join(tmp_dir, 'symbol-mess-parent-hints.txt')
+  # BRANCH_WITH_COMMIT is usually determined to branch from .trunk.;
+  # set the preferred parent to BRANCH instead:
+  open(symbol_hints_file, 'w').write(
+      '. MOSTLY_BRANCH      branch .\n'
+      '. MOSTLY_TAG         tag    .\n'
+      '. BRANCH_WITH_COMMIT .      BRANCH\n'
       )
   conv = ensure_conversion(
       'symbol-mess', args=['--symbol-hints=%s' % (symbol_hints_file,)],
@@ -3142,9 +3161,10 @@ test_list = [
     write_symbol_info,
     symbol_hints,
     parent_hints,
+    parent_hints_wildcards,
     issue_99,
-    issue_100,
 # 110:
+    issue_100,
     issue_106,
     options_option,
     multiproject,
@@ -3154,8 +3174,8 @@ test_list = [
     repeated_deltatext,
     nasty_graphs,
     XFail(tagging_after_delete),
-    crossed_branches,
 # 120:
+    crossed_branches,
     file_directory_conflict,
     attic_directory_conflict,
     internal_co,
@@ -3165,8 +3185,8 @@ test_list = [
     leftover_revs,
     requires_internal_co,
     timestamp_chaos,
-    symlinks,
 # 130:
+    symlinks,
     empty_trunk_path,
     preferred_parent_cycle,
     branch_from_empty_dir,

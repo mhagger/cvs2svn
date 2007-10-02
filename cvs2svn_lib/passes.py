@@ -287,8 +287,7 @@ class CollateSymbolsPass(Pass):
     symbols = list(self.get_symbols())
 
     # Check the symbols for consistency and bail out if there were errors:
-    if Ctx()._symbol_stats.check_consistency(symbols):
-      sys.exit(1)
+    Ctx()._symbol_stats.check_consistency(symbols)
 
     for symbol in symbols:
       if isinstance(symbol, ExcludedSymbol):

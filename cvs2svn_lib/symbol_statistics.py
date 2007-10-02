@@ -23,7 +23,7 @@ from cvs2svn_lib.boolean import *
 from cvs2svn_lib.set_support import *
 from cvs2svn_lib import config
 from cvs2svn_lib.common import error_prefix
-from cvs2svn_lib.common import InternalError
+from cvs2svn_lib.common import FatalException
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.symbol import Trunk
@@ -462,8 +462,9 @@ class SymbolStatistics:
     """Check the plan for how to convert symbols for consistency.
 
     LODS is an iterable of Trunk and TypedSymbol objects indicating
-    how each line of development is to be converted.  Return True iff
-    any problems were detected."""
+    how each line of development is to be converted.  If any problems
+    are detected, describe the problem to Log().error() and raise a
+    FatalException."""
 
     # Create a map { symbol_name : Symbol } including only
     # non-excluded symbols:
@@ -474,10 +475,13 @@ class SymbolStatistics:
         symbols_by_name[lod.name] = lod
 
     # It is important that we not short-circuit here:
-    return (
+    if (
         self._check_blocked_excludes(symbols_by_name)
         | self._check_invalid_tags(symbols_by_name)
-        )
+        ):
+      raise FatalException(
+          'Please fix the above errors and restart CollateSymbolsPass'
+          )
 
   def exclude_symbol(self, symbol):
     """SYMBOL has been excluded; remove it from our statistics."""

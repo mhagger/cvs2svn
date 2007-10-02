@@ -2431,11 +2431,10 @@ def double_branch_delete():
 def symbol_mismatches():
   "error for conflicting tag/branch"
 
-  try:
-    ensure_conversion('symbol-mess')
-    raise MissingErrorException()
-  except Failure:
-    pass
+  ensure_conversion(
+      'symbol-mess',
+      error_re=r'.*Problems determining how symbols should be converted',
+      )
 
 
 def overlook_symbol_mismatches():

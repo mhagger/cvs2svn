@@ -156,12 +156,46 @@ def path_split(path):
     return (path[:pos], path[pos+1:],)
 
 
+class PathRepeatedException(Exception):
+  def __init__(self, path, count):
+    self.path = path
+    self.count = count
+    Exception.__init__(
+        self, 'Path %s is repeated %d times' % (self.path, self.count,)
+        )
+
+
+class PathsNestedException(Exception):
+  def __init__(self, nest, nestlings):
+    self.nest = nest
+    self.nestlings = nestlings
+    Exception.__init__(
+        self,
+        'Path %s contains the following other paths: %s'
+        % (self.nest, ', '.join(self.nestlings),)
+        )
+
+
+class PathsNotDisjointException(FatalException):
+  """An exception that collects multiple other disjointness exceptions."""
+
+  def __init__(self, problems):
+    self.problems = problems
+    Exception.__init__(
+        self,
+        'The following paths are not disjoint:\n'
+        '    %s\n'
+        % ('\n    '.join([str(problem) for problem in self.problems]),)
+        )
+
+
 def verify_paths_disjoint(*paths):
   """Verify that all of the paths in the argument list are disjoint.
 
   If any of the paths is nested in another one (i.e., in the sense
   that 'a/b/c/d' is nested in 'a/b'), or any two paths are identical,
-  raise a FatalError."""
+  raise a PathsNotDisjointException containing exceptions detailing
+  the individual problems."""
 
   def split(path):
     if not path:
@@ -169,20 +203,52 @@ def verify_paths_disjoint(*paths):
     else:
       return path.split('/')
 
+  def contains(split_path1, split_path2):
+    """Return True iff SPLIT_PATH1 contains SPLIT_PATH2."""
+
+    return (
+        len(split_path1) < len(split_path2)
+        and split_path2[:len(split_path1)] == split_path1
+        )
+
   paths = [(split(path), path) for path in paths]
   # If all overlapping elements are equal, a shorter list is
   # considered "less than" a longer one.  Therefore if any paths are
   # nested, this sort will leave at least one such pair adjacent, in
   # the order [nest,nestling].
   paths.sort()
-  for i in range(1, len(paths)):
-    split_path1, path1 = paths[i - 1]
-    split_path2, path2 = paths[i]
-    if len(split_path1) <= len(split_path2) \
-       and split_path2[:len(split_path1)] == split_path1:
-      raise FatalError(
-          'paths "%s" and "%s" are not disjoint.' % (path1, path2,)
-          )
+
+  problems = []
+
+  # Create exceptions for any repeated paths, and delete the repeats
+  # from the paths array:
+  i = 0
+  while i < len(paths):
+    split_path, path = paths[i]
+    j = i + 1
+    while j < len(paths) and split_path == paths[j][0]:
+      j += 1
+    if j - i > 1:
+      problems.append(PathRepeatedException(path, j - i))
+      # Delete all but the first copy:
+      del paths[i + 1:j]
+    i += 1
+
+  # Create exceptions for paths nested in each other:
+  i = 0
+  while i < len(paths):
+    split_path, path = paths[i]
+    j = i + 1
+    while j < len(paths) and contains(split_path, paths[j][0]):
+      j += 1
+    if j - i > 1:
+      problems.append(PathsNestedException(
+          path, [path2 for (split_path2, path2) in paths[i + 1:j]]
+          ))
+    i += 1
+
+  if problems:
+    raise PathsNotDisjointException(problems)
 
 
 def format_date(date):

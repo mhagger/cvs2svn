@@ -2296,7 +2296,7 @@ def nested_ttb_directories():
 
   for opts in opts_list:
     ensure_conversion(
-        'main', error_re=r'.*paths .* and .* are not disjoint\.', **opts
+        'main', error_re=r'The following paths are not disjoint\:', **opts
         )
 
 

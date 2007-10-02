@@ -402,14 +402,14 @@ class SymbolStatistics:
     SYMBOLS is a map { name : Symbol } not including Trunk entries.  A
     branch can be blocked because it has another, non-excluded symbol
     that depends on it.  If any blocked excludes are found in SYMBOLS,
-    output error messages describing the situation.  Return True if
-    any errors were found."""
+    output error messages describing the situation and raise a
+    FatalError."""
 
     Log().quiet("Checking for blocked exclusions...")
 
     blocked_excludes = self._find_blocked_excludes(symbols)
     if not blocked_excludes:
-      return False
+      return
 
     s = []
     for branch, branch_blockers in blocked_excludes.items():
@@ -423,7 +423,7 @@ class SymbolStatistics:
     s.append('\n')
     Log().error(''.join(s))
 
-    return True
+    raise FatalException()
 
   def _check_invalid_tags(self, symbols):
     """Check for commits on any symbols that are to be converted as tags.
@@ -431,7 +431,7 @@ class SymbolStatistics:
     SYMBOLS is a map { name : Symbol } not including Trunk entries.
     If there is a commit on a symbol, then it cannot be converted as a
     tag.  If any tags with commits are found, output error messages
-    describing the problems.  Return True iff any errors are found."""
+    describing the problems then raise a FatalException."""
 
     Log().quiet("Checking for forced tags with commits...")
 
@@ -444,7 +444,7 @@ class SymbolStatistics:
 
     if not invalid_tags:
       # No problems found:
-      return False
+      return
 
     s = []
     s.append(
@@ -456,7 +456,7 @@ class SymbolStatistics:
     s.append('\n')
     Log().error(''.join(s))
 
-    return True
+    raise FatalException()
 
   def check_consistency(self, lods):
     """Check the plan for how to convert symbols for consistency.
@@ -474,11 +474,20 @@ class SymbolStatistics:
         # Symbol included; include it in the symbol check.
         symbols_by_name[lod.name] = lod
 
-    # It is important that we not short-circuit here:
-    if (
-        self._check_blocked_excludes(symbols_by_name)
-        | self._check_invalid_tags(symbols_by_name)
-        ):
+    # We want to do both consistency checks even if the first fails,
+    # so that the user gets as much feedback as possible.
+    error_found = False
+    try:
+      self._check_blocked_excludes(symbols_by_name)
+    except FatalException:
+      error_found = True
+
+    try:
+      self._check_invalid_tags(symbols_by_name)
+    except FatalException:
+      error_found = True
+
+    if error_found:
       raise FatalException(
           'Please fix the above errors and restart CollateSymbolsPass'
           )

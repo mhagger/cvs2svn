@@ -313,6 +313,7 @@ class ManualRule(StrategyRule):
              and (name == stats.lod.name):
         if conversion is not None:
           symbol = conversion(symbol)
+
         if parent_lod_name is None:
           pass
         elif parent_lod_name == '.trunk.':

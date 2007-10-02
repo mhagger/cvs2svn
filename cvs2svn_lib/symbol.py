@@ -121,7 +121,7 @@ class Trunk(LineOfDevelopment):
 
 
 class Symbol:
-  def __init__(self, id, project, name):
+  def __init__(self, id, project, name, preferred_parent_id=None):
     self.id = id
     self.project = project
     self.name = name
@@ -132,7 +132,7 @@ class Symbol:
     # all of the branches on this LOD have been detached from the
     # dependency tree), then this field is set to None.  This field is
     # set during FilterSymbolsPass.
-    self.preferred_parent_id = None
+    self.preferred_parent_id = preferred_parent_id
 
   def __getstate__(self):
     return (self.id, self.project.id, self.name, self.preferred_parent_id,)
@@ -180,7 +180,10 @@ class TypedSymbol(Symbol):
   """A Symbol whose type (branch, tag, or excluded) has been decided."""
 
   def __init__(self, symbol):
-    Symbol.__init__(self, symbol.id, symbol.project, symbol.name)
+    Symbol.__init__(
+        self, symbol.id, symbol.project, symbol.name,
+        symbol.preferred_parent_id,
+        )
 
 
 class IncludedSymbol(TypedSymbol, LineOfDevelopment):

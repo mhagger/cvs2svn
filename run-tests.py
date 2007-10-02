@@ -2437,83 +2437,6 @@ def symbol_mismatches():
       )
 
 
-def write_symbol_info():
-  "test --write-symbol-info"
-
-  expected_lines = [
-      ['0', 'BLOCKED_BY_UNNAMED',   'branch', '.trunk.'           ],
-      ['0', 'BLOCKING_COMMIT',      'branch', 'BLOCKED_BY_COMMIT' ],
-      ['0', 'BLOCKED_BY_COMMIT',    'branch', '.trunk.'           ],
-      ['0', 'BLOCKING_BRANCH',      'branch', 'BLOCKED_BY_BRANCH' ],
-      ['0', 'BLOCKED_BY_BRANCH',    'branch', '.trunk.'           ],
-      ['0', 'MOSTLY_BRANCH',        '.',      '.'                 ],
-      ['0', 'MOSTLY_TAG',           '.',      '.'                 ],
-      ['0', 'BRANCH_WITH_COMMIT',   'branch', '.trunk.'           ],
-      ['0', 'BRANCH',               'branch', '.trunk.'           ],
-      ['0', 'TAG',                  'tag',    '.trunk.'           ],
-      ['0', 'unlabeled-1.1.12.1.2', 'branch', 'BLOCKED_BY_UNNAMED'],
-      ]
-  expected_lines.sort()
-
-  symbol_info_file = os.path.join(tmp_dir, 'symbol-mess-symbol-info.txt')
-  try:
-    ensure_conversion(
-        'symbol-mess',
-        args=[
-            '--write-symbol-info=%s' % (symbol_info_file,),
-            '--passes=:CollateSymbolsPass',
-            ],
-      )
-    raise MissingErrorException()
-  except Failure:
-    pass
-  lines = []
-  comment_re = re.compile(r'^\s*\#')
-  for l in open(symbol_info_file, 'r'):
-    if comment_re.match(l):
-      continue
-    lines.append(l.strip().split())
-  lines.sort()
-  if lines != expected_lines:
-    raise Failure('Symbol info incorrect')
-
-
-def symbol_hints():
-  "test --symbol-hints for setting branch/tag"
-
-  symbol_hints_file = os.path.join(tmp_dir, 'symbol-mess-symbol-hints.txt')
-  open(symbol_hints_file, 'w').write(
-      '0 MOSTLY_BRANCH branch .\n'
-      '0 MOSTLY_TAG    tag    .\n'
-      )
-  conv = ensure_conversion(
-      'symbol-mess', args=['--symbol-hints=%s' % (symbol_hints_file,)],
-      )
-  if not conv.path_exists('branches', 'MOSTLY_BRANCH'):
-    raise Failure()
-  if not conv.path_exists('tags', 'MOSTLY_TAG'):
-    raise Failure()
-
-
-def parent_hints():
-  "test --symbol-hints for setting parent"
-
-  symbol_hints_file = os.path.join(tmp_dir, 'symbol-mess-parent-hints.txt')
-  # BRANCH_WITH_COMMIT is usually determined to branch from .trunk.;
-  # set the preferred parent to BRANCH instead:
-  open(symbol_hints_file, 'w').write(
-      '0 MOSTLY_BRANCH      branch .\n'
-      '0 MOSTLY_TAG         tag    .\n'
-      '0 BRANCH_WITH_COMMIT branch BRANCH'
-      )
-  conv = ensure_conversion(
-      'symbol-mess', args=['--symbol-hints=%s' % (symbol_hints_file,)],
-      )
-  conv.logs[9].check(sym_log_msg('BRANCH_WITH_COMMIT'), (
-    ('/%(branches)s/BRANCH_WITH_COMMIT (from /branches/BRANCH:8)', 'A'),
-    ))
-
-
 def overlook_symbol_mismatches():
   "overlook conflicting tag/branch when --trunk-only"
 
@@ -2652,6 +2575,83 @@ def symbol_transform():
      raise Failure()
   if not conv.path_exists('tags', 'MOSTLY.TAG'):
      raise Failure()
+
+
+def write_symbol_info():
+  "test --write-symbol-info"
+
+  expected_lines = [
+      ['0', 'BLOCKED_BY_UNNAMED',   'branch', '.trunk.'           ],
+      ['0', 'BLOCKING_COMMIT',      'branch', 'BLOCKED_BY_COMMIT' ],
+      ['0', 'BLOCKED_BY_COMMIT',    'branch', '.trunk.'           ],
+      ['0', 'BLOCKING_BRANCH',      'branch', 'BLOCKED_BY_BRANCH' ],
+      ['0', 'BLOCKED_BY_BRANCH',    'branch', '.trunk.'           ],
+      ['0', 'MOSTLY_BRANCH',        '.',      '.'                 ],
+      ['0', 'MOSTLY_TAG',           '.',      '.'                 ],
+      ['0', 'BRANCH_WITH_COMMIT',   'branch', '.trunk.'           ],
+      ['0', 'BRANCH',               'branch', '.trunk.'           ],
+      ['0', 'TAG',                  'tag',    '.trunk.'           ],
+      ['0', 'unlabeled-1.1.12.1.2', 'branch', 'BLOCKED_BY_UNNAMED'],
+      ]
+  expected_lines.sort()
+
+  symbol_info_file = os.path.join(tmp_dir, 'symbol-mess-symbol-info.txt')
+  try:
+    ensure_conversion(
+        'symbol-mess',
+        args=[
+            '--write-symbol-info=%s' % (symbol_info_file,),
+            '--passes=:CollateSymbolsPass',
+            ],
+      )
+    raise MissingErrorException()
+  except Failure:
+    pass
+  lines = []
+  comment_re = re.compile(r'^\s*\#')
+  for l in open(symbol_info_file, 'r'):
+    if comment_re.match(l):
+      continue
+    lines.append(l.strip().split())
+  lines.sort()
+  if lines != expected_lines:
+    raise Failure('Symbol info incorrect')
+
+
+def symbol_hints():
+  "test --symbol-hints for setting branch/tag"
+
+  symbol_hints_file = os.path.join(tmp_dir, 'symbol-mess-symbol-hints.txt')
+  open(symbol_hints_file, 'w').write(
+      '0 MOSTLY_BRANCH branch .\n'
+      '0 MOSTLY_TAG    tag    .\n'
+      )
+  conv = ensure_conversion(
+      'symbol-mess', args=['--symbol-hints=%s' % (symbol_hints_file,)],
+      )
+  if not conv.path_exists('branches', 'MOSTLY_BRANCH'):
+    raise Failure()
+  if not conv.path_exists('tags', 'MOSTLY_TAG'):
+    raise Failure()
+
+
+def parent_hints():
+  "test --symbol-hints for setting parent"
+
+  symbol_hints_file = os.path.join(tmp_dir, 'symbol-mess-parent-hints.txt')
+  # BRANCH_WITH_COMMIT is usually determined to branch from .trunk.;
+  # set the preferred parent to BRANCH instead:
+  open(symbol_hints_file, 'w').write(
+      '0 MOSTLY_BRANCH      branch .\n'
+      '0 MOSTLY_TAG         tag    .\n'
+      '0 BRANCH_WITH_COMMIT branch BRANCH'
+      )
+  conv = ensure_conversion(
+      'symbol-mess', args=['--symbol-hints=%s' % (symbol_hints_file,)],
+      )
+  conv.logs[9].check(sym_log_msg('BRANCH_WITH_COMMIT'), (
+    ('/%(branches)s/BRANCH_WITH_COMMIT (from /branches/BRANCH:8)', 'A'),
+    ))
 
 
 def issue_99():

@@ -30,7 +30,7 @@ from cvs2svn_lib.main import main
 try:
   main(sys.argv[0], sys.argv[1:])
 except FatalException, e:
-  sys.stderr.write(str(e))
+  sys.stderr.write(str(e) + '\n')
   sys.exit(1)
 
 

@@ -77,9 +77,12 @@ class CheckDependenciesPass(Pass):
               '%s lists succ=%s, but not vice versa.' % (cvs_item, succ,))
 
     if fatal_errors:
-      raise FatalException("Dependencies inconsistent:\n"
-                           + "\n".join(fatal_errors) + "\n"
-                           + "Exited due to fatal error(s).\n")
+      raise FatalException(
+          'Dependencies inconsistent:\n'
+          '%s\n'
+          'Exited due to fatal error(s).'
+          % ('\n'.join(fatal_errors),)
+          )
 
     self.symbol_db.close()
     self.symbol_db = None

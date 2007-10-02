@@ -51,8 +51,8 @@ class FatalException(Exception):
   """Exception thrown on a non-recoverable error.
 
   If this exception is thrown by main(), it is caught by the global
-  layer of the program, its string representation is printed, and the
-  program is ended with an exit code of 1."""
+  layer of the program, its string representation is printed (followed
+  by a newline), and the program is ended with an exit code of 1."""
 
   pass
 
@@ -67,9 +67,9 @@ class FatalError(FatalException):
   """A FatalException that prepends error_prefix to the message."""
 
   def __init__(self, msg):
-    """Use (error_prefix + ': ' + MSG + '\n') as the error message."""
+    """Use (error_prefix + ': ' + MSG) as the error message."""
 
-    FatalException.__init__(self, '%s: %s\n' % (error_prefix, msg,))
+    FatalException.__init__(self, '%s: %s' % (error_prefix, msg,))
 
 
 class CommandError(FatalError):

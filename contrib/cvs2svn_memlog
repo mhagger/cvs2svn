@@ -116,7 +116,7 @@ MemoryLogger(interval=interval).start()
 try:
   main(sys.argv[0], args)
 except FatalException, e:
-  sys.stderr.write(str(e))
+  sys.stderr.write(str(e) + '\n')
   sys.exit(1)
 
 

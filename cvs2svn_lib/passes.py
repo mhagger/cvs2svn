@@ -146,7 +146,7 @@ class CollectRevsPass(Pass):
                            + "=" * 75 + "\n"
                            + "Error summary:\n"
                            + "\n".join(fatal_errors) + "\n"
-                           + "Exited due to fatal error(s).\n")
+                           + "Exited due to fatal error(s).")
 
     Ctx()._cvs_file_db.close()
     write_projects(artifact_manager.get_temp_file(config.PROJECTS))

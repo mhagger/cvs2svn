@@ -2478,6 +2478,23 @@ def write_symbol_info():
     raise Failure('Symbol info incorrect')
 
 
+def symbol_hints():
+  "test --symbol-hints for setting branch/tag"
+
+  symbol_hints_file = os.path.join(tmp_dir, 'symbol-mess-symbol-hints.txt')
+  open(symbol_hints_file, 'w').write(
+      '0 MOSTLY_BRANCH branch .\n'
+      '0 MOSTLY_TAG    tag    .\n'
+      )
+  conv = ensure_conversion(
+      'symbol-mess', args=['--symbol-hints=%s' % (symbol_hints_file,)],
+      )
+  if not conv.path_exists('branches', 'MOSTLY_BRANCH'):
+    raise Failure()
+  if not conv.path_exists('tags', 'MOSTLY_TAG'):
+    raise Failure()
+
+
 def overlook_symbol_mismatches():
   "overlook conflicting tag/branch when --trunk-only"
 
@@ -3104,11 +3121,12 @@ test_list = [
     tag_symbol_default,
     symbol_transform,
     write_symbol_info,
+    symbol_hints,
     issue_99,
     issue_100,
     issue_106,
-    options_option,
 # 110:
+    options_option,
     multiproject,
     crossproject,
     tag_with_no_revision,
@@ -3118,8 +3136,8 @@ test_list = [
     XFail(tagging_after_delete),
     crossed_branches,
     file_directory_conflict,
-    attic_directory_conflict,
 # 120:
+    attic_directory_conflict,
     internal_co,
     internal_co_exclude,
     internal_co_trunk_only,
@@ -3129,8 +3147,8 @@ test_list = [
     timestamp_chaos,
     symlinks,
     empty_trunk_path,
-    preferred_parent_cycle,
 # 130:
+    preferred_parent_cycle,
     branch_from_empty_dir,
     trunk_readd,
     branch_from_deleted_1_1,

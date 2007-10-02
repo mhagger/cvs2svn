@@ -102,6 +102,9 @@ class CVSPath(object):
       retval.extend(self.basename)
       return retval
 
+  def __eq__(a, b):
+    return a.id == b.id
+
   def slow_compare(a, b):
     return (
         # Sort first by project:

@@ -156,6 +156,35 @@ def path_split(path):
     return (path[:pos], path[pos+1:],)
 
 
+def verify_paths_disjoint(*paths):
+  """Verify that all of the paths in the argument list are disjoint.
+
+  If any of the paths is nested in another one (i.e., in the sense
+  that 'a/b/c/d' is nested in 'a/b'), or any two paths are identical,
+  raise a FatalError."""
+
+  def split(path):
+    if not path:
+      return []
+    else:
+      return path.split('/')
+
+  paths = [(split(path), path) for path in paths]
+  # If all overlapping elements are equal, a shorter list is
+  # considered "less than" a longer one.  Therefore if any paths are
+  # nested, this sort will leave at least one such pair adjacent, in
+  # the order [nest,nestling].
+  paths.sort()
+  for i in range(1, len(paths)):
+    split_path1, path1 = paths[i - 1]
+    split_path2, path2 = paths[i]
+    if len(split_path1) <= len(split_path2) \
+       and split_path2[:len(split_path1)] == split_path1:
+      raise FatalError(
+          'paths "%s" and "%s" are not disjoint.' % (path1, path2,)
+          )
+
+
 def format_date(date):
   """Return an svn-compatible date string for DATE (seconds since epoch).
 

@@ -14,6 +14,13 @@ Version x.x.x (not yet released)
  Miscellaneous:
 
 
+Version 2.0.1 (04 October 2007)
+-------------------------------
+
+ Bugs fixed:
+ * Fix problem with keyword expansion when using --use-internal-co.
+
+
 Version 2.0.0 (15 August 2007)
 ------------------------------
 

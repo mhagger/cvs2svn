@@ -2904,11 +2904,11 @@ def timestamp_chaos():
   conv = ensure_conversion('timestamp-chaos', args=["-v"])
 
   times = [
-      '2007-01-01 22:00:00', # Initial commit
-      '2007-01-01 22:00:00', # revision 1.1 of both files
-      '2007-01-01 22:00:01', # revision 1.2 of file1.txt, adjusted forwards
-      '2007-01-01 22:00:02', # revision 1.2 of file1.txt, adjusted backwards
-      '2007-01-01 23:00:00', # revision 1.3 of both files
+      '2007-01-01 21:00:00', # Initial commit
+      '2007-01-01 21:00:00', # revision 1.1 of both files
+      '2007-01-01 21:00:01', # revision 1.2 of file1.txt, adjusted forwards
+      '2007-01-01 21:00:02', # revision 1.2 of file1.txt, adjusted backwards
+      '2007-01-01 22:00:00', # revision 1.3 of both files
       ]
   for i in range(len(times)):
     if abs(conv.logs[i + 1].date - time.mktime(svn_strptime(times[i]))) > 0.1:
@@ -3197,6 +3197,11 @@ test_list = [
     ]
 
 if __name__ == '__main__':
+
+  # Configure the environment for reproducable output from svn, etc.
+  # I have no idea if this works on Windows too.
+  os.environ["LC_ALL"] = "C"
+  os.environ["TZ"] = "UTC"
 
   # The Subversion test suite code assumes it's being invoked from
   # within a working copy of the Subversion sources, and tries to use

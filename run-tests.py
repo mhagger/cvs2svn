@@ -2894,7 +2894,12 @@ def internal_co_keywords():
     raise Failure()
   if kk_ic != kk_cvs:
     raise Failure()
-  if kv_ic != kv_cvs:
+
+  # The date format changed between cvs and co ('/' instead of '-').
+  # Accept either one:
+  date_substitution_re = re.compile(r' ([0-9]*)-([0-9]*)-([0-9]*) ')
+  if kv_ic != kv_cvs \
+         and date_substitution_re.sub(r' \1/\2/\3 ', kv_ic) != kv_cvs:
     raise Failure()
 
 

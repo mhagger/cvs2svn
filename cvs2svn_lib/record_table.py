@@ -135,6 +135,8 @@ class AbstractRecordTable:
     self.filename = filename
     self.mode = mode
     self.packer = packer
+    # Simplify and speed access to this oft-needed quantity:
+    self._record_len = self.packer.record_len
 
   def __str__(self):
     return '%s(%r)' % (self.__class__.__name__, self.filename,)
@@ -243,7 +245,7 @@ class RecordTable(AbstractRecordTable):
     # Number of items that can be stored in the write cache.
     self._max_memory_cache = (
         self.cache_memory
-        / (self.CACHE_OVERHEAD_PER_ENTRY + self.packer.record_len))
+        / (self.CACHE_OVERHEAD_PER_ENTRY + self._record_len))
 
     # Read and write cache; a map {i : (dirty, s)}, where i is an
     # index, dirty indicates whether the value has to be written to
@@ -253,7 +255,7 @@ class RecordTable(AbstractRecordTable):
     self._cache = {}
 
     # The index just beyond the last record ever written:
-    self._limit = os.path.getsize(self.filename) // self.packer.record_len
+    self._limit = os.path.getsize(self.filename) // self._record_len
 
     # The index just beyond the last record ever written to disk:
     self._limit_written = self._limit
@@ -273,11 +275,11 @@ class RecordTable(AbstractRecordTable):
           pass
         elif i <= self._limit_written:
           # Just jump there:
-          f.seek(i * self.packer.record_len)
+          f.seek(i * self._record_len)
         else:
           # Jump to the end of the file then write _empty_values until
           # we reach the correct location:
-          f.seek(self._limit_written * self.packer.record_len)
+          f.seek(self._limit_written * self._record_len)
           while self._limit_written < i:
             f.write(self.packer.empty_value)
             self._limit_written += 1
@@ -305,8 +307,8 @@ class RecordTable(AbstractRecordTable):
     except KeyError:
       if not 0 <= i < self._limit_written:
         raise KeyError(i)
-      self.f.seek(i * self.packer.record_len)
-      s = self.f.read(self.packer.record_len)
+      self.f.seek(i * self._record_len)
+      s = self.f.read(self._record_len)
       self._cache[i] = (False, s)
       if len(self._cache) >= self._max_memory_cache:
         self.flush()
@@ -346,7 +348,7 @@ class MmapRecordTable(AbstractRecordTable):
           )
 
       # The index just beyond the last record ever written:
-      self._limit = os.path.getsize(self.filename) // self.packer.record_len
+      self._limit = os.path.getsize(self.filename) // self._record_len
     elif self.mode == DB_OPEN_READ:
       self.python_file = open(self.filename, 'rb')
       self._filesize = os.path.getsize(self.filename)
@@ -356,7 +358,7 @@ class MmapRecordTable(AbstractRecordTable):
           )
 
       # The index just beyond the last record ever written:
-      self._limit = os.path.getsize(self.filename) // self.packer.record_len
+      self._limit = os.path.getsize(self.filename) // self._record_len
     else:
       raise RuntimeError('Invalid mode %r' % self.mode)
 
@@ -371,7 +373,7 @@ class MmapRecordTable(AbstractRecordTable):
     if i >= self._limit:
       # This write extends the range of valid indices.  First check
       # whether the file has to be enlarged:
-      new_size = (i + 1) * self.packer.record_len
+      new_size = (i + 1) * self._record_len
       if new_size > self._filesize:
         self._filesize = (
             (new_size + self.GROWTH_INCREMENT - 1)
@@ -380,20 +382,20 @@ class MmapRecordTable(AbstractRecordTable):
             )
         self.f.resize(self._filesize)
       # Now pad up to the new record with empty_value, then write record:
-      self.f.seek(self._limit * self.packer.record_len)
+      self.f.seek(self._limit * self._record_len)
       if i > self._limit:
         self.f.write(self.packer.empty_value * (i - self._limit))
       self.f.write(s)
       self._limit = i + 1
     else:
-      self.f.seek(i * self.packer.record_len)
+      self.f.seek(i * self._record_len)
       self.f.write(s)
 
   def _get_packed_record(self, i):
     if not 0 <= i < self._limit:
       raise KeyError(i)
-    self.f.seek(i * self.packer.record_len)
-    return self.f.read(self.packer.record_len)
+    self.f.seek(i * self._record_len)
+    return self.f.read(self._record_len)
 
   def close(self):
     self.flush()

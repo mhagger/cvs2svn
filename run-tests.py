@@ -2883,12 +2883,12 @@ def internal_co_keywords():
   conv_cvs = ensure_conversion('internal-co-keywords',
                                args=["--use-cvs", "--keywords-off"])
 
-  ko_ic = file(conv_ic.get_wc("trunk", "dir/ko.txt")).read()
-  ko_cvs = file(conv_cvs.get_wc("trunk", "dir/ko.txt")).read()
-  kk_ic = file(conv_ic.get_wc("trunk", "dir/kk.txt")).read()
-  kk_cvs = file(conv_cvs.get_wc("trunk", "dir/kk.txt")).read()
-  kv_ic = file(conv_ic.get_wc("trunk", "dir/kv.txt")).read()
-  kv_cvs = file(conv_cvs.get_wc("trunk", "dir/kv.txt")).read()
+  ko_ic = file(conv_ic.get_wc('trunk', 'dir', 'ko.txt')).read()
+  ko_cvs = file(conv_cvs.get_wc('trunk', 'dir', 'ko.txt')).read()
+  kk_ic = file(conv_ic.get_wc('trunk', 'dir', 'kk.txt')).read()
+  kk_cvs = file(conv_cvs.get_wc('trunk', 'dir', 'kk.txt')).read()
+  kv_ic = file(conv_ic.get_wc('trunk', 'dir', 'kv.txt')).read()
+  kv_cvs = file(conv_cvs.get_wc('trunk', 'dir', 'kv.txt')).read()
 
   if ko_ic != ko_cvs:
     raise Failure()

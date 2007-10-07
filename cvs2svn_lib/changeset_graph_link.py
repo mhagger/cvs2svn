@@ -59,7 +59,7 @@ class ChangesetGraphLink(object):
     # (indexed by LINK_* constants):
     link_counts = [0] * 4
 
-    for cvs_item in list(changeset.get_cvs_items()):
+    for cvs_item in list(changeset.iter_cvs_items()):
       link_counts[self.get_link_type(cvs_item)] += 1
 
     [self.pred_links, self.succ_links, self.passthru_links] = link_counts[1:]
@@ -134,7 +134,7 @@ class ChangesetGraphLink(object):
       destination[LINK_NONE] = pred_items
       destination[LINK_PASSTHRU] = pred_items
 
-    for cvs_item in self.changeset.get_cvs_items():
+    for cvs_item in self.changeset.iter_cvs_items():
       link_type = self.get_link_type(cvs_item)
       destination[link_type].append(cvs_item.id)
 

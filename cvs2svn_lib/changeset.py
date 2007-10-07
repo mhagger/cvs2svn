@@ -37,7 +37,7 @@ class Changeset(object):
     self.id = id
     self.cvs_item_ids = list(cvs_item_ids)
 
-  def get_cvs_items(self):
+  def iter_cvs_items(self):
     """Yield the CVSItems within this Changeset."""
 
     for (id, cvs_item) in Ctx()._cvs_items_db.get_many(self.cvs_item_ids):
@@ -91,7 +91,7 @@ class RevisionChangeset(Changeset):
     pred_ids = set()
     succ_ids = set()
 
-    for cvs_item in self.get_cvs_items():
+    for cvs_item in self.iter_cvs_items():
       time_range.add(cvs_item.timestamp)
 
       for pred_id in cvs_item.get_pred_ids():
@@ -144,7 +144,7 @@ class OrderedChangeset(Changeset):
 
   def get_projects_opened(self):
     retval = set()
-    for cvs_item in self.get_cvs_items():
+    for cvs_item in self.iter_cvs_items():
       retval.add(cvs_item.cvs_file.project)
     return retval
 
@@ -160,7 +160,7 @@ class OrderedChangeset(Changeset):
     if self.next_id is not None:
       succ_ids.add(self.next_id)
 
-    for cvs_item in self.get_cvs_items():
+    for cvs_item in self.iter_cvs_items():
       time_range.add(cvs_item.timestamp)
 
       for pred_id in cvs_item.get_symbol_pred_ids():
@@ -207,7 +207,7 @@ class SymbolChangeset(Changeset):
     pred_ids = set()
     succ_ids = set()
 
-    for cvs_item in self.get_cvs_items():
+    for cvs_item in self.iter_cvs_items():
       for pred_id in cvs_item.get_pred_ids():
         changeset_id = cvs_item_to_changeset_id.get(pred_id)
         if changeset_id is not None:

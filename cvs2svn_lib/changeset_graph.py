@@ -406,7 +406,7 @@ class ChangesetGraph(object):
 
     for node in self:
       changeset = self._changeset_db[node.id]
-      for cvs_item in changeset.get_cvs_items():
+      for cvs_item in changeset.iter_cvs_items():
         for succ_id in cvs_item.get_succ_ids():
           f.write('  I%x -> I%x;\n' % (cvs_item.id, succ_id,))
 

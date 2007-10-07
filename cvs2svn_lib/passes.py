@@ -503,7 +503,7 @@ class InitializeChangesetsPass(Pass):
     CHANGESET at most once, even though the resulting changesets might
     themselves have internal dependencies."""
 
-    cvs_items = list(changeset.get_cvs_items())
+    cvs_items = list(changeset.iter_cvs_items())
     # We only look for succ dependencies, since by doing so we
     # automatically cover pred dependencies as well.  First create a
     # list of tuples (pred, succ) of id pairs for CVSItems that depend
@@ -626,7 +626,7 @@ class InitializeChangesetsPass(Pass):
       if Log().is_on(Log.DEBUG):
         Log().debug(repr(changeset))
       changeset_graph.store_changeset(changeset)
-      for cvs_item in list(changeset.get_cvs_items()):
+      for cvs_item in list(changeset.iter_cvs_items()):
         self.sorted_cvs_items_db.add(cvs_item)
 
     self.sorted_cvs_items_db.close()
@@ -1042,7 +1042,7 @@ class BreakAllChangesetCyclesPass(Pass):
 
     # A map { cvs_branch_id : (max_pred_ordinal, min_succ_ordinal) }
     ordinal_limits = {}
-    for cvs_branch in changeset.get_cvs_items():
+    for cvs_branch in changeset.iter_cvs_items():
       max_pred_ordinal = 0
       min_succ_ordinal = sys.maxint
 

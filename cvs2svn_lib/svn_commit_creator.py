@@ -107,7 +107,7 @@ class SVNCommitCreator:
     # Subversion revision containing the log message for the second dead
     # revision, because we don't want to lose that information.
 
-    cvs_revs = list(changeset.get_cvs_items())
+    cvs_revs = list(changeset.iter_cvs_items())
     if cvs_revs:
       cvs_revs.sort(lambda a, b: cmp(a.cvs_file.filename, b.cvs_file.filename))
       svn_commit = SVNPrimaryCommit(
@@ -145,7 +145,7 @@ class SVNCommitCreator:
 
     cvs_tag_ids = [
         cvs_tag.id
-        for cvs_tag in changeset.get_cvs_items()
+        for cvs_tag in changeset.iter_cvs_items()
         if not isinstance(cvs_tag, CVSTagNoop)
         ]
     if cvs_tag_ids:
@@ -170,7 +170,7 @@ class SVNCommitCreator:
 
     cvs_branches = [
         cvs_branch
-        for cvs_branch in changeset.get_cvs_items()
+        for cvs_branch in changeset.iter_cvs_items()
         if not isinstance(cvs_branch, CVSBranchNoop)
         ]
     if cvs_branches:

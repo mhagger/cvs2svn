@@ -312,8 +312,6 @@ class FilterSymbolsPass(Pass):
 
   def register_artifacts(self):
     self._register_temp_file(config.SUMMARY_SERIALIZER)
-    self._register_temp_file(config.CVS_ITEMS_FILTERED_STORE)
-    self._register_temp_file(config.CVS_ITEMS_FILTERED_INDEX_TABLE)
     self._register_temp_file(config.CVS_REVS_SUMMARY_DATAFILE)
     self._register_temp_file(config.CVS_SYMBOLS_SUMMARY_DATAFILE)
     self._register_temp_file_needed(config.PROJECTS)
@@ -330,10 +328,6 @@ class FilterSymbolsPass(Pass):
     Ctx()._symbol_db = SymbolDatabase()
     cvs_item_store = OldCVSItemStore(
         artifact_manager.get_temp_file(config.CVS_ITEMS_STORE))
-    cvs_items_db = IndexedCVSItemStore(
-        artifact_manager.get_temp_file(config.CVS_ITEMS_FILTERED_STORE),
-        artifact_manager.get_temp_file(config.CVS_ITEMS_FILTERED_INDEX_TABLE),
-        DB_OPEN_NEW)
 
     cvs_item_serializer = PrimedPickleSerializer(cvs_item_primer)
     f = open(artifact_manager.get_temp_file(config.SUMMARY_SERIALIZER), 'wb')
@@ -373,7 +367,6 @@ class FilterSymbolsPass(Pass):
       stats_keeper.record_cvs_file(cvs_file_items.cvs_file)
       for cvs_item in cvs_file_items.values():
         stats_keeper.record_cvs_item(cvs_item)
-        cvs_items_db.add(cvs_item)
 
         if isinstance(cvs_item, CVSRevision):
           rev_db.add(cvs_item)
@@ -385,7 +378,6 @@ class FilterSymbolsPass(Pass):
     rev_db.close()
     symbol_db.close()
     revision_excluder.finish()
-    cvs_items_db.close()
     cvs_item_store.close()
     Ctx()._symbol_db.close()
     Ctx()._cvs_file_db.close()
@@ -437,8 +429,6 @@ class InitializeChangesetsPass(Pass):
     self._register_temp_file_needed(config.PROJECTS)
     self._register_temp_file_needed(config.SYMBOL_DB)
     self._register_temp_file_needed(config.CVS_FILES_DB)
-    self._register_temp_file_needed(config.CVS_ITEMS_FILTERED_STORE)
-    self._register_temp_file_needed(config.CVS_ITEMS_FILTERED_INDEX_TABLE)
     self._register_temp_file_needed(config.SUMMARY_SERIALIZER)
     self._register_temp_file_needed(config.CVS_REVS_SUMMARY_SORTED_DATAFILE)
     self._register_temp_file_needed(
@@ -643,10 +633,6 @@ class InitializeChangesetsPass(Pass):
         )
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
     Ctx()._symbol_db = SymbolDatabase()
-    Ctx()._cvs_items_db = IndexedCVSItemStore(
-        artifact_manager.get_temp_file(config.CVS_ITEMS_FILTERED_STORE),
-        artifact_manager.get_temp_file(config.CVS_ITEMS_FILTERED_INDEX_TABLE),
-        DB_OPEN_READ)
 
     f = open(artifact_manager.get_temp_file(config.SUMMARY_SERIALIZER), 'rb')
     self.cvs_item_serializer = cPickle.load(f)
@@ -680,7 +666,6 @@ class InitializeChangesetsPass(Pass):
     self.sorted_cvs_items_db.close()
     cvs_item_to_changeset_id.close()
     changeset_db.close()
-    Ctx()._cvs_items_db.close()
     Ctx()._symbol_db.close()
     Ctx()._cvs_file_db.close()
 
@@ -1648,9 +1633,6 @@ passes = [
     CollateSymbolsPass(),
     #CheckItemStoreDependenciesPass(config.CVS_ITEMS_STORE),
     FilterSymbolsPass(),
-    #CheckIndexedItemStoreDependenciesPass(
-    #    config.CVS_ITEMS_FILTERED_STORE,
-    #    config.CVS_ITEMS_FILTERED_INDEX_TABLE),
     SortRevisionSummaryPass(),
     SortSymbolSummaryPass(),
     InitializeChangesetsPass(),

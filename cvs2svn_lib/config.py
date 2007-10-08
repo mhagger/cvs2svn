@@ -135,14 +135,6 @@ CVS_FILES_DB = 'cvs-files.pck'
 # CVSFile.
 CVS_ITEMS_STORE = 'cvs-items.pck'
 
-# A database of filtered CVSItems.  Excluded symbols have been
-# discarded (and the dependencies of the remaining CVSItems fixed up).
-# These two files are used within an IndexedCVSItemStore; the first is
-# a map id-> offset, and the second contains the pickled CVSItems at
-# the specified offsets.
-CVS_ITEMS_FILTERED_INDEX_TABLE = 'cvs-items-filtered-index.dat'
-CVS_ITEMS_FILTERED_STORE = 'cvs-items-filtered.pck'
-
 # The same as above, but with the CVSItems ordered in groups based on
 # their initial changesets.  CVSItems will usually be accessed one
 # changeset at a time, so this ordering helps disk locality (even

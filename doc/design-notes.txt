@@ -297,9 +297,6 @@ are in memory at once.)  It does the following things:
    - For each CVSRevision, record the list of symbols that the
      revision opens and closes.
 
-   - Write the surviving CVSItems to the indexed store in files
-     'cvs-items-filtered-index.dat' and 'cvs-items-filtered.pck'.
-
    - Write a summary of each surviving CVSRevision to
      'revs-summary.txt'.  Each line of the file has the format
 

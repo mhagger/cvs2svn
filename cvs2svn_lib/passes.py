@@ -642,16 +642,14 @@ class InitializeChangesetsPass(Pass):
     self.cvs_item_serializer = cPickle.load(f)
     f.close()
 
-    changeset_graph = ChangesetGraph(
-        ChangesetDatabase(
-            artifact_manager.get_temp_file(config.CHANGESETS_STORE),
-            artifact_manager.get_temp_file(config.CHANGESETS_INDEX),
-            DB_OPEN_NEW,
-            ),
-        CVSItemToChangesetTable(
-            artifact_manager.get_temp_file(config.CVS_ITEM_TO_CHANGESET),
-            DB_OPEN_NEW,
-            ),
+    changeset_db = ChangesetDatabase(
+        artifact_manager.get_temp_file(config.CHANGESETS_STORE),
+        artifact_manager.get_temp_file(config.CHANGESETS_INDEX),
+        DB_OPEN_NEW,
+        )
+    cvs_item_to_changeset_id = CVSItemToChangesetTable(
+        artifact_manager.get_temp_file(config.CVS_ITEM_TO_CHANGESET),
+        DB_OPEN_NEW,
         )
 
     self.sorted_cvs_items_db = IndexedCVSItemStore(
@@ -664,12 +662,14 @@ class InitializeChangesetsPass(Pass):
     for changeset in self.get_changesets():
       if Log().is_on(Log.DEBUG):
         Log().debug(repr(changeset))
-      changeset_graph.store_changeset(changeset)
+      changeset_db.store(changeset)
       for cvs_item in list(changeset.iter_cvs_items()):
         self.sorted_cvs_items_db.add(cvs_item)
+        cvs_item_to_changeset_id[cvs_item.id] = changeset.id
 
     self.sorted_cvs_items_db.close()
-    changeset_graph.close()
+    cvs_item_to_changeset_id.close()
+    changeset_db.close()
     Ctx()._cvs_items_db.close()
     Ctx()._symbol_db.close()
     Ctx()._cvs_file_db.close()

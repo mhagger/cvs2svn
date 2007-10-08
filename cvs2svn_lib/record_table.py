@@ -381,21 +381,18 @@ class MmapRecordTable(AbstractRecordTable):
             * self.GROWTH_INCREMENT
             )
         self.f.resize(self._filesize)
-      # Now pad up to the new record with empty_value, then write record:
-      self.f.seek(self._limit * self._record_len)
       if i > self._limit:
-        self.f.write(self.packer.empty_value * (i - self._limit))
-      self.f.write(s)
+        # Pad up to the new record with empty_value:
+        self.f[self._limit * self._record_len:i * self._record_len] = \
+            self.packer.empty_value * (i - self._limit)
       self._limit = i + 1
-    else:
-      self.f.seek(i * self._record_len)
-      self.f.write(s)
+
+    self.f[i * self._record_len:(i + 1) * self._record_len] = s
 
   def _get_packed_record(self, i):
     if not 0 <= i < self._limit:
       raise KeyError(i)
-    self.f.seek(i * self._record_len)
-    return self.f.read(self._record_len)
+    return self.f[i * self._record_len:(i + 1) * self._record_len]
 
   def close(self):
     self.flush()

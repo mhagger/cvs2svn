@@ -244,16 +244,31 @@ class IndexedDatabase:
       # Read the memo from the first pickle:
       self.serializer = cPickle.load(self.f)
 
+    # Seek to the end of the file, and record that position:
+    self.f.seek(0, 2)
+    self.fp = self.f.tell()
+    self.eofp = self.fp
+
   def __setitem__(self, index, item):
     """Write ITEM into the database indexed by INDEX."""
 
     # Make sure we're at the end of the file:
-    self.f.seek(0, 2)
-    self.index_table[index] = self.f.tell()
-    self.serializer.dumpf(self.f, item)
+    if self.fp != self.eofp:
+      self.f.seek(self.eofp)
+    self.index_table[index] = self.eofp
+    s = self.serializer.dumps(item)
+    self.f.write(s)
+    self.eofp += len(s)
+    self.fp = self.eofp
 
   def _fetch(self, offset):
-    self.f.seek(offset)
+    if self.fp != offset:
+      self.f.seek(offset)
+
+    # There is no easy way to tell how much data will be read, so just
+    # indicate that we don't know the current file pointer:
+    self.fp = None
+
     return self.serializer.loadf(self.f)
 
   def iterkeys(self):

@@ -518,23 +518,26 @@ class InitializeChangesetsPass(Pass):
 
   compare_items = staticmethod(compare_items)
 
-  def break_internal_dependencies(self, changeset):
-    """Split up CHANGESET if necessary to break internal dependencies.
+  def break_internal_dependencies(self, changeset_items):
+    """Split up CHANGESET_ITEMS if necessary to break internal dependencies.
 
-    Return a list containing the resulting changeset(s).  Iff
-    CHANGESET did not have to be split, then the return value will
-    contain a single value, namely the original CHANGESET.  Split
-    CHANGESET at most once, even though the resulting changesets might
-    themselves have internal dependencies."""
+    CHANGESET_ITEMS is a list of CVSRevisions that could possibly
+    belong in a single RevisionChangeset, but there might be internal
+    dependencies among the items.  Return a list of lists, where each
+    sublist is a list of CVSRevisions and at least one internal
+    dependency has been eliminated.  Iff CHANGESET_ITEMS does not have
+    to be split, then the return value will contain a single value,
+    namely the original value of CHANGESET_ITEMS.  Split
+    CHANGESET_ITEMS at most once, even though the resulting changesets
+    might themselves have internal dependencies."""
 
-    cvs_items = list(changeset.iter_cvs_items())
     # We only look for succ dependencies, since by doing so we
     # automatically cover pred dependencies as well.  First create a
     # list of tuples (pred, succ) of id pairs for CVSItems that depend
     # on each other.
     dependencies = []
-    changeset_cvs_item_ids = set(changeset.cvs_item_ids)
-    for cvs_item in cvs_items:
+    changeset_cvs_item_ids = set([cvs_rev.id for cvs_rev in changeset_items])
+    for cvs_item in changeset_items:
       for next_id in cvs_item.get_succ_ids():
         if next_id in changeset_cvs_item_ids:
           # Sanity check: a CVSItem should never depend on itself:
@@ -544,15 +547,15 @@ class InitializeChangesetsPass(Pass):
           dependencies.append((cvs_item.id, next_id,))
 
     if dependencies:
-      # Sort the cvs_items in a defined order (chronological to the
+      # Sort the changeset_items in a defined order (chronological to the
       # extent that the timestamps are correct and unique).
-      cvs_items.sort(self.compare_items)
+      changeset_items.sort(self.compare_items)
       indexes = {}
-      for i in range(len(cvs_items)):
-        indexes[cvs_items[i].id] = i
+      for i in range(len(changeset_items)):
+        indexes[changeset_items[i].id] = i
       # How many internal dependencies would be broken by breaking the
       # Changeset after a particular index?
-      breaks = [0] * len(cvs_items)
+      breaks = [0] * len(changeset_items)
       for (pred, succ,) in dependencies:
         pred_index = indexes[pred]
         succ_index = indexes[succ]
@@ -567,24 +570,19 @@ class InitializeChangesetsPass(Pass):
         if breaks[i] > best_count:
           best_i = i
           best_count = breaks[i]
-          best_time = cvs_items[i + 1].timestamp - cvs_items[i].timestamp
+          best_time = (changeset_items[i + 1].timestamp
+                       - changeset_items[i].timestamp)
         elif breaks[i] == best_count \
-             and cvs_items[i + 1].timestamp - cvs_items[i].timestamp \
-                 < best_time:
+             and (changeset_items[i + 1].timestamp
+                  - changeset_items[i].timestamp) < best_time:
           best_i = i
           best_count = breaks[i]
-          best_time = cvs_items[i + 1].timestamp - cvs_items[i].timestamp
+          best_time = (changeset_items[i + 1].timestamp
+                       - changeset_items[i].timestamp)
       # Reuse the old changeset.id for the first of the split changesets.
-      return [
-          RevisionChangeset(
-              changeset.id,
-              [cvs_item.id for cvs_item in cvs_items[:best_i + 1]]),
-          RevisionChangeset(
-              self.changeset_key_generator.gen_id(),
-              [cvs_item.id for cvs_item in cvs_items[best_i + 1:]]),
-          ]
+      return [changeset_items[:best_i + 1], changeset_items[best_i + 1:]]
     else:
-      return [changeset]
+      return [changeset_items]
 
   def break_all_internal_dependencies(self, changeset_items):
     """Keep breaking CHANGESET_ITEMS up to break all internal dependencies.
@@ -597,15 +595,15 @@ class InitializeChangesetsPass(Pass):
     # This method is written non-recursively to avoid any possible
     # problems with recursion depth.
 
-    changeset = RevisionChangeset(
-        self.changeset_key_generator.gen_id(),
-        [cvs_rev.id for cvs_rev in changeset_items]
-        )
-    changesets_to_split = [changeset]
+    changesets_to_split = [changeset_items]
     while changesets_to_split:
       changesets = self.break_internal_dependencies(changesets_to_split.pop())
       if len(changesets) == 1:
-        yield changesets[0]
+        [changeset_items] = changesets
+        yield RevisionChangeset(
+            self.changeset_key_generator.gen_id(),
+            [cvs_rev.id for cvs_rev in changeset_items]
+            )
       else:
         # The changeset had to be split; see if either of the
         # fragments have to be split:

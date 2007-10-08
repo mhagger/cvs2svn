@@ -588,9 +588,9 @@ class InitializeChangesetsPass(Pass):
     """Keep breaking CHANGESET_ITEMS up to break all internal dependencies.
 
     CHANGESET_ITEMS is a list of CVSRevisions that could conceivably
-    be part of a single changeset.  Generate RevisionChangesets
-    collectively containing all of the CHANGESET_ITEMS but where each
-    RevisionChangeset is free of internal dependencies."""
+    be part of a single changeset.  Break this list into sublists,
+    where the CVSRevisions in each sublist are free of mutual
+    dependencies."""
 
     # This method is written non-recursively to avoid any possible
     # problems with recursion depth.
@@ -600,10 +600,7 @@ class InitializeChangesetsPass(Pass):
       changesets = self.break_internal_dependencies(changesets_to_split.pop())
       if len(changesets) == 1:
         [changeset_items] = changesets
-        yield RevisionChangeset(
-            self.changeset_key_generator.gen_id(),
-            [cvs_rev.id for cvs_rev in changeset_items]
-            )
+        yield changeset_items
       else:
         # The changeset had to be split; see if either of the
         # fragments have to be split:
@@ -614,9 +611,12 @@ class InitializeChangesetsPass(Pass):
     """Return all changesets, with internal dependencies already broken."""
 
     for changeset_items in self.get_revision_changesets():
-      for split_changeset \
+      for split_changeset_items \
               in self.break_all_internal_dependencies(changeset_items):
-        yield split_changeset
+        yield RevisionChangeset(
+            self.changeset_key_generator.gen_id(),
+            [cvs_rev.id for cvs_rev in split_changeset_items]
+            )
 
     for changeset_items in self.get_symbol_changesets():
       yield create_symbol_changeset(

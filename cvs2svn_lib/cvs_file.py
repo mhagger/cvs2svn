@@ -27,12 +27,17 @@ class CVSPath(object):
   """Represent a CVS file or directory.
 
   Members:
-    ID -- (int) unique ID for this CVSPath.
-    PROJECT -- (Project) the project containing this CVSPath.
-    PARENT_DIRECTORY -- (CVSDirectory or None) the CVSDirectory
+
+    id -- (int) unique ID for this CVSPath.
+
+    project -- (Project) the project containing this CVSPath.
+
+    parent_directory -- (CVSDirectory or None) the CVSDirectory
         containing this CVSPath.
-    BASENAME -- (string) the base name of this CVSPath (no ',v').
-    ORDINAL -- (int) the order that this instance should be sorted
+
+    basename -- (string) the base name of this CVSPath (no ',v').
+
+    ordinal -- (int) the order that this instance should be sorted
         relative to other CVSPath instances.  This member is set based
         on the ordering imposed by slow_compare() by CollectData after
         all CVSFiles have been processed.  Comparisons of CVSPath
@@ -124,12 +129,15 @@ class CVSDirectory(CVSPath):
 
   Members:
 
-    ID -- (int or None) unique id for this file.  If None, a new id is
+    id -- (int or None) unique id for this file.  If None, a new id is
         generated.
-    PROJECT -- (Project) the project containing this file.
-    PARENT_DIRECTORY -- (CVSDirectory or None) the CVSDirectory containing
-        this CVSDirectory.
-    BASENAME -- (string) the base name of this CVSDirectory (no ',v').
+
+    project -- (Project) the project containing this file.
+
+    parent_directory -- (CVSDirectory or None) the CVSDirectory
+        containing this CVSDirectory.
+
+    basename -- (string) the base name of this CVSDirectory (no ',v').
 
   """
 
@@ -172,19 +180,26 @@ class CVSFile(CVSPath):
 
   Members:
 
-    ID -- (int) unique id for this file.
-    PROJECT -- (Project) the project containing this file.
-    PARENT_DIRECTORY -- (CVSDirectory) the CVSDirectory containing
+    id -- (int) unique id for this file.
+
+    project -- (Project) the project containing this file.
+
+    parent_directory -- (CVSDirectory) the CVSDirectory containing
         this CVSFile.
-    BASENAME -- (string) the base name of this CVSFile (no ',v').
-    _IN_ATTIC -- (bool) True if RCS file is in an Attic subdirectory
+
+    basename -- (string) the base name of this CVSFile (no ',v').
+
+    _in_attic -- (bool) True if RCS file is in an Attic subdirectory
         that is not considered the parent directory.  (If a file is
         in-and-out-of-attic and one copy is to be left in Attic after
         the conversion, then the Attic directory is that file's
         PARENT_DIRECTORY and _IN_ATTIC is False.)
-    EXECUTABLE -- (bool) True iff RCS file has executable bit set.
-    FILE_SIZE -- (long) size of the RCS file in bytes.
-    MODE -- (string or None) 'kkv', 'kb', etc.
+
+    executable -- (bool) True iff RCS file has executable bit set.
+
+    file_size -- (long) size of the RCS file in bytes.
+
+    mode -- (string or None) 'kkv', 'kb', etc.
 
   PARENT_DIRECTORY might contain an 'Attic' component if it should be
   retained in the SVN repository; i.e., if the same filename exists out

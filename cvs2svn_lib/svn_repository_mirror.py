@@ -108,10 +108,10 @@ class LODHistory(object):
 
   Members:
 
-    REVNUMS -- (list of int) the SVN revision numbers in which the id
+    revnums -- (list of int) the SVN revision numbers in which the id
         changed, in numerical order.
 
-    IDS -- (list of (int or None)) the ID of the node describing the
+    ids -- (list of (int or None)) the ID of the node describing the
         root of this LOD starting at the corresponding SVN revision
         number, or None if the LOD did not exist in that revision.
 
@@ -122,7 +122,9 @@ class LODHistory(object):
 
   A sentry is written at the zeroth index of both arrays to describe
   the initial situation, namely, that the LOD doesn't exist in SVN
-  revision r0."""
+  revision r0.
+
+  """
 
   __slots__ = ['revnums', 'ids']
 

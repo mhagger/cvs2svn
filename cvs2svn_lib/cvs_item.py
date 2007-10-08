@@ -148,37 +148,63 @@ class CVSRevision(CVSItem):
   a single file.
 
   Members:
-    ID -- (string) unique ID for this revision.
-    CVS_FILE -- (CVSFile) CVSFile affected by this revision.
-    TIMESTAMP -- (int) date stamp for this revision.
-    METADATA_ID -- (int) id of author + log message record in metadata_db.
-    PREV_ID -- (int) id of the logically previous CVSRevision, either on the
-        same or the source branch (or None).
-    NEXT_ID -- (int) id of the logically next CVSRevision (or None).
-    REV -- (string) the CVS revision number, e.g., '1.3'.
-    DELTATEXT_EXISTS -- (bool) true iff this revision's deltatext is not
-        empty.
-    LOD -- (LineOfDevelopment) LOD on which this revision occurred.
-    FIRST_ON_BRANCH_ID -- (int or None) if this revision is the first on its
-        branch, the cvs_branch_id of that branch; else, None.
-    NTDBR -- (bool) true iff this is a non-trunk default branch revision.
-    NTDBR_PREV_ID -- (int or None) Iff this is the 1.2 revision after the end
-        of a default branch, the id of the last rev on the default branch;
-        else, None.
-    NTDBR_NEXT_ID -- (int or None) Iff this is the last revision on a default
-        branch preceding a 1.2 rev, the id of the 1.2 revision; else, None.
-    TAG_IDS -- (list of int) ids of all CVSTags rooted at this CVSRevision.
-    BRANCH_IDS -- (list of int) ids of all CVSBranches rooted at this
+
+    id -- (string) unique ID for this revision.
+
+    cvs_file -- (CVSFile) CVSFile affected by this revision.
+
+    timestamp -- (int) date stamp for this revision.
+
+    metadata_id -- (int) id of author + log message record in
+        metadata_db.
+
+    prev_id -- (int) id of the logically previous CVSRevision, either
+        on the same or the source branch (or None).
+
+    next_id -- (int) id of the logically next CVSRevision (or None).
+
+    rev -- (string) the CVS revision number, e.g., '1.3'.
+
+    deltatext_exists -- (bool) true iff this revision's deltatext is
+        not empty.
+
+    lod -- (LineOfDevelopment) LOD on which this revision occurred.
+
+    first_on_branch_id -- (int or None) if this revision is the first
+        on its branch, the cvs_branch_id of that branch; else, None.
+
+    ntdbr -- (bool) true iff this is a non-trunk default branch
+        revision.
+
+    ntdbr_prev_id -- (int or None) Iff this is the 1.2 revision after
+        the end of a default branch, the id of the last rev on the
+        default branch; else, None.
+
+    ntdbr_next_id -- (int or None) Iff this is the last revision on a
+        default branch preceding a 1.2 rev, the id of the 1.2
+        revision; else, None.
+
+    tag_ids -- (list of int) ids of all CVSTags rooted at this
         CVSRevision.
-    BRANCH_COMMIT_IDS -- (list of int) ids of first CVSRevision committed on
-        each branch rooted in this revision (for branches with commits).
-    OPENED_SYMBOLS -- (None or list of (symbol_id, cvs_symbol_id) tuples)
-        information about all CVSSymbols opened by this revision.  This member
-        is set in FilterSymbolsPass; before then, it is None.
-    CLOSED_SYMBOLS -- (None or list of (symbol_id, cvs_symbol_id) tuples)
-        information about all CVSSymbols closed by this revision.  This member
-        is set in FilterSymbolsPass; before then, it is None.
-    REVISION_RECORDER_TOKEN -- (arbitrary) a token that can be set by
+
+    branch_ids -- (list of int) ids of all CVSBranches rooted at this
+        CVSRevision.
+
+    branch_commit_ids -- (list of int) ids of first CVSRevision
+        committed on each branch rooted in this revision (for branches
+        with commits).
+
+    opened_symbols -- (None or list of (symbol_id, cvs_symbol_id)
+        tuples) information about all CVSSymbols opened by this
+        revision.  This member is set in FilterSymbolsPass; before
+        then, it is None.
+
+    closed_symbols -- (None or list of (symbol_id, cvs_symbol_id)
+        tuples) information about all CVSSymbols closed by this
+        revision.  This member is set in FilterSymbolsPass; before
+        then, it is None.
+
+    revision_recorder_token -- (arbitrary) a token that can be set by
         RevisionRecorder for the later use of RevisionReader.
 
   """
@@ -562,14 +588,20 @@ class CVSSymbol(CVSItem):
   This is the base class for CVSBranch and CVSTag.
 
   Members:
-    ID -- (string) unique ID for this item.
-    CVS_FILE -- (CVSFile) CVSFile affected by this item.
-    SYMBOL -- (Symbol) the symbol affected by this CVSSymbol.
-    SOURCE_LOD -- (LineOfDevelopment) the LOD that is the source for this
-        CVSSymbol.
-    SOURCE_ID -- (int) the ID of the CVSRevision or CVSBranch that is the
-        source for this item.
-    REVISION_RECORDER_TOKEN -- (arbitrary) a token that can be set by
+
+    id -- (string) unique ID for this item.
+
+    cvs_file -- (CVSFile) CVSFile affected by this item.
+
+    symbol -- (Symbol) the symbol affected by this CVSSymbol.
+
+    source_lod -- (LineOfDevelopment) the LOD that is the source for
+        this CVSSymbol.
+
+    source_id -- (int) the ID of the CVSRevision or CVSBranch that is
+        the source for this item.
+
+    revision_recorder_token -- (arbitrary) a token that can be set by
         RevisionRecorder for the later use of RevisionReader.
 
   """
@@ -604,25 +636,39 @@ class CVSBranch(CVSSymbol):
   """Represent the creation of a branch in a particular CVSFile.
 
   Members:
-    ID -- (string) unique ID for this item.
-    CVS_FILE -- (CVSFile) CVSFile affected by this item.
-    SYMBOL -- (Symbol) the symbol affected by this CVSSymbol.
-    BRANCH_NUMBER -- (string) the number of this branch (e.g., '1.3.4'), or
-        None if this is a converted CVSTag.
-    SOURCE_LOD -- (LineOfDevelopment) the LOD that is the source for this
-        CVSSymbol.
-    SOURCE_ID -- (int) id of the CVSRevision or CVSBranch from which this
-        branch sprouts.
-    NEXT_ID -- (int or None) id of first CVSRevision on this branch, if any;
-        else, None.
-    TAG_IDS -- (list of int) ids of all CVSTags rooted at this CVSBranch (can
-        be set due to parent adjustment in FilterSymbolsPass).
-    BRANCH_IDS -- (list of int) ids of all CVSBranches rooted at this
-        CVSBranch (can be set due to parent adjustment in FilterSymbolsPass).
-    OPENED_SYMBOLS -- (None or list of (symbol_id, cvs_symbol_id) tuples)
-        information about all CVSSymbols opened by this branch.  This member
-        is set in FilterSymbolsPass; before then, it is None.
-    REVISION_RECORDER_TOKEN -- (arbitrary) a token that can be set by
+
+    id -- (string) unique ID for this item.
+
+    cvs_file -- (CVSFile) CVSFile affected by this item.
+
+    symbol -- (Symbol) the symbol affected by this CVSSymbol.
+
+    branch_number -- (string) the number of this branch (e.g.,
+        '1.3.4'), or None if this is a converted CVSTag.
+
+    source_lod -- (LineOfDevelopment) the LOD that is the source for
+        this CVSSymbol.
+
+    source_id -- (int) id of the CVSRevision or CVSBranch from which
+        this branch sprouts.
+
+    next_id -- (int or None) id of first CVSRevision on this branch,
+        if any; else, None.
+
+    tag_ids -- (list of int) ids of all CVSTags rooted at this
+        CVSBranch (can be set due to parent adjustment in
+        FilterSymbolsPass).
+
+    branch_ids -- (list of int) ids of all CVSBranches rooted at this
+        CVSBranch (can be set due to parent adjustment in
+        FilterSymbolsPass).
+
+    opened_symbols -- (None or list of (symbol_id, cvs_symbol_id)
+        tuples) information about all CVSSymbols opened by this
+        branch.  This member is set in FilterSymbolsPass; before then,
+        it is None.
+
+    revision_recorder_token -- (arbitrary) a token that can be set by
         RevisionRecorder for the later use of RevisionReader.
 
   """
@@ -753,14 +799,20 @@ class CVSTag(CVSSymbol):
   """Represent the creation of a tag on a particular CVSFile.
 
   Members:
-    ID -- (string) unique ID for this item.
-    CVS_FILE -- (CVSFile) CVSFile affected by this item.
-    SYMBOL -- (Symbol) the symbol affected by this CVSSymbol.
-    SOURCE_LOD -- (LineOfDevelopment) the LOD that is the source for this
-        CVSSymbol.
-    SOURCE_ID -- (int) the ID of the CVSRevision or CVSBranch that is being
-        tagged.
-    REVISION_RECORDER_TOKEN -- (arbitrary) a token that can be set by
+
+    id -- (string) unique ID for this item.
+
+    cvs_file -- (CVSFile) CVSFile affected by this item.
+
+    symbol -- (Symbol) the symbol affected by this CVSSymbol.
+
+    source_lod -- (LineOfDevelopment) the LOD that is the source for
+        this CVSSymbol.
+
+    source_id -- (int) the ID of the CVSRevision or CVSBranch that is
+        being tagged.
+
+    revision_recorder_token -- (arbitrary) a token that can be set by
         RevisionRecorder for the later use of RevisionReader.
 
   """

@@ -56,9 +56,11 @@ class FillSource:
 
     Members:
 
-      CVS_PATH -- (CVSPath): the CVSPath described by this FillSource.
-      _SYMBOL -- (Symbol) the symbol to be filled.
-      _NODE_TREE -- (dict) a tree stored as a map { CVSPath : node },
+      cvs_path -- (CVSPath): the CVSPath described by this FillSource.
+
+      _symbol -- (Symbol) the symbol to be filled.
+
+      _node_tree -- (dict) a tree stored as a map { CVSPath : node },
           where subnodes have the same form.  Leaves are
           SVNRevisionRange instances telling the source_lod and range
           of SVN revision numbers from which the CVSPath can be

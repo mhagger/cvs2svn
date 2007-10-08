@@ -19,6 +19,7 @@
 
 from __future__ import generators
 
+import re
 import cPickle
 
 from cvs2svn_lib.boolean import *
@@ -36,11 +37,12 @@ from cvs2svn_lib.cvs_item import CVSBranchNoop
 from cvs2svn_lib.cvs_item import CVSTag
 from cvs2svn_lib.cvs_item import CVSTagNoop
 from cvs2svn_lib.cvs_file_items import CVSFileItems
+from cvs2svn_lib.serializer import Serializer
 from cvs2svn_lib.serializer import PrimedPickleSerializer
 from cvs2svn_lib.database import IndexedStore
 
 
-_cvs_item_primer = (
+cvs_item_primer = (
     CVSRevisionAdd, CVSRevisionChange,
     CVSRevisionDelete, CVSRevisionNoop,
     CVSBranch, CVSBranchNoop,
@@ -65,7 +67,7 @@ class NewCVSItemStore:
     self.f = open(filename, 'wb')
 
     self.serializer = PrimedPickleSerializer(
-        _cvs_item_primer + (CVSFileItems,)
+        cvs_item_primer + (CVSFileItems,)
         )
     cPickle.dump(self.serializer, self.f, -1)
 
@@ -107,10 +109,146 @@ class OldCVSItemStore:
     self.f = None
 
 
+class LinewiseSerializer(Serializer):
+  """A serializer that writes exactly one line for each object.
+
+  The actual serialization is done by a wrapped serializer; this class
+  only escapes any newlines in the serialized data then appends a
+  single newline."""
+
+  def __init__(self, wrapee):
+    self.wrapee = wrapee
+
+  def _encode_newlines(s):
+    """Return s with newlines and backslashes encoded.
+
+    The string is returned with the following character transformations:
+
+      LF -> \n
+      CR -> \r
+      \ -> \\
+
+    """
+
+    return s.replace('\\', '\\\\').replace('\n', '\\n').replace('\r', '\\r')
+
+  _encode_newlines = staticmethod(_encode_newlines)
+
+  _escape_re = re.compile(r'(\\\\|\\n|\\r)')
+  _subst = {'\\n' : '\n', '\\r' : '\r', '\\\\' : '\\'}
+
+  def _decode_newlines(s):
+    """Return s with newlines and backslashes decoded.
+
+    This function reverses the encoding of _encode_newlines().
+
+    """
+
+    def repl(m):
+      return LinewiseSerializer._subst[m.group(1)]
+
+    return LinewiseSerializer._escape_re.sub(repl, s)
+
+  _decode_newlines = staticmethod(_decode_newlines)
+
+  def dumpf(self, f, object):
+    f.write(self.dumps(object))
+
+  def dumps(self, object):
+    return self._encode_newlines(self.wrapee.dumps(object)) + '\n'
+
+  def loadf(self, f):
+    return self.loads(f.readline())
+
+  def loads(self, s):
+    return self.wrapee.loads(self._decode_newlines(s[:-1]))
+
+
+class NewSortableCVSRevisionDatabase(object):
+  """A serially-accessible, sortable file for holding CVSRevisions.
+
+  This class creates such files."""
+
+  def __init__(self, filename, serializer):
+    self.f = open(filename, 'wb')
+    self.serializer = LinewiseSerializer(serializer)
+
+  def add(self, cvs_rev):
+    self.f.write(
+        '%x %08x %s' % (
+            cvs_rev.metadata_id, cvs_rev.timestamp,
+            self.serializer.dumps(cvs_rev),
+            )
+        )
+
+  def close(self):
+    self.f.close()
+    self.f = None
+
+
+class OldSortableCVSRevisionDatabase(object):
+  """A serially-accessible, sortable file for holding CVSRevisions.
+
+  This class reads such files."""
+
+  def __init__(self, filename, serializer):
+    self.filename = filename
+    self.serializer = LinewiseSerializer(serializer)
+
+  def __iter__(self):
+    f = open(self.filename, 'rb')
+    for l in f:
+      s = l.split(' ', 2)[-1]
+      yield self.serializer.loads(s)
+    f.close
+
+  def close(self):
+    pass
+
+
+class NewSortableCVSSymbolDatabase(object):
+  """A serially-accessible, sortable file for holding CVSSymbols.
+
+  This class creates such files."""
+
+  def __init__(self, filename, serializer):
+    self.f = open(filename, 'wb')
+    self.serializer = LinewiseSerializer(serializer)
+
+  def add(self, cvs_symbol):
+    self.f.write(
+        '%x %s' % (cvs_symbol.symbol.id, self.serializer.dumps(cvs_symbol))
+        )
+
+  def close(self):
+    self.f.close()
+    self.f = None
+
+
+class OldSortableCVSSymbolDatabase(object):
+  """A serially-accessible, sortable file for holding CVSSymbols.
+
+  This class reads such files."""
+
+  def __init__(self, filename, serializer):
+    self.filename = filename
+    self.serializer = LinewiseSerializer(serializer)
+
+  def __iter__(self):
+    f = open(self.filename, 'rb')
+    for l in f:
+      s = l.split(' ', 1)[-1]
+      yield self.serializer.loads(s)
+    f.close
+
+  def close(self):
+    pass
+
+
 def IndexedCVSItemStore(filename, index_filename, mode):
   return IndexedStore(
       filename, index_filename, mode,
-      PrimedPickleSerializer(_cvs_item_primer)
+      PrimedPickleSerializer(cvs_item_primer)
       )
 
 

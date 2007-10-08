@@ -36,6 +36,10 @@ SORT_EXECUTABLE = 'sort'
 # A pickled list of the projects defined for this conversion.
 PROJECTS = 'projects.pck'
 
+# A file holding the Serializer to be used for
+# CVS_REVS_SUMMARY_*_DATAFILE and CVS_SYMBOLS_SYMMARY_*_DATAFILE:
+SUMMARY_SERIALIZER = 'summary-serializer.pck'
+
 # The first file contains enough information about each CVSRevision to
 # deduce preliminary Changesets.  The second file is a sorted version
 # of the first.

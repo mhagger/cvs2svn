@@ -37,6 +37,7 @@ from cvs2svn_lib.common import DB_OPEN_WRITE
 from cvs2svn_lib.common import Timestamper
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.pass_manager import Pass
+from cvs2svn_lib.serializer import PrimedPickleSerializer
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.cvs_file_database import CVSFileDatabase
 from cvs2svn_lib.metadata_database import MetadataDatabase
@@ -54,6 +55,11 @@ from cvs2svn_lib.cvs_item import CVSRevision
 from cvs2svn_lib.cvs_item import CVSSymbol
 from cvs2svn_lib.cvs_item_database import OldCVSItemStore
 from cvs2svn_lib.cvs_item_database import IndexedCVSItemStore
+from cvs2svn_lib.cvs_item_database import cvs_item_primer
+from cvs2svn_lib.cvs_item_database import NewSortableCVSRevisionDatabase
+from cvs2svn_lib.cvs_item_database import OldSortableCVSRevisionDatabase
+from cvs2svn_lib.cvs_item_database import NewSortableCVSSymbolDatabase
+from cvs2svn_lib.cvs_item_database import OldSortableCVSSymbolDatabase
 from cvs2svn_lib.key_generator import KeyGenerator
 from cvs2svn_lib.changeset import RevisionChangeset
 from cvs2svn_lib.changeset import OrderedChangeset
@@ -305,6 +311,7 @@ class FilterSymbolsPass(Pass):
   references to the excluded symbols."""
 
   def register_artifacts(self):
+    self._register_temp_file(config.SUMMARY_SERIALIZER)
     self._register_temp_file(config.CVS_ITEMS_FILTERED_STORE)
     self._register_temp_file(config.CVS_ITEMS_FILTERED_INDEX_TABLE)
     self._register_temp_file(config.CVS_REVS_SUMMARY_DATAFILE)
@@ -327,12 +334,21 @@ class FilterSymbolsPass(Pass):
         artifact_manager.get_temp_file(config.CVS_ITEMS_FILTERED_STORE),
         artifact_manager.get_temp_file(config.CVS_ITEMS_FILTERED_INDEX_TABLE),
         DB_OPEN_NEW)
-    revs_summary_file = open(
+
+    cvs_item_serializer = PrimedPickleSerializer(cvs_item_primer)
+    f = open(artifact_manager.get_temp_file(config.SUMMARY_SERIALIZER), 'wb')
+    cPickle.dump(cvs_item_serializer, f, -1)
+    f.close()
+
+    rev_db = NewSortableCVSRevisionDatabase(
         artifact_manager.get_temp_file(config.CVS_REVS_SUMMARY_DATAFILE),
-        'w')
-    symbols_summary_file = open(
+        cvs_item_serializer,
+        )
+
+    symbol_db = NewSortableCVSSymbolDatabase(
         artifact_manager.get_temp_file(config.CVS_SYMBOLS_SUMMARY_DATAFILE),
-        'w')
+        cvs_item_serializer,
+        )
 
     revision_excluder = Ctx().revision_excluder
 
@@ -340,6 +356,7 @@ class FilterSymbolsPass(Pass):
 
     stats_keeper.reset_cvs_rev_info()
     revision_excluder.start()
+
     # Process the cvs items store one file at a time:
     for cvs_file_items in cvs_item_store.iter_cvs_file_items():
       cvs_file_items.filter_excluded_symbols(revision_excluder)
@@ -359,18 +376,15 @@ class FilterSymbolsPass(Pass):
         cvs_items_db.add(cvs_item)
 
         if isinstance(cvs_item, CVSRevision):
-          revs_summary_file.write(
-              '%x %08x %x\n'
-              % (cvs_item.metadata_id, cvs_item.timestamp, cvs_item.id,))
+          rev_db.add(cvs_item)
         elif isinstance(cvs_item, CVSSymbol):
-          symbols_summary_file.write(
-              '%x %x\n' % (cvs_item.symbol.id, cvs_item.id,))
+          symbol_db.add(cvs_item)
 
     stats_keeper.set_stats_reflect_exclude(True)
 
+    rev_db.close()
+    symbol_db.close()
     revision_excluder.finish()
-    symbols_summary_file.close()
-    revs_summary_file.close()
     cvs_items_db.close()
     cvs_item_store.close()
     Ctx()._symbol_db.close()
@@ -425,6 +439,7 @@ class InitializeChangesetsPass(Pass):
     self._register_temp_file_needed(config.CVS_FILES_DB)
     self._register_temp_file_needed(config.CVS_ITEMS_FILTERED_STORE)
     self._register_temp_file_needed(config.CVS_ITEMS_FILTERED_INDEX_TABLE)
+    self._register_temp_file_needed(config.SUMMARY_SERIALIZER)
     self._register_temp_file_needed(config.CVS_REVS_SUMMARY_SORTED_DATAFILE)
     self._register_temp_file_needed(
         config.CVS_SYMBOLS_SUMMARY_SORTED_DATAFILE)
@@ -435,54 +450,71 @@ class InitializeChangesetsPass(Pass):
     # Create changesets for CVSRevisions:
     old_metadata_id = None
     old_timestamp = None
-    changeset = []
-    for l in open(
+    changeset_items = []
+
+    db = OldSortableCVSRevisionDatabase(
         artifact_manager.get_temp_file(
-            config.CVS_REVS_SUMMARY_SORTED_DATAFILE), 'r'):
-      [metadata_id, timestamp, cvs_item_id] = \
-          [int(s, 16) for s in l.strip().split()]
-      if metadata_id != old_metadata_id \
-         or timestamp > old_timestamp + config.COMMIT_THRESHOLD:
+            config.CVS_REVS_SUMMARY_SORTED_DATAFILE
+            ),
+        self.cvs_item_serializer,
+        )
+
+    for cvs_rev in db:
+      if cvs_rev.metadata_id != old_metadata_id \
+         or cvs_rev.timestamp > old_timestamp + config.COMMIT_THRESHOLD:
         # Start a new changeset.  First finish up the old changeset,
         # if any:
-        if changeset:
+        if changeset_items:
           yield RevisionChangeset(
-              self.changeset_key_generator.gen_id(), changeset)
-          changeset = []
-        old_metadata_id = metadata_id
-      changeset.append(cvs_item_id)
-      old_timestamp = timestamp
+              self.changeset_key_generator.gen_id(),
+              [r.id for r in changeset_items]
+              )
+          changeset_items = []
+        old_metadata_id = cvs_rev.metadata_id
+      changeset_items.append(cvs_rev)
+      old_timestamp = cvs_rev.timestamp
 
     # Finish up the last changeset, if any:
-    if changeset:
+    if changeset_items:
       yield RevisionChangeset(
-          self.changeset_key_generator.gen_id(), changeset)
+          self.changeset_key_generator.gen_id(),
+          [r.id for r in changeset_items]
+          )
 
   def get_symbol_changesets(self):
     """Generate symbol changesets, one at a time."""
 
     old_symbol_id = None
-    changeset = []
-    for l in open(
+    changeset_items = []
+
+    db = OldSortableCVSSymbolDatabase(
         artifact_manager.get_temp_file(
-            config.CVS_SYMBOLS_SUMMARY_SORTED_DATAFILE), 'r'):
-      [symbol_id, cvs_item_id] = [int(s, 16) for s in l.strip().split()]
-      if symbol_id != old_symbol_id:
+            config.CVS_SYMBOLS_SUMMARY_SORTED_DATAFILE
+            ),
+        self.cvs_item_serializer,
+        )
+
+    for cvs_symbol in db:
+      if cvs_symbol.symbol.id != old_symbol_id:
         # Start a new changeset.  First finish up the old changeset,
         # if any:
-        if changeset:
+        if changeset_items:
           yield create_symbol_changeset(
               self.changeset_key_generator.gen_id(),
-              Ctx()._symbol_db.get_symbol(old_symbol_id), changeset)
-          changeset = []
-        old_symbol_id = symbol_id
-      changeset.append(cvs_item_id)
+              Ctx()._symbol_db.get_symbol(old_symbol_id),
+              [s.id for s in changeset_items]
+              )
+          changeset_items = []
+        old_symbol_id = cvs_symbol.symbol.id
+      changeset_items.append(cvs_symbol)
 
     # Finish up the last changeset, if any:
-    if changeset:
+    if changeset_items:
       yield create_symbol_changeset(
           self.changeset_key_generator.gen_id(),
-          Ctx()._symbol_db.get_symbol(symbol_id), changeset)
+          Ctx()._symbol_db.get_symbol(old_symbol_id),
+          [s.id for s in changeset_items]
+          )
 
   def compare_items(a, b):
       return (
@@ -603,6 +635,10 @@ class InitializeChangesetsPass(Pass):
         artifact_manager.get_temp_file(config.CVS_ITEMS_FILTERED_INDEX_TABLE),
         DB_OPEN_READ)
 
+    f = open(artifact_manager.get_temp_file(config.SUMMARY_SERIALIZER), 'rb')
+    self.cvs_item_serializer = cPickle.load(f)
+    f.close()
+
     changeset_graph = ChangesetGraph(
         ChangesetDatabase(
             artifact_manager.get_temp_file(config.CHANGESETS_STORE),
@@ -634,6 +670,8 @@ class InitializeChangesetsPass(Pass):
     Ctx()._cvs_items_db.close()
     Ctx()._symbol_db.close()
     Ctx()._cvs_file_db.close()
+
+    del self.cvs_item_serializer
 
     Log().quiet("Done")
 

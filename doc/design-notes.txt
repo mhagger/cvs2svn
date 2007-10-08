@@ -303,21 +303,23 @@ are in memory at once.)  It does the following things:
    - Write a summary of each surviving CVSRevision to
      'revs-summary.txt'.  Each line of the file has the format
 
-         METADATA_ID TIMESTAMP CVS_REVISION_ID
+         METADATA_ID TIMESTAMP CVS_REVISION
 
-     where TIMESTAMP is a fixed-width timestamp.  These summaries will
-     be sorted in SortRevisionSummaryPass then used by
-     InitializeChangesetsPass to create preliminary
-     RevisionChangesets.
+     where TIMESTAMP is a fixed-width timestamp, and CVS_REVISION is
+     the pickled CVSRevision in a format that does not contain any
+     newlines.  These summaries will be sorted in
+     SortRevisionSummaryPass then used by InitializeChangesetsPass to
+     create preliminary RevisionChangesets.
 
    - Write a summary of CVSSymbols to 'symbols-summary.txt'.  Each
      line of the file has the format
 
-         SYMBOL_ID CVS_SYMBOL_ID
+         SYMBOL_ID CVS_SYMBOL
 
-     This information will be sorted by SYMBOL_ID in
-     SortSymbolSummaryPass then used to create preliminary
-     SymbolChangesets.
+     where CVS_SYMBOL is the pickled CVSSymbol in a format that does
+     not contain any newlines.  This information will be sorted by
+     SYMBOL_ID in SortSymbolSummaryPass then used to create
+     preliminary SymbolChangesets.
 
 
 SortRevisionSummaryPass
@@ -370,12 +372,11 @@ grouped into symbol changesets.  (Symbol changesets cannot have
 internal dependencies, so there is no need to break them up at this
 stage.)
 
-Finally, this pass writes a new version of the CVSItem database with
-the CVSItems written in order grouped by the preliminary changeset to
-which they belong.  Even though the preliminary changesets still have
-to be split up to form final changesets, grouping the CVSItems this
-way improves the locality of disk accesses and thereby speeds up later
-passes.
+Finally, this pass writes a CVSItem database with the CVSItems written
+in order grouped by the preliminary changeset to which they belong.
+Even though the preliminary changesets still have to be split up to
+form final changesets, grouping the CVSItems this way improves the
+locality of disk accesses and thereby speeds up later passes.
 
 The result of this pass is two databases:
 

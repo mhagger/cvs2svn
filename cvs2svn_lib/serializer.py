@@ -50,26 +50,6 @@ class Serializer:
     raise NotImplementedError()
 
 
-class StringSerializer(Serializer):
-  """This class serializes/deserializes strings.
-
-  Dumps and loads are simple pass-throughs, while dumpf and loadf use
-  marshal (so the serialized values know their own length in the file).
-  As a consequence, the two storage methods must not be mixed."""
-
-  def dumpf(self, f, object):
-    marshal.dump(object, f)
-
-  def dumps(self, object):
-    return object
-
-  def loadf(self, f):
-    return marshal.load(f)
-
-  def loads(self, s):
-    return s
-
-
 class MarshalSerializer(Serializer):
   """This class uses the marshal module to serialize/deserialize.
 
@@ -146,10 +126,7 @@ class PrimedPickleSerializer(Serializer):
 
 
 class CompressingSerializer(Serializer):
-  """This class wraps other Serializers to compress their serialized data.
-
-  The bit streams for dumps and loads are different from those of dumpf
-  and loadf for the reasons explained in StringSerializer."""
+  """This class wraps other Serializers to compress their serialized data."""
 
   def __init__(self, wrapee):
     """Constructor.  WRAPEE is the Serializer whose bitstream ought to be
@@ -158,15 +135,15 @@ class CompressingSerializer(Serializer):
     self.wrapee = wrapee
 
   def dumpf(self, f, object):
-    marshal.dump(self.dumps(object), f)
+    marshal.dump(zlib.compress(self.wrapee.dumps(object), 9), f)
 
   def dumps(self, object):
-    return zlib.compress(self.wrapee.dumps(object), 9)
+    return marshal.dumps(zlib.compress(self.wrapee.dumps(object), 9))
 
   def loadf(self, f):
-    return self.loads(marshal.load(f))
+    return self.wrapee.loads(zlib.decompress(marshal.load(f)))
 
   def loads(self, s):
-    return self.wrapee.loads(zlib.decompress(s))
+    return self.wrapee.loads(zlib.decompress(marshal.loads(s)))
 
 

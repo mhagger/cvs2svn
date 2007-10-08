@@ -116,7 +116,7 @@ from cvs2svn_lib.rcs_stream import RCSStream
 from cvs2svn_lib.revision_manager import RevisionRecorder
 from cvs2svn_lib.revision_manager import RevisionExcluder
 from cvs2svn_lib.revision_manager import RevisionReader
-from cvs2svn_lib.serializer import StringSerializer
+from cvs2svn_lib.serializer import MarshalSerializer
 from cvs2svn_lib.serializer import CompressingSerializer
 from cvs2svn_lib.serializer import PrimedPickleSerializer
 
@@ -465,7 +465,7 @@ class InternalRevisionRecorder(RevisionRecorder):
     artifact_manager.register_temp_file(config.RCS_TREES_STORE, which_pass)
 
   def start(self):
-    ser = StringSerializer()
+    ser = MarshalSerializer()
     if self._compress:
       ser = CompressingSerializer(ser)
     self._rcs_deltas = IndexedDatabase(
@@ -699,7 +699,7 @@ class InternalRevisionReader(RevisionReader):
         artifact_manager.get_temp_file(config.RCS_TREES_FILTERED_STORE),
         artifact_manager.get_temp_file(config.RCS_TREES_FILTERED_INDEX_TABLE),
         DB_OPEN_READ)
-    ser = StringSerializer()
+    ser = MarshalSerializer()
     if self._compress:
       ser = CompressingSerializer(ser)
     self._co_db = Database(

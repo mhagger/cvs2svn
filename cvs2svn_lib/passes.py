@@ -445,7 +445,10 @@ class InitializeChangesetsPass(Pass):
         config.CVS_SYMBOLS_SUMMARY_SORTED_DATAFILE)
 
   def get_revision_changesets(self):
-    """Generate revision changesets, one at a time."""
+    """Generate revision changesets, one at a time.
+
+    Each time, yield a list of CVSRevisions that might potentially
+    consititute a changeset."""
 
     # Create changesets for CVSRevisions:
     old_metadata_id = None
@@ -465,10 +468,7 @@ class InitializeChangesetsPass(Pass):
         # Start a new changeset.  First finish up the old changeset,
         # if any:
         if changeset_items:
-          yield RevisionChangeset(
-              self.changeset_key_generator.gen_id(),
-              [r.id for r in changeset_items]
-              )
+          yield changeset_items
           changeset_items = []
         old_metadata_id = cvs_rev.metadata_id
       changeset_items.append(cvs_rev)
@@ -476,13 +476,13 @@ class InitializeChangesetsPass(Pass):
 
     # Finish up the last changeset, if any:
     if changeset_items:
-      yield RevisionChangeset(
-          self.changeset_key_generator.gen_id(),
-          [r.id for r in changeset_items]
-          )
+      yield changeset_items
 
   def get_symbol_changesets(self):
-    """Generate symbol changesets, one at a time."""
+    """Generate symbol changesets, one at a time.
+
+    Each time, yield a list of CVSSymbols that might potentially
+    consititute a changeset."""
 
     old_symbol_id = None
     changeset_items = []
@@ -499,22 +499,14 @@ class InitializeChangesetsPass(Pass):
         # Start a new changeset.  First finish up the old changeset,
         # if any:
         if changeset_items:
-          yield create_symbol_changeset(
-              self.changeset_key_generator.gen_id(),
-              Ctx()._symbol_db.get_symbol(old_symbol_id),
-              [s.id for s in changeset_items]
-              )
+          yield changeset_items
           changeset_items = []
         old_symbol_id = cvs_symbol.symbol.id
       changeset_items.append(cvs_symbol)
 
     # Finish up the last changeset, if any:
     if changeset_items:
-      yield create_symbol_changeset(
-          self.changeset_key_generator.gen_id(),
-          Ctx()._symbol_db.get_symbol(old_symbol_id),
-          [s.id for s in changeset_items]
-          )
+      yield changeset_items
 
   def compare_items(a, b):
       return (
@@ -615,12 +607,20 @@ class InitializeChangesetsPass(Pass):
   def get_changesets(self):
     """Return all changesets, with internal dependencies already broken."""
 
-    for changeset in self.get_revision_changesets():
+    for changeset_items in self.get_revision_changesets():
+      changeset = RevisionChangeset(
+          self.changeset_key_generator.gen_id(),
+          [cvs_rev.id for cvs_rev in changeset_items]
+          )
       for split_changeset in self.break_all_internal_dependencies(changeset):
         yield split_changeset
 
-    for changeset in self.get_symbol_changesets():
-      yield changeset
+    for changeset_items in self.get_symbol_changesets():
+      yield create_symbol_changeset(
+          self.changeset_key_generator.gen_id(),
+          changeset_items[0].symbol,
+          [cvs_symbol.id for cvs_symbol in changeset_items]
+          )
 
   def run(self, run_options, stats_keeper):
     Log().quiet("Creating preliminary commit sets...")

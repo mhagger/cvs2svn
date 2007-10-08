@@ -608,21 +608,31 @@ class InitializeChangesetsPass(Pass):
         changesets_to_split.extend(changesets)
 
   def get_changesets(self):
-    """Return all changesets, with internal dependencies already broken."""
+    """Generate (Changeset, [CVSItem,...]) for all changesets.
+
+    The Changesets already have their internal dependencies broken.
+    The [CVSItem,...] list is the list of CVSItems in the
+    corresponding Changeset."""
 
     for changeset_items in self.get_revision_changesets():
       for split_changeset_items \
               in self.break_all_internal_dependencies(changeset_items):
-        yield RevisionChangeset(
-            self.changeset_key_generator.gen_id(),
-            [cvs_rev.id for cvs_rev in split_changeset_items]
+        yield (
+            RevisionChangeset(
+                self.changeset_key_generator.gen_id(),
+                [cvs_rev.id for cvs_rev in split_changeset_items]
+                ),
+            split_changeset_items,
             )
 
     for changeset_items in self.get_symbol_changesets():
-      yield create_symbol_changeset(
-          self.changeset_key_generator.gen_id(),
-          changeset_items[0].symbol,
-          [cvs_symbol.id for cvs_symbol in changeset_items]
+      yield (
+          create_symbol_changeset(
+              self.changeset_key_generator.gen_id(),
+              changeset_items[0].symbol,
+              [cvs_symbol.id for cvs_symbol in changeset_items]
+              ),
+          changeset_items,
           )
 
   def run(self, run_options, stats_keeper):
@@ -659,11 +669,11 @@ class InitializeChangesetsPass(Pass):
 
     self.changeset_key_generator = KeyGenerator()
 
-    for changeset in self.get_changesets():
+    for (changeset, changeset_items) in self.get_changesets():
       if Log().is_on(Log.DEBUG):
         Log().debug(repr(changeset))
       changeset_db.store(changeset)
-      for cvs_item in list(changeset.iter_cvs_items()):
+      for cvs_item in changeset_items:
         self.sorted_cvs_items_db.add(cvs_item)
         cvs_item_to_changeset_id[cvs_item.id] = changeset.id
 

@@ -14,7 +14,13 @@
 # history and logs, available at http://cvs2svn.tigris.org/.
 # ====================================================================
 
-"""Classes for outputting the converted repository to git."""
+"""Classes for outputting the converted repository to git.
+
+For information about the format allowed by git-fast-import, see:
+
+    http://www.kernel.org/pub/software/scm/git/docs/git-fast-import.html
+
+"""
 
 
 from __future__ import generators
@@ -37,6 +43,15 @@ from cvs2svn_lib.cvs_item import CVSRevisionDelete
 from cvs2svn_lib.cvs_item import CVSRevisionNoop
 from cvs2svn_lib.output_option import OutputOption
 from cvs2svn_lib.svn_revision_range import RevisionScores
+
+
+# The branch name to use for the "tag fixup branches".  The
+# git-fast-import documentation suggests using 'TAG_FIXUP' (outside of
+# the refs/heads namespace), but this is currently broken.  Use a name
+# containing '.', which is not allowed in CVS symbols, to avoid
+# conflicts (though of course a conflict could still result if the
+# user requests symbol transformations).
+FIXUP_BRANCH_NAME = 'refs/heads/TAG.FIXUP'
 
 
 class GitOutputOption(OutputOption):
@@ -314,10 +329,7 @@ class GitOutputOption(OutputOption):
     log_msg = self._get_log_msg(svn_commit)
 
     mark = self._create_commit_mark(svn_commit.symbol, svn_commit.revnum)
-    self._process_symbol_commit(
-        svn_commit, 'refs/heads/%s' % (svn_commit.symbol.name,),
-        mark,
-        )
+    self._process_symbol_commit(svn_commit, FIXUP_BRANCH_NAME, mark)
     self.f.write('tag %s\n' % (svn_commit.symbol.name,))
     self.f.write('from :%d\n' % (mark,))
     self.f.write(
@@ -325,6 +337,9 @@ class GitOutputOption(OutputOption):
         )
     self.f.write('data %d\n' % (len(log_msg),))
     self.f.write('%s\n' % (log_msg,))
+
+    self.f.write('reset %s\n' % (FIXUP_BRANCH_NAME,))
+    self.f.write('\n')
 
   def cleanup(self):
     self.f.close()

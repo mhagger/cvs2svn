@@ -3032,7 +3032,7 @@ def main_git():
   #     cat cvs2svn-tmp/git-dump.dat \
   #         | git-fast-import --import-marks=cvs2svn-tmp/git-marks.dat
   #
-  # Then "gitk", "git log", etc.
+  # Then "gitk --all", "git log", etc.
 
   conv = ensure_conversion('main', options_file='cvs2svn-git.options')
 

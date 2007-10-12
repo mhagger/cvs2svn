@@ -3037,6 +3037,24 @@ def main_git():
   conv = ensure_conversion('main', options_file='cvs2svn-git.options')
 
 
+def invalid_symbol():
+  "a symbol with the incorrect format"
+
+  conv = ensure_conversion('invalid-symbol')
+  if not conv.output_found(
+        r".*branch 'SYMBOL' references invalid revision 1$"
+        ):
+    raise Failure()
+
+
+def invalid_symbol_ignore():
+  "ignore a symbol with the incorrect format"
+
+  conv = ensure_conversion(
+      'invalid-symbol', options_file='cvs2svn-ignore.options'
+      )
+
+
 ########################################################################
 # Run the tests
 
@@ -3199,6 +3217,8 @@ test_list = [
     branch_from_deleted_1_1,
     add_on_branch,
     XFail(main_git),
+    invalid_symbol,
+    invalid_symbol_ignore,
     ]
 
 if __name__ == '__main__':

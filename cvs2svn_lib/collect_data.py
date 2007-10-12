@@ -87,6 +87,16 @@ from cvs2svn_lib.metadata_database import MetadataDatabase
 import cvs2svn_rcsparse
 
 
+# A regular expression defining "valid" revision numbers (used to
+# check that symbol definitions are reasonable).
+_valid_revision_re = re.compile(r'''
+    ^
+    (?:[1-9]\d*\.)+     # Digit groups (but not starting with "0") with
+                        # trailing dots
+    (?:[1-9]\d*)        # And the last digit group
+    $
+    ''', re.VERBOSE)
+
 _branch_revision_re = re.compile(r'''
     ^
     ((?:\d+\.\d+\.)+)   # A nonzero even number of digit groups w/trailing dot
@@ -330,8 +340,17 @@ class _SymbolDataCollector(object):
 
     # If the name transformed to None, then we ignore it:
     if name is not None:
-      # Record it for later processing:
-      self._symbol_defs.append( (name, revision) )
+      # Verify that the revision number is valid:
+      if _valid_revision_re.match(revision):
+        # The revision number is valid; record it for later processing:
+        self._symbol_defs.append( (name, revision) )
+      else:
+        Log().warn(
+            'In %r:\n'
+            '    branch %r references invalid revision %s\n'
+            '    and will be ignored.'
+            % (self.cvs_file.filename, name, revision,)
+            )
 
   def _process_duplicate_defs(self):
     """Look for and process duplicate names in SELF._symbol_defs.

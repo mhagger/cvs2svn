@@ -10,6 +10,7 @@ Version x.x.x (not yet released)
 
  Improvements and output changes:
  * Create trunk/tags/branches directories for project when project is created.
+ * Ignore (with a warning) symbols defined to malformed revision numbers.
 
  Miscellaneous:
 

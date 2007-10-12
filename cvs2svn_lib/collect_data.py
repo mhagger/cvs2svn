@@ -87,7 +87,7 @@ from cvs2svn_lib.metadata_database import MetadataDatabase
 import cvs2svn_rcsparse
 
 
-branch_tag_re = re.compile(r'''
+_branch_revision_re = re.compile(r'''
     ^
     ((?:\d+\.\d+\.)+)   # A nonzero even number of digit groups w/trailing dot
     (?:0\.)?            # CVS sticks an extra 0 here; RCS does not
@@ -322,7 +322,7 @@ class _SymbolDataCollector(object):
     """Record a symbol definition for later processing."""
 
     # Canonicalize the revision number:
-    revision = branch_tag_re.sub(r'\1\2', revision)
+    revision = _branch_revision_re.sub(r'\1\2', revision)
 
     name = self.cvs_file.project.transform_symbol(
         self.cvs_file, name, revision

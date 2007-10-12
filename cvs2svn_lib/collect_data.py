@@ -379,7 +379,7 @@ class _SymbolDataCollector(object):
         self.collect_data.record_fatal_error(
             "Multiple definitions of the symbol '%s' in '%s': %s" % (
                 name, self.cvs_file.filename,
-                ', '.join([self._symbol_defs[i][1] for i in indexes]),
+                ' '.join([self._symbol_defs[i][1] for i in indexes]),
                 )
             )
         # Ignore all but the last definition for now, to allow the

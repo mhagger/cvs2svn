@@ -1135,14 +1135,14 @@ def multiply_defined_symbols():
       'multiply-defined-symbols',
       error_re=(
           r"ERROR\: Multiple definitions of the symbol \'BRANCH\' .*\: "
-          r"1\.2\.4\, 1\.2\.2"
+          r"1\.2\.4 1\.2\.2"
           ),
       )
   conv = ensure_conversion(
       'multiply-defined-symbols',
       error_re=(
           r"ERROR\: Multiple definitions of the symbol \'TAG\' .*\: "
-          r"1\.2\, 1\.1"
+          r"1\.2 1\.1"
           ),
       )
 

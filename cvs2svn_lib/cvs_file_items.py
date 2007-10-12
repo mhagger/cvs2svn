@@ -416,8 +416,9 @@ class CVSFileItems(object):
     rev_1_2_id = rev_1_1.next_id
     if rev_1_2_id is not None:
       raise VendorBranchError(
-          'File has default branch=%s but also a revision %s'
-          % (vendor_lod_items.cvs_branch.branch_number, self[rev_1_2_id].rev,)
+          'File \'%s\' has default branch=%s but also a revision %s'
+          % (self.cvs_file.filename,
+             vendor_lod_items.cvs_branch.branch_number, self[rev_1_2_id].rev,)
           )
 
     ntdbr_cvs_revs = list(vendor_lod_items.cvs_revisions)

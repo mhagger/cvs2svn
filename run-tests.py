@@ -1780,7 +1780,7 @@ def default_branch_and_1_2():
   conv = ensure_conversion(
       'default-branch-and-1-2',
       error_re=(
-          r'.*File has default branch=1\.1\.1 but also a revision 1\.2'
+          r'.*File \'.*\' has default branch=1\.1\.1 but also a revision 1\.2'
           ),
       )
 

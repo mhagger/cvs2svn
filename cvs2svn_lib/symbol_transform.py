@@ -22,6 +22,7 @@ from __future__ import generators
 import re
 
 from cvs2svn_lib.boolean import *
+from cvs2svn_lib.log import Log
 
 
 class SymbolTransform:
@@ -84,12 +85,19 @@ class SymbolMapper(SymbolTransform):
     self._map = {}
 
     for (cvs_filename, symbol_name, revision, new_name) in items:
-      self._map[cvs_filename, symbol_name, revision] = new_name
+      self[cvs_filename, symbol_name, revision] = new_name
 
   def __setitem__(self, (cvs_filename, symbol_name, revision), new_name):
     """Set a mapping for a particular file, symbol, and revision."""
 
-    self._map[cvs_filename, symbol_name, revision] = new_name
+    key = (cvs_filename, symbol_name, revision)
+    if key in self._map:
+      Log().warn(
+          'Overwriting symbol transform for\n'
+          '    filename=%r symbol=%s revision=%s'
+          % (cvs_filename, symbol_name, revision,)
+          )
+    self._map[key] = new_name
 
   def transform(self, cvs_file, symbol_name, revision):
     return self._map.get(

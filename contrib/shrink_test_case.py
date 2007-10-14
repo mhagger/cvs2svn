@@ -732,7 +732,7 @@ def main():
         os.makedirs(tmpdir)
 
     if not skip_initial_test:
-        # Verify that test_command succeeds with the original repository:
+        sys.stdout.write('Testing with the original repository.\n')
         try:
             test_command()
         except CommandFailedException, e:

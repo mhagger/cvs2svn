@@ -498,7 +498,13 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
   def set_principal_branch(self, branch):
     """This is a callback method declared in Sink."""
 
-    self.default_branch = branch
+    if branch.find('.') == -1:
+      # This just sets the default branch to trunk.  Normally this
+      # shouldn't occur, but it has been seen in at least one CVS
+      # repository.  Just ignore it.
+      pass
+    else:
+      self.default_branch = branch
 
   def set_expansion(self, mode):
     """This is a callback method declared in Sink."""

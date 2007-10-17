@@ -3096,6 +3096,37 @@ def invalid_symbol_ignore():
       )
 
 
+class EOLVariants(Cvs2SvnTestCase):
+  "handle various --eol-style options"
+
+  eol_style_strings = {
+      'LF' : '\n',
+      'CR' : '\r',
+      'CRLF' : '\r\n',
+      'native' : '\n',
+      }
+
+  def __init__(self, eol_style):
+    self.eol_style = eol_style
+    self.dumpfile = 'eol-variants-%s.dump' % (self.eol_style,)
+    Cvs2SvnTestCase.__init__(
+        self, 'eol-variants', variant=self.eol_style,
+        dumpfile=self.dumpfile,
+        args=[
+            '--default-eol=%s' % (self.eol_style,),
+            ],
+        )
+
+  def run(self):
+    conv = self.ensure_conversion()
+    dump_contents = open(conv.dumpfile, 'rb').read()
+    expected_text = self.eol_style_strings[self.eol_style].join(
+        ['line 1', 'line 2', '\n\n']
+        )
+    if not dump_contents.endswith(expected_text):
+      raise Failure()
+
+
 ########################################################################
 # Run the tests
 
@@ -3260,6 +3291,11 @@ test_list = [
     XFail(main_git),
     invalid_symbol,
     invalid_symbol_ignore,
+# 140:
+    EOLVariants('LF'),
+    XFail(EOLVariants('CR')),
+    XFail(EOLVariants('CRLF')),
+    EOLVariants('native'),
     ]
 
 if __name__ == '__main__':

@@ -258,8 +258,10 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
       stream = get_maybe_apple_single_stream(stream)
 
     # Insert a filter to convert all EOLs to LFs if neccessary
-    if s_item.needs_eol_filter():
-      stream = LF_EOL_Filter(stream)
+
+    eol_style = s_item.svn_props.get('svn:eol-style', None)
+    if eol_style:
+      stream = LF_EOL_Filter(stream, eol_style)
 
     buf = None
 
@@ -391,10 +393,18 @@ def generate_ignores(raw_ignore_val):
 
 class LF_EOL_Filter:
   """Filter a stream and convert all end-of-line markers (CRLF, CR or LF)
-  into LFs only."""
+  into the appropriate canonical eol style."""
 
-  def __init__(self, stream):
+  eol_style_replacements = {
+      'LF' : '\n',
+      'CR' : '\r',
+      'CRLF' : '\r\n',
+      'native' : '\n',
+      }
+
+  def __init__(self, stream, eol_style):
     self.stream = stream
+    self.replacement = self.eol_style_replacements[eol_style]
     self.carry_cr = False
     self.eof = False
 
@@ -410,6 +420,8 @@ class LF_EOL_Filter:
         buf = buf[:-1]
       buf = buf.replace('\r\n', '\n')
       buf = buf.replace('\r', '\n')
+      if self.replacement != '\n':
+        buf = buf.replace('\n', self.replacement)
       if buf or self.eof:
         return buf
 

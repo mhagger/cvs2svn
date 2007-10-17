@@ -3293,8 +3293,8 @@ test_list = [
     invalid_symbol_ignore,
 # 140:
     EOLVariants('LF'),
-    XFail(EOLVariants('CR')),
-    XFail(EOLVariants('CRLF')),
+    EOLVariants('CR'),
+    EOLVariants('CRLF'),
     EOLVariants('native'),
     ]
 

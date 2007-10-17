@@ -46,14 +46,6 @@ class SVNCommitItem:
     for svn_property_setter in Ctx().svn_property_setters:
       svn_property_setter.set_properties(self)
 
-  def needs_eol_filter(self):
-    """Return True iff EOLs needs to be filtered for this item.
-
-    This returns true for any svn:eol-style that does not indicate a
-    binary file."""
-
-    return bool(self.svn_props.get('svn:eol-style', None))
-
   def has_keywords(self):
     return bool(self.svn_props.get('svn:keywords', None))
 

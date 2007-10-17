@@ -431,9 +431,15 @@ class Conversion:
 
     name -- a one-word name indicating the involved repositories.
 
-    repos -- the path to the svn repository.
+    dumpfile -- the name of the SVN dumpfile created by the conversion
+        (if the DUMPFILE constructor argument was used); otherwise,
+        None.
+
+    repos -- the path to the svn repository.  Unset if DUMPFILE was
+        specified.
 
     logs -- a dictionary of Log instances, as returned by parse_log().
+        Unset if DUMPFILE was specified.
 
     symbols -- a dictionary of symbols used for string interpolation
         in path names.
@@ -441,16 +447,20 @@ class Conversion:
     stdout -- a list of lines written by cvs2svn to stdout
 
     _wc -- the basename of the svn working copy (within tmp_dir).
+        Unset if DUMPFILE was specified.
 
     _wc_path -- the path to the svn working copy, if it has already
         been created; otherwise, None.  (The working copy is created
-        lazily when get_wc() is called.)
+        lazily when get_wc() is called.)  Unset if DUMPFILE was
+        specified.
 
     _wc_tree -- the tree built from the svn working copy, if it has
         already been created; otherwise, None.  The tree is created
-        lazily when get_wc_tree() is called.)
+        lazily when get_wc_tree() is called.)  Unset if DUMPFILE was
+        specified.
 
-    _svnrepos -- the basename of the svn repository (within tmp_dir)."""
+    _svnrepos -- the basename of the svn repository (within tmp_dir).
+        Unset if DUMPFILE was specified."""
 
   # The number of the last cvs2svn pass (determined lazily by
   # get_last_pass()).
@@ -466,8 +476,10 @@ class Conversion:
 
   get_last_pass = classmethod(get_last_pass)
 
-  def __init__(self, conv_id, name, error_re, passbypass, symbols, args,
-               options_file=None):
+  def __init__(
+      self, conv_id, name, error_re, passbypass, symbols, args,
+      options_file=None, dumpfile=None,
+      ):
     self.conv_id = conv_id
     self.name = name
     self.symbols = symbols
@@ -476,32 +488,39 @@ class Conversion:
 
     cvsrepos = os.path.join(test_data_dir, '%s-cvsrepos' % self.name)
 
-    self.repos = os.path.join(tmp_dir, '%s-svnrepos' % self.conv_id)
-    self._wc = os.path.join(tmp_dir, '%s-wc' % self.conv_id)
-    self._wc_path = None
-    self._wc_tree = None
+    if dumpfile:
+      self.dumpfile = os.path.join(tmp_dir, dumpfile)
+      # Clean up from any previous invocations of this script.
+      erase(self.dumpfile)
+    else:
+      self.dumpfile = None
+      self.repos = os.path.join(tmp_dir, '%s-svnrepos' % self.conv_id)
+      self._wc = os.path.join(tmp_dir, '%s-wc' % self.conv_id)
+      self._wc_path = None
+      self._wc_tree = None
 
-    # Clean up from any previous invocations of this script.
-    erase(self.repos)
-    erase(self._wc)
+      # Clean up from any previous invocations of this script.
+      erase(self.repos)
+      erase(self._wc)
 
     args = list(args)
-    if options_file is None:
+    if options_file:
+      self.options_file = os.path.join(cvsrepos, options_file)
+      args.extend([
+          '--options=%s' % self.options_file,
+          ])
+    else:
       self.options_file = None
       if tmp_dir != 'cvs2svn-tmp':
         # Only include this argument if it differs from cvs2svn's default:
         args.extend([
             '--tmpdir=%s' % tmp_dir,
             ])
-      args.extend([
-          '-s', self.repos,
-          cvsrepos,
-          ])
-    else:
-      self.options_file = os.path.join(cvsrepos, options_file)
-      args.extend([
-          '--options=%s' % self.options_file,
-          ])
+      if self.dumpfile:
+        args.extend(['--dumpfile=%s' % (self.dumpfile,)])
+      else:
+        args.extend(['-s', self.repos])
+      args.extend([cvsrepos])
 
     if passbypass:
       self.stdout = []
@@ -510,12 +529,20 @@ class Conversion:
     else:
       self.stdout = run_cvs2svn(error_re, *args)
 
-    if os.path.isdir(self.repos):
-      self.logs = parse_log(self.repos, self.symbols)
-    elif error_re is None:
-      raise Failure("Repository not created: '%s'"
-                    % os.path.join(os.getcwd(), self.repos))
-
+    if self.dumpfile:
+      if not os.path.isfile(self.dumpfile):
+        raise Failure(
+            "Dumpfile not created: '%s'"
+            % os.path.join(os.getcwd(), self.dumpfile)
+            )
+    else:
+      if os.path.isdir(self.repos):
+        self.logs = parse_log(self.repos, self.symbols)
+      elif error_re is None:
+        raise Failure(
+            "Repository not created: '%s'"
+            % os.path.join(os.getcwd(), self.repos)
+            )
 
   def output_found(self, pattern):
     """Return True if PATTERN matches any line in self.stdout.
@@ -591,9 +618,11 @@ class Conversion:
 # values are Conversion instances.
 already_converted = { }
 
-def ensure_conversion(name, error_re=None, passbypass=None,
-                      trunk=None, branches=None, tags=None,
-                      args=None, options_file=None):
+def ensure_conversion(
+    name, error_re=None, passbypass=None,
+    trunk=None, branches=None, tags=None,
+    args=None, options_file=None, dumpfile=None,
+    ):
   """Convert CVS repository NAME to Subversion, but only if it has not
   been converted before by this invocation of this script.  If it has
   been converted before, return the Conversion object from the
@@ -621,7 +650,11 @@ def ensure_conversion(name, error_re=None, passbypass=None,
   If OPTIONS_FILE is specified, then it should be the name of a file
   within the main directory of the cvs repository associated with this
   test.  It is passed to cvs2svn using the --options option (which
-  suppresses some other options that are incompatible with --options)."""
+  suppresses some other options that are incompatible with --options).
+
+  If DUMPFILE is specified, then it is the name of a dumpfile within
+  the temporary directory to which the conversion output should be
+  written."""
 
   if args is None:
     args = []
@@ -652,7 +685,8 @@ def ensure_conversion(name, error_re=None, passbypass=None,
       already_converted[conv_id] = Conversion(
           conv_id, name, error_re, passbypass,
           {'trunk' : trunk, 'branches' : branches, 'tags' : tags},
-          args, options_file)
+          args, options_file, dumpfile,
+          )
     except Failure:
       # Remember the failure so that a future attempt to run this conversion
       # does not bother to retry, but fails immediately.
@@ -666,10 +700,13 @@ def ensure_conversion(name, error_re=None, passbypass=None,
 
 
 class Cvs2SvnTestCase(TestCase):
-  def __init__(self, name, description=None, variant=None,
-               error_re=None, passbypass=None,
-               trunk=None, branches=None, tags=None,
-               args=None, options_file=None):
+  def __init__(
+      self, name, description=None, variant=None,
+      error_re=None, passbypass=None,
+      trunk=None, branches=None, tags=None,
+      args=None,
+      options_file=None, dumpfile=None,
+      ):
     TestCase.__init__(self)
     self.name = name
 
@@ -699,6 +736,7 @@ class Cvs2SvnTestCase(TestCase):
     self.tags = tags
     self.args = args
     self.options_file = options_file
+    self.dumpfile = dumpfile
 
   def get_description(self):
     return self._description
@@ -708,7 +746,10 @@ class Cvs2SvnTestCase(TestCase):
         self.name,
         error_re=self.error_re, passbypass=self.passbypass,
         trunk=self.trunk, branches=self.branches, tags=self.tags,
-        args=self.args, options_file=self.options_file)
+        args=self.args,
+        options_file=self.options_file,
+        dumpfile=self.dumpfile,
+        )
 
 
 class Cvs2SvnPropertiesTestCase(Cvs2SvnTestCase):

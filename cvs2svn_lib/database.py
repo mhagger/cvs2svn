@@ -48,10 +48,15 @@ except ImportError:
 import anydbm
 if anydbm._defaultmod.__name__ in ['dumbdbm', 'dbm']:
   Log().error(
-      '%s: your installation of Python does not contain a suitable\n'
-      'DBM module -- cvs2svn cannot continue.\n'
-      'See http://python.org/doc/current/lib/module-anydbm.html to solve.\n'
-      % (error_prefix,)
+      '%s: cvs2svn uses the anydbm package, which depends on lower level '
+          'dbm\n'
+      'libraries.  Your system has %s, with which cvs2svn is known to have\n'
+      'problems.  To use cvs2svn, you must install a Python dbm library '
+          'other than\n'
+      'dumbdbm or dbm.  See '
+          'http://python.org/doc/current/lib/module-anydbm.html\n'
+      'for more information.\n'
+      % (error_prefix, anydbm._defaultmod.__name__,)
       )
   sys.exit(1)
 

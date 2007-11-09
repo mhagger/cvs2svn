@@ -46,13 +46,12 @@ except ImportError:
 
 # 2. These DBM modules are not good for cvs2svn.
 import anydbm
-if (anydbm._defaultmod.__name__ == 'dumbdbm'
-    or anydbm._defaultmod.__name__ == 'dbm'):
+if anydbm._defaultmod.__name__ in ['dumbdbm', 'dbm']:
   Log().error(
-      error_prefix
-      + ': your installation of Python does not contain a suitable\n'
-      + 'DBM module -- cvs2svn cannot continue.\n'
-      + 'See http://python.org/doc/current/lib/module-anydbm.html to solve.\n'
+      '%s: your installation of Python does not contain a suitable\n'
+      'DBM module -- cvs2svn cannot continue.\n'
+      'See http://python.org/doc/current/lib/module-anydbm.html to solve.\n'
+      % (error_prefix,)
       )
   sys.exit(1)
 
@@ -63,14 +62,13 @@ if hasattr(anydbm._defaultmod, 'bsddb') \
   try:
     gdbm = __import__('gdbm')
   except ImportError:
-    Log().error(
-        warning_prefix +
-        ': The version of the bsddb module found\n'
-        'on your computer has been reported to malfunction on some '
-        'datasets,\n'
-        'causing KeyError exceptions.  You may wish to upgrade your Python '
-        'to\n'
-        'version 2.3 or later.\n'
+    Log().warn(
+        '%s: The version of the bsddb module found on your computer '
+            'has been\n'
+        'reported to malfunction on some datasets, causing KeyError '
+            'exceptions.\n'
+        'You may wish to upgrade your Python to version 2.3 or later.\n'
+        % (warning_prefix,)
         )
   else:
     anydbm._defaultmod = gdbm

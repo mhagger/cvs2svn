@@ -42,6 +42,7 @@ import os
 import time
 import os.path
 import locale
+from difflib import Differ
 
 # Make sure this Python is recent enough.
 if sys.hexversion < 0x02020000:
@@ -2657,7 +2658,14 @@ def write_symbol_info():
     lines.append(l.strip().split())
   lines.sort()
   if lines != expected_lines:
-    raise Failure('Symbol info incorrect')
+    s = ['Symbol info incorrect\n']
+    differ = Differ()
+    for diffline in differ.compare(
+        [' '.join(line) + '\n' for line in expected_lines],
+        [' '.join(line) + '\n' for line in lines],
+        ):
+        s.append(diffline)
+    raise Failure(''.join(s))
 
 
 def symbol_hints():

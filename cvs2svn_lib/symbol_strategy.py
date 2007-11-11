@@ -25,6 +25,7 @@ from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
+from cvs2svn_lib.symbol import LineOfDevelopment
 from cvs2svn_lib.symbol import Trunk
 from cvs2svn_lib.symbol import TypedSymbol
 from cvs2svn_lib.symbol import Branch
@@ -49,13 +50,13 @@ class StrategyRule:
   def get_symbol(self, symbol, stats):
     """Return an object describing what to do with the symbol in STATS.
 
-    SYMBOL holds a Symbol object as it has been determined so far.
-    Initially it is a naked Symbol instance, but hopefully one of
-    these method calls will turn it into a TypedSymbol.
+    SYMBOL holds a Trunk or Symbol object as it has been determined so
+    far.  Hopefully one of these method calls will turn any naked
+    Symbol instances into TypedSymbols.
 
-    If this rule applies to the symbol (whose statistics are collected
-    in STATS), then return the appropriate TypedSymbol object.  If
-    this rule doesn't apply, return SYMBOL unchanged."""
+    If this rule applies to the SYMBOL (whose statistics are collected
+    in STATS), then return a new or modified AbstractSymbol object.
+    If this rule doesn't apply, return SYMBOL unchanged."""
 
     raise NotImplementedError()
 
@@ -96,7 +97,7 @@ class _RegexpStrategyRule(StrategyRule):
     self.action = action
 
   def get_symbol(self, symbol, stats):
-    if isinstance(symbol, TypedSymbol):
+    if isinstance(symbol, (Trunk, TypedSymbol)):
       return symbol
     elif self.regexp.match(symbol.name):
       return self.action(symbol)
@@ -129,7 +130,7 @@ class UnambiguousUsageRule(StrategyRule):
   """If a symbol is used unambiguously as a tag/branch, convert it as such."""
 
   def get_symbol(self, symbol, stats):
-    if isinstance(symbol, TypedSymbol):
+    if isinstance(symbol, (Trunk, TypedSymbol)):
       return symbol
     is_tag = stats.tag_create_count > 0
     is_branch = stats.branch_create_count > 0 or stats.branch_commit_count > 0
@@ -149,7 +150,7 @@ class BranchIfCommitsRule(StrategyRule):
   """If there was ever a commit on the symbol, convert it as a branch."""
 
   def get_symbol(self, symbol, stats):
-    if isinstance(symbol, TypedSymbol):
+    if isinstance(symbol, (Trunk, TypedSymbol)):
       return symbol
     elif stats.branch_commit_count > 0:
       return Branch(symbol)
@@ -164,7 +165,7 @@ class HeuristicStrategyRule(StrategyRule):
   converted."""
 
   def get_symbol(self, symbol, stats):
-    if isinstance(symbol, TypedSymbol):
+    if isinstance(symbol, (Trunk, TypedSymbol)):
       return symbol
     elif stats.tag_create_count >= stats.branch_create_count:
       return Tag(symbol)
@@ -180,7 +181,7 @@ class AllBranchRule(StrategyRule):
   therefore only apply to the symbols not handled earlier."""
 
   def get_symbol(self, symbol, stats):
-    if isinstance(symbol, TypedSymbol):
+    if isinstance(symbol, (Trunk, TypedSymbol)):
       return symbol
     else:
       return Branch(symbol)
@@ -197,7 +198,7 @@ class AllTagRule(StrategyRule):
   therefore only apply to the symbols not handled earlier."""
 
   def get_symbol(self, symbol, stats):
-    if isinstance(symbol, TypedSymbol):
+    if isinstance(symbol, (Trunk, TypedSymbol)):
       return symbol
     else:
       return Tag(symbol)

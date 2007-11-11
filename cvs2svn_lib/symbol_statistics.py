@@ -28,6 +28,7 @@ from cvs2svn_lib.common import PathsNotDisjointException
 from cvs2svn_lib.common import verify_paths_disjoint
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.artifact_manager import artifact_manager
+from cvs2svn_lib.symbol import LineOfDevelopment
 from cvs2svn_lib.symbol import Trunk
 from cvs2svn_lib.symbol import Symbol
 from cvs2svn_lib.symbol import IncludedSymbol
@@ -191,7 +192,7 @@ class _Stats:
     sensible.)  If there are any problems, raise a
     SymbolPlanException."""
 
-    if not isinstance(symbol, (Branch, Tag, ExcludedSymbol)):
+    if not isinstance(symbol, (Trunk, Branch, Tag, ExcludedSymbol)):
       raise IndeterminateSymbolException(self, symbol)
 
     if symbol.id != self.lod.id:
@@ -200,7 +201,7 @@ class _Stats:
     if symbol.project != self.lod.project:
       raise SymbolPlanException(self, symbol, 'Projects must match')
 
-    if symbol.name != self.lod.name:
+    if isinstance(symbol, IncludedSymbol) and symbol.name != self.lod.name:
       raise SymbolPlanException(self, symbol, 'Names must match')
 
   def check_preferred_parent_allowed(self, symbol):

@@ -2624,6 +2624,7 @@ def write_symbol_info():
   "test --write-symbol-info"
 
   expected_lines = [
+      ['0', '.trunk.',              'trunk',  '.'                 ],
       ['0', 'BLOCKED_BY_UNNAMED',   'branch', '.trunk.'           ],
       ['0', 'BLOCKING_COMMIT',      'branch', 'BLOCKED_BY_COMMIT' ],
       ['0', 'BLOCKED_BY_COMMIT',    'branch', '.trunk.'           ],

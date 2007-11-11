@@ -163,6 +163,7 @@ class CollateSymbolsPass(Pass):
   """Divide symbols into branches, tags, and excludes."""
 
   conversion_names = {
+      Trunk : 'trunk',
       Branch : 'branch',
       Tag : 'tag',
       ExcludedSymbol : 'excluded',
@@ -177,12 +178,12 @@ class CollateSymbolsPass(Pass):
   def get_symbol(self, stats):
     """Use StrategyRules to decide what to do with a symbol.
 
-    STATS is an instance of symbol_statistics._Stats describing a
-    Symbol (i.e., not a Trunk instance).  To determine how the symbol
-    is to be converted, consult the StrategyRules in
+    STATS is an instance of symbol_statistics._Stats describing an
+    instance of Symbol or Trunk.  To determine how the symbol is to be
+    converted, consult the StrategyRules in
     Ctx().symbol_strategy_rules.  Each rule is allowed a chance to
     change the way the symbol will be converted.  If the symbol is not
-    a TypedSymbol after all rules have run, raise
+    a Trunk or TypedSymbol after all rules have run, raise
     IndeterminateSymbolException."""
 
     symbol = stats.lod
@@ -195,7 +196,14 @@ class CollateSymbolsPass(Pass):
     return symbol
 
   def log_symbol_summary(self, stats, symbol):
-    if self.symbol_info_file:
+    if not self.symbol_info_file:
+      return
+
+    if isinstance(symbol, Trunk):
+      name = '.trunk.'
+      preferred_parent_name = '.'
+    else:
+      name = stats.lod.name
       if symbol.preferred_parent_id is None:
         preferred_parent_name = '.'
       else:
@@ -204,14 +212,16 @@ class CollateSymbolsPass(Pass):
           preferred_parent_name = '.trunk.'
         else:
           preferred_parent_name = preferred_parent.name
-      self.symbol_info_file.write(
-          '%-5d %-30s %-10s %s\n'
-          % (stats.lod.project.id, stats.lod.name,
-             self.conversion_names[symbol.__class__], preferred_parent_name)
-          )
-      self.symbol_info_file.write('      # %s\n' % (stats,))
+
+    self.symbol_info_file.write(
+        '%-5d %-30s %-10s %s\n'
+        % (stats.lod.project.id, name,
+           self.conversion_names[symbol.__class__], preferred_parent_name)
+        )
+    self.symbol_info_file.write('      # %s\n' % (stats,))
+    parent_counts = stats.possible_parents.items()
+    if parent_counts:
       self.symbol_info_file.write('      # Possible parents:\n')
-      parent_counts = stats.possible_parents.items()
       parent_counts.sort(lambda a,b: cmp((b[1], a[0]), (a[1], b[0])))
       for (pp, count) in parent_counts:
         if isinstance(pp, Trunk):
@@ -251,20 +261,17 @@ class CollateSymbolsPass(Pass):
     retval = {}
 
     for stats in self.symbol_stats:
-      if isinstance(stats.lod, Trunk):
-        retval[stats.lod] = stats.lod
+      try:
+        symbol = self.get_symbol(stats)
+      except IndeterminateSymbolException, e:
+        self.log_symbol_summary(stats, stats.lod)
+        mismatches.append(e.stats)
+      except SymbolPlanError, e:
+        self.log_symbol_summary(stats, stats.lod)
+        errors.append(e)
       else:
-        try:
-          symbol = self.get_symbol(stats)
-        except IndeterminateSymbolException, e:
-          self.log_symbol_summary(stats, stats.lod)
-          mismatches.append(e.stats)
-        except SymbolPlanError, e:
-          self.log_symbol_summary(stats, stats.lod)
-          errors.append(e)
-        else:
-          self.log_symbol_summary(stats, symbol)
-          retval[stats.lod] = symbol
+        self.log_symbol_summary(stats, symbol)
+        retval[stats.lod] = symbol
 
     for rule in Ctx().symbol_strategy_rules:
       rule.finish()

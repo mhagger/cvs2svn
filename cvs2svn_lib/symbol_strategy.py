@@ -30,6 +30,7 @@ from cvs2svn_lib.symbol import TypedSymbol
 from cvs2svn_lib.symbol import Branch
 from cvs2svn_lib.symbol import Tag
 from cvs2svn_lib.symbol import ExcludedSymbol
+from cvs2svn_lib.symbol_statistics import SymbolPlanError
 
 
 class StrategyRule:
@@ -251,6 +252,33 @@ class ManualRule(StrategyRule):
     self.conversion = conversion
     self.parent_lod_name = parent_lod_name
 
+  def _get_parent_by_id(self, parent_lod_name, stats):
+    """Return the LOD object for the parent with name PARENT_LOD_NAME.
+
+    STATS is the _Stats object describing a symbol whose parent needs
+    to be determined from its name.  If none of its possible parents
+    has name PARENT_LOD_NAME, raise a SymbolPlanError."""
+
+    for pp in stats.possible_parents.keys():
+      if isinstance(pp, Trunk):
+        pass
+      elif pp.name == parent_lod_name:
+        return pp
+    else:
+      parent_counts = stats.possible_parents.items()
+      parent_counts.sort(lambda a,b: - cmp(a[1], b[1]))
+      lines = [
+          '%s is not a valid parent for %s;'
+              % (parent_lod_name, stats.lod,),
+          '    possible parents (with counts):'
+          ]
+      for (symbol, count) in parent_counts:
+        if isinstance(symbol, Trunk):
+          lines.append('        .trunk. : %d' % count)
+        else:
+          lines.append('        %s : %d' % (symbol.name, count))
+      raise SymbolPlanError('\n'.join(lines))
+
   def get_symbol(self, symbol, stats):
     if isinstance(symbol, Trunk):
       return symbol
@@ -265,19 +293,9 @@ class ManualRule(StrategyRule):
       elif self.parent_lod_name == '.trunk.':
         symbol.preferred_parent_id = stats.lod.project.trunk_id
       else:
-        # We only have the parent symbol's name; we have to find its
-        # id:
-        for pp in stats.possible_parents.keys():
-          if isinstance(pp, Trunk):
-            pass
-          elif pp.name == self.parent_lod_name:
-            symbol.preferred_parent_id = pp.id
-            break
-        else:
-          raise FatalError(
-              'Symbol named %s not among possible parents'
-              % (self.parent_lod_name,)
-              )
+        symbol.preferred_parent_id = self._get_parent_by_id(
+            self.parent_lod_name, stats
+            ).id
 
     return symbol
 

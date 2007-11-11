@@ -48,7 +48,7 @@ from cvs2svn_lib.symbol import Tag
 from cvs2svn_lib.symbol import ExcludedSymbol
 from cvs2svn_lib.symbol_database import SymbolDatabase
 from cvs2svn_lib.symbol_database import create_symbol_database
-from cvs2svn_lib.symbol_statistics import SymbolPlanException
+from cvs2svn_lib.symbol_statistics import SymbolPlanError
 from cvs2svn_lib.symbol_statistics import IndeterminateSymbolException
 from cvs2svn_lib.symbol_statistics import SymbolStatistics
 from cvs2svn_lib.cvs_item import CVSRevision
@@ -254,7 +254,7 @@ class CollateSymbolsPass(Pass):
         except IndeterminateSymbolException, e:
           self.log_symbol_summary(stats, stats.lod)
           mismatches.append(e.stats)
-        except SymbolPlanException, e:
+        except SymbolPlanError, e:
           self.log_symbol_summary(stats, stats.lod)
           errors.append(e)
         else:

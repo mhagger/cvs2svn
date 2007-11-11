@@ -181,26 +181,15 @@ class _Stats:
         and not self.possible_parents
         )
 
-  def _check_preferred_parent_allowed(self, symbol):
-    """Check that the selected preferred parent is a possible parent."""
+  def check_valid(self, symbol):
+    """Check whether SYMBOL is a valid conversion of SELF.lod.
 
-    if isinstance(symbol, IncludedSymbol) \
-           and symbol.preferred_parent_id is not None:
-      for pp in self.possible_parents.keys():
-        if pp.id == symbol.preferred_parent_id:
-          return
-      else:
-        raise SymbolPlanException(
-            self, symbol,
-            'The selected parent is not among the symbol\'s '
-            'possible parents.'
-            )
-
-  def check_consistency(self, symbol):
-    """Check whether the symbol described by SELF can be converted as SYMBOL.
-
-    It is planned to convert SELF.lod as SYMBOL.  If there are any
-    problems with that plan, raise a SymbolPlanException."""
+    It is planned to convert SELF.lod as SYMBOL.  Verify that SYMBOL
+    is a TypedSymbol and that the information that it contains is
+    consistent with that stored in SELF.lod.  (This routine does not
+    do higher-level tests of whether the chosen conversion is actually
+    sensible.)  If there are any problems, raise a
+    SymbolPlanException."""
 
     if not isinstance(symbol, (Branch, Tag, ExcludedSymbol)):
       raise IndeterminateSymbolException(self, symbol)
@@ -214,7 +203,24 @@ class _Stats:
     if symbol.name != self.lod.name:
       raise SymbolPlanException(self, symbol, 'Names must match')
 
-    self._check_preferred_parent_allowed(symbol)
+  def check_preferred_parent_allowed(self, symbol):
+    """Check that SYMBOL's preferred_parent_id is an allowed parent.
+
+    SYMBOL is the planned conversion of SELF.lod.  Verify that its
+    preferred_parent_id is a possible parent of SELF.lod.  If not,
+    raise a SymbolPlanException describing the problem."""
+
+    if isinstance(symbol, IncludedSymbol) \
+           and symbol.preferred_parent_id is not None:
+      for pp in self.possible_parents.keys():
+        if pp.id == symbol.preferred_parent_id:
+          return
+      else:
+        raise SymbolPlanException(
+            self, symbol,
+            'The selected parent is not among the symbol\'s '
+            'possible parents.'
+            )
 
   def __str__(self):
     return (
@@ -489,6 +495,22 @@ class SymbolStatistics:
     are detected, describe the problem to Log().error() and raise a
     FatalException."""
 
+    # We want to do all of the consistency checks even if one of them
+    # fails, so that the user gets as much feedback as possible.  Set
+    # this variable to True if any errors are found.
+    error_found = False
+
+    # Check that the planned preferred parents are OK for all
+    # IncludedSymbols:
+    for lod in lods:
+      if isinstance(lod, IncludedSymbol):
+        stats = self.get_stats(lod)
+        try:
+          stats.check_preferred_parent_allowed(lod)
+        except SymbolPlanException, e:
+          Log().error('%s\n' % (e,))
+          error_found = True
+
     # Create a map { symbol_name : Symbol } including only
     # non-excluded symbols:
     symbols_by_name = {}
@@ -497,9 +519,6 @@ class SymbolStatistics:
         # Symbol included; include it in the symbol check.
         symbols_by_name[lod.name] = lod
 
-    # We want to do both consistency checks even if the first fails,
-    # so that the user gets as much feedback as possible.
-    error_found = False
     try:
       self._check_blocked_excludes(symbols_by_name)
     except FatalException:

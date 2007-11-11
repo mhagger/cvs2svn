@@ -190,7 +190,7 @@ class CollateSymbolsPass(Pass):
       symbol = rule.get_symbol(symbol, stats)
       assert symbol is not None
 
-    stats.check_consistency(symbol)
+    stats.check_valid(symbol)
 
     return symbol
 

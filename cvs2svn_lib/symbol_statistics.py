@@ -499,14 +499,6 @@ class SymbolStatistics:
           Log().error('%s\n' % (e,))
           error_found = True
 
-    # Create a map { symbol_name : Symbol } including only
-    # non-excluded symbols:
-    symbols_by_name = {}
-    for lod in symbol_map.itervalues():
-      if isinstance(lod, IncludedSymbol):
-        # Symbol included; include it in the symbol check.
-        symbols_by_name[lod.name] = lod
-
     try:
       self._check_blocked_excludes(symbol_map)
     except FatalException:

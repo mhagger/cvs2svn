@@ -244,7 +244,7 @@ class HeuristicPreferredParentRule(StrategyRule):
     return symbol
 
 
-class ManualRule(StrategyRule):
+class SymbolHintsFileRule(StrategyRule):
   """Use manual symbol configurations read from a file.
 
   The input file is line-oriented with the following format:

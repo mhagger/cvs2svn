@@ -59,7 +59,7 @@ from cvs2svn_lib.symbol_strategy import ForceTagRegexpStrategyRule
 from cvs2svn_lib.symbol_strategy import HeuristicStrategyRule
 from cvs2svn_lib.symbol_strategy import UnambiguousUsageRule
 from cvs2svn_lib.symbol_strategy import HeuristicPreferredParentRule
-from cvs2svn_lib.symbol_strategy import ManualRule
+from cvs2svn_lib.symbol_strategy import SymbolHintsFileRule
 from cvs2svn_lib.symbol_transform import RegexpSymbolTransform
 from cvs2svn_lib.property_setters import AutoPropsPropertySetter
 from cvs2svn_lib.property_setters import CVSBinaryFileDefaultMimeTypeSetter
@@ -387,7 +387,7 @@ class RunOptions:
       elif opt == '--fallback-encoding':
         fallback_encoding = value
       elif opt == '--symbol-hints':
-        ctx.symbol_strategy_rules.append(ManualRule(value))
+        ctx.symbol_strategy_rules.append(SymbolHintsFileRule(value))
       elif opt == '--force-branch':
         ctx.symbol_strategy_rules.append(ForceBranchRegexpStrategyRule(value))
         force_branch = True

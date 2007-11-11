@@ -82,7 +82,7 @@ from cvs2svn_lib.symbol_strategy import ForceTagRegexpStrategyRule
 from cvs2svn_lib.symbol_strategy import HeuristicStrategyRule
 from cvs2svn_lib.symbol_strategy import UnambiguousUsageRule
 from cvs2svn_lib.symbol_strategy import HeuristicPreferredParentRule
-from cvs2svn_lib.symbol_strategy import ManualRule
+from cvs2svn_lib.symbol_strategy import SymbolHintsFileRule
 from cvs2svn_lib.symbol_transform import RegexpSymbolTransform
 from cvs2svn_lib.property_setters import AutoPropsPropertySetter
 from cvs2svn_lib.property_setters import CVSBinaryFileDefaultMimeTypeSetter
@@ -315,14 +315,14 @@ ctx.symbol_strategy_rules.append(UnambiguousUsageRule())
 # hints and enable the following option.
 #
 # The format of the hints file is described in the documentation for
-# the ManualRule class in cvs2svn_lib/symbol_strategy.py.  The file
-# output by the --write-symbol-info (i.e., ctx.symbol_info_filename)
-# option is in the same format.  The simplest way to use this option
-# is to run the conversion through CollateSymbolsPass with
-# --write-symbol-info option, copy the symbol info and edit it to
-# create a hints file, then re-start the conversion at
-# CollateSymbolsPass with this option enabled.
-#ctx.symbol_strategy_rules.append(ManualRule('symbol-hints.txt'))
+# the SymbolHintsFileRule class in cvs2svn_lib/symbol_strategy.py.
+# The file output by the --write-symbol-info (i.e.,
+# ctx.symbol_info_filename) option is in the same format.  The
+# simplest way to use this option is to run the conversion through
+# CollateSymbolsPass with --write-symbol-info option, copy the symbol
+# info and edit it to create a hints file, then re-start the
+# conversion at CollateSymbolsPass with this option enabled.
+#ctx.symbol_strategy_rules.append(SymbolHintsFileRule('symbol-hints.txt'))
 
 # The last rule is here to choose the preferred parent of branches and
 # tags, that is, the line of development from which the symbol

@@ -2698,7 +2698,9 @@ def parent_hints():
 def parent_hints_wildcards():
   "test --symbol-hints wildcards"
 
-  symbol_hints_file = os.path.join(tmp_dir, 'symbol-mess-parent-hints.txt')
+  symbol_hints_file = os.path.join(
+      tmp_dir, 'symbol-mess-parent-hints-wildcards.txt'
+      )
   # BRANCH_WITH_COMMIT is usually determined to branch from .trunk.;
   # set the preferred parent to BRANCH instead:
   open(symbol_hints_file, 'w').write(

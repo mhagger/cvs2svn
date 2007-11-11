@@ -319,9 +319,12 @@ class SymbolHintsFileRule(StrategyRule):
       }
 
   def __init__(self, filename):
+    self.filename = filename
+
+  def start(self, symbol_statistics):
     self._rules = []
 
-    f = open(filename, 'r')
+    f = open(self.filename, 'r')
     for l in f:
       s = l.strip()
       if self.comment_re.match(s):
@@ -360,7 +363,6 @@ class SymbolHintsFileRule(StrategyRule):
           ManualRule(project_id, symbol_name, conversion, parent_lod_name)
           )
 
-  def start(self, symbol_statistics):
     for rule in self._rules:
       rule.start(symbol_statistics)
 
@@ -376,5 +378,7 @@ class SymbolHintsFileRule(StrategyRule):
   def finish(self):
     for rule in self._rules:
       rule.finish()
+
+    del self._rules
 
 

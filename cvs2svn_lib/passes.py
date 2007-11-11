@@ -245,6 +245,9 @@ class CollateSymbolsPass(Pass):
     else:
       self.symbol_info_file = None
 
+    for rule in Ctx().symbol_strategy_rules:
+      rule.start(self.symbol_stats)
+
     for stats in self.symbol_stats:
       if isinstance(stats.lod, Trunk):
         yield stats.lod
@@ -260,6 +263,9 @@ class CollateSymbolsPass(Pass):
         else:
           self.log_symbol_summary(stats, symbol)
           yield symbol
+
+    for rule in Ctx().symbol_strategy_rules:
+      rule.finish()
 
     if self.symbol_info_file:
       self.symbol_info_file.close()

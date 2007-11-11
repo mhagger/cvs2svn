@@ -35,6 +35,16 @@ from cvs2svn_lib.symbol import ExcludedSymbol
 class StrategyRule:
   """A single rule that might determine how to convert a symbol."""
 
+  def start(self, symbol_statistics):
+    """This method is called once before get_symbol() is ever called.
+
+    The StrategyRule can override this method to do whatever it wants
+    to prepare itself for work.  SYMBOL_STATISTICS is an instance of
+    SymbolStatistics containing the statistics for all symbols in all
+    projects."""
+
+    pass
+
   def get_symbol(self, symbol, stats):
     """Return an object describing what to do with the symbol in STATS.
 
@@ -47,6 +57,14 @@ class StrategyRule:
     this rule doesn't apply, return SYMBOL unchanged."""
 
     raise NotImplementedError()
+
+  def finish(self):
+    """This method is called once after get_symbol() is done being called.
+
+    The StrategyRule can override this method do whatever it wants to
+    release resources, etc."""
+
+    pass
 
 
 class _RegexpStrategyRule(StrategyRule):

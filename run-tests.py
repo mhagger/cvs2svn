@@ -2510,13 +2510,14 @@ def commit_blocks_tags():
   "commit prevents forced tag"
 
   basic_args = ['--force-branch=MOSTLY_BRANCH', '--force-tag=MOSTLY_TAG']
-  try:
-    ensure_conversion(
-        'symbol-mess',
-        args=(basic_args + ['--force-tag=BRANCH_WITH_COMMIT']))
-    raise MissingErrorException()
-  except Failure:
-    pass
+  ensure_conversion(
+      'symbol-mess',
+      args=(basic_args + ['--force-tag=BRANCH_WITH_COMMIT']),
+      error_re=(
+          r'.*The following branches cannot be forced to be tags '
+          r'because they have commits'
+          )
+      )
 
 
 def blocked_excludes():

@@ -2695,6 +2695,27 @@ def parent_hints():
     ))
 
 
+def parent_hints_invalid():
+  "test --symbol-hints with an invalid parent"
+
+  symbol_hints_file = os.path.join(
+      tmp_dir, 'symbol-mess-parent-hints-invalid.txt'
+      )
+  # BRANCH_WITH_COMMIT is usually determined to branch from .trunk.;
+  # set the preferred parent to BRANCH instead:
+  open(symbol_hints_file, 'w').write(
+      '0 MOSTLY_BRANCH      branch .\n'
+      '0 MOSTLY_TAG         tag    .\n'
+      '0 BRANCH_WITH_COMMIT branch BLOCKED_BY_BRANCH\n'
+      )
+  conv = ensure_conversion(
+      'symbol-mess', args=['--symbol-hints=%s' % (symbol_hints_file,)],
+      error_re=(
+          r"BLOCKED_BY_BRANCH is not a valid parent for BRANCH_WITH_COMMIT"
+          ),
+      )
+
+
 def parent_hints_wildcards():
   "test --symbol-hints wildcards"
 
@@ -3258,9 +3279,10 @@ test_list = [
     write_symbol_info,
     symbol_hints,
     parent_hints,
+    parent_hints_invalid,
     parent_hints_wildcards,
-    issue_99,
 # 110:
+    issue_99,
     issue_100,
     issue_106,
     options_option,
@@ -3270,8 +3292,8 @@ test_list = [
     XFail(delete_cvsignore),
     repeated_deltatext,
     nasty_graphs,
-    XFail(tagging_after_delete),
 # 120:
+    XFail(tagging_after_delete),
     crossed_branches,
     file_directory_conflict,
     attic_directory_conflict,
@@ -3281,8 +3303,8 @@ test_list = [
     internal_co_keywords,
     leftover_revs,
     requires_internal_co,
-    timestamp_chaos,
 # 130:
+    timestamp_chaos,
     symlinks,
     empty_trunk_path,
     preferred_parent_cycle,
@@ -3292,8 +3314,8 @@ test_list = [
     add_on_branch,
     XFail(main_git),
     invalid_symbol,
-    invalid_symbol_ignore,
 # 140:
+    invalid_symbol_ignore,
     EOLVariants('LF'),
     EOLVariants('CR'),
     EOLVariants('CRLF'),

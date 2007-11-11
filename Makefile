@@ -28,7 +28,7 @@ install:
 	;; \
 	esac
 
-check:
+check: clean
 	${PYTHON} ./run-tests.py
 
 pycheck:

@@ -487,13 +487,13 @@ class SymbolStatistics:
       Log().error(str(e))
       raise FatalException()
 
-  def check_consistency(self, lods):
+  def check_consistency(self, symbol_map):
     """Check the plan for how to convert symbols for consistency.
 
-    LODS is an iterable of Trunk and TypedSymbol objects indicating
-    how each line of development is to be converted.  If any problems
-    are detected, describe the problem to Log().error() and raise a
-    FatalException."""
+    SYMBOL_MAP is a map {AbstractSymbol : (Trunk|TypedSymbol)}
+    indicating how each AbstractSymbol is to be converted.  If any
+    problems are detected, describe the problem to Log().error() and
+    raise a FatalException."""
 
     # We want to do all of the consistency checks even if one of them
     # fails, so that the user gets as much feedback as possible.  Set
@@ -502,7 +502,7 @@ class SymbolStatistics:
 
     # Check that the planned preferred parents are OK for all
     # IncludedSymbols:
-    for lod in lods:
+    for lod in symbol_map.itervalues():
       if isinstance(lod, IncludedSymbol):
         stats = self.get_stats(lod)
         try:
@@ -514,7 +514,7 @@ class SymbolStatistics:
     # Create a map { symbol_name : Symbol } including only
     # non-excluded symbols:
     symbols_by_name = {}
-    for lod in lods:
+    for lod in symbol_map.itervalues():
       if isinstance(lod, IncludedSymbol):
         # Symbol included; include it in the symbol check.
         symbols_by_name[lod.name] = lod
@@ -530,7 +530,7 @@ class SymbolStatistics:
       error_found = True
 
     try:
-      self._check_paths_disjoint(lods)
+      self._check_paths_disjoint(symbol_map.values())
     except FatalException:
       error_found = True
 

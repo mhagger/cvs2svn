@@ -224,13 +224,13 @@ class CollateSymbolsPass(Pass):
               )
 
   def get_symbols(self):
-    """Return a list of TypedSymbol objects telling how to convert symbols.
+    """Return a map telling how to convert symbols.
 
-    The return value is a list of TypedSymbol objects (Branch, Tag, or
-    ExcludedSymbol), indicating how each symbol should be converted.
-    Trunk objects in SYMBOL_STATS are passed through unchanged.  One
-    object must be included in the return value for each line of
-    development described in SYMBOL_STATS.
+    The return value is a map {AbstractSymbol : (Trunk|TypedSymbol)},
+    indicating how each symbol should be converted.  Trunk objects in
+    SYMBOL_STATS are passed through unchanged.  One object is included
+    in the return value for each line of development described in
+    SYMBOL_STATS.
 
     Raise FatalError if there was an error."""
 
@@ -248,9 +248,11 @@ class CollateSymbolsPass(Pass):
     for rule in Ctx().symbol_strategy_rules:
       rule.start(self.symbol_stats)
 
+    retval = {}
+
     for stats in self.symbol_stats:
       if isinstance(stats.lod, Trunk):
-        yield stats.lod
+        retval[stats.lod] = stats.lod
       else:
         try:
           symbol = self.get_symbol(stats)
@@ -262,7 +264,7 @@ class CollateSymbolsPass(Pass):
           errors.append(e)
         else:
           self.log_symbol_summary(stats, symbol)
-          yield symbol
+          retval[stats.lod] = symbol
 
     for rule in Ctx().symbol_strategy_rules:
       rule.finish()
@@ -287,6 +289,8 @@ class CollateSymbolsPass(Pass):
         for stats in mismatches:
           s.append('    %s\n' % (stats,))
       raise FatalError(''.join(s))
+    else:
+      return retval
 
   def run(self, run_options, stats_keeper):
     Ctx()._projects = read_projects(
@@ -296,16 +300,16 @@ class CollateSymbolsPass(Pass):
         artifact_manager.get_temp_file(config.SYMBOL_STATISTICS)
         )
 
-    symbols = list(self.get_symbols())
+    symbol_map = self.get_symbols()
 
     # Check the symbols for consistency and bail out if there were errors:
-    self.symbol_stats.check_consistency(symbols)
+    self.symbol_stats.check_consistency(symbol_map)
 
-    for symbol in symbols:
+    for symbol in symbol_map.itervalues():
       if isinstance(symbol, ExcludedSymbol):
         self.symbol_stats.exclude_symbol(symbol)
 
-    create_symbol_database(symbols)
+    create_symbol_database(symbol_map.values())
 
     del self.symbol_stats
 

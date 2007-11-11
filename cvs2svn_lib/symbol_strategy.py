@@ -244,6 +244,44 @@ class HeuristicPreferredParentRule(StrategyRule):
     return symbol
 
 
+class ManualRule(StrategyRule):
+  def __init__(self, project_id, symbol_name, conversion, parent_lod_name):
+    self.project_id = project_id
+    self.symbol_name = symbol_name
+    self.conversion = conversion
+    self.parent_lod_name = parent_lod_name
+
+  def get_symbol(self, symbol, stats):
+    if isinstance(symbol, Trunk):
+      return symbol
+
+    if (self.project_id is None or self.project_id == stats.lod.project.id) \
+           and (self.symbol_name == stats.lod.name):
+      if self.conversion is not None:
+        symbol = self.conversion(symbol)
+
+      if self.parent_lod_name is None:
+        pass
+      elif self.parent_lod_name == '.trunk.':
+        symbol.preferred_parent_id = stats.lod.project.trunk_id
+      else:
+        # We only have the parent symbol's name; we have to find its
+        # id:
+        for pp in stats.possible_parents.keys():
+          if isinstance(pp, Trunk):
+            pass
+          elif pp.name == self.parent_lod_name:
+            symbol.preferred_parent_id = pp.id
+            break
+        else:
+          raise FatalError(
+              'Symbol named %s not among possible parents'
+              % (self.parent_lod_name,)
+              )
+
+    return symbol
+
+
 class SymbolHintsFileRule(StrategyRule):
   """Use manual symbol configurations read from a file.
 
@@ -281,7 +319,7 @@ class SymbolHintsFileRule(StrategyRule):
       }
 
   def __init__(self, filename):
-    self._hints = []
+    self._rules = []
 
     f = open(filename, 'r')
     for l in f:
@@ -318,39 +356,25 @@ class SymbolHintsFileRule(StrategyRule):
             'Illegal conversion in the following line:\n    "%s"' % (l,)
             )
 
-      self._hints.append(
-          (project_id, symbol_name, conversion, parent_lod_name)
+      self._rules.append(
+          ManualRule(project_id, symbol_name, conversion, parent_lod_name)
           )
+
+  def start(self, symbol_statistics):
+    for rule in self._rules:
+      rule.start(symbol_statistics)
 
   def get_symbol(self, symbol, stats):
     if isinstance(symbol, Trunk):
       return symbol
 
-    for (project_id, name, conversion, parent_lod_name) in self._hints:
-      if (project_id is None or project_id == stats.lod.project.id) \
-             and (name == stats.lod.name):
-        if conversion is not None:
-          symbol = conversion(symbol)
-
-        if parent_lod_name is None:
-          pass
-        elif parent_lod_name == '.trunk.':
-          symbol.preferred_parent_id = stats.lod.project.trunk_id
-        else:
-          # We only have the parent symbol's name; we have to find its
-          # id:
-          for pp in stats.possible_parents.keys():
-            if isinstance(pp, Trunk):
-              pass
-            elif pp.name == parent_lod_name:
-              symbol.preferred_parent_id = pp.id
-              break
-          else:
-            raise FatalError(
-                'Symbol named %s not among possible parents'
-                % (parent_lod_name,)
-                )
+    for rule in self._rules:
+      symbol = rule.get_symbol(symbol, stats)
 
     return symbol
+
+  def finish(self):
+    for rule in self._rules:
+      rule.finish()
 
 

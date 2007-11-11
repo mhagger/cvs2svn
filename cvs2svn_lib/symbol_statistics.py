@@ -423,22 +423,23 @@ class SymbolStatistics:
 
       raise FatalException()
 
-  def _check_invalid_tags(self, symbols):
+  def _check_invalid_tags(self, symbol_map):
     """Check for commits on any symbols that are to be converted as tags.
 
-    SYMBOLS is a map { name : Symbol } not including Trunk entries.
-    If there is a commit on a symbol, then it cannot be converted as a
-    tag.  If any tags with commits are found, output error messages
-    describing the problems then raise a FatalException."""
+    SYMBOL_MAP is a map {AbstractSymbol : (Trunk|TypedSymbol)}
+    indicating how each AbstractSymbol is to be converted.  If there
+    is a commit on a symbol, then it cannot be converted as a tag.  If
+    any tags with commits are found, output error messages describing
+    the problems then raise a FatalException."""
 
     Log().quiet("Checking for forced tags with commits...")
 
     invalid_tags = [ ]
-    for symbol in symbols.values():
+    for symbol in symbol_map.itervalues():
       if isinstance(symbol, Tag):
         stats = self.get_stats(symbol)
         if stats.branch_commit_count > 0:
-          invalid_tags.append(stats.lod.name)
+          invalid_tags.append(symbol)
 
     if not invalid_tags:
       # No problems found:
@@ -446,11 +447,12 @@ class SymbolStatistics:
 
     s = []
     s.append(
-        error_prefix + ": The following branches cannot be "
-        "forced to be tags because they have commits:\n"
+        '%s: The following branches cannot be forced to be tags '
+        'because they have commits:\n'
+        % (error_prefix,)
         )
     for tag in invalid_tags:
-      s.append("    '%s'\n" % (tag))
+      s.append('    %s\n' % (tag.name))
     s.append('\n')
     Log().error(''.join(s))
 
@@ -511,7 +513,7 @@ class SymbolStatistics:
       error_found = True
 
     try:
-      self._check_invalid_tags(symbols_by_name)
+      self._check_invalid_tags(symbol_map)
     except FatalException:
       error_found = True
 

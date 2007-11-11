@@ -38,11 +38,11 @@ from cvs2svn_lib.cvs_item import CVSBranch
 from cvs2svn_lib.cvs_item import CVSTag
 
 
-class SymbolPlanException(Exception):
+class SymbolPlanException(FatalException):
   def __init__(self, stats, symbol, msg):
     self.stats = stats
     self.symbol = symbol
-    Exception.__init__(
+    FatalException.__init__(
         self,
         'Cannot convert the following symbol to %s: %s\n    %s'
         % (symbol, msg, self.stats,)

@@ -60,6 +60,7 @@ from cvs2svn_lib.symbol_strategy import HeuristicStrategyRule
 from cvs2svn_lib.symbol_strategy import UnambiguousUsageRule
 from cvs2svn_lib.symbol_strategy import HeuristicPreferredParentRule
 from cvs2svn_lib.symbol_strategy import SymbolHintsFileRule
+from cvs2svn_lib.symbol_strategy import DefaultBasePathRule
 from cvs2svn_lib.symbol_transform import RegexpSymbolTransform
 from cvs2svn_lib.property_setters import AutoPropsPropertySetter
 from cvs2svn_lib.property_setters import CVSBinaryFileDefaultMimeTypeSetter
@@ -582,6 +583,9 @@ class RunOptions:
       ctx.symbol_strategy_rules.append(HeuristicStrategyRule())
     else:
       assert False
+
+    # Now add a rule that sets the SVN path for each LOD:
+    ctx.symbol_strategy_rules.append(DefaultBasePathRule())
 
     # Now add a rule whose job it is to pick the preferred parents of
     # branches and tags:

@@ -81,6 +81,7 @@ from cvs2svn_lib.symbol_strategy import ForceBranchRegexpStrategyRule
 from cvs2svn_lib.symbol_strategy import ForceTagRegexpStrategyRule
 from cvs2svn_lib.symbol_strategy import HeuristicStrategyRule
 from cvs2svn_lib.symbol_strategy import UnambiguousUsageRule
+from cvs2svn_lib.symbol_strategy import DefaultBasePathRule
 from cvs2svn_lib.symbol_strategy import HeuristicPreferredParentRule
 from cvs2svn_lib.symbol_strategy import SymbolHintsFileRule
 from cvs2svn_lib.symbol_transform import RegexpSymbolTransform
@@ -323,6 +324,10 @@ ctx.symbol_strategy_rules.append(UnambiguousUsageRule())
 # info and edit it to create a hints file, then re-start the
 # conversion at CollateSymbolsPass with this option enabled.
 #ctx.symbol_strategy_rules.append(SymbolHintsFileRule('symbol-hints.txt'))
+
+# This rule sets the SVN path of each symbol to the default value for
+# the project containing it, if a path hasn't been set already.
+ctx.symbol_strategy_rules.append(DefaultBasePathRule())
 
 # The last rule is here to choose the preferred parent of branches and
 # tags, that is, the line of development from which the symbol

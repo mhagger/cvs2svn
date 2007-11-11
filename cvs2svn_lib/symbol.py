@@ -103,20 +103,24 @@ class LineOfDevelopment(AbstractSymbol):
   This is basically the abstraction for what will be a root tree in
   the Subversion repository."""
 
+  def __init__(self, id, project):
+    AbstractSymbol.__init__(self, id, project)
+    self.base_path = None
+
   def get_path(self, *components):
     """Return the svn path for this LineOfDevelopment."""
 
-    raise NotImplementedError()
+    return path_join(self.base_path, *components)
 
 
 class Trunk(LineOfDevelopment):
   """Represent the main line of development."""
 
   def __getstate__(self):
-    return (self.id, self.project.id,)
+    return (self.id, self.project.id, self.base_path,)
 
   def __setstate__(self, state):
-    (self.id, project_id,) = state
+    (self.id, project_id, self.base_path,) = state
     self.project = Ctx()._projects[project_id]
 
   def __cmp__(self, other):
@@ -127,9 +131,6 @@ class Trunk(LineOfDevelopment):
       return -1
     else:
       raise NotImplementedError()
-
-  def get_path(self, *components):
-    return self.project.get_trunk_path(*components)
 
   def __str__(self):
     """For convenience only.  The format is subject to change at any time."""
@@ -216,14 +217,22 @@ class TypedSymbol(Symbol):
 class IncludedSymbol(TypedSymbol, LineOfDevelopment):
   """A TypedSymbol that will be included in the conversion."""
 
-  pass
+  def __init__(self, symbol):
+    TypedSymbol.__init__(self, symbol)
+    # We can't call the LineOfDevelopment constructor, so initialize
+    # its extra member explicitly:
+    self.base_path = None
+
+  def __getstate__(self):
+    return (TypedSymbol.__getstate__(self), self.base_path,)
+
+  def __setstate__(self, state):
+    (super_state, self.base_path,) = state
+    TypedSymbol.__setstate__(self, super_state)
 
 
 class Branch(IncludedSymbol):
   """An object that describes a CVS branch."""
-
-  def get_path(self, *components):
-    return self.project.get_branch_path(self, *components)
 
   def __str__(self):
     """For convenience only.  The format is subject to change at any time."""
@@ -232,9 +241,6 @@ class Branch(IncludedSymbol):
 
 
 class Tag(IncludedSymbol):
-  def get_path(self, *components):
-    return self.project.get_tag_path(self, *components)
-
   def __str__(self):
     """For convenience only.  The format is subject to change at any time."""
 

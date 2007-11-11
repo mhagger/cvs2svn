@@ -204,6 +204,29 @@ class AllTagRule(StrategyRule):
       return Tag(symbol)
 
 
+class DefaultBasePathRule(StrategyRule):
+  """Set LOD base paths to their default values."""
+
+  def get_symbol(self, symbol, stats):
+    if not isinstance(symbol, LineOfDevelopment):
+      # This symbol will not be included in the conversion; skip it.
+      return symbol
+
+    if symbol.base_path is not None:
+      # This lod's base path is already set; leave it.
+      pass
+    elif isinstance(symbol, Trunk):
+      symbol.base_path = symbol.project.get_trunk_path()
+    elif isinstance(symbol, Branch):
+      symbol.base_path = symbol.project.get_branch_path(symbol)
+    elif isinstance(symbol, Tag):
+      symbol.base_path = symbol.project.get_tag_path(symbol)
+    else:
+      raise NotImplementedError()
+
+    return symbol
+
+
 class HeuristicPreferredParentRule(StrategyRule):
   """Use a heuristic rule to pick preferred parents.
 

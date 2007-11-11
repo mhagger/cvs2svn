@@ -499,6 +499,9 @@ class SymbolStatistics:
         except SymbolPlanException, e:
           Log().error('%s\n' % (e,))
           error_found = True
+      if isinstance(lod, LineOfDevelopment) and lod.base_path is None:
+        Log().error('%s: No path was set for %r\n' % (error_prefix, lod,))
+        error_found = True
 
     try:
       self._check_blocked_excludes(symbol_map)

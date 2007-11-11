@@ -199,7 +199,7 @@ class CollateSymbolsPass(Pass):
       if symbol.preferred_parent_id is None:
         preferred_parent_name = '.'
       else:
-        preferred_parent = Ctx()._symbol_stats[symbol.preferred_parent_id].lod
+        preferred_parent = self.symbol_stats[symbol.preferred_parent_id].lod
         if isinstance(preferred_parent, Trunk):
           preferred_parent_name = '.trunk.'
         else:
@@ -245,7 +245,7 @@ class CollateSymbolsPass(Pass):
     else:
       self.symbol_info_file = None
 
-    for stats in Ctx()._symbol_stats:
+    for stats in self.symbol_stats:
       if isinstance(stats.lod, Trunk):
         yield stats.lod
       else:
@@ -286,20 +286,22 @@ class CollateSymbolsPass(Pass):
     Ctx()._projects = read_projects(
         artifact_manager.get_temp_file(config.PROJECTS)
         )
-    Ctx()._symbol_stats = SymbolStatistics(
+    self.symbol_stats = SymbolStatistics(
         artifact_manager.get_temp_file(config.SYMBOL_STATISTICS)
         )
 
     symbols = list(self.get_symbols())
 
     # Check the symbols for consistency and bail out if there were errors:
-    Ctx()._symbol_stats.check_consistency(symbols)
+    self.symbol_stats.check_consistency(symbols)
 
     for symbol in symbols:
       if isinstance(symbol, ExcludedSymbol):
-        Ctx()._symbol_stats.exclude_symbol(symbol)
+        self.symbol_stats.exclude_symbol(symbol)
 
     create_symbol_database(symbols)
+
+    del self.symbol_stats
 
     Log().quiet("Done")
 

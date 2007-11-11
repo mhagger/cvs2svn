@@ -1,12 +1,17 @@
 # Makefile for packaging and installing cvs2svn.
 
 # The python interpreter to be used can be overridden here or via
-# something like "make ... PYTHON=python2.2":
+# something like "make ... PYTHON=/path/to/python2.5".  Please note
+# that this option only affects the "install" and "check" targets:
 PYTHON=python
 
 all:
-	@echo "Use 'make install' to install, or 'make dist' to package",
-	@echo " or 'make check' to run tests."
+	@echo "Supported make targets:"
+	@echo "    install -- Install software using distutils"
+	@echo "    dist -- Create an installation package"
+	@echo "    check -- Run cvs2svn tests"
+	@echo "    pycheck -- Use pychecker to check cvs2svn Python code"
+	@echo "    clean -- Clean up source tree and temporary directory"
 
 dist:
 	./dist.sh

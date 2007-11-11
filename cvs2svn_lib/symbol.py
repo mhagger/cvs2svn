@@ -16,55 +16,66 @@
 
 """This module contains classes that represent trunk, branches, and tags.
 
-The classes in this module represent lines of development, or LODs for
-short.  Trunk, Branches, and Tags are all LODs.
+The classes in this module represent several concepts related to
+symbols and lines of development in the abstract; that is, not within
+a particular file, but across all files in a project.
 
-Symbols include Branches and Tags.  Each Symbol has an identifier that
-is unique across the whole conversion, and multiple instances
-representing the same abstract Symbol have the same identifier.  The
-Symbols in one project are distinct from those in another project, and
-have non-overlapping ids.  Even if, for example, two projects each
-have branches with the same name, the branches are considered
-distinct.
+The classes in this module are organized into the following class
+hierarchy:
 
-Prior to CollateSymbolsPass, it is not known which symbols will be
-converted as branches and which as tags.  In this phase, the symbols
-are all represented by instances of the non-specific Symbol class.
-During CollateSymbolsPass, the Symbol instances are replaced by
-instances of Branch or Tag.  But the ids are preserved even when the
-symbols are converted.  (This is important to avoid having to rewrite
-databases with new symbol ids in CollateSymbolsPass.)  In particular,
-it is possible that a Symbol, Branch, and Tag instance all have the
-same id, in which case they are all considered equal.
-
-Trunk instances do not have ids, but Trunk objects can be compared to
-Symbol objects (trunks always compare less than symbols).
-
-The classes in this module are organized into two overlapping class
-hierarchies as follows:
-
-LineOfDevelopment
+AbstractSymbol
   |
-  +--Trunk
+  +--LineOfDevelopment
+  |    |
+  |    +--Trunk
+  |    |
+  |    +--IncludedSymbol (also inherits from TypedSymbol)
+  |         |
+  |         +--Branch
+  |         |
+  |         +--Tag
   |
-  +--IncludedSymbol (also inherits from TypedSymbol)
+  +--Symbol
        |
-       +--Branch
-       |
-       +--Tag
+       +--TypedSymbol
+            |
+            +--IncludedSymbol (also inherits from LineOfDevelopment)
+            |    |
+            |    +--Branch
+            |    |
+            |    +--Tag
+            |
+            +--ExcludedSymbol
 
-Symbol
-  |
-  +--TypedSymbol
-       |
-       +--IncludedSymbol (also inherits from LineOfDevelopment)
-       |    |
-       |    +--Branch
-       |    |
-       |    +--Tag
-       |
-       +--ExcludedSymbol
-"""
+Please note the use of multiple inheritance.
+
+All AbstractSymbols contain an id that is globally unique across all
+AbstractSymbols.  Moreover, the id of an AbstractSymbol remains the
+same even if the symbol is mutated (as described below), and two
+AbstractSymbols are considered equal iff their ids are the same, even
+if the two instances have different types.  Symbols in different
+projects always have different ids and are therefore always distinct.
+(Indeed, this is pretty much the defining characteristic of a
+project.)  Even if, for example, two projects each have branches with
+the same name, the Symbols representing the branches are distinct and
+have distinct ids.  (This is important to avoid having to rewrite
+databases with new symbol ids in CollateSymbolsPass.)
+
+AbstractSymbols are all initially created in CollectRevsPass as either
+Trunk or Symbol instances.  A Symbol instance is essentially an
+undifferentiated Symbol.
+
+In CollateSymbolsPass, it is decided which symbols will be converted
+as branches, which as tags, and which excluded altogether.  At the
+beginning of this pass, the symbols are all represented by instances
+of the non-specific Symbol class.  During CollateSymbolsPass, each
+Symbol instance is replaced by an instance of Branch, Tag, or
+ExcludedSymbol with the same id.  (Trunk instances are left
+unchanged.)  At the end of CollateSymbolsPass, all ExcludedSymbols are
+discarded and processing continues with only Trunk, Branch, and Tag
+instances.  These three classes inherit from LineOfDevelopment;
+therefore, in later passes the term LineOfDevelopment (abbreviated to
+LOD) is used to refer to such objects."""
 
 
 from cvs2svn_lib.boolean import *
@@ -72,8 +83,25 @@ from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.common import path_join
 
 
-class LineOfDevelopment:
-  """Base class for Trunk, Branch, and Tag."""
+class AbstractSymbol:
+  """Base class for all other classes in this file."""
+
+  def __init__(self, id, project):
+    self.id = id
+    self.project = project
+
+  def __hash__(self):
+    return self.id
+
+  def __eq__(self, other):
+    return self.id == other.id
+
+
+class LineOfDevelopment(AbstractSymbol):
+  """Base class for Trunk, Branch, and Tag.
+
+  This is basically the abstraction for what will be a root tree in
+  the Subversion repository."""
 
   def get_path(self, *components):
     """Return the svn path for this LineOfDevelopment."""
@@ -84,10 +112,6 @@ class LineOfDevelopment:
 class Trunk(LineOfDevelopment):
   """Represent the main line of development."""
 
-  def __init__(self, id, project):
-    self.id = id
-    self.project = project
-
   def __getstate__(self):
     return (self.id, self.project.id,)
 
@@ -95,18 +119,14 @@ class Trunk(LineOfDevelopment):
     (self.id, project_id,) = state
     self.project = Ctx()._projects[project_id]
 
-  def __eq__(self, other):
-    return isinstance(other, Trunk) and self.project == other.project
-
   def __cmp__(self, other):
     if isinstance(other, Trunk):
       return cmp(self.project, other.project)
-    else:
+    elif isinstance(other, Symbol):
       # Allow Trunk to compare less than Symbols:
       return -1
-
-  def __hash__(self):
-    return hash(self.project)
+    else:
+      raise NotImplementedError()
 
   def get_path(self, *components):
     return self.project.get_trunk_path(*components)
@@ -120,10 +140,21 @@ class Trunk(LineOfDevelopment):
     return '%s<%x>' % (self, self.id,)
 
 
-class Symbol:
+class Symbol(AbstractSymbol):
+  """Represents a symbol within one project in the CVS repository.
+
+  Instance of the Symbol class itself are used to represent symbols
+  from the CVS repository.  CVS, of course, distinguishes between
+  normal tags and branch tags, but we allow symbol types to be changed
+  in CollateSymbolsPass.  Therefore, we store all CVS symbols as
+  Symbol instances at the beginning of the conversion.
+
+  In CollateSymbolsPass, Symbols are replaced by Branches, Tags, and
+  ExcludedSymbols (the latter being discarded at the end of that
+  pass)."""
+
   def __init__(self, id, project, name, preferred_parent_id=None):
-    self.id = id
-    self.project = project
+    AbstractSymbol.__init__(self, id, project)
     self.name = name
 
     # If this symbol has a preferred parent, this member is the id of
@@ -141,20 +172,16 @@ class Symbol:
     (self.id, project_id, self.name, self.preferred_parent_id,) = state
     self.project = Ctx()._projects[project_id]
 
-  def __eq__(self, other):
-    return isinstance(other, Symbol) and self.id == other.id
-
   def __cmp__(self, other):
     if isinstance(other, Symbol):
       return cmp(self.project, other.project) \
              or cmp(self.name, other.name) \
              or cmp(self.id, other.id)
-    else:
+    elif isinstance(other, Trunk):
       # Allow Symbols to compare greater than Trunk:
       return +1
-
-  def __hash__(self):
-    return self.id
+    else:
+      raise NotImplementedError()
 
   def __str__(self):
     return self.name

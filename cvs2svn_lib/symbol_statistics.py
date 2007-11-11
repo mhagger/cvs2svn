@@ -387,55 +387,41 @@ class SymbolStatistics:
   def __iter__(self):
     return self._stats.itervalues()
 
-  def _find_blocked_excludes(self, symbols):
-    """Find all excluded symbols that are blocked by non-excluded symbols.
+  def _check_blocked_excludes(self, symbol_map):
+    """Check for any excluded LODs that are blocked by non-excluded symbols.
 
-    Non-excluded symbols are by definition the symbols contained in
-    SYMBOLS, which is a map { name : Symbol } not including Trunk
-    entries.  Return a map { name : blocker_names } containing any
-    problems found, where blocker_names is a set containing the names
-    of blocking symbols."""
+    If any are found, describe the problem to Log().error() and raise
+    a FatalException."""
 
-    blocked_branches = {}
-    for stats in self:
-      if isinstance(stats.lod, Trunk):
-        # Trunk is never excluded
-        pass
-      elif stats.lod.name not in symbols:
-        blockers = [ blocker.name for blocker in stats.branch_blockers
-                     if blocker.name in symbols ]
-        if blockers:
-          blocked_branches[stats.lod.name] = set(blockers)
-    return blocked_branches
+    # A list of (lod,[blocker,...]) tuples for excludes that are
+    # blocked by the specified non-excluded blockers:
+    problems = []
 
-  def _check_blocked_excludes(self, symbols):
-    """Check whether any excluded branches are blocked.
+    for lod in symbol_map.itervalues():
+      if isinstance(lod, ExcludedSymbol):
+        # Symbol is excluded; make sure that its blockers are also
+        # excluded:
+        lod_blockers = []
+        for blocker in self.get_stats(lod).branch_blockers:
+          if isinstance(symbol_map.get(blocker, None), IncludedSymbol):
+            lod_blockers.append(blocker)
+        if lod_blockers:
+          problems.append((lod, lod_blockers))
 
-    SYMBOLS is a map { name : Symbol } not including Trunk entries.  A
-    branch can be blocked because it has another, non-excluded symbol
-    that depends on it.  If any blocked excludes are found in SYMBOLS,
-    output error messages describing the situation and raise a
-    FatalError."""
+    if problems:
+      s = []
+      for (lod, lod_blockers) in problems:
+        s.append(
+            '%s: %s cannot be excluded because the following symbols '
+                'depend on it:\n'
+            % (error_prefix, lod,)
+            )
+        for blocker in lod_blockers:
+          s.append('    %s\n' % (blocker,))
+      s.append('\n')
+      Log().error(''.join(s))
 
-    Log().quiet("Checking for blocked exclusions...")
-
-    blocked_excludes = self._find_blocked_excludes(symbols)
-    if not blocked_excludes:
-      return
-
-    s = []
-    for branch, branch_blockers in blocked_excludes.items():
-      s.append(
-          error_prefix + ": The branch '%s' cannot be "
-          "excluded because the following symbols depend "
-          "on it:\n" % (branch)
-          )
-      for blocker in branch_blockers:
-        s.append("    '%s'\n" % (blocker,))
-    s.append('\n')
-    Log().error(''.join(s))
-
-    raise FatalException()
+      raise FatalException()
 
   def _check_invalid_tags(self, symbols):
     """Check for commits on any symbols that are to be converted as tags.
@@ -520,7 +506,7 @@ class SymbolStatistics:
         symbols_by_name[lod.name] = lod
 
     try:
-      self._check_blocked_excludes(symbols_by_name)
+      self._check_blocked_excludes(symbol_map)
     except FatalException:
       error_found = True
 

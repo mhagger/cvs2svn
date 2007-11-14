@@ -69,8 +69,9 @@ class RCSStream:
       sl = int(admatch.group(2))
       cn = int(admatch.group(3))
       if admatch.group(1) == 'd': # "d" - Delete command
-        ntexts += self._texts[ooff:sl - 1]
-        ooff = sl - 1 + cn
+        sl -= 1
+        ntexts += self._texts[ooff:sl]
+        ooff = sl + cn
       else: # "a" - Add command
         ntexts += self._texts[ooff:sl] + diffs[i:i + cn]
         ooff = sl
@@ -95,27 +96,28 @@ class RCSStream:
       sl = int(admatch.group(2))
       cn = int(admatch.group(3))
       if admatch.group(1) == 'd': # "d" - Delete command
+        sl -= 1
         # Handle substitution explicitly, as add must come after del
         # (last add may end in no newline, so no command can follow).
         if i < len(diffs):
           amatch = self.a_command.match(diffs[i])
         else:
           amatch = None
-        if amatch and int(amatch.group(1)) == sl - 1 + cn:
+        if amatch and int(amatch.group(1)) == sl + cn:
           cn2 = int(amatch.group(2))
           i += 1
           ndiffs += ["d%d %d\na%d %d\n" % \
-                        (sl + adjust, cn2, sl - 1 + adjust + cn2, cn)] + \
-                    self._texts[sl - 1:sl - 1 + cn]
-          ntexts += self._texts[ooff:sl - 1] + diffs[i:i + cn2]
+                        (sl + 1 + adjust, cn2, sl + adjust + cn2, cn)] + \
+                    self._texts[sl:sl + cn]
+          ntexts += self._texts[ooff:sl] + diffs[i:i + cn2]
           adjust += cn2 - cn
           i += cn2
         else:
-          ndiffs += ["a%d %d\n" % (sl - 1 + adjust, cn)] + \
-                    self._texts[sl - 1:sl - 1 + cn]
-          ntexts += self._texts[ooff:sl - 1]
+          ndiffs += ["a%d %d\n" % (sl + adjust, cn)] + \
+                    self._texts[sl:sl + cn]
+          ntexts += self._texts[ooff:sl]
           adjust -= cn
-        ooff = sl - 1 + cn
+        ooff = sl + cn
       else: # "a" - Add command
         ndiffs += ["d%d %d\n" % (sl + 1 + adjust, cn)]
         ntexts += self._texts[ooff:sl] + diffs[i:i + cn]

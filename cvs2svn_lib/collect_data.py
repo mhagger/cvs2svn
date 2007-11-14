@@ -544,9 +544,9 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
     if revision in self._rev_data:
       # This revision has already been seen.
-      raise FatalError(
-          'File %r contains duplicate definitions of revision %s.'
-          % (self.cvs_file.filename, revision,))
+      Log().error('File %r contains duplicate definitions of revision %s.'
+                  % (self.cvs_file.filename, revision,))
+      raise RuntimeError
 
     # Record basic information about the revision:
     rev_data = _RevisionData(

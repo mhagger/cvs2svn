@@ -940,6 +940,9 @@ class _ProjectDataCollector:
       self.collect_data.record_fatal_error(
           "%r is not a valid ,v file" % (cvs_file.filename,)
           )
+      # Abort the processing of this file, but let the pass continue
+      # with other files:
+      return
     except:
       Log().warn("Exception occurred while parsing %s" % cvs_file.filename)
       raise

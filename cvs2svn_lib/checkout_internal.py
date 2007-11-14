@@ -512,9 +512,10 @@ class InternalRevisionRecorder(RevisionRecorder):
         # as the forward delta of our child revision.
         try:
           text = self._stream.invert_diff(text)
-        except MalformedDeltaException:
-          Log().error('Malformed RCS delta in %s, revision %s'
-                      % (cvs_rev.cvs_file.get_filename(), cvs_rev.rev))
+        except MalformedDeltaException, (msg):
+          Log().error('Malformed RCS delta in %s, revision %s: %s'
+                      % (cvs_rev.cvs_file.get_filename(), cvs_rev.rev,
+                         msg))
           raise RuntimeError
         text_record = DeltaTextRecord(cvs_rev.next_id, cvs_rev.id)
         self._writeout(text_record, text)
@@ -750,9 +751,9 @@ class InternalRevisionReader(RevisionReader):
 
     try:
       text = self._get_text_record(cvs_rev).checkout(self._text_record_db)
-    except MalformedDeltaException:
-      raise FatalError('Malformed RCS delta in %s, revision %s'
-                       % (cvs_rev.cvs_file.get_filename(), cvs_rev.rev))
+    except MalformedDeltaException, (msg):
+      raise FatalError('Malformed RCS delta in %s, revision %s: %s'
+                       % (cvs_rev.cvs_file.get_filename(), cvs_rev.rev, msg))
     if cvs_rev.cvs_file.mode != 'b' and cvs_rev.cvs_file.mode != 'o':
       if suppress_keyword_substitution or cvs_rev.cvs_file.mode == 'k':
         text = self._kw_re.sub(r'$\1$', text)

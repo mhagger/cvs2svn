@@ -64,15 +64,25 @@ class RCSStream:
     while i < len(diffs):
       admatch = self.ad_command.match(diffs[i])
       if not admatch:
-        raise MalformedDeltaException('Bad RCS delta')
+        raise MalformedDeltaException('Bad ed command')
       i += 1
       sl = int(admatch.group(2))
       cn = int(admatch.group(3))
       if admatch.group(1) == 'd': # "d" - Delete command
         sl -= 1
+        if sl < ooff:
+          raise MalformedDeltaException('Deletion below last edit')
+        if sl > len(self._texts):
+          raise MalformedDeltaException('Deletion past file end')
+        if sl + cn > len(self._texts):
+          raise MalformedDeltaException('Deletion beyond file end')
         ntexts += self._texts[ooff:sl]
         ooff = sl + cn
       else: # "a" - Add command
+        if sl < ooff: # Also catches same place
+          raise MalformedDeltaException('Insertion below last edit')
+        if sl > len(self._texts):
+          raise MalformedDeltaException('Insertion past file end')
         ntexts += self._texts[ooff:sl] + diffs[i:i + cn]
         ooff = sl
         i += cn
@@ -91,12 +101,18 @@ class RCSStream:
     while i < len(diffs):
       admatch = self.ad_command.match(diffs[i])
       if not admatch:
-        raise MalformedDeltaException('Bad RCS delta')
+        raise MalformedDeltaException('Bad ed command')
       i += 1
       sl = int(admatch.group(2))
       cn = int(admatch.group(3))
       if admatch.group(1) == 'd': # "d" - Delete command
         sl -= 1
+        if sl < ooff:
+          raise MalformedDeltaException('Deletion below last edit')
+        if sl > len(self._texts):
+          raise MalformedDeltaException('Deletion past file end')
+        if sl + cn > len(self._texts):
+          raise MalformedDeltaException('Deletion beyond file end')
         # Handle substitution explicitly, as add must come after del
         # (last add may end in no newline, so no command can follow).
         if i < len(diffs):
@@ -119,6 +135,10 @@ class RCSStream:
           adjust -= cn
         ooff = sl + cn
       else: # "a" - Add command
+        if sl < ooff: # Also catches same place
+          raise MalformedDeltaException('Insertion below last edit')
+        if sl > len(self._texts):
+          raise MalformedDeltaException('Insertion past file end')
         ndiffs += ["d%d %d\n" % (sl + 1 + adjust, cn)]
         ntexts += self._texts[ooff:sl] + diffs[i:i + cn]
         ooff = sl

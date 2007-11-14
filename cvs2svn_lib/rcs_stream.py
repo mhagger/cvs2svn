@@ -71,7 +71,7 @@ class RCSStream:
       if admatch.group(1) == 'd': # "d" - Delete command
         sl -= 1
         if sl < ooff:
-          raise MalformedDeltaException('Deletion below last edit')
+          raise MalformedDeltaException('Deletion before last edit')
         if sl > len(self._texts):
           raise MalformedDeltaException('Deletion past file end')
         if sl + cn > len(self._texts):
@@ -80,7 +80,7 @@ class RCSStream:
         ooff = sl + cn
       else: # "a" - Add command
         if sl < ooff: # Also catches same place
-          raise MalformedDeltaException('Insertion below last edit')
+          raise MalformedDeltaException('Insertion before last edit')
         if sl > len(self._texts):
           raise MalformedDeltaException('Insertion past file end')
         ntexts += self._texts[ooff:sl] + diffs[i:i + cn]
@@ -108,7 +108,7 @@ class RCSStream:
       if admatch.group(1) == 'd': # "d" - Delete command
         sl -= 1
         if sl < ooff:
-          raise MalformedDeltaException('Deletion below last edit')
+          raise MalformedDeltaException('Deletion before last edit')
         if sl > len(self._texts):
           raise MalformedDeltaException('Deletion past file end')
         if sl + cn > len(self._texts):
@@ -136,7 +136,7 @@ class RCSStream:
         ooff = sl + cn
       else: # "a" - Add command
         if sl < ooff: # Also catches same place
-          raise MalformedDeltaException('Insertion below last edit')
+          raise MalformedDeltaException('Insertion before last edit')
         if sl > len(self._texts):
           raise MalformedDeltaException('Insertion past file end')
         ndiffs += ["d%d %d\n" % (sl + 1 + adjust, cn)]

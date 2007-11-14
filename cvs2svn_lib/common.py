@@ -132,6 +132,19 @@ def verify_svn_filename_legal(path, filename):
         )
 
 
+def verify_svn_path_legal(path):
+  """Verify that PATH is a legitimate SVN path.
+
+  If not, raise a FatalError."""
+
+  if path.startswith('/'):
+    raise FatalError("Path %r must not start with '/'." % (path,))
+  head = path
+  while head != '':
+    (head,tail) = path_split(head)
+    verify_svn_filename_legal(path, tail)
+
+
 def path_join(*components):
   """Join two or more pathname COMPONENTS, inserting '/' as needed.
   Empty component are skipped."""

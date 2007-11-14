@@ -101,6 +101,7 @@ from cvs2svn_lib import config
 from cvs2svn_lib.common import DB_OPEN_NEW
 from cvs2svn_lib.common import DB_OPEN_READ
 from cvs2svn_lib.common import warning_prefix
+from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import InternalError
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.log import Log
@@ -113,6 +114,7 @@ from cvs2svn_lib.collect_data import is_trunk_revision
 from cvs2svn_lib.database import Database
 from cvs2svn_lib.database import IndexedDatabase
 from cvs2svn_lib.rcs_stream import RCSStream
+from cvs2svn_lib.rcs_stream import MalformedDeltaException
 from cvs2svn_lib.revision_manager import RevisionRecorder
 from cvs2svn_lib.revision_manager import RevisionExcluder
 from cvs2svn_lib.revision_manager import RevisionReader
@@ -508,7 +510,12 @@ class InternalRevisionRecorder(RevisionRecorder):
         # delta to the RCSStream to mutate it to the contents of this
         # revision, and also to get the reverse delta, which we store
         # as the forward delta of our child revision.
-        text = self._stream.invert_diff(text)
+        try:
+          text = self._stream.invert_diff(text)
+        except MalformedDeltaException:
+          Log().error('Malformed RCS delta in %s, revision %s'
+                      % (cvs_rev.cvs_file.get_filename(), cvs_rev.rev))
+          raise RuntimeError
         text_record = DeltaTextRecord(cvs_rev.next_id, cvs_rev.id)
         self._writeout(text_record, text)
 
@@ -741,7 +748,11 @@ class InternalRevisionReader(RevisionReader):
     very large.  Revisions may be skipped.  Each revision may be
     requested only once."""
 
-    text = self._get_text_record(cvs_rev).checkout(self._text_record_db)
+    try:
+      text = self._get_text_record(cvs_rev).checkout(self._text_record_db)
+    except MalformedDeltaException:
+      raise FatalError('Malformed RCS delta in %s, revision %s'
+                       % (cvs_rev.cvs_file.get_filename(), cvs_rev.rev))
     if cvs_rev.cvs_file.mode != 'b' and cvs_rev.cvs_file.mode != 'o':
       if suppress_keyword_substitution or cvs_rev.cvs_file.mode == 'k':
         text = self._kw_re.sub(r'$\1$', text)

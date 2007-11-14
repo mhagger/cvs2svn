@@ -32,6 +32,11 @@ def msplit(s):
   return re
 
 
+class MalformedDeltaException(Exception):
+  """A malformed RCS delta was encountered."""
+
+  pass
+
 class RCSStream:
   """This class represents a single file object to which RCS deltas can be
   applied in various ways."""
@@ -59,7 +64,7 @@ class RCSStream:
     while i < len(diffs):
       admatch = self.ad_command.match(diffs[i])
       if not admatch:
-        raise RuntimeError, 'Error parsing diff commands'
+        raise MalformedDeltaException('Bad RCS delta')
       i += 1
       sl = int(admatch.group(2))
       cn = int(admatch.group(3))
@@ -85,7 +90,7 @@ class RCSStream:
     while i < len(diffs):
       admatch = self.ad_command.match(diffs[i])
       if not admatch:
-        raise RuntimeError, 'Error parsing diff commands'
+        raise MalformedDeltaException('Bad RCS delta')
       i += 1
       sl = int(admatch.group(2))
       cn = int(admatch.group(3))

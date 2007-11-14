@@ -156,6 +156,22 @@ def path_split(path):
     return (path[:pos], path[pos+1:],)
 
 
+def normalize_svn_path(opt, path, allow_empty=False):
+  """Normalize an SVN path (e.g., one supplied by a user).
+
+  1. Strip leading, trailing, and duplicated '/'.
+  2. If ALLOW_EMPTY is not set, verify that PATH is not empty.
+
+  Return the normalized path.
+
+  If the path is invalid, raise a FatalError."""
+
+  norm_path = path_join(*path.split('/'))
+  if not allow_empty and not norm_path:
+    raise FatalError("cannot pass an empty path to %s." % (opt,))
+  return norm_path
+
+
 class PathRepeatedException(Exception):
   def __init__(self, path, count):
     self.path = path

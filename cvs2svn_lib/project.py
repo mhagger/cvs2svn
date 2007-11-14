@@ -25,25 +25,10 @@ from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import path_join
 from cvs2svn_lib.common import path_split
+from cvs2svn_lib.common import normalize_svn_path
 from cvs2svn_lib.common import verify_svn_filename_legal
 from cvs2svn_lib.common import verify_paths_disjoint
 from cvs2svn_lib.log import Log
-
-
-def normalize_ttb_path(opt, path, allow_empty=False):
-  """Normalize a path to be used for --trunk, --tags, or --branches.
-
-  1. Strip leading, trailing, and duplicated '/'.
-  2. If ALLOW_EMPTY is not set, verify that PATH is not empty.
-
-  Return the normalized path.
-
-  If the path is invalid, write an error message and exit."""
-
-  norm_path = path_join(*path.split('/'))
-  if not allow_empty and not norm_path:
-    raise FatalError("cannot pass an empty path to %s." % (opt,))
-  return norm_path
 
 
 class FileInAndOutOfAtticException(Exception):
@@ -92,12 +77,12 @@ class Project(object):
     self.project_prefix_re = re.compile(
         r'^' + re.escape(self.project_cvs_repos_path)
         + r'(' + re.escape(os.sep) + r'|$)')
-    self.trunk_path = normalize_ttb_path(
+    self.trunk_path = normalize_svn_path(
         '--trunk', trunk_path, allow_empty=Ctx().trunk_only
         )
     if not Ctx().trunk_only:
-      self.branches_path = normalize_ttb_path('--branches', branches_path)
-      self.tags_path = normalize_ttb_path('--tags', tags_path)
+      self.branches_path = normalize_svn_path('--branches', branches_path)
+      self.tags_path = normalize_svn_path('--tags', tags_path)
       verify_paths_disjoint(
           self.trunk_path, self.branches_path, self.tags_path
           )

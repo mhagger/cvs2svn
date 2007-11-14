@@ -48,7 +48,9 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
 
     # A set of the basic project infrastructure project directories
     # that have been created so far, as SVN paths.  (The root
-    # directory is considered to be present at initialization.)
+    # directory is considered to be present at initialization.)  This
+    # includes all of the LOD paths, and all of their parent
+    # directories etc.
     self._basic_directories = set([''])
 
   def _write_dumpfile_header(self, dumpfile):
@@ -146,8 +148,9 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
   def _create_basic_directory(self, path):
     """Create PATH in the repository if it is not already there.
 
-    This method should only be used for the basic project TTB
-    directories, not for directories with a project."""
+    This method should only be used for the LOD paths and the
+    directories containing them, not for directories within an LOD
+    path."""
 
     if path not in self._basic_directories:
       # Make sure that the parent directory is present:
@@ -172,7 +175,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
   def initialize_lod(self, lod):
     lod_path = lod.get_path()
     if lod_path:
-      self.mkdir(lod_path)
+      self._create_basic_directory(lod_path)
 
   def mkdir(self, path):
     """Emit the creation of directory PATH."""

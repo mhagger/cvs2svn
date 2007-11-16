@@ -382,7 +382,9 @@ def sym_log_msg(symbolic_name, is_tag=None):
   return log
 
 
-def make_conversion_id(name, args, passbypass, options_file=None):
+def make_conversion_id(
+      name, args, passbypass, options_file=None, symbol_hints_file=None
+      ):
   """Create an identifying tag for a conversion.
 
   The return value can also be used as part of a filesystem path.
@@ -396,6 +398,9 @@ def make_conversion_id(name, args, passbypass, options_file=None):
 
   If OPTIONS_FILE is specified, it is an options file that will be
   used for the conversion.
+
+  If SYMBOL_HINTS_FILE is specified, it is a symbol hints file that
+  will be used for the conversion.
 
   The 1-to-1 mapping between cvs2svn command parameters and
   conversion_ids allows us to avoid running the same conversion more
@@ -419,6 +424,9 @@ def make_conversion_id(name, args, passbypass, options_file=None):
 
   if options_file is not None:
     conv_id += '--options=%s' % options_file
+
+  if symbol_hints_file is not None:
+    conv_id += '--symbol-hints=%s' % symbol_hints_file
 
   return conv_id
 
@@ -479,7 +487,7 @@ class Conversion:
 
   def __init__(
       self, conv_id, name, error_re, passbypass, symbols, args,
-      options_file=None, dumpfile=None,
+      options_file=None, symbol_hints_file=None, dumpfile=None,
       ):
     self.conv_id = conv_id
     self.name = name
@@ -510,6 +518,7 @@ class Conversion:
       args.extend([
           '--options=%s' % self.options_file,
           ])
+      assert not symbol_hints_file
     else:
       self.options_file = None
       if tmp_dir != 'cvs2svn-tmp':
@@ -517,6 +526,13 @@ class Conversion:
         args.extend([
             '--tmpdir=%s' % tmp_dir,
             ])
+
+      if symbol_hints_file:
+        self.symbol_hints_file = os.path.join(cvsrepos, symbol_hints_file)
+        args.extend([
+            '--symbol-hints=%s' % self.symbol_hints_file,
+            ])
+
       if self.dumpfile:
         args.extend(['--dumpfile=%s' % (self.dumpfile,)])
       else:
@@ -622,7 +638,7 @@ already_converted = { }
 def ensure_conversion(
     name, error_re=None, passbypass=None,
     trunk=None, branches=None, tags=None,
-    args=None, options_file=None, dumpfile=None,
+    args=None, options_file=None, symbol_hints_file=None, dumpfile=None,
     ):
   """Convert CVS repository NAME to Subversion, but only if it has not
   been converted before by this invocation of this script.  If it has
@@ -653,6 +669,10 @@ def ensure_conversion(
   test.  It is passed to cvs2svn using the --options option (which
   suppresses some other options that are incompatible with --options).
 
+  If SYMBOL_HINTS_FILE is specified, then it should be the name of a
+  file within the main directory of the cvs repository associated with
+  this test.  It is passed to cvs2svn using the --symbol-hints option.
+
   If DUMPFILE is specified, then it is the name of a dumpfile within
   the temporary directory to which the conversion output should be
   written."""
@@ -677,7 +697,9 @@ def ensure_conversion(
   else:
     args.append('--tags=%s' % (tags,))
 
-  conv_id = make_conversion_id(name, args, passbypass, options_file)
+  conv_id = make_conversion_id(
+      name, args, passbypass, options_file, symbol_hints_file
+      )
 
   if conv_id not in already_converted:
     try:
@@ -686,7 +708,7 @@ def ensure_conversion(
       already_converted[conv_id] = Conversion(
           conv_id, name, error_re, passbypass,
           {'trunk' : trunk, 'branches' : branches, 'tags' : tags},
-          args, options_file, dumpfile,
+          args, options_file, symbol_hints_file, dumpfile,
           )
     except Failure:
       # Remember the failure so that a future attempt to run this conversion
@@ -706,7 +728,7 @@ class Cvs2SvnTestCase(TestCase):
       error_re=None, passbypass=None,
       trunk=None, branches=None, tags=None,
       args=None,
-      options_file=None, dumpfile=None,
+      options_file=None, symbol_hints_file=None, dumpfile=None,
       ):
     TestCase.__init__(self)
     self.name = name
@@ -737,6 +759,7 @@ class Cvs2SvnTestCase(TestCase):
     self.tags = tags
     self.args = args
     self.options_file = options_file
+    self.symbol_hints_file = symbol_hints_file
     self.dumpfile = dumpfile
 
   def get_description(self):
@@ -749,6 +772,7 @@ class Cvs2SvnTestCase(TestCase):
         trunk=self.trunk, branches=self.branches, tags=self.tags,
         args=self.args,
         options_file=self.options_file,
+        symbol_hints_file=self.symbol_hints_file,
         dumpfile=self.dumpfile,
         )
 
@@ -2672,13 +2696,8 @@ def write_symbol_info():
 def symbol_hints():
   "test --symbol-hints for setting branch/tag"
 
-  symbol_hints_file = os.path.join(tmp_dir, 'symbol-mess-symbol-hints.txt')
-  open(symbol_hints_file, 'w').write(
-      '0 MOSTLY_BRANCH branch .\n'
-      '0 MOSTLY_TAG    tag    .\n'
-      )
   conv = ensure_conversion(
-      'symbol-mess', args=['--symbol-hints=%s' % (symbol_hints_file,)],
+      'symbol-mess', symbol_hints_file='symbol-mess-symbol-hints.txt',
       )
   if not conv.path_exists('branches', 'MOSTLY_BRANCH'):
     raise Failure()
@@ -2689,16 +2708,8 @@ def symbol_hints():
 def parent_hints():
   "test --symbol-hints for setting parent"
 
-  symbol_hints_file = os.path.join(tmp_dir, 'symbol-mess-parent-hints.txt')
-  # BRANCH_WITH_COMMIT is usually determined to branch from .trunk.;
-  # set the preferred parent to BRANCH instead:
-  open(symbol_hints_file, 'w').write(
-      '0 MOSTLY_BRANCH      branch .\n'
-      '0 MOSTLY_TAG         tag    .\n'
-      '0 BRANCH_WITH_COMMIT branch BRANCH\n'
-      )
   conv = ensure_conversion(
-      'symbol-mess', args=['--symbol-hints=%s' % (symbol_hints_file,)],
+      'symbol-mess', symbol_hints_file='symbol-mess-parent-hints.txt',
       )
   conv.logs[9].check(sym_log_msg('BRANCH_WITH_COMMIT'), (
     ('/%(branches)s/BRANCH_WITH_COMMIT (from /branches/BRANCH:8)', 'A'),
@@ -2708,18 +2719,11 @@ def parent_hints():
 def parent_hints_invalid():
   "test --symbol-hints with an invalid parent"
 
-  symbol_hints_file = os.path.join(
-      tmp_dir, 'symbol-mess-parent-hints-invalid.txt'
-      )
   # BRANCH_WITH_COMMIT is usually determined to branch from .trunk.;
-  # set the preferred parent to BRANCH instead:
-  open(symbol_hints_file, 'w').write(
-      '0 MOSTLY_BRANCH      branch .\n'
-      '0 MOSTLY_TAG         tag    .\n'
-      '0 BRANCH_WITH_COMMIT branch BLOCKED_BY_BRANCH\n'
-      )
+  # this symbol hints file sets the preferred parent to BRANCH
+  # instead:
   conv = ensure_conversion(
-      'symbol-mess', args=['--symbol-hints=%s' % (symbol_hints_file,)],
+      'symbol-mess', symbol_hints_file='symbol-mess-parent-hints-invalid.txt',
       error_re=(
           r"BLOCKED_BY_BRANCH is not a valid parent for BRANCH_WITH_COMMIT"
           ),
@@ -2729,18 +2733,12 @@ def parent_hints_invalid():
 def parent_hints_wildcards():
   "test --symbol-hints wildcards"
 
-  symbol_hints_file = os.path.join(
-      tmp_dir, 'symbol-mess-parent-hints-wildcards.txt'
-      )
   # BRANCH_WITH_COMMIT is usually determined to branch from .trunk.;
-  # set the preferred parent to BRANCH instead:
-  open(symbol_hints_file, 'w').write(
-      '. MOSTLY_BRANCH      branch .\n'
-      '. MOSTLY_TAG         tag    .\n'
-      '. BRANCH_WITH_COMMIT .      BRANCH\n'
-      )
+  # this symbol hints file sets the preferred parent to BRANCH
+  # instead:
   conv = ensure_conversion(
-      'symbol-mess', args=['--symbol-hints=%s' % (symbol_hints_file,)],
+      'symbol-mess',
+      symbol_hints_file='symbol-mess-parent-hints-wildcards.txt',
       )
   conv.logs[9].check(sym_log_msg('BRANCH_WITH_COMMIT'), (
     ('/%(branches)s/BRANCH_WITH_COMMIT (from /branches/BRANCH:8)', 'A'),

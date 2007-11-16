@@ -119,6 +119,10 @@ def path_split(path):
     return (path[:pos], path[pos+1:],)
 
 
+class IllegalSVNPathError(FatalException):
+  pass
+
+
 # Control characters (characters not allowed in Subversion filenames):
 ctrl_characters_regexp = re.compile('[\\\x00-\\\x1f\\\x7f]')
 
@@ -169,7 +173,7 @@ def verify_svn_path_legal(path):
     verify_svn_filename_legal(path, tail)
 
 
-def normalize_svn_path(opt, path, allow_empty=False):
+def normalize_svn_path(path, allow_empty=False):
   """Normalize an SVN path (e.g., one supplied by a user).
 
   1. Strip leading, trailing, and duplicated '/'.
@@ -177,11 +181,11 @@ def normalize_svn_path(opt, path, allow_empty=False):
 
   Return the normalized path.
 
-  If the path is invalid, raise a FatalError."""
+  If the path is invalid, raise an IllegalSVNPathError."""
 
   norm_path = path_join(*path.split('/'))
   if not allow_empty and not norm_path:
-    raise FatalError("cannot pass an empty path to %s." % (opt,))
+    raise IllegalSVNPathError("Path is empty." % (opt,))
   return norm_path
 
 

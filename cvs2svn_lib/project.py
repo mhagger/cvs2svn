@@ -25,6 +25,7 @@ from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import path_join
 from cvs2svn_lib.common import path_split
+from cvs2svn_lib.common import IllegalSVNPathError
 from cvs2svn_lib.common import normalize_svn_path
 from cvs2svn_lib.common import verify_paths_disjoint
 from cvs2svn_lib.log import Log
@@ -39,6 +40,13 @@ class FileInAndOutOfAtticException(Exception):
 
     self.non_attic_path = non_attic_path
     self.attic_path = attic_path
+
+
+def normalize_ttb_path(opt, path, allow_empty=False):
+  try:
+    return normalize_svn_path(path, allow_empty)
+  except IllegalSVNPathError, e:
+    raise FatalError('Problem with %s: %s' % (opt, e,))
 
 
 class Project(object):
@@ -76,12 +84,12 @@ class Project(object):
     self.project_prefix_re = re.compile(
         r'^' + re.escape(self.project_cvs_repos_path)
         + r'(' + re.escape(os.sep) + r'|$)')
-    self.trunk_path = normalize_svn_path(
+    self.trunk_path = normalize_ttb_path(
         '--trunk', trunk_path, allow_empty=Ctx().trunk_only
         )
     if not Ctx().trunk_only:
-      self.branches_path = normalize_svn_path('--branches', branches_path)
-      self.tags_path = normalize_svn_path('--tags', tags_path)
+      self.branches_path = normalize_ttb_path('--branches', branches_path)
+      self.tags_path = normalize_ttb_path('--tags', tags_path)
       verify_paths_disjoint(
           self.trunk_path, self.branches_path, self.tags_path
           )

@@ -95,6 +95,30 @@ class CommandError(FatalError):
           % (self.command, self.exit_status))
 
 
+def path_join(*components):
+  """Join two or more pathname COMPONENTS, inserting '/' as needed.
+  Empty component are skipped."""
+
+  return '/'.join(filter(None, components))
+
+
+def path_split(path):
+  """Split the svn pathname PATH into a pair, (HEAD, TAIL).
+
+  This is similar to os.path.split(), but always uses '/' as path
+  separator.  PATH is an svn path, which should not start with a '/'.
+  HEAD is everything before the last slash, and TAIL is everything
+  after.  If PATH ends in a slash, TAIL will be empty.  If there is no
+  slash in PATH, HEAD will be empty.  If PATH is empty, both HEAD and
+  TAIL are empty."""
+
+  pos = path.rfind('/')
+  if pos == -1:
+    return ('', path,)
+  else:
+    return (path[:pos], path[pos+1:],)
+
+
 # Control characters (characters not allowed in Subversion filenames):
 ctrl_characters_regexp = re.compile('[\\\x00-\\\x1f\\\x7f]')
 
@@ -143,30 +167,6 @@ def verify_svn_path_legal(path):
   while head != '':
     (head,tail) = path_split(head)
     verify_svn_filename_legal(path, tail)
-
-
-def path_join(*components):
-  """Join two or more pathname COMPONENTS, inserting '/' as needed.
-  Empty component are skipped."""
-
-  return '/'.join(filter(None, components))
-
-
-def path_split(path):
-  """Split the svn pathname PATH into a pair, (HEAD, TAIL).
-
-  This is similar to os.path.split(), but always uses '/' as path
-  separator.  PATH is an svn path, which should not start with a '/'.
-  HEAD is everything before the last slash, and TAIL is everything
-  after.  If PATH ends in a slash, TAIL will be empty.  If there is no
-  slash in PATH, HEAD will be empty.  If PATH is empty, both HEAD and
-  TAIL are empty."""
-
-  pos = path.rfind('/')
-  if pos == -1:
-    return ('', path,)
-  else:
-    return (path[:pos], path[pos+1:],)
 
 
 def normalize_svn_path(opt, path, allow_empty=False):

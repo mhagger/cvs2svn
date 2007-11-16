@@ -127,7 +127,7 @@ class IllegalSVNPathError(FatalException):
 ctrl_characters_regexp = re.compile('[\\\x00-\\\x1f\\\x7f]')
 
 
-def verify_svn_filename_legal(path, filename):
+def verify_svn_filename_legal(filename):
   """Verify that FILENAME is a legal filename.
 
   FILENAME is a path component of a CVS path.  Check that it won't
@@ -139,22 +139,17 @@ def verify_svn_filename_legal(path, filename):
 
   - Check that the filename does not include any control characters.
 
-  If any of these tests fail, raise a FatalError.  PATH is the full
-  filesystem path from which FILENAME was derived; it can be used in
-  error messages."""
+  If any of these tests fail, raise an IllegalSVNPathError."""
 
   if filename == '':
-    raise FatalError("File %s would result in an empty filename." % (path,))
+    raise IllegalSVNPathError("Empty filename component.")
 
   if filename in ['.', '..']:
-    raise FatalError(
-        "File %s would result in an illegal filename '%s'."
-        % (path, filename,)
-        )
+    raise IllegalSVNPathError("Illegal filename component %r." % (filename,))
 
   m = ctrl_characters_regexp.search(filename)
   if m:
-    raise FatalError(
+    raise IllegalSVNPathError(
         "Character %r in filename %r is not supported by Subversion."
         % (m.group(), filename,)
         )
@@ -163,14 +158,17 @@ def verify_svn_filename_legal(path, filename):
 def verify_svn_path_legal(path):
   """Verify that PATH is a legitimate SVN path.
 
-  If not, raise a FatalError."""
+  If not, raise an IllegalSVNPathError."""
 
   if path.startswith('/'):
-    raise FatalError("Path %r must not start with '/'." % (path,))
+    raise IllegalSVNPathError("Path %r must not start with '/'." % (path,))
   head = path
   while head != '':
     (head,tail) = path_split(head)
-    verify_svn_filename_legal(path, tail)
+    try:
+        verify_svn_filename_legal(tail)
+    except IllegalSVNPathError, e:
+        raise IllegalSVNPathError('Problem with path %r: %s' % (path, e,))
 
 
 def normalize_svn_path(path, allow_empty=False):

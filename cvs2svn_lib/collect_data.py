@@ -63,6 +63,7 @@ from cvs2svn_lib.common import DB_OPEN_NEW
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.common import error_prefix
+from cvs2svn_lib.common import IllegalSVNPathError
 from cvs2svn_lib.common import verify_svn_filename_legal
 from cvs2svn_lib.common import path_split
 from cvs2svn_lib.log import Log
@@ -998,7 +999,13 @@ class _ProjectDataCollector:
     SVN."""
 
     filename = os.path.join(parent_directory.filename, basename)
-    verify_svn_filename_legal(filename, basename[:-2])
+    try:
+      verify_svn_filename_legal(basename[:-2])
+    except IllegalSVNPathError, e:
+      raise FatalError(
+          'File %r would result in an illegal SVN filename: %s'
+          % (filename, e,)
+          )
 
     if file_in_attic and not leave_in_attic:
       in_attic = True
@@ -1160,7 +1167,13 @@ class _ProjectDataCollector:
 
       # Verify that the directory name does not contain any illegal
       # characters:
-      verify_svn_filename_legal(dirname, fname)
+      try:
+        verify_svn_filename_legal(fname)
+      except IllegalSVNPathError, e:
+        raise FatalError(
+            'Directory %r would result in an illegal SVN path name: %s'
+            % (dirname, e,)
+            )
 
       sub_directory = CVSDirectory(
           self.collect_data.file_key_generator.gen_id(),

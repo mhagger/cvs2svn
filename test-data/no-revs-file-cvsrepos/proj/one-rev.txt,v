@@ -1,0 +1,24 @@
+head	1.1;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2007.11.18.22.28.09;	author mhagger;	state Exp;
+branches;
+next	;
+commitid	cLpur0bMXRgJK6Gs;
+
+
+desc
+@@
+
+
+1.1
+log
+@Add empty file
+@
+text
+@@

@@ -3158,6 +3158,12 @@ class EOLVariants(Cvs2SvnTestCase):
       raise Failure()
 
 
+def no_revs_file():
+  "handle a file with no revisions (issue #80)"
+
+  conv = ensure_conversion('no-revs-file')
+
+
 ########################################################################
 # Run the tests
 
@@ -3328,6 +3334,7 @@ test_list = [
     EOLVariants('CR'),
     EOLVariants('CRLF'),
     EOLVariants('native'),
+    no_revs_file,
     ]
 
 if __name__ == '__main__':

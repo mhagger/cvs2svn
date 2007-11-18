@@ -3,7 +3,7 @@
 # (Be in -*- python -*- mode.)
 #
 # ====================================================================
-# Copyright (c) 2006 CollabNet.  All rights reserved.
+# Copyright (c) 2006-2007 CollabNet.  All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.  The terms
@@ -28,42 +28,46 @@ returns all relevant information in the file and provided that the
 order of callbacks is always the same."""
 
 
-from __future__ import generators
-
 import sys
 import os
-import time
-
-sys.path.insert(0, os.path.dirname(os.path.dirname(sys.argv[0])))
-
-import cvs2svn_rcsparse
 
 
 class Logger:
-    def __init__(self, name):
-        self.name = name
+  def __init__(self, f, name):
+    self.f = f
+    self.name = name
 
-    def __call__(self, *args):
-        print '%s(%s)' % (self.name, ', '.join(['%r' % arg for arg in args]),)
+  def __call__(self, *args):
+    self.f.write(
+        '%s(%s)\n' % (self.name, ', '.join(['%r' % arg for arg in args]),)
+        )
 
 
 class LoggingSink:
-    def __init__(self, f):
-        self.f = f
+  def __init__(self, f):
+    self.f = f
 
-    def __getattr__(self, name):
-        return Logger(name)
+  def __getattr__(self, name):
+    return Logger(self.f, name)
 
 
 if __name__ == '__main__':
-    if sys.argv[1:]:
-        for path in sys.argv[1:]:
-            if os.path.isfile(path) and path.endswith(',v'):
-                cvs2svn_rcsparse.parse(
-                    open(path, 'rb'), LoggingSink(sys.stdout)
-                    )
-            else:
-                sys.stderr.write('%r is being ignored.\n' % path)
-    else:
-        cvs2svn_rcsparse.parse(sys.stdin, LoggingSink(sys.stdout))
+  # Since there is nontrivial logic in __init__.py, we have to import
+  # parse() via that file.  First make sure that the directory
+  # containing this script is in the path:
+  sys.path.insert(0, os.path.dirname(sys.argv[0]))
+
+  from __init__ import parse
+
+  if sys.argv[1:]:
+    for path in sys.argv[1:]:
+      if os.path.isfile(path) and path.endswith(',v'):
+        parse(
+            open(path, 'rb'), LoggingSink(sys.stdout)
+            )
+      else:
+        sys.stderr.write('%r is being ignored.\n' % path)
+  else:
+    parse(sys.stdin, LoggingSink(sys.stdout))
+
 

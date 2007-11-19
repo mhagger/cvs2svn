@@ -221,7 +221,11 @@ class IncludedSymbol(TypedSymbol, LineOfDevelopment):
     TypedSymbol.__init__(self, symbol)
     # We can't call the LineOfDevelopment constructor, so initialize
     # its extra member explicitly:
-    self.base_path = None
+    try:
+      # If the old symbol had a base_path set, then use it:
+      self.base_path = symbol.base_path
+    except AttributeError:
+      self.base_path = None
 
   def __getstate__(self):
     return (TypedSymbol.__getstate__(self), self.base_path,)

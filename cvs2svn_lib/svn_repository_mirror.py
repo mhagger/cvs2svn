@@ -809,9 +809,11 @@ class SVNRepositoryMirrorDelegate:
     raise NotImplementedError()
 
   def initialize_lod(self, lod):
-    """Initialize LOD.
+    """Initialize LOD with no contents.
 
-    LOD is an instance of LineOfDevelopment."""
+    LOD is an instance of LineOfDevelopment.  It is also possible for
+    an LOD to be created by copying from another LOD; such events are
+    indicated via the copy_lod() callback."""
 
     raise NotImplementedError()
 

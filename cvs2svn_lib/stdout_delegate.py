@@ -51,36 +51,38 @@ class StdoutDelegate(SVNRepositoryMirrorDelegate):
   def mkdir(self, path):
     """Print a line stating that we are creating directory PATH."""
 
-    Log().verbose("  New Directory", path)
+    Log().verbose("  New Directory %s" % (path,))
 
   def add_path(self, s_item):
     """Print a line stating what path we are 'adding'."""
 
-    Log().verbose("  Adding", s_item.cvs_rev.get_svn_path())
+    Log().verbose("  Adding %s" % (s_item.cvs_rev.get_svn_path(),))
 
   def change_path(self, s_item):
     """Print a line stating what path we are 'changing'."""
 
-    Log().verbose("  Changing", s_item.cvs_rev.get_svn_path())
+    Log().verbose("  Changing %s" % (s_item.cvs_rev.get_svn_path(),))
 
   def delete_path(self, path):
     """Print a line stating that we are 'deleting' PATH."""
 
-    Log().verbose("  Deleting", path)
+    Log().verbose("  Deleting %s" % (path,))
 
   def copy_lod(self, src_lod, dest_lod, src_revnum):
     """Print a line stating that we are 'copying' revision SRC_REVNUM
     of SRC_PATH to DEST_PATH."""
 
-    Log().verbose("  Copying revision", src_revnum, "of", src_lod)
-    Log().verbose("                to", dest_lod)
+    self.copy_path(src_lod.get_path(), dest_lod.get_path(), src_revnum)
 
   def copy_path(self, src_path, dest_path, src_revnum):
     """Print a line stating that we are 'copying' revision SRC_REVNUM
     of SRC_PATH to DEST_PATH."""
 
-    Log().verbose("  Copying revision", src_revnum, "of", src_path)
-    Log().verbose("                to", dest_path)
+    Log().verbose(
+        "  Copying revision %d of %s\n"
+        "                to %s\n"
+        % (src_revnum, src_path, dest_path,)
+        )
 
   def finish(self):
     """State that we are done creating our repository."""

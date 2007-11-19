@@ -365,6 +365,16 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
 
     self._add_or_change_path(s_item, OP_CHANGE)
 
+  def delete_lod(self, lod):
+    """Emit the deletion of LOD."""
+
+    self.dumpfile.write(
+        'Node-path: %s\n'
+        'Node-action: delete\n'
+        '\n'
+        % (self._utf8_path(lod.get_path()),)
+        )
+
   def delete_path(self, path):
     """Emit the deletion of PATH."""
 

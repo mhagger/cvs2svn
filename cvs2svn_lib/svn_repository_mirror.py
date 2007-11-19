@@ -443,7 +443,7 @@ class SVNRepositoryMirror:
     if not lod_history.exists():
       raise KeyError()
     lod_history.update(self._youngest, None)
-    self._invoke_delegates('delete_path', lod.get_path())
+    self._invoke_delegates('delete_lod', lod)
 
   def delete_path(self, cvs_path, lod, should_prune=False):
     """Delete CVS_PATH from LOD."""
@@ -834,6 +834,13 @@ class SVNRepositoryMirrorDelegate:
     """Change the path corresponding to S_ITEM in the repository.
 
     S_ITEM is an SVNCommitItem."""
+
+    raise NotImplementedError()
+
+  def delete_lod(self, lod):
+    """Delete LOD from the repository.
+
+    LOD is a LineOfDevelopment instance."""
 
     raise NotImplementedError()
 

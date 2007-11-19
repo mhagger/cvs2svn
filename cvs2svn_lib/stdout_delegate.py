@@ -63,6 +63,11 @@ class StdoutDelegate(SVNRepositoryMirrorDelegate):
 
     Log().verbose("  Changing %s" % (s_item.cvs_rev.get_svn_path(),))
 
+  def delete_lod(self, lod):
+    """Print a line stating that we are 'deleting' LOD."""
+
+    Log().verbose("  Deleting %s" % (lod.get_path(),))
+
   def delete_path(self, path):
     """Print a line stating that we are 'deleting' PATH."""
 

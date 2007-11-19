@@ -374,6 +374,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
         '\n'
         % (self._utf8_path(lod.get_path()),)
         )
+    self._basic_directories.remove(lod.get_path())
 
   def delete_path(self, path):
     """Emit the deletion of PATH."""
@@ -387,6 +388,10 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
 
   def copy_lod(self, src_lod, dest_lod, src_revnum):
     """Emit the copying of SRC_LOD at SRC_REV to DEST_LOD."""
+
+    # Register the main LOD directory, and create parent directories
+    # as needed:
+    self._register_basic_directory(dest_lod.get_path(), False)
 
     # We don't need to include "Node-kind:" for copies; the loader
     # ignores it anyway and just uses the source kind instead.

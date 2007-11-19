@@ -904,7 +904,7 @@ cvs2svn --symbol-transform='([0-9])-(.*):release-\1.\2' -s SVN RCS
       namely a text file with four whitespace-separated columns:</p>
 
 <pre>
-project-id symbol conversion parent-lod-name
+project-id symbol conversion svn-path parent-lod-name
 </pre>
 
       <p><i>project-id</i> is the numerical ID of the project to which
@@ -914,13 +914,16 @@ project-id symbol conversion parent-lod-name
       <i>conversion</i> specifies how the symbol should be converted,
       and can be one of the values 'branch', 'tag', or 'exclude'.  If
       <i>conversion</i> is '.', then this rule does not affect how the
-      symbol is converted.  <i>parent-lod-name</i> is the name of the
-      symbol from which this symbol should sprout, or '.trunk.' if the
-      symbol should sprout from trunk.  If <i>parent-lod-name</i> is
-      omitted or '.', then this rule does not affect the preferred
-      parent of this symbol.  The file may contain blank lines or
-      comment lines (lines whose first non-whitespace character is
-      '#').</p>
+      symbol is converted.  <i>svn-path</i> is the name of the SVN
+      path to which this line of development should be written.  If
+      <i>svn-path</i> is omitted or '.', then this rule does not
+      affect the SVN path of this symbol.  <i>parent-lod-name</i> is
+      the name of the symbol from which this symbol should sprout, or
+      '.trunk.' if the symbol should sprout from trunk.  If
+      <i>parent-lod-name</i> is omitted or '.', then this rule does
+      not affect the preferred parent of this symbol.  The file may
+      contain blank lines or comment lines (lines whose first
+      non-whitespace character is '#').</p>
 
       <p>The simplest way to use this option is to run the conversion
       through CollateSymbolsPass with <tt>--write-symbol-info</tt>
@@ -1209,7 +1212,9 @@ project-id symbol conversion parent-lod-name
   <tr>
     <td align="right"><tt>--write-symbol-info=PATH</tt></td>
     <td>Write symbol statistics and information about how symbols were
-      converted to PATH during CollateSymbolsPass.</td>
+      converted to PATH during CollateSymbolsPass.  See
+      <tt>--symbol-hints</tt> for a description of the output
+      format.</td>
   </tr>
 
   <tr>

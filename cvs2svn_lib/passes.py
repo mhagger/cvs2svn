@@ -41,6 +41,7 @@ from cvs2svn_lib.serializer import PrimedPickleSerializer
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.cvs_file_database import CVSFileDatabase
 from cvs2svn_lib.metadata_database import MetadataDatabase
+from cvs2svn_lib.symbol import LineOfDevelopment
 from cvs2svn_lib.symbol import Trunk
 from cvs2svn_lib.symbol import Symbol
 from cvs2svn_lib.symbol import Branch
@@ -213,10 +214,19 @@ class CollateSymbolsPass(Pass):
         else:
           preferred_parent_name = preferred_parent.name
 
+    if isinstance(symbol, LineOfDevelopment):
+      symbol_path = symbol.get_path()
+    else:
+      symbol_path = '.'
+
     self.symbol_info_file.write(
-        '%-5d %-30s %-10s %s\n'
-        % (stats.lod.project.id, name,
-           self.conversion_names[symbol.__class__], preferred_parent_name)
+        '%-5d %-30s %-10s %s %s\n' % (
+            stats.lod.project.id,
+            name,
+            self.conversion_names[symbol.__class__],
+            symbol_path,
+            preferred_parent_name,
+            )
         )
     self.symbol_info_file.write('      # %s\n' % (stats,))
     parent_counts = stats.possible_parents.items()

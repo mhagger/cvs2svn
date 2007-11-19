@@ -2648,18 +2648,30 @@ def write_symbol_info():
   "test --write-symbol-info"
 
   expected_lines = [
-      ['0', '.trunk.',              'trunk',  '.'                 ],
-      ['0', 'BLOCKED_BY_UNNAMED',   'branch', '.trunk.'           ],
-      ['0', 'BLOCKING_COMMIT',      'branch', 'BLOCKED_BY_COMMIT' ],
-      ['0', 'BLOCKED_BY_COMMIT',    'branch', '.trunk.'           ],
-      ['0', 'BLOCKING_BRANCH',      'branch', 'BLOCKED_BY_BRANCH' ],
-      ['0', 'BLOCKED_BY_BRANCH',    'branch', '.trunk.'           ],
-      ['0', 'MOSTLY_BRANCH',        '.',      '.'                 ],
-      ['0', 'MOSTLY_TAG',           '.',      '.'                 ],
-      ['0', 'BRANCH_WITH_COMMIT',   'branch', '.trunk.'           ],
-      ['0', 'BRANCH',               'branch', '.trunk.'           ],
-      ['0', 'TAG',                  'tag',    '.trunk.'           ],
-      ['0', 'unlabeled-1.1.12.1.2', 'branch', 'BLOCKED_BY_UNNAMED'],
+      ['0', '.trunk.',
+       'trunk', 'trunk',                         '.'],
+      ['0', 'BLOCKED_BY_UNNAMED',
+       'branch', 'branches/BLOCKED_BY_UNNAMED',  '.trunk.'],
+      ['0', 'BLOCKING_COMMIT',
+       'branch', 'branches/BLOCKING_COMMIT',     'BLOCKED_BY_COMMIT'],
+      ['0', 'BLOCKED_BY_COMMIT',
+       'branch', 'branches/BLOCKED_BY_COMMIT',   '.trunk.'],
+      ['0', 'BLOCKING_BRANCH',
+       'branch', 'branches/BLOCKING_BRANCH',     'BLOCKED_BY_BRANCH'],
+      ['0', 'BLOCKED_BY_BRANCH',
+       'branch', 'branches/BLOCKED_BY_BRANCH',   '.trunk.'],
+      ['0', 'MOSTLY_BRANCH',
+       '.',      '.',                            '.'],
+      ['0', 'MOSTLY_TAG',
+       '.',      '.',                            '.'],
+      ['0', 'BRANCH_WITH_COMMIT',
+       'branch', 'branches/BRANCH_WITH_COMMIT',  '.trunk.'],
+      ['0', 'BRANCH',
+       'branch', 'branches/BRANCH',              '.trunk.'],
+      ['0', 'TAG',
+       'tag',    'tags/TAG',                     '.trunk.'],
+      ['0', 'unlabeled-1.1.12.1.2',
+       'branch', 'branches/unlabeled-1.1.12.1.2', 'BLOCKED_BY_UNNAMED'],
       ]
   expected_lines.sort()
 
@@ -2703,6 +2715,15 @@ def symbol_hints():
     raise Failure()
   if not conv.path_exists('tags', 'MOSTLY_TAG'):
     raise Failure()
+  conv.logs[3].check(sym_log_msg('MOSTLY_TAG', 1), (
+    ('/tags/MOSTLY_TAG (from /trunk:2)', 'A'),
+    ))
+  conv.logs[9].check(sym_log_msg('BRANCH_WITH_COMMIT'), (
+    ('/branches/BRANCH_WITH_COMMIT (from /trunk:2)', 'A'),
+    ))
+  conv.logs[10].check(sym_log_msg('MOSTLY_BRANCH'), (
+    ('/branches/MOSTLY_BRANCH (from /trunk:2)', 'A'),
+    ))
 
 
 def parent_hints():
@@ -2742,6 +2763,28 @@ def parent_hints_wildcards():
       )
   conv.logs[9].check(sym_log_msg('BRANCH_WITH_COMMIT'), (
     ('/%(branches)s/BRANCH_WITH_COMMIT (from /branches/BRANCH:8)', 'A'),
+    ))
+
+
+def path_hints():
+  "test --symbol-hints for setting svn paths"
+
+  conv = ensure_conversion(
+      'symbol-mess', symbol_hints_file='symbol-mess-path-hints.txt',
+      )
+  conv.logs[3].check(sym_log_msg('MOSTLY_TAG', 1), (
+    ('/special', 'A'),
+    ('/special/tag', 'A'),
+    ('/special/tag/path (from /trunk:2)', 'A'),
+    ))
+  conv.logs[9].check(sym_log_msg('BRANCH_WITH_COMMIT'), (
+    ('/special/other', 'A'),
+    ('/special/other/branch', 'A'),
+    ('/special/other/branch/path (from /trunk:2)', 'A'),
+    ))
+  conv.logs[10].check(sym_log_msg('MOSTLY_BRANCH'), (
+    ('/special/branch', 'A'),
+    ('/special/branch/path (from /trunk:2)', 'A'),
     ))
 
 
@@ -3296,6 +3339,7 @@ test_list = [
     parent_hints_invalid,
     parent_hints_wildcards,
 # 110:
+    path_hints,
     issue_99,
     issue_100,
     issue_106,
@@ -3305,8 +3349,8 @@ test_list = [
     tag_with_no_revision,
     XFail(delete_cvsignore),
     repeated_deltatext,
-    nasty_graphs,
 # 120:
+    nasty_graphs,
     XFail(tagging_after_delete),
     crossed_branches,
     file_directory_conflict,
@@ -3316,8 +3360,8 @@ test_list = [
     internal_co_trunk_only,
     internal_co_keywords,
     leftover_revs,
-    requires_internal_co,
 # 130:
+    requires_internal_co,
     timestamp_chaos,
     symlinks,
     empty_trunk_path,
@@ -3327,8 +3371,8 @@ test_list = [
     branch_from_deleted_1_1,
     add_on_branch,
     XFail(main_git),
-    invalid_symbol,
 # 140:
+    invalid_symbol,
     invalid_symbol_ignore,
     EOLVariants('LF'),
     EOLVariants('CR'),

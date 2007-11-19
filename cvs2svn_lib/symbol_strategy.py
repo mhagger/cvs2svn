@@ -23,6 +23,7 @@ from cvs2svn_lib.boolean import *
 from cvs2svn_lib.set_support import *
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import error_prefix
+from cvs2svn_lib.common import normalize_svn_path
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.symbol import LineOfDevelopment
@@ -270,10 +271,32 @@ class HeuristicPreferredParentRule(StrategyRule):
 
 
 class ManualRule(StrategyRule):
-  def __init__(self, project_id, symbol_name, conversion, parent_lod_name):
+  def __init__(
+        self, project_id, symbol_name, conversion, svn_path, parent_lod_name
+        ):
     self.project_id = project_id
     self.symbol_name = symbol_name
+    if self.symbol_name is None:
+      # This is used to represent trunk.  Make sure the user isn't
+      # asking for anything that we can't support for trunk:
+      if issubclass(conversion, Trunk):
+        conversion = None
+      elif issubclass(conversion, ExcludedSymbol):
+        raise FatalError('Trunk cannot be excluded')
+      elif conversion is None:
+        # OK
+        pass
+      else:
+        raise FatalError('Trunk cannot be converted as a different type')
+
+      if parent_lod_name is not None:
+        raise FatalError('Trunk cannot have a parent line of development')
+
     self.conversion = conversion
+    if svn_path is None:
+      self.svn_path = None
+    else:
+      self.svn_path = normalize_svn_path(svn_path, allow_empty=True)
     self.parent_lod_name = parent_lod_name
 
   def _get_parent_by_id(self, parent_lod_name, stats):
@@ -304,11 +327,15 @@ class ManualRule(StrategyRule):
       raise SymbolPlanError('\n'.join(lines))
 
   def get_symbol(self, symbol, stats):
-    if isinstance(symbol, Trunk):
+    if (self.project_id is not None
+        and self.project_id != stats.lod.project.id):
       return symbol
 
-    if (self.project_id is None or self.project_id == stats.lod.project.id) \
-           and (self.symbol_name == stats.lod.name):
+    if isinstance(symbol, Trunk) and self.symbol_name is None:
+      if self.svn_path is not None:
+        symbol.base_path = self.svn_path
+
+    elif self.symbol_name == stats.lod.name:
       if self.conversion is not None:
         symbol = self.conversion(symbol)
 
@@ -321,6 +348,9 @@ class ManualRule(StrategyRule):
             self.parent_lod_name, stats
             ).id
 
+      if self.svn_path is not None:
+        symbol.base_path = self.svn_path
+
     return symbol
 
 
@@ -329,7 +359,7 @@ class SymbolHintsFileRule(StrategyRule):
 
   The input file is line-oriented with the following format:
 
-      <project-id> <symbol-name> <conversion> [<parent-lod-name>]
+      <project-id> <symbol-name> <conversion> [<svn-path> [<parent-lod-name>]]
 
   Where the fields are separated by whitespace and
 
@@ -344,6 +374,12 @@ class SymbolHintsFileRule(StrategyRule):
           'tag', or 'exclude'.  This field can be '.' if the rule
           shouldn't affect how the symbol is treated in the
           conversion.
+
+      svn-path -- the SVN path that should serve as the root path of
+          this LOD.  The path should be expressed as a path relative
+          to the SVN root directory, with or without a leading '/'.
+          This field can be omitted or '.' if the rule shouldn't
+          affect the LOD's SVN path.
 
       parent-lod-name -- the name of the LOD that should serve as this
           symbol's parent.  This field can be omitted or '.'  if the
@@ -372,18 +408,8 @@ class SymbolHintsFileRule(StrategyRule):
       if self.comment_re.match(s):
         continue
       fields = s.split()
-      if len(fields) == 3:
-        [project_id, symbol_name, conversion] = fields
-        parent_lod_name = None
-      elif len(fields) == 4:
-        [project_id, symbol_name, conversion, parent_lod_name] = fields
-        if parent_lod_name == '.':
-          parent_lod_name = None
-      else:
-        raise FatalError(
-            'The following line in "%s" cannot be parsed:\n    "%s"' % (l,)
-            )
 
+      project_id = fields.pop(0)
       if project_id == '.':
         project_id = None
       else:
@@ -394,6 +420,9 @@ class SymbolHintsFileRule(StrategyRule):
               'Illegal project_id in the following line:\n    "%s"' % (l,)
               )
 
+      symbol_name = fields.pop(0)
+
+      conversion = fields.pop(0)
       try:
         conversion = self.conversion_map[conversion]
       except KeyError:
@@ -401,8 +430,31 @@ class SymbolHintsFileRule(StrategyRule):
             'Illegal conversion in the following line:\n    "%s"' % (l,)
             )
 
+      if fields:
+        svn_path = fields.pop(0)
+        if svn_path[0] == '/':
+          svn_path = svn_path[1:]
+        elif svn_path == '.':
+          svn_path = None
+      else:
+        svn_path = None
+
+      if fields:
+        parent_lod_name = fields.pop(0)
+        if parent_lod_name == '.':
+          parent_lod_name = None
+      else:
+        parent_lod_name = None
+
+      if fields:
+        raise FatalError(
+            'The following line in "%s" cannot be parsed:\n    "%s"' % (l,)
+            )
+
       self._rules.append(
-          ManualRule(project_id, symbol_name, conversion, parent_lod_name)
+          ManualRule(
+              project_id, symbol_name, conversion, svn_path, parent_lod_name
+              )
           )
 
     for rule in self._rules:

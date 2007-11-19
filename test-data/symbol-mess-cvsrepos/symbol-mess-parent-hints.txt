@@ -1,3 +1,3 @@
-0 MOSTLY_BRANCH      branch .
-0 MOSTLY_TAG         tag    .
-0 BRANCH_WITH_COMMIT branch BRANCH
+0 MOSTLY_BRANCH      branch . .
+0 MOSTLY_TAG         tag    . .
+0 BRANCH_WITH_COMMIT branch . BRANCH

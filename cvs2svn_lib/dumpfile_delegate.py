@@ -145,17 +145,19 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
   def end_commit(self):
     pass
 
-  def _create_basic_directory(self, path):
-    """Create PATH in the repository if it is not already there.
+  def _register_basic_directory(self, path, create):
+    """Register the creation of PATH if it is not already there.
 
-    This method should only be used for the LOD paths and the
-    directories containing them, not for directories within an LOD
-    path."""
+    Create any parent directories that do not already exist.  If
+    CREATE is set, also create PATH if it doesn't already exist.  This
+    method should only be used for the LOD paths and the directories
+    containing them, not for directories within an LOD path."""
 
     if path not in self._basic_directories:
       # Make sure that the parent directory is present:
-      self._create_basic_directory(path_split(path)[0])
-      self.mkdir(path)
+      self._register_basic_directory(path_split(path)[0], True)
+      if create:
+        self.mkdir(path)
       self._basic_directories.add(path)
 
   def initialize_project(self, project):
@@ -167,15 +169,15 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
 
     # For a trunk-only conversion, trunk_path might be ''.
     if project.trunk_path:
-      self._create_basic_directory(project.trunk_path)
+      self._register_basic_directory(project.trunk_path, True)
     if not Ctx().trunk_only:
-      self._create_basic_directory(project.branches_path)
-      self._create_basic_directory(project.tags_path)
+      self._register_basic_directory(project.branches_path, True)
+      self._register_basic_directory(project.tags_path, True)
 
   def initialize_lod(self, lod):
     lod_path = lod.get_path()
     if lod_path:
-      self._create_basic_directory(lod_path)
+      self._register_basic_directory(lod_path, True)
 
   def mkdir(self, path):
     """Emit the creation of directory PATH."""

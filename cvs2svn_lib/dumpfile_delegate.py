@@ -133,14 +133,15 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     total_len = len(all_prop_strings)
 
     # Print the revision header and revprops
-    self.dumpfile.write('Revision-number: %d\n'
-                        'Prop-content-length: %d\n'
-                        'Content-length: %d\n'
-                        '\n'
-                        % (self.revision, total_len, total_len))
-
-    self.dumpfile.write(all_prop_strings)
-    self.dumpfile.write('\n')
+    self.dumpfile.write(
+        'Revision-number: %d\n'
+        'Prop-content-length: %d\n'
+        'Content-length: %d\n'
+        '\n'
+        '%s'
+        '\n'
+        % (self.revision, total_len, total_len, all_prop_strings)
+        )
 
   def end_commit(self):
     pass
@@ -182,11 +183,14 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
   def mkdir(self, path):
     """Emit the creation of directory PATH."""
 
-    self.dumpfile.write("Node-path: %s\n"
-                        "Node-kind: dir\n"
-                        "Node-action: add\n"
-                        "\n"
-                        "\n" % self._utf8_path(path))
+    self.dumpfile.write(
+        "Node-path: %s\n"
+        "Node-kind: dir\n"
+        "Node-action: add\n"
+        "\n"
+        "\n"
+        % self._utf8_path(path)
+        )
 
   def _add_or_change_path(self, s_item, op):
     """Emit the addition or change corresponding to S_ITEM.
@@ -284,30 +288,35 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
       ignore_len = len(ignore_contents)
 
       # write headers, then props
-      self.dumpfile.write('Node-path: %s\n'
-                          'Node-kind: dir\n'
-                          'Node-action: change\n'
-                          'Prop-content-length: %d\n'
-                          'Content-length: %d\n'
-                          '\n'
-                          '%s'
-                          % (self._utf8_path(dir_path), ignore_len,
-                             ignore_len, ignore_contents))
+      self.dumpfile.write(
+          'Node-path: %s\n'
+          'Node-kind: dir\n'
+          'Node-action: change\n'
+          'Prop-content-length: %d\n'
+          'Content-length: %d\n'
+          '\n'
+          '%s'
+          % (self._utf8_path(dir_path),
+             ignore_len, ignore_len, ignore_contents)
+          )
 
-    self.dumpfile.write('Node-path: %s\n'
-                        'Node-kind: file\n'
-                        'Node-action: %s\n'
-                        '%s'  # no property header if no props
-                        'Text-content-length: '
-                        % (self._utf8_path(cvs_rev.get_svn_path()),
-                           action, props_header))
+    self.dumpfile.write(
+        'Node-path: %s\n'
+        'Node-kind: file\n'
+        'Node-action: %s\n'
+        '%s'  # no property header if no props
+        'Text-content-length: '
+        % (self._utf8_path(cvs_rev.get_svn_path()), action, props_header)
+        )
 
     pos = self.dumpfile.tell()
 
-    self.dumpfile.write('0000000000000000\n'
-                        'Text-content-md5: 00000000000000000000000000000000\n'
-                        'Content-length: 0000000000000000\n'
-                        '\n')
+    self.dumpfile.write(
+        '0000000000000000\n'
+        'Text-content-md5: 00000000000000000000000000000000\n'
+        'Content-length: 0000000000000000\n'
+        '\n'
+        )
 
     if prop_contents:
       self.dumpfile.write(prop_contents)
@@ -359,9 +368,12 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
   def delete_path(self, path):
     """Emit the deletion of PATH."""
 
-    self.dumpfile.write('Node-path: %s\n'
-                        'Node-action: delete\n'
-                        '\n' % self._utf8_path(path))
+    self.dumpfile.write(
+        'Node-path: %s\n'
+        'Node-action: delete\n'
+        '\n'
+        % (self._utf8_path(path),)
+        )
 
   def copy_lod(self, src_lod, dest_lod, src_revnum):
     """Emit the copying of SRC_LOD at SRC_REV to DEST_LOD."""
@@ -373,11 +385,9 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
         'Node-action: add\n'
         'Node-copyfrom-rev: %d\n'
         'Node-copyfrom-path: /%s\n'
-        '\n' % (
-            self._utf8_path(dest_lod.get_path()),
-            src_revnum,
-            self._utf8_path(src_lod.get_path()),
-            )
+        '\n'
+        % (self._utf8_path(dest_lod.get_path()),
+           src_revnum, self._utf8_path(src_lod.get_path()))
         )
 
   def copy_path(self, src_path, dest_path, src_revnum):
@@ -390,11 +400,8 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
         'Node-action: add\n'
         'Node-copyfrom-rev: %d\n'
         'Node-copyfrom-path: /%s\n'
-        '\n' % (
-            self._utf8_path(dest_path),
-            src_revnum,
-            self._utf8_path(src_path),
-            )
+        '\n'
+        % (self._utf8_path(dest_path), src_revnum, self._utf8_path(src_path))
         )
 
   def finish(self):

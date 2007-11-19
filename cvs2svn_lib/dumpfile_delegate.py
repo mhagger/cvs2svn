@@ -361,19 +361,39 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
                         'Node-action: delete\n'
                         '\n' % self._utf8_path(path))
 
+  def copy_lod(self, src_lod, dest_lod, src_revnum):
+    """Emit the copying of SRC_LOD at SRC_REV to DEST_LOD."""
+
+    # We don't need to include "Node-kind:" for copies; the loader
+    # ignores it anyway and just uses the source kind instead.
+    self.dumpfile.write(
+        'Node-path: %s\n'
+        'Node-action: add\n'
+        'Node-copyfrom-rev: %d\n'
+        'Node-copyfrom-path: /%s\n'
+        '\n' % (
+            self._utf8_path(dest_lod.get_path()),
+            src_revnum,
+            self._utf8_path(src_lod.get_path()),
+            )
+        )
+
   def copy_path(self, src_path, dest_path, src_revnum):
     """Emit the copying of SRC_PATH at SRC_REV to DEST_PATH."""
 
     # We don't need to include "Node-kind:" for copies; the loader
     # ignores it anyway and just uses the source kind instead.
-    self.dumpfile.write('Node-path: %s\n'
-                        'Node-action: add\n'
-                        'Node-copyfrom-rev: %d\n'
-                        'Node-copyfrom-path: /%s\n'
-                        '\n'
-                        % (self._utf8_path(dest_path),
-                           src_revnum,
-                           self._utf8_path(src_path)))
+    self.dumpfile.write(
+        'Node-path: %s\n'
+        'Node-action: add\n'
+        'Node-copyfrom-rev: %d\n'
+        'Node-copyfrom-path: /%s\n'
+        '\n' % (
+            self._utf8_path(dest_path),
+            src_revnum,
+            self._utf8_path(src_path),
+            )
+        )
 
   def finish(self):
     """Perform any cleanup necessary after all revisions have been

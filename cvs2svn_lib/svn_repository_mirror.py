@@ -527,7 +527,7 @@ class SVNRepositoryMirror:
 
     dest_lod_history.update(self._youngest, src_node.id)
 
-    self._invoke_delegates('copy_path', src_path, dest_path, src_revnum)
+    self._invoke_delegates('copy_lod', src_lod, dest_lod, src_revnum)
 
     # This is a cheap copy, so src_node has the same contents as the
     # new destination node.
@@ -841,6 +841,14 @@ class SVNRepositoryMirrorDelegate:
     """PATH is being deleted from the repository.
 
     PATH is a string; see subclass implementation for details."""
+
+    raise NotImplementedError()
+
+  def copy_lod(self, src_lod, dest_lod, src_revnum):
+    """SRC_LOD in SRC_REVNUM is being copied to DEST_LOD.
+
+    SRC_LOD and DEST_LOD are both LODs, and SRC_REVNUM is a subversion
+    revision number (int); see subclass implementation for details."""
 
     raise NotImplementedError()
 

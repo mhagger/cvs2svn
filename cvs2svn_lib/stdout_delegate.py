@@ -68,6 +68,13 @@ class StdoutDelegate(SVNRepositoryMirrorDelegate):
 
     Log().verbose("  Deleting", path)
 
+  def copy_lod(self, src_lod, dest_lod, src_revnum):
+    """Print a line stating that we are 'copying' revision SRC_REVNUM
+    of SRC_PATH to DEST_PATH."""
+
+    Log().verbose("  Copying revision", src_revnum, "of", src_lod)
+    Log().verbose("                to", dest_lod)
+
   def copy_path(self, src_path, dest_path, src_revnum):
     """Print a line stating that we are 'copying' revision SRC_REVNUM
     of SRC_PATH to DEST_PATH."""

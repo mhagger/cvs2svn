@@ -48,10 +48,10 @@ class StdoutDelegate(SVNRepositoryMirrorDelegate):
   def initialize_lod(self, lod):
     Log().verbose("  Initializing %s" % (lod,))
 
-  def mkdir(self, path):
-    """Print a line stating that we are creating directory PATH."""
-
-    Log().verbose("  New Directory %s" % (path,))
+  def mkdir(self, lod, cvs_directory):
+    Log().verbose(
+        "  New Directory %s" % (lod.get_path(cvs_directory.cvs_path),)
+        )
 
   def add_path(self, s_item):
     """Print a line stating what path we are 'adding'."""

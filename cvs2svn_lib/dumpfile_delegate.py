@@ -146,6 +146,18 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
   def end_commit(self):
     pass
 
+  def _make_any_dir(self, path):
+    """Emit the creation of directory PATH."""
+
+    self.dumpfile.write(
+        "Node-path: %s\n"
+        "Node-kind: dir\n"
+        "Node-action: add\n"
+        "\n"
+        "\n"
+        % self._utf8_path(path)
+        )
+
   def _register_basic_directory(self, path, create):
     """Register the creation of PATH if it is not already there.
 
@@ -158,7 +170,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
       # Make sure that the parent directory is present:
       self._register_basic_directory(path_split(path)[0], True)
       if create:
-        self.mkdir(path)
+        self._make_any_dir(path)
       self._basic_directories.add(path)
 
   def initialize_project(self, project):
@@ -180,17 +192,8 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     if lod_path:
       self._register_basic_directory(lod_path, True)
 
-  def mkdir(self, path):
-    """Emit the creation of directory PATH."""
-
-    self.dumpfile.write(
-        "Node-path: %s\n"
-        "Node-kind: dir\n"
-        "Node-action: add\n"
-        "\n"
-        "\n"
-        % self._utf8_path(path)
-        )
+  def mkdir(self, lod, cvs_directory):
+    self._make_any_dir(lod.get_path(cvs_directory.cvs_path))
 
   def _add_or_change_path(self, s_item, op):
     """Emit the addition or change corresponding to S_ITEM.

@@ -413,7 +413,7 @@ class SVNRepositoryMirror:
         # The component does not exist, so we create it.
         new_node = self._create_empty_node()
         parent_node[cvs_directory] = new_node
-        self._invoke_delegates('mkdir', lod.get_path(cvs_directory.cvs_path))
+        self._invoke_delegates('mkdir', lod, cvs_directory)
         return new_node
       else:
         raise
@@ -817,11 +817,10 @@ class SVNRepositoryMirrorDelegate:
 
     raise NotImplementedError()
 
-  def mkdir(self, path):
-    """Create directory PATH.
+  def mkdir(self, lod, cvs_directory):
+    """Create CVS_DIRECTORY within LOD.
 
-    PATH is a string representing an SVN path within an LOD tree
-    (i.e., not an LOD's main directory or anything higher than that)."""
+    LOD is a LineOfDevelopment; CVS_DIRECTORY is a CVSDirectory."""
 
     raise NotImplementedError()
 

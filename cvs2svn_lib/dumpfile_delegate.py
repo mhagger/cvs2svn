@@ -305,18 +305,19 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
         'Node-kind: file\n'
         'Node-action: %s\n'
         '%s'  # no property header if no props
-        'Text-content-length: '
         % (self._utf8_path(cvs_rev.get_svn_path()), action, props_header)
         )
 
     pos = self.dumpfile.tell()
 
-    self.dumpfile.write(
-        '0000000000000000\n'
-        'Text-content-md5: 00000000000000000000000000000000\n'
-        'Content-length: 0000000000000000\n'
+    content_header_fmt = (
+        'Text-content-length: %16d\n'
+        'Text-content-md5: %32s\n'
+        'Content-length: %16d\n'
         '\n'
         )
+
+    self.dumpfile.write(content_header_fmt % (0, '', 0,))
 
     if prop_contents:
       self.dumpfile.write(prop_contents)
@@ -334,19 +335,15 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
 
     stream.close()
 
-    # Go back to patch up the length and checksum headers:
+    # Go back to overwrite the length and checksum headers with the
+    # correct values.  The content length is the length of property
+    # data, text data, and any metadata around/inside around them:
     self.dumpfile.seek(pos, 0)
-    # We left 16 zeros for the text length; replace them with the real
-    # length, padded on the left with spaces:
-    self.dumpfile.write('%16d' % length)
-    # 16... + 1 newline + len('Text-content-md5: ') == 35
-    self.dumpfile.seek(pos + 35, 0)
-    self.dumpfile.write(checksum.hexdigest())
-    # 35... + 32 bytes of checksum + 1 newline + len('Content-length: ') == 84
-    self.dumpfile.seek(pos + 84, 0)
-    # The content length is the length of property data, text data,
-    # and any metadata around/inside around them.
-    self.dumpfile.write('%16d' % (length + len(prop_contents)))
+    self.dumpfile.write(
+        content_header_fmt
+        % (length, checksum.hexdigest(), length + len(prop_contents),)
+        )
+
     # Jump back to the end of the stream
     self.dumpfile.seek(0, 2)
 

@@ -78,6 +78,12 @@ repository's history as possible.</p>
     such changesets up into separate commits
     (<tt>--no-cross-branch-commits</tt>; see also options file).</dd>
 
+  <dt>Multiproject conversions</dt>
+  <dd>cvs2svn can convert a CVS repository that contains multiple
+    projects into a single Subversion repository with the conventional
+    multiproject directory layout.  See <a
+    href="faq.html#onetoone">the FAQ</a> for more information.</dt>
+
   <dt>Branch vs. tag</dt>
   <dd>CVS allows the same symbol name to be used sometimes as a
     branch, sometimes as a tag.  cvs2svn has options and heuristics to
@@ -95,6 +101,14 @@ repository's history as possible.</p>
   <dt>Branch/tag renaming</dt>
   <dd>cvs2svn can rename branches and tags during the conversion using
     regular-expression patterns (<tt>--symbol-transform</tt>).</dd>
+
+  <dt>Choosing SVN paths for branches/tags</dt>
+  <dd>You can choose what SVN paths to use as the trunk/branches/tags
+    directories (<tt>--trunk</tt>, <tt>--branches</tt>,
+    <tt>--tags</tt>), or set arbitrary paths for specific CVS
+    branches/tags (<tt>--symbol-hints</tt>).  For example, you might
+    want to store some tags to the <tt>project/tags</tt> directory,
+    but others to <tt>project/releases</tt>.</dd>
 
   <dt>Branch and tag parents</dt>
   <dd>In many cases, the CVS history is ambiguous about which branch
@@ -186,7 +200,8 @@ repository's history as possible.</p>
       <li>Multiple revision headers for the same CVS file
         revision.</li>
 
-      <li>Tags that refer to non-existent revisions.</li>
+      <li>Tags and branches that refer to non-existent revisions or
+        ill-formed revision numbers.</li>
 
       <li>Branches that have no associated labels.</li>
 
@@ -211,6 +226,11 @@ repository's history as possible.</p>
     amount of RAM.  Conversions are organized as multiple passes and
     can be restarted at an arbitrary pass in the case of
     problems.</dd>
+
+  <dt>Configurable/extensible using Python</dt>
+  <dd>Many aspects of the conversion can be customized using Python
+    plugins that interact with cvs2svn through documented interfaces
+    (<tt>--options</tt>).</dd>
 
 </dl>
 
@@ -557,7 +577,12 @@ heavily-commented sample options file,
 <tt>cvs2svn-example.options</tt>, is included in the cvs2svn
 distribution.  The easiest way to create your own options file is to
 make a copy of the sample file and modify it as directed by the
-comments in the file.</p>
+comments in that file.</p>
+
+<p><strong>Note:</strong> The options file format changes frequently.
+Please be sure to base your options file on the
+<tt>cvs2svn-example.options</tt> file from the version of cvs2svn that
+you plan to use.</p>
 
 <p>To start a conversion using an options file, invoke cvs2svn like
 this:</p>
@@ -605,8 +630,13 @@ level of the repository tree, though this behavior can be changed by
 using the <tt>--trunk</tt>, <tt>--branches</tt>, and <tt>--tags</tt>
 options.  For multiproject conversions, you must specify the location
 of each project's trunk, branches, and tags directory in the options
-file, but you are encouraged to use the standard Subversion
-multiproject layout.</p>
+file; <a
+href="http://svnbook.red-bean.com/en/1.4/svn.branchmerge.maint.html#svn.branchmerge.maint.layout">repository
+layout strategies</a> are discussed in the <a
+href="http://svnbook.red-bean.com/">Subversion book</a>.  For even
+finer control over the conversion, you can use a
+<tt>--symbol-hints</tt> file to specify the SVN path to be used for
+each CVS tag and branch.</p>
 
 
 <h2><a name="symbol-exclusion">Excluding tags and branches</a></h2>

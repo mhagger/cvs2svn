@@ -2,15 +2,30 @@ Version x.x.x (not yet released)
 --------------------------------
 
  New features:
- * Add option --write-symbol-info to write info and stats about CVS symbols.
- * Add option --symbol-hints to specify how symbols should be converted.
+ * Allow conversion of a CVS repository to git (experimental).
+ * Enhance symbol transform capabilities:
+   - Add SymbolMapper, for transforming specific symbols in specific files.
+   - Allow SymbolTransforms to cause a symbol to be discarded.
+ * Enhance symbol strategy capabilities:
+   - Write each CVS branch/tag to be written to an arbitrary SVN path.
+   - Choose which trunk/branch should serve as the parent of each branch/tag.
+   - --symbol-hints: manually specify how symbols should be converted.
+ * --write-symbol-info: output info about CVS symbols.
  * Add option ctx.decode_apple_single for handling AppleSingle-encoded files.
 
  Bugs fixed:
+ * Fix issue #80: Empty CVS,v file not accepted.
+ * Fix issue #108: Create project TTB directories "just-in-time".
+ * Fix issue #112: Random test failures with Python 2.5.
+ * Fix issue #115: crash - Bad file descriptor.
+ * Fix the translation of line-end characters for eol-styles CR and CRLF.
 
  Improvements and output changes:
  * Create trunk/tags/branches directories for project when project is created.
+ * Improved conversion speed significantly, especially for large repositories.
  * Ignore (with a warning) symbols defined to malformed revision numbers.
+ * Emit warning if symbol definitions reference malformed revision numbers.
+ * Handle RCS files that superfluously set the default branch to trunk.
 
  Miscellaneous:
 

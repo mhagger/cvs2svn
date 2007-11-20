@@ -376,14 +376,12 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
         )
     self._basic_directories.remove(lod.get_path())
 
-  def delete_path(self, path):
-    """Emit the deletion of PATH."""
-
+  def delete_path(self, lod, cvs_path):
     self.dumpfile.write(
         'Node-path: %s\n'
         'Node-action: delete\n'
         '\n'
-        % (self._utf8_path(path),)
+        % (self._utf8_path(lod.get_path(cvs_path.cvs_path)),)
         )
 
   def copy_lod(self, src_lod, dest_lod, src_revnum):

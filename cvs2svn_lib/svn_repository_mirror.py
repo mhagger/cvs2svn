@@ -456,7 +456,7 @@ class SVNRepositoryMirror:
           cvs_path.parent_directory, lod, False
           )
       del parent_node[cvs_path]
-      self._invoke_delegates('delete_path', lod.get_path(cvs_path.cvs_path))
+      self._invoke_delegates('delete_path', lod, cvs_path)
 
       # The following recursion makes pruning an O(n^2) operation in the
       # worst case (where n is the depth of SVN_PATH), but the worst case
@@ -619,10 +619,7 @@ class SVNRepositoryMirror:
       delete_list.sort()
       for cvs_path in delete_list:
         del dest_node[cvs_path]
-        self._invoke_delegates(
-            'delete_path',
-            symbol.get_path(dest_cvs_path.cvs_path, cvs_path.basename)
-            )
+        self._invoke_delegates('delete_path', symbol, cvs_path)
 
     return dest_node
 
@@ -845,10 +842,10 @@ class SVNRepositoryMirrorDelegate:
 
     raise NotImplementedError()
 
-  def delete_path(self, path):
-    """Delete PATH from the repository.
+  def delete_path(self, lod, cvs_path):
+    """Delete CVS_PATH from LOD.
 
-    PATH is a string representing an SVN path."""
+    LOD is a LineOfDevelopment; CVS_PATH is a CVSPath."""
 
     raise NotImplementedError()
 

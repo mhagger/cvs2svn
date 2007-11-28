@@ -2772,19 +2772,27 @@ def path_hints():
   conv = ensure_conversion(
       'symbol-mess', symbol_hints_file='symbol-mess-path-hints.txt',
       )
+  conv.logs[1].check('Standard project directories initialized by cvs2svn.', (
+    ('/a', 'A'),
+    ('/a/strange', 'A'),
+    ('/a/strange/trunk', 'A'),
+    ('/a/strange/trunk/path', 'A'),
+    ('/branches', 'A'),
+    ('/tags', 'A'),
+    ))
   conv.logs[3].check(sym_log_msg('MOSTLY_TAG', 1), (
     ('/special', 'A'),
     ('/special/tag', 'A'),
-    ('/special/tag/path (from /trunk:2)', 'A'),
+    ('/special/tag/path (from /a/strange/trunk/path:2)', 'A'),
     ))
   conv.logs[9].check(sym_log_msg('BRANCH_WITH_COMMIT'), (
     ('/special/other', 'A'),
     ('/special/other/branch', 'A'),
-    ('/special/other/branch/path (from /trunk:2)', 'A'),
+    ('/special/other/branch/path (from /a/strange/trunk/path:2)', 'A'),
     ))
   conv.logs[10].check(sym_log_msg('MOSTLY_BRANCH'), (
     ('/special/branch', 'A'),
-    ('/special/branch/path (from /trunk:2)', 'A'),
+    ('/special/branch/path (from /a/strange/trunk/path:2)', 'A'),
     ))
 
 
@@ -3339,7 +3347,7 @@ test_list = [
     parent_hints_invalid,
     parent_hints_wildcards,
 # 110:
-    path_hints,
+    XFail(path_hints),
     issue_99,
     issue_100,
     issue_106,

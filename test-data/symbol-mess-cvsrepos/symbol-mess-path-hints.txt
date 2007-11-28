@@ -1,3 +1,4 @@
+. .trunk.            trunk  /a/strange/trunk/path .
 . MOSTLY_BRANCH      branch /special/branch/path .
 . MOSTLY_TAG         tag    /special/tag/path .
 . BRANCH_WITH_COMMIT .      /special/other/branch/path .

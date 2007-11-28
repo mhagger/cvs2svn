@@ -152,23 +152,6 @@ class Project(object):
 
   determine_repository_root = staticmethod(determine_repository_root)
 
-  def is_source(self, svn_path):
-    """Return True iff SVN_PATH is a legitimate source for this project.
-
-    Legitimate paths are self.trunk_path or any directory directly
-    under self.branches_path.
-
-    This routine must not be called during --trunk-only conversions."""
-
-    if svn_path == self.trunk_path:
-      return True
-
-    (head, tail,) = path_split(svn_path)
-    if head == self.branches_path:
-      return True
-
-    return False
-
   def get_trunk_path(self, *components):
     """Return the trunk path.
 

@@ -180,9 +180,15 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     because two directories share part of their paths either within or
     across projects)."""
 
-    # For a trunk-only conversion, trunk_path might be ''.
-    if project.trunk_path:
-      self._register_basic_directory(project.trunk_path, True)
+    # Find the path of the Trunk symbol for this project (which might
+    # differ from project.trunk_path because of SymbolStrategyRules):
+    trunk = Ctx()._symbol_db.get_symbol(project.trunk_id)
+
+    # For a trunk-only conversion, the trunk path might be '', in
+    # which case it already exists and we mustn't create it:
+    if trunk.base_path:
+      self._register_basic_directory(trunk.base_path, True)
+
     if not Ctx().trunk_only:
       self._register_basic_directory(project.branches_path, True)
       self._register_basic_directory(project.tags_path, True)

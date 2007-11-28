@@ -3347,7 +3347,7 @@ test_list = [
     parent_hints_invalid,
     parent_hints_wildcards,
 # 110:
-    XFail(path_hints),
+    path_hints,
     issue_99,
     issue_100,
     issue_106,

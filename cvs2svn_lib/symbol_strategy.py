@@ -270,28 +270,74 @@ class HeuristicPreferredParentRule(StrategyRule):
     return symbol
 
 
-class ManualRule(StrategyRule):
+class ManualTrunkRule(StrategyRule):
+  """Change the SVN path of Trunk LODs.
+
+  Members:
+
+    project_id -- (int or None) The id of the project whose trunk
+        should be affected by this rule.  If project_id is None, then
+        the rule is not project-specific.
+
+    svn_path -- (str) The SVN path that should be used as the base
+        directory for this trunk.  This member must not be None,
+        though it may be the empty string for a single-project,
+        trunk-only conversion.
+
+  """
+
+  def __init__(self, project_id, svn_path):
+    self.project_id = project_id
+    self.svn_path = normalize_svn_path(svn_path, allow_empty=True)
+
+  def get_symbol(self, symbol, stats):
+    if (self.project_id is not None
+        and self.project_id != stats.lod.project.id):
+      return symbol
+
+    if isinstance(symbol, Trunk):
+      symbol.base_path = self.svn_path
+
+    return symbol
+
+
+class ManualSymbolRule(StrategyRule):
+  """Change how particular symbols are converted.
+
+  Members:
+
+    project_id -- (int or None) The id of the project whose trunk
+        should be affected by this rule.  If project_id is None, then
+        the rule is not project-specific.
+
+    symbol_name -- (str) The name of the symbol that should be
+        affected by this rule.
+
+    conversion -- (callable or None) A callable that converts the
+        symbol to its preferred output type.  This should be one of
+        (Branch, Tag, ExcludedSymbol).  If this member is None, then
+        this rule does not affect the symbol's output type.
+
+    svn_path -- (str) The SVN path that should be used as the base
+        directory for this trunk.  This member must not be None,
+        though it may be the empty string for a single-project,
+        trunk-only conversion.
+
+    parent_lod_name -- (str or None) The name of the line of
+        development that should be preferred as the parent of this
+        symbol.  (The preferred parent is the line of development from
+        which the symbol should sprout.)  If this member is set to the
+        string '.trunk.', then the symbol will be set to sprout
+        directly from trunk.  If this member is set to None, then this
+        rule won't affect the symbol's parent.
+
+  """
+
   def __init__(
         self, project_id, symbol_name, conversion, svn_path, parent_lod_name
         ):
     self.project_id = project_id
     self.symbol_name = symbol_name
-    if self.symbol_name is None:
-      # This is used to represent trunk.  Make sure the user isn't
-      # asking for anything that we can't support for trunk:
-      if issubclass(conversion, Trunk):
-        conversion = None
-      elif issubclass(conversion, ExcludedSymbol):
-        raise FatalError('Trunk cannot be excluded')
-      elif conversion is None:
-        # OK
-        pass
-      else:
-        raise FatalError('Trunk cannot be converted as a different type')
-
-      if parent_lod_name is not None:
-        raise FatalError('Trunk cannot have a parent line of development')
-
     self.conversion = conversion
     if svn_path is None:
       self.svn_path = None
@@ -331,9 +377,8 @@ class ManualRule(StrategyRule):
         and self.project_id != stats.lod.project.id):
       return symbol
 
-    if isinstance(symbol, Trunk) and self.symbol_name is None:
-      if self.svn_path is not None:
-        symbol.base_path = self.svn_path
+    elif isinstance(symbol, Trunk):
+      return symbol
 
     elif self.symbol_name == stats.lod.name:
       if self.conversion is not None:
@@ -367,7 +412,8 @@ class SymbolHintsFileRule(StrategyRule):
           symbol belongs (numbered starting with 0).  This field can
           be '.' if the rule is not project-specific.
 
-      symbol-name -- the name of the symbol being specified.
+      symbol-name -- the name of the symbol being specified, or
+          '.trunk.' if the rule should apply to trunk.
 
       conversion -- how the symbol should be treated in the
           conversion.  This is one of the following values: 'branch',
@@ -404,12 +450,41 @@ class SymbolHintsFileRule(StrategyRule):
 
     f = open(self.filename, 'r')
     for l in f:
-      s = l.strip()
+      l = l.rstrip()
+      s = l.lstrip()
       if self.comment_re.match(s):
         continue
       fields = s.split()
 
+      if len(fields) < 3:
+        raise FatalError(
+            'The following line in "%s" cannot be parsed:\n    "%s"' % (l,)
+            )
+
       project_id = fields.pop(0)
+      symbol_name = fields.pop(0)
+      conversion = fields.pop(0)
+
+      if fields:
+        svn_path = fields.pop(0)
+        if svn_path == '.':
+          svn_path = None
+        elif svn_path[0] == '/':
+          svn_path = svn_path[1:]
+      else:
+        svn_path = None
+
+      if fields:
+        parent_lod_name = fields.pop(0)
+      else:
+        parent_lod_name = '.'
+
+      if fields:
+        raise FatalError(
+            'The following line in "%s" cannot be parsed:\n    "%s"'
+            % (self.filename, l,)
+            )
+
       if project_id == '.':
         project_id = None
       else:
@@ -420,50 +495,47 @@ class SymbolHintsFileRule(StrategyRule):
               'Illegal project_id in the following line:\n    "%s"' % (l,)
               )
 
-      symbol_name = fields.pop(0)
+      if symbol_name == '.trunk.':
+        if conversion not in ['.', 'trunk']:
+          raise FatalError('Trunk cannot be converted as a different type')
 
-      conversion = fields.pop(0)
-      try:
-        conversion = self.conversion_map[conversion]
-      except KeyError:
-        raise FatalError(
-            'Illegal conversion in the following line:\n    "%s"' % (l,)
-            )
+        if parent_lod_name != '.':
+          raise FatalError('Trunk\'s parent cannot be set')
 
-      if fields:
-        svn_path = fields.pop(0)
-        if svn_path[0] == '/':
-          svn_path = svn_path[1:]
-        elif svn_path == '.':
-          svn_path = None
+        if svn_path is None:
+          # This rule doesn't do anything:
+          pass
+        else:
+          self._rules.append(ManualTrunkRule(project_id, svn_path))
+
       else:
-        svn_path = None
+        try:
+          conversion = self.conversion_map[conversion]
+        except KeyError:
+          raise FatalError(
+              'Illegal conversion in the following line:\n    "%s"' % (l,)
+              )
 
-      if fields:
-        parent_lod_name = fields.pop(0)
         if parent_lod_name == '.':
           parent_lod_name = None
-      else:
-        parent_lod_name = None
 
-      if fields:
-        raise FatalError(
-            'The following line in "%s" cannot be parsed:\n    "%s"' % (l,)
-            )
-
-      self._rules.append(
-          ManualRule(
-              project_id, symbol_name, conversion, svn_path, parent_lod_name
+        if conversion is None \
+               and svn_path is None \
+               and parent_lod_name is None:
+          # There is nothing to be done:
+          pass
+        else:
+          self._rules.append(
+              ManualSymbolRule(
+                  project_id, symbol_name,
+                  conversion, svn_path, parent_lod_name
+                  )
               )
-          )
 
     for rule in self._rules:
       rule.start(symbol_statistics)
 
   def get_symbol(self, symbol, stats):
-    if isinstance(symbol, Trunk):
-      return symbol
-
     for rule in self._rules:
       symbol = rule.get_symbol(symbol, stats)
 

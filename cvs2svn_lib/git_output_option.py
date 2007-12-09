@@ -110,6 +110,10 @@ class GitOutputOption(OutputOption):
     return mark
 
   def _get_author(svn_commit):
+    """Return the author to be used for SVN_COMMIT.
+
+    Return the author in the form needed by git; that is, 'foo <bar>'."""
+
     author = svn_commit.get_author()
     try:
       author = Ctx().utf8_encoder(author)
@@ -117,7 +121,7 @@ class GitOutputOption(OutputOption):
       Log().warn('%s: problem encoding author:' % warning_prefix)
       Log().warn("  author: '%s'" % (author,))
 
-    return author
+    return '%s <%s>' % (author, author,)
 
   _get_author = staticmethod(_get_author)
 
@@ -157,7 +161,7 @@ class GitOutputOption(OutputOption):
         % (self._create_commit_mark(lod, svn_commit.revnum),)
         )
     self.f.write(
-        'committer %s <%s> %d +0000\n' % (author, author, svn_commit.date,)
+        'committer %s %d +0000\n' % (author, svn_commit.date,)
         )
     self.f.write('data %d\n' % (len(log_msg),))
     self.f.write('%s\n' % (log_msg,))
@@ -199,7 +203,7 @@ class GitOutputOption(OutputOption):
         % (self._create_commit_mark(None, svn_commit.revnum),)
         )
     self.f.write(
-        'committer %s <%s> %d +0000\n' % (author, author, svn_commit.date,)
+        'committer %s %d +0000\n' % (author, svn_commit.date,)
         )
     self.f.write('data %d\n' % (len(log_msg),))
     self.f.write('%s\n' % (log_msg,))
@@ -282,7 +286,7 @@ class GitOutputOption(OutputOption):
     self.f.write('commit %s\n' % (git_branch,))
     self.f.write('mark :%d\n' % (mark,))
     self.f.write(
-        'committer %s <%s> %d +0000\n' % (author, author, svn_commit.date,)
+        'committer %s %d +0000\n' % (author, svn_commit.date,)
         )
     self.f.write('data %d\n' % (len(log_msg),))
     self.f.write('%s\n' % (log_msg,))
@@ -328,7 +332,7 @@ class GitOutputOption(OutputOption):
     self.f.write('tag %s\n' % (svn_commit.symbol.name,))
     self.f.write('from :%d\n' % (mark,))
     self.f.write(
-        'tagger %s <%s> %d +0000\n' % (author, author, svn_commit.date,)
+        'tagger %s %d +0000\n' % (author, svn_commit.date,)
         )
     self.f.write('data %d\n' % (len(log_msg),))
     self.f.write('%s\n' % (log_msg,))

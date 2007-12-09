@@ -60,6 +60,7 @@ import re
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib import config
+from cvs2svn_lib import changeset_database
 from cvs2svn_lib.common import UTF8Encoder
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.project import Project
@@ -510,4 +511,14 @@ run_options.add_project(
 # debugging purposes):
 run_options.profiling = False
 
+
+# Should CVSItem -> Changeset database files be memory mapped?  In
+# some tests, using memory mapping speeded up the overall conversion
+# by about 5%.  But this option can cause the conversion to fail with
+# an out of memory error if the conversion computer runs out of
+# virtual address space (e.g., when running a very large conversion on
+# a 32-bit operating system).  Therefore it is disabled by default.
+# Uncomment the following line to allow these database files to be
+# memory mapped.
+#changeset_database.use_mmap_for_cvs_item_to_changeset_table = True
 

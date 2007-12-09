@@ -28,12 +28,24 @@ from cvs2svn_lib.changeset import BranchChangeset
 from cvs2svn_lib.changeset import TagChangeset
 from cvs2svn_lib.record_table import UnsignedIntegerPacker
 from cvs2svn_lib.record_table import MmapRecordTable
+from cvs2svn_lib.record_table import RecordTable
 from cvs2svn_lib.database import IndexedStore
 from cvs2svn_lib.serializer import PrimedPickleSerializer
 
 
+# Should the CVSItemToChangesetTable database files be memory mapped?
+# This speeds up the converstion but can cause the computer's virtual
+# address space to be exhausted.  This option can be changed
+# externally, affecting any CVSItemToChangesetTables opened subsequent
+# to the change:
+use_mmap_for_cvs_item_to_changeset_table = False
+
+
 def CVSItemToChangesetTable(filename, mode):
-  return MmapRecordTable(filename, mode, UnsignedIntegerPacker())
+  if use_mmap_for_cvs_item_to_changeset_table:
+    return MmapRecordTable(filename, mode, UnsignedIntegerPacker())
+  else:
+    return RecordTable(filename, mode, UnsignedIntegerPacker())
 
 
 class ChangesetDatabase(IndexedStore):

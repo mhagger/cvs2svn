@@ -35,7 +35,7 @@ from cvs2svn_lib import config
 from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.common import FatalError
-from cvs2svn_lib.common import UTF8Encoder
+from cvs2svn_lib.common import CVSTextDecoder
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.svn_output_option import DumpfileOutputOption
@@ -565,9 +565,10 @@ class RunOptions:
         )
 
     try:
-      ctx.utf8_encoder = UTF8Encoder(encodings, fallback_encoding)
+      ctx.cvs_author_decoder = CVSTextDecoder(encodings, fallback_encoding)
+      ctx.cvs_log_decoder = CVSTextDecoder(encodings, fallback_encoding)
       # Don't use fallback_encoding for filenames:
-      ctx.filename_utf8_encoder = UTF8Encoder(encodings)
+      ctx.cvs_filename_decoder = CVSTextDecoder(encodings)
     except LookupError, e:
       raise FatalError(str(e))
 

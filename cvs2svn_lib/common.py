@@ -290,11 +290,11 @@ def format_date(date):
   return time.strftime("%Y-%m-%dT%H:%M:%S.000000Z", time.gmtime(date))
 
 
-class UTF8Encoder:
-  """Callable that decodes strings into unicode then encodes them as utf8."""
+class CVSTextDecoder:
+  """Callable that decodes CVS strings into unicode."""
 
   def __init__(self, encodings, fallback_encoding=None):
-    """Create a UTF8Encoder instance.
+    """Create a CVSTextDecoder instance.
 
     ENCODINGS is a list containing the names of encodings that are
     attempted to be used as source encodings in 'strict' mode.
@@ -317,22 +317,25 @@ class UTF8Encoder:
           )
 
   def __call__(self, s):
-    """Try to decode 8-bit string S using our configured source encodings.
+    """Try to decode string S using our configured source encodings.
 
-    Return the string as unicode, encoded in an 8-bit string as utf8.
+    Return the string as a unicode string.  If S is already a unicode
+    string, do nothing.
 
     Raise UnicodeError if the string cannot be decoded using any of
     the source encodings and no fallback encoding was specified."""
 
+    if isinstance(s, unicode):
+      return s
     for (name, decoder) in self.decoders:
       try:
-        return decoder(s)[0].encode('utf8')
+        return decoder(s)[0]
       except ValueError:
         Log().verbose("Encoding '%s' failed for string %r" % (name, s))
 
     if self.fallback_decoder is not None:
       (name, decoder) = self.fallback_decoder
-      return decoder(s, 'replace')[0].encode('utf8')
+      return decoder(s, 'replace')[0]
     else:
       raise UnicodeError
 

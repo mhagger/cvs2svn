@@ -38,7 +38,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
 
   def __init__(self, revision_reader, dumpfile_path):
     """Return a new DumpfileDelegate instance, attached to a dumpfile
-    DUMPFILE_PATH, using Ctx().filename_utf8_encoder()."""
+    DUMPFILE_PATH, using Ctx().cvs_filename_decoder()."""
 
     self._revision_reader = revision_reader
     self.dumpfile_path = dumpfile_path
@@ -69,9 +69,7 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
     # different encodings).
     for i in range(len(pieces)):
       try:
-        # Log messages can be converted with the 'replace' strategy,
-        # but we can't afford any lossiness here.
-        pieces[i] = Ctx().filename_utf8_encoder(pieces[i])
+        pieces[i] = Ctx().cvs_filename_decoder(pieces[i]).encode('utf8')
       except UnicodeError:
         raise FatalError(
             "Unable to convert a path '%s' to internal encoding.\n"

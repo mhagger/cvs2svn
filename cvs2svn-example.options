@@ -61,7 +61,7 @@ import re
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib import config
 from cvs2svn_lib import changeset_database
-from cvs2svn_lib.common import UTF8Encoder
+from cvs2svn_lib.common import CVSTextDecoder
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.project import Project
 from cvs2svn_lib.svn_output_option import DumpfileOutputOption
@@ -205,31 +205,37 @@ ctx.trunk_only = False
 # directory once the last file has been deleted from it:
 ctx.prune = False
 
-# How to converting author names and log messages to UTF8.  The first
-# argument is a list of encoders that are tried in order in 'strict'
-# mode until one of them succeeds.  If none of those succeeds, then
-# fallback_encoding is used in lossy 'replace' mode (if it is
-# specified).  Setting a fallback encoder ensures that the encoder
-# always succeeds, but it can cause information loss.
-ctx.utf8_encoder = UTF8Encoder(
+# How to convert author names, log messages, and filenames to unicode.
+# The first argument to CVSTextDecoder is a list of encoders that are
+# tried in order in 'strict' mode until one of them succeeds.  If none
+# of those succeeds, then fallback_encoder is used in lossy 'replace'
+# mode (if it is specified).  Setting a fallback encoder ensures that
+# the encoder always succeeds, but it can cause information loss.
+ctx.cvs_author_decoder = CVSTextDecoder(
     [
         #'latin1',
         #'utf8',
         'ascii',
         ],
-    #fallback_encoder='ascii'
+    #fallback_encoding='ascii'
     )
-
-# The following encoder is used to convert filenames to UTF8.  See the
-# documentation for ctx.utf8_encoder for more information.  You might
-# want to set this encoder stricter than ctx.utf8_encoder.
-ctx.filename_utf8_encoder = UTF8Encoder(
+ctx.cvs_log_decoder = CVSTextDecoder(
     [
         #'latin1',
         #'utf8',
         'ascii',
         ],
-    #fallback_encoder='ascii'
+    #fallback_encoding='ascii'
+    )
+# You might want to be especially strict when converting filenames to
+# unicode (e.g., maybe not specify a fallback_encoding).
+ctx.cvs_filename_decoder = CVSTextDecoder(
+    [
+        #'latin1',
+        #'utf8',
+        'ascii',
+        ],
+    #fallback_encoding='ascii'
     )
 
 # Some CVS clients for MacOS store resource fork data into CVS along

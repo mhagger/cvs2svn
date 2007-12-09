@@ -49,8 +49,9 @@ class Ctx:
     self.sort_executable = config.SORT_EXECUTABLE
     self.trunk_only = False
     self.prune = True
-    self.utf8_encoder = lambda s: s.decode('ascii').encode('utf8')
-    self.filename_utf8_encoder = lambda s: s.decode('ascii').encode('utf8')
+    self.cvs_author_decoder = lambda s: s.decode('ascii')
+    self.cvs_log_decoder = lambda s: s.decode('ascii')
+    self.cvs_filename_decoder = lambda s: s.decode('ascii')
     self.decode_apple_single = False
     self.symbol_strategy_rules = []
     self.symbol_info_filename = None

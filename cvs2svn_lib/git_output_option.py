@@ -116,7 +116,7 @@ class GitOutputOption(OutputOption):
 
     author = svn_commit.get_author()
     try:
-      author = Ctx().utf8_encoder(author)
+      author = Ctx().cvs_author_decoder(author).encode('utf8')
     except UnicodeError:
       Log().warn('%s: problem encoding author:' % warning_prefix)
       Log().warn("  author: '%s'" % (author,))
@@ -128,7 +128,7 @@ class GitOutputOption(OutputOption):
   def _get_log_msg(svn_commit):
     log_msg = svn_commit.get_log_msg()
     try:
-      log_msg = Ctx().utf8_encoder(log_msg)
+      log_msg = Ctx().cvs_log_decoder(log_msg).encode('utf8')
     except UnicodeError:
       Log().warn('%s: problem encoding log message:' % warning_prefix)
       Log().warn("  log:    '%s'" % log_msg.rstrip())

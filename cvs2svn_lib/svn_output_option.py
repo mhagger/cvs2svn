@@ -79,8 +79,8 @@ class SVNOutputOption(OutputOption):
     try:
       utf8_author = None
       if author is not None:
-        utf8_author = Ctx().utf8_encoder(author)
-      utf8_log = Ctx().utf8_encoder(log_msg)
+        utf8_author = Ctx().cvs_author_decoder(author).encode('utf8')
+      utf8_log = Ctx().cvs_log_decoder(log_msg).encode('utf8')
       return { 'svn:author' : utf8_author,
                'svn:log'    : utf8_log,
                'svn:date'   : date }

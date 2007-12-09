@@ -73,11 +73,11 @@ class SVNOutputOption(OutputOption):
   def _get_revprops(self, svn_commit):
     """Return the Subversion revprops for this SVNCommit."""
 
-    date = format_date(svn_commit.date)
+    author = svn_commit.get_author()
     log_msg = svn_commit.get_log_msg()
+    date = format_date(svn_commit.date)
     try:
       utf8_author = None
-      author = svn_commit.get_author()
       if author is not None:
         utf8_author = Ctx().utf8_encoder(author)
       utf8_log = Ctx().utf8_encoder(log_msg)
@@ -87,7 +87,7 @@ class SVNOutputOption(OutputOption):
     except UnicodeError:
       Log().warn('%s: problem encoding author or log message:'
                  % warning_prefix)
-      Log().warn("  author: '%s'" % svn_commit.get_author())
+      Log().warn("  author: '%s'" % author)
       Log().warn("  log:    '%s'" % log_msg.rstrip())
       Log().warn("  date:   '%s'" % date)
       Log().warn(svn_commit.get_warning_summary())
@@ -96,7 +96,7 @@ class SVNOutputOption(OutputOption):
           "with '--fallback-encoding'.\n")
       # It's better to fall back to the original (unknown encoding) data
       # than to either 1) quit or 2) record nothing at all.
-      return { 'svn:author' : svn_commit.get_author(),
+      return { 'svn:author' : author,
                'svn:log'    : log_msg,
                'svn:date'   : date }
 

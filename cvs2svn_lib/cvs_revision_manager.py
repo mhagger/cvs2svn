@@ -34,7 +34,9 @@ class CVSRevisionReader(RevisionReader):
   # Here are the global arguments that we try to use, in order of
   # decreasing preference:
   _possible_global_arguments = [
+      ['-q', '-R', '-f'],
       ['-q', '-R'],
+      ['-q', '-f'],
       ['-q'],
       ]
 

@@ -30,30 +30,41 @@ from cvs2svn_lib.revision_manager import NullRevisionExcluder
 class CVSRevisionReader(RevisionReader):
   """A RevisionReader that reads the contents via CVS."""
 
+  # Different versions of CVS support different global arguments.
+  # Here are the global arguments that we try to use, in order of
+  # decreasing preference:
+  _possible_global_arguments = [
+      ['-q', '-R'],
+      ['-q'],
+      ]
+
   def __init__(self, cvs_executable):
     self.cvs_executable = cvs_executable
 
-    self.global_arguments = [ "-q", "-R" ]
-    try:
-      self._check_cvs_runs()
-    except CommandFailedException, e:
-      self.global_arguments = [ "-q" ]
+    for global_arguments in self._possible_global_arguments:
       try:
-        self._check_cvs_runs()
+        self._check_cvs_runs(global_arguments)
       except CommandFailedException, e:
-        raise FatalError(
-            '%s\n'
-            'Please check that cvs is installed and in your PATH.' % (e,))
+        pass
+      else:
+        # Those global arguments were OK; use them for all CVS invocations.
+        self.global_arguments = global_arguments
+        break
+    else:
+      raise FatalError(
+          '%s\n'
+          'Please check that cvs is installed and in your PATH.' % (e,)
+          )
 
-  def _check_cvs_runs(self):
+  def _check_cvs_runs(self, global_arguments):
     """Check that CVS can be started.
 
-    Try running 'cvs --version' with the current settings for
-    self.cvs_executable and self.global_arguments.  If not, raise a
-    CommandFailedException."""
+    Try running 'cvs --version' with the current setting for
+    self.cvs_executable and the specified global_arguments.  If not
+    successful, raise a CommandFailedException."""
 
     check_command_runs(
-        [self.cvs_executable] + self.global_arguments + ['--version'],
+        [self.cvs_executable] + global_arguments + ['--version'],
         self.cvs_executable,
         )
 

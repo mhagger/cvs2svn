@@ -33,22 +33,29 @@ class CVSRevisionReader(RevisionReader):
   def __init__(self, cvs_executable):
     self.cvs_executable = cvs_executable
 
-    def cvs_ok(global_arguments):
-      check_command_runs(
-          [self.cvs_executable] + global_arguments + ['--version'],
-          self.cvs_executable)
-
     self.global_arguments = [ "-q", "-R" ]
     try:
-      cvs_ok(self.global_arguments)
+      self._check_cvs_runs()
     except CommandFailedException, e:
       self.global_arguments = [ "-q" ]
       try:
-        cvs_ok(self.global_arguments)
+        self._check_cvs_runs()
       except CommandFailedException, e:
         raise FatalError(
             '%s\n'
             'Please check that cvs is installed and in your PATH.' % (e,))
+
+  def _check_cvs_runs(self):
+    """Check that CVS can be started.
+
+    Try running 'cvs --version' with the current settings for
+    self.cvs_executable and self.global_arguments.  If not, raise a
+    CommandFailedException."""
+
+    check_command_runs(
+        [self.cvs_executable] + self.global_arguments + ['--version'],
+        self.cvs_executable,
+        )
 
   def get_content_stream(self, cvs_rev, suppress_keyword_substitution=False):
     project = cvs_rev.cvs_file.project

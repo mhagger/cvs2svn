@@ -1231,6 +1231,15 @@ def multiply_defined_symbols_ignored():
       )
 
 
+def repeatedly_defined_symbols():
+  "multiple identical definitions of symbol names"
+
+  # If a symbol is defined multiple times but has the same value each
+  # time, that should not be an error.
+
+  conv = ensure_conversion('repeatedly-defined-symbols')
+
+
 def bogus_tag():
   "conversion of invalid symbolic names"
   conv = ensure_conversion('bogus-tag')
@@ -3328,14 +3337,15 @@ test_list = [
     multiply_defined_symbols,
     multiply_defined_symbols_renamed,
     multiply_defined_symbols_ignored,
+    XFail(repeatedly_defined_symbols),
     double_branch_delete,
     symbol_mismatches,
     overlook_symbol_mismatches,
     force_symbols,
     commit_blocks_tags,
     blocked_excludes,
-    unblock_blocked_excludes,
 # 100:
+    unblock_blocked_excludes,
     regexp_force_symbols,
     heuristic_symbol_default,
     branch_symbol_default,
@@ -3345,8 +3355,8 @@ test_list = [
     symbol_hints,
     parent_hints,
     parent_hints_invalid,
-    parent_hints_wildcards,
 # 110:
+    parent_hints_wildcards,
     path_hints,
     issue_99,
     issue_100,
@@ -3356,8 +3366,8 @@ test_list = [
     crossproject,
     tag_with_no_revision,
     XFail(delete_cvsignore),
-    repeated_deltatext,
 # 120:
+    repeated_deltatext,
     nasty_graphs,
     XFail(tagging_after_delete),
     crossed_branches,
@@ -3367,8 +3377,8 @@ test_list = [
     internal_co_exclude,
     internal_co_trunk_only,
     internal_co_keywords,
-    leftover_revs,
 # 130:
+    leftover_revs,
     requires_internal_co,
     timestamp_chaos,
     symlinks,
@@ -3378,8 +3388,8 @@ test_list = [
     trunk_readd,
     branch_from_deleted_1_1,
     add_on_branch,
-    XFail(main_git),
 # 140:
+    XFail(main_git),
     invalid_symbol,
     invalid_symbol_ignore,
     EOLVariants('LF'),

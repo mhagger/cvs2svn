@@ -24,6 +24,7 @@ Version x.x.x (not yet released)
  * Create trunk/tags/branches directories for project when project is created.
  * Improved conversion speed significantly, especially for large repositories.
  * Ignore (with a warning) symbols defined to malformed revision numbers.
+ * Tolerate multiple definitions of a symbol to the same revision number.
  * Handle RCS files that superfluously set the default branch to trunk.
 
  Miscellaneous:

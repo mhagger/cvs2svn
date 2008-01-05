@@ -353,11 +353,50 @@ class _SymbolDataCollector(object):
             % (self.cvs_file.filename, name, revision,)
             )
 
+  def _eliminate_trivial_duplicate_defs(self):
+    """Remove identical duplicate definitions in SELF._symbol_defs.
+
+    Duplicate definitions of symbol names have been seen in the wild,
+    and they can also happen when --symbol-transform is used.  If a
+    symbol is defined to the same revision number repeatedly, then
+    ignore all but the last definition."""
+
+    # A map { (name, revision) : [index,...] } of the indexes where
+    # symbol definitions name=revision were found:
+    known_definitions = {}
+
+    # A set of the indexes of entries that have to be removed from
+    # _symbol_defs:
+    dup_indexes = set()
+
+    for i in range(len(self._symbol_defs)):
+      (name, revision) = self._symbol_defs[i]
+      if (name, revision) in known_definitions:
+        if len(known_definitions[name, revision]) == 1:
+          Log().verbose(
+              "in %r:\n"
+              "   symbol %s:%s defined multiple times;\n"
+              "   ignoring all but first definition\n"
+              % (self.cvs_file.filename, name, revision,)
+              )
+        dup_indexes.add(known_definitions[name, revision][-1])
+        known_definitions[name, revision].append(i)
+      else:
+        known_definitions[name, revision] = [i]
+
+    self._symbol_defs = [
+        self._symbol_defs[i]
+        for i in range(len(self._symbol_defs))
+        if i not in dup_indexes
+        ]
+
   def _process_duplicate_defs(self):
     """Look for and process duplicate names in SELF._symbol_defs.
 
     Duplicate definitions of symbol names have been seen in the wild,
-    and they can also happen when --symbol-transform is used."""
+    and they can also happen when --symbol-transform is used.  If a
+    symbol is defined multiple times, then it is a fatal error.  This
+    method should be called after _eliminate_trivial_duplicate_defs()."""
 
     # A map {name : [index,...]} mapping the names of symbols to a
     # list of their definitions' indexes in self._symbol_defs:
@@ -409,6 +448,7 @@ class _SymbolDataCollector(object):
   def process_symbols(self):
     """Process the symbol definitions from SELF._symbol_defs."""
 
+    self._eliminate_trivial_duplicate_defs()
     self._process_duplicate_defs()
 
     for (name, revision) in self._symbol_defs:

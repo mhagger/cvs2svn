@@ -3337,7 +3337,7 @@ test_list = [
     multiply_defined_symbols,
     multiply_defined_symbols_renamed,
     multiply_defined_symbols_ignored,
-    XFail(repeatedly_defined_symbols),
+    repeatedly_defined_symbols,
     double_branch_delete,
     symbol_mismatches,
     overlook_symbol_mismatches,

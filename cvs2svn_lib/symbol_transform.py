@@ -19,6 +19,7 @@
 
 from __future__ import generators
 
+import os
 import re
 
 from cvs2svn_lib.boolean import *
@@ -103,5 +104,63 @@ class SymbolMapper(SymbolTransform):
     return self._map.get(
         (cvs_file.filename, symbol_name, revision), symbol_name
         )
+
+
+class SubtreeSymbolMapper(SymbolTransform):
+  """A SymbolTransform that transforms symbols within a whole repo subtree.
+
+  The user has to specify a CVS repository path (a filename or
+  directory) and the original symbol name.  All symbols under that
+  path will be renamed to the specified new name (which can be None if
+  the symbol should be ignored).  The mappings can be set via a
+  constructor argument or by calling __setitem__().  Only the most
+  specific rule is applied."""
+
+  def __init__(self, items=[]):
+    """Initialize the mapper.
+
+    ITEMS is a list of tuples (cvs_path, symbol_name, new_name)
+    which will be set as mappings.  cvs_path is a string naming a
+    directory within the CVS repository."""
+
+    # A map {symbol_name : {cvs_path : new_name}}:
+    self._map = {}
+
+    for (cvs_path, symbol_name, new_name) in items:
+      self[cvs_path, symbol_name] = new_name
+
+  def __setitem__(self, (cvs_path, symbol_name), new_name):
+    """Set a mapping for a particular file and symbol."""
+
+    try:
+      symbol_map = self._map[symbol_name]
+    except KeyError:
+      symbol_map = {}
+      self._map[symbol_name] = symbol_map
+
+    if cvs_path in symbol_map:
+      Log().warn(
+          'Overwriting symbol transform for\n'
+          '    directory=%r symbol=%s'
+          % (cvs_path, symbol_name,)
+          )
+    symbol_map[cvs_path] = new_name
+
+  def transform(self, cvs_file, symbol_name, revision):
+    try:
+      symbol_map = self._map[symbol_name]
+    except KeyError:
+      # No rules for that symbol name
+      return symbol_name
+
+    cvs_path = cvs_file.filename
+    while cvs_path:
+      try:
+        return symbol_map[cvs_path]
+      except KeyError:
+        cvs_path = os.path.dirname(cvs_path)
+
+    # No rules found for that path; return symbol name unaltered.
+    return symbol_name
 
 

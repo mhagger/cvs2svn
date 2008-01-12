@@ -154,13 +154,15 @@ class SubtreeSymbolMapper(SymbolTransform):
       return symbol_name
 
     cvs_path = cvs_file.filename
-    while cvs_path:
+    while True:
       try:
         return symbol_map[cvs_path]
       except KeyError:
-        cvs_path = os.path.dirname(cvs_path)
-
-    # No rules found for that path; return symbol name unaltered.
-    return symbol_name
+        new_cvs_path = os.path.dirname(cvs_path)
+        if new_cvs_path == cvs_path:
+          # No rules found for that path; return symbol name unaltered.
+          return symbol_name
+        else:
+          cvs_path = new_cvs_path
 
 

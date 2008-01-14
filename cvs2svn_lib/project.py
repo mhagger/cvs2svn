@@ -153,34 +153,24 @@ class Project(object):
 
   determine_repository_root = staticmethod(determine_repository_root)
 
-  def get_trunk_path(self, *components):
-    """Return the trunk path.
+  def get_trunk_path(self):
+    """Return the trunk path for this project."""
 
-    Also append any cvs path components from COMPONENTS."""
+    return self.trunk_path
 
-    return path_join(self.trunk_path, *components)
-
-  def get_branch_path(self, branch_symbol, *components):
+  def get_branch_path(self, branch_symbol):
     """Return the svnpath for BRANCH_SYMBOL.
 
-    Also append any cvs path components from COMPONENTS.
-
     This routine must not be called during --trunk-only conversions."""
 
-    return path_join(
-        self.branches_path, branch_symbol.get_clean_name(), *components
-        )
+    return path_join(self.branches_path, branch_symbol.get_clean_name())
 
-  def get_tag_path(self, tag_symbol, *components):
+  def get_tag_path(self, tag_symbol):
     """Return the svnpath for TAG_SYMBOL.
 
-    Also append any cvs path components from COMPONENTS.
-
     This routine must not be called during --trunk-only conversions."""
 
-    return path_join(
-        self.tags_path, tag_symbol.get_clean_name(), *components
-        )
+    return path_join(self.tags_path, tag_symbol.get_clean_name())
 
   def transform_symbol(self, cvs_file, symbol_name, revision):
     """Transform the symbol SYMBOL_NAME.

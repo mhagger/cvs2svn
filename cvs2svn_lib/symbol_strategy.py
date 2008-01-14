@@ -23,6 +23,7 @@ from cvs2svn_lib.boolean import *
 from cvs2svn_lib.set_support import *
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import error_prefix
+from cvs2svn_lib.common import path_join
 from cvs2svn_lib.common import normalize_svn_path
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
@@ -217,11 +218,15 @@ class DefaultBasePathRule(StrategyRule):
       # This lod's base path is already set; leave it.
       pass
     elif isinstance(symbol, Trunk):
-      symbol.base_path = symbol.project.get_trunk_path()
+      symbol.base_path = symbol.project.trunk_path
     elif isinstance(symbol, Branch):
-      symbol.base_path = symbol.project.get_branch_path(symbol)
+      symbol.base_path = path_join(
+          symbol.project.branches_path, symbol.get_clean_name()
+          )
     elif isinstance(symbol, Tag):
-      symbol.base_path = symbol.project.get_tag_path(symbol)
+      symbol.base_path = path_join(
+          symbol.project.tags_path, symbol.get_clean_name()
+          )
     else:
       raise NotImplementedError()
 

@@ -29,6 +29,7 @@ from cvs2svn_lib.common import IllegalSVNPathError
 from cvs2svn_lib.common import normalize_svn_path
 from cvs2svn_lib.common import verify_paths_disjoint
 from cvs2svn_lib.log import Log
+from cvs2svn_lib.symbol_transform import CompoundSymbolTransform
 
 
 class FileInAndOutOfAtticException(Exception):
@@ -97,9 +98,9 @@ class Project(object):
     # A list of transformation rules (regexp, replacement) applied to
     # symbol names in this project.
     if symbol_transforms is None:
-      self.symbol_transforms = []
-    else:
-      self.symbol_transforms = symbol_transforms
+      symbol_transforms = []
+
+    self.symbol_transform = CompoundSymbolTransform(symbol_transforms)
 
     # The ID of the Trunk instance for this Project.  This member is
     # filled in during CollectRevsPass.
@@ -181,33 +182,29 @@ class Project(object):
         self.tags_path, tag_symbol.get_clean_name(), *components
         )
 
-  def transform_symbol(self, cvs_file, name, revision):
-    """Transform the symbol NAME.
+  def transform_symbol(self, cvs_file, symbol_name, revision):
+    """Transform the symbol SYMBOL_NAME.
 
-    NAME refers to revision number REVISION in CVS_FILE.  REVISION is
-    the CVS revision number as a string, with zeros removed (e.g.,
-    '1.7' or '1.7.2').  Use the renaming rules specified with
-    --symbol-transform to possibly rename the symbol.  Return the
-    transformed symbol name, or the original name if it should not be
-    transformed."""
+    SYMBOL_NAME refers to revision number REVISION in CVS_FILE.
+    REVISION is the CVS revision number as a string, with zeros
+    removed (e.g., '1.7' or '1.7.2').  Use the renaming rules
+    specified with --symbol-transform to possibly rename the symbol.
+    Return the transformed symbol name, or the original name if it
+    should not be transformed."""
 
-    for symbol_transform in self.symbol_transforms:
-      newname = symbol_transform.transform(cvs_file, name, revision)
-      if newname is None:
-        Log().warn(
-            "   symbol '%s'=%s ignored in %s"
-            % (name, revision, cvs_file.filename,)
-            )
-        # Don't continue with other symbol transforms:
-        return None
-      elif newname != name:
-        Log().warn(
-            "   symbol '%s'=%s transformed to '%s' in %s"
-            % (name, revision, newname, cvs_file.filename,)
-            )
-        name = newname
+    newname = self.symbol_transform.transform(cvs_file, symbol_name, revision)
+    if newname is None:
+      Log().warn(
+          "   symbol '%s'=%s ignored in %s"
+          % (symbol_name, revision, cvs_file.filename,)
+          )
+    elif newname != symbol_name:
+      Log().warn(
+          "   symbol '%s'=%s transformed to '%s' in %s"
+          % (symbol_name, revision, newname, cvs_file.filename,)
+          )
 
-    return name
+    return newname
 
   def __str__(self):
     return self.trunk_path

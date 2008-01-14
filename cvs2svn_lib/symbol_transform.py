@@ -49,6 +49,32 @@ class SymbolTransform:
     raise NotImplementedError()
 
 
+class CompoundSymbolTransform(SymbolTransform):
+  """A SymbolTransform that applies other SymbolTransforms in series.
+
+  Each of the contained SymbolTransforms is applied, one after the
+  other.  If any of them returns None, then None is returned (the
+  following SymbolTransforms are ignored)."""
+
+  def __init__(self, symbol_transforms):
+    """Ininitialize a CompoundSymbolTransform.
+
+    SYMBOL_TRANSFORMS is an iterable of SymbolTransform instances."""
+
+    self.symbol_transforms = list(symbol_transforms)
+
+  def transform(self, cvs_file, symbol_name, revision):
+    for symbol_transform in self.symbol_transforms:
+      symbol_name = symbol_transform.transform(
+          cvs_file, symbol_name, revision
+          )
+      if symbol_name is None:
+        # Don't continue with other symbol transforms:
+        break
+
+    return symbol_name
+
+
 class RegexpSymbolTransform(SymbolTransform):
   """Transform symbols by using a regexp textual substitution."""
 

@@ -29,9 +29,9 @@ from cvs2svn_lib.symbol import Trunk
 class SymbolDatabase:
   """Read-only access to symbol database.
 
-  This class allows lookups id -> symbol, where symbol is a
-  TypedSymbol instance.  The whole database is read into memory upon
-  construction."""
+  This class allows iteration and lookups id -> symbol, where symbol
+  is a TypedSymbol instance.  The whole database is read into memory
+  upon construction."""
 
   def __init__(self):
     # A map { id : TypedSymbol }
@@ -49,6 +49,11 @@ class SymbolDatabase:
     Raise KeyError if the symbol is not known."""
 
     return self._symbols[id]
+
+  def __iter__(self):
+    """Iterate over the Symbol instances within this database."""
+
+    return self._symbols.itervalues()
 
   def close(self):
     self._symbols = None

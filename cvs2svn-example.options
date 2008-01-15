@@ -281,67 +281,69 @@ ctx.symbol_info_filename = None
 # that has already been processed by an earlier rule, so in effect the
 # first matching rule is the one that is used.
 
-global_symbol_strategy_rules = []
+global_symbol_strategy_rules = [
+    # To force all symbols matching a regular expression to be
+    # converted as branches, add rules like the following:
+    #ForceBranchRegexpStrategyRule(r'branch.*'),
 
-# To force all symbols matching a regular expression to be converted
-# as branches, add rules like the following:
-#global_symbol_strategy_rules.append(ForceBranchRegexpStrategyRule(r'branch.*'))
+    # To force all symbols matching a regular expression to be
+    # converted as tags, add rules like the following:
+    #ForceTagRegexpStrategyRule(r'tag.*'),
 
-# To force all symbols matching a regular expression to be converted
-# as tags, add rules like the following:
-#global_symbol_strategy_rules.append(ForceTagRegexpStrategyRule(r'tag.*'))
+    # To force all symbols matching a regular expression to be
+    # excluded from the conversion, add rules like the following:
+    #ExcludeRegexpStrategyRule(r'unknown-.*'),
 
-# To force all symbols matching a regular expression to be excluded
-# from the conversion, add rules like the following:
-#global_symbol_strategy_rules.append(ExcludeRegexpStrategyRule(r'unknown-.*'))
+    # Usually you want this rule, to convert unambiguous symbols
+    # (symbols that were only ever used as tags or only ever used as
+    # branches in CVS) the same way they were used in CVS:
+    UnambiguousUsageRule(),
 
-# Usually you want this rule, to convert unambiguous symbols (symbols
-# that were only ever used as tags or only ever used as branches in
-# CVS) the same way they were used in CVS:
-global_symbol_strategy_rules.append(UnambiguousUsageRule())
+    # If there was ever a commit on a symbol, then it cannot be
+    # converted as a tag.  Uncomment the following line to convert
+    # such symbols automatically as branches:
+    #BranchIfCommitsRule(),
 
-# If there was ever a commit on a symbol, then it cannot be converted
-# as a tag.  Uncomment the following line to convert such symbols
-# automatically as branches:
-#global_symbol_strategy_rules.append(BranchIfCommitsRule())
+    # Last in the list can be a catch-all rule that is used for
+    # symbols that were not matched by any of the more specific rules
+    # above.  Include at most one of these lines.  If none of these
+    # are included, then the presence of any ambiguous symbols (that
+    # haven't been disambiguated above) is an error:
 
-# Last in the list can be a catch-all rule that is used for symbols
-# that were not matched by any of the more specific rules above.
-# Include at most one of these lines.  If none of these are included,
-# then the presence of any ambiguous symbols (that haven't been
-# disambiguated above) is an error:
+    # Convert all ambiguous symbols as branches:
+    #AllBranchRule(),
+    # Convert all ambiguous symbols as tags:
+    #AllTagRule(),
+    # Convert ambiguous symbols based on whether they were used more
+    # often as branches or as tags:
+    #HeuristicStrategyRule(),
 
-# Convert all ambiguous symbols as branches:
-#global_symbol_strategy_rules.append(AllBranchRule())
-# Convert all ambiguous symbols as tags:
-#global_symbol_strategy_rules.append(AllTagRule())
-# Convert ambiguous symbols based on whether they were used more
-# often as branches or as tags:
-#global_symbol_strategy_rules.append(HeuristicStrategyRule())
+    # It is possible to specify manually exactly how symbols should be
+    # converted and what line of development should be used as the
+    # preferred parent.  To do so, create a file containing the symbol
+    # hints and enable the following option.
+    #
+    # The format of the hints file is described in the documentation
+    # for the SymbolHintsFileRule class in
+    # cvs2svn_lib/symbol_strategy.py.  The file output by the
+    # --write-symbol-info (i.e., ctx.symbol_info_filename) option is
+    # in the same format.  The simplest way to use this option is to
+    # run the conversion through CollateSymbolsPass with
+    # --write-symbol-info option, copy the symbol info and edit it to
+    # create a hints file, then re-start the conversion at
+    # CollateSymbolsPass with this option enabled.
+    #SymbolHintsFileRule('symbol-hints.txt'),
 
-# It is possible to specify manually exactly how symbols should be
-# converted and what line of development should be used as the
-# preferred parent.  To do so, create a file containing the symbol
-# hints and enable the following option.
-#
-# The format of the hints file is described in the documentation for
-# the SymbolHintsFileRule class in cvs2svn_lib/symbol_strategy.py.
-# The file output by the --write-symbol-info (i.e.,
-# ctx.symbol_info_filename) option is in the same format.  The
-# simplest way to use this option is to run the conversion through
-# CollateSymbolsPass with --write-symbol-info option, copy the symbol
-# info and edit it to create a hints file, then re-start the
-# conversion at CollateSymbolsPass with this option enabled.
-#global_symbol_strategy_rules.append(SymbolHintsFileRule('symbol-hints.txt'))
+    # This rule sets the SVN path of each symbol to the default value
+    # for the project containing it, if a path hasn't been set
+    # already.
+    DefaultBasePathRule(),
 
-# This rule sets the SVN path of each symbol to the default value for
-# the project containing it, if a path hasn't been set already.
-global_symbol_strategy_rules.append(DefaultBasePathRule())
-
-# The last rule is here to choose the preferred parent of branches and
-# tags, that is, the line of development from which the symbol
-# sprouts.
-global_symbol_strategy_rules.append(HeuristicPreferredParentRule())
+    # The last rule is here to choose the preferred parent of branches
+    # and tags, that is, the line of development from which the symbol
+    # sprouts.
+    HeuristicPreferredParentRule(),
+    ]
 
 # Specify a username to be used for commits generated by cvs2svn.  If
 # this options is set to None then no username will be used for such

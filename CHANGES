@@ -10,6 +10,7 @@ Version x.x.x (not yet released)
    - Write each CVS branch/tag to be written to an arbitrary SVN path.
    - Choose which trunk/branch should serve as the parent of each branch/tag.
    - --symbol-hints: manually specify how symbols should be converted.
+   - Make symbol strategy rules project-specific.
  * --write-symbol-info: output info about CVS symbols.
  * Add option ctx.decode_apple_single for handling AppleSingle-encoded files.
 

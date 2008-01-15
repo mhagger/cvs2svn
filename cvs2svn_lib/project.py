@@ -53,9 +53,12 @@ def normalize_ttb_path(opt, path, allow_empty=False):
 class Project(object):
   """A project within a CVS repository."""
 
-  def __init__(self, project_cvs_repos_path,
-               trunk_path, branches_path=None, tags_path=None,
-               symbol_transforms=None):
+  def __init__(
+        self, project_cvs_repos_path,
+        trunk_path, branches_path=None, tags_path=None,
+        symbol_transforms=None,
+        symbol_strategy_rules=None,
+        ):
     """Create a new Project record.
 
     PROJECT_CVS_REPOS_PATH is the main CVS directory for this project
@@ -65,8 +68,12 @@ class Project(object):
     TAGS_PATH do not have to be specified for a --trunk-only
     conversion.)
 
-    SYMBOL_TRANSFORMS is a list of SymbolTransform instances which
-    will be used to transform any symbol names within this project."""
+    SYMBOL_TRANSFORMS is an iterable of SymbolTransform instances
+    which will be used to transform any symbol names within this
+    project.
+
+    SYMBOL_STRATEGY_RULES is an iterable of SymbolStrategyRules that
+    will be applied to symbols in this project."""
 
     # A unique id for this project.  This field is filled in by
     # RunOptions.add_project().
@@ -101,6 +108,13 @@ class Project(object):
       symbol_transforms = []
 
     self.symbol_transform = CompoundSymbolTransform(symbol_transforms)
+
+    # A list of SymbolStrategyRules applied to symbols in this
+    # project:
+    if symbol_strategy_rules is None:
+      self.symbol_strategy_rules = []
+    else:
+      self.symbol_strategy_rules = list(symbol_strategy_rules)
 
     # The ID of the Trunk instance for this Project.  This member is
     # filled in during CollectRevsPass.

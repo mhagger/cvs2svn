@@ -181,14 +181,14 @@ class CollateSymbolsPass(Pass):
 
     STATS is an instance of symbol_statistics._Stats describing an
     instance of Symbol or Trunk.  To determine how the symbol is to be
-    converted, consult the StrategyRules in
-    Ctx().symbol_strategy_rules.  Each rule is allowed a chance to
-    change the way the symbol will be converted.  If the symbol is not
-    a Trunk or TypedSymbol after all rules have run, raise
+    converted, consult the StrategyRules in the project's
+    symbol_strategy_rules.  Each rule is allowed a chance to change
+    the way the symbol will be converted.  If the symbol is not a
+    Trunk or TypedSymbol after all rules have run, raise
     IndeterminateSymbolException."""
 
     symbol = stats.lod
-    for rule in Ctx().symbol_strategy_rules:
+    for rule in symbol.project.symbol_strategy_rules:
       symbol = rule.get_symbol(symbol, stats)
       assert symbol is not None
 
@@ -265,7 +265,15 @@ class CollateSymbolsPass(Pass):
     else:
       self.symbol_info_file = None
 
-    for rule in Ctx().symbol_strategy_rules:
+    # Initialize each symbol strategy rule a single time, even if it
+    # is used in more than one project.  First define a map from
+    # object id to symbol strategy rule:
+    rules = {}
+    for project in Ctx()._projects.itervalues():
+      for rule in project.symbol_strategy_rules:
+        rules[id(rule)] = rule
+
+    for rule in rules.itervalues():
       rule.start(self.symbol_stats)
 
     retval = {}
@@ -283,7 +291,7 @@ class CollateSymbolsPass(Pass):
         self.log_symbol_summary(stats, symbol)
         retval[stats.lod] = symbol
 
-    for rule in Ctx().symbol_strategy_rules:
+    for rule in rules.itervalues():
       rule.finish()
 
     if self.symbol_info_file:

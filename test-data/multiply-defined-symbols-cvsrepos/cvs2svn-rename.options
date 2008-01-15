@@ -30,6 +30,7 @@ run_options.add_project(
         symbol_transforms=[
             symbol_mapper,
             ],
+        symbol_strategy_rules=global_symbol_strategy_rules,
         )
     )
 

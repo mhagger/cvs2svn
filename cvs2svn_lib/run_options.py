@@ -359,6 +359,7 @@ class RunOptions:
     force_branch = False
     force_tag = False
     symbol_transforms = []
+    symbol_strategy_rules = []
 
     for opt, value in self.opts:
       if opt  in ['-s', '--svnrepos']:
@@ -388,15 +389,15 @@ class RunOptions:
       elif opt == '--fallback-encoding':
         fallback_encoding = value
       elif opt == '--symbol-hints':
-        ctx.symbol_strategy_rules.append(SymbolHintsFileRule(value))
+        symbol_strategy_rules.append(SymbolHintsFileRule(value))
       elif opt == '--force-branch':
-        ctx.symbol_strategy_rules.append(ForceBranchRegexpStrategyRule(value))
+        symbol_strategy_rules.append(ForceBranchRegexpStrategyRule(value))
         force_branch = True
       elif opt == '--force-tag':
-        ctx.symbol_strategy_rules.append(ForceTagRegexpStrategyRule(value))
+        symbol_strategy_rules.append(ForceTagRegexpStrategyRule(value))
         force_tag = True
       elif opt == '--exclude':
-        ctx.symbol_strategy_rules.append(ExcludeRegexpStrategyRule(value))
+        symbol_strategy_rules.append(ExcludeRegexpStrategyRule(value))
       elif opt == '--symbol-default':
         if value not in ['branch', 'tag', 'heuristic', 'strict']:
           raise FatalError(
@@ -555,15 +556,6 @@ class RunOptions:
       ctx.revision_excluder = InternalRevisionExcluder()
       ctx.revision_reader = InternalRevisionReader(compress=True)
 
-    # Create the default project (using ctx.trunk, ctx.branches, and
-    # ctx.tags):
-    self.add_project(
-        Project(
-            cvsroot, trunk_base, branches_base, tags_base,
-            symbol_transforms=symbol_transforms
-            )
-        )
-
     try:
       ctx.cvs_author_decoder = CVSTextDecoder(encodings, fallback_encoding)
       ctx.cvs_log_decoder = CVSTextDecoder(encodings, fallback_encoding)
@@ -572,25 +564,25 @@ class RunOptions:
     except LookupError, e:
       raise FatalError(str(e))
 
-    ctx.symbol_strategy_rules.append(UnambiguousUsageRule())
+    symbol_strategy_rules.append(UnambiguousUsageRule())
     if symbol_strategy_default == 'strict':
       pass
     elif symbol_strategy_default == 'branch':
-      ctx.symbol_strategy_rules.append(AllBranchRule())
+      symbol_strategy_rules.append(AllBranchRule())
     elif symbol_strategy_default == 'tag':
-      ctx.symbol_strategy_rules.append(AllTagRule())
+      symbol_strategy_rules.append(AllTagRule())
     elif symbol_strategy_default == 'heuristic':
-      ctx.symbol_strategy_rules.append(BranchIfCommitsRule())
-      ctx.symbol_strategy_rules.append(HeuristicStrategyRule())
+      symbol_strategy_rules.append(BranchIfCommitsRule())
+      symbol_strategy_rules.append(HeuristicStrategyRule())
     else:
       assert False
 
     # Now add a rule that sets the SVN path for each LOD:
-    ctx.symbol_strategy_rules.append(DefaultBasePathRule())
+    symbol_strategy_rules.append(DefaultBasePathRule())
 
     # Now add a rule whose job it is to pick the preferred parents of
     # branches and tags:
-    ctx.symbol_strategy_rules.append(HeuristicPreferredParentRule())
+    symbol_strategy_rules.append(HeuristicPreferredParentRule())
 
     if auto_props_file:
       ctx.svn_property_setters.append(AutoPropsPropertySetter(
@@ -615,6 +607,16 @@ class RunOptions:
           KeywordsPropertySetter(config.SVN_KEYWORDS_VALUE))
 
     ctx.svn_property_setters.append(ExecutablePropertySetter())
+
+    # Create the default project (using ctx.trunk, ctx.branches, and
+    # ctx.tags):
+    self.add_project(
+        Project(
+            cvsroot, trunk_base, branches_base, tags_base,
+            symbol_transforms=symbol_transforms,
+            symbol_strategy_rules=symbol_strategy_rules,
+            )
+        )
 
   def check_options(self):
     """Check the the run options are OK.

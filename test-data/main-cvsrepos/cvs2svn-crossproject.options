@@ -32,6 +32,7 @@ for project in [
             '%s/trunk' % (project,),
             '%s/branches' % (project,),
             '%s/tags' % (project,),
+            symbol_strategy_rules=global_symbol_strategy_rules,
             )
         )
 

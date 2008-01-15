@@ -156,11 +156,11 @@ CollateSymbolsPass
 ==================
 
 Use the symbol statistics collected in CollectRevsPass and
-Ctx().symbol_strategy_rules to decide which symbols should be treated
-as branches, which as tags, and which symbols should be excluded from
-the conversion altogether.  Consistency checks prevent, for example, a
-branch from being converted into a tag if there were commits on the
-branch.
+project.symbol_strategy_rules to decide which symbols should be
+treated as branches, which as tags, and which symbols should be
+excluded from the conversion altogether.  Consistency checks prevent,
+for example, a branch from being converted into a tag if there were
+commits on the branch.
 
 The symbol_strategy_rules are also used to determine the preferred
 parent of each symbol.  The preferred parent of a Symbol is the line

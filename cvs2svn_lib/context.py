@@ -53,7 +53,6 @@ class Ctx:
     self.cvs_log_decoder = lambda s: s.decode('ascii')
     self.cvs_filename_decoder = lambda s: s.decode('ascii')
     self.decode_apple_single = False
-    self.symbol_strategy_rules = []
     self.symbol_info_filename = None
     self.username = None
     self.svn_property_setters = []

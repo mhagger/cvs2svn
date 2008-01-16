@@ -190,11 +190,6 @@ class Symbol(AbstractSymbol):
   def __repr__(self):
     return '%s<%x>' % (self, self.id,)
 
-  def get_clean_name(self):
-    """self.name is already cleaned up, so return it."""
-
-    return self.name
-
 
 class TypedSymbol(Symbol):
   """A Symbol whose type (branch, tag, or excluded) has been decided."""

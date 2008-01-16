@@ -331,13 +331,12 @@ class SVNSymbolCommit(SVNCommit):
 
     # In Python 2.2.3, we could use textwrap.fill().  Oh well :-).
     space_or_newline = ' '
-    cleaned_symbolic_name = self.symbol.get_clean_name()
-    if len(cleaned_symbolic_name) >= 13:
+    if len(self.symbol.name) >= 13:
       space_or_newline = '\n'
 
     return (
         "This commit was manufactured by cvs2svn to create %s%s'%s'."
-        % (self._get_symbol_type(), space_or_newline, cleaned_symbolic_name)
+        % (self._get_symbol_type(), space_or_newline, self.symbol.name)
         )
 
   def get_description(self):
@@ -350,7 +349,8 @@ class SVNSymbolCommit(SVNCommit):
 
     return (
         SVNCommit.__str__(self)
-        + "   symbolic name: %s\n" % self.symbol.get_clean_name())
+        + "   symbolic name: %s\n" % (self.symbol.name,)
+        )
 
 
 class SVNBranchCommit(SVNSymbolCommit):

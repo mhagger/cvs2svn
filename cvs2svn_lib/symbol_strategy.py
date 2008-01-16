@@ -220,13 +220,9 @@ class DefaultBasePathRule(StrategyRule):
     elif isinstance(symbol, Trunk):
       symbol.base_path = symbol.project.trunk_path
     elif isinstance(symbol, Branch):
-      symbol.base_path = path_join(
-          symbol.project.branches_path, symbol.get_clean_name()
-          )
+      symbol.base_path = path_join(symbol.project.branches_path, symbol.name)
     elif isinstance(symbol, Tag):
-      symbol.base_path = path_join(
-          symbol.project.tags_path, symbol.get_clean_name()
-          )
+      symbol.base_path = path_join(symbol.project.tags_path, symbol.name)
     else:
       raise NotImplementedError()
 

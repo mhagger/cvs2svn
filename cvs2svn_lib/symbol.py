@@ -191,17 +191,9 @@ class Symbol(AbstractSymbol):
     return '%s<%x>' % (self, self.id,)
 
   def get_clean_name(self):
-    """Return self.name, translating characters that Subversion does
-    not allow in a pathname.
+    """self.name is already cleaned up, so return it."""
 
-    Since the unofficial set also includes [/\] we need to translate
-    those into ones that don't conflict with Subversion
-    limitations."""
-
-    name = self.name
-    name = name.replace('/','++')
-    name = name.replace('\\','--')
-    return name
+    return self.name
 
 
 class TypedSymbol(Symbol):

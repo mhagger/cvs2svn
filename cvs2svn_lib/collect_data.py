@@ -261,6 +261,18 @@ class _TagData(_SymbolData):
     self.rev = rev
 
 
+def clean_symbol_name(symbol_name):
+  """Return SYMBOL_NAME, cleaned up so that it can be used in an SVN path.
+
+  Since the unofficial set of disallowed characters also includes
+  [/\], we need to translate those into characters that don't conflict
+  with Subversion limitations."""
+
+  symbol_name = symbol_name.replace('/','++')
+  symbol_name = symbol_name.replace('\\','--')
+  return symbol_name
+
+
 class _SymbolDataCollector(object):
   """Collect information about symbols in a single CVSFile."""
 
@@ -335,12 +347,16 @@ class _SymbolDataCollector(object):
     # Canonicalize the revision number:
     revision = _branch_revision_re.sub(r'\1\2', revision)
 
+    # Apply any user-defined symbol transforms to the symbol name:
     name = self.cvs_file.project.transform_symbol(
         self.cvs_file, name, revision
         )
 
     # If the name transformed to None, then we ignore it:
     if name is not None:
+      # Clean up the symbol name:
+      name = clean_symbol_name(name)
+
       # Verify that the revision number is valid:
       if _valid_revision_re.match(revision):
         # The revision number is valid; record it for later processing:

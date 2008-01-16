@@ -49,6 +49,19 @@ class SymbolTransform:
     raise NotImplementedError()
 
 
+class ReplaceSubstringsSymbolTransform(SymbolTransform):
+  """Replace specific substrings in symbol names.
+
+  If the substring occurs multiple times, replace all copies."""
+
+  def __init__(self, old, new):
+    self.old = old
+    self.new = new
+
+  def transform(self, cvs_file, symbol_name, revision):
+    return symbol_name.replace(self.old, self.new)
+
+
 class CompoundSymbolTransform(SymbolTransform):
   """A SymbolTransform that applies other SymbolTransforms in series.
 

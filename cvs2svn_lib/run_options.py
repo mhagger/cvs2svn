@@ -61,6 +61,7 @@ from cvs2svn_lib.symbol_strategy import UnambiguousUsageRule
 from cvs2svn_lib.symbol_strategy import HeuristicPreferredParentRule
 from cvs2svn_lib.symbol_strategy import SymbolHintsFileRule
 from cvs2svn_lib.symbol_strategy import DefaultBasePathRule
+from cvs2svn_lib.symbol_transform import ReplaceSubstringsSymbolTransform
 from cvs2svn_lib.symbol_transform import RegexpSymbolTransform
 from cvs2svn_lib.property_setters import AutoPropsPropertySetter
 from cvs2svn_lib.property_setters import CVSBinaryFileDefaultMimeTypeSetter
@@ -563,6 +564,12 @@ class RunOptions:
       ctx.cvs_filename_decoder = CVSTextDecoder(encodings)
     except LookupError, e:
       raise FatalError(str(e))
+
+    # Add the standard symbol name cleanup rules:
+    symbol_transforms.extend([
+        ReplaceSubstringsSymbolTransform('/','++'),
+        ReplaceSubstringsSymbolTransform('\\','--'),
+        ])
 
     symbol_strategy_rules.append(UnambiguousUsageRule())
     if symbol_strategy_default == 'strict':

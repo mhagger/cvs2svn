@@ -85,6 +85,7 @@ from cvs2svn_lib.symbol_strategy import UnambiguousUsageRule
 from cvs2svn_lib.symbol_strategy import DefaultBasePathRule
 from cvs2svn_lib.symbol_strategy import HeuristicPreferredParentRule
 from cvs2svn_lib.symbol_strategy import SymbolHintsFileRule
+from cvs2svn_lib.symbol_transform import ReplaceSubstringsSymbolTransform
 from cvs2svn_lib.symbol_transform import RegexpSymbolTransform
 from cvs2svn_lib.property_setters import AutoPropsPropertySetter
 from cvs2svn_lib.property_setters import CVSBinaryFileDefaultMimeTypeSetter
@@ -497,6 +498,10 @@ run_options.add_project(
             #                      r'release-\1.\2'),
             #RegexpSymbolTransform(r'release-(\d+)_(\d+)_(\d+)',
             #                      r'release-\1.\2.\3'),
+            # The following two rules convert any slash characters
+            # found in symbol names to '++' and '--' respectively:
+            ReplaceSubstringsSymbolTransform('/','++'),
+            ReplaceSubstringsSymbolTransform('\\','--'),
             ],
         symbol_strategy_rules=global_symbol_strategy_rules + [
             # Additional, project-specific symbol strategy rules can
@@ -518,6 +523,10 @@ run_options.add_project(
 #            #                      r'release-\1.\2'),
 #            #RegexpSymbolTransform(r'release-(\d+)_(\d+)_(\d+)',
 #            #                      r'release-\1.\2.\3'),
+#            # The following two rules convert any slash characters
+#            # found in symbol names to '++' and '--' respectively:
+#            ReplaceSubstringsSymbolTransform('/','++'),
+#            ReplaceSubstringsSymbolTransform('\\','--'),
 #            ],
 #        symbol_strategy_rules=global_symbol_strategy_rules + [
 #            # Additional, project-specific symbol strategy rules can

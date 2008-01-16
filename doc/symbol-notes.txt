@@ -99,6 +99,33 @@ distinct from the Trunk objects for other Projects.  For each symbol
 name seen in each project, create a Symbol object.  The Symbol object
 contains its id, project, and name.
 
+The very first thing that is done when a symbol is read is that the
+Project's symbol transform rules are given a chance to transform the
+symbol name (or even cause it to be discarded).  The result of the
+transformation is used as the symbol name in the rest of the program.
+Because this transformation process is so low-level, it is capable of
+making a more fundamental kind of change than the symbol strategy
+rules that come later:
+
+  * Symbols can be renamed.
+
+  * Symbols can be fully discarded, as if they never appeared in the
+    CVS repository.  This can even be done for a malformed symbol or
+    for a branch symbol that refers to the same branch as another
+    branch symbol (which would otherwise be a fatal error).
+
+  * Two distinct symbols in different files within the same project
+    can be transformed to the same name, in which case they are
+    treated as a single symbol.
+
+  * Two distinct symbols within a single file can be transformed to
+    the same name, provided they refer to the same revision number.
+    This effectively discards one of the symbols.
+
+  * Two symbols with the same name in different files can be given
+    distinct names, in which case they are treated as completely
+    separate symbols.
+
 For each Symbol object, collect the following statistics:
 
   * In how many files was the symbol used as a branch and in how many
@@ -155,17 +182,29 @@ directory to the branch directory.
 CollateSymbolsPass
 ==================
 
-Use the symbol statistics collected in CollectRevsPass and
-project.symbol_strategy_rules to decide which symbols should be
-treated as branches, which as tags, and which symbols should be
-excluded from the conversion altogether.  Consistency checks prevent,
-for example, a branch from being converted into a tag if there were
-commits on the branch.
+Allow the project's symbol strategy rules to affect how symbols are
+converted:
 
-The symbol_strategy_rules are also used to determine the preferred
-parent of each symbol.  The preferred parent of a Symbol is the line
-of development that appeared as a possible parent of this symbol in
-the most CVSFiles.
+  * A symbol can be excluded from the conversion output (as long as
+    there are no other non-excluded symbols that depend on it).  In
+    this case, the Symbol will be converted into an ExcludedSymbol
+    instance.
+
+  * A tag symbol can be converted as a branch.  In this case, the
+    Symbol will be converted into a Branch instance.
+
+  * A branch symbol can be converted as a tag, provided there were
+    never any commits on the branch.  In this case, the Symbol will be
+    converted into a Tag instance.
+
+  * The SVN path where a symbol will be placed is determined.
+    Typically, symbols are laid out in the standard
+    trunk/branches/tags Subversion repository layout, but strategy
+    rules can in fact place symbols arbitrarily.
+
+  * The preferred parent of each symbol is determined.  The preferred
+    parent of a Symbol is chosen to be the line of development that
+    appeared as a possible parent of this symbol in the most CVSFiles.
 
 This pass creates the symbol database, SYMBOL_DB, which is accessed in
 later passes via the SymbolDatabase class.  The SymbolDatabase

@@ -27,3 +27,22 @@ ctx.revision_recorder = SimpleFulltextRevisionRecorderAdapter(
 ctx.revision_excluder = NullRevisionExcluder()
 ctx.revision_reader = None
 
+del run_options.projects[:]
+
+run_options.add_project(
+    Project(
+        r'test-data/main-cvsrepos',
+        symbol_transforms=[
+            # See cvs2svn-example.options for more documention about
+            # symbol transforms.
+            ReplaceSubstringsSymbolTransform('\\','/'),
+            NormalizePathsSymbolTransform(),
+            ],
+        symbol_strategy_rules=[
+            # See cvs2svn-example.options for more documention about
+            # strategy rules.
+            UnambiguousUsageRule(),
+            HeuristicPreferredParentRule(),
+            ],
+        )
+    )

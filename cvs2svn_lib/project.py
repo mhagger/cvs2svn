@@ -55,7 +55,7 @@ class Project(object):
 
   def __init__(
         self, project_cvs_repos_path,
-        trunk_path, branches_path=None, tags_path=None,
+        trunk_path=None, branches_path=None, tags_path=None,
         symbol_transforms=None,
         symbol_strategy_rules=None,
         ):
@@ -92,15 +92,29 @@ class Project(object):
     self.project_prefix_re = re.compile(
         r'^' + re.escape(self.project_cvs_repos_path)
         + r'(' + re.escape(os.sep) + r'|$)')
-    self.trunk_path = normalize_ttb_path(
-        '--trunk', trunk_path, allow_empty=Ctx().trunk_only
-        )
-    if not Ctx().trunk_only:
-      self.branches_path = normalize_ttb_path('--branches', branches_path)
-      self.tags_path = normalize_ttb_path('--tags', tags_path)
-      verify_paths_disjoint(
-          self.trunk_path, self.branches_path, self.tags_path
+
+    self.trunk_path = None
+    self.branches_path = None
+    self.tags_path = None
+
+    paths_to_check = []
+
+    if trunk_path is not None:
+      self.trunk_path = normalize_ttb_path(
+          '--trunk', trunk_path, allow_empty=True
           )
+      paths_to_check.append(self.trunk_path)
+
+    if not Ctx().trunk_only:
+      if branches_path is not None:
+        self.branches_path = normalize_ttb_path('--branches', branches_path)
+        paths_to_check.append(self.branches_path)
+
+      if tags_path is not None:
+        self.tags_path = normalize_ttb_path('--tags', tags_path)
+        paths_to_check.append(self.tags_path)
+
+    verify_paths_disjoint(*paths_to_check)
 
     # A list of transformation rules (regexp, replacement) applied to
     # symbol names in this project.
@@ -192,6 +206,6 @@ class Project(object):
     return newname
 
   def __str__(self):
-    return self.trunk_path
+    return self.trunk_path or self.project_cvs_repos_path
 
 

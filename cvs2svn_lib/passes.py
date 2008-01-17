@@ -167,7 +167,7 @@ class CollateSymbolsPass(Pass):
       Trunk : 'trunk',
       Branch : 'branch',
       Tag : 'tag',
-      ExcludedSymbol : 'excluded',
+      ExcludedSymbol : 'exclude',
       Symbol : '.',
       }
 

@@ -34,8 +34,6 @@ from cvs2svn_lib.common import InternalError
 from cvs2svn_lib.common import DB_OPEN_NEW
 from cvs2svn_lib.common import DB_OPEN_READ
 from cvs2svn_lib.common import DB_OPEN_WRITE
-from cvs2svn_lib.common import PathsNotDisjointException
-from cvs2svn_lib.common import verify_paths_disjoint
 from cvs2svn_lib.common import Timestamper
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.pass_manager import Pass
@@ -216,8 +214,8 @@ class CollateSymbolsPass(Pass):
         else:
           preferred_parent_name = preferred_parent.name
 
-    if isinstance(symbol, LineOfDevelopment):
-      symbol_path = symbol.get_path()
+    if isinstance(symbol, LineOfDevelopment) and symbol.base_path:
+      symbol_path = symbol.base_path
     else:
       symbol_path = '.'
 
@@ -319,34 +317,6 @@ class CollateSymbolsPass(Pass):
     else:
       return retval
 
-  def check_symbol_paths(self, symbol_map):
-    """Check that the paths of all included LODs are set and disjoint."""
-
-    error_found = False
-
-    # Check that all included LODs have their base paths set, and
-    # collect the paths into a list:
-    paths = []
-    for lod in symbol_map.itervalues():
-      if isinstance(lod, LineOfDevelopment):
-        if lod.base_path is None:
-          Log().error('%s: No path was set for %r\n' % (error_prefix, lod,))
-          error_found = True
-        else:
-          paths.append(lod.base_path)
-
-    # Check that the SVN paths of all LODS are disjoint:
-    try:
-      verify_paths_disjoint(*paths)
-    except PathsNotDisjointException, e:
-      Log().error(str(e))
-      error_found = True
-
-    if error_found:
-      raise FatalException(
-          'Please fix the above errors and restart CollateSymbolsPass'
-          )
-
   def run(self, run_options, stats_keeper):
     Ctx()._projects = read_projects(
         artifact_manager.get_temp_file(config.PROJECTS)
@@ -362,7 +332,7 @@ class CollateSymbolsPass(Pass):
 
     # Check that the symbols all have SVN paths set and that the paths
     # are disjoint:
-    self.check_symbol_paths(symbol_map)
+    Ctx().output_option.check_symbols(symbol_map)
 
     for symbol in symbol_map.itervalues():
       if isinstance(symbol, ExcludedSymbol):

@@ -25,8 +25,11 @@ from cvs2svn_lib.boolean import *
 from cvs2svn_lib import config
 from cvs2svn_lib.common import InternalError
 from cvs2svn_lib.common import FatalError
+from cvs2svn_lib.common import FatalException
 from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.common import format_date
+from cvs2svn_lib.common import PathsNotDisjointException
+from cvs2svn_lib.common import verify_paths_disjoint
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
@@ -39,6 +42,7 @@ from cvs2svn_lib.svn_repository_mirror import SVNRepositoryMirror
 from cvs2svn_lib.stdout_delegate import StdoutDelegate
 from cvs2svn_lib.dumpfile_delegate import DumpfileDelegate
 from cvs2svn_lib.repository_delegate import RepositoryDelegate
+from cvs2svn_lib.symbol import LineOfDevelopment
 from cvs2svn_lib.cvs_item import CVSRevisionAdd
 from cvs2svn_lib.cvs_item import CVSRevisionChange
 from cvs2svn_lib.cvs_item import CVSRevisionDelete
@@ -63,6 +67,34 @@ class SVNOutputOption(OutputOption):
 
     self.repos.register_artifacts(which_pass)
     Ctx().revision_reader.register_artifacts(which_pass)
+
+  def check_symbols(self, symbol_map):
+    """Check that the paths of all included LODs are set and disjoint."""
+
+    error_found = False
+
+    # Check that all included LODs have their base paths set, and
+    # collect the paths into a list:
+    paths = []
+    for lod in symbol_map.itervalues():
+      if isinstance(lod, LineOfDevelopment):
+        if lod.base_path is None:
+          Log().error('%s: No path was set for %r\n' % (error_prefix, lod,))
+          error_found = True
+        else:
+          paths.append(lod.base_path)
+
+    # Check that the SVN paths of all LODS are disjoint:
+    try:
+      verify_paths_disjoint(*paths)
+    except PathsNotDisjointException, e:
+      Log().error(str(e))
+      error_found = True
+
+    if error_found:
+      raise FatalException(
+          'Please fix the above errors and restart CollateSymbolsPass'
+          )
 
   def setup(self, svn_rev_count):
     self._symbolings_reader = SymbolingsReader()

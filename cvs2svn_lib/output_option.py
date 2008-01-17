@@ -42,6 +42,16 @@ class OutputOption:
 
     raise NotImplementedError()
 
+  def check_symbols(self, symbol_map):
+    """Check that the symbols in SYMBOL_MAP are OK for this output option.
+
+    SYMBOL_MAP is a map {AbstractSymbol : (Trunk|TypedSymbol)},
+    indicating how each symbol is planned to be converted.  Raise a
+    FatalError if the symbol plan is not acceptable for this output
+    option."""
+
+    raise NotImplementedError()
+
   def setup(self, svn_rev_count):
     """Prepare this output option."""
 

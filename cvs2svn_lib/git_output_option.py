@@ -90,6 +90,10 @@ class GitOutputOption(OutputOption):
           'Git output requires a default commit username'
           )
 
+  def check_symbols(self, symbol_map):
+    # FIXME: What constraints does git impose on symbols?
+    pass
+
   def setup(self, svn_rev_count):
     self._symbolings_reader = SymbolingsReader()
     self.f = open(self.dump_filename, 'wb')

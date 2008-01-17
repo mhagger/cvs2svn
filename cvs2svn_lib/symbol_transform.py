@@ -24,6 +24,9 @@ import re
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.log import Log
+from cvs2svn_lib.common import FatalError
+from cvs2svn_lib.common import IllegalSVNPathError
+from cvs2svn_lib.common import normalize_svn_path
 
 
 class SymbolTransform:
@@ -60,6 +63,15 @@ class ReplaceSubstringsSymbolTransform(SymbolTransform):
 
   def transform(self, cvs_file, symbol_name, revision):
     return symbol_name.replace(self.old, self.new)
+
+
+class NormalizePathsSymbolTransform(SymbolTransform):
+  def transform(self, cvs_file, symbol_name, revision):
+    try:
+      return normalize_svn_path(symbol_name)
+    except IllegalSVNPathError, e:
+      raise FatalError('Problem with %s: %s' % (opt, e,))
+
 
 
 class CompoundSymbolTransform(SymbolTransform):

@@ -27,6 +27,9 @@ Version x.x.x (not yet released)
  * Ignore (with a warning) symbols defined to malformed revision numbers.
  * Tolerate multiple definitions of a symbol to the same revision number.
  * Handle RCS files that superfluously set the default branch to trunk.
+ * Allow '/' characters in CVS symbol names (creating multilevel SVN paths).
+ * Allow symbols to be transformed to contain '/' (allowing multilevel paths).
+ * Convert '\' characters to '/' (rather than '--') in symbol names.
 
  Miscellaneous:
 

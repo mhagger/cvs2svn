@@ -2259,10 +2259,22 @@ def questionable_branch_names():
 def questionable_tag_names():
   "test that we can handle weird tag names"
   conv = ensure_conversion('questionable-symbols')
-  for tag_name in ['Tag_A', 'TagWith--Backslash_E', 'TagWith++Slash_Z']:
-    conv.find_tag_log(tag_name).check(sym_log_msg(tag_name,1), (
-      ('/%(tags)s/' + tag_name + ' (from /trunk:8)', 'A'),
+  conv.find_tag_log('Tag_A').check(sym_log_msg('Tag_A', 1), (
+      ('/%(tags)s/Tag_A (from /trunk:8)', 'A'),
       ))
+  conv.find_tag_log('TagWith/Backslash_E').check(
+      sym_log_msg('TagWith/Backslash_E',1),
+      (
+          ('/%(tags)s/TagWith', 'A'),
+          ('/%(tags)s/TagWith/Backslash_E (from /trunk:8)', 'A'),
+          )
+      )
+  conv.find_tag_log('TagWith/Slash_Z').check(
+      sym_log_msg('TagWith/Slash_Z',1),
+      (
+          ('/%(tags)s/TagWith/Slash_Z (from /trunk:8)', 'A'),
+          )
+      )
 
 
 def revision_reorder_bug():

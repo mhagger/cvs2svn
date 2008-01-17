@@ -63,6 +63,7 @@ from cvs2svn_lib.symbol_strategy import SymbolHintsFileRule
 from cvs2svn_lib.symbol_strategy import DefaultBasePathRule
 from cvs2svn_lib.symbol_transform import ReplaceSubstringsSymbolTransform
 from cvs2svn_lib.symbol_transform import RegexpSymbolTransform
+from cvs2svn_lib.symbol_transform import NormalizePathsSymbolTransform
 from cvs2svn_lib.property_setters import AutoPropsPropertySetter
 from cvs2svn_lib.property_setters import CVSBinaryFileDefaultMimeTypeSetter
 from cvs2svn_lib.property_setters import CVSBinaryFileEOLStyleSetter
@@ -567,8 +568,9 @@ class RunOptions:
 
     # Add the standard symbol name cleanup rules:
     symbol_transforms.extend([
-        ReplaceSubstringsSymbolTransform('/','++'),
-        ReplaceSubstringsSymbolTransform('\\','--'),
+        ReplaceSubstringsSymbolTransform('\\','/'),
+        # Remove leading, trailing, and repeated slashes:
+        NormalizePathsSymbolTransform(),
         ])
 
     symbol_strategy_rules.append(UnambiguousUsageRule())

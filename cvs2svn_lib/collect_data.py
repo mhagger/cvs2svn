@@ -1125,9 +1125,9 @@ class _ProjectDataCollector:
       elif fname.endswith(',v'):
         self.found_rcs_file = True
         cvs_file = self._get_attic_file(cvs_directory, fname)
-        retained_in_attic = (cvs_file.parent_directory == cvs_directory)
+        if cvs_file.parent_directory == cvs_directory:
+          retained_attic_file = True
         rcsfiles[cvs_file.basename] = cvs_file.filename
-        retained_attic_file |= retained_in_attic
         self._process_file(cvs_file)
 
     if retained_attic_file:

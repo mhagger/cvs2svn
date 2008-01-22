@@ -1119,7 +1119,9 @@ class _ProjectDataCollector:
 
     retained_attic_file = False
 
-    for fname in os.listdir(cvs_directory.filename):
+    fnames = os.listdir(cvs_directory.filename)
+    fnames.sort()
+    for fname in fnames:
       pathname = os.path.join(cvs_directory.filename, fname)
       if os.path.isdir(pathname):
         Log().warn("Directory %s found within Attic; ignoring" % (pathname,))
@@ -1149,8 +1151,6 @@ class _ProjectDataCollector:
 
     self.collect_data.add_cvs_directory(cvs_directory)
 
-    files = os.listdir(cvs_directory.filename)
-
     # Map { fname[:-2] : pathname }:
     rcsfiles = {}
 
@@ -1158,7 +1158,9 @@ class _ProjectDataCollector:
 
     dirs = []
 
-    for fname in files[:]:
+    fnames = os.listdir(cvs_directory.filename)
+    fnames.sort()
+    for fname in fnames:
       pathname = os.path.join(cvs_directory.filename, fname)
       if os.path.isdir(pathname):
         if fname == 'Attic':

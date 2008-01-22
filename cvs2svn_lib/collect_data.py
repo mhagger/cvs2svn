@@ -949,7 +949,9 @@ class _ProjectDataCollector:
 
     self.project.root_cvs_directory_id = root_cvs_directory.id
 
-    self._visit_non_attic_directory(root_cvs_directory)
+    for cvs_file in self._generate_cvs_files(root_cvs_directory):
+      self._process_file(cvs_file)
+      self.found_rcs_file = True
 
     if not self.found_rcs_file:
       self.collect_data.record_fatal_error(
@@ -1108,13 +1110,11 @@ class _ProjectDataCollector:
           parent_directory, basename, True, leave_in_attic=True
           )
 
-  def _visit_attic_directory(self, cvs_directory):
-    """Visit the Attic directory CVS_DIRECTORY."""
+  def _generate_attic_cvs_files(self, cvs_directory):
+    """Generate CVSFiles for the files in Attic directory CVS_DIRECTORY.
 
-    # Map {cvs_file.basename : cvs_file.filename} for files that will
-    # end up in CVS_DIRECTORY.parent_directory (i.e., files that will
-    # not be retained in the Attic directory):
-    rcsfiles = {}
+    Also add CVS_DIRECTORY to self.collect_data if any files are being
+    retained in that directory."""
 
     retained_attic_file = False
 
@@ -1125,38 +1125,39 @@ class _ProjectDataCollector:
       if os.path.isdir(pathname):
         Log().warn("Directory %s found within Attic; ignoring" % (pathname,))
       elif fname.endswith(',v'):
-        self.found_rcs_file = True
         cvs_file = self._get_attic_file(cvs_directory, fname)
         if cvs_file.parent_directory == cvs_directory:
           # This file will be retained in the Attic directory.
           retained_attic_file = True
-        else:
-          rcsfiles[cvs_file.basename] = cvs_file.filename
-
-        self._process_file(cvs_file)
+        yield cvs_file
 
     if retained_attic_file:
       # If any files were retained in the Attic directory, then write
       # the Attic directory to CVSFileDatabase:
       self.collect_data.add_cvs_directory(cvs_directory)
 
-    return rcsfiles
-
   def _get_non_attic_file(self, parent_directory, basename):
     """Return a CVSFile object for the non-Attic file at BASENAME."""
 
     return self._get_cvs_file(parent_directory, basename, False)
 
-  def _visit_non_attic_directory(self, cvs_directory):
-    """Visit the non-Attic directory CVS_DIRECTORY."""
+  def _generate_cvs_files(self, cvs_directory):
+    """Generate the CVSFiles under non-Attic directory CVS_DIRECTORY.
+
+    Process directories recursively, including Attic directories.
+    Also create and register CVSDirectories as they are found, and
+    look for conflicts between the filenames that will result from
+    files, attic files, and subdirectories."""
 
     self.collect_data.add_cvs_directory(cvs_directory)
 
-    # Map { fname[:-2] : pathname }:
+    # Map {cvs_file.basename : cvs_file.filename} for files directly
+    # in cvs_directory:
     rcsfiles = {}
 
     attic_dir = None
 
+    # Non-Attic subdirectories of cvs_directory (to be recursed into):
     dirs = []
 
     fnames = os.listdir(cvs_directory.filename)
@@ -1169,13 +1170,16 @@ class _ProjectDataCollector:
         else:
           dirs.append(fname)
       elif fname.endswith(',v'):
-        self.found_rcs_file = True
         cvs_file = self._get_non_attic_file(cvs_directory, fname)
         rcsfiles[cvs_file.basename] = cvs_file.filename
-        self._process_file(cvs_file)
+        yield cvs_file
       else:
         # Silently ignore other files:
         pass
+
+    # Map {cvs_file.basename : cvs_file.filename} for files in an
+    # Attic directory within cvs_directory:
+    attic_rcsfiles = {}
 
     if attic_dir is not None:
       attic_directory = CVSDirectory(
@@ -1183,11 +1187,14 @@ class _ProjectDataCollector:
           self.project, cvs_directory, 'Attic',
           )
 
-      attic_rcsfiles = self._visit_attic_directory(attic_directory)
+      for cvs_file in self._generate_attic_cvs_files(attic_directory):
+        if cvs_file.parent_directory == cvs_directory:
+          attic_rcsfiles[cvs_file.basename] = cvs_file.filename
+        yield cvs_file
+
       alldirs = dirs + [attic_dir]
     else:
       alldirs = dirs
-      attic_rcsfiles = {}
 
     # Check for conflicts between directory names and the filenames
     # that will result from the rcs files (both in this directory and
@@ -1225,7 +1232,8 @@ class _ProjectDataCollector:
           self.project, cvs_directory, fname,
           )
 
-      self._visit_non_attic_directory(sub_directory)
+      for cvs_file in self._generate_cvs_files(sub_directory):
+        yield cvs_file
 
 
 class CollectData:

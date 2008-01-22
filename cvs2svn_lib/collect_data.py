@@ -1086,12 +1086,12 @@ class _ProjectDataCollector:
     necessarily the parent_directory of the CVSFile that will be
     returned.
 
-    Return (CVSFile, retained_in_attic), where RETAINED_IN_ATTIC is a
-    boolean that is True iff CVSFile will remain in the Attic
-    directory."""
+    Return CVSFile, whose parent directory is usually
+    PARENT_DIRECTORY.parent_directory, but might be PARENT_DIRECTORY
+    iff CVSFile will remain in the Attic directory."""
 
     try:
-      return (self._get_cvs_file(parent_directory, basename, True), False)
+      return self._get_cvs_file(parent_directory, basename, True)
     except FileInAndOutOfAtticException, e:
       if Ctx().retain_conflicting_attic_files:
         Log().warn(
@@ -1104,11 +1104,8 @@ class _ProjectDataCollector:
 
       # Either way, return a CVSFile object so that the rest of the
       # file processing can proceed:
-      return (
-          self._get_cvs_file(
-              parent_directory, basename, True, leave_in_attic=True
-              ),
-          True,
+      return self._get_cvs_file(
+          parent_directory, basename, True, leave_in_attic=True
           )
 
   def _visit_attic_directory(self, cvs_directory):
@@ -1127,9 +1124,8 @@ class _ProjectDataCollector:
         Log().warn("Directory %s found within Attic; ignoring" % (pathname,))
       elif fname.endswith(',v'):
         self.found_rcs_file = True
-        (cvs_file, retained_in_attic) = self._get_attic_file(
-            cvs_directory, fname
-            )
+        cvs_file = self._get_attic_file(cvs_directory, fname)
+        retained_in_attic = (cvs_file.parent_directory == cvs_directory)
         rcsfiles[cvs_file.basename] = cvs_file.filename
         retained_attic_file |= retained_in_attic
         self._process_file(cvs_file)

@@ -1111,7 +1111,9 @@ class _ProjectDataCollector:
   def _visit_attic_directory(self, cvs_directory):
     """Visit the Attic directory CVS_DIRECTORY."""
 
-    # Maps { fname[:-2] : pathname }:
+    # Map {cvs_file.basename : cvs_file.filename} for files that will
+    # end up in CVS_DIRECTORY.parent_directory (i.e., files that will
+    # not be retained in the Attic directory):
     rcsfiles = {}
 
     retained_attic_file = False
@@ -1126,8 +1128,11 @@ class _ProjectDataCollector:
         self.found_rcs_file = True
         cvs_file = self._get_attic_file(cvs_directory, fname)
         if cvs_file.parent_directory == cvs_directory:
+          # This file will be retained in the Attic directory.
           retained_attic_file = True
-        rcsfiles[cvs_file.basename] = cvs_file.filename
+        else:
+          rcsfiles[cvs_file.basename] = cvs_file.filename
+
         self._process_file(cvs_file)
 
     if retained_attic_file:

@@ -1127,10 +1127,10 @@ class _ProjectDataCollector:
         Log().warn("Directory %s found within Attic; ignoring" % (pathname,))
       elif fname.endswith(',v'):
         self.found_rcs_file = True
-        rcsfiles[fname[:-2]] = pathname
         (cvs_file, retained_in_attic) = self._get_attic_file(
             cvs_directory, fname
             )
+        rcsfiles[cvs_file.basename] = cvs_file.filename
         retained_attic_file |= retained_in_attic
         self._process_file(cvs_file)
 
@@ -1169,8 +1169,9 @@ class _ProjectDataCollector:
           dirs.append(fname)
       elif fname.endswith(',v'):
         self.found_rcs_file = True
-        rcsfiles[fname[:-2]] = pathname
-        self._process_file(self._get_non_attic_file(cvs_directory, fname))
+        cvs_file = self._get_non_attic_file(cvs_directory, fname)
+        rcsfiles[cvs_file.basename] = cvs_file.filename
+        self._process_file(cvs_file)
       else:
         # Silently ignore other files:
         pass

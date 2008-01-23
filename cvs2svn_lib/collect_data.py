@@ -923,12 +923,9 @@ class _ProjectDataCollector:
   def __init__(self, collect_data, project):
     self.collect_data = collect_data
     self.project = project
-    self.found_rcs_file = False
     self.num_files = 0
 
-    Ctx()._projects[project.id] = project
-
-    # The Trunk LineOfDevelopment object for this project.
+    # The Trunk LineOfDevelopment object for this project:
     self.trunk = Trunk(
         self.collect_data.symbol_key_generator.gen_id(), self.project
         )
@@ -942,24 +939,6 @@ class _ProjectDataCollector:
     # Tags because the same name might appear as a branch in one file
     # and a tag in another.
     self.symbols = {}
-
-    root_cvs_directory = CVSDirectory(
-        self.collect_data.file_key_generator.gen_id(), self.project, None, ''
-        )
-
-    self.project.root_cvs_directory_id = root_cvs_directory.id
-
-    for cvs_file in self._generate_cvs_files(root_cvs_directory):
-      self._process_file(cvs_file)
-      self.found_rcs_file = True
-
-    if not self.found_rcs_file:
-      self.collect_data.record_fatal_error(
-          'No RCS files found under %r!\n'
-          'Are you absolutely certain you are pointing cvs2svn\n'
-          'at a CVS repository?\n'
-          % (self.project.project_cvs_repos_path,)
-          )
 
   def get_symbol(self, name):
     """Return the Symbol object for the symbol named NAME in this project.
@@ -975,7 +954,7 @@ class _ProjectDataCollector:
       self.symbols[name] = symbol
     return symbol
 
-  def _process_file(self, cvs_file):
+  def process_file(self, cvs_file):
     Log().normal(cvs_file.filename)
     fdc = _FileDataCollector(self, cvs_file)
     try:
@@ -1014,6 +993,65 @@ class _ProjectDataCollector:
     self.collect_data.revision_recorder.finish_file(cvs_file_items)
     self.collect_data.add_cvs_file_items(cvs_file_items)
     self.collect_data.symbol_stats.register(cvs_file_items)
+
+
+class CollectData:
+  """Repository for data collected by parsing the CVS repository files.
+
+  This class manages the databases into which information collected
+  from the CVS repository is stored.  The data are stored into this
+  class by _FileDataCollector instances, one of which is created for
+  each file to be parsed."""
+
+  def __init__(self, revision_recorder, stats_keeper):
+    self.revision_recorder = revision_recorder
+    self._cvs_item_store = NewCVSItemStore(
+        artifact_manager.get_temp_file(config.CVS_ITEMS_STORE))
+    self.metadata_db = MetadataDatabase(DB_OPEN_NEW)
+    self.fatal_errors = []
+    self.num_files = 0
+    self.symbol_stats = SymbolStatisticsCollector()
+    self.stats_keeper = stats_keeper
+
+    # Key generator for CVSFiles:
+    self.file_key_generator = KeyGenerator()
+
+    # Key generator for CVSItems:
+    self.item_key_generator = KeyGenerator()
+
+    # Key generator for Symbols:
+    self.symbol_key_generator = KeyGenerator()
+
+    self.revision_recorder.start()
+
+  def record_fatal_error(self, err):
+    """Record that fatal error ERR was found.
+
+    ERR is a string (without trailing newline) describing the error.
+    Output the error to stderr immediately, and record a copy to be
+    output again in a summary at the end of CollectRevsPass."""
+
+    err = '%s: %s' % (error_prefix, err,)
+    Log().error(err + '\n')
+    self.fatal_errors.append(err)
+
+  def add_cvs_directory(self, cvs_directory):
+    """Record CVS_DIRECTORY."""
+
+    Ctx()._cvs_file_db.log_file(cvs_directory)
+
+  def add_cvs_file_items(self, cvs_file_items):
+    """Record the information from CVS_FILE_ITEMS.
+
+    Store the CVSFile to _cvs_file_db under its persistent id, store
+    the CVSItems, and record the CVSItems to self.stats_keeper."""
+
+    Ctx()._cvs_file_db.log_file(cvs_file_items.cvs_file)
+    self._cvs_item_store.add(cvs_file_items)
+
+    self.stats_keeper.record_cvs_file(cvs_file_items.cvs_file)
+    for cvs_item in cvs_file_items.values():
+      self.stats_keeper.record_cvs_item(cvs_item)
 
   def _get_cvs_file(
         self, parent_directory, basename, file_in_attic, leave_in_attic=False
@@ -1075,7 +1113,7 @@ class _ProjectDataCollector:
 
     # mode is not known, so we temporarily set it to None.
     return CVSFile(
-        self.collect_data.file_key_generator.gen_id(),
+        self.file_key_generator.gen_id(),
         parent_directory.project, logical_parent_directory, basename[:-2],
         in_attic, file_executable, file_size, None
         )
@@ -1102,7 +1140,7 @@ class _ProjectDataCollector:
             % (warning_prefix, e)
             )
       else:
-        self.collect_data.record_fatal_error(str(e))
+        self.record_fatal_error(str(e))
 
       # Either way, return a CVSFile object so that the rest of the
       # file processing can proceed:
@@ -1113,8 +1151,8 @@ class _ProjectDataCollector:
   def _generate_attic_cvs_files(self, cvs_directory):
     """Generate CVSFiles for the files in Attic directory CVS_DIRECTORY.
 
-    Also add CVS_DIRECTORY to self.collect_data if any files are being
-    retained in that directory."""
+    Also add CVS_DIRECTORY to self if any files are being retained in
+    that directory."""
 
     retained_attic_file = False
 
@@ -1134,7 +1172,7 @@ class _ProjectDataCollector:
     if retained_attic_file:
       # If any files were retained in the Attic directory, then write
       # the Attic directory to CVSFileDatabase:
-      self.collect_data.add_cvs_directory(cvs_directory)
+      self.add_cvs_directory(cvs_directory)
 
   def _get_non_attic_file(self, parent_directory, basename):
     """Return a CVSFile object for the non-Attic file at BASENAME."""
@@ -1149,7 +1187,7 @@ class _ProjectDataCollector:
     look for conflicts between the filenames that will result from
     files, attic files, and subdirectories."""
 
-    self.collect_data.add_cvs_directory(cvs_directory)
+    self.add_cvs_directory(cvs_directory)
 
     # Map {cvs_file.basename : cvs_file.filename} for files directly
     # in cvs_directory:
@@ -1183,7 +1221,7 @@ class _ProjectDataCollector:
 
     if attic_dir is not None:
       attic_directory = CVSDirectory(
-          self.collect_data.file_key_generator.gen_id(),
+          self.file_key_generator.gen_id(),
           cvs_directory.project, cvs_directory, 'Attic',
           )
 
@@ -1204,7 +1242,7 @@ class _ProjectDataCollector:
       pathname = os.path.join(cvs_directory.filename, fname)
       for rcsfile_list in [rcsfiles, attic_rcsfiles]:
         if fname in rcsfile_list:
-          self.collect_data.record_fatal_error(
+          self.record_fatal_error(
               'Directory name conflicts with filename.  Please remove or '
               'rename one\n'
               'of the following:\n'
@@ -1228,76 +1266,37 @@ class _ProjectDataCollector:
             )
 
       sub_directory = CVSDirectory(
-          self.collect_data.file_key_generator.gen_id(),
+          self.file_key_generator.gen_id(),
           cvs_directory.project, cvs_directory, fname,
           )
 
       for cvs_file in self._generate_cvs_files(sub_directory):
         yield cvs_file
 
-
-class CollectData:
-  """Repository for data collected by parsing the CVS repository files.
-
-  This class manages the databases into which information collected
-  from the CVS repository is stored.  The data are stored into this
-  class by _FileDataCollector instances, one of which is created for
-  each file to be parsed."""
-
-  def __init__(self, revision_recorder, stats_keeper):
-    self.revision_recorder = revision_recorder
-    self._cvs_item_store = NewCVSItemStore(
-        artifact_manager.get_temp_file(config.CVS_ITEMS_STORE))
-    self.metadata_db = MetadataDatabase(DB_OPEN_NEW)
-    self.fatal_errors = []
-    self.num_files = 0
-    self.symbol_stats = SymbolStatisticsCollector()
-    self.stats_keeper = stats_keeper
-
-    # Key generator for CVSFiles:
-    self.file_key_generator = KeyGenerator()
-
-    # Key generator for CVSItems:
-    self.item_key_generator = KeyGenerator()
-
-    # Key generator for Symbols:
-    self.symbol_key_generator = KeyGenerator()
-
-    self.revision_recorder.start()
-
-  def record_fatal_error(self, err):
-    """Record that fatal error ERR was found.
-
-    ERR is a string (without trailing newline) describing the error.
-    Output the error to stderr immediately, and record a copy to be
-    output again in a summary at the end of CollectRevsPass."""
-
-    err = '%s: %s' % (error_prefix, err,)
-    Log().error(err + '\n')
-    self.fatal_errors.append(err)
-
   def process_project(self, project):
+    Ctx()._projects[project.id] = project
+
+    root_cvs_directory = CVSDirectory(
+        self.file_key_generator.gen_id(), project, None, ''
+        )
+    project.root_cvs_directory_id = root_cvs_directory.id
     pdc = _ProjectDataCollector(self, project)
+
+    found_rcs_file = False
+    for cvs_file in self._generate_cvs_files(root_cvs_directory):
+      pdc.process_file(cvs_file)
+      found_rcs_file = True
+
+    if not found_rcs_file:
+      self.record_fatal_error(
+          'No RCS files found under %r!\n'
+          'Are you absolutely certain you are pointing cvs2svn\n'
+          'at a CVS repository?\n'
+          % (project.project_cvs_repos_path,)
+          )
+
     self.num_files += pdc.num_files
     Log().verbose('Processed', self.num_files, 'files')
-
-  def add_cvs_directory(self, cvs_directory):
-    """Record CVS_DIRECTORY."""
-
-    Ctx()._cvs_file_db.log_file(cvs_directory)
-
-  def add_cvs_file_items(self, cvs_file_items):
-    """Record the information from CVS_FILE_ITEMS.
-
-    Store the CVSFile to _cvs_file_db under its persistent id, store
-    the CVSItems, and record the CVSItems to self.stats_keeper."""
-
-    Ctx()._cvs_file_db.log_file(cvs_file_items.cvs_file)
-    self._cvs_item_store.add(cvs_file_items)
-
-    self.stats_keeper.record_cvs_file(cvs_file_items.cvs_file)
-    for cvs_item in cvs_file_items.values():
-      self.stats_keeper.record_cvs_item(cvs_item)
 
   def _set_cvs_path_ordinals(self):
     cvs_files = list(Ctx()._cvs_file_db.itervalues())

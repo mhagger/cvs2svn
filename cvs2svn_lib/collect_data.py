@@ -1076,8 +1076,8 @@ class _ProjectDataCollector:
     # mode is not known, so we temporarily set it to None.
     return CVSFile(
         self.collect_data.file_key_generator.gen_id(),
-        self.project, logical_parent_directory, basename[:-2], in_attic,
-        file_executable, file_size, None
+        parent_directory.project, logical_parent_directory, basename[:-2],
+        in_attic, file_executable, file_size, None
         )
 
   def _get_attic_file(self, parent_directory, basename):
@@ -1184,7 +1184,7 @@ class _ProjectDataCollector:
     if attic_dir is not None:
       attic_directory = CVSDirectory(
           self.collect_data.file_key_generator.gen_id(),
-          self.project, cvs_directory, 'Attic',
+          cvs_directory.project, cvs_directory, 'Attic',
           )
 
       for cvs_file in self._generate_attic_cvs_files(attic_directory):
@@ -1229,7 +1229,7 @@ class _ProjectDataCollector:
 
       sub_directory = CVSDirectory(
           self.collect_data.file_key_generator.gen_id(),
-          self.project, cvs_directory, fname,
+          cvs_directory.project, cvs_directory, fname,
           )
 
       for cvs_file in self._generate_cvs_files(sub_directory):

@@ -954,6 +954,27 @@ class _ProjectDataCollector:
       self.symbols[name] = symbol
     return symbol
 
+  def _process_cvs_file_items(self, cvs_file_items):
+    """Process the CVSFileItems from one CVSFile."""
+
+    # Remove CVSRevisionDeletes that are not needed:
+    cvs_file_items.remove_unneeded_deletes(self.collect_data.metadata_db)
+
+    # Remove initial branch deletes that are not needed:
+    cvs_file_items.remove_initial_branch_deletes(
+        self.collect_data.metadata_db
+        )
+
+    # If this is a --trunk-only conversion, discard all branches and
+    # tags, then draft any non-trunk default branch revisions to
+    # trunk:
+    if Ctx().trunk_only:
+      cvs_file_items.exclude_non_trunk()
+
+    self.collect_data.revision_recorder.finish_file(cvs_file_items)
+    self.collect_data.add_cvs_file_items(cvs_file_items)
+    self.collect_data.symbol_stats.register(cvs_file_items)
+
   def process_file(self, cvs_file):
     Log().normal(cvs_file.filename)
     fdc = _FileDataCollector(self, cvs_file)
@@ -976,23 +997,7 @@ class _ProjectDataCollector:
 
     del fdc
 
-    # Remove CVSRevisionDeletes that are not needed:
-    cvs_file_items.remove_unneeded_deletes(self.collect_data.metadata_db)
-
-    # Remove initial branch deletes that are not needed:
-    cvs_file_items.remove_initial_branch_deletes(
-        self.collect_data.metadata_db
-        )
-
-    # If this is a --trunk-only conversion, discard all branches and
-    # tags, then draft any non-trunk default branch revisions to
-    # trunk:
-    if Ctx().trunk_only:
-      cvs_file_items.exclude_non_trunk()
-
-    self.collect_data.revision_recorder.finish_file(cvs_file_items)
-    self.collect_data.add_cvs_file_items(cvs_file_items)
-    self.collect_data.symbol_stats.register(cvs_file_items)
+    self._process_cvs_file_items(cvs_file_items)
 
 
 class CollectData:

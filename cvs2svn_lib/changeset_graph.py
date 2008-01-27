@@ -49,9 +49,9 @@ class _NoPredNodes:
 
   The implementation of this class is crude: as changesets are added,
   they are appended to a list.  When one is needed, the list is sorted
-  and then the first changeset in the list is returned.  To reduce the
-  number of sorts that are needed, the class keeps track of whether
-  the list is currently sorted.
+  in reverse order and then the last changeset in the list is
+  returned.  To reduce the number of sorts that are needed, the class
+  keeps track of whether the list is currently sorted.
 
   All this repeated sorting is wasteful and unnecessary.  We should
   instead use a heap to output the changeset order, which would
@@ -80,10 +80,10 @@ class _NoPredNodes:
     return len(self._nodes)
 
   def _compare((node_1, changeset_1), (node_2, changeset_2)):
-    """Define an ordering on self._nodes."""
+    """Define a (reverse) ordering on self._nodes."""
 
-    return cmp(node_1.time_range, node_2.time_range) \
-           or cmp(changeset_1, changeset_2)
+    return cmp(node_2.time_range, node_1.time_range) \
+           or cmp(changeset_2, changeset_1)
 
   _compare = staticmethod(_compare)
 
@@ -99,7 +99,7 @@ class _NoPredNodes:
     if not self._sorted:
       self._nodes.sort(self._compare)
       self._sorted = True
-    return self._nodes.pop(0)
+    return self._nodes.pop()
 
 
 class ChangesetGraph(object):

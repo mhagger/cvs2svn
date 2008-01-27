@@ -42,6 +42,59 @@ class NoPredNodeInGraphException(Exception):
     Exception.__init__(self, 'Node %s has no predecessors' % (node,))
 
 
+class _NoPredNodes:
+  """Manage changesets that are to be processed.
+
+  Output the changesets in order by time and changeset type.
+
+  The implementation of this class is crude: as changesets are added,
+  they are appended to a list.  When one is needed, the list is sorted
+  and then the first changeset in the list is returned.  To reduce the
+  number of sorts that are needed, the class keeps track of whether
+  the list is currently sorted.
+
+  All this repeated sorting is wasteful and unnecessary.  We should
+  instead use a heap to output the changeset order, which would
+  require O(lg N) work per add/get rather than O(1) and O(N lg N).
+  But: (1) the heapq modules was not added to Python until version
+  2.3; (2) the lame interface of heapq doesn't allow arbitrary
+  comparisons, so we would have to store extra information in the
+  array elements; and (3) testing showed that the heapq implementation
+  is no faster than this one (perhaps because of the increased memory
+  usage)."""
+
+  def __init__(self, changeset_db):
+    self.changeset_db = changeset_db
+    # A list [(node, changeset,)] of nodes with no predecessors:
+    self._nodes = []
+    self._sorted = True
+
+  def __len__(self):
+    return len(self._nodes)
+
+  def _compare((node_1, changeset_1), (node_2, changeset_2)):
+    """Define an ordering on self._nodes."""
+
+    return cmp(node_1.time_range, node_2.time_range) \
+           or cmp(changeset_1, changeset_2)
+
+  _compare = staticmethod(_compare)
+
+  def add(self, node):
+    self._nodes.append( (node, self.changeset_db[node.id],) )
+    self._sorted = False
+
+  def get(self):
+    """Return (node, changeset,) of the smallest node.
+
+    'Smallest' is defined by self._compare()."""
+
+    if not self._sorted:
+      self._nodes.sort(self._compare)
+      self._sorted = True
+    return self._nodes.pop(0)
+
+
 class ChangesetGraph(object):
   """A graph of changesets and their dependencies."""
 
@@ -241,35 +294,21 @@ class ChangesetGraph(object):
     The graph should not be otherwise altered while this generator is
     running."""
 
-    def compare((node_1, changeset_1), (node_2, changeset_2)):
-      """Define an ordering on nopred_nodes elements."""
-
-      return cmp(node_1.time_range, node_2.time_range) \
-             or cmp(changeset_1, changeset_2)
-
     # Find a list of (node,changeset,) where the node has no
     # predecessors:
-    nopred_nodes = [
-        (node, self._changeset_db[node.id],)
-        for node in self.nodes.itervalues()
-        if not node.pred_ids]
-    nopred_nodes.sort(compare)
+    nopred_nodes = _NoPredNodes(self._changeset_db)
+    for node in self.nodes.itervalues():
+      if not node.pred_ids:
+        nopred_nodes.add(node)
+
     while nopred_nodes:
-      (node, changeset,) = nopred_nodes.pop(0)
+      (node, changeset,) = nopred_nodes.get()
       del self[node.id]
       # See if any successors are now ready for extraction:
-      new_nodes_found = False
       for succ_id in node.succ_ids:
         succ = self[succ_id]
         if not succ.pred_ids:
-          nopred_nodes.append( (succ, self._changeset_db[succ.id],) )
-          new_nodes_found = True
-      if new_nodes_found:
-        # All this repeated sorting is very wasteful.  We should
-        # instead use a heap to keep things coming out in order.  But
-        # I highly doubt that this will be a bottleneck, so here we
-        # go.
-        nopred_nodes.sort(compare)
+          nopred_nodes.add(succ)
       yield (node.id, node.time_range)
 
   def find_cycle(self, starting_node_id):

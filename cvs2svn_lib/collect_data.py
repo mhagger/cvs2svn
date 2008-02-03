@@ -84,6 +84,7 @@ from cvs2svn_lib.key_generator import KeyGenerator
 from cvs2svn_lib.cvs_item_database import NewCVSItemStore
 from cvs2svn_lib.symbol_statistics import SymbolStatisticsCollector
 from cvs2svn_lib.metadata_database import MetadataDatabase
+from cvs2svn_lib.metadata_database import MetadataLogger
 
 import cvs2svn_rcsparse
 
@@ -819,8 +820,9 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     else:
       branch_name = self.sdc.rev_to_branch_data(revision).symbol.name
 
-    cvs_rev.metadata_id = self.collect_data.metadata_db.get_key(
-        self.project, branch_name, rev_data.author, log)
+    cvs_rev.metadata_id = self.collect_data.metadata_logger.store(
+        self.project, branch_name, rev_data.author, log
+        )
     cvs_rev.deltatext_exists = bool(text)
 
     # If this is revision 1.1, determine whether the file appears to
@@ -1013,6 +1015,7 @@ class CollectData:
     self._cvs_item_store = NewCVSItemStore(
         artifact_manager.get_temp_file(config.CVS_ITEMS_STORE))
     self.metadata_db = MetadataDatabase(DB_OPEN_NEW)
+    self.metadata_logger = MetadataLogger(self.metadata_db)
     self.fatal_errors = []
     self.num_files = 0
     self.symbol_stats = SymbolStatisticsCollector()
@@ -1319,6 +1322,7 @@ class CollectData:
     self.symbol_stats.purge_ghost_symbols()
     self.symbol_stats.close()
     self.symbol_stats = None
+    self.metadata_logger = None
     self.metadata_db.close()
     self.metadata_db = None
     self._cvs_item_store.close()

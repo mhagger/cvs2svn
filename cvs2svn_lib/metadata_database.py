@@ -14,7 +14,7 @@
 # history and logs, available at http://cvs2svn.tigris.org/.
 # ====================================================================
 
-"""This module contains a class to store CVSRevision metadata."""
+"""This module contains classes to manage CVSRevision metadata."""
 
 
 import sha
@@ -39,71 +39,20 @@ class MetadataDatabase:
 
       id -> (author, log_msg,)
 
-  where id is a unique identifier for a set of metadata.
-
-  When the MetadataDatabase is opened in DB_OPEN_NEW mode, the mapping
-
-      { (project, branch_name, author, log_msg) -> id }
-
-  is also available.  If the requested set of metadata has never been
-  seen before, a new record is created and its id is returned.  This
-  is done by creating an SHA digest of a string containing author,
-  log_message, and possible project_id and/or branch_name, then
-  looking up the digest in the _digest_to_id map.
-
-  """
+  where id is a unique identifier for a set of metadata."""
 
   def __init__(self, mode):
     """Initialize an instance, opening database in the specified MODE.
 
     MODE must be DB_OPEN_NEW or DB_OPEN_READ."""
 
-    self.mode = mode
-
-    if self.mode == DB_OPEN_NEW:
-      # A map { digest : id }:
-      self._digest_to_id = {}
-
-      # A key_generator to generate keys for metadata that haven't
-      # been seen yet:
-      self.key_generator = KeyGenerator()
-    elif self.mode == DB_OPEN_READ:
-      # In this case, we don't need key_generator or _digest_to_id.
-      pass
-    elif self.mode == DB_OPEN_WRITE:
-      # Modifying an existing database is not supported:
-      raise NotImplementedError('Mode %r is not supported' % self.mode)
-
     self.db = Database(
-        artifact_manager.get_temp_file(config.METADATA_DB), self.mode,
-        MarshalSerializer())
+        artifact_manager.get_temp_file(config.METADATA_DB), mode,
+        MarshalSerializer()
+        )
 
-  def get_key(self, project, branch_name, author, log_msg):
-      """Return the id for the specified metadata.
-
-      Locate the record for a commit with the specified (PROJECT,
-      BRANCH_NAME, AUTHOR, LOG_MSG).  (Depending on policy, not all of
-      these items are necessarily used when creating the unique id.)
-      If there is no such record, create one and return its
-      newly-generated id."""
-
-      key = [author, log_msg]
-      if not Ctx().cross_project_commits:
-        key.append('%x' % project.id)
-      if not Ctx().cross_branch_commits:
-        key.append(branch_name or '')
-
-      digest = sha.new('\0'.join(key)).digest()
-      try:
-          # See if it is already known:
-          return self._digest_to_id[digest]
-      except KeyError:
-          pass
-
-      id = self.key_generator.gen_id()
-      self._digest_to_id[digest] = id
-      self.db['%x' % id] = (author, log_msg,)
-      return id
+  def __setitem__(self, id, (author, log_msg)):
+    self.db['%x' % (id,)] = (author, log_msg)
 
   def __getitem__(self, id):
     """Return (author, log_msg,) for ID."""
@@ -111,9 +60,63 @@ class MetadataDatabase:
     return self.db['%x' % (id,)]
 
   def close(self):
-    if self.mode == DB_OPEN_NEW:
-      self._digest_to_id = None
     self.db.close()
     self.db = None
+
+
+class MetadataLogger:
+  """Store and generate IDs for the metadata associated with CVSRevisions.
+
+  We want CVSRevisions that might be able to be combined to have the
+  same metadata ID, so we want a one-to-one relationship id <->
+  metadata.  We could simply construct a map {metadata : id}, but the
+  map would grow too large.  Therefore, we generate a digest
+  containing the significant parts of the metadata, and construct a
+  map {digest : id}.
+
+  To get the ID for a new set of metadata, we first create the digest.
+  If there is already an ID registered for that digest, we simply
+  return it.  If not, we generate a new ID, store the metadata in the
+  metadata database under that ID, record the mapping {digest : id},
+  and return the new id.
+
+  What metadata is included in the digest?  The author, log_msg,
+  project_id (if Ctx().cross_project_commits is not set), and
+  branch_name (if Ctx().cross_branch_commits is not set)."""
+
+  def __init__(self, metadata_db):
+    self._metadata_db = metadata_db
+
+    # A map { digest : id }:
+    self._digest_to_id = {}
+
+    # A key_generator to generate keys for metadata that haven't been
+    # seen yet:
+    self.key_generator = KeyGenerator()
+
+  def store(self, project, branch_name, author, log_msg):
+    """Store the metadata and return its id.
+
+    Locate the record for a commit with the specified (PROJECT,
+    BRANCH_NAME, AUTHOR, LOG_MSG) and return its id.  (Depending on
+    policy, not all of these items are necessarily used when creating
+    the unique id.)  If there is no such record, create one and return
+    its newly-generated id."""
+
+    key = [author, log_msg]
+    if not Ctx().cross_project_commits:
+      key.append('%x' % project.id)
+    if not Ctx().cross_branch_commits:
+      key.append(branch_name or '')
+
+    digest = sha.new('\0'.join(key)).digest()
+    try:
+      # See if it is already known:
+      return self._digest_to_id[digest]
+    except KeyError:
+      id = self.key_generator.gen_id()
+      self._digest_to_id[digest] = id
+      self._metadata_db[id] = (author, log_msg,)
+      return id
 
 

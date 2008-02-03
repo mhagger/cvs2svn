@@ -1464,7 +1464,6 @@ class CreateRevsPass(Pass):
     self._register_temp_file_needed(config.CVS_ITEMS_SORTED_STORE)
     self._register_temp_file_needed(config.CVS_ITEMS_SORTED_INDEX_TABLE)
     self._register_temp_file_needed(config.SYMBOL_DB)
-    self._register_temp_file_needed(config.METADATA_DB)
     self._register_temp_file_needed(config.CHANGESETS_ALLBROKEN_STORE)
     self._register_temp_file_needed(config.CHANGESETS_ALLBROKEN_INDEX)
     self._register_temp_file_needed(config.CHANGESETS_SORTED_DATAFILE)
@@ -1512,7 +1511,6 @@ class CreateRevsPass(Pass):
         )
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
     Ctx()._symbol_db = SymbolDatabase()
-    Ctx()._metadata_db = MetadataDatabase(DB_OPEN_READ)
     Ctx()._cvs_items_db = IndexedCVSItemStore(
         artifact_manager.get_temp_file(config.CVS_ITEMS_SORTED_STORE),
         artifact_manager.get_temp_file(config.CVS_ITEMS_SORTED_INDEX_TABLE),
@@ -1533,7 +1531,6 @@ class CreateRevsPass(Pass):
     persistence_manager.close()
     Ctx()._symbolings_logger.close()
     Ctx()._cvs_items_db.close()
-    Ctx()._metadata_db.close()
     Ctx()._symbol_db.close()
     Ctx()._cvs_file_db.close()
 

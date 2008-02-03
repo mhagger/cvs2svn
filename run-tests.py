@@ -1496,13 +1496,13 @@ def nonascii_filenames():
     svntest.main.safe_rmtree(dstrepos_path)
 
 
-class UnicodeLog(Cvs2SvnTestCase):
-  "log message contains unicode"
+class UnicodeTest(Cvs2SvnTestCase):
+  "metadata contains unicode"
 
   warning_pattern = r'WARNING\: problem encoding author or log message'
 
-  def __init__(self, warning_expected, **kw):
-    Cvs2SvnTestCase.__init__(self, 'unicode-log', **kw)
+  def __init__(self, name, warning_expected, **kw):
+    Cvs2SvnTestCase.__init__(self, name, **kw)
     self.warning_expected = warning_expected
 
   def run(self):
@@ -1520,6 +1520,20 @@ class UnicodeLog(Cvs2SvnTestCase):
     else:
       if conv.output_found(self.warning_pattern):
         raise Failure()
+
+
+class UnicodeAuthor(UnicodeTest):
+  "author name contains unicode"
+
+  def __init__(self, warning_expected, **kw):
+    UnicodeTest.__init__(self, 'unicode-author', warning_expected, **kw)
+
+
+class UnicodeLog(UnicodeTest):
+  "log message contains unicode"
+
+  def __init__(self, warning_expected, **kw):
+    UnicodeTest.__init__(self, 'unicode-log', warning_expected, **kw)
 
 
 def vendor_branch_sameness():
@@ -3286,6 +3300,14 @@ test_list = [
     BranchDeleteFirst(variant=1, trunk='a/1', branches='a/2', tags='a/3'),
     nonascii_filenames,
 # 40:
+    UnicodeAuthor(
+        warning_expected=1),
+    UnicodeAuthor(
+        warning_expected=0,
+        variant='encoding', args=['--encoding=utf_8']),
+    UnicodeAuthor(
+        warning_expected=0,
+        variant='fallback-encoding', args=['--fallback-encoding=utf_8']),
     UnicodeLog(
         warning_expected=1),
     UnicodeLog(
@@ -3298,10 +3320,10 @@ test_list = [
     vendor_branch_trunk_only,
     default_branches,
     default_branches_trunk_only,
+# 50:
     default_branch_and_1_2,
     compose_tag_three_sources,
     pass5_when_to_fill,
-# 50:
     PeerPathPruning(),
     PeerPathPruning(variant=1, trunk='a/1', branches='a/2', tags='a/3'),
     EmptyTrunk(),
@@ -3309,10 +3331,10 @@ test_list = [
     EmptyTrunk(variant=2, trunk='a/1', branches='a/2', tags='a/3'),
     no_spurious_svn_commits,
     invalid_closings_on_trunk,
+# 60:
     individual_passes,
     resync_bug,
     branch_from_default_branch,
-# 60:
     file_in_attic_too,
     retain_file_in_attic_too,
     symbolic_name_filling_guide,
@@ -3320,10 +3342,10 @@ test_list = [
     eol_mime2,
     eol_mime3,
     eol_mime4,
+# 70:
     cvs_revnums_off,
     cvs_revnums_on,
     keywords,
-# 70:
     ignore,
     requires_cvs,
     questionable_branch_names,
@@ -3331,10 +3353,10 @@ test_list = [
     revision_reorder_bug,
     exclude,
     vendor_branch_delete_add,
+# 80:
     resync_pass2_pull_forward,
     native_eol,
     double_fill,
-# 80:
     XFail(double_fill2),
     resync_pass2_push_backward,
     double_add,
@@ -3342,10 +3364,10 @@ test_list = [
     nested_ttb_directories,
     auto_props_ignore_case,
     ctrl_char_in_filename,
+# 90:
     commit_dependencies,
     show_help_passes,
     multiple_tags,
-# 90:
     multiply_defined_symbols,
     multiply_defined_symbols_renamed,
     multiply_defined_symbols_ignored,
@@ -3353,10 +3375,10 @@ test_list = [
     double_branch_delete,
     symbol_mismatches,
     overlook_symbol_mismatches,
+# 100:
     force_symbols,
     commit_blocks_tags,
     blocked_excludes,
-# 100:
     unblock_blocked_excludes,
     regexp_force_symbols,
     heuristic_symbol_default,
@@ -3364,10 +3386,10 @@ test_list = [
     tag_symbol_default,
     symbol_transform,
     write_symbol_info,
+# 110:
     symbol_hints,
     parent_hints,
     parent_hints_invalid,
-# 110:
     parent_hints_wildcards,
     path_hints,
     issue_99,
@@ -3375,10 +3397,10 @@ test_list = [
     issue_106,
     options_option,
     multiproject,
+# 120:
     crossproject,
     tag_with_no_revision,
     XFail(delete_cvsignore),
-# 120:
     repeated_deltatext,
     nasty_graphs,
     XFail(tagging_after_delete),
@@ -3386,10 +3408,10 @@ test_list = [
     file_directory_conflict,
     attic_directory_conflict,
     internal_co,
+# 130:
     internal_co_exclude,
     internal_co_trunk_only,
     internal_co_keywords,
-# 130:
     leftover_revs,
     requires_internal_co,
     timestamp_chaos,
@@ -3397,10 +3419,10 @@ test_list = [
     empty_trunk_path,
     preferred_parent_cycle,
     branch_from_empty_dir,
+# 140:
     trunk_readd,
     branch_from_deleted_1_1,
     add_on_branch,
-# 140:
     XFail(main_git),
     invalid_symbol,
     invalid_symbol_ignore,
@@ -3408,6 +3430,7 @@ test_list = [
     EOLVariants('CR'),
     EOLVariants('CRLF'),
     EOLVariants('native'),
+# 150:
     no_revs_file,
     ]
 

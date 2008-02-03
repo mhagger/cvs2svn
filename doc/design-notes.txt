@@ -220,11 +220,11 @@ When every CVS file is done, CollectRevsPass is complete, and:
      over the place.
 
    - Selected metadata for each CVS revision, including the author and
-     log message, is written to 'metadata.db'.  The purpose is
-     twofold: first, to save space by not having to save this
-     information multiple times, and second because CVSRevisions that
-     have the same metadata are candidates to be combined into an SVN
-     changeset.
+     log message, is written to 'metadata-index.dat' and
+     'metadata.pck'.  The purpose is twofold: first, to save space by
+     not having to save this information multiple times, and second
+     because CVSRevisions that have the same metadata are candidates
+     to be combined into an SVN changeset.
 
      First, an SHA digest is created for each set of metadata.  The
      digest is constructed so that CVSRevisions that can be combined
@@ -249,7 +249,7 @@ When every CVS file is done, CollectRevsPass is complete, and:
      to allow the record for a set of metadata to be located
      efficiently.  As data are collected, it stores a map
 
-       metadata_id (int as hex) -> (author, log_msg,) (tuple)
+       metadata_id (int) -> (author, log_msg,) (tuple)
 
      into the database for use in future passes.  CVSRevision records
      include the metadata_id.

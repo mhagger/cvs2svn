@@ -27,12 +27,12 @@ from cvs2svn_lib.common import DB_OPEN_NEW
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.artifact_manager import artifact_manager
-from cvs2svn_lib.database import Database
+from cvs2svn_lib.database import IndexedDatabase
 from cvs2svn_lib.key_generator import KeyGenerator
 from cvs2svn_lib.serializer import MarshalSerializer
 
 
-class MetadataDatabase:
+def MetadataDatabase(mode):
   """A Database to store metadata about CVSRevisions.
 
   This database manages a map
@@ -41,27 +41,11 @@ class MetadataDatabase:
 
   where id is a unique identifier for a set of metadata."""
 
-  def __init__(self, mode):
-    """Initialize an instance, opening database in the specified MODE.
-
-    MODE must be DB_OPEN_NEW or DB_OPEN_READ."""
-
-    self.db = Database(
-        artifact_manager.get_temp_file(config.METADATA_DB), mode,
-        MarshalSerializer()
-        )
-
-  def __setitem__(self, id, (author, log_msg)):
-    self.db['%x' % (id,)] = (author, log_msg)
-
-  def __getitem__(self, id):
-    """Return (author, log_msg,) for ID."""
-
-    return self.db['%x' % (id,)]
-
-  def close(self):
-    self.db.close()
-    self.db = None
+  return IndexedDatabase(
+      artifact_manager.get_temp_file(config.METADATA_STORE),
+      artifact_manager.get_temp_file(config.METADATA_INDEX_TABLE),
+      mode, MarshalSerializer(),
+      )
 
 
 class MetadataLogger:

@@ -177,7 +177,8 @@ PIPE_READ_SIZE = 128 * 1024
 # is assigned the same id.  Note that the (author, logmessage) pairs
 # are not necessarily all distinct; other data are taken into account
 # when constructing ids.
-METADATA_DB = 'metadata.db'
+METADATA_INDEX_TABLE = 'metadata-index.dat'
+METADATA_STORE = 'metadata.pck'
 
 # The following four databases are used in conjunction with --use-internal-co.
 

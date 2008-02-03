@@ -37,7 +37,7 @@ class MetadataDatabase:
 
   This database manages a map
 
-      id -> (project.id, author, log_msg,)
+      id -> (author, log_msg,)
 
   where id is a unique identifier for a set of metadata.
 
@@ -54,9 +54,9 @@ class MetadataDatabase:
   """
 
   def __init__(self, mode):
-    """Initialize an instance, opening database in MODE (like the MODE
-    argument to Database or anydbm.open()).  Use CVS_FILE_DB to look
-    up CVSFiles."""
+    """Initialize an instance, opening database in the specified MODE.
+
+    MODE must be DB_OPEN_NEW or DB_OPEN_READ."""
 
     self.mode = mode
 

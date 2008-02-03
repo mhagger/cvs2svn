@@ -845,9 +845,10 @@ class BreakRevisionChangesetCyclesPass(Pass):
     self.processed_changeset_logger = ProcessedChangesetLogger()
 
     # Consume the graph, breaking cycles using self.break_cycle():
-    for (changeset_id, time_range) in self.changeset_graph.consume_graph(
-          cycle_breaker=self.break_cycle):
-      self.processed_changeset_logger.log(changeset_id)
+    for (changeset, time_range) in self.changeset_graph.consume_graph(
+          cycle_breaker=self.break_cycle
+          ):
+      self.processed_changeset_logger.log(changeset.id)
 
     self.processed_changeset_logger.flush()
     del self.processed_changeset_logger
@@ -912,8 +913,8 @@ class RevisionTopologicalSortPass(Pass):
     # Sentry:
     changeset_ids.append(None)
 
-    for (changeset_id, time_range) in changeset_graph.consume_graph():
-      changeset_ids.append(changeset_id)
+    for (changeset, time_range) in changeset_graph.consume_graph():
+      changeset_ids.append(changeset.id)
 
     # Sentry:
     changeset_ids.append(None)
@@ -1066,9 +1067,10 @@ class BreakSymbolChangesetCyclesPass(Pass):
     self.processed_changeset_logger = ProcessedChangesetLogger()
 
     # Consume the graph, breaking cycles using self.break_cycle():
-    for (changeset_id, time_range) in self.changeset_graph.consume_graph(
-          cycle_breaker=self.break_cycle):
-      self.processed_changeset_logger.log(changeset_id)
+    for (changeset, time_range) in self.changeset_graph.consume_graph(
+          cycle_breaker=self.break_cycle
+          ):
+      self.processed_changeset_logger.log(changeset.id)
 
     self.processed_changeset_logger.flush()
     del self.processed_changeset_logger
@@ -1406,8 +1408,7 @@ class TopologicalSortPass(Pass):
     # one is larger.
     timestamper = Timestamper()
 
-    for (changeset_id, time_range) in changeset_graph.consume_graph():
-      changeset = changeset_db[changeset_id]
+    for (changeset, time_range) in changeset_graph.consume_graph():
       timestamp = timestamper.get(
           time_range.t_max, changeset.id in symbol_changeset_ids
           )

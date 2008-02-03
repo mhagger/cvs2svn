@@ -358,7 +358,7 @@ class ChangesetGraph(object):
   def consume_graph(self, cycle_breaker=None):
     """Remove and yield changesets from this graph in dependency order.
 
-    Each iteration, this generator yields a (changeset_id, time_range)
+    Each iteration, this generator yields a (changeset, time_range)
     tuple for the oldest changeset in the graph that doesn't have any
     predecessor nodes.  If CYCLE_BREAKER is specified, then call
     CYCLE_BREAKER(cycle) whenever a cycle is encountered, where cycle
@@ -372,7 +372,7 @@ class ChangesetGraph(object):
 
     while True:
       for (changeset, time_range) in self.consume_nopred_nodes():
-        yield (changeset.id, time_range)
+        yield (changeset, time_range)
 
       # If there are any nodes left in the graph, then there must be
       # at least one cycle.  Find a cycle and process it.

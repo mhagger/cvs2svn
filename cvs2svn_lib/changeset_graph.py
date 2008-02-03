@@ -286,7 +286,7 @@ class ChangesetGraph(object):
   def consume_nopred_nodes(self):
     """Remove and yield changesets in dependency order.
 
-    Each iteration, this generator yields a (changeset_id, time_range)
+    Each iteration, this generator yields a (changeset, time_range)
     tuple for the oldest changeset in the graph that doesn't have any
     predecessor nodes (i.e., it is ready to be committed).  This is
     continued until there are no more nodes without predecessors
@@ -316,7 +316,7 @@ class ChangesetGraph(object):
         succ = self[succ_id]
         if not succ.pred_ids:
           nopred_nodes.add(succ)
-      yield (node.id, node.time_range)
+      yield (changeset, node.time_range)
 
   def find_cycle(self, starting_node_id):
     """Find a cycle in the dependency graph and return it.
@@ -371,8 +371,8 @@ class ChangesetGraph(object):
     CycleInGraphException."""
 
     while True:
-      for (changeset_id, time_range) in self.consume_nopred_nodes():
-        yield (changeset_id, time_range)
+      for (changeset, time_range) in self.consume_nopred_nodes():
+        yield (changeset.id, time_range)
 
       # If there are any nodes left in the graph, then there must be
       # at least one cycle.  Find a cycle and process it.

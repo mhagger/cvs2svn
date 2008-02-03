@@ -1315,12 +1315,12 @@ class BreakAllChangesetCyclesPass(Pass):
 
     while self.changeset_graph:
       # Consume any nodes that don't have predecessors:
-      for (changeset_id, time_range) \
+      for (changeset, time_range) \
               in self.changeset_graph.consume_nopred_nodes():
-        self.processed_changeset_logger.log(changeset_id)
-        if changeset_id in ordered_changeset_ids:
+        self.processed_changeset_logger.log(changeset.id)
+        if changeset.id in ordered_changeset_ids:
           next_ordered_changeset += 1
-          ordered_changeset_ids.remove(changeset_id)
+          ordered_changeset_ids.remove(changeset.id)
 
       self.processed_changeset_logger.flush()
 

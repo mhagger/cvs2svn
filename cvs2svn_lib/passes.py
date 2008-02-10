@@ -1649,7 +1649,11 @@ class OutputPass(Pass):
         artifact_manager.get_temp_file(config.PROJECTS)
         )
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
-    Ctx()._metadata_db = MetadataDatabase(DB_OPEN_READ)
+    Ctx()._metadata_db = MetadataDatabase(
+        artifact_manager.get_temp_file(config.METADATA_STORE),
+        artifact_manager.get_temp_file(config.METADATA_INDEX_TABLE),
+        DB_OPEN_READ,
+        )
     Ctx()._cvs_items_db = IndexedCVSItemStore(
         artifact_manager.get_temp_file(config.CVS_ITEMS_SORTED_STORE),
         artifact_manager.get_temp_file(config.CVS_ITEMS_SORTED_INDEX_TABLE),

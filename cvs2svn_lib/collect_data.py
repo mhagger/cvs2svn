@@ -1014,7 +1014,11 @@ class CollectData:
     self.revision_recorder = revision_recorder
     self._cvs_item_store = NewCVSItemStore(
         artifact_manager.get_temp_file(config.CVS_ITEMS_STORE))
-    self.metadata_db = MetadataDatabase(DB_OPEN_NEW)
+    self.metadata_db = MetadataDatabase(
+        artifact_manager.get_temp_file(config.METADATA_STORE),
+        artifact_manager.get_temp_file(config.METADATA_INDEX_TABLE),
+        DB_OPEN_NEW,
+        )
     self.metadata_logger = MetadataLogger(self.metadata_db)
     self.fatal_errors = []
     self.num_files = 0

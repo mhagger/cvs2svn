@@ -33,7 +33,7 @@ from cvs2svn_lib.serializer import PrimedPickleSerializer
 from cvs2svn_lib.metadata import Metadata
 
 
-def MetadataDatabase(mode):
+def MetadataDatabase(store_filename, index_table_filename, mode):
   """A Database to store Metadata instances that describe CVSRevisions.
 
   This database manages a map
@@ -43,8 +43,7 @@ def MetadataDatabase(mode):
   where id is a unique identifier for the metadata."""
 
   return IndexedDatabase(
-      artifact_manager.get_temp_file(config.METADATA_STORE),
-      artifact_manager.get_temp_file(config.METADATA_INDEX_TABLE),
+      store_filename, index_table_filename,
       mode, PrimedPickleSerializer((Metadata,)),
       )
 

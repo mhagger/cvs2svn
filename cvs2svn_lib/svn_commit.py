@@ -185,7 +185,7 @@ class SVNRevisionCommit(SVNCommit):
     return self.cvs_revs
 
   def _get_metadata(self):
-    """Return the tuple (author, log_msg,) for this commit."""
+    """Return the Metadata instance for this commit."""
 
     if self._metadata is None:
       # Set self._metadata for this commit from that of the first cvs
@@ -196,10 +196,10 @@ class SVNRevisionCommit(SVNCommit):
       metadata_id = self.cvs_revs[0].metadata_id
       self._metadata = Ctx()._metadata_db[metadata_id]
 
-    return self._metadata.author, self._metadata.log_msg
+    return self._metadata
 
   def get_author(self):
-    return self._get_metadata()[0]
+    return self._get_metadata().author
 
   def get_warning_summary(self):
     retval = []
@@ -229,7 +229,7 @@ class SVNPrimaryCommit(SVNRevisionCommit):
   def get_log_msg(self):
     """Return the actual log message for this commit."""
 
-    return self._get_metadata()[1]
+    return self._get_metadata().log_msg
 
   def get_description(self):
     return 'commit'

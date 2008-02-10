@@ -146,13 +146,13 @@ conversion.  \fIregexp\fR must match the whole symbol name.
 .TP
 \fB--symbol-default\fR=\fIopt\fR
 Specify how to convert ambiguous symbols (those that appear in the CVS
-archive as both branches and tags).  \fIopt\fR must be `branch' (treat
-every ambiguous symbol as a branch), `tag' (treat every ambiguous
-symbol as a tag), `heuristic' (decide how to treat each ambiguous
-symbol based on whether it was used more often as a branch/tag in
-CVS), or `strict' (no default; every ambiguous symbol has to be
-resolved manually using \fB--force-branch\fR, \fB--force-tag\fR,
-or \fB--exclude\fR).  The default is `strict'.
+archive as both branches and tags).  \fIopt\fR must be `heuristic'
+(decide how to treat each ambiguous symbol based on whether it was
+used more often as a branch/tag in CVS), `strict' (no default; every
+ambiguous symbol has to be resolved manually using
+\fB--force-branch\fR, \fB--force-tag\fR, or \fB--exclude\fR), `branch'
+(treat every ambiguous symbol as a branch), or `tag' (treat every
+ambiguous symbol as a tag).  The default is `heuristic'.
 .TP
 \fB--no-cross-branch-commits\fR
 Prevent the creation of SVN commits that affect multiple branches or

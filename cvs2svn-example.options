@@ -318,23 +318,27 @@ global_symbol_strategy_rules = [
     UnambiguousUsageRule(),
 
     # If there was ever a commit on a symbol, then it cannot be
-    # converted as a tag.  Uncomment the following line to convert
-    # such symbols automatically as branches:
-    #BranchIfCommitsRule(),
+    # converted as a tag.  This rule causes all such symbols to be
+    # converted as branches.  If you would like to resolve such
+    # ambiguities manually, comment out the following line:
+    BranchIfCommitsRule(),
 
     # Last in the list can be a catch-all rule that is used for
     # symbols that were not matched by any of the more specific rules
-    # above.  Include at most one of these lines.  If none of these
-    # are included, then the presence of any ambiguous symbols (that
-    # haven't been disambiguated above) is an error:
+    # above.  (Assuming that BranchIfCommitsRule() was included above,
+    # then the symbols that are still indeterminate at this point can
+    # sensibly be converted as branches or tags.)  Include at most one
+    # of these lines.  If none of these catch-all rules are included,
+    # then the presence of any ambiguous symbols (that haven't been
+    # disambiguated above) is an error:
 
+    # Convert ambiguous symbols based on whether they were used more
+    # often as branches or as tags:
+    HeuristicStrategyRule(),
     # Convert all ambiguous symbols as branches:
     #AllBranchRule(),
     # Convert all ambiguous symbols as tags:
     #AllTagRule(),
-    # Convert ambiguous symbols based on whether they were used more
-    # often as branches or as tags:
-    #HeuristicStrategyRule(),
 
     # This rule sets the SVN path of each symbol to the default value
     # for the project containing it, if a path hasn't been set

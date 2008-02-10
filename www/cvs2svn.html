@@ -692,8 +692,20 @@ as a tag.  cvs2svn provides features to help you resolve these
 ambiguities.</p>
 
 <p>If your repository contains inconsistently-used symbols, then
-<tt>CollateSymbolsPass</tt> reports the problems and aborts the
-conversion.  The error message looks like this:</p>
+<tt>CollateSymbolsPass</tt>, by default, uses heuristics to decide
+which symbols to convert as branches and which as tags.  Often this
+behavior will be adequate, and you don't have to do anything special.
+You can use the <tt>--symbol-info=<i>filename</i></tt> option to cause
+cvs2svn to list all of the symbols in your repository and how it chose
+to convert them to <tt><i>filename</i></tt>.</p>
+
+<p>However, if you want to take finer control over how symbols are
+converted, you can do so.  The first step is probably to change the
+default symbol handling style from <tt>heuristic</tt> (the default
+value) to <tt>strict</tt> using the option
+<tt>--symbol-default=strict</tt>.  With the <tt>strict</tt> setting,
+cvs2svn prints error messages and aborts the conversion if there are
+any ambiguous symbols.  The error messages look like this:</p>
 
 <pre>
    ERROR: It is not clear how the following symbols should be converted.
@@ -705,7 +717,7 @@ conversion.  The error message looks like this:</p>
 </pre>
 
 <p>You have to tell cvs2svn how to fix the inconsistencies then
-restart the conversion.</p>
+restart the conversion at <tt>CollateSymbolsPass</tt>.</p>
 
 <p>There are three ways to deal with an inconsistent symbol: treat it
 as a tag, treat it as a branch, or exclude it from the conversion
@@ -734,14 +746,14 @@ the branch will be left out of the Subversion repository.</p>
 <p>If you are not so picky about which symbols are converted as tags
 and which as branches, you can ask cvs2svn to decide by itself.  To do
 this, specify the <tt>--symbol-default=OPTION</tt>, where
-<tt>OPTION</tt> can be either "<tt>branch</tt>" (treat every ambiguous
-symbol as a branch), "<tt>tag</tt>" (treat every ambiguous symbol as a
-tag), or "<tt>heuristic</tt>" (decide how to treat each ambiguous
-symbol based on whether it was used more often as a branch or as a tag
-in CVS).  You can use the <tt>--force-branch</tt> and
-<tt>--force-tag</tt> options to specify the treatment of particular
-symbols, in combination with <tt>--symbol-default</tt> to specify the
-default to be used for other ambiguous symbols.</p>
+<tt>OPTION</tt> can be either "<tt>heuristic</tt>" (the default;
+decide how to treat each ambiguous symbol based on whether it was used
+more often as a branch or as a tag in CVS), "<tt>branch</tt>" (treat
+every ambiguous symbol as a branch), or "<tt>tag</tt>" (treat every
+ambiguous symbol as a tag).  You can use the <tt>--force-branch</tt>
+and <tt>--force-tag</tt> options to specify the treatment of
+particular symbols, in combination with <tt>--symbol-default</tt> to
+specify the default to be used for other ambiguous symbols.</p>
 
 <p>Finally, you can have cvs2svn write a text file showing how each
 symbol was converted by using the <tt>--show-symbol-info</tt> option.
@@ -992,21 +1004,21 @@ project-id symbol conversion svn-path parent-lod-name
     <td>Specify how to convert ambiguous symbols (i.e., those that
       appear in the CVS archive as both branches and tags).
       <tt>OPT</tt> is one of the following:<ul>
-        <li>"<tt>branch</tt>": Treat every ambiguous symbol as
-          a branch.</li>
+
+        <li>"<tt>heuristic</tt>": Decide how to treat each ambiguous
+          symbol based on whether it was used more often as a branch
+          or tag in CVS.  (This is the default behavior.)</li>
+
+        <li>"<tt>strict</tt>": No default; every ambiguous symbol has
+          to be resolved manually using <tt>--symbol-hints</tt>,
+          <tt>--force-branch</tt>, <tt>--force-tag</tt>, or
+          <tt>--exclude</tt>.</li>
+
+        <li>"<tt>branch</tt>": Treat every ambiguous symbol as a
+          branch.</li>
 
         <li>"<tt>tag</tt>": Treat every ambiguous symbols as a
           tag.</li>
-
-        <li>"<tt>heuristic</tt>": Decide how to treat each
-          ambiguous symbol based on whether it was used more often as
-          a branch or tag in CVS.</li>
-
-        <li>"<tt>strict</tt>": No default; every ambiguous
-          symbol has to be resolved manually using
-          <tt>--symbol-hints</tt>, <tt>--force-branch</tt>,
-          <tt>--force-tag</tt>, or <tt>--exclude</tt>.  (This is the
-          default behavior.)</li>
 
       </ul>
     </td>

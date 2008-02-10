@@ -2546,6 +2546,7 @@ def symbol_mismatches():
 
   ensure_conversion(
       'symbol-mess',
+      args=['--symbol-default=strict'],
       error_re=r'.*Problems determining how symbols should be converted',
       )
 
@@ -2727,6 +2728,7 @@ def write_symbol_info():
     ensure_conversion(
         'symbol-mess',
         args=[
+            '--symbol-default=strict',
             '--write-symbol-info=%s' % (symbol_info_file,),
             '--passes=:CollateSymbolsPass',
             ],

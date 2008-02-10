@@ -118,13 +118,13 @@ history.
       --symbol-transform=P:S transform symbol names from P to S, where P and S
                              use Python regexp and reference syntax
                              respectively.  P must match the whole symbol name
-      --symbol-hints=PATH    read symbol conversion hints from PATH.
+      --symbol-hints=PATH    read symbol conversion hints from PATH
       --force-branch=REGEXP  force symbols matching REGEXP to be branches
       --force-tag=REGEXP     force symbols matching REGEXP to be tags
       --exclude=REGEXP       exclude branches and tags matching REGEXP
       --symbol-default=OPT   specify how ambiguous symbols are converted.
-                             OPT is "branch", "tag", "heuristic", or
-                             "strict" (default)
+                             OPT is "heuristic" (default), "strict", "branch",
+                             or "tag"
       --no-cross-branch-commits   Prevent the creation of cross-branch commits
       --retain-conflicting-attic-files   if a file appears both in and out of
                              the CVS Attic, then leave the attic version in a
@@ -344,7 +344,7 @@ class RunOptions:
     use_rcs = False
     use_cvs = False
     use_internal_co = False
-    symbol_strategy_default = 'strict'
+    symbol_strategy_default = 'heuristic'
     mime_types_file = None
     auto_props_file = None
     auto_props_ignore_case = True

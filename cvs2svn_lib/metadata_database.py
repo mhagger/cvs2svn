@@ -45,7 +45,7 @@ def MetadataDatabase(mode):
   return IndexedDatabase(
       artifact_manager.get_temp_file(config.METADATA_STORE),
       artifact_manager.get_temp_file(config.METADATA_INDEX_TABLE),
-      mode, PrimedPickleSerializer((MetadataDatabase,)),
+      mode, PrimedPickleSerializer((Metadata,)),
       )
 
 

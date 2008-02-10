@@ -893,14 +893,15 @@ sprouts).</p>
 
   <tr>
     <td align="right"><tt>--fallback-encoding=ENC</tt></td>
-    <td>If all of the encodings specified with <tt>--encoding</tt>
-      fail, then fall back to using ENC in lossy 'replace' mode.  Use
-      of this option may cause information to be lost, but at least it
-      allows the conversion to run to completion.  This option only
-      affects the encoding of log messages and author names; there is
-      no fallback encoding for filenames.  (By using an <tt>--options</tt>
-      file, it is possible to specify a fallback encoding for
-      filenames.)  Default: disabled.</td>
+    <td>If none of the encodings specified with <tt>--encoding</tt>
+      succeed in decoding an author name or log message, then fall
+      back to using ENC in lossy 'replace' mode.  Use of this option
+      may cause information to be lost, but at least it allows the
+      conversion to run to completion.  This option only affects the
+      encoding of log messages and author names; there is no fallback
+      encoding for filenames.  (By using an <tt>--options</tt> file,
+      it is possible to specify a fallback encoding for filenames.)
+      Default: disabled.</td>
   </tr>
 
   <tr>

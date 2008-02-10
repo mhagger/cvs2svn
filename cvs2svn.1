@@ -97,10 +97,14 @@ http://docs.python.org/lib/standard-encodings.html for a list of other
 standard encodings.
 .TP
 \fB--fallback-encoding\fR=\fIencoding\fR
-If all of the encodings specified with \fB--encoding\fR fail, then
-fall back to using \fIencoding\fR in lossy 'replace' mode.  Use of
-this option may cause information to be lost, but at least it allows
-the conversion to run to completion.  Default: disabled.
+If none of the encodings specified with \fB--encoding\fR succeed in
+decoding an author name or log message, then fall back to using
+\fIencoding\fR in lossy 'replace' mode.  Use of this option may cause
+information to be lost, but at least it allows the conversion to run
+to completion.  This option only affects the encoding of log messages
+and author names; there is no fallback encoding for filenames.  (By
+using an \fB--options\fR file, it is possible to specify a fallback
+encoding for filenames.)  Default: disabled.
 .TP
 \fB--symbol-transform\fR=\fIpattern\fR:\fIreplacement\fR
 Transform RCS/CVS symbol names before entering them into Subversion.

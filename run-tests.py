@@ -1499,8 +1499,15 @@ def nonascii_filenames():
 class UnicodeTest(Cvs2SvnTestCase):
   "metadata contains unicode"
 
+  warning_pattern = r'ERROR\: There were warnings converting .* messages'
+
   def __init__(self, name, warning_expected, **kw):
-    Cvs2SvnTestCase.__init__(self, name, **kw)
+    if warning_expected:
+      error_re = self.warning_pattern
+    else:
+      error_re = None
+
+    Cvs2SvnTestCase.__init__(self, name, error_re=error_re, **kw)
     self.warning_expected = warning_expected
 
   def run(self):
@@ -1510,20 +1517,11 @@ class UnicodeTest(Cvs2SvnTestCase):
     except LookupError:
       raise svntest.Skip()
 
-    conv = self.ensure_conversion()
-
-    if self.warning_expected:
-      if not conv.output_found(self.warning_pattern):
-        raise Failure()
-    else:
-      if conv.output_found(self.warning_pattern):
-        raise Failure()
+    self.ensure_conversion()
 
 
 class UnicodeAuthor(UnicodeTest):
   "author name contains unicode"
-
-  warning_pattern = r'WARNING\: Problem decoding author'
 
   def __init__(self, warning_expected, **kw):
     UnicodeTest.__init__(self, 'unicode-author', warning_expected, **kw)
@@ -1531,8 +1529,6 @@ class UnicodeAuthor(UnicodeTest):
 
 class UnicodeLog(UnicodeTest):
   "log message contains unicode"
-
-  warning_pattern = r'WARNING\: Problem decoding log message'
 
   def __init__(self, warning_expected, **kw):
     UnicodeTest.__init__(self, 'unicode-log', warning_expected, **kw)

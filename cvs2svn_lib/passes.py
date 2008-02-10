@@ -272,11 +272,11 @@ class CleanMetadataPass(Pass):
       metadata_clean_db[id] = metadata
 
     if self.warnings:
-      Log().warn(
+      raise FatalError(
           'There were warnings converting author names and/or log messages\n'
-          'to unicode (see messages above).  Consider restarting this pass\n'
+          'to unicode (see messages above).  Please restart this pass\n'
           'with one or more \'--encoding\' parameters or with\n'
-          '\'--fallback-encoding\'.\n'
+          '\'--fallback-encoding\'.'
           )
 
     metadata_clean_db.close()

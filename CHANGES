@@ -31,6 +31,7 @@ Version x.x.x (not yet released)
  * Allow '/' characters in CVS symbol names (creating multilevel SVN paths).
  * Allow symbols to be transformed to contain '/' (allowing multilevel paths).
  * Convert '\' characters to '/' (rather than '--') in symbol names.
+ * Make encoding problems fatal; to resolve, restart at CleanMetadataPass.
 
  Miscellaneous:
 

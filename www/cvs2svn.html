@@ -615,10 +615,10 @@ handling.</p>
 
 <p><strong>HINT:</strong> If there are problems with symbol usage in
 your repository, they are usually reported during
-<tt>CollateSymbolsPass</tt> (pass 2) of the conversion, causing the
-conversion to be interrupted.  However, it is not necessary to restart
-the whole conversion to fix the problems.  Usually it is adequate to
-adjust the symbol-handling options then re-start cvs2svn starting at
+<tt>CollateSymbolsPass</tt> of the conversion, causing the conversion
+to be interrupted.  However, it is not necessary to restart the whole
+conversion to fix the problems.  Usually it is adequate to adjust the
+symbol-handling options then re-start cvs2svn starting at
 <tt>CollateSymbolsPass</tt>, by adding the option "<tt>-p
 CollateSymbolsPass:</tt>".  This trick can save a lot of time if you
 have a large repository, as it might take a few iterations before you

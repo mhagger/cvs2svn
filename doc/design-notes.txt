@@ -259,6 +259,14 @@ assigned an arbitrary unique ID that is used throughout the conversion
 to refer to it.
 
 
+CleanMetadataPass
+=================
+
+Encode the cvs revision metadata as UTF-8, ensuring that all entries
+can be decoded using the chosen encodings.  Output the results to
+'metadata-clean-index.dat' and 'metadata-clean.pck'.
+
+
 CollateSymbolsPass
 ==================
 

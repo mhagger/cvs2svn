@@ -180,6 +180,10 @@ PIPE_READ_SIZE = 128 * 1024
 METADATA_INDEX_TABLE = 'metadata-index.dat'
 METADATA_STORE = 'metadata.pck'
 
+# The same, after it has been cleaned up for the chosen output option:
+METADATA_CLEAN_INDEX_TABLE = 'metadata-clean-index.dat'
+METADATA_CLEAN_STORE = 'metadata-clean.pck'
+
 # The following four databases are used in conjunction with --use-internal-co.
 
 # Records the RCS deltas for all CVS revisions.  The deltas are to be

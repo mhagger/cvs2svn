@@ -28,6 +28,7 @@ from cvs2svn_lib.boolean import *
 from cvs2svn_lib.set_support import *
 from cvs2svn_lib import config
 from cvs2svn_lib.context import Ctx
+from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.common import FatalException
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import InternalError
@@ -40,6 +41,7 @@ from cvs2svn_lib.pass_manager import Pass
 from cvs2svn_lib.serializer import PrimedPickleSerializer
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.cvs_file_database import CVSFileDatabase
+from cvs2svn_lib.metadata import Metadata
 from cvs2svn_lib.metadata_database import MetadataDatabase
 from cvs2svn_lib.symbol import LineOfDevelopment
 from cvs2svn_lib.symbol import Trunk
@@ -158,6 +160,122 @@ class CollectRevsPass(Pass):
 
     Ctx()._cvs_file_db.close()
     write_projects(artifact_manager.get_temp_file(config.PROJECTS))
+    Log().quiet("Done")
+
+
+class CleanMetadataPass(Pass):
+  """Clean up CVS revision metadata and write it to a new database."""
+
+  def register_artifacts(self):
+    self._register_temp_file(config.METADATA_CLEAN_INDEX_TABLE)
+    self._register_temp_file(config.METADATA_CLEAN_STORE)
+    self._register_temp_file_needed(config.METADATA_INDEX_TABLE)
+    self._register_temp_file_needed(config.METADATA_STORE)
+
+  def _get_clean_author(self, author):
+    """Return AUTHOR, converted appropriately to UTF8.
+
+    Raise a UnicodeException if it cannot be converted using the
+    configured cvs_author_decoder."""
+
+    try:
+      return self._authors[author]
+    except KeyError:
+      pass
+
+    try:
+      clean_author = Ctx().cvs_author_decoder(author)
+    except UnicodeError:
+      self._authors[author] = author
+      raise UnicodeError('Problem decoding author \'%s\'' % (author,))
+
+    try:
+      clean_author = clean_author.encode('utf8')
+    except UnicodeError:
+      self._authors[author] = author
+      raise UnicodeError('Problem encoding author \'%s\'' % (author,))
+
+    self._authors[author] = clean_author
+    return clean_author
+
+  def _get_clean_log_msg(self, log_msg):
+    """Return LOG_MSG, converted appropriately to UTF8.
+
+    Raise a UnicodeException if it cannot be converted using the
+    configured cvs_log_decoder."""
+
+    try:
+      clean_log_msg = Ctx().cvs_log_decoder(log_msg)
+    except UnicodeError:
+      raise UnicodeError(
+          'Problem decoding log message:\n'
+          '%s\n'
+          '%s\n'
+          '%s'
+          % ('-' * 75, log_msg, '-' * 75,)
+          )
+
+    try:
+      return clean_log_msg.encode('utf8')
+    except UnicodeError:
+      raise UnicodeError(
+          'Problem encoding log message:\n'
+          '%s\n'
+          '%s\n'
+          '%s'
+          % ('-' * 75, log_msg, '-' * 75,)
+          )
+
+  def run(self, run_options, stats_keeper):
+    Log().quiet("Converting metadata to UTF8...")
+    metadata_db = MetadataDatabase(
+        artifact_manager.get_temp_file(config.METADATA_STORE),
+        artifact_manager.get_temp_file(config.METADATA_INDEX_TABLE),
+        DB_OPEN_READ,
+        )
+    metadata_clean_db = MetadataDatabase(
+        artifact_manager.get_temp_file(config.METADATA_CLEAN_STORE),
+        artifact_manager.get_temp_file(config.METADATA_CLEAN_INDEX_TABLE),
+        DB_OPEN_NEW,
+        )
+
+    warnings = False
+
+    # A map {author : clean_author} for those known (to avoid
+    # repeating warnings):
+    self._authors = {}
+
+    for id in metadata_db.iterkeys():
+      metadata = metadata_db[id]
+
+      # Record the original author name because it might be needed for
+      # expanding CVS keywords:
+      metadata.original_author = metadata.author
+
+      try:
+        metadata.author = self._get_clean_author(metadata.author)
+      except UnicodeError, e:
+        Log().warn('%s: %s' % (warning_prefix, e,))
+        warnings = True
+
+      try:
+        metadata.log_msg = self._get_clean_log_msg(metadata.log_msg)
+      except UnicodeError, e:
+        Log().warn('%s: %s' % (warning_prefix, e,))
+        warnings = True
+
+      metadata_clean_db[id] = metadata
+
+    if warnings:
+      Log().warn(
+          'There were warnings converting author names and/or log messages\n'
+          'to unicode (see messages above).  Consider restarting this pass\n'
+          'with one or more \'--encoding\' parameters or with\n'
+          '\'--fallback-encoding\'.\n'
+          )
+
+    metadata_clean_db.close()
+    metadata_db.close()
     Log().quiet("Done")
 
 
@@ -1619,8 +1737,8 @@ class OutputPass(Pass):
     self._register_temp_file_needed(config.CVS_ITEMS_SORTED_STORE)
     self._register_temp_file_needed(config.CVS_ITEMS_SORTED_INDEX_TABLE)
     self._register_temp_file_needed(config.SYMBOL_DB)
-    self._register_temp_file_needed(config.METADATA_INDEX_TABLE)
-    self._register_temp_file_needed(config.METADATA_STORE)
+    self._register_temp_file_needed(config.METADATA_CLEAN_INDEX_TABLE)
+    self._register_temp_file_needed(config.METADATA_CLEAN_STORE)
     self._register_temp_file_needed(config.SVN_COMMITS_INDEX_TABLE)
     self._register_temp_file_needed(config.SVN_COMMITS_STORE)
     self._register_temp_file_needed(config.CVS_REVS_TO_SVN_REVNUMS)
@@ -1650,8 +1768,8 @@ class OutputPass(Pass):
         )
     Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
     Ctx()._metadata_db = MetadataDatabase(
-        artifact_manager.get_temp_file(config.METADATA_STORE),
-        artifact_manager.get_temp_file(config.METADATA_INDEX_TABLE),
+        artifact_manager.get_temp_file(config.METADATA_CLEAN_STORE),
+        artifact_manager.get_temp_file(config.METADATA_CLEAN_INDEX_TABLE),
         DB_OPEN_READ,
         )
     Ctx()._cvs_items_db = IndexedCVSItemStore(
@@ -1676,6 +1794,7 @@ class OutputPass(Pass):
 # The list of passes constituting a run of cvs2svn:
 passes = [
     CollectRevsPass(),
+    CleanMetadataPass(),
     CollateSymbolsPass(),
     #CheckItemStoreDependenciesPass(config.CVS_ITEMS_STORE),
     FilterSymbolsPass(),

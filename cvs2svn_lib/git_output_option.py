@@ -119,25 +119,12 @@ class GitOutputOption(OutputOption):
     Return the author in the form needed by git; that is, 'foo <bar>'."""
 
     author = svn_commit.get_author()
-    try:
-      author = Ctx().cvs_author_decoder(author).encode('utf8')
-    except UnicodeError:
-      Log().warn('%s: problem encoding author:' % warning_prefix)
-      Log().warn("  author: '%s'" % (author,))
-
     return '%s <%s>' % (author, author,)
 
   _get_author = staticmethod(_get_author)
 
   def _get_log_msg(svn_commit):
-    log_msg = svn_commit.get_log_msg()
-    try:
-      log_msg = Ctx().cvs_log_decoder(log_msg).encode('utf8')
-    except UnicodeError:
-      Log().warn('%s: problem encoding log message:' % warning_prefix)
-      Log().warn("  log:    '%s'" % log_msg.rstrip())
-
-    return log_msg
+    return svn_commit.get_log_msg()
 
   _get_log_msg = staticmethod(_get_log_msg)
 

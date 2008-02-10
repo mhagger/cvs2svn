@@ -28,10 +28,4 @@ class Metadata(object):
     self.author = author
     self.log_msg = log_msg
 
-  def __getstate__(self):
-    return (self.id, self.author, self.log_msg,)
-
-  def __setstate__(self, state):
-    (self.id, self.author, self.log_msg,) = state
-
 

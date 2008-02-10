@@ -1499,8 +1499,6 @@ def nonascii_filenames():
 class UnicodeTest(Cvs2SvnTestCase):
   "metadata contains unicode"
 
-  warning_pattern = r'WARNING\: problem encoding author or log message'
-
   def __init__(self, name, warning_expected, **kw):
     Cvs2SvnTestCase.__init__(self, name, **kw)
     self.warning_expected = warning_expected
@@ -1525,12 +1523,16 @@ class UnicodeTest(Cvs2SvnTestCase):
 class UnicodeAuthor(UnicodeTest):
   "author name contains unicode"
 
+  warning_pattern = r'WARNING\: Problem decoding author'
+
   def __init__(self, warning_expected, **kw):
     UnicodeTest.__init__(self, 'unicode-author', warning_expected, **kw)
 
 
 class UnicodeLog(UnicodeTest):
   "log message contains unicode"
+
+  warning_pattern = r'WARNING\: Problem decoding log message'
 
   def __init__(self, warning_expected, **kw):
     UnicodeTest.__init__(self, 'unicode-log', warning_expected, **kw)

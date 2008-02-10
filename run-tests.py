@@ -98,6 +98,7 @@ class MissingErrorException(Failure):
 
 def run_program(program, error_re, *varargs):
   """Run PROGRAM with VARARGS, return stdout as a list of lines.
+
   If there is any stderr and ERROR_RE is None, raise
   RunProgramException, and print the stderr lines if
   svntest.main.verbose_mode is true.
@@ -105,25 +106,34 @@ def run_program(program, error_re, *varargs):
   If ERROR_RE is not None, it is a string regular expression that must
   match some line of stderr.  If it fails to match, raise
   MissingErrorExpection."""
+
   out, err = svntest.main.run_command(program, 1, 0, *varargs)
-  if err:
-    if error_re:
+
+  if error_re:
+    # Specified error expected on stderr.
+    if not err:
+      raise MissingErrorException(error_re)
+    else:
       for line in err:
         if re.match(error_re, line):
           return out
       raise MissingErrorException(error_re)
-    else:
+  else:
+    # No stderr allowed.
+    if err:
       if svntest.main.verbose_mode:
         print '\n%s said:\n' % program
         for line in err:
           print '   ' + line,
         print
       raise RunProgramException()
+
   return out
 
 
 def run_cvs2svn(error_re, *varargs):
   """Run cvs2svn with VARARGS, return stdout as a list of lines.
+
   If there is any stderr and ERROR_RE is None, raise
   RunProgramException, and print the stderr lines if
   svntest.main.verbose_mode is true.
@@ -131,6 +141,7 @@ def run_cvs2svn(error_re, *varargs):
   If ERROR_RE is not None, it is a string regular expression that must
   match some line of stderr.  If it fails to match, raise
   MissingErrorException."""
+
   # Use the same python that is running this script
   return run_program(sys.executable, error_re, cvs2svn, *varargs)
   # On Windows, for an unknown reason, the cmd.exe process invoked by
@@ -1247,8 +1258,11 @@ def bogus_tag():
 
 def overlapping_branch():
   "ignore a file with a branch with two names"
-  conv = ensure_conversion('overlapping-branch',
-                           error_re='.*cannot also have name \'vendorB\'')
+  conv = ensure_conversion('overlapping-branch')
+
+  if not conv.output_found('.*cannot also have name \'vendorB\''):
+    raise Failure()
+
   conv.logs[2].check('imported', (
     ('/%(branches)s/vendorA', 'A'),
     ('/%(branches)s/vendorA/nonoverlapping-branch', 'A'),
@@ -2895,10 +2909,10 @@ def delete_cvsignore():
 def repeated_deltatext():
   "ignore repeated deltatext blocks with warning"
 
-  conv = ensure_conversion(
-      'repeated-deltatext',
-      error_re=(r'.*Deltatext block for revision 1.1 appeared twice'),
-      )
+  conv = ensure_conversion('repeated-deltatext')
+  warning_re = r'.*Deltatext block for revision 1.1 appeared twice'
+  if not conv.output_found(warning_re):
+    raise Failure()
 
 
 def nasty_graphs():

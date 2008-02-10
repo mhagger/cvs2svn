@@ -13,6 +13,7 @@ Version x.x.x (not yet released)
    - Make symbol strategy rules project-specific.
  * --write-symbol-info: output info about CVS symbols.
  * Add option ctx.decode_apple_single for handling AppleSingle-encoded files.
+ * Add a new, restartable pass that converts author and log_msg to unicode.
 
  Bugs fixed:
  * Fix issue #80: Empty CVS,v file not accepted.

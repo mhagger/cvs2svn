@@ -226,6 +226,21 @@ class CleanMetadataPass(Pass):
           % ('-' * 75, log_msg, '-' * 75,)
           )
 
+  def _clean_metadata(self, metadata):
+    """Clean up METADATA by overwriting its members as necessary."""
+
+    try:
+      metadata.author = self._get_clean_author(metadata.author)
+    except UnicodeError, e:
+      Log().warn('%s: %s' % (warning_prefix, e,))
+      self.warnings = True
+
+    try:
+      metadata.log_msg = self._get_clean_log_msg(metadata.log_msg)
+    except UnicodeError, e:
+      Log().warn('%s: %s' % (warning_prefix, e,))
+      self.warnings = True
+
   def run(self, run_options, stats_keeper):
     Log().quiet("Converting metadata to UTF8...")
     metadata_db = MetadataDatabase(
@@ -239,7 +254,7 @@ class CleanMetadataPass(Pass):
         DB_OPEN_NEW,
         )
 
-    warnings = False
+    self.warnings = False
 
     # A map {author : clean_author} for those known (to avoid
     # repeating warnings):
@@ -252,21 +267,11 @@ class CleanMetadataPass(Pass):
       # expanding CVS keywords:
       metadata.original_author = metadata.author
 
-      try:
-        metadata.author = self._get_clean_author(metadata.author)
-      except UnicodeError, e:
-        Log().warn('%s: %s' % (warning_prefix, e,))
-        warnings = True
-
-      try:
-        metadata.log_msg = self._get_clean_log_msg(metadata.log_msg)
-      except UnicodeError, e:
-        Log().warn('%s: %s' % (warning_prefix, e,))
-        warnings = True
+      self._clean_metadata(metadata)
 
       metadata_clean_db[id] = metadata
 
-    if warnings:
+    if self.warnings:
       Log().warn(
           'There were warnings converting author names and/or log messages\n'
           'to unicode (see messages above).  Consider restarting this pass\n'

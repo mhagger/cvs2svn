@@ -628,7 +628,7 @@ class _KeywordExpander:
            (match.group(1), getattr(self, match.group(1).lower())(),)
 
   def author(self):
-    return Ctx()._metadata_db[self.cvs_rev.metadata_id][0]
+    return Ctx()._metadata_db[self.cvs_rev.metadata_id].author
 
   def date(self):
     return time.strftime("%Y-%m-%d %H:%M:%S",

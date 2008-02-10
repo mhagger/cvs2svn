@@ -155,7 +155,7 @@ class CVSRevision(CVSItem):
 
     timestamp -- (int) date stamp for this revision.
 
-    metadata_id -- (int) id of author + log message record in
+    metadata_id -- (int) id of metadata instance record in
         metadata_db.
 
     prev_id -- (int) id of the logically previous CVSRevision, either

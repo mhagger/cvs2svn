@@ -158,9 +158,8 @@ class SVNRevisionCommit(SVNCommit):
 
     self.cvs_revs = list(cvs_revs)
 
-    # These values are set lazily by _get_metadata():
-    self._author = None
-    self._log_msg = None
+    # This value is set lazily by _get_metadata():
+    self._metadata = None
 
   def __getstate__(self):
     """Return the part of the state represented by this mixin."""
@@ -180,8 +179,7 @@ class SVNRevisionCommit(SVNCommit):
         cvs_rev
         for (id, cvs_rev) in Ctx()._cvs_items_db.get_many(cvs_rev_ids)
         ]
-    self._author = None
-    self._log_msg = None
+    self._metadata = None
 
   def get_cvs_items(self):
     return self.cvs_revs
@@ -189,16 +187,16 @@ class SVNRevisionCommit(SVNCommit):
   def _get_metadata(self):
     """Return the tuple (author, log_msg,) for this commit."""
 
-    if self._author is None:
-      # Set self._author and self._log_msg for this commit from that
-      # of the first cvs revision.
+    if self._metadata is None:
+      # Set self._metadata for this commit from that of the first cvs
+      # revision.
       if not self.cvs_revs:
         raise InternalError('SVNPrimaryCommit contains no CVS revisions')
 
       metadata_id = self.cvs_revs[0].metadata_id
-      self._author, self._log_msg = Ctx()._metadata_db[metadata_id]
+      self._metadata = Ctx()._metadata_db[metadata_id]
 
-    return self._author, self._log_msg
+    return self._metadata.author, self._metadata.log_msg
 
   def get_author(self):
     return self._get_metadata()[0]

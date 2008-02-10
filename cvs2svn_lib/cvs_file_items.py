@@ -532,7 +532,7 @@ class CVSFileItems(object):
            and not cvs_item.ntdbr:
       # FIXME: This message will not match if the RCS file was renamed
       # manually after it was created.
-      author, log_msg = metadata_db[cvs_item.metadata_id]
+      log_msg = metadata_db[cvs_item.metadata_id].log_msg
       cvs_generated_msg = 'file %s was initially added on branch %s.\n' % (
           self.cvs_file.basename,
           self[cvs_item.branch_ids[0]].symbol.name,)
@@ -596,7 +596,7 @@ class CVSFileItems(object):
              and abs(cvs_revision.timestamp - cvs_rev_source.timestamp) <= 2:
         # FIXME: This message will not match if the RCS file was renamed
         # manually after it was created.
-        author, log_msg = metadata_db[cvs_revision.metadata_id]
+        log_msg = metadata_db[cvs_revision.metadata_id].log_msg
         return bool(re.match(
             r'file %s was added on branch .* on '
             r'\d{4}\-\d{2}\-\d{2} \d{2}\:\d{2}\:\d{2}( [\+\-]\d{4})?'

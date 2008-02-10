@@ -29,22 +29,23 @@ from cvs2svn_lib.log import Log
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.database import IndexedDatabase
 from cvs2svn_lib.key_generator import KeyGenerator
-from cvs2svn_lib.serializer import MarshalSerializer
+from cvs2svn_lib.serializer import PrimedPickleSerializer
+from cvs2svn_lib.metadata import Metadata
 
 
 def MetadataDatabase(mode):
-  """A Database to store metadata about CVSRevisions.
+  """A Database to store Metadata instances that describe CVSRevisions.
 
   This database manages a map
 
-      id -> (author, log_msg,)
+      id -> Metadata instance
 
-  where id is a unique identifier for a set of metadata."""
+  where id is a unique identifier for the metadata."""
 
   return IndexedDatabase(
       artifact_manager.get_temp_file(config.METADATA_STORE),
       artifact_manager.get_temp_file(config.METADATA_INDEX_TABLE),
-      mode, MarshalSerializer(),
+      mode, PrimedPickleSerializer((MetadataDatabase,)),
       )
 
 
@@ -100,7 +101,7 @@ class MetadataLogger:
     except KeyError:
       id = self.key_generator.gen_id()
       self._digest_to_id[digest] = id
-      self._metadata_db[id] = (author, log_msg,)
+      self._metadata_db[id] = Metadata(id, author, log_msg)
       return id
 
 

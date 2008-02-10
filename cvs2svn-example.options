@@ -284,6 +284,22 @@ ctx.symbol_info_filename = None
 # first matching rule is the one that is used.
 
 global_symbol_strategy_rules = [
+    # It is possible to specify manually exactly how symbols should be
+    # converted and what line of development should be used as the
+    # preferred parent.  To do so, create a file containing the symbol
+    # hints and enable the following option.
+    #
+    # The format of the hints file is described in the documentation
+    # for the SymbolHintsFileRule class in
+    # cvs2svn_lib/symbol_strategy.py.  The file output by the
+    # --write-symbol-info (i.e., ctx.symbol_info_filename) option is
+    # in the same format.  The simplest way to use this option is to
+    # run the conversion through CollateSymbolsPass with
+    # --write-symbol-info option, copy the symbol info and edit it to
+    # create a hints file, then re-start the conversion at
+    # CollateSymbolsPass with this option enabled.
+    #SymbolHintsFileRule('symbol-hints.txt'),
+
     # To force all symbols matching a regular expression to be
     # converted as branches, add rules like the following:
     #ForceBranchRegexpStrategyRule(r'branch.*'),
@@ -319,22 +335,6 @@ global_symbol_strategy_rules = [
     # Convert ambiguous symbols based on whether they were used more
     # often as branches or as tags:
     #HeuristicStrategyRule(),
-
-    # It is possible to specify manually exactly how symbols should be
-    # converted and what line of development should be used as the
-    # preferred parent.  To do so, create a file containing the symbol
-    # hints and enable the following option.
-    #
-    # The format of the hints file is described in the documentation
-    # for the SymbolHintsFileRule class in
-    # cvs2svn_lib/symbol_strategy.py.  The file output by the
-    # --write-symbol-info (i.e., ctx.symbol_info_filename) option is
-    # in the same format.  The simplest way to use this option is to
-    # run the conversion through CollateSymbolsPass with
-    # --write-symbol-info option, copy the symbol info and edit it to
-    # create a hints file, then re-start the conversion at
-    # CollateSymbolsPass with this option enabled.
-    #SymbolHintsFileRule('symbol-hints.txt'),
 
     # This rule sets the SVN path of each symbol to the default value
     # for the project containing it, if a path hasn't been set

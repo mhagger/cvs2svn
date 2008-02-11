@@ -508,10 +508,10 @@ run_options.add_project(
             # Eliminate leading, trailing, and repeated slashes:
             NormalizePathsSymbolTransform(),
             ],
-        symbol_strategy_rules=global_symbol_strategy_rules + [
+        symbol_strategy_rules=[
             # Additional, project-specific symbol strategy rules can
             # be added here.
-            ],
+            ] + global_symbol_strategy_rules,
         )
     )
 
@@ -533,10 +533,10 @@ run_options.add_project(
 #            # Eliminate leading, trailing, and repeated slashes:
 #            NormalizePathsSymbolTransform(),
 #            ],
-#        symbol_strategy_rules=global_symbol_strategy_rules + [
+#        symbol_strategy_rules=[
 #            # Additional, project-specific symbol strategy rules can
 #            # be added here.
-#            ],
+#            ] + global_symbol_strategy_rules,
 #        )
 #    )
 

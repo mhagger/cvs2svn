@@ -3196,15 +3196,20 @@ def main_git():
 
   # Note: To test importing into git, do
   #
-  #     ./run-tests 128
+  #     ./run-tests <test-number>
   #     rm -rf .git
   #     git-init
+  #     cat cvs2svn-tmp/git-{blob,dump}.dat | git-fast-import
+  #
+  # Or, to load the dumpfiles separately:
+  #
   #     cat cvs2svn-tmp/git-blob.dat \
   #         | git-fast-import --export-marks=cvs2svn-tmp/git-marks.dat
   #     cat cvs2svn-tmp/git-dump.dat \
   #         | git-fast-import --import-marks=cvs2svn-tmp/git-marks.dat
   #
-  # Then "gitk --all", "git log", etc.
+  # Then use "gitk --all", "git log", etc. to test the contents of the
+  # repository.
 
   conv = ensure_conversion('main', options_file='cvs2svn-git.options')
 

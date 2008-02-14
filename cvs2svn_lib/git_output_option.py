@@ -62,9 +62,17 @@ class GitOutputOption(OutputOption):
   # avoid conflicts with blob marks.
   _mark_offset = 1000000000
 
-  def __init__(self, dump_filename):
+  def __init__(self, dump_filename, author_transforms=None):
     # The file to which to write the git-fast-import commands:
     self.dump_filename = dump_filename
+
+    # A map {cvsauthor : (name, email)} from CVS author name to the
+    # author's name and email address.  All strings should be encoded
+    # as UTF-8.
+    if author_transforms is None:
+      self.author_transforms = {}
+    else:
+      self.author_transforms = dict(author_transforms)
 
   def register_artifacts(self, which_pass):
     # These artifacts are needed for SymbolingsReader:
@@ -113,15 +121,14 @@ class GitOutputOption(OutputOption):
     self._youngest = revnum
     return mark
 
-  def _get_author(svn_commit):
+  def _get_author(self, svn_commit):
     """Return the author to be used for SVN_COMMIT.
 
     Return the author in the form needed by git; that is, 'foo <bar>'."""
 
     author = svn_commit.get_author()
-    return '%s <%s>' % (author, author,)
-
-  _get_author = staticmethod(_get_author)
+    (name, email,) = self.author_transforms.get(author, (author, author,))
+    return '%s <%s>' % (name, email,)
 
   def _get_log_msg(svn_commit):
     return svn_commit.get_log_msg()

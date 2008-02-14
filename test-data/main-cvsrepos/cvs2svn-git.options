@@ -1,4 +1,4 @@
-# (Be in -*- python -*- mode.)
+# (Be in -*- mode: python; coding: utf-8 -*- mode.)
 
 # As a partial check that the example options file is functional, we
 # use it as the basis for this test.  We only need to overwrite the
@@ -18,7 +18,22 @@ ctx.cross_project_commits = False
 ctx.cross_branch_commits = False
 ctx.username = 'cvs2svn'
 
-ctx.output_option = GitOutputOption('cvs2svn-tmp/git-dump.dat')
+# CVS uses unix login names as author names whereas git requires
+# author names to be of the form "foo <bar>".  The default is to set
+# the git author to "cvsauthor <cvsauthor>".  author_transforms can be
+# used to map cvsauthor names (e.g., "jrandom") to a true name and
+# email address (e.g., "J. Random <jrandom@example.com>" for the
+# example shown).  All values should be 8-bit strings in the utf-8
+# encoding.
+author_transforms={
+    'jrandom' : ('J. Random', 'jrandom@example.com',),
+    'mhagger' : ('Michael Haggerty', 'mhagger@nospam.example.com',),
+    }
+
+ctx.output_option = GitOutputOption(
+    'cvs2svn-tmp/git-dump.dat',
+    author_transforms=author_transforms,
+    )
 
 ctx.revision_recorder = SimpleFulltextRevisionRecorderAdapter(
     RCSRevisionReader('co'),

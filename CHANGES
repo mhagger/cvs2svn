@@ -3,6 +3,7 @@ Version x.x.x (not yet released)
 
  New features:
  * Allow conversion of a CVS repository to git (experimental).
+   - Support mapping from cvs author names to git "Author <email>" form.
  * Enhance symbol transform capabilities:
    - Add SymbolMapper, for transforming specific symbols in specific files.
    - Allow SymbolTransforms to cause a symbol to be discarded.

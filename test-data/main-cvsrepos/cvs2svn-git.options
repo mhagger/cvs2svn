@@ -23,11 +23,14 @@ ctx.username = 'cvs2svn'
 # the git author to "cvsauthor <cvsauthor>".  author_transforms can be
 # used to map cvsauthor names (e.g., "jrandom") to a true name and
 # email address (e.g., "J. Random <jrandom@example.com>" for the
-# example shown).  All values should be 8-bit strings in the utf-8
-# encoding.
+# example shown).  All values should be either 16-bit strings or 8-bit
+# strings in the utf-8 encoding.
 author_transforms={
-    'jrandom' : ('J. Random', 'jrandom@example.com',),
-    'mhagger' : ('Michael Haggerty', 'mhagger@nospam.example.com',),
+    'jrandom' : ('J. Random', 'jrandom@example.com'),
+    'mhagger' : ('Michael Haggerty', 'mhagger@alum.mit.edu'),
+    'brane' : (u'Branko Čibej', 'brane@xbc.nu'),
+    'ringstrom' : ('Tobias Ringström', 'tobias@ringstrom.mine.nu'),
+    'dionisos' : (u'Erik Hülsmann', 'e.huelsmann@gmx.net'),
     }
 
 ctx.output_option = GitOutputOption(

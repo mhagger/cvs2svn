@@ -55,7 +55,19 @@ FIXUP_BRANCH_NAME = 'refs/heads/TAG.FIXUP'
 
 
 class GitOutputOption(OutputOption):
-  """An OutputOption that outputs to a git-fast-import formatted file."""
+  """An OutputOption that outputs to a git-fast-import formatted file.
+
+  Members:
+
+    dump_filename -- (string) the name of the file to which the
+        git-fast-import commands for defining revisions will be
+        written.
+
+    author_transforms -- a map {cvsauthor : (fullname, email)} from
+        CVS author names to git full name and email address.  All of
+        the contents are 8-bit strings encoded as UTF-8.
+
+  """
 
   # The offset added to svn revision numbers to create a number to use
   # as a git-fast-import commit mark.  This value needs to be large to
@@ -63,16 +75,35 @@ class GitOutputOption(OutputOption):
   _mark_offset = 1000000000
 
   def __init__(self, dump_filename, author_transforms=None):
+    """Constructor.
+
+    DUMP_FILENAME is the name of the file to which the git-fast-import
+    commands for defining revisions should be written.  (Please note
+    that the actual file contents are not written to this file.)
+
+    AUTHOR_TRANSFORMS is a map {cvsauthor : (fullname, email)} from
+    CVS author names to git full name and email address.  All of the
+    contents should either be unicode strings or 8-bit strings encoded
+    as UTF-8.
+
+    """
+
     # The file to which to write the git-fast-import commands:
     self.dump_filename = dump_filename
 
-    # A map {cvsauthor : (name, email)} from CVS author name to the
-    # author's name and email address.  All strings should be encoded
-    # as UTF-8.
-    if author_transforms is None:
-      self.author_transforms = {}
-    else:
-      self.author_transforms = dict(author_transforms)
+    def to_utf8(s):
+      if isinstance(s, unicode):
+        return s.encode('utf8')
+      else:
+        return s
+
+    self.author_transforms = {}
+    if author_transforms is not None:
+      for (cvsauthor, (name, email,)) in author_transforms.iteritems():
+        cvsauthor = to_utf8(cvsauthor)
+        name = to_utf8(name)
+        email = to_utf8(email)
+        self.author_transforms[cvsauthor] = (name, email,)
 
   def register_artifacts(self, which_pass):
     # These artifacts are needed for SymbolingsReader:

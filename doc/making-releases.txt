@@ -79,7 +79,7 @@ href="http://cvs2svn.tigris.org/files/documents/1462/NNNNN/cvs2svn-VERSION.tar.g
 Email:
 [[[
 Subject: cvs2svn VERSION released
-To: announce@cvs2svn.tigris.org
+To: announce@cvs2svn.tigris.org, git@vger.kernel.org
 Reply-to: users@cvs2svn.tigris.org
 
 cvs2svn VERSION is now released.

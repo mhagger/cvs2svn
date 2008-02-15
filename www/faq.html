@@ -210,32 +210,28 @@ repository.  For example, if your CVS repository has the layout:</p>
 
 <pre>
 run_options.add_project(
-    Project(
-        'my/cvsrepo/project_a',
-        'project_a/trunk',
-        'project_a/branches',
-        'project_a/tags',
-        symbol_transforms=[
-            #...whatever...
-            ],
-        symbol_strategy_rules=[
-            #...whatever...
-            ],
-        )
+    'my/cvsrepo/project_a',
+    trunk_path='project_a/trunk',
+    branches_path='project_a/branches',
+    tags_path='project_a/tags',
+    symbol_transforms=[
+        #...whatever...
+        ],
+    symbol_strategy_rules=[
+        #...whatever...
+        ],
     )
 run_options.add_project(
-    Project(
-        'my/cvsrepo/project_b',
-        'project_b/trunk',
-        'project_b/branches',
-        'project_b/tags',
-        symbol_transforms=[
-            #...whatever...
-            ],
-        symbol_strategy_rules=[
-            #...whatever...
-            ],
-        )
+    'my/cvsrepo/project_b',
+    trunk_path='project_b/trunk',
+    branches_path='project_b/branches',
+    tags_path='project_b/tags',
+    symbol_transforms=[
+        #...whatever...
+        ],
+    symbol_strategy_rules=[
+        #...whatever...
+        ],
     )
 </pre>
 
@@ -254,18 +250,16 @@ run_options.add_project(
 
 <pre>
 run_options.add_project(
-    Project(
-        'my/cvsrepo/foo',
-        'foo/trunk',
-        'foo/branches',
-        'foo/tags',
-        symbol_transforms=[
-            #...whatever...
-            ],
-        symbol_strategy_rules=[
-            #...whatever...
-            ],
-        )
+    'my/cvsrepo/foo',
+    trunk_path='foo/trunk',
+    branches_path='foo/branches',
+    tags_path='foo/tags',
+    symbol_transforms=[
+        #...whatever...
+        ],
+    symbol_strategy_rules=[
+        #...whatever...
+        ],
     )
 </pre>
 
@@ -455,12 +449,11 @@ for subdir in ['project1', 'project2', 'project3']:
 
 # Now register the project, using our own symbol transforms:
 run_options.add_project(
-    Project(
-        'your_cvs_path',
-        'trunk',
-        'branches',
-        'tags',
-        symbol_transforms=symbol_transforms))
+    'your_cvs_path',
+    trunk_path='trunk',
+    branches_path='branches',
+    tags_path='tags',
+    symbol_transforms=symbol_transforms))
 </pre>
 
   <p>This example causes any symbol under "project1" that looks like

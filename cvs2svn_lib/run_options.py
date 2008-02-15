@@ -281,10 +281,23 @@ class RunOptions:
     # Check for problems with the options:
     self.check_options()
 
-  def add_project(self, project):
+  def add_project(
+        self,
+        project_cvs_repos_path,
+        trunk_path=None, branches_path=None, tags_path=None,
+        symbol_transforms=None,
+        symbol_strategy_rules=None,
+        ):
     """Add a project to be converted."""
 
-    assert project.id is None
+    project = Project(
+        project_cvs_repos_path,
+        trunk_path=trunk_path,
+        branches_path=branches_path, tags_path=tags_path,
+        symbol_transforms=symbol_transforms,
+        symbol_strategy_rules=symbol_strategy_rules,
+        )
+
     project.id = len(self.projects)
     self.projects.append(project)
 
@@ -628,11 +641,12 @@ class RunOptions:
     # Create the default project (using ctx.trunk, ctx.branches, and
     # ctx.tags):
     self.add_project(
-        Project(
-            cvsroot, trunk_base, branches_base, tags_base,
-            symbol_transforms=symbol_transforms,
-            symbol_strategy_rules=symbol_strategy_rules,
-            )
+        cvsroot,
+        trunk_path=trunk_base,
+        branches_path=branches_base,
+        tags_path=tags_base,
+        symbol_transforms=symbol_transforms,
+        symbol_strategy_rules=symbol_strategy_rules,
         )
 
   def check_options(self):

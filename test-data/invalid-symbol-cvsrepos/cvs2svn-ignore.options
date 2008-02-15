@@ -21,15 +21,13 @@ symbol_mapper = SymbolMapper([
     ])
 
 run_options.add_project(
-    Project(
-        r'test-data/%s-cvsrepos' % (name,),
-        'trunk',
-        'branches',
-        'tags',
-        symbol_transforms=[
-            symbol_mapper,
-            ],
-        symbol_strategy_rules=global_symbol_strategy_rules,
-        )
+    r'test-data/%s-cvsrepos' % (name,),
+    trunk_path='trunk',
+    branches_path='branches',
+    tags_path='tags',
+    symbol_transforms=[
+        symbol_mapper,
+        ],
+    symbol_strategy_rules=global_symbol_strategy_rules,
     )
 

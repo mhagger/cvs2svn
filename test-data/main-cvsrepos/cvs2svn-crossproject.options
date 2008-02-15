@@ -27,12 +27,10 @@ for project in [
     'single-files',
     ]:
     run_options.add_project(
-        Project(
-            os.path.join(r'test-data/main-cvsrepos', project),
-            '%s/trunk' % (project,),
-            '%s/branches' % (project,),
-            '%s/tags' % (project,),
-            symbol_strategy_rules=global_symbol_strategy_rules,
-            )
+        os.path.join(r'test-data/main-cvsrepos', project),
+        trunk_path='%s/trunk' % (project,),
+        branches_path='%s/branches' % (project,),
+        tags_path='%s/tags' % (project,),
+        symbol_strategy_rules=global_symbol_strategy_rules,
         )
 

@@ -493,51 +493,47 @@ ctx.retain_conflicting_attic_files = False
 
 # Create the default project (using ctx.trunk, ctx.branches, and ctx.tags):
 run_options.add_project(
-    Project(
-        r'test-data/main-cvsrepos',
-        'trunk',
-        'branches',
-        'tags',
-        symbol_transforms=[
-            #RegexpSymbolTransform(r'release-(\d+)_(\d+)',
-            #                      r'release-\1.\2'),
-            #RegexpSymbolTransform(r'release-(\d+)_(\d+)_(\d+)',
-            #                      r'release-\1.\2.\3'),
-            # Convert backslashes into forward slashes:
-            ReplaceSubstringsSymbolTransform('\\','/'),
-            # Eliminate leading, trailing, and repeated slashes:
-            NormalizePathsSymbolTransform(),
-            ],
-        symbol_strategy_rules=[
-            # Additional, project-specific symbol strategy rules can
-            # be added here.
-            ] + global_symbol_strategy_rules,
-        )
+    r'test-data/main-cvsrepos',
+    trunk_path='trunk',
+    branches_path='branches',
+    tags_path='tags',
+    symbol_transforms=[
+        #RegexpSymbolTransform(r'release-(\d+)_(\d+)',
+        #                      r'release-\1.\2'),
+        #RegexpSymbolTransform(r'release-(\d+)_(\d+)_(\d+)',
+        #                      r'release-\1.\2.\3'),
+        # Convert backslashes into forward slashes:
+        ReplaceSubstringsSymbolTransform('\\','/'),
+        # Eliminate leading, trailing, and repeated slashes:
+        NormalizePathsSymbolTransform(),
+        ],
+    symbol_strategy_rules=[
+        # Additional, project-specific symbol strategy rules can
+        # be added here.
+        ] + global_symbol_strategy_rules,
     )
 
 # Add a second project, to be stored to projA/trunk, projA/branches,
 # and projA/tags:
 #run_options.add_project(
-#    Project(
-#        r'my/cvsrepo/projA',
-#        'projA/trunk',
-#        'projA/branches',
-#        'projA/tags',
-#        symbol_transforms=[
-#            #RegexpSymbolTransform(r'release-(\d+)_(\d+)',
-#            #                      r'release-\1.\2'),
-#            #RegexpSymbolTransform(r'release-(\d+)_(\d+)_(\d+)',
-#            #                      r'release-\1.\2.\3'),
-#            # Convert backslashes into forward slashes:
-#            ReplaceSubstringsSymbolTransform('\\','/'),
-#            # Eliminate leading, trailing, and repeated slashes:
-#            NormalizePathsSymbolTransform(),
-#            ],
-#        symbol_strategy_rules=[
-#            # Additional, project-specific symbol strategy rules can
-#            # be added here.
-#            ] + global_symbol_strategy_rules,
-#        )
+#    r'my/cvsrepo/projA',
+#    trunk_path='projA/trunk',
+#    branches_path='projA/branches',
+#    tags_path='projA/tags',
+#    symbol_transforms=[
+#        #RegexpSymbolTransform(r'release-(\d+)_(\d+)',
+#        #                      r'release-\1.\2'),
+#        #RegexpSymbolTransform(r'release-(\d+)_(\d+)_(\d+)',
+#        #                      r'release-\1.\2.\3'),
+#        # Convert backslashes into forward slashes:
+#        ReplaceSubstringsSymbolTransform('\\','/'),
+#        # Eliminate leading, trailing, and repeated slashes:
+#        NormalizePathsSymbolTransform(),
+#        ],
+#    symbol_strategy_rules=[
+#        # Additional, project-specific symbol strategy rules can
+#        # be added here.
+#        ] + global_symbol_strategy_rules,
 #    )
 
 # Change this option to True to turn on profiling of cvs2svn (for

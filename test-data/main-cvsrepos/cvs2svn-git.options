@@ -48,43 +48,41 @@ ctx.revision_reader = None
 run_options.clear_projects()
 
 run_options.add_project(
-    Project(
-        r'test-data/main-cvsrepos',
-        symbol_transforms=[
-            # See cvs2svn-example.options for more documention about
-            # symbol transforms.
-            ReplaceSubstringsSymbolTransform('\\','/'),
-            NormalizePathsSymbolTransform(),
-            ],
-        symbol_strategy_rules=[
-            # See cvs2svn-example.options for more documention about
-            # strategy rules.
+    r'test-data/main-cvsrepos',
+    symbol_transforms=[
+        # See cvs2svn-example.options for more documention about
+        # symbol transforms.
+        ReplaceSubstringsSymbolTransform('\\','/'),
+        NormalizePathsSymbolTransform(),
+        ],
+    symbol_strategy_rules=[
+        # See cvs2svn-example.options for more documention about
+        # strategy rules.
 
-            # Read from a file how symbols should be converted:
-            #SymbolHintsFileRule('symbol-hints.txt'),
+        # Read from a file how symbols should be converted:
+        #SymbolHintsFileRule('symbol-hints.txt'),
 
-            # Specific rules for symbols matching particular regexps:
-            #ForceBranchRegexpStrategyRule(r'branch.*'),
-            #ForceTagRegexpStrategyRule(r'tag.*'),
-            #ExcludeRegexpStrategyRule(r'unknown-.*'),
+        # Specific rules for symbols matching particular regexps:
+        #ForceBranchRegexpStrategyRule(r'branch.*'),
+        #ForceTagRegexpStrategyRule(r'tag.*'),
+        #ExcludeRegexpStrategyRule(r'unknown-.*'),
 
-            # If a symbol is used consistently in CVS, do the same in git:
-            UnambiguousUsageRule(),
+        # If a symbol is used consistently in CVS, do the same in git:
+        UnambiguousUsageRule(),
 
-            # If there are ever commits on a symbol, force it to be a
-            # branch:
-            BranchIfCommitsRule(),
+        # If there are ever commits on a symbol, force it to be a
+        # branch:
+        BranchIfCommitsRule(),
 
-            # Uncomment at most one of the following group of
-            # "catch-all" rules:
-            HeuristicStrategyRule(),
-            #AllBranchRule(),
-            #AllTagRule(),
+        # Uncomment at most one of the following group of
+        # "catch-all" rules:
+        HeuristicStrategyRule(),
+        #AllBranchRule(),
+        #AllTagRule(),
 
-            # This rule should always be included.  It determines from
-            # where each branch sprouts.
-            HeuristicPreferredParentRule(),
-            ],
-        )
+        # This rule should always be included.  It determines from
+        # where each branch sprouts.
+        HeuristicPreferredParentRule(),
+        ],
     )
 

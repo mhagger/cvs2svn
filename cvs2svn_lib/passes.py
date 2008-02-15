@@ -300,7 +300,7 @@ class CollateSymbolsPass(Pass):
     self._register_temp_file_needed(config.PROJECTS)
     self._register_temp_file_needed(config.SYMBOL_STATISTICS)
 
-  def get_symbol(self, stats):
+  def get_symbol(self, run_options, stats):
     """Use StrategyRules to decide what to do with a symbol.
 
     STATS is an instance of symbol_statistics._Stats describing an
@@ -312,7 +312,8 @@ class CollateSymbolsPass(Pass):
     IndeterminateSymbolException."""
 
     symbol = stats.lod
-    for rule in symbol.project.symbol_strategy_rules:
+    rules = run_options.project_symbol_strategy_rules[symbol.project.id]
+    for rule in rules:
       symbol = rule.get_symbol(symbol, stats)
       assert symbol is not None
 
@@ -367,7 +368,7 @@ class CollateSymbolsPass(Pass):
               '      #     %s : %d\n' % (pp.name, count,)
               )
 
-  def get_symbols(self):
+  def get_symbols(self, run_options):
     """Return a map telling how to convert symbols.
 
     The return value is a map {AbstractSymbol : (Trunk|TypedSymbol)},
@@ -393,8 +394,8 @@ class CollateSymbolsPass(Pass):
     # is used in more than one project.  First define a map from
     # object id to symbol strategy rule:
     rules = {}
-    for project in Ctx()._projects.itervalues():
-      for rule in project.symbol_strategy_rules:
+    for rule_list in run_options.project_symbol_strategy_rules:
+      for rule in rule_list:
         rules[id(rule)] = rule
 
     for rule in rules.itervalues():
@@ -404,7 +405,7 @@ class CollateSymbolsPass(Pass):
 
     for stats in self.symbol_stats:
       try:
-        symbol = self.get_symbol(stats)
+        symbol = self.get_symbol(run_options, stats)
       except IndeterminateSymbolException, e:
         self.log_symbol_summary(stats, stats.lod)
         mismatches.append(e.stats)
@@ -449,7 +450,7 @@ class CollateSymbolsPass(Pass):
         artifact_manager.get_temp_file(config.SYMBOL_STATISTICS)
         )
 
-    symbol_map = self.get_symbols()
+    symbol_map = self.get_symbols(run_options)
 
     # Check the symbols for consistency and bail out if there were errors:
     self.symbol_stats.check_consistency(symbol_map)

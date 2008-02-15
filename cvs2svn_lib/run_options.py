@@ -198,6 +198,9 @@ class RunOptions:
 
     self.projects = []
 
+    # A list of one list of SymbolStrategyRules for each project:
+    self.project_symbol_strategy_rules = []
+
     try:
       self.opts, self.args = my_getopt(cmd_args, 'hvqs:p:', [
           "options=",
@@ -286,9 +289,14 @@ class RunOptions:
         project_cvs_repos_path,
         trunk_path=None, branches_path=None, tags_path=None,
         symbol_transforms=None,
-        symbol_strategy_rules=None,
+        symbol_strategy_rules=[],
         ):
-    """Add a project to be converted."""
+    """Add a project to be converted.
+
+    Most arguments are passed straight through to the Project
+    constructor.  SYMBOL_STRATEGY_RULES is an iterable of
+    SymbolStrategyRules that will be applied to symbols in this
+    project."""
 
     id = len(self.projects)
     project = Project(
@@ -297,10 +305,10 @@ class RunOptions:
         trunk_path=trunk_path,
         branches_path=branches_path, tags_path=tags_path,
         symbol_transforms=symbol_transforms,
-        symbol_strategy_rules=symbol_strategy_rules,
         )
 
     self.projects.append(project)
+    self.project_symbol_strategy_rules.append(list(symbol_strategy_rules))
 
   def clear_projects(self):
     """Clear the list of projects to be converted.
@@ -309,6 +317,7 @@ class RunOptions:
     want to import one another."""
 
     del self.projects[:]
+    del self.project_symbol_strategy_rules[:]
 
   def process_help_options(self):
     """Process any help-type options."""

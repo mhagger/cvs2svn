@@ -57,7 +57,6 @@ class Project(object):
         self, id, project_cvs_repos_path,
         trunk_path=None, branches_path=None, tags_path=None,
         symbol_transforms=None,
-        symbol_strategy_rules=None,
         ):
     """Create a new Project record.
 
@@ -70,10 +69,7 @@ class Project(object):
 
     SYMBOL_TRANSFORMS is an iterable of SymbolTransform instances
     which will be used to transform any symbol names within this
-    project.
-
-    SYMBOL_STRATEGY_RULES is an iterable of SymbolStrategyRules that
-    will be applied to symbols in this project."""
+    project."""
 
     self.id = id
 
@@ -120,13 +116,6 @@ class Project(object):
       symbol_transforms = []
 
     self.symbol_transform = CompoundSymbolTransform(symbol_transforms)
-
-    # A list of SymbolStrategyRules applied to symbols in this
-    # project:
-    if symbol_strategy_rules is None:
-      self.symbol_strategy_rules = []
-    else:
-      self.symbol_strategy_rules = list(symbol_strategy_rules)
 
     # The ID of the Trunk instance for this Project.  This member is
     # filled in during CollectRevsPass.

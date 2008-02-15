@@ -16,7 +16,7 @@ ctx.output_option = NewRepositoryOutputOption(
 ctx.cross_project_commits = True
 ctx.cross_branch_commits = False
 
-del run_options.projects[:]
+run_options.clear_projects()
 
 for project in [
     'full-prune',

@@ -13,7 +13,7 @@ ctx.output_option = NewRepositoryOutputOption(
     'cvs2svn-tmp/%s--options=cvs2svn-ignore.options-svnrepos' % (name,),
     )
 
-del run_options.projects[:]
+run_options.clear_projects()
 
 filename = 'test-data/%s-cvsrepos/proj/default,v' % (name,)
 symbol_mapper = SymbolMapper([

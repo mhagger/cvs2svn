@@ -288,6 +288,14 @@ class RunOptions:
     project.id = len(self.projects)
     self.projects.append(project)
 
+  def clear_projects(self):
+    """Clear the list of projects to be converted.
+
+    This method is for the convenience of options files, which may
+    want to import one another."""
+
+    del self.projects[:]
+
   def process_help_options(self):
     """Process any help-type options."""
 

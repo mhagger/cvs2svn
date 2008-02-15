@@ -45,7 +45,7 @@ ctx.revision_recorder = SimpleFulltextRevisionRecorderAdapter(
 ctx.revision_excluder = NullRevisionExcluder()
 ctx.revision_reader = None
 
-del run_options.projects[:]
+run_options.clear_projects()
 
 run_options.add_project(
     Project(

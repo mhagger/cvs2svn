@@ -290,7 +290,9 @@ class RunOptions:
         ):
     """Add a project to be converted."""
 
+    id = len(self.projects)
     project = Project(
+        id,
         project_cvs_repos_path,
         trunk_path=trunk_path,
         branches_path=branches_path, tags_path=tags_path,
@@ -298,7 +300,6 @@ class RunOptions:
         symbol_strategy_rules=symbol_strategy_rules,
         )
 
-    project.id = len(self.projects)
     self.projects.append(project)
 
   def clear_projects(self):

@@ -54,19 +54,19 @@ class Project(object):
   """A project within a CVS repository."""
 
   def __init__(
-        self, project_cvs_repos_path,
+        self, id, project_cvs_repos_path,
         trunk_path=None, branches_path=None, tags_path=None,
         symbol_transforms=None,
         symbol_strategy_rules=None,
         ):
     """Create a new Project record.
 
-    PROJECT_CVS_REPOS_PATH is the main CVS directory for this project
-    (within the filesystem).  TRUNK_PATH, BRANCHES_PATH, and TAGS_PATH
-    are the full, normalized directory names in svn for the
-    corresponding part of the repository.  (BRANCHES_PATH and
-    TAGS_PATH do not have to be specified for a --trunk-only
-    conversion.)
+    ID is a unique id for this project.  PROJECT_CVS_REPOS_PATH is the
+    main CVS directory for this project (within the filesystem).
+    TRUNK_PATH, BRANCHES_PATH, and TAGS_PATH are the full, normalized
+    directory names in svn for the corresponding part of the
+    repository.  (BRANCHES_PATH and TAGS_PATH do not have to be
+    specified for a --trunk-only conversion.)
 
     SYMBOL_TRANSFORMS is an iterable of SymbolTransform instances
     which will be used to transform any symbol names within this
@@ -75,9 +75,7 @@ class Project(object):
     SYMBOL_STRATEGY_RULES is an iterable of SymbolStrategyRules that
     will be applied to symbols in this project."""
 
-    # A unique id for this project.  This field is filled in by
-    # RunOptions.add_project().
-    self.id = None
+    self.id = id
 
     self.project_cvs_repos_path = os.path.normpath(project_cvs_repos_path)
     if not os.path.isdir(self.project_cvs_repos_path):

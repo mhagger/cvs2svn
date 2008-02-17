@@ -41,15 +41,18 @@ allowed in combination with \fB--options\fR: \fB-h\fR/\fB--help\fR,
 .SH "OUTPUT OPTIONS"
 .TP
 \fB-s\fR, \fB--svnrepos\fR \fIpath\fR
-Load CVS repository into the Subversion repository located at
-\fIpath\fR.  If there is no Subversion repository at \fIpath\fR,
-create a new one.
+Write the output of the conversion into a Subversion repository
+located at \fIpath\fR.  This option causes a new Subversion repository
+to be created at \fIpath\fR unless the \fB--existing-svnrepos\fR
+option is also used.
 .TP
 \fB--existing-svnrepos\fR
-Load output into existing SVN repository, instead of creating a new
-repository.  The existing repository must either be empty or contain
-no paths that conflict with paths that will be output by cvs2svn.
-Please note that you need write permission for the repository files.
+Load the converted CVS repository into an existing Subversion
+repository, instead of creating a new repository.  (This option should
+be used in combination with \fB-s\fR/\fB--svnrepos\fR.)  The
+repository must either be empty or contain no paths that overlap with
+those that will result from the conversion.  Please note that you need
+write permission for the repository files.
 .TP
 \fB--fs-type\fR
 Pass \fI--fs-type\fR=\fItype\fR to "svnadmin create" when creating a

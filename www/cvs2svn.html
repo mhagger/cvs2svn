@@ -647,34 +647,40 @@ sprouts).</p>
 
   <tr>
     <td align="right"><tt>-s PATH</tt><br/><tt>--svnrepos PATH</tt></td>
-    <td>Load CVS repository into the Subversion repository located
-      at PATH.  If there is no Subversion repository at PATH, create a
-      new one.</td>
+    <td>Write the output of the conversion into a Subversion
+      repository located at PATH.  This option causes a new Subversion
+      repository to be created at PATH unless the
+      <tt>--existing-svnrepos</tt> option is also used.</td>
   </tr>
 
   <tr>
     <td align="right"><tt>--existing-svnrepos</tt></td>
     <td>Load the converted CVS repository into an existing Subversion
-    repository, instead of creating a new repository.</td>
+      repository, instead of creating a new repository.  (This option
+      should be used in combination with
+      <tt>-s</tt>/<tt>--svnrepos</tt>.)  The repository must either be
+      empty or contain no paths that overlap with those that will
+      result from the conversion.  Please note that you need write
+      permission for the repository files.</td>
   </tr>
 
   <tr>
     <td align="right"><tt>--fs-type=TYPE</tt></td>
     <td>Pass the <tt>--fs-type=TYPE</tt> option to "svnadmin
-      create" when creating a new repository.</td>
+      create" if creating a new Subversion repository.</td>
   </tr>
 
   <tr>
     <td align="right"><tt>--bdb-txn-nosync</tt></td>
     <td>Pass the <tt>--bdb-txn-nosync</tt> switch to "svnadmin
-      create" when creating a new repository.</td>
+      create" if creating a new Subversion repository.</td>
   </tr>
 
   <tr>
     <td align="right"><tt>--dumpfile=PATH</tt></td>
     <td>Output the converted CVS repository into a Subversion dumpfile
       instead of a Subversion repository (useful for importing a CVS
-      Repository into an existing Subversion repository).  PATH is the
+      repository into an existing Subversion repository).  PATH is the
       filename in which to store the dumpfile.</td>
   </tr>
 

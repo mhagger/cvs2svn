@@ -200,7 +200,7 @@ class OldSortableCVSRevisionDatabase(object):
     for l in f:
       s = l.split(' ', 2)[-1]
       yield self.serializer.loads(s)
-    f.close
+    f.close()
 
   def close(self):
     pass
@@ -239,7 +239,7 @@ class OldSortableCVSSymbolDatabase(object):
     for l in f:
       s = l.split(' ', 1)[-1]
       yield self.serializer.loads(s)
-    f.close
+    f.close()
 
   def close(self):
     pass

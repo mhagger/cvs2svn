@@ -44,6 +44,15 @@ Subversion or git repository.  It is designed for one-time
 conversions, not for repeated synchronizations between CVS and the
 target source code management system.</p>
 
+<p>cvs2svn infers what happened in the history of your CVS repository
+and replicates that history as accurately as possible in the target
+SCM.  All revisions, branches, tags, log messages, author names, and
+commit dates are converted.  cvs2svn deduces what CVS modifications
+were made at the same time, and outputs these modifications grouped
+together as changesets in the target SCM.  cvs2svn also deals with
+many CVS quirks and is highly configurable.  See the comprehensive <a
+href="features.html">feature list</a>.</p>
+
 <p>You can get the latest release from the <a
 href="http://cvs2svn.tigris.org/servlets/ProjectDocumentList?folderID=2976"
 >Downloads Area</a>.  Please read <a href="cvs2svn.html">the

@@ -512,7 +512,6 @@ class SVNRepositoryMirror:
     Return the new node at DEST_LOD.  Note that this node is not
     necessarily writable, though its parent node necessarily is."""
 
-    src_path = src_lod.get_path()
     dest_path = dest_lod.get_path()
 
     # Get the node of our src_path

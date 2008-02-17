@@ -183,7 +183,7 @@ def normalize_svn_path(path, allow_empty=False):
 
   norm_path = path_join(*path.split('/'))
   if not allow_empty and not norm_path:
-    raise IllegalSVNPathError("Path is empty." % (opt,))
+    raise IllegalSVNPathError("Path is empty")
   return norm_path
 
 

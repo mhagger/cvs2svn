@@ -70,8 +70,7 @@ class NormalizePathsSymbolTransform(SymbolTransform):
     try:
       return normalize_svn_path(symbol_name)
     except IllegalSVNPathError, e:
-      raise FatalError('Problem with %s: %s' % (opt, e,))
-
+      raise FatalError('Problem with %s: %s' % (symbol_name, e,))
 
 
 class CompoundSymbolTransform(SymbolTransform):

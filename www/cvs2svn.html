@@ -47,199 +47,32 @@
 
 <p>cvs2svn is a program that can be used to migrate a CVS repository
 to <a href="http://subversion.tigris.org/">Subversion</a> (otherwise
-known as "SVN").  The primary goal of cvs2svn is to migrate as much
-information as possible from your old CVS repository to your new
-Subversion or git repository.</p>
+known as "SVN") or <a href="http://git.or.cz/">git</a>.
+Documentation:</p>
 
-<p>cvs2svn can also convert to <a href="http://git.or.cz/">git</a>;
-this usage is described in <a href="cvs2git.html">a separate
-document</a>.</p>
+<ul>
 
-<p>Unfortunately, CVS doesn't record complete information about your
-project's history.  For example, CVS doesn't record what file
-modifications took place together in the same CVS commit.  Therefore,
-cvs2svn attempts to infer from CVS's incomplete information what
-<em>really</em> happened in the history of your repository.  So the
-second goal of cvs2svn is to reconstruct as much of your CVS
-repository's history as possible.</p>
+  <li>The <a href="features.html">list of cvs2svn features</a>
+  explains briefly why converting a repository from CVS is nontrivial
+  and gives a comprehensive list of cvs2svn's many features.</li>
 
-<h2><a name="features">cvs2svn features</a></h2>
+  <li>The document you are currently reading contains a lot of general
+  information about converting from CVS, and specifically how to use
+  cvs2svn to convert your repository to Subversion.</li>
 
-<dl>
+  <li><a href="cvs2git.html">cvs2git.html</a> describes how to use
+  cvs2svn to convert your CVS repository to git.</li>
 
-  <dt>No information lost</dt>
-  <dd>cvs2svn works hard to avoid losing any information from your CVS
-    repository (unless you specifically ask for a partial conversion
-    using <tt>--trunk-only</tt> or <tt>--exclude</tt>).</dd>
+  <li>The <a href="faq.html">FAQ</a> provides frequently asked
+  questions and answers, including important topics such as how to <a
+  href="faq.html#onetoone">convert multiple project</a> within a
+  single repository, how to <a href="faq.html#eol-fixup">fix problems
+  with end-of-line translation</a>, how to <a
+  href="faq.html#gettinghelp">get more help</a> and how to <a
+  href="faq.html#reportingbugs">report bugs</a> including a <a
+  href="faq.html#testcase">useful test case</a>.</li>
 
-  <dt>Changesets</dt>
-  <dd>CVS records modifications file-by-file, and does not keep track
-    of what files were modified at the same time.  cvs2svn uses
-    information like the file modification times, log messages, and
-    dependency information to deduce the original changesets.  cvs2svn
-    allows changesets that affect multiple branches and/or multiple
-    projects (as is allowed by CVS), or it can be configured to split
-    such changesets up into separate commits
-    (<tt>--no-cross-branch-commits</tt>; see also options file).</dd>
-
-  <dt>Multiproject conversions</dt>
-  <dd>cvs2svn can convert a CVS repository that contains multiple
-    projects into a single Subversion repository with the conventional
-    multiproject directory layout.  See <a
-    href="faq.html#onetoone">the FAQ</a> for more information.</dd>
-
-  <dt>Branch vs. tag</dt>
-  <dd>CVS allows the same symbol name to be used sometimes as a
-    branch, sometimes as a tag.  cvs2svn has options and heuristics to
-    decide how to convert such "mixed" symbols
-    (<tt>--symbol-hints</tt>, <tt>--force-branch</tt>,
-    <tt>--force-tag</tt>, <tt>--symbol-default</tt>).</dd>
-
-  <dt>Branch/tag exclusion</dt>
-  <dd>cvs2svn allows the user to specify branches and/or tags that
-    should be excluded from the conversion altogether
-    (<tt>--symbol-hints</tt>, <tt>--exclude</tt>).  It checks that the
-    exclusions are self-consistent (e.g., it doesn't allow a branch to
-    be excluded if a branch that sprouts from it is not excluded).</dd>
-
-  <dt>Branch/tag renaming</dt>
-  <dd>cvs2svn can rename branches and tags during the conversion using
-    regular-expression patterns (<tt>--symbol-transform</tt>).</dd>
-
-  <dt>Choosing SVN paths for branches/tags</dt>
-  <dd>You can choose what SVN paths to use as the trunk/branches/tags
-    directories (<tt>--trunk</tt>, <tt>--branches</tt>,
-    <tt>--tags</tt>), or set arbitrary paths for specific CVS
-    branches/tags (<tt>--symbol-hints</tt>).  For example, you might
-    want to store some tags to the <tt>project/tags</tt> directory,
-    but others to <tt>project/releases</tt>.</dd>
-
-  <dt>Branch and tag parents</dt>
-  <dd>In many cases, the CVS history is ambiguous about which branch
-    served as the parent of another branch or tag.  cvs2svn determines
-    the most plausible parent for symbols using cross-file
-    information.  You can override cvs2svn's choices on a case-by-case
-    basis by using the <tt>--symbol-hints</tt> option.</dd>
-
-  <dt>Branch and tag creation times</dt>
-  <dd>CVS does not record when branches and tags are created.  cvs2svn
-    creates branches and tags at a reasonable time, consistent with
-    the file revisions that were tagged, and tries to create each one
-    within a single Subversion commit if possible.</dd>
-
-  <dt>Mime types</dt>
-  <dd>CVS does not record files' mime types.  cvs2svn provides several
-    mechanisms for choosing reasonable file mime types
-    (<tt>--mime-types</tt>, <tt>--auto-props</tt>).</dd>
-
-  <dt>Binary vs. text</dt>
-  <dd>Many CVS users do not systematically record which files are
-    binary and which are text.  (This is mostly important if the
-    repository is used on non-Unix systems.)  cvs2svn provides a
-    number of ways to infer this information
-    (<tt>--eol-from-mime-type</tt>, <tt>--default-eol</tt>,
-    <tt>--keywords-off</tt>, <tt>--auto-props</tt>).</dd>
-
-  <dt>Subversion file properties</dt>
-  <dd>Subversion allows arbitrary text properties to be attached to
-    files.  cvs2svn provides a mechanism to set such properties when a
-    file is first added to the repository
-    (<tt>--auto-props</tt>) as well as a hook that users can use to
-    set arbitrary file properties via Python code.</dd>
-
-  <dt>Subversion repository customization</dt>
-  <dd>cvs2svn provides many options that allow you to customize the
-    structure of the resulting Subversion repository
-    (<tt>--trunk</tt>, <tt>--branches</tt>, <tt>--tags</tt>,
-    <tt>--no-prune</tt>, <tt>--symbol-transform</tt>, etc.; see also
-    the additional customization options available by using the <a
-    href="#options-file-method"><tt>--options</tt>-file
-    method</a>).</dd>
-
-  <dt>Support for multiple character encodings</dt>
-  <dd>CVS does not record which character encoding was used to store
-    metainformation like file names, author names and log messages.
-    cvs2svn provides options to help convert such text into UTF-8
-    (<tt>--encoding</tt>, <tt>--fallback-encoding</tt>).</dd>
-
-  <dt>Vendor branches</dt>
-  <dd>CVS supports "vendor branches", which (under some circumstances)
-    affect the contents of the main line of development.  cvs2svn
-    tries to detect vendor branches whenever possible, and explicitly
-    copies vendor branch contents to trunk so that a checkout of trunk
-    gives the same results under SVN as under CVS.  If a vendor branch
-    is excluded from the conversion, cvs2svn grafts the relevant
-    vendor branch revisions onto trunk.  cvs2svn also discards
-    spurious "1.1" revisions on files that were imported.</dd>
-
-  <dt>CVS quirks</dt>
-  <dd>cvs2svn goes to great length to deal with CVS's many quirks.
-    For example,
-    <ul>
-
-      <li>CVS introduces spurious "1.1" revisions when a file is added
-        on a branch.  cvs2svn discards these revisions.</li>
-
-      <li>If a file is added on a branch, CVS introduces a spurious
-        "dead" revision at the beginning of the branch to indicate
-        that the file did not exist when the branch was created.
-        cvs2svn deletes these spurious revisions and adds the file on
-        the branch at the correct time.</li>
-
-    </ul>
-  </dd>
-
-  <dt>Robust against repository corruption</dt>
-  <dd>cvs2svn knows how to handle several types of CVS repository
-    corruption that have been reported frequently, and gives
-    informative error messages in other cases:
-    <ul>
-
-      <li>An RCS file that exists both in and out of the "Attic"
-        directory.</li>
-
-      <li>Multiple deltatext blocks for a single CVS file
-        revision.</li>
-
-      <li>Multiple revision headers for the same CVS file
-        revision.</li>
-
-      <li>Tags and branches that refer to non-existent revisions or
-        ill-formed revision numbers.</li>
-
-      <li>Repeated definitions of a symbol name to the same revision
-        number.</li>
-
-      <li>Branches that have no associated labels.</li>
-
-      <li>A directory name that conflicts with a file name (in or out
-        of the Attic).</li>
-
-      <li>Filenames that contain forbidden characters.</li>
-
-    </ul>
-  </dd>
-
-  <dt>Timestamp error correction</dt>
-  <dd>Many CVS repositories contain timestamp errors due to servers'
-    clocks being set incorrectly during part of the repository's
-    history.  cvs2svn's history reconstruction is relatively robust
-    against timestamp errors and it writes monotonic timestamps to the
-    Subversion repository.</dd>
-
-  <dt>Scalable</dt>
-  <dd>cvs2svn stores most intermediate data to on-disk databases so
-    that it can convert very large CVS repositories using a reasonable
-    amount of RAM.  Conversions are organized as multiple passes and
-    can be restarted at an arbitrary pass in the case of
-    problems.</dd>
-
-  <dt>Configurable/extensible using Python</dt>
-  <dd>Many aspects of the conversion can be customized using Python
-    plugins that interact with cvs2svn through documented interfaces
-    (<tt>--options</tt>).</dd>
-
-</dl>
+</ul>
 
 
 <hr />

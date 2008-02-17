@@ -302,22 +302,26 @@ run_options.add_project(
 
       <tr>
         <td align="right"><tt>--auto-props=FILE</tt></td>
-        <td><p>Set arbitrary Subversion properties on files based on the
-          auto-props section of a file in svn config format.  The
-          auto-props file might have content like this:</p>
+        <td>
+
+	  <p>Set arbitrary Subversion properties on files based on the
+            auto-props section of a file in svn config format.  The
+            auto-props file might have content like this:</p>
+
 <pre>
 [auto-props]
 *.txt = svn:mime-type=text/plain;svn:eol-style=native
-*.doc = svn:mime-type=application/msword;svn:eol-style=
+*.doc = svn:mime-type=application/msword;!svn:eol-style
 </pre>
+
           <p>This option can also be used in combination with
-          <tt>--eol-from-mime-type</tt>.</p>
-	  <p>Please note that cvs2svn treats auto-props directives a
-          bit differently than Subversion: if cvs2svn sees a setting
-          like <tt>svn:eol-style=</tt> (with no value), it forces the
-          property to remain <em>unset</em>, even if later rules would
-          otherwise set the property.  Subversion, in this situation,
-          would try to set the property to the empty string.</p></td>
+            <tt>--eol-from-mime-type</tt>.</p>
+
+          <p>To force end-of-line translation off, use a setting of
+            the form <tt>!svn:eol-style</tt> (with a leading
+            exclamation point).</p>
+
+	</td>
       </tr>
 
       <tr>

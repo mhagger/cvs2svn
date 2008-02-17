@@ -1074,13 +1074,31 @@ project-id symbol conversion svn-path parent-lod-name
 
   <tr>
     <td align="right"><tt>--auto-props=FILE</tt></td>
-    <td>Specify a file in the format of Subversion's config file,
-      whose <tt>[auto-props]</tt> section can be used to set arbitrary
-      properties on files in the Subversion repository based on their
-      filenames.  (The <tt>[auto-props]</tt> section header must be
-      present; other sections of the config file, including the
-      <tt>enable-auto-props</tt> setting, are ignored.)  Filenames are
-      matched to the filename patterns case-insensitively.</td>
+    <td>
+
+      <p>Specify a file in the format of Subversion's config file,
+        whose <tt>[auto-props]</tt> section can be used to set
+        arbitrary properties on files in the Subversion repository
+        based on their filenames.  (The <tt>[auto-props]</tt> section
+        header must be present; other sections of the config file,
+        including the <tt>enable-auto-props</tt> setting, are
+        ignored.)  Filenames are matched to the filename patterns
+        case-insensitively, consistent with Subversion's behavior.
+        The auto-props file might have content like this:</p>
+
+<pre>
+[auto-props]
+*.txt = svn:mime-type=text/plain;svn:eol-style=native
+*.doc = svn:mime-type=application/msword;!svn:eol-style
+</pre>
+
+      <p>Please note that cvs2svn allows properties to be explicitly
+        <em>unset</em>: if cvs2svn sees a setting like
+        <tt>!svn:eol-style</tt> (with a leading exclamation point), it
+        forces the property to remain <em>unset</em>, even if later
+        rules would otherwise set the property.</p>
+
+    </td>
   </tr>
 
   <tr>

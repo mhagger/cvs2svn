@@ -2421,6 +2421,7 @@ class AutoProps(Cvs2SvnPropertiesTestCase):
       trunk/foo.txt: no -kb, mime auto-prop says nothing.
       trunk/foo.xml: no -kb, mime auto-prop says text and eol-style=CRLF.
       trunk/foo.zip: no -kb, mime auto-prop says non-text.
+      trunk/foo.asc: no -kb, mime auto-prop says text and eol-style=<unset>.
       trunk/foo.bin: has -kb, mime auto-prop says nothing.
       trunk/foo.csv: has -kb, mime auto-prop says text and eol-style=CRLF.
       trunk/foo.dbf: has -kb, mime auto-prop says non-text.
@@ -2452,6 +2453,7 @@ auto_props_ignore_case = AutoProps(
         ('trunk/foo.txt', ['txt', 'native', None, KEYWORDS]),
         ('trunk/foo.xml', ['xml', 'CRLF', 'text/xml', KEYWORDS]),
         ('trunk/foo.zip', ['zip', None, 'application/zip', None]),
+        ('trunk/foo.asc', ['asc', None, 'text/plain', None]),
         ('trunk/foo.bin', ['bin', None, 'application/octet-stream', None]),
         ('trunk/foo.csv', ['csv', 'CRLF', 'text/csv', None]),
         ('trunk/foo.dbf', ['dbf', None, 'application/what-is-dbf', None]),

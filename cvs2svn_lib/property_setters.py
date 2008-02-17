@@ -19,6 +19,7 @@
 
 import sys
 import os
+import re
 import fnmatch
 import ConfigParser
 
@@ -129,14 +130,17 @@ class AutoPropsPropertySetter(SVNPropertySetter):
   """Set arbitrary svn properties based on an auto-props configuration.
 
   This class supports case-sensitive or case-insensitive pattern
-  matching.  The 'correct' behavior is not quite clear, because
-  subversion itself does an inconsistent job of handling case in
-  auto-props patterns; see
-  http://subversion.tigris.org/issues/show_bug.cgi?id=2036.
+  matching.  The command-line default is case-insensitive behavior,
+  consistent with Subversion (see
+  http://subversion.tigris.org/issues/show_bug.cgi?id=2036).
 
   If a property specified in auto-props has already been set to a
   different value, print a warning and leave the old property value
   unchanged."""
+
+  property_unset_re = re.compile('^\!(?P<name>[^\=]+)$')
+  property_set_re = re.compile('^(?P<name>[^\!\=][^\=]*)\=(?P<value>.*)$')
+  property_novalue_re = re.compile('^(?P<name>[^\!\=][^\=]*)$')
 
   class Pattern:
     """Describes the properties to be set for files matching a pattern."""
@@ -179,13 +183,22 @@ class AutoPropsPropertySetter(SVNPropertySetter):
     props = value.split(';')
     propdict = {}
     for prop in props:
-      s = prop.split('=', 1)
-      if len(s) == 1:
-        propdict[s[0]] = None
-      else:
-        propdict[s[0]] = s[1]
-    self.patterns.append(
-        self.Pattern(self.transform_case(pattern), propdict))
+      m = self.property_unset_re.match(prop)
+      if m:
+        propdict[m.group('name')] = None
+        continue
+
+      m = self.property_set_re.match(prop)
+      if m:
+        propdict[m.group('name')] = m.group('value')
+        continue
+
+      m = self.property_novalue_re.match(prop)
+      if m:
+        propdict[m.group('name')] = ''
+        continue
+
+    self.patterns.append(self.Pattern(self.transform_case(pattern), propdict))
 
   def get_propdict(self, cvs_file):
     basename = self.transform_case(cvs_file.basename)

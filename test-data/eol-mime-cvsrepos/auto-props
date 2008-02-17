@@ -5,6 +5,7 @@
 *.txt = myprop=txt
 *.xml = myprop=xml;svn:mime-type=text/xml;svn:eol-style=CRLF
 *.zip = myprop=zip;svn:mime-type=application/zip
+*.asc = myprop=asc;svn:mime-type=text/plain;!svn:eol-style
 
 *.bin = myprop=bin
 *.csv = myprop=csv;svn:mime-type=text/csv;svn:eol-style=CRLF

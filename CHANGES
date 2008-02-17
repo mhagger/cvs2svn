@@ -15,6 +15,7 @@ Version x.x.x (not yet released)
  * --write-symbol-info: output info about CVS symbols.
  * Add option ctx.decode_apple_single for handling AppleSingle-encoded files.
  * Add a new, restartable pass that converts author and log_msg to unicode.
+ * Allow properties to be left unset via auto-props using a leading '!'.
 
  Bugs fixed:
  * Fix issue #80: Empty CVS,v file not accepted.

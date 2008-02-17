@@ -27,6 +27,7 @@ from cvs2svn_lib.common import InternalError
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import FatalException
 from cvs2svn_lib.common import warning_prefix
+from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.common import format_date
 from cvs2svn_lib.common import PathsNotDisjointException
 from cvs2svn_lib.common import verify_paths_disjoint

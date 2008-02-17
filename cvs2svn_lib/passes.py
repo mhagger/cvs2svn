@@ -43,6 +43,8 @@ from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.cvs_file_database import CVSFileDatabase
 from cvs2svn_lib.metadata import Metadata
 from cvs2svn_lib.metadata_database import MetadataDatabase
+from cvs2svn_lib.project import read_projects
+from cvs2svn_lib.project import write_projects
 from cvs2svn_lib.symbol import LineOfDevelopment
 from cvs2svn_lib.symbol import Trunk
 from cvs2svn_lib.symbol import Symbol
@@ -115,17 +117,6 @@ def sort_file(infilename, outfilename, options=''):
   if not os.path.exists(outfilename) \
      or os.path.getsize(outfilename) != os.path.getsize(infilename):
     raise FatalError('Command failed: "%s"' % (command,))
-
-
-def read_projects(filename):
-  retval = {}
-  for project in cPickle.load(open(filename, 'rb')):
-    retval[project.id] = project
-  return retval
-
-
-def write_projects(filename):
-  cPickle.dump(Ctx()._projects.values(), open(filename, 'wb'), -1)
 
 
 class CollectRevsPass(Pass):

@@ -27,6 +27,7 @@ from cvs2svn_lib.common import FatalException
 from cvs2svn_lib.common import DB_OPEN_READ
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.pass_manager import Pass
+from cvs2svn_lib.project import read_projects
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.cvs_file_database import CVSFileDatabase
 from cvs2svn_lib.symbol_database import SymbolDatabase

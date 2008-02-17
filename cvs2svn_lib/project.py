@@ -19,6 +19,7 @@
 
 import re
 import os
+import cPickle
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.context import Ctx
@@ -194,5 +195,16 @@ class Project(object):
 
   def __str__(self):
     return self.trunk_path or self.project_cvs_repos_path
+
+
+def read_projects(filename):
+  retval = {}
+  for project in cPickle.load(open(filename, 'rb')):
+    retval[project.id] = project
+  return retval
+
+
+def write_projects(filename):
+  cPickle.dump(Ctx()._projects.values(), open(filename, 'wb'), -1)
 
 

@@ -490,7 +490,8 @@ class SymbolHintsFileRule(StrategyRule):
 
       if len(fields) < 3:
         raise FatalError(
-            'The following line in "%s" cannot be parsed:\n    "%s"' % (l,)
+            'The following line in "%s" cannot be parsed:\n    "%s"'
+            % (self.filename, l,)
             )
 
       project_id = fields.pop(0)

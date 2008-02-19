@@ -9,12 +9,6 @@ Making releases
    E. Run "www/validate.sh www/*.html" to make sure that the
       documentation HTML is valid.
 
- Temporary notes for upcoming release:
-   * Consider removing the "experimental" warning from
-     git_output_option.py, CHANGES.
-   * Remove from cvs2git.html the note about git output not yet being
-     in any official releases.
-
  Creating the release:
    1. If this is an A.B.0 release, make a branch:
         svn copy http://cvs2svn.tigris.org/svn/cvs2svn/trunk \

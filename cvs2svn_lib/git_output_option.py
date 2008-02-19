@@ -115,7 +115,6 @@ class GitOutputOption(OutputOption):
         )
 
   def check(self):
-    Log().warn('!!!!! WARNING: Git output is highly experimental !!!!!')
     if Ctx().cross_project_commits:
       raise FatalError(
           'Git output is not supported with cross-project commits'

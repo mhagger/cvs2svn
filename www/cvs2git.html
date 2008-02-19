@@ -45,10 +45,9 @@ Linux kernel development.  When talking about converting from CVS to
 git, I will refer to the program as cvs2git, even though the project
 and the main executable are still called "cvs2svn".</p>
 
-<p><strong>Please note that conversion to git is not yet supported by
-any official release of cvs2svn.  You must retrieve the development
-version of cvs2svn via Subversion (as described below).  git output is
-planned to be released with cvs2svn version 2.1.</strong></p>
+<p><strong>Please note that conversion to git was added in release 2.1
+of cvs2svn.  Please make sure you are using cvs2svn release 2.1 or
+newer.</strong></p>
 
 
 <h2><a name="status">Development status</a></h2>
@@ -173,34 +172,50 @@ to git using cvs2git.</p>
 
 <ol>
 
-  <li>Install svn (to be able to check out the development version of
-    cvs2svn) and either cvs or rcs (used to read revision contents
-    from the CVS repository).</li>
+  <li>Be sure that you have the cvs2svn <a
+    href="cvs2svn.html#reqs">requirements</a>, including either RCS or
+    CVS (used to read revision contents from the CVS repository).</li>
 
-  <li>
+  <li>Obtain a copy of cvs2svn version 2.1 or newer.
 
-    <p>Check out the current trunk version of cvs2svn:</p>
+    <ul>
+
+      <li>To install cvs2svn from a <a
+        href="http://cvs2svn.tigris.org/servlets/ProjectDocumentList">tarball</a>,
+        simply unpack the tarball into a directory on your conversion
+        computer (cvs2svn can be run directly from this
+        directory).</li>
+
+      <li>
+
+        <p>To Check out the current trunk version of cvs2svn, make
+          sure that you have Subversion installed and then run:</p>
 
 <pre>
 svn co http://guest@cvs2svn.tigris.org/svn/cvs2svn/trunk cvs2svn-trunk
+# The password is empty; i.e., just press return.
 cd cvs2svn-trunk
 make check # ...optional
 </pre>
 
-    <p>Please note that the test suite includes tests that are marked
-      "XFAIL" (expected failure); these are known and are not
-      considered serious problems.  In fact, the test for git output
-      is marked XFAIL because the cvs2svn test suite doesn't know how
-      to verify the contents of the git repository.</p>
+        <p>Please note that the test suite includes tests that are
+          marked "XFAIL" (expected failure); these are known and are
+          not considered serious problems.  In fact, the test for git
+          output is marked XFAIL because the cvs2svn test suite
+          doesn't know how to verify the contents of the git
+          repository.</p>
+
+      </li>
+
+    </ul>
 
   </li>
 
   <li>Configure cvs2svn for your conversion.  This has to be done via
     the <a href="cvs2svn.html#cmd-vs-options">options-file method</a>.
-    See <tt>cvs2svn-example.options</tt> and
-    <tt>test-data/main-cvsrepos/cvs2svn-git.options</tt> in the
-    cvs2svn source tree as examples; both files contain lots of
-    documentation.</li>
+    See <tt>test-data/main-cvsrepos/cvs2svn-git.options</tt> and
+    <tt>cvs2svn-example.options</tt> in the cvs2svn source tree as
+    examples; both files contain lots of documentation.</li>
 
   <li>Run cvs2svn.  This creates two output files in <a
     href="http://www.kernel.org/pub/software/scm/git/docs/git-fast-import.html">git-fast-import</a>

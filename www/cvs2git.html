@@ -133,6 +133,9 @@ production conversions.</p>
   <li>The cvs2svn test suite does not include meaningful tests of git
     output.</li>
 
+  <li>cvs2git makes no attempt to convert <tt>.cvsignore</tt> files
+    into <tt>.gitignore</tt> files.</li>
+
 </ul>
 
 
@@ -151,11 +154,11 @@ cvs2git.  See the following sources:</p>
     discussion and describe many features that can also be used for
     cvs2git.</li>
 
-  <li><tt>cvs2svn-example.options</tt> and
-    <tt>test-data/main-cvsrepos/cvs2svn-git.options</tt> in the
-    cvs2svn source tree are examples of the options files needed to
-    configure a cvs2git conversion.  Both files are extensively
-    documented.</li>
+  <li><tt>test-data/main-cvsrepos/cvs2svn-git.options</tt> in the
+    cvs2svn source tree is an example of an options file that can be
+    used to configure a cvs2git conversion.  It includes from
+    <tt>cvs2svn-example.options</tt> many settings that apply to both
+    cvs2svn and cvs2git.  Both files are extensively documented.</li>
 
   <li>The cvs2svn mailing lists, IRC channel, etc., as described in <a
     href="faq.html#gettinghelp">the cvs2svn FAQ</a>.</li>
@@ -196,8 +199,8 @@ make check # ...optional
     the <a href="cvs2svn.html#cmd-vs-options">options-file method</a>.
     See <tt>cvs2svn-example.options</tt> and
     <tt>test-data/main-cvsrepos/cvs2svn-git.options</tt> in the
-    cvs2svn source tree as examples; the former file includes
-    voluminous documentation.</li>
+    cvs2svn source tree as examples; both files contain lots of
+    documentation.</li>
 
   <li>Run cvs2svn.  This creates two output files in <a
     href="http://www.kernel.org/pub/software/scm/git/docs/git-fast-import.html">git-fast-import</a>

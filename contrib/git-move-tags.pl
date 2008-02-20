@@ -4,8 +4,8 @@
 # identical with the content of one of the parents for the commit,
 # then the tag is moved to the parent.
 
-# The script is meant to be run against a repository converted
-# by cvs2svn, since cvs2svn creates empty commits for all tags.
+# The script is meant to be run against a repository converted by
+# cvs2svn, since cvs2svn creates empty commits for some tags.
 
 use strict;
 
@@ -27,9 +27,9 @@ sub TryToMoveTag {
   foreach my $parent (@parents) {
     if( IdenticalTrees( $tag, $parent ) ) {
       if( not TryToMoveTag( $tag, $parent, $level++ ) ) {
-#   system( "git tag -f ${tag}-org $tag" );
-    system( "git tag -f ${tag} $parent" );
-#   print "$tag moved $level levels\n";
+        #system( "git tag -f ${tag}-org $tag" );
+        system( "git tag -f ${tag} $parent" );
+        #print "$tag moved $level levels\n";
       }
 
       return 1;

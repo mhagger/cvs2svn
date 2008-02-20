@@ -351,14 +351,14 @@ application/msword      doc
       <tr>
         <td align="right"><tt>--default-eol=STYLE</tt></td>
         <td>Usually cvs2svn treats a file as binary unless one of the
-          other rules determines that it is binary or if it is marked
-          as binary in CVS.  But if this option is specified, then
-          cvs2svn uses the specified style as the default.  STYLE can
-          be 'binary' (default), 'native', 'CRLF', 'LF', or 'CR'.  If
-          you have been diligent about annotating binary files in CVS,
-          or if you are confident that the above options will catch
-          all of your binary files, then this option may be just the
-          thing you need.</td>
+          other rules determines that it is not binary and it is not
+          marked as binary in CVS.  But if this option is specified,
+          then cvs2svn uses the specified style as the default.  STYLE
+          can be 'binary' (default), 'native', 'CRLF', 'LF', or 'CR'.
+          If you have been diligent about annotating binary files in
+          CVS, or if you are confident that the above options will
+          catch all of your binary files, then this option may be just
+          the thing you need.</td>
       </tr>
 
     </table>

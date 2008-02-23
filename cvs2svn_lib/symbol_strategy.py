@@ -206,6 +206,47 @@ class AllTagRule(StrategyRule):
       return Tag(symbol)
 
 
+class TrunkPathRule(StrategyRule):
+  """Set the base path for Trunk."""
+
+  def __init__(self, trunk_path):
+    self.trunk_path = trunk_path
+
+  def get_symbol(self, symbol, stats):
+    if isinstance(symbol, Trunk) and symbol.base_path is None:
+      symbol.base_path = self.trunk_path
+
+    return symbol
+
+
+class SymbolPathRule(StrategyRule):
+  """Set the base paths for symbol LODs."""
+
+  def __init__(self, symbol_type, base_path):
+    self.symbol_type = symbol_type
+    self.base_path = base_path
+
+  def get_symbol(self, symbol, stats):
+    if isinstance(symbol, self.symbol_type) and symbol.base_path is None:
+      symbol.base_path = path_join(self.base_path, symbol.name)
+
+    return symbol
+
+
+class BranchesPathRule(SymbolPathRule):
+  """Set the base paths for Branch LODs."""
+
+  def __init__(self, branch_path):
+    SymbolPathRule.__init__(self, Branch, branch_path)
+
+
+class TagsPathRule(SymbolPathRule):
+  """Set the base paths for Tag LODs."""
+
+  def __init__(self, tag_path):
+    SymbolPathRule.__init__(self, Tag, tag_path)
+
+
 class DefaultBasePathRule(StrategyRule):
   """Set LOD base paths to their default values.
 

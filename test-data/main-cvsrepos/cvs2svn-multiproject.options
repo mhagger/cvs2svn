@@ -31,6 +31,7 @@ for project in [
         trunk_path='%s/trunk' % (project,),
         branches_path='%s/branches' % (project,),
         tags_path='%s/tags' % (project,),
+        initial_directories=['%s/releases' % (project,)],
         symbol_strategy_rules=global_symbol_strategy_rules,
         )
 

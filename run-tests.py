@@ -2881,6 +2881,13 @@ def multiproject():
   conv = ensure_conversion(
       'main', options_file='cvs2svn-multiproject.options'
       )
+  conv.logs[1].check('Standard project directories initialized by cvs2svn.', (
+    ('/partial-prune', 'A'),
+    ('/partial-prune/trunk', 'A'),
+    ('/partial-prune/branches', 'A'),
+    ('/partial-prune/tags', 'A'),
+    ('/partial-prune/releases', 'A'),
+    ))
 
 
 def crossproject():

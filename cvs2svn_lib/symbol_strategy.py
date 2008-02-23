@@ -247,60 +247,6 @@ class TagsPathRule(SymbolPathRule):
     SymbolPathRule.__init__(self, Tag, tag_path)
 
 
-class DefaultBasePathRule(StrategyRule):
-  """Set LOD base paths to their default values.
-
-  The default values are read from the trunk_path, branches_path, and
-  tags_path members of the Project containing the symbol.  If one of
-  these defaults is needed but unset, get_symbol() raises a
-  FatalError."""
-
-  def get_symbol(self, symbol, stats):
-    if not isinstance(symbol, LineOfDevelopment):
-      # This symbol will not be included in the conversion; skip it.
-      return symbol
-
-    if symbol.base_path is not None:
-      # This lod's base path is already set; leave it.
-      pass
-    elif isinstance(symbol, Trunk):
-      trunk_path = symbol.project.trunk_path
-
-      if trunk_path is None:
-        raise FatalError(
-            'DefaultBasePathRule used for trunk,\n'
-            'but project\'s trunk path is not set'
-            )
-
-      symbol.base_path = trunk_path
-    elif isinstance(symbol, Branch):
-      branches_path = symbol.project.branches_path
-
-      if branches_path is None:
-        raise FatalError(
-            'DefaultBasePathRule used for symbol %s,\n'
-            'but project\'s branch path is not set'
-            % (symbol,)
-            )
-
-      symbol.base_path = path_join(branches_path, symbol.name)
-    elif isinstance(symbol, Tag):
-      tags_path = symbol.project.tags_path
-
-      if tags_path is None:
-        raise FatalError(
-            'DefaultBasePathRule used for symbol %s,\n'
-            'but project\'s tag path is not set'
-            % (symbol,)
-            )
-
-      symbol.base_path = path_join(tags_path, symbol.name)
-    else:
-      raise NotImplementedError()
-
-    return symbol
-
-
 class HeuristicPreferredParentRule(StrategyRule):
   """Use a heuristic rule to pick preferred parents.
 

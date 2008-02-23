@@ -57,16 +57,22 @@ class Project(object):
   def __init__(
         self, id, project_cvs_repos_path,
         trunk_path=None, branches_path=None, tags_path=None,
+        initial_directories=[],
         symbol_transforms=None,
         ):
     """Create a new Project record.
 
     ID is a unique id for this project.  PROJECT_CVS_REPOS_PATH is the
     main CVS directory for this project (within the filesystem).
+
     TRUNK_PATH, BRANCHES_PATH, and TAGS_PATH are the full, normalized
     directory names in svn for the corresponding part of the
-    repository.  (BRANCHES_PATH and TAGS_PATH do not have to be
-    specified for a --trunk-only conversion.)
+    repository.  These arguments do not need to be specified if the
+    base paths for all lines of development are determined via symbol
+    strategy rules.
+
+    INITIAL_DIRECTORIES is an iterable of other SVN directories that
+    should be created when the project is first created.
 
     SYMBOL_TRANSFORMS is an iterable of SymbolTransform instances
     which will be used to transform any symbol names within this
@@ -114,6 +120,17 @@ class Project(object):
         self.tags_path = normalize_ttb_path('--tags', tags_path)
         self._initial_directories.append(self.tags_path)
         paths_to_check.append(self.tags_path)
+
+    for path in initial_directories:
+      try:
+        path = normalize_svn_path(path, False)
+      except IllegalSVNPathError, e:
+        raise FatalError(
+            'Initial directory %s is not a legal SVN path: %e'
+            % (path, e,)
+            )
+      self._initial_directories.append(path)
+      paths_to_check.append(path)
 
     verify_paths_disjoint(*paths_to_check)
 

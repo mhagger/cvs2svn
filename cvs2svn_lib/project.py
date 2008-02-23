@@ -56,7 +56,6 @@ class Project(object):
 
   def __init__(
         self, id, project_cvs_repos_path,
-        trunk_path=None, branches_path=None, tags_path=None,
         initial_directories=[],
         symbol_transforms=None,
         ):
@@ -64,12 +63,6 @@ class Project(object):
 
     ID is a unique id for this project.  PROJECT_CVS_REPOS_PATH is the
     main CVS directory for this project (within the filesystem).
-
-    TRUNK_PATH, BRANCHES_PATH, and TAGS_PATH are the full, normalized
-    directory names in svn for the corresponding part of the
-    repository.  These arguments do not need to be specified if the
-    base paths for all lines of development are determined via symbol
-    strategy rules.
 
     INITIAL_DIRECTORIES is an iterable of all SVN directories that
     should be created when the project is first created.  Normally,
@@ -94,22 +87,6 @@ class Project(object):
     self.project_prefix_re = re.compile(
         r'^' + re.escape(self.project_cvs_repos_path)
         + r'(' + re.escape(os.sep) + r'|$)')
-
-    self.trunk_path = None
-    self.branches_path = None
-    self.tags_path = None
-
-    if trunk_path is not None:
-      self.trunk_path = normalize_ttb_path(
-          '--trunk', trunk_path, allow_empty=True
-          )
-
-    if not Ctx().trunk_only:
-      if branches_path is not None:
-        self.branches_path = normalize_ttb_path('--branches', branches_path)
-
-      if tags_path is not None:
-        self.tags_path = normalize_ttb_path('--tags', tags_path)
 
     # The SVN directories to add when the project is first created:
     self._initial_directories = []
@@ -215,17 +192,18 @@ class Project(object):
     created when the project is first created."""
 
     # Yield the path of the Trunk symbol for this project (which might
-    # differ from self.trunk_path because of SymbolStrategyRules).
-    # The trunk path may be '' during a trunk-only conversion, but
-    # that is OK because DumpfileDelegate considers that directory to
-    # exist already and will therefore ignore it:
+    # differ from the one passed to the --trunk option because of
+    # SymbolStrategyRules).  The trunk path might be '' during a
+    # trunk-only conversion, but that is OK because DumpfileDelegate
+    # considers that directory to exist already and will therefore
+    # ignore it:
     yield Ctx()._symbol_db.get_symbol(self.trunk_id).base_path
 
     for path in self._initial_directories:
       yield path
 
   def __str__(self):
-    return self.trunk_path or self.project_cvs_repos_path
+    return self.project_cvs_repos_path
 
 
 def read_projects(filename):

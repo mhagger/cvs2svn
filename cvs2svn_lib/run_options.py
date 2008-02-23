@@ -322,8 +322,6 @@ class RunOptions:
     project = Project(
         id,
         project_cvs_repos_path,
-        trunk_path=trunk_path,
-        branches_path=branches_path, tags_path=tags_path,
         initial_directories=initial_directories,
         symbol_transforms=symbol_transforms,
         )

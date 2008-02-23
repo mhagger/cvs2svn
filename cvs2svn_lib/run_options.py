@@ -288,6 +288,7 @@ class RunOptions:
         self,
         project_cvs_repos_path,
         trunk_path=None, branches_path=None, tags_path=None,
+        initial_directories=[],
         symbol_transforms=None,
         symbol_strategy_rules=[],
         ):
@@ -302,7 +303,7 @@ class RunOptions:
         path
         for path in [trunk_path, branches_path, tags_path]
         if path
-        ]
+        ] + list(initial_directories)
 
     id = len(self.projects)
     project = Project(

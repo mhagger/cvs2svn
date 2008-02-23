@@ -126,7 +126,7 @@ class Project(object):
         path = normalize_svn_path(path, False)
       except IllegalSVNPathError, e:
         raise FatalError(
-            'Initial directory %s is not a legal SVN path: %e'
+            'Initial directory %r is not a legal SVN path: %s'
             % (path, e,)
             )
       self._initial_directories.append(path)

@@ -60,7 +60,9 @@ from cvs2svn_lib.symbol_strategy import HeuristicStrategyRule
 from cvs2svn_lib.symbol_strategy import UnambiguousUsageRule
 from cvs2svn_lib.symbol_strategy import HeuristicPreferredParentRule
 from cvs2svn_lib.symbol_strategy import SymbolHintsFileRule
-from cvs2svn_lib.symbol_strategy import DefaultBasePathRule
+from cvs2svn_lib.symbol_strategy import TrunkPathRule
+from cvs2svn_lib.symbol_strategy import BranchesPathRule
+from cvs2svn_lib.symbol_strategy import TagsPathRule
 from cvs2svn_lib.symbol_transform import ReplaceSubstringsSymbolTransform
 from cvs2svn_lib.symbol_transform import RegexpSymbolTransform
 from cvs2svn_lib.symbol_transform import NormalizePathsSymbolTransform
@@ -304,6 +306,17 @@ class RunOptions:
         for path in [trunk_path, branches_path, tags_path]
         if path
         ] + list(initial_directories)
+
+    symbol_strategy_rules = list(symbol_strategy_rules)
+
+    # Add rules to set the SVN paths for LODs depending on whether
+    # they are the trunk, tags, or branches:
+    if trunk_path is not None:
+      symbol_strategy_rules.append(TrunkPathRule(trunk_path))
+    if branches_path is not None:
+      symbol_strategy_rules.append(BranchesPathRule(branches_path))
+    if tags_path is not None:
+      symbol_strategy_rules.append(TagsPathRule(tags_path))
 
     id = len(self.projects)
     project = Project(
@@ -624,9 +637,6 @@ class RunOptions:
       symbol_strategy_rules.append(HeuristicStrategyRule())
     else:
       assert False
-
-    # Now add a rule that sets the SVN path for each LOD:
-    symbol_strategy_rules.append(DefaultBasePathRule())
 
     # Now add a rule whose job it is to pick the preferred parents of
     # branches and tags:

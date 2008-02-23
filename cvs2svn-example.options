@@ -82,7 +82,6 @@ from cvs2svn_lib.symbol_strategy import ForceBranchRegexpStrategyRule
 from cvs2svn_lib.symbol_strategy import ForceTagRegexpStrategyRule
 from cvs2svn_lib.symbol_strategy import HeuristicStrategyRule
 from cvs2svn_lib.symbol_strategy import UnambiguousUsageRule
-from cvs2svn_lib.symbol_strategy import DefaultBasePathRule
 from cvs2svn_lib.symbol_strategy import HeuristicPreferredParentRule
 from cvs2svn_lib.symbol_strategy import SymbolHintsFileRule
 from cvs2svn_lib.symbol_transform import ReplaceSubstringsSymbolTransform
@@ -339,11 +338,6 @@ global_symbol_strategy_rules = [
     #AllBranchRule(),
     # Convert all ambiguous symbols as tags:
     #AllTagRule(),
-
-    # This rule sets the SVN path of each symbol to the default value
-    # for the project containing it, if a path hasn't been set
-    # already.
-    DefaultBasePathRule(),
 
     # The last rule is here to choose the preferred parent of branches
     # and tags, that is, the line of development from which the symbol

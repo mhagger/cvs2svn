@@ -497,6 +497,13 @@ run_options.add_project(
     trunk_path='trunk',
     branches_path='branches',
     tags_path='tags',
+    initial_directories=[
+        # The project's trunk_path, branches_path, and tags_path
+        # directories are added to the SVN repository in the project's
+        # first commit.  If you would like additional SVN directories
+        # to be created in the project's first commit, list them here.
+        #'releases',
+        ],
     symbol_transforms=[
         #RegexpSymbolTransform(r'release-(\d+)_(\d+)',
         #                      r'release-\1.\2'),
@@ -520,6 +527,13 @@ run_options.add_project(
 #    trunk_path='projA/trunk',
 #    branches_path='projA/branches',
 #    tags_path='projA/tags',
+#    initial_directories=[
+#        # The project's trunk_path, branches_path, and tags_path
+#        # directories are added to the SVN repository in the project's
+#        # first commit.  If you would like additional SVN directories
+#        # to be created in the project's first commit, list them here.
+#        #'releases',
+#        ],
 #    symbol_transforms=[
 #        #RegexpSymbolTransform(r'release-(\d+)_(\d+)',
 #        #                      r'release-\1.\2'),

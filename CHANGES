@@ -1,3 +1,16 @@
+Version ?.?.? (not yet released)
+--------------------------------
+
+ New features:
+ * Allow arbitrary SVN directories to be created when a project is created.
+
+ Bugs fixed:
+
+ Improvements and output changes:
+
+ Miscellaneous:
+
+
 Version 2.1.0 (19 February 2008)
 --------------------------------
 

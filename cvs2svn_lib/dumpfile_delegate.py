@@ -172,24 +172,15 @@ class DumpfileDelegate(SVNRepositoryMirrorDelegate):
       self._basic_directories.add(path)
 
   def initialize_project(self, project):
-    """Create the TTB directories for the project.
+    """Create any initial directories for the project.
 
-    Be sure not to create parent directories that already exist (e.g.,
-    because two directories share part of their paths either within or
-    across projects)."""
+    The trunk, tags, and branches directories directories are created
+    the first time the project is seen.  Be sure not to create parent
+    directories that already exist (e.g., because two directories
+    share part of their paths either within or across projects)."""
 
-    # Find the path of the Trunk symbol for this project (which might
-    # differ from project.trunk_path because of SymbolStrategyRules):
-    trunk = Ctx()._symbol_db.get_symbol(project.trunk_id)
-
-    # For a trunk-only conversion, the trunk path might be '', in
-    # which case it already exists and we mustn't create it:
-    if trunk.base_path:
-      self._register_basic_directory(trunk.base_path, True)
-
-    if not Ctx().trunk_only:
-      self._register_basic_directory(project.branches_path, True)
-      self._register_basic_directory(project.tags_path, True)
+    for path in project.get_initial_directories():
+      self._register_basic_directory(path, True)
 
   def initialize_lod(self, lod):
     lod_path = lod.get_path()

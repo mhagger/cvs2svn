@@ -193,6 +193,25 @@ class Project(object):
 
     return newname
 
+  def get_initial_directories(self):
+    """Generate the project's initial SVN directories.
+
+    Yield as strings the SVN paths of directories that should be
+    created when the project is first created."""
+
+    # Yield the path of the Trunk symbol for this project (which might
+    # differ from self.trunk_path because of SymbolStrategyRules).
+    # The trunk path may be '' during a trunk-only conversion, but
+    # that is OK because DumpfileDelegate considers that directory to
+    # exist already and will therefore ignore it:
+    yield Ctx()._symbol_db.get_symbol(self.trunk_id).base_path
+
+    if not Ctx().trunk_only:
+      if self.branches_path:
+        yield self.branches_path
+      if self.tags_path:
+        yield self.tags_path
+
   def __str__(self):
     return self.trunk_path or self.project_cvs_repos_path
 

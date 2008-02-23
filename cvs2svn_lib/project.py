@@ -92,21 +92,27 @@ class Project(object):
     self.branches_path = None
     self.tags_path = None
 
+    # The SVN directories to add when the project is first created:
+    self._initial_directories = []
+
     paths_to_check = []
 
     if trunk_path is not None:
       self.trunk_path = normalize_ttb_path(
           '--trunk', trunk_path, allow_empty=True
           )
+      self._initial_directories.append(self.trunk_path)
       paths_to_check.append(self.trunk_path)
 
     if not Ctx().trunk_only:
       if branches_path is not None:
         self.branches_path = normalize_ttb_path('--branches', branches_path)
+        self._initial_directories.append(self.branches_path)
         paths_to_check.append(self.branches_path)
 
       if tags_path is not None:
         self.tags_path = normalize_ttb_path('--tags', tags_path)
+        self._initial_directories.append(self.tags_path)
         paths_to_check.append(self.tags_path)
 
     verify_paths_disjoint(*paths_to_check)
@@ -206,11 +212,8 @@ class Project(object):
     # exist already and will therefore ignore it:
     yield Ctx()._symbol_db.get_symbol(self.trunk_id).base_path
 
-    if not Ctx().trunk_only:
-      if self.branches_path:
-        yield self.branches_path
-      if self.tags_path:
-        yield self.tags_path
+    for path in self._initial_directories:
+      yield path
 
   def __str__(self):
     return self.trunk_path or self.project_cvs_repos_path

@@ -2824,6 +2824,7 @@ def path_hints():
       'symbol-mess', symbol_hints_file='symbol-mess-path-hints.txt',
       )
   conv.logs[1].check('Standard project directories initialized by cvs2svn.', (
+    ('/trunk', 'A'),
     ('/a', 'A'),
     ('/a/strange', 'A'),
     ('/a/strange/trunk', 'A'),

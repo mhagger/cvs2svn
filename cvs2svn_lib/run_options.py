@@ -298,12 +298,19 @@ class RunOptions:
     SymbolStrategyRules that will be applied to symbols in this
     project."""
 
+    initial_directories = [
+        path
+        for path in [trunk_path, branches_path, tags_path]
+        if path
+        ]
+
     id = len(self.projects)
     project = Project(
         id,
         project_cvs_repos_path,
         trunk_path=trunk_path,
         branches_path=branches_path, tags_path=tags_path,
+        initial_directories=initial_directories,
         symbol_transforms=symbol_transforms,
         )
 

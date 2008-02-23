@@ -71,8 +71,9 @@ class Project(object):
     base paths for all lines of development are determined via symbol
     strategy rules.
 
-    INITIAL_DIRECTORIES is an iterable of other SVN directories that
-    should be created when the project is first created.
+    INITIAL_DIRECTORIES is an iterable of all SVN directories that
+    should be created when the project is first created.  Normally,
+    this should include the trunk, branches, and tags directory.
 
     SYMBOL_TRANSFORMS is an iterable of SymbolTransform instances
     which will be used to transform any symbol names within this
@@ -98,28 +99,20 @@ class Project(object):
     self.branches_path = None
     self.tags_path = None
 
-    # The SVN directories to add when the project is first created:
-    self._initial_directories = []
-
-    paths_to_check = []
-
     if trunk_path is not None:
       self.trunk_path = normalize_ttb_path(
           '--trunk', trunk_path, allow_empty=True
           )
-      self._initial_directories.append(self.trunk_path)
-      paths_to_check.append(self.trunk_path)
 
     if not Ctx().trunk_only:
       if branches_path is not None:
         self.branches_path = normalize_ttb_path('--branches', branches_path)
-        self._initial_directories.append(self.branches_path)
-        paths_to_check.append(self.branches_path)
 
       if tags_path is not None:
         self.tags_path = normalize_ttb_path('--tags', tags_path)
-        self._initial_directories.append(self.tags_path)
-        paths_to_check.append(self.tags_path)
+
+    # The SVN directories to add when the project is first created:
+    self._initial_directories = []
 
     for path in initial_directories:
       try:
@@ -130,9 +123,8 @@ class Project(object):
             % (path, e,)
             )
       self._initial_directories.append(path)
-      paths_to_check.append(path)
 
-    verify_paths_disjoint(*paths_to_check)
+    verify_paths_disjoint(*self._initial_directories)
 
     # A list of transformation rules (regexp, replacement) applied to
     # symbol names in this project.

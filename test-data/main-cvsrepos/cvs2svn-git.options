@@ -80,10 +80,10 @@ ctx.output_option = GitOutputOption(
 ctx.revision_recorder = SimpleFulltextRevisionRecorderAdapter(
     # cvs2git uses either RCS's "co" command or CVS's "cvs co -p" to
     # extract the content of file revisions.  Here you can choose
-    # whether to use RCS (faster, but doesn't always work) or CVS
-    # (much slower, but more reliable).
-    RCSRevisionReader(co_executable=r'co'),
-    #CVSRevisionReader(cvs_executable=r'cvs'),
+    # whether to use RCS (faster, but fails in some rare
+    # circumstances) or CVS (much slower, but more reliable).
+    #RCSRevisionReader(co_executable=r'co'),
+    CVSRevisionReader(cvs_executable=r'cvs'),
 
     # The file in which to write the git-fast-import stream that
     # contains the file revision contents:

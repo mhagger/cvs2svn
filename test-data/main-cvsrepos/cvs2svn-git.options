@@ -1,11 +1,24 @@
 # (Be in -*- mode: python; coding: utf-8 -*- mode.)
 
-# As a partial check that the example options file is functional, we
-# use it as the basis for this test.  We only need to overwrite the
-# output option to get the output repository in the location expected
-# by the test infrastructure.
+# This is an example of an options file that can be used to make
+# cvs2svn convert to git rather than to Subversion.  See
+# www/cvs2svn.html for general information, and see the comments in
+# this file and in cvs2svn-example.options for information about what
+# options are available and how they can be set.
 
+# "cvs2git" is shorthand for "cvs2svn in the mode where it is
+# outputting to git instead of Subversion".  But the program that
+# needs to be run is still called "cvs2svn".  Run it with the
+# --options option, passing it this file as argument:
+#
+#     cvs2svn --options=cvs2svn-git.options
+
+# Many options are shared with Subversion, so we simply import the
+# sample Subversion options file (from the current directory, which
+# should be the main cvs2svn directory)...
 execfile('cvs2svn-example.options')
+
+# ...and then we overwrite the things that need to be different.
 
 from cvs2svn_lib.fulltext_revision_recorder \
      import SimpleFulltextRevisionRecorderAdapter
@@ -13,9 +26,20 @@ from cvs2svn_lib.git_revision_recorder import GitRevisionRecorder
 from cvs2svn_lib.git_output_option import GitOutputOption
 
 
+# Set this option to True to convert only the main branch of the CVS
+# repository:
 ctx.trunk_only = False
+
+# cvs2git only supports single-project conversions (multiple-project
+# conversions wouldn't really make sense for git anyway).  So these
+# options must both be set to False:
 ctx.cross_project_commits = False
 ctx.cross_branch_commits = False
+
+# Specify a username to be used for commits for which CVS doesn't
+# record the original author (for example, the creation of a branch).
+# This should be a simple (unix-style) username, but it can be
+# translated into a git-style name by the author_transforms map.
 ctx.username = 'cvs2svn'
 
 # CVS uses unix login names as author names whereas git requires
@@ -23,42 +47,80 @@ ctx.username = 'cvs2svn'
 # the git author to "cvsauthor <cvsauthor>".  author_transforms can be
 # used to map cvsauthor names (e.g., "jrandom") to a true name and
 # email address (e.g., "J. Random <jrandom@example.com>" for the
-# example shown).  All values should be either 16-bit strings or 8-bit
-# strings in the utf-8 encoding.
+# example shown).  All values should be either 16-bit strings (i.e.,
+# with "u" as a prefix) or 8-bit strings in the utf-8 encoding.
+# Please substitute your own project's usernames here to use with the
+# author_transforms option of GitOutputOption below.
 author_transforms={
     'jrandom' : ('J. Random', 'jrandom@example.com'),
     'mhagger' : ('Michael Haggerty', 'mhagger@alum.mit.edu'),
     'brane' : (u'Branko Čibej', 'brane@xbc.nu'),
     'ringstrom' : ('Tobias Ringström', 'tobias@ringstrom.mine.nu'),
     'dionisos' : (u'Erik Hülsmann', 'e.huelsmann@gmx.net'),
+
+    # This one will be used for commits for which CVS doesn't record
+    # the original author, as explained above.
+    'cvs2svn' : ('cvs2svn', 'admin@example.com'),
     }
 
+# This is the main option that causes cvs2svn to output to git rather
+# than Subversion:
 ctx.output_option = GitOutputOption(
+    # The file in which to write the git-fast-import stream that
+    # contains the changesets and branch/tag information:
     'cvs2svn-tmp/git-dump.dat',
+
+    # Optional map from CVS author names to git author names:
     author_transforms=author_transforms,
     )
 
+# During CollectRevsPass, cvs2git records the contents of file
+# revisions into a file in git-fast-import format.  This option
+# configures that process:
 ctx.revision_recorder = SimpleFulltextRevisionRecorderAdapter(
-    RCSRevisionReader('co'),
+    # cvs2git uses either RCS's "co" command or CVS's "cvs co -p" to
+    # extract the content of file revisions.  Here you can choose
+    # whether to use RCS (faster, but doesn't always work) or CVS
+    # (much slower, but more reliable).
+    RCSRevisionReader(co_executable=r'co'),
+    #CVSRevisionReader(cvs_executable=r'cvs'),
+
+    # The file in which to write the git-fast-import stream that
+    # contains the file revision contents:
     GitRevisionRecorder('cvs2svn-tmp/git-blob.dat'),
     )
+# cvs2git does not need to know what revisions will be excluded, so
+# leave this option unchanged:
 ctx.revision_excluder = NullRevisionExcluder()
+
+# cvs2git does not need a revision reader, so leave this option
+# unchanged.
 ctx.revision_reader = None
 
+# Clear the default project that was set in cvs2svn-example.options:
 run_options.clear_projects()
 
+# Now add a project to be converted to git:
 run_options.add_project(
+    # The path to the part of the CVS repository (*not* a CVS working
+    # copy) that should be converted.  This may be a subdirectory
+    # (i.e., a module) within a larger CVS repository.
     r'test-data/main-cvsrepos',
+
+    # See cvs2svn-example.options for more documention about symbol
+    # transforms that can be set using this option.
     symbol_transforms=[
-        # See cvs2svn-example.options for more documention about
-        # symbol transforms.
         ReplaceSubstringsSymbolTransform('\\','/'),
         NormalizePathsSymbolTransform(),
         ],
-    symbol_strategy_rules=[
-        # See cvs2svn-example.options for more documention about
-        # strategy rules.
 
+    # See www/cvs2svn.html and cvs2svn-example.options for more
+    # documention about symbol strategy rules.  The settings below
+    # will give pretty much a 1:1 conversion, but you can change the
+    # settings for more customization (for example, excluding a symbol
+    # from the conversion, forcing it to be output as a branch
+    # vs. tag, changing its name, etc).
+    symbol_strategy_rules=[
         # Read from a file how symbols should be converted:
         #SymbolHintsFileRule('symbol-hints.txt'),
 
@@ -81,7 +143,7 @@ run_options.add_project(
         #AllTagRule(),
 
         # This rule should always be included.  It determines from
-        # where each branch sprouts.
+        # which parent branch each daughter branch/tag sprouts.
         HeuristicPreferredParentRule(),
         ],
     )

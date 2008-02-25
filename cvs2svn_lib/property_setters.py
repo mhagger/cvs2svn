@@ -138,9 +138,9 @@ class AutoPropsPropertySetter(SVNPropertySetter):
   different value, print a warning and leave the old property value
   unchanged."""
 
-  property_unset_re = re.compile('^\!(?P<name>[^\=]+)$')
-  property_set_re = re.compile('^(?P<name>[^\!\=][^\=]*)\=(?P<value>.*)$')
-  property_novalue_re = re.compile('^(?P<name>[^\!\=][^\=]*)$')
+  property_unset_re = re.compile(r'^\!(?P<name>[^\=]+)$')
+  property_set_re = re.compile(r'^(?P<name>[^\!\=][^\=]*)\=(?P<value>.*)$')
+  property_novalue_re = re.compile(r'^(?P<name>[^\!\=][^\=]*)$')
 
   class Pattern:
     """Describes the properties to be set for files matching a pattern."""

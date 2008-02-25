@@ -179,24 +179,42 @@ class AutoPropsPropertySetter(SVNPropertySetter):
   def preserve_case(self, s):
     return s
 
-  def _add_pattern(self, pattern, value):
-    props = value.split(';')
+  def _add_pattern(self, pattern, props):
     propdict = {}
-    for prop in props:
+    for prop in props.split(';'):
       m = self.property_unset_re.match(prop)
       if m:
-        propdict[m.group('name')] = None
+        name = m.group('name')
+        Log().debug(
+            'auto-props: For %r, leaving %r unset.' % (pattern, name,)
+            )
+        propdict[name] = None
         continue
 
       m = self.property_set_re.match(prop)
       if m:
-        propdict[m.group('name')] = m.group('value')
+        name = m.group('name')
+        value = m.group('value')
+        Log().debug(
+            'auto-props: For %r, setting %r to %r.' % (pattern, name, value,)
+            )
+        propdict[name] = value
         continue
 
       m = self.property_novalue_re.match(prop)
       if m:
-        propdict[m.group('name')] = ''
+        name = m.group('name')
+        Log().debug(
+            'auto-props: For %r, setting %r to the empty string'
+            % (pattern, name,)
+            )
+        propdict[name] = ''
         continue
+
+      Log().warn(
+          '%s: in auto-props line for %r, value %r cannot be parsed (ignored)'
+          % (warning_prefix, pattern, prop,)
+          )
 
     self.patterns.append(self.Pattern(self.transform_case(pattern), propdict))
 

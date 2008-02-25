@@ -7,7 +7,7 @@
 *.zip = myprop=zip;svn:mime-type=application/zip
 *.asc = myprop=asc;svn:mime-type=text/plain;!svn:eol-style
 
-*.bin = myprop=bin
+*.bin = myprop=bin;svn:executable
 *.csv = myprop=csv;svn:mime-type=text/csv;svn:eol-style=CRLF
 *.dbf = myprop=dbf;svn:mime-type=application/what-is-dbf
 

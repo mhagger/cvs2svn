@@ -26,8 +26,9 @@ log
 @Commit a second revision of every file.
 @
 text
-@This is the first revision in this file.
-This line was added in the second revision.
+@#!/bin/sh
+echo 'Hello world!'
+echo 'Hello back at you!'
 @
 
 
@@ -36,6 +37,6 @@ log
 @Add a file.
 @
 text
-@d2 1
+@d3 1
 @
 

@@ -2438,7 +2438,12 @@ class AutoProps(Cvs2SvnPropertiesTestCase):
     Cvs2SvnPropertiesTestCase.__init__(
         self, 'eol-mime',
         props_to_test=[
-            'myprop', 'svn:eol-style', 'svn:mime-type', 'svn:keywords'],
+            'myprop',
+            'svn:eol-style',
+            'svn:mime-type',
+            'svn:keywords',
+            'svn:executable',
+            ],
         args=[
             '--auto-props=%s' % auto_props_path,
             '--eol-from-mime-type'
@@ -2450,15 +2455,17 @@ auto_props_ignore_case = AutoProps(
     description="test auto-props",
     args=['--default-eol=native'],
     expected_props=[
-        ('trunk/foo.txt', ['txt', 'native', None, KEYWORDS]),
-        ('trunk/foo.xml', ['xml', 'CRLF', 'text/xml', KEYWORDS]),
-        ('trunk/foo.zip', ['zip', None, 'application/zip', None]),
-        ('trunk/foo.asc', ['asc', None, 'text/plain', None]),
-        ('trunk/foo.bin', ['bin', None, 'application/octet-stream', None]),
-        ('trunk/foo.csv', ['csv', 'CRLF', 'text/csv', None]),
-        ('trunk/foo.dbf', ['dbf', None, 'application/what-is-dbf', None]),
-        ('trunk/foo.UPCASE1', ['UPCASE1', 'native', None, KEYWORDS]),
-        ('trunk/foo.UPCASE2', ['UPCASE2', 'native', None, KEYWORDS]),
+        ('trunk/foo.txt', ['txt', 'native', None, KEYWORDS, None]),
+        ('trunk/foo.xml', ['xml', 'CRLF', 'text/xml', KEYWORDS, None]),
+        ('trunk/foo.zip', ['zip', None, 'application/zip', None, None]),
+        ('trunk/foo.asc', ['asc', None, 'text/plain', None, None]),
+        ('trunk/foo.bin',
+         ['bin', None, 'application/octet-stream', None, '']),
+        ('trunk/foo.csv', ['csv', 'CRLF', 'text/csv', None, None]),
+        ('trunk/foo.dbf',
+         ['dbf', None, 'application/what-is-dbf', None, None]),
+        ('trunk/foo.UPCASE1', ['UPCASE1', 'native', None, KEYWORDS, None]),
+        ('trunk/foo.UPCASE2', ['UPCASE2', 'native', None, KEYWORDS, None]),
         ])
 
 

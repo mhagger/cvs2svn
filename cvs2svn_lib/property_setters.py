@@ -134,6 +134,10 @@ class AutoPropsPropertySetter(SVNPropertySetter):
   consistent with Subversion (see
   http://subversion.tigris.org/issues/show_bug.cgi?id=2036).
 
+  As a special extension to Subversion's auto-props handling, if a
+  property name is preceded by a '!' then that property is forced to
+  be left unset.
+
   If a property specified in auto-props has already been set to a
   different value, print a warning and leave the old property value
   unchanged."""

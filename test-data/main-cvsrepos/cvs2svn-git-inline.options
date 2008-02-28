@@ -20,10 +20,8 @@ execfile('cvs2svn-example.options')
 
 # ...and then we overwrite the things that need to be different.
 
-from cvs2svn_lib.fulltext_revision_recorder \
-     import SimpleFulltextRevisionRecorderAdapter
 from cvs2svn_lib.git_revision_recorder import GitRevisionRecorder
-from cvs2svn_lib.git_output_option import GitRevisionMarkWriter
+from cvs2svn_lib.git_output_option import GitRevisionInlineWriter
 from cvs2svn_lib.git_output_option import GitOutputOption
 
 
@@ -71,9 +69,17 @@ ctx.output_option = GitOutputOption(
     # contains the changesets and branch/tag information:
     'cvs2svn-tmp/git-dump.dat',
 
-    # The blobs will be written via the revision recorder, so in
-    # OutputPass we only have to emit references to the blob marks:
-    GitRevisionMarkWriter(),
+    # Write the file contents inline in the git-fast-import stream,
+    # rather than using a separate blobs file.  This makes the stream
+    # file much larger.
+    revision_writer=GitRevisionInlineWriter(
+        # cvs2git uses either RCS's "co" command or CVS's "cvs co -p" to
+        # extract the content of file revisions.  Here you can choose
+        # whether to use RCS (faster, but fails in some rare
+        # circumstances) or CVS (much slower, but more reliable).
+        #RCSRevisionReader(co_executable=r'co')
+        CVSRevisionReader(cvs_executable=r'cvs')
+        ),
 
     # Optional map from CVS author names to git author names:
     author_transforms=author_transforms,
@@ -82,24 +88,14 @@ ctx.output_option = GitOutputOption(
 # During CollectRevsPass, cvs2git records the contents of file
 # revisions into a file in git-fast-import format.  This option
 # configures that process:
-ctx.revision_recorder = SimpleFulltextRevisionRecorderAdapter(
-    # cvs2git uses either RCS's "co" command or CVS's "cvs co -p" to
-    # extract the content of file revisions.  Here you can choose
-    # whether to use RCS (faster, but fails in some rare
-    # circumstances) or CVS (much slower, but more reliable).
-    #RCSRevisionReader(co_executable=r'co'),
-    CVSRevisionReader(cvs_executable=r'cvs'),
+ctx.revision_recorder = NullRevisionRecorder()
 
-    # The file in which to write the git-fast-import stream that
-    # contains the file revision contents:
-    GitRevisionRecorder('cvs2svn-tmp/git-blob.dat'),
-    )
 # cvs2git does not need to know what revisions will be excluded, so
 # leave this option unchanged:
 ctx.revision_excluder = NullRevisionExcluder()
 
-# cvs2git does not need a revision reader, so leave this option
-# unchanged.
+# cvs2git's revision reader is set via the GitOutputOption
+# constructor, so leave this option set to None.
 ctx.revision_reader = None
 
 # Clear the default project that was set in cvs2svn-example.options:

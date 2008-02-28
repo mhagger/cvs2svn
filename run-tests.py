@@ -3231,6 +3231,22 @@ def main_git():
   conv = ensure_conversion('main', options_file='cvs2svn-git.options')
 
 
+def main_git_inline():
+  "output in git-fast-import format with inline data"
+
+  # Note: To test importing into git, do
+  #
+  #     ./run-tests <test-number>
+  #     rm -rf .git
+  #     git-init
+  #     cat cvs2svn-tmp/git-dump.dat | git-fast-import
+  #
+  # Then use "gitk --all", "git log", etc. to test the contents of the
+  # repository.
+
+  conv = ensure_conversion('main', options_file='cvs2svn-git-inline.options')
+
+
 def invalid_symbol():
   "a symbol with the incorrect format"
 
@@ -3460,6 +3476,7 @@ test_list = [
     branch_from_deleted_1_1,
     add_on_branch,
     XFail(main_git),
+    XFail(main_git_inline),
     invalid_symbol,
     invalid_symbol_ignore,
     EOLVariants('LF'),

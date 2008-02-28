@@ -42,6 +42,7 @@ from cvs2svn_lib.cvs_item import CVSRevisionAdd
 from cvs2svn_lib.cvs_item import CVSRevisionChange
 from cvs2svn_lib.cvs_item import CVSRevisionDelete
 from cvs2svn_lib.cvs_item import CVSRevisionNoop
+from cvs2svn_lib.cvs_item import CVSSymbol
 from cvs2svn_lib.output_option import OutputOption
 from cvs2svn_lib.svn_revision_range import RevisionScores
 
@@ -107,6 +108,48 @@ class GitRevisionMarkWriter(GitRevisionWriter):
         )
 
 
+class GitRevisionInlineWriter(GitRevisionWriter):
+  def __init__(self, revision_reader):
+    self.revision_reader = revision_reader
+
+  def register_artifacts(self, which_pass):
+    GitRevisionWriter.register_artifacts(self, which_pass)
+    self.revision_reader.register_artifacts(which_pass)
+
+  def start(self):
+    GitRevisionWriter.start(self)
+    self.revision_reader.start()
+
+  def _modify_file(self, f, cvs_item):
+    if cvs_item.cvs_file.executable:
+      mode = '100755'
+    else:
+      mode = '100644'
+
+    f.write(
+        'M %s inline %s\n'
+        % (mode, cvs_item.cvs_file.cvs_path,)
+        )
+
+    cvs_rev = cvs_item
+    while isinstance(cvs_rev, CVSSymbol):
+      cvs_rev = Ctx()._cvs_items_db[cvs_rev.source_id]
+
+    # FIXME: We have to decide what to do about keyword substitution
+    # and eol_style here:
+    fulltext = self.revision_reader.get_content_stream(
+        cvs_rev, suppress_keyword_substitution=False
+        ).read()
+
+    f.write('data %d\n' % (len(fulltext),))
+    f.write(fulltext)
+    f.write('\n')
+
+  def finish(self):
+    GitRevisionWriter.finish(self)
+    self.revision_reader.finish()
+
+
 class GitOutputOption(OutputOption):
   """An OutputOption that outputs to a git-fast-import formatted file.
 
@@ -127,12 +170,16 @@ class GitOutputOption(OutputOption):
   # avoid conflicts with blob marks.
   _mark_offset = 1000000000
 
-  def __init__(self, dump_filename, author_transforms=None):
+  def __init__(self, dump_filename, revision_writer, author_transforms=None):
     """Constructor.
 
     DUMP_FILENAME is the name of the file to which the git-fast-import
     commands for defining revisions should be written.  (Please note
     that the actual file contents are not written to this file.)
+
+    REVISION_WRITER is a GitRevisionWriter that is used to output
+    either the content of revisions or a mark that was previously used
+    to label a blob.
 
     AUTHOR_TRANSFORMS is a map {cvsauthor : (fullname, email)} from
     CVS author names to git full name and email address.  All of the
@@ -158,7 +205,7 @@ class GitOutputOption(OutputOption):
         email = to_utf8(email)
         self.author_transforms[cvsauthor] = (name, email,)
 
-    self.revision_writer = GitRevisionMarkWriter()
+    self.revision_writer = revision_writer
 
   def register_artifacts(self, which_pass):
     # These artifacts are needed for SymbolingsReader:

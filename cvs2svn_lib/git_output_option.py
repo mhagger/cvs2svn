@@ -38,7 +38,8 @@ from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.openings_closings import SymbolingsReader
 from cvs2svn_lib.symbol import Trunk
-from cvs2svn_lib.cvs_item import CVSRevisionModification
+from cvs2svn_lib.cvs_item import CVSRevisionAdd
+from cvs2svn_lib.cvs_item import CVSRevisionChange
 from cvs2svn_lib.cvs_item import CVSRevisionDelete
 from cvs2svn_lib.cvs_item import CVSRevisionNoop
 from cvs2svn_lib.output_option import OutputOption
@@ -52,6 +53,44 @@ from cvs2svn_lib.svn_revision_range import RevisionScores
 # conflicts (though of course a conflict could still result if the
 # user requests symbol transformations).
 FIXUP_BRANCH_NAME = 'refs/heads/TAG.FIXUP'
+
+
+class GitRevisionWriter(object):
+  def _modify_file(self, f, cvs_item):
+    if cvs_item.cvs_file.executable:
+      mode = '100755'
+    else:
+      mode = '100644'
+
+    f.write(
+        'M %s :%d %s\n'
+        % (mode, cvs_item.revision_recorder_token,
+           cvs_item.cvs_file.cvs_path,)
+        )
+
+  def add_file(self, f, cvs_rev):
+    self._modify_file(f, cvs_rev)
+
+  def modify_file(self, f, cvs_rev):
+    self._modify_file(f, cvs_rev)
+
+  def delete_file(self, f, cvs_item):
+    f.write('D %s\n' % (cvs_item.cvs_file.cvs_path,))
+
+  def process_revision(self, f, cvs_rev):
+    if isinstance(cvs_rev, CVSRevisionAdd):
+      self.add_file(f, cvs_rev)
+    elif isinstance(cvs_rev, CVSRevisionChange):
+      self.modify_file(f, cvs_rev)
+    elif isinstance(cvs_rev, CVSRevisionDelete):
+      self.delete_file(f, cvs_rev)
+    elif isinstance(cvs_rev, CVSRevisionNoop):
+      pass
+    else:
+      raise InternalError('Unexpected CVSRevision type: %s' % (cvs_rev,))
+
+  def branch_file(self, f, cvs_symbol):
+    self._modify_file(f, cvs_symbol)
 
 
 class GitOutputOption(OutputOption):
@@ -104,6 +143,8 @@ class GitOutputOption(OutputOption):
         name = to_utf8(name)
         email = to_utf8(email)
         self.author_transforms[cvsauthor] = (name, email,)
+
+    self.revision_writer = GitRevisionWriter()
 
   def register_artifacts(self, which_pass):
     # These artifacts are needed for SymbolingsReader:
@@ -194,23 +235,7 @@ class GitOutputOption(OutputOption):
     self.f.write('data %d\n' % (len(log_msg),))
     self.f.write('%s\n' % (log_msg,))
     for cvs_rev in svn_commit.get_cvs_items():
-      if isinstance(cvs_rev, CVSRevisionNoop):
-        pass
-
-      elif isinstance(cvs_rev, CVSRevisionDelete):
-        self.f.write('D %s\n' % (cvs_rev.cvs_file.cvs_path,))
-
-      elif isinstance(cvs_rev, CVSRevisionModification):
-        if cvs_rev.cvs_file.executable:
-          mode = '100755'
-        else:
-          mode = '100644'
-
-        self.f.write(
-            'M %s :%d %s\n'
-            % (mode, cvs_rev.revision_recorder_token,
-               cvs_rev.cvs_file.cvs_path,)
-            )
+      self.revision_writer.process_revision(self.f, cvs_rev)
 
     self.f.write('\n')
 
@@ -240,26 +265,7 @@ class GitOutputOption(OutputOption):
         % (self._get_source_mark(source_lod, svn_commit.revnum),)
         )
     for cvs_rev in svn_commit.cvs_revs:
-      if isinstance(cvs_rev, CVSRevisionNoop):
-        pass
-
-      elif isinstance(cvs_rev, CVSRevisionDelete):
-        self.f.write('D %s\n' % (cvs_rev.cvs_file.cvs_path,))
-
-      elif isinstance(cvs_rev, CVSRevisionModification):
-        if cvs_rev.cvs_file.executable:
-          mode = '100755'
-        else:
-          mode = '100644'
-
-        self.f.write(
-            'M %s :%d %s\n'
-            % (mode, cvs_rev.revision_recorder_token,
-               cvs_rev.cvs_file.cvs_path,)
-            )
-
-      else:
-        raise InternalError('Unexpected CVSRevision type: %s' % (cvs_rev,))
+      self.revision_writer.process_revision(self.f, cvs_rev)
 
     self.f.write('\n')
 
@@ -328,16 +334,7 @@ class GitOutputOption(OutputOption):
 
     for (source_lod, source_revnum, cvs_symbols,) in source_groups:
       for cvs_symbol in cvs_symbols:
-        if cvs_symbol.cvs_file.executable:
-          mode = '100755'
-        else:
-          mode = '100644'
-
-        self.f.write(
-            'M %s :%d %s\n'
-            % (mode, cvs_symbol.revision_recorder_token,
-               cvs_symbol.cvs_file.cvs_path,)
-            )
+        self.revision_writer.branch_file(self.f, cvs_symbol)
 
     self.f.write('\n')
 

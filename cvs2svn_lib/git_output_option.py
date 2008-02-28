@@ -63,16 +63,7 @@ class GitRevisionWriter(object):
     pass
 
   def _modify_file(self, f, cvs_item):
-    if cvs_item.cvs_file.executable:
-      mode = '100755'
-    else:
-      mode = '100644'
-
-    f.write(
-        'M %s :%d %s\n'
-        % (mode, cvs_item.revision_recorder_token,
-           cvs_item.cvs_file.cvs_path,)
-        )
+    raise NotImplementedError()
 
   def add_file(self, f, cvs_rev):
     self._modify_file(f, cvs_rev)
@@ -100,6 +91,20 @@ class GitRevisionWriter(object):
 
   def finish(self):
     pass
+
+
+class GitRevisionMarkWriter(GitRevisionWriter):
+  def _modify_file(self, f, cvs_item):
+    if cvs_item.cvs_file.executable:
+      mode = '100755'
+    else:
+      mode = '100644'
+
+    f.write(
+        'M %s :%d %s\n'
+        % (mode, cvs_item.revision_recorder_token,
+           cvs_item.cvs_file.cvs_path,)
+        )
 
 
 class GitOutputOption(OutputOption):
@@ -153,7 +158,7 @@ class GitOutputOption(OutputOption):
         email = to_utf8(email)
         self.author_transforms[cvsauthor] = (name, email,)
 
-    self.revision_writer = GitRevisionWriter()
+    self.revision_writer = GitRevisionMarkWriter()
 
   def register_artifacts(self, which_pass):
     # These artifacts are needed for SymbolingsReader:

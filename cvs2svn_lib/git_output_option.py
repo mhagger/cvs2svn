@@ -56,6 +56,12 @@ FIXUP_BRANCH_NAME = 'refs/heads/TAG.FIXUP'
 
 
 class GitRevisionWriter(object):
+  def register_artifacts(self, which_pass):
+    pass
+
+  def start(self):
+    pass
+
   def _modify_file(self, f, cvs_item):
     if cvs_item.cvs_file.executable:
       mode = '100755'
@@ -91,6 +97,9 @@ class GitRevisionWriter(object):
 
   def branch_file(self, f, cvs_symbol):
     self._modify_file(f, cvs_symbol)
+
+  def finish(self):
+    pass
 
 
 class GitOutputOption(OutputOption):
@@ -154,6 +163,7 @@ class GitOutputOption(OutputOption):
     artifact_manager.register_temp_file_needed(
         config.SYMBOL_OFFSETS_DB, which_pass
         )
+    self.revision_writer.register_artifacts(which_pass)
 
   def check(self):
     if Ctx().cross_project_commits:
@@ -184,6 +194,8 @@ class GitOutputOption(OutputOption):
     # numbers in which there was a commit to lod, and the
     # corresponding mark.
     self._marks = {}
+
+    self.revision_writer.start()
 
   def _create_commit_mark(self, lod, revnum):
     assert revnum >= self._youngest
@@ -366,6 +378,7 @@ class GitOutputOption(OutputOption):
     self.f.write('\n')
 
   def cleanup(self):
+    self.revision_writer.finish()
     self.f.close()
     del self.f
     self._symbolings_reader.close()

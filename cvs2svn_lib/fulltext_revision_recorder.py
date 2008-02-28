@@ -105,6 +105,14 @@ class SimpleFulltextRevisionRecorderAdapter(FulltextRevisionRecorderAdapter):
     FulltextRevisionRecorderAdapter.__init__(self, fulltext_revision_recorder)
     self.revision_reader = revision_reader
 
+  def register_artifacts(self, which_pass):
+    FulltextRevisionRecorderAdapter.register_artifacts(self, which_pass)
+    self.revision_reader.register_artifacts(which_pass)
+
+  def start(self):
+    FulltextRevisionRecorderAdapter.start(self)
+    self.revision_reader.start()
+
   def record_text(self, cvs_rev, log, text):
     # FIXME: We have to decide what to do about keyword substitution
     # and eol_style here:
@@ -114,5 +122,9 @@ class SimpleFulltextRevisionRecorderAdapter(FulltextRevisionRecorderAdapter):
     return self.fulltext_revision_recorder.record_fulltext(
         cvs_rev, log, fulltext
         )
+
+  def finish(self):
+    FulltextRevisionRecorderAdapter.finish(self)
+    self.revision_reader.finish()
 
 

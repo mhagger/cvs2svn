@@ -34,11 +34,7 @@ Since 'first' was already removed, removing 'second' empties the
 directory, so the directory itself gets pruned.
 @
 text
-@The original text of this file was much longer, but we didn't
-need it for the regression test, so we removed it.  It was
-src/gnu/usr.bin/cvs/contrib/pcl-cvs/Attic/NEWS,v in the FreeBSD CVS
-repository.
-@
+@@
 
 
 1.1

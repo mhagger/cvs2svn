@@ -36,11 +36,7 @@ log
 @Remove the file 'first' again, which should have no effect.
 @
 text
-@The original text of this file was much longer, but we didn't
-need it for the regression test, so we removed it.  It was
-src/gnu/usr.bin/cvs/contrib/pcl-cvs/Attic/cookie.el,v in the FreeBSD
-CVS repository.
-@
+@@
 
 
 1.2

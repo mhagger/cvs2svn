@@ -40,11 +40,6 @@ class KeyGenerator:
 
     return self._last_id
 
-  def gen_key(self):
-    """Generate and return a previously-unused key, as a string."""
-
-    return '%x' % self.gen_id()
-
   def get_last_id(self):
     """Return the last id that was generated, as an integer."""
 

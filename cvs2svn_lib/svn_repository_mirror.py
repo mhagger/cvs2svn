@@ -151,6 +151,15 @@ class LODHistory(object):
     return self.ids[-1] is not None
 
   def update(self, revnum, id):
+    """Indicate that the root node of this LOD changed to ID at REVNUM.
+
+    REVNUM is a revision number that must be the same as that of the
+    previous recorded change (in which case the previous change is
+    overwritten) or later (in which the new change is appended).
+
+    ID can be a node ID, or it can be None to indicate that this LOD
+    ceased to exist in REVNUM."""
+
     if revnum < self.revnums[-1]:
       raise KeyError()
     elif revnum == self.revnums[-1]:

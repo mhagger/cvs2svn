@@ -59,13 +59,17 @@ class _MirrorNode(object):
     # The id of this node:
     self.id = id
 
-    # The entries within this directory (a map from CVSPath to node_id):
+    # The entries within this directory, stored as a map {CVSPath :
+    # node_id}.  The node_ids are integers for CVSDirectories, None
+    # for CVSFiles:
     self.entries = entries
 
   def __getitem__(self, cvs_path):
     """Return the _MirrorNode associated with the specified subnode.
 
-    Raise KeyError if the specified subnode does not exist."""
+    Return a _MirrorNode instance if the subnode is a CVSDirectory;
+    None if it is a CVSFile.  Raise KeyError if the specified subnode
+    does not exist."""
 
     id = self.entries[cvs_path]
     if id is None:
@@ -75,12 +79,18 @@ class _MirrorNode(object):
       return self.repo._get_node(id)
 
   def __len__(self):
+    """Return the number of CVSPaths within this node."""
+
     return len(self.entries)
 
   def __contains__(self, cvs_path):
+    """Return True iff CVS_PATH is contained in this node."""
+
     return cvs_path in self.entries
 
   def __iter__(self):
+    """Iterate over the CVSPaths within this node."""
+
     return self.entries.__iter__()
 
 
@@ -94,12 +104,22 @@ class _WritableMirrorNode(_MirrorNode):
   """Represent a writable node within the SVNRepositoryMirror."""
 
   def __setitem__(self, cvs_path, node):
+    """Create or overwrite a subnode of this node.
+
+    CVS_PATH is the path of the subnode.  NODE will be the new value
+    of the node; for CVSDirectories it should be a _MirrorNode
+    instance; for CVSFiles it should be None."""
+
     if node is None:
       self.entries[cvs_path] = None
     else:
       self.entries[cvs_path] = node.id
 
   def __delitem__(self, cvs_path):
+    """Remove the subnode of this node at CVS_PATH.
+
+    If the node does not exist, then raise a KeyError."""
+
     del self.entries[cvs_path]
 
 

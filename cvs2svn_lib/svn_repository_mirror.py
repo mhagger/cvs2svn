@@ -618,8 +618,9 @@ class SVNRepositoryMirror:
     try:
       dest_node = self._open_writable_lod_node(symbol, False)
     except KeyError:
-      dest_node = None
-    self._fill_directory(symbol, dest_node, fill_source, None)
+      self._fill_directory(symbol, None, fill_source, None)
+    else:
+      self._fill_directory(symbol, dest_node, fill_source, None)
 
   def _fill_directory(self, symbol, dest_node, fill_source, parent_source):
     """Fill the tag or branch SYMBOL at the path indicated by FILL_SOURCE.
@@ -684,11 +685,13 @@ class SVNRepositoryMirror:
         try:
           dest_subnode = dest_node[cvs_path]
         except KeyError:
-          # Path didn't exist at all; it has to be created:
-          dest_subnode = None
-        self._fill_directory(
-            symbol, dest_subnode, src_entries[cvs_path], copy_source
-            )
+          # Path doesn't exist yet; it has to be created:
+          self._fill_directory(symbol, None, src_entries[cvs_path], None)
+        else:
+          # Path already exists, but might have to be cleaned up:
+          self._fill_directory(
+              symbol, dest_subnode, src_entries[cvs_path], copy_source
+              )
       else:
         # Path is a CVSFile:
         self._fill_file(

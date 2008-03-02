@@ -46,11 +46,7 @@ class _MirrorNode(object):
 
   Instances of this class act like a map { CVSPath : _MirrorNode },
   where CVSPath is an item within this node (i.e., a file or
-  subdirectory within this directory).
-
-  For space efficiency, SVNRepositoryMirror does not actually use this
-  class to store the data internally, but rather constructs instances
-  of this class on demand."""
+  subdirectory within this directory)."""
 
   def __init__(self, repo, id, entries):
     # The SVNRepositoryMirror containing this directory:
@@ -307,7 +303,7 @@ class SVNRepositoryMirror:
 
     self._youngest = revnum
 
-    # A map {node_id : {CVSPath : node_id}}.
+    # A map {node_id : _WritableMirrorNode}.
     self._new_nodes = {}
 
     self._invoke_delegates('start_commit', revnum, revprops)
@@ -319,8 +315,8 @@ class SVNRepositoryMirror:
     db."""
 
     # Copy the new nodes to the _nodes_db
-    for id, value in self._new_nodes.items():
-      self._nodes_db[id] = value
+    for node in self._new_nodes.values():
+      self._nodes_db[node.id] = node.entries
 
     del self._new_nodes
 
@@ -342,7 +338,7 @@ class SVNRepositoryMirror:
     """Create and return a new, empty, writable node."""
 
     new_node = _WritableMirrorNode(self, self._key_generator.gen_id(), {})
-    self._new_nodes[new_node.id] = new_node.entries
+    self._new_nodes[new_node.id] = new_node
     return new_node
 
   def _copy_node(self, old_node):
@@ -352,7 +348,7 @@ class SVNRepositoryMirror:
         self, self._key_generator.gen_id(), old_node.entries.copy()
         )
 
-    self._new_nodes[new_node.id] = new_node.entries
+    self._new_nodes[new_node.id] = new_node
     return new_node
 
   def _get_node(self, id):
@@ -362,7 +358,7 @@ class SVNRepositoryMirror:
     self._new_nodes.  Return an instance of _MirrorNode."""
 
     try:
-      return _WritableMirrorNode(self, id, self._new_nodes[id])
+      return self._new_nodes[id]
     except KeyError:
       return _ReadOnlyMirrorNode(self, id, self._nodes_db[id])
 

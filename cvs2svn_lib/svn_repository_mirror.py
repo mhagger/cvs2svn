@@ -666,11 +666,9 @@ class SVNRepositoryMirror:
     else:
       copy_source = parent_source
 
-    # Get the map {entry : FillSource} for entries within this
-    # directory that need filling.
-    src_entries = {}
-    for (cvs_path, fill_subsource) in fill_source.get_subsources():
-      src_entries[cvs_path] = fill_subsource
+    # The map {CVSPath : FillSource} of entries within this directory
+    # that need filling:
+    src_entries = fill_source.get_subsource_map()
 
     if copy_source is not None:
       dest_node = self._prune_extra_entries(

@@ -185,6 +185,14 @@ class Project(object):
 
     return newname
 
+  def get_trunk(self):
+    """Return the Trunk instance for this project.
+
+    This method can only be called after self.trunk_id has been
+    initialized in CollectRevsPass."""
+
+    return Ctx()._symbol_db.get_symbol(self.trunk_id)
+
   def get_initial_directories(self):
     """Generate the project's initial SVN directories.
 
@@ -197,7 +205,7 @@ class Project(object):
     # trunk-only conversion, but that is OK because DumpfileDelegate
     # considers that directory to exist already and will therefore
     # ignore it:
-    yield Ctx()._symbol_db.get_symbol(self.trunk_id).base_path
+    yield self.get_trunk().base_path
 
     for path in self._initial_directories:
       yield path

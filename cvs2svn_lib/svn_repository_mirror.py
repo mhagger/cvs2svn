@@ -501,8 +501,7 @@ class SVNRepositoryMirror:
     self._invoke_delegates('initialize_project', project)
 
     self._open_writable_lod_node(
-        Ctx()._symbol_db.get_symbol(project.trunk_id),
-        create=True, invoke_delegates=False
+        project.get_trunk(), create=True, invoke_delegates=False
         )
 
   def change_path(self, cvs_rev):

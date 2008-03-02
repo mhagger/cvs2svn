@@ -621,31 +621,6 @@ class SVNRepositoryMirror:
       dest_node = None
     self._fill_directory(symbol, dest_node, fill_source, None)
 
-  def _prune_extra_entries(
-        self, dest_cvs_path, symbol, dest_node, src_entries
-        ):
-    """Delete any entries in DEST_NODE that are not in SRC_ENTRIES.
-
-    This might require creating a new writable node, so return a
-    possibly-modified dest_node."""
-
-    delete_list = [
-        cvs_path
-        for cvs_path in dest_node
-        if cvs_path not in src_entries
-        ]
-    if delete_list:
-      if not isinstance(dest_node, _WritableMirrorNode):
-        dest_node = self._open_writable_node(dest_cvs_path, symbol, False)
-      # Sort the delete list so that the output is in a consistent
-      # order:
-      delete_list.sort()
-      for cvs_path in delete_list:
-        del dest_node[cvs_path]
-        self._invoke_delegates('delete_path', symbol, cvs_path)
-
-    return dest_node
-
   def _fill_directory(self, symbol, dest_node, fill_source, parent_source):
     """Fill the tag or branch SYMBOL at the path indicated by FILL_SOURCE.
 
@@ -763,6 +738,31 @@ class SVNRepositoryMirror:
           fill_source.cvs_path, copy_source.source_lod,
           symbol, copy_source.opening_revnum
           )
+
+  def _prune_extra_entries(
+        self, dest_cvs_path, symbol, dest_node, src_entries
+        ):
+    """Delete any entries in DEST_NODE that are not in SRC_ENTRIES.
+
+    This might require creating a new writable node, so return a
+    possibly-modified dest_node."""
+
+    delete_list = [
+        cvs_path
+        for cvs_path in dest_node
+        if cvs_path not in src_entries
+        ]
+    if delete_list:
+      if not isinstance(dest_node, _WritableMirrorNode):
+        dest_node = self._open_writable_node(dest_cvs_path, symbol, False)
+      # Sort the delete list so that the output is in a consistent
+      # order:
+      delete_list.sort()
+      for cvs_path in delete_list:
+        del dest_node[cvs_path]
+        self._invoke_delegates('delete_path', symbol, cvs_path)
+
+    return dest_node
 
   def add_delegate(self, delegate):
     """Adds DELEGATE to self._delegates.

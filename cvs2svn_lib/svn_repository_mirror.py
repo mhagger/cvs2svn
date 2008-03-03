@@ -676,7 +676,19 @@ class SVNRepositoryMirror:
           fill_source.cvs_path, symbol, dest_node, src_entries
           )
 
-    # Recurse into the SRC_ENTRIES ids sorted in alphabetical order.
+    self._cleanup_filled_directory(
+        symbol, dest_node, src_entries, copy_source
+        )
+
+  def _cleanup_filled_directory(
+        self, symbol, dest_node, src_entries, copy_source
+        ):
+    """The directory at DEST_NODE has been filled and pruned; recurse.
+
+    Recurse into the SRC_ENTRIES, in alphabetical order.  If DEST_NODE
+    was copied in this revision, COPY_SOURCE should indicate where it
+    was copied from; otherwise, COPY_SOURCE should be None."""
+
     cvs_paths = src_entries.keys()
     cvs_paths.sort()
     for cvs_path in cvs_paths:

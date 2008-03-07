@@ -193,6 +193,14 @@ class Project(object):
 
     return Ctx()._symbol_db.get_symbol(self.trunk_id)
 
+  def get_root_cvs_directory(self):
+    """Return the root CVSDirectory instance for this project.
+
+    This method can only be called after self.root_cvs_directory_id
+    has been initialized in CollectRevsPass."""
+
+    return Ctx()._cvs_file_db.get_file(self.root_cvs_directory_id)
+
   def get_initial_directories(self):
     """Generate the project's initial SVN directories.
 

@@ -174,9 +174,7 @@ def get_source_set(symbol, range_map):
   Use the SVNRevisionRanges from RANGE_MAP to create a FillSource
   instance describing the sources for filling SYMBOL."""
 
-  root_cvs_directory = Ctx()._cvs_file_db.get_file(
-      symbol.project.root_cvs_directory_id
-      )
+  root_cvs_directory = symbol.project.get_root_cvs_directory()
   fill_source = FillSource(root_cvs_directory, symbol, {})
 
   for cvs_symbol, svn_revision_range in range_map.items():

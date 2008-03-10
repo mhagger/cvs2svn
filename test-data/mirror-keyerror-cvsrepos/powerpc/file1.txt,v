@@ -1,0 +1,46 @@
+head	1.3;
+access;
+symbols;
+locks; strict;
+comment	@ * @;
+
+
+1.3
+date	2002.06.24.05.48.14;	author author49;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2000.04.26.02.46.59;	author author19;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2000.04.21.20.33.29;	author author19;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.3
+log
+@log 2492@
+text
+@@
+
+
+1.2
+log
+@log 4326@
+text
+@@
+
+
+1.1
+log
+@log 4129@
+text
+@@

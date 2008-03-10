@@ -3303,6 +3303,12 @@ def no_revs_file():
   conv = ensure_conversion('no-revs-file')
 
 
+def mirror_keyerror_test():
+  "a case that gave KeyError in SVNRepositoryMirror"
+
+  conv = ensure_conversion('mirror-keyerror')
+
+
 ########################################################################
 # Run the tests
 
@@ -3483,9 +3489,10 @@ test_list = [
     EOLVariants('LF'),
     EOLVariants('CR'),
     EOLVariants('CRLF'),
-    EOLVariants('native'),
 # 150:
+    EOLVariants('native'),
     no_revs_file,
+    mirror_keyerror_test,
     ]
 
 if __name__ == '__main__':

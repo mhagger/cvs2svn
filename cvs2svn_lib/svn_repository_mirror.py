@@ -288,7 +288,7 @@ class SVNRepositoryMirror:
         )
 
     # Start at revision 0 without a root node.  It will be created
-    # by _open_writable_root_node.
+    # by _open_writable_lod_node().
     self._youngest = 0
 
   def start_commit(self, revnum, revprops):

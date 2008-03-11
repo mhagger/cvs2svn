@@ -24,21 +24,14 @@ from cvs2svn_lib.boolean import *
 from cvs2svn_lib import config
 from cvs2svn_lib.common import InternalError
 from cvs2svn_lib.common import DB_OPEN_NEW
-from cvs2svn_lib.common import DB_OPEN_READ
-from cvs2svn_lib.common import path_join
-from cvs2svn_lib.common import path_split
-from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.key_generator import KeyGenerator
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.serializer import MarshalSerializer
 from cvs2svn_lib.database import IndexedDatabase
-from cvs2svn_lib.record_table import UnsignedIntegerPacker
-from cvs2svn_lib.record_table import RecordTable
 from cvs2svn_lib.cvs_file import CVSDirectory
 from cvs2svn_lib.symbol import Trunk
 from cvs2svn_lib.svn_commit_item import SVNCommitItem
-from cvs2svn_lib.svn_revision_range import SVNRevisionRange
 
 
 class _MirrorNode(object):

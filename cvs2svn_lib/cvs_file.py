@@ -35,7 +35,8 @@ class CVSPath(object):
     parent_directory -- (CVSDirectory or None) the CVSDirectory
         containing this CVSPath.
 
-    basename -- (string) the base name of this CVSPath (no ',v').
+    basename -- (string) the base name of this CVSPath (no ',v').  The
+        basename of the root directory of a project is ''.
 
     ordinal -- (int) the order that this instance should be sorted
         relative to other CVSPath instances.  This member is set based
@@ -100,8 +101,13 @@ class CVSPath(object):
   cvs_path = property(get_cvs_path)
 
   def _get_dir_components(self):
+    """Return a list containing the components of the path leading to SELF.
+
+    The return value contains the base names of all of the parent
+    directories (except for the root directory) and SELF."""
+
     if self.parent_directory is None:
-      return [self.basename]
+      return []
     else:
       retval = self.parent_directory._get_dir_components()
       retval.extend(self.basename)

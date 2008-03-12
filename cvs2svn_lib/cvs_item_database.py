@@ -126,16 +126,20 @@ class LinewiseSerializer(Serializer):
 
       LF -> \n
       CR -> \r
+      ^Z -> \z (needed for Windows)
       \ -> \\
 
     """
 
-    return s.replace('\\', '\\\\').replace('\n', '\\n').replace('\r', '\\r')
+    return s.replace('\\', '\\\\') \
+            .replace('\n', '\\n') \
+            .replace('\r', '\\r') \
+            .replace('\x1a', '\\z')
 
   _encode_newlines = staticmethod(_encode_newlines)
 
-  _escape_re = re.compile(r'(\\\\|\\n|\\r)')
-  _subst = {'\\n' : '\n', '\\r' : '\r', '\\\\' : '\\'}
+  _escape_re = re.compile(r'(\\\\|\\n|\\r|\\z)')
+  _subst = {'\\n' : '\n', '\\r' : '\r', '\\z' : '\x1a', '\\\\' : '\\'}
 
   def _decode_newlines(s):
     """Return s with newlines and backslashes decoded.

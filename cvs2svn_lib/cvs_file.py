@@ -110,7 +110,7 @@ class CVSPath(object):
       return []
     else:
       retval = self.parent_directory._get_dir_components()
-      retval.extend(self.basename)
+      retval.append(self.basename)
       return retval
 
   def __eq__(a, b):

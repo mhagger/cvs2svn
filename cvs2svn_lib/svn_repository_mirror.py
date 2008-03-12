@@ -380,7 +380,7 @@ class SVNRepositoryMirror:
           )
       return parent_node[cvs_path]
 
-  def _open_writable_lod_node(self, lod, create, invoke_delegates=True):
+  def _open_writable_lod_node(self, lod, create, invoke_delegates):
     """Open a writable node for the root path in LOD.
 
     Iff CREATE is True, create the path and any missing directories.
@@ -418,7 +418,7 @@ class SVNRepositoryMirror:
     set."""
 
     if cvs_directory.parent_directory is None:
-      return self._open_writable_lod_node(lod, create)
+      return self._open_writable_lod_node(lod, create, True)
 
     parent_node = self._open_writable_node(
         cvs_directory.parent_directory, lod, create
@@ -489,9 +489,7 @@ class SVNRepositoryMirror:
 
     self._invoke_delegates('initialize_project', project)
 
-    self._open_writable_lod_node(
-        project.get_trunk(), create=True, invoke_delegates=False
-        )
+    self._open_writable_lod_node(project.get_trunk(), True, False)
 
   def change_path(self, cvs_rev):
     """Register a change in self._youngest for the CVS_REV's svn_path."""
@@ -609,7 +607,7 @@ class SVNRepositoryMirror:
     symbol = svn_symbol_commit.symbol
 
     try:
-      dest_node = self._open_writable_lod_node(symbol, False)
+      dest_node = self._open_writable_lod_node(symbol, False, False)
     except KeyError:
       self._fill_directory(symbol, None, fill_source, None)
     else:

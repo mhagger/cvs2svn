@@ -357,7 +357,15 @@ class GitOutputOption(OutputOption):
         lod_range_maps[range.source_lod] = lod_range_map
       lod_range_map[cvs_symbol] = range
 
-    for (lod, lod_range_map) in lod_range_maps.iteritems():
+    # Sort the sources so that the branch that serves most often as
+    # parent is processed first:
+    lod_ranges = lod_range_maps.items()
+    lod_ranges.sort(
+        lambda (lod1,lod_range_map1),(lod2,lod_range_map2):
+        -cmp(len(lod_range_map1), len(lod_range_map2)) or cmp(lod1, lod2)
+        )
+
+    for (lod, lod_range_map) in lod_ranges:
       while lod_range_map:
         revision_scores = RevisionScores(lod_range_map.values())
         (source_lod, revnum, score) = revision_scores.get_best_revnum()

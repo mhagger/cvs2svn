@@ -174,7 +174,7 @@ class NewSortableCVSRevisionDatabase(object):
   This class creates such files."""
 
   def __init__(self, filename, serializer):
-    self.f = open(filename, 'wb')
+    self.f = open(filename, 'w')
     self.serializer = LinewiseSerializer(serializer)
 
   def add(self, cvs_rev):
@@ -200,7 +200,7 @@ class OldSortableCVSRevisionDatabase(object):
     self.serializer = LinewiseSerializer(serializer)
 
   def __iter__(self):
-    f = open(self.filename, 'rb')
+    f = open(self.filename, 'r')
     for l in f:
       s = l.split(' ', 2)[-1]
       yield self.serializer.loads(s)
@@ -216,7 +216,7 @@ class NewSortableCVSSymbolDatabase(object):
   This class creates such files."""
 
   def __init__(self, filename, serializer):
-    self.f = open(filename, 'wb')
+    self.f = open(filename, 'w')
     self.serializer = LinewiseSerializer(serializer)
 
   def add(self, cvs_symbol):
@@ -239,7 +239,7 @@ class OldSortableCVSSymbolDatabase(object):
     self.serializer = LinewiseSerializer(serializer)
 
   def __iter__(self):
-    f = open(self.filename, 'rb')
+    f = open(self.filename, 'r')
     for l in f:
       s = l.split(' ', 1)[-1]
       yield self.serializer.loads(s)

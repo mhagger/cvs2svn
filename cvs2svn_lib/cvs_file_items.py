@@ -69,12 +69,24 @@ class LODItems(object):
     # cvs_branch or from one of the CVSRevisions).
     self.cvs_tags = cvs_tags
 
+  def is_trivial_import(self):
+    """Return True iff this LOD is a trivial import branch in this file.
+
+    A trivial import branch is a branch that was used for a single
+    import and nothing else.  Such a branch is eligible for being
+    grafted onto trunk, even if it has branch blockers."""
+
+    return (
+        len(self.cvs_revisions) == 1
+        and self.cvs_revisions[0].ntdbr
+        )
+
   def is_pure_ntdb(self):
     """Return True iff this LOD is a pure NTDB in this file.
 
     A pure non-trunk default branch is defined to be a branch that
-    contains only NTDB revisions (and at least one of them).  Such
-    branches are eligible for being grafted onto trunk, even if it has
+    contains only NTDB revisions (and at least one of them).  Such a
+    branch is eligible for being grafted onto trunk, even if it has
     branch blockers."""
 
     return (

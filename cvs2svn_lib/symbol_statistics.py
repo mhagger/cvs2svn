@@ -307,21 +307,19 @@ class SymbolStatisticsCollector:
         if lod_items.cvs_revisions:
           branch_stats.register_branch_commit()
 
-        for cvs_tag in lod_items.cvs_tags:
-          branch_stats.register_branch_blocker(cvs_tag.symbol)
-
-        for cvs_branch in lod_items.cvs_branches:
-          branch_stats.register_branch_blocker(cvs_branch.symbol)
-
-        if lod_items.cvs_branch is not None:
-          branch_stats.register_branch_possible_parents(
-              lod_items.cvs_branch, cvs_file_items)
-
         if lod_items.is_trivial_import():
           branch_stats.register_trivial_import()
 
         if lod_items.is_pure_ntdb():
           branch_stats.register_pure_ntdb()
+
+        for cvs_symbol in lod_items.iter_blockers():
+          branch_stats.register_branch_blocker(cvs_symbol.symbol)
+
+        if lod_items.cvs_branch is not None:
+          branch_stats.register_branch_possible_parents(
+              lod_items.cvs_branch, cvs_file_items
+              )
 
       for cvs_tag in lod_items.cvs_tags:
         tag_stats = self[cvs_tag.symbol]

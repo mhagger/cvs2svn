@@ -94,6 +94,13 @@ class LODItems(object):
         and self.cvs_revisions[-1].ntdbr
         )
 
+  def iter_blockers(self):
+    for cvs_tag in self.cvs_tags:
+      yield cvs_tag
+
+    for cvs_branch in self.cvs_branches:
+      yield cvs_branch
+
 
 class CVSFileItems(object):
   def __init__(self, cvs_file, trunk, cvs_items):
@@ -806,8 +813,7 @@ class CVSFileItems(object):
         # A symbol can only be excluded if no other symbols spring
         # from it.  This was already checked in CollateSymbolsPass, so
         # these conditions should already be satisfied.
-        assert not lod_items.cvs_branches
-        assert not lod_items.cvs_tags
+        assert not list(lod_items.iter_blockers())
 
         ntdbr_excluded |= self._exclude_branch(lod_items)
 

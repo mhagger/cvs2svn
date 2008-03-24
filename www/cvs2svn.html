@@ -513,6 +513,37 @@ error message like the following:</p>
 this case by using <tt>--exclude=TAG --exclude=SUBBRANCH</tt>) or
 <em>not</em> exclude 'BRANCH'.</p>
 
+<h3>Excluding vendor branches</h3>
+
+<p>There is one more special case related to branch handling.  A <a
+href="http://cvsbook.red-bean.com/cvsbook.html#Tracking%20Third-Party%20Sources%20(Vendor%20Branches)">vendor
+branch</a> is a CVS branch that is used to track source code received
+from an outside source.  A vendor branch typically has CVS branch
+number <tt>1.1.1</tt> and revision numbers <tt>1.1.1.1</tt>,
+<tt>1.1.1.2</tt>, etc.  Vendor branches are created automatically
+whenever the <tt>cvs import</tt> command is used.  Vendor branches
+have the strange property that, under certain circumstances, a file
+that appears on a vendor branch also implicitly exists on trunk.
+cvs2svn knows all about vendor branches and does its best to ensure
+that a file that appears on a vendor branch is also copied to trunk,
+to give Subversion behavior that is as close as possible to the CVS
+behavior.</p>
+
+<p>However, often vendor branches exist for reasons unrelated to
+tracking outside sources.  Indeed, some CVS documentation recommends
+using the <tt>cvs import</tt> command to import your own code into
+your CVS repository (which is arguably a misuse of the <tt>cvs
+import</tt> command).  Vendor branches created by this practice are
+useless and would only serve to clutter up your Subversion repository.
+Therefore, cvs2svn allows vendor branches to be excluded, in which
+case the vendor branch revisions are grafted onto the history of
+trunk.  This is allowed <em>even if</em> other branches or tags appear
+to sprout from the vendor branch, in which case the dependent tags are
+grafted to trunk as well.  Such branches can be recognized in the
+<tt>--write-symbol-info</tt> by looking for a symbol that is a "pure
+import" in the same number of files that it appears as a branch.  It
+is typically advantageous to exclude such branches.</p>
+
 
 <h2><a name="symbol-inconsistencies">Tag/branch inconsistencies</a></h2>
 

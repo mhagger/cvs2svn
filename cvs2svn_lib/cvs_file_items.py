@@ -95,11 +95,25 @@ class LODItems(object):
         )
 
   def iter_blockers(self):
-    for cvs_tag in self.cvs_tags:
-      yield cvs_tag
+    if self.is_pure_ntdb():
+      # Such a branch has no blockers, because the blockers can be
+      # grafted to trunk.
+      pass
+    else:
+      # Other branches are only blocked by symbols that sprout from
+      # non-NTDB revisions:
+      non_ntdbr_revision_ids = set()
+      for cvs_revision in self.cvs_revisions:
+        if not cvs_revision.ntdbr:
+          non_ntdbr_revision_ids.add(cvs_revision.id)
 
-    for cvs_branch in self.cvs_branches:
-      yield cvs_branch
+      for cvs_tag in self.cvs_tags:
+        if cvs_tag.source_id in non_ntdbr_revision_ids:
+          yield cvs_tag
+
+      for cvs_branch in self.cvs_branches:
+        if cvs_branch.source_id in non_ntdbr_revision_ids:
+          yield cvs_branch
 
 
 class CVSFileItems(object):

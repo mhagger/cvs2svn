@@ -1,0 +1,156 @@
+head	1.2;
+access;
+symbols
+	branch3:1.1.1.3.0.2
+	tag3:1.1.1.3
+	vendortag3:1.1.1.3
+	branch2:1.1.1.2.0.2
+	tag2:1.1.1.2
+	vendortag2:1.1.1.2
+	branch1:1.1.1.1.0.2
+	tag1:1.1.1.1
+	vendortag1:1.1.1.1
+	vendorbranch:1.1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2008.03.23.21.09.25;	author mhagger;	state Exp;
+branches;
+next	1.1;
+commitid	eP23GQr5EN3CgiWs;
+
+1.1
+date	2008.03.23.21.09.12;	author mhagger;	state Exp;
+branches
+	1.1.1.1;
+next	;
+commitid	DP3br0gPAbExgiWs;
+
+1.1.1.1
+date	2008.03.23.21.09.12;	author mhagger;	state Exp;
+branches
+	1.1.1.1.2.1;
+next	1.1.1.2;
+commitid	DP3br0gPAbExgiWs;
+
+1.1.1.2
+date	2008.03.23.21.09.18;	author mhagger;	state Exp;
+branches
+	1.1.1.2.2.1;
+next	1.1.1.3;
+commitid	jW6XTZM1bdCzgiWs;
+
+1.1.1.3
+date	2008.03.23.21.09.28;	author mhagger;	state Exp;
+branches
+	1.1.1.3.2.1;
+next	;
+commitid	9MGIzCxv7EgDgiWs;
+
+1.1.1.1.2.1
+date	2008.03.23.21.09.15;	author mhagger;	state Exp;
+branches;
+next	;
+commitid	8JhDtGnHHSyygiWs;
+
+1.1.1.2.2.1
+date	2008.03.23.21.09.21;	author mhagger;	state Exp;
+branches;
+next	;
+commitid	t6VniT76SxUAgiWs;
+
+1.1.1.3.2.1
+date	2008.03.23.21.09.31;	author mhagger;	state Exp;
+branches;
+next	;
+commitid	gM9gAG7c2jgEgiWs;
+
+
+desc
+@@
+
+
+1.2
+log
+@First explicit commit on trunk
+@
+text
+@1.2
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d1 1
+a1 1
+1.1.1.1
+@
+
+
+1.1.1.1
+log
+@First import
+@
+text
+@@
+
+
+1.1.1.2
+log
+@Second import
+@
+text
+@d1 1
+a1 1
+1.1.1.2
+@
+
+
+1.1.1.3
+log
+@Third import
+@
+text
+@d1 1
+a1 1
+1.1.1.3
+@
+
+
+1.1.1.3.2.1
+log
+@Commit on branch branch3
+@
+text
+@d1 1
+a1 1
+1.1.1.3.2.1
+@
+
+
+1.1.1.2.2.1
+log
+@Commit on branch branch2
+@
+text
+@d1 1
+a1 1
+1.1.1.2.2.1
+@
+
+
+1.1.1.1.2.1
+log
+@Commit on branch branch1
+@
+text
+@d1 1
+a1 1
+1.1.1.1.2.1
+@
+

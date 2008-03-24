@@ -3308,6 +3308,21 @@ def mirror_keyerror_test():
 
   conv = ensure_conversion('mirror-keyerror')
 
+def exclude_ntdb_test():
+  "exclude a non-trunk default branch"
+
+  symbol_info_file = os.path.join(tmp_dir, 'exclude-ntdb-symbol-info.txt')
+  conv = ensure_conversion(
+      'exclude-ntdb',
+      args=[
+          '--write-symbol-info=%s' % (symbol_info_file,),
+          '--exclude=branch3',
+          '--exclude=tag3',
+          '--exclude=vendortag3',
+          '--exclude=vendorbranch',
+          ],
+      )
+
 
 ########################################################################
 # Run the tests
@@ -3493,6 +3508,7 @@ test_list = [
     EOLVariants('native'),
     no_revs_file,
     mirror_keyerror_test,
+    exclude_ntdb_test,
     ]
 
 if __name__ == '__main__':

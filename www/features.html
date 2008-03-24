@@ -142,8 +142,10 @@ customization by writing Python code.</p>
     copies vendor branch contents to trunk so that a checkout of trunk
     gives the same results under SVN as under CVS.  If a vendor branch
     is excluded from the conversion, cvs2svn grafts the relevant
-    vendor branch revisions onto trunk.  cvs2svn also discards
-    spurious "1.1" revisions on files that were imported.</dd>
+    vendor branch revisions onto trunk.  In most circumstances, vendor
+    branches can even be excluded if other tags or branches sprout
+    from them.  cvs2svn also discards spurious "1.1" revisions on
+    files that were imported.</dd>
 
   <dt>CVS quirks</dt>
   <dd>cvs2svn goes to great length to deal with CVS's many quirks.

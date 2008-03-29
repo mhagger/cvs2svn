@@ -870,6 +870,14 @@ project-id symbol conversion svn-path parent-lod-name
   </tr>
 
   <tr>
+    <td align="right"><tt>--keep-trivial-imports</tt></td>
+    <td>Do not exclude branches that were only used for a single
+      import.  (By default such branches are excluded because they
+      are usually created by the inappropriate use of <tt>cvs
+      import</tt>.)</td>
+  </tr>
+
+  <tr>
     <td align="right"><tt>--symbol-default=OPT</tt></td>
     <td>Specify how to convert ambiguous symbols (i.e., those that
       appear in the CVS archive as both branches and tags).

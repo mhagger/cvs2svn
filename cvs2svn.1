@@ -147,6 +147,11 @@ must match the whole symbol name.
 Exclude branches and tags whose names match \fIregexp\fR from the
 conversion.  \fIregexp\fR must match the whole symbol name.
 .TP
+\fB--keep-trivial-imports\fR
+Do not exclude branches that were only used for a single import.  (By
+default such branches are excluded because they are usually created by
+the inappropriate use of \fBcvs import\fR.)
+.TP
 \fB--symbol-default\fR=\fIopt\fR
 Specify how to convert ambiguous symbols (those that appear in the CVS
 archive as both branches and tags).  \fIopt\fR must be `heuristic'

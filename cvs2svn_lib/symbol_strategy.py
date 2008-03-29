@@ -128,6 +128,40 @@ class ExcludeRegexpStrategyRule(_RegexpStrategyRule):
     _RegexpStrategyRule.__init__(self, pattern, ExcludedSymbol)
 
 
+class ExcludeTrivialImportBranchRule(StrategyRule):
+  """If a symbol is a trivial import branch, exclude it.
+
+  A trivial import branch is defined to be a branch that only had a
+  single import on it (no other kinds of commits) in every file in
+  which it appeared.  In most cases these branches are worthless."""
+
+  def get_symbol(self, symbol, stats):
+    if isinstance(symbol, (Trunk, TypedSymbol)):
+      return symbol
+    if stats.tag_create_count == 0 \
+          and stats.branch_create_count == stats.trivial_import_count:
+      return ExcludedSymbol(symbol)
+    else:
+      return symbol
+
+
+class ExcludeVendorBranchRule(StrategyRule):
+  """If a symbol is a pure vendor branch, exclude it.
+
+  A pure vendor branch is defined to be a branch that only had imports
+  on it (no other kinds of commits) in every file in which it
+  appeared."""
+
+  def get_symbol(self, symbol, stats):
+    if isinstance(symbol, (Trunk, TypedSymbol)):
+      return symbol
+    if stats.tag_create_count == 0 \
+          and stats.branch_create_count == stats.pure_ntdb_count:
+      return ExcludedSymbol(symbol)
+    else:
+      return symbol
+
+
 class UnambiguousUsageRule(StrategyRule):
   """If a symbol is used unambiguously as a tag/branch, convert it as such."""
 

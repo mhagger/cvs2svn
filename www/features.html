@@ -138,14 +138,36 @@ customization by writing Python code.</p>
   <dt>Vendor branches</dt>
   <dd>CVS supports "vendor branches", which (under some circumstances)
     affect the contents of the main line of development.  cvs2svn
-    tries to detect vendor branches whenever possible, and explicitly
-    copies vendor branch contents to trunk so that a checkout of trunk
-    gives the same results under SVN as under CVS.  If a vendor branch
-    is excluded from the conversion, cvs2svn grafts the relevant
-    vendor branch revisions onto trunk.  In most circumstances, vendor
-    branches can even be excluded if other tags or branches sprout
-    from them.  cvs2svn also discards spurious "1.1" revisions on
-    files that were imported.</dd>
+    detects vendor branches whenever possible and handles them
+    intelligently.  For example,
+    <ul>
+
+      <li>cvs2svn explicitly copies vendor branch revisions back to
+        trunk so that a checkout of trunk gives the same results under
+        SVN as under CVS.</li>
+
+      <li>If a vendor branch is excluded from the conversion, cvs2svn
+        grafts the relevant vendor branch revisions onto trunk so that
+        the contents of trunk are still the same as in CVS.  If other
+        tags or branches sprout from these revisions, they are grafted
+        to trunk as well.</li>
+
+      <li>When a file is imported into CVS, CVS creates two revisions
+        ("1.1" and "1.1.1.1") with the same contents.  cvs2svn
+        discards the redundant "1.1" revision in such cases (since
+        revision "1.1.1.1" will be copied to trunk anyway).</li>
+
+      <li>Often users create vendor branches unnecessarily by using
+        "cvs import" to import their own sources into the CVS
+        repository.  Such vendor branches do not contain any useful
+        information, so by default cvs2svn excludes any vendor branch
+        that was only used for a single import.  You can change this
+        default behavior by specifying the
+        <tt>--keep-trivial-imports</tt> option.</li>
+
+    </ul>
+
+  </dd>
 
   <dt>CVS quirks</dt>
   <dd>cvs2svn goes to great length to deal with CVS's many quirks.

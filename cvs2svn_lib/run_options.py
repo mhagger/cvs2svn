@@ -56,6 +56,8 @@ from cvs2svn_lib.symbol_strategy import BranchIfCommitsRule
 from cvs2svn_lib.symbol_strategy import ExcludeRegexpStrategyRule
 from cvs2svn_lib.symbol_strategy import ForceBranchRegexpStrategyRule
 from cvs2svn_lib.symbol_strategy import ForceTagRegexpStrategyRule
+from cvs2svn_lib.symbol_strategy import ExcludeTrivialImportBranchRule
+from cvs2svn_lib.symbol_strategy import ExcludeVendorBranchRule
 from cvs2svn_lib.symbol_strategy import HeuristicStrategyRule
 from cvs2svn_lib.symbol_strategy import UnambiguousUsageRule
 from cvs2svn_lib.symbol_strategy import HeuristicPreferredParentRule
@@ -124,6 +126,8 @@ history.
       --force-branch=REGEXP  force symbols matching REGEXP to be branches
       --force-tag=REGEXP     force symbols matching REGEXP to be tags
       --exclude=REGEXP       exclude branches and tags matching REGEXP
+      --keep-trivial-imports do not exclude branches that were only used for
+                             a single import (usually these are unneeded)
       --symbol-default=OPT   specify how ambiguous symbols are converted.
                              OPT is "heuristic" (default), "strict", "branch",
                              or "tag"
@@ -217,7 +221,8 @@ class RunOptions:
           "encoding=", "fallback-encoding=",
           "symbol-transform=",
           "symbol-hints=",
-          "force-branch=", "force-tag=", "exclude=", "symbol-default=",
+          "force-branch=", "force-tag=", "exclude=",
+          "keep-trivial-imports", "symbol-default=",
           "no-cross-branch-commits",
           "retain-conflicting-attic-files",
           "username=",
@@ -394,6 +399,7 @@ class RunOptions:
     use_rcs = False
     use_cvs = False
     use_internal_co = False
+    keep_trivial_imports = False
     symbol_strategy_default = 'heuristic'
     mime_types_file = None
     auto_props_file = None
@@ -450,6 +456,8 @@ class RunOptions:
         force_tag = True
       elif opt == '--exclude':
         symbol_strategy_rules.append(ExcludeRegexpStrategyRule(value))
+      elif opt == '--keep-trivial-imports':
+        keep_trivial_imports = True
       elif opt == '--symbol-default':
         if value not in ['branch', 'tag', 'heuristic', 'strict']:
           raise FatalError(
@@ -622,6 +630,9 @@ class RunOptions:
         # Remove leading, trailing, and repeated slashes:
         NormalizePathsSymbolTransform(),
         ])
+
+    if not keep_trivial_imports:
+      symbol_strategy_rules.append(ExcludeTrivialImportBranchRule())
 
     symbol_strategy_rules.append(UnambiguousUsageRule())
     if symbol_strategy_default == 'strict':

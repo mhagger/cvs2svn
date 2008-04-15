@@ -1,3 +1,14 @@
+Version 2.1.1 (15 April 2008)
+-----------------------------
+
+ Bugs fixed:
+ * Make files that are to be sorted more text-like to fix problem on Windows.
+ * Fix comment in header of --write-symbol-info output file.
+
+ Miscellaneous
+ * Adjust test suite for upstream changes in the svntest code.
+
+
 Version 2.1.0 (19 February 2008)
 --------------------------------
 

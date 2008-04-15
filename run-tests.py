@@ -107,7 +107,8 @@ def run_program(program, error_re, *varargs):
   match some line of stderr.  If it fails to match, raise
   MissingErrorExpection."""
 
-  out, err = svntest.main.run_command(program, 1, 0, *varargs)
+  # FIXME: exit_code is currently ignored.
+  exit_code, out, err = svntest.main.run_command(program, 1, 0, *varargs)
 
   if error_re:
     # Specified error expected on stderr.

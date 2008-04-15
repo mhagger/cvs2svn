@@ -126,16 +126,20 @@ class LinewiseSerializer(Serializer):
 
       LF -> \n
       CR -> \r
+      ^Z -> \z (needed for Windows)
       \ -> \\
 
     """
 
-    return s.replace('\\', '\\\\').replace('\n', '\\n').replace('\r', '\\r')
+    return s.replace('\\', '\\\\') \
+            .replace('\n', '\\n') \
+            .replace('\r', '\\r') \
+            .replace('\x1a', '\\z')
 
   _encode_newlines = staticmethod(_encode_newlines)
 
-  _escape_re = re.compile(r'(\\\\|\\n|\\r)')
-  _subst = {'\\n' : '\n', '\\r' : '\r', '\\\\' : '\\'}
+  _escape_re = re.compile(r'(\\\\|\\n|\\r|\\z)')
+  _subst = {'\\n' : '\n', '\\r' : '\r', '\\z' : '\x1a', '\\\\' : '\\'}
 
   def _decode_newlines(s):
     """Return s with newlines and backslashes decoded.
@@ -170,7 +174,7 @@ class NewSortableCVSRevisionDatabase(object):
   This class creates such files."""
 
   def __init__(self, filename, serializer):
-    self.f = open(filename, 'wb')
+    self.f = open(filename, 'w')
     self.serializer = LinewiseSerializer(serializer)
 
   def add(self, cvs_rev):
@@ -196,7 +200,7 @@ class OldSortableCVSRevisionDatabase(object):
     self.serializer = LinewiseSerializer(serializer)
 
   def __iter__(self):
-    f = open(self.filename, 'rb')
+    f = open(self.filename, 'r')
     for l in f:
       s = l.split(' ', 2)[-1]
       yield self.serializer.loads(s)
@@ -212,7 +216,7 @@ class NewSortableCVSSymbolDatabase(object):
   This class creates such files."""
 
   def __init__(self, filename, serializer):
-    self.f = open(filename, 'wb')
+    self.f = open(filename, 'w')
     self.serializer = LinewiseSerializer(serializer)
 
   def add(self, cvs_symbol):
@@ -235,7 +239,7 @@ class OldSortableCVSSymbolDatabase(object):
     self.serializer = LinewiseSerializer(serializer)
 
   def __iter__(self):
-    f = open(self.filename, 'rb')
+    f = open(self.filename, 'r')
     for l in f:
       s = l.split(' ', 1)[-1]
       yield self.serializer.loads(s)

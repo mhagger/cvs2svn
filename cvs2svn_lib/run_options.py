@@ -145,11 +145,11 @@ history.
 
  Extraction options:
 
-      --use-rcs              use RCS to extract revision contents (default)
+      --use-rcs              use RCS to extract revision contents
       --use-cvs              use CVS to extract revision contents
                              (only use this if having problems with RCS)
       --use-internal-co      use internal code to extract revision contents
-                             (very fast but disk space intensive)
+                             (very fast but disk space intensive) (default)
 
  Environment options:
 

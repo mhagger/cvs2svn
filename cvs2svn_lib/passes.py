@@ -376,7 +376,8 @@ class CollateSymbolsPass(Pass):
     if Ctx().symbol_info_filename is not None:
       self.symbol_info_file = open(Ctx().symbol_info_filename, 'w')
       self.symbol_info_file.write(
-          '# Columns: project_id symbol_name conversion preferred_parent\n'
+          '# Columns: project_id symbol_name conversion symbol_path '
+          'preferred_parent_name\n'
           )
     else:
       self.symbol_info_file = None

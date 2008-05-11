@@ -120,6 +120,13 @@ customization by writing Python code.</p>
     (<tt>--auto-props</tt>) as well as a hook that users can use to
     set arbitrary file properties via Python code.</dd>
 
+  <dt>Handling of <tt>.cvsignore</tt></dt>
+  <dd><tt>.cvsignore</tt> files in the CVS repository are converted
+    into the equivalent <tt>svn:ignore</tt> properties in the output.
+    By default, the <tt>.cvsignore</tt> files themselves are
+    <em>not</em> included in the output; this behavior can be changed
+    by specifying the <tt>--keep-cvsignore</tt> option.</dd>
+
   <dt>Subversion repository customization</dt>
   <dd>cvs2svn provides many options that allow you to customize the
     structure of the resulting Subversion repository

@@ -903,6 +903,13 @@ project-id symbol conversion svn-path parent-lod-name
   </tr>
 
   <tr>
+    <td align="right"><tt>--keep-cvsignore</tt></td>
+    <td>Include <tt>.cvsignore</tt> files in the output.  (Normally
+      they are unneeded because cvs2svn sets the corresponding
+      <tt>svn:ignore</tt> properties.)</td>
+  </tr>
+
+  <tr>
     <td align="right"><tt>--no-cross-branch-commits</tt></td>
     <td>Prevent the creation of SVN commits that affect multiple
       branches or trunk and a branch.  Instead, break such changesets

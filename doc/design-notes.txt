@@ -633,6 +633,15 @@ which files existed on each LOD, but does not record any file
 contents.  cvs2svn requires this information to decide which paths to
 copy when filling branches and tags.
 
+When .cvsignore files are modified, cvs2svn computes the corresponding
+svn:ignore properties and applies the properties to the parent
+directory.  The .cvsignore files themselves are not included in the
+output unless the --keep-cvsignore option was specified.  But in
+either case, the .cvsignore files are recorded within the repository
+mirror as if they were being written to disk, to ensure that the
+containing directory is not pruned if the directory in CVS still
+contained a .cvsignore file.
+
 
                   ===============================
                       Branches and Tags Plan.

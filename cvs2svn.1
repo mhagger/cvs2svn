@@ -162,10 +162,10 @@ ambiguous symbol has to be resolved manually using
 (treat every ambiguous symbol as a branch), or `tag' (treat every
 ambiguous symbol as a tag).  The default is `heuristic'.
 .TP
-\fB--no-cross-branch-commits\fR
-Prevent the creation of SVN commits that affect multiple branches or
-trunk and a branch.  Instead, break such changesets into multiple
-commits, one per branch.
+\fB--keep-cvsignore\fR
+Include \fI.cvsignore\fR files in the output.  (Normally they are
+unneeded because cvs2svn sets the corresponding \fIsvn:ignore\fR
+properties.)
 .TP
 \fB--retain-conflicting-attic-files\fR
 If a file appears both inside an outside of the CVS attic, retain the

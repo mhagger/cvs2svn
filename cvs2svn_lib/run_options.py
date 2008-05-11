@@ -131,10 +131,12 @@ history.
       --symbol-default=OPT   specify how ambiguous symbols are converted.
                              OPT is "heuristic" (default), "strict", "branch",
                              or "tag"
-      --no-cross-branch-commits   Prevent the creation of cross-branch commits
+      --keep-cvsignore       keep .cvsignore files (in addition to creating
+                             the analogous svn:ignore properties)
+      --no-cross-branch-commits   prevent the creation of cross-branch commits
       --retain-conflicting-attic-files   if a file appears both in and out of
                              the CVS Attic, then leave the attic version in a
-                             SVN directory called "Attic".
+                             SVN directory called "Attic"
       --username=NAME        username for cvs2svn-synthesized commits
       --cvs-revnums          record CVS revision numbers as file properties
       --mime-types=FILE      specify an apache-style mime.types file for
@@ -223,6 +225,7 @@ class RunOptions:
           "symbol-hints=",
           "force-branch=", "force-tag=", "exclude=",
           "keep-trivial-imports", "symbol-default=",
+          "keep-cvsignore",
           "no-cross-branch-commits",
           "retain-conflicting-attic-files",
           "username=",
@@ -463,6 +466,8 @@ class RunOptions:
           raise FatalError(
               '%r is not a valid option for --symbol_default.' % (value,))
         symbol_strategy_default = value
+      elif opt == '--keep-cvsignore':
+        ctx.keep_cvsignore = True
       elif opt == '--no-cross-branch-commits':
         ctx.cross_branch_commits = False
       elif opt == '--retain-conflicting-attic-files':

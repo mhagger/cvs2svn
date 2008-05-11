@@ -466,6 +466,12 @@ ctx.cross_project_commits = True
 # single SVN commits, change this option to False:
 ctx.cross_branch_commits = True
 
+# By default, .cvsignore files are rendered in the output by setting
+# corresponding svn:ignore properties on the parent directory, but the
+# .cvsignore files themselves are not included in the conversion
+# output.  If you would like to include the .cvsignore files in the
+# output, change this option to True:
+ctx.keep_cvsignore = False
 
 # By default, it is a fatal error for a CVS ",v" file to appear both
 # inside and outside of an "Attic" subdirectory (this should never

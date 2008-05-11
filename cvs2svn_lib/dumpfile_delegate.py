@@ -296,6 +296,9 @@ class DumpfileDelegate(SVNRepositoryDelegate):
           % (self._utf8_path(dir_path),
              ignore_len, ignore_len, ignore_contents)
           )
+      if not Ctx().keep_cvsignore:
+        stream.close()
+        return
 
     self.dumpfile.write(
         'Node-path: %s\n'
@@ -390,6 +393,8 @@ class DumpfileDelegate(SVNRepositoryDelegate):
           % (self._utf8_path(dir_path),
              ignore_len, ignore_len, ignore_contents)
           )
+      if not Ctx().keep_cvsignore:
+        return
 
     self.dumpfile.write(
         'Node-path: %s\n'

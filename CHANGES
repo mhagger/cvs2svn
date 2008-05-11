@@ -5,6 +5,8 @@ Version ?.?.? (not yet released)
  * cvs2git: Omit fixup branch if a tag can be copied from an existing revision.
  * Allow arbitrary SVN directories to be created when a project is created.
  * Allow vendor branches to be excluded, grafting child symbols to trunk.
+ * By default, don't include .cvsignore files in output (except as svn:ignore).
+ * Add option --keep-cvsignore to get the old behavior.
 
  Bugs fixed:
  * Fix issue #81: Remove svn:ignore property when .cvsignore is deleted.

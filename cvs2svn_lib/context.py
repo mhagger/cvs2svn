@@ -58,6 +58,7 @@ class Ctx:
     self.svn_property_setters = []
     self.tmpdir = 'cvs2svn-tmp'
     self.skip_cleanup = False
+    self.keep_cvsignore = False
     self.cross_project_commits = True
     self.cross_branch_commits = True
     self.retain_conflicting_attic_files = False

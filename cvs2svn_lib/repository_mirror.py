@@ -138,6 +138,7 @@ from cvs2svn_lib.boolean import *
 from cvs2svn_lib import config
 from cvs2svn_lib.common import DB_OPEN_NEW
 from cvs2svn_lib.common import InternalError
+from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.cvs_file import CVSFile
 from cvs2svn_lib.cvs_file import CVSDirectory
@@ -593,7 +594,8 @@ class _NodeDatabase(object):
   [(cvs_path.id, node_id),...]}, where the keys are the node_ids of
   the new nodes.  When a node is read, its whole group is read and
   cached under the assumption that the other nodes in the group are
-  likely to be needed soon.
+  likely to be needed soon.  The cache is retained across revisions
+  and cleared when _cache_max_size is exceeded.
 
   The dictionaries for nodes that have been read from the database
   during the current revision are cached by node_id in the _cache
@@ -601,6 +603,15 @@ class _NodeDatabase(object):
   when read.  To avoid cross-talk between distinct MirrorDirectory
   instances that have the same node_id, users of these dictionaries
   have to copy them before modification."""
+
+  # How many entries should be allowed in the cache for each
+  # CVSDirectory in the repository.  (This number is very roughly the
+  # number of complete lines of development that can be stored in the
+  # cache at one time.)
+  CACHE_SIZE_MULTIPLIER = 5
+
+  # But the cache will never be limited to less than this number:
+  MIN_CACHE_LIMIT = 5000
 
   def __init__(self):
     self.cvs_file_db = Ctx()._cvs_file_db
@@ -616,6 +627,18 @@ class _NodeDatabase(object):
 
     # A map {node_id : {cvs_path : node_id}}:
     self._cache = {}
+
+    # The number of directories in the repository:
+    num_dirs = len([
+        cvs_path
+        for cvs_path in self.cvs_file_db.itervalues()
+        if isinstance(cvs_path, CVSDirectory)
+        ])
+
+    self._cache_max_size = max(
+        int(self.CACHE_SIZE_MULTIPLIER * num_dirs),
+        self.MIN_CACHE_LIMIT,
+        )
 
   def _load(self, items):
     retval = {}
@@ -650,13 +673,19 @@ class _NodeDatabase(object):
 
     NODES is an iterable of writable CurrentMirrorDirectory instances."""
 
-    self._cache.clear()
+    if len(self._cache) > self._cache_max_size:
+      # The size of the cache has exceeded the threshold.  Discard the
+      # old cache values (but still store the new nodes into the
+      # cache):
+      Log().debug('Clearing node cache')
+      self._cache.clear()
 
     data = {}
     max_node_id = 0
     for node in nodes:
       max_node_id = max(max_node_id, node.id)
       data[node.id] = self._dump(node._entries)
+      self._cache[node.id] = node._entries
 
     self.db[len(self._max_node_ids)] = data
 

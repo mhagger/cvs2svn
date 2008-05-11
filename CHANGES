@@ -7,6 +7,7 @@ Version ?.?.? (not yet released)
  * Allow vendor branches to be excluded, grafting child symbols to trunk.
 
  Bugs fixed:
+ * Fix issue #81: Remove svn:ignore property when .cvsignore is deleted.
 
  Improvements and output changes:
 

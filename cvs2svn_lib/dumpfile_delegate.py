@@ -371,6 +371,26 @@ class DumpfileDelegate(SVNRepositoryDelegate):
     self._basic_directories.remove(lod.get_path())
 
   def delete_path(self, lod, cvs_path):
+    dir_path, basename = path_split(lod.get_path(cvs_path.get_cvs_path()))
+    if basename == '.cvsignore':
+      # When a .cvsignore file is deleted, the directory's svn:ignore
+      # property needs to be deleted.
+      ignore_contents = 'PROPS-END\n'
+      ignore_len = len(ignore_contents)
+
+      # write headers, then props
+      self.dumpfile.write(
+          'Node-path: %s\n'
+          'Node-kind: dir\n'
+          'Node-action: change\n'
+          'Prop-content-length: %d\n'
+          'Content-length: %d\n'
+          '\n'
+          '%s'
+          % (self._utf8_path(dir_path),
+             ignore_len, ignore_len, ignore_contents)
+          )
+
     self.dumpfile.write(
         'Node-path: %s\n'
         'Node-action: delete\n'

@@ -3473,7 +3473,7 @@ test_list = [
 # 120:
     crossproject,
     tag_with_no_revision,
-    XFail(delete_cvsignore),
+    delete_cvsignore,
     repeated_deltatext,
     nasty_graphs,
     XFail(tagging_after_delete),

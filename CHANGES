@@ -2,6 +2,7 @@ Version ?.?.? (not yet released)
 --------------------------------
 
  New features:
+ * cvs2git: Omit fixup branch if a tag can be copied from an existing revision.
  * Allow arbitrary SVN directories to be created when a project is created.
  * Allow vendor branches to be excluded, grafting child symbols to trunk.
 

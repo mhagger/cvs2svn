@@ -37,25 +37,43 @@ from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.process import CommandFailedException
 from cvs2svn_lib.process import check_command_runs
 from cvs2svn_lib.process import run_command
-from cvs2svn_lib.openings_closings import SymbolingsReader
-from cvs2svn_lib.fill_source import get_source_set
-from cvs2svn_lib.svn_repository_mirror import SVNRepositoryMirror
-from cvs2svn_lib.stdout_delegate import StdoutDelegate
-from cvs2svn_lib.dumpfile_delegate import DumpfileDelegate
-from cvs2svn_lib.repository_delegate import RepositoryDelegate
+from cvs2svn_lib.cvs_file import CVSDirectory
+from cvs2svn_lib.symbol import Trunk
 from cvs2svn_lib.symbol import LineOfDevelopment
 from cvs2svn_lib.cvs_item import CVSRevisionAdd
 from cvs2svn_lib.cvs_item import CVSRevisionChange
 from cvs2svn_lib.cvs_item import CVSRevisionDelete
 from cvs2svn_lib.cvs_item import CVSRevisionNoop
+from cvs2svn_lib.repository_mirror import RepositoryMirror
+from cvs2svn_lib.repository_mirror import PathExistsError
+from cvs2svn_lib.svn_commit_item import SVNCommitItem
+from cvs2svn_lib.openings_closings import SymbolingsReader
+from cvs2svn_lib.fill_source import get_source_set
+from cvs2svn_lib.stdout_delegate import StdoutDelegate
+from cvs2svn_lib.dumpfile_delegate import DumpfileDelegate
+from cvs2svn_lib.repository_delegate import RepositoryDelegate
 from cvs2svn_lib.output_option import OutputOption
 
 
 class SVNOutputOption(OutputOption):
   """An OutputOption appropriate for output to Subversion."""
 
+  class ParentMissingError(Exception):
+    """The parent of a path is missing.
+
+    Exception raised if an attempt is made to add a path to the
+    repository mirror but the parent's path doesn't exist in the
+    youngest revision of the repository."""
+
+    pass
+
+  class ExpectedDirectoryError(Exception):
+    """A file was found where a directory was expected."""
+
+    pass
+
   def __init__(self):
-    self.repos = SVNRepositoryMirror()
+    self._mirror = RepositoryMirror()
 
   def register_artifacts(self, which_pass):
     # These artifacts are needed for SymbolingsReader:
@@ -66,7 +84,7 @@ class SVNOutputOption(OutputOption):
         config.SYMBOL_OFFSETS_DB, which_pass
         )
 
-    self.repos.register_artifacts(which_pass)
+    self._mirror.register_artifacts(which_pass)
     Ctx().revision_reader.register_artifacts(which_pass)
 
   def check_symbols(self, symbol_map):
@@ -99,9 +117,10 @@ class SVNOutputOption(OutputOption):
 
   def setup(self, svn_rev_count):
     self._symbolings_reader = SymbolingsReader()
-    self.repos.open()
+    self._mirror.open()
+    self._delegates = []
     Ctx().revision_reader.start()
-    self.repos.add_delegate(StdoutDelegate(svn_rev_count))
+    self.add_delegate(StdoutDelegate(svn_rev_count))
 
   def _get_revprops(self, svn_commit):
     """Return the Subversion revprops for this SVNCommit."""
@@ -112,16 +131,381 @@ class SVNOutputOption(OutputOption):
         'svn:date'   : format_date(svn_commit.date),
         }
 
+  def start_commit(self, revnum, revprops):
+    """Start a new commit."""
+
+    self._mirror.start_commit(revnum)
+    self._invoke_delegates('start_commit', revnum, revprops)
+
+  def end_commit(self):
+    """Called at the end of each commit.
+
+    This method copies the newly created nodes to the on-disk nodes
+    db."""
+
+    self._mirror.end_commit()
+    self._invoke_delegates('end_commit')
+
+  def delete_lod(self, lod):
+    """Delete the main path for LOD from the tree.
+
+    The path must currently exist.  Silently refuse to delete trunk
+    paths."""
+
+    if isinstance(lod, Trunk):
+      # Never delete a Trunk path.
+      return
+
+    self._mirror.get_current_lod_directory(lod).delete()
+    self._invoke_delegates('delete_lod', lod)
+
+  def delete_path(self, cvs_path, lod, should_prune=False):
+    """Delete CVS_PATH from LOD."""
+
+    if cvs_path.parent_directory is None:
+      self.delete_lod(lod)
+      return
+
+    parent_node = self._mirror.get_current_path(
+        cvs_path.parent_directory, lod
+        )
+    del parent_node[cvs_path]
+    self._invoke_delegates('delete_path', lod, cvs_path)
+
+    if should_prune:
+      while parent_node is not None and len(parent_node) == 0:
+        # A drawback of this code is that we issue a delete for each
+        # path and not just a single delete for the topmost directory
+        # pruned.
+        node = parent_node
+        cvs_path = node.cvs_path
+        if cvs_path.parent_directory is None:
+          parent_node = None
+          self.delete_lod(lod)
+        else:
+          parent_node = node.parent_mirror_dir
+          node.delete()
+          self._invoke_delegates('delete_path', lod, cvs_path)
+
+  def initialize_project(self, project):
+    """Create the basic structure for PROJECT."""
+
+    self._invoke_delegates('initialize_project', project)
+
+    # Don't invoke delegates.
+    self._mirror.add_lod(project.get_trunk())
+
+  def change_path(self, cvs_rev):
+    """Register a change in self._youngest for the CVS_REV's svn_path."""
+
+    # We do not have to update the nodes because our mirror is only
+    # concerned with the presence or absence of paths, and a file
+    # content change does not cause any path changes.
+    self._invoke_delegates('change_path', SVNCommitItem(cvs_rev, False))
+
+  def _mkdir_p(self, cvs_directory, lod):
+    """Make sure that CVS_DIRECTORY exists in LOD.
+
+    If not, create it, calling delegates.  Return the node for
+    CVS_DIRECTORY."""
+
+    try:
+      node = self._mirror.get_current_lod_directory(lod)
+    except KeyError:
+      node = self._mirror.add_lod(lod)
+      self._invoke_delegates('initialize_lod', lod)
+
+    for sub_path in cvs_directory.get_ancestry()[1:]:
+      try:
+        node = node[sub_path]
+      except KeyError:
+        node = node.mkdir(sub_path)
+        self._invoke_delegates('mkdir', lod, sub_path)
+      if node is None:
+        raise self.ExpectedDirectoryError(
+            'File found at \'%s\' where directory was expected.' % (sub_path,)
+            )
+
+    return node
+
+  def add_path(self, cvs_rev):
+    """Add the CVS_REV's svn_path to the repository mirror.
+
+    Create any missing intermediate paths."""
+
+    cvs_file = cvs_rev.cvs_file
+    parent_path = cvs_file.parent_directory
+    lod = cvs_rev.lod
+    parent_node = self._mkdir_p(parent_path, lod)
+    parent_node.add_file(cvs_file)
+    self._invoke_delegates('add_path', SVNCommitItem(cvs_rev, True))
+
+  def copy_lod(self, src_lod, dest_lod, src_revnum):
+    """Copy all of SRC_LOD at SRC_REVNUM to DST_LOD.
+
+    In the youngest revision of the repository, the destination LOD
+    *must not* already exist.
+
+    Return the new node at DEST_LOD.  Note that this node is not
+    necessarily writable, though its parent node necessarily is."""
+
+    node = self._mirror.copy_lod(src_lod, dest_lod, src_revnum)
+    self._invoke_delegates('copy_lod', src_lod, dest_lod, src_revnum)
+    return node
+
+  def copy_path(
+        self, cvs_path, src_lod, dest_lod, src_revnum, create_parent=False
+        ):
+    """Copy CVS_PATH from SRC_LOD at SRC_REVNUM to DST_LOD.
+
+    In the youngest revision of the repository, the destination's
+    parent *must* exist unless CREATE_PARENT is specified.  But the
+    destination itself *must not* exist.
+
+    Return the new node at (CVS_PATH, DEST_LOD), as a
+    CurrentMirrorDirectory."""
+
+    if cvs_path.parent_directory is None:
+      return self.copy_lod(src_lod, dest_lod, src_revnum)
+
+    # Get the node of our source, or None if it is a file:
+    src_node = self._mirror.get_old_path(cvs_path, src_lod, src_revnum)
+
+    # Get the parent path of the destination:
+    if create_parent:
+      dest_parent_node = self._mkdir_p(cvs_path.parent_directory, dest_lod)
+    else:
+      try:
+        dest_parent_node = self._mirror.get_current_path(
+            cvs_path.parent_directory, dest_lod
+            )
+      except KeyError:
+        raise self.ParentMissingError(
+            'Attempt to add path \'%s\' to repository mirror, '
+            'but its parent directory doesn\'t exist in the mirror.'
+            % (dest_lod.get_path(cvs_path.cvs_path),)
+            )
+
+    if cvs_path in dest_parent_node:
+      raise PathExistsError(
+          'Attempt to add path \'%s\' to repository mirror '
+          'when it already exists in the mirror.'
+          % (dest_lod.get_path(cvs_path.cvs_path),)
+          )
+
+    dest_parent_node[cvs_path] = src_node
+    self._invoke_delegates(
+        'copy_path',
+        src_lod.get_path(cvs_path.cvs_path),
+        dest_lod.get_path(cvs_path.cvs_path),
+        src_revnum
+        )
+
+    return dest_parent_node[cvs_path]
+
+  def fill_symbol(self, svn_symbol_commit, fill_source):
+    """Perform all copies for the CVSSymbols in SVN_SYMBOL_COMMIT.
+
+    The symbolic name is guaranteed to exist in the Subversion
+    repository by the end of this call, even if there are no paths
+    under it."""
+
+    symbol = svn_symbol_commit.symbol
+
+    try:
+      dest_node = self._mirror.get_current_lod_directory(symbol)
+    except KeyError:
+      self._fill_directory(symbol, None, fill_source, None)
+    else:
+      self._fill_directory(symbol, dest_node, fill_source, None)
+
+  def _fill_directory(self, symbol, dest_node, fill_source, parent_source):
+    """Fill the tag or branch SYMBOL at the path indicated by FILL_SOURCE.
+
+    Use items from FILL_SOURCE, and recurse into the child items.
+
+    Fill SYMBOL starting at the path FILL_SOURCE.cvs_path.  DEST_NODE
+    is the node of this destination path, or None if the destination
+    does not yet exist.  All directories above this path have already
+    been filled.  FILL_SOURCE is a FillSource instance describing the
+    items within a subtree of the repository that still need to be
+    copied to the destination.
+
+    PARENT_SOURCE is the SVNRevisionRange that was used to copy the
+    parent directory, if it was copied in this commit.  We prefer to
+    copy from the same source as was used for the parent, since it
+    typically requires less touching-up.  If PARENT_SOURCE is None,
+    then the parent directory was not copied in this commit, so no
+    revision is preferable to any other."""
+
+    copy_source = fill_source.compute_best_source(parent_source)
+
+    # Figure out if we shall copy to this destination and delete any
+    # destination path that is in the way.
+    if dest_node is None:
+      # The destination does not exist at all, so it definitely has to
+      # be copied:
+      dest_node = self.copy_path(
+          fill_source.cvs_path, copy_source.source_lod,
+          symbol, copy_source.opening_revnum
+          )
+    elif (parent_source is not None) and (
+          copy_source.source_lod != parent_source.source_lod
+          or copy_source.opening_revnum != parent_source.opening_revnum
+          ):
+      # The parent path was copied from a different source than we
+      # need to use, so we have to delete the version that was copied
+      # with the parent then re-copy from the correct source:
+      self.delete_path(fill_source.cvs_path, symbol)
+      dest_node = self.copy_path(
+          fill_source.cvs_path, copy_source.source_lod,
+          symbol, copy_source.opening_revnum
+          )
+    else:
+      copy_source = parent_source
+
+    # The map {CVSPath : FillSource} of entries within this directory
+    # that need filling:
+    src_entries = fill_source.get_subsource_map()
+
+    if copy_source is not None:
+      self._prune_extra_entries(
+          fill_source.cvs_path, symbol, dest_node, src_entries
+          )
+
+    return self._cleanup_filled_directory(
+        symbol, dest_node, src_entries, copy_source
+        )
+
+  def _cleanup_filled_directory(
+        self, symbol, dest_node, src_entries, copy_source
+        ):
+    """The directory at DEST_NODE has been filled and pruned; recurse.
+
+    Recurse into the SRC_ENTRIES, in alphabetical order.  If DEST_NODE
+    was copied in this revision, COPY_SOURCE should indicate where it
+    was copied from; otherwise, COPY_SOURCE should be None."""
+
+    cvs_paths = src_entries.keys()
+    cvs_paths.sort()
+    for cvs_path in cvs_paths:
+      if isinstance(cvs_path, CVSDirectory):
+        # Path is a CVSDirectory:
+        try:
+          dest_subnode = dest_node[cvs_path]
+        except KeyError:
+          # Path doesn't exist yet; it has to be created:
+          dest_node = self._fill_directory(
+              symbol, None, src_entries[cvs_path], None
+              ).parent_mirror_dir
+        else:
+          # Path already exists, but might have to be cleaned up:
+          dest_node = self._fill_directory(
+              symbol, dest_subnode, src_entries[cvs_path], copy_source
+              ).parent_mirror_dir
+      else:
+        # Path is a CVSFile:
+        self._fill_file(
+            symbol, cvs_path in dest_node, src_entries[cvs_path], copy_source
+            )
+        # Reread dest_node since the call to _fill_file() might have
+        # made it writable:
+        dest_node = self._mirror.get_current_path(
+            dest_node.cvs_path, dest_node.lod
+            )
+
+    return dest_node
+
+  def _fill_file(self, symbol, dest_existed, fill_source, parent_source):
+    """Fill the tag or branch SYMBOL at the path indicated by FILL_SOURCE.
+
+    Use items from FILL_SOURCE.
+
+    Fill SYMBOL at path FILL_SOURCE.cvs_path.  DEST_NODE is the node
+    of this destination path, or None if the destination does not yet
+    exist.  All directories above this path have already been filled
+    as needed.  FILL_SOURCE is a FillSource instance describing the
+    item that needs to be copied to the destination.
+
+    PARENT_SOURCE is the source from which the parent directory was
+    copied, or None if the parent directory was not copied during this
+    commit.  We prefer to copy from PARENT_SOURCE, since it typically
+    requires less touching-up.  If PARENT_SOURCE is None, then the
+    parent directory was not copied in this commit, so no revision is
+    preferable to any other."""
+
+    copy_source = fill_source.compute_best_source(parent_source)
+
+    # Figure out if we shall copy to this destination and delete any
+    # destination path that is in the way.
+    if not dest_existed:
+      # The destination does not exist at all, so it definitely has to
+      # be copied:
+      self.copy_path(
+          fill_source.cvs_path, copy_source.source_lod,
+          symbol, copy_source.opening_revnum
+          )
+    elif (parent_source is not None) and (
+          copy_source.source_lod != parent_source.source_lod
+          or copy_source.opening_revnum != parent_source.opening_revnum
+          ):
+      # The parent path was copied from a different source than we
+      # need to use, so we have to delete the version that was copied
+      # with the parent and then re-copy from the correct source:
+      self.delete_path(fill_source.cvs_path, symbol)
+      self.copy_path(
+          fill_source.cvs_path, copy_source.source_lod,
+          symbol, copy_source.opening_revnum
+          )
+
+  def _prune_extra_entries(
+        self, dest_cvs_path, symbol, dest_node, src_entries
+        ):
+    """Delete any entries in DEST_NODE that are not in SRC_ENTRIES."""
+
+    delete_list = [
+        cvs_path
+        for cvs_path in dest_node
+        if cvs_path not in src_entries
+        ]
+
+    # Sort the delete list so that the output is in a consistent
+    # order:
+    delete_list.sort()
+    for cvs_path in delete_list:
+      del dest_node[cvs_path]
+      self._invoke_delegates('delete_path', symbol, cvs_path)
+
+  def add_delegate(self, delegate):
+    """Adds DELEGATE to self._delegates.
+
+    For every delegate you add, whenever a repository action method is
+    performed, delegate's corresponding repository action method is
+    called.  Multiple delegates will be called in the order that they
+    are added.  See SVNRepositoryDelegate for more information."""
+
+    self._delegates.append(delegate)
+
+  def _invoke_delegates(self, method, *args):
+    """Invoke a method on each delegate.
+
+    Iterate through each of our delegates, in the order that they were
+    added, and call the delegate's method named METHOD with the
+    arguments in ARGS."""
+
+    for delegate in self._delegates:
+      getattr(delegate, method)(*args)
+
   def process_initial_project_commit(self, svn_commit):
-    self.repos.start_commit(svn_commit.revnum, self._get_revprops(svn_commit))
+    self.start_commit(svn_commit.revnum, self._get_revprops(svn_commit))
 
     for project in svn_commit.projects:
-      self.repos.initialize_project(project)
+      self.initialize_project(project)
 
-    self.repos.end_commit()
+    self.end_commit()
 
   def process_primary_commit(self, svn_commit):
-    self.repos.start_commit(svn_commit.revnum, self._get_revprops(svn_commit))
+    self.start_commit(svn_commit.revnum, self._get_revprops(svn_commit))
 
     # This actually commits CVSRevisions
     if len(svn_commit.cvs_revs) > 1:
@@ -135,18 +519,18 @@ class SVNOutputOption(OutputOption):
         pass
 
       elif isinstance(cvs_rev, CVSRevisionDelete):
-        self.repos.delete_path(cvs_rev.cvs_file, cvs_rev.lod, Ctx().prune)
+        self.delete_path(cvs_rev.cvs_file, cvs_rev.lod, Ctx().prune)
 
       elif isinstance(cvs_rev, CVSRevisionAdd):
-        self.repos.add_path(cvs_rev)
+        self.add_path(cvs_rev)
 
       elif isinstance(cvs_rev, CVSRevisionChange):
-        self.repos.change_path(cvs_rev)
+        self.change_path(cvs_rev)
 
-    self.repos.end_commit()
+    self.end_commit()
 
   def process_post_commit(self, svn_commit):
-    self.repos.start_commit(svn_commit.revnum, self._get_revprops(svn_commit))
+    self.start_commit(svn_commit.revnum, self._get_revprops(svn_commit))
 
     Log().verbose(
         'Synchronizing default branch motivated by %d'
@@ -157,31 +541,31 @@ class SVNOutputOption(OutputOption):
       trunk = cvs_rev.cvs_file.project.get_trunk()
       if isinstance(cvs_rev, CVSRevisionAdd):
         # Copy from branch to trunk:
-        self.repos.copy_path(
+        self.copy_path(
             cvs_rev.cvs_file, cvs_rev.lod, trunk,
             svn_commit.motivating_revnum, True
             )
       elif isinstance(cvs_rev, CVSRevisionChange):
         # Delete old version of the path on trunk...
-        self.repos.delete_path(cvs_rev.cvs_file, trunk)
+        self.delete_path(cvs_rev.cvs_file, trunk)
         # ...and copy the new version over from branch:
-        self.repos.copy_path(
+        self.copy_path(
             cvs_rev.cvs_file, cvs_rev.lod, trunk,
             svn_commit.motivating_revnum, True
             )
       elif isinstance(cvs_rev, CVSRevisionDelete):
         # Delete trunk path:
-        self.repos.delete_path(cvs_rev.cvs_file, trunk)
+        self.delete_path(cvs_rev.cvs_file, trunk)
       elif isinstance(cvs_rev, CVSRevisionNoop):
         # Do nothing
         pass
       else:
         raise InternalError('Unexpected CVSRevision type: %s' % (cvs_rev,))
 
-    self.repos.end_commit()
+    self.end_commit()
 
   def process_branch_commit(self, svn_commit):
-    self.repos.start_commit(svn_commit.revnum, self._get_revprops(svn_commit))
+    self.start_commit(svn_commit.revnum, self._get_revprops(svn_commit))
     Log().verbose('Filling branch:', svn_commit.symbol.name)
 
     # Get the set of sources for the symbolic name:
@@ -190,12 +574,12 @@ class SVNOutputOption(OutputOption):
         self._symbolings_reader.get_range_map(svn_commit),
         )
 
-    self.repos.fill_symbol(svn_commit, source_set)
+    self.fill_symbol(svn_commit, source_set)
 
-    self.repos.end_commit()
+    self.end_commit()
 
   def process_tag_commit(self, svn_commit):
-    self.repos.start_commit(svn_commit.revnum, self._get_revprops(svn_commit))
+    self.start_commit(svn_commit.revnum, self._get_revprops(svn_commit))
     Log().verbose('Filling tag:', svn_commit.symbol.name)
 
     # Get the set of sources for the symbolic name:
@@ -204,12 +588,14 @@ class SVNOutputOption(OutputOption):
         self._symbolings_reader.get_range_map(svn_commit),
         )
 
-    self.repos.fill_symbol(svn_commit, source_set)
+    self.fill_symbol(svn_commit, source_set)
 
-    self.repos.end_commit()
+    self.end_commit()
 
   def cleanup(self):
-    self.repos.close()
+    self._invoke_delegates('finish')
+    self._mirror.close()
+    self._mirror = None
     Ctx().revision_reader.finish()
     self._symbolings_reader.close()
     del self._symbolings_reader
@@ -229,7 +615,7 @@ class DumpfileOutputOption(SVNOutputOption):
     Log().quiet("Starting Subversion Dumpfile.")
     SVNOutputOption.setup(self, svn_rev_count)
     if not Ctx().dry_run:
-      self.repos.add_delegate(
+      self.add_delegate(
           DumpfileDelegate(Ctx().revision_reader, self.dumpfile_path)
           )
 
@@ -257,7 +643,7 @@ class RepositoryOutputOption(SVNOutputOption):
     Log().quiet("Starting Subversion Repository.")
     SVNOutputOption.setup(self, svn_rev_count)
     if not Ctx().dry_run:
-      self.repos.add_delegate(
+      self.add_delegate(
           RepositoryDelegate(Ctx().revision_reader, self.target)
           )
 

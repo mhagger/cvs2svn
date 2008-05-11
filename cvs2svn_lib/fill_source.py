@@ -46,7 +46,7 @@ class FillSource:
   FillSource objects are able to compute the score for arbitrary
   source LODs and source revision numbers.
 
-  These objects are used by the symbol filler in SVNRepositoryMirror."""
+  These objects are used by the symbol filler in SVNOutputOption."""
 
   def __init__(self, cvs_path, symbol, node_tree):
     """Create a fill source.
@@ -162,6 +162,18 @@ class FillSource:
       src_entries[cvs_path] = fill_subsource
 
     return src_entries
+
+  def __str__(self):
+    """For convenience only.  The format is subject to change at any time."""
+
+    return '%s(%s:%s)' % (
+        self.__class__.__name__, self._symbol, self.cvs_path,
+        )
+
+  def __repr__(self):
+    """For convenience only.  The format is subject to change at any time."""
+
+    return '%s%r' % (self, self._node_tree,)
 
 
 def get_source_set(symbol, range_map):

@@ -56,6 +56,9 @@ class SVNRevisionRange:
     else:
       return '[%d:%d]' % (self.opening_revnum, self.closing_revnum,)
 
+  def __repr__(self):
+    return str(self)
+
 
 class RevisionScores:
   """Represent the scores for a range of revisions."""

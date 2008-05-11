@@ -1,0 +1,49 @@
+head	1.2;
+access;
+symbols
+	NET:1.1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	99.05.05.10.04.36;	author author2;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	99.05.04.19.30.26;	author author2;	state Exp;
+branches
+	1.1.1.1;
+next	;
+
+1.1.1.1
+date	99.05.04.19.30.26;	author author2;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@log 6@
+text
+@@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@@
+
+
+1.1.1.1
+log
+@log 5@
+text
+@@

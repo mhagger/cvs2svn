@@ -29,11 +29,11 @@ from cvs2svn_lib.common import OP_ADD
 from cvs2svn_lib.common import OP_CHANGE
 from cvs2svn_lib.common import path_split
 from cvs2svn_lib.context import Ctx
-from cvs2svn_lib.svn_repository_mirror import SVNRepositoryMirrorDelegate
+from cvs2svn_lib.svn_repository_delegate import SVNRepositoryDelegate
 from cvs2svn_lib.apple_single_filter import get_maybe_apple_single_stream
 
 
-class DumpfileDelegate(SVNRepositoryMirrorDelegate):
+class DumpfileDelegate(SVNRepositoryDelegate):
   """Create a Subversion dumpfile."""
 
   def __init__(self, revision_reader, dumpfile_path):

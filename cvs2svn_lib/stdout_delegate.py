@@ -19,12 +19,12 @@
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.log import Log
-from cvs2svn_lib.svn_repository_mirror import SVNRepositoryMirrorDelegate
+from cvs2svn_lib.svn_repository_delegate import SVNRepositoryDelegate
 
 
-class StdoutDelegate(SVNRepositoryMirrorDelegate):
+class StdoutDelegate(SVNRepositoryDelegate):
   """Makes no changes to the disk, but writes out information to
-  STDOUT about what the SVNRepositoryMirror is doing.  Of course, our
+  STDOUT about what is happening in the SVN output.  Of course, our
   print statements will state that we're doing something, when in
   reality, we aren't doing anything other than printing out that we're
   doing something.  Kind of zen, really."""

@@ -1,0 +1,38 @@
+head	1.1;
+access;
+symbols
+	TAG1:1.1.2.1
+	BRANCH1:1.1.2.1.0.2
+	BRANCH2:1.1.0.2;
+locks; strict;
+comment	@ * @;
+
+
+1.1
+date	2002.06.24.05.47.35;	author author2;	state Exp;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2002.07.03.17.27.18;	author author3;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@log 3@
+text
+@@
+
+
+1.1.2.1
+log
+@log 4@
+text
+@@

@@ -627,11 +627,11 @@ loaded into the repository, and then removed.
 In both modes, the dumpfile revisions are created by walking through
 'data.s-revs.txt'.
 
-The database 'svn-nodes.db' holds a skeletal mirror of the repository
-structure at each SVN revision.  This mirror keeps track of which
-files existed on each LOD, but does not record any file contents.
-cvs2svn requires this information to decide which paths to copy when
-filling branches and tags.
+The database 'mirror-nodes.db' holds a skeletal mirror of the
+repository structure at each SVN revision.  This mirror keeps track of
+which files existed on each LOD, but does not record any file
+contents.  cvs2svn requires this information to decide which paths to
+copy when filling branches and tags.
 
 
                   ===============================
@@ -679,7 +679,7 @@ map path component names to other unique keys:
    entrykeyX ==> { etc, etc ...}
    entrykeyY ==> { etc, etc ...}
 
-(The leaf nodes -- files -- are also dictionaries, for simplicity.)
+(The leaf nodes -- files -- are represented by None.)
 
 The repository mirror allows cvs2svn to remember what paths exist in
 what revisions.

@@ -22,7 +22,6 @@ For information about the format allowed by git-fast-import, see:
 
 """
 
-
 from __future__ import generators
 
 import bisect
@@ -45,6 +44,8 @@ from cvs2svn_lib.cvs_item import CVSRevisionNoop
 from cvs2svn_lib.cvs_item import CVSSymbol
 from cvs2svn_lib.output_option import OutputOption
 from cvs2svn_lib.svn_revision_range import RevisionScores
+from cvs2svn_lib.repository_mirror import RepositoryMirror
+from cvs2svn_lib.repository_mirror import PathExistsError
 
 
 # The branch name to use for the "tag fixup branches".  The
@@ -56,52 +57,120 @@ from cvs2svn_lib.svn_revision_range import RevisionScores
 FIXUP_BRANCH_NAME = 'refs/heads/TAG.FIXUP'
 
 
+class ExpectedDirectoryError(Exception):
+  """A file was found where a directory was expected."""
+
+  pass
+
+
+class ExpectedFileError(Exception):
+  """A directory was found where a file was expected."""
+
+  pass
+
+
 class GitRevisionWriter(object):
   def register_artifacts(self, which_pass):
     pass
 
-  def start(self):
-    pass
+  def start(self, f, mirror):
+    self.f = f
+    self._mirror = mirror
 
-  def _modify_file(self, f, cvs_item):
+  def _modify_file(self, cvs_item, post_commit):
     raise NotImplementedError()
 
-  def add_file(self, f, cvs_rev):
-    self._modify_file(f, cvs_rev)
+  def _mkdir_p(self, cvs_directory, lod):
+    """Make sure that CVS_DIRECTORY exists in LOD.
 
-  def modify_file(self, f, cvs_rev):
-    self._modify_file(f, cvs_rev)
+    If not, create it.  Return the node for CVS_DIRECTORY."""
 
-  def delete_file(self, f, cvs_item):
-    f.write('D %s\n' % (cvs_item.cvs_file.cvs_path,))
+    try:
+      node = self._mirror.get_current_lod_directory(lod)
+    except KeyError:
+      node = self._mirror.add_lod(lod)
 
-  def process_revision(self, f, cvs_rev):
+    for sub_path in cvs_directory.get_ancestry()[1:]:
+      try:
+        node = node[sub_path]
+      except KeyError:
+        node = node.mkdir(sub_path)
+      if node is None:
+        raise ExpectedDirectoryError(
+            'File found at \'%s\' where directory was expected.' % (sub_path,)
+            )
+
+    return node
+
+  def add_file(self, cvs_rev, post_commit):
+    cvs_file = cvs_rev.cvs_file
+    if post_commit:
+      lod = cvs_file.project.get_trunk()
+    else:
+      lod = cvs_rev.lod
+    parent_node = self._mkdir_p(cvs_file.parent_directory, lod)
+    parent_node.add_file(cvs_file)
+    self._modify_file(cvs_rev, post_commit)
+
+  def modify_file(self, cvs_rev, post_commit):
+    cvs_file = cvs_rev.cvs_file
+    if post_commit:
+      lod = cvs_file.project.get_trunk()
+    else:
+      lod = cvs_rev.lod
+    if self._mirror.get_current_path(cvs_file, lod) is not None:
+      raise ExpectedFileError(
+          'Directory found at \'%s\' where file was expected.' % (cvs_file,)
+          )
+    self._modify_file(cvs_rev, post_commit)
+
+  def delete_file(self, cvs_rev, post_commit):
+    cvs_file = cvs_rev.cvs_file
+    if post_commit:
+      lod = cvs_file.project.get_trunk()
+    else:
+      lod = cvs_rev.lod
+    parent_node = self._mirror.get_current_path(
+        cvs_file.parent_directory, lod
+        )
+    if parent_node[cvs_file] is not None:
+      raise ExpectedFileError(
+          'Directory found at \'%s\' where file was expected.' % (cvs_file,)
+          )
+    del parent_node[cvs_file]
+    self.f.write('D %s\n' % (cvs_rev.cvs_file.cvs_path,))
+
+  def process_revision(self, cvs_rev, post_commit):
     if isinstance(cvs_rev, CVSRevisionAdd):
-      self.add_file(f, cvs_rev)
+      self.add_file(cvs_rev, post_commit)
     elif isinstance(cvs_rev, CVSRevisionChange):
-      self.modify_file(f, cvs_rev)
+      self.modify_file(cvs_rev, post_commit)
     elif isinstance(cvs_rev, CVSRevisionDelete):
-      self.delete_file(f, cvs_rev)
+      self.delete_file(cvs_rev, post_commit)
     elif isinstance(cvs_rev, CVSRevisionNoop):
       pass
     else:
       raise InternalError('Unexpected CVSRevision type: %s' % (cvs_rev,))
 
-  def branch_file(self, f, cvs_symbol):
-    self._modify_file(f, cvs_symbol)
+  def branch_file(self, cvs_symbol):
+    cvs_file = cvs_symbol.cvs_file
+    parent_node = self._mkdir_p(cvs_file.parent_directory, cvs_symbol.symbol)
+    parent_node.add_file(cvs_file)
+    self._modify_file(cvs_symbol, post_commit=False)
 
   def finish(self):
-    pass
+    del self._mirror
+    del self.f
 
 
 class GitRevisionMarkWriter(GitRevisionWriter):
-  def _modify_file(self, f, cvs_item):
+  def _modify_file(self, cvs_item, post_commit):
     if cvs_item.cvs_file.executable:
       mode = '100755'
     else:
       mode = '100644'
 
-    f.write(
+    self.f.write(
         'M %s :%d %s\n'
         % (mode, cvs_item.revision_recorder_token,
            cvs_item.cvs_file.cvs_path,)
@@ -116,17 +185,17 @@ class GitRevisionInlineWriter(GitRevisionWriter):
     GitRevisionWriter.register_artifacts(self, which_pass)
     self.revision_reader.register_artifacts(which_pass)
 
-  def start(self):
-    GitRevisionWriter.start(self)
+  def start(self, f, mirror):
+    GitRevisionWriter.start(self, f, mirror)
     self.revision_reader.start()
 
-  def _modify_file(self, f, cvs_item):
+  def _modify_file(self, cvs_item, post_commit):
     if cvs_item.cvs_file.executable:
       mode = '100755'
     else:
       mode = '100644'
 
-    f.write(
+    self.f.write(
         'M %s inline %s\n'
         % (mode, cvs_item.cvs_file.cvs_path,)
         )
@@ -141,9 +210,9 @@ class GitRevisionInlineWriter(GitRevisionWriter):
         cvs_rev, suppress_keyword_substitution=False
         ).read()
 
-    f.write('data %d\n' % (len(fulltext),))
-    f.write(fulltext)
-    f.write('\n')
+    self.f.write('data %d\n' % (len(fulltext),))
+    self.f.write(fulltext)
+    self.f.write('\n')
 
   def finish(self):
     GitRevisionWriter.finish(self)
@@ -207,6 +276,8 @@ class GitOutputOption(OutputOption):
 
     self.revision_writer = revision_writer
 
+    self._mirror = RepositoryMirror()
+
   def register_artifacts(self, which_pass):
     # These artifacts are needed for SymbolingsReader:
     artifact_manager.register_temp_file_needed(
@@ -216,6 +287,7 @@ class GitOutputOption(OutputOption):
         config.SYMBOL_OFFSETS_DB, which_pass
         )
     self.revision_writer.register_artifacts(which_pass)
+    self._mirror.register_artifacts(which_pass)
 
   def check(self):
     if Ctx().cross_project_commits:
@@ -247,7 +319,8 @@ class GitOutputOption(OutputOption):
     # corresponding mark.
     self._marks = {}
 
-    self.revision_writer.start()
+    self._mirror.open()
+    self.revision_writer.start(self.f, self._mirror)
 
   def _create_commit_mark(self, lod, revnum):
     assert revnum >= self._youngest
@@ -271,8 +344,8 @@ class GitOutputOption(OutputOption):
   _get_log_msg = staticmethod(_get_log_msg)
 
   def process_initial_project_commit(self, svn_commit):
-    # Nothing to do.
-    pass
+    self._mirror.start_commit(svn_commit.revnum)
+    self._mirror.end_commit()
 
   def process_primary_commit(self, svn_commit):
     author = self._get_author(svn_commit)
@@ -284,6 +357,8 @@ class GitOutputOption(OutputOption):
     if len(lods) != 1:
       raise InternalError('Commit affects %d LODs' % (len(lods),))
     lod = lods.pop()
+
+    self._mirror.start_commit(svn_commit.revnum)
     if isinstance(lod, Trunk):
       # FIXME: is this correct?:
       self.f.write('commit refs/heads/master\n')
@@ -299,9 +374,10 @@ class GitOutputOption(OutputOption):
     self.f.write('data %d\n' % (len(log_msg),))
     self.f.write('%s\n' % (log_msg,))
     for cvs_rev in svn_commit.get_cvs_items():
-      self.revision_writer.process_revision(self.f, cvs_rev)
+      self.revision_writer.process_revision(cvs_rev, post_commit=False)
 
     self.f.write('\n')
+    self._mirror.end_commit()
 
   def process_post_commit(self, svn_commit):
     author = self._get_author(svn_commit)
@@ -313,6 +389,8 @@ class GitOutputOption(OutputOption):
     if len(source_lods) != 1:
       raise InternalError('Commit is from %d LODs' % (len(source_lods),))
     source_lod = source_lods.pop()
+
+    self._mirror.start_commit(svn_commit.revnum)
     # FIXME: is this correct?:
     self.f.write('commit refs/heads/master\n')
     self.f.write(
@@ -329,9 +407,10 @@ class GitOutputOption(OutputOption):
         % (self._get_source_mark(source_lod, svn_commit.revnum),)
         )
     for cvs_rev in svn_commit.cvs_revs:
-      self.revision_writer.process_revision(self.f, cvs_rev)
+      self.revision_writer.process_revision(cvs_rev, post_commit=True)
 
     self.f.write('\n')
+    self._mirror.end_commit()
 
   def _get_source_groups(self, svn_commit):
     """Return groups of sources for SVN_COMMIT.
@@ -377,6 +456,55 @@ class GitOutputOption(OutputOption):
             del lod_range_map[cvs_symbol]
         yield (lod, revnum, cvs_symbols)
 
+  def _get_all_files(self, node):
+    """Generate all of the CVSFiles under NODE."""
+
+    for cvs_path in node:
+      subnode = node[cvs_path]
+      if subnode is None:
+        yield cvs_path
+      else:
+        for sub_cvs_path in self._get_all_files(subnode):
+          yield sub_cvs_path
+
+  def _is_simple_copy(self, svn_commit, source_groups):
+    """Return True iff SVN_COMMIT can be created as a simple copy.
+
+    SVN_COMMIT is an SVNTagCommit.  Return True iff it can be created
+    as a simple copy from an existing revision (i.e., if the fixup
+    branch can be avoided for this tag creation)."""
+
+    # The first requirement is that there be exactly one source:
+    if len(source_groups) != 1:
+      return False
+
+    (source_lod, svn_revnum, cvs_symbols) = source_groups[0]
+
+    # The second requirement is that the destionation LOD not already
+    # exist:
+    try:
+      self._mirror.get_current_lod_directory(svn_commit.symbol)
+    except KeyError:
+      # The LOD doesn't already exist.  This is good.
+      pass
+    else:
+      # The LOD already exists.  It cannot be created by a copy.
+      return False
+
+    # The third requirement is that the source LOD contains exactly
+    # the same files as we need to add to the symbol:
+    try:
+      source_node = self._mirror.get_current_lod_directory(source_lod)
+    except KeyError:
+      raise InternalError('Source %r does not exist' % (source_lod,))
+    cvs_file_set = set([cvs_symbol.cvs_file for cvs_symbol in cvs_symbols])
+    for cvs_file in self._get_all_files(source_node):
+      try:
+        cvs_file_set.remove(cvs_file)
+      except KeyError:
+        return False
+    return not cvs_file_set
+
   def _get_source_mark(self, source_lod, revnum):
     """Return the mark active at REVNUM on SOURCE_LOD."""
 
@@ -385,7 +513,9 @@ class GitOutputOption(OutputOption):
     (revnum, mark) = modifications[i]
     return mark
 
-  def _process_symbol_commit(self, svn_commit, git_branch, mark):
+  def _process_symbol_commit(
+        self, svn_commit, git_branch, source_groups, mark
+        ):
     author = self._get_author(svn_commit)
     log_msg = self._get_log_msg(svn_commit)
 
@@ -397,7 +527,6 @@ class GitOutputOption(OutputOption):
     self.f.write('data %d\n' % (len(log_msg),))
     self.f.write('%s\n' % (log_msg,))
 
-    source_groups = list(self._get_source_groups(svn_commit))
     for (source_lod, source_revnum, cvs_symbols,) in source_groups:
       self.f.write(
           'merge :%d\n'
@@ -406,15 +535,28 @@ class GitOutputOption(OutputOption):
 
     for (source_lod, source_revnum, cvs_symbols,) in source_groups:
       for cvs_symbol in cvs_symbols:
-        self.revision_writer.branch_file(self.f, cvs_symbol)
+        self.revision_writer.branch_file(cvs_symbol)
 
     self.f.write('\n')
 
   def process_branch_commit(self, svn_commit):
+    self._mirror.start_commit(svn_commit.revnum)
+    source_groups = list(self._get_source_groups(svn_commit))
     self._process_symbol_commit(
         svn_commit, 'refs/heads/%s' % (svn_commit.symbol.name,),
+        source_groups,
         self._create_commit_mark(svn_commit.symbol, svn_commit.revnum),
         )
+    self._mirror.end_commit()
+
+  def _set_tag(self, svn_commit, mark, author, log_msg):
+    self.f.write('tag %s\n' % (svn_commit.symbol.name,))
+    self.f.write('from :%d\n' % (mark,))
+    self.f.write(
+        'tagger %s %d +0000\n' % (author, svn_commit.date,)
+        )
+    self.f.write('data %d\n' % (len(log_msg),))
+    self.f.write('%s\n' % (log_msg,))
 
   def process_tag_commit(self, svn_commit):
     # FIXME: For now we create a fixup branch with the same name as
@@ -424,21 +566,34 @@ class GitOutputOption(OutputOption):
     author = self._get_author(svn_commit)
     log_msg = self._get_log_msg(svn_commit)
 
-    mark = self._create_commit_mark(svn_commit.symbol, svn_commit.revnum)
-    self._process_symbol_commit(svn_commit, FIXUP_BRANCH_NAME, mark)
-    self.f.write('tag %s\n' % (svn_commit.symbol.name,))
-    self.f.write('from :%d\n' % (mark,))
-    self.f.write(
-        'tagger %s %d +0000\n' % (author, svn_commit.date,)
-        )
-    self.f.write('data %d\n' % (len(log_msg),))
-    self.f.write('%s\n' % (log_msg,))
+    self._mirror.start_commit(svn_commit.revnum)
 
-    self.f.write('reset %s\n' % (FIXUP_BRANCH_NAME,))
-    self.f.write('\n')
+    source_groups = list(self._get_source_groups(svn_commit))
+    if self._is_simple_copy(svn_commit, source_groups):
+      (source_lod, source_revnum, cvs_symbols) = source_groups[0]
+      Log().debug(
+          '%s will be created via a simple copy from %s:r%d'
+          % (svn_commit.symbol, source_lod, source_revnum,)
+          )
+      mark = self._get_source_mark(source_lod, source_revnum)
+      self._set_tag(svn_commit, mark, author, log_msg)
+    else:
+      Log().debug(
+          '%s will be created via a fixup branch' % (svn_commit.symbol,)
+          )
+      mark = self._create_commit_mark(svn_commit.symbol, svn_commit.revnum)
+      self._process_symbol_commit(
+          svn_commit, FIXUP_BRANCH_NAME, source_groups, mark
+          )
+      self._set_tag(svn_commit, mark, author, log_msg)
+      self.f.write('reset %s\n' % (FIXUP_BRANCH_NAME,))
+      self.f.write('\n')
+
+    self._mirror.end_commit()
 
   def cleanup(self):
     self.revision_writer.finish()
+    self._mirror.close()
     self.f.close()
     del self.f
     self._symbolings_reader.close()

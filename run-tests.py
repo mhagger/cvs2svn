@@ -3294,6 +3294,7 @@ def mirror_keyerror_test():
 
   conv = ensure_conversion('mirror-keyerror')
 
+
 def exclude_ntdb_test():
   "exclude a non-trunk default branch"
 
@@ -3308,6 +3309,18 @@ def exclude_ntdb_test():
           '--exclude=vendorbranch',
           ],
       )
+
+
+def mirror_keyerror2_test():
+  "a case that gave KeyError in RepositoryMirror"
+
+  conv = ensure_conversion('mirror-keyerror2')
+
+
+def mirror_keyerror3_test():
+  "a case that gave KeyError in RepositoryMirror"
+
+  conv = ensure_conversion('mirror-keyerror3')
 
 
 ########################################################################
@@ -3495,6 +3508,8 @@ test_list = [
     no_revs_file,
     mirror_keyerror_test,
     exclude_ntdb_test,
+    mirror_keyerror2_test,
+    mirror_keyerror3_test,
     ]
 
 if __name__ == '__main__':

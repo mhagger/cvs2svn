@@ -1,0 +1,39 @@
+head	1.1;
+access;
+symbols
+	tree-serialize-branch:1.1.0.2
+	tree-serialize-branchpoint:1.1
+	NET:1.1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	99.05.04.19.30.26;	author author2;	state Exp;
+branches
+	1.1.1.1;
+next	;
+
+1.1.1.1
+date	99.05.04.19.30.26;	author author2;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@@
+
+
+1.1.1.1
+log
+@log 5@
+text
+@@

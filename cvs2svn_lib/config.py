@@ -117,10 +117,10 @@ SYMBOL_OPENINGS_CLOSINGS = 'symbolic-names.txt'
 # assumed by some internal consistency checks.
 SYMBOL_OPENINGS_CLOSINGS_SORTED = 'symbolic-names-s.txt'
 
-# Skeleton version of an svn filesystem.  See class
-# SVNRepositoryMirror for how these work.
-SVN_MIRROR_NODES_INDEX_TABLE = 'svn-nodes-index.dat'
-SVN_MIRROR_NODES_STORE = 'svn-nodes.pck'
+# Skeleton version of the repository filesystem.  See class
+# RepositoryMirror for how these work.
+MIRROR_NODES_INDEX_TABLE = 'mirror-nodes-index.dat'
+MIRROR_NODES_STORE = 'mirror-nodes.pck'
 
 # Offsets pointing to the beginning of each symbol's records in
 # SYMBOL_OPENINGS_CLOSINGS_SORTED.  This file contains a pickled map

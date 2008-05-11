@@ -28,7 +28,11 @@ class CVSPath(object):
 
   Members:
 
-    id -- (int) unique ID for this CVSPath.
+    id -- (int) unique ID for this CVSPath.  At any moment, there is
+        at most one CVSPath instance with a particular ID.  (This
+        means that object identity is the same as object equality, and
+        objects can be used as map keys even though they don't have a
+        __hash__() method).
 
     project -- (Project) the project containing this CVSPath.
 
@@ -121,7 +125,12 @@ class CVSPath(object):
     return [p.basename for p in self.get_ancestry()[1:]]
 
   def __eq__(a, b):
-    return a.id == b.id
+    """Compare two CVSPath instances for equality.
+
+    This method is supplied to avoid using __cmp__() for comparing for
+    equality."""
+
+    return a is b
 
   def slow_compare(a, b):
     return (
@@ -185,7 +194,7 @@ class CVSDirectory(CVSPath):
     return self.cvs_path + '/'
 
   def __repr__(self):
-    return 'CVSDirectory<%d>(%r)' % (self.id, str(self),)
+    return 'CVSDirectory<%x>(%r)' % (self.id, str(self),)
 
 
 class CVSFile(CVSPath):
@@ -274,6 +283,6 @@ class CVSFile(CVSPath):
     return self.cvs_path
 
   def __repr__(self):
-    return 'CVSFile<%d>(%r)' % (self.id, str(self),)
+    return 'CVSFile<%x>(%r)' % (self.id, str(self),)
 
 

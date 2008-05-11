@@ -17,7 +17,6 @@
 """This module contains database facilities used by cvs2svn."""
 
 
-import os
 import md5
 
 from cvs2svn_lib.boolean import *
@@ -273,8 +272,8 @@ class DumpfileDelegate(SVNRepositoryDelegate):
     buf = None
 
     # treat .cvsignore as a directory property
-    dir_path, basename = os.path.split(cvs_rev.get_svn_path())
-    if basename == ".cvsignore":
+    dir_path, basename = path_split(cvs_rev.get_svn_path())
+    if basename == '.cvsignore':
       buf = stream.read()
       ignore_vals = generate_ignores(buf)
       ignore_contents = '\n'.join(ignore_vals)

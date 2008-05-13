@@ -599,7 +599,9 @@ class CVSSymbol(CVSItem):
         this CVSSymbol.
 
     source_id -- (int) the ID of the CVSRevision or CVSBranch that is
-        the source for this item.
+        the source for this item.  This initially points to a
+        CVSRevision, but can be changed to a CVSBranch via parent
+        adjustment in FilterSymbolsPass.
 
     revision_recorder_token -- (arbitrary) a token that can be set by
         RevisionRecorder for the later use of RevisionReader.
@@ -623,6 +625,15 @@ class CVSSymbol(CVSItem):
     self.symbol = symbol
     self.source_lod = source_lod
     self.source_id = source_id
+
+  def get_cvs_revision_source(self, cvs_file_items):
+    """Return the CVSRevision that is the ultimate source of this symbol."""
+
+    cvs_source = cvs_file_items[self.source_id]
+    while not isinstance(cvs_source, CVSRevision):
+      cvs_source = cvs_file_items[cvs_source.source_id]
+
+    return cvs_source
 
   def get_svn_path(self):
     return self.symbol.get_path(self.cvs_file.cvs_path)
@@ -650,7 +661,9 @@ class CVSBranch(CVSSymbol):
         this CVSSymbol.
 
     source_id -- (int) id of the CVSRevision or CVSBranch from which
-        this branch sprouts.
+        this branch sprouts.  This initially points to a CVSRevision,
+        but can be changed to a CVSBranch via parent adjustment in
+        FilterSymbolsPass.
 
     next_id -- (int or None) id of first CVSRevision on this branch,
         if any; else, None.
@@ -810,7 +823,9 @@ class CVSTag(CVSSymbol):
         this CVSSymbol.
 
     source_id -- (int) the ID of the CVSRevision or CVSBranch that is
-        being tagged.
+        being tagged.  This initially points to a CVSRevision, but can
+        be changed to a CVSBranch via parent adjustment in
+        FilterSymbolsPass.
 
     revision_recorder_token -- (arbitrary) a token that can be set by
         RevisionRecorder for the later use of RevisionReader.

@@ -200,9 +200,10 @@ class GitRevisionInlineWriter(GitRevisionWriter):
         % (mode, cvs_item.cvs_file.cvs_path,)
         )
 
-    cvs_rev = cvs_item
-    while isinstance(cvs_rev, CVSSymbol):
-      cvs_rev = Ctx()._cvs_items_db[cvs_rev.source_id]
+    if isinstance(cvs_item, CVSSymbol):
+      cvs_rev = cvs_item.get_cvs_revision_source(Ctx()._cvs_items_db)
+    else:
+      cvs_rev = cvs_item
 
     # FIXME: We have to decide what to do about keyword substitution
     # and eol_style here:

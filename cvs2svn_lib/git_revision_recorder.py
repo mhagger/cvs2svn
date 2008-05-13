@@ -100,9 +100,7 @@ class GitRevisionRecorder(FulltextRevisionRecorder):
     # the symbol's revision_recorder_token.
     for cvs_item in cvs_file_items.values():
       if isinstance(cvs_item, CVSSymbol):
-        cvs_source = cvs_file_items[cvs_item.source_id]
-        while not isinstance(cvs_source, CVSRevision):
-          cvs_source = cvs_file_items[cvs_source.source_id]
+        cvs_source = cvs_item.get_cvs_revision_source(cvs_file_items)
         cvs_item.revision_recorder_token = cvs_source.revision_recorder_token
 
     del self._cvs_file_items

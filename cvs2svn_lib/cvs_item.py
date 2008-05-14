@@ -427,6 +427,23 @@ class CVSRevision(CVSItem):
       # prev_id is on the same LOD and this item closes that one:
       yield self.prev_id
 
+  def _get_branch_ids_recursively(self, cvs_file_items):
+    """Return the set of all CVSBranches that sprout from this CVSRevision.
+
+    After parent adjustment in FilterSymbolsPass, it is possible for
+    branches to sprout directly from a CVSRevision, or from those
+    branches, etc.  Return all branches that sprout from this
+    CVSRevision, directly or indirectly."""
+
+    retval = set()
+    branch_ids_to_process = list(self.branch_ids)
+    while branch_ids_to_process:
+      branch = cvs_file_items[branch_ids_to_process.pop()]
+      retval.add(branch)
+      branch_ids_to_process.extend(branch.branch_ids)
+
+    return retval
+
   def check_links(self, cvs_file_items):
     assert self.cvs_file == cvs_file_items.cvs_file
 
@@ -445,7 +462,10 @@ class CVSRevision(CVSItem):
       assert isinstance(first_on_branch, CVSBranch)
       assert first_on_branch.symbol == self.lod
       assert first_on_branch.next_id == self.id
-      assert first_on_branch.source_id == prev.id
+      cvs_revision_source = first_on_branch.get_cvs_revision_source(
+          cvs_file_items
+          )
+      assert cvs_revision_source.id == prev.id
       assert self.id in prev.branch_commit_ids
     else:
       # This revision follows another revision on the same LOD:
@@ -469,15 +489,20 @@ class CVSRevision(CVSItem):
       assert tag.source_id == self.id
       assert tag.source_lod == self.lod
 
-    branch_commit_ids = list(self.branch_commit_ids)
     for branch_id in self.branch_ids:
       branch = cvs_file_items[branch_id]
       assert isinstance(branch, CVSBranch)
       assert branch.source_id == self.id
       assert branch.source_lod == self.lod
+
+    branch_commit_ids = list(self.branch_commit_ids)
+
+    for branch in self._get_branch_ids_recursively(cvs_file_items):
+      assert isinstance(branch, CVSBranch)
       if branch.next_id is not None:
         assert branch.next_id in branch_commit_ids
         branch_commit_ids.remove(branch.next_id)
+
     assert not branch_commit_ids
 
     assert self.__class__ == cvs_revision_type_map[(

@@ -518,9 +518,7 @@ class FilterSymbolsPass(Pass):
       cvs_file_items.refine_symbols()
       cvs_file_items.record_opened_symbols()
       cvs_file_items.record_closed_symbols()
-
-      if Log().is_on(Log.DEBUG):
-        cvs_file_items.check_link_consistency()
+      cvs_file_items.check_link_consistency()
 
       # Store whatever is left to the new file and update statistics:
       stats_keeper.record_cvs_file(cvs_file_items.cvs_file)

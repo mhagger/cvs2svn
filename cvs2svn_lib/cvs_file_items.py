@@ -171,7 +171,12 @@ class CVSFileItems(object):
       try:
         cvs_item.check_links(self)
       except AssertionError:
-        Log().warn('Link consistency error in %s\n' % (cvs_item,))
+        Log().error(
+            'Link consistency error in %s\n'
+            'This is probably a bug internal to cvs2svn.  Please file a bug\n'
+            'report including the following stack trace (see FAQ for more '
+            'info).'
+            % (cvs_item,))
         raise
 
   def _get_lod(self, lod, cvs_branch, start_id):

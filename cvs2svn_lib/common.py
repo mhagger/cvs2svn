@@ -37,7 +37,6 @@ SVN_INVALID_REVNUM = -1
 
 # Things that can happen to a file.
 OP_ADD    = 'A'
-OP_DELETE = 'D'
 OP_CHANGE = 'C'
 
 

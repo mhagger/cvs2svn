@@ -31,8 +31,8 @@ from cvs2svn_lib.apple_single_filter import get_maybe_apple_single_stream
 
 
 # Things that can happen to a file.
-OP_ADD    = 'A'
-OP_CHANGE = 'C'
+OP_ADD    = 'add'
+OP_CHANGE = 'change'
 
 
 class DumpfileDelegate(SVNRepositoryDelegate):
@@ -194,16 +194,10 @@ class DumpfileDelegate(SVNRepositoryDelegate):
 
   def _add_or_change_path(self, s_item, op):
     """Emit the addition or change corresponding to S_ITEM.
+
     OP is either the constant OP_ADD or OP_CHANGE."""
 
-    # Validation stuffs
-    if op == OP_ADD:
-      action = 'add'
-    elif op == OP_CHANGE:
-      action = 'change'
-    else:
-      raise FatalError("_add_or_change_path() called with bad op ('%s')"
-                       % (op,))
+    assert op in [OP_ADD, OP_CHANGE]
 
     # Convenience variables
     cvs_rev = s_item.cvs_rev
@@ -308,7 +302,7 @@ class DumpfileDelegate(SVNRepositoryDelegate):
         'Node-kind: file\n'
         'Node-action: %s\n'
         '%s'  # no property header if no props
-        % (self._utf8_path(cvs_rev.get_svn_path()), action, props_header)
+        % (self._utf8_path(cvs_rev.get_svn_path()), op, props_header)
         )
 
     pos = self.dumpfile.tell()

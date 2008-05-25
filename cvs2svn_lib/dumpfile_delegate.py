@@ -24,12 +24,15 @@ from cvs2svn_lib.set_support import *
 from cvs2svn_lib import config
 from cvs2svn_lib.common import CommandError
 from cvs2svn_lib.common import FatalError
-from cvs2svn_lib.common import OP_ADD
-from cvs2svn_lib.common import OP_CHANGE
 from cvs2svn_lib.common import path_split
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.svn_repository_delegate import SVNRepositoryDelegate
 from cvs2svn_lib.apple_single_filter import get_maybe_apple_single_stream
+
+
+# Things that can happen to a file.
+OP_ADD    = 'A'
+OP_CHANGE = 'C'
 
 
 class DumpfileDelegate(SVNRepositoryDelegate):

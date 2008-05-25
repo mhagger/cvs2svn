@@ -35,11 +35,6 @@ DB_OPEN_NEW = 'n'
 SVN_INVALID_REVNUM = -1
 
 
-# Things that can happen to a file.
-OP_ADD    = 'A'
-OP_CHANGE = 'C'
-
-
 # Warnings and errors start with these strings.  They are typically
 # followed by a colon and a space, as in "%s: " ==> "WARNING: ".
 warning_prefix = "WARNING"

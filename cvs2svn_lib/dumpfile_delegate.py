@@ -413,7 +413,7 @@ class DumpfileDelegate(SVNRepositoryDelegate):
         'Node-path: %s\n'
         'Node-action: add\n'
         'Node-copyfrom-rev: %d\n'
-        'Node-copyfrom-path: /%s\n'
+        'Node-copyfrom-path: %s\n'
         '\n'
         % (self._utf8_path(dest_lod.get_path()),
            src_revnum, self._utf8_path(src_lod.get_path()))
@@ -428,7 +428,7 @@ class DumpfileDelegate(SVNRepositoryDelegate):
         'Node-path: %s\n'
         'Node-action: add\n'
         'Node-copyfrom-rev: %d\n'
-        'Node-copyfrom-path: /%s\n'
+        'Node-copyfrom-path: %s\n'
         '\n'
         % (self._utf8_path(dest_path), src_revnum, self._utf8_path(src_path))
         )

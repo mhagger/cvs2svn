@@ -419,9 +419,7 @@ class DumpfileDelegate(SVNRepositoryDelegate):
            src_revnum, self._utf8_path(src_lod.get_path()))
         )
 
-  def copy_path(self, src_path, dest_path, src_revnum):
-    """Emit the copying of SRC_PATH at SRC_REV to DEST_PATH."""
-
+  def copy_path(self, cvs_path, src_lod, dest_lod, src_revnum):
     # We don't need to include "Node-kind:" for copies; the loader
     # ignores it anyway and just uses the source kind instead.
     self.dumpfile.write(
@@ -430,7 +428,11 @@ class DumpfileDelegate(SVNRepositoryDelegate):
         'Node-copyfrom-rev: %d\n'
         'Node-copyfrom-path: %s\n'
         '\n'
-        % (self._utf8_path(dest_path), src_revnum, self._utf8_path(src_path))
+        % (
+            self._utf8_path(dest_lod.get_path(cvs_path.cvs_path)),
+            src_revnum,
+            self._utf8_path(src_lod.get_path(cvs_path.cvs_path))
+            )
         )
 
   def finish(self):

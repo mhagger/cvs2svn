@@ -73,13 +73,7 @@ class StdoutDelegate(SVNRepositoryDelegate):
 
     Log().verbose("  Deleting %s" % (lod.get_path(cvs_path.cvs_path),))
 
-  def copy_lod(self, src_lod, dest_lod, src_revnum):
-    """Print a line stating that we are 'copying' revision SRC_REVNUM
-    of SRC_PATH to DEST_PATH."""
-
-    self.copy_path(src_lod.get_path(), dest_lod.get_path(), src_revnum)
-
-  def copy_path(self, src_path, dest_path, src_revnum):
+  def _show_copy(self, src_path, dest_path, src_revnum):
     """Print a line stating that we are 'copying' revision SRC_REVNUM
     of SRC_PATH to DEST_PATH."""
 
@@ -87,6 +81,22 @@ class StdoutDelegate(SVNRepositoryDelegate):
         "  Copying revision %d of %s\n"
         "                to %s\n"
         % (src_revnum, src_path, dest_path,)
+        )
+
+  def copy_lod(self, src_lod, dest_lod, src_revnum):
+    """Print a line stating that we are 'copying' revision SRC_REVNUM
+    of SRC_PATH to DEST_PATH."""
+
+    self._show_copy(src_lod.get_path(), dest_lod.get_path(), src_revnum)
+
+  def copy_path(self, cvs_path, src_lod, dest_lod, src_revnum):
+    """Print a line stating that we are 'copying' revision SRC_REVNUM
+    of CVS_PATH from SRC_LOD to DEST_LOD."""
+
+    self._show_copy(
+        src_lod.get_path(cvs_path.cvs_path),
+        dest_lod.get_path(cvs_path.cvs_path),
+        src_revnum,
         )
 
   def finish(self):

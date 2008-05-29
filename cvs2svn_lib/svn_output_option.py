@@ -296,9 +296,7 @@ class SVNOutputOption(OutputOption):
     dest_parent_node[cvs_path] = src_node
     self._invoke_delegates(
         'copy_path',
-        src_lod.get_path(cvs_path.cvs_path),
-        dest_lod.get_path(cvs_path.cvs_path),
-        src_revnum
+        cvs_path, src_lod, dest_lod, src_revnum
         )
 
     return dest_parent_node[cvs_path]

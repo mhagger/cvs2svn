@@ -106,11 +106,11 @@ class SVNRepositoryDelegate:
 
     raise NotImplementedError()
 
-  def copy_path(self, src_path, dest_path, src_revnum):
-    """Copy SRC_PATH in SRC_REVNUM to DEST_PATH.
+  def copy_path(self, cvs_path, src_lod, dest_lod, src_revnum):
+    """Copy CVS_PATH in SRC_LOD@SRC_REVNUM to DEST_LOD.
 
-    SRC_PATH and DEST_PATH are both SVN paths, and SRC_REVNUM is a
-    subversion revision number (int)."""
+    CVS_PATH is a CVSPath, SRC_LOD and DEST_LOD are LODs, and
+    SRC_REVNUM is a subversion revision number (int)."""
 
     raise NotImplementedError()
 

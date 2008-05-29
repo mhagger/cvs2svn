@@ -10,6 +10,8 @@ Version ?.?.? (not yet released)
 
  Bugs fixed:
  * Fix issue #81: Remove svn:ignore property when .cvsignore is deleted.
+ * Fix svn dumpfile conformance:
+   - Don't include a leading '/' for Node-path.
 
  Improvements and output changes:
 

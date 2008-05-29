@@ -12,6 +12,7 @@ Version ?.?.? (not yet released)
  * Fix issue #81: Remove svn:ignore property when .cvsignore is deleted.
  * Fix svn dumpfile conformance:
    - Don't include a leading '/' for Node-path.
+   - Include the Node-kind field when copying nodes.
 
  Improvements and output changes:
 

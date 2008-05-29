@@ -24,8 +24,11 @@ from cvs2svn_lib.set_support import *
 from cvs2svn_lib import config
 from cvs2svn_lib.common import CommandError
 from cvs2svn_lib.common import FatalError
+from cvs2svn_lib.common import InternalError
 from cvs2svn_lib.common import path_split
 from cvs2svn_lib.context import Ctx
+from cvs2svn_lib.cvs_file import CVSDirectory
+from cvs2svn_lib.cvs_file import CVSFile
 from cvs2svn_lib.svn_repository_delegate import SVNRepositoryDelegate
 from cvs2svn_lib.apple_single_filter import get_maybe_apple_single_stream
 
@@ -401,16 +404,13 @@ class DumpfileDelegate(SVNRepositoryDelegate):
         )
 
   def copy_lod(self, src_lod, dest_lod, src_revnum):
-    """Emit the copying of SRC_LOD at SRC_REV to DEST_LOD."""
-
     # Register the main LOD directory, and create parent directories
     # as needed:
     self._register_basic_directory(dest_lod.get_path(), False)
 
-    # We don't need to include "Node-kind:" for copies; the loader
-    # ignores it anyway and just uses the source kind instead.
     self.dumpfile.write(
         'Node-path: %s\n'
+        'Node-kind: dir\n'
         'Node-action: add\n'
         'Node-copyfrom-rev: %d\n'
         'Node-copyfrom-path: %s\n'
@@ -420,16 +420,23 @@ class DumpfileDelegate(SVNRepositoryDelegate):
         )
 
   def copy_path(self, cvs_path, src_lod, dest_lod, src_revnum):
-    # We don't need to include "Node-kind:" for copies; the loader
-    # ignores it anyway and just uses the source kind instead.
+    if isinstance(cvs_path, CVSFile):
+      node_kind = 'file'
+    elif isinstance(cvs_path, CVSDirectory):
+      node_kind = 'dir'
+    else:
+      raise InternalError()
+
     self.dumpfile.write(
         'Node-path: %s\n'
+        'Node-kind: %s\n'
         'Node-action: add\n'
         'Node-copyfrom-rev: %d\n'
         'Node-copyfrom-path: %s\n'
         '\n'
         % (
             self._utf8_path(dest_lod.get_path(cvs_path.cvs_path)),
+            node_kind,
             src_revnum,
             self._utf8_path(src_lod.get_path(cvs_path.cvs_path))
             )

@@ -56,14 +56,13 @@ class _NoPredNodes:
   All this repeated sorting is wasteful and unnecessary.  We should
   instead use a heap to output the changeset order, which would
   require O(lg N) work per add()/get() rather than O(1) and O(N lg N)
-  as in the current implementation [1].  But: (1) the heapq modules
-  was not added to Python until version 2.3; (2) the lame interface of
-  heapq doesn't allow an arbitrary compare function, so we would have
-  to store extra information in the array elements; (3) in practice,
-  the number of items in the list at any time is only a tiny fraction
-  of the total number of changesets; and (4) testing showed that the
-  heapq implementation is no faster than this one (perhaps because of
-  the increased memory usage).
+  as in the current implementation [1].  But: (1) the lame interface
+  of heapq doesn't allow an arbitrary compare function, so we would
+  have to store extra information in the array elements; (2) in
+  practice, the number of items in the list at any time is only a tiny
+  fraction of the total number of changesets; and (3) testing showed
+  that the heapq implementation is no faster than this one (perhaps
+  because of the increased memory usage).
 
   [1] According to Objects/listsort.txt in the Python source code, the
   Python list-sorting code is heavily optimized for arrays that have

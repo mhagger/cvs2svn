@@ -17,8 +17,6 @@
 """This module contains a database that can store arbitrary CVSItems."""
 
 
-from __future__ import generators
-
 import re
 import cPickle
 

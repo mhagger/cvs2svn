@@ -17,8 +17,6 @@
 """This module contains classes to keep track of symbol openings/closings."""
 
 
-from __future__ import generators
-
 import cPickle
 
 from cvs2svn_lib import config

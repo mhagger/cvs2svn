@@ -22,8 +22,6 @@ For information about the format allowed by git-fast-import, see:
 
 """
 
-from __future__ import generators
-
 import bisect
 
 from cvs2svn_lib import config

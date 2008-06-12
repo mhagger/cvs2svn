@@ -51,8 +51,6 @@ CVSItem
 """
 
 
-from __future__ import generators
-
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.symbol import Trunk
 

@@ -17,8 +17,6 @@
 """Keep track of counts of different types of changeset links."""
 
 
-from __future__ import generators
-
 
 # A cvs_item doesn't depend on any cvs_items in either pred or succ:
 LINK_NONE = 0

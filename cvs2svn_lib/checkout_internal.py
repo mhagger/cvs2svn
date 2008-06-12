@@ -90,8 +90,6 @@ after it has been updated for excluded symbols, symbol
 preferred-parent grafting, etc."""
 
 
-from __future__ import generators
-
 import cStringIO
 import re
 import time

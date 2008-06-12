@@ -16,7 +16,6 @@
 
 """Picklers and unpicklers that are primed with known objects."""
 
-from __future__ import generators
 
 import cStringIO
 import marshal

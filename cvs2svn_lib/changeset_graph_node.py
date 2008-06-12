@@ -17,8 +17,6 @@
 """A node in the changeset dependency graph."""
 
 
-from __future__ import generators
-
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.time_range import TimeRange
 

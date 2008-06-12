@@ -34,8 +34,6 @@ how it is used by Macintosh CVS clients:
 """
 
 
-from __future__ import generators
-
 import struct
 from cStringIO import StringIO
 

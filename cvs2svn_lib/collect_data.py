@@ -48,8 +48,6 @@ or branch.
 """
 
 
-from __future__ import generators
-
 import sys
 import os
 import stat

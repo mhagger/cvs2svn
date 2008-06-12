@@ -17,8 +17,6 @@
 """This module contains a class to manage the CVSItems related to one file."""
 
 
-from __future__ import generators
-
 import re
 
 from cvs2svn_lib.common import InternalError

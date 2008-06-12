@@ -17,8 +17,6 @@
 """This module contains classes to transform symbol names."""
 
 
-from __future__ import generators
-
 import os
 import re
 

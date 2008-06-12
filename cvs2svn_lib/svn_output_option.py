@@ -17,8 +17,6 @@
 """Classes for outputting the converted repository to SVN."""
 
 
-from __future__ import generators
-
 import os
 
 from cvs2svn_lib import config

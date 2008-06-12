@@ -17,8 +17,6 @@
 """This module contains classes to set cvs2svn run options."""
 
 
-from __future__ import generators
-
 import sys
 import os
 import re

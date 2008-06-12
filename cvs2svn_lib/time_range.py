@@ -17,9 +17,6 @@
 """This module contains a class to manage time ranges."""
 
 
-from __future__ import generators
-
-
 class TimeRange(object):
   __slots__ = ('t_min', 't_max')
 

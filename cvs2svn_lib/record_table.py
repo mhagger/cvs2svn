@@ -33,8 +33,6 @@ been written by filling them with packer.empty_value.  If a record is
 read which contains packer.empty_value, then a KeyError is raised."""
 
 
-from __future__ import generators
-
 import os
 import types
 import struct

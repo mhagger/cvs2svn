@@ -17,8 +17,6 @@
 """This module contains database facilities used by cvs2svn."""
 
 
-from __future__ import generators
-
 import cPickle
 
 from cvs2svn_lib import config

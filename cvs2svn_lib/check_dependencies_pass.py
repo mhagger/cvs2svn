@@ -17,8 +17,6 @@
 """This module defines some passes that can be used for debugging cv2svn."""
 
 
-from __future__ import generators
-
 from cvs2svn_lib import config
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.common import FatalException

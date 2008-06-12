@@ -70,8 +70,6 @@ even further.
 
 """
 
-from __future__ import generators
-
 import sys
 import os
 import shutil

@@ -17,9 +17,6 @@
 """This module contains classes that hold the cvs2svn output options."""
 
 
-from __future__ import generators
-
-
 class OutputOption:
   """Represents an output choice for a run of cvs2svn."""
 

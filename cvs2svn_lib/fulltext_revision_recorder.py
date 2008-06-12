@@ -21,8 +21,6 @@ revision.  This method should be overwritten to do something with the
 fulltext and possibly return a revision_recorder_token."""
 
 
-from __future__ import generators
-
 from cvs2svn_lib.revision_manager import RevisionRecorder
 
 

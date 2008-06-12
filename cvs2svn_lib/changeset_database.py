@@ -17,8 +17,6 @@
 """This module contains classes to store changesets."""
 
 
-from __future__ import generators
-
 from cvs2svn_lib.changeset import Changeset
 from cvs2svn_lib.changeset import RevisionChangeset
 from cvs2svn_lib.changeset import OrderedChangeset

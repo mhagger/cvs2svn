@@ -17,8 +17,6 @@
 """This module defines the passes that make up a conversion."""
 
 
-from __future__ import generators
-
 import sys
 import os
 import shutil

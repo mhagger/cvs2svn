@@ -17,8 +17,6 @@
 """This module contains the SVNCommitCreator class."""
 
 
-from __future__ import generators
-
 import time
 
 from cvs2svn_lib import config

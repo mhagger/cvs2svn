@@ -17,9 +17,6 @@
 """Represent CVSRevision metadata."""
 
 
-from __future__ import generators
-
-
 class Metadata(object):
   def __init__(self, id, author, log_msg):
     self.id = id

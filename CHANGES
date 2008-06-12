@@ -13,6 +13,7 @@ Version ?.?.? (not yet released)
  * Fix svn dumpfile conformance:
    - Don't include a leading '/' for Node-path.
    - Include the Node-kind field when copying nodes.
+ * Make symlink test create symlinks explicitly, to avoid packaging problems.
 
  Improvements and output changes:
 

@@ -3101,21 +3101,40 @@ def symlinks():
 
   # This is a test for issue #97.
 
-  if not os.path.islink(
-      os.path.join(test_data_dir, 'symlinks-cvsrepos', 'proj', 'dir2')
-      ):
+  proj = os.path.join(test_data_dir, 'symlinks-cvsrepos', 'proj')
+  links = [
+      (
+          os.path.join('..', 'file.txt,v'),
+          os.path.join(proj, 'dir1', 'file.txt,v'),
+          ),
+      (
+          'dir1',
+          os.path.join(proj, 'dir2'),
+          ),
+      ]
+
+  try:
+    os.symlink
+  except AttributeError:
     # Apparently this OS doesn't support symlinks, so skip test.
     raise svntest.Skip()
 
-  conv = ensure_conversion('symlinks')
-  conv.logs[2].check('', (
-    ('/%(trunk)s/proj', 'A'),
-    ('/%(trunk)s/proj/file.txt', 'A'),
-    ('/%(trunk)s/proj/dir1', 'A'),
-    ('/%(trunk)s/proj/dir1/file.txt', 'A'),
-    ('/%(trunk)s/proj/dir2', 'A'),
-    ('/%(trunk)s/proj/dir2/file.txt', 'A'),
-    ))
+  try:
+    for (src,dst) in links:
+      os.symlink(src, dst)
+
+    conv = ensure_conversion('symlinks')
+    conv.logs[2].check('', (
+      ('/%(trunk)s/proj', 'A'),
+      ('/%(trunk)s/proj/file.txt', 'A'),
+      ('/%(trunk)s/proj/dir1', 'A'),
+      ('/%(trunk)s/proj/dir1/file.txt', 'A'),
+      ('/%(trunk)s/proj/dir2', 'A'),
+      ('/%(trunk)s/proj/dir2/file.txt', 'A'),
+      ))
+  finally:
+    for (src,dst) in links:
+      os.remove(dst)
 
 
 def empty_trunk_path():

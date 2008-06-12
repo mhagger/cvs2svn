@@ -19,8 +19,6 @@
 
 from __future__ import generators
 
-from cvs2svn_lib.set_support import *
-
 
 # A cvs_item doesn't depend on any cvs_items in either pred or succ:
 LINK_NONE = 0

@@ -96,7 +96,6 @@ import cStringIO
 import re
 import time
 
-from cvs2svn_lib.set_support import *
 from cvs2svn_lib import config
 from cvs2svn_lib.common import DB_OPEN_NEW
 from cvs2svn_lib.common import DB_OPEN_READ

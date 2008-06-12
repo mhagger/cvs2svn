@@ -21,7 +21,6 @@ from __future__ import generators
 
 import re
 
-from cvs2svn_lib.set_support import *
 from cvs2svn_lib.common import InternalError
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.context import Ctx

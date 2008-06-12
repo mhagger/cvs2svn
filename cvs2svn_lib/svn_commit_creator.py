@@ -21,7 +21,6 @@ from __future__ import generators
 
 import time
 
-from cvs2svn_lib.set_support import *
 from cvs2svn_lib import config
 from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.common import InternalError

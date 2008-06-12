@@ -23,7 +23,6 @@ fulltext and possibly return a revision_recorder_token."""
 
 from __future__ import generators
 
-from cvs2svn_lib.set_support import *
 from cvs2svn_lib.symbol import Trunk
 from cvs2svn_lib.cvs_item import CVSRevision
 from cvs2svn_lib.cvs_item import CVSRevisionAbsent

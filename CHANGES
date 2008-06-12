@@ -18,6 +18,7 @@ Version ?.?.? (not yet released)
  Improvements and output changes:
 
  Miscellaneous:
+ * cvs2svn now requires Python version 2.4 or later.
 
 
 Version 2.1.1 (15 April 2008)

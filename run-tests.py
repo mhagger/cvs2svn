@@ -45,9 +45,10 @@ import locale
 from difflib import Differ
 
 # Make sure this Python is recent enough.
-if sys.hexversion < 0x02020000:
-  sys.stderr.write("error: Python 2.2 or higher required, "
-                   "see www.python.org.\n")
+if sys.hexversion < 0x02040000:
+  sys.stderr.write(
+      'error: Python 2.4 or higher required; see www.python.org.\n'
+      )
   sys.exit(1)
 
 # This script needs to run in the correct directory.  Make sure we're there.

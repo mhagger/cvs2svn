@@ -30,8 +30,8 @@ import os
 
 # Make sure this Python is recent enough.  Do this as early as possible,
 # using only code compatible with Python 1.5.2 before the check.
-if sys.hexversion < 0x02020000:
-  sys.stderr.write("ERROR: Python 2.2 or higher required.\n")
+if sys.hexversion < 0x02040000:
+  sys.stderr.write("ERROR: Python 2.4 or higher required.\n")
   sys.exit(1)
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(sys.argv[0])))

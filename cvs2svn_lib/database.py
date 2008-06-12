@@ -72,7 +72,6 @@ if hasattr(anydbm._defaultmod, 'bsddb') \
             'has been\n'
         'reported to malfunction on some datasets, causing KeyError '
             'exceptions.\n'
-        'You may wish to upgrade your Python to version 2.3 or later.\n'
         % (warning_prefix,)
         )
   else:

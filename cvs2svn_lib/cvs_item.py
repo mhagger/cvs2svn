@@ -522,10 +522,6 @@ class CVSRevisionModification(CVSRevision):
 
   __slots__ = []
 
-  # Explicitly define pickle methods to get around a Python 2.2 bug:
-  __setstate__ = CVSRevision.__setstate__
-  __getstate__ = CVSRevision.__getstate__
-
   def get_cvs_symbol_ids_opened(self):
     return self.tag_ids + self.branch_ids
 
@@ -538,29 +534,17 @@ class CVSRevisionAdd(CVSRevisionModification):
 
   __slots__ = []
 
-  # Explicitly define pickle methods to get around a Python 2.2 bug:
-  __setstate__ = CVSRevisionModification.__setstate__
-  __getstate__ = CVSRevisionModification.__getstate__
-
 
 class CVSRevisionChange(CVSRevisionModification):
   """A CVSRevision that modifies a file that already existed on this LOD."""
 
   __slots__ = []
 
-  # Explicitly define pickle methods to get around a Python 2.2 bug:
-  __setstate__ = CVSRevisionModification.__setstate__
-  __getstate__ = CVSRevisionModification.__getstate__
-
 
 class CVSRevisionAbsent(CVSRevision):
   """A CVSRevision for which the file is nonexistent on this LOD."""
 
   __slots__ = []
-
-  # Explicitly define pickle methods to get around a Python 2.2 bug:
-  __setstate__ = CVSRevision.__setstate__
-  __getstate__ = CVSRevision.__getstate__
 
   def get_cvs_symbol_ids_opened(self):
     return []
@@ -570,10 +554,6 @@ class CVSRevisionDelete(CVSRevisionAbsent):
   """A CVSRevision that deletes a file that existed on this LOD."""
 
   __slots__ = []
-
-  # Explicitly define pickle methods to get around a Python 2.2 bug:
-  __setstate__ = CVSRevisionAbsent.__setstate__
-  __getstate__ = CVSRevisionAbsent.__getstate__
 
 
 class CVSRevisionNoop(CVSRevisionAbsent):
@@ -586,10 +566,6 @@ class CVSRevisionNoop(CVSRevisionAbsent):
   away."""
 
   __slots__ = []
-
-  # Explicitly define pickle methods to get around a Python 2.2 bug:
-  __setstate__ = CVSRevisionAbsent.__setstate__
-  __getstate__ = CVSRevisionAbsent.__getstate__
 
 
 # A map
@@ -812,10 +788,6 @@ class CVSBranchNoop(CVSBranch):
 
   __slots__ = []
 
-  # Explicitly define pickle methods to get around a Python 2.2 bug:
-  __setstate__ = CVSBranch.__setstate__
-  __getstate__ = CVSBranch.__getstate__
-
   def get_cvs_symbol_ids_opened(self):
     return []
 
@@ -917,10 +889,6 @@ class CVSTagNoop(CVSTag):
   """A CVSTag whose source is a CVSRevisionAbsent."""
 
   __slots__ = []
-
-  # Explicitly define pickle methods to get around a Python 2.2 bug:
-  __setstate__ = CVSTag.__setstate__
-  __getstate__ = CVSTag.__getstate__
 
 
 # A map

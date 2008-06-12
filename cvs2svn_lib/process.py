@@ -20,6 +20,7 @@
 import sys
 import os
 import types
+import subprocess
 
 from cvs2svn_lib.boolean import *
 from cvs2svn_lib.common import FatalError
@@ -75,59 +76,20 @@ else:
     return ' '.join(map(escape_shell_arg, argv))
 
 
-# ============================================================================
-
-
-# Opening pipes was a mess before Python 2.4, because some methods did
-# not exist on some platforms, and some behaved differenly on other.
-# Python 2.4 solved this by adding the subprocess module, but since we
-# cannot require such a new version, we cannot use it directly, but
-# must implement a simplified Popen using the best means neccessary.
-#
-# The SimplePopen class only has the following members and methods, all
-# behaving as documented in the subprocess.Popen class:
-#     - stdin
-#     - stdout
-#     - stderr
-#     - wait
-try:
-  # First try subprocess.Popen...
-  import subprocess
-  class SimplePopen:
-    def __init__(self, cmd, capture_stderr):
-      if capture_stderr:
-        stderr = subprocess.PIPE
-      else:
-        stderr = None
-      self._popen = subprocess.Popen(cmd, stdin=subprocess.PIPE,
-                                    stdout=subprocess.PIPE, stderr=stderr)
-      self.stdin = self._popen.stdin
-      self.stdout = self._popen.stdout
-      if capture_stderr:
-        self.stderr = self._popen.stderr
-      self.wait = self._popen.wait
-except ImportError:
-  import popen2
-  if hasattr(popen2, 'Popen3'):
-    # ...then try popen2.Popen3...
-    class SimplePopen:
-      def __init__(self, cmd, capture_stderr):
-        self._popen3 = popen2.Popen3(cmd, capture_stderr)
-        self.stdin = self._popen3.tochild
-        self.stdout = self._popen3.fromchild
-        if capture_stderr:
-          self.stderr = self._popen3.childerr
-        self.wait = self._popen3.wait
-  else:
-    # ...and if all fails, use popen2.popen3...
-    class SimplePopen:
-      def __init__(self, cmd, capture_stderr):
-        if type(cmd) != types.StringType:
-          cmd = argv_to_command_string(cmd)
-        self.stdout, self.stdin, self.stderr = popen2.popen3(cmd, mode='b')
-      def wait(self):
-        return self.stdout.close() or self.stdin.close() or \
-               self.stderr.close()
+class SimplePopen:
+  def __init__(self, cmd, capture_stderr):
+    if capture_stderr:
+      stderr = subprocess.PIPE
+    else:
+      stderr = None
+    self._popen = subprocess.Popen(
+        cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=stderr
+        )
+    self.stdin = self._popen.stdin
+    self.stdout = self._popen.stdout
+    if capture_stderr:
+      self.stderr = self._popen.stderr
+    self.wait = self._popen.wait
 
 
 def run_command(command):

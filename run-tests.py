@@ -168,15 +168,10 @@ def repos_to_url(path_to_svn_repos):
     rpath = '/' + rpath
   return 'file://%s' % rpath.replace(os.sep, '/')
 
-if hasattr(time, 'strptime'):
-  def svn_strptime(timestr):
-    return time.strptime(timestr, '%Y-%m-%d %H:%M:%S')
-else:
-  # This is for Python earlier than 2.3 on Windows
-  _re_rev_date = re.compile(r'(\d{4})-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d)')
-  def svn_strptime(timestr):
-    matches = _re_rev_date.match(timestr).groups()
-    return tuple(map(int, matches)) + (0, 1, -1)
+
+def svn_strptime(timestr):
+  return time.strptime(timestr, '%Y-%m-%d %H:%M:%S')
+
 
 class Log:
   def __init__(self, revision, author, date, symbols):

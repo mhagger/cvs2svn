@@ -29,7 +29,6 @@ try:
 except AttributeError:
   my_getopt = getopt.getopt
 
-from cvs2svn_lib.boolean import *
 from cvs2svn_lib.version import VERSION
 from cvs2svn_lib import config
 from cvs2svn_lib.common import warning_prefix

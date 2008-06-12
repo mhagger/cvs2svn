@@ -21,7 +21,6 @@ from __future__ import generators
 
 import cPickle
 
-from cvs2svn_lib.boolean import *
 from cvs2svn_lib import config
 from cvs2svn_lib.common import InternalError
 from cvs2svn_lib.context import Ctx

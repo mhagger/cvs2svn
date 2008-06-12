@@ -19,7 +19,6 @@
 
 import os
 
-from cvs2svn_lib.boolean import *
 from cvs2svn_lib.common import CommandError
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.config import DUMPFILE

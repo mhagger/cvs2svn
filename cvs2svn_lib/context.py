@@ -19,7 +19,6 @@
 
 import os
 
-from cvs2svn_lib.boolean import *
 from cvs2svn_lib import config
 
 

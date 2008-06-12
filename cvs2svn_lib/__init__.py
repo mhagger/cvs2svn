@@ -16,5 +16,3 @@
 
 """This package contains modules that support cvs2svn."""
 
-from cvs2svn_lib.boolean import *
-

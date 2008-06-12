@@ -19,7 +19,6 @@
 
 import md5
 
-from cvs2svn_lib.boolean import *
 from cvs2svn_lib.set_support import *
 from cvs2svn_lib import config
 from cvs2svn_lib.common import CommandError

@@ -53,7 +53,6 @@ CVSItem
 
 from __future__ import generators
 
-from cvs2svn_lib.boolean import *
 from cvs2svn_lib.set_support import *
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.symbol import Trunk

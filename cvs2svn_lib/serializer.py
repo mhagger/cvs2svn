@@ -23,8 +23,6 @@ import marshal
 import cPickle
 import zlib
 
-from cvs2svn_lib.boolean import *
-
 
 class Serializer:
   """An object able to serialize/deserialize some class of objects."""

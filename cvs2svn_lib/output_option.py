@@ -19,8 +19,6 @@
 
 from __future__ import generators
 
-from cvs2svn_lib.boolean import *
-
 
 class OutputOption:
   """Represents an output choice for a run of cvs2svn."""

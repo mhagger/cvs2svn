@@ -22,7 +22,6 @@ from __future__ import generators
 import os
 import re
 
-from cvs2svn_lib.boolean import *
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import IllegalSVNPathError

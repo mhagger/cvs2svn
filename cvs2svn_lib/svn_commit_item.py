@@ -17,7 +17,6 @@
 """This module contains class SVNCommitItem."""
 
 
-from cvs2svn_lib.boolean import *
 from cvs2svn_lib.context import Ctx
 
 

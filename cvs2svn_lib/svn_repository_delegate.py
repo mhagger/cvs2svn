@@ -17,9 +17,6 @@
 """This module contains the SVNRepositoryDelegate class."""
 
 
-from cvs2svn_lib.boolean import *
-
-
 class SVNRepositoryDelegate:
   """Abstract superclass for any delegate to SVNOutputOption.
 

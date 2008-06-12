@@ -26,7 +26,6 @@ try:
 except ImportError:
   pass
 
-from cvs2svn_lib.boolean import *
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.run_options import RunOptions
 from cvs2svn_lib.context import Ctx

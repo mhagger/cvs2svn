@@ -41,7 +41,6 @@ import time
 import getopt
 import threading
 
-from cvs2svn_lib.boolean import *
 from cvs2svn_lib.common import FatalException
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.main import main

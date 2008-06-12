@@ -36,7 +36,6 @@ There are five types of SVNCommits:
 """
 
 
-from cvs2svn_lib.boolean import *
 from cvs2svn_lib.common import InternalError
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.log import Log

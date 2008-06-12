@@ -22,7 +22,6 @@ from __future__ import generators
 import re
 import cPickle
 
-from cvs2svn_lib.boolean import *
 from cvs2svn_lib.common import DB_OPEN_NEW
 from cvs2svn_lib.common import DB_OPEN_READ
 from cvs2svn_lib.common import DB_OPEN_WRITE

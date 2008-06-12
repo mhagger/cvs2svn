@@ -24,7 +24,6 @@ import time
 import cPickle
 from cStringIO import StringIO
 
-from cvs2svn_lib.boolean import *
 from cvs2svn_lib.set_support import *
 from cvs2svn_lib import config
 from cvs2svn_lib.artifact_manager import artifact_manager

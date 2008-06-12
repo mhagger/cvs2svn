@@ -21,8 +21,6 @@ import sys
 import time
 import threading
 
-from cvs2svn_lib.boolean import *
-
 
 class Log:
   """A Simple logging facility.

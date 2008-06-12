@@ -19,8 +19,6 @@
 
 from __future__ import generators
 
-from cvs2svn_lib.boolean import *
-
 
 class Metadata(object):
   def __init__(self, id, author, log_msg):

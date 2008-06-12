@@ -19,8 +19,6 @@
 
 import bisect
 
-from cvs2svn_lib.boolean import *
-
 from cvs2svn_lib.common import SVN_INVALID_REVNUM
 
 

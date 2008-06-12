@@ -17,7 +17,6 @@
 """This module manages the artifacts produced by conversion passes."""
 
 
-from cvs2svn_lib.boolean import *
 from cvs2svn_lib.set_support import *
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.log import Log

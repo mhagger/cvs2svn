@@ -19,7 +19,6 @@
 
 from __future__ import generators
 
-from cvs2svn_lib.boolean import *
 from cvs2svn_lib.set_support import *
 from cvs2svn_lib import config
 from cvs2svn_lib.context import Ctx

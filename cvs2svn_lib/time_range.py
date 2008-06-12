@@ -19,8 +19,6 @@
 
 from __future__ import generators
 
-from cvs2svn_lib.boolean import *
-
 
 class TimeRange(object):
   __slots__ = ('t_min', 't_max')

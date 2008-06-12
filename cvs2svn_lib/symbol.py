@@ -78,7 +78,6 @@ therefore, in later passes the term LineOfDevelopment (abbreviated to
 LOD) is used to refer to such objects."""
 
 
-from cvs2svn_lib.boolean import *
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.common import path_join
 

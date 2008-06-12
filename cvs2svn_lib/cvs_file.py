@@ -18,7 +18,6 @@
 
 import os
 
-from cvs2svn_lib.boolean import *
 from cvs2svn_lib.common import path_join
 from cvs2svn_lib.context import Ctx
 

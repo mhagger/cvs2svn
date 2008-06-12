@@ -39,8 +39,6 @@ from __future__ import generators
 import struct
 from cStringIO import StringIO
 
-from cvs2svn_lib.boolean import *
-
 
 class AppleSingleFormatError(IOError):
   """The stream was not in correct AppleSingle format."""

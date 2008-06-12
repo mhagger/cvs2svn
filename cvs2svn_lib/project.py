@@ -21,7 +21,6 @@ import re
 import os
 import cPickle
 
-from cvs2svn_lib.boolean import *
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import path_join

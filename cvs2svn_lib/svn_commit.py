@@ -291,7 +291,7 @@ class SVNPostCommit(SVNRevisionCommit):
 
 
 class SVNSymbolCommit(SVNCommit):
-  text_wrapper = textwrap.TextWrapper(width=72)
+  text_wrapper = textwrap.TextWrapper(width=76)
 
   def __init__(self, symbol, cvs_symbol_ids, date, revnum):
     SVNCommit.__init__(self, date, revnum)

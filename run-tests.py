@@ -370,7 +370,7 @@ def erase(path):
     os.remove(path)
 
 
-log_msg_text_wrapper = textwrap.TextWrapper(width=72)
+log_msg_text_wrapper = textwrap.TextWrapper(width=76)
 
 def sym_log_msg(symbolic_name, is_tag=None):
   """Return the expected log message for a cvs2svn-synthesized revision

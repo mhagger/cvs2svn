@@ -7,6 +7,7 @@ Version ?.?.? (not yet released)
  * Allow vendor branches to be excluded, grafting child symbols to trunk.
  * By default, don't include .cvsignore files in output (except as svn:ignore).
  * Add option --keep-cvsignore to get the old behavior.
+ * Allow the user to specify the form of cvs2svn-generated log messages.
 
  Bugs fixed:
  * Fix issue #81: Remove svn:ignore property when .cvsignore is deleted.

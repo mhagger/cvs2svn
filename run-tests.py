@@ -42,6 +42,7 @@ import os
 import time
 import os.path
 import locale
+import textwrap
 from difflib import Differ
 
 # Make sure this Python is recent enough.
@@ -369,25 +370,22 @@ def erase(path):
     os.remove(path)
 
 
+log_msg_text_wrapper = textwrap.TextWrapper(width=72)
+
 def sym_log_msg(symbolic_name, is_tag=None):
   """Return the expected log message for a cvs2svn-synthesized revision
   creating branch or tag SYMBOLIC_NAME."""
-  # This is a copy-paste of part of cvs2svn's make_revision_props
+
+  # This reproduces the logic in SVNSymbolCommit.get_log_msg().
   if is_tag:
     type = 'tag'
   else:
     type = 'branch'
 
-  # In Python 2.2.3, we could use textwrap.fill().  Oh well :-).
-  if len(symbolic_name) >= 13:
-    space_or_newline = '\n'
-  else:
-    space_or_newline = ' '
-
-  log = "This commit was manufactured by cvs2svn to create %s%s'%s'." \
-      % (type, space_or_newline, symbolic_name)
-
-  return log
+  return log_msg_text_wrapper.fill(
+      "This commit was manufactured by cvs2svn to create %s '%s'."
+      % (type, symbolic_name)
+      )
 
 
 def make_conversion_id(

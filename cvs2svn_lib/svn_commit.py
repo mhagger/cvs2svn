@@ -36,6 +36,8 @@ There are five types of SVNCommits:
 """
 
 
+import textwrap
+
 from cvs2svn_lib.common import InternalError
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.log import Log
@@ -289,6 +291,8 @@ class SVNPostCommit(SVNRevisionCommit):
 
 
 class SVNSymbolCommit(SVNCommit):
+  text_wrapper = textwrap.TextWrapper(width=72)
+
   def __init__(self, symbol, cvs_symbol_ids, date, revnum):
     SVNCommit.__init__(self, date, revnum)
 
@@ -326,14 +330,9 @@ class SVNSymbolCommit(SVNCommit):
   def get_log_msg(self):
     """Return a manufactured log message for this commit."""
 
-    # In Python 2.2.3, we could use textwrap.fill().  Oh well :-).
-    space_or_newline = ' '
-    if len(self.symbol.name) >= 13:
-      space_or_newline = '\n'
-
-    return (
-        "This commit was manufactured by cvs2svn to create %s%s'%s'."
-        % (self._get_symbol_type(), space_or_newline, self.symbol.name)
+    return self.text_wrapper.fill(
+        "This commit was manufactured by cvs2svn to create %s '%s'."
+        % (self._get_symbol_type(), self.symbol.name)
         )
 
   def get_description(self):

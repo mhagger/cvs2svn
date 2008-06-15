@@ -36,8 +36,6 @@ class StatsKeeper:
     self._first_rev_date = 1L<<32
     self._last_rev_date = 0
     self._pass_timings = { }
-    self._start_time = time.time()
-    self._end_time = 0
     self._stats_reflect_exclude = False
     self.reset_cvs_rev_info()
 
@@ -47,9 +45,6 @@ class StatsKeeper:
 
   def log_duration_for_pass(self, duration, pass_num, pass_name):
     self._pass_timings[pass_num] = (pass_name, duration,)
-
-  def set_end_time(self, end):
-    self._end_time = end
 
   def set_stats_reflect_exclude(self, value):
     self._stats_reflect_exclude = value
@@ -170,7 +165,10 @@ class StatsKeeper:
     f.write('Timings (seconds):\n')
     f.write('------------------\n')
 
-    total = self._end_time - self._start_time
+    total = 0.0
+    for pass_num in passes:
+      (pass_name, duration,) = self._pass_timings[pass_num]
+      total += duration
 
     format = self._get_timing_format(total)
 

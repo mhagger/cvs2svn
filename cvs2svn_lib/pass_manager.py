@@ -160,8 +160,6 @@ class PassManager:
           artifact_manager.get_temp_file(config.STATISTICS_FILE)
           )
 
-    stats_keeper.set_start_time(time.time())
-
     # Tell the artifact manager about passes that are being skipped this run:
     for the_pass in self.passes[0:index_start]:
       artifact_manager.pass_skipped(the_pass)

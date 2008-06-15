@@ -74,13 +74,12 @@ class _NoPredNodes:
   def __len__(self):
     return len(self._nodes)
 
+  @staticmethod
   def _compare((node_1, changeset_1), (node_2, changeset_2)):
     """Define a (reverse) ordering on self._nodes."""
 
     return cmp(node_2.time_range, node_1.time_range) \
            or cmp(changeset_2, changeset_1)
-
-  _compare = staticmethod(_compare)
 
   def add(self, node):
     self._nodes.append( (node, self.changeset_db[node.id],) )

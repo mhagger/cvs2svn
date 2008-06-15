@@ -152,13 +152,12 @@ class StatsKeeper:
 
     return f.getvalue()
 
+  @staticmethod
   def _get_timing_format(value):
     # Output times with up to 3 decimal places:
     decimals = max(0, 4 - len('%d' % int(value)))
     length = len(('%%.%df' % decimals) % value)
     return '%%%d.%df' % (length, decimals,)
-
-  _get_timing_format = staticmethod(_get_timing_format)
 
   def single_pass_timing(self, pass_num):
     (pass_name, duration,) = self._pass_timings[pass_num]

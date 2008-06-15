@@ -127,6 +127,7 @@ class Project(object):
   def __hash__(self):
     return self.id
 
+  @staticmethod
   def determine_repository_root(path):
     """Ascend above the specified PATH if necessary to find the
     cvs_repository_root (a directory containing a CVSROOT directory)
@@ -157,8 +158,6 @@ class Project(object):
       cvs_module = module_component + "/" + cvs_module
 
     return path, cvs_module
-
-  determine_repository_root = staticmethod(determine_repository_root)
 
   def transform_symbol(self, cvs_file, symbol_name, revision):
     """Transform the symbol SYMBOL_NAME.

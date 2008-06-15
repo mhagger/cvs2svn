@@ -651,6 +651,7 @@ class InitializeChangesetsPass(Pass):
     if changeset_items:
       yield changeset_items
 
+  @staticmethod
   def compare_items(a, b):
       return (
           cmp(a.timestamp, b.timestamp)
@@ -658,8 +659,6 @@ class InitializeChangesetsPass(Pass):
           or cmp([int(x) for x in a.rev.split('.')],
                  [int(x) for x in b.rev.split('.')])
           or cmp(a.id, b.id))
-
-  compare_items = staticmethod(compare_items)
 
   def break_internal_dependencies(self, changeset_items):
     """Split up CHANGESET_ITEMS if necessary to break internal dependencies.

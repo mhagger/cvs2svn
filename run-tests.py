@@ -481,6 +481,7 @@ class Conversion:
   # get_last_pass()).
   last_pass = None
 
+  @classmethod
   def get_last_pass(cls):
     """Return the number of cvs2svn's last pass."""
 
@@ -488,8 +489,6 @@ class Conversion:
       out = run_cvs2svn(None, '--help-passes')
       cls.last_pass = int(out[-1].split()[0])
     return cls.last_pass
-
-  get_last_pass = classmethod(get_last_pass)
 
   def __init__(
       self, conv_id, name, error_re, passbypass, symbols, args,

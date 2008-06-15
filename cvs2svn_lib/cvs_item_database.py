@@ -116,6 +116,7 @@ class LinewiseSerializer(Serializer):
   def __init__(self, wrapee):
     self.wrapee = wrapee
 
+  @staticmethod
   def _encode_newlines(s):
     """Return s with newlines and backslashes encoded.
 
@@ -133,11 +134,10 @@ class LinewiseSerializer(Serializer):
             .replace('\r', '\\r') \
             .replace('\x1a', '\\z')
 
-  _encode_newlines = staticmethod(_encode_newlines)
-
   _escape_re = re.compile(r'(\\\\|\\n|\\r|\\z)')
   _subst = {'\\n' : '\n', '\\r' : '\r', '\\z' : '\x1a', '\\\\' : '\\'}
 
+  @staticmethod
   def _decode_newlines(s):
     """Return s with newlines and backslashes decoded.
 
@@ -149,8 +149,6 @@ class LinewiseSerializer(Serializer):
       return LinewiseSerializer._subst[m.group(1)]
 
     return LinewiseSerializer._escape_re.sub(repl, s)
-
-  _decode_newlines = staticmethod(_decode_newlines)
 
   def dumpf(self, f, object):
     f.write(self.dumps(object))

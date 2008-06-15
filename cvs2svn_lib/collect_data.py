@@ -454,6 +454,7 @@ class _SymbolDataCollector(object):
 
     del self._symbol_defs
 
+  @staticmethod
   def rev_to_branch_number(revision):
     """Return the branch_number of the branch on which REVISION lies.
 
@@ -465,8 +466,6 @@ class _SymbolDataCollector(object):
     if is_trunk_revision(revision):
       return None
     return revision[:revision.rindex(".")]
-
-  rev_to_branch_number = staticmethod(rev_to_branch_number)
 
   def rev_to_branch_data(self, revision):
     """Return the branch_data of the branch on which REVISION lies.

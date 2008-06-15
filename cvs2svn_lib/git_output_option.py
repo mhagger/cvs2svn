@@ -335,10 +335,9 @@ class GitOutputOption(OutputOption):
     (name, email,) = self.author_transforms.get(author, (author, author,))
     return '%s <%s>' % (name, email,)
 
+  @staticmethod
   def _get_log_msg(svn_commit):
     return svn_commit.get_log_msg()
-
-  _get_log_msg = staticmethod(_get_log_msg)
 
   def process_initial_project_commit(self, svn_commit):
     self._mirror.start_commit(svn_commit.revnum)

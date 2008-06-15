@@ -17,7 +17,6 @@
 """This module manages the artifacts produced by conversion passes."""
 
 
-from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.artifact import TempFile
 
@@ -212,14 +211,16 @@ class ArtifactManager:
     self._active_passes.remove(which_pass)
     self._unregister_artifacts(which_pass)
 
-  def pass_done(self, which_pass):
+  def pass_done(self, which_pass, skip_cleanup):
     """WHICH_PASS is done.
 
-    Clean up all artifacts that are no longer needed."""
+    Clean up all artifacts that are no longer needed.  If SKIP_CLEANUP
+    is True, then just do the bookkeeping without actually calling
+    artifact.cleanup()."""
 
     self._active_passes.remove(which_pass)
     artifacts = self._unregister_artifacts(which_pass)
-    if not Ctx().skip_cleanup:
+    if not skip_cleanup:
       for artifact in artifacts:
         artifact.cleanup()
 

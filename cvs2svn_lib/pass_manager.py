@@ -184,7 +184,7 @@ class PassManager:
       Ctx().clean()
       # Allow the artifact manager to clean up artifacts that are no
       # longer needed:
-      artifact_manager.pass_done(the_pass)
+      artifact_manager.pass_done(the_pass, Ctx().skip_cleanup)
 
       check_for_garbage()
 
@@ -199,7 +199,7 @@ class PassManager:
 
     if index_end == self.num_passes:
       # The overall conversion is done:
-      artifact_manager.pass_done(self)
+      artifact_manager.pass_done(self, Ctx().skip_cleanup)
     else:
       # The end is yet to come:
       artifact_manager.pass_continued(self)

@@ -156,7 +156,9 @@ class PassManager:
     if index_start == 0:
       stats_keeper = StatsKeeper()
     else:
-      stats_keeper = read_stats_keeper()
+      stats_keeper = read_stats_keeper(
+          artifact_manager.get_temp_file(config.STATISTICS_FILE)
+          )
 
     stats_keeper.set_start_time(time.time())
 
@@ -178,7 +180,9 @@ class PassManager:
       stats_keeper.log_duration_for_pass(
           end_time - start_time, i + 1, the_pass.name
           )
-      stats_keeper.archive()
+      stats_keeper.archive(
+          artifact_manager.get_temp_file(config.STATISTICS_FILE)
+          )
       Log().normal(stats_keeper.single_pass_timing(i + 1))
       start_time = end_time
       Ctx().clean()

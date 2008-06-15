@@ -24,7 +24,6 @@ import time
 import cPickle
 from cStringIO import StringIO
 
-from cvs2svn_lib import config
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.cvs_item import CVSRevision
 from cvs2svn_lib.cvs_item import CVSBranch
@@ -113,8 +112,7 @@ class StatsKeeper:
     # This can get kinda large, so we don't store it:
     return state
 
-  def archive(self):
-    filename = artifact_manager.get_temp_file(config.STATISTICS_FILE)
+  def archive(self, filename):
     f = open(filename, 'wb')
     cPickle.dump(self, f)
     f.close()
@@ -189,13 +187,11 @@ class StatsKeeper:
     return f.getvalue()
 
 
-def read_stats_keeper():
+def read_stats_keeper(filename):
   """Factory function: Return a _StatsKeeper instance.
 
-  If STATISTICS_FILE exists, read the instance from the file;
-  otherwise, create and return a new instance."""
+  Read the instance from FILENAME as written by StatsKeeper.archive()."""
 
-  filename = artifact_manager.get_temp_file(config.STATISTICS_FILE)
   f = open(filename, 'rb')
   retval = cPickle.load(f)
   f.close()

@@ -145,45 +145,48 @@ class PassManager:
     index_start = run_options.start_pass - 1
     index_end = run_options.end_pass
 
-    artifact_manager.register_temp_file(config.STATISTICS_FILE, self)
-
     # Inform the artifact manager when artifacts are created and used:
-    for the_pass in self.passes:
+    for (i, the_pass) in enumerate(self.passes):
       the_pass.register_artifacts()
-
-    # Consider self to be running during the whole conversion, to keep
-    # STATISTICS_FILE alive:
-    artifact_manager.pass_started(self)
-
-    if index_start == 0:
-      stats_keeper = StatsKeeper()
-    else:
-      stats_keeper = read_stats_keeper(
-          artifact_manager.get_temp_file(config.STATISTICS_FILE)
+      # Each pass creates a new version of the statistics file:
+      artifact_manager.register_temp_file(
+          config.STATISTICS_FILE % (i + 1,), the_pass
           )
+      if i != 0:
+        # Each pass subsequent to the first reads the statistics file
+        # from the preceding pass:
+        artifact_manager.register_temp_file_needed(
+            config.STATISTICS_FILE % (i + 1 - 1,), the_pass
+            )
 
     # Tell the artifact manager about passes that are being skipped this run:
     for the_pass in self.passes[0:index_start]:
       artifact_manager.pass_skipped(the_pass)
-
-    # Clear the pass timings for passes that will have to be redone:
-    for i in range(index_start, len(self.passes)):
-      stats_keeper.clear_duration_for_pass(i + 1)
 
     start_time = time.time()
     for i in range(index_start, index_end):
       the_pass = self.passes[i]
       Log().quiet('----- pass %d (%s) -----' % (i + 1, the_pass.name,))
       artifact_manager.pass_started(the_pass)
+
+      if i == 0:
+        stats_keeper = StatsKeeper()
+      else:
+        stats_keeper = read_stats_keeper(
+            artifact_manager.get_temp_file(
+                config.STATISTICS_FILE % (i + 1 - 1,)
+                )
+            )
+
       the_pass.run(run_options, stats_keeper)
       end_time = time.time()
       stats_keeper.log_duration_for_pass(
           end_time - start_time, i + 1, the_pass.name
           )
-      stats_keeper.archive(
-          artifact_manager.get_temp_file(config.STATISTICS_FILE)
-          )
       Log().normal(stats_keeper.single_pass_timing(i + 1))
+      stats_keeper.archive(
+          artifact_manager.get_temp_file(config.STATISTICS_FILE % (i + 1,))
+          )
       start_time = end_time
       Ctx().clean()
       # Allow the artifact manager to clean up artifacts that are no
@@ -198,13 +201,6 @@ class PassManager:
 
     Log().quiet(stats_keeper)
     Log().normal(stats_keeper.timings())
-
-    if index_end == self.num_passes:
-      # The overall conversion is done:
-      artifact_manager.pass_done(self, Ctx().skip_cleanup)
-    else:
-      # The end is yet to come:
-      artifact_manager.pass_continued(self)
 
     # Consistency check:
     artifact_manager.check_clean()

@@ -16,8 +16,8 @@
 
 """This module contains the StatsKeeper class.
 
-A StatsKeeper can pickle itself to STATISTICS_FILE.  This module also
-includes a function to read a StatsKeeper from STATISTICS_FILE."""
+A StatsKeeper can pickle itself to a STATISTICS_FILE.  This module
+also includes a function to read a StatsKeeper from a STATISTICS_FILE."""
 
 
 import time
@@ -38,10 +38,6 @@ class StatsKeeper:
     self._pass_timings = { }
     self._stats_reflect_exclude = False
     self.reset_cvs_rev_info()
-
-  def clear_duration_for_pass(self, pass_num):
-    if pass_num in self._pass_timings:
-      del self._pass_timings[pass_num]
 
   def log_duration_for_pass(self, duration, pass_num, pass_name):
     self._pass_timings[pass_num] = (pass_name, duration,)

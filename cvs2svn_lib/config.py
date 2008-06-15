@@ -93,10 +93,11 @@ CHANGESETS_ALLBROKEN_STORE = 'changesets-allbroken.pck'
 # order that the changesets should be committed to svn.
 CHANGESETS_SORTED_DATAFILE = 'changesets-s.txt'
 
-# This file contains a marshalled copy of all the statistics that we
-# gather throughout the various runs of cvs2svn.  The data stored as a
-# marshalled dictionary.
-STATISTICS_FILE = 'statistics.pck'
+# A file containing a marshalled copy of all the statistics that have
+# been gathered so far is written at the end of each pass as a
+# marshalled dictionary.  This is the pattern used to generate the
+# filenames.
+STATISTICS_FILE = 'statistics-%02d.pck'
 
 # This text file contains records (1 per line) that describe openings
 # and closings for copies to tags and branches.  The format is as

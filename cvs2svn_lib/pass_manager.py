@@ -132,9 +132,11 @@ class PassManager:
   def run(self, run_options):
     """Run the specified passes, one after another.
 
-    START_PASS is the number of the first pass that should be run.
-    END_PASS is the number of the last pass that should be run.  It
-    must be that 1 <= START_PASS <= END_PASS <= self.num_passes."""
+    RUN_OPTIONS will be passed to the Passes' run() methods.
+    RUN_OPTIONS.start_pass is the number of the first pass that should
+    be run.  RUN_OPTIONS.end_pass is the number of the last pass that
+    should be run.  It must be that 1 <= RUN_OPTIONS.start_pass <=
+    RUN_OPTIONS.end_pass <= self.num_passes."""
 
     # Convert start_pass and end_pass into the indices of the passes
     # to execute, using the Python index range convention (i.e., first

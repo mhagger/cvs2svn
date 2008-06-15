@@ -32,7 +32,7 @@ class ArtifactNotActiveError(Exception):
 
 
 class ArtifactManager:
-  """Manager artifacts that are created by one pass but needed by others.
+  """Manage artifacts that are created by one pass but needed by others.
 
   This class is responsible for cleaning up artifacts once they are no
   longer needed.  The trick is that cvs2svn can be run pass by pass,

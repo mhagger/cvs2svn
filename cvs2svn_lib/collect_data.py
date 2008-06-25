@@ -91,7 +91,8 @@ _valid_revision_re = re.compile(r'''
     ^
     (?:[1-9]\d*\.)+     # Digit groups (but not starting with "0") with
                         # trailing dots
-    (?:[1-9]\d*)        # And the last digit group
+    (?:\d+)             # And the last digit group, which might be "0" if the
+                        # user has renumbered revisions using "cvs commit -r".
     $
     ''', re.VERBOSE)
 

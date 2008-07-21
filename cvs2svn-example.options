@@ -118,11 +118,14 @@ Log().log_level = Log.NORMAL
 # repository must not already exist).  The second (optional) argument
 # allows a --fs-type option to be passed to "svnadmin create".  The
 # third (optional) argument can be specified to set the
-# --bdb-txn-nosync option on a bdb repository:
+# --bdb-txn-nosync option on a bdb repository.  The fourth (optional)
+# argument can be specified to set a list of verbatim options to be passed
+# to "svnadmin create":
 ctx.output_option = NewRepositoryOutputOption(
     r'/path/to/svnrepo', # Path to repository
     #fs_type='fsfs', # Type of repository to create
     #bdb_txn_nosync=False, # For bsd repositories, this option can be added
+    #create_options=['--pre-1.5-compatible'], # Options for "svnadmin create"
     )
 
 # Use this output option if you would like cvs2svn to store the

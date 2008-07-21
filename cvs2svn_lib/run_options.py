@@ -98,6 +98,8 @@ history.
                              with --svnrepos)
       --bdb-txn-nosync       pass --bdb-txn-nosync to "svnadmin create" (for
                              use with --svnrepos)
+      --create-option=OPT    pass OPT to "svnadmin create" (for use with
+                             --svnrepos)
       --dumpfile=PATH        just produce a dumpfile; don't commit to a repos
       --dry-run              do not create a repository or a dumpfile;
                              just print what would happen.
@@ -210,7 +212,8 @@ class RunOptions:
       self.opts, self.args = my_getopt(cmd_args, 'hvqs:p:', [
           "options=",
 
-          "svnrepos=", "existing-svnrepos", "fs-type=", "bdb-txn-nosync",
+          "svnrepos=", "existing-svnrepos",
+          "fs-type=", "bdb-txn-nosync", "create-option=",
           "dumpfile=",
           "dry-run",
 
@@ -394,6 +397,7 @@ class RunOptions:
     existing_svnrepos = False
     fs_type = None
     bdb_txn_nosync = False
+    create_options = []
     dump_only = False
     dumpfile = None
     use_rcs = False
@@ -482,6 +486,8 @@ class RunOptions:
         fs_type = value
       elif opt == '--bdb-txn-nosync':
         bdb_txn_nosync = True
+      elif opt == '--create-option':
+        create_options.append(value)
       elif opt == '--cvs-revnums':
         ctx.svn_property_setters.append(CVSRevisionNumberSetter())
       elif opt == '--mime-types':
@@ -600,7 +606,8 @@ class RunOptions:
         ctx.output_option = ExistingRepositoryOutputOption(target)
       else:
         ctx.output_option = NewRepositoryOutputOption(
-            target, fs_type=fs_type, bdb_txn_nosync=bdb_txn_nosync)
+            target, fs_type=fs_type, bdb_txn_nosync=bdb_txn_nosync,
+            create_options=create_options)
     else:
       ctx.output_option = DumpfileOutputOption(dumpfile)
 

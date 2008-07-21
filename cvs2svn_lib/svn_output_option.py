@@ -646,10 +646,12 @@ class RepositoryOutputOption(SVNOutputOption):
 class NewRepositoryOutputOption(RepositoryOutputOption):
   """Output the result of the conversion into a new SVN repository."""
 
-  def __init__(self, target, fs_type=None, bdb_txn_nosync=None):
+  def __init__(self, target, fs_type=None, bdb_txn_nosync=None,
+               create_options=[]):
     RepositoryOutputOption.__init__(self, target)
     self.fs_type = fs_type
     self.bdb_txn_nosync = bdb_txn_nosync
+    self.create_options = create_options
 
   def check(self):
     RepositoryOutputOption.check(self)
@@ -660,6 +662,7 @@ class NewRepositoryOutputOption(RepositoryOutputOption):
 
   def setup(self, svn_rev_count):
     Log().normal("Creating new repository '%s'" % (self.target))
+    create_options_str = ' '.join(self.create_options)
     if Ctx().dry_run:
       # Do not actually create repository:
       pass
@@ -668,9 +671,9 @@ class NewRepositoryOutputOption(RepositoryOutputOption):
       # We still pass --bdb-txn-nosync.  It's a no-op if the default
       # repository type doesn't support it, but we definitely want
       # it if BDB is the default.
-      run_command('%s create %s "%s"'
+      run_command('%s create %s %s "%s"'
                   % (Ctx().svnadmin_executable, "--bdb-txn-nosync",
-                     self.target))
+                     create_options_str, self.target))
     elif self.fs_type == 'bdb':
       # User explicitly specified bdb.
       #
@@ -680,16 +683,16 @@ class NewRepositoryOutputOption(RepositoryOutputOption):
       # accessing the svn repository (until cvs is done, at least)).
       # But we'll turn no-sync off in self.finish(), unless
       # instructed otherwise.
-      run_command('%s create %s %s "%s"'
+      run_command('%s create %s %s %s "%s"'
                   % (Ctx().svnadmin_executable,
                      "--fs-type=bdb", "--bdb-txn-nosync",
-                     self.target))
+                     create_options_str, self.target))
     else:
       # User specified something other than bdb.
-      run_command('%s create %s "%s"'
+      run_command('%s create %s %s "%s"'
                   % (Ctx().svnadmin_executable,
                      "--fs-type=%s" % self.fs_type,
-                     self.target))
+                     create_options_str, self.target))
 
     RepositoryOutputOption.setup(self, svn_rev_count)
 

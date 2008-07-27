@@ -160,6 +160,9 @@ class AutoPropsPropertySetter(SVNPropertySetter):
       r'^' + property_name_pattern + r'$'
       )
 
+  quoted_re = re.compile(
+      r'^([\'\"]).*\1$'
+      )
   comment_re = re.compile(r'\s;')
 
   class Pattern:
@@ -217,6 +220,12 @@ class AutoPropsPropertySetter(SVNPropertySetter):
 
   def _add_pattern(self, pattern, props):
     propdict = {}
+    if self.quoted_re.match(pattern):
+      Log().warn(
+          '%s: Quoting is not supported in auto-props; please verify rule\n'
+          'for %r.  (Using pattern including quotation marks.)\n'
+          % (warning_prefix, pattern,)
+          )
     for prop in props.split(';'):
       prop = prop.strip()
       m = self.property_unset_re.match(prop)
@@ -232,6 +241,13 @@ class AutoPropsPropertySetter(SVNPropertySetter):
       if m:
         name = m.group('name')
         value = m.group('value')
+        if self.quoted_re.match(value):
+          Log().warn(
+              '%s: Quoting is not supported in auto-props; please verify\n'
+              'rule %r for pattern %r.  (Using value\n'
+              'including quotation marks.)\n'
+              % (warning_prefix, prop, pattern,)
+              )
         Log().debug(
             'auto-props: For %r, setting %r to %r.' % (pattern, name, value,)
             )

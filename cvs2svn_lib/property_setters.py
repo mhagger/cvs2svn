@@ -146,15 +146,11 @@ class AutoPropsPropertySetter(SVNPropertySetter):
   buggy and inconsistent.  Usually spaces are preserved, but if there
   is at least one semicolon in the value, and the *first* semicolon is
   preceded by a space, then that is treated as the start of a comment
-  and the rest of the line is silently discarded.  So we simply don't
-  allow spaces in the auto-props values, and if any are found, we
-  raise a FatalError."""
+  and the rest of the line is silently discarded."""
 
   property_unset_re = re.compile(r'^\!(?P<name>[^\=]+)$')
   property_set_re = re.compile(r'^(?P<name>[^\!\=][^\=]*)\=(?P<value>.*)$')
   property_novalue_re = re.compile(r'^(?P<name>[^\!\=][^\=]*)$')
-
-  whitespace_re = re.compile(r'\s')
 
   class Pattern:
     """Describes the properties to be set for files matching a pattern."""
@@ -194,12 +190,6 @@ class AutoPropsPropertySetter(SVNPropertySetter):
     return s
 
   def _add_pattern(self, pattern, props):
-    if self.whitespace_re.search(props):
-      raise FatalError(
-          'Spaces found in the auto-props file value for pattern %r.\n'
-          '(Auto-props values must not include spaces.)'
-          % (pattern,)
-          )
     propdict = {}
     for prop in props.split(';'):
       m = self.property_unset_re.match(prop)

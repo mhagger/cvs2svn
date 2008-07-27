@@ -148,12 +148,16 @@ class AutoPropsPropertySetter(SVNPropertySetter):
   preceded by a space, then that is treated as the start of a comment
   and the rest of the line is silently discarded."""
 
-  property_name_pattern = r'(?P<name>[^\!\=]+)'
-  property_unset_re = re.compile(r'^\!' + property_name_pattern + r'$')
-  property_set_re = re.compile(
-      r'^' + property_name_pattern + r'\=(?P<value>.*)$'
+  property_name_pattern = r'(?P<name>[^\!\=\s]+)'
+  property_unset_re = re.compile(
+      r'^\!\s*' + property_name_pattern + r'$'
       )
-  property_novalue_re = re.compile(r'^' + property_name_pattern + r'$')
+  property_set_re = re.compile(
+      r'^' + property_name_pattern + r'\s*\=\s*(?P<value>.*)$'
+      )
+  property_novalue_re = re.compile(
+      r'^' + property_name_pattern + r'$'
+      )
 
   class Pattern:
     """Describes the properties to be set for files matching a pattern."""
@@ -199,6 +203,7 @@ class AutoPropsPropertySetter(SVNPropertySetter):
   def _add_pattern(self, pattern, props):
     propdict = {}
     for prop in props.split(';'):
+      prop = prop.strip()
       m = self.property_unset_re.match(prop)
       if m:
         name = m.group('name')

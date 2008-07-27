@@ -22,6 +22,7 @@ import os
 import re
 import fnmatch
 import ConfigParser
+from cStringIO import StringIO
 
 from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.common import FatalError
@@ -159,6 +160,8 @@ class AutoPropsPropertySetter(SVNPropertySetter):
       r'^' + property_name_pattern + r'$'
       )
 
+  comment_re = re.compile(r'\s;')
+
   class Pattern:
     """Describes the properties to be set for files matching a pattern."""
 
@@ -181,7 +184,19 @@ class AutoPropsPropertySetter(SVNPropertySetter):
       config.optionxform = self.preserve_case
       self.transform_case = self.preserve_case
 
-    config.readfp(file(configfilename), configfilename)
+    configtext = open(configfilename).read()
+    if self.comment_re.search(configtext):
+      Log().warn(
+          '%s: Please be aware that a space followed by a\n'
+          'semicolon is sometimes treated as a comment in configuration\n'
+          'files.  This pattern was seen in\n'
+          '    %s\n'
+          'Please make sure that you have not inadvertently commented\n'
+          'out part of an important line.'
+          % (warning_prefix, configfilename,)
+          )
+
+    config.readfp(StringIO(configtext), configfilename)
     self.patterns = []
     sections = config.sections()
     sections.sort()

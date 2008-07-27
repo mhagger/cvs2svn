@@ -30,8 +30,7 @@ class SVNCommitItem:
     to have changed since the last revision.
 
     The properties are set by the SVNPropertySetters in
-    Ctx().svn_property_setters, then we read a couple of the
-    properties back out for our own purposes."""
+    Ctx().svn_property_setters."""
 
     self.cvs_rev = cvs_rev
     # Did the svn properties change for this file (i.e., do they have

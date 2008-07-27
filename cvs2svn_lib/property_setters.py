@@ -179,9 +179,13 @@ class AutoPropsPropertySetter(SVNPropertySetter):
 
     config.readfp(file(configfilename))
     self.patterns = []
-    for section in config.sections():
+    sections = config.sections()
+    sections.sort()
+    for section in sections:
       if self.transform_case(section) == 'auto-props':
-        for pattern in config.options(section):
+        patterns = config.options(section)
+        patterns.sort()
+        for pattern in patterns:
           value = config.get(section, pattern)
           if value:
             self._add_pattern(pattern, value)

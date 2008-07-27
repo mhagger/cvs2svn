@@ -167,7 +167,7 @@ class AutoPropsPropertySetter(SVNPropertySetter):
       return fnmatch.fnmatch(basename, self.pattern)
 
   def __init__(self, configfilename, ignore_case=True):
-    config = ConfigParser.RawConfigParser()
+    config = ConfigParser.ConfigParser()
     if ignore_case:
       self.transform_case = self.squash_case
     else:

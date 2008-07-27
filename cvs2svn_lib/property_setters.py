@@ -181,7 +181,7 @@ class AutoPropsPropertySetter(SVNPropertySetter):
       config.optionxform = self.preserve_case
       self.transform_case = self.preserve_case
 
-    config.readfp(file(configfilename))
+    config.readfp(file(configfilename), configfilename)
     self.patterns = []
     sections = config.sections()
     sections.sort()

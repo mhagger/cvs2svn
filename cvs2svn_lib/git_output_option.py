@@ -256,6 +256,7 @@ class GitOutputOption(OutputOption):
     """
 
     self.dump_filename = dump_filename
+    self.revision_writer = revision_writer
 
     def to_utf8(s):
       if isinstance(s, unicode):
@@ -270,8 +271,6 @@ class GitOutputOption(OutputOption):
         name = to_utf8(name)
         email = to_utf8(email)
         self.author_transforms[cvsauthor] = (name, email,)
-
-    self.revision_writer = revision_writer
 
     self._mirror = RepositoryMirror()
 

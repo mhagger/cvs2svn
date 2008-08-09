@@ -42,6 +42,7 @@ from cvs2svn_lib.output_option import OutputOption
 from cvs2svn_lib.svn_revision_range import RevisionScores
 from cvs2svn_lib.repository_mirror import RepositoryMirror
 from cvs2svn_lib.repository_mirror import PathExistsError
+from cvs2svn_lib.key_generator import KeyGenerator
 
 
 # The branch name to use for the "tag fixup branches".  The
@@ -231,10 +232,9 @@ class GitOutputOption(OutputOption):
 
   """
 
-  # The offset added to svn revision numbers to create a number to use
-  # as a git-fast-import commit mark.  This value needs to be large to
-  # avoid conflicts with blob marks.
-  _mark_offset = 1000000000
+  # The first mark number used for git-fast-import commit marks.  This
+  # value needs to be large to avoid conflicts with blob marks.
+  _first_commit_mark = 1000000000
 
   def __init__(self, dump_filename, revision_writer, author_transforms=None):
     """Constructor.
@@ -273,6 +273,8 @@ class GitOutputOption(OutputOption):
         self.author_transforms[cvsauthor] = (name, email,)
 
     self._mirror = RepositoryMirror()
+
+    self._mark_generator = KeyGenerator(GitOutputOption._first_commit_mark)
 
   def register_artifacts(self, which_pass):
     # These artifacts are needed for SymbolingsReader:
@@ -320,7 +322,7 @@ class GitOutputOption(OutputOption):
 
   def _create_commit_mark(self, lod, revnum):
     assert revnum >= self._youngest
-    mark = GitOutputOption._mark_offset + revnum
+    mark = self._mark_generator.gen_id()
     self._marks.setdefault(lod, []).append((revnum, mark))
     self._youngest = revnum
     return mark

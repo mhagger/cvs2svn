@@ -313,8 +313,8 @@ class GitOutputOption(OutputOption):
     self._youngest = 0
 
     # A map {lod : [(revnum, mark)]} giving each of the revision
-    # numbers in which there was a commit to lod, and the
-    # corresponding mark.
+    # numbers in which there was a commit to lod, and the mark active
+    # at the end of the revnum.
     self._marks = {}
 
     self._mirror.open()
@@ -323,7 +323,22 @@ class GitOutputOption(OutputOption):
   def _create_commit_mark(self, lod, revnum):
     assert revnum >= self._youngest
     mark = self._mark_generator.gen_id()
-    self._marks.setdefault(lod, []).append((revnum, mark))
+
+    # If there is already an entry for this revnum, overwrite it.  If
+    # not, append the new entry to the list.
+    entry = (revnum, mark)
+    try:
+      modifications = self._marks[lod]
+    except KeyError:
+      # This LOD hasn't appeared before; create a new list and add the
+      # entry:
+      self._marks[lod] = [entry]
+    else:
+      # A record exists, so it necessarily has at least one element:
+      if modifications[-1][0] == revnum:
+        modifications[-1] = entry
+      else:
+        modifications.append(entry)
     self._youngest = revnum
     return mark
 
@@ -503,7 +518,7 @@ class GitOutputOption(OutputOption):
     return not cvs_file_set
 
   def _get_source_mark(self, source_lod, revnum):
-    """Return the mark active at REVNUM on SOURCE_LOD."""
+    """Return the mark active on SOURCE_LOD at the end of REVNUM."""
 
     modifications = self._marks[source_lod]
     i = bisect.bisect_left(modifications, (revnum + 1,)) - 1

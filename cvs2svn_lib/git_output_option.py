@@ -241,7 +241,8 @@ class GitOutputOption(OutputOption):
 
     DUMP_FILENAME is the name of the file to which the git-fast-import
     commands for defining revisions should be written.  (Please note
-    that the actual file contents are not written to this file.)
+    that depending on the style of revision writer, the actual file
+    contents might not be written to this file.)
 
     REVISION_WRITER is a GitRevisionWriter that is used to output
     either the content of revisions or a mark that was previously used
@@ -254,7 +255,6 @@ class GitOutputOption(OutputOption):
 
     """
 
-    # The file to which to write the git-fast-import commands:
     self.dump_filename = dump_filename
 
     def to_utf8(s):

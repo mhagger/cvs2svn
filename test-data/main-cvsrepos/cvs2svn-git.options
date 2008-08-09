@@ -75,6 +75,15 @@ ctx.output_option = GitOutputOption(
     # OutputPass we only have to emit references to the blob marks:
     GitRevisionMarkWriter(),
 
+    # This option can be set to an integer to limit the number of
+    # revisions that are merged with the main parent in any commit.
+    # For git output, this can be set to None (unlimited), though due
+    # to the limitations of other tools you might want to set it to a
+    # smaller number (e.g., 16).  For Mercurial output, this should be
+    # set to 1.
+    max_merges=None,
+    #max_merges=1,
+
     # Optional map from CVS author names to git author names:
     author_transforms=author_transforms,
     )

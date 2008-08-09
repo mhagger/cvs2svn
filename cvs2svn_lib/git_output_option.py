@@ -217,6 +217,36 @@ class GitRevisionInlineWriter(GitRevisionWriter):
     self.revision_reader.finish()
 
 
+def get_chunks(iterable, chunk_size):
+  """Generate lists containing chunks of the output of ITERABLE.
+
+  Each list contains at most CHUNK_SIZE items.  If CHUNK_SIZE is None,
+  yield the whole contents of ITERABLE in one list."""
+
+  if chunk_size is None:
+    yield list(iterable)
+  else:
+    it = iter(iterable)
+    while True:
+      # If this call to it.next() raises StopIteration, then we have
+      # no more chunks to emit, so simply pass the exception through:
+      chunk = [it.next()]
+
+      # Now try filling the rest of the chunk:
+      try:
+        while len(chunk) < chunk_size:
+          chunk.append(it.next())
+      except StopIteration:
+        # The iterator was exhausted while filling chunk, but chunk
+        # contains at least one element.  Yield it, then we're done.
+        yield chunk
+        break
+
+      # Yield the full chunk then continue with the next chunk:
+      yield chunk
+      del chunk
+
+
 class GitOutputOption(OutputOption):
   """An OutputOption that outputs to a git-fast-import formatted file.
 
@@ -236,7 +266,10 @@ class GitOutputOption(OutputOption):
   # value needs to be large to avoid conflicts with blob marks.
   _first_commit_mark = 1000000000
 
-  def __init__(self, dump_filename, revision_writer, author_transforms=None):
+  def __init__(
+        self, dump_filename, revision_writer,
+        max_merges=None, author_transforms=None,
+        ):
     """Constructor.
 
     DUMP_FILENAME is the name of the file to which the git-fast-import
@@ -248,6 +281,10 @@ class GitOutputOption(OutputOption):
     either the content of revisions or a mark that was previously used
     to label a blob.
 
+    MAX_MERGES can be set to an integer telling the maximum number of
+    parents that can be merged into a commit at once (aside from the
+    natural parent).  If it is set to None, then there is no limit.
+
     AUTHOR_TRANSFORMS is a map {cvsauthor : (fullname, email)} from
     CVS author names to git full name and email address.  All of the
     contents should either be unicode strings or 8-bit strings encoded
@@ -257,6 +294,7 @@ class GitOutputOption(OutputOption):
 
     self.dump_filename = dump_filename
     self.revision_writer = revision_writer
+    self.max_merges = max_merges
 
     def to_utf8(s):
       if isinstance(s, unicode):
@@ -553,12 +591,14 @@ class GitOutputOption(OutputOption):
 
   def process_branch_commit(self, svn_commit):
     self._mirror.start_commit(svn_commit.revnum)
-    source_groups = list(self._get_source_groups(svn_commit))
-    self._process_symbol_commit(
-        svn_commit, 'refs/heads/%s' % (svn_commit.symbol.name,),
-        source_groups,
-        self._create_commit_mark(svn_commit.symbol, svn_commit.revnum),
-        )
+    for groups in get_chunks(
+          self._get_source_groups(svn_commit), self.max_merges
+          ):
+      self._process_symbol_commit(
+          svn_commit, 'refs/heads/%s' % (svn_commit.symbol.name,),
+          groups,
+          self._create_commit_mark(svn_commit.symbol, svn_commit.revnum),
+          )
     self._mirror.end_commit()
 
   def _set_tag(self, svn_commit, mark, author, log_msg):
@@ -593,10 +633,17 @@ class GitOutputOption(OutputOption):
       Log().debug(
           '%s will be created via a fixup branch' % (svn_commit.symbol,)
           )
-      mark = self._create_commit_mark(svn_commit.symbol, svn_commit.revnum)
-      self._process_symbol_commit(
-          svn_commit, FIXUP_BRANCH_NAME, source_groups, mark
-          )
+
+      # Create the fixup branch (which might involve making more than
+      # one commit):
+      for groups in get_chunks(source_groups, self.max_merges):
+        mark = self._create_commit_mark(svn_commit.symbol, svn_commit.revnum)
+        self._process_symbol_commit(
+            svn_commit, FIXUP_BRANCH_NAME, groups, mark
+            )
+
+      # Store the mark of the last commit to the fixup branch as the
+      # value of the tag:
       self._set_tag(svn_commit, mark, author, log_msg)
       self.f.write('reset %s\n' % (FIXUP_BRANCH_NAME,))
       self.f.write('\n')

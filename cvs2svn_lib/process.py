@@ -25,22 +25,6 @@ from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import CommandError
 
 
-class SimplePopen:
-  def __init__(self, cmd, capture_stderr):
-    if capture_stderr:
-      stderr = subprocess.PIPE
-    else:
-      stderr = None
-    self._popen = subprocess.Popen(
-        cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=stderr
-        )
-    self.stdin = self._popen.stdin
-    self.stdout = self._popen.stdout
-    if capture_stderr:
-      self.stderr = self._popen.stderr
-    self.wait = self._popen.wait
-
-
 def call_command(command, **kw):
   """Call the specified command, checking that it exits successfully.
 
@@ -76,9 +60,9 @@ class CommandFailedException(Exception):
 def check_command_runs(cmd, cmdname):
   """Check whether the command CMD can be executed without errors.
 
-  CMD is a list or string, as accepted by SimplePopen.  CMDNAME is the
-  name of the command as it should be included in exception error
-  messages.
+  CMD is a list or string, as accepted by subprocess.Popen().  CMDNAME
+  is the name of the command as it should be included in exception
+  error messages.
 
   This function checks three things: (1) the command can be run
   without throwing an OSError; (2) it exits with status=0; (3) it
@@ -86,7 +70,12 @@ def check_command_runs(cmd, cmdname):
   not met, raise a CommandFailedException describing the problem."""
 
   try:
-    pipe = SimplePopen(cmd, True)
+    pipe = subprocess.Popen(
+        cmd,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        )
   except OSError, e:
     raise CommandFailedException('error executing %s: %s' % (cmdname, e,))
   pipe.stdin.close()
@@ -105,7 +94,12 @@ class PipeStream(object):
 
   def __init__(self, pipe_command):
     self.pipe_command = ' '.join(pipe_command)
-    self.pipe = SimplePopen(pipe_command, True)
+    self.pipe = subprocess.Popen(
+        pipe_command,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        )
     self.pipe.stdin.close()
 
   def read(self, size=None):

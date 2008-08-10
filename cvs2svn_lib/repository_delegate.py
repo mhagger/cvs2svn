@@ -18,13 +18,13 @@
 
 
 import os
+import subprocess
 
 from cvs2svn_lib.common import CommandError
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.config import DUMPFILE
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.log import Log
-from cvs2svn_lib.process import SimplePopen
 from cvs2svn_lib.dumpfile_delegate import DumpfileDelegate
 
 
@@ -44,15 +44,21 @@ class RepositoryDelegate(DumpfileDelegate):
         )
 
     self.dumpfile = open(self.dumpfile_path, 'w+b')
-    self.loader_pipe = SimplePopen([ Ctx().svnadmin_executable, 'load', '-q',
-                                     self.target ], True)
+    self.loader_pipe = subprocess.Popen(
+        [Ctx().svnadmin_executable, 'load', '-q', self.target],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        )
     self.loader_pipe.stdout.close()
     try:
       self._write_dumpfile_header(self.loader_pipe.stdin)
     except IOError:
-      raise FatalError("svnadmin failed with the following output while "
-                       "loading the dumpfile:\n"
-                       + self.loader_pipe.stderr.read())
+      raise FatalError(
+          'svnadmin failed with the following output while '
+          'loading the dumpfile:\n%s'
+          % (self.loader_pipe.stderr.read(),)
+          )
 
   def start_commit(self, revnum, revprops):
     """Start a new commit."""

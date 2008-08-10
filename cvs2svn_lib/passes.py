@@ -77,7 +77,7 @@ from cvs2svn_lib.openings_closings import SymbolingsLogger
 from cvs2svn_lib.svn_commit_creator import SVNCommitCreator
 from cvs2svn_lib.persistence_manager import PersistenceManager
 from cvs2svn_lib.collect_data import CollectData
-from cvs2svn_lib.process import run_command
+from cvs2svn_lib.process import call_command
 from cvs2svn_lib.check_dependencies_pass \
     import CheckItemStoreDependenciesPass
 from cvs2svn_lib.check_dependencies_pass \
@@ -100,12 +100,15 @@ def sort_file(infilename, outfilename, options=[]):
   # case insensitive and cannot be used, and since it does not
   # understand the -T option and dies if we try to use it, there is no
   # risk that we use that sort by accident.
-  command = '%s -T %s %s %s >%s' % (
-      Ctx().sort_executable, Ctx().tmpdir, ' '.join(options),
-      infilename, outfilename
-      )
+  command = [
+      Ctx().sort_executable,
+      '-T', Ctx().tmpdir
+      ] + options + [
+      infilename
+      ]
+
   try:
-    run_command(command)
+    call_command(command, stdout=open(outfilename, 'w'))
   finally:
     if lc_all_tmp is None:
       del os.environ['LC_ALL']

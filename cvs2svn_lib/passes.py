@@ -113,11 +113,21 @@ def sort_file(infilename, outfilename, options=[]):
       os.environ['LC_ALL'] = lc_all_tmp
 
   # On some versions of Windows, os.system() does not return an error
-  # if the command fails.  So add a little consistency test here that
+  # if the command fails.  So add little consistency tests here that
   # the output file was created and has the right size:
-  if not os.path.exists(outfilename) \
-     or os.path.getsize(outfilename) != os.path.getsize(infilename):
-    raise FatalError('Command failed: "%s"' % (command,))
+
+  if not os.path.exists(outfilename):
+    raise FatalError('Sort output file missing: %r' % (outfilename,))
+
+  if os.path.getsize(outfilename) != os.path.getsize(infilename):
+    raise FatalError(
+        'Sort input and output file sizes differ:\n'
+        '    %r (%d bytes)\n'
+        '    %r (%d bytes)' % (
+            infilename, os.path.getsize(infilename),
+            outfilename, os.path.getsize(outfilename),
+            )
+        )
 
 
 class CollectRevsPass(Pass):

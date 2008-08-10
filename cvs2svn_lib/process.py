@@ -91,6 +91,32 @@ class SimplePopen:
     self.wait = self._popen.wait
 
 
+def call_command(command, **kw):
+  """Call the specified command, checking that it exits successfully.
+
+  Raise a FatalError if the command cannot be executed, or if it exits
+  with a non-zero exit code.  Pass KW as keyword arguments to
+  subprocess.call()."""
+
+  try:
+    retcode = subprocess.call(command, **kw)
+    if retcode < 0:
+      raise FatalError(
+          'Command terminated by signal %d: "%s"'
+          % (-retcode, ' '.join(command),)
+          )
+    elif retcode > 0:
+      raise FatalError(
+          'Command failed with return code %d: "%s"'
+          % (retcode, ' '.join(command),)
+          )
+  except OSError, e:
+    raise FatalError(
+        'Command execution failed (%s): "%s"'
+        % (e, ' '.join(command),)
+        )
+
+
 def run_command(command):
   if os.system(command):
     raise FatalError('Command failed: "%s"' % (command,))

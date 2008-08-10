@@ -39,7 +39,12 @@ class RCSRevisionReader(RevisionReader):
                        '(it is a part of the RCS software).' % (e,))
 
   def get_content_stream(self, cvs_rev, suppress_keyword_substitution=False):
-    pipe_cmd = [self.co_executable, '-q', '-x,v', '-p' + cvs_rev.rev]
+    pipe_cmd = [
+        self.co_executable,
+        '-q',
+        '-x,v',
+        '-p%s' % (cvs_rev.rev,)
+        ]
     if suppress_keyword_substitution:
       pipe_cmd.append('-kk')
     pipe_cmd.append(cvs_rev.cvs_file.filename)

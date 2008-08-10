@@ -28,7 +28,6 @@ from cvs2svn_lib.common import path_split
 from cvs2svn_lib.common import IllegalSVNPathError
 from cvs2svn_lib.common import normalize_svn_path
 from cvs2svn_lib.common import verify_paths_disjoint
-from cvs2svn_lib.log import Log
 from cvs2svn_lib.symbol_transform import CompoundSymbolTransform
 
 
@@ -169,19 +168,7 @@ class Project(object):
     Return the transformed symbol name, or the original name if it
     should not be transformed."""
 
-    newname = self.symbol_transform.transform(cvs_file, symbol_name, revision)
-    if newname is None:
-      Log().verbose(
-          "   symbol '%s'=%s ignored in %s"
-          % (symbol_name, revision, cvs_file.filename,)
-          )
-    elif newname != symbol_name:
-      Log().verbose(
-          "   symbol '%s'=%s transformed to '%s' in %s"
-          % (symbol_name, revision, newname, cvs_file.filename,)
-          )
-
-    return newname
+    return self.symbol_transform.transform(cvs_file, symbol_name, revision)
 
   def get_trunk(self):
     """Return the Trunk instance for this project.

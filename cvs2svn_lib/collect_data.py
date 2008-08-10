@@ -333,13 +333,25 @@ class _SymbolDataCollector(object):
     # Canonicalize the revision number:
     revision = _branch_revision_re.sub(r'\1\2', revision)
 
+    old_name = name
     # Apply any user-defined symbol transforms to the symbol name:
     name = self.cvs_file.project.transform_symbol(
         self.cvs_file, name, revision
         )
 
-    # If the name transformed to None, then we ignore it:
-    if name is not None:
+    if name is None:
+      # Ignore symbol:
+      Log().verbose(
+          "   symbol '%s'=%s ignored in %s"
+          % (old_name, revision, self.cvs_file.filename,)
+          )
+    else:
+      if name != old_name:
+        Log().verbose(
+            "   symbol '%s'=%s transformed to '%s' in %s"
+            % (old_name, revision, name, self.cvs_file.filename,)
+            )
+
       # Verify that the revision number is valid:
       if _valid_revision_re.match(revision):
         # The revision number is valid; record it for later processing:

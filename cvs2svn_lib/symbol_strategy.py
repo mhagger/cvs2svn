@@ -373,10 +373,10 @@ class HeuristicPreferredParentRule(StrategyRule):
     if isinstance(symbol, TypedSymbol) and symbol.preferred_parent_id is None:
       preferred_parent = self._get_preferred_parent(stats)
       if preferred_parent is None:
-        Log().debug('%s has no preferred parent' % (symbol,))
+        Log().verbose('%s has no preferred parent' % (symbol,))
       else:
         symbol.preferred_parent_id = preferred_parent.id
-        Log().debug(
+        Log().verbose(
             'The preferred parent of %s is %s' % (symbol, preferred_parent,)
             )
 

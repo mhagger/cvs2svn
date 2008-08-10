@@ -18,7 +18,6 @@
 
 
 import sys
-import os
 import types
 import subprocess
 
@@ -115,11 +114,6 @@ def call_command(command, **kw):
         'Command execution failed (%s): "%s"'
         % (e, ' '.join(command),)
         )
-
-
-def run_command(command):
-  if os.system(command):
-    raise FatalError('Command failed: "%s"' % (command,))
 
 
 class CommandFailedException(Exception):

@@ -17,15 +17,6 @@
 """This module describes the interface to the CVS repository."""
 
 
-import os
-
-from cvs2svn_lib.common import FatalError
-from cvs2svn_lib.context import Ctx
-from cvs2svn_lib.process import check_command_runs
-from cvs2svn_lib.process import PipeStream
-from cvs2svn_lib.process import CommandFailedException
-
-
 class RevisionRecorder:
   """An object that can record text and deltas from CVS files."""
 

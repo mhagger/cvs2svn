@@ -71,9 +71,14 @@ class CVSRevisionReader(RevisionReader):
 
   def get_content_stream(self, cvs_rev, suppress_keyword_substitution=False):
     project = cvs_rev.cvs_file.project
-    pipe_cmd = [self.cvs_executable] + self.global_arguments + \
-               ['-d', project.cvs_repository_root,
-                'co', '-r' + cvs_rev.rev, '-p']
+    pipe_cmd = [
+        self.cvs_executable
+        ] + self.global_arguments + [
+        '-d', project.cvs_repository_root,
+        'co',
+        '-r' + cvs_rev.rev,
+        '-p'
+        ]
     if suppress_keyword_substitution:
       pipe_cmd.append('-kk')
     pipe_cmd.append(project.cvs_module + cvs_rev.cvs_path)

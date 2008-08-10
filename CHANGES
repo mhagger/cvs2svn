@@ -3,11 +3,20 @@ Version ?.?.? (not yet released)
 
  New features:
  * cvs2git: Omit fixup branch if a tag can be copied from an existing revision.
+ * cvs2git: Add option to set the maximum number of merge sources per commit.
  * Allow arbitrary SVN directories to be created when a project is created.
  * Allow vendor branches to be excluded, grafting child symbols to trunk.
+ * By default, omit trivial import branches from conversion.
+   - Add --keep-trivial-imports option to get old behavior.
  * By default, don't include .cvsignore files in output (except as svn:ignore).
- * Add option --keep-cvsignore to get the old behavior.
+   - Add option --keep-cvsignore to get the old behavior.
  * Allow the user to specify the form of cvs2svn-generated log messages.
+ * Allow file contents to be written inline in git-fast-import streams.
+ * --create-option: allow arbitrary options to be passed to "svnadmin create".
+ * Improve handling of auto-props file:
+   - Discard extraneous spaces where they don't make sense.
+   - Warn if parts of the file might be commented out unintentionally.
+   - Warn if the user appears to be trying to quote a property value.
 
  Bugs fixed:
  * Fix issue #81: Remove svn:ignore property when .cvsignore is deleted.
@@ -15,6 +24,7 @@ Version ?.?.? (not yet released)
    - Don't include a leading '/' for Node-path.
    - Include the Node-kind field when copying nodes.
  * Make symlink test create symlinks explicitly, to avoid packaging problems.
+ * Accept symbol references to revision numbers that end with ".0".
 
  Improvements and output changes:
 

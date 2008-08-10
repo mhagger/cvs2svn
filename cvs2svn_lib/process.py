@@ -25,55 +25,6 @@ from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import CommandError
 
 
-# ============================================================================
-# This code is copied with a few modifications from:
-#   subversion/subversion/bindings/swig/python/svn/core.py
-
-if sys.platform == "win32":
-  import re
-  _escape_shell_arg_re = re.compile(r'(\\+)(\"|$)')
-
-  def escape_shell_arg(arg):
-    # The (very strange) parsing rules used by the C runtime library are
-    # described at:
-    # http://msdn.microsoft.com/library/en-us/vclang/html/_pluslang_Parsing_C.2b2b_.Command.2d.Line_Arguments.asp
-
-    # double up slashes, but only if they are followed by a quote character
-    arg = re.sub(_escape_shell_arg_re, r'\1\1\2', arg)
-
-    # surround by quotes and escape quotes inside
-    arg = '"' + arg.replace('"', '"^""') + '"'
-    return arg
-
-
-  def argv_to_command_string(argv):
-    """Flatten a list of command line arguments into a command string.
-
-    The resulting command string is expected to be passed to the system
-    shell which os functions like popen() and system() invoke internally.
-    """
-
-    # According cmd's usage notes (cmd /?), it parses the command line by
-    # "seeing if the first character is a quote character and if so, stripping
-    # the leading character and removing the last quote character."
-    # So to prevent the argument string from being changed we add an extra set
-    # of quotes around it here.
-    return '"' + ' '.join(map(escape_shell_arg, argv)) + '"'
-
-else:
-  def escape_shell_arg(arg):
-    return "'" + arg.replace("'", "'\\''") + "'"
-
-  def argv_to_command_string(argv):
-    """Flatten a list of command line arguments into a command string.
-
-    The resulting command string is expected to be passed to the system
-    shell which os functions like popen() and system() invoke internally.
-    """
-
-    return ' '.join(map(escape_shell_arg, argv))
-
-
 class SimplePopen:
   def __init__(self, cmd, capture_stderr):
     if capture_stderr:

@@ -646,12 +646,34 @@ class RepositoryOutputOption(SVNOutputOption):
 class NewRepositoryOutputOption(RepositoryOutputOption):
   """Output the result of the conversion into a new SVN repository."""
 
-  def __init__(self, target, fs_type=None, bdb_txn_nosync=None,
-               create_options=[]):
+  def __init__(
+        self, target, fs_type=None, bdb_txn_nosync=None, create_options=[]
+        ):
     RepositoryOutputOption.__init__(self, target)
-    self.fs_type = fs_type
     self.bdb_txn_nosync = bdb_txn_nosync
-    self.create_options = create_options
+
+    # Determine the options to be passed to "svnadmin create":
+    if not fs_type:
+      # User didn't say what kind repository (bdb, fsfs, etc).  We
+      # still pass --bdb-txn-nosync.  It's a no-op if the default
+      # repository type doesn't support it, but we definitely want it
+      # if BDB is the default.
+      self.create_options = ['--bdb-txn-nosync']
+    elif fs_type == 'bdb':
+      # User explicitly specified bdb.
+      #
+      # Since this is a BDB repository, pass --bdb-txn-nosync, because
+      # it gives us a 4-5x speed boost (if cvs2svn is creating the
+      # repository, cvs2svn should be the only program accessing the
+      # svn repository until cvs2svn is done).  But we'll turn no-sync
+      # off in self.finish(), unless instructed otherwise.
+      self.create_options = ['--fs-type=bdb', '--bdb-txn-nosync']
+    else:
+      # User specified something other than bdb.
+      self.create_options = ['--fs-type=%s' % fs_type]
+
+    # Now append the user's explicitly-set create options:
+    self.create_options += create_options
 
   def check(self):
     RepositoryOutputOption.check(self)
@@ -665,37 +687,9 @@ class NewRepositoryOutputOption(RepositoryOutputOption):
     if Ctx().dry_run:
       # Do not actually create repository:
       pass
-    elif not self.fs_type:
-      # User didn't say what kind repository (bdb, fsfs, etc).
-      # We still pass --bdb-txn-nosync.  It's a no-op if the default
-      # repository type doesn't support it, but we definitely want
-      # it if BDB is the default.
-      call_command([
-          Ctx().svnadmin_executable, 'create',
-          '--bdb-txn-nosync',
-          ] + self.create_options + [
-          self.target
-          ])
-    elif self.fs_type == 'bdb':
-      # User explicitly specified bdb.
-      #
-      # Since this is a BDB repository, pass --bdb-txn-nosync,
-      # because it gives us a 4-5x speed boost (if cvs2svn is
-      # creating the repository, cvs2svn should be the only program
-      # accessing the svn repository (until cvs is done, at least)).
-      # But we'll turn no-sync off in self.finish(), unless
-      # instructed otherwise.
-      call_command([
-          Ctx().svnadmin_executable, 'create',
-          '--fs-type=bdb', '--bdb-txn-nosync',
-          ] + self.create_options + [
-          self.target
-          ])
     else:
-      # User specified something other than bdb.
       call_command([
           Ctx().svnadmin_executable, 'create',
-          '--fs-type=%s' % self.fs_type,
           ] + self.create_options + [
           self.target
           ])

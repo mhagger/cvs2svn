@@ -165,8 +165,9 @@ class Project(object):
     REVISION is the CVS revision number as a string, with zeros
     removed (e.g., '1.7' or '1.7.2').  Use the renaming rules
     specified with --symbol-transform to possibly rename the symbol.
-    Return the transformed symbol name, or the original name if it
-    should not be transformed."""
+    Return the transformed symbol name, the original name if it should
+    not be transformed, or None if the symbol should be omitted from
+    the conversion."""
 
     return self.symbol_transform.transform(cvs_file, symbol_name, revision)
 

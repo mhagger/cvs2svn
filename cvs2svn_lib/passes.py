@@ -84,8 +84,11 @@ from cvs2svn_lib.check_dependencies_pass \
     import CheckIndexedItemStoreDependenciesPass
 
 
-def sort_file(infilename, outfilename, options=''):
-  """Sort file INFILENAME, storing the results to OUTFILENAME."""
+def sort_file(infilename, outfilename, options=[]):
+  """Sort file INFILENAME, storing the results to OUTFILENAME.
+
+  OPTIONS is an optional list of strings that are passed as additional
+  options to the sort command."""
 
   # GNU sort will sort our dates differently (incorrectly!) if our
   # LC_ALL is anything but 'C', so if LC_ALL is set, temporarily set
@@ -97,8 +100,9 @@ def sort_file(infilename, outfilename, options=''):
   # case insensitive and cannot be used, and since it does not
   # understand the -T option and dies if we try to use it, there is no
   # risk that we use that sort by accident.
-  command = '%s -T %s %s %s > %s' % (
-      Ctx().sort_executable, Ctx().tmpdir, options, infilename, outfilename
+  command = '%s -T %s %s %s >%s' % (
+      Ctx().sort_executable, Ctx().tmpdir, ' '.join(options),
+      infilename, outfilename
       )
   try:
     run_command(command)
@@ -1662,7 +1666,8 @@ class SortSymbolsPass(Pass):
         artifact_manager.get_temp_file(config.SYMBOL_OPENINGS_CLOSINGS),
         artifact_manager.get_temp_file(
             config.SYMBOL_OPENINGS_CLOSINGS_SORTED),
-        options='-k 1,1 -k 2,2n -k 3')
+        options=['-k', '1,1', '-k', '2,2n', '-k', '3'],
+        )
     Log().quiet("Done")
 
 

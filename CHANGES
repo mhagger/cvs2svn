@@ -27,6 +27,7 @@ Version ?.?.? (not yet released)
  * Accept symbol references to revision numbers that end with ".0".
 
  Improvements and output changes:
+ * When -v, log reasons for symbol conversion choices (tag/branch/exclude).
 
  Miscellaneous:
  * cvs2svn now requires Python version 2.4 or later.

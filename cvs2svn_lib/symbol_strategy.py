@@ -96,10 +96,14 @@ class _RegexpStrategyRule(StrategyRule):
 
     self.action = action
 
+  def log(self, symbol):
+    raise NotImplementedError()
+
   def get_symbol(self, symbol, stats):
     if isinstance(symbol, (Trunk, TypedSymbol)):
       return symbol
     elif self.regexp.match(symbol.name):
+      self.log(symbol)
       return self.action(symbol)
     else:
       return symbol
@@ -111,6 +115,12 @@ class ForceBranchRegexpStrategyRule(_RegexpStrategyRule):
   def __init__(self, pattern):
     _RegexpStrategyRule.__init__(self, pattern, Branch)
 
+  def log(self, symbol):
+    Log().verbose(
+        'Converting symbol %s as a branch because it matches regexp "%s".'
+        % (symbol, self.regexp.pattern,)
+        )
+
 
 class ForceTagRegexpStrategyRule(_RegexpStrategyRule):
   """Force symbols matching pattern to be tags."""
@@ -118,12 +128,24 @@ class ForceTagRegexpStrategyRule(_RegexpStrategyRule):
   def __init__(self, pattern):
     _RegexpStrategyRule.__init__(self, pattern, Tag)
 
+  def log(self, symbol):
+    Log().verbose(
+        'Converting symbol %s as a tag because it matches regexp "%s".'
+        % (symbol, self.regexp.pattern,)
+        )
+
 
 class ExcludeRegexpStrategyRule(_RegexpStrategyRule):
   """Exclude symbols matching pattern."""
 
   def __init__(self, pattern):
     _RegexpStrategyRule.__init__(self, pattern, ExcludedSymbol)
+
+  def log(self, symbol):
+    Log().verbose(
+        'Excluding symbol %s because it matches regexp "%s".'
+        % (symbol, self.regexp.pattern,)
+        )
 
 
 class ExcludeTrivialImportBranchRule(StrategyRule):
@@ -138,6 +160,10 @@ class ExcludeTrivialImportBranchRule(StrategyRule):
       return symbol
     if stats.tag_create_count == 0 \
           and stats.branch_create_count == stats.trivial_import_count:
+      Log().verbose(
+          'Excluding branch %s because it is a trivial import branch.'
+          % (symbol,)
+          )
       return ExcludedSymbol(symbol)
     else:
       return symbol
@@ -155,6 +181,10 @@ class ExcludeVendorBranchRule(StrategyRule):
       return symbol
     if stats.tag_create_count == 0 \
           and stats.branch_create_count == stats.pure_ntdb_count:
+      Log().verbose(
+          'Excluding branch %s because it is a pure vendor branch.'
+          % (symbol,)
+          )
       return ExcludedSymbol(symbol)
     else:
       return symbol
@@ -172,8 +202,18 @@ class UnambiguousUsageRule(StrategyRule):
       # Can't decide
       return symbol
     elif is_branch:
+      Log().verbose(
+          'Converting symbol %s as a branch because it is always used '
+          'as a branch.'
+          % (symbol,)
+          )
       return Branch(symbol)
     elif is_tag:
+      Log().verbose(
+          'Converting symbol %s as a tag because it is always used '
+          'as a tag.'
+          % (symbol,)
+          )
       return Tag(symbol)
     else:
       # The symbol didn't appear at all:
@@ -187,6 +227,10 @@ class BranchIfCommitsRule(StrategyRule):
     if isinstance(symbol, (Trunk, TypedSymbol)):
       return symbol
     elif stats.branch_commit_count > 0:
+      Log().verbose(
+          'Converting symbol %s as a branch because there are commits on it.'
+          % (symbol,)
+          )
       return Branch(symbol)
     else:
       return symbol
@@ -202,8 +246,18 @@ class HeuristicStrategyRule(StrategyRule):
     if isinstance(symbol, (Trunk, TypedSymbol)):
       return symbol
     elif stats.tag_create_count >= stats.branch_create_count:
+      Log().verbose(
+          'Converting symbol %s as a tag because it is more often used '
+          'as a tag.'
+          % (symbol,)
+          )
       return Tag(symbol)
     else:
+      Log().verbose(
+          'Converting symbol %s as a branch because it is more often used '
+          'as a branch.'
+          % (symbol,)
+          )
       return Branch(symbol)
 
 
@@ -218,6 +272,10 @@ class AllBranchRule(StrategyRule):
     if isinstance(symbol, (Trunk, TypedSymbol)):
       return symbol
     else:
+      Log().verbose(
+          'Converting symbol %s as a branch because no other rules applied.'
+          % (symbol,)
+          )
       return Branch(symbol)
 
 
@@ -235,6 +293,10 @@ class AllTagRule(StrategyRule):
     if isinstance(symbol, (Trunk, TypedSymbol)):
       return symbol
     else:
+      Log().verbose(
+          'Converting symbol %s as a tag because no other rules applied.'
+          % (symbol,)
+          )
       return Tag(symbol)
 
 
@@ -352,6 +414,30 @@ class ManualTrunkRule(StrategyRule):
     return symbol
 
 
+def convert_as_branch(symbol):
+  Log().verbose(
+      'Converting symbol %s as a branch because of manual setting.'
+      % (symbol,)
+      )
+  return Branch(symbol)
+
+
+def convert_as_tag(symbol):
+  Log().verbose(
+      'Converting symbol %s as a tag because of manual setting.'
+      % (symbol,)
+      )
+  return Tag(symbol)
+
+
+def exclude(symbol):
+  Log().verbose(
+      'Excluding symbol %s because of manual setting.'
+      % (symbol,)
+      )
+  return ExcludedSymbol(symbol)
+
+
 class ManualSymbolRule(StrategyRule):
   """Change how particular symbols are converted.
 
@@ -365,9 +451,10 @@ class ManualSymbolRule(StrategyRule):
         affected by this rule.
 
     conversion -- (callable or None) A callable that converts the
-        symbol to its preferred output type.  This should be one of
-        (Branch, Tag, ExcludedSymbol).  If this member is None, then
-        this rule does not affect the symbol's output type.
+        symbol to its preferred output type.  This should normally be
+        one of (convert_as_branch, convert_as_tag, exclude).  If this
+        member is None, then this rule does not affect the symbol's
+        output type.
 
     svn_path -- (str) The SVN path that should be used as the base
         directory for this trunk.  This member must not be None,
@@ -487,9 +574,9 @@ class SymbolHintsFileRule(StrategyRule):
   comment_re = re.compile(r'^(\#|$)')
 
   conversion_map = {
-      'branch' : Branch,
-      'tag' : Tag,
-      'exclude' : ExcludedSymbol,
+      'branch' : convert_as_branch,
+      'tag' : convert_as_tag,
+      'exclude' : exclude,
       '.' : None,
       }
 

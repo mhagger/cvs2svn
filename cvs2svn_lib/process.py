@@ -93,7 +93,7 @@ class PipeStream(object):
   """A file-like object from which revision contents can be read."""
 
   def __init__(self, pipe_command):
-    self.pipe_command = ' '.join(pipe_command)
+    self._pipe_command_str = ' '.join(pipe_command)
     self.pipe = subprocess.Popen(
         pipe_command,
         stdin=subprocess.PIPE,
@@ -113,6 +113,6 @@ class PipeStream(object):
     error_output = self.pipe.stderr.read()
     exit_status = self.pipe.wait()
     if exit_status:
-      raise CommandError(self.pipe_command, exit_status, error_output)
+      raise CommandError(self._pipe_command_str, exit_status, error_output)
 
 

@@ -92,14 +92,15 @@ def sort_file(infilename, outfilename, options=''):
   # it to 'C'
   lc_all_tmp = os.environ.get('LC_ALL', None)
   os.environ['LC_ALL'] = 'C'
+
+  # The -T option to sort has a nice side effect.  The Win32 sort is
+  # case insensitive and cannot be used, and since it does not
+  # understand the -T option and dies if we try to use it, there is no
+  # risk that we use that sort by accident.
   command = '%s -T %s %s %s > %s' % (
       Ctx().sort_executable, Ctx().tmpdir, options, infilename, outfilename
       )
   try:
-    # The -T option to sort has a nice side effect.  The Win32 sort is
-    # case insensitive and cannot be used, and since it does not
-    # understand the -T option and dies if we try to use it, there is
-    # no risk that we use that sort by accident.
     run_command(command)
   finally:
     if lc_all_tmp is None:

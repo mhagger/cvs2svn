@@ -341,12 +341,14 @@ class _SymbolDataCollector(object):
 
     if name is None:
       # Ignore symbol:
+      self.pdc.log_symbol_transform(old_name, None)
       Log().verbose(
           "   symbol '%s'=%s ignored in %s"
           % (old_name, revision, self.cvs_file.filename,)
           )
     else:
       if name != old_name:
+        self.pdc.log_symbol_transform(old_name, name)
         Log().verbose(
             "   symbol '%s'=%s transformed to '%s' in %s"
             % (old_name, revision, name, self.cvs_file.filename,)
@@ -948,6 +950,10 @@ class _ProjectDataCollector:
     # and a tag in another.
     self.symbols = {}
 
+    # A map { (old_name, new_name) : count } indicating how many files
+    # were affected by each each symbol name transformation:
+    self.symbol_transform_counts = {}
+
   def get_symbol(self, name):
     """Return the Symbol object for the symbol named NAME in this project.
 
@@ -961,6 +967,29 @@ class _ProjectDataCollector:
           self.project, name)
       self.symbols[name] = symbol
     return symbol
+
+  def log_symbol_transform(self, old_name, new_name):
+    """Record that OLD_NAME was transformed to NEW_NAME in one file."""
+
+    try:
+      self.symbol_transform_counts[old_name, new_name] += 1
+    except KeyError:
+      self.symbol_transform_counts[old_name, new_name] = 1
+
+  def summarize_symbol_transforms(self):
+    if self.symbol_transform_counts and Log().is_on(Log.NORMAL):
+      log = Log()
+      log.normal('Summary of symbol transforms:')
+      transforms = self.symbol_transform_counts.items()
+      transforms.sort()
+      for ((old_name, new_name), count) in transforms:
+        if new_name is None:
+          log.normal('    "%s" ignored in %d files' % (old_name, count,))
+        else:
+          log.normal(
+              '    "%s" transformed to "%s" in %d files'
+              % (old_name, new_name, count,)
+              )
 
   def _process_cvs_file_items(self, cvs_file_items):
     """Process the CVSFileItems from one CVSFile."""
@@ -1312,6 +1341,8 @@ class CollectData:
           'at a CVS repository?\n'
           % (project.project_cvs_repos_path,)
           )
+
+    pdc.summarize_symbol_transforms()
 
     self.num_files += pdc.num_files
     Log().verbose('Processed', self.num_files, 'files')

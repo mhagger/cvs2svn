@@ -89,10 +89,8 @@ import cvs2svn_rcsparse
 # check that symbol definitions are reasonable).
 _valid_revision_re = re.compile(r'''
     ^
-    (?:[1-9]\d*\.)+     # Digit groups (but not starting with "0") with
-                        # trailing dots
-    (?:\d+)             # And the last digit group, which might be "0" if the
-                        # user has renumbered revisions using "cvs commit -r".
+    (?:\d+\.)+          # Digit groups with trailing dots
+    \d+                 # And the last digit group.
     $
     ''', re.VERBOSE)
 

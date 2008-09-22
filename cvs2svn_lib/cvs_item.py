@@ -145,7 +145,7 @@ class CVSRevision(CVSItem):
 
   Members:
 
-    id -- (string) unique ID for this revision.
+    id -- (int) unique ID for this revision.
 
     cvs_file -- (CVSFile) CVSFile affected by this revision.
 
@@ -586,7 +586,7 @@ class CVSSymbol(CVSItem):
 
   Members:
 
-    id -- (string) unique ID for this item.
+    id -- (int) unique ID for this item.
 
     cvs_file -- (CVSFile) CVSFile affected by this item.
 
@@ -645,7 +645,7 @@ class CVSBranch(CVSSymbol):
 
   Members:
 
-    id -- (string) unique ID for this item.
+    id -- (int) unique ID for this item.
 
     cvs_file -- (CVSFile) CVSFile affected by this item.
 
@@ -806,7 +806,7 @@ class CVSTag(CVSSymbol):
 
   Members:
 
-    id -- (string) unique ID for this item.
+    id -- (int) unique ID for this item.
 
     cvs_file -- (CVSFile) CVSFile affected by this item.
 

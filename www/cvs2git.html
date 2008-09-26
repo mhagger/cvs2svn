@@ -102,9 +102,10 @@ used for production conversions.</p>
       case the tag fixup branch would be superfluous.  It would be
       possible to teach cvs2git to determine when single-source tags
       can be created, at a considerable cost in runtime and temporary
-      workspace.  Alternatively, it is possible to <a
-      href="http://cvs2svn.tigris.org/issues/show_bug.cgi?id=117">delete
-      uninteresting branches after the conversion</a>.</p>
+      workspace.  Alternatively, it is possible to delete all
+      superfluous tag fixup branches after the conversion, by running
+      the <tt>contrib/git-move-tags.py</tt> script within the
+      resulting git repository.</p>
 
   </li>
 
@@ -243,6 +244,10 @@ cat cvs2svn-tmp/git-blob.dat cvs2svn-tmp/git-dump.dat | git fast-import
 </pre>
 
   </li>
+
+  <li>If you want to get rid of unnecessary tag fixup branches, then
+    run the <tt>contrib/git-move-tags.py</tt> script from within the
+    git repository.</li>
 
 </ol>
 

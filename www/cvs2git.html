@@ -70,10 +70,10 @@ features would be pretty easy to program, and I'd be happy to help you
 get started.</p>
 
 <p>But thanks to the excellent <a
-href="http://www.kernel.org/pub/software/scm/git/docs/git-fast-import.html">git-fast-import</a>
-tool, the code needed to output to git is relatively straightforward,
-and it is believed that cvs2git can (cautiously) be used for
-production conversions.</p>
+href="http://www.kernel.org/pub/software/scm/git/docs/git-fast-import.html">git
+fast-import</a> tool, the code needed to output to git is relatively
+straightforward, and it is believed that cvs2git can (cautiously) be
+used for production conversions.</p>
 
 <p>cvs2git still has the following limitations:</p>
 
@@ -112,11 +112,11 @@ production conversions.</p>
     names.  There are probably other git constraints that should also
     be checked.</li>
 
-  <li>The data that should be fed to git-fast-import is written to two
-    files, which have to be loaded into git-fast-import manually.
+  <li>The data that should be fed to git fast-import is written to two
+    files, which have to be loaded into git fast-import manually.
     These files might grow to very large size.  It would be nice to
-    add an option to invoke git-fast-import automatically and pipe the
-    output directly into git-fast-import; this should also speed up
+    add an option to invoke git fast-import automatically and pipe the
+    output directly into git fast-import; this should also speed up
     the conversion.</li>
 
   <li>Only single projects can be converted at a time.  Given the way
@@ -218,28 +218,28 @@ make check # ...optional
     examples; both files contain lots of documentation.</li>
 
   <li>Run cvs2svn.  This creates two output files in <a
-    href="http://www.kernel.org/pub/software/scm/git/docs/git-fast-import.html">git-fast-import</a>
-    format.  The names of these files are specified by your options
-    file.  In the example, these files are named
+    href="http://www.kernel.org/pub/software/scm/git/docs/git-fast-import.html">git
+    fast-import</a> format.  The names of these files are specified by
+    your options file.  In the example, these files are named
     <tt>cvs2svn-tmp/git-blob.dat</tt> and
     <tt>cvs2svn-tmp/git-dump.dat</tt>.</li>
 
   <li>
 
     <p>Initialize a git repository, and load the dump files using
-      git-fast-import:</p>
+      git fast-import:</p>
 
 <pre>
-git-init
-cat cvs2svn-tmp/git-blob.dat | git-fast-import --export-marks=cvs2svn-tmp/git-marks.dat
-cat cvs2svn-tmp/git-dump.dat | git-fast-import --import-marks=cvs2svn-tmp/git-marks.dat
+git init
+cat cvs2svn-tmp/git-blob.dat | git fast-import --export-marks=cvs2svn-tmp/git-marks.dat
+cat cvs2svn-tmp/git-dump.dat | git fast-import --import-marks=cvs2svn-tmp/git-marks.dat
 </pre>
 
     <p>This can, of course, be shortened to:</p>
 
 <pre>
-git-init
-cat cvs2svn-tmp/git-blob.dat cvs2svn-tmp/git-dump.dat | git-fast-import
+git init
+cat cvs2svn-tmp/git-blob.dat cvs2svn-tmp/git-dump.dat | git fast-import
 </pre>
 
   </li>

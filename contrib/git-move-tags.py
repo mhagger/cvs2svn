@@ -74,7 +74,7 @@ get_tag_info_cmd = [
     "--format=%(refname)%00%(objecttype)%00%(subject)%00"
               "%(objectname)%00%(tree)%00%(parent)%00"
               "%(*objectname)%00%(*tree)%00%(*parent)",
-    "refs/tags/",
+    "refs/tags",
 ]
 
 get_tag_info = Popen(get_tag_info_cmd, stdout = PIPE)

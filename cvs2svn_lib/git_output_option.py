@@ -602,13 +602,8 @@ class GitOutputOption(OutputOption):
     self._mirror.end_commit()
 
   def _set_tag(self, svn_commit, mark, author, log_msg):
-    self.f.write('tag %s\n' % (svn_commit.symbol.name,))
+    self.f.write('reset refs/tags/%s\n' % (svn_commit.symbol.name,))
     self.f.write('from :%d\n' % (mark,))
-    self.f.write(
-        'tagger %s %d +0000\n' % (author, svn_commit.date,)
-        )
-    self.f.write('data %d\n' % (len(log_msg),))
-    self.f.write('%s\n' % (log_msg,))
 
   def process_tag_commit(self, svn_commit):
     # FIXME: For now we create a fixup branch with the same name as

@@ -16,13 +16,11 @@
 # history and logs, available at http://cvs2svn.tigris.org/.
 # ====================================================================
 
-"""Strip the text content out of RCS-format files.
+"""Usage: destroy_repository.py OPTION... PATH...
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!! This script irretrievably destroys any RCS files that it is applied to! !!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+Strip the text content out of RCS-format files.
 
-Usage: destroy_repository.py PATH ...
+*** This script irretrievably destroys any RCS files that it is applied to!
 
 This script attempts to strip the file text, log messages, and author
 names out of RCS files.  (This is useful to make test cases smaller
@@ -32,12 +30,38 @@ information that might also be considered proprietary: file names,
 commit dates, etc.  In fact, it's not guaranteed even to obliterate
 all of the file text, or to do anything else for that matter.
 
+The following OPTIONs are recognized:
+  --all       destroy all data (this is the default if no options are given)
+  --data      destroy revision data (file contents) only
+  --metadata  destroy revision metadata (author, log message, description) only
+  --no-X      where X is one of the above options negates the meaning of that
+              option.
+
 Each PATH that is a *,v file will be stripped.
 
 Each PATH that is a directory will be traversed and all of its *,v
 files stripped.
 
 Other PATHs will be ignored.
+
+
+Examples of usage:
+  destroy_repository.py PATH
+        destroys all data in PATH
+
+  destroy_repository.py --all PATH
+        same as above
+
+  destroy_repository.py --data PATH
+        destroys only revision data
+
+  destroy_repository.py --no-data PATH
+        destroys everything but revision data
+
+  destroy_repository.py --data --metadata PATH
+        destroys revision data and metadata only
+
+---->8----
 
 The *,v files must be writable by the user running the script.
 Typically CVS repositories are read-only, so you might have to run
@@ -83,6 +107,12 @@ import cvs2svn_rcsparse
 from rcs_file_filter import WriteRCSFileSink
 from rcs_file_filter import FilterSink
 
+
+# Which components to be destroyed. Default to all.
+destroy = {
+    'data': True,
+    'metadata': True,
+    }
 
 tmpdir = 'destroy_repository-tmp'
 
@@ -144,19 +174,23 @@ class DestroyerFilterSink(FilterSink):
     def define_revision(
         self, revision, timestamp, author, state, branches, next
         ):
+        if destroy['metadata']:
+            author = self.author_substituter.get_substitution(author)
         FilterSink.define_revision(
-            self, revision, timestamp,
-            self.author_substituter.get_substitution(author),
-            state, branches, next
+            self, revision, timestamp, author, state, branches, next
             )
 
     def set_description(self, description):
-        FilterSink.set_description(self, '')
+        if destroy['metadata']:
+            description = ''
+        FilterSink.set_description(self, description)
 
     def set_revision_info(self, revision, log, text):
-        FilterSink.set_revision_info(
-            self, revision, self.log_substituter.get_substitution(log), ''
-            )
+        if destroy['data']:
+            text = ''
+        if destroy['metadata']:
+            log = self.log_substituter.get_substitution(log)
+        FilterSink.set_revision_info(self, revision, log, text)
 
 
 class FileDestroyer:
@@ -198,18 +232,64 @@ class FileDestroyer:
         os.path.walk(path, FileDestroyer.visit, self)
 
 
+def usage_abort(msg):
+    if msg:
+        print >>sys.stderr, "ERROR:", msg
+        print >>sys.stderr
+    # Use this file's docstring as a usage string, but only the first part
+    print __doc__.split('\n---->8----', 1)[0]
+    sys.exit(1)
+
 if __name__ == '__main__':
     if not os.path.isdir(tmpdir):
         os.makedirs(tmpdir)
 
-    file_destroyer = FileDestroyer()
+    # Paths to be destroyed
+    paths = []
 
-    for path in sys.argv[1:]:
+    # Command-line argument processing
+    first_option = True
+    for arg in sys.argv[1:]:
+        if arg.startswith("--"):
+            # Option processing
+            option = arg[2:].lower()
+            value = True
+            if option.startswith("no-"):
+                value = False
+                option = option[3:]
+            if first_option:
+                # Use the first option on the command-line to determine the
+                # default actions. If the first option is negated (i.e. --no-X)
+                # the default action should be to destroy everything.
+                # Otherwise, the default action should be to destroy nothing.
+                # This makes both positive and negative options work
+                # intuitively (e.g. "--data" will destroy only data, while
+                # "--no-data" will destroy everything BUT data).
+                for d in destroy.keys():
+                    destroy[d] = not value
+                first_option = False
+            if option in destroy:
+                destroy[option] = value
+            elif option == "all":
+                for d in destroy.keys():
+                    destroy[d] = value
+            else:
+                usage_abort("Unknown OPTION '%s'" % arg)
+        else:
+            # Path argument
+            paths.append(arg)
+
+    if not paths:
+        usage_abort("No PATH given")
+
+    # Destroy given PATHs
+    file_destroyer = FileDestroyer()
+    for path in paths:
         if os.path.isfile(path) and path.endswith(',v'):
             file_destroyer.destroy_file(path)
         elif os.path.isdir(path):
             file_destroyer.destroy_dir(path)
         else:
-            sys.stderr.write('File %s is being ignored.\n' % path)
+            sys.stderr.write('PATH %s is being ignored.\n' % path)
 
 

@@ -38,6 +38,8 @@ The following OPTIONs are recognized:
   --filenames destroy the filenames of RCS files
   --basenames destroy basenames only (keep filename extensions, such as '.txt')
               (--filenames overrides --basenames)
+  --dirnames  destroy directory names within given PATH. PATH itself (if a
+              directory) is not destroyed.
   --no-X      where X is one of the above options negates the meaning of that
               option.
 
@@ -119,6 +121,7 @@ destroy = {
     'symbols': True,
     'filenames': True,
     'basenames': True,
+    'dirnames': True,
     }
 
 tmpdir = 'destroy_repository-tmp'
@@ -171,6 +174,26 @@ def rewrite_filename(pathname):
     if filename not in filename_map:
         filename_map[filename] = "file%03d" % (len(filename_map))
     return os.path.join(dirname, filename_map[filename] + extra)
+
+# List of directory names to be renamed. This list is filled while we walk
+# the directory structure, and then processed afterwards, in order to not
+# mess up the directory structure while it is being walked.
+rename_dir_list = []
+
+def rename_dirs():
+    """Rename all directories occuring in rename_dir_list"""
+    # Make sure we rename subdirs _before_ renaming their parents
+    rename_dir_list.reverse()
+    rename_map = {}
+    for d in rename_dir_list:
+        (parent, name) = os.path.split(d)
+        # Skip rewriting 'Attic' directories
+        if name == "Attic":
+            continue
+        if name not in rename_map:
+            rename_map[name] = "dir%03d" % (len(rename_map))
+        new_d = os.path.join(parent, rename_map[name])
+        shutil.move(d, new_d)
 
 
 class Substituter:
@@ -296,6 +319,8 @@ class FileDestroyer:
                 self.destroy_file(path)
                 sys.stderr.write('done.\n')
             elif os.path.isdir(path):
+                if destroy['dirnames']:
+                    rename_dir_list.append(path)
                 # Subdirectories are traversed automatically
                 pass
             else:
@@ -371,4 +396,6 @@ if __name__ == '__main__':
         else:
             sys.stderr.write('PATH %s is being ignored.\n' % path)
 
+    if destroy['dirnames']:
+        rename_dirs()
 

@@ -781,10 +781,11 @@ tremendously.</p>
 <p>The <tt>destroy_repository.py</tt> script tries to delete as much
 information as possible out of your repository while still preserving
 its basic structure (and therefore hopefully any cvs2svn bugs).
-Specifically, it tries to delete all file descriptions and text
-content, all nontrivial log messages, and all author names.  (It does
-not affect the directory and file names or the number and dates of
-revisions to those files.)</p>
+Specifically, it tries to delete file descriptions, text content, all
+nontrivial log messages, and all author names.  It also renames all
+files and directories to have generic names (e.g.,
+<tt>dir015/file053,v</tt>).  (It does not affect the number and dates
+of revisions to the files.)</p>
 
 <ol>
 
@@ -815,6 +816,12 @@ revisions to those files.)</p>
   the "destroyed" repository with your bug report.</li>
 
 </ol>
+
+<p>If running <tt>destroy_repository.py</tt> with its default options
+causes the bug to go away, consider using
+<tt>destroy_repository.py</tt> command-line options to leave part of
+the repository information intact.  Run <tt>destroy_repository.py
+--help</tt> for more information.</p>
 
 
 <h4>The repository is still too large</h4>

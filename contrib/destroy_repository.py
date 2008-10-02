@@ -36,6 +36,8 @@ The following OPTIONs are recognized:
   --metadata  destroy revision metadata (author, log message, description) only
   --symbols   destroy symbol names (branch/tag names) only
   --filenames destroy the filenames of RCS files
+  --basenames destroy basenames only (keep filename extensions, such as '.txt')
+              (--filenames overrides --basenames)
   --no-X      where X is one of the above options negates the meaning of that
               option.
 
@@ -116,6 +118,7 @@ destroy = {
     'metadata': True,
     'symbols': True,
     'filenames': True,
+    'basenames': True,
     }
 
 tmpdir = 'destroy_repository-tmp'
@@ -134,7 +137,15 @@ def rewrite_symbol(name):
     return symbol_map[name]
 
 # Mapping from "real" filename to rewritten filename
-filename_map = {}
+filename_map = {
+    # Empty filename should always map to empty filename. This is useful when
+    # preserving the last component of filenames with only one component.
+    '': '',
+    }
+
+# Set the following to true if we should not destroy the last filename
+# component (aka. filename extension)
+keep_last_filename_component = False
 
 def rewrite_filename(pathname):
     (dirname, filename) = os.path.split(pathname)
@@ -144,6 +155,17 @@ def rewrite_filename(pathname):
     if filename.endswith(',v'):
         extra += ',v'
         filename = filename[:-2]
+
+    if keep_last_filename_component:
+        try:
+            i = filename.index('.')
+            extra = filename[i:] + extra
+            filename = filename[:i]
+        except ValueError:
+            # filename has no extension. Handle entire filename as extension.
+            # Note: these filenames will not be rewritten at all.
+            extra = filename + extra
+            filename = ''
 
     # Rewrite filename
     if filename not in filename_map:
@@ -329,6 +351,12 @@ if __name__ == '__main__':
         else:
             # Path argument
             paths.append(arg)
+
+    # If --basenames if given (and not also --filenames), we shall destroy
+    # filenames, up to, but not including the last component.
+    if destroy['basenames'] and not destroy['filenames']:
+        destroy['filenames'] = True
+        keep_last_filename_component = True
 
     if not paths:
         usage_abort("No PATH given")

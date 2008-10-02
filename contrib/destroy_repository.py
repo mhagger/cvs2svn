@@ -35,6 +35,7 @@ The following OPTIONs are recognized:
   --data      destroy revision data (file contents) only
   --metadata  destroy revision metadata (author, log message, description) only
   --symbols   destroy symbol names (branch/tag names) only
+  --filenames destroy the filenames of RCS files
   --no-X      where X is one of the above options negates the meaning of that
               option.
 
@@ -114,6 +115,7 @@ destroy = {
     'data': True,
     'metadata': True,
     'symbols': True,
+    'filenames': True,
     }
 
 tmpdir = 'destroy_repository-tmp'
@@ -130,6 +132,24 @@ def rewrite_symbol(name):
     if name not in symbol_map:
         symbol_map[name] = "symbol%05d" % (len(symbol_map))
     return symbol_map[name]
+
+# Mapping from "real" filename to rewritten filename
+filename_map = {}
+
+def rewrite_filename(pathname):
+    (dirname, filename) = os.path.split(pathname)
+    extra = ''
+
+    # Strip trailing ',v' now, and re-append it to the rewritten filename
+    if filename.endswith(',v'):
+        extra += ',v'
+        filename = filename[:-2]
+
+    # Rewrite filename
+    if filename not in filename_map:
+        filename_map[filename] = "file%03d" % (len(filename_map))
+    return os.path.join(dirname, filename_map[filename] + extra)
+
 
 class Substituter:
     def __init__(self, template):
@@ -152,8 +172,8 @@ class LogSubstituter(Substituter):
     # is passed through untouched.
     untouchable_log_res = [
         re.compile(r'^Initial revision\n$'),
-        re.compile(
-            r'^file .+ was initially added on branch (?P<symbol>.+)\.\n$'),
+        re.compile(r'^file (?P<filename>.+) was initially added'
+                   r' on branch (?P<symbol>.+)\.\n$'),
         re.compile(r'^\*\*\* empty log message \*\*\*\n$'),
         re.compile(r'^initial checkin$'),
         ]
@@ -175,6 +195,12 @@ class LogSubstituter(Substituter):
                     # Need to rewrite symbol name
                     symbol = groups['symbol']
                     keep_log = keep_log.replace(symbol, rewrite_symbol(symbol))
+                if 'filename' in groups and destroy['filenames']:
+                    # Need to rewrite filename
+                    filename = groups['filename']
+                    keep_log = keep_log.replace(
+                        filename, rewrite_filename(filename)
+                        )
         if keep_log:
             return keep_log
         if destroy['metadata']:
@@ -211,7 +237,7 @@ class DestroyerFilterSink(FilterSink):
     def set_revision_info(self, revision, log, text):
         if destroy['data']:
             text = ''
-        if destroy['metadata'] or destroy['symbols']:
+        if destroy['metadata'] or destroy['symbols'] or destroy['filenames']:
             log = self.log_substituter.get_substitution(log)
         FilterSink.set_revision_info(self, revision, log, text)
 
@@ -236,6 +262,8 @@ class FileDestroyer:
 
         # Replace the original file with the new one:
         os.remove(filename)
+        if destroy['filenames']:
+            filename = rewrite_filename(filename)
         shutil.move(tmp_filename, filename)
 
     def visit(self, dirname, names):

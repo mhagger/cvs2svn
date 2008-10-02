@@ -34,6 +34,7 @@ The following OPTIONs are recognized:
   --all       destroy all data (this is the default if no options are given)
   --data      destroy revision data (file contents) only
   --metadata  destroy revision metadata (author, log message, description) only
+  --symbols   destroy symbol names (branch/tag names) only
   --no-X      where X is one of the above options negates the meaning of that
               option.
 
@@ -112,6 +113,7 @@ from rcs_file_filter import FilterSink
 destroy = {
     'data': True,
     'metadata': True,
+    'symbols': True,
     }
 
 tmpdir = 'destroy_repository-tmp'
@@ -121,6 +123,13 @@ file_key_generator = KeyGenerator(1)
 def get_tmp_filename():
     return os.path.join(tmpdir, 'f%07d.tmp' % file_key_generator.gen_id())
 
+# Mapping from "real" symbol name to rewritten symbol name
+symbol_map = {}
+
+def rewrite_symbol(name):
+    if name not in symbol_map:
+        symbol_map[name] = "symbol%05d" % (len(symbol_map))
+    return symbol_map[name]
 
 class Substituter:
     def __init__(self, template):
@@ -143,7 +152,8 @@ class LogSubstituter(Substituter):
     # is passed through untouched.
     untouchable_log_res = [
         re.compile(r'^Initial revision\n$'),
-        re.compile(r'^file .+ was initially added on branch .+\.\n$'),
+        re.compile(
+            r'^file .+ was initially added on branch (?P<symbol>.+)\.\n$'),
         re.compile(r'^\*\*\* empty log message \*\*\*\n$'),
         re.compile(r'^initial checkin$'),
         ]
@@ -151,17 +161,25 @@ class LogSubstituter(Substituter):
     def __init__(self):
         Substituter.__init__(self, 'log %d')
 
-    def _is_untouchable(self, log):
-        for untouchable_log_re in self.untouchable_log_res:
-            if untouchable_log_re.search(log):
-                return True
-        return False
-
     def get_substitution(self, log):
-        if self._is_untouchable(log):
-            return log
-        else:
+        keep_log = ''
+        for untouchable_log_re in self.untouchable_log_res:
+            m = untouchable_log_re.search(log)
+            if m:
+                # We have matched one of the above regexps
+                # Keep log message
+                keep_log = log
+                # Check if we matched a regexp with a named subgroup
+                groups = m.groupdict()
+                if 'symbol' in groups and destroy['symbols']:
+                    # Need to rewrite symbol name
+                    symbol = groups['symbol']
+                    keep_log = keep_log.replace(symbol, rewrite_symbol(symbol))
+        if keep_log:
+            return keep_log
+        if destroy['metadata']:
             return Substituter.get_substitution(self, log)
+        return log
 
 
 class DestroyerFilterSink(FilterSink):
@@ -170,6 +188,11 @@ class DestroyerFilterSink(FilterSink):
 
         self.author_substituter = author_substituter
         self.log_substituter = log_substituter
+
+    def define_tag(self, name, revision):
+        if destroy['symbols']:
+            name = rewrite_symbol(name)
+        self.sink.define_tag(name, revision)
 
     def define_revision(
         self, revision, timestamp, author, state, branches, next
@@ -188,7 +211,7 @@ class DestroyerFilterSink(FilterSink):
     def set_revision_info(self, revision, log, text):
         if destroy['data']:
             text = ''
-        if destroy['metadata']:
+        if destroy['metadata'] or destroy['symbols']:
             log = self.log_substituter.get_substitution(log)
         FilterSink.set_revision_info(self, revision, log, text)
 

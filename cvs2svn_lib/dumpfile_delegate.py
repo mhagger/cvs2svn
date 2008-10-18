@@ -420,6 +420,13 @@ class DumpfileDelegate(SVNRepositoryDelegate):
   def copy_path(self, cvs_path, src_lod, dest_lod, src_revnum):
     if isinstance(cvs_path, CVSFile):
       node_kind = 'file'
+      if cvs_path.basename == '.cvsignore':
+        # FIXME: Here we have to adjust the containing directory's
+        # svn:ignore property to reflect the addition of the
+        # .cvsignore file to the LOD!  This is awkward because we
+        # don't have the contents of the .cvsignore file available.
+        if not Ctx().keep_cvsignore:
+          return
     elif isinstance(cvs_path, CVSDirectory):
       node_kind = 'dir'
     else:

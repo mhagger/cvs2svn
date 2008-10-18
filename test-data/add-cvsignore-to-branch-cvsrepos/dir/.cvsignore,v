@@ -20,5 +20,5 @@ desc
 log
 @@
 text
-@@
+@*.o@
 

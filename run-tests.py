@@ -3339,6 +3339,14 @@ def add_cvsignore_to_branch_test():
   "check adding .cvsignore to an existing branch"
 
   conv = ensure_conversion('add-cvsignore-to-branch')
+  wc_tree = conv.get_wc_tree()
+  trunk_props = props_for_path(wc_tree, 'trunk/dir')
+  if trunk_props['svn:ignore'] != '*.o\n\n':
+    raise Failure()
+
+  branch_props = props_for_path(wc_tree, 'branches/BRANCH/dir')
+  if branch_props['svn:ignore'] != '*.o\n\n':
+    raise Failure()
 
 
 ########################################################################

@@ -3335,6 +3335,12 @@ def mirror_keyerror3_test():
   conv = ensure_conversion('mirror-keyerror3')
 
 
+def cvsignore_not_found_test():
+  "check cvsignore omission handling"
+
+  conv = ensure_conversion('cvsignore-not-found')
+
+
 ########################################################################
 # Run the tests
 
@@ -3522,6 +3528,7 @@ test_list = [
     exclude_ntdb_test,
     mirror_keyerror2_test,
     mirror_keyerror3_test,
+    cvsignore_not_found_test,
     ]
 
 if __name__ == '__main__':

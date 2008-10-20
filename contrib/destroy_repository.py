@@ -23,12 +23,13 @@ Strip the text content out of RCS-format files.
 *** This script irretrievably destroys any RCS files that it is applied to!
 
 This script attempts to strip the file text, log messages, and author
-names out of RCS files.  (This is useful to make test cases smaller
-and to remove much of the proprietary information that is stored in a
-repository.)  Note that this script does NOT obliterate other
-information that might also be considered proprietary: file names,
-commit dates, etc.  In fact, it's not guaranteed even to obliterate
-all of the file text, or to do anything else for that matter.
+names out of RCS files, in addition to renaming RCS files and directories.
+(This is useful to make test cases smaller and to remove much of the
+proprietary information that is stored in a repository.)  Note that this
+script does NOT obliterate other information that might also be considered
+proprietary, such as 'CVSROOT' directories and their contents, commit dates,
+etc.  In fact, it's not guaranteed even to obliterate all of the file text,
+or to do anything else for that matter.
 
 The following OPTIONs are recognized:
   --all       destroy all data (this is the default if no options are given)
@@ -312,6 +313,11 @@ class FileDestroyer:
         shutil.move(tmp_filename, filename)
 
     def visit(self, dirname, names):
+        # Leave CVSROOT directories alone
+        if "CVSROOT" in names:
+            sys.stderr.write('Skipping %s/CVSROOT...' % dirname)
+            del names[names.index("CVSROOT")]
+            sys.stderr.write('done.\n')
         for name in names:
             path = os.path.join(dirname, name)
             if os.path.isfile(path) and path.endswith(',v'):

@@ -40,7 +40,7 @@ The following OPTIONs are recognized:
               (--filenames overrides --basenames)
   --dirnames  destroy directory names within given PATH. PATH itself (if a
               directory) is not destroyed.
-  --no-X      where X is one of the above options negates the meaning of that
+  --no-<X>    where <X> is one of the above options negates the meaning of that
               option.
 
 Each PATH that is a *,v file will be stripped.

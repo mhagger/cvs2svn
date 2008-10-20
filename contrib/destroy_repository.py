@@ -41,7 +41,7 @@ The following OPTIONs are recognized:
               (--filenames overrides --basenames)
   --dirnames  destroy directory names within given PATH. PATH itself (if a
               directory) is not destroyed.
-  --x-cvsroot delete files within 'CVSROOT' directories, instead of leaving
+  --cvsroot   delete files within 'CVSROOT' directories, instead of leaving
               them untouched. The 'CVSROOT' directory itself is preserved.
   --no-<X>    where <X> is one of the above options negates the meaning of that
               option.
@@ -125,7 +125,7 @@ destroy = {
     'filenames': True,
     'basenames': True,
     'dirnames': True,
-    'x-cvsroot': True,
+    'cvsroot': True,
     }
 
 tmpdir = 'destroy_repository-tmp'
@@ -319,7 +319,7 @@ class FileDestroyer:
         # Special handling of CVSROOT directories
         if "CVSROOT" in names:
             path = os.path.join(dirname, "CVSROOT")
-            if destroy['x-cvsroot']:
+            if destroy['cvsroot']:
                 # Remove all contents within CVSROOT
                 sys.stderr.write('Deleting %s contents...' % path)
                 shutil.rmtree(path)

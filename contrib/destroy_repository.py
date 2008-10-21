@@ -166,14 +166,12 @@ def rewrite_filename(pathname):
         filename = filename[:-2]
 
     if keep_last_filename_component:
-        try:
-            i = filename.index('.')
-            extra = filename[i:] + extra
-            filename = filename[:i]
-        except ValueError:
+        (filename, extension) = os.path.splitext(filename)
+        if not extension:
             # filename has no extension.  Do not rewrite this filename
             # at all.
             return pathname
+        extra = extension + extra
 
     # Rewrite filename
     if filename not in filename_map:

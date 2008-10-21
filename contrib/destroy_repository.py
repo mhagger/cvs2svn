@@ -171,10 +171,9 @@ def rewrite_filename(pathname):
             extra = filename[i:] + extra
             filename = filename[:i]
         except ValueError:
-            # filename has no extension. Handle entire filename as extension.
-            # Note: these filenames will not be rewritten at all.
-            extra = filename + extra
-            filename = ''
+            # filename has no extension.  Do not rewrite this filename
+            # at all.
+            return pathname
 
     # Rewrite filename
     if filename not in filename_map:

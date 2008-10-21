@@ -155,6 +155,8 @@ filename_map = {
 keep_last_filename_component = False
 
 def rewrite_filename(pathname):
+    if not destroy['filenames']:
+        return pathname
     (dirname, filename) = os.path.split(pathname)
     extra = ''
 
@@ -311,8 +313,7 @@ class FileDestroyer:
 
         # Replace the original file with the new one:
         os.remove(filename)
-        if destroy['filenames']:
-            filename = rewrite_filename(filename)
+        filename = rewrite_filename(filename)
         shutil.move(tmp_filename, filename)
 
     def visit(self, dirname, names):

@@ -301,6 +301,7 @@ class FileDestroyer:
     def destroy_file(self, filename):
         tmp_filename = get_tmp_filename()
         f = open(tmp_filename, 'wb')
+        new_filename = rewrite_filename(filename)
         cvs2svn_rcsparse.parse(
             open(filename, 'rb'),
             DestroyerFilterSink(
@@ -313,8 +314,7 @@ class FileDestroyer:
 
         # Replace the original file with the new one:
         os.remove(filename)
-        filename = rewrite_filename(filename)
-        shutil.move(tmp_filename, filename)
+        shutil.move(tmp_filename, new_filename)
 
     def visit(self, dirname, names):
         # Special handling of CVSROOT directories

@@ -175,7 +175,7 @@ def rewrite_filename(pathname):
 
     # Rewrite filename
     try:
-        retval = os.path.join(dirname, filename_map[filename] + extra)
+        return os.path.join(dirname, filename_map[filename] + extra)
     except KeyError:
         # filename_map[filename] does not exist. Generate automatically:
         num = len(filename_map)
@@ -183,9 +183,8 @@ def rewrite_filename(pathname):
             filename_map[filename] = "file%03d" % (num)
             retval = os.path.join(dirname, filename_map[filename] + extra)
             if not os.path.exists(retval):
-                break
+                return retval
             num += 1
-    return retval
 
 # List of directory names to be renamed. This list is filled while we walk
 # the directory structure, and then processed afterwards, in order to not

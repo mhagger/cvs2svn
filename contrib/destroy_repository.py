@@ -174,9 +174,18 @@ def rewrite_filename(pathname):
         extra = extension + extra
 
     # Rewrite filename
-    if filename not in filename_map:
-        filename_map[filename] = "file%03d" % (len(filename_map))
-    return os.path.join(dirname, filename_map[filename] + extra)
+    try:
+        retval = os.path.join(dirname, filename_map[filename] + extra)
+    except KeyError:
+        # filename_map[filename] does not exist. Generate automatically:
+        num = len(filename_map)
+        while True:
+            filename_map[filename] = "file%03d" % (num)
+            retval = os.path.join(dirname, filename_map[filename] + extra)
+            if not os.path.exists(retval):
+                break
+            num += 1
+    return retval
 
 # List of directory names to be renamed. This list is filled while we walk
 # the directory structure, and then processed afterwards, in order to not
@@ -188,14 +197,20 @@ def rename_dirs():
     # Make sure we rename subdirs _before_ renaming their parents
     rename_dir_list.reverse()
     rename_map = {}
+    num = 0
     for d in rename_dir_list:
         (parent, name) = os.path.split(d)
         # Skip rewriting 'Attic' directories
         if name == "Attic":
             continue
         if name not in rename_map:
-            rename_map[name] = "dir%03d" % (len(rename_map))
+            while True:
+                num += 1
+                rename_map[name] = "dir%03d" % (num)
+                if not os.path.exists(os.path.join(parent, rename_map[name])):
+                    break
         new_d = os.path.join(parent, rename_map[name])
+        assert not os.path.exists(new_d)
         shutil.move(d, new_d)
 
 
@@ -310,6 +325,7 @@ class FileDestroyer:
         f.close()
 
         # Replace the original file with the new one:
+        assert filename == new_filename or not os.path.exists(new_filename)
         os.remove(filename)
         shutil.move(tmp_filename, new_filename)
 

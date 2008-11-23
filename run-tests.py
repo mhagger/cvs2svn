@@ -3338,6 +3338,8 @@ def mirror_keyerror3_test():
 def add_cvsignore_to_branch_test():
   "check adding .cvsignore to an existing branch"
 
+  # This a test for issue #122.
+
   conv = ensure_conversion('add-cvsignore-to-branch')
   wc_tree = conv.get_wc_tree()
   trunk_props = props_for_path(wc_tree, 'trunk/dir')
@@ -3536,7 +3538,7 @@ test_list = [
     exclude_ntdb_test,
     mirror_keyerror2_test,
     mirror_keyerror3_test,
-    add_cvsignore_to_branch_test,
+    XFail(add_cvsignore_to_branch_test),
     ]
 
 if __name__ == '__main__':

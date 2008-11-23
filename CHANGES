@@ -31,6 +31,11 @@ Version ?.?.? (not yet released)
  * Log preferred parent determinations at verbose (rather than debug) level.
  * Log symbol transformations at verbose (rather than warn) level.
  * Log statistics about all symbol transformations at normal level.
+ * cvs2git: Generate lightweight rather than annotated tags.
+ * contrib/destroy_repository.py:
+   - Allow symbols, files, and directories to be renamed.
+   - Allow CVSROOT directory contents to be erased.
+   - Specify what aspects of a repo to destroy via command-line options.
 
  Miscellaneous:
  * cvs2svn now requires Python version 2.4 or later.

@@ -20,11 +20,6 @@
 import re
 import cPickle
 
-from cvs2svn_lib.common import DB_OPEN_NEW
-from cvs2svn_lib.common import DB_OPEN_READ
-from cvs2svn_lib.common import DB_OPEN_WRITE
-from cvs2svn_lib.common import FatalError
-from cvs2svn_lib.log import Log
 from cvs2svn_lib.cvs_item import CVSRevisionAdd
 from cvs2svn_lib.cvs_item import CVSRevisionChange
 from cvs2svn_lib.cvs_item import CVSRevisionDelete

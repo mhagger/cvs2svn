@@ -107,7 +107,6 @@ import sys
 import os
 import shutil
 import re
-import traceback
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(sys.argv[0])))
 

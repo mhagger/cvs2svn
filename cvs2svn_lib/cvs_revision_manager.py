@@ -22,8 +22,6 @@ from cvs2svn_lib.process import check_command_runs
 from cvs2svn_lib.process import PipeStream
 from cvs2svn_lib.process import CommandFailedException
 from cvs2svn_lib.revision_manager import RevisionReader
-from cvs2svn_lib.revision_manager import NullRevisionRecorder
-from cvs2svn_lib.revision_manager import NullRevisionExcluder
 
 
 class CVSRevisionReader(RevisionReader):

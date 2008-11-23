@@ -40,7 +40,6 @@ import textwrap
 
 from cvs2svn_lib.common import InternalError
 from cvs2svn_lib.context import Ctx
-from cvs2svn_lib.log import Log
 from cvs2svn_lib.symbol import Branch
 from cvs2svn_lib.symbol import Tag
 

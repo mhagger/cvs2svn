@@ -16,7 +16,6 @@
 
 """This module gathers and processes statistics about lines of development."""
 
-import sys
 import cPickle
 
 from cvs2svn_lib import config
@@ -24,15 +23,11 @@ from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.common import FatalException
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.artifact_manager import artifact_manager
-from cvs2svn_lib.symbol import LineOfDevelopment
 from cvs2svn_lib.symbol import Trunk
-from cvs2svn_lib.symbol import Symbol
 from cvs2svn_lib.symbol import IncludedSymbol
 from cvs2svn_lib.symbol import Branch
 from cvs2svn_lib.symbol import Tag
 from cvs2svn_lib.symbol import ExcludedSymbol
-from cvs2svn_lib.cvs_item import CVSBranch
-from cvs2svn_lib.cvs_item import CVSTag
 
 
 class SymbolPlanError(FatalException):

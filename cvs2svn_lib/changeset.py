@@ -21,7 +21,6 @@ from cvs2svn_lib.common import InternalError
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.symbol import Branch
 from cvs2svn_lib.symbol import Tag
-from cvs2svn_lib.cvs_item import CVSRevision
 from cvs2svn_lib.time_range import TimeRange
 from cvs2svn_lib.changeset_graph_node import ChangesetGraphNode
 

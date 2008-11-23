@@ -24,7 +24,6 @@ from cvs2svn_lib.common import CommandError
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.config import DUMPFILE
 from cvs2svn_lib.context import Ctx
-from cvs2svn_lib.log import Log
 from cvs2svn_lib.dumpfile_delegate import DumpfileDelegate
 
 

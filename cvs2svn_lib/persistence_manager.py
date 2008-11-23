@@ -21,8 +21,6 @@ from cvs2svn_lib import config
 from cvs2svn_lib.common import DB_OPEN_NEW
 from cvs2svn_lib.common import DB_OPEN_READ
 from cvs2svn_lib.common import SVN_INVALID_REVNUM
-from cvs2svn_lib.log import Log
-from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.record_table import SignedIntegerPacker
 from cvs2svn_lib.record_table import RecordTable

@@ -17,7 +17,6 @@
 """This module contains classes describing the sources of symbol fills."""
 
 
-from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.common import InternalError
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import SVN_INVALID_REVNUM

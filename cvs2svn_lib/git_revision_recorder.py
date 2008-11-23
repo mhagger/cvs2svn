@@ -22,8 +22,6 @@ fulltext and possibly return a revision_recorder_token."""
 
 
 from cvs2svn_lib.symbol import Trunk
-from cvs2svn_lib.cvs_item import CVSRevision
-from cvs2svn_lib.cvs_item import CVSRevisionAbsent
 from cvs2svn_lib.cvs_item import CVSSymbol
 from cvs2svn_lib.fulltext_revision_recorder import FulltextRevisionRecorder
 from cvs2svn_lib.key_generator import KeyGenerator

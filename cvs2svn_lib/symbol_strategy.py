@@ -16,16 +16,12 @@
 
 """SymbolStrategy classes determine how to convert symbols."""
 
-import sys
 import re
 
 from cvs2svn_lib.common import FatalError
-from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.common import path_join
 from cvs2svn_lib.common import normalize_svn_path
 from cvs2svn_lib.log import Log
-from cvs2svn_lib.context import Ctx
-from cvs2svn_lib.symbol import LineOfDevelopment
 from cvs2svn_lib.symbol import Trunk
 from cvs2svn_lib.symbol import TypedSymbol
 from cvs2svn_lib.symbol import Branch

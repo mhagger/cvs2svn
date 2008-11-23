@@ -20,7 +20,6 @@
 import md5
 
 from cvs2svn_lib import config
-from cvs2svn_lib.common import CommandError
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import InternalError
 from cvs2svn_lib.common import path_split

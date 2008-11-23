@@ -17,8 +17,6 @@
 """This module contains generic utilities used by cvs2svn."""
 
 
-import sys
-import types
 import subprocess
 
 from cvs2svn_lib.common import FatalError

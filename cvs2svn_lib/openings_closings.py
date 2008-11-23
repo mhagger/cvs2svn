@@ -21,9 +21,7 @@ import cPickle
 
 from cvs2svn_lib import config
 from cvs2svn_lib.common import InternalError
-from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
-from cvs2svn_lib.symbol import Branch
 from cvs2svn_lib.svn_revision_range import SVNRevisionRange
 
 

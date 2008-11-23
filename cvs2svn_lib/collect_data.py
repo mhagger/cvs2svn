@@ -48,11 +48,9 @@ or branch.
 """
 
 
-import sys
 import os
 import stat
 import re
-import time
 
 from cvs2svn_lib import config
 from cvs2svn_lib.common import DB_OPEN_NEW
@@ -61,7 +59,6 @@ from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.common import IllegalSVNPathError
 from cvs2svn_lib.common import verify_svn_filename_legal
-from cvs2svn_lib.common import path_split
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager

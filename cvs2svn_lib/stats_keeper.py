@@ -24,7 +24,6 @@ import time
 import cPickle
 from cStringIO import StringIO
 
-from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.cvs_item import CVSRevision
 from cvs2svn_lib.cvs_item import CVSBranch
 from cvs2svn_lib.cvs_item import CVSTag

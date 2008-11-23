@@ -27,7 +27,6 @@ import bisect
 from cvs2svn_lib import config
 from cvs2svn_lib.common import InternalError
 from cvs2svn_lib.common import FatalError
-from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
@@ -41,7 +40,6 @@ from cvs2svn_lib.cvs_item import CVSSymbol
 from cvs2svn_lib.output_option import OutputOption
 from cvs2svn_lib.svn_revision_range import RevisionScores
 from cvs2svn_lib.repository_mirror import RepositoryMirror
-from cvs2svn_lib.repository_mirror import PathExistsError
 from cvs2svn_lib.key_generator import KeyGenerator
 
 

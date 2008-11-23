@@ -37,7 +37,6 @@ from cvs2svn_lib.pass_manager import Pass
 from cvs2svn_lib.serializer import PrimedPickleSerializer
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.cvs_file_database import CVSFileDatabase
-from cvs2svn_lib.metadata import Metadata
 from cvs2svn_lib.metadata_database import MetadataDatabase
 from cvs2svn_lib.project import read_projects
 from cvs2svn_lib.project import write_projects
@@ -71,7 +70,6 @@ from cvs2svn_lib.changeset_graph import ChangesetGraph
 from cvs2svn_lib.changeset_graph_link import ChangesetGraphLink
 from cvs2svn_lib.changeset_database import ChangesetDatabase
 from cvs2svn_lib.changeset_database import CVSItemToChangesetTable
-from cvs2svn_lib.svn_commit import SVNCommit
 from cvs2svn_lib.svn_commit import SVNRevisionCommit
 from cvs2svn_lib.openings_closings import SymbolingsLogger
 from cvs2svn_lib.svn_commit_creator import SVNCommitCreator

@@ -17,7 +17,6 @@
 """This module contains classes to set Subversion properties on files."""
 
 
-import sys
 import os
 import re
 import fnmatch
@@ -25,7 +24,6 @@ import ConfigParser
 from cStringIO import StringIO
 
 from cvs2svn_lib.common import warning_prefix
-from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.log import Log
 
 

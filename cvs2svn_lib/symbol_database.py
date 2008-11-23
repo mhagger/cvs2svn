@@ -19,10 +19,8 @@
 
 import cPickle
 
-from cvs2svn_lib.log import Log
 from cvs2svn_lib import config
 from cvs2svn_lib.artifact_manager import artifact_manager
-from cvs2svn_lib.symbol import Trunk
 
 
 class SymbolDatabase:

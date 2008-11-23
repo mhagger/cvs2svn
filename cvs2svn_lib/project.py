@@ -23,8 +23,6 @@ import cPickle
 
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.common import FatalError
-from cvs2svn_lib.common import path_join
-from cvs2svn_lib.common import path_split
 from cvs2svn_lib.common import IllegalSVNPathError
 from cvs2svn_lib.common import normalize_svn_path
 from cvs2svn_lib.common import verify_paths_disjoint

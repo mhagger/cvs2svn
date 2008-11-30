@@ -61,6 +61,7 @@ if not (os.path.exists('cvs2svn') and os.path.exists('test-data')):
 # Load the Subversion test framework.
 import svntest
 from svntest import Failure
+from svntest.main import run_command
 from svntest.testcase import TestCase
 from svntest.testcase import Skip
 from svntest.testcase import XFail
@@ -110,7 +111,7 @@ def run_program(program, error_re, *varargs):
   MissingErrorExpection."""
 
   # FIXME: exit_code is currently ignored.
-  exit_code, out, err = svntest.main.run_command(program, 1, 0, *varargs)
+  exit_code, out, err = run_command(program, 1, 0, *varargs)
 
   if error_re:
     # Specified error expected on stderr.

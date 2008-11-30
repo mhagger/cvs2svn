@@ -22,10 +22,6 @@ import os
 import re
 import getopt
 import time
-try:
-  my_getopt = getopt.gnu_getopt
-except AttributeError:
-  my_getopt = getopt.getopt
 
 from cvs2svn_lib.version import VERSION
 from cvs2svn_lib import config
@@ -208,7 +204,7 @@ class RunOptions:
     self.project_symbol_strategy_rules = []
 
     try:
-      self.opts, self.args = my_getopt(cmd_args, 'hvqs:p:', [
+      self.opts, self.args = getopt.gnu_getopt(cmd_args, 'hvqs:p:', [
           "options=",
 
           "svnrepos=", "existing-svnrepos",

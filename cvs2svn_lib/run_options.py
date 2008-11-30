@@ -194,6 +194,11 @@ class RunOptions:
             'would happen.'
             ),
         ))
+
+    # Deprecated options:
+    group.add_option(go('--dump-only', help=optparse.SUPPRESS_HELP))
+    group.add_option(go('--create', help=optparse.SUPPRESS_HELP))
+
     parser.add_option_group(group)
 
     group = optparse.OptionGroup(parser, 'Conversion options')
@@ -355,6 +360,13 @@ class RunOptions:
             % (config.SVN_KEYWORDS_VALUE,)
             ),
         ))
+
+    # Deprecated options:
+    group.add_option(go('--no-default-eol', help=optparse.SUPPRESS_HELP))
+    group.add_option(go(
+        '--auto-props-ignore-case', help=optparse.SUPPRESS_HELP
+        ))
+
     parser.add_option_group(group)
 
     group = optparse.OptionGroup(parser, 'Extraction options')
@@ -461,15 +473,6 @@ class RunOptions:
         help='profile with \'hotshot\' (into file cvs2svn.hotshot)',
         ))
     parser.add_option_group(group)
-
-    # These options are deprecated and are only included for
-    # backwards compatibility:
-    parser.add_option(go('--dump-only', help=optparse.SUPPRESS_HELP))
-    parser.add_option(go('--create', help=optparse.SUPPRESS_HELP))
-    parser.add_option(go('--no-default-eol', help=optparse.SUPPRESS_HELP))
-    parser.add_option(go(
-        '--auto-props-ignore-case', help=optparse.SUPPRESS_HELP
-        ))
 
     (options, self.args) = parser.parse_args()
     self.opts = go.opts

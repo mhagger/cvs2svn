@@ -38,7 +38,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(sys.argv[0])))
 
 import re
 import time
-import getopt
+import optparse
 import threading
 
 from cvs2svn_lib.common import FatalException
@@ -46,18 +46,13 @@ from cvs2svn_lib.log import Log
 from cvs2svn_lib.main import main
 
 
-usage_string = """\
-USAGE: %(progname)s [--interval=<value>] [--help|-h] -- <cvs2svn-args>
-  ('--' is required, to separate %(progname)s options from the options
-  and arguments that will be passed through to cvs2svn.)
+usage = '%prog [--interval=VALUE] [--help|-h] -- CVS2SVN-ARGS'
 
-  --interval=VALUE   Specify the time in seconds between memory logs.
-  --help, -h         Print this usage message.
+description = """\
+Run cvs2svn while logging its memory usage.  ('--' is required to
+separate %(progname)s options from the options and arguments that will
+be passed through to cvs2svn.)
 """
-
-
-def usage(f=sys.stderr):
-  f.write(usage_string % {'progname' : sys.argv[0]})
 
 
 rss_re = re.compile(r'^VmRSS\:\s+(?P<mem>.*)$')
@@ -90,27 +85,17 @@ class MemoryLogger(threading.Thread):
       i += 1
 
 
-try:
-  opts, args = getopt.getopt(sys.argv[1:], 'h', [
-      'interval=',
-      'help',
-      ])
-except getopt.GetoptError, e:
-  sys.stderr.write('Unknown option: %s\n' % (e,))
-  usage()
-  sys.exit(1)
+parser = optparse.OptionParser(usage=usage, description=description)
+parser.set_defaults(interval=1.0)
+parser.add_option(
+    '--interval',
+    action='store', type='float',
+    help='the time in seconds between memory logs',
+    )
 
-interval = 1.0
+(options, args) = parser.parse_args()
 
-for opt, value in opts:
-  if opt == '--interval':
-    interval = float(value)
-  elif opt in ['-h', '--help']:
-    usage(sys.stdout)
-    sys.exit(0)
-
-
-MemoryLogger(interval=interval).start()
+MemoryLogger(interval=options.interval).start()
 
 try:
   main(sys.argv[0], args)

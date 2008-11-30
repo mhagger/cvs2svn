@@ -100,114 +100,14 @@ class GetoptOptions(object):
     self.opts.append((opt_str, value,))
 
 
-usage_message_template = """\
-Usage: %(progname)s --options OPTIONFILE
-       %(progname)s [OPTION...] OUTPUT-OPTION CVS-REPOS-PATH
-%(progname)s converts a CVS repository into a Subversion repository, including
-history.
+usage = """\
+Usage: %prog --options OPTIONFILE
+       %prog [OPTION...] OUTPUT-OPTION CVS-REPOS-PATH"""
 
- Configuration via options file:
-
-      --options=PATH         read the conversion options from PATH.  This
-                             method allows more flexibility than using
-                             command-line options.  See documentation for info
-
- Output options:
-
-  -s, --svnrepos=PATH        path where SVN repos should be created
-      --existing-svnrepos    load into existing SVN repository (for use with
-                             --svnrepos)
-      --fs-type=TYPE         pass --fs-type=TYPE to "svnadmin create" (for use
-                             with --svnrepos)
-      --bdb-txn-nosync       pass --bdb-txn-nosync to "svnadmin create" (for
-                             use with --svnrepos)
-      --create-option=OPT    pass OPT to "svnadmin create" (for use with
-                             --svnrepos)
-      --dumpfile=PATH        just produce a dumpfile; don't commit to a repos
-      --dry-run              do not create a repository or a dumpfile;
-                             just print what would happen.
-
- Conversion options:
-
-      --trunk-only           convert only trunk commits, not tags nor branches
-      --trunk=PATH           path for trunk (default: %(trunk_base)s)
-      --branches=PATH        path for branches (default: %(branches_base)s)
-      --tags=PATH            path for tags (default: %(tags_base)s)
-      --no-prune             don't prune empty directories
-      --encoding=ENC         encoding for paths and log messages in CVS repos.
-                             If option is specified multiple times, encoders
-                             are tried in order until one succeeds.  See
-                             http://docs.python.org/lib/standard-encodings.html
-                             for a list of standard Python encodings.
-      --fallback-encoding=ENC   If all --encodings fail, use lossy encoding
-                             with ENC
-      --symbol-transform=P:S transform symbol names from P to S, where P and S
-                             use Python regexp and reference syntax
-                             respectively.  P must match the whole symbol name
-      --symbol-hints=PATH    read symbol conversion hints from PATH
-      --force-branch=REGEXP  force symbols matching REGEXP to be branches
-      --force-tag=REGEXP     force symbols matching REGEXP to be tags
-      --exclude=REGEXP       exclude branches and tags matching REGEXP
-      --keep-trivial-imports do not exclude branches that were only used for
-                             a single import (usually these are unneeded)
-      --symbol-default=OPT   specify how ambiguous symbols are converted.
-                             OPT is "heuristic" (default), "strict", "branch",
-                             or "tag"
-      --keep-cvsignore       keep .cvsignore files (in addition to creating
-                             the analogous svn:ignore properties)
-      --no-cross-branch-commits   prevent the creation of cross-branch commits
-      --retain-conflicting-attic-files   if a file appears both in and out of
-                             the CVS Attic, then leave the attic version in a
-                             SVN directory called "Attic"
-      --username=NAME        username for cvs2svn-synthesized commits
-      --cvs-revnums          record CVS revision numbers as file properties
-      --mime-types=FILE      specify an apache-style mime.types file for
-                             setting svn:mime-type
-      --eol-from-mime-type   set svn:eol-style from mime type if known
-      --auto-props=FILE      set file properties from the auto-props section
-                             of a file in svn config format
-      --default-eol=VALUE    default svn:eol-style for non-binary files with
-                             undetermined mime types.  VALUE is "binary"
-                             (default), "native", "CRLF", "LF", or "CR"
-      --keywords-off         don't set svn:keywords on any files (by default,
-                             cvs2svn sets svn:keywords on non-binary files to
-                             "%(svn_keywords_value)s")
-
- Extraction options:
-
-      --use-rcs              use RCS to extract revision contents
-      --use-cvs              use CVS to extract revision contents
-                             (only use this if having problems with RCS)
-      --use-internal-co      use internal code to extract revision contents
-                             (very fast but disk space intensive) (default)
-
- Environment options:
-
-      --tmpdir=PATH          directory to use for temporary data files
-                             (default "cvs2svn-tmp")
-      --svnadmin=PATH        path to the "svnadmin" program
-      --co=PATH              path to the "co" program (required if --use-rcs)
-      --cvs=PATH             path to the "cvs" program (required if --use-cvs)
-      --sort=PATH            path to the GNU "sort" program
-
- Partial conversions:
-
-  -p, --pass PASS            execute only specified PASS of conversion
-  -p, --passes [START]:[END] execute passes START through END, inclusive (PASS,
-                             START, and END can be pass names or numbers)
-
- Information options:
-
-      --version              print the version number
-  -h, --help                 print this usage message and exit with success
-      --help-passes          list the available passes and their numbers
-  -v, --verbose              verbose (may be specified twice for debug output)
-  -q, --quiet                quiet (may be specified twice for very quiet)
-      --write-symbol-info=PATH write information and statistics about CVS
-                             symbols to PATH.
-      --skip-cleanup         prevent the deletion of intermediate files
-      --profile              profile with 'hotshot' (into file cvs2svn.hotshot)
+description="""\
+Convert a CVS repository into a Subversion repository, including history.
 """
+
 
 class RunOptions:
   """A place to store meta-options that are used to start the conversion."""
@@ -232,71 +132,344 @@ class RunOptions:
     self.project_symbol_strategy_rules = []
 
     go = GetoptOptions()
-    parser = optparse.OptionParser(add_help_option=False)
-    parser.add_option(go('--options', type='string'))
 
-    parser.add_option(go('--svnrepos', '-s', type='string'))
-    parser.add_option(go('--existing-svnrepos'))
-    parser.add_option(go('--fs-type', type='string'))
-    parser.add_option(go('--bdb-txn-nosync'))
-    parser.add_option(go('--create-option', type='string'))
-    parser.add_option(go('--dumpfile', type='string'))
-    parser.add_option(go('--dry-run'))
+    parser = self.parser = optparse.OptionParser(
+        usage=usage,
+        description=description,
+        add_help_option=False,
+        )
 
-    parser.add_option(go('--trunk-only'))
-    parser.add_option(go('--trunk', type='string'))
-    parser.add_option(go('--branches', type='string'))
-    parser.add_option(go('--tags', type='string'))
-    parser.add_option(go('--no-prune'))
-    parser.add_option(go('--encoding', type='string'))
-    parser.add_option(go('--fallback-encoding', type='string'))
-    parser.add_option(go('--symbol-transform', type='string'))
-    parser.add_option(go('--symbol-hints', type='string'))
-    parser.add_option(go('--force-branch', type='string'))
-    parser.add_option(go('--force-tag', type='string'))
-    parser.add_option(go('--exclude', type='string'))
-    parser.add_option(go('--keep-trivial-imports'))
-    parser.add_option(go('--symbol-default', type='string'))
-    parser.add_option(go('--keep-cvsignore'))
-    parser.add_option(go('--no-cross-branch-commits'))
-    parser.add_option(go('--retain-conflicting-attic-files'))
-    parser.add_option(go('--username', type='string'))
-    parser.add_option(go('--cvs-revnums'))
-    parser.add_option(go('--mime-types', type='string'))
-    parser.add_option(go('--auto-props', type='string'))
-    parser.add_option(go('--eol-from-mime-type'))
-    parser.add_option(go('--default-eol', type='string'))
-    parser.add_option(go('--keywords-off'))
 
-    parser.add_option(go('--use-rcs'))
-    parser.add_option(go('--use-cvs'))
-    parser.add_option(go('--use-internal-co'))
+    group = optparse.OptionGroup(parser, 'Configuration via options file')
+    group.add_option(go(
+        '--options', type='string',
+        help=(
+            'read the conversion options from PATH.  This '
+            'method allows more flexibility than using '
+            'command-line options.  See documentation for info'
+            ),
+        metavar='PATH',
+        ))
+    parser.add_option_group(group)
 
-    parser.add_option(go('--tmpdir', type='string'))
-    parser.add_option(go('--svnadmin', type='string'))
-    parser.add_option(go('--co', type='string'))
-    parser.add_option(go('--cvs', type='string'))
-    parser.add_option(go('--sort', type='string'))
+    group = optparse.OptionGroup(parser, 'Output options')
+    group.add_option(go(
+        '--svnrepos', '-s', type='string',
+        help='path where SVN repos should be created',
+        metavar='PATH',
+        ))
+    group.add_option(go(
+        '--existing-svnrepos',
+        help='load into existing SVN repository (for use with --svnrepos)',
+        ))
+    group.add_option(go(
+        '--fs-type', type='string',
+        help=(
+            'pass --fs-type=TYPE to "svnadmin create" (for use with '
+            '--svnrepos)'
+            ),
+        metavar='TYPE',
+        ))
+    group.add_option(go(
+        '--bdb-txn-nosync',
+        help=(
+            'pass --bdb-txn-nosync to "svnadmin create" (for use with '
+            '--svnrepos)'
+            ),
+        ))
+    group.add_option(go(
+        '--create-option', type='string',
+        help='pass OPT to "svnadmin create" (for use with --svnrepos)',
+        metavar='OPT',
+        ))
+    group.add_option(go(
+        '--dumpfile', type='string',
+        help='just produce a dumpfile; don\'t commit to a repos',
+        metavar='PATH',
+        ))
+    group.add_option(go(
+        '--dry-run',
+        help=(
+            'do not create a repository or a dumpfile; just print what '
+            'would happen.'
+            ),
+        ))
+    parser.add_option_group(group)
 
-    parser.add_option(go('--pass', '--passes', '-p', type='string'))
+    group = optparse.OptionGroup(parser, 'Conversion options')
+    group.add_option(go(
+        '--trunk-only',
+        help='convert only trunk commits, not tags nor branches',
+        ))
+    group.add_option(go(
+        '--trunk', type='string',
+        help=(
+            'path for trunk (default: %s)'
+            % (config.DEFAULT_TRUNK_BASE,)
+            ),
+        metavar='PATH',
+        ))
+    group.add_option(go(
+        '--branches', type='string',
+        help=(
+            'path for branches (default: %s)'
+            % (config.DEFAULT_BRANCHES_BASE,)
+            ),
+        metavar='PATH',
+        ))
+    group.add_option(go(
+        '--tags', type='string',
+        help=(
+            'path for tags (default: %s)'
+            % (config.DEFAULT_TAGS_BASE,)
+            ),
+        metavar='PATH',
+        ))
+    group.add_option(go(
+        '--no-prune',
+        help='don\'t prune empty directories',
+        ))
+    group.add_option(go(
+        '--encoding', type='string',
+        help=(
+            'encoding for paths and log messages in CVS repos.  '
+            'If option is specified multiple times, encoders '
+            'are tried in order until one succeeds.  See '
+            'http://docs.python.org/lib/standard-encodings.html '
+            'for a list of standard Python encodings.'
+            ),
+        metavar='ENC',
+        ))
+    group.add_option(go(
+        '--fallback-encoding', type='string',
+        help='If all --encodings fail, use lossy encoding with ENC',
+        metavar='ENC',
+        ))
+    group.add_option(go(
+        '--symbol-transform', type='string',
+        help=(
+            'transform symbol names from P to S, where P and S '
+            'use Python regexp and reference syntax '
+            'respectively.  P must match the whole symbol name'
+            ),
+        metavar='P:S',
+        ))
+    group.add_option(go(
+        '--symbol-hints', type='string',
+        help='read symbol conversion hints from PATH',
+        metavar='PATH',
+        ))
+    group.add_option(go(
+        '--force-branch', type='string',
+        help='force symbols matching REGEXP to be branches',
+        metavar='REGEXP',
+        ))
+    group.add_option(go(
+        '--force-tag', type='string',
+        help='force symbols matching REGEXP to be tags',
+        metavar='REGEXP',
+        ))
+    group.add_option(go(
+        '--exclude', type='string',
+        help='exclude branches and tags matching REGEXP',
+        metavar='REGEXP',
+        ))
+    group.add_option(go(
+        '--keep-trivial-imports',
+        help=(
+            'do not exclude branches that were only used for '
+            'a single import (usually these are unneeded)'
+            ),
+        ))
+    group.add_option(go(
+        '--symbol-default', type='string',
+        help=(
+            'specify how ambiguous symbols are converted.  '
+            'OPT is "heuristic" (default), "strict", "branch", '
+            'or "tag"'
+            ),
+        metavar='OPT',
+        ))
+    group.add_option(go(
+        '--keep-cvsignore',
+        help=(
+            'keep .cvsignore files (in addition to creating '
+            'the analogous svn:ignore properties)'
+            ),
+        ))
+    group.add_option(go(
+        '--no-cross-branch-commits',
+        help='prevent the creation of cross-branch commits',
+        ))
+    group.add_option(go(
+        '--retain-conflicting-attic-files',
+        help=(
+            'if a file appears both in and out of '
+            'the CVS Attic, then leave the attic version in a '
+            'SVN directory called "Attic"'
+            ),
+        ))
+    group.add_option(go(
+        '--username', type='string',
+        help='username for cvs2svn-synthesized commits',
+        metavar='NAME',
+        ))
+    group.add_option(go(
+        '--cvs-revnums',
+        help='record CVS revision numbers as file properties',
+        ))
+    group.add_option(go(
+        '--mime-types', type='string',
+        help=(
+            'specify an apache-style mime.types file for setting '
+            'svn:mime-type'
+            ),
+        metavar='FILE',
+        ))
+    group.add_option(go(
+        '--eol-from-mime-type',
+        help='set svn:eol-style from mime type if known',
+        ))
+    group.add_option(go(
+        '--auto-props', type='string',
+        help=(
+            'set file properties from the auto-props section '
+            'of a file in svn config format'
+            ),
+        metavar='FILE',
+        ))
+    group.add_option(go(
+        '--default-eol', type='string',
+        help=(
+            'default svn:eol-style for non-binary files with '
+            'undetermined mime types.  VALUE is "binary" '
+            '(default), "native", "CRLF", "LF", or "CR"'
+            ),
+        metavar='VALUE',
+        ))
+    group.add_option(go(
+        '--keywords-off',
+        help=(
+            'don\'t set svn:keywords on any files (by default, '
+            'cvs2svn sets svn:keywords on non-binary files to "%s")'
+            % (config.SVN_KEYWORDS_VALUE,)
+            ),
+        ))
+    parser.add_option_group(group)
 
-    parser.add_option(go('--version'))
-    parser.add_option(go('--help', '-h'))
-    parser.add_option(go('--help-passes'))
+    group = optparse.OptionGroup(parser, 'Extraction options')
+    group.add_option(go(
+        '--use-rcs',
+        help='use RCS to extract revision contents',
+        ))
+    group.add_option(go(
+        '--use-cvs',
+        help=(
+            'use CVS to extract revision contents '
+            '(only use this if having problems with RCS)'
+            ),
+        ))
+    group.add_option(go(
+        '--use-internal-co',
+        help=(
+            'use internal code to extract revision contents '
+            '(very fast but disk space intensive) (default)'
+            ),
+        ))
+    parser.add_option_group(group)
 
-    parser.add_option(go('--verbose', '-v'))
-    parser.add_option(go('--quiet', '-q'))
+    group = optparse.OptionGroup(parser, 'Environment options')
+    group.add_option(go(
+        '--tmpdir', type='string',
+        help=(
+            'directory to use for temporary data files '
+            '(default "cvs2svn-tmp")'
+            ),
+        metavar='PATH',
+        ))
+    group.add_option(go(
+        '--svnadmin', type='string',
+        help='path to the "svnadmin" program',
+        metavar='PATH',
+        ))
+    group.add_option(go(
+        '--co', type='string',
+        help='path to the "co" program (required if --use-rcs)',
+        metavar='PATH',
+        ))
+    group.add_option(go(
+        '--cvs', type='string',
+        help='path to the "cvs" program (required if --use-cvs)',
+        metavar='PATH',
+        ))
+    group.add_option(go(
+        '--sort', type='string',
+        help='path to the GNU "sort" program',
+        metavar='PATH',
+        ))
+    parser.add_option_group(group)
 
-    parser.add_option(go('--write-symbol-info', type='string'))
-    parser.add_option(go('--skip-cleanup'))
-    parser.add_option(go('--profile'))
+    group = optparse.OptionGroup(parser, 'Partial conversions')
+    group.add_option(go(
+        '--pass', type='string',
+        help='execute only specified PASS of conversion',
+        metavar='PASS',
+        ))
+    group.add_option(go(
+        '--passes', '-p', type='string',
+        help=(
+            'execute passes START through END, inclusive (PASS, '
+            'START, and END can be pass names or numbers)'
+            ),
+        metavar='[START]:[END]',
+        ))
+    parser.add_option_group(group)
+
+    group = optparse.OptionGroup(parser, 'Information options')
+    group.add_option(go(
+        '--version',
+        help='print the version number',
+        ))
+    group.add_option(
+        '--help', '-h',
+        action="help",
+        help='print this usage message and exit with success',
+        )
+    group.add_option(go(
+        '--help-passes',
+        help='list the available passes and their numbers',
+        ))
+    group.add_option(go(
+        '--verbose', '-v',
+        help='verbose (may be specified twice for debug output)',
+        ))
+    group.add_option(go(
+        '--quiet', '-q',
+        help='quiet (may be specified twice for very quiet)',
+        ))
+    group.add_option(go(
+        '--write-symbol-info', type='string',
+        help='write information and statistics about CVS symbols to PATH.',
+        metavar='PATH',
+        ))
+    group.add_option(go(
+        '--skip-cleanup',
+        help='prevent the deletion of intermediate files',
+        ))
+    group.add_option(go(
+        '--profile',
+        help='profile with \'hotshot\' (into file cvs2svn.hotshot)',
+        ))
+    parser.add_option_group(group)
 
     # These options are deprecated and are only included for
     # backwards compatibility:
-    parser.add_option(go('--dump-only'))
-    parser.add_option(go('--create'))
-    parser.add_option(go('--no-default-eol'))
-    parser.add_option(go('--auto-props-ignore-case'))
+    parser.add_option(go('--dump-only', help=optparse.SUPPRESS_HELP))
+    parser.add_option(go('--create', help=optparse.SUPPRESS_HELP))
+    parser.add_option(go('--no-default-eol', help=optparse.SUPPRESS_HELP))
+    parser.add_option(go(
+        '--auto-props-ignore-case', help=optparse.SUPPRESS_HELP
+        ))
 
     (options, self.args) = parser.parse_args()
     self.opts = go.opts
@@ -393,10 +566,7 @@ class RunOptions:
   def process_help_options(self):
     """Process any help-type options."""
 
-    if self.get_options('-h', '--help'):
-      self.usage()
-      sys.exit(0)
-    elif self.get_options('--help-passes'):
+    if self.get_options('--help-passes'):
       self.pass_manager.help_passes()
       sys.exit(0)
     elif self.get_options('--version'):
@@ -819,12 +989,6 @@ class RunOptions:
     execfile(options_filename, g, l)
 
   def usage(self):
-    Log().write(usage_message_template % {
-        'progname' : self.progname,
-        'trunk_base' : config.DEFAULT_TRUNK_BASE,
-        'branches_base' : config.DEFAULT_BRANCHES_BASE,
-        'tags_base' : config.DEFAULT_TAGS_BASE,
-        'svn_keywords_value' : config.SVN_KEYWORDS_VALUE,
-        })
+    self.parser.print_help()
 
 

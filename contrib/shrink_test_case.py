@@ -23,8 +23,6 @@
 !! applied to!                                                      !!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-Usage: shrink_test_case.py CVSREPO TEST_COMMAND
-
 This script is meant to be used to shrink the size of a CVS repository
 that is to be used as a test case for cvs2svn.  It tries to throw out
 parts of the repository while preserving the bug.
@@ -37,7 +35,7 @@ if the bug is still present, and fail if the bug is absent."""
 import sys
 import os
 import shutil
-import getopt
+import optparse
 from cStringIO import StringIO
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(sys.argv[0])))
@@ -51,22 +49,17 @@ from contrib.rcs_file_filter import WriteRCSFileSink
 from contrib.rcs_file_filter import FilterSink
 
 
-usage_string = """\
-USAGE: %(progname)s [OPT...] CVSREPO TEST_COMMAND
+usage = 'USAGE: %prog [options] CVSREPO TEST_COMMAND'
+description = """\
+Simplify a CVS repository while preserving the presence of a bug.
 
-  CVSREPO is the path to a CVS repository.
+***THE CVS REPOSITORY WILL BE DESTROYED***
 
-  ***THE REPOSITORY WILL BE DESTROYED***
+CVSREPO is the path to a CVS repository.
 
-  TEST_COMMAND is a command that runs successfully (i.e., with exit
-  code '0') if the bug is still present, and fails if the bug is
-  absent.
-
-Valid options:
-  --skip-initial-test  Assume that the bug is present when run on the initial
-                       repository.  Usually this fact is verified
-                       automatically.
-  --help, -h           Print this usage message.
+TEST_COMMAND is a command that runs successfully (i.e., with exit
+code '0') if the bug is still present, and fails if the bug is
+absent.
 """
 
 
@@ -75,10 +68,6 @@ verbose = 1
 tmpdir = 'shrink_test_case-tmp'
 
 file_key_generator = KeyGenerator(1)
-
-
-def usage(f=sys.stderr):
-    f.write(usage_string % {'progname' : sys.argv[0]})
 
 
 def get_tmp_filename():
@@ -701,27 +690,26 @@ again.
 """
 
 
+class MyHelpFormatter(optparse.IndentedHelpFormatter):
+    """A HelpFormatter for optparse that doesn't reformat the description."""
+
+    def format_description(self, description):
+        return description
+
+
 def main():
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], 'h', [
-            'skip-initial-test',
-            'help',
-            ])
-    except getopt.GetoptError, e:
-        sys.stderr.write('Unknown option: %s\n' % (e,))
-        usage()
-        sys.exit(1)
+    parser = optparse.OptionParser(
+        usage=usage, description=description,
+        formatter=MyHelpFormatter(),
+        )
+    parser.set_defaults(skip_initial_test=False)
+    parser.add_option(
+        '--skip-initial-test',
+        action='store_true', default=False,
+        help='skip verifying that the bug exists in the original repository',
+        )
 
-    skip_initial_test = False
-
-    for opt, value in opts:
-        if opt in ['--skip-initial-test']:
-            skip_initial_test = True
-        elif opt in ['-h', '--help']:
-            usage(sys.stdout)
-            sys.exit(0)
-        else:
-            sys.exit('Internal error')
+    (options, args) = parser.parse_args()
 
     cvsrepo = args[0]
 
@@ -731,7 +719,7 @@ def main():
     if not os.path.isdir(tmpdir):
         os.makedirs(tmpdir)
 
-    if not skip_initial_test:
+    if not options.skip_initial_test:
         sys.stdout.write('Testing with the original repository.\n')
         try:
             test_command()

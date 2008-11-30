@@ -66,6 +66,7 @@ from svntest.main import safe_rmtree
 from svntest.testcase import TestCase
 from svntest.testcase import Skip
 from svntest.testcase import XFail
+from svntest.tree import build_tree_from_wc
 
 cvs2svn = os.path.abspath('cvs2svn')
 
@@ -607,7 +608,7 @@ class Conversion:
 
   def get_wc_tree(self):
     if self._wc_tree is None:
-      self._wc_tree = svntest.tree.build_tree_from_wc(self.get_wc(), 1)
+      self._wc_tree = build_tree_from_wc(self.get_wc(), 1)
     return self._wc_tree
 
   def path_exists(self, *args):

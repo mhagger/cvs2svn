@@ -67,6 +67,7 @@ from svntest.testcase import TestCase
 from svntest.testcase import Skip
 from svntest.testcase import XFail
 from svntest.tree import build_tree_from_wc
+from svntest.tree import get_child
 
 cvs2svn = os.path.abspath('cvs2svn')
 
@@ -2076,7 +2077,7 @@ def node_for_path(node, path):
   path = path.strip('/')
   components = path.split('/')
   for component in components:
-    node = svntest.tree.get_child(node, component)
+    node = get_child(node, component)
   return node
 
 # Helper for tests involving properties.

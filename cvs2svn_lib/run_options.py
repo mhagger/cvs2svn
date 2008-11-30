@@ -20,7 +20,7 @@
 import sys
 import os
 import re
-import getopt
+import optparse
 import time
 
 from cvs2svn_lib.version import VERSION
@@ -70,6 +70,34 @@ from cvs2svn_lib.property_setters import ExecutablePropertySetter
 from cvs2svn_lib.property_setters import KeywordsPropertySetter
 from cvs2svn_lib.property_setters import MimeMapper
 from cvs2svn_lib.property_setters import SVNBinaryFileKeywordsPropertySetter
+
+
+class GetoptOptions(object):
+  """Backwards compatibility adapter for getopt-style options.
+
+  optparse-compatible options can be created with the __call__()
+  method.  When such an option is seen, it appends (opt, value) tuples
+  to self.opts.  These can be processed in a getopt-style option
+  processing loop."""
+
+  def __init__(self):
+    self.opts = []
+
+  def __call__(self, *args, **kw):
+    """Create an optparse-compatible Option object.
+
+    The arguments are compatible with those of the optparse.Options
+    constructor, except that action is allways set to 'callback' and
+    the callback is always set to self.callback.  In particular, if
+    the option should take an argument, then the 'type' keyword
+    argument should be used."""
+
+    kw['action'] = 'callback'
+    kw['callback'] = self.callback
+    return optparse.Option(*args, **kw)
+
+  def callback(self, option, opt_str, value, parser):
+    self.opts.append((opt_str, value,))
 
 
 usage_message_template = """\
@@ -203,54 +231,75 @@ class RunOptions:
     # A list of one list of SymbolStrategyRules for each project:
     self.project_symbol_strategy_rules = []
 
-    try:
-      self.opts, self.args = getopt.gnu_getopt(cmd_args, 'hvqs:p:', [
-          "options=",
+    go = GetoptOptions()
+    parser = optparse.OptionParser(add_help_option=False)
+    parser.add_option(go('--options', type='string'))
 
-          "svnrepos=", "existing-svnrepos",
-          "fs-type=", "bdb-txn-nosync", "create-option=",
-          "dumpfile=",
-          "dry-run",
+    parser.add_option(go('--svnrepos', '-s', type='string'))
+    parser.add_option(go('--existing-svnrepos'))
+    parser.add_option(go('--fs-type', type='string'))
+    parser.add_option(go('--bdb-txn-nosync'))
+    parser.add_option(go('--create-option', type='string'))
+    parser.add_option(go('--dumpfile', type='string'))
+    parser.add_option(go('--dry-run'))
 
-          "trunk-only",
-          "trunk=", "branches=", "tags=",
-          "no-prune",
-          "encoding=", "fallback-encoding=",
-          "symbol-transform=",
-          "symbol-hints=",
-          "force-branch=", "force-tag=", "exclude=",
-          "keep-trivial-imports", "symbol-default=",
-          "keep-cvsignore",
-          "no-cross-branch-commits",
-          "retain-conflicting-attic-files",
-          "username=",
-          "cvs-revnums",
-          "mime-types=",
-          "auto-props=",
-          "eol-from-mime-type", "default-eol=",
-          "keywords-off",
+    parser.add_option(go('--trunk-only'))
+    parser.add_option(go('--trunk', type='string'))
+    parser.add_option(go('--branches', type='string'))
+    parser.add_option(go('--tags', type='string'))
+    parser.add_option(go('--no-prune'))
+    parser.add_option(go('--encoding', type='string'))
+    parser.add_option(go('--fallback-encoding', type='string'))
+    parser.add_option(go('--symbol-transform', type='string'))
+    parser.add_option(go('--symbol-hints', type='string'))
+    parser.add_option(go('--force-branch', type='string'))
+    parser.add_option(go('--force-tag', type='string'))
+    parser.add_option(go('--exclude', type='string'))
+    parser.add_option(go('--keep-trivial-imports'))
+    parser.add_option(go('--symbol-default', type='string'))
+    parser.add_option(go('--keep-cvsignore'))
+    parser.add_option(go('--no-cross-branch-commits'))
+    parser.add_option(go('--retain-conflicting-attic-files'))
+    parser.add_option(go('--username', type='string'))
+    parser.add_option(go('--cvs-revnums'))
+    parser.add_option(go('--mime-types', type='string'))
+    parser.add_option(go('--auto-props', type='string'))
+    parser.add_option(go('--eol-from-mime-type'))
+    parser.add_option(go('--default-eol', type='string'))
+    parser.add_option(go('--keywords-off'))
 
-          "use-rcs", "use-cvs", "use-internal-co",
+    parser.add_option(go('--use-rcs'))
+    parser.add_option(go('--use-cvs'))
+    parser.add_option(go('--use-internal-co'))
 
-          "tmpdir=",
-          "svnadmin=", "co=", "cvs=", "sort=",
+    parser.add_option(go('--tmpdir', type='string'))
+    parser.add_option(go('--svnadmin', type='string'))
+    parser.add_option(go('--co', type='string'))
+    parser.add_option(go('--cvs', type='string'))
+    parser.add_option(go('--sort', type='string'))
 
-          "pass=", "passes=",
+    parser.add_option(go('--pass', '--passes', '-p', type='string'))
 
-          "version", "help", "help-passes",
-          "verbose", "quiet",
-          "write-symbol-info=",
-          "skip-cleanup",
-          "profile",
+    parser.add_option(go('--version'))
+    parser.add_option(go('--help', '-h'))
+    parser.add_option(go('--help-passes'))
 
-          # These options are deprecated and are only included for
-          # backwards compatibility:
-          "dump-only", "create", "no-default-eol", "auto-props-ignore-case",
-          ])
-    except getopt.GetoptError, e:
-      Log().error('%s: %s\n\n' % (error_prefix, e))
-      self.usage()
-      sys.exit(1)
+    parser.add_option(go('--verbose', '-v'))
+    parser.add_option(go('--quiet', '-q'))
+
+    parser.add_option(go('--write-symbol-info', type='string'))
+    parser.add_option(go('--skip-cleanup'))
+    parser.add_option(go('--profile'))
+
+    # These options are deprecated and are only included for
+    # backwards compatibility:
+    parser.add_option(go('--dump-only'))
+    parser.add_option(go('--create'))
+    parser.add_option(go('--no-default-eol'))
+    parser.add_option(go('--auto-props-ignore-case'))
+
+    (options, self.args) = parser.parse_args()
+    self.opts = go.opts
 
     # First look for any 'help'-type options, as they just cause the
     # program to print help and ignore any other options:

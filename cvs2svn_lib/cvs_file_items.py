@@ -330,6 +330,26 @@ class CVSFileItems(object):
       for lod_items in self._iter_tree(lod, cvs_branch, id):
         yield lod_items
 
+  def iter_deltatext_ancestors(self, cvs_rev):
+    """Generate the delta-dependency ancestors of CVS_REV.
+
+    Generate then ancestors of CVS_REV in deltatext order; i.e., back
+    along branches towards trunk, then outwards along trunk towards
+    HEAD."""
+
+    while True:
+      # Determine the next candidate source revision:
+      if isinstance(cvs_rev.lod, Trunk):
+        if cvs_rev.next_id is None:
+          # HEAD has no ancestors, so we are done:
+          return
+        else:
+          cvs_rev = self[cvs_rev.next_id]
+      else:
+        cvs_rev = self[cvs_rev.prev_id]
+
+      yield cvs_rev
+
   def _sever_branch(self, lod_items):
     """Sever the branch from its source and discard the CVSBranch.
 

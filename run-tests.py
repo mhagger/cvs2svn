@@ -62,6 +62,7 @@ if not (os.path.exists('cvs2svn') and os.path.exists('test-data')):
 import svntest
 from svntest import Failure
 from svntest.main import run_command
+from svntest.main import run_tests
 from svntest.main import safe_rmtree
 from svntest.testcase import TestCase
 from svntest.testcase import Skip
@@ -3561,7 +3562,7 @@ if __name__ == '__main__':
   svntest.main.svnadmin_binary    = 'svnadmin'
   svntest.main.svnversion_binary  = 'svnversion'
 
-  svntest.main.run_tests(test_list)
+  run_tests(test_list)
   # NOTREACHED
 
 

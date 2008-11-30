@@ -20,6 +20,7 @@ It calls its record_fulltext() method with the full text of every
 revision.  This method should be overwritten to do something with the
 fulltext and possibly return a revision_recorder_token."""
 
+import itertools
 
 from cvs2svn_lib.symbol import Trunk
 from cvs2svn_lib.cvs_item import CVSSymbol
@@ -50,18 +51,13 @@ class GitRevisionRecorder(FulltextRevisionRecorder):
     If there is no other CVSRevision that have the same content,
     return CVS_REV itself."""
 
-    while True:
+    for cvs_rev in itertools.chain(
+          [cvs_rev], self._cvs_file_items.iter_deltatext_ancestors(cvs_rev)
+          ):
       if cvs_rev.deltatext_exists:
-        return cvs_rev
-      if isinstance(cvs_rev.lod, Trunk):
-        if cvs_rev.next_id is None:
-          # The HEAD revision on trunk is always its own source, even
-          # if its deltatext (i.e., its fulltext) is empty:
-          return cvs_rev
-        else:
-          cvs_rev = self._cvs_file_items[cvs_rev.next_id]
-      else:
-        cvs_rev = self._cvs_file_items[cvs_rev.prev_id]
+        break
+
+    return cvs_rev
 
   def record_fulltext(self, cvs_rev, log, fulltext):
     """Write the fulltext to a blob if it is original.

@@ -62,6 +62,7 @@ if not (os.path.exists('cvs2svn') and os.path.exists('test-data')):
 import svntest
 from svntest import Failure
 from svntest.main import run_command
+from svntest.main import safe_rmtree
 from svntest.testcase import TestCase
 from svntest.testcase import Skip
 from svntest.testcase import XFail
@@ -366,7 +367,7 @@ def erase(path):
   """Unconditionally remove PATH and its subtree, if any.  PATH may be
   non-existent, a file or symlink, or a directory."""
   if os.path.isdir(path):
-    svntest.main.safe_rmtree(path)
+    safe_rmtree(path)
   elif os.path.exists(path):
     os.remove(path)
 
@@ -1486,7 +1487,7 @@ def nonascii_filenames():
   finally:
     if locale_changed:
       locale.setlocale(locale.LC_ALL, current_locale)
-    svntest.main.safe_rmtree(dstrepos_path)
+    safe_rmtree(dstrepos_path)
 
 
 class UnicodeTest(Cvs2SvnTestCase):
@@ -2457,7 +2458,7 @@ def ctrl_char_in_filename():
     srcrepos_path = os.path.join(test_data_dir,'main-cvsrepos')
     dstrepos_path = os.path.join(test_data_dir,'ctrl-char-filename-cvsrepos')
     if os.path.exists(dstrepos_path):
-      svntest.main.safe_rmtree(dstrepos_path)
+      safe_rmtree(dstrepos_path)
 
     # create repos from existing main repos
     shutil.copytree(srcrepos_path, dstrepos_path)
@@ -2477,7 +2478,7 @@ def ctrl_char_in_filename():
                   r'is not supported by Subversion\.'),
         )
   finally:
-    svntest.main.safe_rmtree(dstrepos_path)
+    safe_rmtree(dstrepos_path)
 
 
 def commit_dependencies():

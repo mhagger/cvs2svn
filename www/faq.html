@@ -46,6 +46,9 @@
 
   <li><a href="#cvsnt">How can I convert a CVSNT repository?</a></li>
 
+  <li><a href="#osxsetup">How do I get cvs2svn to run on OS X
+    10.5.5?</a></li>
+
 </ol>
 
 <p><strong>Problems:</strong></p>
@@ -884,6 +887,158 @@ the following steps:</p>
 
 </ol>
 
+
+<h3><a name="osxsetup" title="#osxsetup">How do I get cvs2svn to run
+on OS X 10.5.5?</a></h3>
+
+<p>Attempting to run cvs2svn on a standard OS X 10.5.5 installation
+yields the following error:</p>
+
+<blockquote> <p> ERROR: cvs2svn uses the anydbm package, which depends on
+lower level dbm libraries.  Your system has dbm, with which cvs2svn is
+known to have problems.  To use cvs2svn, you must install a Python dbm
+library other than dumbdbm or dbm.  See <a
+href="http://python.org/doc/current/lib/module-anydbm.html">http://python.org/doc/current/lib/module-anydbm.html</a>
+for more information. </p> </blockquote>
+
+<p>The problem is that the standard distribution of python on OS X
+10.5.5 does not include any other dbm libraries other than the
+standard dbm.  In order for cvs2svn to work, we need to install the
+gdbm library, in addition to a new version of python that enables the
+python gdbm module. Here is the procedure for a successful
+installation of cvs2svn and all supporting libs:</p>
+
+<ol>
+
+  <li>Download the gdbm-1.8.3 (or greater) source, unarchive and
+    change directory to gdbm-1.8.3. We need to install the gdbm
+    libraries so python's gdbm module can use them.
+
+  <ol>
+
+    <li>Type <code>./configure</code></li>
+
+    <li>Edit "Makefile" so that the owner and group are not the
+        non-existing "bin" owner and group by changing
+
+<pre>
+BINOWN = bin
+BINGRP = bin
+</pre>
+to
+<pre>
+BINOWN = root
+BINGRP = admin
+</pre>
+
+    </li>
+
+    <li>Type "make"</li>
+
+    <li>Type "sudo make install"</li>
+
+  </ol>
+
+  </li>
+
+  <li>Download the Python2.6 (or greater) source, unarchive, and
+  change directory to Python2.6.  We need to enable python gdbm
+  support which is not enabled in the default OS X 10.5.5 installation
+  of python, as the gdbm libs are not included.  However, we just
+  installed the gdbm libs in step 1, so we can now compile python with
+  gdbm support.
+
+  <ol>
+
+    <li>Edit the file "Modules/Setup" by uncommenting the line which
+      links against gdbm by changing
+
+<pre>
+#gdbm gdbmmodule.c -I/usr/local/include -L/usr/local/lib -lgdbm
+</pre>
+to
+<pre>
+gdbm gdbmmodule.c -I/usr/local/include -L/usr/local/lib -lgdbm
+</pre>
+    </li>
+
+    <li>Edit the file "Modules/Setup" by uncommenting the line to
+      create shared libs by changing
+
+<pre>
+#*shared*
+</pre>
+to
+<pre>
+*shared*
+</pre>
+    </li>
+
+    <li>Type <code>./configure --enable-framework
+    --enable-universalsdk --enable-shared</code> in the top-level
+    Python2.6 directory.  This will configure the installation of
+    python as a shared OS X framework, and usable with OS X GUI
+    frameworks and SDKs.  By default, python will be installed in
+    "/Library/Frameworks/Python.framework", which is what we
+    want.</li>
+
+    <li>Type <code>make</code></li>
+
+    <li>Type <code>sudo make install</code></li>
+
+    <li>Type <code>cd /usr/local/bin; sudo ln -s python2.6 python</code></li>
+
+    <li>Make sure "/usr/local/bin" is at the front of your search path
+    in ~/.profile or ~/.bashrc etc.</li>
+
+    <li>Type <code>source ~/.profle</code> or <code>source
+    ~/.bashrc</code> etc. or alternatively, just open a new shell
+    window.  When you type <code>which python</code> it should give
+    you the new version in "/usr/local/bin" <strong>not</strong> the
+    one in "/usr/bin".</li>
+
+  </ol>
+
+  </li>
+
+  <li>Download the cvs2svn-2.2.0 (or greater) source, unarchive and
+  change directory to cvs2svn-2.2.0.  Many people can't get cvs2svn to
+  work except in the installation directory.  The reason for this is
+  that the installation places copies of cvs2svn, cvs2svn_libs, and
+  cvs2svn_rcsparse in the /Library/Frameworks/Python.framework
+  hierarchy.  All we need to do is make a link in /usr/local/bin
+  pointing to the location of cvs2svn in the python framework
+  hierarchy.  And for good measure we also make links to the lib and
+  include directories:
+
+  <ol>
+
+    <li>Type <code>sudo make install</code></li>
+
+    <li>Create the required links by typing the following:
+
+<pre>
+sudo ln -s /Library/Frameworks/Python.framework/Versions/2.6/bin/cvs2svn /usr/local/bin/cvs2svn
+sudo ln -s /Library/Frameworks/Python.framework/Versions/2.6/lib/python2.6 /usr/local/lib/python2.6
+sudo ln -s /Library/Frameworks/Python.framework/Versions/2.6/include/python2.6 /usr/local/include/python2.6
+</pre>
+
+    </li>
+
+  </ol>
+
+  </li>
+
+</ol>
+
+<p>The installation is complete. Change directory out of the
+cvs2svn-2.2.0 installation directory, and you should be able to run
+cvs2svn. Be careful *not* to copy the version of cvs2svn in the
+cvs2svn-2.2.0 installation directory to /usr/local/bin, as this has a
+different python environment setting at the top of the file than the
+one that was installed in the /Library/Frameworks/Python.framework
+hierarchy. Follow the instructions exactly, and it should work.
+</p>
 
 </div>
 </body>

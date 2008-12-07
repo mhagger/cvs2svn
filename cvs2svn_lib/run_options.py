@@ -127,6 +127,55 @@ class IncompatibleOption(optparse.Option):
         )
 
 
+class ContextOption(optparse.Option):
+  """An optparse.Option that stores its value to Ctx."""
+
+  def __init__(self, *args, **kw):
+    if kw.get('action') not in self.STORE_ACTIONS:
+      raise ValueError('Invalid action: %s' % (kw['action'],))
+
+    self.__action = kw.pop('action')
+    try:
+      self.__dest = kw.pop('dest')
+    except KeyError:
+      opt = args[0]
+      if not opt.startswith('--'):
+        raise ValueError
+      self.__dest = opt[2:].replace('-', '_')
+    if 'const' in kw:
+      self.__const = kw.pop('const')
+
+    kw['action'] = 'callback'
+    kw['callback'] = self.__callback
+
+    optparse.Option.__init__(self, *args, **kw)
+
+  def __callback(self, option, opt_str, value, parser):
+    oio = parser.values.options_incompatible_options
+    if opt_str not in oio:
+      oio.append(opt_str)
+
+    action = self.__action
+    dest = self.__dest
+
+    if action == "store":
+        setattr(Ctx(), dest, value)
+    elif action == "store_const":
+        setattr(Ctx(), dest, self.__const)
+    elif action == "store_true":
+        setattr(Ctx(), dest, True)
+    elif action == "store_false":
+        setattr(Ctx(), dest, False)
+    elif action == "append":
+        getattr(Ctx(), dest).append(value)
+    elif action == "count":
+        setattr(Ctx(), dest, getattr(Ctx(), dest, 0) + 1)
+    else:
+        raise RuntimeError("unknown action %r" % self.__action)
+
+    return 1
+
+
 class RunOptions:
   """A place to store meta-options that are used to start the conversion."""
 

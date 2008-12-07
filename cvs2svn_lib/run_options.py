@@ -612,7 +612,7 @@ class RunOptions:
 
     options = self.options
 
-    options.target = None
+    options.svnrepos = None
     options.existing_svnrepos = False
     options.fs_type = None
     options.bdb_txn_nosync = False
@@ -644,7 +644,7 @@ class RunOptions:
 
     for opt, value in self.opts:
       if opt  in ['-s', '--svnrepos']:
-        options.target = value
+        options.svnrepos = value
       elif opt == '--existing-svnrepos':
         options.existing_svnrepos = True
       elif opt == '--dumpfile':
@@ -782,7 +782,7 @@ class RunOptions:
     if options.dump_only and not options.dumpfile:
       raise FatalError("'--dump-only' requires '--dumpfile' to be specified.")
 
-    if (not options.target) and (not options.dumpfile) and (not ctx.dry_run):
+    if not options.svnrepos and not options.dumpfile and not ctx.dry_run:
       raise FatalError("must pass one of '-s' or '--dumpfile'.")
 
     def not_both(opt1val, opt1name, opt2val, opt2name):
@@ -790,7 +790,7 @@ class RunOptions:
         raise FatalError("cannot pass both '%s' and '%s'."
                          % (opt1name, opt2name,))
 
-    not_both(options.target, '-s',
+    not_both(options.svnrepos, '-s',
              options.dumpfile, '--dumpfile')
 
     not_both(options.dumpfile, '--dumpfile',
@@ -828,12 +828,12 @@ class RunOptions:
       raise FatalError("cannot pass --bdb-txn-nosync with --fs-type=%s."
                        % options.fs_type)
 
-    if options.target:
+    if options.svnrepos:
       if options.existing_svnrepos:
-        ctx.output_option = ExistingRepositoryOutputOption(options.target)
+        ctx.output_option = ExistingRepositoryOutputOption(options.svnrepos)
       else:
         ctx.output_option = NewRepositoryOutputOption(
-            options.target,
+            options.svnrepos,
             fs_type=options.fs_type, bdb_txn_nosync=options.bdb_txn_nosync,
             create_options=options.create_options)
     else:

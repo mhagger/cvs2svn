@@ -176,8 +176,9 @@ class RunOptions:
 
 
     group = parser.add_option_group('Output options')
-    group.add_option(go(
+    group.add_option(IncompatibleOption(
         '--svnrepos', '-s', type='string',
+        action='store',
         help='path where SVN repos should be created',
         metavar='PATH',
         ))
@@ -627,7 +628,6 @@ class RunOptions:
 
     options = self.options
 
-    options.svnrepos = None
     options.existing_svnrepos = False
     options.fs_type = None
     options.bdb_txn_nosync = False
@@ -658,9 +658,7 @@ class RunOptions:
     options.symbol_strategy_rules = []
 
     for opt, value in self.opts:
-      if opt  in ['-s', '--svnrepos']:
-        options.svnrepos = value
-      elif opt == '--existing-svnrepos':
+      if opt == '--existing-svnrepos':
         options.existing_svnrepos = True
       elif opt == '--dumpfile':
         options.dumpfile = value

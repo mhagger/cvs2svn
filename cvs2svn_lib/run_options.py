@@ -197,8 +197,10 @@ class RunOptions:
             ),
         metavar='TYPE',
         ))
-    group.add_option(go(
+    parser.set_default('bdb_txn_nosync', False)
+    group.add_option(IncompatibleOption(
         '--bdb-txn-nosync',
+        action='store_true',
         help=(
             'pass --bdb-txn-nosync to "svnadmin create" (for use with '
             '--svnrepos)'
@@ -632,7 +634,6 @@ class RunOptions:
 
     options = self.options
 
-    options.bdb_txn_nosync = False
     options.create_options = []
     options.dump_only = False
     options.use_rcs = False
@@ -715,8 +716,6 @@ class RunOptions:
           raise FatalError("'%s' is not a valid regexp." % (pattern,))
       elif opt == '--username':
         ctx.username = value
-      elif opt == '--bdb-txn-nosync':
-        options.bdb_txn_nosync = True
       elif opt == '--create-option':
         options.create_options.append(value)
       elif opt == '--cvs-revnums':

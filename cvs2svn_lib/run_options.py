@@ -422,19 +422,21 @@ class RunOptions:
     parser.add_option_group(group)
 
     group = optparse.OptionGroup(parser, 'Partial conversions')
-    group.add_option(go(
+    group.add_option(
         '--pass', type='string',
+        action='callback', callback=self.callback_passes,
         help='execute only specified PASS of conversion',
         metavar='PASS',
-        ))
-    group.add_option(go(
+        )
+    group.add_option(
         '--passes', '-p', type='string',
+        action='callback', callback=self.callback_passes,
         help=(
             'execute passes START through END, inclusive (PASS, '
             'START, and END can be pass names or numbers)'
             ),
         metavar='[START]:[END]',
-        ))
+        )
     parser.add_option_group(group)
 
     group = optparse.OptionGroup(parser, 'Information options')
@@ -582,20 +584,20 @@ class RunOptions:
   def callback_quiet(self, option, opt_str, value, parser):
     Log().decrease_verbosity()
 
+  def callback_passes(self, option, opt_str, value, parser):
+    if value.find(':') >= 0:
+      start_pass, end_pass = value.split(':')
+      self.start_pass = self.pass_manager.get_pass_number(start_pass, 1)
+      self.end_pass = self.pass_manager.get_pass_number(
+          end_pass, self.pass_manager.num_passes
+          )
+    else:
+      self.end_pass = \
+          self.start_pass = \
+          self.pass_manager.get_pass_number(value)
+
   def process_common_options(self):
     """Process the options that are compatible with --options."""
-
-    for (opt, value) in self.get_options('--pass', '--passes', '-p'):
-      if value.find(':') >= 0:
-        start_pass, end_pass = value.split(':')
-        self.start_pass = self.pass_manager.get_pass_number(
-            start_pass, 1)
-        self.end_pass = self.pass_manager.get_pass_number(
-            end_pass, self.pass_manager.num_passes)
-      else:
-        self.end_pass = \
-            self.start_pass = \
-            self.pass_manager.get_pass_number(value)
 
     if self.get_options('--dry-run'):
       Ctx().dry_run = True

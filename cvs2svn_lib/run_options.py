@@ -323,8 +323,9 @@ class RunOptions:
             ),
         metavar='PATH',
         ))
-    group.add_option(go(
+    group.add_option(ContextOption(
         '--no-prune',
+        action='store_false', dest='prune',
         help='don\'t prune empty directories',
         ))
     parser.set_default('encodings', [])
@@ -778,9 +779,7 @@ class RunOptions:
     options = self.options
 
     for opt, value in self.opts:
-      if opt == '--no-prune':
-        ctx.prune = False
-      elif opt == '--keep-cvsignore':
+      if opt == '--keep-cvsignore':
         ctx.keep_cvsignore = True
       elif opt == '--no-cross-branch-commits':
         ctx.cross_branch_commits = False

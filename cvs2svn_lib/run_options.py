@@ -430,7 +430,11 @@ class RunOptions:
         ))
 
     # Deprecated options:
-    group.add_option(go('--no-default-eol', help=optparse.SUPPRESS_HELP))
+    group.add_option(IncompatibleOption(
+        '--no-default-eol',
+        action='store_const', dest='default_eol', const=None,
+        help=optparse.SUPPRESS_HELP,
+        ))
     parser.set_default('auto_props_ignore_case', True)
     # True is the default now, so this option has no effect:
     group.add_option(IncompatibleOption(
@@ -738,9 +742,6 @@ class RunOptions:
         ctx.username = value
       elif opt == '--cvs-revnums':
         ctx.svn_property_setters.append(CVSRevisionNumberSetter())
-      elif opt == '--no-default-eol':
-        # For backwards compatibility:
-        options.default_eol = None
       elif opt == '--tmpdir':
         ctx.tmpdir = value
       elif opt == '--write-symbol-info':

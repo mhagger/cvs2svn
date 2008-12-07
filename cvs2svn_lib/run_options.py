@@ -536,8 +536,9 @@ class RunOptions:
             ),
         metavar='PATH',
         ))
-    group.add_option(go(
+    group.add_option(ContextOption(
         '--svnadmin', type='string',
+        action='store', dest='svnadmin_executable',
         help='path to the "svnadmin" program',
         metavar='PATH',
         ))
@@ -788,8 +789,6 @@ class RunOptions:
     for opt, value in self.opts:
       if opt == '--cvs-revnums':
         ctx.svn_property_setters.append(CVSRevisionNumberSetter())
-      elif opt == '--svnadmin':
-        ctx.svnadmin_executable = value
       elif opt == '--sort':
         ctx.sort_executable = value
       elif opt == '--create':

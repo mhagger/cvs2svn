@@ -406,19 +406,25 @@ class RunOptions:
 
 
     group = parser.add_option_group('Extraction options')
-    group.add_option(go(
+    parser.set_default('use_rcs', False)
+    group.add_option(IncompatibleOption(
         '--use-rcs',
+        action='store_true',
         help='use RCS to extract revision contents',
         ))
-    group.add_option(go(
+    parser.set_default('use_cvs', False)
+    group.add_option(IncompatibleOption(
         '--use-cvs',
+        action='store_true',
         help=(
             'use CVS to extract revision contents '
             '(only use this if having problems with RCS)'
             ),
         ))
-    group.add_option(go(
+    parser.set_default('use_internal_co', False)
+    group.add_option(IncompatibleOption(
         '--use-internal-co',
+        action='store_true',
         help=(
             'use internal code to extract revision contents '
             '(very fast but disk space intensive) (default)'
@@ -649,9 +655,6 @@ class RunOptions:
 
     options = self.options
 
-    options.use_rcs = False
-    options.use_cvs = False
-    options.use_internal_co = False
     options.keep_trivial_imports = False
     options.symbol_strategy_default = 'heuristic'
     options.mime_types_file = None
@@ -673,13 +676,7 @@ class RunOptions:
     options.symbol_strategy_rules = []
 
     for opt, value in self.opts:
-      if opt == '--use-rcs':
-        options.use_rcs = True
-      elif opt == '--use-cvs':
-        options.use_cvs = True
-      elif opt == '--use-internal-co':
-        options.use_internal_co = True
-      elif opt == '--trunk-only':
+      if opt == '--trunk-only':
         ctx.trunk_only = True
       elif opt == '--trunk':
         options.trunk_base = value

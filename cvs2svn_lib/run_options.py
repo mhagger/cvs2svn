@@ -305,13 +305,16 @@ class RunOptions:
             ),
         metavar='P:S',
         ))
+    parser.set_default('symbol_strategy_rules', [])
     group.add_option(go(
         '--symbol-hints', type='string',
         help='read symbol conversion hints from PATH',
         metavar='PATH',
         ))
-    group.add_option(go(
+    parser.set_default('force_branch', False)
+    group.add_option(IncompatibleOption(
         '--force-branch', type='string',
+        action='callback', callback=self.callback_force_branch,
         help='force symbols matching REGEXP to be branches',
         metavar='REGEXP',
         ))
@@ -677,6 +680,12 @@ class RunOptions:
         'by --dumpfile).\n'
         )
 
+  def callback_force_branch(self, option, opt_str, value, parser):
+    parser.values.symbol_strategy_rules.append(
+        ForceBranchRegexpStrategyRule(value)
+        )
+    parser.values.force_branch = True
+
   def process_remaining_options(self):
     """Process the options that are not compatible with --options."""
 
@@ -685,10 +694,8 @@ class RunOptions:
 
     options = self.options
 
-    options.force_branch = False
     options.force_tag = False
     options.symbol_transforms = []
-    options.symbol_strategy_rules = []
 
     for opt, value in self.opts:
       if opt == '--trunk-only':
@@ -697,11 +704,6 @@ class RunOptions:
         ctx.prune = False
       elif opt == '--symbol-hints':
         options.symbol_strategy_rules.append(SymbolHintsFileRule(value))
-      elif opt == '--force-branch':
-        options.symbol_strategy_rules.append(
-            ForceBranchRegexpStrategyRule(value)
-            )
-        options.force_branch = True
       elif opt == '--force-tag':
         options.symbol_strategy_rules.append(
             ForceTagRegexpStrategyRule(value)

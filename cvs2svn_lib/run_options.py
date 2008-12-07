@@ -474,7 +474,7 @@ class RunOptions:
         ))
     parser.add_option_group(group)
 
-    (options, self.args) = parser.parse_args()
+    (self.options, self.args) = parser.parse_args()
     self.opts = go.opts
 
     # First look for any 'help'-type options, as they just cause the

@@ -187,13 +187,14 @@ class RunOptions:
         help='just produce a dumpfile; don\'t commit to a repos',
         metavar='PATH',
         ))
-    group.add_option(go(
+    group.add_option(
         '--dry-run',
+        action='callback', callback=self.callback_dry_run,
         help=(
             'do not create a repository or a dumpfile; just print what '
             'would happen.'
             ),
-        ))
+        )
 
     # Deprecated options:
     group.add_option(go('--dump-only', help=optparse.SUPPRESS_HELP))
@@ -596,11 +597,11 @@ class RunOptions:
           self.start_pass = \
           self.pass_manager.get_pass_number(value)
 
+  def callback_dry_run(self, option, opt_str, value, parser):
+    Ctx().dry_run = True
+
   def process_common_options(self):
     """Process the options that are compatible with --options."""
-
-    if self.get_options('--dry-run'):
-      Ctx().dry_run = True
 
     if self.get_options('--profile'):
       self.profiling = True

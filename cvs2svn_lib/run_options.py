@@ -657,7 +657,7 @@ class RunOptions:
 
     options = self.options
 
-    options.symbol_strategy_default = 'heuristic'
+    options.symbol_default = 'heuristic'
     options.mime_types_file = None
     options.auto_props_file = None
     options.auto_props_ignore_case = True
@@ -710,7 +710,7 @@ class RunOptions:
           raise FatalError(
               '%r is not a valid option for --symbol-default.' % (value,)
               )
-        options.symbol_strategy_default = value
+        options.symbol_default = value
       elif opt == '--keep-cvsignore':
         ctx.keep_cvsignore = True
       elif opt == '--no-cross-branch-commits':
@@ -884,13 +884,13 @@ class RunOptions:
       options.symbol_strategy_rules.append(ExcludeTrivialImportBranchRule())
 
     options.symbol_strategy_rules.append(UnambiguousUsageRule())
-    if options.symbol_strategy_default == 'strict':
+    if options.symbol_default == 'strict':
       pass
-    elif options.symbol_strategy_default == 'branch':
+    elif options.symbol_default == 'branch':
       options.symbol_strategy_rules.append(AllBranchRule())
-    elif options.symbol_strategy_default == 'tag':
+    elif options.symbol_default == 'tag':
       options.symbol_strategy_rules.append(AllTagRule())
-    elif options.symbol_strategy_default == 'heuristic':
+    elif options.symbol_default == 'heuristic':
       options.symbol_strategy_rules.append(BranchIfCommitsRule())
       options.symbol_strategy_rules.append(HeuristicStrategyRule())
     else:

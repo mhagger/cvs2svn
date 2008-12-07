@@ -206,8 +206,10 @@ class RunOptions:
             '--svnrepos)'
             ),
         ))
-    group.add_option(go(
+    parser.set_default('create_options', [])
+    group.add_option(IncompatibleOption(
         '--create-option', type='string',
+        action='append', dest='create_options',
         help='pass OPT to "svnadmin create" (for use with --svnrepos)',
         metavar='OPT',
         ))
@@ -634,7 +636,6 @@ class RunOptions:
 
     options = self.options
 
-    options.create_options = []
     options.dump_only = False
     options.use_rcs = False
     options.use_cvs = False
@@ -716,8 +717,6 @@ class RunOptions:
           raise FatalError("'%s' is not a valid regexp." % (pattern,))
       elif opt == '--username':
         ctx.username = value
-      elif opt == '--create-option':
-        options.create_options.append(value)
       elif opt == '--cvs-revnums':
         ctx.svn_property_setters.append(CVSRevisionNumberSetter())
       elif opt == '--mime-types':

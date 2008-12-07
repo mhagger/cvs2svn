@@ -427,8 +427,9 @@ class RunOptions:
             'SVN directory called "Attic"'
             ),
         ))
-    group.add_option(go(
+    group.add_option(ContextOption(
         '--username', type='string',
+        action='store',
         help='username for cvs2svn-synthesized commits',
         metavar='NAME',
         ))
@@ -782,9 +783,7 @@ class RunOptions:
     options = self.options
 
     for opt, value in self.opts:
-      if opt == '--username':
-        ctx.username = value
-      elif opt == '--cvs-revnums':
+      if opt == '--cvs-revnums':
         ctx.svn_property_setters.append(CVSRevisionNumberSetter())
       elif opt == '--tmpdir':
         ctx.tmpdir = value

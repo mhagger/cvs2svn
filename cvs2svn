@@ -17,11 +17,48 @@
 
 import sys
 
-# Make sure this Python is recent enough.  Do this as early as possible,
-# using only code compatible with Python 1.5.2 before the check.
-if sys.hexversion < 0x02040000:
-  sys.stderr.write("ERROR: Python 2.4 or higher required.\n")
+# Make sure that a supported version of Python is being used.  Do this
+# as early as possible, using only code compatible with Python 1.5.2
+# and Python 3.x before the check.  Remember:
+#
+# Python 1.5.2 doesn't have sys.version_info or ''.join().
+# Python 3.0 doesn't have string.join().
+# There are plans to start deprecating the string formatting '%'
+# operator in Python 3.1 (but we use it here anyway).
+
+version_error = """\
+ERROR: cvs2svn requires Python 2, version 2.4 or later; it does not
+work with Python 3.  You are currently using"""
+
+version_advice = """\
+Please restart cvs2svn using a different version of the Python
+interpreter.  Visit http://www.python.org or consult your local system
+administrator if you need help.
+
+HINT: If you already have a usable Python version installed, it might
+be possible to invoke cvs2svn with the correct Python interpreter by
+typing something like 'python2.5 """ + sys.argv[0] + """ [...]'.
+"""
+
+try:
+  version = sys.version_info
+except AttributeError:
+  # This is probably a pre-2.0 version of Python.
+  sys.stderr.write(version_error + '\n')
+  sys.stderr.write('-'*70 + '\n')
+  sys.stderr.write(sys.version + '\n')
+  sys.stderr.write('-'*70 + '\n')
+  sys.stderr.write(version_advice)
   sys.exit(1)
+
+if not ((2,4) <= version < (3,0)):
+  sys.stderr.write(
+      version_error + ' version %d.%d.%d.\n'
+      % (version[0], version[1], version[2],)
+      )
+  sys.stderr.write(version_advice)
+  sys.exit(1)
+
 
 from cvs2svn_lib.common import FatalException
 from cvs2svn_lib.main import main

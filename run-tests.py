@@ -45,10 +45,10 @@ import locale
 import textwrap
 from difflib import Differ
 
-# Make sure this Python is recent enough.
-if sys.hexversion < 0x02040000:
+# Make sure that a supported version of Python is being used:
+if not (0x02040000 <= sys.hexversion < 0x03000000):
   sys.stderr.write(
-      'error: Python 2.4 or higher required; see www.python.org.\n'
+      'error: Python 2, version 2.4 or higher required.\n'
       )
   sys.exit(1)
 

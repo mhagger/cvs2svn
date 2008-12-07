@@ -277,8 +277,10 @@ class RunOptions:
         '--no-prune',
         help='don\'t prune empty directories',
         ))
-    group.add_option(go(
+    parser.set_default('encodings', [])
+    group.add_option(IncompatibleOption(
         '--encoding', type='string',
+        action='append', dest='encodings',
         help=(
             'encoding for paths and log messages in CVS repos.  '
             'If option is specified multiple times, encoders '
@@ -682,7 +684,6 @@ class RunOptions:
 
     options = self.options
 
-    options.encodings = ['ascii']
     options.fallback_encoding = None
     options.force_branch = False
     options.force_tag = False
@@ -694,8 +695,6 @@ class RunOptions:
         ctx.trunk_only = True
       elif opt == '--no-prune':
         ctx.prune = False
-      elif opt == '--encoding':
-        options.encodings.insert(-1, value)
       elif opt == '--fallback-encoding':
         options.fallback_encoding = value
       elif opt == '--symbol-hints':
@@ -834,6 +833,9 @@ class RunOptions:
       ctx.revision_recorder = InternalRevisionRecorder(compress=True)
       ctx.revision_excluder = InternalRevisionExcluder()
       ctx.revision_reader = InternalRevisionReader(compress=True)
+
+    if 'ascii' not in options.encodings:
+      options.encodings.append('ascii')
 
     try:
       ctx.cvs_author_decoder = CVSTextDecoder(

@@ -437,8 +437,9 @@ class RunOptions:
         help='username for cvs2svn-synthesized commits',
         metavar='NAME',
         ))
-    group.add_option(go(
+    group.add_option(IncompatibleOption(
         '--cvs-revnums',
+        action='callback', callback=self.callback_cvs_revnums,
         help='record CVS revision numbers as file properties',
         ))
     parser.set_default('mime_types_files', [])
@@ -782,6 +783,9 @@ class RunOptions:
         ExcludeRegexpStrategyRule(value)
         )
 
+  def callback_cvs_revnums(self, option, opt_str, value, parser):
+    Ctx().svn_property_setters.append(CVSRevisionNumberSetter())
+
   def callback_symbol_transform(self, option, opt_str, value, parser):
     [pattern, replacement] = value.split(":")
     try:
@@ -798,10 +802,6 @@ class RunOptions:
     ctx = Ctx()
 
     options = self.options
-
-    for opt, value in self.opts:
-      if opt == '--cvs-revnums':
-        ctx.svn_property_setters.append(CVSRevisionNumberSetter())
 
     # Consistency check for options and arguments.
     if len(self.args) == 0:

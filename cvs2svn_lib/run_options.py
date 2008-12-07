@@ -80,8 +80,8 @@ class GetoptOptions(object):
   to self.opts.  These can be processed in a getopt-style option
   processing loop."""
 
-  def __init__(self):
-    self.opts = []
+  def __init__(self, opts):
+    self.opts = opts
 
   def __call__(self, *args, **kw):
     """Create an optparse-compatible Option object.
@@ -131,7 +131,8 @@ class RunOptions:
     # A list of one list of SymbolStrategyRules for each project:
     self.project_symbol_strategy_rules = []
 
-    go = GetoptOptions()
+    self.opts = []
+    go = GetoptOptions(self.opts)
 
     parser = self.parser = optparse.OptionParser(
         usage=usage,
@@ -479,7 +480,6 @@ class RunOptions:
         )
 
     (self.options, self.args) = parser.parse_args()
-    self.opts = go.opts
 
     # Next look for any --options options, process them, and remove
     # them from the list, as they affect the processing of other

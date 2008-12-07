@@ -475,10 +475,11 @@ class RunOptions:
         '--skip-cleanup',
         help='prevent the deletion of intermediate files',
         ))
-    group.add_option(go(
+    group.add_option(
         '--profile',
+        action='callback', callback=self.callback_profile,
         help='profile with \'hotshot\' (into file cvs2svn.hotshot)',
-        ))
+        )
     parser.add_option_group(group)
 
     (self.options, self.args) = parser.parse_args()
@@ -491,10 +492,6 @@ class RunOptions:
     for (opt, value) in self.get_options('--options'):
       self.process_options_file(value)
       options_file_found = True
-
-    # Now process options that can be used either with or without
-    # --options:
-    self.process_common_options()
 
     # Now the log level has been set; log the time when the run started:
     Log().verbose(
@@ -600,11 +597,8 @@ class RunOptions:
   def callback_dry_run(self, option, opt_str, value, parser):
     Ctx().dry_run = True
 
-  def process_common_options(self):
-    """Process the options that are compatible with --options."""
-
-    if self.get_options('--profile'):
-      self.profiling = True
+  def callback_profile(self, option, opt_str, value, parser):
+    self.profiling = True
 
   def process_remaining_options(self):
     """Process the options that are not compatible with --options."""

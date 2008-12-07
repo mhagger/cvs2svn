@@ -364,8 +364,10 @@ class RunOptions:
         '--cvs-revnums',
         help='record CVS revision numbers as file properties',
         ))
-    group.add_option(go(
+    parser.set_default('mime_types_files', [])
+    group.add_option(IncompatibleOption(
         '--mime-types', type='string',
+        action='append', dest='mime_types_files',
         help=(
             'specify an apache-style mime.types file for setting '
             'svn:mime-type'
@@ -659,7 +661,6 @@ class RunOptions:
 
     options = self.options
 
-    options.mime_types_file = None
     options.auto_props_file = None
     options.auto_props_ignore_case = True
     options.eol_from_mime_type = False
@@ -723,8 +724,6 @@ class RunOptions:
         ctx.username = value
       elif opt == '--cvs-revnums':
         ctx.svn_property_setters.append(CVSRevisionNumberSetter())
-      elif opt == '--mime-types':
-        options.mime_types_file = value
       elif opt == '--auto-props':
         options.auto_props_file = value
       elif opt == '--auto-props-ignore-case':
@@ -899,8 +898,8 @@ class RunOptions:
       ctx.svn_property_setters.append(AutoPropsPropertySetter(
           options.auto_props_file, options.auto_props_ignore_case))
 
-    if options.mime_types_file:
-      ctx.svn_property_setters.append(MimeMapper(options.mime_types_file))
+    for value in options.mime_types_files:
+      ctx.svn_property_setters.append(MimeMapper(value))
 
     ctx.svn_property_setters.append(CVSBinaryFileEOLStyleSetter())
 

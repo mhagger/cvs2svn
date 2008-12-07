@@ -208,8 +208,9 @@ class RunOptions:
         help='pass OPT to "svnadmin create" (for use with --svnrepos)',
         metavar='OPT',
         ))
-    group.add_option(go(
+    group.add_option(IncompatibleOption(
         '--dumpfile', type='string',
+        action='store',
         help='just produce a dumpfile; don\'t commit to a repos',
         metavar='PATH',
         ))
@@ -634,7 +635,6 @@ class RunOptions:
     options.bdb_txn_nosync = False
     options.create_options = []
     options.dump_only = False
-    options.dumpfile = None
     options.use_rcs = False
     options.use_cvs = False
     options.use_internal_co = False
@@ -659,9 +659,7 @@ class RunOptions:
     options.symbol_strategy_rules = []
 
     for opt, value in self.opts:
-      if opt == '--dumpfile':
-        options.dumpfile = value
-      elif opt == '--use-rcs':
+      if opt == '--use-rcs':
         options.use_rcs = True
       elif opt == '--use-cvs':
         options.use_cvs = True

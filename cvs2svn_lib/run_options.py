@@ -413,8 +413,9 @@ class RunOptions:
             'the analogous svn:ignore properties)'
             ),
         ))
-    group.add_option(go(
+    group.add_option(ContextOption(
         '--no-cross-branch-commits',
+        action='store_false', dest='cross_branch_commits',
         help='prevent the creation of cross-branch commits',
         ))
     group.add_option(go(
@@ -780,9 +781,7 @@ class RunOptions:
     options = self.options
 
     for opt, value in self.opts:
-      if opt == '--no-cross-branch-commits':
-        ctx.cross_branch_commits = False
-      elif opt == '--retain-conflicting-attic-files':
+      if opt == '--retain-conflicting-attic-files':
         ctx.retain_conflicting_attic_files = True
       elif opt == '--username':
         ctx.username = value

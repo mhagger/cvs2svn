@@ -290,8 +290,9 @@ class RunOptions:
             ),
         metavar='ENC',
         ))
-    group.add_option(go(
+    group.add_option(IncompatibleOption(
         '--fallback-encoding', type='string',
+        action='store',
         help='If all --encodings fail, use lossy encoding with ENC',
         metavar='ENC',
         ))
@@ -684,7 +685,6 @@ class RunOptions:
 
     options = self.options
 
-    options.fallback_encoding = None
     options.force_branch = False
     options.force_tag = False
     options.symbol_transforms = []
@@ -695,8 +695,6 @@ class RunOptions:
         ctx.trunk_only = True
       elif opt == '--no-prune':
         ctx.prune = False
-      elif opt == '--fallback-encoding':
-        options.fallback_encoding = value
       elif opt == '--symbol-hints':
         options.symbol_strategy_rules.append(SymbolHintsFileRule(value))
       elif opt == '--force-branch':

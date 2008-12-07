@@ -308,8 +308,9 @@ class RunOptions:
         metavar='P:S',
         ))
     parser.set_default('symbol_strategy_rules', [])
-    group.add_option(go(
+    group.add_option(IncompatibleOption(
         '--symbol-hints', type='string',
+        action='callback', callback=self.callback_symbol_hints,
         help='read symbol conversion hints from PATH',
         metavar='PATH',
         ))
@@ -684,6 +685,9 @@ class RunOptions:
         'by --dumpfile).\n'
         )
 
+  def callback_symbol_hints(self, option, opt_str, value, parser):
+    parser.values.symbol_strategy_rules.append(SymbolHintsFileRule(value))
+
   def callback_force_branch(self, option, opt_str, value, parser):
     parser.values.symbol_strategy_rules.append(
         ForceBranchRegexpStrategyRule(value)
@@ -718,8 +722,6 @@ class RunOptions:
         ctx.trunk_only = True
       elif opt == '--no-prune':
         ctx.prune = False
-      elif opt == '--symbol-hints':
-        options.symbol_strategy_rules.append(SymbolHintsFileRule(value))
       elif opt == '--exclude':
         options.symbol_strategy_rules.append(ExcludeRegexpStrategyRule(value))
       elif opt == '--keep-cvsignore':

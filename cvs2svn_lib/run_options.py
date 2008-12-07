@@ -253,8 +253,10 @@ class RunOptions:
             ),
         metavar='PATH',
         ))
-    group.add_option(go(
+    parser.set_default('branches_base', config.DEFAULT_BRANCHES_BASE)
+    group.add_option(IncompatibleOption(
         '--branches', type='string',
+        action='store', dest='branches_base',
         help=(
             'path for branches (default: %s)'
             % (config.DEFAULT_BRANCHES_BASE,)
@@ -678,7 +680,6 @@ class RunOptions:
 
     options = self.options
 
-    options.branches_base = config.DEFAULT_BRANCHES_BASE
     options.tags_base = config.DEFAULT_TAGS_BASE
     options.encodings = ['ascii']
     options.fallback_encoding = None
@@ -690,8 +691,6 @@ class RunOptions:
     for opt, value in self.opts:
       if opt == '--trunk-only':
         ctx.trunk_only = True
-      elif opt == '--branches':
-        options.branches_base = value
       elif opt == '--tags':
         options.tags_base = value
       elif opt == '--no-prune':

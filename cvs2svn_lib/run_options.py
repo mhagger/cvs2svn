@@ -318,8 +318,10 @@ class RunOptions:
         help='force symbols matching REGEXP to be branches',
         metavar='REGEXP',
         ))
-    group.add_option(go(
+    parser.set_default('force_tag', False)
+    group.add_option(IncompatibleOption(
         '--force-tag', type='string',
+        action='callback', callback=self.callback_force_tag,
         help='force symbols matching REGEXP to be tags',
         metavar='REGEXP',
         ))
@@ -686,6 +688,12 @@ class RunOptions:
         )
     parser.values.force_branch = True
 
+  def callback_force_tag(self, option, opt_str, value, parser):
+    parser.values.symbol_strategy_rules.append(
+        ForceTagRegexpStrategyRule(value)
+        )
+    parser.values.force_tag = True
+
   def process_remaining_options(self):
     """Process the options that are not compatible with --options."""
 
@@ -694,7 +702,6 @@ class RunOptions:
 
     options = self.options
 
-    options.force_tag = False
     options.symbol_transforms = []
 
     for opt, value in self.opts:
@@ -704,11 +711,6 @@ class RunOptions:
         ctx.prune = False
       elif opt == '--symbol-hints':
         options.symbol_strategy_rules.append(SymbolHintsFileRule(value))
-      elif opt == '--force-tag':
-        options.symbol_strategy_rules.append(
-            ForceTagRegexpStrategyRule(value)
-            )
-        options.force_tag = True
       elif opt == '--exclude':
         options.symbol_strategy_rules.append(ExcludeRegexpStrategyRule(value))
       elif opt == '--keep-cvsignore':

@@ -142,15 +142,18 @@ class RunOptions:
 
 
     group = parser.add_option_group('Configuration via options file')
-    group.add_option(go(
+    parser.set_default('options_files', [])
+    group.add_option(
         '--options', type='string',
+        action='append', dest='options_files',
         help=(
             'read the conversion options from PATH.  This '
             'method allows more flexibility than using '
             'command-line options.  See documentation for info'
             ),
         metavar='PATH',
-        ))
+        )
+
 
     group = parser.add_option_group('Output options')
     group.add_option(go(
@@ -485,7 +488,7 @@ class RunOptions:
     # them from the list, as they affect the processing of other
     # options:
     options_file_found = False
-    for (opt, value) in self.get_options('--options'):
+    for value in self.options.options_files:
       self.process_options_file(value)
       options_file_found = True
 

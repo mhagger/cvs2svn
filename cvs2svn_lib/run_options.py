@@ -405,8 +405,9 @@ class RunOptions:
             ),
         metavar='OPT',
         ))
-    group.add_option(go(
+    group.add_option(ContextOption(
         '--keep-cvsignore',
+        action='store_true',
         help=(
             'keep .cvsignore files (in addition to creating '
             'the analogous svn:ignore properties)'
@@ -779,9 +780,7 @@ class RunOptions:
     options = self.options
 
     for opt, value in self.opts:
-      if opt == '--keep-cvsignore':
-        ctx.keep_cvsignore = True
-      elif opt == '--no-cross-branch-commits':
+      if opt == '--no-cross-branch-commits':
         ctx.cross_branch_commits = False
       elif opt == '--retain-conflicting-attic-files':
         ctx.retain_conflicting_attic_files = True

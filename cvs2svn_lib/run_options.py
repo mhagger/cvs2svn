@@ -610,80 +610,86 @@ class RunOptions:
     # Convenience var, so we don't have to keep instantiating this Borg.
     ctx = Ctx()
 
-    target = None
-    existing_svnrepos = False
-    fs_type = None
-    bdb_txn_nosync = False
-    create_options = []
-    dump_only = False
-    dumpfile = None
-    use_rcs = False
-    use_cvs = False
-    use_internal_co = False
-    keep_trivial_imports = False
-    symbol_strategy_default = 'heuristic'
-    mime_types_file = None
-    auto_props_file = None
-    auto_props_ignore_case = True
-    eol_from_mime_type = False
-    default_eol = None
-    keywords_off = False
-    co_executable = config.CO_EXECUTABLE
-    cvs_executable = config.CVS_EXECUTABLE
-    trunk_base = config.DEFAULT_TRUNK_BASE
-    branches_base = config.DEFAULT_BRANCHES_BASE
-    tags_base = config.DEFAULT_TAGS_BASE
-    encodings = ['ascii']
-    fallback_encoding = None
-    force_branch = False
-    force_tag = False
-    symbol_transforms = []
-    symbol_strategy_rules = []
+    options = self.options
+
+    options.target = None
+    options.existing_svnrepos = False
+    options.fs_type = None
+    options.bdb_txn_nosync = False
+    options.create_options = []
+    options.dump_only = False
+    options.dumpfile = None
+    options.use_rcs = False
+    options.use_cvs = False
+    options.use_internal_co = False
+    options.keep_trivial_imports = False
+    options.symbol_strategy_default = 'heuristic'
+    options.mime_types_file = None
+    options.auto_props_file = None
+    options.auto_props_ignore_case = True
+    options.eol_from_mime_type = False
+    options.default_eol = None
+    options.keywords_off = False
+    options.co_executable = config.CO_EXECUTABLE
+    options.cvs_executable = config.CVS_EXECUTABLE
+    options.trunk_base = config.DEFAULT_TRUNK_BASE
+    options.branches_base = config.DEFAULT_BRANCHES_BASE
+    options.tags_base = config.DEFAULT_TAGS_BASE
+    options.encodings = ['ascii']
+    options.fallback_encoding = None
+    options.force_branch = False
+    options.force_tag = False
+    options.symbol_transforms = []
+    options.symbol_strategy_rules = []
 
     for opt, value in self.opts:
       if opt  in ['-s', '--svnrepos']:
-        target = value
+        options.target = value
       elif opt == '--existing-svnrepos':
-        existing_svnrepos = True
+        options.existing_svnrepos = True
       elif opt == '--dumpfile':
-        dumpfile = value
+        options.dumpfile = value
       elif opt == '--use-rcs':
-        use_rcs = True
+        options.use_rcs = True
       elif opt == '--use-cvs':
-        use_cvs = True
+        options.use_cvs = True
       elif opt == '--use-internal-co':
-        use_internal_co = True
+        options.use_internal_co = True
       elif opt == '--trunk-only':
         ctx.trunk_only = True
       elif opt == '--trunk':
-        trunk_base = value
+        options.trunk_base = value
       elif opt == '--branches':
-        branches_base = value
+        options.branches_base = value
       elif opt == '--tags':
-        tags_base = value
+        options.tags_base = value
       elif opt == '--no-prune':
         ctx.prune = False
       elif opt == '--encoding':
-        encodings.insert(-1, value)
+        options.encodings.insert(-1, value)
       elif opt == '--fallback-encoding':
-        fallback_encoding = value
+        options.fallback_encoding = value
       elif opt == '--symbol-hints':
-        symbol_strategy_rules.append(SymbolHintsFileRule(value))
+        options.symbol_strategy_rules.append(SymbolHintsFileRule(value))
       elif opt == '--force-branch':
-        symbol_strategy_rules.append(ForceBranchRegexpStrategyRule(value))
-        force_branch = True
+        options.symbol_strategy_rules.append(
+            ForceBranchRegexpStrategyRule(value)
+            )
+        options.force_branch = True
       elif opt == '--force-tag':
-        symbol_strategy_rules.append(ForceTagRegexpStrategyRule(value))
-        force_tag = True
+        options.symbol_strategy_rules.append(
+            ForceTagRegexpStrategyRule(value)
+            )
+        options.force_tag = True
       elif opt == '--exclude':
-        symbol_strategy_rules.append(ExcludeRegexpStrategyRule(value))
+        options.symbol_strategy_rules.append(ExcludeRegexpStrategyRule(value))
       elif opt == '--keep-trivial-imports':
-        keep_trivial_imports = True
+        options.keep_trivial_imports = True
       elif opt == '--symbol-default':
         if value not in ['branch', 'tag', 'heuristic', 'strict']:
           raise FatalError(
               '%r is not a valid option for --symbol_default.' % (value,))
-        symbol_strategy_default = value
+        options.symbol_strategy_default = value
       elif opt == '--keep-cvsignore':
         ctx.keep_cvsignore = True
       elif opt == '--no-cross-branch-commits':
@@ -693,34 +699,34 @@ class RunOptions:
       elif opt == '--symbol-transform':
         [pattern, replacement] = value.split(":")
         try:
-          symbol_transforms.append(
+          options.symbol_transforms.append(
               RegexpSymbolTransform(pattern, replacement))
         except re.error:
           raise FatalError("'%s' is not a valid regexp." % (pattern,))
       elif opt == '--username':
         ctx.username = value
       elif opt == '--fs-type':
-        fs_type = value
+        options.fs_type = value
       elif opt == '--bdb-txn-nosync':
-        bdb_txn_nosync = True
+        options.bdb_txn_nosync = True
       elif opt == '--create-option':
-        create_options.append(value)
+        options.create_options.append(value)
       elif opt == '--cvs-revnums':
         ctx.svn_property_setters.append(CVSRevisionNumberSetter())
       elif opt == '--mime-types':
-        mime_types_file = value
+        options.mime_types_file = value
       elif opt == '--auto-props':
-        auto_props_file = value
+        options.auto_props_file = value
       elif opt == '--auto-props-ignore-case':
         # "ignore case" is now the default, so this option doesn't
         # affect anything.
-        auto_props_ignore_case = True
+        options.auto_props_ignore_case = True
       elif opt == '--eol-from-mime-type':
-        eol_from_mime_type = True
+        options.eol_from_mime_type = True
       elif opt == '--default-eol':
         try:
           # Check that value is valid, and translate it to the proper case
-          default_eol = {
+          options.default_eol = {
               'binary' : None, 'native' : 'native',
               'crlf' : 'CRLF', 'lf' : 'LF', 'cr' : 'CR',
               }[value.lower()]
@@ -730,9 +736,9 @@ class RunOptions:
               )
       elif opt == '--no-default-eol':
         # For backwards compatibility:
-        default_eol = None
+        options.default_eol = None
       elif opt == '--keywords-off':
-        keywords_off = True
+        options.keywords_off = True
       elif opt == '--tmpdir':
         ctx.tmpdir = value
       elif opt == '--write-symbol-info':
@@ -742,13 +748,13 @@ class RunOptions:
       elif opt == '--svnadmin':
         ctx.svnadmin_executable = value
       elif opt == '--co':
-        co_executable = value
+        options.co_executable = value
       elif opt == '--cvs':
-        cvs_executable = value
+        options.cvs_executable = value
       elif opt == '--sort':
         ctx.sort_executable = value
       elif opt == '--dump-only':
-        dump_only = True
+        options.dump_only = True
         Log().error(
             warning_prefix +
             ': The --dump-only option is deprecated (it is implied\n'
@@ -773,10 +779,10 @@ class RunOptions:
 
     cvsroot = self.args[0]
 
-    if dump_only and not dumpfile:
+    if options.dump_only and not options.dumpfile:
       raise FatalError("'--dump-only' requires '--dumpfile' to be specified.")
 
-    if (not target) and (not dumpfile) and (not ctx.dry_run):
+    if (not options.target) and (not options.dumpfile) and (not ctx.dry_run):
       raise FatalError("must pass one of '-s' or '--dumpfile'.")
 
     def not_both(opt1val, opt1name, opt2val, opt2name):
@@ -784,58 +790,63 @@ class RunOptions:
         raise FatalError("cannot pass both '%s' and '%s'."
                          % (opt1name, opt2name,))
 
-    not_both(target, '-s',
-             dumpfile, '--dumpfile')
+    not_both(options.target, '-s',
+             options.dumpfile, '--dumpfile')
 
-    not_both(dumpfile, '--dumpfile',
-             existing_svnrepos, '--existing-svnrepos')
+    not_both(options.dumpfile, '--dumpfile',
+             options.existing_svnrepos, '--existing-svnrepos')
 
-    not_both(bdb_txn_nosync, '--bdb-txn-nosync',
-             existing_svnrepos, '--existing-svnrepos')
+    not_both(options.bdb_txn_nosync, '--bdb-txn-nosync',
+             options.existing_svnrepos, '--existing-svnrepos')
 
-    not_both(dumpfile, '--dumpfile',
-             bdb_txn_nosync, '--bdb-txn-nosync')
+    not_both(options.dumpfile, '--dumpfile',
+             options.bdb_txn_nosync, '--bdb-txn-nosync')
 
-    not_both(fs_type, '--fs-type',
-             existing_svnrepos, '--existing-svnrepos')
+    not_both(options.fs_type, '--fs-type',
+             options.existing_svnrepos, '--existing-svnrepos')
 
-    not_both(use_rcs, '--use-rcs',
-             use_cvs, '--use-cvs')
+    not_both(options.use_rcs, '--use-rcs',
+             options.use_cvs, '--use-cvs')
 
-    not_both(use_rcs, '--use-rcs',
-             use_internal_co, '--use-internal-co')
+    not_both(options.use_rcs, '--use-rcs',
+             options.use_internal_co, '--use-internal-co')
 
-    not_both(use_cvs, '--use-cvs',
-             use_internal_co, '--use-internal-co')
-
-    not_both(ctx.trunk_only, '--trunk-only',
-             force_branch, '--force-branch')
+    not_both(options.use_cvs, '--use-cvs',
+             options.use_internal_co, '--use-internal-co')
 
     not_both(ctx.trunk_only, '--trunk-only',
-             force_tag, '--force-tag')
+             options.force_branch, '--force-branch')
 
-    if fs_type and fs_type != 'bdb' and bdb_txn_nosync:
+    not_both(ctx.trunk_only, '--trunk-only',
+             options.force_tag, '--force-tag')
+
+    if (
+          options.fs_type
+          and options.fs_type != 'bdb'
+          and options.bdb_txn_nosync
+          ):
       raise FatalError("cannot pass --bdb-txn-nosync with --fs-type=%s."
-                       % fs_type)
+                       % options.fs_type)
 
-    if target:
-      if existing_svnrepos:
-        ctx.output_option = ExistingRepositoryOutputOption(target)
+    if options.target:
+      if options.existing_svnrepos:
+        ctx.output_option = ExistingRepositoryOutputOption(options.target)
       else:
         ctx.output_option = NewRepositoryOutputOption(
-            target, fs_type=fs_type, bdb_txn_nosync=bdb_txn_nosync,
-            create_options=create_options)
+            options.target,
+            fs_type=options.fs_type, bdb_txn_nosync=options.bdb_txn_nosync,
+            create_options=options.create_options)
     else:
-      ctx.output_option = DumpfileOutputOption(dumpfile)
+      ctx.output_option = DumpfileOutputOption(options.dumpfile)
 
-    if use_rcs:
+    if options.use_rcs:
       ctx.revision_recorder = NullRevisionRecorder()
       ctx.revision_excluder = NullRevisionExcluder()
-      ctx.revision_reader = RCSRevisionReader(co_executable)
-    elif use_cvs:
+      ctx.revision_reader = RCSRevisionReader(options.co_executable)
+    elif options.use_cvs:
       ctx.revision_recorder = NullRevisionRecorder()
       ctx.revision_excluder = NullRevisionExcluder()
-      ctx.revision_reader = CVSRevisionReader(cvs_executable)
+      ctx.revision_reader = CVSRevisionReader(options.cvs_executable)
     else:
       # --use-internal-co is the default:
       ctx.revision_recorder = InternalRevisionRecorder(compress=True)
@@ -843,59 +854,65 @@ class RunOptions:
       ctx.revision_reader = InternalRevisionReader(compress=True)
 
     try:
-      ctx.cvs_author_decoder = CVSTextDecoder(encodings, fallback_encoding)
-      ctx.cvs_log_decoder = CVSTextDecoder(encodings, fallback_encoding)
+      ctx.cvs_author_decoder = CVSTextDecoder(
+          options.encodings, options.fallback_encoding
+          )
+      ctx.cvs_log_decoder = CVSTextDecoder(
+          options.encodings, options.fallback_encoding
+          )
       # Don't use fallback_encoding for filenames:
-      ctx.cvs_filename_decoder = CVSTextDecoder(encodings)
+      ctx.cvs_filename_decoder = CVSTextDecoder(options.encodings)
     except LookupError, e:
       raise FatalError(str(e))
 
     # Add the standard symbol name cleanup rules:
-    symbol_transforms.extend([
+    options.symbol_transforms.extend([
         ReplaceSubstringsSymbolTransform('\\','/'),
         # Remove leading, trailing, and repeated slashes:
         NormalizePathsSymbolTransform(),
         ])
 
-    if not keep_trivial_imports:
-      symbol_strategy_rules.append(ExcludeTrivialImportBranchRule())
+    if not options.keep_trivial_imports:
+      options.symbol_strategy_rules.append(ExcludeTrivialImportBranchRule())
 
-    symbol_strategy_rules.append(UnambiguousUsageRule())
-    if symbol_strategy_default == 'strict':
+    options.symbol_strategy_rules.append(UnambiguousUsageRule())
+    if options.symbol_strategy_default == 'strict':
       pass
-    elif symbol_strategy_default == 'branch':
-      symbol_strategy_rules.append(AllBranchRule())
-    elif symbol_strategy_default == 'tag':
-      symbol_strategy_rules.append(AllTagRule())
-    elif symbol_strategy_default == 'heuristic':
-      symbol_strategy_rules.append(BranchIfCommitsRule())
-      symbol_strategy_rules.append(HeuristicStrategyRule())
+    elif options.symbol_strategy_default == 'branch':
+      options.symbol_strategy_rules.append(AllBranchRule())
+    elif options.symbol_strategy_default == 'tag':
+      options.symbol_strategy_rules.append(AllTagRule())
+    elif options.symbol_strategy_default == 'heuristic':
+      options.symbol_strategy_rules.append(BranchIfCommitsRule())
+      options.symbol_strategy_rules.append(HeuristicStrategyRule())
     else:
       assert False
 
     # Now add a rule whose job it is to pick the preferred parents of
     # branches and tags:
-    symbol_strategy_rules.append(HeuristicPreferredParentRule())
+    options.symbol_strategy_rules.append(HeuristicPreferredParentRule())
 
-    if auto_props_file:
+    if options.auto_props_file:
       ctx.svn_property_setters.append(AutoPropsPropertySetter(
-          auto_props_file, auto_props_ignore_case))
+          options.auto_props_file, options.auto_props_ignore_case))
 
-    if mime_types_file:
-      ctx.svn_property_setters.append(MimeMapper(mime_types_file))
+    if options.mime_types_file:
+      ctx.svn_property_setters.append(MimeMapper(options.mime_types_file))
 
     ctx.svn_property_setters.append(CVSBinaryFileEOLStyleSetter())
 
     ctx.svn_property_setters.append(CVSBinaryFileDefaultMimeTypeSetter())
 
-    if eol_from_mime_type:
+    if options.eol_from_mime_type:
       ctx.svn_property_setters.append(EOLStyleFromMimeTypeSetter())
 
-    ctx.svn_property_setters.append(DefaultEOLStyleSetter(default_eol))
+    ctx.svn_property_setters.append(
+        DefaultEOLStyleSetter(options.default_eol)
+        )
 
     ctx.svn_property_setters.append(SVNBinaryFileKeywordsPropertySetter())
 
-    if not keywords_off:
+    if not options.keywords_off:
       ctx.svn_property_setters.append(
           KeywordsPropertySetter(config.SVN_KEYWORDS_VALUE))
 
@@ -905,11 +922,11 @@ class RunOptions:
     # ctx.tags):
     self.add_project(
         cvsroot,
-        trunk_path=trunk_base,
-        branches_path=branches_base,
-        tags_path=tags_base,
-        symbol_transforms=symbol_transforms,
-        symbol_strategy_rules=symbol_strategy_rules,
+        trunk_path=options.trunk_base,
+        branches_path=options.branches_base,
+        tags_path=options.tags_base,
+        symbol_transforms=options.symbol_transforms,
+        symbol_strategy_rules=options.symbol_strategy_rules,
         )
 
   def check_options(self):

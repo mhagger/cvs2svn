@@ -229,7 +229,12 @@ class RunOptions:
         )
 
     # Deprecated options:
-    group.add_option(go('--dump-only', help=optparse.SUPPRESS_HELP))
+    parser.set_default('dump_only', False)
+    group.add_option(IncompatibleOption(
+        '--dump-only',
+        action='callback', callback=self.callback_dump_only,
+        help=optparse.SUPPRESS_HELP
+        ))
     group.add_option(go('--create', help=optparse.SUPPRESS_HELP))
 
 
@@ -628,6 +633,14 @@ class RunOptions:
   def callback_profile(self, option, opt_str, value, parser):
     self.profiling = True
 
+  def callback_dump_only(self, option, opt_str, value, parser):
+    parser.values.dump_only = True
+    Log().error(
+        warning_prefix +
+        ': The --dump-only option is deprecated (it is implied '
+        'by --dumpfile).\n'
+        )
+
   def process_remaining_options(self):
     """Process the options that are not compatible with --options."""
 
@@ -636,7 +649,6 @@ class RunOptions:
 
     options = self.options
 
-    options.dump_only = False
     options.use_rcs = False
     options.use_cvs = False
     options.use_internal_co = False
@@ -759,13 +771,6 @@ class RunOptions:
         options.cvs_executable = value
       elif opt == '--sort':
         ctx.sort_executable = value
-      elif opt == '--dump-only':
-        options.dump_only = True
-        Log().error(
-            warning_prefix +
-            ': The --dump-only option is deprecated (it is implied\n'
-            'by --dumpfile).\n'
-            )
       elif opt == '--create':
         Log().error(
             warning_prefix +

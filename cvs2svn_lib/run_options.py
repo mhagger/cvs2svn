@@ -325,8 +325,10 @@ class RunOptions:
             'a single import (usually these are unneeded)'
             ),
         ))
-    group.add_option(go(
-        '--symbol-default', type='string',
+    parser.set_default('symbol_default', 'heuristic')
+    group.add_option(IncompatibleOption(
+        '--symbol-default', type='choice',
+        choices=['heuristic', 'strict', 'branch', 'tag'],
         help=(
             'specify how ambiguous symbols are converted.  '
             'OPT is "heuristic" (default), "strict", "branch", '
@@ -657,7 +659,6 @@ class RunOptions:
 
     options = self.options
 
-    options.symbol_default = 'heuristic'
     options.mime_types_file = None
     options.auto_props_file = None
     options.auto_props_ignore_case = True
@@ -705,12 +706,6 @@ class RunOptions:
         options.force_tag = True
       elif opt == '--exclude':
         options.symbol_strategy_rules.append(ExcludeRegexpStrategyRule(value))
-      elif opt == '--symbol-default':
-        if value not in ['branch', 'tag', 'heuristic', 'strict']:
-          raise FatalError(
-              '%r is not a valid option for --symbol-default.' % (value,)
-              )
-        options.symbol_default = value
       elif opt == '--keep-cvsignore':
         ctx.keep_cvsignore = True
       elif opt == '--no-cross-branch-commits':

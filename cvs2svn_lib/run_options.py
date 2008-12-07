@@ -556,8 +556,9 @@ class RunOptions:
         help='path to the "cvs" program (required if --use-cvs)',
         metavar='PATH',
         ))
-    group.add_option(go(
+    group.add_option(ContextOption(
         '--sort', type='string',
+        action='store', dest='sort_executable',
         help='path to the GNU "sort" program',
         metavar='PATH',
         ))
@@ -789,8 +790,6 @@ class RunOptions:
     for opt, value in self.opts:
       if opt == '--cvs-revnums':
         ctx.svn_property_setters.append(CVSRevisionNumberSetter())
-      elif opt == '--sort':
-        ctx.sort_executable = value
       elif opt == '--create':
         Log().error(
             warning_prefix +

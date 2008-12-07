@@ -1481,7 +1481,6 @@ def nonascii_filenames():
       new_path = os.path.join(dstrepos_path, 'single\366files')
       os.rename(base_path, new_path)
 
-    # if ensure_conversion can generate a
     conv = ensure_conversion('non-ascii', args=['--encoding=latin1'])
   finally:
     if locale_changed:

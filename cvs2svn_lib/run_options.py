@@ -400,8 +400,10 @@ class RunOptions:
             ),
         metavar='VALUE',
         ))
-    group.add_option(go(
+    parser.set_default('keywords_off', False)
+    group.add_option(IncompatibleOption(
         '--keywords-off',
+        action='store_true',
         help=(
             'don\'t set svn:keywords on any files (by default, '
             'cvs2svn sets svn:keywords on non-binary files to "%s")'
@@ -670,7 +672,6 @@ class RunOptions:
 
     options = self.options
 
-    options.keywords_off = False
     options.co_executable = config.CO_EXECUTABLE
     options.cvs_executable = config.CVS_EXECUTABLE
     options.trunk_base = config.DEFAULT_TRUNK_BASE
@@ -732,8 +733,6 @@ class RunOptions:
       elif opt == '--no-default-eol':
         # For backwards compatibility:
         options.default_eol = None
-      elif opt == '--keywords-off':
-        options.keywords_off = True
       elif opt == '--tmpdir':
         ctx.tmpdir = value
       elif opt == '--write-symbol-info':

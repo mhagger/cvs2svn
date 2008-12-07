@@ -948,13 +948,10 @@ def interleaved_commits():
     ('/%(trunk)s/interleaved/e', 'A'),
     ))
 
-  # This PEP explains why we pass the 'log' parameter to these two
-  # nested functions, instead of just inheriting it from the enclosing
-  # scope: http://www.python.org/peps/pep-0227.html
-
-  def check_letters(log):
+  def check_letters(rev):
     """Check if REV is the rev where only letters were committed."""
-    log.check('Committing letters only.', (
+
+    conv.logs[rev].check('Committing letters only.', (
       ('/%(trunk)s/interleaved/a', 'M'),
       ('/%(trunk)s/interleaved/b', 'M'),
       ('/%(trunk)s/interleaved/c', 'M'),
@@ -962,9 +959,10 @@ def interleaved_commits():
       ('/%(trunk)s/interleaved/e', 'M'),
       ))
 
-  def check_numbers(log):
+  def check_numbers(rev):
     """Check if REV is the rev where only numbers were committed."""
-    log.check('Committing numbers only.', (
+
+    conv.logs[rev].check('Committing numbers only.', (
       ('/%(trunk)s/interleaved/1', 'M'),
       ('/%(trunk)s/interleaved/2', 'M'),
       ('/%(trunk)s/interleaved/3', 'M'),
@@ -977,11 +975,11 @@ def interleaved_commits():
   # about which commit appeared first, so we just try both ways.
   rev += 1
   try:
-    check_letters(conv.logs[rev])
-    check_numbers(conv.logs[rev + 1])
+    check_letters(rev)
+    check_numbers(rev + 1)
   except Failure:
-    check_numbers(conv.logs[rev])
-    check_letters(conv.logs[rev + 1])
+    check_numbers(rev)
+    check_letters(rev + 1)
 
 
 def simple_commits():

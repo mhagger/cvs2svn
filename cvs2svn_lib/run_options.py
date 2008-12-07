@@ -463,8 +463,10 @@ class RunOptions:
         help='path to the "svnadmin" program',
         metavar='PATH',
         ))
-    group.add_option(go(
+    parser.set_default('co_executable', config.CO_EXECUTABLE)
+    group.add_option(IncompatibleOption(
         '--co', type='string',
+        action='store', dest='co_executable',
         help='path to the "co" program (required if --use-rcs)',
         metavar='PATH',
         ))
@@ -672,7 +674,6 @@ class RunOptions:
 
     options = self.options
 
-    options.co_executable = config.CO_EXECUTABLE
     options.cvs_executable = config.CVS_EXECUTABLE
     options.trunk_base = config.DEFAULT_TRUNK_BASE
     options.branches_base = config.DEFAULT_BRANCHES_BASE
@@ -741,8 +742,6 @@ class RunOptions:
         ctx.skip_cleanup = True
       elif opt == '--svnadmin':
         ctx.svnadmin_executable = value
-      elif opt == '--co':
-        options.co_executable = value
       elif opt == '--cvs':
         options.cvs_executable = value
       elif opt == '--sort':

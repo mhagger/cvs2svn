@@ -188,8 +188,9 @@ class RunOptions:
         action='store_true',
         help='load into existing SVN repository (for use with --svnrepos)',
         ))
-    group.add_option(go(
+    group.add_option(IncompatibleOption(
         '--fs-type', type='string',
+        action='store',
         help=(
             'pass --fs-type=TYPE to "svnadmin create" (for use with '
             '--svnrepos)'
@@ -631,7 +632,6 @@ class RunOptions:
 
     options = self.options
 
-    options.fs_type = None
     options.bdb_txn_nosync = False
     options.create_options = []
     options.dump_only = False
@@ -715,8 +715,6 @@ class RunOptions:
           raise FatalError("'%s' is not a valid regexp." % (pattern,))
       elif opt == '--username':
         ctx.username = value
-      elif opt == '--fs-type':
-        options.fs_type = value
       elif opt == '--bdb-txn-nosync':
         options.bdb_txn_nosync = True
       elif opt == '--create-option':

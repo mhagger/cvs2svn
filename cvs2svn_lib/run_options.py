@@ -72,34 +72,6 @@ from cvs2svn_lib.property_setters import MimeMapper
 from cvs2svn_lib.property_setters import SVNBinaryFileKeywordsPropertySetter
 
 
-class GetoptOptions(object):
-  """Backwards compatibility adapter for getopt-style options.
-
-  optparse-compatible options can be created with the __call__()
-  method.  When such an option is seen, it appends (opt, value) tuples
-  to self.opts.  These can be processed in a getopt-style option
-  processing loop."""
-
-  def __init__(self, opts):
-    self.opts = opts
-
-  def __call__(self, *args, **kw):
-    """Create an optparse-compatible Option object.
-
-    The arguments are compatible with those of the optparse.Options
-    constructor, except that action is allways set to 'callback' and
-    the callback is always set to self.callback.  In particular, if
-    the option should take an argument, then the 'type' keyword
-    argument should be used."""
-
-    kw['action'] = 'callback'
-    kw['callback'] = self.callback
-    return optparse.Option(*args, **kw)
-
-  def callback(self, option, opt_str, value, parser):
-    self.opts.append((opt_str, value,))
-
-
 usage = """\
 Usage: %prog --options OPTIONFILE
        %prog [OPTION...] OUTPUT-OPTION CVS-REPOS-PATH"""
@@ -197,9 +169,6 @@ class RunOptions:
 
     # A list of one list of SymbolStrategyRules for each project:
     self.project_symbol_strategy_rules = []
-
-    self.opts = []
-    go = GetoptOptions(self.opts)
 
     parser = self.parser = optparse.OptionParser(
         usage=usage,
@@ -990,24 +959,6 @@ class RunOptions:
     if not self.projects:
       raise FatalError('No project specified.')
 
-  def get_options(self, *names):
-    """Return a list of (option,value) pairs for options in NAMES.
-
-    Return a list containing any (opt, value) pairs from self.opts
-    where opt is in NAMES.  The matching options are removed from
-    self.opts."""
-
-    retval = []
-    i = 0
-    while i < len(self.opts):
-      (opt, value) = self.opts[i]
-      if opt in names:
-        del self.opts[i]
-        retval.append( (opt, value) )
-      else:
-        i += 1
-    return retval
-
   def verify_options_consumed(self):
     """Verify that all command line options and arguments have been used.
 
@@ -1016,12 +967,9 @@ class RunOptions:
     that there are no remaining (i.e., incompatible) options or
     arguments."""
 
-    if self.options.options_incompatible_options or self.opts or self.args:
-      if self.options.options_incompatible_options or self.opts:
-        oio = (
-          self.options.options_incompatible_options
-          + [opt for (opt,value) in self.opts]
-          )
+    if self.options.options_incompatible_options or self.args:
+      if self.options.options_incompatible_options:
+        oio = self.options.options_incompatible_options
         Log().error(
             '%s: The following options cannot be used in combination with '
             'the --options\n'

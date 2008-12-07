@@ -708,7 +708,8 @@ class RunOptions:
       elif opt == '--symbol-default':
         if value not in ['branch', 'tag', 'heuristic', 'strict']:
           raise FatalError(
-              '%r is not a valid option for --symbol_default.' % (value,))
+              '%r is not a valid option for --symbol-default.' % (value,)
+              )
         options.symbol_strategy_default = value
       elif opt == '--keep-cvsignore':
         ctx.keep_cvsignore = True

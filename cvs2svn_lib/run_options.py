@@ -243,8 +243,10 @@ class RunOptions:
         '--trunk-only',
         help='convert only trunk commits, not tags nor branches',
         ))
-    group.add_option(go(
+    parser.set_default('trunk_base', config.DEFAULT_TRUNK_BASE)
+    group.add_option(IncompatibleOption(
         '--trunk', type='string',
+        action='store', dest='trunk_base',
         help=(
             'path for trunk (default: %s)'
             % (config.DEFAULT_TRUNK_BASE,)
@@ -676,7 +678,6 @@ class RunOptions:
 
     options = self.options
 
-    options.trunk_base = config.DEFAULT_TRUNK_BASE
     options.branches_base = config.DEFAULT_BRANCHES_BASE
     options.tags_base = config.DEFAULT_TAGS_BASE
     options.encodings = ['ascii']
@@ -689,8 +690,6 @@ class RunOptions:
     for opt, value in self.opts:
       if opt == '--trunk-only':
         ctx.trunk_only = True
-      elif opt == '--trunk':
-        options.trunk_base = value
       elif opt == '--branches':
         options.branches_base = value
       elif opt == '--tags':

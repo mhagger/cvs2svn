@@ -606,8 +606,9 @@ class RunOptions:
         action='callback', callback=self.callback_quiet,
         help='quiet (may be specified twice for very quiet)',
         )
-    group.add_option(go(
+    group.add_option(ContextOption(
         '--write-symbol-info', type='string',
+        action='store', dest='symbol_info_filename',
         help='write information and statistics about CVS symbols to PATH.',
         metavar='PATH',
         ))
@@ -786,8 +787,6 @@ class RunOptions:
     for opt, value in self.opts:
       if opt == '--cvs-revnums':
         ctx.svn_property_setters.append(CVSRevisionNumberSetter())
-      elif opt == '--write-symbol-info':
-        ctx.symbol_info_filename = value
       elif opt == '--skip-cleanup':
         ctx.skip_cleanup = True
       elif opt == '--svnadmin':

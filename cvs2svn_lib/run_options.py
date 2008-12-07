@@ -296,8 +296,10 @@ class RunOptions:
         help='If all --encodings fail, use lossy encoding with ENC',
         metavar='ENC',
         ))
-    group.add_option(go(
+    parser.set_default('symbol_transforms', [])
+    group.add_option(IncompatibleOption(
         '--symbol-transform', type='string',
+        action='callback', callback=self.callback_symbol_transform,
         help=(
             'transform symbol names from P to S, where P and S '
             'use Python regexp and reference syntax '
@@ -694,6 +696,15 @@ class RunOptions:
         )
     parser.values.force_tag = True
 
+  def callback_symbol_transform(self, option, opt_str, value, parser):
+    [pattern, replacement] = value.split(":")
+    try:
+      parser.values.symbol_transforms.append(
+          RegexpSymbolTransform(pattern, replacement)
+          )
+    except re.error:
+      raise FatalError("'%s' is not a valid regexp." % (pattern,))
+
   def process_remaining_options(self):
     """Process the options that are not compatible with --options."""
 
@@ -701,8 +712,6 @@ class RunOptions:
     ctx = Ctx()
 
     options = self.options
-
-    options.symbol_transforms = []
 
     for opt, value in self.opts:
       if opt == '--trunk-only':
@@ -719,13 +728,6 @@ class RunOptions:
         ctx.cross_branch_commits = False
       elif opt == '--retain-conflicting-attic-files':
         ctx.retain_conflicting_attic_files = True
-      elif opt == '--symbol-transform':
-        [pattern, replacement] = value.split(":")
-        try:
-          options.symbol_transforms.append(
-              RegexpSymbolTransform(pattern, replacement))
-        except re.error:
-          raise FatalError("'%s' is not a valid regexp." % (pattern,))
       elif opt == '--username':
         ctx.username = value
       elif opt == '--cvs-revnums':

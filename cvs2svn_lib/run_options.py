@@ -109,6 +109,24 @@ Convert a CVS repository into a Subversion repository, including history.
 """
 
 
+class IncompatibleOption(optparse.Option):
+  """An optparse.Option that is incompatible with the --options option.
+
+  Record that the option was used so that error checking can later be
+  done."""
+
+  def __init__(self, *args, **kw):
+    optparse.Option.__init__(self, *args, **kw)
+
+  def take_action(self, action, dest, opt, value, values, parser):
+    oio = parser.values.options_incompatible_options
+    if opt not in oio:
+      oio.append(opt)
+    return optparse.Option.take_action(
+        self, action, dest, opt, value, values, parser
+        )
+
+
 class RunOptions:
   """A place to store meta-options that are used to start the conversion."""
 
@@ -139,7 +157,9 @@ class RunOptions:
         description=description,
         add_help_option=False,
         )
-
+    # A place to record any options used that are incompatible with
+    # --options:
+    parser.set_default('options_incompatible_options', [])
 
     group = parser.add_option_group('Configuration via options file')
     parser.set_default('options_files', [])
@@ -971,17 +991,18 @@ class RunOptions:
     that there are no remaining (i.e., incompatible) options or
     arguments."""
 
-    if self.opts or self.args:
-      if self.opts:
+    if self.options.options_incompatible_options or self.opts or self.args:
+      if self.options.options_incompatible_options or self.opts:
+        oio = (
+          self.options.options_incompatible_options
+          + [opt for (opt,value) in self.opts]
+          )
         Log().error(
             '%s: The following options cannot be used in combination with '
             'the --options\n'
             'option:\n'
             '    %s\n'
-            % (
-                error_prefix,
-                '\n    '.join([opt for (opt,value) in self.opts])
-                )
+            % (error_prefix, '\n    '.join(oio))
             )
       if self.args:
         Log().error(

@@ -140,7 +140,7 @@ class RunOptions:
         )
 
 
-    group = optparse.OptionGroup(parser, 'Configuration via options file')
+    group = parser.add_option_group('Configuration via options file')
     group.add_option(go(
         '--options', type='string',
         help=(
@@ -150,9 +150,8 @@ class RunOptions:
             ),
         metavar='PATH',
         ))
-    parser.add_option_group(group)
 
-    group = optparse.OptionGroup(parser, 'Output options')
+    group = parser.add_option_group('Output options')
     group.add_option(go(
         '--svnrepos', '-s', type='string',
         help='path where SVN repos should be created',
@@ -200,9 +199,8 @@ class RunOptions:
     group.add_option(go('--dump-only', help=optparse.SUPPRESS_HELP))
     group.add_option(go('--create', help=optparse.SUPPRESS_HELP))
 
-    parser.add_option_group(group)
 
-    group = optparse.OptionGroup(parser, 'Conversion options')
+    group = parser.add_option_group('Conversion options')
     group.add_option(go(
         '--trunk-only',
         help='convert only trunk commits, not tags nor branches',
@@ -368,9 +366,8 @@ class RunOptions:
         '--auto-props-ignore-case', help=optparse.SUPPRESS_HELP
         ))
 
-    parser.add_option_group(group)
 
-    group = optparse.OptionGroup(parser, 'Extraction options')
+    group = parser.add_option_group('Extraction options')
     group.add_option(go(
         '--use-rcs',
         help='use RCS to extract revision contents',
@@ -389,9 +386,9 @@ class RunOptions:
             '(very fast but disk space intensive) (default)'
             ),
         ))
-    parser.add_option_group(group)
 
-    group = optparse.OptionGroup(parser, 'Environment options')
+
+    group = parser.add_option_group('Environment options')
     group.add_option(go(
         '--tmpdir', type='string',
         help=(
@@ -420,9 +417,9 @@ class RunOptions:
         help='path to the GNU "sort" program',
         metavar='PATH',
         ))
-    parser.add_option_group(group)
 
-    group = optparse.OptionGroup(parser, 'Partial conversions')
+
+    group = parser.add_option_group('Partial conversions')
     group.add_option(
         '--pass', type='string',
         action='callback', callback=self.callback_passes,
@@ -438,9 +435,9 @@ class RunOptions:
             ),
         metavar='[START]:[END]',
         )
-    parser.add_option_group(group)
 
-    group = optparse.OptionGroup(parser, 'Information options')
+
+    group = parser.add_option_group('Information options')
     group.add_option(
         '--version',
         action='callback', callback=self.callback_version,
@@ -480,7 +477,6 @@ class RunOptions:
         action='callback', callback=self.callback_profile,
         help='profile with \'hotshot\' (into file cvs2svn.hotshot)',
         )
-    parser.add_option_group(group)
 
     (self.options, self.args) = parser.parse_args()
     self.opts = go.opts

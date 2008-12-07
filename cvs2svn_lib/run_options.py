@@ -612,8 +612,9 @@ class RunOptions:
         help='write information and statistics about CVS symbols to PATH.',
         metavar='PATH',
         ))
-    group.add_option(go(
+    group.add_option(ContextOption(
         '--skip-cleanup',
+        action='store_true',
         help='prevent the deletion of intermediate files',
         ))
     group.add_option(
@@ -787,8 +788,6 @@ class RunOptions:
     for opt, value in self.opts:
       if opt == '--cvs-revnums':
         ctx.svn_property_setters.append(CVSRevisionNumberSetter())
-      elif opt == '--skip-cleanup':
-        ctx.skip_cleanup = True
       elif opt == '--svnadmin':
         ctx.svnadmin_executable = value
       elif opt == '--sort':

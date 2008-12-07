@@ -418,8 +418,9 @@ class RunOptions:
         action='store_false', dest='cross_branch_commits',
         help='prevent the creation of cross-branch commits',
         ))
-    group.add_option(go(
+    group.add_option(ContextOption(
         '--retain-conflicting-attic-files',
+        action='store_true',
         help=(
             'if a file appears both in and out of '
             'the CVS Attic, then leave the attic version in a '
@@ -781,9 +782,7 @@ class RunOptions:
     options = self.options
 
     for opt, value in self.opts:
-      if opt == '--retain-conflicting-attic-files':
-        ctx.retain_conflicting_attic_files = True
-      elif opt == '--username':
+      if opt == '--username':
         ctx.username = value
       elif opt == '--cvs-revnums':
         ctx.svn_property_setters.append(CVSRevisionNumberSetter())

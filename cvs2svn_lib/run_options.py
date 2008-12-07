@@ -453,14 +453,16 @@ class RunOptions:
         action='callback', callback=self.callback_help_passes,
         help='list the available passes and their numbers',
         )
-    group.add_option(go(
+    group.add_option(
         '--verbose', '-v',
+        action='callback', callback=self.callback_verbose,
         help='verbose (may be specified twice for debug output)',
-        ))
-    group.add_option(go(
+        )
+    group.add_option(
         '--quiet', '-q',
+        action='callback', callback=self.callback_quiet,
         help='quiet (may be specified twice for very quiet)',
-        ))
+        )
     group.add_option(go(
         '--write-symbol-info', type='string',
         help='write information and statistics about CVS symbols to PATH.',
@@ -574,15 +576,14 @@ class RunOptions:
         )
     sys.exit(0)
 
+  def callback_verbose(self, option, opt_str, value, parser):
+    Log().increase_verbosity()
+
+  def callback_quiet(self, option, opt_str, value, parser):
+    Log().decrease_verbosity()
+
   def process_common_options(self):
     """Process the options that are compatible with --options."""
-
-    # Adjust level of verbosity:
-    for (opt, value) in self.get_options('--verbose', '-v'):
-      Log().increase_verbosity()
-
-    for (opt, value) in self.get_options('--quiet', '-q'):
-      Log().decrease_verbosity()
 
     for (opt, value) in self.get_options('--pass', '--passes', '-p'):
       if value.find(':') >= 0:

@@ -288,8 +288,9 @@ class RunOptions:
 
 
     group = parser.add_option_group('Conversion options')
-    group.add_option(go(
+    group.add_option(ContextOption(
         '--trunk-only',
+        action='store_true',
         help='convert only trunk commits, not tags nor branches',
         ))
     parser.set_default('trunk_base', config.DEFAULT_TRUNK_BASE)
@@ -777,9 +778,7 @@ class RunOptions:
     options = self.options
 
     for opt, value in self.opts:
-      if opt == '--trunk-only':
-        ctx.trunk_only = True
-      elif opt == '--no-prune':
+      if opt == '--no-prune':
         ctx.prune = False
       elif opt == '--keep-cvsignore':
         ctx.keep_cvsignore = True

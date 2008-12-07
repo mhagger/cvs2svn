@@ -328,8 +328,9 @@ class RunOptions:
         help='force symbols matching REGEXP to be tags',
         metavar='REGEXP',
         ))
-    group.add_option(go(
+    group.add_option(IncompatibleOption(
         '--exclude', type='string',
+        action='callback', callback=self.callback_exclude,
         help='exclude branches and tags matching REGEXP',
         metavar='REGEXP',
         ))
@@ -700,6 +701,11 @@ class RunOptions:
         )
     parser.values.force_tag = True
 
+  def callback_exclude(self, option, opt_str, value, parser):
+    parser.values.symbol_strategy_rules.append(
+        ExcludeRegexpStrategyRule(value)
+        )
+
   def callback_symbol_transform(self, option, opt_str, value, parser):
     [pattern, replacement] = value.split(":")
     try:
@@ -722,8 +728,6 @@ class RunOptions:
         ctx.trunk_only = True
       elif opt == '--no-prune':
         ctx.prune = False
-      elif opt == '--exclude':
-        options.symbol_strategy_rules.append(ExcludeRegexpStrategyRule(value))
       elif opt == '--keep-cvsignore':
         ctx.keep_cvsignore = True
       elif opt == '--no-cross-branch-commits':

@@ -316,8 +316,10 @@ class RunOptions:
         help='exclude branches and tags matching REGEXP',
         metavar='REGEXP',
         ))
-    group.add_option(go(
+    parser.set_default('keep_trivial_imports', False)
+    group.add_option(IncompatibleOption(
         '--keep-trivial-imports',
+        action='store_true',
         help=(
             'do not exclude branches that were only used for '
             'a single import (usually these are unneeded)'
@@ -655,7 +657,6 @@ class RunOptions:
 
     options = self.options
 
-    options.keep_trivial_imports = False
     options.symbol_strategy_default = 'heuristic'
     options.mime_types_file = None
     options.auto_props_file = None
@@ -704,8 +705,6 @@ class RunOptions:
         options.force_tag = True
       elif opt == '--exclude':
         options.symbol_strategy_rules.append(ExcludeRegexpStrategyRule(value))
-      elif opt == '--keep-trivial-imports':
-        options.keep_trivial_imports = True
       elif opt == '--symbol-default':
         if value not in ['branch', 'tag', 'heuristic', 'strict']:
           raise FatalError(

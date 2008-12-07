@@ -390,8 +390,9 @@ class RunOptions:
             ),
         metavar='FILE',
         ))
-    group.add_option(go(
-        '--default-eol', type='string',
+    group.add_option(IncompatibleOption(
+        '--default-eol', type='choice',
+        choices=['binary', 'native', 'CRLF', 'LF', 'CR'],
         help=(
             'default svn:eol-style for non-binary files with '
             'undetermined mime types.  VALUE is "binary" '
@@ -669,7 +670,6 @@ class RunOptions:
 
     options = self.options
 
-    options.default_eol = None
     options.keywords_off = False
     options.co_executable = config.CO_EXECUTABLE
     options.cvs_executable = config.CVS_EXECUTABLE
@@ -729,17 +729,6 @@ class RunOptions:
         ctx.username = value
       elif opt == '--cvs-revnums':
         ctx.svn_property_setters.append(CVSRevisionNumberSetter())
-      elif opt == '--default-eol':
-        try:
-          # Check that value is valid, and translate it to the proper case
-          options.default_eol = {
-              'binary' : None, 'native' : 'native',
-              'crlf' : 'CRLF', 'lf' : 'LF', 'cr' : 'CR',
-              }[value.lower()]
-        except KeyError:
-          raise FatalError(
-              'Illegal value specified for --default-eol: %s' % (value,)
-              )
       elif opt == '--no-default-eol':
         # For backwards compatibility:
         options.default_eol = None

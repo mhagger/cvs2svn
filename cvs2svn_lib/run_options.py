@@ -374,8 +374,10 @@ class RunOptions:
             ),
         metavar='FILE',
         ))
-    group.add_option(go(
+    parser.set_default('eol_from_mime_type', False)
+    group.add_option(IncompatibleOption(
         '--eol-from-mime-type',
+        action='store_true',
         help='set svn:eol-style from mime type if known',
         ))
     parser.set_default('auto_props_files', [])
@@ -667,7 +669,6 @@ class RunOptions:
 
     options = self.options
 
-    options.eol_from_mime_type = False
     options.default_eol = None
     options.keywords_off = False
     options.co_executable = config.CO_EXECUTABLE
@@ -728,8 +729,6 @@ class RunOptions:
         ctx.username = value
       elif opt == '--cvs-revnums':
         ctx.svn_property_setters.append(CVSRevisionNumberSetter())
-      elif opt == '--eol-from-mime-type':
-        options.eol_from_mime_type = True
       elif opt == '--default-eol':
         try:
           # Check that value is valid, and translate it to the proper case

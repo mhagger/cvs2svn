@@ -378,8 +378,10 @@ class RunOptions:
         '--eol-from-mime-type',
         help='set svn:eol-style from mime type if known',
         ))
-    group.add_option(go(
+    parser.set_default('auto_props_files', [])
+    group.add_option(IncompatibleOption(
         '--auto-props', type='string',
+        action='append', dest='auto_props_files',
         help=(
             'set file properties from the auto-props section '
             'of a file in svn config format'
@@ -661,7 +663,6 @@ class RunOptions:
 
     options = self.options
 
-    options.auto_props_file = None
     options.auto_props_ignore_case = True
     options.eol_from_mime_type = False
     options.default_eol = None
@@ -724,8 +725,6 @@ class RunOptions:
         ctx.username = value
       elif opt == '--cvs-revnums':
         ctx.svn_property_setters.append(CVSRevisionNumberSetter())
-      elif opt == '--auto-props':
-        options.auto_props_file = value
       elif opt == '--auto-props-ignore-case':
         # "ignore case" is now the default, so this option doesn't
         # affect anything.
@@ -894,9 +893,10 @@ class RunOptions:
     # branches and tags:
     options.symbol_strategy_rules.append(HeuristicPreferredParentRule())
 
-    if options.auto_props_file:
-      ctx.svn_property_setters.append(AutoPropsPropertySetter(
-          options.auto_props_file, options.auto_props_ignore_case))
+    for value in options.auto_props_files:
+      ctx.svn_property_setters.append(
+          AutoPropsPropertySetter(value, options.auto_props_ignore_case)
+          )
 
     for value in options.mime_types_files:
       ctx.svn_property_setters.append(MimeMapper(value))

@@ -438,19 +438,21 @@ class RunOptions:
     parser.add_option_group(group)
 
     group = optparse.OptionGroup(parser, 'Information options')
-    group.add_option(go(
+    group.add_option(
         '--version',
+        action='callback', callback=self.callback_version,
         help='print the version number',
-        ))
+        )
     group.add_option(
         '--help', '-h',
         action="help",
         help='print this usage message and exit with success',
         )
-    group.add_option(go(
+    group.add_option(
         '--help-passes',
+        action='callback', callback=self.callback_help_passes,
         help='list the available passes and their numbers',
-        ))
+        )
     group.add_option(go(
         '--verbose', '-v',
         help='verbose (may be specified twice for debug output)',
@@ -476,10 +478,6 @@ class RunOptions:
 
     (self.options, self.args) = parser.parse_args()
     self.opts = go.opts
-
-    # First look for any 'help'-type options, as they just cause the
-    # program to print help and ignore any other options:
-    self.process_help_options()
 
     # Next look for any --options options, process them, and remove
     # them from the list, as they affect the processing of other
@@ -566,15 +564,15 @@ class RunOptions:
     del self.projects[:]
     del self.project_symbol_strategy_rules[:]
 
-  def process_help_options(self):
-    """Process any help-type options."""
+  def callback_help_passes(self, option, opt_str, value, parser):
+    self.pass_manager.help_passes()
+    sys.exit(0)
 
-    if self.get_options('--help-passes'):
-      self.pass_manager.help_passes()
-      sys.exit(0)
-    elif self.get_options('--version'):
-      print '%s version %s' % (os.path.basename(self.progname), VERSION)
-      sys.exit(0)
+  def callback_version(self, option, opt_str, value, parser):
+    sys.stdout.write(
+        '%s version %s\n' % (os.path.basename(self.progname), VERSION)
+        )
+    sys.exit(0)
 
   def process_common_options(self):
     """Process the options that are compatible with --options."""

@@ -263,8 +263,10 @@ class RunOptions:
             ),
         metavar='PATH',
         ))
-    group.add_option(go(
+    parser.set_default('tags_base', config.DEFAULT_TAGS_BASE)
+    group.add_option(IncompatibleOption(
         '--tags', type='string',
+        action='store', dest='tags_base',
         help=(
             'path for tags (default: %s)'
             % (config.DEFAULT_TAGS_BASE,)
@@ -680,7 +682,6 @@ class RunOptions:
 
     options = self.options
 
-    options.tags_base = config.DEFAULT_TAGS_BASE
     options.encodings = ['ascii']
     options.fallback_encoding = None
     options.force_branch = False
@@ -691,8 +692,6 @@ class RunOptions:
     for opt, value in self.opts:
       if opt == '--trunk-only':
         ctx.trunk_only = True
-      elif opt == '--tags':
-        options.tags_base = value
       elif opt == '--no-prune':
         ctx.prune = False
       elif opt == '--encoding':

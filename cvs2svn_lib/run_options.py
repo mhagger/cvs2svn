@@ -555,7 +555,7 @@ class RunOptions:
         )
 
     self.projects.append(project)
-    self.project_symbol_strategy_rules.append(list(symbol_strategy_rules))
+    self.project_symbol_strategy_rules.append(symbol_strategy_rules)
 
   def clear_projects(self):
     """Clear the list of projects to be converted.

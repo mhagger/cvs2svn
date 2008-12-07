@@ -182,8 +182,10 @@ class RunOptions:
         help='path where SVN repos should be created',
         metavar='PATH',
         ))
-    group.add_option(go(
+    parser.set_default('existing_svnrepos', False)
+    group.add_option(IncompatibleOption(
         '--existing-svnrepos',
+        action='store_true',
         help='load into existing SVN repository (for use with --svnrepos)',
         ))
     group.add_option(go(
@@ -628,7 +630,6 @@ class RunOptions:
 
     options = self.options
 
-    options.existing_svnrepos = False
     options.fs_type = None
     options.bdb_txn_nosync = False
     options.create_options = []
@@ -658,9 +659,7 @@ class RunOptions:
     options.symbol_strategy_rules = []
 
     for opt, value in self.opts:
-      if opt == '--existing-svnrepos':
-        options.existing_svnrepos = True
-      elif opt == '--dumpfile':
+      if opt == '--dumpfile':
         options.dumpfile = value
       elif opt == '--use-rcs':
         options.use_rcs = True

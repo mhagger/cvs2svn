@@ -282,9 +282,13 @@ class RunOptions:
     group.add_option(IncompatibleOption(
         '--dump-only',
         action='callback', callback=self.callback_dump_only,
-        help=optparse.SUPPRESS_HELP
+        help=optparse.SUPPRESS_HELP,
         ))
-    group.add_option(go('--create', help=optparse.SUPPRESS_HELP))
+    group.add_option(IncompatibleOption(
+        '--create',
+        action='callback', callback=self.callback_create,
+        help=optparse.SUPPRESS_HELP,
+        ))
 
 
     group = parser.add_option_group('Conversion options')
@@ -750,6 +754,14 @@ class RunOptions:
         'by --dumpfile).\n'
         )
 
+  def callback_create(self, option, opt_str, value, parser):
+    Log().error(
+        warning_prefix +
+        ': The behaviour produced by the --create option is now the '
+        'default;\n'
+        'passing the option is deprecated.\n'
+        )
+
   def callback_symbol_hints(self, option, opt_str, value, parser):
     parser.values.symbol_strategy_rules.append(SymbolHintsFileRule(value))
 
@@ -790,12 +802,6 @@ class RunOptions:
     for opt, value in self.opts:
       if opt == '--cvs-revnums':
         ctx.svn_property_setters.append(CVSRevisionNumberSetter())
-      elif opt == '--create':
-        Log().error(
-            warning_prefix +
-            ': The behaviour produced by the --create option is now the '
-            'default,\nand passing the option is deprecated.\n'
-            )
 
     # Consistency check for options and arguments.
     if len(self.args) == 0:

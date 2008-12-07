@@ -408,8 +408,12 @@ class RunOptions:
 
     # Deprecated options:
     group.add_option(go('--no-default-eol', help=optparse.SUPPRESS_HELP))
-    group.add_option(go(
-        '--auto-props-ignore-case', help=optparse.SUPPRESS_HELP
+    parser.set_default('auto_props_ignore_case', True)
+    # True is the default now, so this option has no effect:
+    group.add_option(IncompatibleOption(
+        '--auto-props-ignore-case',
+        action='store_true',
+        help=optparse.SUPPRESS_HELP,
         ))
 
 
@@ -663,7 +667,6 @@ class RunOptions:
 
     options = self.options
 
-    options.auto_props_ignore_case = True
     options.eol_from_mime_type = False
     options.default_eol = None
     options.keywords_off = False
@@ -725,10 +728,6 @@ class RunOptions:
         ctx.username = value
       elif opt == '--cvs-revnums':
         ctx.svn_property_setters.append(CVSRevisionNumberSetter())
-      elif opt == '--auto-props-ignore-case':
-        # "ignore case" is now the default, so this option doesn't
-        # affect anything.
-        options.auto_props_ignore_case = True
       elif opt == '--eol-from-mime-type':
         options.eol_from_mime_type = True
       elif opt == '--default-eol':

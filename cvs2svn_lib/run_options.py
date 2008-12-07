@@ -527,8 +527,9 @@ class RunOptions:
 
 
     group = parser.add_option_group('Environment options')
-    group.add_option(go(
+    group.add_option(ContextOption(
         '--tmpdir', type='string',
+        action='store',
         help=(
             'directory to use for temporary data files '
             '(default "cvs2svn-tmp")'
@@ -785,8 +786,6 @@ class RunOptions:
     for opt, value in self.opts:
       if opt == '--cvs-revnums':
         ctx.svn_property_setters.append(CVSRevisionNumberSetter())
-      elif opt == '--tmpdir':
-        ctx.tmpdir = value
       elif opt == '--write-symbol-info':
         ctx.symbol_info_filename = value
       elif opt == '--skip-cleanup':

@@ -312,12 +312,10 @@ def parse_log(svn_repos, symbols):
         return None
 
   def absorb_message_body(out, num_lines, log):
-    'Read NUM_LINES of log message body from OUT into Log item LOG.'
-    i = 0
-    while i < num_lines:
-      line = out.readline()
-      log.msg += line
-      i += 1
+    """Read NUM_LINES of log message body from OUT into Log item LOG."""
+
+    for i in range(num_lines):
+      log.msg += out.readline()
 
   log_start_re = re.compile('^r(?P<rev>[0-9]+) \| '
                             '(?P<author>[^\|]+) \| '

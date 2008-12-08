@@ -148,9 +148,14 @@ class ContextOption(optparse.Option):
     return 1
 
 
+class IncompatibleOptionsException(FatalError):
+  pass
+
+
 def not_both(opt1val, opt1name, opt2val, opt2name):
+  """Raise an exception if both opt1val and opt2val are set."""
   if opt1val and opt2val:
-    raise FatalError(
+    raise IncompatibleOptionsException(
         "cannot pass both '%s' and '%s'." % (opt1name, opt2name,)
         )
 

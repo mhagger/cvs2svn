@@ -152,6 +152,29 @@ class IncompatibleOptionsException(FatalError):
   pass
 
 
+# Options that are not allowed to be used with --trunk-only:
+SYMBOL_OPTIONS = [
+    '--symbol-transform',
+    '--symbol-hints',
+    '--force-branch',
+    '--force-tag',
+    '--exclude',
+    '--keep-trivial-imports',
+    '--symbol-default',
+    '--no-cross-branch-commits',
+    ]
+
+class SymbolOptionsWithTrunkOnlyException(IncompatibleOptionsException):
+  def __init__(self):
+    IncompatibleOptionsException.__init__(
+        self,
+        'The following symbol-related options cannot be used together\n'
+        'with --trunk-only:\n'
+        '    %s'
+        % ('\n    '.join(SYMBOL_OPTIONS),)
+        )
+
+
 def not_both(opt1val, opt1name, opt2val, opt2name):
   """Raise an exception if both opt1val and opt2val are set."""
   if opt1val and opt2val:
@@ -860,11 +883,9 @@ class RunOptions:
     options = self.options
 
     if ctx.trunk_only:
-      not_both(ctx.trunk_only, '--trunk-only',
-               options.force_branch, '--force-branch')
+      if options.force_branch or options.force_tag:
+        raise SymbolOptionsWithTrunkOnlyException()
 
-      not_both(ctx.trunk_only, '--trunk-only',
-               options.force_tag, '--force-tag')
     else:
       if not options.keep_trivial_imports:
         options.symbol_strategy_rules.append(ExcludeTrivialImportBranchRule())

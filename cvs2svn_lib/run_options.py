@@ -771,25 +771,11 @@ class RunOptions:
     except re.error:
       raise FatalError("'%s' is not a valid regexp." % (pattern,))
 
-  def process_remaining_options(self):
-    """Process the options that are not compatible with --options."""
+  def process_output_options(self):
+    """Process the options related to SVN output."""
 
-    # Convenience var, so we don't have to keep instantiating this Borg.
     ctx = Ctx()
-
     options = self.options
-
-    # Consistency check for options and arguments.
-    if len(self.args) == 0:
-      self.usage()
-      sys.exit(1)
-
-    if len(self.args) > 1:
-      Log().error(error_prefix + ": must pass only one CVS repository.\n")
-      self.usage()
-      sys.exit(1)
-
-    cvsroot = self.args[0]
 
     if options.dump_only and not options.dumpfile:
       raise FatalError("'--dump-only' requires '--dumpfile' to be specified.")
@@ -812,21 +798,6 @@ class RunOptions:
     not_both(options.fs_type, '--fs-type',
              options.existing_svnrepos, '--existing-svnrepos')
 
-    not_both(options.use_rcs, '--use-rcs',
-             options.use_cvs, '--use-cvs')
-
-    not_both(options.use_rcs, '--use-rcs',
-             options.use_internal_co, '--use-internal-co')
-
-    not_both(options.use_cvs, '--use-cvs',
-             options.use_internal_co, '--use-internal-co')
-
-    not_both(ctx.trunk_only, '--trunk-only',
-             options.force_branch, '--force-branch')
-
-    not_both(ctx.trunk_only, '--trunk-only',
-             options.force_tag, '--force-tag')
-
     if (
           options.fs_type
           and options.fs_type != 'bdb'
@@ -845,6 +816,43 @@ class RunOptions:
             create_options=options.create_options)
     else:
       ctx.output_option = DumpfileOutputOption(options.dumpfile)
+
+  def process_remaining_options(self):
+    """Process the options that are not compatible with --options."""
+
+    # Convenience var, so we don't have to keep instantiating this Borg.
+    ctx = Ctx()
+
+    options = self.options
+
+    # Consistency check for options and arguments.
+    if len(self.args) == 0:
+      self.usage()
+      sys.exit(1)
+
+    if len(self.args) > 1:
+      Log().error(error_prefix + ": must pass only one CVS repository.\n")
+      self.usage()
+      sys.exit(1)
+
+    cvsroot = self.args[0]
+
+    self.process_output_options()
+
+    not_both(options.use_rcs, '--use-rcs',
+             options.use_cvs, '--use-cvs')
+
+    not_both(options.use_rcs, '--use-rcs',
+             options.use_internal_co, '--use-internal-co')
+
+    not_both(options.use_cvs, '--use-cvs',
+             options.use_internal_co, '--use-internal-co')
+
+    not_both(ctx.trunk_only, '--trunk-only',
+             options.force_branch, '--force-branch')
+
+    not_both(ctx.trunk_only, '--trunk-only',
+             options.force_tag, '--force-tag')
 
     if options.use_rcs:
       ctx.revision_recorder = NullRevisionRecorder()

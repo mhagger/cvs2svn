@@ -771,6 +771,35 @@ class RunOptions:
     except re.error:
       raise FatalError("'%s' is not a valid regexp." % (pattern,))
 
+  def process_extraction_options(self):
+    """Process options related to extracting data from the CVS repository."""
+
+    ctx = Ctx()
+    options = self.options
+
+    not_both(options.use_rcs, '--use-rcs',
+             options.use_cvs, '--use-cvs')
+
+    not_both(options.use_rcs, '--use-rcs',
+             options.use_internal_co, '--use-internal-co')
+
+    not_both(options.use_cvs, '--use-cvs',
+             options.use_internal_co, '--use-internal-co')
+
+    if options.use_rcs:
+      ctx.revision_recorder = NullRevisionRecorder()
+      ctx.revision_excluder = NullRevisionExcluder()
+      ctx.revision_reader = RCSRevisionReader(options.co_executable)
+    elif options.use_cvs:
+      ctx.revision_recorder = NullRevisionRecorder()
+      ctx.revision_excluder = NullRevisionExcluder()
+      ctx.revision_reader = CVSRevisionReader(options.cvs_executable)
+    else:
+      # --use-internal-co is the default:
+      ctx.revision_recorder = InternalRevisionRecorder(compress=True)
+      ctx.revision_excluder = InternalRevisionExcluder()
+      ctx.revision_reader = InternalRevisionReader(compress=True)
+
   def process_output_options(self):
     """Process the options related to SVN output."""
 
@@ -837,36 +866,14 @@ class RunOptions:
 
     cvsroot = self.args[0]
 
+    self.process_extraction_options()
     self.process_output_options()
-
-    not_both(options.use_rcs, '--use-rcs',
-             options.use_cvs, '--use-cvs')
-
-    not_both(options.use_rcs, '--use-rcs',
-             options.use_internal_co, '--use-internal-co')
-
-    not_both(options.use_cvs, '--use-cvs',
-             options.use_internal_co, '--use-internal-co')
 
     not_both(ctx.trunk_only, '--trunk-only',
              options.force_branch, '--force-branch')
 
     not_both(ctx.trunk_only, '--trunk-only',
              options.force_tag, '--force-tag')
-
-    if options.use_rcs:
-      ctx.revision_recorder = NullRevisionRecorder()
-      ctx.revision_excluder = NullRevisionExcluder()
-      ctx.revision_reader = RCSRevisionReader(options.co_executable)
-    elif options.use_cvs:
-      ctx.revision_recorder = NullRevisionRecorder()
-      ctx.revision_excluder = NullRevisionExcluder()
-      ctx.revision_reader = CVSRevisionReader(options.cvs_executable)
-    else:
-      # --use-internal-co is the default:
-      ctx.revision_recorder = InternalRevisionRecorder(compress=True)
-      ctx.revision_excluder = InternalRevisionExcluder()
-      ctx.revision_reader = InternalRevisionReader(compress=True)
 
     if 'ascii' not in options.encodings:
       options.encodings.append('ascii')

@@ -846,6 +846,38 @@ class RunOptions:
     else:
       ctx.output_option = DumpfileOutputOption(options.dumpfile)
 
+  def process_symbol_strategy_options(self):
+    """Process symbol strategy-related options."""
+
+    ctx = Ctx()
+    options = self.options
+
+    not_both(ctx.trunk_only, '--trunk-only',
+             options.force_branch, '--force-branch')
+
+    not_both(ctx.trunk_only, '--trunk-only',
+             options.force_tag, '--force-tag')
+
+    if not options.keep_trivial_imports:
+      options.symbol_strategy_rules.append(ExcludeTrivialImportBranchRule())
+
+    options.symbol_strategy_rules.append(UnambiguousUsageRule())
+    if options.symbol_default == 'strict':
+      pass
+    elif options.symbol_default == 'branch':
+      options.symbol_strategy_rules.append(AllBranchRule())
+    elif options.symbol_default == 'tag':
+      options.symbol_strategy_rules.append(AllTagRule())
+    elif options.symbol_default == 'heuristic':
+      options.symbol_strategy_rules.append(BranchIfCommitsRule())
+      options.symbol_strategy_rules.append(HeuristicStrategyRule())
+    else:
+      assert False
+
+    # Now add a rule whose job it is to pick the preferred parents of
+    # branches and tags:
+    options.symbol_strategy_rules.append(HeuristicPreferredParentRule())
+
   def process_property_setter_options(self):
     """Process the options that set SVN properties."""
 
@@ -902,12 +934,6 @@ class RunOptions:
     self.process_extraction_options()
     self.process_output_options()
 
-    not_both(ctx.trunk_only, '--trunk-only',
-             options.force_branch, '--force-branch')
-
-    not_both(ctx.trunk_only, '--trunk-only',
-             options.force_tag, '--force-tag')
-
     if 'ascii' not in options.encodings:
       options.encodings.append('ascii')
 
@@ -930,26 +956,7 @@ class RunOptions:
         NormalizePathsSymbolTransform(),
         ])
 
-    if not options.keep_trivial_imports:
-      options.symbol_strategy_rules.append(ExcludeTrivialImportBranchRule())
-
-    options.symbol_strategy_rules.append(UnambiguousUsageRule())
-    if options.symbol_default == 'strict':
-      pass
-    elif options.symbol_default == 'branch':
-      options.symbol_strategy_rules.append(AllBranchRule())
-    elif options.symbol_default == 'tag':
-      options.symbol_strategy_rules.append(AllTagRule())
-    elif options.symbol_default == 'heuristic':
-      options.symbol_strategy_rules.append(BranchIfCommitsRule())
-      options.symbol_strategy_rules.append(HeuristicStrategyRule())
-    else:
-      assert False
-
-    # Now add a rule whose job it is to pick the preferred parents of
-    # branches and tags:
-    options.symbol_strategy_rules.append(HeuristicPreferredParentRule())
-
+    self.process_symbol_strategy_options()
     self.process_property_setter_options()
 
     # Create the default project (using ctx.trunk, ctx.branches, and

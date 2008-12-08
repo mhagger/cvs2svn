@@ -879,7 +879,7 @@ class RunOptions:
     options = self.options
 
     if ctx.trunk_only:
-      if options.symbol_strategy_rules:
+      if options.symbol_strategy_rules or options.keep_trivial_imports:
         raise SymbolOptionsWithTrunkOnlyException()
 
     else:

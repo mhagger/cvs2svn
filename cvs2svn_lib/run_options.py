@@ -383,6 +383,7 @@ class RunOptions:
     group.add_option(IncompatibleOption(
         '--symbol-default', type='choice',
         choices=['heuristic', 'strict', 'branch', 'tag'],
+        action='store',
         help=(
             'specify how ambiguous symbols are converted.  '
             'OPT is "heuristic" (default), "strict", "branch", '
@@ -452,6 +453,7 @@ class RunOptions:
     group.add_option(IncompatibleOption(
         '--default-eol', type='choice',
         choices=['binary', 'native', 'CRLF', 'LF', 'CR'],
+        action='store',
         help=(
             'default svn:eol-style for non-binary files with '
             'undetermined mime types.  VALUE is "binary" '

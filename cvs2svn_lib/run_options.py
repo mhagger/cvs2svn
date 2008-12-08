@@ -621,7 +621,7 @@ class RunOptions:
       # All of the options that are compatible with --options have
       # been consumed above.  It is an error if any other options or
       # arguments are left:
-      self.verify_options_consumed()
+      self.verify_option_compatibility()
     else:
       # --options was not specified.  So we can process other options
       # that are not compatible with --options.
@@ -959,13 +959,11 @@ class RunOptions:
     if not self.projects:
       raise FatalError('No project specified.')
 
-  def verify_options_consumed(self):
-    """Verify that all command line options and arguments have been used.
+  def verify_option_compatibility(self):
+    """Verify that no options incompatible with --options were used.
 
-    The --options option was specified, and all options that are
-    compatible with that option have already been consumed.  Verify
-    that there are no remaining (i.e., incompatible) options or
-    arguments."""
+    The --options option was specified.  Verify that no incompatible
+    options or arguments were specified."""
 
     if self.options.options_incompatible_options or self.args:
       if self.options.options_incompatible_options:

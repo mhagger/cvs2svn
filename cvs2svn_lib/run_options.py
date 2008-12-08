@@ -373,14 +373,12 @@ class RunOptions:
         help='read symbol conversion hints from PATH',
         metavar='PATH',
         ))
-    parser.set_default('force_branch', False)
     group.add_option(IncompatibleOption(
         '--force-branch', type='string',
         action='callback', callback=self.callback_force_branch,
         help='force symbols matching REGEXP to be branches',
         metavar='REGEXP',
         ))
-    parser.set_default('force_tag', False)
     group.add_option(IncompatibleOption(
         '--force-tag', type='string',
         action='callback', callback=self.callback_force_tag,
@@ -776,13 +774,11 @@ class RunOptions:
     parser.values.symbol_strategy_rules.append(
         ForceBranchRegexpStrategyRule(value)
         )
-    parser.values.force_branch = True
 
   def callback_force_tag(self, option, opt_str, value, parser):
     parser.values.symbol_strategy_rules.append(
         ForceTagRegexpStrategyRule(value)
         )
-    parser.values.force_tag = True
 
   def callback_exclude(self, option, opt_str, value, parser):
     parser.values.symbol_strategy_rules.append(
@@ -883,7 +879,7 @@ class RunOptions:
     options = self.options
 
     if ctx.trunk_only:
-      if options.force_branch or options.force_tag:
+      if options.symbol_strategy_rules:
         raise SymbolOptionsWithTrunkOnlyException()
 
     else:

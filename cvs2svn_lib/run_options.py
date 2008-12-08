@@ -148,6 +148,13 @@ class ContextOption(optparse.Option):
     return 1
 
 
+def not_both(opt1val, opt1name, opt2val, opt2name):
+  if opt1val and opt2val:
+    raise FatalError(
+        "cannot pass both '%s' and '%s'." % (opt1name, opt2name,)
+        )
+
+
 class RunOptions:
   """A place to store meta-options that are used to start the conversion."""
 
@@ -789,11 +796,6 @@ class RunOptions:
 
     if not options.svnrepos and not options.dumpfile and not ctx.dry_run:
       raise FatalError("must pass one of '-s' or '--dumpfile'.")
-
-    def not_both(opt1val, opt1name, opt2val, opt2name):
-      if opt1val and opt2val:
-        raise FatalError("cannot pass both '%s' and '%s'."
-                         % (opt1name, opt2name,))
 
     not_both(options.svnrepos, '-s',
              options.dumpfile, '--dumpfile')

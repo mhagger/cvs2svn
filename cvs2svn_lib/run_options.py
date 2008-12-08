@@ -846,6 +846,39 @@ class RunOptions:
     else:
       ctx.output_option = DumpfileOutputOption(options.dumpfile)
 
+  def process_property_setter_options(self):
+    """Process the options that set SVN properties."""
+
+    ctx = Ctx()
+    options = self.options
+
+    for value in options.auto_props_files:
+      ctx.svn_property_setters.append(
+          AutoPropsPropertySetter(value, options.auto_props_ignore_case)
+          )
+
+    for value in options.mime_types_files:
+      ctx.svn_property_setters.append(MimeMapper(value))
+
+    ctx.svn_property_setters.append(CVSBinaryFileEOLStyleSetter())
+
+    ctx.svn_property_setters.append(CVSBinaryFileDefaultMimeTypeSetter())
+
+    if options.eol_from_mime_type:
+      ctx.svn_property_setters.append(EOLStyleFromMimeTypeSetter())
+
+    ctx.svn_property_setters.append(
+        DefaultEOLStyleSetter(options.default_eol)
+        )
+
+    ctx.svn_property_setters.append(SVNBinaryFileKeywordsPropertySetter())
+
+    if not options.keywords_off:
+      ctx.svn_property_setters.append(
+          KeywordsPropertySetter(config.SVN_KEYWORDS_VALUE))
+
+    ctx.svn_property_setters.append(ExecutablePropertySetter())
+
   def process_remaining_options(self):
     """Process the options that are not compatible with --options."""
 
@@ -917,32 +950,7 @@ class RunOptions:
     # branches and tags:
     options.symbol_strategy_rules.append(HeuristicPreferredParentRule())
 
-    for value in options.auto_props_files:
-      ctx.svn_property_setters.append(
-          AutoPropsPropertySetter(value, options.auto_props_ignore_case)
-          )
-
-    for value in options.mime_types_files:
-      ctx.svn_property_setters.append(MimeMapper(value))
-
-    ctx.svn_property_setters.append(CVSBinaryFileEOLStyleSetter())
-
-    ctx.svn_property_setters.append(CVSBinaryFileDefaultMimeTypeSetter())
-
-    if options.eol_from_mime_type:
-      ctx.svn_property_setters.append(EOLStyleFromMimeTypeSetter())
-
-    ctx.svn_property_setters.append(
-        DefaultEOLStyleSetter(options.default_eol)
-        )
-
-    ctx.svn_property_setters.append(SVNBinaryFileKeywordsPropertySetter())
-
-    if not options.keywords_off:
-      ctx.svn_property_setters.append(
-          KeywordsPropertySetter(config.SVN_KEYWORDS_VALUE))
-
-    ctx.svn_property_setters.append(ExecutablePropertySetter())
+    self.process_property_setter_options()
 
     # Create the default project (using ctx.trunk, ctx.branches, and
     # ctx.tags):

@@ -356,14 +356,6 @@ class RunOptions:
         metavar='ENC',
         ))
     group.add_option(ContextOption(
-        '--keep-cvsignore',
-        action='store_true',
-        help=(
-            'keep .cvsignore files (in addition to creating '
-            'the analogous svn:ignore properties)'
-            ),
-        ))
-    group.add_option(ContextOption(
         '--no-cross-branch-commits',
         action='store_false', dest='cross_branch_commits',
         help='prevent the creation of cross-branch commits',
@@ -376,78 +368,6 @@ class RunOptions:
             'the CVS Attic, then leave the attic version in a '
             'SVN directory called "Attic"'
             ),
-        ))
-    group.add_option(ContextOption(
-        '--username', type='string',
-        action='store',
-        help='username for cvs2svn-synthesized commits',
-        metavar='NAME',
-        ))
-    group.add_option(IncompatibleOption(
-        '--cvs-revnums',
-        action='callback', callback=self.callback_cvs_revnums,
-        help='record CVS revision numbers as file properties',
-        ))
-    parser.set_default('mime_types_files', [])
-    group.add_option(IncompatibleOption(
-        '--mime-types', type='string',
-        action='append', dest='mime_types_files',
-        help=(
-            'specify an apache-style mime.types file for setting '
-            'svn:mime-type'
-            ),
-        metavar='FILE',
-        ))
-    parser.set_default('eol_from_mime_type', False)
-    group.add_option(IncompatibleOption(
-        '--eol-from-mime-type',
-        action='store_true',
-        help='set svn:eol-style from mime type if known',
-        ))
-    parser.set_default('auto_props_files', [])
-    group.add_option(IncompatibleOption(
-        '--auto-props', type='string',
-        action='append', dest='auto_props_files',
-        help=(
-            'set file properties from the auto-props section '
-            'of a file in svn config format'
-            ),
-        metavar='FILE',
-        ))
-    group.add_option(IncompatibleOption(
-        '--default-eol', type='choice',
-        choices=['binary', 'native', 'CRLF', 'LF', 'CR'],
-        action='store',
-        help=(
-            'default svn:eol-style for non-binary files with '
-            'undetermined mime types.  VALUE is "binary" '
-            '(default), "native", "CRLF", "LF", or "CR"'
-            ),
-        metavar='VALUE',
-        ))
-    parser.set_default('keywords_off', False)
-    group.add_option(IncompatibleOption(
-        '--keywords-off',
-        action='store_true',
-        help=(
-            'don\'t set svn:keywords on any files (by default, '
-            'cvs2svn sets svn:keywords on non-binary files to "%s")'
-            % (config.SVN_KEYWORDS_VALUE,)
-            ),
-        ))
-
-    # Deprecated options:
-    group.add_option(IncompatibleOption(
-        '--no-default-eol',
-        action='store_const', dest='default_eol', const=None,
-        help=optparse.SUPPRESS_HELP,
-        ))
-    parser.set_default('auto_props_ignore_case', True)
-    # True is the default now, so this option has no effect:
-    group.add_option(IncompatibleOption(
-        '--auto-props-ignore-case',
-        action='store_true',
-        help=optparse.SUPPRESS_HELP,
         ))
 
 
@@ -508,6 +428,89 @@ class RunOptions:
             'do not exclude branches that were only used for '
             'a single import (usually these are unneeded)'
             ),
+        ))
+
+
+    group = parser.add_option_group('Subversion properties')
+    group.add_option(ContextOption(
+        '--username', type='string',
+        action='store',
+        help='username for cvs2svn-synthesized commits',
+        metavar='NAME',
+        ))
+    parser.set_default('auto_props_files', [])
+    group.add_option(IncompatibleOption(
+        '--auto-props', type='string',
+        action='append', dest='auto_props_files',
+        help=(
+            'set file properties from the auto-props section '
+            'of a file in svn config format'
+            ),
+        metavar='FILE',
+        ))
+    parser.set_default('mime_types_files', [])
+    group.add_option(IncompatibleOption(
+        '--mime-types', type='string',
+        action='append', dest='mime_types_files',
+        help=(
+            'specify an apache-style mime.types file for setting '
+            'svn:mime-type'
+            ),
+        metavar='FILE',
+        ))
+    parser.set_default('eol_from_mime_type', False)
+    group.add_option(IncompatibleOption(
+        '--eol-from-mime-type',
+        action='store_true',
+        help='set svn:eol-style from mime type if known',
+        ))
+    group.add_option(IncompatibleOption(
+        '--default-eol', type='choice',
+        choices=['binary', 'native', 'CRLF', 'LF', 'CR'],
+        action='store',
+        help=(
+            'default svn:eol-style for non-binary files with '
+            'undetermined mime types.  VALUE is "binary" '
+            '(default), "native", "CRLF", "LF", or "CR"'
+            ),
+        metavar='VALUE',
+        ))
+    parser.set_default('keywords_off', False)
+    group.add_option(IncompatibleOption(
+        '--keywords-off',
+        action='store_true',
+        help=(
+            'don\'t set svn:keywords on any files (by default, '
+            'cvs2svn sets svn:keywords on non-binary files to "%s")'
+            % (config.SVN_KEYWORDS_VALUE,)
+            ),
+        ))
+    group.add_option(ContextOption(
+        '--keep-cvsignore',
+        action='store_true',
+        help=(
+            'keep .cvsignore files (in addition to creating '
+            'the analogous svn:ignore properties)'
+            ),
+        ))
+    group.add_option(IncompatibleOption(
+        '--cvs-revnums',
+        action='callback', callback=self.callback_cvs_revnums,
+        help='record CVS revision numbers as file properties',
+        ))
+
+    # Deprecated options:
+    group.add_option(IncompatibleOption(
+        '--no-default-eol',
+        action='store_const', dest='default_eol', const=None,
+        help=optparse.SUPPRESS_HELP,
+        ))
+    parser.set_default('auto_props_ignore_case', True)
+    # True is the default now, so this option has no effect:
+    group.add_option(IncompatibleOption(
+        '--auto-props-ignore-case',
+        action='store_true',
+        help=optparse.SUPPRESS_HELP,
         ))
 
 

@@ -355,63 +355,6 @@ class RunOptions:
         help='If all --encodings fail, use lossy encoding with ENC',
         metavar='ENC',
         ))
-    parser.set_default('symbol_transforms', [])
-    group.add_option(IncompatibleOption(
-        '--symbol-transform', type='string',
-        action='callback', callback=self.callback_symbol_transform,
-        help=(
-            'transform symbol names from P to S, where P and S '
-            'use Python regexp and reference syntax '
-            'respectively.  P must match the whole symbol name'
-            ),
-        metavar='P:S',
-        ))
-    parser.set_default('symbol_strategy_rules', [])
-    group.add_option(IncompatibleOption(
-        '--symbol-hints', type='string',
-        action='callback', callback=self.callback_symbol_hints,
-        help='read symbol conversion hints from PATH',
-        metavar='PATH',
-        ))
-    group.add_option(IncompatibleOption(
-        '--force-branch', type='string',
-        action='callback', callback=self.callback_force_branch,
-        help='force symbols matching REGEXP to be branches',
-        metavar='REGEXP',
-        ))
-    group.add_option(IncompatibleOption(
-        '--force-tag', type='string',
-        action='callback', callback=self.callback_force_tag,
-        help='force symbols matching REGEXP to be tags',
-        metavar='REGEXP',
-        ))
-    group.add_option(IncompatibleOption(
-        '--exclude', type='string',
-        action='callback', callback=self.callback_exclude,
-        help='exclude branches and tags matching REGEXP',
-        metavar='REGEXP',
-        ))
-    parser.set_default('keep_trivial_imports', False)
-    group.add_option(IncompatibleOption(
-        '--keep-trivial-imports',
-        action='store_true',
-        help=(
-            'do not exclude branches that were only used for '
-            'a single import (usually these are unneeded)'
-            ),
-        ))
-    parser.set_default('symbol_default', 'heuristic')
-    group.add_option(IncompatibleOption(
-        '--symbol-default', type='choice',
-        choices=['heuristic', 'strict', 'branch', 'tag'],
-        action='store',
-        help=(
-            'specify how ambiguous symbols are converted.  '
-            'OPT is "heuristic" (default), "strict", "branch", '
-            'or "tag"'
-            ),
-        metavar='OPT',
-        ))
     group.add_option(ContextOption(
         '--keep-cvsignore',
         action='store_true',
@@ -505,6 +448,66 @@ class RunOptions:
         '--auto-props-ignore-case',
         action='store_true',
         help=optparse.SUPPRESS_HELP,
+        ))
+
+
+    group = parser.add_option_group('Symbol handling')
+    parser.set_default('symbol_transforms', [])
+    group.add_option(IncompatibleOption(
+        '--symbol-transform', type='string',
+        action='callback', callback=self.callback_symbol_transform,
+        help=(
+            'transform symbol names from P to S, where P and S '
+            'use Python regexp and reference syntax '
+            'respectively.  P must match the whole symbol name'
+            ),
+        metavar='P:S',
+        ))
+    parser.set_default('symbol_strategy_rules', [])
+    group.add_option(IncompatibleOption(
+        '--symbol-hints', type='string',
+        action='callback', callback=self.callback_symbol_hints,
+        help='read symbol conversion hints from PATH',
+        metavar='PATH',
+        ))
+    parser.set_default('symbol_default', 'heuristic')
+    group.add_option(IncompatibleOption(
+        '--symbol-default', type='choice',
+        choices=['heuristic', 'strict', 'branch', 'tag'],
+        action='store',
+        help=(
+            'specify how ambiguous symbols are converted.  '
+            'OPT is "heuristic" (default), "strict", "branch", '
+            'or "tag"'
+            ),
+        metavar='OPT',
+        ))
+    group.add_option(IncompatibleOption(
+        '--force-branch', type='string',
+        action='callback', callback=self.callback_force_branch,
+        help='force symbols matching REGEXP to be branches',
+        metavar='REGEXP',
+        ))
+    group.add_option(IncompatibleOption(
+        '--force-tag', type='string',
+        action='callback', callback=self.callback_force_tag,
+        help='force symbols matching REGEXP to be tags',
+        metavar='REGEXP',
+        ))
+    group.add_option(IncompatibleOption(
+        '--exclude', type='string',
+        action='callback', callback=self.callback_exclude,
+        help='exclude branches and tags matching REGEXP',
+        metavar='REGEXP',
+        ))
+    parser.set_default('keep_trivial_imports', False)
+    group.add_option(IncompatibleOption(
+        '--keep-trivial-imports',
+        action='store_true',
+        help=(
+            'do not exclude branches that were only used for '
+            'a single import (usually these are unneeded)'
+            ),
         ))
 
 

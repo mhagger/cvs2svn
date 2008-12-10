@@ -795,6 +795,26 @@ sprouts).</p>
   </tr>
 
   <tr>
+    <td align="right"><tt>--no-cross-branch-commits</tt></td>
+    <td>Prevent the creation of SVN commits that affect multiple
+      branches or trunk and a branch.  Instead, break such changesets
+      into multiple commits, one per branch.</td>
+  </tr>
+
+  <tr>
+    <td align="right"><tt>--retain-conflicting-attic-files</tt></td>
+    <td>If a file appears both inside an outside of the CVS attic,
+      retain the attic version in an SVN subdirectory called `Attic'.
+      (Normally this situation is treated as a fatal error.)</td>
+  </tr>
+
+  <tr>
+    <th colspan="2">
+      Symbol handling
+    </th>
+  </tr>
+
+  <tr>
     <td align="right"><tt>--symbol-transform=PAT:SUB</tt></td>
     <td><p>Transform RCS/CVS symbol names before entering them into
       Subversion.  PAT is a Python regular expression pattern that is
@@ -861,31 +881,6 @@ project-id symbol conversion svn-path parent-lod-name
   </tr>
 
   <tr>
-    <td align="right"><tt>--force-branch=REGEXP</tt></td>
-    <td>Force symbols whose names match REGEXP to be branches.</td>
-  </tr>
-
-  <tr>
-    <td align="right"><tt>--force-tag=REGEXP</tt></td>
-    <td>Force symbols whose names match REGEXP to be tags.  This will
-      cause an error if such a symbol has commits on it.</td>
-  </tr>
-
-  <tr>
-    <td align="right"><tt>--exclude=REGEXP</tt></td>
-    <td>Exclude branches and tags whose names match REGEXP from
-      the conversion.</td>
-  </tr>
-
-  <tr>
-    <td align="right"><tt>--keep-trivial-imports</tt></td>
-    <td>Do not exclude branches that were only used for a single
-      import.  (By default such branches are excluded because they
-      are usually created by the inappropriate use of <tt>cvs
-      import</tt>.)</td>
-  </tr>
-
-  <tr>
     <td align="right"><tt>--symbol-default=OPT</tt></td>
     <td>Specify how to convert ambiguous symbols (i.e., those that
       appear in the CVS archive as both branches and tags).
@@ -911,58 +906,40 @@ project-id symbol conversion svn-path parent-lod-name
   </tr>
 
   <tr>
-    <td align="right"><tt>--keep-cvsignore</tt></td>
-    <td>Include <tt>.cvsignore</tt> files in the output.  (Normally
-      they are unneeded because cvs2svn sets the corresponding
-      <tt>svn:ignore</tt> properties.)</td>
+    <td align="right"><tt>--force-branch=REGEXP</tt></td>
+    <td>Force symbols whose names match REGEXP to be branches.</td>
   </tr>
 
   <tr>
-    <td align="right"><tt>--no-cross-branch-commits</tt></td>
-    <td>Prevent the creation of SVN commits that affect multiple
-      branches or trunk and a branch.  Instead, break such changesets
-      into multiple commits, one per branch.</td>
+    <td align="right"><tt>--force-tag=REGEXP</tt></td>
+    <td>Force symbols whose names match REGEXP to be tags.  This will
+      cause an error if such a symbol has commits on it.</td>
   </tr>
 
   <tr>
-    <td align="right"><tt>--retain-conflicting-attic-files</tt></td>
-    <td>If a file appears both inside an outside of the CVS attic,
-      retain the attic version in an SVN subdirectory called `Attic'.
-      (Normally this situation is treated as a fatal error.)</td>
+    <td align="right"><tt>--exclude=REGEXP</tt></td>
+    <td>Exclude branches and tags whose names match REGEXP from
+      the conversion.</td>
+  </tr>
+
+  <tr>
+    <td align="right"><tt>--keep-trivial-imports</tt></td>
+    <td>Do not exclude branches that were only used for a single
+      import.  (By default such branches are excluded because they
+      are usually created by the inappropriate use of <tt>cvs
+      import</tt>.)</td>
+  </tr>
+
+  <tr>
+    <th colspan="2">
+      Subversion properties
+    </th>
   </tr>
 
   <tr>
     <td align="right"><tt>--username=NAME</tt></td>
     <td>Use NAME as the author for cvs2svn-synthesized commits (the
       default value is no author at all.</td>
-  </tr>
-
-  <tr>
-    <td align="right"><tt>--cvs-revnums</tt></td>
-    <td>Record CVS revision numbers as file properties in the
-      Subversion repository.  (Note that unless it is removed
-      explicitly, the last CVS revision number will remain associated
-      with the file even after the file is changed within
-      Subversion.)</td>
-  </tr>
-
-  <tr>
-    <td align="right"><tt>--mime-types=FILE</tt></td>
-    <td>Specify an apache-style mime.types file for setting
-      <tt>svn:mime-type</tt> properties on files in the Subversion
-      repository.</td>
-  </tr>
-
-  <tr>
-    <td align="right"><tt>--eol-from-mime-type</tt></td>
-    <td>For files that don't have the <tt>kb</tt> expansion mode but
-      have a known mime type, set the eol-style based on the mime
-      type.  For such files, set the <tt>svn:eol-style</tt> property
-      to "native" if the mime type begins with "text/", and leave it
-      unset (i.e., no EOL translation) otherwise.  Files with unknown
-      mime types are not affected by this option.  This option has no
-      effect unless the <tt>--mime-types</tt> option is also
-      specified.</td>
   </tr>
 
   <tr>
@@ -995,6 +972,25 @@ project-id symbol conversion svn-path parent-lod-name
   </tr>
 
   <tr>
+    <td align="right"><tt>--mime-types=FILE</tt></td>
+    <td>Specify an apache-style mime.types file for setting
+      <tt>svn:mime-type</tt> properties on files in the Subversion
+      repository.</td>
+  </tr>
+
+  <tr>
+    <td align="right"><tt>--eol-from-mime-type</tt></td>
+    <td>For files that don't have the <tt>kb</tt> expansion mode but
+      have a known mime type, set the eol-style based on the mime
+      type.  For such files, set the <tt>svn:eol-style</tt> property
+      to "native" if the mime type begins with "text/", and leave it
+      unset (i.e., no EOL translation) otherwise.  Files with unknown
+      mime types are not affected by this option.  This option has no
+      effect unless the <tt>--mime-types</tt> option is also
+      specified.</td>
+  </tr>
+
+  <tr>
     <td align="right"><tt>--default-eol=STYLE</tt></td>
     <td>Set <tt>svn:eol-style</tt> to STYLE for files that don't have
       the <tt>kb</tt> expansion mode and whose end-of-line translation
@@ -1012,6 +1008,22 @@ project-id symbol conversion svn-path parent-lod-name
       <tt>svn:keywords</tt> for any file.  While this will not touch
       the keywords in the contents of your files, Subversion will not
       expand them.</td>
+  </tr>
+
+  <tr>
+    <td align="right"><tt>--keep-cvsignore</tt></td>
+    <td>Include <tt>.cvsignore</tt> files in the output.  (Normally
+      they are unneeded because cvs2svn sets the corresponding
+      <tt>svn:ignore</tt> properties.)</td>
+  </tr>
+
+  <tr>
+    <td align="right"><tt>--cvs-revnums</tt></td>
+    <td>Record CVS revision numbers as file properties in the
+      Subversion repository.  (Note that unless it is removed
+      explicitly, the last CVS revision number will remain associated
+      with the file even after the file is changed within
+      Subversion.)</td>
   </tr>
 
   <tr>

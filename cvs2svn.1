@@ -113,6 +113,16 @@ and author names; there is no fallback encoding for filenames.  (By
 using an \fB--options\fR file, it is possible to specify a fallback
 encoding for filenames.)  Default: disabled.
 .TP
+\fB--no-cross-branch-commits\fR
+Prevent the creation of commits that affect files on multiple
+branches at once.
+.TP
+\fB--retain-conflicting-attic-files\fR
+If a file appears both inside an outside of the CVS attic, retain the
+attic version in an SVN subdirectory called `Attic'.  (Normally this
+situation is treated as a fatal error.)
+.SH "SYMBOL HANDLING"
+.TP
 \fB--symbol-transform\fR=\fIpattern\fR:\fIreplacement\fR
 Transform RCS/CVS symbol names before entering them into Subversion.
 \fIpattern\fR is a Python regexp pattern that is matches against the
@@ -139,6 +149,16 @@ then this rule does not affect the preferred parent of this symbol.
 The file may contain blank lines or comment lines (lines whose first
 non-whitespace character is '#').
 .TP
+\fB--symbol-default\fR=\fIopt\fR
+Specify how to convert ambiguous symbols (those that appear in the CVS
+archive as both branches and tags).  \fIopt\fR must be `heuristic'
+(decide how to treat each ambiguous symbol based on whether it was
+used more often as a branch/tag in CVS), `strict' (no default; every
+ambiguous symbol has to be resolved manually using
+\fB--force-branch\fR, \fB--force-tag\fR, or \fB--exclude\fR), `branch'
+(treat every ambiguous symbol as a branch), or `tag' (treat every
+ambiguous symbol as a tag).  The default is `heuristic'.
+.TP
 \fB--force-branch\fR=\fIregexp\fR
 Force symbols whose names match \fIregexp\fR to be branches.
 \fIregexp\fR must match the whole symbol name.
@@ -155,26 +175,7 @@ conversion.  \fIregexp\fR must match the whole symbol name.
 Do not exclude branches that were only used for a single import.  (By
 default such branches are excluded because they are usually created by
 the inappropriate use of \fBcvs import\fR.)
-.TP
-\fB--symbol-default\fR=\fIopt\fR
-Specify how to convert ambiguous symbols (those that appear in the CVS
-archive as both branches and tags).  \fIopt\fR must be `heuristic'
-(decide how to treat each ambiguous symbol based on whether it was
-used more often as a branch/tag in CVS), `strict' (no default; every
-ambiguous symbol has to be resolved manually using
-\fB--force-branch\fR, \fB--force-tag\fR, or \fB--exclude\fR), `branch'
-(treat every ambiguous symbol as a branch), or `tag' (treat every
-ambiguous symbol as a tag).  The default is `heuristic'.
-.TP
-\fB--keep-cvsignore\fR
-Include \fI.cvsignore\fR files in the output.  (Normally they are
-unneeded because cvs2svn sets the corresponding \fIsvn:ignore\fR
-properties.)
-.TP
-\fB--retain-conflicting-attic-files\fR
-If a file appears both inside an outside of the CVS attic, retain the
-attic version in an SVN subdirectory called `Attic'.  (Normally this
-situation is treated as a fatal error.)
+.SH "SUBVERSION PROPERTIES"
 .TP
 \fB--username\fR=\fIname\fR
 Set the default username to \fIname\fR when cvs2svn needs to generate
@@ -182,11 +183,13 @@ a commit for which CVS does not record the original username.  This
 happens when a branch or tag is created.  The default is to use no
 author at all for such commits.
 .TP
-\fB--cvs-revnums\fR
-Record CVS revision numbers as file properties in the Subversion
-repository.  (Note that unless it is removed explicitly, the last CVS
-revision number will remain associated with the file even after the
-file is changed within Subversion.)
+\fB--auto-props\fR=\fIfile\fR
+Specify a file in the format of Subversion's config file, whose
+[auto-props] section can be used to set arbitrary properties on files
+in the Subversion repository based on their filenames.  (The
+[auto-props] section header must be present; other sections of the
+config file, including the enable-auto-props setting, are ignored.)
+Filenames are matched to the filename patterns case-insensitively.
 .TP
 \fB--mime-types\fR=\fIfile\fR
 Specify an apache-style mime.types \fIfile\fR for setting
@@ -200,14 +203,6 @@ leave it unset (i.e., no EOL translation) otherwise.  Files with
 unknown mime types are not affected by this option.  This option has
 no effect unless the \fB--mime-types\fR option is also specified.
 .TP
-\fB--auto-props\fR=\fIfile\fR
-Specify a file in the format of Subversion's config file, whose
-[auto-props] section can be used to set arbitrary properties on files
-in the Subversion repository based on their filenames.  (The
-[auto-props] section header must be present; other sections of the
-config file, including the enable-auto-props setting, are ignored.)
-Filenames are matched to the filename patterns case-insensitively.
-.TP
 \fB--default-eol\fR=\fIstyle\fR
 Set svn:eol-style to \fIstyle\fR for files that don't have the CVS
 `kb' expansion mode and whose end-of-line translation mode hasn't been
@@ -220,15 +215,18 @@ if the mode of the RCS file in question is either kv, kvl or unset.
 If you use the --keywords-off switch, cvs2svn will not set
 svn:keywords for any file.  While this will not touch the keywords in
 the contents of your files, Subversion will not expand them.
-.SH "EXTRACTION OPTIONS"
 .TP
-\fB--use-internal-co\fR
-Use internal code to extract revision contents.  This is up to 50%
-faster than using \fB--use-rcs\fR, but needs a lot of disk space:
-Roughly the size of your CVS repository plus the peak size of a
-complete checkout of the repository with all branches that existed and
-still had commits pending at a given time.  This option is the
-default.
+\fB--keep-cvsignore\fR
+Include \fI.cvsignore\fR files in the output.  (Normally they are
+unneeded because cvs2svn sets the corresponding \fIsvn:ignore\fR
+properties.)
+.TP
+\fB--cvs-revnums\fR
+Record CVS revision numbers as file properties in the Subversion
+repository.  (Note that unless it is removed explicitly, the last CVS
+revision number will remain associated with the file even after the
+file is changed within Subversion.)
+.SH "EXTRACTION OPTIONS"
 .TP
 \fB--use-rcs\fR
 Use RCS 'co' to extract revision contents.
@@ -237,6 +235,14 @@ Use RCS 'co' to extract revision contents.
 Use CVS to extract revision contents (only use this if having
 problems with \fB--use-internal-co\fR or \fB--use-rcs\fR, as those
 options are much faster).
+.TP
+\fB--use-internal-co\fR
+Use internal code to extract revision contents.  This is up to 50%
+faster than using \fB--use-rcs\fR, but needs a lot of disk space:
+Roughly the size of your CVS repository plus the peak size of a
+complete checkout of the repository with all branches that existed and
+still had commits pending at a given time.  This option is the
+default.
 .SH "ENVIRONMENT OPTIONS"
 .TP
 \fB--tmpdir\fR=\fIpath\fR

@@ -3230,8 +3230,10 @@ def main_git():
   conv = ensure_conversion('main', options_file='cvs2git.options')
 
 
-def main_git_inline():
+def main_hg():
   "output in git-fast-import format with inline data"
+
+  # The output should be suitable for import by Mercurial.
 
   # Note: To test importing into git, do
   #
@@ -3243,7 +3245,7 @@ def main_git_inline():
   # Then use "gitk --all", "git log", etc. to test the contents of the
   # repository.
 
-  conv = ensure_conversion('main', options_file='cvs2svn-git-inline.options')
+  conv = ensure_conversion('main', options_file='cvs2hg.options')
 
 
 def invalid_symbol():
@@ -3525,7 +3527,7 @@ test_list = [
     branch_from_deleted_1_1,
     add_on_branch,
     XFail(main_git),
-    XFail(main_git_inline),
+    XFail(main_hg),
     invalid_symbol,
     invalid_symbol_ignore,
     EOLVariants('LF'),

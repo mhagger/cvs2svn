@@ -1,0 +1,8 @@
+# (Be in -*- mode: python; coding: utf-8 -*- mode.)
+
+# An options file to test converting to Mercurial.
+
+# Actually, the example file cvs2hg-example.options is fully
+# functional, so we just load it:
+execfile('cvs2hg-example.options')
+

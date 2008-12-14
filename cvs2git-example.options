@@ -2,16 +2,17 @@
 
 # This is an example of an options file that can be used to make
 # cvs2svn convert to git rather than to Subversion.  See
-# www/cvs2svn.html for general information, and see the comments in
-# this file and in cvs2svn-example.options for information about what
-# options are available and how they can be set.
+# www/cvs2git.html and www/cvs2svn.html for general information, and
+# see the comments in this file and in cvs2svn-example.options for
+# information about what options are available and how they can be
+# set.
 
 # "cvs2git" is shorthand for "cvs2svn in the mode where it is
 # outputting to git instead of Subversion".  But the program that
 # needs to be run is still called "cvs2svn".  Run it with the
 # --options option, passing it this file as argument:
 #
-#     cvs2svn --options=cvs2svn-git.options
+#     cvs2svn --options=cvs2git-example.options
 
 # Many options are shared with Subversion, so we simply import the
 # sample Subversion options file (from the current directory, which
@@ -107,8 +108,9 @@ ctx.revision_recorder = SimpleFulltextRevisionRecorderAdapter(
 # leave this option unchanged:
 ctx.revision_excluder = NullRevisionExcluder()
 
-# cvs2git does not need a revision reader, so leave this option
-# unchanged.
+# cvs2git doesn't need a revision reader because OutputPass only
+# refers to blobs that were output during CollectRevsPass, so leave
+# this option set to None.
 ctx.revision_reader = None
 
 # Clear the default project that was set in cvs2svn-example.options:

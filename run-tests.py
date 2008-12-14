@@ -3227,7 +3227,7 @@ def main_git():
   # Then use "gitk --all", "git log", etc. to test the contents of the
   # repository.
 
-  conv = ensure_conversion('main', options_file='cvs2svn-git.options')
+  conv = ensure_conversion('main', options_file='cvs2git.options')
 
 
 def main_git_inline():

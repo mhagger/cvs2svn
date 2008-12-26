@@ -35,14 +35,17 @@
 #   Therefore, if you don't know what you are doing, it is best to
 #   leave the whitespace as it is.
 #
-# * In normal strings, Python uses backslashes ("\") are used as an
-#   escape character.  Therefore you need to be careful, especially
-#   when specifying regular expressions or Windows filenames.  It is
-#   recommended that you use "raw strings" for these cases.
-#   Backslashes in raw strings are treated literally.  A raw string is
-#   written by prefixing an "r" character to a string.  Example:
+# * In normal strings, Python treats a backslash ("\") as an escape
+#   character.  Therefore, if you want to specify a string that
+#   contains a backslash, you need either to escape the backslash with
+#   another backslash ("\\"), or use a "raw string", as in one if the
+#   following equivalent examples:
 #
+#       ctx.sort_executable = 'c:\\windows\\system32\\sort.exe'
 #       ctx.sort_executable = r'c:\windows\system32\sort.exe'
+#
+#   See http://docs.python.org/tutorial/introduction.html#strings for
+#   more information.
 #
 # Two identifiers will have been defined before this file is executed,
 # and can be used freely within this file:

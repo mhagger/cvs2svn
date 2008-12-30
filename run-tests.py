@@ -670,7 +670,7 @@ class GitConversion:
 
     stdout -- a list of lines written by cvs2svn to stdout."""
 
-  def __init__(self, name, error_re, args, options_file):
+  def __init__(self, name, error_re, args, options_file=None):
     self.name = name
     if not os.path.isdir(tmp_dir):
       os.mkdir(tmp_dir)
@@ -678,11 +678,13 @@ class GitConversion:
     cvsrepos = os.path.join(test_data_dir, '%s-cvsrepos' % self.name)
 
     args = list(args)
-    assert options_file
-    self.options_file = os.path.join(cvsrepos, options_file)
-    args.extend([
-        '--options=%s' % self.options_file,
-        ])
+    if options_file:
+      self.options_file = os.path.join(cvsrepos, options_file)
+      args.extend([
+          '--options=%s' % self.options_file,
+          ])
+    else:
+      self.options_file = None
 
     self.stdout = run_cvs2git(error_re, *args)
 

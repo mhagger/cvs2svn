@@ -17,6 +17,10 @@
 """This module manages cvs2git run options."""
 
 
+import sys
+
+from cvs2svn_lib.common import error_prefix
+from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.run_options import not_both
 from cvs2svn_lib.run_options import RunOptions
@@ -80,5 +84,27 @@ class GitRunOptions(RunOptions):
 
     self.projects = [project]
     self.project_symbol_strategy_rules = [symbol_strategy_rules]
+
+  def process_remaining_options(self):
+    # Consistency check for options and arguments.
+    if len(self.args) == 0:
+      self.usage()
+      sys.exit(1)
+
+    if len(self.args) > 1:
+      Log().error(error_prefix + ": must pass only one CVS repository.\n")
+      self.usage()
+      sys.exit(1)
+
+    cvsroot = self.args[0]
+
+    RunOptions.process_remaining_options(self)
+
+    # Create the project:
+    self.set_project(
+        cvsroot,
+        symbol_transforms=self.options.symbol_transforms,
+        symbol_strategy_rules=self.options.symbol_strategy_rules,
+        )
 
 

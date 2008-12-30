@@ -17,10 +17,12 @@
 """This module manages cvs2svn run options."""
 
 
+import sys
 import optparse
 
 from cvs2svn_lib import config
 from cvs2svn_lib.common import warning_prefix
+from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
@@ -333,5 +335,31 @@ class SVNRunOptions(RunOptions):
 
     del self.projects[:]
     del self.project_symbol_strategy_rules[:]
+
+  def process_remaining_options(self):
+    # Consistency check for options and arguments.
+    if len(self.args) == 0:
+      self.usage()
+      sys.exit(1)
+
+    if len(self.args) > 1:
+      Log().error(error_prefix + ": must pass only one CVS repository.\n")
+      self.usage()
+      sys.exit(1)
+
+    cvsroot = self.args[0]
+
+    RunOptions.process_remaining_options(self)
+
+    # Create the default project (using ctx.trunk, ctx.branches, and
+    # ctx.tags):
+    self.add_project(
+        cvsroot,
+        trunk_path=self.options.trunk_base,
+        branches_path=self.options.branches_base,
+        tags_path=self.options.tags_base,
+        symbol_transforms=self.options.symbol_transforms,
+        symbol_strategy_rules=self.options.symbol_strategy_rules,
+        )
 
 

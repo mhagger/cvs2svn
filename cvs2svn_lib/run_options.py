@@ -706,40 +706,26 @@ class RunOptions(object):
     # Convenience var, so we don't have to keep instantiating this Borg.
     ctx = Ctx()
 
-    options = self.options
-
-    # Consistency check for options and arguments.
-    if len(self.args) == 0:
-      self.usage()
-      sys.exit(1)
-
-    if len(self.args) > 1:
-      Log().error(error_prefix + ": must pass only one CVS repository.\n")
-      self.usage()
-      sys.exit(1)
-
-    cvsroot = self.args[0]
-
     self.process_extraction_options()
     self.process_output_options()
 
-    if 'ascii' not in options.encodings:
-      options.encodings.append('ascii')
+    if 'ascii' not in self.options.encodings:
+      self.options.encodings.append('ascii')
 
     try:
       ctx.cvs_author_decoder = CVSTextDecoder(
-          options.encodings, options.fallback_encoding
+          self.options.encodings, self.options.fallback_encoding
           )
       ctx.cvs_log_decoder = CVSTextDecoder(
-          options.encodings, options.fallback_encoding
+          self.options.encodings, self.options.fallback_encoding
           )
       # Don't use fallback_encoding for filenames:
-      ctx.cvs_filename_decoder = CVSTextDecoder(options.encodings)
+      ctx.cvs_filename_decoder = CVSTextDecoder(self.options.encodings)
     except LookupError, e:
       raise FatalError(str(e))
 
     # Add the standard symbol name cleanup rules:
-    options.symbol_transforms.extend([
+    self.options.symbol_transforms.extend([
         ReplaceSubstringsSymbolTransform('\\','/'),
         # Remove leading, trailing, and repeated slashes:
         NormalizePathsSymbolTransform(),
@@ -747,17 +733,6 @@ class RunOptions(object):
 
     self.process_symbol_strategy_options()
     self.process_property_setter_options()
-
-    # Create the default project (using ctx.trunk, ctx.branches, and
-    # ctx.tags):
-    self.add_project(
-        cvsroot,
-        trunk_path=options.trunk_base,
-        branches_path=options.branches_base,
-        tags_path=options.tags_base,
-        symbol_transforms=options.symbol_transforms,
-        symbol_strategy_rules=options.symbol_strategy_rules,
-        )
 
   def check_options(self):
     """Check the the run options are OK.

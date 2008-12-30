@@ -524,10 +524,9 @@ run_options.profiling = False
 # memory mapped.
 #changeset_database.use_mmap_for_cvs_item_to_changeset_table = True
 
-# Now add a project to be converted to hg.  cvs2hg only supports
-# single-project conversions, so add_project() must only be called
-# once:
-run_options.add_project(
+# Now set the project to be converted to hg.  cvs2hg only supports
+# single-project conversions, so this method must only be called once:
+run_options.set_project(
     # The filesystem path to the part of the CVS repository (*not* a
     # CVS working copy) that should be converted.  This may be a
     # subdirectory (i.e., a module) within a larger CVS repository.

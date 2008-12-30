@@ -28,6 +28,7 @@ from cvs2svn_lib.run_options import not_both
 from cvs2svn_lib.run_options import RunOptions
 from cvs2svn_lib.run_options import ContextOption
 from cvs2svn_lib.run_options import IncompatibleOption
+from cvs2svn_lib.project import Project
 from cvs2svn_lib.svn_output_option import DumpfileOutputOption
 from cvs2svn_lib.svn_output_option import ExistingRepositoryOutputOption
 from cvs2svn_lib.svn_output_option import NewRepositoryOutputOption
@@ -38,6 +39,9 @@ from cvs2svn_lib.cvs_revision_manager import CVSRevisionReader
 from cvs2svn_lib.checkout_internal import InternalRevisionRecorder
 from cvs2svn_lib.checkout_internal import InternalRevisionExcluder
 from cvs2svn_lib.checkout_internal import InternalRevisionReader
+from cvs2svn_lib.symbol_strategy import TrunkPathRule
+from cvs2svn_lib.symbol_strategy import BranchesPathRule
+from cvs2svn_lib.symbol_strategy import TagsPathRule
 
 
 class SVNRunOptions(RunOptions):
@@ -277,5 +281,57 @@ class SVNRunOptions(RunOptions):
       ctx.revision_recorder = InternalRevisionRecorder(compress=True)
       ctx.revision_excluder = InternalRevisionExcluder()
       ctx.revision_reader = InternalRevisionReader(compress=True)
+
+  def add_project(
+        self,
+        project_cvs_repos_path,
+        trunk_path=None, branches_path=None, tags_path=None,
+        initial_directories=[],
+        symbol_transforms=None,
+        symbol_strategy_rules=[],
+        ):
+    """Add a project to be converted.
+
+    Most arguments are passed straight through to the Project
+    constructor.  SYMBOL_STRATEGY_RULES is an iterable of
+    SymbolStrategyRules that will be applied to symbols in this
+    project."""
+
+    initial_directories = [
+        path
+        for path in [trunk_path, branches_path, tags_path]
+        if path
+        ] + list(initial_directories)
+
+    symbol_strategy_rules = list(symbol_strategy_rules)
+
+    # Add rules to set the SVN paths for LODs depending on whether
+    # they are the trunk, tags, or branches:
+    if trunk_path is not None:
+      symbol_strategy_rules.append(TrunkPathRule(trunk_path))
+    if branches_path is not None:
+      symbol_strategy_rules.append(BranchesPathRule(branches_path))
+    if tags_path is not None:
+      symbol_strategy_rules.append(TagsPathRule(tags_path))
+
+    id = len(self.projects)
+    project = Project(
+        id,
+        project_cvs_repos_path,
+        initial_directories=initial_directories,
+        symbol_transforms=symbol_transforms,
+        )
+
+    self.projects.append(project)
+    self.project_symbol_strategy_rules.append(symbol_strategy_rules)
+
+  def clear_projects(self):
+    """Clear the list of projects to be converted.
+
+    This method is for the convenience of options files, which may
+    want to import one another."""
+
+    del self.projects[:]
+    del self.project_symbol_strategy_rules[:]
 
 

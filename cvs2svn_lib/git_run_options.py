@@ -21,6 +21,7 @@ from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.run_options import not_both
 from cvs2svn_lib.run_options import RunOptions
 from cvs2svn_lib.run_options import ContextOption
+from cvs2svn_lib.project import Project
 
 
 class GitRunOptions(RunOptions):
@@ -53,5 +54,31 @@ class GitRunOptions(RunOptions):
     else:
       # --use-cvs is the default:
       pass
+
+  def set_project(
+        self,
+        project_cvs_repos_path,
+        symbol_transforms=None,
+        symbol_strategy_rules=[],
+        ):
+    """Set the project to be converted.
+
+    If a project had already been set, overwrite it.
+
+    Most arguments are passed straight through to the Project
+    constructor.  SYMBOL_STRATEGY_RULES is an iterable of
+    SymbolStrategyRules that will be applied to symbols in this
+    project."""
+
+    symbol_strategy_rules = list(symbol_strategy_rules)
+
+    project = Project(
+        0,
+        project_cvs_repos_path,
+        symbol_transforms=symbol_transforms,
+        )
+
+    self.projects = [project]
+    self.project_symbol_strategy_rules = [symbol_strategy_rules]
 
 

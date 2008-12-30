@@ -173,6 +173,18 @@ class SVNRunOptions(RunOptions):
 
     return group
 
+  def _get_environment_options_group(self):
+    group = RunOptions._get_environment_options_group(self)
+
+    group.add_option(ContextOption(
+        '--svnadmin', type='string',
+        action='store', dest='svnadmin_executable',
+        help='path to the "svnadmin" program',
+        metavar='PATH',
+        ))
+
+    return group
+
   def callback_dump_only(self, option, opt_str, value, parser):
     parser.values.dump_only = True
     Log().error(

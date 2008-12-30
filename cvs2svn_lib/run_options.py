@@ -482,12 +482,6 @@ class RunOptions(object):
             ),
         metavar='PATH',
         ))
-    group.add_option(ContextOption(
-        '--svnadmin', type='string',
-        action='store', dest='svnadmin_executable',
-        help='path to the "svnadmin" program',
-        metavar='PATH',
-        ))
     self.parser.set_default('co_executable', config.CO_EXECUTABLE)
     group.add_option(IncompatibleOption(
         '--co', type='string',

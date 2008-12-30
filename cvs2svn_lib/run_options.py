@@ -31,13 +31,6 @@ from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.project import Project
 from cvs2svn_lib.pass_manager import InvalidPassError
-from cvs2svn_lib.revision_manager import NullRevisionRecorder
-from cvs2svn_lib.revision_manager import NullRevisionExcluder
-from cvs2svn_lib.rcs_revision_manager import RCSRevisionReader
-from cvs2svn_lib.cvs_revision_manager import CVSRevisionReader
-from cvs2svn_lib.checkout_internal import InternalRevisionRecorder
-from cvs2svn_lib.checkout_internal import InternalRevisionExcluder
-from cvs2svn_lib.checkout_internal import InternalRevisionReader
 from cvs2svn_lib.symbol_strategy import AllBranchRule
 from cvs2svn_lib.symbol_strategy import AllTagRule
 from cvs2svn_lib.symbol_strategy import BranchIfCommitsRule
@@ -475,15 +468,6 @@ class RunOptions(object):
             '(only use this if having problems with RCS)'
             ),
         ))
-    self.parser.set_default('use_internal_co', False)
-    group.add_option(IncompatibleOption(
-        '--use-internal-co',
-        action='store_true',
-        help=(
-            'use internal code to extract revision contents '
-            '(very fast but disk space intensive) (default)'
-            ),
-        ))
 
     return group
 
@@ -709,31 +693,7 @@ class RunOptions(object):
   def process_extraction_options(self):
     """Process options related to extracting data from the CVS repository."""
 
-    ctx = Ctx()
-    options = self.options
-
-    not_both(options.use_rcs, '--use-rcs',
-             options.use_cvs, '--use-cvs')
-
-    not_both(options.use_rcs, '--use-rcs',
-             options.use_internal_co, '--use-internal-co')
-
-    not_both(options.use_cvs, '--use-cvs',
-             options.use_internal_co, '--use-internal-co')
-
-    if options.use_rcs:
-      ctx.revision_recorder = NullRevisionRecorder()
-      ctx.revision_excluder = NullRevisionExcluder()
-      ctx.revision_reader = RCSRevisionReader(options.co_executable)
-    elif options.use_cvs:
-      ctx.revision_recorder = NullRevisionRecorder()
-      ctx.revision_excluder = NullRevisionExcluder()
-      ctx.revision_reader = CVSRevisionReader(options.cvs_executable)
-    else:
-      # --use-internal-co is the default:
-      ctx.revision_recorder = InternalRevisionRecorder(compress=True)
-      ctx.revision_excluder = InternalRevisionExcluder()
-      ctx.revision_reader = InternalRevisionReader(compress=True)
+    pass
 
   def process_output_options(self):
     pass

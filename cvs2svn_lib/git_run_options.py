@@ -18,6 +18,7 @@
 
 
 from cvs2svn_lib.context import Ctx
+from cvs2svn_lib.run_options import not_both
 from cvs2svn_lib.run_options import RunOptions
 from cvs2svn_lib.run_options import ContextOption
 
@@ -35,5 +36,22 @@ class GitRunOptions(RunOptions):
         ))
 
     return group
+
+  def process_extraction_options(self):
+    """Process options related to extracting data from the CVS repository."""
+
+    ctx = Ctx()
+    options = self.options
+
+    not_both(options.use_rcs, '--use-rcs',
+             options.use_cvs, '--use-cvs')
+
+    if options.use_rcs:
+      raise NotImplementedError()
+    elif options.use_cvs:
+      raise NotImplementedError()
+    else:
+      # --use-cvs is the default:
+      pass
 
 

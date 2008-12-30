@@ -24,13 +24,20 @@ from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
-from cvs2svn_lib.svn_output_option import DumpfileOutputOption
-from cvs2svn_lib.svn_output_option import ExistingRepositoryOutputOption
-from cvs2svn_lib.svn_output_option import NewRepositoryOutputOption
 from cvs2svn_lib.run_options import not_both
 from cvs2svn_lib.run_options import RunOptions
 from cvs2svn_lib.run_options import ContextOption
 from cvs2svn_lib.run_options import IncompatibleOption
+from cvs2svn_lib.svn_output_option import DumpfileOutputOption
+from cvs2svn_lib.svn_output_option import ExistingRepositoryOutputOption
+from cvs2svn_lib.svn_output_option import NewRepositoryOutputOption
+from cvs2svn_lib.revision_manager import NullRevisionRecorder
+from cvs2svn_lib.revision_manager import NullRevisionExcluder
+from cvs2svn_lib.rcs_revision_manager import RCSRevisionReader
+from cvs2svn_lib.cvs_revision_manager import CVSRevisionReader
+from cvs2svn_lib.checkout_internal import InternalRevisionRecorder
+from cvs2svn_lib.checkout_internal import InternalRevisionExcluder
+from cvs2svn_lib.checkout_internal import InternalRevisionReader
 
 
 class SVNRunOptions(RunOptions):
@@ -151,6 +158,21 @@ class SVNRunOptions(RunOptions):
 
     return group
 
+  def _get_extraction_options_group(self):
+    group = RunOptions._get_extraction_options_group(self)
+
+    self.parser.set_default('use_internal_co', False)
+    group.add_option(IncompatibleOption(
+        '--use-internal-co',
+        action='store_true',
+        help=(
+            'use internal code to extract revision contents '
+            '(very fast but disk space intensive) (default)'
+            ),
+        ))
+
+    return group
+
   def callback_dump_only(self, option, opt_str, value, parser):
     parser.values.dump_only = True
     Log().error(
@@ -214,5 +236,34 @@ class SVNRunOptions(RunOptions):
             create_options=options.create_options)
     else:
       ctx.output_option = DumpfileOutputOption(options.dumpfile)
+
+  def process_extraction_options(self):
+    """Process options related to extracting data from the CVS repository."""
+
+    ctx = Ctx()
+    options = self.options
+
+    not_both(options.use_rcs, '--use-rcs',
+             options.use_cvs, '--use-cvs')
+
+    not_both(options.use_rcs, '--use-rcs',
+             options.use_internal_co, '--use-internal-co')
+
+    not_both(options.use_cvs, '--use-cvs',
+             options.use_internal_co, '--use-internal-co')
+
+    if options.use_rcs:
+      ctx.revision_recorder = NullRevisionRecorder()
+      ctx.revision_excluder = NullRevisionExcluder()
+      ctx.revision_reader = RCSRevisionReader(options.co_executable)
+    elif options.use_cvs:
+      ctx.revision_recorder = NullRevisionRecorder()
+      ctx.revision_excluder = NullRevisionExcluder()
+      ctx.revision_reader = CVSRevisionReader(options.cvs_executable)
+    else:
+      # --use-internal-co is the default:
+      ctx.revision_recorder = InternalRevisionRecorder(compress=True)
+      ctx.revision_excluder = InternalRevisionExcluder()
+      ctx.revision_reader = InternalRevisionReader(compress=True)
 
 

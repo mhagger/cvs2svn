@@ -19,23 +19,21 @@
 
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.run_options import RunOptions
+from cvs2svn_lib.run_options import ContextOption
 
 
 class GitRunOptions(RunOptions):
   def _get_output_options_group(self):
     group = RunOptions._get_output_options_group(self)
 
-    group.add_option(
+    group.add_option(ContextOption(
         '--dry-run',
-        action='callback', callback=self.callback_dry_run,
+        action='store_true',
         help=(
             'do not create any output; just print what would happen.'
             ),
-        )
+        ))
 
     return group
-
-  def callback_dry_run(self, option, opt_str, value, parser):
-    Ctx().dry_run = True
 
 

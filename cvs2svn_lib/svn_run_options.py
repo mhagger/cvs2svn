@@ -81,14 +81,14 @@ class SVNRunOptions(RunOptions):
         metavar='PATH',
         ))
 
-    group.add_option(
+    group.add_option(ContextOption(
         '--dry-run',
-        action='callback', callback=self.callback_dry_run,
+        action='store_true',
         help=(
             'do not create a repository or a dumpfile; just print what '
             'would happen.'
             ),
-        )
+        ))
 
     # Deprecated options:
     self.parser.set_default('dump_only', False)
@@ -150,9 +150,6 @@ class SVNRunOptions(RunOptions):
         ))
 
     return group
-
-  def callback_dry_run(self, option, opt_str, value, parser):
-    Ctx().dry_run = True
 
   def callback_dump_only(self, option, opt_str, value, parser):
     parser.values.dump_only = True

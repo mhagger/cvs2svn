@@ -236,7 +236,7 @@ class RunOptions(object):
     else:
       # --options was not specified.  So we can process other options
       # that are not compatible with --options.
-      self.process_remaining_options()
+      self.process_options()
 
     # Check for problems with the options:
     self.check_options()
@@ -727,7 +727,7 @@ class RunOptions(object):
 
     ctx.svn_property_setters.append(ExecutablePropertySetter())
 
-  def process_remaining_options(self):
+  def process_options(self):
     """Process the options that are not compatible with --options."""
 
     self.process_extraction_options()

@@ -85,7 +85,7 @@ class GitRunOptions(RunOptions):
     self.projects = [project]
     self.project_symbol_strategy_rules = [symbol_strategy_rules]
 
-  def process_remaining_options(self):
+  def process_options(self):
     # Consistency check for options and arguments.
     if len(self.args) == 0:
       self.usage()
@@ -98,7 +98,7 @@ class GitRunOptions(RunOptions):
 
     cvsroot = self.args[0]
 
-    RunOptions.process_remaining_options(self)
+    RunOptions.process_options(self)
 
     # Create the project:
     self.set_project(

@@ -336,7 +336,7 @@ class SVNRunOptions(RunOptions):
     del self.projects[:]
     del self.project_symbol_strategy_rules[:]
 
-  def process_remaining_options(self):
+  def process_options(self):
     # Consistency check for options and arguments.
     if len(self.args) == 0:
       self.usage()
@@ -349,7 +349,7 @@ class SVNRunOptions(RunOptions):
 
     cvsroot = self.args[0]
 
-    RunOptions.process_remaining_options(self)
+    RunOptions.process_options(self)
 
     # Create the default project (using ctx.trunk, ctx.branches, and
     # ctx.tags):

@@ -636,6 +636,26 @@ class RunOptions(object):
   def process_output_options(self):
     pass
 
+  def process_encoding_options(self):
+    """Process options related to encoding/decoding character data."""
+
+    ctx = Ctx()
+
+    if 'ascii' not in self.options.encodings:
+      self.options.encodings.append('ascii')
+
+    try:
+      ctx.cvs_author_decoder = CVSTextDecoder(
+          self.options.encodings, self.options.fallback_encoding
+          )
+      ctx.cvs_log_decoder = CVSTextDecoder(
+          self.options.encodings, self.options.fallback_encoding
+          )
+      # Don't use fallback_encoding for filenames:
+      ctx.cvs_filename_decoder = CVSTextDecoder(self.options.encodings)
+    except LookupError, e:
+      raise FatalError(str(e))
+
   def process_symbol_strategy_options(self):
     """Process symbol strategy-related options."""
 
@@ -703,26 +723,9 @@ class RunOptions(object):
   def process_remaining_options(self):
     """Process the options that are not compatible with --options."""
 
-    # Convenience var, so we don't have to keep instantiating this Borg.
-    ctx = Ctx()
-
     self.process_extraction_options()
     self.process_output_options()
-
-    if 'ascii' not in self.options.encodings:
-      self.options.encodings.append('ascii')
-
-    try:
-      ctx.cvs_author_decoder = CVSTextDecoder(
-          self.options.encodings, self.options.fallback_encoding
-          )
-      ctx.cvs_log_decoder = CVSTextDecoder(
-          self.options.encodings, self.options.fallback_encoding
-          )
-      # Don't use fallback_encoding for filenames:
-      ctx.cvs_filename_decoder = CVSTextDecoder(self.options.encodings)
-    except LookupError, e:
-      raise FatalError(str(e))
+    self.process_encoding_options()
 
     # Add the standard symbol name cleanup rules:
     self.options.symbol_transforms.extend([

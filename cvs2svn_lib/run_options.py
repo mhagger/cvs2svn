@@ -730,11 +730,7 @@ class RunOptions(object):
   def process_options(self):
     """Process the options that are not compatible with --options."""
 
-    self.process_extraction_options()
-    self.process_output_options()
-    self.process_encoding_options()
-    self.process_symbol_strategy_options()
-    self.process_property_setter_options()
+    raise NotImplementedError()
 
   def check_options(self):
     """Check the the run options are OK.

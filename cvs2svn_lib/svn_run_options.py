@@ -349,7 +349,11 @@ class SVNRunOptions(RunOptions):
 
     cvsroot = self.args[0]
 
-    RunOptions.process_options(self)
+    self.process_extraction_options()
+    self.process_output_options()
+    self.process_encoding_options()
+    self.process_symbol_strategy_options()
+    self.process_property_setter_options()
 
     # Create the default project (using ctx.trunk, ctx.branches, and
     # ctx.tags):

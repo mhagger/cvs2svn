@@ -98,7 +98,11 @@ class GitRunOptions(RunOptions):
 
     cvsroot = self.args[0]
 
-    RunOptions.process_options(self)
+    self.process_extraction_options()
+    self.process_output_options()
+    self.process_encoding_options()
+    self.process_symbol_strategy_options()
+    self.process_property_setter_options()
 
     # Create the project:
     self.set_project(

@@ -2,6 +2,7 @@ Version ?.?.? (not yet released)
 --------------------------------
 
  New features:
+ * Added a "cvs2git" script for starting conversions to git or Mercurial.
 
  Bugs fixed:
  * cvs2git with non-inline blobs: a revision after a delete could be empty.

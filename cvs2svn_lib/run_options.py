@@ -14,8 +14,7 @@
 # history and logs, available at http://cvs2svn.tigris.org/.
 # ====================================================================
 
-"""This module contains classes to set cvs2svn run options."""
-
+"""This module contains classes to set common cvs2xxx run options."""
 
 import sys
 import re

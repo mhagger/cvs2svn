@@ -27,23 +27,20 @@ except ImportError:
   pass
 
 from cvs2svn_lib.common import FatalError
-from cvs2svn_lib.run_options import RunOptions
+from cvs2svn_lib.svn_run_options import SVNRunOptions
+from cvs2svn_lib.git_run_options import GitRunOptions
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.pass_manager import PassManager
 from cvs2svn_lib.passes import passes
 
 
-def main(progname, cmd_args):
+def main(progname, run_options, pass_manager):
   # Disable garbage collection, as we try not to create any circular
   # data structures:
   gc.disable()
 
   # Convenience var, so we don't have to keep instantiating this Borg.
   ctx = Ctx()
-
-  pass_manager = PassManager(passes)
-
-  run_options = RunOptions(progname, cmd_args, pass_manager)
 
   # Make sure the tmp directory exists.  Note that we don't check if
   # it's empty -- we want to be able to use, for example, "." to hold
@@ -97,4 +94,17 @@ def main(progname, cmd_args):
         os.rmdir(ctx.tmpdir)
       except:
         pass
+
+
+def svn_main(progname, cmd_args):
+  pass_manager = PassManager(passes)
+  run_options = SVNRunOptions(progname, cmd_args, pass_manager)
+  main(progname, run_options, pass_manager)
+
+
+def git_main(progname, cmd_args):
+  pass_manager = PassManager(passes)
+  run_options = GitRunOptions(progname, cmd_args, pass_manager)
+  main(progname, run_options, pass_manager)
+
 

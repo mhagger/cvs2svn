@@ -24,12 +24,11 @@
 # see the comments in this file for information about what options are
 # available and how they can be set.
 #
-# "cvs2git" is shorthand for "cvs2svn in the mode where it is
-# outputting to git instead of Subversion".  But the program that
-# needs to be run is still called "cvs2svn".  Run it with the
-# --options option, passing it this file as argument:
+# The program that is run to convert from CVS to git is called
+# cvs2git.  Run it with the --options option, passing it this file as
+# argument:
 #
-#     cvs2svn --options=cvs2git-example.options
+#     cvs2git --options=cvs2git-example.options
 #
 # Many options do not have defaults, so it is easier to copy this file
 # and modify what you need rather than creating a new options file
@@ -63,9 +62,9 @@
 #     ctx -- a Ctx object (see cvs2svn_lib/context.py), which holds
 #         many configuration options
 #
-#     run_options -- an instance of the RunOptions class (see
-#         cvs2svn_lib/run_options.py), which holds some variables
-#         governing how cvs2svn is run
+#     run_options -- an instance of the GitRunOptions class (see
+#         cvs2svn_lib/git_run_options.py), which holds some variables
+#         governing how cvs2git is run
 
 
 # Import some modules that are used in setting the options:

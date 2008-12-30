@@ -35,20 +35,24 @@
 
 <h2><a name="intro">Introduction</a></h2>
 
-<p>cvs2svn is a tool that was originally developed to migrate CVS
-repositories to <a
-href="http://subversion.tigris.org/">Subversion</a>.  The current
-development version of cvs2svn can also output the converted
-repository directly to <a href="http://git.or.cz/">git</a>, a
-distributed version control system most famous for being used for
-Linux kernel development.  When talking about converting from CVS to
-git, I will refer to the program as cvs2git, even though the project
-and the main executable are still called "cvs2svn".</p>
+<p>cvs2svn/cvs2git is a tool that can be used to migrate CVS
+repositories to newer version control tools, including <a
+href="http://git.or.cz/">git</a>.  git is a distributed version
+control system most famous for being used for Linux kernel
+development.  The program used to convert to git, called cvs2git, is
+distributed as part of the cvs2svn project.</p>
 
-<p><strong>Please note that conversion to git was added in release 2.1
-of cvs2svn.  Please make sure you are using cvs2svn release 2.1 or
-newer.</strong></p>
+<p><strong>If you are reading this documentation on the <a
+href="http://cvs2svn.tigris.org">cvs2svn website</a>, then please be
+aware that it describes the current trunk version of cvs2svn, which
+may be different than the most recent released version.  Please refer
+to the documentation that was included with your version of cvs2svn.
+</strong></p>
 
+<p>Conversion to git was added in release 2.1 of cvs2svn and has
+improved significantly since then.  Please make sure you are using an
+up-to-date version of cvs2svn--perhaps even the development trunk
+version.</p>
 
 <h2><a name="status">Development status</a></h2>
 
@@ -57,25 +61,29 @@ modern version control system is inferring the most likely history
 given the incomplete information that CVS records.  cvs2svn has a long
 history of making sense of even the most convoluted CVS repositories,
 and cvs2git uses this same machinery.  Therefore, cvs2git inherits the
-robustness and many of the features of cvs2svn.  cvs2svn can convert
-just about every CVS repository we have ever seen, and includes a
-plethora of options for customizing your conversion.  See <a
-href="cvs2svn.html#intro">the cvs2svn documentation</a> for a summary
-of cvs2svn's features.</p>
+robustness and many of the <a href="features.html">features of
+cvs2svn</a>.  cvs2svn can convert just about every CVS repository we
+have ever seen, and includes a plethora of options for customizing
+your conversion.</p>
 
-<p>However, the git output of cvs2git is still rather new and rough
-around the edges.  The main cvs2svn developer is not a git user, so
+<p>The output of cvs2git is one or more dump files that can be
+imported into git using the excellent <a
+href="http://www.kernel.org/pub/software/scm/git/docs/git
+fast-import.html">git fast-import</a> tool.</p>
+
+<p>Although cvs2git is considerably newer than cvs2svn, and much less
+well tested, it is believed that cvs2git can (cautiously) be used for
+production conversions.  If you use cvs2git, please let us know how it
+worked for you!</p>
+
+
+<h2><a name="limitations">cvs2git limitations</a></h2>
+
+<p>cvs2git still has many limitations compared to cvs2svn.  The main
+cvs2svn developer has limited git experience and very limited time, so
 <strong>help would be much appreciated!</strong> Some of these missing
 features would be pretty easy to program, and I'd be happy to help you
 get started.</p>
-
-<p>But thanks to the excellent <a
-href="http://www.kernel.org/pub/software/scm/git/docs/git-fast-import.html">git
-fast-import</a> tool, the code needed to output to git is relatively
-straightforward, and it is believed that cvs2git can (cautiously) be
-used for production conversions.</p>
-
-<p>cvs2git still has the following limitations:</p>
 
 <ul>
 
@@ -89,32 +97,26 @@ used for production conversions.</p>
     pathological situations, the number of merge sources for a branch
     can be arbitrarily large.</li>
 
-  <li>
-
-    <p>It is not very intelligent about creating tags.  When asked to
-      create a tag, it unconditionally creates a <a
-      href="http://www.kernel.org/pub/software/scm/git/docs/git-fast-import.html">tag
-      fixup branch</a> named <tt>TAG.FIXUP</tt>, then tags this
-      branch.  The <tt>TAG.FIXUP</tt> branch is cleared at the end of
-      the conversion, but not deleted.</p>
-
-    <p>Some CVS tags can be created from a single parent, in which
-      case the tag fixup branch would be superfluous.  It would be
-      possible to teach cvs2git to determine when single-source tags
-      can be created, at a considerable cost in runtime and temporary
-      workspace.  Alternatively, it is possible to delete all
-      superfluous tag fixup branches after the conversion, by running
-      the <tt>contrib/git-move-tags.py</tt> script within the
-      resulting git repository.</p>
-
-  </li>
+  <li>If cvs2git cannot determine that a CVS tag can be created from a
+    single revision, then it creates a <a
+    href="http://www.kernel.org/pub/software/scm/git/docs/git-fast-import.html">tag
+    fixup branch</a> named <tt>TAG.FIXUP</tt>, then tags this branch.
+    (This is a necessary workaround for the fact that CVS tags are
+    fundamentally different than git tags.)  The <tt>TAG.FIXUP</tt>
+    branch is cleared at the end of the conversion, but not deleted.
+    There are some situations when a tag <em>could</em> be created
+    from a single revision, but cvs2git does not realize it and
+    creates a superfluous tag fixup branch.  It is possible to delete
+    all superfluous tag fixup branches after the conversion, by
+    running the <tt>contrib/git-move-tags.py</tt> script within the
+    resulting git repository.</li>
 
   <li>There are no checks that CVS branch and tag names are legal git
     names.  There are probably other git constraints that should also
     be checked.</li>
 
-  <li>The data that should be fed to git fast-import is written to two
-    files, which have to be loaded into git fast-import manually.
+  <li>The data that should be fed to git fast-import are written to
+    two files, which have to be loaded into git fast-import manually.
     These files might grow to very large size.  It would be nice to
     add an option to invoke git fast-import automatically and pipe the
     output directly into git fast-import; this should also speed up
@@ -150,15 +152,14 @@ cvs2git.  See the following sources:</p>
   <li>This document.</li>
 
   <li><a href="cvs2svn.html#intro">The cvs2svn documentation</a> and
-    <a href="faq.html">the cvs2svn FAQ</a> contain much general
+    <a href="faq.html">the cvs2svn FAQ</a>, which contain much general
     discussion and describe many features that can also be used for
     cvs2git.</li>
 
-  <li><tt>cvs2git-example.options</tt> in the cvs2svn source tree is
-    an example of an options file that can be used to configure a
-    cvs2git conversion.  It includes from
-    <tt>cvs2svn-example.options</tt> many settings that apply to both
-    cvs2svn and cvs2git.  Both files are extensively documented.</li>
+  <li><tt>cvs2git-example.options</tt> in the cvs2svn source tree,
+    which is an example of an options file that can be used to
+    configure a cvs2git conversion.  The file is extensively
+    documented.</li>
 
   <li>The cvs2svn mailing lists, IRC channel, etc., as described in <a
     href="faq.html#gettinghelp">the cvs2svn FAQ</a>.</li>
@@ -177,7 +178,9 @@ to git using cvs2git.</p>
     href="cvs2svn.html#reqs">requirements</a>, including either RCS or
     CVS (used to read revision contents from the CVS repository).</li>
 
-  <li>Obtain a copy of cvs2svn version 2.1 or newer.
+  <li>Obtain a copy of cvs2svn version 2.1 or newer.  It is
+    recommended that you use the most recent version available, or
+    even the development version.
 
     <ul>
 
@@ -189,7 +192,7 @@ to git using cvs2git.</p>
 
       <li>
 
-        <p>To Check out the current trunk version of cvs2svn, make
+        <p>To check out the current trunk version of cvs2svn, make
           sure that you have Subversion installed and then run:</p>
 
 <pre>
@@ -201,10 +204,7 @@ make check # ...optional
 
         <p>Please note that the test suite includes tests that are
           marked "XFAIL" (expected failure); these are known and are
-          not considered serious problems.  In fact, the test for git
-          output is marked XFAIL because the cvs2svn test suite
-          doesn't know how to verify the contents of the git
-          repository.</p>
+          not considered serious problems.</p>
 
       </li>
 
@@ -214,16 +214,25 @@ make check # ...optional
 
   <li>Configure cvs2svn for your conversion.  This has to be done via
     the <a href="cvs2svn.html#cmd-vs-options">options-file method</a>.
-    See <tt>cvs2git-example.options</tt> and
-    <tt>cvs2svn-example.options</tt> in the cvs2svn source tree as
-    examples; both files contain lots of documentation.</li>
+    Use <tt>cvs2git-example.options</tt> in the cvs2svn source tree as
+    your starting point; the file contains lots of documentation.</li>
 
-  <li>Run cvs2svn.  This creates two output files in <a
+  <li>
+
+    <p>Run cvs2git:</p>
+
+<pre>
+cvs2git --options=OPTIONS-FILE
+</pre>
+
+    <p>.  This creates two output files in <a
     href="http://www.kernel.org/pub/software/scm/git/docs/git-fast-import.html">git
     fast-import</a> format.  The names of these files are specified by
     your options file.  In the example, these files are named
     <tt>cvs2svn-tmp/git-blob.dat</tt> and
-    <tt>cvs2svn-tmp/git-dump.dat</tt>.</li>
+    <tt>cvs2svn-tmp/git-dump.dat</tt>.</p>
+
+  </li>
 
   <li>
 
@@ -251,8 +260,9 @@ cat cvs2svn-tmp/git-blob.dat cvs2svn-tmp/git-dump.dat | git fast-import
 
 </ol>
 
-<p>Feedback would be much appreciated, as I am a git newbie.  Please
-  send comments, bug reports, and patches to the <a
+<p>Feedback would be much appreciated, including reports of success
+  using cvs2git.  Please send comments, bug reports, and patches to
+  the <a
   href="http://cvs2svn.tigris.org/servlets/ProjectMailingListList">cvs2svn
   mailing lists</a>.</p>
 

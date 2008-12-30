@@ -27,16 +27,16 @@ import sys
 # operator in Python 3.1 (but we use it here anyway).
 
 version_error = """\
-ERROR: cvs2svn requires Python 2, version 2.4 or later; it does not
+ERROR: cvs2git requires Python 2, version 2.4 or later; it does not
 work with Python 3.  You are currently using"""
 
 version_advice = """\
-Please restart cvs2svn using a different version of the Python
+Please restart cvs2git using a different version of the Python
 interpreter.  Visit http://www.python.org or consult your local system
 administrator if you need help.
 
 HINT: If you already have a usable Python version installed, it might
-be possible to invoke cvs2svn with the correct Python interpreter by
+be possible to invoke cvs2git with the correct Python interpreter by
 typing something like 'python2.5 """ + sys.argv[0] + """ [...]'.
 """
 
@@ -63,11 +63,11 @@ if not ((2,4) <= version < (3,0)):
 import os
 
 from cvs2svn_lib.common import FatalException
-from cvs2svn_lib.main import svn_main
+from cvs2svn_lib.main import git_main
 
 
 try:
-  svn_main(os.path.basename(sys.argv[0]), sys.argv[1:])
+  git_main(os.path.basename(sys.argv[0]), sys.argv[1:])
 except FatalException, e:
   sys.stderr.write(str(e) + '\n')
   sys.exit(1)

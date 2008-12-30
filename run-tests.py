@@ -71,6 +71,7 @@ from svntest.tree import build_tree_from_wc
 from svntest.tree import get_child
 
 cvs2svn = os.path.abspath('cvs2svn')
+cvs2git = os.path.abspath('cvs2git')
 
 # We use the installed svn and svnlook binaries, instead of using
 # svntest.main.run_svn() and svntest.main.run_svnlook(), because the
@@ -152,6 +153,27 @@ def run_cvs2svn(error_re, *varargs):
 
   # Use the same python that is running this script
   return run_program(sys.executable, error_re, cvs2svn, *varargs)
+  # On Windows, for an unknown reason, the cmd.exe process invoked by
+  # os.system('sort ...') in cvs2svn receives invalid stdio handles, if
+  # cvs2svn is started as "cvs2svn ...".  "python cvs2svn ..." avoids
+  # this.  Therefore, the redirection of the output to the .s-revs file fails.
+  # We no longer use the problematic invocation on any system, but this
+  # comment remains to warn about this problem.
+
+
+def run_cvs2git(error_re, *varargs):
+  """Run cvs2git with VARARGS, returning stdout as a list of lines.
+
+  If there is any stderr and ERROR_RE is None, raise
+  RunProgramException, and print the stderr lines if
+  svntest.main.verbose_mode is true.
+
+  If ERROR_RE is not None, it is a string regular expression that must
+  match some line of stderr.  If it fails to match, raise
+  MissingErrorException."""
+
+  # Use the same python that is running this script
+  return run_program(sys.executable, error_re, cvs2git, *varargs)
   # On Windows, for an unknown reason, the cmd.exe process invoked by
   # os.system('sort ...') in cvs2svn receives invalid stdio handles, if
   # cvs2svn is started as "cvs2svn ...".  "python cvs2svn ..." avoids
@@ -637,6 +659,32 @@ class Conversion:
               "(it should have been \"%s\").\n"
               % (file, keys[i], props.get(keys[i]), values[i],)
               )
+
+
+class GitConversion:
+  """A record of a cvs2svn conversion.
+
+  Fields:
+
+    name -- a one-word name indicating the CVS repository to be converted.
+
+    stdout -- a list of lines written by cvs2svn to stdout."""
+
+  def __init__(self, name, error_re, args, options_file):
+    self.name = name
+    if not os.path.isdir(tmp_dir):
+      os.mkdir(tmp_dir)
+
+    cvsrepos = os.path.join(test_data_dir, '%s-cvsrepos' % self.name)
+
+    args = list(args)
+    assert options_file
+    self.options_file = os.path.join(cvsrepos, options_file)
+    args.extend([
+        '--options=%s' % self.options_file,
+        ])
+
+    self.stdout = run_cvs2git(error_re, *args)
 
 
 # Cache of conversions that have already been done.  Keys are conv_id;
@@ -3227,7 +3275,10 @@ def main_git():
   # Then use "gitk --all", "git log", etc. to test the contents of the
   # repository.
 
-  conv = ensure_conversion('main', options_file='cvs2git.options')
+  # We don't have the infrastructure to check that the resulting git
+  # repository is correct, so we just check that the conversion runs
+  # to completion:
+  conv = GitConversion('main', None, [], options_file='cvs2git.options')
 
 
 def main_hg():
@@ -3245,7 +3296,10 @@ def main_hg():
   # Then use "gitk --all", "git log", etc. to test the contents of the
   # repository.
 
-  conv = ensure_conversion('main', options_file='cvs2hg.options')
+  # We don't have the infrastructure to check that the resulting
+  # Mercurial repository is correct, so we just check that the
+  # conversion runs to completion:
+  conv = GitConversion('main', None, [], options_file='cvs2hg.options')
 
 
 def invalid_symbol():
@@ -3526,8 +3580,8 @@ test_list = [
     trunk_readd,
     branch_from_deleted_1_1,
     add_on_branch,
-    XFail(main_git),
-    XFail(main_hg),
+    main_git,
+    main_hg,
     invalid_symbol,
     invalid_symbol_ignore,
     EOLVariants('LF'),

@@ -53,8 +53,8 @@
 #     ctx -- a Ctx object (see cvs2svn_lib/context.py), which holds
 #         many configuration options
 #
-#     run_options -- an instance of the OptionsFileRunOptions class
-#         (see cvs2svn_lib/run_options.py), which holds some variables
+#     run_options -- an instance of the SVNRunOptions class (see
+#         cvs2svn_lib/svn_run_options.py), which holds some variables
 #         governing how cvs2svn is run
 
 

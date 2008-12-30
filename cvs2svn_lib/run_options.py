@@ -214,8 +214,54 @@ class RunOptions:
     # --options:
     parser.set_default('options_incompatible_options', [])
 
-    group = parser.add_option_group('Configuration via options file')
-    parser.set_default('options_files', [])
+    # Populate the options parser with the options, one group at a
+    # time:
+    parser.add_option_group(self._get_options_file_options_group())
+    parser.add_option_group(self._get_output_options_group())
+    parser.add_option_group(self._get_conversion_options_group())
+    parser.add_option_group(self._get_symbol_handling_options_group())
+    parser.add_option_group(self._get_subversion_properties_options_group())
+    parser.add_option_group(self._get_extraction_options_group())
+    parser.add_option_group(self._get_environment_options_group())
+    parser.add_option_group(self._get_partial_conversion_options_group())
+    parser.add_option_group(self._get_information_options_group())
+
+    (self.options, self.args) = parser.parse_args()
+
+    # Next look for any --options options, process them, and remove
+    # them from the list, as they affect the processing of other
+    # options:
+    options_file_found = False
+    for value in self.options.options_files:
+      self.process_options_file(value)
+      options_file_found = True
+
+    # Now the log level has been set; log the time when the run started:
+    Log().verbose(
+        time.strftime(
+            'Conversion start time: %Y-%m-%d %I:%M:%S %Z',
+            time.localtime(Log().start_time)
+            )
+        )
+
+    if options_file_found:
+      # All of the options that are compatible with --options have
+      # been consumed above.  It is an error if any other options or
+      # arguments are left:
+      self.verify_option_compatibility()
+    else:
+      # --options was not specified.  So we can process other options
+      # that are not compatible with --options.
+      self.process_remaining_options()
+
+    # Check for problems with the options:
+    self.check_options()
+
+  def _get_options_file_options_group(self):
+    group = optparse.OptionGroup(
+        self.parser, 'Configuration via options file'
+        )
+    self.parser.set_default('options_files', [])
     group.add_option(
         '--options', type='string',
         action='append', dest='options_files',
@@ -226,16 +272,17 @@ class RunOptions:
             ),
         metavar='PATH',
         )
+    return group
 
-
-    group = parser.add_option_group('Output options')
+  def _get_output_options_group(self):
+    group = optparse.OptionGroup(self.parser, 'Output options')
     group.add_option(IncompatibleOption(
         '--svnrepos', '-s', type='string',
         action='store',
         help='path where SVN repos should be created',
         metavar='PATH',
         ))
-    parser.set_default('existing_svnrepos', False)
+    self.parser.set_default('existing_svnrepos', False)
     group.add_option(IncompatibleOption(
         '--existing-svnrepos',
         action='store_true',
@@ -250,7 +297,7 @@ class RunOptions:
             ),
         metavar='TYPE',
         ))
-    parser.set_default('bdb_txn_nosync', False)
+    self.parser.set_default('bdb_txn_nosync', False)
     group.add_option(IncompatibleOption(
         '--bdb-txn-nosync',
         action='store_true',
@@ -259,7 +306,7 @@ class RunOptions:
             '--svnrepos)'
             ),
         ))
-    parser.set_default('create_options', [])
+    self.parser.set_default('create_options', [])
     group.add_option(IncompatibleOption(
         '--create-option', type='string',
         action='append', dest='create_options',
@@ -282,7 +329,7 @@ class RunOptions:
         )
 
     # Deprecated options:
-    parser.set_default('dump_only', False)
+    self.parser.set_default('dump_only', False)
     group.add_option(IncompatibleOption(
         '--dump-only',
         action='callback', callback=self.callback_dump_only,
@@ -294,14 +341,16 @@ class RunOptions:
         help=optparse.SUPPRESS_HELP,
         ))
 
+    return group
 
-    group = parser.add_option_group('Conversion options')
+  def _get_conversion_options_group(self):
+    group = optparse.OptionGroup(self.parser, 'Conversion options')
     group.add_option(ContextOption(
         '--trunk-only',
         action='store_true',
         help='convert only trunk commits, not tags nor branches',
         ))
-    parser.set_default('trunk_base', config.DEFAULT_TRUNK_BASE)
+    self.parser.set_default('trunk_base', config.DEFAULT_TRUNK_BASE)
     group.add_option(IncompatibleOption(
         '--trunk', type='string',
         action='store', dest='trunk_base',
@@ -311,7 +360,7 @@ class RunOptions:
             ),
         metavar='PATH',
         ))
-    parser.set_default('branches_base', config.DEFAULT_BRANCHES_BASE)
+    self.parser.set_default('branches_base', config.DEFAULT_BRANCHES_BASE)
     group.add_option(IncompatibleOption(
         '--branches', type='string',
         action='store', dest='branches_base',
@@ -321,7 +370,7 @@ class RunOptions:
             ),
         metavar='PATH',
         ))
-    parser.set_default('tags_base', config.DEFAULT_TAGS_BASE)
+    self.parser.set_default('tags_base', config.DEFAULT_TAGS_BASE)
     group.add_option(IncompatibleOption(
         '--tags', type='string',
         action='store', dest='tags_base',
@@ -336,7 +385,7 @@ class RunOptions:
         action='store_false', dest='prune',
         help='don\'t prune empty directories',
         ))
-    parser.set_default('encodings', [])
+    self.parser.set_default('encodings', [])
     group.add_option(IncompatibleOption(
         '--encoding', type='string',
         action='append', dest='encodings',
@@ -370,9 +419,11 @@ class RunOptions:
             ),
         ))
 
+    return group
 
-    group = parser.add_option_group('Symbol handling')
-    parser.set_default('symbol_transforms', [])
+  def _get_symbol_handling_options_group(self):
+    group = optparse.OptionGroup(self.parser, 'Symbol handling')
+    self.parser.set_default('symbol_transforms', [])
     group.add_option(IncompatibleOption(
         '--symbol-transform', type='string',
         action='callback', callback=self.callback_symbol_transform,
@@ -383,14 +434,14 @@ class RunOptions:
             ),
         metavar='P:S',
         ))
-    parser.set_default('symbol_strategy_rules', [])
+    self.parser.set_default('symbol_strategy_rules', [])
     group.add_option(IncompatibleOption(
         '--symbol-hints', type='string',
         action='callback', callback=self.callback_symbol_hints,
         help='read symbol conversion hints from PATH',
         metavar='PATH',
         ))
-    parser.set_default('symbol_default', 'heuristic')
+    self.parser.set_default('symbol_default', 'heuristic')
     group.add_option(IncompatibleOption(
         '--symbol-default', type='choice',
         choices=['heuristic', 'strict', 'branch', 'tag'],
@@ -420,7 +471,7 @@ class RunOptions:
         help='exclude branches and tags matching REGEXP',
         metavar='REGEXP',
         ))
-    parser.set_default('keep_trivial_imports', False)
+    self.parser.set_default('keep_trivial_imports', False)
     group.add_option(IncompatibleOption(
         '--keep-trivial-imports',
         action='store_true',
@@ -430,15 +481,17 @@ class RunOptions:
             ),
         ))
 
+    return group
 
-    group = parser.add_option_group('Subversion properties')
+  def _get_subversion_properties_options_group(self):
+    group = optparse.OptionGroup(self.parser, 'Subversion properties')
     group.add_option(ContextOption(
         '--username', type='string',
         action='store',
         help='username for cvs2svn-synthesized commits',
         metavar='NAME',
         ))
-    parser.set_default('auto_props_files', [])
+    self.parser.set_default('auto_props_files', [])
     group.add_option(IncompatibleOption(
         '--auto-props', type='string',
         action='append', dest='auto_props_files',
@@ -448,7 +501,7 @@ class RunOptions:
             ),
         metavar='FILE',
         ))
-    parser.set_default('mime_types_files', [])
+    self.parser.set_default('mime_types_files', [])
     group.add_option(IncompatibleOption(
         '--mime-types', type='string',
         action='append', dest='mime_types_files',
@@ -458,7 +511,7 @@ class RunOptions:
             ),
         metavar='FILE',
         ))
-    parser.set_default('eol_from_mime_type', False)
+    self.parser.set_default('eol_from_mime_type', False)
     group.add_option(IncompatibleOption(
         '--eol-from-mime-type',
         action='store_true',
@@ -475,7 +528,7 @@ class RunOptions:
             ),
         metavar='VALUE',
         ))
-    parser.set_default('keywords_off', False)
+    self.parser.set_default('keywords_off', False)
     group.add_option(IncompatibleOption(
         '--keywords-off',
         action='store_true',
@@ -505,7 +558,7 @@ class RunOptions:
         action='store_const', dest='default_eol', const=None,
         help=optparse.SUPPRESS_HELP,
         ))
-    parser.set_default('auto_props_ignore_case', True)
+    self.parser.set_default('auto_props_ignore_case', True)
     # True is the default now, so this option has no effect:
     group.add_option(IncompatibleOption(
         '--auto-props-ignore-case',
@@ -513,15 +566,17 @@ class RunOptions:
         help=optparse.SUPPRESS_HELP,
         ))
 
+    return group
 
-    group = parser.add_option_group('Extraction options')
-    parser.set_default('use_rcs', False)
+  def _get_extraction_options_group(self):
+    group = optparse.OptionGroup(self.parser, 'Extraction options')
+    self.parser.set_default('use_rcs', False)
     group.add_option(IncompatibleOption(
         '--use-rcs',
         action='store_true',
         help='use RCS to extract revision contents',
         ))
-    parser.set_default('use_cvs', False)
+    self.parser.set_default('use_cvs', False)
     group.add_option(IncompatibleOption(
         '--use-cvs',
         action='store_true',
@@ -530,7 +585,7 @@ class RunOptions:
             '(only use this if having problems with RCS)'
             ),
         ))
-    parser.set_default('use_internal_co', False)
+    self.parser.set_default('use_internal_co', False)
     group.add_option(IncompatibleOption(
         '--use-internal-co',
         action='store_true',
@@ -540,8 +595,10 @@ class RunOptions:
             ),
         ))
 
+    return group
 
-    group = parser.add_option_group('Environment options')
+  def _get_environment_options_group(self):
+    group = optparse.OptionGroup(self.parser, 'Environment options')
     group.add_option(ContextOption(
         '--tmpdir', type='string',
         action='store',
@@ -557,14 +614,14 @@ class RunOptions:
         help='path to the "svnadmin" program',
         metavar='PATH',
         ))
-    parser.set_default('co_executable', config.CO_EXECUTABLE)
+    self.parser.set_default('co_executable', config.CO_EXECUTABLE)
     group.add_option(IncompatibleOption(
         '--co', type='string',
         action='store', dest='co_executable',
         help='path to the "co" program (required if --use-rcs)',
         metavar='PATH',
         ))
-    parser.set_default('cvs_executable', config.CVS_EXECUTABLE)
+    self.parser.set_default('cvs_executable', config.CVS_EXECUTABLE)
     group.add_option(IncompatibleOption(
         '--cvs', type='string',
         action='store', dest='cvs_executable',
@@ -578,8 +635,10 @@ class RunOptions:
         metavar='PATH',
         ))
 
+    return group
 
-    group = parser.add_option_group('Partial conversions')
+  def _get_partial_conversion_options_group(self):
+    group = optparse.OptionGroup(self.parser, 'Partial conversions')
     group.add_option(
         '--pass', type='string',
         action='callback', callback=self.callback_passes,
@@ -596,8 +655,10 @@ class RunOptions:
         metavar='[START]:[END]',
         )
 
+    return group
 
-    group = parser.add_option_group('Information options')
+  def _get_information_options_group(self):
+    group = optparse.OptionGroup(self.parser, 'Information options')
     group.add_option(
         '--version',
         action='callback', callback=self.callback_version,
@@ -640,36 +701,7 @@ class RunOptions:
         help='profile with \'hotshot\' (into file cvs2svn.hotshot)',
         )
 
-    (self.options, self.args) = parser.parse_args()
-
-    # Next look for any --options options, process them, and remove
-    # them from the list, as they affect the processing of other
-    # options:
-    options_file_found = False
-    for value in self.options.options_files:
-      self.process_options_file(value)
-      options_file_found = True
-
-    # Now the log level has been set; log the time when the run started:
-    Log().verbose(
-        time.strftime(
-            'Conversion start time: %Y-%m-%d %I:%M:%S %Z',
-            time.localtime(Log().start_time)
-            )
-        )
-
-    if options_file_found:
-      # All of the options that are compatible with --options have
-      # been consumed above.  It is an error if any other options or
-      # arguments are left:
-      self.verify_option_compatibility()
-    else:
-      # --options was not specified.  So we can process other options
-      # that are not compatible with --options.
-      self.process_remaining_options()
-
-    # Check for problems with the options:
-    self.check_options()
+    return group
 
   def add_project(
         self,

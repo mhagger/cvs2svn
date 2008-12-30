@@ -60,12 +60,14 @@ if not ((2,4) <= version < (3,0)):
   sys.exit(1)
 
 
+import os
+
 from cvs2svn_lib.common import FatalException
 from cvs2svn_lib.main import main
 
 
 try:
-  main(sys.argv[0], sys.argv[1:])
+  main(os.path.basename(sys.argv[0]), sys.argv[1:])
 except FatalException, e:
   sys.stderr.write(str(e) + '\n')
   sys.exit(1)

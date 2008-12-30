@@ -18,7 +18,6 @@
 
 
 import sys
-import os
 import re
 import optparse
 import time
@@ -761,7 +760,7 @@ class RunOptions:
 
   def callback_version(self, option, opt_str, value, parser):
     sys.stdout.write(
-        '%s version %s\n' % (os.path.basename(self.progname), VERSION)
+        '%s version %s\n' % (self.progname, VERSION)
         )
     sys.exit(0)
 

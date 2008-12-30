@@ -280,41 +280,6 @@ class RunOptions(object):
         action='store_true',
         help='convert only trunk commits, not tags nor branches',
         ))
-    self.parser.set_default('trunk_base', config.DEFAULT_TRUNK_BASE)
-    group.add_option(IncompatibleOption(
-        '--trunk', type='string',
-        action='store', dest='trunk_base',
-        help=(
-            'path for trunk (default: %s)'
-            % (config.DEFAULT_TRUNK_BASE,)
-            ),
-        metavar='PATH',
-        ))
-    self.parser.set_default('branches_base', config.DEFAULT_BRANCHES_BASE)
-    group.add_option(IncompatibleOption(
-        '--branches', type='string',
-        action='store', dest='branches_base',
-        help=(
-            'path for branches (default: %s)'
-            % (config.DEFAULT_BRANCHES_BASE,)
-            ),
-        metavar='PATH',
-        ))
-    self.parser.set_default('tags_base', config.DEFAULT_TAGS_BASE)
-    group.add_option(IncompatibleOption(
-        '--tags', type='string',
-        action='store', dest='tags_base',
-        help=(
-            'path for tags (default: %s)'
-            % (config.DEFAULT_TAGS_BASE,)
-            ),
-        metavar='PATH',
-        ))
-    group.add_option(ContextOption(
-        '--no-prune',
-        action='store_false', dest='prune',
-        help='don\'t prune empty directories',
-        ))
     self.parser.set_default('encodings', [])
     group.add_option(IncompatibleOption(
         '--encoding', type='string',
@@ -333,11 +298,6 @@ class RunOptions(object):
         action='store',
         help='If all --encodings fail, use lossy encoding with ENC',
         metavar='ENC',
-        ))
-    group.add_option(ContextOption(
-        '--no-cross-branch-commits',
-        action='store_false', dest='cross_branch_commits',
-        help='prevent the creation of cross-branch commits',
         ))
     group.add_option(ContextOption(
         '--retain-conflicting-attic-files',

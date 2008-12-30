@@ -19,6 +19,7 @@
 
 import optparse
 
+from cvs2svn_lib import config
 from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.log import Log
@@ -28,6 +29,7 @@ from cvs2svn_lib.svn_output_option import ExistingRepositoryOutputOption
 from cvs2svn_lib.svn_output_option import NewRepositoryOutputOption
 from cvs2svn_lib.run_options import not_both
 from cvs2svn_lib.run_options import RunOptions
+from cvs2svn_lib.run_options import ContextOption
 from cvs2svn_lib.run_options import IncompatibleOption
 
 
@@ -99,6 +101,52 @@ class SVNRunOptions(RunOptions):
         '--create',
         action='callback', callback=self.callback_create,
         help=optparse.SUPPRESS_HELP,
+        ))
+
+    return group
+
+  def _get_conversion_options_group(self):
+    group = RunOptions._get_conversion_options_group(self)
+
+    self.parser.set_default('trunk_base', config.DEFAULT_TRUNK_BASE)
+    group.add_option(IncompatibleOption(
+        '--trunk', type='string',
+        action='store', dest='trunk_base',
+        help=(
+            'path for trunk (default: %s)'
+            % (config.DEFAULT_TRUNK_BASE,)
+            ),
+        metavar='PATH',
+        ))
+    self.parser.set_default('branches_base', config.DEFAULT_BRANCHES_BASE)
+    group.add_option(IncompatibleOption(
+        '--branches', type='string',
+        action='store', dest='branches_base',
+        help=(
+            'path for branches (default: %s)'
+            % (config.DEFAULT_BRANCHES_BASE,)
+            ),
+        metavar='PATH',
+        ))
+    self.parser.set_default('tags_base', config.DEFAULT_TAGS_BASE)
+    group.add_option(IncompatibleOption(
+        '--tags', type='string',
+        action='store', dest='tags_base',
+        help=(
+            'path for tags (default: %s)'
+            % (config.DEFAULT_TAGS_BASE,)
+            ),
+        metavar='PATH',
+        ))
+    group.add_option(ContextOption(
+        '--no-prune',
+        action='store_false', dest='prune',
+        help='don\'t prune empty directories',
+        ))
+    group.add_option(ContextOption(
+        '--no-cross-branch-commits',
+        action='store_false', dest='cross_branch_commits',
+        help='prevent the creation of cross-branch commits',
         ))
 
     return group

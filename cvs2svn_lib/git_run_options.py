@@ -20,18 +20,46 @@
 import sys
 
 from cvs2svn_lib.common import error_prefix
+from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.run_options import not_both
 from cvs2svn_lib.run_options import RunOptions
 from cvs2svn_lib.run_options import ContextOption
+from cvs2svn_lib.run_options import IncompatibleOption
 from cvs2svn_lib.project import Project
+from cvs2svn_lib.rcs_revision_manager import RCSRevisionReader
+from cvs2svn_lib.cvs_revision_manager import CVSRevisionReader
+from cvs2svn_lib.git_revision_recorder import GitRevisionRecorder
+from cvs2svn_lib.git_output_option import GitRevisionMarkWriter
+from cvs2svn_lib.git_output_option import GitOutputOption
+from cvs2svn_lib.revision_manager import NullRevisionRecorder
+from cvs2svn_lib.revision_manager import NullRevisionExcluder
+from cvs2svn_lib.fulltext_revision_recorder \
+     import SimpleFulltextRevisionRecorderAdapter
 
 
 class GitRunOptions(RunOptions):
+  def __init__(self, progname, cmd_args, pass_manager):
+    Ctx().cross_project_commits = False
+    Ctx().cross_branch_commits = False
+    RunOptions.__init__(self, progname, cmd_args, pass_manager)
+
   def _get_output_options_group(self):
     group = RunOptions._get_output_options_group(self)
 
+    group.add_option(IncompatibleOption(
+        '--blobfile', type='string',
+        action='store',
+        help='path to which the "blob" data should be written',
+        metavar='PATH',
+        ))
+    group.add_option(IncompatibleOption(
+        '--dumpfile', type='string',
+        action='store',
+        help='path to which the revision data should be written',
+        metavar='PATH',
+        ))
     group.add_option(ContextOption(
         '--dry-run',
         action='store_true',
@@ -55,12 +83,35 @@ class GitRunOptions(RunOptions):
              options.use_cvs, '--use-cvs')
 
     if options.use_rcs:
-      raise NotImplementedError()
-    elif options.use_cvs:
-      raise NotImplementedError()
+      revision_reader = RCSRevisionReader(
+          co_executable=options.co_executable
+          )
     else:
       # --use-cvs is the default:
-      pass
+      revision_reader = CVSRevisionReader(
+          cvs_executable=options.cvs_executable
+          )
+
+    if ctx.dry_run:
+      ctx.revision_recorder = NullRevisionRecorder()
+    else:
+      if not (options.blobfile and options.dumpfile):
+        raise FatalError("must pass '--blobfile' and '--dumpfile' options.")
+      ctx.revision_recorder = SimpleFulltextRevisionRecorderAdapter(
+          revision_reader,
+          GitRevisionRecorder(options.blobfile),
+          )
+
+    ctx.revision_excluder = NullRevisionExcluder()
+    ctx.revision_reader = None
+
+    ctx.output_option = GitOutputOption(
+        options.dumpfile,
+        GitRevisionMarkWriter(),
+        max_merges=None,
+        # Optional map from CVS author names to git author names:
+        author_transforms={}, # FIXME
+        )
 
   def set_project(
         self,

@@ -3280,6 +3280,17 @@ def main_git():
   # We don't have the infrastructure to check that the resulting git
   # repository is correct, so we just check that the conversion runs
   # to completion:
+  conv = GitConversion('main', None, [
+      '--blobfile=cvs2svn-tmp/blobfile.out',
+      '--dumpfile=cvs2svn-tmp/dumpfile.out',
+      '--username=cvs2git',
+      'test-data/main-cvsrepos',
+      ])
+
+
+def git_options():
+  "test cvs2git using options file"
+
   conv = GitConversion('main', None, [], options_file='cvs2git.options')
 
 
@@ -3583,13 +3594,14 @@ test_list = [
     branch_from_deleted_1_1,
     add_on_branch,
     main_git,
+    git_options,
     main_hg,
     invalid_symbol,
     invalid_symbol_ignore,
     EOLVariants('LF'),
     EOLVariants('CR'),
-    EOLVariants('CRLF'),
 # 150:
+    EOLVariants('CRLF'),
     EOLVariants('native'),
     no_revs_file,
     mirror_keyerror_test,

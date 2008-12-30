@@ -17,10 +17,25 @@
 """This module manages cvs2git run options."""
 
 
+from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.run_options import RunOptions
 
 
 class GitRunOptions(RunOptions):
-  pass
+  def _get_output_options_group(self):
+    group = RunOptions._get_output_options_group(self)
+
+    group.add_option(
+        '--dry-run',
+        action='callback', callback=self.callback_dry_run,
+        help=(
+            'do not create any output; just print what would happen.'
+            ),
+        )
+
+    return group
+
+  def callback_dry_run(self, option, opt_str, value, parser):
+    Ctx().dry_run = True
 
 

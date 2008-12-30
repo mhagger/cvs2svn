@@ -239,8 +239,6 @@ class SVNRunOptions(RunOptions):
   def process_output_options(self):
     """Process the options related to SVN output."""
 
-    RunOptions.process_output_options(self)
-
     ctx = Ctx()
     options = self.options
 

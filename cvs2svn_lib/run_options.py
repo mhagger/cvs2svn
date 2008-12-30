@@ -628,14 +628,6 @@ class RunOptions(object):
     except re.error:
       raise FatalError("'%s' is not a valid regexp." % (pattern,))
 
-  def process_extraction_options(self):
-    """Process options related to extracting data from the CVS repository."""
-
-    pass
-
-  def process_output_options(self):
-    pass
-
   def process_encoding_options(self):
     """Process options related to encoding/decoding character data."""
 

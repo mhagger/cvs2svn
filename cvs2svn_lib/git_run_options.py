@@ -42,8 +42,11 @@ class GitRunOptions(RunOptions):
 
     return group
 
-  def process_extraction_options(self):
-    """Process options related to extracting data from the CVS repository."""
+  def process_io_options(self):
+    """Process input/output options.
+
+    Process options related to extracting data from the CVS repository
+    and writing to 'git fast-import'-formatted files."""
 
     ctx = Ctx()
     options = self.options
@@ -98,8 +101,7 @@ class GitRunOptions(RunOptions):
 
     cvsroot = self.args[0]
 
-    self.process_extraction_options()
-    self.process_output_options()
+    self.process_io_options()
     self.process_encoding_options()
     self.process_symbol_strategy_options()
     self.process_property_setter_options()

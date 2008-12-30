@@ -182,7 +182,7 @@ def not_both(opt1val, opt1name, opt2val, opt2name):
         )
 
 
-class RunOptions:
+class RunOptions(object):
   """A place to store meta-options that are used to start the conversion."""
 
   def __init__(self, progname, cmd_args, pass_manager):

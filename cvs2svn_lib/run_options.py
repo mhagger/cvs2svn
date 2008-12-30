@@ -662,6 +662,13 @@ class RunOptions(object):
     ctx = Ctx()
     options = self.options
 
+    # Add the standard symbol name cleanup rules:
+    self.options.symbol_transforms.extend([
+        ReplaceSubstringsSymbolTransform('\\','/'),
+        # Remove leading, trailing, and repeated slashes:
+        NormalizePathsSymbolTransform(),
+        ])
+
     if ctx.trunk_only:
       if options.symbol_strategy_rules or options.keep_trivial_imports:
         raise SymbolOptionsWithTrunkOnlyException()
@@ -726,14 +733,6 @@ class RunOptions(object):
     self.process_extraction_options()
     self.process_output_options()
     self.process_encoding_options()
-
-    # Add the standard symbol name cleanup rules:
-    self.options.symbol_transforms.extend([
-        ReplaceSubstringsSymbolTransform('\\','/'),
-        # Remove leading, trailing, and repeated slashes:
-        NormalizePathsSymbolTransform(),
-        ])
-
     self.process_symbol_strategy_options()
     self.process_property_setter_options()
 

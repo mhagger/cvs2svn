@@ -3420,6 +3420,18 @@ def add_cvsignore_to_branch_test():
     raise Failure()
 
 
+def missing_deltatext():
+  "a revision's deltatext is missing"
+
+  # This is a type of RCS file corruption that has been observed.
+  conv = ensure_conversion(
+      'missing-deltatext',
+      error_re=(
+          r"ERROR\: .* has no deltatext section for revision 1\.1\.4\.4"
+          ),
+      )
+
+
 ########################################################################
 # Run the tests
 
@@ -3609,6 +3621,7 @@ test_list = [
     mirror_keyerror2_test,
     mirror_keyerror3_test,
     XFail(add_cvsignore_to_branch_test),
+    missing_deltatext,
     ]
 
 if __name__ == '__main__':

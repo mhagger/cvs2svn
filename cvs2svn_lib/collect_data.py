@@ -68,6 +68,7 @@ from cvs2svn_lib.cvs_file import CVSDirectory
 from cvs2svn_lib.cvs_file import CVSFile
 from cvs2svn_lib.symbol import Symbol
 from cvs2svn_lib.symbol import Trunk
+from cvs2svn_lib.cvs_item import CVSRevision
 from cvs2svn_lib.cvs_item import CVSBranch
 from cvs2svn_lib.cvs_item import CVSTag
 from cvs2svn_lib.cvs_item import cvs_revision_type_map
@@ -845,7 +846,13 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
     This is a callback method declared in Sink."""
 
-    pass
+    # Make sure that there was an info section for each revision:
+    for cvs_item in self._cvs_file_items.values():
+      if isinstance(cvs_item, CVSRevision) and cvs_item.metadata_id is None:
+        self.collect_data.record_fatal_error(
+            '%r has no deltatext section for revision %s'
+            % (self.cvs_file.filename, cvs_item.rev,)
+            )
 
   def _process_ntdbrs(self):
     """Fix up any non-trunk default branch revisions (if present).

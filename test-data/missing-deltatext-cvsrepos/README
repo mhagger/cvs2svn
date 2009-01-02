@@ -1,0 +1,5 @@
+Please note that revision 1.1.4.4 of the RCS file has a "delta" but no
+"deltatext".  cvs2svn should test for this problem and emit a suitable
+error.
+
+This test file was submitted by Sebastian Marek.

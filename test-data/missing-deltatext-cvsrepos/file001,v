@@ -1,0 +1,77 @@
+head	1.1;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2003.02.14.12.21.04;	author author1;	state dead;
+branches
+	1.1.2.1
+	1.1.4.1;
+next	;
+
+1.1.2.1
+date	2003.02.14.12.21.04;	author author1;	state Exp;
+branches;
+next	;
+
+1.1.4.1
+date	2003.02.14.18.28.37;	author author1;	state Exp;
+branches;
+next	1.1.4.2;
+
+1.1.4.2
+date	2003.02.28.13.31.47;	author author1;	state dead;
+branches;
+next	1.1.4.3;
+
+1.1.4.3
+date	2003.02.28.14.25.24;	author author2;	state Exp;
+branches;
+next	1.1.4.4;
+
+1.1.4.4
+date	2003.05.02.21.55.01;	author author3;	state dead;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@log 1@
+text
+@@
+
+
+1.1.4.1
+log
+@log 2@
+text
+@@
+
+
+1.1.4.2
+log
+@log 3@
+text
+@@
+
+
+1.1.4.3
+log
+@log 4@
+text
+@@
+
+
+1.1.2.1
+log
+@log 5@
+text
+@@

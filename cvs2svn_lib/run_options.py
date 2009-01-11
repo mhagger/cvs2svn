@@ -19,6 +19,8 @@
 import sys
 import re
 import optparse
+from optparse import Option
+from optparse import OptionGroup
 import time
 
 from cvs2svn_lib.version import VERSION
@@ -65,25 +67,25 @@ Convert a CVS repository into a Subversion repository, including history.
 """
 
 
-class IncompatibleOption(optparse.Option):
+class IncompatibleOption(Option):
   """An optparse.Option that is incompatible with the --options option.
 
   Record that the option was used so that error checking can later be
   done."""
 
   def __init__(self, *args, **kw):
-    optparse.Option.__init__(self, *args, **kw)
+    Option.__init__(self, *args, **kw)
 
   def take_action(self, action, dest, opt, value, values, parser):
     oio = parser.values.options_incompatible_options
     if opt not in oio:
       oio.append(opt)
-    return optparse.Option.take_action(
+    return Option.take_action(
         self, action, dest, opt, value, values, parser
         )
 
 
-class ContextOption(optparse.Option):
+class ContextOption(Option):
   """An optparse.Option that stores its value to Ctx."""
 
   def __init__(self, *args, **kw):
@@ -104,7 +106,7 @@ class ContextOption(optparse.Option):
     kw['action'] = 'callback'
     kw['callback'] = self.__callback
 
-    optparse.Option.__init__(self, *args, **kw)
+    Option.__init__(self, *args, **kw)
 
   def __callback(self, option, opt_str, value, parser):
     oio = parser.values.options_incompatible_options
@@ -242,7 +244,7 @@ class RunOptions(object):
     self.check_options()
 
   def _get_options_file_options_group(self):
-    group = optparse.OptionGroup(
+    group = OptionGroup(
         self.parser, 'Configuration via options file'
         )
     self.parser.set_default('options_files', [])
@@ -259,11 +261,11 @@ class RunOptions(object):
     return group
 
   def _get_output_options_group(self):
-    group = optparse.OptionGroup(self.parser, 'Output options')
+    group = OptionGroup(self.parser, 'Output options')
     return group
 
   def _get_conversion_options_group(self):
-    group = optparse.OptionGroup(self.parser, 'Conversion options')
+    group = OptionGroup(self.parser, 'Conversion options')
     group.add_option(ContextOption(
         '--trunk-only',
         action='store_true',
@@ -301,7 +303,7 @@ class RunOptions(object):
     return group
 
   def _get_symbol_handling_options_group(self):
-    group = optparse.OptionGroup(self.parser, 'Symbol handling')
+    group = OptionGroup(self.parser, 'Symbol handling')
     self.parser.set_default('symbol_transforms', [])
     group.add_option(IncompatibleOption(
         '--symbol-transform', type='string',
@@ -363,7 +365,7 @@ class RunOptions(object):
     return group
 
   def _get_subversion_properties_options_group(self):
-    group = optparse.OptionGroup(self.parser, 'Subversion properties')
+    group = OptionGroup(self.parser, 'Subversion properties')
     group.add_option(ContextOption(
         '--username', type='string',
         action='store',
@@ -448,7 +450,7 @@ class RunOptions(object):
     return group
 
   def _get_extraction_options_group(self):
-    group = optparse.OptionGroup(self.parser, 'Extraction options')
+    group = OptionGroup(self.parser, 'Extraction options')
     self.parser.set_default('use_rcs', False)
     group.add_option(IncompatibleOption(
         '--use-rcs',
@@ -468,7 +470,7 @@ class RunOptions(object):
     return group
 
   def _get_environment_options_group(self):
-    group = optparse.OptionGroup(self.parser, 'Environment options')
+    group = OptionGroup(self.parser, 'Environment options')
     group.add_option(ContextOption(
         '--tmpdir', type='string',
         action='store',
@@ -502,7 +504,7 @@ class RunOptions(object):
     return group
 
   def _get_partial_conversion_options_group(self):
-    group = optparse.OptionGroup(self.parser, 'Partial conversions')
+    group = OptionGroup(self.parser, 'Partial conversions')
     group.add_option(
         '--pass', type='string',
         action='callback', callback=self.callback_passes,
@@ -522,7 +524,7 @@ class RunOptions(object):
     return group
 
   def _get_information_options_group(self):
-    group = optparse.OptionGroup(self.parser, 'Information options')
+    group = OptionGroup(self.parser, 'Information options')
     group.add_option(
         '--version',
         action='callback', callback=self.callback_version,

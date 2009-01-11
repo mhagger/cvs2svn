@@ -248,7 +248,7 @@ class RunOptions(object):
         self.parser, 'Configuration via options file'
         )
     self.parser.set_default('options_files', [])
-    group.add_option(
+    group.add_option(Option(
         '--options', type='string',
         action='append', dest='options_files',
         help=(
@@ -257,7 +257,7 @@ class RunOptions(object):
             'command-line options.  See documentation for info'
             ),
         metavar='PATH',
-        )
+        ))
     return group
 
   def _get_output_options_group(self):
@@ -505,13 +505,13 @@ class RunOptions(object):
 
   def _get_partial_conversion_options_group(self):
     group = OptionGroup(self.parser, 'Partial conversions')
-    group.add_option(
+    group.add_option(Option(
         '--pass', type='string',
         action='callback', callback=self.callback_passes,
         help='execute only specified PASS of conversion',
         metavar='PASS',
-        )
-    group.add_option(
+        ))
+    group.add_option(Option(
         '--passes', '-p', type='string',
         action='callback', callback=self.callback_passes,
         help=(
@@ -519,37 +519,37 @@ class RunOptions(object):
             'START, and END can be pass names or numbers)'
             ),
         metavar='[START]:[END]',
-        )
+        ))
 
     return group
 
   def _get_information_options_group(self):
     group = OptionGroup(self.parser, 'Information options')
-    group.add_option(
+    group.add_option(Option(
         '--version',
         action='callback', callback=self.callback_version,
         help='print the version number',
-        )
-    group.add_option(
+        ))
+    group.add_option(Option(
         '--help', '-h',
         action="help",
         help='print this usage message and exit with success',
-        )
-    group.add_option(
+        ))
+    group.add_option(Option(
         '--help-passes',
         action='callback', callback=self.callback_help_passes,
         help='list the available passes and their numbers',
-        )
-    group.add_option(
+        ))
+    group.add_option(Option(
         '--verbose', '-v',
         action='callback', callback=self.callback_verbose,
         help='verbose (may be specified twice for debug output)',
-        )
-    group.add_option(
+        ))
+    group.add_option(Option(
         '--quiet', '-q',
         action='callback', callback=self.callback_quiet,
         help='quiet (may be specified twice for very quiet)',
-        )
+        ))
     group.add_option(ContextOption(
         '--write-symbol-info', type='string',
         action='store', dest='symbol_info_filename',
@@ -561,11 +561,11 @@ class RunOptions(object):
         action='store_true',
         help='prevent the deletion of intermediate files',
         ))
-    group.add_option(
+    group.add_option(Option(
         '--profile',
         action='callback', callback=self.callback_profile,
         help='profile with \'hotshot\' (into file cvs2svn.hotshot)',
-        )
+        ))
 
     return group
 

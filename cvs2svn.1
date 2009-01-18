@@ -68,19 +68,6 @@ cvs2svn would do if it were really converting your repository.
 .SH "CONVERSION OPTIONS"
 .IP "\fB--trunk-only\fR"
 Convert only trunk commits, not tags nor branches.
-.IP "\fB--trunk\fR=\fIpath\fR"
-Set the top-level path to use for trunk in the Subversion repository.
-The default is \fItrunk\fR.
-.IP "\fB--branches\fR=\fIpath\fR"
-Set the top-level path to use for branches in the Subversion
-repository.  The default is \fIbranches\fR.
-.IP "\fB--tags\fR=\fIpath\fR"
-Set the top-level path to use for tags in the Subversion repository.
-The default is \fItags\fR.
-.IP "\fB--no-prune\fR"
-When all files are deleted from a directory in the Subversion
-repository, don't delete the empty directory (the default is to delete
-any empty directories).
 .IP "\fB--encoding\fR=\fIencoding\fR"
 Use \fIencoding\fR as the encoding for filenames, log messages, and
 author names in the CVS repos.  This option may be specified
@@ -97,13 +84,26 @@ to completion.  This option only affects the encoding of log messages
 and author names; there is no fallback encoding for filenames.  (By
 using an \fB--options\fR file, it is possible to specify a fallback
 encoding for filenames.)  Default: disabled.
-.IP "\fB--no-cross-branch-commits\fR"
-Prevent the creation of commits that affect files on multiple
-branches at once.
 .IP "\fB--retain-conflicting-attic-files\fR"
 If a file appears both inside an outside of the CVS attic, retain the
 attic version in an SVN subdirectory called `Attic'.  (Normally this
 situation is treated as a fatal error.)
+.IP "\fB--trunk\fR=\fIpath\fR"
+Set the top-level path to use for trunk in the Subversion repository.
+The default is \fItrunk\fR.
+.IP "\fB--branches\fR=\fIpath\fR"
+Set the top-level path to use for branches in the Subversion
+repository.  The default is \fIbranches\fR.
+.IP "\fB--tags\fR=\fIpath\fR"
+Set the top-level path to use for tags in the Subversion repository.
+The default is \fItags\fR.
+.IP "\fB--no-prune\fR"
+When all files are deleted from a directory in the Subversion
+repository, don't delete the empty directory (the default is to delete
+any empty directories).
+.IP "\fB--no-cross-branch-commits\fR"
+Prevent the creation of commits that affect files on multiple
+branches at once.
 .SH "SYMBOL HANDLING"
 .IP "\fB--symbol-transform\fR=\fIpattern\fR:\fIreplacement\fR"
 Transform RCS/CVS symbol names before entering them into Subversion.
@@ -212,9 +212,6 @@ default.
 .IP "\fB--tmpdir\fR=\fIpath\fR"
 Set the \fIpath\fR to use for temporary data.  Default is a directory
 called \fIcvs2svn-tmp\fR under the current directory.
-.IP "\fB--svnadmin\fR=\fIpath\fR"
-Path to the \fIsvnadmin\fR program.  (\fIsvnadmin\fR is needed when
-the \fB-s\fR/\fB--svnrepos\fR output option is used.)
 .IP "\fB--co\fR=\fIpath\fR"
 Path to the \fIco\fR program.  (\fIco\fR is needed if the
 \fB--use-rcs\fR option is used.)
@@ -223,6 +220,9 @@ Path to the \fIcvs\fR program.  (\fIcvs\fR is needed if the
 \fB--use-cvs\fR option is used.)
 .IP "\fB--sort\fR=\fIpath\fR"
 Path to the GNU \fIsort\fR program.  (cvs2svn requires GNU sort.)
+.IP "\fB--svnadmin\fR=\fIpath\fR"
+Path to the \fIsvnadmin\fR program.  (\fIsvnadmin\fR is needed when
+the \fB-s\fR/\fB--svnrepos\fR output option is used.)
 .SH "PARTIAL CONVERSIONS"
 .IP "\fB-p\fR, \fB--pass\fR=\fIpass\fR"
 Execute only pass \fIpass\fR of the conversion.  \fIpass\fR can be

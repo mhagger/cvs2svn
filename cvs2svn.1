@@ -38,7 +38,7 @@ allowed in combination with \fB--options\fR: \fB-h\fR/\fB--help\fR,
 \fB-q\fR/\fB--quiet\fR, \fB-p\fR/\fB--pass\fR/\fB--passes\fR,
 \fB--dry-run\fR, and \fB--profile\fR.
 .SH "OUTPUT OPTIONS"
-.IP "\fB-s\fR, \fB--svnrepos\fR \fIpath\fR"
+.IP "\fB-s\fR, \fB--svnrepos\fR=\fIpath\fR"
 Write the output of the conversion into a Subversion repository
 located at \fIpath\fR.  This option causes a new Subversion repository
 to be created at \fIpath\fR unless the \fB--existing-svnrepos\fR
@@ -50,7 +50,7 @@ be used in combination with \fB-s\fR/\fB--svnrepos\fR.)  The
 repository must either be empty or contain no paths that overlap with
 those that will result from the conversion.  Please note that you need
 write permission for the repository files.
-.IP "\fB--fs-type\fR \fItype\fR"
+.IP "\fB--fs-type\fR=\fItype\fR"
 Pass \fI--fs-type\fR=\fItype\fR to "svnadmin create" when creating a
 new repository.
 .IP "\fB--bdb-txn-nosync\fR"
@@ -224,10 +224,10 @@ Path to the \fIcvs\fR program.  (\fIcvs\fR is needed if the
 .IP "\fB--sort\fR=\fIpath\fR"
 Path to the GNU \fIsort\fR program.  (cvs2svn requires GNU sort.)
 .SH "PARTIAL CONVERSIONS"
-.IP "\fB-p\fR, \fB--pass\fR \fIpass\fR"
+.IP "\fB-p\fR, \fB--pass\fR=\fIpass\fR"
 Execute only pass \fIpass\fR of the conversion.  \fIpass\fR can be
 specified by name or by number (see \fB--help-passes\fR).
-.IP "\fB-p\fR, \fB--passes\fR [\fIstart\fR]:[\fIend\fR]"
+.IP "\fB-p\fR, \fB--passes\fR=[\fIstart\fR]:[\fIend\fR]"
 Execute passes \fIstart\fR through \fIend\fR of the conversion
 (inclusive).  \fIstart\fR and \fIend\fR can be specified by name or by
 number (see \fB--help-passes\fR).  If \fIstart\fR or \fIend\fR is

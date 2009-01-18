@@ -57,10 +57,10 @@ class ManHelpFormatter(HelpFormatter):
         opt_help = ' '.join([l.strip() for l in option.help.splitlines()])
         return '''.IP "%s"
 %s
-''' % (option.option_strings, opt_help)
+''' % (self.format_option_strings(option), opt_help)
 
     def format_head(self, optparser, pkginfo, section=1):
-        pgm = optparser._get_prog_name()
+        pgm = optparser.get_prog_name()
         return '%s\n%s\n%s\n%s' % (self.format_title(pgm, section),
                                    self.format_short_description(pgm, pkginfo.short_desc),
                                    self.format_synopsis(pgm),

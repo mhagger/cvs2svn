@@ -404,10 +404,10 @@ class RunOptions(object):
         action='store',
         help=(
             'default svn:eol-style for non-binary files with '
-            'undetermined mime types.  VALUE is "binary" '
+            'undetermined mime types.  STYLE is "binary" '
             '(default), "native", "CRLF", "LF", or "CR"'
             ),
-        metavar='VALUE',
+        metavar='STYLE',
         ))
     self.parser.set_default('keywords_off', False)
     group.add_option(IncompatibleOption(

@@ -110,14 +110,22 @@ example:</p>
 </ul>
 
 <p>If your provider does not provide any way to download your CVS
-repository, there is a possible workaround.  The <a
-href="http://cvs.m17n.org/~akr/cvssuck/">CVSsuck</a> tool claims to be
-able to mirror a remote CVS repository using only CVS commands.  It
-should be possible to use this tool to fetch a copy of your CVS
-repository from your provider, then to use cvs2svn to convert the
-copy.  However, the developers of cvs2svn do not have any experience
-with this tool, so you are on your own here.  If you try this method,
-please tell us about your experience on the <a
+repository, there are two known tools that claim to be able to
+clone a CVS repository via the CVS protocol:</p>
+
+<ul>
+
+  <li><a href="http://samba.org/ftp/tridge/rtc/cvsclone.l">cvsclone</a></li>
+
+  <li><a href="http://cvs.m17n.org/~akr/cvssuck/">CVSsuck</a></li>
+
+</ul>
+
+<p>It should be possible to use one of these tools to fetch a copy of
+your CVS repository from your provider, then to use cvs2svn to convert
+the copy.  However, the developers of cvs2svn do not have any
+experience with these tools, so you are on your own here.  If you try
+one of them, please tell us about your experience on the <a
 href="mailto:users@cvs2svn.tigris.org">users mailing list</a>.</p>
 
 

@@ -1,15 +1,15 @@
 .\" Process this file with
 .\" groff -man -Tascii cvs2svn.1
 .TH CVS2SVN "1" "Oct 24, 2004" "Subversion" "User Commands"
-.SH NAME
+.SH "NAME"
 cvs2svn \- convert a cvs repository into a subversion repository
-.SH SYNOPSIS
+.SH "SYNOPSIS"
 .B cvs2svn
 [\fIOPTION\fR]... \fIOUTPUT-OPTION CVS-REPOS-PATH\fR
 .br
 .B cvs2svn
 [\fIOPTION\fR]... \fI--options=PATH\fR
-.SH DESCRIPTION
+.SH "DESCRIPTION"
 Create a new Subversion repository based on the version history stored in a
 CVS repository. Each CVS commit will be mirrored in the Subversion
 repository, including such information as date of commit and id of the
@@ -256,10 +256,10 @@ symbols were converted during CollateSymbolsPass.
 Prevent the deletion of temporary files.
 .IP "\fB--profile\fR"
 Profile with 'hotshot' (into file \fIcvs2svn.hotshot\fR).
-.SH FILES
+.SH "FILES"
 A directory called \fIcvs2svn-tmp\fR (or the directory specified by
 \fB--tmpdir\fR) is used as scratch space for temporary data files.
-.SH AUTHORS
+.SH "AUTHORS"
 Main authors are:
 .br
 C. Michael Pilato <cmpilato@collab.net>

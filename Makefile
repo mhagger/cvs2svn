@@ -7,11 +7,20 @@ PYTHON=python
 
 all:
 	@echo "Supported make targets:"
+	@echo "    man -- Create manpages for the main programs"
 	@echo "    install -- Install software using distutils"
 	@echo "    dist -- Create an installation package"
 	@echo "    check -- Run cvs2svn tests"
 	@echo "    pycheck -- Use pychecker to check cvs2svn Python code"
 	@echo "    clean -- Clean up source tree and temporary directory"
+
+man: cvs2svn.1 cvs2git.1
+
+cvs2svn.1:
+	./cvs2svn --man >$@
+
+cvs2git.1:
+	./cvs2git --man >$@
 
 dist:
 	./dist.sh

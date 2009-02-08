@@ -19,7 +19,6 @@
 import sys
 import re
 import optparse
-from optparse import Option
 from optparse import OptionGroup
 import time
 
@@ -31,6 +30,7 @@ from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import CVSTextDecoder
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
+from cvs2svn_lib.man_writer import ManOption
 from cvs2svn_lib.pass_manager import InvalidPassError
 from cvs2svn_lib.symbol_strategy import AllBranchRule
 from cvs2svn_lib.symbol_strategy import AllTagRule
@@ -66,27 +66,56 @@ description="""\
 Convert a CVS repository into a Subversion repository, including history.
 """
 
+authors = u"""\
+Main authors are:
+.br
+C. Michael Pilato <cmpilato@collab.net>
+.br
+Greg Stein <gstein@lyra.org>
+.br
+Branko \u010cibej <brane@xbc.nu>
+.br
+Blair Zajac <blair@orcaware.com>
+.br
+Max Bowsher <maxb@ukf.net>
+.br
+Brian Fitzpatrick <fitz@red-bean.com>
+.br
+Tobias Ringstr\u00f6m <tobias@ringstrom.mine.nu>
+.br
+Karl Fogel <kfogel@collab.net>
+.br
+Erik H\u00fclsmann <e.huelsmann@gmx.net>
+.br
+David Summers <david@summersoft.fay.ar.us>
+.br
+Michael Haggerty <mhagger@alum.mit.edu>
+.PP
+Manpage was written for the Debian GNU/Linux system by
+Laszlo 'GCS' Boszormenyi <gcs@lsc.hu> (but may be used by others).
+"""
 
-class IncompatibleOption(Option):
-  """An optparse.Option that is incompatible with the --options option.
+
+class IncompatibleOption(ManOption):
+  """A ManOption that is incompatible with the --options option.
 
   Record that the option was used so that error checking can later be
   done."""
 
   def __init__(self, *args, **kw):
-    Option.__init__(self, *args, **kw)
+    ManOption.__init__(self, *args, **kw)
 
   def take_action(self, action, dest, opt, value, values, parser):
     oio = parser.values.options_incompatible_options
     if opt not in oio:
       oio.append(opt)
-    return Option.take_action(
+    return ManOption.take_action(
         self, action, dest, opt, value, values, parser
         )
 
 
-class ContextOption(Option):
-  """An optparse.Option that stores its value to Ctx."""
+class ContextOption(ManOption):
+  """A ManOption that stores its value to Ctx."""
 
   def __init__(self, *args, **kw):
     if kw.get('action') not in self.STORE_ACTIONS:
@@ -106,7 +135,7 @@ class ContextOption(Option):
     kw['action'] = 'callback'
     kw['callback'] = self.__callback
 
-    Option.__init__(self, *args, **kw)
+    ManOption.__init__(self, *args, **kw)
 
   def __callback(self, option, opt_str, value, parser):
     oio = parser.values.options_incompatible_options
@@ -248,13 +277,25 @@ class RunOptions(object):
         self.parser, 'Configuration via options file'
         )
     self.parser.set_default('options_files', [])
-    group.add_option(Option(
+    group.add_option(ManOption(
         '--options', type='string',
         action='append', dest='options_files',
         help=(
             'read the conversion options from PATH.  This '
             'method allows more flexibility than using '
             'command-line options.  See documentation for info'
+            ),
+        man_help=(
+            'Read the conversion options from \\fIpath\\fR instead of from '
+            'the command line.  This option allows far more conversion '
+            'flexibility than can be achieved using the command-line alone. '
+            'See the documentation for more information.  Only the following '
+            'command-line options are allowed in combination with '
+            '\\fB--options\\fR: \\fB-h\\fR/\\fB--help\\fR, '
+            '\\fB--help-passes\\fR, \\fB--version\\fR, '
+            '\\fB-v\\fR/\\fB--verbose\\fR, \\fB-q\\fR/\\fB--quiet\\fR, '
+            '\\fB-p\\fR/\\fB--pass\\fR/\\fB--passes\\fR, \\fB--dry-run\\fR, '
+            'and \\fB--profile\\fR.'
             ),
         metavar='PATH',
         ))
@@ -270,6 +311,9 @@ class RunOptions(object):
         '--trunk-only',
         action='store_true',
         help='convert only trunk commits, not tags nor branches',
+        man_help=(
+            'Convert only trunk commits, not tags nor branches.'
+            ),
         ))
     self.parser.set_default('encodings', [])
     group.add_option(IncompatibleOption(
@@ -282,12 +326,31 @@ class RunOptions(object):
             'http://docs.python.org/lib/standard-encodings.html '
             'for a list of standard Python encodings.'
             ),
+        man_help=(
+            'Use \\fIencoding\\fR as the encoding for filenames, log '
+            'messages, and author names in the CVS repos.  This option '
+            'may be specified multiple times, in which case the encodings '
+            'are tried in order until one succeeds.  Default: ascii.  See '
+            'http://docs.python.org/lib/standard-encodings.html for a list '
+            'of other standard encodings.'
+            ),
         metavar='ENC',
         ))
     group.add_option(IncompatibleOption(
         '--fallback-encoding', type='string',
         action='store',
         help='If all --encodings fail, use lossy encoding with ENC',
+        man_help=(
+            'If none of the encodings specified with \\fB--encoding\\fR '
+            'succeed in decoding an author name or log message, then fall '
+            'back to using \\fIencoding\\fR in lossy \'replace\' mode. '
+            'Use of this option may cause information to be lost, but at '
+            'least it allows the conversion to run to completion.  This '
+            'option only affects the encoding of log messages and author '
+            'names; there is no fallback encoding for filenames.  (By '
+            'using an \\fB--options\\fR file, it is possible to specify '
+            'a fallback encoding for filenames.)  Default: disabled.'
+            ),
         metavar='ENC',
         ))
     group.add_option(ContextOption(
@@ -297,6 +360,12 @@ class RunOptions(object):
             'if a file appears both in and out of '
             'the CVS Attic, then leave the attic version in a '
             'SVN directory called "Attic"'
+            ),
+        man_help=(
+            'If a file appears both inside an outside of the CVS attic, '
+            'retain the attic version in an SVN subdirectory called '
+            '\'Attic\'.  (Normally this situation is treated as a fatal '
+            'error.)'
             ),
         ))
 
@@ -313,6 +382,14 @@ class RunOptions(object):
             'use Python regexp and reference syntax '
             'respectively.  P must match the whole symbol name'
             ),
+        man_help=(
+            'Transform RCS/CVS symbol names before entering them into '
+            'Subversion. \\fIpattern\\fR is a Python regexp pattern that '
+            'is matches against the entire symbol name; \\fIreplacement\\fR '
+            'is a replacement using Python\'s regexp reference syntax. '
+            'You may specify any number of these options; they will be '
+            'applied in the order given on the command line.'
+            ),
         metavar='P:S',
         ))
     self.parser.set_default('symbol_strategy_rules', [])
@@ -320,6 +397,28 @@ class RunOptions(object):
         '--symbol-hints', type='string',
         action='callback', callback=self.callback_symbol_hints,
         help='read symbol conversion hints from PATH',
+        man_help=(
+            'Read symbol conversion hints from \\fIpath\\fR.  The format of '
+            '\\fIpath\\fR is the same as the format output by '
+            '\\fB--write-symbol-info\\fR, namely a text file with four '
+            'whitespace-separated columns: \\fIproject-id\\fR, '
+            '\\fIsymbol\\fR, \\fIconversion\\fR, and '
+            '\\fIparent-lod-name\\fR.  \\fIproject-id\\fR is the numerical '
+            'ID of the project to which the symbol belongs, counting from '
+            '0. \\fIproject-id\\fR can be set to \'.\' if '
+            'project-specificity is not needed.  \\fIsymbol-name\\fR is the '
+            'name of the symbol being specified.  \\fIconversion\\fR '
+            'specifies how the symbol should be converted, and can be one '
+            'of the values \'branch\', \'tag\', or \'exclude\'. If '
+            '\\fIconversion\\fR is \'.\', then this rule does not affect '
+            'how the symbol is converted.  \\fIparent-lod-name\\fR is the '
+            'name of the symbol from which this symbol should sprout, or '
+            '\'.trunk.\' if the symbol should sprout from trunk.  If '
+            '\\fIparent-lod-name\\fR is omitted or \'.\', then this rule '
+            'does not affect the preferred parent of this symbol. The file '
+            'may contain blank lines or comment lines (lines whose first '
+            'non-whitespace character is \'#\').'
+            ),
         metavar='PATH',
         ))
     self.parser.set_default('symbol_default', 'heuristic')
@@ -332,24 +431,48 @@ class RunOptions(object):
             'OPT is "heuristic" (default), "strict", "branch", '
             'or "tag"'
             ),
+        man_help=(
+            'Specify how to convert ambiguous symbols (those that appear in '
+            'the CVS archive as both branches and tags).  \\fIopt\\fR must '
+            'be \'heuristic\' (decide how to treat each ambiguous symbol '
+            'based on whether it was used more often as a branch/tag in '
+            'CVS), \'strict\' (no default; every ambiguous symbol has to be '
+            'resolved manually using \\fB--force-branch\\fR, '
+            '\\fB--force-tag\\fR, or \\fB--exclude\\fR), \'branch\' (treat '
+            'every ambiguous symbol as a branch), or \'tag\' (treat every '
+            'ambiguous symbol as a tag).  The default is \'heuristic\'.'
+            ),
         metavar='OPT',
         ))
     group.add_option(IncompatibleOption(
         '--force-branch', type='string',
         action='callback', callback=self.callback_force_branch,
         help='force symbols matching REGEXP to be branches',
+        man_help=(
+            'Force symbols whose names match \\fIregexp\\fR to be branches. '
+            '\\fIregexp\\fR must match the whole symbol name.'
+            ),
         metavar='REGEXP',
         ))
     group.add_option(IncompatibleOption(
         '--force-tag', type='string',
         action='callback', callback=self.callback_force_tag,
         help='force symbols matching REGEXP to be tags',
+        man_help=(
+            'Force symbols whose names match \\fIregexp\\fR to be tags. '
+            '\\fIregexp\\fR must match the whole symbol name.'
+            ),
         metavar='REGEXP',
         ))
     group.add_option(IncompatibleOption(
         '--exclude', type='string',
         action='callback', callback=self.callback_exclude,
         help='exclude branches and tags matching REGEXP',
+        man_help=(
+            'Exclude branches and tags whose names match \\fIregexp\\fR '
+            'from the conversion.  \\fIregexp\\fR must match the whole '
+            'symbol name.'
+            ),
         metavar='REGEXP',
         ))
     self.parser.set_default('keep_trivial_imports', False)
@@ -359,6 +482,12 @@ class RunOptions(object):
         help=(
             'do not exclude branches that were only used for '
             'a single import (usually these are unneeded)'
+            ),
+        man_help=(
+            'Do not exclude branches that were only used for a single '
+            'import. (By default such branches are excluded because they '
+            'are usually created by the inappropriate use of \\fBcvs '
+            'import\\fR.)'
             ),
         ))
 
@@ -370,6 +499,13 @@ class RunOptions(object):
         '--username', type='string',
         action='store',
         help='username for cvs2svn-synthesized commits',
+        man_help=(
+            'Set the default username to \\fIname\\fR when cvs2svn needs '
+            'to generate a commit for which CVS does not record the '
+            'original username. This happens when a branch or tag is '
+            'created. The default is to use no author at all for such '
+            'commits.'
+            ),
         metavar='NAME',
         ))
     self.parser.set_default('auto_props_files', [])
@@ -379,6 +515,16 @@ class RunOptions(object):
         help=(
             'set file properties from the auto-props section '
             'of a file in svn config format'
+            ),
+        man_help=(
+            'Specify a file in the format of Subversion\'s config file, '
+            'whose [auto-props] section can be used to set arbitrary '
+            'properties on files in the Subversion repository based on '
+            'their filenames. (The [auto-props] section header must be '
+            'present; other sections of the config file, including the '
+            'enable-auto-props setting, are ignored.) Filenames are matched '
+            'to the filename patterns case-insensitively.'
+
             ),
         metavar='FILE',
         ))
@@ -390,6 +536,10 @@ class RunOptions(object):
             'specify an apache-style mime.types file for setting '
             'svn:mime-type'
             ),
+        man_help=(
+            'Specify an apache-style mime.types \\fIfile\\fR for setting '
+            'svn:mime-type.'
+            ),
         metavar='FILE',
         ))
     self.parser.set_default('eol_from_mime_type', False)
@@ -397,6 +547,15 @@ class RunOptions(object):
         '--eol-from-mime-type',
         action='store_true',
         help='set svn:eol-style from mime type if known',
+        man_help=(
+            'For files that don\'t have the kb expansion mode but have a '
+            'known mime type, set the eol-style based on the mime type. '
+            'For such files, set svn:eol-style to "native" if the mime type '
+            'begins with "text/", and leave it unset (i.e., no EOL '
+            'translation) otherwise. Files with unknown mime types are '
+            'not affected by this option.  This option has no effect '
+            'unless the \\fB--mime-types\\fR option is also specified.'
+            ),
         ))
     group.add_option(IncompatibleOption(
         '--default-eol', type='choice',
@@ -406,6 +565,13 @@ class RunOptions(object):
             'default svn:eol-style for non-binary files with '
             'undetermined mime types.  STYLE is "binary" '
             '(default), "native", "CRLF", "LF", or "CR"'
+            ),
+        man_help=(
+            'Set svn:eol-style to \\fIstyle\\fR for files that don\'t have '
+            'the CVS \'kb\' expansion mode and whose end-of-line '
+            'translation mode hasn\'t been determined by one of the other '
+            'options. \\fIstyle\\fR must be \'binary\' (default), '
+            '\'native\', \'CRLF\', \'LF\', or \'CR\'.'
             ),
         metavar='STYLE',
         ))
@@ -418,6 +584,14 @@ class RunOptions(object):
             'cvs2svn sets svn:keywords on non-binary files to "%s")'
             % (config.SVN_KEYWORDS_VALUE,)
             ),
+        man_help=(
+            'By default, cvs2svn sets svn:keywords on CVS files to "author '
+            'id date" if the mode of the RCS file in question is either kv, '
+            'kvl or unset. If you use the --keywords-off switch, cvs2svn '
+            'will not set svn:keywords for any file. While this will not '
+            'touch the keywords in the contents of your files, Subversion '
+            'will not expand them.'
+            ),
         ))
     group.add_option(ContextOption(
         '--keep-cvsignore',
@@ -426,11 +600,23 @@ class RunOptions(object):
             'keep .cvsignore files (in addition to creating '
             'the analogous svn:ignore properties)'
             ),
+        man_help=(
+            'Include \\fI.cvsignore\\fR files in the output.  (Normally '
+            'they are unneeded because cvs2svn sets the corresponding '
+            '\\fIsvn:ignore\\fR properties.)'
+            ),
         ))
     group.add_option(IncompatibleOption(
         '--cvs-revnums',
         action='callback', callback=self.callback_cvs_revnums,
         help='record CVS revision numbers as file properties',
+        man_help=(
+            'Record CVS revision numbers as file properties in the '
+            'Subversion repository. (Note that unless it is removed '
+            'explicitly, the last CVS revision number will remain '
+            'associated with the file even after the file is changed '
+            'within Subversion.)'
+            ),
         ))
 
     # Deprecated options:
@@ -438,6 +624,7 @@ class RunOptions(object):
         '--no-default-eol',
         action='store_const', dest='default_eol', const=None,
         help=optparse.SUPPRESS_HELP,
+        man_help=optparse.SUPPRESS_HELP,
         ))
     self.parser.set_default('auto_props_ignore_case', True)
     # True is the default now, so this option has no effect:
@@ -445,6 +632,7 @@ class RunOptions(object):
         '--auto-props-ignore-case',
         action='store_true',
         help=optparse.SUPPRESS_HELP,
+        man_help=optparse.SUPPRESS_HELP,
         ))
 
     return group
@@ -463,6 +651,11 @@ class RunOptions(object):
             'directory to use for temporary data files '
             '(default "cvs2svn-tmp")'
             ),
+        man_help=(
+            'Set the \\fIpath\\fR to use for temporary data. Default '
+            'is a directory called \\fIcvs2svn-tmp\\fR under the current '
+            'directory.'
+            ),
         metavar='PATH',
         ))
     self.parser.set_default('co_executable', config.CO_EXECUTABLE)
@@ -470,6 +663,10 @@ class RunOptions(object):
         '--co', type='string',
         action='store', dest='co_executable',
         help='path to the "co" program (required if --use-rcs)',
+        man_help=(
+            'Path to the \\fIco\\fR program.  (\\fIco\\fR is needed if the '
+            '\\fB--use-rcs\\fR option is used.)'
+            ),
         metavar='PATH',
         ))
     self.parser.set_default('cvs_executable', config.CVS_EXECUTABLE)
@@ -477,12 +674,20 @@ class RunOptions(object):
         '--cvs', type='string',
         action='store', dest='cvs_executable',
         help='path to the "cvs" program (required if --use-cvs)',
+        man_help=(
+            'Path to the \\fIcvs\\fR program.  (\\fIcvs\\fR is needed if the '
+            '\\fB--use-cvs\\fR option is used.)'
+            ),
         metavar='PATH',
         ))
     group.add_option(ContextOption(
         '--sort', type='string',
         action='store', dest='sort_executable',
         help='path to the GNU "sort" program',
+        man_help=(
+            'Path to the GNU \\fIsort\\fR program.  (cvs2svn requires GNU '
+            'sort.)'
+            ),
         metavar='PATH',
         ))
 
@@ -490,18 +695,33 @@ class RunOptions(object):
 
   def _get_partial_conversion_options_group(self):
     group = OptionGroup(self.parser, 'Partial conversions')
-    group.add_option(Option(
+    group.add_option(ManOption(
         '--pass', type='string',
         action='callback', callback=self.callback_passes,
         help='execute only specified PASS of conversion',
+        man_help=(
+            'Execute only pass \\fIpass\\fR of the conversion. '
+            '\\fIpass\\fR can be specified by name or by number (see '
+            '\\fB--help-passes\\fR).'
+            ),
         metavar='PASS',
         ))
-    group.add_option(Option(
+    group.add_option(ManOption(
         '--passes', '-p', type='string',
         action='callback', callback=self.callback_passes,
         help=(
             'execute passes START through END, inclusive (PASS, '
             'START, and END can be pass names or numbers)'
+            ),
+        man_help=(
+            'Execute passes \\fIstart\\fR through \\fIend\\fR of the '
+            'conversion (inclusive). \\fIstart\\fR and \\fIend\\fR can be '
+            'specified by name or by number (see \\fB--help-passes\\fR). '
+            'If \\fIstart\\fR or \\fIend\\fR is missing, it defaults to '
+            'the first or last pass, respectively. For this to work the '
+            'earlier passes must have been completed before on the '
+            'same CVS repository, and the generated data files must be '
+            'in the temporary directory (see \\fB--tmpdir\\fR).'
             ),
         metavar='[START]:[END]',
         ))
@@ -510,46 +730,77 @@ class RunOptions(object):
 
   def _get_information_options_group(self):
     group = OptionGroup(self.parser, 'Information options')
-    group.add_option(Option(
+    group.add_option(ManOption(
         '--version',
         action='callback', callback=self.callback_version,
         help='print the version number',
+        man_help='Print the version number.',
         ))
-    group.add_option(Option(
+    group.add_option(ManOption(
         '--help', '-h',
         action="help",
         help='print this usage message and exit with success',
+        man_help='Print the usage message and exit with success.',
         ))
-    group.add_option(Option(
+    group.add_option(ManOption(
         '--help-passes',
         action='callback', callback=self.callback_help_passes,
         help='list the available passes and their numbers',
+        man_help=(
+            'Print the numbers and names of the conversion passes and '
+            'exit with success.'
+            ),
         ))
-    group.add_option(Option(
+    group.add_option(ManOption(
+        '--man',
+        action='callback', callback=self.callback_manpage,
+        help='write the manpage for this program to standard output',
+        man_help=(
+            'Output the unix-style manpage for this program to standard '
+            'output.'
+            ),
+        ))
+    group.add_option(ManOption(
         '--verbose', '-v',
         action='callback', callback=self.callback_verbose,
         help='verbose (may be specified twice for debug output)',
+        man_help=(
+            'Print more information while running. This option may be '
+            'specified twice to output voluminous debugging information.'
+            ),
         ))
-    group.add_option(Option(
+    group.add_option(ManOption(
         '--quiet', '-q',
         action='callback', callback=self.callback_quiet,
         help='quiet (may be specified twice for very quiet)',
+        man_help=(
+            'Print less information while running. This option may be '
+            'specified twice to suppress all non-error output.'
+            ),
         ))
     group.add_option(ContextOption(
         '--write-symbol-info', type='string',
         action='store', dest='symbol_info_filename',
         help='write information and statistics about CVS symbols to PATH.',
+        man_help=(
+            'Write to \\fIpath\\fR symbol statistics and information about '
+            'how symbols were converted during CollateSymbolsPass.'
+            ),
         metavar='PATH',
         ))
     group.add_option(ContextOption(
         '--skip-cleanup',
         action='store_true',
         help='prevent the deletion of intermediate files',
+        man_help='Prevent the deletion of temporary files.',
         ))
-    group.add_option(Option(
+    group.add_option(ManOption(
         '--profile',
         action='callback', callback=self.callback_profile,
         help='profile with \'hotshot\' (into file cvs2svn.hotshot)',
+        man_help=(
+            'Profile with \'hotshot\' (into file \\fIcvs2svn.hotshot\\fR).'
+            ),
         ))
 
     return group
@@ -557,6 +808,9 @@ class RunOptions(object):
   def callback_help_passes(self, option, opt_str, value, parser):
     self.pass_manager.help_passes()
     sys.exit(0)
+
+  def callback_manpage(self, option, opt_str, value, parser):
+    raise NotImplementedError()
 
   def callback_version(self, option, opt_str, value, parser):
     sys.stdout.write(

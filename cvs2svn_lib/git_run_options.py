@@ -18,7 +18,10 @@
 
 
 import sys
+import datetime
+import codecs
 
+from cvs2svn_lib.version import VERSION
 from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.log import Log
@@ -27,6 +30,8 @@ from cvs2svn_lib.run_options import not_both
 from cvs2svn_lib.run_options import RunOptions
 from cvs2svn_lib.run_options import ContextOption
 from cvs2svn_lib.run_options import IncompatibleOption
+from cvs2svn_lib.run_options import authors
+from cvs2svn_lib.man_writer import ManWriter
 from cvs2svn_lib.project import Project
 from cvs2svn_lib.rcs_revision_manager import RCSRevisionReader
 from cvs2svn_lib.cvs_revision_manager import CVSRevisionReader
@@ -37,6 +42,50 @@ from cvs2svn_lib.revision_manager import NullRevisionRecorder
 from cvs2svn_lib.revision_manager import NullRevisionExcluder
 from cvs2svn_lib.fulltext_revision_recorder \
      import SimpleFulltextRevisionRecorderAdapter
+
+
+short_desc = 'convert a cvs repository into a git repository'
+
+synopsis = """\
+.B cvs2git
+[\\fIOPTION\\fR]... \\fIOUTPUT-OPTIONS CVS-REPOS-PATH\\fR
+.br
+.B cvs2git
+[\\fIOPTION\\fR]... \\fI--options=PATH\\fR
+"""
+
+long_desc = """\
+Create a new git repository based on the version history stored in a
+CVS repository. Each CVS commit will be mirrored in the git
+repository, including such information as date of commit and id of the
+committer.
+.P
+The output of this program are a "blobfile" and a "dumpfile", which
+together can be loaded into a git repository using "git fast-import".
+.P
+\\fICVS-REPOS-PATH\\fR is the filesystem path of the part of the CVS
+repository that you want to convert.  This path doesn't have to be the
+top level directory of a CVS repository; it can point at a project
+within a repository, in which case only that project will be
+converted.  This path or one of its parent directories has to contain
+a subdirectory called CVSROOT (though the CVSROOT directory can be
+empty).
+.P
+It is not possible directly to convert a CVS repository to which you
+only have remote access, but the FAQ describes tools that may be used
+to create a local copy of a remote CVS repository.
+"""
+
+files = """\
+A directory called \\fIcvs2svn-tmp\\fR (or the directory specified by
+\\fB--tmpdir\\fR) is used as scratch space for temporary data files.
+"""
+
+see_also = [
+  ('cvs', '1'),
+  ('git', '1'),
+  ('git-fast-import', '1'),
+  ]
 
 
 class GitRunOptions(RunOptions):
@@ -52,12 +101,19 @@ class GitRunOptions(RunOptions):
         '--blobfile', type='string',
         action='store',
         help='path to which the "blob" data should be written',
+        man_help=(
+            'Write the "blob" data (containing revision contents) to '
+            '\\fIpath\\fR.'
+            ),
         metavar='PATH',
         ))
     group.add_option(IncompatibleOption(
         '--dumpfile', type='string',
         action='store',
         help='path to which the revision data should be written',
+        man_help=(
+            'Write the revision data (branches and commits) to \\fIpath\\fR.'
+            ),
         metavar='PATH',
         ))
     group.add_option(ContextOption(
@@ -65,6 +121,9 @@ class GitRunOptions(RunOptions):
         action='store_true',
         help=(
             'do not create any output; just print what would happen.'
+            ),
+        man_help=(
+            'Do not create any output; just print what would happen.'
             ),
         ))
 
@@ -81,6 +140,10 @@ class GitRunOptions(RunOptions):
             'use CVS to extract revision contents (slower than '
             '--use-rcs but more reliable) (default)'
             ),
+        man_help=(
+            'Use CVS to extract revision contents.  This option is slower '
+            'than \\fB--use-rcs\\fR but more reliable.'
+            ),
         ))
     self.parser.set_default('use_rcs', False)
     group.add_option(IncompatibleOption(
@@ -90,9 +153,30 @@ class GitRunOptions(RunOptions):
             'use RCS to extract revision contents (faster than '
             '--use-cvs but fails in some cases)'
             ),
+        man_help=(
+            'Use RCS \'co\' to extract revision contents.  This option is '
+            'faster than \\fB--use-cvs\\fR but fails in some cases.'
+            ),
         ))
 
     return group
+
+  def callback_manpage(self, option, opt_str, value, parser):
+    f = codecs.getwriter('utf_8')(sys.stdout)
+    ManWriter(
+        parser,
+        section='1',
+        date=datetime.date.today(),
+        source='Version %s' % (VERSION,),
+        manual='User Commands',
+        short_desc=short_desc,
+        synopsis=synopsis,
+        long_desc=long_desc,
+        files=files,
+        authors=authors,
+        see_also=see_also,
+        ).write_manpage(f)
+    sys.exit(0)
 
   def process_io_options(self):
     """Process input/output options.

@@ -25,7 +25,7 @@ setup(
     license = "Apache-style",
     # Data.
     packages = ["cvs2svn_lib", "cvs2svn_rcsparse"],
-    scripts = ["cvs2svn"]
+    scripts = ["cvs2svn", "cvs2git"]
     )
 
 

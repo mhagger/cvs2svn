@@ -83,7 +83,12 @@ class ManWriter(object):
 
   def write_title(self, f):
     f.write('.\\" Process this file with\n')
-    f.write('.\\" groff -man -Tascii cvs2svn.1\n')
+    f.write(
+        '.\\" groff -man -Tascii %s.%s\n' % (
+            self.parser.get_prog_name(),
+            self.section,
+            )
+        )
     f.write(
         '.TH %s "%s" "%s" "%s" "%s"\n' % (
             self.parser.get_prog_name().upper(),

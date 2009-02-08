@@ -23,6 +23,19 @@ setup(
     author_email = "<dev@cvs2svn.tigris.org>",
     url = "http://cvs2svn.tigris.org/",
     license = "Apache-style",
+    classifiers = [
+        'Development Status :: 5 - Production/Stable',
+        'Environment :: Console',
+        'Intended Audience :: Developers',
+        'Intended Audience :: System Administrators',
+        'License :: OSI Approved',
+        'Natural Language :: English',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python :: 2',
+        'Topic :: Software Development :: Version Control',
+        'Topic :: Software Development :: Version Control :: CVS',
+        'Topic :: Utilities',
+        ],
     # Data.
     packages = ["cvs2svn_lib", "cvs2svn_rcsparse"],
     scripts = ["cvs2svn", "cvs2git"]

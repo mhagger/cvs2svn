@@ -18,7 +18,7 @@ setup(
     # Metadata.
     name = "cvs2svn",
     version = get_version(),
-    description = "CVS-to-Subversion repository converter",
+    description = "CVS to Subversion or git repository converter",
     author = "The cvs2svn Team",
     author_email = "<dev@cvs2svn.tigris.org>",
     url = "http://cvs2svn.tigris.org/",

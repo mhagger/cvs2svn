@@ -173,7 +173,25 @@ class SVNRunOptions(RunOptions):
         action='store_true',
         help=(
             'use internal code to extract revision contents '
-            '(very fast but disk space intensive) (default)'
+            '(fastest but disk space intensive) (default)'
+            ),
+        ))
+    self.parser.set_default('use_cvs', False)
+    group.add_option(IncompatibleOption(
+        '--use-cvs',
+        action='store_true',
+        help=(
+            'use CVS to extract revision contents (slower than '
+            '--use-internal-co or --use-rcs)'
+            ),
+        ))
+    self.parser.set_default('use_rcs', False)
+    group.add_option(IncompatibleOption(
+        '--use-rcs',
+        action='store_true',
+        help=(
+            'use RCS to extract revision contents (faster than '
+            '--use-cvs but fails in some cases)'
             ),
         ))
 

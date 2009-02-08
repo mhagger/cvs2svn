@@ -70,6 +70,30 @@ class GitRunOptions(RunOptions):
 
     return group
 
+  def _get_extraction_options_group(self):
+    group = RunOptions._get_extraction_options_group(self)
+
+    self.parser.set_default('use_cvs', False)
+    group.add_option(IncompatibleOption(
+        '--use-cvs',
+        action='store_true',
+        help=(
+            'use CVS to extract revision contents (slower than '
+            '--use-rcs but more reliable) (default)'
+            ),
+        ))
+    self.parser.set_default('use_rcs', False)
+    group.add_option(IncompatibleOption(
+        '--use-rcs',
+        action='store_true',
+        help=(
+            'use RCS to extract revision contents (faster than '
+            '--use-cvs but fails in some cases)'
+            ),
+        ))
+
+    return group
+
   def process_io_options(self):
     """Process input/output options.
 

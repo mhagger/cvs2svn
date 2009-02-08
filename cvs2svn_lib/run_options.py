@@ -451,21 +451,6 @@ class RunOptions(object):
 
   def _get_extraction_options_group(self):
     group = OptionGroup(self.parser, 'Extraction options')
-    self.parser.set_default('use_rcs', False)
-    group.add_option(IncompatibleOption(
-        '--use-rcs',
-        action='store_true',
-        help='use RCS to extract revision contents',
-        ))
-    self.parser.set_default('use_cvs', False)
-    group.add_option(IncompatibleOption(
-        '--use-cvs',
-        action='store_true',
-        help=(
-            'use CVS to extract revision contents '
-            '(only use this if having problems with RCS)'
-            ),
-        ))
 
     return group
 

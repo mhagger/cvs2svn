@@ -38,7 +38,7 @@ setup(
         ],
     # Data.
     packages = ["cvs2svn_lib", "cvs2svn_rcsparse"],
-    scripts = ["cvs2svn", "cvs2git"]
+    scripts = ["cvs2svn", "cvs2git"],
     )
 
 

@@ -55,9 +55,9 @@ best choice. However, if you want to use the newest cvs2svn features or if
 you're debugging or patching cvs2svn, you might want to use the trunk version
 (which is usually quite stable). To do so, use Subversion to check out a
 working copy from http://cvs2svn.tigris.org/svn/cvs2svn/trunk/ using a command
-like
+like::
 
- svn co --username=guest http://cvs2svn.tigris.org/svn/cvs2svn/trunk cvs2svn-trunk
+  svn co --username=guest http://cvs2svn.tigris.org/svn/cvs2svn/trunk cvs2svn-trunk
 
 (the password is empty; i.e., just press return).
 """,

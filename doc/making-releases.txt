@@ -48,6 +48,12 @@ Making releases
       no need to send to both lists.)  See example template below.
    5. Update the topic on #cvs2svn.
 
+ Publishing the release to PyPI (http://pypi.python.org):
+   1. Unpack the release tarball.
+   2. Run
+        python setup.py register
+      Within PyPI, cvs2svn appears here: http://pypi.python.org/pypi/cvs2svn
+
 
 Release announcement templates
 ==============================

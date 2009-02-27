@@ -20,7 +20,7 @@ setup(
     version = get_version(),
     description = "CVS to Subversion or git repository converter",
     author = "The cvs2svn team",
-    author_email = "<dev@cvs2svn.tigris.org>",
+    author_email = "dev@cvs2svn.tigris.org",
     url = "http://cvs2svn.tigris.org/",
     download_url = "http://cvs2svn.tigris.org/servlets/ProjectDocumentList?folderID=2976",
     license = "Apache-style",

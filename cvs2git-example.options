@@ -30,6 +30,10 @@
 #
 #     cvs2git --options=cvs2git-example.options
 #
+# The output of cvs2git is a blob file and a dump file that can be
+# loaded into git using the "git fast-import" command.  Please read
+# www/cvs2git.html for more information.
+#
 # Many options do not have defaults, so it is easier to copy this file
 # and modify what you need rather than creating a new options file
 # from scratch.  This file is in Python syntax, but you don't need to

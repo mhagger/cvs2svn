@@ -189,13 +189,16 @@ get started.</p>
 
 <h2><a name="docs">Documentation</a></h2>
 
-<p>There is not a lot of documentation specific to cvs2git, but much
-of the cvs2svn documentation applies fairly straightforwardly to
+<p>There is some documentation specific to cvs2git, and much of the
+cvs2svn documentation also applies fairly straightforwardly to
 cvs2git.  See the following sources:</p>
 
 <ul>
 
   <li>This document.</li>
+
+  <li>The cvs2git man page and the output of <tt>cvs2git
+    --help</tt>.</li>
 
   <li><a href="cvs2svn.html#intro">The cvs2svn documentation</a> and
     <a href="faq.html">the cvs2svn FAQ</a>, which contain much general
@@ -224,7 +227,7 @@ to git using cvs2git.</p>
     including either RCS or CVS (used to read revision contents from
     the CVS repository).</li>
 
-  <li>Obtain a copy of cvs2svn version 2.1 or newer.  It is
+  <li>Obtain a copy of cvs2svn/cvs2git version 2.1 or newer.  It is
     recommended that you use the most recent version available, or
     even the development version.
 
@@ -233,7 +236,7 @@ to git using cvs2git.</p>
       <li>To install cvs2svn from a <a
         href="http://cvs2svn.tigris.org/servlets/ProjectDocumentList">tarball</a>,
         simply unpack the tarball into a directory on your conversion
-        computer (cvs2svn can be run directly from this
+        computer (cvs2git can be run directly from this
         directory).</li>
 
       <li>
@@ -259,24 +262,45 @@ make check # ...optional
 
   </li>
 
-  <li>Configure cvs2svn for your conversion.  This has to be done via
-    the <a href="cvs2svn.html#cmd-vs-options">options-file method</a>.
-    Use <tt>cvs2git-example.options</tt> in the cvs2svn source tree as
-    your starting point; the file contains lots of documentation.</li>
-
   <li>
 
-    <p>Run cvs2git:</p>
+    Configure cvs2git for your conversion.  This can be done via
+    command-line options or via an options file:
+
+    <ul>
+
+      <li>The command-line options for running cvs2git are documented
+        in the cvs2git man page and in the output of <tt>cvs2git
+        --help</tt>.</li>
+
+      <li>
+
+        <p>The more flexible <a
+          href="cvs2svn.html#cmd-vs-options">options-file method</a>
+          requires you to create an options file, then start cvs2git
+          with</p>
 
 <pre>
 cvs2git --options=OPTIONS-FILE
 </pre>
 
-    <p>.  This creates two output files in <a
+        <p>Use <tt>cvs2git-example.options</tt> in the cvs2svn source
+          tree as your starting point; the file contains lots of
+          documentation.</p>
+
+      </li>
+
+    </ul>
+
+  </li>
+
+  <li>
+
+    <p>Run cvs2git.  This creates two output files in <a
     href="http://www.kernel.org/pub/software/scm/git/docs/git-fast-import.html">git
     fast-import</a> format.  The names of these files are specified by
-    your options file.  In the example, these files are named
-    <tt>cvs2svn-tmp/git-blob.dat</tt> and
+    your options file or command-line arguments.  In the example,
+    these files are named <tt>cvs2svn-tmp/git-blob.dat</tt> and
     <tt>cvs2svn-tmp/git-dump.dat</tt>.</p>
 
   </li>

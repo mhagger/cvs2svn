@@ -90,6 +90,7 @@ from cvs2svn_lib.symbol_strategy import HeuristicPreferredParentRule
 from cvs2svn_lib.symbol_strategy import SymbolHintsFileRule
 from cvs2svn_lib.symbol_transform import ReplaceSubstringsSymbolTransform
 from cvs2svn_lib.symbol_transform import RegexpSymbolTransform
+from cvs2svn_lib.symbol_transform import IgnoreSymbolTransform
 from cvs2svn_lib.symbol_transform import NormalizePathsSymbolTransform
 from cvs2svn_lib.property_setters import AutoPropsPropertySetter
 from cvs2svn_lib.property_setters import CVSBinaryFileDefaultMimeTypeSetter
@@ -555,6 +556,17 @@ run_options.add_project(
         #'releases',
         ],
     symbol_transforms=[
+        # Use IgnoreSymbolTransforms like the following to completely
+        # ignore symbols matching a regular expression when parsing
+        # the CVS repository, for example to avoid warnings about
+        # branches with two names and to choose the preferred name.
+        # It is *not* recommended to use this instead of
+        # ExcludeRegexpStrategyRule; though more efficient,
+        # IgnoreSymbolTransforms are less flexible and don't exclude
+        # branches correctly.  The argument is a Python-style regular
+        # expression that has to match the *whole* CVS symbol name:
+        #IgnoreSymbolTransform(r'nightly-build-tag-.*')
+
         # RegexpSymbolTransforms transform symbols textually using a
         # regular expression.  The first argument is a Python regular
         # expression pattern and the second is a replacement pattern.

@@ -542,7 +542,7 @@ class GitOutputOption(OutputOption):
     # The third requirement is that the source LOD contains exactly
     # the same files as we need to add to the symbol:
     try:
-      source_node = self._mirror.get_current_lod_directory(source_lod)
+      source_node = self._mirror.get_old_lod_directory(source_lod, svn_revnum)
     except KeyError:
       raise InternalError('Source %r does not exist' % (source_lod,))
     cvs_file_set = set([cvs_symbol.cvs_file for cvs_symbol in cvs_symbols])

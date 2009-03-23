@@ -528,7 +528,7 @@ class GitOutputOption(OutputOption):
 
     (source_lod, svn_revnum, cvs_symbols) = source_groups[0]
 
-    # The second requirement is that the destionation LOD not already
+    # The second requirement is that the destination LOD not already
     # exist:
     try:
       self._mirror.get_current_lod_directory(svn_commit.symbol)

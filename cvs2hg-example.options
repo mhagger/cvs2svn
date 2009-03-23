@@ -546,15 +546,14 @@ run_options.set_project(
         # (strings with a preceding 'r', like shown in the examples)
         # for the regexp and its replacement to avoid backslash
         # substitution within those strings.
-
         #RegexpSymbolTransform(r'release-(\d+)_(\d+)',
         #                      r'release-\1.\2'),
         #RegexpSymbolTransform(r'release-(\d+)_(\d+)_(\d+)',
         #                      r'release-\1.\2.\3'),
 
         # Simple 1:1 character replacements can also be done.  The
-        # following transform converts backslashes into forward
-        # slashes:
+        # following transform, which converts backslashes into forward
+        # slashes, should usually be included:
         ReplaceSubstringsSymbolTransform('\\','/'),
 
         # This last rule eliminates leading, trailing, and repeated

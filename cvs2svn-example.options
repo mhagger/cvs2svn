@@ -551,17 +551,33 @@ run_options.add_project(
         # The project's trunk_path, branches_path, and tags_path
         # directories are added to the SVN repository in the project's
         # first commit.  If you would like additional SVN directories
-        # to be created in the project's first commit, list them here.
+        # to be created in the project's first commit, list them here:
         #'releases',
         ],
     symbol_transforms=[
+        # RegexpSymbolTransforms transform symbols textually using a
+        # regular expression.  The first argument is a Python regular
+        # expression pattern and the second is a replacement pattern.
+        # The pattern is matched against each symbol name.  If it
+        # matches the whole symbol name, then the symbol name is
+        # replaced with the corresponding replacement text.  The
+        # replacement can include substitution patterns (e.g., r'\1'
+        # or r'\g<name>').  Typically you will want to use raw strings
+        # (strings with a preceding 'r', like shown in the examples)
+        # for the regexp and its replacement to avoid backslash
+        # substitution within those strings.
         #RegexpSymbolTransform(r'release-(\d+)_(\d+)',
         #                      r'release-\1.\2'),
         #RegexpSymbolTransform(r'release-(\d+)_(\d+)_(\d+)',
         #                      r'release-\1.\2.\3'),
-        # Convert backslashes into forward slashes:
+
+        # Simple 1:1 character replacements can also be done.  The
+        # following transform, which converts backslashes into forward
+        # slashes, should usually be included:
         ReplaceSubstringsSymbolTransform('\\','/'),
-        # Eliminate leading, trailing, and repeated slashes:
+
+        # Eliminate leading, trailing, and repeated slashes.  This
+        # transform should always be included:
         NormalizePathsSymbolTransform(),
         ],
     symbol_strategy_rules=[
@@ -578,20 +594,13 @@ run_options.add_project(
 #    branches_path='projA/branches',
 #    tags_path='projA/tags',
 #    initial_directories=[
-#        # The project's trunk_path, branches_path, and tags_path
-#        # directories are added to the SVN repository in the project's
-#        # first commit.  If you would like additional SVN directories
-#        # to be created in the project's first commit, list them here.
-#        #'releases',
 #        ],
 #    symbol_transforms=[
 #        #RegexpSymbolTransform(r'release-(\d+)_(\d+)',
 #        #                      r'release-\1.\2'),
 #        #RegexpSymbolTransform(r'release-(\d+)_(\d+)_(\d+)',
 #        #                      r'release-\1.\2.\3'),
-#        # Convert backslashes into forward slashes:
 #        ReplaceSubstringsSymbolTransform('\\','/'),
-#        # Eliminate leading, trailing, and repeated slashes:
 #        NormalizePathsSymbolTransform(),
 #        ],
 #    symbol_strategy_rules=[

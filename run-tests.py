@@ -3336,10 +3336,18 @@ def invalid_symbol():
 
 
 def invalid_symbol_ignore():
-  "ignore a symbol with the incorrect format"
+  "ignore a symbol using a SymbolMapper"
 
   conv = ensure_conversion(
       'invalid-symbol', options_file='cvs2svn-ignore.options'
+      )
+
+
+def invalid_symbol_ignore2():
+  "ignore a symbol using an IgnoreSymbolTransform"
+
+  conv = ensure_conversion(
+      'invalid-symbol', options_file='cvs2svn-ignore2.options'
       )
 
 
@@ -3623,6 +3631,7 @@ test_list = [
     invalid_symbol,
     invalid_symbol_ignore,
 # 150:
+    invalid_symbol_ignore2,
     EOLVariants('LF'),
     EOLVariants('CR'),
     EOLVariants('CRLF'),
@@ -3632,8 +3641,8 @@ test_list = [
     exclude_ntdb_test,
     mirror_keyerror2_test,
     mirror_keyerror3_test,
-    XFail(add_cvsignore_to_branch_test),
 # 160:
+    XFail(add_cvsignore_to_branch_test),
     missing_deltatext,
     ]
 

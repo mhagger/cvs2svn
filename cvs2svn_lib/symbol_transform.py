@@ -213,3 +213,21 @@ class SubtreeSymbolMapper(SymbolTransform):
           cvs_path = new_cvs_path
 
 
+class IgnoreSymbolTransform(SymbolTransform):
+  """Ignore symbols matching a specified regular expression."""
+
+  def __init__(self, pattern):
+    """Create an SymbolTransform that ignores symbols matching PATTERN.
+
+    PATTERN is a regular expression that should match the whole symbol
+    name."""
+
+    self.pattern = re.compile('^' + pattern + '$')
+
+  def transform(self, cvs_file, symbol_name, revision):
+    if self.pattern.match(symbol_name):
+      return None
+    else:
+      return symbol_name
+
+

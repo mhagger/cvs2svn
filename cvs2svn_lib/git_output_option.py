@@ -604,7 +604,7 @@ class GitOutputOption(OutputOption):
           )
     self._mirror.end_commit()
 
-  def _set_tag(self, svn_commit, mark, author, log_msg):
+  def _set_tag(self, svn_commit, mark):
     self.f.write('reset refs/tags/%s\n' % (svn_commit.symbol.name,))
     self.f.write('from :%d\n' % (mark,))
 
@@ -613,9 +613,6 @@ class GitOutputOption(OutputOption):
     # the tag, then the tag.  We never delete the fixup branch.  Also,
     # a fixup branch is created even if the tag could be created from
     # a single source.
-    author = self._get_author(svn_commit)
-    log_msg = self._get_log_msg(svn_commit)
-
     self._mirror.start_commit(svn_commit.revnum)
 
     source_groups = list(self._get_source_groups(svn_commit))
@@ -626,7 +623,7 @@ class GitOutputOption(OutputOption):
           % (svn_commit.symbol, source_lod, source_revnum,)
           )
       mark = self._get_source_mark(source_lod, source_revnum)
-      self._set_tag(svn_commit, mark, author, log_msg)
+      self._set_tag(svn_commit, mark)
     else:
       Log().debug(
           '%s will be created via a fixup branch' % (svn_commit.symbol,)
@@ -642,7 +639,7 @@ class GitOutputOption(OutputOption):
 
       # Store the mark of the last commit to the fixup branch as the
       # value of the tag:
-      self._set_tag(svn_commit, mark, author, log_msg)
+      self._set_tag(svn_commit, mark)
       self.f.write('reset %s\n' % (FIXUP_BRANCH_NAME,))
       self.f.write('\n')
 

@@ -550,13 +550,10 @@ class GitOutputOption(OutputOption):
       source_node = self._mirror.get_old_lod_directory(source_lod, svn_revnum)
     except KeyError:
       raise InternalError('Source %r does not exist' % (source_lod,))
-    cvs_file_set = set([cvs_symbol.cvs_file for cvs_symbol in cvs_symbols])
-    for cvs_file in self._get_all_files(source_node):
-      try:
-        cvs_file_set.remove(cvs_file)
-      except KeyError:
-        return False
-    return not cvs_file_set
+    return (
+        set([cvs_symbol.cvs_file for cvs_symbol in cvs_symbols])
+        == set(self._get_all_files(source_node))
+        )
 
   def _get_source_mark(self, source_lod, revnum):
     """Return the mark active on SOURCE_LOD at the end of REVNUM."""

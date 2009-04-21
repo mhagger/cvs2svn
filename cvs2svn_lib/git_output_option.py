@@ -574,9 +574,7 @@ class GitOutputOption(OutputOption):
 
     self.f.write('commit %s\n' % (git_branch,))
     self.f.write('mark :%d\n' % (mark,))
-    self.f.write(
-        'committer %s %d +0000\n' % (author, svn_commit.date,)
-        )
+    self.f.write('committer %s %d +0000\n' % (author, svn_commit.date,))
     self.f.write('data %d\n' % (len(log_msg),))
     self.f.write('%s\n' % (log_msg,))
 

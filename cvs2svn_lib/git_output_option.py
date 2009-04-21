@@ -357,11 +357,17 @@ class GitOutputOption(OutputOption):
     self.revision_writer.start(self.f, self._mirror)
 
   def _create_commit_mark(self, lod, revnum):
-    assert revnum >= self._youngest
     mark = self._mark_generator.gen_id()
+    self._set_lod_mark(lod, revnum, mark)
+    return mark
 
-    # If there is already an entry for this revnum, overwrite it.  If
-    # not, append the new entry to the list.
+  def _set_lod_mark(self, lod, revnum, mark):
+    """Record MARK as the status of LOD for REVNUM.
+
+    If there is already an entry for REVNUM, overwrite it.  If not,
+    append a new entry to the self._marks list for LOD."""
+
+    assert revnum >= self._youngest
     entry = (revnum, mark)
     try:
       modifications = self._marks[lod]
@@ -376,7 +382,6 @@ class GitOutputOption(OutputOption):
       else:
         modifications.append(entry)
     self._youngest = revnum
-    return mark
 
   def _get_author(self, svn_commit):
     """Return the author to be used for SVN_COMMIT.

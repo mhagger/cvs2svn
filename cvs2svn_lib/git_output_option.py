@@ -611,9 +611,6 @@ class GitOutputOption(OutputOption):
     self.f.write('reset refs/%s/%s\n' % (category, symbol.name,))
     self.f.write('from :%d\n' % (mark,))
 
-  def _set_tag(self, svn_commit, mark):
-    return self._set_symbol(svn_commit.symbol, mark)
-
   def process_tag_commit(self, svn_commit):
     # FIXME: For now we create a fixup branch with the same name as
     # the tag, then the tag.  We never delete the fixup branch.  Also,
@@ -629,7 +626,7 @@ class GitOutputOption(OutputOption):
           % (svn_commit.symbol, source_lod, source_revnum,)
           )
       mark = self._get_source_mark(source_lod, source_revnum)
-      self._set_tag(svn_commit, mark)
+      self._set_symbol(svn_commit.symbol, mark)
     else:
       Log().debug(
           '%s will be created via a fixup branch' % (svn_commit.symbol,)
@@ -645,7 +642,7 @@ class GitOutputOption(OutputOption):
 
       # Store the mark of the last commit to the fixup branch as the
       # value of the tag:
-      self._set_tag(svn_commit, mark)
+      self._set_symbol(svn_commit.symbol, mark)
       self.f.write('reset %s\n' % (FIXUP_BRANCH_NAME,))
       self.f.write('\n')
 

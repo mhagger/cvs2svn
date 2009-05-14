@@ -32,6 +32,8 @@ from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.openings_closings import SymbolingsReader
 from cvs2svn_lib.symbol import Trunk
+from cvs2svn_lib.symbol import Branch
+from cvs2svn_lib.symbol import Tag
 from cvs2svn_lib.cvs_item import CVSRevisionAdd
 from cvs2svn_lib.cvs_item import CVSRevisionChange
 from cvs2svn_lib.cvs_item import CVSRevisionDelete
@@ -599,9 +601,18 @@ class GitOutputOption(OutputOption):
           )
     self._mirror.end_commit()
 
-  def _set_tag(self, svn_commit, mark):
-    self.f.write('reset refs/tags/%s\n' % (svn_commit.symbol.name,))
+  def _set_symbol(self, symbol, mark):
+    if isinstance(symbol, Branch):
+      category = 'heads'
+    elif isinstance(symbol, Tag):
+      category = 'tags'
+    else:
+      raise InternalError()
+    self.f.write('reset refs/%s/%s\n' % (category, symbol.name,))
     self.f.write('from :%d\n' % (mark,))
+
+  def _set_tag(self, svn_commit, mark):
+    return self._set_symbol(svn_commit.symbol, mark)
 
   def process_tag_commit(self, svn_commit):
     # FIXME: For now we create a fixup branch with the same name as

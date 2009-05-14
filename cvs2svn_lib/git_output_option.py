@@ -591,9 +591,8 @@ class GitOutputOption(OutputOption):
 
   def process_branch_commit(self, svn_commit):
     self._mirror.start_commit(svn_commit.revnum)
-    for groups in get_chunks(
-          self._get_source_groups(svn_commit), self.max_merges
-          ):
+    source_groups = list(self._get_source_groups(svn_commit))
+    for groups in get_chunks(source_groups, self.max_merges):
       self._process_symbol_commit(
           svn_commit, 'refs/heads/%s' % (svn_commit.symbol.name,),
           groups,

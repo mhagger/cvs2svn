@@ -17,7 +17,11 @@
 """This module contains database facilities used by cvs2svn."""
 
 
-import md5
+try:
+  from hashlib import md5
+except ImportError:
+  from md5 import new as md5
+
 
 from cvs2svn_lib import config
 from cvs2svn_lib.common import FatalError
@@ -320,7 +324,7 @@ class DumpfileDelegate(SVNRepositoryDelegate):
       self.dumpfile.write(prop_contents)
 
     # Insert the rev contents, calculating length and checksum as we go.
-    checksum = md5.new()
+    checksum = md5()
     length = 0
     if buf is None:
       buf = stream.read(config.PIPE_READ_SIZE)

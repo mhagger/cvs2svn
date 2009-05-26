@@ -17,7 +17,10 @@
 """This module contains classes to manage CVSRevision metadata."""
 
 
-import sha
+try:
+  from hashlib import sha1
+except ImportError:
+  from sha import new as sha1
 
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.database import IndexedDatabase
@@ -86,7 +89,7 @@ class MetadataLogger:
     if not Ctx().cross_branch_commits:
       key.append(branch_name or '')
 
-    digest = sha.new('\0'.join(key)).digest()
+    digest = sha1('\0'.join(key)).digest()
     try:
       # See if it is already known:
       return self._digest_to_id[digest]

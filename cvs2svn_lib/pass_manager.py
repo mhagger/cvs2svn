@@ -124,8 +124,8 @@ class PassManager:
       return pass_number
     except ValueError:
       # Is pass_name the name of one of the passes?
-      for i in range(len(self.passes)):
-        if self.passes[i].name == pass_name:
+      for (i, the_pass) in enumerate(self.passes):
+        if the_pass.name == pass_name:
           return i + 1
       raise InvalidPassError('Unknown pass name (%r).' % (pass_name,))
 
@@ -209,7 +209,7 @@ class PassManager:
     """Output (to sys.stdout) the indices and names of available passes."""
 
     print 'PASSES:'
-    for i in range(len(self.passes)):
-      print '%5d : %s' % (i + 1, self.passes[i].name,)
+    for (i, the_pass) in enumerate(self.passes):
+      print '%5d : %s' % (i + 1, the_pass.name,)
 
 

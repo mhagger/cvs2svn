@@ -709,8 +709,8 @@ class InitializeChangesetsPass(Pass):
       # extent that the timestamps are correct and unique).
       changeset_items.sort(self.compare_items)
       indexes = {}
-      for i in range(len(changeset_items)):
-        indexes[changeset_items[i].id] = i
+      for (i, changeset_item) in enumerate(changeset_items):
+        indexes[changeset_item.id] = i
       # How many internal dependencies would be broken by breaking the
       # Changeset after a particular index?
       breaks = [0] * len(changeset_items)

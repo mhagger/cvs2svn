@@ -73,15 +73,15 @@ class DumpfileDelegate(SVNRepositoryDelegate):
     pieces = path.split('/')
     # Convert each path component separately (as they may each use
     # different encodings).
-    for i in range(len(pieces)):
-      try:
+    try:
+      for i in range(len(pieces)):
         pieces[i] = Ctx().cvs_filename_decoder(pieces[i]).encode('utf8')
-      except UnicodeError:
-        raise FatalError(
-            "Unable to convert a path '%s' to internal encoding.\n"
-            "Consider rerunning with one or more '--encoding' parameters or\n"
-            "with '--fallback-encoding'."
-            % (path,))
+    except UnicodeError:
+      raise FatalError(
+          "Unable to convert a path '%s' to internal encoding.\n"
+          "Consider rerunning with one or more '--encoding' parameters or\n"
+          "with '--fallback-encoding'."
+          % (path,))
     return '/'.join(pieces)
 
   def _string_for_prop(self, name, value):

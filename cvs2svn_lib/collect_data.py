@@ -378,8 +378,7 @@ class _SymbolDataCollector(object):
     # _symbol_defs:
     dup_indexes = set()
 
-    for i in range(len(self._symbol_defs)):
-      (name, revision) = self._symbol_defs[i]
+    for (i, (name, revision)) in enumerate(self._symbol_defs):
       if (name, revision) in known_definitions:
         if len(known_definitions[name, revision]) == 1:
           Log().verbose(
@@ -394,8 +393,8 @@ class _SymbolDataCollector(object):
         known_definitions[name, revision] = [i]
 
     self._symbol_defs = [
-        self._symbol_defs[i]
-        for i in range(len(self._symbol_defs))
+        symbol_def
+        for (i, symbol_def) in enumerate(self._symbol_defs)
         if i not in dup_indexes
         ]
 
@@ -411,8 +410,7 @@ class _SymbolDataCollector(object):
     # list of their definitions' indexes in self._symbol_defs:
     known_symbols = {}
 
-    for i in range(len(self._symbol_defs)):
-      (name, revision) = self._symbol_defs[i]
+    for (i, (name, revision)) in enumerate(self._symbol_defs):
       if name in known_symbols:
         known_symbols[name].append(i)
       else:
@@ -436,8 +434,8 @@ class _SymbolDataCollector(object):
         dup_indexes.update(indexes[:-1])
 
     self._symbol_defs = [
-        self._symbol_defs[i]
-        for i in range(len(self._symbol_defs))
+        symbol_def
+        for (i, symbol_def) in enumerate(self._symbol_defs)
         if i not in dup_indexes
         ]
 
@@ -1352,8 +1350,8 @@ class CollectData:
   def _set_cvs_path_ordinals(self):
     cvs_files = list(Ctx()._cvs_file_db.itervalues())
     cvs_files.sort(CVSPath.slow_compare)
-    for i in range(len(cvs_files)):
-      cvs_files[i].ordinal = i
+    for (i, cvs_file) in enumerate(cvs_files):
+      cvs_file.ordinal = i
 
   def close(self):
     """Close the data structures associated with this instance.

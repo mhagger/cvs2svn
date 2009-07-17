@@ -70,19 +70,19 @@ class DumpfileDelegate(SVNRepositoryDelegate):
   def _utf8_path(self, path):
     """Return a copy of PATH encoded in UTF-8."""
 
-    pieces = path.split('/')
     # Convert each path component separately (as they may each use
     # different encodings).
     try:
-      for i in range(len(pieces)):
-        pieces[i] = Ctx().cvs_filename_decoder(pieces[i]).encode('utf8')
+      return '/'.join([
+          Ctx().cvs_filename_decoder(piece).encode('utf8')
+          for piece in path.split('/')
+          ])
     except UnicodeError:
       raise FatalError(
           "Unable to convert a path '%s' to internal encoding.\n"
           "Consider rerunning with one or more '--encoding' parameters or\n"
           "with '--fallback-encoding'."
           % (path,))
-    return '/'.join(pieces)
 
   def _string_for_prop(self, name, value):
     """Return a property in the form needed for the dumpfile."""

@@ -3146,9 +3146,12 @@ def timestamp_chaos():
       '2007-01-01 21:00:02', # revision 1.2 of file2.txt, adjusted backwards
       '2007-01-01 22:00:00', # revision 1.3 of both files
       ]
+
+  # Convert the times to seconds since the epoch, in UTC:
+  times = [calendar.timegm(svn_strptime(t)) for t in times]
+
   for i in range(len(times)):
-    if abs(conv.logs[i + 1].date -
-           calendar.timegm(svn_strptime(times[i]))) > 0.1:
+    if abs(conv.logs[i + 1].date - times[i]) > 0.1:
       raise Failure()
 
 

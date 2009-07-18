@@ -43,6 +43,7 @@ import time
 import os.path
 import locale
 import textwrap
+import calendar
 from difflib import Differ
 
 # Make sure that a supported version of Python is being used:
@@ -3137,6 +3138,7 @@ def timestamp_chaos():
 
   conv = ensure_conversion('timestamp-chaos', args=["-v"])
 
+  # The times are expressed here in UTC:
   times = [
       '2007-01-01 21:00:00', # Initial commit
       '2007-01-01 21:00:00', # revision 1.1 of both files
@@ -3145,7 +3147,8 @@ def timestamp_chaos():
       '2007-01-01 22:00:00', # revision 1.3 of both files
       ]
   for i in range(len(times)):
-    if abs(conv.logs[i + 1].date - time.mktime(svn_strptime(times[i]))) > 0.1:
+    if abs(conv.logs[i + 1].date -
+           calendar.timegm(svn_strptime(times[i]))) > 0.1:
       raise Failure()
 
 
@@ -3649,9 +3652,11 @@ test_list = [
 if __name__ == '__main__':
 
   # Configure the environment for reproducable output from svn, etc.
-  # I have no idea if this works on Windows too.
   os.environ["LC_ALL"] = "C"
-  os.environ["TZ"] = "UTC"
+
+  # Unfortunately, there is no way under Windows to make Subversion
+  # think that the local time zone is UTC, so we just work in the
+  # local time zone.
 
   # The Subversion test suite code assumes it's being invoked from
   # within a working copy of the Subversion sources, and tries to use

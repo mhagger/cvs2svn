@@ -3141,7 +3141,7 @@ def timestamp_chaos():
       '2007-01-01 21:00:00', # Initial commit
       '2007-01-01 21:00:00', # revision 1.1 of both files
       '2007-01-01 21:00:01', # revision 1.2 of file1.txt, adjusted forwards
-      '2007-01-01 21:00:02', # revision 1.2 of file1.txt, adjusted backwards
+      '2007-01-01 21:00:02', # revision 1.2 of file2.txt, adjusted backwards
       '2007-01-01 22:00:00', # revision 1.3 of both files
       ]
   for i in range(len(times)):

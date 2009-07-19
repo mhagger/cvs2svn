@@ -68,8 +68,21 @@ class SVNOutputOption(OutputOption):
 
     pass
 
-  def __init__(self):
+  def __init__(self, author_transforms=None):
     self._mirror = RepositoryMirror()
+
+    def to_utf8(s):
+      if isinstance(s, unicode):
+	return s.encode('utf8')
+      else:
+	return s
+
+    self.author_transforms = {}
+    if author_transforms is not None:
+      for (cvsauthor, name) in author_transforms.iteritems():
+	cvsauthor = to_utf8(cvsauthor)
+	name = to_utf8(name)
+	self.author_transforms[cvsauthor] = name
 
   def register_artifacts(self, which_pass):
     # These artifacts are needed for SymbolingsReader:
@@ -118,11 +131,16 @@ class SVNOutputOption(OutputOption):
     Ctx().revision_reader.start()
     self.add_delegate(StdoutDelegate(svn_rev_count))
 
+  def _get_author(self, svn_commit):
+    author = svn_commit.get_author()
+    name = self.author_transforms.get(author, author)
+    return name
+
   def _get_revprops(self, svn_commit):
     """Return the Subversion revprops for this SVNCommit."""
 
     return {
-        'svn:author' : svn_commit.get_author(),
+        'svn:author' : self._get_author(svn_commit),
         'svn:log'    : svn_commit.get_log_msg(),
         'svn:date'   : format_date(svn_commit.date),
         }
@@ -598,8 +616,8 @@ class SVNOutputOption(OutputOption):
 class DumpfileOutputOption(SVNOutputOption):
   """Output the result of the conversion into a dumpfile."""
 
-  def __init__(self, dumpfile_path):
-    SVNOutputOption.__init__(self)
+  def __init__(self, dumpfile_path, author_transforms=None):
+    SVNOutputOption.__init__(self, author_transforms)
     self.dumpfile_path = dumpfile_path
 
   def check(self):
@@ -617,8 +635,8 @@ class DumpfileOutputOption(SVNOutputOption):
 class RepositoryOutputOption(SVNOutputOption):
   """Output the result of the conversion into an SVN repository."""
 
-  def __init__(self, target):
-    SVNOutputOption.__init__(self)
+  def __init__(self, target, author_transforms=None):
+    SVNOutputOption.__init__(self, author_transforms)
     self.target = target
 
   def check(self):
@@ -646,9 +664,9 @@ class NewRepositoryOutputOption(RepositoryOutputOption):
   """Output the result of the conversion into a new SVN repository."""
 
   def __init__(
-        self, target, fs_type=None, bdb_txn_nosync=None, create_options=[]
+        self, target, fs_type=None, bdb_txn_nosync=None, author_transforms=None, create_options=[]
         ):
-    RepositoryOutputOption.__init__(self, target)
+    RepositoryOutputOption.__init__(self, target, author_transforms)
     self.bdb_txn_nosync = bdb_txn_nosync
 
     # Determine the options to be passed to "svnadmin create":
@@ -723,8 +741,8 @@ class NewRepositoryOutputOption(RepositoryOutputOption):
 class ExistingRepositoryOutputOption(RepositoryOutputOption):
   """Output the result of the conversion into an existing SVN repository."""
 
-  def __init__(self, target):
-    RepositoryOutputOption.__init__(self, target)
+  def __init__(self, target, author_transforms=None):
+    RepositoryOutputOption.__init__(self, target, author_transforms)
 
   def check(self):
     RepositoryOutputOption.check(self)

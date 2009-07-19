@@ -138,6 +138,7 @@ class SymbolMapper(SymbolTransform):
   def __setitem__(self, (cvs_filename, symbol_name, revision), new_name):
     """Set a mapping for a particular file, symbol, and revision."""
 
+    cvs_filename = os.path.normcase(os.path.normpath(cvs_filename))
     key = (cvs_filename, symbol_name, revision)
     if key in self._map:
       Log().warn(
@@ -148,8 +149,9 @@ class SymbolMapper(SymbolTransform):
     self._map[key] = new_name
 
   def transform(self, cvs_file, symbol_name, revision):
+    cvs_filename = os.path.normcase(os.path.normpath(cvs_file.filename))
     return self._map.get(
-        (cvs_file.filename, symbol_name, revision), symbol_name
+        (cvs_filename, symbol_name, revision), symbol_name
         )
 
 
@@ -185,6 +187,7 @@ class SubtreeSymbolMapper(SymbolTransform):
       symbol_map = {}
       self._map[symbol_name] = symbol_map
 
+    cvs_path = os.path.normcase(os.path.normpath(cvs_path))
     if cvs_path in symbol_map:
       Log().warn(
           'Overwriting symbol transform for\n'
@@ -200,7 +203,7 @@ class SubtreeSymbolMapper(SymbolTransform):
       # No rules for that symbol name
       return symbol_name
 
-    cvs_path = cvs_file.filename
+    cvs_path = os.path.normcase(os.path.normpath(cvs_file.filename))
     while True:
       try:
         return symbol_map[cvs_path]

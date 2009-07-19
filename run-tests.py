@@ -44,6 +44,10 @@ import os.path
 import locale
 import textwrap
 import calendar
+try:
+  from hashlib import md5
+except ImportError:
+  from md5 import md5
 from difflib import Differ
 
 # Make sure that a supported version of Python is being used:
@@ -440,25 +444,26 @@ def make_conversion_id(
 
   conv_id = name
 
-  _win32_fname_mapping = { '/': '_sl_', '\\': '_bs_', ':': '_co_',
-                           '*': '_st_', '?': '_qm_', '"': '_qq_',
-                           '<': '_lt_', '>': '_gt_', '|': '_pi_', }
-  for arg in args:
-    # Replace some characters that Win32 isn't happy about having in a
-    # filename (which was causing the eol_mime test to fail).
-    sanitized_arg = arg
-    for a, b in _win32_fname_mapping.items():
-      sanitized_arg = sanitized_arg.replace(a, b)
-    conv_id += sanitized_arg
+  args = args[:]
 
   if passbypass:
-    conv_id += '-passbypass'
-
-  if options_file is not None:
-    conv_id += '--options=%s' % options_file
+    args.append('--passbypass')
 
   if symbol_hints_file is not None:
-    conv_id += '--symbol-hints=%s' % symbol_hints_file
+    args.append('--symbol-hints=%s' % (symbol_hints_file,))
+
+  # There are some characters that are forbidden in filenames, and
+  # there is a limit on the total length of a path to a file.  So use
+  # a hash of the parameters rather than concatenating the parameters
+  # into a string.
+  if args:
+    conv_id += "-" + md5('\0'.join(args)).hexdigest()
+
+  # Some options-file based tests rely on knowing the paths to which
+  # the repository should be written, so we handle that option as a
+  # predictable string:
+  if options_file is not None:
+    conv_id += '--options=%s' % (options_file,)
 
   return conv_id
 

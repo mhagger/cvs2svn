@@ -112,6 +112,20 @@ Log().log_level = Log.NORMAL
 #Log().log_level = Log.DEBUG
 
 
+# author_transforms can be used to map CVS author names (e.g.,
+# "jrandom") to whatever names make sense for your SVN configuration
+# (e.g., "john.j.random").  All values should be either 16-bit strings
+# (i.e., with "u" as a prefix) or 8-bit strings in the utf-8 encoding.
+# To use this feature, please substitute your own project's usernames
+# here and uncomment the author_transforms option when setting
+# ctx.output_option below
+author_transforms={
+    'jrandom' : u'john.j.random',
+    'brane' : u'Branko.Čibej',
+    'ringstrom' : 'ringström',
+    'dionisos' : u'e.hülsmann',
+    }
+
 # There are several possible options for where to put the output of a
 # cvs2svn conversion.  Please choose one of the following and adjust
 # the parameters as necessary:
@@ -119,32 +133,39 @@ Log().log_level = Log.NORMAL
 # Use this output option if you would like cvs2svn to create a new SVN
 # repository and store the converted repository there.  The first
 # argument is the path to which the repository should be written (this
-# repository must not already exist).  The second (optional) argument
+# repository must not already exist).  The (optional) fs_type argument
 # allows a --fs-type option to be passed to "svnadmin create".  The
-# third (optional) argument can be specified to set the
-# --bdb-txn-nosync option on a bdb repository.  The fourth (optional)
-# argument can be specified to set a list of verbatim options to be passed
-# to "svnadmin create":
+# (optional) bdb_txn_nosync argument can be specified to set the
+# --bdb-txn-nosync option on a bdb repository.  The (optional)
+# create_options argument can be specified to set a list of verbatim
+# options to be passed to "svnadmin create".  The (optional)
+# author_transforms argument allows CVS author names to be transformed
+# arbitrarily into SVN author names (as described above):
 ctx.output_option = NewRepositoryOutputOption(
-    r'/path/to/svnrepo', # Path to repository
-    #fs_type='fsfs', # Type of repository to create
-    #bdb_txn_nosync=False, # For bsd repositories, this option can be added
-    #create_options=['--pre-1.5-compatible'], # Options for "svnadmin create"
+    r'/path/to/svnrepo',
+    #fs_type='fsfs',
+    #bdb_txn_nosync=False,
+    #create_options=['--pre-1.5-compatible'],
+    #author_transforms=author_transforms,
     )
 
 # Use this output option if you would like cvs2svn to store the
 # converted CVS repository into an SVN repository that already exists.
-# The argument is the filesystem path of an existing local SVN
-# repository (this repository must already exist):
+# The first argument is the filesystem path of an existing local SVN
+# repository (this repository must already exist).  The
+# author_transforms option is as described above:
 #ctx.output_option = ExistingRepositoryOutputOption(
 #    r'/path/to/svnrepo', # Path to repository
+#    #author_transforms=author_transforms,
 #    )
 
 # Use this type of output option if you want the output of the
 # conversion to be written to a SVN dumpfile instead of committing
-# them into an actual repository:
+# them into an actual repository.  The author_transforms option is as
+# described above:
 #ctx.output_option = DumpfileOutputOption(
 #    dumpfile_path=r'/path/to/cvs2svn-dump', # Name of dumpfile to create
+#    #author_transforms=author_transforms,
 #    )
 
 

@@ -26,6 +26,16 @@
 
 </ol>
 
+
+<p><strong>Compatibility:</strong></p>
+
+<ol>
+
+  <li><a href="#psyco">Does cvs2svn run under Psyco?</a></li>
+
+</ol>
+
+
 <p><strong>How-to:</strong></p>
 
 <ol>
@@ -60,6 +70,7 @@
 
 </ol>
 
+
 <p><strong>Problems:</strong></p>
 
 <ol>
@@ -80,6 +91,7 @@
 
 </ol>
 
+
 <p><strong>Getting help:</strong></p>
 
 <ol>
@@ -96,6 +108,7 @@
 </ol>
 
 <hr />
+
 
 <h2>General:</h2>
 
@@ -124,8 +137,34 @@ CVS, but as far as is known none of them are reliable.</p>
 <p>Volunteers or sponsorship to add support for incremental
 conversions to cvs2svn/cvs2git would be welcome.</p>
 
+<hr />
+
+
+<h2>Compatibility:</h2>
+
+<h3><a name="psyco" title="#psyco">Does cvs2svn run under
+Psyco?</a></h3>
+
+<p>No.</p>
+
+<p>Explanation: <a href="http://psyco.sourceforge.net/">Psyco</a> is a
+python extension that can speed up the execution of Python code by
+compiling parts of it into i386 machine code.  Unfortunately, Psyco is
+known <em>not</em> to run cvs2svn correctly (this was last tested with
+the Psyco pre-2.0 development branch).  When cvs2svn is run under
+Psyco it crashes in <tt>OutputPass</tt> with an error message that
+looks something like this:</p>
+
+<pre>
+cvs2svn_lib.common.InternalError: ID changed from 2 -> 3 for Trunk, r2
+</pre>
+
+<p>The Psyco team <a
+href="https://sourceforge.net/tracker/?func=detail&amp;aid=2827082&amp;group_id=41036&amp;atid=429622">has
+been informed about the problem</a>.</p>
 
 <hr />
+
 
 <h2>How-to:</h2>
 

@@ -104,6 +104,27 @@ incremental repository conversion?</a></h3>
 
 <p>No.</p>
 
+<p>Explanation: During the transition from CVS to Subversion, it would
+sometimes be useful to have the new Subversion repository track
+activity in the CVS repository for a period of time until the final
+switchover.  This would require each conversion to determine what had
+changed in CVS since the last conversion, and add those commits on top
+of the Subversion repository.</p>
+
+<p>Unfortunately, cvs2svn/cvs2git does <em>not</em> support
+incremental conversions.  With some work it would be possible to add
+this feature, but it would be difficult to make it robust.  The
+trickiest problem is that CVS allows changes to the repository that
+have retroactive effects (e.g., affecting parts of the history that
+have already been converted).</p>
+
+<p>Some conversion tools claim to support incremental conversions from
+CVS, but as far as is known none of them are reliable.</p>
+
+<p>Volunteers or sponsorship to add support for incremental
+conversions to cvs2svn/cvs2git would be welcome.</p>
+
+
 <hr />
 
 <h2>How-to:</h2>

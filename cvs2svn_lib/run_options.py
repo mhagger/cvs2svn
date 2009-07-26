@@ -209,11 +209,12 @@ class RunOptions(object):
     program.  PASS_MANAGER is an instance of PassManager, needed to
     help process the -p and --help-passes options."""
 
+    self.progname = progname
+    self.cmd_args = cmd_args
     self.pass_manager = pass_manager
     self.start_pass = 1
     self.end_pass = self.pass_manager.num_passes
     self.profiling = False
-    self.progname = progname
 
     self.projects = []
 
@@ -241,7 +242,7 @@ class RunOptions(object):
     parser.add_option_group(self._get_partial_conversion_options_group())
     parser.add_option_group(self._get_information_options_group())
 
-    (self.options, self.args) = parser.parse_args()
+    (self.options, self.args) = parser.parse_args(args=self.cmd_args)
 
     # Next look for any --options options, process them, and remove
     # them from the list, as they affect the processing of other

@@ -121,6 +121,7 @@ class ContextOption(ManOption):
     if kw.get('action') not in self.STORE_ACTIONS:
       raise ValueError('Invalid action: %s' % (kw['action'],))
 
+    self.__compatible_with_option = kw.pop('compatible_with_option', False)
     self.__action = kw.pop('action')
     try:
       self.__dest = kw.pop('dest')
@@ -138,9 +139,10 @@ class ContextOption(ManOption):
     ManOption.__init__(self, *args, **kw)
 
   def __callback(self, option, opt_str, value, parser):
-    oio = parser.values.options_incompatible_options
-    if opt_str not in oio:
-      oio.append(opt_str)
+    if not self.__compatible_with_option:
+      oio = parser.values.options_incompatible_options
+      if opt_str not in oio:
+        oio.append(opt_str)
 
     action = self.__action
     dest = self.__dest

@@ -82,8 +82,10 @@ cvs2git = os.path.abspath('cvs2git')
 # svntest.main.run_svn() and svntest.main.run_svnlook(), because the
 # behavior -- or even existence -- of local builds shouldn't affect
 # the cvs2svn test suite.
-svn = 'svn'
-svnlook = 'svnlook'
+svn_binary = 'svn'
+svnlook_binary = 'svnlook'
+svnadmin_binary = 'svnadmin'
+svnversion_binary  = 'svnversion'
 
 test_data_dir = 'test-data'
 tmp_dir = 'cvs2svn-tmp'
@@ -191,7 +193,7 @@ def run_svn(*varargs):
   """Run svn with VARARGS; return stdout as a list of lines.
   If there is any stderr, raise RunProgramException, and print the
   stderr lines if svntest.main.verbose_mode is true."""
-  return run_program(svn, None, *varargs)
+  return run_program(svn_binary, None, *varargs)
 
 
 def repos_to_url(path_to_svn_repos):
@@ -3670,10 +3672,10 @@ if __name__ == '__main__':
   # within a working copy of the Subversion sources, and tries to use
   # the binaries in that tree.  Since the cvs2svn tree never contains
   # a Subversion build, we just use the system's installed binaries.
-  svntest.main.svn_binary         = 'svn'
-  svntest.main.svnlook_binary     = 'svnlook'
-  svntest.main.svnadmin_binary    = 'svnadmin'
-  svntest.main.svnversion_binary  = 'svnversion'
+  svntest.main.svn_binary         = svn_binary
+  svntest.main.svnlook_binary     = svnlook_binary
+  svntest.main.svnadmin_binary    = svnadmin_binary
+  svntest.main.svnversion_binary  = svnversion_binary
 
   run_tests(test_list)
   # NOTREACHED

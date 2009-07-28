@@ -44,6 +44,7 @@ import os.path
 import locale
 import textwrap
 import calendar
+import types
 try:
   from hashlib import md5
 except ImportError:
@@ -788,35 +789,81 @@ def ensure_conversion(
   return conv
 
 
+class Cvs2SvnTestFunction(TestCase):
+  """A TestCase based on a naked Python function object.
+
+  FUNC should be a function that returns None on success and throws an
+  svntest.Failure exception on failure.  It should have a brief
+  docstring describing what it does (and fulfilling certain
+  conditions).  FUNC must take no arguments.
+
+  This class is almost identical to svntest.testcase.FunctionTestCase,
+  except that the test function does not require a sandbox and does
+  not accept any parameter (not even sandbox=None).
+
+  This class can be used as an annotation on a Python function.
+
+  """
+
+  def __init__(self, func):
+    # it better be a function that accepts no parameters and has a
+    # docstring on it.
+    assert isinstance(func, types.FunctionType)
+
+    name = func.func_name
+
+    assert func.func_code.co_argcount == 0, \
+        '%s must not take any arguments' % name
+
+    doc = func.__doc__.strip()
+    assert doc, '%s must have a docstring' % name
+
+    # enforce stylistic guidelines for the function docstrings:
+    # - no longer than 50 characters
+    # - should not end in a period
+    # - should not be capitalized
+    assert len(doc) <= 50, \
+        "%s's docstring must be 50 characters or less" % name
+    assert doc[-1] != '.', \
+        "%s's docstring should not end in a period" % name
+    assert doc[0].lower() == doc[0], \
+        "%s's docstring should not be capitalized" % name
+
+    TestCase.__init__(self, doc=doc)
+    self.func = func
+
+  def get_function_name(self):
+    return self.func.func_name
+
+  def get_sandbox_name(self):
+    return None
+
+  def run(self, sandbox):
+    return self.func()
+
+
 class Cvs2SvnTestCase(TestCase):
   def __init__(
-      self, name, description=None, variant=None,
+      self, name, doc=None, variant=None,
       error_re=None, passbypass=None,
       trunk=None, branches=None, tags=None,
       args=None,
       options_file=None, symbol_hints_file=None, dumpfile=None,
       ):
-    TestCase.__init__(self)
     self.name = name
 
-    if description is not None:
-      self._description = description
-    else:
+    if doc is None:
       # By default, use the first line of the class docstring as the
-      # description:
-      self._description = self.__doc__.splitlines()[0]
-
-    # Check that the original description is OK before we tinker with
-    # it:
-    self.check_description()
+      # doc:
+      doc = self.__doc__.splitlines()[0]
 
     if variant is not None:
-      # Modify description to show the variant.  Trim description
-      # first if necessary to stay within the 50-character limit.
+      # Modify doc to show the variant.  Trim doc first if necessary
+      # to stay within the 50-character limit.
       suffix = '...variant %s' % (variant,)
-      self._description = self._description[:50 - len(suffix)] + suffix
-      # Check that the description is still OK:
-      self.check_description()
+      doc = doc[:50 - len(suffix)] + suffix
+
+    TestCase.__init__(self, doc=doc)
 
     self.error_re = error_re
     self.passbypass = passbypass
@@ -828,9 +875,6 @@ class Cvs2SvnTestCase(TestCase):
     self.symbol_hints_file = symbol_hints_file
     self.dumpfile = dumpfile
 
-  def get_description(self):
-    return self._description
-
   def ensure_conversion(self):
     return ensure_conversion(
         self.name,
@@ -841,6 +885,9 @@ class Cvs2SvnTestCase(TestCase):
         symbol_hints_file=self.symbol_hints_file,
         dumpfile=self.dumpfile,
         )
+
+  def get_sandbox_name(self):
+    return None
 
 
 class Cvs2SvnPropertiesTestCase(Cvs2SvnTestCase):
@@ -861,7 +908,7 @@ class Cvs2SvnPropertiesTestCase(Cvs2SvnTestCase):
     self.props_to_test = props_to_test
     self.expected_props = expected_props
 
-  def run(self):
+  def run(self, sbox):
     conv = self.ensure_conversion()
     conv.check_props(self.props_to_test, self.expected_props)
 
@@ -871,6 +918,7 @@ class Cvs2SvnPropertiesTestCase(Cvs2SvnTestCase):
 #----------------------------------------------------------------------
 
 
+@Cvs2SvnTestFunction
 def show_usage():
   "cvs2svn with no arguments shows usage"
   out = run_cvs2svn(None)
@@ -883,16 +931,19 @@ def show_usage():
     raise Failure('Basic cvs2svn invocation failed.')
 
 
+@Cvs2SvnTestFunction
 def cvs2svn_manpage():
   "generate a manpage for cvs2svn"
   out = run_cvs2svn(None, '--man')
 
 
+@Cvs2SvnTestFunction
 def cvs2git_manpage():
   "generate a manpage for cvs2git"
   out = run_cvs2git(None, '--man')
 
 
+@Cvs2SvnTestFunction
 def show_help_passes():
   "cvs2svn --help-passes shows pass information"
   out = run_cvs2svn(None, '--help-passes')
@@ -900,6 +951,7 @@ def show_help_passes():
     raise Failure('cvs2svn --help-passes failed.')
 
 
+@Cvs2SvnTestFunction
 def attr_exec():
   "detection of the executable flag"
   if sys.platform == 'win32':
@@ -910,6 +962,7 @@ def attr_exec():
     raise Failure()
 
 
+@Cvs2SvnTestFunction
 def space_fname():
   "conversion of filename with a space"
   conv = ensure_conversion('main')
@@ -917,6 +970,7 @@ def space_fname():
     raise Failure()
 
 
+@Cvs2SvnTestFunction
 def two_quick():
   "two commits in quick succession"
   conv = ensure_conversion('main')
@@ -932,7 +986,7 @@ class PruneWithCare(Cvs2SvnTestCase):
   def __init__(self, **kw):
     Cvs2SvnTestCase.__init__(self, 'main', **kw)
 
-  def run(self):
+  def run(self, sbox):
     # Robert Pluim encountered this lovely one while converting the
     # directory src/gnu/usr.bin/cvs/contrib/pcl-cvs/ in FreeBSD's CVS
     # repository (see issue #1302).  Step 4 is the doozy:
@@ -995,6 +1049,7 @@ class PruneWithCare(Cvs2SvnTestCase):
       conv.logs[33].check_change('/%(trunk)s/' + path, 'A')
 
 
+@Cvs2SvnTestFunction
 def interleaved_commits():
   "two interleaved trunk commits, different log msgs"
   # See test-data/main-cvsrepos/proj/README.
@@ -1050,6 +1105,7 @@ def interleaved_commits():
     check_letters(rev + 1)
 
 
+@Cvs2SvnTestFunction
 def simple_commits():
   "simple trunk commits"
   # See test-data/main-cvsrepos/proj/README.
@@ -1098,7 +1154,7 @@ class SimpleTags(Cvs2SvnTestCase):
     # See test-data/main-cvsrepos/proj/README.
     Cvs2SvnTestCase.__init__(self, 'main', **kw)
 
-  def run(self):
+  def run(self, sbox):
     conv = self.ensure_conversion()
 
     # Verify the copy source for the tags we are about to check
@@ -1149,6 +1205,7 @@ class SimpleTags(Cvs2SvnTestCase):
       ))
 
 
+@Cvs2SvnTestFunction
 def simple_branch_commits():
   "simple branch commits"
   # See test-data/main-cvsrepos/proj/README.
@@ -1161,6 +1218,7 @@ def simple_branch_commits():
     ))
 
 
+@Cvs2SvnTestFunction
 def mixed_time_tag():
   "mixed-time tag"
   # See test-data/main-cvsrepos/proj/README.
@@ -1172,6 +1230,7 @@ def mixed_time_tag():
     ))
 
 
+@Cvs2SvnTestFunction
 def mixed_time_branch_with_added_file():
   "mixed-time branch, and a file added to the branch"
   # See test-data/main-cvsrepos/proj/README.
@@ -1193,6 +1252,7 @@ def mixed_time_branch_with_added_file():
     ))
 
 
+@Cvs2SvnTestFunction
 def mixed_commit():
   "a commit affecting both trunk and a branch"
   # See test-data/main-cvsrepos/proj/README.
@@ -1206,6 +1266,7 @@ def mixed_commit():
     ))
 
 
+@Cvs2SvnTestFunction
 def split_time_branch():
   "branch some trunk files, and later branch the rest"
   # See test-data/main-cvsrepos/proj/README.
@@ -1246,6 +1307,7 @@ def split_time_branch():
     ))
 
 
+@Cvs2SvnTestFunction
 def multiple_tags():
   "multiple tags referring to same revision"
   conv = ensure_conversion('main')
@@ -1256,6 +1318,7 @@ def multiple_tags():
     raise Failure()
 
 
+@Cvs2SvnTestFunction
 def multiply_defined_symbols():
   "multiple definitions of symbol names"
 
@@ -1278,6 +1341,7 @@ def multiply_defined_symbols():
       )
 
 
+@Cvs2SvnTestFunction
 def multiply_defined_symbols_renamed():
   "rename multiply defined symbols"
 
@@ -1287,6 +1351,7 @@ def multiply_defined_symbols_renamed():
       )
 
 
+@Cvs2SvnTestFunction
 def multiply_defined_symbols_ignored():
   "ignore multiply defined symbols"
 
@@ -1296,6 +1361,7 @@ def multiply_defined_symbols_ignored():
       )
 
 
+@Cvs2SvnTestFunction
 def repeatedly_defined_symbols():
   "multiple identical definitions of symbol names"
 
@@ -1305,11 +1371,13 @@ def repeatedly_defined_symbols():
   conv = ensure_conversion('repeatedly-defined-symbols')
 
 
+@Cvs2SvnTestFunction
 def bogus_tag():
   "conversion of invalid symbolic names"
   conv = ensure_conversion('bogus-tag')
 
 
+@Cvs2SvnTestFunction
 def overlapping_branch():
   "ignore a file with a branch with two names"
   conv = ensure_conversion('overlapping-branch')
@@ -1332,7 +1400,7 @@ class PhoenixBranch(Cvs2SvnTestCase):
   def __init__(self, **kw):
     Cvs2SvnTestCase.__init__(self, 'phoenix', **kw)
 
-  def run(self):
+  def run(self, sbox):
     conv = self.ensure_conversion()
     conv.logs[8].check('This file was supplied by Jack Moffitt', (
       ('/%(branches)s/volsung_20010721', 'A'),
@@ -1346,6 +1414,7 @@ class PhoenixBranch(Cvs2SvnTestCase):
 ###TODO: We check for 4 changed paths here to accomodate creating tags
 ###and branches in rev 1, but that will change, so this will
 ###eventually change back.
+@Cvs2SvnTestFunction
 def ctrl_char_in_log():
   "handle a control char in a log message"
   # This was issue #1106.
@@ -1359,6 +1428,7 @@ def ctrl_char_in_log():
         "Log message of 'ctrl-char-in-log,v' (rev 2) is wrong.")
 
 
+@Cvs2SvnTestFunction
 def overdead():
   "handle tags rooted in a redeleted revision"
   conv = ensure_conversion('overdead')
@@ -1370,7 +1440,7 @@ class NoTrunkPrune(Cvs2SvnTestCase):
   def __init__(self, **kw):
     Cvs2SvnTestCase.__init__(self, 'overdead', **kw)
 
-  def run(self):
+  def run(self, sbox):
     conv = self.ensure_conversion()
     for rev in conv.logs.keys():
       rev_logs = conv.logs[rev]
@@ -1378,6 +1448,7 @@ class NoTrunkPrune(Cvs2SvnTestCase):
         raise Failure()
 
 
+@Cvs2SvnTestFunction
 def double_delete():
   "file deleted twice, in the root of the repository"
   # This really tests several things: how we handle a file that's
@@ -1400,6 +1471,7 @@ def double_delete():
     ))
 
 
+@Cvs2SvnTestFunction
 def split_branch():
   "branch created from both trunk and another branch"
   # See test-data/split-branch-cvsrepos/README.
@@ -1409,6 +1481,7 @@ def split_branch():
   conv = ensure_conversion('split-branch')
 
 
+@Cvs2SvnTestFunction
 def resync_misgroups():
   "resyncing should not misorder commit groups"
   # See test-data/resync-misgroups-cvsrepos/README.
@@ -1424,7 +1497,7 @@ class TaggedBranchAndTrunk(Cvs2SvnTestCase):
   def __init__(self, **kw):
     Cvs2SvnTestCase.__init__(self, 'tagged-branch-n-trunk', **kw)
 
-  def run(self):
+  def run(self, sbox):
     conv = self.ensure_conversion()
 
     tags = conv.symbols.get('tags', 'tags')
@@ -1438,6 +1511,7 @@ class TaggedBranchAndTrunk(Cvs2SvnTestCase):
       raise Failure()
 
 
+@Cvs2SvnTestFunction
 def enroot_race():
   "never use the rev-in-progress as a copy source"
 
@@ -1456,6 +1530,7 @@ def enroot_race():
     ))
 
 
+@Cvs2SvnTestFunction
 def enroot_race_obo():
   "do use the last completed rev as a copy source"
   conv = ensure_conversion('enroot-race-obo')
@@ -1470,7 +1545,7 @@ class BranchDeleteFirst(Cvs2SvnTestCase):
   def __init__(self, **kw):
     Cvs2SvnTestCase.__init__(self, 'branch-delete-first', **kw)
 
-  def run(self):
+  def run(self, sbox):
     # See test-data/branch-delete-first-cvsrepos/README.
     #
     # The conversion will fail if the bug is present, and
@@ -1488,6 +1563,7 @@ class BranchDeleteFirst(Cvs2SvnTestCase):
       raise Failure()
 
 
+@Cvs2SvnTestFunction
 def nonascii_filenames():
   "non ascii files converted incorrectly"
   # see issue #1255
@@ -1570,7 +1646,7 @@ class UnicodeTest(Cvs2SvnTestCase):
     Cvs2SvnTestCase.__init__(self, name, error_re=error_re, **kw)
     self.warning_expected = warning_expected
 
-  def run(self):
+  def run(self, sbox):
     try:
       # ensure the availability of the "utf_8" encoding:
       u'a'.encode('utf_8').decode('utf_8')
@@ -1594,6 +1670,7 @@ class UnicodeLog(UnicodeTest):
     UnicodeTest.__init__(self, 'unicode-log', warning_expected, **kw)
 
 
+@Cvs2SvnTestFunction
 def vendor_branch_sameness():
   "avoid spurious changes for initial revs"
   conv = ensure_conversion(
@@ -1670,6 +1747,7 @@ def vendor_branch_sameness():
     ))
 
 
+@Cvs2SvnTestFunction
 def vendor_branch_trunk_only():
   "handle vendor branches with --trunk-only"
   conv = ensure_conversion('vendor-branch-sameness', args=['--trunk-only'])
@@ -1697,6 +1775,7 @@ def vendor_branch_trunk_only():
     ))
 
 
+@Cvs2SvnTestFunction
 def default_branches():
   "handle default branches correctly"
   conv = ensure_conversion('default-branches')
@@ -1873,6 +1952,7 @@ def default_branches():
     ))
 
 
+@Cvs2SvnTestFunction
 def default_branches_trunk_only():
   "handle default branches with --trunk-only"
 
@@ -1923,6 +2003,7 @@ def default_branches_trunk_only():
     ))
 
 
+@Cvs2SvnTestFunction
 def default_branch_and_1_2():
   "do not allow 1.2 revision with default branch"
 
@@ -1934,6 +2015,7 @@ def default_branch_and_1_2():
       )
 
 
+@Cvs2SvnTestFunction
 def compose_tag_three_sources():
   "compose a tag from three sources"
   conv = ensure_conversion('compose-tag-three-sources')
@@ -1987,6 +2069,7 @@ def compose_tag_three_sources():
     ))
 
 
+@Cvs2SvnTestFunction
 def pass5_when_to_fill():
   "reserve a svn revnum for a fill only when required"
   # The conversion will fail if the bug is present, and
@@ -2000,12 +2083,13 @@ class EmptyTrunk(Cvs2SvnTestCase):
   def __init__(self, **kw):
     Cvs2SvnTestCase.__init__(self, 'empty-trunk', **kw)
 
-  def run(self):
+  def run(self, sbox):
     # The conversion will fail if the bug is present, and
     # ensure_conversion would raise Failure.
     conv = self.ensure_conversion()
 
 
+@Cvs2SvnTestFunction
 def no_spurious_svn_commits():
   "ensure that we don't create any spurious commits"
   conv = ensure_conversion('phoenix')
@@ -2050,7 +2134,7 @@ class PeerPathPruning(Cvs2SvnTestCase):
   def __init__(self, **kw):
     Cvs2SvnTestCase.__init__(self, 'peer-path-pruning', **kw)
 
-  def run(self):
+  def run(self, sbox):
     conv = self.ensure_conversion()
     conv.logs[6].check(sym_log_msg('BRANCH'), (
       ('/%(branches)s/BRANCH (from /%(trunk)s:4)', 'A'),
@@ -2059,6 +2143,7 @@ class PeerPathPruning(Cvs2SvnTestCase):
       ))
 
 
+@Cvs2SvnTestFunction
 def invalid_closings_on_trunk():
   "verify correct revs are copied to default branches"
   # The conversion will fail if the bug is present, and
@@ -2066,6 +2151,7 @@ def invalid_closings_on_trunk():
   conv = ensure_conversion('invalid-closings-on-trunk')
 
 
+@Cvs2SvnTestFunction
 def individual_passes():
   "run each pass individually"
   conv = ensure_conversion('main')
@@ -2075,12 +2161,14 @@ def individual_passes():
     raise Failure()
 
 
+@Cvs2SvnTestFunction
 def resync_bug():
   "reveal a big bug in our resync algorithm"
   # This will fail if the bug is present
   conv = ensure_conversion('resync-bug')
 
 
+@Cvs2SvnTestFunction
 def branch_from_default_branch():
   "reveal a bug in our default branch detection code"
   conv = ensure_conversion('branch-from-default-branch')
@@ -2099,6 +2187,7 @@ def branch_from_default_branch():
     ))
 
 
+@Cvs2SvnTestFunction
 def file_in_attic_too():
   "die if a file exists in and out of the attic"
   ensure_conversion(
@@ -2112,6 +2201,7 @@ def file_in_attic_too():
       )
 
 
+@Cvs2SvnTestFunction
 def retain_file_in_attic_too():
   "test --retain-conflicting-attic-files option"
   conv = ensure_conversion(
@@ -2122,6 +2212,7 @@ def retain_file_in_attic_too():
     raise Failure()
 
 
+@Cvs2SvnTestFunction
 def symbolic_name_filling_guide():
   "reveal a big bug in our SymbolFillingGuide"
   # This will fail if the bug is present
@@ -2244,7 +2335,7 @@ eol_mime4 = EOLMime(
 
 cvs_revnums_off = Cvs2SvnPropertiesTestCase(
     'eol-mime',
-    description='test non-setting of cvs2svn:cvs-rev property',
+    doc='test non-setting of cvs2svn:cvs-rev property',
     args=[],
     props_to_test=['cvs2svn:cvs-rev'],
     expected_props=[
@@ -2259,7 +2350,7 @@ cvs_revnums_off = Cvs2SvnPropertiesTestCase(
 
 cvs_revnums_on = Cvs2SvnPropertiesTestCase(
     'eol-mime',
-    description='test setting of cvs2svn:cvs-rev property',
+    doc='test setting of cvs2svn:cvs-rev property',
     args=['--cvs-revnums'],
     props_to_test=['cvs2svn:cvs-rev'],
     expected_props=[
@@ -2274,7 +2365,7 @@ cvs_revnums_on = Cvs2SvnPropertiesTestCase(
 
 keywords = Cvs2SvnPropertiesTestCase(
     'keywords',
-    description='test setting of svn:keywords property among others',
+    doc='test setting of svn:keywords property among others',
     args=['--default-eol=native'],
     props_to_test=['svn:keywords', 'svn:eol-style', 'svn:mime-type'],
     expected_props=[
@@ -2288,6 +2379,7 @@ keywords = Cvs2SvnPropertiesTestCase(
         ])
 
 
+@Cvs2SvnTestFunction
 def ignore():
   "test setting of svn:ignore property"
   conv = ensure_conversion('cvsignore')
@@ -2296,14 +2388,15 @@ def ignore():
   subdir_props = props_for_path(wc_tree, '/trunk/proj/subdir')
 
   if topdir_props['svn:ignore'] != \
-     '*.idx\n*.aux\n*.dvi\n*.log\nfoo\nbar\nbaz\nqux\n\n':
+     '*.idx\n*.aux\n*.dvi\n*.log\nfoo\nbar\nbaz\nqux\n':
     raise Failure()
 
   if subdir_props['svn:ignore'] != \
-     '*.idx\n*.aux\n*.dvi\n*.log\nfoo\nbar\nbaz\nqux\n\n':
+     '*.idx\n*.aux\n*.dvi\n*.log\nfoo\nbar\nbaz\nqux\n':
     raise Failure()
 
 
+@Cvs2SvnTestFunction
 def requires_cvs():
   "test that CVS can still do what RCS can't"
   # See issues 4, 11, 29 for the bugs whose regression we're testing for.
@@ -2322,6 +2415,7 @@ def requires_cvs():
     raise Failure()
 
 
+@Cvs2SvnTestFunction
 def questionable_branch_names():
   "test that we can handle weird branch names"
   conv = ensure_conversion('questionable-symbols')
@@ -2330,6 +2424,7 @@ def questionable_branch_names():
   # conversion doesn't fail.
 
 
+@Cvs2SvnTestFunction
 def questionable_tag_names():
   "test that we can handle weird tag names"
   conv = ensure_conversion('questionable-symbols')
@@ -2351,6 +2446,7 @@ def questionable_tag_names():
       )
 
 
+@Cvs2SvnTestFunction
 def revision_reorder_bug():
   "reveal a bug that reorders file revisions"
   conv = ensure_conversion('revision-reorder-bug')
@@ -2359,6 +2455,7 @@ def revision_reorder_bug():
   # conversion doesn't fail.
 
 
+@Cvs2SvnTestFunction
 def exclude():
   "test that exclude really excludes everything"
   conv = ensure_conversion('main', args=['--exclude=.*'])
@@ -2368,12 +2465,14 @@ def exclude():
         raise Failure()
 
 
+@Cvs2SvnTestFunction
 def vendor_branch_delete_add():
   "add trunk file that was deleted on vendor branch"
   # This will error if the bug is present
   conv = ensure_conversion('vendor-branch-delete-add')
 
 
+@Cvs2SvnTestFunction
 def resync_pass2_pull_forward():
   "ensure pass2 doesn't pull rev too far forward"
   conv = ensure_conversion('resync-pass2-pull-forward')
@@ -2382,6 +2481,7 @@ def resync_pass2_pull_forward():
   # conversion doesn't fail.
 
 
+@Cvs2SvnTestFunction
 def native_eol():
   "only LFs for svn:eol-style=native files"
   conv = ensure_conversion('native-eol', args=['--default-eol=native'])
@@ -2395,6 +2495,7 @@ def native_eol():
       raise Failure()
 
 
+@Cvs2SvnTestFunction
 def double_fill():
   "reveal a bug that created a branch twice"
   conv = ensure_conversion('double-fill')
@@ -2403,6 +2504,7 @@ def double_fill():
   # conversion doesn't fail.
 
 
+@Cvs2SvnTestFunction
 def double_fill2():
   "reveal a second bug that created a branch twice"
   conv = ensure_conversion('double-fill2')
@@ -2417,6 +2519,7 @@ def double_fill2():
     raise Failure('Symbol filled twice in a row')
 
 
+@Cvs2SvnTestFunction
 def resync_pass2_push_backward():
   "ensure pass2 doesn't push rev too far backward"
   conv = ensure_conversion('resync-pass2-push-backward')
@@ -2425,6 +2528,7 @@ def resync_pass2_push_backward():
   # conversion doesn't fail.
 
 
+@Cvs2SvnTestFunction
 def double_add():
   "reveal a bug that added a branch file twice"
   conv = ensure_conversion('double-add')
@@ -2433,6 +2537,7 @@ def double_add():
   # conversion doesn't fail.
 
 
+@Cvs2SvnTestFunction
 def bogus_branch_copy():
   "reveal a bug that copies a branch file wrongly"
   conv = ensure_conversion('bogus-branch-copy')
@@ -2441,6 +2546,7 @@ def bogus_branch_copy():
   # conversion doesn't fail.
 
 
+@Cvs2SvnTestFunction
 def nested_ttb_directories():
   "require error if ttb directories are not disjoint"
   opts_list = [
@@ -2500,7 +2606,7 @@ class AutoProps(Cvs2SvnPropertiesTestCase):
 
 
 auto_props_ignore_case = AutoProps(
-    description="test auto-props",
+    doc="test auto-props",
     args=['--default-eol=native'],
     expected_props=[
         ('trunk/foo.txt', ['txt', 'native', None, KEYWORDS, None]),
@@ -2517,6 +2623,7 @@ auto_props_ignore_case = AutoProps(
         ])
 
 
+@Cvs2SvnTestFunction
 def ctrl_char_in_filename():
   "do not allow control characters in filenames"
 
@@ -2547,6 +2654,7 @@ def ctrl_char_in_filename():
     safe_rmtree(dstrepos_path)
 
 
+@Cvs2SvnTestFunction
 def commit_dependencies():
   "interleaved and multi-branch commits to same files"
   conv = ensure_conversion("commit-dependencies")
@@ -2579,6 +2687,7 @@ def commit_dependencies():
     ))
 
 
+@Cvs2SvnTestFunction
 def double_branch_delete():
   "fill branches before modifying files on them"
   conv = ensure_conversion('double-branch-delete')
@@ -2598,6 +2707,7 @@ def double_branch_delete():
     ));
 
 
+@Cvs2SvnTestFunction
 def symbol_mismatches():
   "error for conflicting tag/branch"
 
@@ -2608,6 +2718,7 @@ def symbol_mismatches():
       )
 
 
+@Cvs2SvnTestFunction
 def overlook_symbol_mismatches():
   "overlook conflicting tag/branch when --trunk-only"
 
@@ -2616,6 +2727,7 @@ def overlook_symbol_mismatches():
   ensure_conversion('symbol-mess', args=['--trunk-only'])
 
 
+@Cvs2SvnTestFunction
 def force_symbols():
   "force symbols to be tags/branches"
 
@@ -2636,6 +2748,7 @@ def force_symbols():
      raise Failure()
 
 
+@Cvs2SvnTestFunction
 def commit_blocks_tags():
   "commit prevents forced tag"
 
@@ -2650,6 +2763,7 @@ def commit_blocks_tags():
       )
 
 
+@Cvs2SvnTestFunction
 def blocked_excludes():
   "error for blocked excludes"
 
@@ -2664,6 +2778,7 @@ def blocked_excludes():
       pass
 
 
+@Cvs2SvnTestFunction
 def unblock_blocked_excludes():
   "excluding blocker removes blockage"
 
@@ -2675,6 +2790,7 @@ def unblock_blocked_excludes():
                             '--exclude=BLOCKING_%s' % blocker]))
 
 
+@Cvs2SvnTestFunction
 def regexp_force_symbols():
   "force symbols via regular expressions"
 
@@ -2689,6 +2805,7 @@ def regexp_force_symbols():
      raise Failure()
 
 
+@Cvs2SvnTestFunction
 def heuristic_symbol_default():
   "test 'heuristic' symbol default"
 
@@ -2702,6 +2819,7 @@ def heuristic_symbol_default():
      raise Failure()
 
 
+@Cvs2SvnTestFunction
 def branch_symbol_default():
   "test 'branch' symbol default"
 
@@ -2715,6 +2833,7 @@ def branch_symbol_default():
      raise Failure()
 
 
+@Cvs2SvnTestFunction
 def tag_symbol_default():
   "test 'tag' symbol default"
 
@@ -2728,6 +2847,7 @@ def tag_symbol_default():
      raise Failure()
 
 
+@Cvs2SvnTestFunction
 def symbol_transform():
   "test --symbol-transform"
 
@@ -2749,6 +2869,7 @@ def symbol_transform():
      raise Failure()
 
 
+@Cvs2SvnTestFunction
 def write_symbol_info():
   "test --write-symbol-info"
 
@@ -2811,6 +2932,7 @@ def write_symbol_info():
     raise Failure(''.join(s))
 
 
+@Cvs2SvnTestFunction
 def symbol_hints():
   "test --symbol-hints for setting branch/tag"
 
@@ -2832,6 +2954,7 @@ def symbol_hints():
     ))
 
 
+@Cvs2SvnTestFunction
 def parent_hints():
   "test --symbol-hints for setting parent"
 
@@ -2843,6 +2966,7 @@ def parent_hints():
     ))
 
 
+@Cvs2SvnTestFunction
 def parent_hints_invalid():
   "test --symbol-hints with an invalid parent"
 
@@ -2857,6 +2981,7 @@ def parent_hints_invalid():
       )
 
 
+@Cvs2SvnTestFunction
 def parent_hints_wildcards():
   "test --symbol-hints wildcards"
 
@@ -2872,6 +2997,7 @@ def parent_hints_wildcards():
     ))
 
 
+@Cvs2SvnTestFunction
 def path_hints():
   "test --symbol-hints for setting svn paths"
 
@@ -2903,12 +3029,14 @@ def path_hints():
     ))
 
 
+@Cvs2SvnTestFunction
 def issue_99():
   "test problem from issue 99"
 
   conv = ensure_conversion('issue-99')
 
 
+@Cvs2SvnTestFunction
 def issue_100():
   "test problem from issue 100"
 
@@ -2918,18 +3046,21 @@ def issue_100():
     raise Failure()
 
 
+@Cvs2SvnTestFunction
 def issue_106():
   "test problem from issue 106"
 
   conv = ensure_conversion('issue-106')
 
 
+@Cvs2SvnTestFunction
 def options_option():
   "use of the --options option"
 
   conv = ensure_conversion('main', options_file='cvs2svn.options')
 
 
+@Cvs2SvnTestFunction
 def multiproject():
   "multiproject conversion"
 
@@ -2945,6 +3076,7 @@ def multiproject():
     ))
 
 
+@Cvs2SvnTestFunction
 def crossproject():
   "multiproject conversion with cross-project commits"
 
@@ -2953,12 +3085,14 @@ def crossproject():
       )
 
 
+@Cvs2SvnTestFunction
 def tag_with_no_revision():
   "tag defined but revision is deleted"
 
   conv = ensure_conversion('tag-with-no-revision')
 
 
+@Cvs2SvnTestFunction
 def delete_cvsignore():
   "svn:ignore should vanish when .cvsignore does"
 
@@ -2973,6 +3107,7 @@ def delete_cvsignore():
     raise Failure()
 
 
+@Cvs2SvnTestFunction
 def repeated_deltatext():
   "ignore repeated deltatext blocks with warning"
 
@@ -2982,6 +3117,7 @@ def repeated_deltatext():
     raise Failure()
 
 
+@Cvs2SvnTestFunction
 def nasty_graphs():
   "process some nasty dependency graphs"
 
@@ -2990,6 +3126,7 @@ def nasty_graphs():
   conv = ensure_conversion('nasty-graphs')
 
 
+@Cvs2SvnTestFunction
 def tagging_after_delete():
   "optimal tag after deleting files"
 
@@ -3003,12 +3140,14 @@ def tagging_after_delete():
   log.check_changes(expected)
 
 
+@Cvs2SvnTestFunction
 def crossed_branches():
   "branches created in inconsistent orders"
 
   conv = ensure_conversion('crossed-branches')
 
 
+@Cvs2SvnTestFunction
 def file_directory_conflict():
   "error when filename conflicts with directory name"
 
@@ -3018,6 +3157,7 @@ def file_directory_conflict():
       )
 
 
+@Cvs2SvnTestFunction
 def attic_directory_conflict():
   "error when attic filename conflicts with dirname"
 
@@ -3029,6 +3169,7 @@ def attic_directory_conflict():
       )
 
 
+@Cvs2SvnTestFunction
 def internal_co():
   "verify that --use-internal-co works"
 
@@ -3051,6 +3192,7 @@ def internal_co():
     raise Failure()
 
 
+@Cvs2SvnTestFunction
 def internal_co_exclude():
   "verify that --use-internal-co --exclude=... works"
 
@@ -3075,6 +3217,7 @@ def internal_co_exclude():
     raise Failure()
 
 
+@Cvs2SvnTestFunction
 def internal_co_trunk_only():
   "verify that --use-internal-co --trunk-only works"
 
@@ -3086,6 +3229,7 @@ def internal_co_trunk_only():
     raise Failure()
 
 
+@Cvs2SvnTestFunction
 def leftover_revs():
   "check for leftover checked-out revisions"
 
@@ -3097,6 +3241,7 @@ def leftover_revs():
     raise Failure()
 
 
+@Cvs2SvnTestFunction
 def requires_internal_co():
   "test that internal co can do more than RCS"
   # See issues 4, 11 for the bugs whose regression we're testing for.
@@ -3113,6 +3258,7 @@ def requires_internal_co():
     raise Failure()
 
 
+@Cvs2SvnTestFunction
 def internal_co_keywords():
   "test that internal co handles keywords correctly"
   conv_ic = ensure_conversion('internal-co-keywords',
@@ -3140,6 +3286,7 @@ def internal_co_keywords():
     raise Failure()
 
 
+@Cvs2SvnTestFunction
 def timestamp_chaos():
   "test timestamp adjustments"
 
@@ -3162,6 +3309,7 @@ def timestamp_chaos():
       raise Failure()
 
 
+@Cvs2SvnTestFunction
 def symlinks():
   "convert a repository that contains symlinks"
 
@@ -3203,6 +3351,7 @@ def symlinks():
       os.remove(dst)
 
 
+@Cvs2SvnTestFunction
 def empty_trunk_path():
   "allow --trunk to be empty if --trunk-only"
 
@@ -3213,24 +3362,28 @@ def empty_trunk_path():
       )
 
 
+@Cvs2SvnTestFunction
 def preferred_parent_cycle():
   "handle a cycle in branch parent preferences"
 
   conv = ensure_conversion('preferred-parent-cycle')
 
 
+@Cvs2SvnTestFunction
 def branch_from_empty_dir():
   "branch from an empty directory"
 
   conv = ensure_conversion('branch-from-empty-dir')
 
 
+@Cvs2SvnTestFunction
 def trunk_readd():
   "add a file on a branch then on trunk"
 
   conv = ensure_conversion('trunk-readd')
 
 
+@Cvs2SvnTestFunction
 def branch_from_deleted_1_1():
   "branch from a 1.1 revision that will be deleted"
 
@@ -3253,6 +3406,7 @@ def branch_from_deleted_1_1():
     ))
 
 
+@Cvs2SvnTestFunction
 def add_on_branch():
   "add a file on a branch using newer CVS"
 
@@ -3280,6 +3434,7 @@ def add_on_branch():
     ))
 
 
+@Cvs2SvnTestFunction
 def main_git():
   "test output in git-fast-import format"
 
@@ -3311,12 +3466,14 @@ def main_git():
       ])
 
 
+@Cvs2SvnTestFunction
 def git_options():
   "test cvs2git using options file"
 
   conv = GitConversion('main', None, [], options_file='cvs2git.options')
 
 
+@Cvs2SvnTestFunction
 def main_hg():
   "output in git-fast-import format with inline data"
 
@@ -3338,6 +3495,7 @@ def main_hg():
   conv = GitConversion('main', None, [], options_file='cvs2hg.options')
 
 
+@Cvs2SvnTestFunction
 def invalid_symbol():
   "a symbol with the incorrect format"
 
@@ -3348,6 +3506,7 @@ def invalid_symbol():
     raise Failure()
 
 
+@Cvs2SvnTestFunction
 def invalid_symbol_ignore():
   "ignore a symbol using a SymbolMapper"
 
@@ -3356,6 +3515,7 @@ def invalid_symbol_ignore():
       )
 
 
+@Cvs2SvnTestFunction
 def invalid_symbol_ignore2():
   "ignore a symbol using an IgnoreSymbolTransform"
 
@@ -3385,7 +3545,7 @@ class EOLVariants(Cvs2SvnTestCase):
             ],
         )
 
-  def run(self):
+  def run(self, sbox):
     conv = self.ensure_conversion()
     dump_contents = open(conv.dumpfile, 'rb').read()
     expected_text = self.eol_style_strings[self.eol_style].join(
@@ -3395,18 +3555,21 @@ class EOLVariants(Cvs2SvnTestCase):
       raise Failure()
 
 
+@Cvs2SvnTestFunction
 def no_revs_file():
   "handle a file with no revisions (issue #80)"
 
   conv = ensure_conversion('no-revs-file')
 
 
+@Cvs2SvnTestFunction
 def mirror_keyerror_test():
   "a case that gave KeyError in SVNRepositoryMirror"
 
   conv = ensure_conversion('mirror-keyerror')
 
 
+@Cvs2SvnTestFunction
 def exclude_ntdb_test():
   "exclude a non-trunk default branch"
 
@@ -3423,18 +3586,21 @@ def exclude_ntdb_test():
       )
 
 
+@Cvs2SvnTestFunction
 def mirror_keyerror2_test():
   "a case that gave KeyError in RepositoryMirror"
 
   conv = ensure_conversion('mirror-keyerror2')
 
 
+@Cvs2SvnTestFunction
 def mirror_keyerror3_test():
   "a case that gave KeyError in RepositoryMirror"
 
   conv = ensure_conversion('mirror-keyerror3')
 
 
+@Cvs2SvnTestFunction
 def add_cvsignore_to_branch_test():
   "check adding .cvsignore to an existing branch"
 
@@ -3451,6 +3617,7 @@ def add_cvsignore_to_branch_test():
     raise Failure()
 
 
+@Cvs2SvnTestFunction
 def missing_deltatext():
   "a revision's deltatext is missing"
 

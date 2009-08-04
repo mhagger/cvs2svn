@@ -50,6 +50,12 @@ def pipe(cmd):
   status = child.wait()
   return (output, status)
 
+def cmd_failed(cmd, output, status):
+  print 'CMD FAILED:', ' '.join(cmd)
+  print 'Output:'
+  sys.stdout.write(output)
+  raise RuntimeError('%s command failed!' % cmd[0])
+
 class CvsRepos:
   def __init__(self, path):
     """Open the CVS repository at PATH."""
@@ -84,10 +90,7 @@ class CvsRepos:
     cmd.extend([ '-d', dest_path, self.module ])
     (output, status) = pipe(cmd)
     if status or output:
-      print 'CMD FAILED:', ' '.join(cmd)
-      print 'Output:'
-      sys.stdout.write(output)
-      raise RuntimeError('CVS command failed!')
+      cmd_failed(cmd, output, status)
 
 
 class SvnRepos:
@@ -112,10 +115,7 @@ class SvnRepos:
     cmd = [ SVN_CMD, 'export', '-q', url, dest_path ]
     (output, status) = pipe(cmd)
     if status or output:
-      print 'CMD FAILED:', ' '.join(cmd)
-      print 'Output:'
-      sys.stdout.write(output)
-      raise RuntimeError('SVN command failed!')
+      cmd_failed(cmd, output, status)
 
   def export_trunk(self, dest_path):
     """Export trunk to DEST_PATH."""
@@ -134,10 +134,7 @@ class SvnRepos:
     cmd = [ SVN_CMD, 'ls', self.url + '/' + path ]
     (output, status) = pipe(cmd)
     if status:
-      print 'CMD FAILED:', ' '.join(cmd)
-      print 'Output:'
-      sys.stdout.write(output)
-      raise RuntimeError('SVN command failed!')
+      cmd_failed(cmd, output, status)
     entries = []
     for line in output.split("\n"):
       if line:

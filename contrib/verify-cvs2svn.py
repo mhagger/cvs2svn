@@ -43,6 +43,13 @@ CVS_CMD = 'cvs'
 SVN_CMD = 'svn'
 
 
+def pipe(cmd):
+  """Run cmd as a pipe.  Return (output, status)."""
+  child = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+  output = child.stdout.read()
+  status = child.wait()
+  return (output, status)
+
 class CvsRepos:
   def __init__(self, path):
     """Open the CVS repository at PATH."""
@@ -75,9 +82,7 @@ class CvsRepos:
     else:
       cmd.extend([ '-D', 'now' ])
     cmd.extend([ '-d', dest_path, self.module ])
-    child = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-    output = child.stdout.read()
-    status = child.wait()
+    (output, status) = pipe(cmd)
     if status or output:
       print 'CMD FAILED:', ' '.join(cmd)
       print 'Output:'
@@ -105,9 +110,7 @@ class SvnRepos:
     """Export PATH to DEST_PATH."""
     url = '/'.join([self.url, path])
     cmd = [ SVN_CMD, 'export', '-q', url, dest_path ]
-    child = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-    output = child.stdout.read()
-    status = child.wait()
+    (output, status) = pipe(cmd)
     if status or output:
       print 'CMD FAILED:', ' '.join(cmd)
       print 'Output:'
@@ -129,17 +132,16 @@ class SvnRepos:
   def list(self, path):
     """Return a list of all files and directories in PATH."""
     cmd = [ SVN_CMD, 'ls', self.url + '/' + path ]
-    child = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-    lines = child.stdout.readlines()
-    status = child.wait()
+    (output, status) = pipe(cmd)
     if status:
       print 'CMD FAILED:', ' '.join(cmd)
       print 'Output:'
-      sys.stdout.writelines(lines)
+      sys.stdout.write(output)
       raise RuntimeError('SVN command failed!')
     entries = []
-    for line in lines:
-      entries.append(line[:-2])
+    for line in output.split("\n"):
+      if line:
+        entries.append(line[:-1])
     return entries
 
   def tags(self):

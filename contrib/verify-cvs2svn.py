@@ -33,7 +33,7 @@
 import os
 import sys
 import optparse
-import popen2
+import subprocess
 import shutil
 import re
 
@@ -41,20 +41,6 @@ import re
 # CVS and Subversion command line client commands
 CVS_CMD = 'cvs'
 SVN_CMD = 'svn'
-
-
-# Minimal, incomplete, version of popen2.Popen4 for those platforms
-# for which popen2 does not provide it.
-try:
-  Popen4 = popen2.Popen4
-except AttributeError:
-  class Popen4:
-    def __init__(self, cmd):
-      if type(cmd) != str:
-        cmd = " ".join(cmd)
-      self.fromchild, self.tochild = popen2.popen4(cmd)
-    def wait(self):
-      return self.fromchild.close() or self.tochild.close()
 
 
 class CvsRepos:
@@ -89,9 +75,9 @@ class CvsRepos:
     else:
       cmd.extend([ '-D', 'now' ])
     cmd.extend([ '-d', dest_path, self.module ])
-    pipe = Popen4(cmd)
-    output = pipe.fromchild.read()
-    status = pipe.wait()
+    child = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+    output = child.stdout.read()
+    status = child.wait()
     if status or output:
       print 'CMD FAILED:', ' '.join(cmd)
       print 'Output:'
@@ -119,9 +105,9 @@ class SvnRepos:
     """Export PATH to DEST_PATH."""
     url = '/'.join([self.url, path])
     cmd = [ SVN_CMD, 'export', '-q', url, dest_path ]
-    pipe = Popen4(cmd)
-    output = pipe.fromchild.read()
-    status = pipe.wait()
+    child = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+    output = child.stdout.read()
+    status = child.wait()
     if status or output:
       print 'CMD FAILED:', ' '.join(cmd)
       print 'Output:'
@@ -143,9 +129,9 @@ class SvnRepos:
   def list(self, path):
     """Return a list of all files and directories in PATH."""
     cmd = [ SVN_CMD, 'ls', self.url + '/' + path ]
-    pipe = Popen4(cmd)
-    lines = pipe.fromchild.readlines()
-    status = pipe.wait()
+    child = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+    lines = child.stdout.readlines()
+    status = child.wait()
     if status:
       print 'CMD FAILED:', ' '.join(cmd)
       print 'Output:'

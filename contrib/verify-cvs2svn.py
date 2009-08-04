@@ -41,6 +41,7 @@ import re
 # CVS and Subversion command line client commands
 CVS_CMD = 'cvs'
 SVN_CMD = 'svn'
+HG_CMD = 'hg'
 
 
 def pipe(cmd):
@@ -96,6 +97,13 @@ class CvsRepos:
 class SvnRepos:
   def __init__(self, url):
     """Open the Subversion repository at URL."""
+    # Check if the user supplied an URL or a path
+    if url.find('://') == -1:
+      abspath = os.path.abspath(url)
+      url = 'file://' + (abspath[0] != '/' and '/' or '') + abspath
+      if os.sep != '/':
+        url = url.replace(os.sep, '/')
+
     self.url = url
 
     # Cache a list of all tags and branches
@@ -149,6 +157,51 @@ class SvnRepos:
     """Return a list of all branches in the repository."""
     return self.branch_list
 
+class HgRepos:
+  def __init__(self, path):
+    self.path = path
+    self.base_cmd = [HG_CMD, '--cwd', self.path]
+
+  def _export(self, dest_path, rev):
+    cmd = self.base_cmd + ['archive',
+                           '--type', 'files',
+                           '--rev', rev,
+                           '--exclude', '.hg*',
+                           dest_path]
+    (output, status) = pipe(cmd)
+    if status or output:
+      cmd_failed(cmd, output, status)
+
+  def export_trunk(self, dest_path):
+    self._export(dest_path, 'default')
+
+  def export_tag(self, dest_path, tag):
+    self._export(dest_path, tag)
+
+  def export_branch(self, dest_path, branch):
+    self._export(dest_path, branch)
+
+  def tags(self):
+    cmd = self.base_cmd + ['tags', '-q']
+    tags = self._split_output(cmd)
+    tags.remove('tip')
+    return tags
+
+  def branches(self):
+    cmd = self.base_cmd + ['branches', '-q']
+    branches = self._split_output(cmd)
+    branches.remove('default')
+    return branches
+
+  def _split_output(self, cmd):
+    (output, status) = pipe(cmd)
+    if status:
+      cmd_failed(cmd, output, status)
+    return output.split("\n")[:-1]
+
+class GitRepos:
+  def __init__(self, path):
+    raise NotImplementedError()
 
 def transform_symbol(ctx, name):
   """Transform the symbol NAME using the renaming rules specified
@@ -304,7 +357,7 @@ class OptionContext:
 
 def main(argv):
   parser = optparse.OptionParser(
-    usage='%prog [options] cvs-repos-path svn-repos-path')
+    usage='%prog [options] cvs-repos output-repos')
   parser.add_option('--branch',
                     help='verify contents of the branch BRANCH only')
   parser.add_option('--diff', action='store_true', dest='run_diff',
@@ -320,10 +373,21 @@ def main(argv):
                     metavar='P:S',
                     help='transform symbol names from P to S like cvs2svn, '
                          'except transforms SVN symbol to CVS symbol')
+  parser.add_option('--svn',
+                    action='store_const', dest='repos_type', const='svn',
+                    help='assume output-repos is svn [default]')
+  parser.add_option('--hg',
+                    action='store_const', dest='repos_type', const='hg',
+                    help='assume output-repos is hg')
+  parser.add_option('--git',
+                    action='store_const', dest='repos_type', const='git',
+                    help='assume output-repos is git (not implemented!)')
+
   parser.set_defaults(run_diff=False,
                       tempdir='',
                       skip_cleanup=False,
-                      symbol_transforms=[])
+                      symbol_transforms=[],
+                      repos_type='svn')
   (options, args) = parser.parse_args()
   
   symbol_transforms = []
@@ -349,33 +413,29 @@ def main(argv):
     parser.error("wrong number of arguments")
 
   cvs_path = args[0]
-  # Check if the use supplied an URL or a path
-  if args[1].find('://') != -1:
-    svn_url = args[1]
-  else:
-    abspath = os.path.abspath(args[1])
-    svn_url = 'file://' + (abspath[0] != '/' and '/' or '') + abspath
-    if os.sep != '/':
-      svn_url = svn_url.replace(os.sep, '/')
+  output_path = args[1]
+  output_klass = {'svn': SvnRepos,
+                  'hg':  HgRepos,
+                  'git': GitRepos}[options.repos_type]
 
   try:
     # Open the repositories
     cvsrepos = CvsRepos(cvs_path)
-    svnrepos = SvnRepos(svn_url)
+    outrepos = output_klass(output_path)
 
     # Do our thing...
     if verify_branch:
       print 'Verifying branch', verify_branch
-      verify_contents_single(cvsrepos, svnrepos, 'branch', verify_branch, options)
+      verify_contents_single(cvsrepos, outrepos, 'branch', verify_branch, options)
     elif verify_tag:
       print 'Verifying tag', verify_tag
-      verify_contents_single(cvsrepos, svnrepos, 'tag', verify_tag, options)
+      verify_contents_single(cvsrepos, outrepos, 'tag', verify_tag, options)
     elif verify_trunk:
       print 'Verifying trunk'
-      verify_contents_single(cvsrepos, svnrepos, 'trunk', None, options)
+      verify_contents_single(cvsrepos, outrepos, 'trunk', None, options)
     else:
       # Verify trunk, tags and branches
-      verify_contents(cvsrepos, svnrepos, options)
+      verify_contents(cvsrepos, outrepos, options)
   except RuntimeError, e:
     error(str(e))
   except KeyboardInterrupt:

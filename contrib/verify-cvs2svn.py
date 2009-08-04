@@ -32,7 +32,7 @@
 
 import os
 import sys
-import getopt
+import optparse
 import popen2
 import shutil
 import re
@@ -318,74 +318,50 @@ class OptionContext:
 
 
 def main(argv):
-  def usage():
-    """Print usage."""
-    print 'USAGE: %s cvs-repos-path svn-repos-path' \
-          % os.path.basename(argv[0])
-    print '  --branch=BRANCH  verify contents of the branch BRANCH only'
-    print '  --diff           run diff on differing files'
-    print '  --help, -h       print this usage message and exit'
-    print '  --tag=TAG        verify contents of the tag TAG only'
-    print '  --tempdir=PATH   path to store temporary files'
-    print '  --trunk          verify contents of trunk only'
-    print '  --symbol-transform=P:S transform symbol names from P to S ' \
-          'like cvs2svn,'
-    print '                   except transforms SVN symbol to CVS symbol'
+  parser = optparse.OptionParser(
+    usage='%prog [options] cvs-repos-path svn-repos-path')
+  parser.add_option('--branch',
+                    help='verify contents of the branch BRANCH only')
+  parser.add_option('--diff', action='store_true', dest='run_diff',
+                    help='run diff on differing files')
+  parser.add_option('--tag',
+                    help='verify contents of the tag TAG only')
+  parser.add_option('--tempdir',
+                    metavar='PATH',
+                    help='path to store temporary files')
+  parser.add_option('--trunk', action='store_true',
+                    help='verify contents of trunk only')
+  parser.add_option('--symbol-transform', action='append',
+                    metavar='P:S',
+                    help='transform symbol names from P to S like cvs2svn, '
+                         'except transforms SVN symbol to CVS symbol')
+  parser.set_defaults(run_diff=False,
+                      tempdir='',
+                      skip_cleanup=False,
+                      symbol_transforms=[])
+  (options, args) = parser.parse_args()
+  
+  symbol_transforms = []
+  for value in options.symbol_transforms:
+    # This is broken!
+    [pattern, replacement] = value.split(":")
+    try:
+      symbol_transforms.append(
+          RegexpSymbolTransform(pattern, replacement))
+    except re.error:
+      parser.error("'%s' is not a valid regexp." % (pattern,))
 
   def error(msg):
     """Print an error to sys.stderr."""
     sys.stderr.write('Error: ' + str(msg) + '\n')
 
-  try:
-    opts, args = getopt.getopt(
-        argv[1:], 'h',
-        [ 'branch=', 'diff', 'help', 'tag=', 'tempdir=',
-          'trunk', 'skip-cleanup', 'symbol-transform=' ])
-  except getopt.GetoptError, e:
-    error(e)
-    usage()
-    sys.exit(1)
-
-  # Default values
-  ctx = OptionContext()
-  ctx.run_diff = 0
-  ctx.tempdir = ''
-  ctx.skip_cleanup = 0
-  ctx.symbol_transforms = []
-
-  verify_branch = None
-  verify_tag = None
-  verify_trunk = None
-
-  for opt, value in opts:
-    if (opt == '--branch'):
-      verify_branch = value
-    elif (opt == '--diff'):
-      ctx.run_diff = 1
-    elif (opt == '--help') or (opt == '-h'):
-      usage()
-      sys.exit(0)
-    elif (opt == '--tag'):
-      verify_tag = value
-    elif (opt == '--tempdir'):
-      ctx.tempdir = value
-    elif (opt == '--trunk'):
-      verify_trunk = 1
-    elif (opt == '--skip-cleanup'):
-      ctx.skip_cleanup = 1
-    elif opt == '--symbol-transform':
-      # This is broken!
-      [pattern, replacement] = value.split(":")
-      try:
-        symbol_transforms.append(
-            RegexpSymbolTransform(pattern, replacement))
-      except re.error:
-        raise FatalError("'%s' is not a valid regexp." % (pattern,))
+  verify_branch = options.branch
+  verify_tag = options.tag
+  verify_trunk = options.trunk
 
   # Consistency check for options and arguments.
   if len(args) != 2:
-    usage()
-    sys.exit(1)
+    parser.error("wrong number of arguments")
 
   cvs_path = args[0]
   # Check if the use supplied an URL or a path
@@ -405,16 +381,16 @@ def main(argv):
     # Do our thing...
     if verify_branch:
       print 'Verifying branch', verify_branch
-      verify_contents_single(cvsrepos, svnrepos, 'branch', verify_branch, ctx)
+      verify_contents_single(cvsrepos, svnrepos, 'branch', verify_branch, options)
     elif verify_tag:
       print 'Verifying tag', verify_tag
-      verify_contents_single(cvsrepos, svnrepos, 'tag', verify_tag, ctx)
+      verify_contents_single(cvsrepos, svnrepos, 'tag', verify_tag, options)
     elif verify_trunk:
       print 'Verifying trunk'
-      verify_contents_single(cvsrepos, svnrepos, 'trunk', None, ctx)
+      verify_contents_single(cvsrepos, svnrepos, 'trunk', None, options)
     else:
       # Verify trunk, tags and branches
-      verify_contents(cvsrepos, svnrepos, ctx)
+      verify_contents(cvsrepos, svnrepos, options)
   except RuntimeError, e:
     error(str(e))
   except KeyboardInterrupt:

@@ -114,11 +114,11 @@ Log().log_level = Log.NORMAL
 
 # author_transforms can be used to map CVS author names (e.g.,
 # "jrandom") to whatever names make sense for your SVN configuration
-# (e.g., "john.j.random").  All values should be either 16-bit strings
-# (i.e., with "u" as a prefix) or 8-bit strings in the utf-8 encoding.
-# To use this feature, please substitute your own project's usernames
-# here and uncomment the author_transforms option when setting
-# ctx.output_option below
+# (e.g., "john.j.random").  All values should be either unicode
+# strings (i.e., with "u" as a prefix) or 8-bit strings in the utf-8
+# encoding.  To use this feature, please substitute your own project's
+# usernames here and uncomment the author_transforms option when
+# setting ctx.output_option below
 author_transforms={
     'jrandom' : u'john.j.random',
     'brane' : u'Branko.Čibej',

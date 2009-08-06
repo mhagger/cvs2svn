@@ -475,7 +475,7 @@ ctx.retain_conflicting_attic_files = False
 # the git author to "cvsauthor <cvsauthor>".  author_transforms can be
 # used to map cvsauthor names (e.g., "jrandom") to a true name and
 # email address (e.g., "J. Random <jrandom@example.com>" for the
-# example shown).  All values should be either 16-bit strings (i.e.,
+# example shown).  All values should be either unicode strings (i.e.,
 # with "u" as a prefix) or 8-bit strings in the utf-8 encoding.
 # Please substitute your own project's usernames here to use with the
 # author_transforms option of GitOutputOption below.

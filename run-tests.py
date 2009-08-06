@@ -1633,7 +1633,7 @@ def nonascii_filenames():
 
 
 class UnicodeTest(Cvs2SvnTestCase):
-  "metadata contains unicode"
+  "metadata contains Unicode"
 
   warning_pattern = r'ERROR\: There were warnings converting .* messages'
 
@@ -1657,14 +1657,14 @@ class UnicodeTest(Cvs2SvnTestCase):
 
 
 class UnicodeAuthor(UnicodeTest):
-  "author name contains unicode"
+  "author name contains Unicode"
 
   def __init__(self, warning_expected, **kw):
     UnicodeTest.__init__(self, 'unicode-author', warning_expected, **kw)
 
 
 class UnicodeLog(UnicodeTest):
-  "log message contains unicode"
+  "log message contains Unicode"
 
   def __init__(self, warning_expected, **kw):
     UnicodeTest.__init__(self, 'unicode-log', warning_expected, **kw)

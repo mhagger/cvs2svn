@@ -174,7 +174,7 @@ ctx.sort_executable = r'sort'
 ctx.trunk_only = False
 
 # How to convert CVS author names, log messages, and filenames to
-# unicode.  The first argument to CVSTextDecoder is a list of encoders
+# Unicode.  The first argument to CVSTextDecoder is a list of encoders
 # that are tried in order in 'strict' mode until one of them succeeds.
 # If none of those succeeds, then fallback_encoder (if it is
 # specified) is used in lossy 'replace' mode.  Setting a fallback
@@ -197,7 +197,7 @@ ctx.cvs_log_decoder = CVSTextDecoder(
     #fallback_encoding='ascii'
     )
 # You might want to be especially strict when converting filenames to
-# unicode (e.g., maybe not specify a fallback_encoding).
+# Unicode (e.g., maybe not specify a fallback_encoding).
 ctx.cvs_filename_decoder = CVSTextDecoder(
     [
         #'latin1',
@@ -475,7 +475,7 @@ ctx.retain_conflicting_attic_files = False
 # the git author to "cvsauthor <cvsauthor>".  author_transforms can be
 # used to map cvsauthor names (e.g., "jrandom") to a true name and
 # email address (e.g., "J. Random <jrandom@example.com>" for the
-# example shown).  All values should be either unicode strings (i.e.,
+# example shown).  All values should be either Unicode strings (i.e.,
 # with "u" as a prefix) or 8-bit strings in the utf-8 encoding.
 # Please substitute your own project's usernames here to use with the
 # author_transforms option of GitOutputOption below.

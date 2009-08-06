@@ -287,7 +287,7 @@ class GitOutputOption(OutputOption):
 
     AUTHOR_TRANSFORMS is a map {cvsauthor : (fullname, email)} from
     CVS author names to git full name and email address.  All of the
-    contents should either be unicode strings or 8-bit strings encoded
+    contents should either be Unicode strings or 8-bit strings encoded
     as UTF-8.
 
     """

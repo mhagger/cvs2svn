@@ -288,7 +288,7 @@ class CleanMetadataPass(Pass):
     if self.warnings:
       raise FatalError(
           'There were warnings converting author names and/or log messages\n'
-          'to unicode (see messages above).  Please restart this pass\n'
+          'to Unicode (see messages above).  Please restart this pass\n'
           'with one or more \'--encoding\' parameters or with\n'
           '\'--fallback-encoding\'.'
           )

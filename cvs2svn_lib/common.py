@@ -283,7 +283,7 @@ def format_date(date):
 
 
 class CVSTextDecoder:
-  """Callable that decodes CVS strings into unicode."""
+  """Callable that decodes CVS strings into Unicode."""
 
   def __init__(self, encodings, fallback_encoding=None):
     """Create a CVSTextDecoder instance.
@@ -311,7 +311,7 @@ class CVSTextDecoder:
   def __call__(self, s):
     """Try to decode string S using our configured source encodings.
 
-    Return the string as a unicode string.  If S is already a unicode
+    Return the string as a Unicode string.  If S is already a unicode
     string, do nothing.
 
     Raise UnicodeError if the string cannot be decoded using any of

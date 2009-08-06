@@ -114,7 +114,7 @@ Log().log_level = Log.NORMAL
 
 # author_transforms can be used to map CVS author names (e.g.,
 # "jrandom") to whatever names make sense for your SVN configuration
-# (e.g., "john.j.random").  All values should be either unicode
+# (e.g., "john.j.random").  All values should be either Unicode
 # strings (i.e., with "u" as a prefix) or 8-bit strings in the utf-8
 # encoding.  To use this feature, please substitute your own project's
 # usernames here and uncomment the author_transforms option when
@@ -235,7 +235,7 @@ ctx.trunk_only = False
 # directory once the last file has been deleted from it:
 ctx.prune = False
 
-# How to convert author names, log messages, and filenames to unicode.
+# How to convert author names, log messages, and filenames to Unicode.
 # The first argument to CVSTextDecoder is a list of encoders that are
 # tried in order in 'strict' mode until one of them succeeds.  If none
 # of those succeeds, then fallback_encoder is used in lossy 'replace'
@@ -258,7 +258,7 @@ ctx.cvs_log_decoder = CVSTextDecoder(
     #fallback_encoding='ascii'
     )
 # You might want to be especially strict when converting filenames to
-# unicode (e.g., maybe not specify a fallback_encoding).
+# Unicode (e.g., maybe not specify a fallback_encoding).
 ctx.cvs_filename_decoder = CVSTextDecoder(
     [
         #'latin1',

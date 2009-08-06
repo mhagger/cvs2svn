@@ -83,7 +83,7 @@ Version 2.1.0 (19 February 2008)
    - Make symbol strategy rules project-specific.
  * --write-symbol-info: output info about CVS symbols.
  * Add option ctx.decode_apple_single for handling AppleSingle-encoded files.
- * Add a new, restartable pass that converts author and log_msg to unicode.
+ * Add a new, restartable pass that converts author and log_msg to Unicode.
  * Allow properties to be left unset via auto-props using a leading '!'.
 
  Bugs fixed:

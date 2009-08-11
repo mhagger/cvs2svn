@@ -26,11 +26,11 @@ from cvs2svn_lib.artifact_manager import artifact_manager
 
 
 class CVSFileDatabase:
-  """A Database to store CVSFile objects and retrieve them by their id."""
+  """A database to store CVSFile objects and retrieve them by their id."""
 
   def __init__(self, mode):
-    """Initialize an instance, opening database in MODE (like the MODE
-    argument to Database or anydbm.open())."""
+    """Initialize an instance, opening database in MODE (where MODE is
+    either DB_OPEN_NEW or DB_OPEN_READ)."""
 
     self.mode = mode
 

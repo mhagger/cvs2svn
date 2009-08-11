@@ -30,7 +30,7 @@ from cvs2svn_lib.metadata import Metadata
 
 
 def MetadataDatabase(store_filename, index_table_filename, mode):
-  """A Database to store Metadata instances that describe CVSRevisions.
+  """A database to store Metadata instances that describe CVSRevisions.
 
   This database manages a map
 

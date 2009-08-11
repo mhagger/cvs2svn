@@ -27,6 +27,7 @@ from cvs2svn_lib import config
 from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.common import FatalError
+from cvs2svn_lib.common import normalize_svn_path
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.run_options import not_both
@@ -463,11 +464,21 @@ class SVNRunOptions(RunOptions):
     SymbolStrategyRules that will be applied to symbols in this
     project."""
 
+    if trunk_path is not None:
+      trunk_path = normalize_svn_path(trunk_path, allow_empty=True)
+    if branches_path is not None:
+      branches_path = normalize_svn_path(branches_path, allow_empty=False)
+    if tags_path is not None:
+      tags_path = normalize_svn_path(tags_path, allow_empty=False)
+
     initial_directories = [
         path
         for path in [trunk_path, branches_path, tags_path]
         if path
-        ] + list(initial_directories)
+        ] + [
+        normalize_svn_path(path)
+        for path in initial_directories
+        ]
 
     symbol_strategy_rules = list(symbol_strategy_rules)
 

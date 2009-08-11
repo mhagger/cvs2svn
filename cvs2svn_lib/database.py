@@ -75,11 +75,24 @@ if hasattr(anydbm._defaultmod, 'bsddb') \
     anydbm._defaultmod = gdbm
 
 
-class AbstractDatabase:
-  """An abstract base class for anydbm-based databases."""
+class Database:
+  """A database that uses a Serializer to store objects of a certain type.
 
-  def __init__(self, filename, mode):
-    """A convenience function for opening an anydbm database."""
+  The serializer is stored in the database under the key
+  self.serializer_key.  (This implies that self.serializer_key may not
+  be used as a key for normal entries.)
+
+  The backing database is an anydbm-based DBM.
+
+  """
+
+  serializer_key = '_.%$1\t;_ '
+
+  def __init__(self, filename, mode, serializer=None):
+    """Constructor.
+
+    The database stores its Serializer, so none needs to be supplied
+    when opening an existing database."""
 
     # pybsddb3 has a bug which prevents it from working with
     # Berkeley DB 4.2 if you open the db with 'n' ("new").  This
@@ -94,20 +107,28 @@ class AbstractDatabase:
     if mode == 'n' and anydbm._defaultmod.__name__ == 'dbhash':
       if os.path.isfile(filename):
         os.unlink(filename)
-      mode = 'c'
+      self.db = anydbm.open(filename, 'c')
+    else:
+      self.db = anydbm.open(filename, mode)
 
-    self.db = anydbm.open(filename, mode)
-
-    # Import implementations for many mapping interface methods.  Note
-    # that we specifically do not do this for any method which handles
-    # *values*, because our derived classes define __getitem__ and
-    # __setitem__ to override the storage of values, and grabbing
-    # methods directly from the dbm object would bypass this.
+    # Import implementations for many mapping interface methods.
     for meth_name in ('__delitem__',
         '__iter__', 'has_key', '__contains__', 'iterkeys', 'clear'):
       meth_ref = getattr(self.db, meth_name, None)
       if meth_ref:
         setattr(self, meth_name, meth_ref)
+
+    if mode == DB_OPEN_NEW:
+      self.serializer = serializer
+      self.db[self.serializer_key] = cPickle.dumps(self.serializer)
+    else:
+      self.serializer = cPickle.loads(self.db[self.serializer_key])
+
+  def __getitem__(self, key):
+    return self.serializer.loads(self.db[key])
+
+  def __setitem__(self, key, value):
+    self.db[key] = self.serializer.dumps(value)
 
   def __delitem__(self, key):
     # gdbm defines a __delitem__ method, but it cannot be assigned.  So
@@ -115,7 +136,9 @@ class AbstractDatabase:
     del self.db[key]
 
   def keys(self):
-    return self.db.keys()
+    retval = self.db.keys()
+    retval.remove(self.serializer_key)
+    return retval
 
   def __iter__(self):
     for key in self.keys():
@@ -153,41 +176,6 @@ class AbstractDatabase:
   def close(self):
     self.db.close()
     self.db = None
-
-
-class Database(AbstractDatabase):
-  """A database that uses a Serializer to store objects of a certain type.
-
-  Since the database entry with the key self.serializer_key is used to
-  store the serializer, self.serializer_key may not be used as a key for
-  normal entries."""
-
-  serializer_key = '_.%$1\t;_ '
-
-  def __init__(self, filename, mode, serializer=None):
-    """Constructor.
-
-    The database stores its Serializer, so none needs to be supplied
-    when opening an existing database."""
-
-    AbstractDatabase.__init__(self, filename, mode)
-
-    if mode == DB_OPEN_NEW:
-      self.serializer = serializer
-      self.db[self.serializer_key] = cPickle.dumps(self.serializer)
-    else:
-      self.serializer = cPickle.loads(self.db[self.serializer_key])
-
-  def __getitem__(self, key):
-    return self.serializer.loads(self.db[key])
-
-  def __setitem__(self, key, value):
-    self.db[key] = self.serializer.dumps(value)
-
-  def keys(self): # TODO: Once needed, handle iterators as well.
-    retval = self.db.keys()
-    retval.remove(self.serializer_key)
-    return retval
 
 
 class IndexedDatabase:

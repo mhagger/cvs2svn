@@ -104,7 +104,7 @@ class Database:
     # we know that for bsddb - but *not* anydbm in general - the database
     # consists of one file with the name we specify, rather than several
     # based on that name).
-    if mode == 'n' and anydbm._defaultmod.__name__ == 'dbhash':
+    if mode == DB_OPEN_NEW and anydbm._defaultmod.__name__ == 'dbhash':
       if os.path.isfile(filename):
         os.unlink(filename)
       self.db = anydbm.open(filename, 'c')

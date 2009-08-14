@@ -681,10 +681,13 @@ to
     </li>
 
     <li>Type <code>./configure --enable-framework
-    --enable-universalsdk --enable-shared</code> in the top-level
+    --enable-universalsdk</code> in the top-level
     Python2.6 directory.  This will configure the installation of
     python as a shared OS X framework, and usable with OS X GUI
-    frameworks and SDKs.  By default, python will be installed in
+    frameworks and SDKs. You may have problems building if you don't
+    have the SDKs that support the PPC platform. If you do, just
+    specify <code>--disable-universalsdk</code>.
+    By default, python will be installed in
     "/Library/Frameworks/Python.framework", which is what we
     want.</li>
 

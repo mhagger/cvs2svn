@@ -611,8 +611,16 @@ for more information. </p> </blockquote>
 10.5.5 does not include any other dbm libraries other than the
 standard dbm.  In order for cvs2svn to work, we need to install the
 gdbm library, in addition to a new version of python that enables the
-python gdbm module. Here is the procedure for a successful
-installation of cvs2svn and all supporting libs:</p>
+python gdbm module.</p>
+
+<p>The precompiled versions of python for OS X available from
+python.org or activestate.com (currently version 2.6.2) do not have
+gdbm support turned on.  To check for gdbm support, check for the
+library module (<code>libgdmmodule.so</code>) within the python
+installation.</p>
+
+<p>Here is the procedure for a successful installation of cvs2svn and
+all supporting libs:</p>
 
 <ol>
 

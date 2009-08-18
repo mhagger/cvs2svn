@@ -289,8 +289,9 @@ class RunOptions(object):
             '\\fB--help-passes\\fR, \\fB--version\\fR, '
             '\\fB-v\\fR/\\fB--verbose\\fR, \\fB-q\\fR/\\fB--quiet\\fR, '
             '\\fB-p\\fR/\\fB--pass\\fR/\\fB--passes\\fR, \\fB--dry-run\\fR, '
-            'and \\fB--profile\\fR.  Options are processed in the order '
-            'specified on the command line.'
+            '\\fB--profile\\fR, \\fB--sort\\fR, and \\fB--trunk-only\\fR. '
+            'Options are processed in the order specified on the command '
+            'line.'
             ),
         metavar='PATH',
         ))
@@ -305,6 +306,7 @@ class RunOptions(object):
     group.add_option(ContextOption(
         '--trunk-only',
         action='store_true',
+        compatible_with_option=True,
         help='convert only trunk commits, not tags nor branches',
         man_help=(
             'Convert only trunk commits, not tags nor branches.'

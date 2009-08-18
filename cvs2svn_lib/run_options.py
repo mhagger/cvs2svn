@@ -246,14 +246,6 @@ class RunOptions(object):
 
     (self.options, self.args) = parser.parse_args(args=self.cmd_args)
 
-    # Next look for any --options options, process them, and remove
-    # them from the list, as they affect the processing of other
-    # options:
-    options_file_found = False
-    for value in self.options.options_files:
-      self.process_options_file(value)
-      options_file_found = True
-
     # Now the log level has been set; log the time when the run started:
     Log().verbose(
         time.strftime(
@@ -262,14 +254,13 @@ class RunOptions(object):
             )
         )
 
-    if options_file_found:
-      # All of the options that are compatible with --options have
-      # been consumed above.  It is an error if any other options or
-      # arguments are left:
+    if self.options.options_file_found:
+      # Check that no options that are incompatible with --options
+      # were used:
       self.verify_option_compatibility()
     else:
-      # --options was not specified.  So we can process other options
-      # that are not compatible with --options.
+      # --options was not specified.  So do the main initialization
+      # based on other command-line options:
       self.process_options()
 
     # Check for problems with the options:
@@ -279,10 +270,10 @@ class RunOptions(object):
     group = OptionGroup(
         self.parser, 'Configuration via options file'
         )
-    self.parser.set_default('options_files', [])
+    self.parser.set_default('options_file_found', False)
     group.add_option(ManOption(
         '--options', type='string',
-        action='append', dest='options_files',
+        action='callback', callback=self.callback_options,
         help=(
             'read the conversion options from PATH.  This '
             'method allows more flexibility than using '
@@ -298,7 +289,8 @@ class RunOptions(object):
             '\\fB--help-passes\\fR, \\fB--version\\fR, '
             '\\fB-v\\fR/\\fB--verbose\\fR, \\fB-q\\fR/\\fB--quiet\\fR, '
             '\\fB-p\\fR/\\fB--pass\\fR/\\fB--passes\\fR, \\fB--dry-run\\fR, '
-            'and \\fB--profile\\fR.'
+            'and \\fB--profile\\fR.  Options are processed in the order '
+            'specified on the command line.'
             ),
         metavar='PATH',
         ))
@@ -808,6 +800,10 @@ class RunOptions(object):
 
     return group
 
+  def callback_options(self, option, opt_str, value, parser):
+    parser.values.options_file_found = True
+    self.process_options_file(value)
+
   def callback_help_passes(self, option, opt_str, value, parser):
     self.pass_manager.help_passes()
     sys.exit(0)
@@ -964,7 +960,10 @@ class RunOptions(object):
     ctx.svn_property_setters.append(ExecutablePropertySetter())
 
   def process_options(self):
-    """Process the options that are not compatible with --options."""
+    """Do the main configuration based on command-line options.
+
+    This method is only called if the --options option was not
+    specified."""
 
     raise NotImplementedError()
 

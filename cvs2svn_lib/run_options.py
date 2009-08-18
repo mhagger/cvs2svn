@@ -289,7 +289,8 @@ class RunOptions(object):
             '\\fB--help-passes\\fR, \\fB--version\\fR, '
             '\\fB-v\\fR/\\fB--verbose\\fR, \\fB-q\\fR/\\fB--quiet\\fR, '
             '\\fB-p\\fR/\\fB--pass\\fR/\\fB--passes\\fR, \\fB--dry-run\\fR, '
-            '\\fB--profile\\fR, \\fB--sort\\fR, and \\fB--trunk-only\\fR. '
+            '\\fB--profile\\fR, \\fB--sort\\fR, \\fB--trunk-only\\fR, '
+            '\\fB--encoding\\fR, and \\fB--fallback-encoding\\fR. '
             'Options are processed in the order specified on the command '
             'line.'
             ),
@@ -312,7 +313,7 @@ class RunOptions(object):
             'Convert only trunk commits, not tags nor branches.'
             ),
         ))
-    group.add_option(IncompatibleOption(
+    group.add_option(ManOption(
         '--encoding', type='string',
         action='callback', callback=self.callback_encoding,
         help=(
@@ -332,7 +333,7 @@ class RunOptions(object):
             ),
         metavar='ENC',
         ))
-    group.add_option(IncompatibleOption(
+    group.add_option(ManOption(
         '--fallback-encoding', type='string',
         action='callback', callback=self.callback_fallback_encoding,
         help='If all --encodings fail, use lossy encoding with ENC',

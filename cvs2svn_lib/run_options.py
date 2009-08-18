@@ -312,10 +312,9 @@ class RunOptions(object):
             'Convert only trunk commits, not tags nor branches.'
             ),
         ))
-    self.parser.set_default('encodings', [])
     group.add_option(IncompatibleOption(
         '--encoding', type='string',
-        action='append', dest='encodings',
+        action='callback', callback=self.callback_encoding,
         help=(
             'encoding for paths and log messages in CVS repos.  '
             'If option is specified multiple times, encoders '
@@ -335,7 +334,7 @@ class RunOptions(object):
         ))
     group.add_option(IncompatibleOption(
         '--fallback-encoding', type='string',
-        action='store',
+        action='callback', callback=self.callback_fallback_encoding,
         help='If all --encodings fail, use lossy encoding with ENC',
         man_help=(
             'If none of the encodings specified with \\fB--encoding\\fR '
@@ -807,6 +806,26 @@ class RunOptions(object):
     parser.values.options_file_found = True
     self.process_options_file(value)
 
+  def callback_encoding(self, option, opt_str, value, parser):
+    ctx = Ctx()
+
+    try:
+      ctx.cvs_author_decoder.add_encoding(value)
+      ctx.cvs_log_decoder.add_encoding(value)
+      ctx.cvs_filename_decoder.add_encoding(value)
+    except LookupError, e:
+      raise FatalError(str(e))
+
+  def callback_fallback_encoding(self, option, opt_str, value, parser):
+    ctx = Ctx()
+
+    try:
+      ctx.cvs_author_decoder.set_fallback_encoding(value)
+      ctx.cvs_log_decoder.set_fallback_encoding(value)
+      # Don't use fallback_encoding for filenames.
+    except LookupError, e:
+      raise FatalError(str(e))
+
   def callback_help_passes(self, option, opt_str, value, parser):
     self.pass_manager.help_passes()
     sys.exit(0)
@@ -870,26 +889,6 @@ class RunOptions(object):
           )
     except re.error:
       raise FatalError("'%s' is not a valid regexp." % (pattern,))
-
-  def process_encoding_options(self):
-    """Process options related to encoding/decoding character data."""
-
-    ctx = Ctx()
-
-    if 'ascii' not in self.options.encodings:
-      self.options.encodings.append('ascii')
-
-    try:
-      ctx.cvs_author_decoder = CVSTextDecoder(
-          self.options.encodings, self.options.fallback_encoding
-          )
-      ctx.cvs_log_decoder = CVSTextDecoder(
-          self.options.encodings, self.options.fallback_encoding
-          )
-      # Don't use fallback_encoding for filenames:
-      ctx.cvs_filename_decoder = CVSTextDecoder(self.options.encodings)
-    except LookupError, e:
-      raise FatalError(str(e))
 
   def process_symbol_strategy_options(self):
     """Process symbol strategy-related options."""

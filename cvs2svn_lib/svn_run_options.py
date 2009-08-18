@@ -526,7 +526,6 @@ class SVNRunOptions(RunOptions):
 
     self.process_extraction_options()
     self.process_output_options()
-    self.process_encoding_options()
     self.process_symbol_strategy_options()
     self.process_property_setter_options()
 

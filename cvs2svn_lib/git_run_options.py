@@ -261,7 +261,6 @@ class GitRunOptions(RunOptions):
     cvsroot = self.args[0]
 
     self.process_io_options()
-    self.process_encoding_options()
     self.process_symbol_strategy_options()
     self.process_property_setter_options()
 

@@ -678,6 +678,7 @@ class RunOptions(object):
     group.add_option(ContextOption(
         '--sort', type='string',
         action='store', dest='sort_executable',
+        compatible_with_option=True,
         help='path to the GNU "sort" program',
         man_help=(
             'Path to the GNU \\fIsort\\fR program.  (cvs2svn requires GNU '

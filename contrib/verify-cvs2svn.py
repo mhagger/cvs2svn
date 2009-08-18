@@ -95,6 +95,8 @@ class CvsRepos:
 
 
 class SvnRepos:
+  name = 'svn'
+
   def __init__(self, url):
     """Open the Subversion repository at URL."""
     # Check if the user supplied an URL or a path
@@ -158,6 +160,8 @@ class SvnRepos:
     return self.branch_list
 
 class HgRepos:
+  name = 'hg'
+
   def __init__(self, path):
     self.path = path
     self.base_cmd = [HG_CMD, '-R', self.path]
@@ -229,6 +233,8 @@ class HgRepos:
     return output.split("\n")[:-1]
 
 class GitRepos:
+  name = 'git'
+
   def __init__(self, path):
     raise NotImplementedError()
 
@@ -307,9 +313,9 @@ def tree_compare(base1, base2, run_diff, rel_path=''):
   return ok
 
 
-def verify_contents_single(cvsrepos, svnrepos, kind, label, ctx):
+def verify_contents_single(cvsrepos, verifyrepos, kind, label, ctx):
   """Verify that the contents of the HEAD revision of all directories
-  and files in the Subversion repository SVNREPOS matches the ones in
+  and files in the conversion repository VERIFYREPOS matches the ones in
   the CVS repository CVSREPOS.  KIND can be either 'trunk', 'tag' or
   'branch'.  If KIND is either 'tag' or 'branch', LABEL is used to
   specify the name of the tag or branch.  CTX has the attributes:
@@ -318,8 +324,10 @@ def verify_contents_single(cvsrepos, svnrepos, kind, label, ctx):
   CTX.run_diff: if true, run diff on differing files.
   """
   itemname = kind + (kind != 'trunk' and '-' + label or '')
-  cvs_export_dir = os.path.join(ctx.tempdir, 'cvs-export-' + itemname)
-  svn_export_dir = os.path.join(ctx.tempdir, 'svn-export-' + itemname)
+  cvs_export_dir = os.path.join(
+    ctx.tempdir, 'cvs-export-%s' % itemname)
+  vrf_export_dir = os.path.join(
+    ctx.tempdir, '%s-export-%s' % (verifyrepos.name, itemname))
 
   if label:
     cvslabel = transform_symbol(ctx, label)
@@ -329,48 +337,48 @@ def verify_contents_single(cvsrepos, svnrepos, kind, label, ctx):
   try:
     cvsrepos.export(cvs_export_dir, cvslabel)
     if kind == 'trunk':
-      svnrepos.export_trunk(svn_export_dir)
+      verifyrepos.export_trunk(vrf_export_dir)
     elif kind == 'tag':
-      svnrepos.export_tag(svn_export_dir, label)
+      verifyrepos.export_tag(vrf_export_dir, label)
     else:
-      svnrepos.export_branch(svn_export_dir, label)
+      verifyrepos.export_branch(vrf_export_dir, label)
 
-    if not tree_compare(cvs_export_dir, svn_export_dir, ctx.run_diff):
+    if not tree_compare(cvs_export_dir, vrf_export_dir, ctx.run_diff):
       return 0
   finally:
     if not ctx.skip_cleanup:
       if os.path.exists(cvs_export_dir):
         shutil.rmtree(cvs_export_dir)
-      if os.path.exists(svn_export_dir):
-        shutil.rmtree(svn_export_dir)
+      if os.path.exists(vrf_export_dir):
+        shutil.rmtree(vrf_export_dir)
   return 1
 
 
-def verify_contents(cvsrepos, svnrepos, ctx):
+def verify_contents(cvsrepos, verifyrepos, ctx):
   """Verify that the contents of the HEAD revision of all directories
-  and files in the trunk, all tags and all branches in the Subversion
-  repository SVNREPOS matches the ones in the CVS repository CVSREPOS.
+  and files in the trunk, all tags and all branches in the conversion
+  repository VERIFYREPOS matches the ones in the CVS repository CVSREPOS.
   CTX is passed through to verify_contents_single()."""
   anomalies = []
 
   # Verify contents of trunk
   print 'Verifying trunk'
-  if not verify_contents_single(cvsrepos, svnrepos, 'trunk', None, ctx):
+  if not verify_contents_single(cvsrepos, verifyrepos, 'trunk', None, ctx):
     anomalies.append('trunk')
 
   # Verify contents of all tags
-  for tag in svnrepos.tags():
+  for tag in verifyrepos.tags():
     print 'Verifying tag', tag
-    if not verify_contents_single(cvsrepos, svnrepos, 'tag', tag, ctx):
+    if not verify_contents_single(cvsrepos, verifyrepos, 'tag', tag, ctx):
       anomalies.append('tag:' + tag)
 
   # Verify contents of all branches
-  for branch in svnrepos.branches():
+  for branch in verifyrepos.branches():
     if branch[:10] == 'unlabeled-':
       print 'Skipped branch', branch
     else:
       print 'Verifying branch', branch
-      if not verify_contents_single(cvsrepos, svnrepos, 'branch', branch, ctx):
+      if not verify_contents_single(cvsrepos, verifyrepos, 'branch', branch, ctx):
         anomalies.append('branch:' + branch)
 
   # Show the results
@@ -390,7 +398,7 @@ class OptionContext:
 
 def main(argv):
   parser = optparse.OptionParser(
-    usage='%prog [options] cvs-repos output-repos')
+    usage='%prog [options] cvs-repos verify-repos')
   parser.add_option('--branch',
                     help='verify contents of the branch BRANCH only')
   parser.add_option('--diff', action='store_true', dest='run_diff',
@@ -408,13 +416,13 @@ def main(argv):
                          'except transforms SVN symbol to CVS symbol')
   parser.add_option('--svn',
                     action='store_const', dest='repos_type', const='svn',
-                    help='assume output-repos is svn [default]')
+                    help='assume verify-repos is svn [default]')
   parser.add_option('--hg',
                     action='store_const', dest='repos_type', const='hg',
-                    help='assume output-repos is hg')
+                    help='assume verify-repos is hg')
   parser.add_option('--git',
                     action='store_const', dest='repos_type', const='git',
-                    help='assume output-repos is git (not implemented!)')
+                    help='assume verify-repos is git (not implemented!)')
 
   parser.set_defaults(run_diff=False,
                       tempdir='',
@@ -446,29 +454,29 @@ def main(argv):
     parser.error("wrong number of arguments")
 
   cvs_path = args[0]
-  output_path = args[1]
-  output_klass = {'svn': SvnRepos,
+  verify_path = args[1]
+  verify_klass = {'svn': SvnRepos,
                   'hg':  HgRepos,
                   'git': GitRepos}[options.repos_type]
 
   try:
     # Open the repositories
     cvsrepos = CvsRepos(cvs_path)
-    outrepos = output_klass(output_path)
+    verifyrepos = verify_klass(verify_path)
 
     # Do our thing...
     if verify_branch:
       print 'Verifying branch', verify_branch
-      verify_contents_single(cvsrepos, outrepos, 'branch', verify_branch, options)
+      verify_contents_single(cvsrepos, verifyrepos, 'branch', verify_branch, options)
     elif verify_tag:
       print 'Verifying tag', verify_tag
-      verify_contents_single(cvsrepos, outrepos, 'tag', verify_tag, options)
+      verify_contents_single(cvsrepos, verifyrepos, 'tag', verify_tag, options)
     elif verify_trunk:
       print 'Verifying trunk'
-      verify_contents_single(cvsrepos, outrepos, 'trunk', None, options)
+      verify_contents_single(cvsrepos, verifyrepos, 'trunk', None, options)
     else:
       # Verify trunk, tags and branches
-      verify_contents(cvsrepos, outrepos, options)
+      verify_contents(cvsrepos, verifyrepos, options)
   except RuntimeError, e:
     error(str(e))
   except KeyboardInterrupt:

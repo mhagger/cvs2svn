@@ -20,6 +20,7 @@
 import os
 
 from cvs2svn_lib import config
+from cvs2svn_lib.common import CVSTextDecoder
 
 
 class Ctx:
@@ -48,9 +49,9 @@ class Ctx:
     self.sort_executable = config.SORT_EXECUTABLE
     self.trunk_only = False
     self.prune = True
-    self.cvs_author_decoder = lambda s: s.decode('ascii')
-    self.cvs_log_decoder = lambda s: s.decode('ascii')
-    self.cvs_filename_decoder = lambda s: s.decode('ascii')
+    self.cvs_author_decoder = CVSTextDecoder(['ascii'])
+    self.cvs_log_decoder = CVSTextDecoder(['ascii'])
+    self.cvs_filename_decoder = CVSTextDecoder(['ascii'])
     self.decode_apple_single = False
     self.symbol_info_filename = None
     self.username = None

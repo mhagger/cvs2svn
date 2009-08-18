@@ -160,20 +160,43 @@ class SvnRepos:
 class HgRepos:
   def __init__(self, path):
     self.path = path
-    self.base_cmd = [HG_CMD, '--cwd', self.path]
+    self.base_cmd = [HG_CMD, '-R', self.path]
+
+    self._branches = None               # cache result of branches()
+    self._have_default = None           # so export_trunk() doesn't blow up
 
   def _export(self, dest_path, rev):
     cmd = self.base_cmd + ['archive',
                            '--type', 'files',
                            '--rev', rev,
-                           '--exclude', '.hg*',
+                           '--exclude', 're:^\.hg',
                            dest_path]
     (output, status) = pipe(cmd)
     if status or output:
       cmd_failed(cmd, output, status)
 
+    # If Mercurial has nothing to export, then it doesn't create
+    # dest_path.  This breaks tree_compare(), so just check that the
+    # manifest for the chosen revision really is empty, and if so create
+    # the empty dir.
+    if not os.path.exists(dest_path):
+      cmd = self.base_cmd + ['manifest', '--rev', rev]
+
+      (output, status) = pipe(cmd)
+      if status:
+        cmd_failed(cmd, output, status)
+      manifest = [fn for fn in output.split("\n")[:-1]
+                  if not fn.startswith('.hg')]
+      if not manifest:
+        os.mkdir(dest_path)
+
   def export_trunk(self, dest_path):
-    self._export(dest_path, 'default')
+    self.branches()                     # ensure _have_default is set
+    if self._have_default:
+      self._export(dest_path, 'default')
+    else:
+      # same as CVS does when exporting empty trunk
+      os.mkdir(dest_path)
 
   def export_tag(self, dest_path, tag):
     self._export(dest_path, tag)
@@ -188,10 +211,16 @@ class HgRepos:
     return tags
 
   def branches(self):
-    cmd = self.base_cmd + ['branches', '-q']
-    branches = self._split_output(cmd)
-    branches.remove('default')
-    return branches
+    if self._branches is None:
+      cmd = self.base_cmd + ['branches', '-q']
+      self._branches = branches = self._split_output(cmd)
+      try:
+        branches.remove('default')
+        self._have_default = True
+      except ValueError:
+        self._have_default = False
+
+    return self._branches
 
   def _split_output(self, cmd):
     (output, status) = pipe(cmd)

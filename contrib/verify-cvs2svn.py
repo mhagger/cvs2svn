@@ -247,10 +247,16 @@ def tree_compare(base1, base2, run_diff, rel_path=''):
   else:
     path1 = os.path.join(base1, rel_path)
     path2 = os.path.join(base2, rel_path)
+  if not os.path.exists(path1):
+    print '*** ANOMALY: %s does not exist' % path1
+    return 0
+  if not os.path.exists(path2):
+    print '*** ANOMALY: %s does not exist' % path2
+    return 0
   if os.path.isfile(path1) and os.path.isfile(path2):
     return file_compare(base1, base2, run_diff, rel_path)
-  if not os.path.isdir(path1) or not os.path.isdir(path2):
-    print '*** ANOMALY: Path type differ for %s' % rel_path
+  if not (os.path.isdir(path1) and os.path.isdir(path2)):
+    print '*** ANOMALY: Path types differ for %r' % rel_path
     return 0
   entries1 = os.listdir(path1)
   entries1.sort()
@@ -264,8 +270,6 @@ def tree_compare(base1, base2, run_diff, rel_path=''):
   if extra:
     print '*** ANOMALY: Directory /%s has extra entries: %s' % (
       rel_path, ', '.join(extra))
-  if missing or extra:
-    return 0
   ok = 1
   for entry in entries1:
     new_rel_path = os.path.join(rel_path, entry)

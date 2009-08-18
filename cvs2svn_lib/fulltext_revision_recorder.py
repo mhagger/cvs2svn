@@ -17,7 +17,7 @@
 """An abstract class that contructs file contents during CollectRevsPass.
 
 It calls its record_fulltext() method with the full text of every
-revision.  This method should be overwritten to do something with the
+revision.  This method should be overridden to do something with the
 fulltext and possibly return a revision_recorder_token."""
 
 
@@ -73,7 +73,7 @@ class FulltextRevisionRecorderAdapter(RevisionRecorder):
     self.fulltext_revision_recorder.start_file(cvs_file_items)
 
   def record_text(self, cvs_rev, log, text):
-    """This method should be overwritten.
+    """This method should be overwridden.
 
     It should determine the fulltext of CVS_REV, then pass it to
     self.fulltext_revision_recorder.record_fulltext() and return the

@@ -58,7 +58,7 @@ class OutputOption:
     raise NotImplementedError()
 
   def process_primary_commit(self, svn_commit):
-    """Process SVN_COMMIT, which is an SVNInitialProjectCommit."""
+    """Process SVN_COMMIT, which is an SVNPrimaryCommit."""
 
     raise NotImplementedError()
 

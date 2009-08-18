@@ -14,11 +14,7 @@
 # history and logs, available at http://cvs2svn.tigris.org/.
 # ====================================================================
 
-"""An abstract class that contructs file contents during CollectRevsPass.
-
-It calls its record_fulltext() method with the full text of every
-revision.  This method should be overwritten to do something with the
-fulltext and possibly return a revision_recorder_token."""
+"""Write file contents to a stream of git-fast-import blobs."""
 
 import itertools
 

@@ -17,7 +17,7 @@
 """This module contains the RepositoryMirror class and supporting classes.
 
 RepositoryMirror represents the skeleton of a versioned file tree with
-multiple lines of development ('LODs').  It records the presence of
+multiple lines of development ('LODs').  It records the presence or
 absence of files and directories, but not their contents.  Given three
 values (revnum, lod, cvs_path), it can tell you whether the specified
 CVSPath existed on the specified LOD in the given revision number.

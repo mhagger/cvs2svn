@@ -24,8 +24,8 @@ from cvs2svn_lib import config
 
 class Ctx:
   """Session state for this run of cvs2svn.  For example, run-time
-  options are stored here.  This class is a Borg, see
-  http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/66531."""
+  options are stored here.  This class is a Borg (see
+  http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/66531)."""
 
   __shared_state = { }
 

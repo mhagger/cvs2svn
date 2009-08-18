@@ -252,11 +252,19 @@ def transform_symbol(ctx, name):
 
 
 def file_compare(base1, base2, run_diff, rel_path):
-  """Compare the contents of two files.  The paths are specified as two
-  base paths BASE1 and BASE2, and a path REL_PATH that is relative to the
-  two base paths.  Return 1 if the file contetns are identical, else 0."""
+  """Compare the mode and contents of two files.  The paths are
+  specified as two base paths BASE1 and BASE2, and a path REL_PATH that
+  is relative to the two base paths.  Return 1 if the file mode and
+  contents are identical, else 0."""
   path1 = os.path.join(base1, rel_path)
   path2 = os.path.join(base2, rel_path)
+  mode1 = os.stat(path1).st_mode & 0700   # only look at owner bits
+  mode2 = os.stat(path2).st_mode & 0700
+  if mode1 != mode2:
+    print '*** ANOMALY: File modes differ for %s' % rel_path
+    print '***   %s: %o' % (path1, mode1)
+    print '***   %s: %o' % (path2, mode2)
+
   file1 = open(path1, 'rb')
   file2 = open(path2, 'rb')
   while 1:

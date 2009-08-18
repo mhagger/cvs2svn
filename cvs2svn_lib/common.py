@@ -308,6 +308,29 @@ class CVSTextDecoder:
           fallback_encoding, codecs.lookup(fallback_encoding)[1]
           )
 
+  def add_encoding(self, encoding):
+    """Add an encoding to be tried in 'strict' mode.
+
+    ENCODING is the name of an encoding.  If it is unknown, raise a
+    LookupError."""
+
+    for (name, decoder) in self.decoders:
+      if name == encoding:
+        return
+    else:
+      self.decoders.append( (encoding, codecs.lookup(encoding)[1]) )
+
+  def set_fallback_encoding(self, encoding):
+    """Set the fallback encoding, to be tried in 'replace' mode.
+
+    ENCODING is the name of an encoding.  If it is unknown, raise a
+    LookupError."""
+
+    if encoding is None:
+      self.fallback_decoder = None
+    else:
+      self.fallback_decoder = (encoding, codecs.lookup(encoding)[1])
+
   def __call__(self, s):
     """Try to decode string S using our configured source encodings.
 

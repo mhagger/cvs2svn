@@ -1,0 +1,318 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<style type="text/css"> /* <![CDATA[ */
+  @import "tigris-branding/css/tigris.css";
+  @import "tigris-branding/css/inst.css";
+  /* ]]> */</style>
+<link rel="stylesheet" type="text/css" media="print"
+  href="tigris-branding/css/print.css"/>
+<script type="text/javascript" src="tigris-branding/scripts/tigris.js"></script>
+<title>cvs2bzr Documentation</title>
+</head>
+
+<body id="bodycol">
+<div class="app">
+
+<h1>cvs2bzr</h1>
+
+<h2>Index</h2>
+
+<ul>
+
+  <li><a href="#intro">Introduction</a></li>
+
+  <li><a href="#reqs">Requirements</a></li>
+
+  <li><a href="#status">Development status</a></li>
+
+  <li><a href="#docs">Documentation</a></li>
+
+  <li><a href="#usage">Usage</a></li>
+
+</ul>
+
+<hr />
+
+<h2><a name="intro">Introduction</a></h2>
+
+<p>cvs2svn/cvs2bzr is a tool that can be used to migrate CVS
+repositories to newer version control tools, including <a
+    href="http://bazaar-vcs.org/">Bazaar</a>.  Bazaar is an adaptive
+version control system that supports both centralised and distributed
+version control. It is most famous for being used for Ubuntu and
+MySQL development. The program used to convert to Bazaar, called
+cvs2bzr, is distributed as part of the cvs2svn project.</p>
+
+<p><strong>If you are reading this documentation on the <a
+href="http://cvs2svn.tigris.org">cvs2svn website</a>, then please be
+aware that it describes the current trunk version of cvs2svn, which
+may be different than the most recent released version.  Please refer
+to the documentation that was included with your version of cvs2svn.
+</strong></p>
+
+<p>Conversion to Bazaar was added in release 2.3 of cvs2svn and may have
+improved significantly since then.  Please make sure you are using an
+up-to-date version of cvs2svn--perhaps even the development trunk
+version.</p>
+
+
+<h2><a name="reqs">Requirements</a></h2>
+
+<p>cvs2bzr requires the following:</p>
+
+<ul>
+
+  <li>Direct (filesystem) access to a copy of the CVS repository that
+    you want to convert.  cvs2bzr parses the files in the CVS
+    repository directly, so it is not enough to have remote CVS
+    access.  See the <a href="faq.html#repoaccess">FAQ</a> for more
+    information and a possible workaround.</li>
+
+  <li>Python 2, version 2.4 or later.  See <a
+    href="http://www.python.org/">http://www.python.org/</a>.
+    (cvs2bzr does <strong>not</strong> work with Python 3.x.)</li>
+
+  <li>If you use the <tt>--use-rcs</tt> option, then RCS's `co'
+    program is required.  The RCS home page is
+    <a href="http://www.cs.purdue.edu/homes/trinkle/RCS/"
+            >http://www.cs.purdue.edu/homes/trinkle/RCS/</a>.
+    See the <a href="cvs2svn.html#use-rcs"><tt>--use-rcs</tt> flag</a> for more
+    details.</li>
+
+  <li>If you use the <tt>--use-cvs</tt> option, then the `cvs' command
+    is required.  The CVS home page is
+    <a href="http://ccvs.cvshome.org/">http://ccvs.cvshome.org/</a>.
+    See the <a href="cvs2svn.html#use-cvs"><tt>--use-cvs</tt> flag</a> for more
+    details.</li>
+
+  <li>GNU sort, which is part of the coreutils package, see <a
+    href="http://www.gnu.org/software/coreutils/"
+         >http://www.gnu.org/software/coreutils/</a>.  Binaries for
+    Win32 can be found at <a href="http://unxutils.sourceforge.net/"
+                                  >http://unxutils.sourceforge.net/</a>.
+    Windows <tt>sort.exe</tt> is <b>not</b> adequate.</li>
+
+  <li> Bazaar version 1.13 or later.</li>
+
+  <li> The bzr-fastimport plugin version 0.9 or later.</li>
+
+</ul>
+
+
+<h2><a name="status">Development status</a></h2>
+
+<p>Most of the work of converting a repository from CVS to a more
+modern version control system is inferring the most likely history
+given the incomplete information that CVS records.  cvs2svn has a long
+history of making sense of even the most convoluted CVS repositories,
+and cvs2bzr uses this same machinery.  Therefore, cvs2bzr inherits the
+robustness and many of the <a href="features.html">features of
+cvs2svn</a>.  cvs2svn can convert just about every CVS repository we
+have ever seen, and includes a plethora of options for customizing
+your conversion.</p>
+
+<p>The output of cvs2bzr is a "fastimport" dump file that can be
+imported into Bazaar using the <a
+    href="https://launchpad.net/bzr-fastimport/">bzr-fastimport</a>
+plugin.</p>
+
+<p>Although cvs2bzr is considerably newer than cvs2svn, and much less
+well tested, it is believed that cvs2bzr can (cautiously) be used for
+production conversions. If you use cvs2bzr, please let us know how it
+worked for you!</p>
+
+
+<h2><a name="limitations">cvs2bzr limitations</a></h2>
+
+<p>cvs2bzr still has many limitations compared to cvs2svn.  The main
+cvs2svn developer has limited Bazaar experience and very limited time, so
+<strong>help would be much appreciated!</strong> Some of these missing
+features would be pretty easy to program, and I'd be happy to help you
+get started.</p>
+
+<ul>
+
+  <li>The cvs2bzr documentation is still rather thin.  See <a
+    href="#docs">below</a> for more references.</li>
+
+  <li>CVS allows a branch to be created from arbitrary combinations of
+    source revisions and/or source branches.  cvs2bzr tries to create
+    a branch from a single source, but if it can't figure out how to,
+    it creates the branch using "merge" from multiple sources.  In
+    pathological situations, the number of merge sources for a branch
+    can be arbitrarily large.</li>
+
+  <li>There are no checks that CVS branch and tag names are legal
+    names in Bazaar. This is unlikely to be a problem because Bazaar
+    uses paths for branch names similar to CVS and Subversion. Tag
+    naming in Bazaar is also more flexible than in git, say.</li>
+
+  <li>Only single projects can be converted at a time.  Given the way
+    Bazaar is typically used, I don't think that this is a significant
+    limitation.</li>
+
+  <li>cvs2bzr is not especially fast.  Among other things, it still
+    uses RCS or CVS to extract the contents of the CVS revisions.
+    Implementing the <tt>--internal-co</tt> option for cvs2bzr (using
+    code that already exists in cvs2svn) might improve the conversion
+    speed considerably.</li>
+
+  <li>The cvs2svn test suite does not include meaningful tests of
+    Bazaar output.</li>
+
+  <li>cvs2bzr makes no attempt to convert <tt>.cvsignore</tt> files
+    into <tt>.bzrignore</tt> files.</li>
+
+  <li>cvs2bzr, like cvs2svn, does not support incremental conversion
+    (i.e., tracking a live CVS repository).  However, this <a
+    href="http://www.oak.homeunix.org/~marcel/blog/2009/06/03/tracking-cvs-with-git-using-cvs2git">possible
+    workaround</a> for using cvs2git along those lines might provide
+    some assistance for anyone wanting to try doing that using
+    cvs2bzr.</li>
+
+</ul>
+
+
+<h2><a name="docs">Documentation</a></h2>
+
+<p>There is some documentation specific to cvs2bzr, and much of the
+cvs2svn documentation also applies fairly straightforwardly to
+cvs2bzr.  See the following sources:</p>
+
+<ul>
+
+  <li>This document.</li>
+
+  <li>The cvs2bzr man page and the output of <tt>cvs2bzr
+    --help</tt>.</li>
+
+  <li><a href="cvs2svn.html#intro">The cvs2svn documentation</a> and
+    <a href="faq.html">the cvs2svn FAQ</a>, which contain much general
+    discussion and describe many features that can also be used for
+    cvs2bzr.</li>
+
+  <li><tt>cvs2bzr-example.options</tt> in the cvs2svn source tree,
+    which is an example of an options file that can be used to
+    configure a cvs2bzr conversion.  The file is extensively
+    documented.</li>
+
+  <li>The cvs2svn mailing lists, IRC channel, etc., as described in <a
+    href="faq.html#gettinghelp">the cvs2svn FAQ</a>.</li>
+
+  <li>The <a href="http://doc.bazaar-vcs.org/migration/en/data-migration/">
+    Bazaar Data Migration Guide</a>.</li>
+
+</ul>
+
+
+<h2><a name="usage">Usage</a></h2>
+
+<p>This section outlines the steps needed to convert a CVS repository
+to Bazaar using cvs2bzr.</p>
+
+<ol>
+
+  <li>Be sure that you have the <a href="#reqs">requirements</a>,
+    including either RCS or CVS (used to read revision contents from
+    the CVS repository).</li>
+
+  <li>Obtain a copy of cvs2svn/cvs2bzr version 2.3 or newer.  It is
+    recommended that you use the most recent version available, or
+    even the development version.
+
+    <ul>
+
+      <li>To install cvs2svn from a <a
+        href="http://cvs2svn.tigris.org/servlets/ProjectDocumentList">tarball</a>,
+        simply unpack the tarball into a directory on your conversion
+        computer (cvs2bzr can be run directly from this
+        directory).</li>
+
+      <li>
+
+        <p>To check out the current trunk version of cvs2svn, make
+          sure that you have Subversion installed and then run:</p>
+
+<pre>
+svn co --username=guest http://cvs2svn.tigris.org/svn/cvs2svn/trunk cvs2svn-trunk
+# The password is empty; i.e., just press return.
+cd cvs2svn-trunk
+make man # If you want to create manpages for the main programs
+make check # ...optional
+</pre>
+
+        <p>Please note that the test suite includes tests that are
+          marked "XFAIL" (expected failure); these are known and are
+          not considered serious problems.</p>
+
+      </li>
+
+    </ul>
+
+  </li>
+
+  <li>
+
+    Configure cvs2bzr for your conversion.  This can be done via
+    command-line options or via an options file:
+
+    <ul>
+
+      <li>The command-line options for running cvs2bzr are documented
+        in the cvs2bzr man page and in the output of <tt>cvs2bzr
+        --help</tt>.</li>
+
+      <li>
+
+        <p>The more flexible <a
+          href="cvs2svn.html#cmd-vs-options">options-file method</a>
+          requires you to create an options file, then start cvs2bzr
+          with</p>
+
+<pre>
+cvs2bzr --options=OPTIONS-FILE
+</pre>
+
+        <p>Use <tt>cvs2bzr-example.options</tt> in the cvs2svn source
+          tree as your starting point; the file contains lots of
+          documentation.</p>
+
+      </li>
+
+    </ul>
+
+  </li>
+
+  <li>
+
+    <p>Run cvs2bzr.  This creates an output file in <a
+        href="http://www.kernel.org/pub/software/scm/git/docs/git-fast-import.html">fast-import</a>
+    format.  The name of this file is specified by
+    your options file or a command-line argument.  In the example,
+    the file is named <tt>cvs2svn-tmp/dumpfile.fi</tt>.</p>
+
+  </li>
+
+  <li>
+
+    <p>Load the dump file using bzr fast-import:</p>
+
+<pre>
+bzr fast-import cvs2svn-tmp/dumpfile.fi project.bzr
+</pre>
+
+  </li>
+
+</ol>
+
+<p>Feedback would be much appreciated, including reports of success
+  using cvs2bzr.  Please send comments, bug reports, and patches to
+  the <a
+  href="http://cvs2svn.tigris.org/servlets/ProjectMailingListList">cvs2svn
+  mailing lists</a>.</p>
+
+</div>
+</body>
+</html>

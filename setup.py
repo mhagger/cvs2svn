@@ -18,20 +18,23 @@ setup(
     # Metadata.
     name = "cvs2svn",
     version = get_version(),
-    description = "CVS to Subversion or git repository converter",
+    description = "CVS to Subversion/git/Bazaar/Mercurial repository converter",
     author = "The cvs2svn team",
     author_email = "dev@cvs2svn.tigris.org",
     url = "http://cvs2svn.tigris.org/",
     download_url = "http://cvs2svn.tigris.org/servlets/ProjectDocumentList?folderID=2976",
     license = "Apache-style",
-    long_description = """cvs2svn_ is a tool for migrating a CVS repository to
-Subversion_ or git_. The main design goals are robustness and 100% data
+    long_description = """\
+cvs2svn_ is a tool for migrating a CVS repository to Subversion_, git_,
+Bazaar_, or Mercurial_. The main design goals are robustness and 100% data
 preservation. cvs2svn can convert just about any CVS repository we've ever
 seen, including gcc, Mozilla, FreeBSD, KDE, GNOME...
 
-.. _cvs2svn: http://cvs2svn.tigris.org
-.. _Subversion: http://svn.tigris.org
+.. _cvs2svn: http://cvs2svn.tigris.org/
+.. _Subversion: http://svn.tigris.org/
 .. _git: http://git-scm.com/
+.. _Bazaar: http://bazaar-vcs.org/
+.. _Mercurial: http://mercurial.selenic.com/
 
 cvs2svn infers what happened in the history of your CVS repository and
 replicates that history as accurately as possible in the target SCM. All
@@ -76,7 +79,7 @@ like::
         ],
     # Data.
     packages = ["cvs2svn_lib", "cvs2svn_rcsparse"],
-    scripts = ["cvs2svn", "cvs2git"],
+    scripts = ["cvs2svn", "cvs2git", "cvs2bzr"],
     )
 
 

@@ -279,6 +279,7 @@ def file_compare(failures, base1, base2, run_diff, rel_path):
   specified as two base paths BASE1 and BASE2, and a path REL_PATH that
   is relative to the two base paths.  Return 1 if the file mode and
   contents are identical, else 0."""
+  ok = True
   path1 = os.path.join(base1, rel_path)
   path2 = os.path.join(base2, rel_path)
   mode1 = os.stat(path1).st_mode & 0700   # only look at owner bits
@@ -287,6 +288,7 @@ def file_compare(failures, base1, base2, run_diff, rel_path):
     failures.report('File modes differ for %s' % rel_path,
                     details=['%s: %o' % (path1, mode1),
                              '%s: %o' % (path2, mode2)])
+    ok = False
 
   file1 = open(path1, 'rb')
   file2 = open(path2, 'rb')
@@ -302,9 +304,12 @@ def file_compare(failures, base1, base2, run_diff, rel_path):
         diff = None
       failures.report('File contents differ for %s' % rel_path,
                       details=diff)
-      return False
+      ok = False
     if len(data1) == 0:
-      return True
+      # eof
+      break
+
+  return ok
 
 
 def tree_compare(failures, base1, base2, run_diff, rel_path=''):

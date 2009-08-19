@@ -251,7 +251,21 @@ def transform_symbol(ctx, name):
   return name
 
 
-def file_compare(base1, base2, run_diff, rel_path):
+class Failures(object):
+  def __init__(self):
+    self.count = 0                      # number of failures seen
+
+  def report(self, summary, details=None):
+    self.count += 1
+    sys.stdout.write('*** ANOMALY: %s\n' % summary)
+    if details:
+      for line in details:
+        sys.stdout.write('***  %s\n' % line)
+
+  def __nonzero__(self):
+    return self.count > 0
+
+def file_compare(failures, base1, base2, run_diff, rel_path):
   """Compare the mode and contents of two files.  The paths are
   specified as two base paths BASE1 and BASE2, and a path REL_PATH that
   is relative to the two base paths.  Return 1 if the file mode and
@@ -261,9 +275,9 @@ def file_compare(base1, base2, run_diff, rel_path):
   mode1 = os.stat(path1).st_mode & 0700   # only look at owner bits
   mode2 = os.stat(path2).st_mode & 0700
   if mode1 != mode2:
-    print '*** ANOMALY: File modes differ for %s' % rel_path
-    print '***   %s: %o' % (path1, mode1)
-    print '***   %s: %o' % (path2, mode2)
+    failures.report('File modes differ for %s' % rel_path,
+                    details=['%s: %o' % (path1, mode1),
+                             '%s: %o' % (path2, mode2)])
 
   file1 = open(path1, 'rb')
   file2 = open(path2, 'rb')
@@ -271,15 +285,20 @@ def file_compare(base1, base2, run_diff, rel_path):
     data1 = file1.read(8192)
     data2 = file2.read(8192)
     if data1 != data2:
-      print '*** ANOMALY: File contents differ for %s' % rel_path
       if run_diff:
-        os.system('diff -u "' + path1 + '" "' + path2 + '"')
+        cmd = ['diff', '-u', path1, path2]
+        (output, status) = pipe(cmd)
+        diff = output.split('\n')
+      else:
+        diff = None
+      failures.report('File contents differ for %s' % rel_path,
+                      details=diff)
       return 0
     if len(data1) == 0:
       return 1
 
 
-def tree_compare(base1, base2, run_diff, rel_path=''):
+def tree_compare(failures, base1, base2, run_diff, rel_path=''):
   """Compare the contents of two directory trees, including the contents
   of all files.  The paths are specified as two base paths BASE1 and BASE2,
   and a path REL_PATH that is relative to the two base paths.  Return 1
@@ -291,15 +310,15 @@ def tree_compare(base1, base2, run_diff, rel_path=''):
     path1 = os.path.join(base1, rel_path)
     path2 = os.path.join(base2, rel_path)
   if not os.path.exists(path1):
-    print '*** ANOMALY: %s does not exist' % path1
+    failures.report('%s does not exist' % path1)
     return 0
   if not os.path.exists(path2):
-    print '*** ANOMALY: %s does not exist' % path2
+    failures.report('%s does not exist' % path2)
     return 0
   if os.path.isfile(path1) and os.path.isfile(path2):
-    return file_compare(base1, base2, run_diff, rel_path)
+    return file_compare(failures, base1, base2, run_diff, rel_path)
   if not (os.path.isdir(path1) and os.path.isdir(path2)):
-    print '*** ANOMALY: Path types differ for %r' % rel_path
+    failures.report('Path types differ for %r' % rel_path)
     return 0
   entries1 = os.listdir(path1)
   entries1.sort()
@@ -308,20 +327,20 @@ def tree_compare(base1, base2, run_diff, rel_path=''):
   missing = filter(lambda x: x not in entries2, entries1)
   extra = filter(lambda x: x not in entries1, entries2)
   if missing:
-    print '*** ANOMALY: Directory /%s is missing entries: %s' % (
-      rel_path, ', '.join(missing))
+    failures.report('Directory /%s is missing entries: %s' %
+                    (rel_path, ', '.join(missing)))
   if extra:
-    print '*** ANOMALY: Directory /%s has extra entries: %s' % (
-      rel_path, ', '.join(extra))
+    failures.report('Directory /%s has extra entries: %s' %
+                    (rel_path, ', '.join(extra)))
   ok = 1
   for entry in entries1:
     new_rel_path = os.path.join(rel_path, entry)
-    if not tree_compare(base1, base2, run_diff, new_rel_path):
+    if not tree_compare(failures, base1, base2, run_diff, new_rel_path):
       ok = 0
   return ok
 
 
-def verify_contents_single(cvsrepos, verifyrepos, kind, label, ctx):
+def verify_contents_single(failures, cvsrepos, verifyrepos, kind, label, ctx):
   """Verify that the contents of the HEAD revision of all directories
   and files in the conversion repository VERIFYREPOS matches the ones in
   the CVS repository CVSREPOS.  KIND can be either 'trunk', 'tag' or
@@ -351,7 +370,9 @@ def verify_contents_single(cvsrepos, verifyrepos, kind, label, ctx):
     else:
       verifyrepos.export_branch(vrf_export_dir, label)
 
-    if not tree_compare(cvs_export_dir, vrf_export_dir, ctx.run_diff):
+    if not tree_compare(
+          failures, cvs_export_dir, vrf_export_dir, ctx.run_diff
+          ):
       return 0
   finally:
     if not ctx.skip_cleanup:
@@ -362,7 +383,7 @@ def verify_contents_single(cvsrepos, verifyrepos, kind, label, ctx):
   return 1
 
 
-def verify_contents(cvsrepos, verifyrepos, ctx):
+def verify_contents(failures, cvsrepos, verifyrepos, ctx):
   """Verify that the contents of the HEAD revision of all directories
   and files in the trunk, all tags and all branches in the conversion
   repository VERIFYREPOS matches the ones in the CVS repository CVSREPOS.
@@ -371,13 +392,17 @@ def verify_contents(cvsrepos, verifyrepos, ctx):
 
   # Verify contents of trunk
   print 'Verifying trunk'
-  if not verify_contents_single(cvsrepos, verifyrepos, 'trunk', None, ctx):
+  if not verify_contents_single(
+        failures, cvsrepos, verifyrepos, 'trunk', None, ctx
+        ):
     anomalies.append('trunk')
 
   # Verify contents of all tags
   for tag in verifyrepos.tags():
     print 'Verifying tag', tag
-    if not verify_contents_single(cvsrepos, verifyrepos, 'tag', tag, ctx):
+    if not verify_contents_single(
+          failures, cvsrepos, verifyrepos, 'tag', tag, ctx
+          ):
       anomalies.append('tag:' + tag)
 
   # Verify contents of all branches
@@ -386,11 +411,12 @@ def verify_contents(cvsrepos, verifyrepos, ctx):
       print 'Skipped branch', branch
     else:
       print 'Verifying branch', branch
-      if not verify_contents_single(cvsrepos, verifyrepos, 'branch', branch, ctx):
+      if not verify_contents_single(
+            failures, cvsrepos, verifyrepos, 'branch', branch, ctx
+            ):
         anomalies.append('branch:' + branch)
 
   # Show the results
-  print
   if len(anomalies) == 0:
     print 'No content anomalies detected'
   else:
@@ -438,7 +464,7 @@ def main(argv):
                       symbol_transforms=[],
                       repos_type='svn')
   (options, args) = parser.parse_args()
-  
+
   symbol_transforms = []
   for value in options.symbol_transforms:
     # This is broken!
@@ -467,6 +493,7 @@ def main(argv):
                   'hg':  HgRepos,
                   'git': GitRepos}[options.repos_type]
 
+  failures = Failures()
   try:
     # Open the repositories
     cvsrepos = CvsRepos(cvs_path)
@@ -475,21 +502,29 @@ def main(argv):
     # Do our thing...
     if verify_branch:
       print 'Verifying branch', verify_branch
-      verify_contents_single(cvsrepos, verifyrepos, 'branch', verify_branch, options)
+      verify_contents_single(
+          failures, cvsrepos, verifyrepos, 'branch', verify_branch, options
+          )
     elif verify_tag:
       print 'Verifying tag', verify_tag
-      verify_contents_single(cvsrepos, verifyrepos, 'tag', verify_tag, options)
+      verify_contents_single(
+          failures, cvsrepos, verifyrepos, 'tag', verify_tag, options
+          )
     elif verify_trunk:
       print 'Verifying trunk'
-      verify_contents_single(cvsrepos, verifyrepos, 'trunk', None, options)
+      verify_contents_single(
+          failures, cvsrepos, verifyrepos, 'trunk', None, options
+          )
     else:
       # Verify trunk, tags and branches
-      verify_contents(cvsrepos, verifyrepos, options)
+      verify_contents(failures, cvsrepos, verifyrepos, options)
   except RuntimeError, e:
     error(str(e))
   except KeyboardInterrupt:
     pass
 
+  sys.exit(failures and 1 or 0)
 
 if __name__ == '__main__':
   main(sys.argv)
+

@@ -281,7 +281,7 @@ def file_compare(failures, base1, base2, run_diff, rel_path):
 
   file1 = open(path1, 'rb')
   file2 = open(path2, 'rb')
-  while 1:
+  while True:
     data1 = file1.read(8192)
     data2 = file2.read(8192)
     if data1 != data2:
@@ -293,9 +293,9 @@ def file_compare(failures, base1, base2, run_diff, rel_path):
         diff = None
       failures.report('File contents differ for %s' % rel_path,
                       details=diff)
-      return 0
+      return False
     if len(data1) == 0:
-      return 1
+      return True
 
 
 def tree_compare(failures, base1, base2, run_diff, rel_path=''):

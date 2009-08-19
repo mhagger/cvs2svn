@@ -225,7 +225,7 @@ class RunOptions(object):
 
     parser = self.parser = optparse.OptionParser(
         usage=usage,
-        description=description,
+        description=self.get_description(),
         add_help_option=False,
         )
     # A place to record any options used that are incompatible with
@@ -265,6 +265,9 @@ class RunOptions(object):
 
     # Check for problems with the options:
     self.check_options()
+
+  def get_description(self):
+    return description
 
   def _get_options_file_options_group(self):
     group = OptionGroup(

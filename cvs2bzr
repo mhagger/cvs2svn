@@ -1,0 +1,75 @@
+#!/usr/bin/env python
+# (Be in -*- python -*- mode.)
+#
+# ====================================================================
+# Copyright (c) 2000-2008 CollabNet.  All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.  The terms
+# are also available at http://subversion.tigris.org/license-1.html.
+# If newer versions of this license are posted there, you may use a
+# newer version instead, at your option.
+#
+# This software consists of voluntary contributions made by many
+# individuals.  For exact contribution history, see the revision
+# history and logs, available at http://cvs2svn.tigris.org/.
+# ====================================================================
+
+import sys
+
+# Make sure that a supported version of Python is being used.  Do this
+# as early as possible, using only code compatible with Python 1.5.2
+# and Python 3.x before the check.  Remember:
+#
+# Python 1.5.2 doesn't have sys.version_info or ''.join().
+# Python 3.0 doesn't have string.join().
+# There are plans to start deprecating the string formatting '%'
+# operator in Python 3.1 (but we use it here anyway).
+
+version_error = """\
+ERROR: cvs2bzr requires Python 2, version 2.4 or later; it does not
+work with Python 3.  You are currently using"""
+
+version_advice = """\
+Please restart cvs2bzr using a different version of the Python
+interpreter.  Visit http://www.python.org or consult your local system
+administrator if you need help.
+
+HINT: If you already have a usable Python version installed, it might
+be possible to invoke cvs2bzr with the correct Python interpreter by
+typing something like 'python2.5 """ + sys.argv[0] + """ [...]'.
+"""
+
+try:
+  version = sys.version_info
+except AttributeError:
+  # This is probably a pre-2.0 version of Python.
+  sys.stderr.write(version_error + '\n')
+  sys.stderr.write('-'*70 + '\n')
+  sys.stderr.write(sys.version + '\n')
+  sys.stderr.write('-'*70 + '\n')
+  sys.stderr.write(version_advice)
+  sys.exit(1)
+
+if not ((2,4) <= version < (3,0)):
+  sys.stderr.write(
+      version_error + ' version %d.%d.%d.\n'
+      % (version[0], version[1], version[2],)
+      )
+  sys.stderr.write(version_advice)
+  sys.exit(1)
+
+
+import os
+
+from cvs2svn_lib.common import FatalException
+from cvs2svn_lib.main import bzr_main
+
+
+try:
+  bzr_main(os.path.basename(sys.argv[0]), sys.argv[1:])
+except FatalException, e:
+  sys.stderr.write(str(e) + '\n')
+  sys.exit(1)
+
+

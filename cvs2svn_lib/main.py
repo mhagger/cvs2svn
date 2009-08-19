@@ -29,6 +29,7 @@ except ImportError:
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.svn_run_options import SVNRunOptions
 from cvs2svn_lib.git_run_options import GitRunOptions
+from cvs2svn_lib.bzr_run_options import BzrRunOptions
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.pass_manager import PassManager
 from cvs2svn_lib.passes import passes
@@ -105,6 +106,12 @@ def svn_main(progname, cmd_args):
 def git_main(progname, cmd_args):
   pass_manager = PassManager(passes)
   run_options = GitRunOptions(progname, cmd_args, pass_manager)
+  main(progname, run_options, pass_manager)
+
+
+def bzr_main(progname, cmd_args):
+  pass_manager = PassManager(passes)
+  run_options = BzrRunOptions(progname, cmd_args, pass_manager)
   main(progname, run_options, pass_manager)
 
 

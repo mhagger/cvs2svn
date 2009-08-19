@@ -266,10 +266,10 @@ class Failures(object):
 
   def report(self, summary, details=None):
     self.count += 1
-    sys.stdout.write('*** ANOMALY: %s\n' % summary)
+    sys.stdout.write(' FAIL: %s\n' % summary)
     if details:
       for line in details:
-        sys.stdout.write('***  %s\n' % line)
+        sys.stdout.write('  %s\n' % line)
 
   def __nonzero__(self):
     return self.count > 0

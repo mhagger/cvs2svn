@@ -78,6 +78,9 @@ class CvsRepos:
         self.module = os.path.join(os.path.basename(self.cvsroot), self.module)
         self.cvsroot = parent
 
+  def __str__(self):
+    return os.path.basename(self.cvsroot)
+
   def export(self, dest_path, rev=None):
     """Export revision REV to DEST_PATH where REV can be None to export
     the HEAD revision, or any valid CVS revision string to export that
@@ -118,6 +121,9 @@ class SvnRepos:
       self.branch_list = self.list('branches')
     else:
       self.branch_list = []
+
+  def __str__(self):
+    return self.url.split('/')[-1]
 
   def export(self, path, dest_path):
     """Export PATH to DEST_PATH."""
@@ -168,6 +174,9 @@ class HgRepos:
 
     self._branches = None               # cache result of branches()
     self._have_default = None           # so export_trunk() doesn't blow up
+
+  def __str__(self):
+    return os.path.basename(self.path)
 
   def _export(self, dest_path, rev):
     cmd = self.base_cmd + ['archive',

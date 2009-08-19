@@ -25,8 +25,8 @@
 # available and how they can be set.
 #
 # The program that is run to convert from CVS to git is called
-# cvs2git.  Run it with the --options option, passing it this file as
-# argument:
+# cvs2git.  Run it with the --options option, passing it this file
+# like this:
 #
 #     cvs2git --options=cvs2git-example.options
 #
@@ -458,7 +458,9 @@ ctx.cross_project_commits = False
 ctx.cross_branch_commits = False
 
 # cvs2git does not yet handle translating .cvsignore files into
-# .git/info/exclude content, so by default, the .cvsignore files are included inthe conversion output.  If you would like to omit the .cvsignore files from the output, set this option to False:
+# .gitignore files, so by default, the .cvsignore files are included
+# in the conversion output.  If you would like to omit the .cvsignore
+# files from the output, set this option to False:
 ctx.keep_cvsignore = True
 
 # By default, it is a fatal error for a CVS ",v" file to appear both
@@ -491,8 +493,8 @@ author_transforms={
     'cvs2svn' : ('cvs2svn', 'admin@example.com'),
     }
 
-# This is the main option that causes cvs2svn to output to git rather
-# than Subversion:
+# This is the main option that causes cvs2svn to output to a
+# "fastimport"-format dumpfile rather than to Subversion:
 ctx.output_option = GitOutputOption(
     # The file in which to write the git-fast-import stream that
     # contains the changesets and branch/tag information:

@@ -402,14 +402,16 @@ def verify_contents(failures, cvsrepos, verifyrepos, ctx):
   and files in the trunk, all tags and all branches in the conversion
   repository VERIFYREPOS matches the ones in the CVS repository CVSREPOS.
   CTX is passed through to verify_contents_single()."""
-  anomalies = []
+
+  # branches/tags that failed:
+  locations = []
 
   # Verify contents of trunk
   print 'Verifying trunk'
   if not verify_contents_single(
         failures, cvsrepos, verifyrepos, 'trunk', None, ctx
         ):
-    anomalies.append('trunk')
+    locations.append('trunk')
 
   # Verify contents of all tags
   for tag in verifyrepos.tags():
@@ -417,7 +419,7 @@ def verify_contents(failures, cvsrepos, verifyrepos, ctx):
     if not verify_contents_single(
           failures, cvsrepos, verifyrepos, 'tag', tag, ctx
           ):
-      anomalies.append('tag:' + tag)
+      locations.append('tag:' + tag)
 
   # Verify contents of all branches
   for branch in verifyrepos.branches():
@@ -428,16 +430,16 @@ def verify_contents(failures, cvsrepos, verifyrepos, ctx):
       if not verify_contents_single(
             failures, cvsrepos, verifyrepos, 'branch', branch, ctx
             ):
-        anomalies.append('branch:' + branch)
+        locations.append('branch:' + branch)
 
   # Show the results
-  if len(anomalies) == 0:
+  if len(locations) == 0:
     print 'No content anomalies detected'
   else:
-    print '%d content anomal%s detected:' % (len(anomalies),
-        len(anomalies) == 1 and "y" or "ies")
-    for anomaly in anomalies:
-      print '   ', anomaly
+    print '%d content anomal%s detected:' % (len(locations),
+        len(locations) == 1 and "y" or "ies")
+    for location in locations:
+      print '   ', location
 
 
 class OptionContext:

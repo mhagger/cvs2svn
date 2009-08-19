@@ -360,15 +360,15 @@ def verify_contents_single(failures, cvsrepos, verifyrepos, kind, label, ctx):
   the CVS repository CVSREPOS.  KIND can be either 'trunk', 'tag' or
   'branch'.  If KIND is either 'tag' or 'branch', LABEL is used to
   specify the name of the tag or branch.  CTX has the attributes:
-  CTX.tempdir: specifying the directory for all temporary files.
+  CTX.tmpdir: specifying the directory for all temporary files.
   CTX.skip_cleanup: if true, the temporary files are not deleted.
   CTX.run_diff: if true, run diff on differing files.
   """
   itemname = kind + (kind != 'trunk' and '-' + label or '')
   cvs_export_dir = os.path.join(
-    ctx.tempdir, 'cvs-export-%s' % itemname)
+    ctx.tmpdir, 'cvs-export-%s' % itemname)
   vrf_export_dir = os.path.join(
-    ctx.tempdir, '%s-export-%s' % (verifyrepos.name, itemname))
+    ctx.tmpdir, '%s-export-%s' % (verifyrepos.name, itemname))
 
   if label:
     cvslabel = transform_symbol(ctx, label)
@@ -456,7 +456,7 @@ def main(argv):
                     help='run diff on differing files')
   parser.add_option('--tag',
                     help='verify contents of the tag TAG only')
-  parser.add_option('--tempdir',
+  parser.add_option('--tmpdir',
                     metavar='PATH',
                     help='path to store temporary files')
   parser.add_option('--trunk', action='store_true',
@@ -476,7 +476,7 @@ def main(argv):
                     help='assume verify-repos is git (not implemented!)')
 
   parser.set_defaults(run_diff=False,
-                      tempdir='',
+                      tmpdir='',
                       skip_cleanup=False,
                       symbol_transforms=[],
                       repos_type='svn')

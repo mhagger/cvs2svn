@@ -2,15 +2,25 @@ Version ?.?.? (not yet released)
 --------------------------------
 
  New features:
- * Added a "cvs2git" script for starting conversions to git or Mercurial.
- * Allow manual pages to be generated automatically via new --man option.
+ * Add a "cvs2git" script for starting conversions to git (or Mercurial).
+ * Add a "cvs2bzr" script for starting conversions to Bazaar.
+ * Generate manual pages automatically via new --man option.
+ * Allow --mime-types and --auto-props options to be specified more than once.
+ * Support author transforms when converting to Subversion.
 
  Bugs fixed:
  * cvs2git with non-inline blobs: a revision after a delete could be empty.
+ * Fix timezone handling under Windows (which does not respect TZ variable).
+ * Do path comparisions platform-independently in symbol transform classes.
+ * Fix https://bugs.launchpad.net/pld-linux/+bug/385920
 
  Improvements and output changes:
+ * Output error message if a revision's deltatext is missing.
+ * Improve contrib/verify-cvs2svn.py (used for testing conversion accuracy).
 
  Miscellaneous:
+ * Add an IgnoreSymbolTransform class, for ignoring symbols matching a regexp.
+ * Remove some DeprecationWarnings when running under newer Python versions.
 
 
 Version 2.2.0 (23 November 2008)

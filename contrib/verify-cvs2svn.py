@@ -81,7 +81,7 @@ class CvsRepos:
   def __str__(self):
     return os.path.basename(self.cvsroot)
 
-  def export(self, dest_path, rev=None):
+  def export(self, dest_path, rev=None, keyword_opt=None):
     """Export revision REV to DEST_PATH where REV can be None to export
     the HEAD revision, or any valid CVS revision string to export that
     revision."""
@@ -91,6 +91,8 @@ class CvsRepos:
       cmd.extend([ '-r', rev ])
     else:
       cmd.extend([ '-D', 'now' ])
+    if keyword_opt:
+      cmd.append(keyword_opt)
     cmd.extend([ '-d', dest_path, self.module ])
     (output, status) = pipe(cmd)
     if status or output:
@@ -376,7 +378,7 @@ def verify_contents_single(failures, cvsrepos, verifyrepos, kind, label, ctx):
     cvslabel = None
 
   try:
-    cvsrepos.export(cvs_export_dir, cvslabel)
+    cvsrepos.export(cvs_export_dir, cvslabel, ctx.keyword_opt)
     if kind == 'trunk':
       verifyrepos.export_trunk(vrf_export_dir)
     elif kind == 'tag':
@@ -474,6 +476,14 @@ def main(argv):
   parser.add_option('--git',
                     action='store_const', dest='repos_type', const='git',
                     help='assume verify-repos is git (not implemented!)')
+  parser.add_option('--suppress-keywords',
+                    action='store_const', dest='keyword_opt', const='-kk',
+                    help='suppress CVS keyword expansion '
+                         '(equivalent to --keyword-opt=-kk)')
+  parser.add_option('--keyword-opt',
+                    metavar='OPT',
+                    help='control CVS keyword expansion by adding OPT to '
+                         'cvs export command line')
 
   parser.set_defaults(run_diff=False,
                       tmpdir='',

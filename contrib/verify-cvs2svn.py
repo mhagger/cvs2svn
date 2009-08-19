@@ -432,15 +432,16 @@ def verify_contents(failures, cvsrepos, verifyrepos, ctx):
             ):
         locations.append('branch:' + branch)
 
-  # Show the results
-  if len(locations) == 0:
-    print 'No content anomalies detected'
-  else:
-    print '%d content anomal%s detected:' % (len(locations),
-        len(locations) == 1 and "y" or "ies")
-    for location in locations:
-      print '   ', location
+  assert bool(failures) == bool(locations)
 
+  # Show the results
+  if failures:
+    sys.stdout.write('FAIL: %s != %s: %d failure(s) in:\n'
+                     % (cvsrepos, verifyrepos, failures.count))
+    for location in locations:
+      sys.stdout.write('  %s\n' % location)
+  else:
+    sys.stdout.write('PASS: %s == %s\n' % (cvsrepos, verifyrepos))
 
 class OptionContext:
   pass

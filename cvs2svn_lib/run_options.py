@@ -1023,12 +1023,11 @@ class RunOptions(object):
 
     Store the run options to SELF."""
 
-    g = {}
-    l = {
+    g = {
       'ctx' : Ctx(),
       'run_options' : self,
       }
-    execfile(options_filename, g, l)
+    execfile(options_filename, g)
 
   def usage(self):
     self.parser.print_help()

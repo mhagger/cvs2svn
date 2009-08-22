@@ -3642,6 +3642,20 @@ def transform_unlabeled_branch_name():
       )
 
 
+@Cvs2SvnTestFunction
+def ignore_unlabeled_branch():
+  "ignoring an unlabeled branch is not allowed"
+
+  conv = ensure_conversion(
+      'unlabeled-branch',
+      options_file='cvs2svn-ignore.options',
+      error_re=(
+          r"ERROR\: The unlabeled branch \'unlabeled\-1\.1\.4\' "
+          r"in \'.*\' contains commits"
+          ),
+      )
+
+
 ########################################################################
 # Run the tests
 
@@ -3837,6 +3851,7 @@ test_list = [
     XFail(add_cvsignore_to_branch_test),
     missing_deltatext,
     transform_unlabeled_branch_name,
+    ignore_unlabeled_branch,
     ]
 
 if __name__ == '__main__':

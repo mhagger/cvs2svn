@@ -312,6 +312,16 @@ class _SymbolDataCollector(object):
   def _add_unlabeled_branch(self, branch_number):
     original_name = "unlabeled-" + branch_number
     name = self.transform_symbol(original_name, branch_number)
+    if name is None:
+      self.collect_data.record_fatal_error(
+          "The unlabeled branch '%s' in '%s' contains commits.\n"
+          "It may not be ignored via a symbol transform.  (Use --exclude "
+          "instead.)"
+          % (original_name, self.cvs_file.filename,)
+          )
+      # Retain the original name to allow the conversion to continue:
+      name = original_name
+
     return self._add_branch(name, branch_number)
 
   def _add_tag(self, name, revision):

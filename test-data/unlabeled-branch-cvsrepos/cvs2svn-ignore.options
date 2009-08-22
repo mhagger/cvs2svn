@@ -1,0 +1,33 @@
+# (Be in -*- python -*- mode.)
+
+# Try ignoring an unlabeled branch using a SymbolMapper (it should
+# fail).
+
+from cvs2svn_lib.symbol_transform import SymbolMapper
+
+execfile('cvs2svn-example.options')
+
+name = 'unlabeled-branch'
+
+ctx.output_option = NewRepositoryOutputOption(
+    'cvs2svn-tmp/%s--options=cvs2svn-ignore.options-svnrepos' % (name,),
+    )
+
+run_options.clear_projects()
+
+filename = 'test-data/%s-cvsrepos/proj/a.txt,v' % (name,)
+symbol_mapper = SymbolMapper([
+    (filename, 'unlabeled-1.1.4', '1.1.4', None),
+    ])
+
+run_options.add_project(
+    r'test-data/%s-cvsrepos' % (name,),
+    trunk_path='trunk',
+    branches_path='branches',
+    tags_path='tags',
+    symbol_transforms=[
+        symbol_mapper,
+        ],
+    symbol_strategy_rules=global_symbol_strategy_rules,
+    )
+

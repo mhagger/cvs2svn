@@ -310,7 +310,8 @@ class _SymbolDataCollector(object):
     return branch_data
 
   def _add_unlabeled_branch(self, branch_number):
-    name = "unlabeled-" + branch_number
+    original_name = "unlabeled-" + branch_number
+    name = self.transform_symbol(original_name, branch_number)
     return self._add_branch(name, branch_number)
 
   def _add_tag(self, name, revision):

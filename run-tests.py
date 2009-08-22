@@ -3630,6 +3630,18 @@ def missing_deltatext():
       )
 
 
+@Cvs2SvnTestFunction
+def transform_unlabeled_branch_name():
+  "transform name of unlabeled branch"
+
+  conv = ensure_conversion(
+      'unlabeled-branch',
+      args=[
+          '--symbol-transform=unlabeled-1.1.4:BRANCH2',
+          ],
+      )
+
+
 ########################################################################
 # Run the tests
 
@@ -3824,6 +3836,7 @@ test_list = [
 # 160:
     XFail(add_cvsignore_to_branch_test),
     missing_deltatext,
+    transform_unlabeled_branch_name,
     ]
 
 if __name__ == '__main__':

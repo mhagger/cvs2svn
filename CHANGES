@@ -7,6 +7,7 @@ Version ?.?.? (not yet released)
  * Generate manual pages automatically via new --man option.
  * Allow --mime-types and --auto-props options to be specified more than once.
  * Support author transforms when converting to Subversion.
+ * Allow unlabeled branches to be renamed using SymbolTransforms.
 
  Bugs fixed:
  * cvs2git with non-inline blobs: a revision after a delete could be empty.

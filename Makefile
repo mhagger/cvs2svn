@@ -14,13 +14,16 @@ all:
 	@echo "    pycheck -- Use pychecker to check cvs2svn Python code"
 	@echo "    clean -- Clean up source tree and temporary directory"
 
-man: cvs2svn.1 cvs2git.1
+man: cvs2svn.1 cvs2git.1 cvs2bzr.1
 
 cvs2svn.1:
 	./cvs2svn --man >$@
 
 cvs2git.1:
 	./cvs2git --man >$@
+
+cvs2bzr.1:
+	./cvs2bzr --man >$@
 
 dist:
 	./dist.sh
@@ -44,7 +47,7 @@ pycheck:
 	pychecker cvs2svn_lib/*.py
 
 clean:
-	-rm -rf cvs2svn-*.tar.gz build cvs2svn-tmp
+	-rm -rf cvs2svn-*.tar.gz build cvs2svn-tmp cvs2*.1
 	-for d in . cvs2svn_lib cvs2svn_rcsparse svntest contrib ; \
 	do \
 		rm -f $$d/*.pyc $$d/*.pyo; \

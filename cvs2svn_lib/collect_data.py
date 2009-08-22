@@ -969,7 +969,10 @@ class _ProjectDataCollector:
     return symbol
 
   def log_symbol_transform(self, old_name, new_name):
-    """Record that OLD_NAME was transformed to NEW_NAME in one file."""
+    """Record that OLD_NAME was transformed to NEW_NAME in one file.
+
+    This information is used to generated a statistical summary of
+    symbol transforms."""
 
     try:
       self.symbol_transform_counts[old_name, new_name] += 1

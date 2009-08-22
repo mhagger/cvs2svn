@@ -411,19 +411,22 @@ class _SymbolDataCollector(object):
       if i not in dup_indexes:
         yield symbol_def
 
-  def _process_duplicate_defs(self):
-    """Look for and process duplicate names in SELF._symbol_defs.
+  def _process_duplicate_defs(self, symbol_defs):
+    """Iterate through SYMBOL_DEFS, processing duplicate names.
 
     Duplicate definitions of symbol names have been seen in the wild,
     and they can also happen when --symbol-transform is used.  If a
     symbol is defined multiple times, then it is a fatal error.  This
     method should be called after _eliminate_trivial_duplicate_defs()."""
 
+    # Make a copy, since we have to access multiple times:
+    symbol_defs = list(symbol_defs)
+
     # A map {name : [index,...]} mapping the names of symbols to a
-    # list of their definitions' indexes in self._symbol_defs:
+    # list of their definitions' indexes in symbol_defs:
     known_symbols = {}
 
-    for (i, (name, revision)) in enumerate(self._symbol_defs):
+    for (i, (name, revision)) in enumerate(symbol_defs):
       if name in known_symbols:
         known_symbols[name].append(i)
       else:
@@ -439,18 +442,16 @@ class _SymbolDataCollector(object):
         self.collect_data.record_fatal_error(
             "Multiple definitions of the symbol '%s' in '%s': %s" % (
                 name, self.cvs_file.filename,
-                ' '.join([self._symbol_defs[i][1] for i in indexes]),
+                ' '.join([symbol_defs[i][1] for i in indexes]),
                 )
             )
         # Ignore all but the last definition for now, to allow the
         # conversion to proceed:
         dup_indexes.update(indexes[:-1])
 
-    self._symbol_defs = [
-        symbol_def
-        for (i, symbol_def) in enumerate(self._symbol_defs)
-        if i not in dup_indexes
-        ]
+    for (i, symbol_def) in enumerate(symbol_defs):
+      if i not in dup_indexes:
+        yield symbol_def
 
   def _process_symbol(self, name, revision):
     """Process a symbol called NAME, which is associated with REVISON.
@@ -468,15 +469,14 @@ class _SymbolDataCollector(object):
   def process_symbols(self):
     """Process the symbol definitions from SELF._symbol_defs."""
 
-    self._symbol_defs = list(
-        self._eliminate_trivial_duplicate_defs(self._symbol_defs)
-        )
-    self._process_duplicate_defs()
-
-    for (name, revision) in self._symbol_defs:
-      self._process_symbol(name, revision)
-
+    symbol_defs = self._symbol_defs
     del self._symbol_defs
+
+    symbol_defs = self._eliminate_trivial_duplicate_defs(symbol_defs)
+    symbol_defs = self._process_duplicate_defs(symbol_defs)
+
+    for (name, revision) in symbol_defs:
+      self._process_symbol(name, revision)
 
   @staticmethod
   def rev_to_branch_number(revision):

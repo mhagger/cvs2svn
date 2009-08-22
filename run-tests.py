@@ -3656,6 +3656,36 @@ def ignore_unlabeled_branch():
       )
 
 
+@Cvs2SvnTestFunction
+def unlabeled_branch_name_collision():
+  "transform branch to same name as unlabeled branch"
+
+  conv = ensure_conversion(
+      'unlabeled-branch',
+      args=[
+          '--symbol-transform=unlabeled-1.1.4:BRANCH',
+          ],
+      error_re=(
+          r"ERROR\: Symbol name \'BRANCH\' is already used"
+          ),
+      )
+
+
+@Cvs2SvnTestFunction
+def collision_with_unlabeled_branch_name():
+  "transform unlabeled branch to same name as branch"
+
+  conv = ensure_conversion(
+      'unlabeled-branch',
+      args=[
+          '--symbol-transform=BRANCH:unlabeled-1.1.4',
+          ],
+      error_re=(
+          r"ERROR\: Symbol name \'unlabeled\-1\.1\.4\' is already used"
+          ),
+      )
+
+
 ########################################################################
 # Run the tests
 
@@ -3852,6 +3882,8 @@ test_list = [
     missing_deltatext,
     transform_unlabeled_branch_name,
     ignore_unlabeled_branch,
+    unlabeled_branch_name_collision,
+    collision_with_unlabeled_branch_name,
     ]
 
 if __name__ == '__main__':

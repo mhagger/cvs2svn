@@ -273,6 +273,11 @@ class _SymbolDataCollector(object):
     # process_symbols().
     self._symbol_defs = []
 
+    # A set containing the transformed names of symbols in this file
+    # (used to detect duplicats during processing of unlabeled
+    # branches):
+    self._defined_symbols = set()
+
     # Map { branch_number : _BranchData }, where branch_number has an
     # odd number of digits.
     self.branches_data = { }
@@ -309,6 +314,28 @@ class _SymbolDataCollector(object):
     self.branches_data[branch_number] = branch_data
     return branch_data
 
+  def _construct_distinct_name(self, name, original_name):
+    """Construct a distinct symbol name from NAME.
+
+    If NAME is distinct, return it.  If it is already used in this
+    file (as determined from its presence in self._defined_symbols),
+    construct and return a new name that is not already used."""
+
+    if name not in self._defined_symbols:
+      return name
+    else:
+      index = 1
+      while True:
+        dup_name = '%s-DUPLICATE-%d' % (name, index,)
+        if dup_name not in self._defined_symbols:
+          self.collect_data.record_fatal_error(
+              "Symbol name '%s' is already used in '%s'.\n"
+              "The unlabeled branch '%s' must be renamed using "
+              "--symbol-transform."
+              % (name, self.cvs_file.filename, original_name,)
+              )
+          return dup_name
+
   def _add_unlabeled_branch(self, branch_number):
     original_name = "unlabeled-" + branch_number
     name = self.transform_symbol(original_name, branch_number)
@@ -322,7 +349,9 @@ class _SymbolDataCollector(object):
       # Retain the original name to allow the conversion to continue:
       name = original_name
 
-    return self._add_branch(name, branch_number)
+    distinct_name = self._construct_distinct_name(name, original_name)
+    self._defined_symbols.add(distinct_name)
+    return self._add_branch(distinct_name, branch_number)
 
   def _add_tag(self, name, revision):
     """Record that tag NAME refers to the specified REVISION."""
@@ -482,6 +511,7 @@ class _SymbolDataCollector(object):
     symbol_defs = self._process_duplicate_defs(symbol_defs)
 
     for (name, revision) in symbol_defs:
+      self._defined_symbols.add(name)
       self._process_symbol(name, revision)
 
   @staticmethod

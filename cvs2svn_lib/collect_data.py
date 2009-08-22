@@ -425,18 +425,13 @@ class _SymbolDataCollector(object):
     # A map {name : [index,...]} mapping the names of symbols to a
     # list of their definitions' indexes in symbol_defs:
     known_symbols = {}
-
     for (i, (name, revision)) in enumerate(symbol_defs):
-      if name in known_symbols:
-        known_symbols[name].append(i)
-      else:
-        known_symbols[name] = [i]
+      known_symbols.setdefault(name, []).append(i)
 
-    names = known_symbols.keys()
-    names.sort()
+    known_symbols = known_symbols.items()
+    known_symbols.sort()
     dup_indexes = set()
-    for name in names:
-      indexes = known_symbols[name]
+    for (name, indexes) in known_symbols:
       if len(indexes) > 1:
         # This symbol was defined multiple times.
         self.collect_data.record_fatal_error(

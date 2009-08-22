@@ -614,6 +614,18 @@ class _KeywordExpander:
   Instances of this class can be passed as the REPL argument to
   re.sub()."""
 
+  date_fmt_old = "%Y/%m/%d %H:%M:%S"    # CVS 1.11, rcs
+  date_fmt_new = "%Y-%m-%d %H:%M:%S"    # CVS 1.12
+
+  date_fmt = date_fmt_new
+
+  @classmethod
+  def use_old_date_format(klass):
+      """Class method to ensure exact compatibility with CVS 1.11
+      output.  Use this if you want to verify your conversion and you're
+      using CVS 1.11."""
+      klass.date_fmt = klass.date_fmt_old
+
   def __init__(self, cvs_rev):
     self.cvs_rev = cvs_rev
 
@@ -625,7 +637,7 @@ class _KeywordExpander:
     return Ctx()._metadata_db[self.cvs_rev.metadata_id].original_author
 
   def date(self):
-    return time.strftime("%Y-%m-%d %H:%M:%S",
+    return time.strftime(self.date_fmt,
                          time.gmtime(self.cvs_rev.timestamp))
 
   def header(self):

@@ -1,5 +1,5 @@
-Version ?.?.? (not yet released)
---------------------------------
+Version 2.3.0 (22 August 2009)
+------------------------------
 
  New features:
  * Add a "cvs2git" script for starting conversions to git (or Mercurial).

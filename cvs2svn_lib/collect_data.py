@@ -388,24 +388,20 @@ class _SymbolDataCollector(object):
     # A map { (name, revision) : [index,...] } of the indexes where
     # symbol definitions name=revision were found:
     known_definitions = {}
+    for (i, symbol_def) in enumerate(self._symbol_defs):
+      known_definitions.setdefault(symbol_def, []).append(i)
 
     # A set of the indexes of entries that have to be removed from
     # _symbol_defs:
     dup_indexes = set()
-
-    for (i, (name, revision)) in enumerate(self._symbol_defs):
-      if (name, revision) in known_definitions:
-        if len(known_definitions[name, revision]) == 1:
-          Log().verbose(
-              "in %r:\n"
-              "   symbol %s:%s defined multiple times;\n"
-              "   ignoring all but first definition\n"
-              % (self.cvs_file.filename, name, revision,)
-              )
-        dup_indexes.add(known_definitions[name, revision][-1])
-        known_definitions[name, revision].append(i)
-      else:
-        known_definitions[name, revision] = [i]
+    for ((name, revision), indexes) in known_definitions.iteritems():
+      if len(indexes) > 1:
+        Log().verbose(
+            "in %r:\n"
+            "   symbol %s:%s defined multiple times; ignoring duplicates\n"
+            % (self.cvs_file.filename, name, revision,)
+            )
+        dup_indexes.update(indexes[:-1])
 
     self._symbol_defs = [
         symbol_def

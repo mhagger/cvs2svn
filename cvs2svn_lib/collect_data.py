@@ -323,11 +323,14 @@ class _SymbolDataCollector(object):
     self.tags_data.setdefault(revision, []).append(tag_data)
     return tag_data
 
-  def define_symbol(self, name, revision):
-    """Record a symbol definition for later processing."""
+  def transform_symbol(self, name, revision):
+    """Transform a symbol according to the project's symbol transforms.
 
-    # Canonicalize the revision number:
-    revision = _branch_revision_re.sub(r'\1\2', revision)
+    Transform the symbol with the original name NAME and canonicalized
+    revision number REVISION.  Return the new symbol name or None if
+    the symbol should be ignored entirely.
+
+    Log the results of the symbol transform if necessary."""
 
     old_name = name
     # Apply any user-defined symbol transforms to the symbol name:
@@ -350,6 +353,18 @@ class _SymbolDataCollector(object):
             % (old_name, revision, name, self.cvs_file.filename,)
             )
 
+    return name
+
+  def define_symbol(self, name, revision):
+    """Record a symbol definition for later processing."""
+
+    # Canonicalize the revision number:
+    revision = _branch_revision_re.sub(r'\1\2', revision)
+
+    # Apply any user-defined symbol transforms to the symbol name:
+    name = self.transform_symbol(name, revision)
+
+    if name is not None:
       # Verify that the revision number is valid:
       if _valid_revision_re.match(revision):
         # The revision number is valid; record it for later processing:

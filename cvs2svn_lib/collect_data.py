@@ -377,22 +377,26 @@ class _SymbolDataCollector(object):
             % (self.cvs_file.filename, name, revision,)
             )
 
-  def _eliminate_trivial_duplicate_defs(self):
-    """Remove identical duplicate definitions in SELF._symbol_defs.
+  def _eliminate_trivial_duplicate_defs(self, symbol_defs):
+    """Iterate through SYMBOL_DEFS, Removing identical duplicate definitions.
 
     Duplicate definitions of symbol names have been seen in the wild,
     and they can also happen when --symbol-transform is used.  If a
     symbol is defined to the same revision number repeatedly, then
     ignore all but the last definition."""
 
+    # Make a copy, since we have to iterate through the definitions
+    # twice:
+    symbol_defs = list(symbol_defs)
+
     # A map { (name, revision) : [index,...] } of the indexes where
     # symbol definitions name=revision were found:
     known_definitions = {}
-    for (i, symbol_def) in enumerate(self._symbol_defs):
+    for (i, symbol_def) in enumerate(symbol_defs):
       known_definitions.setdefault(symbol_def, []).append(i)
 
     # A set of the indexes of entries that have to be removed from
-    # _symbol_defs:
+    # symbol_defs:
     dup_indexes = set()
     for ((name, revision), indexes) in known_definitions.iteritems():
       if len(indexes) > 1:
@@ -403,11 +407,9 @@ class _SymbolDataCollector(object):
             )
         dup_indexes.update(indexes[:-1])
 
-    self._symbol_defs = [
-        symbol_def
-        for (i, symbol_def) in enumerate(self._symbol_defs)
-        if i not in dup_indexes
-        ]
+    for (i, symbol_def) in enumerate(symbol_defs):
+      if i not in dup_indexes:
+        yield symbol_def
 
   def _process_duplicate_defs(self):
     """Look for and process duplicate names in SELF._symbol_defs.
@@ -466,7 +468,9 @@ class _SymbolDataCollector(object):
   def process_symbols(self):
     """Process the symbol definitions from SELF._symbol_defs."""
 
-    self._eliminate_trivial_duplicate_defs()
+    self._symbol_defs = list(
+        self._eliminate_trivial_duplicate_defs(self._symbol_defs)
+        )
     self._process_duplicate_defs()
 
     for (name, revision) in self._symbol_defs:

@@ -28,6 +28,10 @@ from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.project import Project
+from cvs2svn_lib.cvs_item import CVSRevisionAdd
+from cvs2svn_lib.cvs_item import CVSRevisionChange
+from cvs2svn_lib.cvs_item import CVSRevisionDelete
+from cvs2svn_lib.cvs_item import CVSRevisionNoop
 from cvs2svn_lib.svn_revision_range import RevisionScores
 from cvs2svn_lib.openings_closings import SymbolingsReader
 from cvs2svn_lib.repository_mirror import RepositoryMirror
@@ -237,6 +241,91 @@ class DVCSOutputOption(OutputOption):
       else:
         for sub_cvs_path in self._get_all_files(subnode):
           yield sub_cvs_path
+
+
+class MirrorUpdater(object):
+  def register_artifacts(self, which_pass):
+    pass
+
+  def start(self, mirror):
+    self._mirror = mirror
+
+  def _mkdir_p(self, cvs_directory, lod):
+    """Make sure that CVS_DIRECTORY exists in LOD.
+
+    If not, create it.  Return the node for CVS_DIRECTORY."""
+
+    try:
+      node = self._mirror.get_current_lod_directory(lod)
+    except KeyError:
+      node = self._mirror.add_lod(lod)
+
+    for sub_path in cvs_directory.get_ancestry()[1:]:
+      try:
+        node = node[sub_path]
+      except KeyError:
+        node = node.mkdir(sub_path)
+      if node is None:
+        raise ExpectedDirectoryError(
+            'File found at \'%s\' where directory was expected.' % (sub_path,)
+            )
+
+    return node
+
+  def add_file(self, cvs_rev, post_commit):
+    cvs_file = cvs_rev.cvs_file
+    if post_commit:
+      lod = cvs_file.project.get_trunk()
+    else:
+      lod = cvs_rev.lod
+    parent_node = self._mkdir_p(cvs_file.parent_directory, lod)
+    parent_node.add_file(cvs_file)
+
+  def modify_file(self, cvs_rev, post_commit):
+    cvs_file = cvs_rev.cvs_file
+    if post_commit:
+      lod = cvs_file.project.get_trunk()
+    else:
+      lod = cvs_rev.lod
+    if self._mirror.get_current_path(cvs_file, lod) is not None:
+      raise ExpectedFileError(
+          'Directory found at \'%s\' where file was expected.' % (cvs_file,)
+          )
+
+  def delete_file(self, cvs_rev, post_commit):
+    cvs_file = cvs_rev.cvs_file
+    if post_commit:
+      lod = cvs_file.project.get_trunk()
+    else:
+      lod = cvs_rev.lod
+    parent_node = self._mirror.get_current_path(
+        cvs_file.parent_directory, lod
+        )
+    if parent_node[cvs_file] is not None:
+      raise ExpectedFileError(
+          'Directory found at \'%s\' where file was expected.' % (cvs_file,)
+          )
+    del parent_node[cvs_file]
+
+  def process_revision(self, cvs_rev, post_commit):
+    if isinstance(cvs_rev, CVSRevisionAdd):
+      self.add_file(cvs_rev, post_commit)
+    elif isinstance(cvs_rev, CVSRevisionChange):
+      self.modify_file(cvs_rev, post_commit)
+    elif isinstance(cvs_rev, CVSRevisionDelete):
+      self.delete_file(cvs_rev, post_commit)
+    elif isinstance(cvs_rev, CVSRevisionNoop):
+      pass
+    else:
+      raise InternalError('Unexpected CVSRevision type: %s' % (cvs_rev,))
+
+  def branch_file(self, cvs_symbol):
+    cvs_file = cvs_symbol.cvs_file
+    parent_node = self._mkdir_p(cvs_file.parent_directory, cvs_symbol.symbol)
+    parent_node.add_file(cvs_file)
+
+  def finish(self):
+    del self._mirror
 
 
 def to_utf8(s):

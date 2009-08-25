@@ -20,11 +20,17 @@ Git, Mercurial, or Bazaar).
 
 import sys
 
+from cvs2svn_lib import config
 from cvs2svn_lib.common import FatalError
+from cvs2svn_lib.common import InternalError
 from cvs2svn_lib.run_options import RunOptions
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
+from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.project import Project
+from cvs2svn_lib.svn_revision_range import RevisionScores
+from cvs2svn_lib.openings_closings import SymbolingsReader
+from cvs2svn_lib.repository_mirror import RepositoryMirror
 from cvs2svn_lib.output_option import OutputOption
 
 
@@ -93,6 +99,10 @@ class DVCSOutputOption(OutputOption):
   # subclasses
   name = None
 
+  def __init__(self):
+    self._mirror = RepositoryMirror()
+    self._symbolings_reader = None
+
   def normalize_author_transforms(self, author_transforms):
     """Return a new dict with the same content as author_transforms, but all
     strings encoded to UTF-8.  Also turns None into the empty dict."""
@@ -104,6 +114,16 @@ class DVCSOutputOption(OutputOption):
         email = to_utf8(email)
         result[cvsauthor] = (name, email,)
     return result
+
+  def register_artifacts(self, which_pass):
+    # These artifacts are needed for SymbolingsReader:
+    artifact_manager.register_temp_file_needed(
+        config.SYMBOL_OPENINGS_CLOSINGS_SORTED, which_pass
+        )
+    artifact_manager.register_temp_file_needed(
+        config.SYMBOL_OFFSETS_DB, which_pass
+        )
+    self._mirror.register_artifacts(which_pass)
 
   def check(self):
     if Ctx().cross_project_commits:
@@ -118,6 +138,105 @@ class DVCSOutputOption(OutputOption):
       raise FatalError(
           '%s output requires a default commit username' % self.name
           )
+
+  def setup(self, svn_rev_count):
+    self._symbolings_reader = SymbolingsReader()
+    self._mirror.open()
+
+  def cleanup(self):
+    self._mirror.close()
+    self._symbolings_reader.close()
+    del self._symbolings_reader
+
+  def _get_source_groups(self, svn_commit):
+    """Return groups of sources for SVN_COMMIT.
+
+    SVN_COMMIT is an instance of SVNSymbolCommit.  Yield tuples
+    (source_lod, svn_revnum, cvs_symbols) where source_lod is the line
+    of development and svn_revnum is the revision that should serve as
+    a source, and cvs_symbols is a list of CVSSymbolItems that can be
+    copied from that source.  The groups are returned in arbitrary
+    order."""
+
+    # Get a map {CVSSymbol : SVNRevisionRange}:
+    range_map = self._symbolings_reader.get_range_map(svn_commit)
+
+    # range_map, split up into one map per LOD; i.e., {LOD :
+    # {CVSSymbol : SVNRevisionRange}}:
+    lod_range_maps = {}
+
+    for (cvs_symbol, range) in range_map.iteritems():
+      lod_range_map = lod_range_maps.get(range.source_lod)
+      if lod_range_map is None:
+        lod_range_map = {}
+        lod_range_maps[range.source_lod] = lod_range_map
+      lod_range_map[cvs_symbol] = range
+
+    # Sort the sources so that the branch that serves most often as
+    # parent is processed first:
+    lod_ranges = lod_range_maps.items()
+    lod_ranges.sort(
+        lambda (lod1,lod_range_map1),(lod2,lod_range_map2):
+        -cmp(len(lod_range_map1), len(lod_range_map2)) or cmp(lod1, lod2)
+        )
+
+    for (lod, lod_range_map) in lod_ranges:
+      while lod_range_map:
+        revision_scores = RevisionScores(lod_range_map.values())
+        (source_lod, revnum, score) = revision_scores.get_best_revnum()
+        assert source_lod == lod
+        cvs_symbols = []
+        for (cvs_symbol, range) in lod_range_map.items():
+          if revnum in range:
+            cvs_symbols.append(cvs_symbol)
+            del lod_range_map[cvs_symbol]
+        yield (lod, revnum, cvs_symbols)
+
+  def _is_simple_copy(self, svn_commit, source_groups):
+    """Return True iff SVN_COMMIT can be created as a simple copy.
+
+    SVN_COMMIT is an SVNTagCommit.  Return True iff it can be created
+    as a simple copy from an existing revision (i.e., if the fixup
+    branch can be avoided for this tag creation)."""
+
+    # The first requirement is that there be exactly one source:
+    if len(source_groups) != 1:
+      return False
+
+    (source_lod, svn_revnum, cvs_symbols) = source_groups[0]
+
+    # The second requirement is that the destination LOD not already
+    # exist:
+    try:
+      self._mirror.get_current_lod_directory(svn_commit.symbol)
+    except KeyError:
+      # The LOD doesn't already exist.  This is good.
+      pass
+    else:
+      # The LOD already exists.  It cannot be created by a copy.
+      return False
+
+    # The third requirement is that the source LOD contains exactly
+    # the same files as we need to add to the symbol:
+    try:
+      source_node = self._mirror.get_old_lod_directory(source_lod, svn_revnum)
+    except KeyError:
+      raise InternalError('Source %r does not exist' % (source_lod,))
+    return (
+        set([cvs_symbol.cvs_file for cvs_symbol in cvs_symbols])
+        == set(self._get_all_files(source_node))
+        )
+
+  def _get_all_files(self, node):
+    """Generate all of the CVSFiles under NODE."""
+
+    for cvs_path in node:
+      subnode = node[cvs_path]
+      if subnode is None:
+        yield cvs_path
+      else:
+        for sub_cvs_path in self._get_all_files(subnode):
+          yield sub_cvs_path
 
 
 def to_utf8(s):

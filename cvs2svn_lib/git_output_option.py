@@ -39,7 +39,7 @@ from cvs2svn_lib.cvs_item import CVSRevisionChange
 from cvs2svn_lib.cvs_item import CVSRevisionDelete
 from cvs2svn_lib.cvs_item import CVSRevisionNoop
 from cvs2svn_lib.cvs_item import CVSSymbol
-from cvs2svn_lib.output_option import OutputOption
+from cvs2svn_lib.dvcs_common import DVCSOutputOption
 from cvs2svn_lib.svn_revision_range import RevisionScores
 from cvs2svn_lib.repository_mirror import RepositoryMirror
 from cvs2svn_lib.key_generator import KeyGenerator
@@ -247,7 +247,7 @@ def get_chunks(iterable, chunk_size):
       del chunk
 
 
-class GitOutputOption(OutputOption):
+class GitOutputOption(DVCSOutputOption):
   """An OutputOption that outputs to a git-fast-import formatted file.
 
   Members:
@@ -261,6 +261,8 @@ class GitOutputOption(OutputOption):
         the contents are 8-bit strings encoded as UTF-8.
 
   """
+
+  name = "Git"
 
   # The first mark number used for git-fast-import commit marks.  This
   # value needs to be large to avoid conflicts with blob marks.
@@ -296,19 +298,7 @@ class GitOutputOption(OutputOption):
     self.revision_writer = revision_writer
     self.max_merges = max_merges
 
-    def to_utf8(s):
-      if isinstance(s, unicode):
-        return s.encode('utf8')
-      else:
-        return s
-
-    self.author_transforms = {}
-    if author_transforms is not None:
-      for (cvsauthor, (name, email,)) in author_transforms.iteritems():
-        cvsauthor = to_utf8(cvsauthor)
-        name = to_utf8(name)
-        email = to_utf8(email)
-        self.author_transforms[cvsauthor] = (name, email,)
+    self.author_transforms = self.normalize_author_transforms(author_transforms)
 
     self._mirror = RepositoryMirror()
 
@@ -324,20 +314,6 @@ class GitOutputOption(OutputOption):
         )
     self.revision_writer.register_artifacts(which_pass)
     self._mirror.register_artifacts(which_pass)
-
-  def check(self):
-    if Ctx().cross_project_commits:
-      raise FatalError(
-          'Git output is not supported with cross-project commits'
-          )
-    if Ctx().cross_branch_commits:
-      raise FatalError(
-          'Git output is not supported with cross-branch commits'
-          )
-    if Ctx().username is None:
-      raise FatalError(
-          'Git output requires a default commit username'
-          )
 
   def check_symbols(self, symbol_map):
     # FIXME: What constraints does git impose on symbols?

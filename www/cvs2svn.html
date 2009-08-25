@@ -568,9 +568,9 @@ ambiguities.</p>
 <tt>CollateSymbolsPass</tt>, by default, uses heuristics to decide
 which symbols to convert as branches and which as tags.  Often this
 behavior will be adequate, and you don't have to do anything special.
-You can use the <tt>--symbol-info=<i>filename</i></tt> option to cause
-cvs2svn to list all of the symbols in your repository and how it chose
-to convert them to <tt><i>filename</i></tt>.</p>
+You can use the <tt>--write-symbol-info=<i>filename</i></tt> option to
+cause cvs2svn to list all of the symbols in your repository and how it
+chose to convert them to <tt><i>filename</i></tt>.</p>
 
 <p>However, if you want to take finer control over how symbols are
 converted, you can do so.  The first step is probably to change the
@@ -629,7 +629,7 @@ particular symbols, in combination with <tt>--symbol-default</tt> to
 specify the default to be used for other ambiguous symbols.</p>
 
 <p>Finally, you can have cvs2svn write a text file showing how each
-symbol was converted by using the <tt>--show-symbol-info</tt> option.
+symbol was converted by using the <tt>--write-symbol-info</tt> option.
 If you disagree with any of cvs2svn's choices, you can make a copy of
 this file, edit it, then pass it to cvs2svn by using the
 <tt>--symbol-hints</tt> option.  In this manner you can influence how

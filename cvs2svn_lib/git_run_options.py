@@ -178,12 +178,9 @@ class GitRunOptions(RunOptions):
         ).write_manpage(f)
     sys.exit(0)
 
-  def process_io_options(self):
-    """Process input/output options.
-
-    Process options related to extracting data from the CVS repository
-    and writing to 'git fast-import'-formatted files."""
-
+  def process_extraction_options(self):
+    """Process options related to extracting data from the CVS
+    repository."""
     ctx = Ctx()
     options = self.options
 
@@ -213,8 +210,11 @@ class GitRunOptions(RunOptions):
     ctx.revision_excluder = NullRevisionExcluder()
     ctx.revision_reader = None
 
+  def process_output_options(self):
+    """Process options related to fastimport output."""
+    ctx = Ctx()
     ctx.output_option = GitOutputOption(
-        options.dumpfile,
+        self.options.dumpfile,
         GitRevisionMarkWriter(),
         max_merges=None,
         # Optional map from CVS author names to git author names:
@@ -260,7 +260,8 @@ class GitRunOptions(RunOptions):
 
     cvsroot = self.args[0]
 
-    self.process_io_options()
+    self.process_extraction_options()
+    self.process_output_options()
     self.process_symbol_strategy_options()
     self.process_property_setter_options()
 

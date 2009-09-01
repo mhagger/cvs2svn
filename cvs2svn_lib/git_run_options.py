@@ -124,38 +124,10 @@ class GitRunOptions(DVCSRunOptions):
 
     return group
 
-  # XXX shouldn't this be the same as -- or, better, shared with --
-  # SVNRunOptions?
   def _get_extraction_options_group(self):
     group = RunOptions._get_extraction_options_group(self)
-
-    self.parser.set_default('use_cvs', False)
-    group.add_option(IncompatibleOption(
-        '--use-cvs',
-        action='store_true',
-        help=(
-            'use CVS to extract revision contents (slower than '
-            '--use-rcs but more reliable) (default)'
-            ),
-        man_help=(
-            'Use CVS to extract revision contents.  This option is slower '
-            'than \\fB--use-rcs\\fR but more reliable.'
-            ),
-        ))
-    self.parser.set_default('use_rcs', False)
-    group.add_option(IncompatibleOption(
-        '--use-rcs',
-        action='store_true',
-        help=(
-            'use RCS to extract revision contents (faster than '
-            '--use-cvs but fails in some cases)'
-            ),
-        man_help=(
-            'Use RCS \'co\' to extract revision contents.  This option is '
-            'faster than \\fB--use-cvs\\fR but fails in some cases.'
-            ),
-        ))
-
+    self._add_use_cvs_option(group)
+    self._add_use_rcs_option(group)
     return group
 
   def callback_manpage(self, option, opt_str, value, parser):

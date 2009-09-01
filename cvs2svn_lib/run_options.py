@@ -642,6 +642,55 @@ class RunOptions(object):
 
     return group
 
+  def _add_use_internal_co_option(self, group):
+    self.parser.set_default('use_internal_co', False)
+    group.add_option(IncompatibleOption(
+        '--use-internal-co',
+        action='store_true',
+        help=(
+            'use internal code to extract revision contents '
+            '(fastest but disk space intensive) (default)'
+            ),
+        man_help=(
+            'Use internal code to extract revision contents.  This '
+            'is up to 50% faster than using \\fB--use-rcs\\fR, but needs '
+            'a lot of disk space: roughly the size of your CVS repository '
+            'plus the peak size of a complete checkout of the repository '
+            'with all branches that existed and still had commits pending '
+            'at a given time.  This option is the default.'
+            ),
+        ))
+
+  def _add_use_cvs_option(self, group):
+    self.parser.set_default('use_cvs', False)
+    group.add_option(IncompatibleOption(
+        '--use-cvs',
+        action='store_true',
+        help=(
+            'use CVS to extract revision contents (slower than '
+            '--use-internal-co or --use-rcs)'
+            ),
+        man_help=(
+            'Use CVS to extract revision contents.  This option is slower '
+            'than \\fB--use-internal-co\\fR or \\fB--use-rcs\\fR.'
+            ),
+        ))
+
+  def _add_use_rcs_option(self, group):
+    self.parser.set_default('use_rcs', False)
+    group.add_option(IncompatibleOption(
+        '--use-rcs',
+        action='store_true',
+        help=(
+            'use RCS to extract revision contents (faster than '
+            '--use-cvs but fails in some cases)'
+            ),
+        man_help=(
+            'Use RCS \'co\' to extract revision contents.  This option is '
+            'faster than \\fB--use-cvs\\fR but fails in some cases.'
+            ),
+        ))
+
   def _get_environment_options_group(self):
     group = OptionGroup(self.parser, 'Environment options')
     group.add_option(ContextOption(

@@ -148,8 +148,9 @@ def run_program(program, error_re, *varargs):
   return out
 
 
-def run_cvs2svn(error_re, *varargs):
-  """Run cvs2svn with VARARGS, return stdout as a list of lines.
+def run_script(script, error_re, *varargs):
+  """Run Python script SCRIPT with VARARGS, returning stdout as a list
+  of lines.
 
   If there is any stderr and ERROR_RE is None, raise
   RunProgramException, and print the stderr lines if
@@ -160,28 +161,7 @@ def run_cvs2svn(error_re, *varargs):
   MissingErrorException."""
 
   # Use the same python that is running this script
-  return run_program(sys.executable, error_re, cvs2svn, *varargs)
-  # On Windows, for an unknown reason, the cmd.exe process invoked by
-  # os.system('sort ...') in cvs2svn receives invalid stdio handles, if
-  # cvs2svn is started as "cvs2svn ...".  "python cvs2svn ..." avoids
-  # this.  Therefore, the redirection of the output to the .s-revs file fails.
-  # We no longer use the problematic invocation on any system, but this
-  # comment remains to warn about this problem.
-
-
-def run_cvs2git(error_re, *varargs):
-  """Run cvs2git with VARARGS, returning stdout as a list of lines.
-
-  If there is any stderr and ERROR_RE is None, raise
-  RunProgramException, and print the stderr lines if
-  svntest.main.verbose_mode is true.
-
-  If ERROR_RE is not None, it is a string regular expression that must
-  match some line of stderr.  If it fails to match, raise
-  MissingErrorException."""
-
-  # Use the same python that is running this script
-  return run_program(sys.executable, error_re, cvs2git, *varargs)
+  return run_program(sys.executable, error_re, script, *varargs)
   # On Windows, for an unknown reason, the cmd.exe process invoked by
   # os.system('sort ...') in cvs2svn receives invalid stdio handles, if
   # cvs2svn is started as "cvs2svn ...".  "python cvs2svn ..." avoids
@@ -520,7 +500,7 @@ class Conversion:
     """Return the number of cvs2svn's last pass."""
 
     if cls.last_pass is None:
-      out = run_cvs2svn(None, '--help-passes')
+      out = run_script(cvs2svn, None, '--help-passes')
       cls.last_pass = int(out[-1].split()[0])
     return cls.last_pass
 
@@ -581,9 +561,9 @@ class Conversion:
     if passbypass:
       self.stdout = []
       for p in range(1, self.get_last_pass() + 1):
-        self.stdout += run_cvs2svn(error_re, '-p', str(p), *args)
+        self.stdout += run_script(cvs2svn, error_re, '-p', str(p), *args)
     else:
-      self.stdout = run_cvs2svn(error_re, *args)
+      self.stdout = run_script(cvs2svn, error_re, *args)
 
     if self.dumpfile:
       if not os.path.isfile(self.dumpfile):
@@ -695,7 +675,7 @@ class GitConversion:
     else:
       self.options_file = None
 
-    self.stdout = run_cvs2git(error_re, *args)
+    self.stdout = run_script(cvs2git, error_re, *args)
 
 
 # Cache of conversions that have already been done.  Keys are conv_id;
@@ -921,7 +901,7 @@ class Cvs2SvnPropertiesTestCase(Cvs2SvnTestCase):
 @Cvs2SvnTestFunction
 def show_usage():
   "cvs2svn with no arguments shows usage"
-  out = run_cvs2svn(None)
+  out = run_script(cvs2svn, None)
   if (len(out) > 2 and out[0].find('ERROR:') == 0
       and out[1].find('DBM module')):
     print 'cvs2svn cannot execute due to lack of proper DBM module.'
@@ -934,19 +914,19 @@ def show_usage():
 @Cvs2SvnTestFunction
 def cvs2svn_manpage():
   "generate a manpage for cvs2svn"
-  out = run_cvs2svn(None, '--man')
+  out = run_script(cvs2svn, None, '--man')
 
 
 @Cvs2SvnTestFunction
 def cvs2git_manpage():
   "generate a manpage for cvs2git"
-  out = run_cvs2git(None, '--man')
+  out = run_script(cvs2git, None, '--man')
 
 
 @Cvs2SvnTestFunction
 def show_help_passes():
   "cvs2svn --help-passes shows pass information"
-  out = run_cvs2svn(None, '--help-passes')
+  out = run_script(cvs2svn, None, '--help-passes')
   if out[0].find('PASSES') < 0:
     raise Failure('cvs2svn --help-passes failed.')
 

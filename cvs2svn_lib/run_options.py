@@ -35,6 +35,13 @@ from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.man_writer import ManOption
 from cvs2svn_lib.pass_manager import InvalidPassError
+from cvs2svn_lib.revision_manager import NullRevisionRecorder
+from cvs2svn_lib.revision_manager import NullRevisionExcluder
+from cvs2svn_lib.rcs_revision_manager import RCSRevisionReader
+from cvs2svn_lib.cvs_revision_manager import CVSRevisionReader
+from cvs2svn_lib.checkout_internal import InternalRevisionRecorder
+from cvs2svn_lib.checkout_internal import InternalRevisionExcluder
+from cvs2svn_lib.checkout_internal import InternalRevisionReader
 from cvs2svn_lib.symbol_strategy import AllBranchRule
 from cvs2svn_lib.symbol_strategy import AllTagRule
 from cvs2svn_lib.symbol_strategy import BranchIfCommitsRule
@@ -951,6 +958,35 @@ class RunOptions(object):
           )
     except re.error:
       raise FatalError("'%s' is not a valid regexp." % (pattern,))
+
+  # Common to SVNRunOptions, HgRunOptions (GitRunOptions and
+  # BzrRunOptions do not support --use-internal-co, so cannot use this).
+  def process_all_extraction_options(self):
+    ctx = Ctx()
+    options = self.options
+
+    not_both(options.use_rcs, '--use-rcs',
+             options.use_cvs, '--use-cvs')
+
+    not_both(options.use_rcs, '--use-rcs',
+             options.use_internal_co, '--use-internal-co')
+
+    not_both(options.use_cvs, '--use-cvs',
+             options.use_internal_co, '--use-internal-co')
+
+    if options.use_rcs:
+      ctx.revision_recorder = NullRevisionRecorder()
+      ctx.revision_excluder = NullRevisionExcluder()
+      ctx.revision_reader = RCSRevisionReader(options.co_executable)
+    elif options.use_cvs:
+      ctx.revision_recorder = NullRevisionRecorder()
+      ctx.revision_excluder = NullRevisionExcluder()
+      ctx.revision_reader = CVSRevisionReader(options.cvs_executable)
+    else:
+      # --use-internal-co is the default:
+      ctx.revision_recorder = InternalRevisionRecorder(compress=True)
+      ctx.revision_excluder = InternalRevisionExcluder()
+      ctx.revision_reader = InternalRevisionReader(compress=True)
 
   def process_symbol_strategy_options(self):
     """Process symbol strategy-related options."""

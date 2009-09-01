@@ -19,8 +19,6 @@
 
 import sys
 import optparse
-import datetime
-import codecs
 
 from cvs2svn_lib.version import VERSION
 from cvs2svn_lib import config
@@ -34,8 +32,6 @@ from cvs2svn_lib.run_options import not_both
 from cvs2svn_lib.run_options import RunOptions
 from cvs2svn_lib.run_options import ContextOption
 from cvs2svn_lib.run_options import IncompatibleOption
-from cvs2svn_lib.run_options import authors
-from cvs2svn_lib.man_writer import ManWriter
 from cvs2svn_lib.project import Project
 from cvs2svn_lib.svn_output_option import DumpfileOutputOption
 from cvs2svn_lib.svn_output_option import ExistingRepositoryOutputOption
@@ -52,9 +48,10 @@ from cvs2svn_lib.symbol_strategy import BranchesPathRule
 from cvs2svn_lib.symbol_strategy import TagsPathRule
 
 
-short_desc = 'convert a cvs repository into a subversion repository'
+class SVNRunOptions(RunOptions):
+  short_desc = 'convert a CVS repository into a Subversion repository'
 
-synopsis = """\
+  synopsis = """\
 .B cvs2svn
 [\\fIOPTION\\fR]... \\fIOUTPUT-OPTION CVS-REPOS-PATH\\fR
 .br
@@ -62,7 +59,7 @@ synopsis = """\
 [\\fIOPTION\\fR]... \\fI--options=PATH\\fR
 """
 
-long_desc = """\
+  long_desc = """\
 Create a new Subversion repository based on the version history stored in a
 CVS repository. Each CVS commit will be mirrored in the Subversion
 repository, including such information as date of commit and id of the
@@ -82,19 +79,17 @@ repository in a single run of cvs2svn, but only by using an
 \\fB--options\\fR file.
 """
 
-files = """\
+  files = """\
 A directory called \\fIcvs2svn-tmp\\fR (or the directory specified by
 \\fB--tmpdir\\fR) is used as scratch space for temporary data files.
 """
 
-see_also = [
-  ('cvs', '1'),
-  ('svn', '1'),
-  ('svnadmin', '1'),
-  ]
+  see_also = [
+    ('cvs', '1'),
+    ('svn', '1'),
+    ('svnadmin', '1'),
+    ]
 
-
-class SVNRunOptions(RunOptions):
   def _get_output_options_group(self):
     group = super(SVNRunOptions, self)._get_output_options_group()
 
@@ -314,23 +309,6 @@ class SVNRunOptions(RunOptions):
         'default;\n'
         'passing the option is deprecated.\n'
         )
-
-  def callback_manpage(self, option, opt_str, value, parser):
-    f = codecs.getwriter('utf_8')(sys.stdout)
-    ManWriter(
-        parser,
-        section='1',
-        date=datetime.date.today(),
-        source='Version %s' % (VERSION,),
-        manual='User Commands',
-        short_desc=short_desc,
-        synopsis=synopsis,
-        long_desc=long_desc,
-        files=files,
-        authors=authors,
-        see_also=see_also,
-        ).write_manpage(f)
-    sys.exit(0)
 
   def process_extraction_options(self):
     """Process options related to extracting data from the CVS repository."""

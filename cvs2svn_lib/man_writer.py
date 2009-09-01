@@ -66,8 +66,9 @@ class ManWriter(object):
   def __init__(
         self,
         parser,
-        section, date, source, manual,
-        short_desc, synopsis, long_desc, files, authors, see_also,
+        section=None, date=None, source=None, manual=None,
+        short_desc=None, synopsis=None, long_desc=None,
+        files=None, authors=None, see_also=None,
         ):
     self.parser = parser
     self.section = section

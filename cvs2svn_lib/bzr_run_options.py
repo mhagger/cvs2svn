@@ -28,7 +28,6 @@ from cvs2svn_lib.run_options import not_both
 from cvs2svn_lib.run_options import RunOptions
 from cvs2svn_lib.run_options import ContextOption
 from cvs2svn_lib.run_options import IncompatibleOption
-from cvs2svn_lib.run_options import authors
 from cvs2svn_lib.man_writer import ManWriter
 from cvs2svn_lib.rcs_revision_manager import RCSRevisionReader
 from cvs2svn_lib.cvs_revision_manager import CVSRevisionReader
@@ -39,9 +38,16 @@ from cvs2svn_lib.revision_manager import NullRevisionRecorder
 from cvs2svn_lib.revision_manager import NullRevisionExcluder
 
 
-short_desc = 'convert a cvs repository into a Bazaar repository'
+description="""\
+Convert a CVS repository into a Bazaar repository, including history.
 
-synopsis = """\
+"""
+
+class BzrRunOptions(GitRunOptions):
+
+  short_desc = 'convert a cvs repository into a Bazaar repository'
+
+  synopsis = """\
 .B cvs2bzr
 [\\fIOPTION\\fR]... \\fIOUTPUT-OPTIONS CVS-REPOS-PATH\\fR
 .br
@@ -49,11 +55,7 @@ synopsis = """\
 [\\fIOPTION\\fR]... \\fI--options=PATH\\fR
 """
 
-description="""\
-Convert a CVS repository into a Bazaar repository, including history.
-
-"""
-long_desc = """\
+  long_desc = """\
 Create a new Bazaar repository based on the version history stored in a
 CVS repository. Each CVS commit will be mirrored in the Bazaar
 repository, including such information as date of commit and id of the
@@ -77,18 +79,16 @@ only have remote access, but the FAQ describes tools that may be used
 to create a local copy of a remote CVS repository.
 """
 
-files = """\
+  files = """\
 A directory called \\fIcvs2svn-tmp\\fR (or the directory specified by
 \\fB--tmpdir\\fR) is used as scratch space for temporary data files.
 """
 
-see_also = [
-  ('cvs', '1'),
-  ('bzr', '1'),
-  ]
+  see_also = [
+    ('cvs', '1'),
+    ('bzr', '1'),
+    ]
 
-
-class BzrRunOptions(GitRunOptions):
 
   def get_description(self):
     return description
@@ -117,23 +117,6 @@ class BzrRunOptions(GitRunOptions):
         ))
 
     return group
-
-  def callback_manpage(self, option, opt_str, value, parser):
-    f = codecs.getwriter('utf_8')(sys.stdout)
-    ManWriter(
-        parser,
-        section='1',
-        date=datetime.date.today(),
-        source='Version %s' % (VERSION,),
-        manual='User Commands',
-        short_desc=short_desc,
-        synopsis=synopsis,
-        long_desc=long_desc,
-        files=files,
-        authors=authors,
-        see_also=see_also,
-        ).write_manpage(f)
-    sys.exit(0)
 
   def process_io_options(self):
     """Process input/output options.

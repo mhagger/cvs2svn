@@ -20,6 +20,8 @@ import sys
 import re
 import optparse
 from optparse import OptionGroup
+import datetime
+import codecs
 import time
 
 from cvs2svn_lib.version import VERSION
@@ -28,6 +30,7 @@ from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import CVSTextDecoder
+from cvs2svn_lib.man_writer import ManWriter
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.man_writer import ManOption
@@ -64,35 +67,6 @@ Usage: %prog --options OPTIONFILE
 
 description="""\
 Convert a CVS repository into a Subversion repository, including history.
-"""
-
-authors = u"""\
-Main authors are:
-.br
-C. Michael Pilato <cmpilato@collab.net>
-.br
-Greg Stein <gstein@lyra.org>
-.br
-Branko \u010cibej <brane@xbc.nu>
-.br
-Blair Zajac <blair@orcaware.com>
-.br
-Max Bowsher <maxb@ukf.net>
-.br
-Brian Fitzpatrick <fitz@red-bean.com>
-.br
-Tobias Ringstr\u00f6m <tobias@ringstrom.mine.nu>
-.br
-Karl Fogel <kfogel@collab.net>
-.br
-Erik H\u00fclsmann <e.huelsmann@gmx.net>
-.br
-David Summers <david@summersoft.fay.ar.us>
-.br
-Michael Haggerty <mhagger@alum.mit.edu>
-.PP
-Manpage was written for the Debian GNU/Linux system by
-Laszlo 'GCS' Boszormenyi <gcs@lsc.hu> (but may be used by others).
 """
 
 
@@ -202,6 +176,43 @@ def not_both(opt1val, opt1name, opt2val, opt2name):
 
 class RunOptions(object):
   """A place to store meta-options that are used to start the conversion."""
+
+  # Components of the man page.  Attributes set to None here must be set
+  # by subclasses; others may be overridden/augmented by subclasses if
+  # they wish.
+  short_desc = None
+  synopsis = None
+  long_desc = None
+  files = None
+  authors = u"""\
+Main authors are:
+.br
+C. Michael Pilato <cmpilato@collab.net>
+.br
+Greg Stein <gstein@lyra.org>
+.br
+Branko \u010cibej <brane@xbc.nu>
+.br
+Blair Zajac <blair@orcaware.com>
+.br
+Max Bowsher <maxb@ukf.net>
+.br
+Brian Fitzpatrick <fitz@red-bean.com>
+.br
+Tobias Ringstr\u00f6m <tobias@ringstrom.mine.nu>
+.br
+Karl Fogel <kfogel@collab.net>
+.br
+Erik H\u00fclsmann <e.huelsmann@gmx.net>
+.br
+David Summers <david@summersoft.fay.ar.us>
+.br
+Michael Haggerty <mhagger@alum.mit.edu>
+.PP
+Manpage was written for the Debian GNU/Linux system by
+Laszlo 'GCS' Boszormenyi <gcs@lsc.hu> (but may be used by others).
+"""
+  see_also = None
 
   def __init__(self, progname, cmd_args, pass_manager):
     """Process the command-line options, storing run options to SELF.
@@ -884,7 +895,20 @@ class RunOptions(object):
     sys.exit(0)
 
   def callback_manpage(self, option, opt_str, value, parser):
-    raise NotImplementedError()
+    f = codecs.getwriter('utf_8')(sys.stdout)
+    writer = ManWriter(parser,
+                       section='1',
+                       date=datetime.date.today(),
+                       source='Version %s' % (VERSION,),
+                       manual='User Commands',
+                       short_desc=self.short_desc,
+                       synopsis=self.synopsis,
+                       long_desc=self.long_desc,
+                       files=self.files,
+                       authors=self.authors,
+                       see_also=self.see_also)
+    writer.write_manpage(f)
+    sys.exit(0)
 
   def callback_version(self, option, opt_str, value, parser):
     sys.stdout.write(

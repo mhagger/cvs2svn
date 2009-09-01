@@ -29,7 +29,6 @@ from cvs2svn_lib.dvcs_common import DVCSRunOptions
 from cvs2svn_lib.run_options import RunOptions
 from cvs2svn_lib.run_options import ContextOption
 from cvs2svn_lib.run_options import IncompatibleOption
-from cvs2svn_lib.run_options import authors
 from cvs2svn_lib.run_options import not_both
 from cvs2svn_lib.man_writer import ManWriter
 from cvs2svn_lib.revision_manager import NullRevisionRecorder
@@ -43,9 +42,11 @@ from cvs2svn_lib.fulltext_revision_recorder \
      import SimpleFulltextRevisionRecorderAdapter
 
 
-short_desc = 'convert a cvs repository into a git repository'
+class GitRunOptions(DVCSRunOptions):
 
-synopsis = """\
+  short_desc = 'convert a cvs repository into a git repository'
+
+  synopsis = """\
 .B cvs2git
 [\\fIOPTION\\fR]... \\fIOUTPUT-OPTIONS CVS-REPOS-PATH\\fR
 .br
@@ -53,7 +54,7 @@ synopsis = """\
 [\\fIOPTION\\fR]... \\fI--options=PATH\\fR
 """
 
-long_desc = """\
+  long_desc = """\
 Create a new git repository based on the version history stored in a
 CVS repository. Each CVS commit will be mirrored in the git
 repository, including such information as date of commit and id of the
@@ -75,19 +76,17 @@ only have remote access, but the FAQ describes tools that may be used
 to create a local copy of a remote CVS repository.
 """
 
-files = """\
+  files = """\
 A directory called \\fIcvs2svn-tmp\\fR (or the directory specified by
 \\fB--tmpdir\\fR) is used as scratch space for temporary data files.
 """
 
-see_also = [
-  ('cvs', '1'),
-  ('git', '1'),
-  ('git-fast-import', '1'),
-  ]
+  see_also = [
+    ('cvs', '1'),
+    ('git', '1'),
+    ('git-fast-import', '1'),
+    ]
 
-
-class GitRunOptions(DVCSRunOptions):
 
   def _get_output_options_group(self):
     group = super(GitRunOptions, self)._get_output_options_group()
@@ -129,23 +128,6 @@ class GitRunOptions(DVCSRunOptions):
     self._add_use_cvs_option(group)
     self._add_use_rcs_option(group)
     return group
-
-  def callback_manpage(self, option, opt_str, value, parser):
-    f = codecs.getwriter('utf_8')(sys.stdout)
-    ManWriter(
-        parser,
-        section='1',
-        date=datetime.date.today(),
-        source='Version %s' % (VERSION,),
-        manual='User Commands',
-        short_desc=short_desc,
-        synopsis=synopsis,
-        long_desc=long_desc,
-        files=files,
-        authors=authors,
-        see_also=see_also,
-        ).write_manpage(f)
-    sys.exit(0)
 
   # XXX not quite the same as same method in SVNRunOptions, but it
   # probably should be

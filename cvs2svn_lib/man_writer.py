@@ -176,7 +176,14 @@ class ManWriter(object):
 
   def write_authors(self, f):
     f.write('.SH "AUTHORS"\n')
-    f.write(self.authors)
+    f.write("Main authors are:\n")
+    for author in self.authors:
+      f.write(".br\n")
+      f.write(author + "\n")
+    f.write(".PP\n")
+    f.write(
+      "Manpage was written for the Debian GNU/Linux system by\n"
+      "Laszlo 'GCS' Boszormenyi <gcs@lsc.hu> (but may be used by others).\n")
 
   def write_see_also(self, f):
     f.write('.SH "SEE ALSO"\n')

@@ -184,34 +184,19 @@ class RunOptions(object):
   synopsis = None
   long_desc = None
   files = None
-  authors = u"""\
-Main authors are:
-.br
-C. Michael Pilato <cmpilato@collab.net>
-.br
-Greg Stein <gstein@lyra.org>
-.br
-Branko \u010cibej <brane@xbc.nu>
-.br
-Blair Zajac <blair@orcaware.com>
-.br
-Max Bowsher <maxb@ukf.net>
-.br
-Brian Fitzpatrick <fitz@red-bean.com>
-.br
-Tobias Ringstr\u00f6m <tobias@ringstrom.mine.nu>
-.br
-Karl Fogel <kfogel@collab.net>
-.br
-Erik H\u00fclsmann <e.huelsmann@gmx.net>
-.br
-David Summers <david@summersoft.fay.ar.us>
-.br
-Michael Haggerty <mhagger@alum.mit.edu>
-.PP
-Manpage was written for the Debian GNU/Linux system by
-Laszlo 'GCS' Boszormenyi <gcs@lsc.hu> (but may be used by others).
-"""
+  authors = [
+    u"C. Michael Pilato <cmpilato@collab.net>",
+    u"Greg Stein <gstein@lyra.org>",
+    u"Branko \u010cibej <brane@xbc.nu>",
+    u"Blair Zajac <blair@orcaware.com>",
+    u"Max Bowsher <maxb@ukf.net>",
+    u"Brian Fitzpatrick <fitz@red-bean.com>",
+    u"Tobias Ringstr\u00f6m <tobias@ringstrom.mine.nu>",
+    u"Karl Fogel <kfogel@collab.net>",
+    u"Erik H\u00fclsmann <e.huelsmann@gmx.net>",
+    u"David Summers <david@summersoft.fay.ar.us>",
+    u"Michael Haggerty <mhagger@alum.mit.edu>",
+    ]
   see_also = None
 
   def __init__(self, progname, cmd_args, pass_manager):

@@ -90,7 +90,7 @@ see_also = [
 class GitRunOptions(DVCSRunOptions):
 
   def _get_output_options_group(self):
-    group = DVCSRunOptions._get_output_options_group(self)
+    group = super(GitRunOptions, self)._get_output_options_group()
 
     group.add_option(IncompatibleOption(
         '--blobfile', type='string',
@@ -125,7 +125,7 @@ class GitRunOptions(DVCSRunOptions):
     return group
 
   def _get_extraction_options_group(self):
-    group = RunOptions._get_extraction_options_group(self)
+    group = super(GitRunOptions, self)._get_extraction_options_group()
     self._add_use_cvs_option(group)
     self._add_use_rcs_option(group)
     return group

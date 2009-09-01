@@ -96,7 +96,7 @@ see_also = [
 
 class SVNRunOptions(RunOptions):
   def _get_output_options_group(self):
-    group = RunOptions._get_output_options_group(self)
+    group = super(SVNRunOptions, self)._get_output_options_group()
 
     group.add_option(IncompatibleOption(
         '--svnrepos', '-s', type='string',
@@ -206,7 +206,7 @@ class SVNRunOptions(RunOptions):
     return group
 
   def _get_conversion_options_group(self):
-    group = RunOptions._get_conversion_options_group(self)
+    group = super(SVNRunOptions, self)._get_conversion_options_group()
 
     self.parser.set_default('trunk_base', config.DEFAULT_TRUNK_BASE)
     group.add_option(IncompatibleOption(
@@ -276,14 +276,14 @@ class SVNRunOptions(RunOptions):
     return group
 
   def _get_extraction_options_group(self):
-    group = RunOptions._get_extraction_options_group(self)
+    group = super(SVNRunOptions, self)._get_extraction_options_group()
     self._add_use_internal_co_option(group)
     self._add_use_cvs_option(group)
     self._add_use_rcs_option(group)
     return group
 
   def _get_environment_options_group(self):
-    group = RunOptions._get_environment_options_group(self)
+    group = super(SVNRunOptions, self)._get_environment_options_group()
 
     group.add_option(ContextOption(
         '--svnadmin', type='string',

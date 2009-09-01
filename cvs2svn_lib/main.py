@@ -115,3 +115,11 @@ def bzr_main(progname, cmd_args):
   main(progname, run_options, pass_manager)
 
 
+def hg_main(progname, cmd_args):
+  # Import late so cvs2{svn,git} do not depend on being able to import
+  # the Mercurial API.
+  from cvs2svn_lib.hg_run_options import HgRunOptions
+
+  pass_manager = PassManager(passes)
+  run_options = HgRunOptions(progname, cmd_args, pass_manager)
+  main(progname, run_options, pass_manager)

@@ -76,8 +76,17 @@ from svntest.testcase import XFail
 from svntest.tree import build_tree_from_wc
 from svntest.tree import get_child
 
+# Test if Mercurial >= 1.1 is available.
+try:
+  from mercurial import context
+  context.memctx
+  have_hg = True
+except (ImportError, AttributeError):
+  have_hg = False
+
 cvs2svn = os.path.abspath('cvs2svn')
 cvs2git = os.path.abspath('cvs2git')
+cvs2hg = os.path.abspath('cvs2hg')
 
 # We use the installed svn and svnlook binaries, instead of using
 # svntest.main.run_svn() and svntest.main.run_svnlook(), because the
@@ -822,6 +831,17 @@ class Cvs2SvnTestFunction(TestCase):
     return self.func()
 
 
+class Cvs2HgTestFunction(Cvs2SvnTestFunction):
+  """Same as Cvs2SvnTestFunction, but for test cases that should be
+  skipped if Mercurial is not available.
+  """
+  def run(self, sandbox):
+    if not have_hg:
+      raise svntest.Skip()
+    else:
+      return self.func()
+
+
 class Cvs2SvnTestCase(TestCase):
   def __init__(
       self, name, doc=None, variant=None,
@@ -921,6 +941,12 @@ def cvs2svn_manpage():
 def cvs2git_manpage():
   "generate a manpage for cvs2git"
   out = run_script(cvs2git, None, '--man')
+
+
+@Cvs2HgTestFunction
+def cvs2hg_manpage():
+  "generate a manpage for cvs2hg"
+  out = run_script(cvs2hg, None, '--man')
 
 
 @Cvs2SvnTestFunction
@@ -3676,13 +3702,14 @@ test_list = [
     show_usage,
     cvs2svn_manpage,
     cvs2git_manpage,
+    cvs2hg_manpage,
     attr_exec,
     space_fname,
     two_quick,
     PruneWithCare(),
     PruneWithCare(variant=1, trunk='a', branches='b', tags='c'),
-    PruneWithCare(variant=2, trunk='a/1', branches='b/1', tags='c/1'),
 # 10:
+    PruneWithCare(variant=2, trunk='a/1', branches='b/1', tags='c/1'),
     PruneWithCare(variant=3, trunk='a/1', branches='a/2', tags='a/3'),
     interleaved_commits,
     simple_commits,
@@ -3692,8 +3719,8 @@ test_list = [
     SimpleTags(variant=3, trunk='a/1', branches='a/2', tags='a/3'),
     simple_branch_commits,
     mixed_time_tag,
-    mixed_time_branch_with_added_file,
 # 20:
+    mixed_time_branch_with_added_file,
     mixed_commit,
     split_time_branch,
     bogus_tag,
@@ -3703,8 +3730,8 @@ test_list = [
     ctrl_char_in_log,
     overdead,
     NoTrunkPrune(),
-    NoTrunkPrune(variant=1, trunk='a', branches='b', tags='c'),
 # 30:
+    NoTrunkPrune(variant=1, trunk='a', branches='b', tags='c'),
     NoTrunkPrune(variant=2, trunk='a/1', branches='b/1', tags='c/1'),
     NoTrunkPrune(variant=3, trunk='a/1', branches='a/2', tags='a/3'),
     double_delete,
@@ -3714,8 +3741,8 @@ test_list = [
     TaggedBranchAndTrunk(variant=1, trunk='a/1', branches='a/2', tags='a/3'),
     enroot_race,
     enroot_race_obo,
-    BranchDeleteFirst(),
 # 40:
+    BranchDeleteFirst(),
     BranchDeleteFirst(variant=1, trunk='a/1', branches='a/2', tags='a/3'),
     nonascii_filenames,
     UnicodeAuthor(
@@ -3735,8 +3762,8 @@ test_list = [
         warning_expected=0,
         variant='fallback-encoding', args=['--fallback-encoding=utf_8']),
     vendor_branch_sameness,
-    vendor_branch_trunk_only,
 # 50:
+    vendor_branch_trunk_only,
     default_branches,
     default_branches_trunk_only,
     default_branch_and_1_2,
@@ -3746,8 +3773,8 @@ test_list = [
     PeerPathPruning(variant=1, trunk='a/1', branches='a/2', tags='a/3'),
     EmptyTrunk(),
     EmptyTrunk(variant=1, trunk='a', branches='b', tags='c'),
-    EmptyTrunk(variant=2, trunk='a/1', branches='a/2', tags='a/3'),
 # 60:
+    EmptyTrunk(variant=2, trunk='a/1', branches='a/2', tags='a/3'),
     no_spurious_svn_commits,
     invalid_closings_on_trunk,
     individual_passes,
@@ -3757,8 +3784,8 @@ test_list = [
     retain_file_in_attic_too,
     symbolic_name_filling_guide,
     eol_mime1,
-    eol_mime2,
 # 70:
+    eol_mime2,
     eol_mime3,
     eol_mime4,
     cvs_revnums_off,
@@ -3768,8 +3795,8 @@ test_list = [
     requires_cvs,
     questionable_branch_names,
     questionable_tag_names,
-    revision_reorder_bug,
 # 80:
+    revision_reorder_bug,
     exclude,
     vendor_branch_delete_add,
     resync_pass2_pull_forward,
@@ -3779,8 +3806,8 @@ test_list = [
     resync_pass2_push_backward,
     double_add,
     bogus_branch_copy,
-    nested_ttb_directories,
 # 90:
+    nested_ttb_directories,
     auto_props_ignore_case,
     ctrl_char_in_filename,
     commit_dependencies,
@@ -3790,8 +3817,8 @@ test_list = [
     multiply_defined_symbols_renamed,
     multiply_defined_symbols_ignored,
     repeatedly_defined_symbols,
-    double_branch_delete,
 # 100:
+    double_branch_delete,
     symbol_mismatches,
     overlook_symbol_mismatches,
     force_symbols,
@@ -3801,8 +3828,8 @@ test_list = [
     regexp_force_symbols,
     heuristic_symbol_default,
     branch_symbol_default,
-    tag_symbol_default,
 # 110:
+    tag_symbol_default,
     symbol_transform,
     write_symbol_info,
     symbol_hints,
@@ -3812,8 +3839,8 @@ test_list = [
     path_hints,
     issue_99,
     issue_100,
-    issue_106,
 # 120:
+    issue_106,
     options_option,
     multiproject,
     crossproject,
@@ -3823,8 +3850,8 @@ test_list = [
     nasty_graphs,
     XFail(tagging_after_delete),
     crossed_branches,
-    file_directory_conflict,
 # 130:
+    file_directory_conflict,
     attic_directory_conflict,
     internal_co,
     internal_co_exclude,
@@ -3834,8 +3861,8 @@ test_list = [
     requires_internal_co,
     timestamp_chaos,
     symlinks,
-    empty_trunk_path,
 # 140:
+    empty_trunk_path,
     preferred_parent_cycle,
     branch_from_empty_dir,
     trunk_readd,
@@ -3845,8 +3872,8 @@ test_list = [
     git_options,
     main_hg,
     invalid_symbol,
-    invalid_symbol_ignore,
 # 150:
+    invalid_symbol_ignore,
     invalid_symbol_ignore2,
     EOLVariants('LF'),
     EOLVariants('CR'),
@@ -3856,8 +3883,8 @@ test_list = [
     mirror_keyerror_test,
     exclude_ntdb_test,
     mirror_keyerror2_test,
-    mirror_keyerror3_test,
 # 160:
+    mirror_keyerror3_test,
     XFail(add_cvsignore_to_branch_test),
     missing_deltatext,
     transform_unlabeled_branch_name,

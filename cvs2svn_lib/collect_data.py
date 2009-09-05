@@ -1064,6 +1064,8 @@ class _ProjectDataCollector:
     if Ctx().trunk_only:
       cvs_file_items.exclude_non_trunk()
 
+    cvs_file_items.check_link_consistency()
+
     self.collect_data.revision_recorder.finish_file(cvs_file_items)
     self.collect_data.add_cvs_file_items(cvs_file_items)
     self.collect_data.symbol_stats.register(cvs_file_items)

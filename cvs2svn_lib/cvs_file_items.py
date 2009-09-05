@@ -355,7 +355,7 @@ class CVSFileItems(object):
 
     LOD_ITEMS describes a branch that should be severed from its
     source, deleting the CVSBranch and creating a new root.  Also set
-    LOD_ITEMS.cvs_branch to rnone.
+    LOD_ITEMS.cvs_branch to None.
 
     This method can only be used before symbols have been grafted onto
     CVSBranches.  It does not adjust NTDBR, NTDBR_PREV_ID or

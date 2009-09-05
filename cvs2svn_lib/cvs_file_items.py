@@ -576,7 +576,7 @@ class CVSFileItems(object):
         cvs_rev2 = self[id]
         cvs_rev2.prev_id = cvs_rev.id
 
-  def _delete_unneeded(self, cvs_item, metadata_db):
+  def _is_unneeded_initial_trunk_delete(self, cvs_item, metadata_db):
     if not isinstance(cvs_item, CVSRevisionNoop):
       # This rule can only be applied to dead revisions.
       return False
@@ -616,7 +616,7 @@ class CVSFileItems(object):
 
     for id in self.root_ids:
       cvs_item = self[id]
-      if self._delete_unneeded(cvs_item, metadata_db):
+      if self._is_unneeded_initial_trunk_delete(cvs_item, metadata_db):
         Log().debug('Removing unnecessary delete %s' % (cvs_item,))
 
         # Delete cvs_item:

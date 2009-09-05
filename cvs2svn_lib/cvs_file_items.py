@@ -692,19 +692,20 @@ class CVSFileItems(object):
         Log().debug(
             'Removing unnecessary initial branch delete %s' % (cvs_revision,)
             )
-        cvs_branch = lod_items.cvs_branch
-        cvs_rev_source = self[cvs_branch.source_id]
-        cvs_rev_next = lod_items.cvs_revisions[1]
 
-        # Delete cvs_revision:
+        # Sever the branch from its source if necessary:
+        self._sever_branch(lod_items)
+
+        # Delete the first revision on the branch:
+        self.root_ids.remove(cvs_revision.id)
         del self[cvs_revision.id]
-        cvs_rev_next.prev_id = None
-        self.root_ids.add(cvs_rev_next.id)
-        cvs_rev_source.branch_commit_ids.remove(cvs_revision.id)
 
-        # Delete the CVSBranch on which it is located:
-        del self[cvs_branch.id]
-        cvs_rev_source.branch_ids.remove(cvs_branch.id)
+        # If it had a successor, adjust its backreference and add it
+        # to the root_ids:
+        if cvs_revision.next_id is not None:
+          cvs_rev_next = self[cvs_revision.next_id]
+          cvs_rev_next.prev_id = None
+          self.root_ids.add(cvs_rev_next.id)
 
   def _exclude_tag(self, cvs_tag):
     """Exclude the specified CVS_TAG."""

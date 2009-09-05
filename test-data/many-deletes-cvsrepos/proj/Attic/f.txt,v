@@ -1,0 +1,29 @@
+head	1.1;
+access;
+symbols
+	BRANCH2:1.1.0.4
+	BRANCH:1.1.0.2
+	TAG:1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2009.09.04.09.45.32;	author mhagger;	state dead;
+branches;
+next	;
+commitid	Jeo5F7Vn6nyLrl2u;
+
+
+desc
+@@
+
+
+1.1
+log
+@file e.txt was initially added on branch BRANCH.
+@
+text
+@@
+
+

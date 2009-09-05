@@ -1,0 +1,26 @@
+head	1.1;
+access;
+symbols
+	BRANCH2:1.1.0.4
+	BRANCH:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2009.09.04.09.44.53;	author mhagger;	state Exp;
+branches;
+next	;
+commitid	FASyv2HRCxOxrl2u;
+
+
+desc
+@@
+
+
+1.1
+log
+@Add a.txt
+@
+text
+@@

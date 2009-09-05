@@ -3692,6 +3692,21 @@ def collision_with_unlabeled_branch_name():
       )
 
 
+@Cvs2SvnTestFunction
+def many_deletes():
+  "a repo with many removable dead revisions"
+
+  conv = ensure_conversion('many-deletes')
+  conv.logs[5].check('Add files on BRANCH', (
+    ('/%(branches)s/BRANCH/proj/b.txt', 'A'),
+    ))
+  conv.logs[6].check('Add files on BRANCH2', (
+    ('/%(branches)s/BRANCH2/proj/b.txt', 'A'),
+    ('/%(branches)s/BRANCH2/proj/c.txt', 'A'),
+    ('/%(branches)s/BRANCH2/proj/d.txt', 'A'),
+    ))
+
+
 ########################################################################
 # Run the tests
 
@@ -3891,6 +3906,7 @@ test_list = [
     ignore_unlabeled_branch,
     unlabeled_branch_name_collision,
     collision_with_unlabeled_branch_name,
+    many_deletes,
     ]
 
 if __name__ == '__main__':

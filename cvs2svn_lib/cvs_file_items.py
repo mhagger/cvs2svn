@@ -652,15 +652,11 @@ class CVSFileItems(object):
       return False
 
     cvs_revision = lod_items.cvs_revisions[0]
-    cvs_rev_source = self[lod_items.cvs_branch.source_id]
 
     if not isinstance(cvs_revision, CVSRevisionAbsent):
       return False
 
     if cvs_revision.tag_ids or cvs_revision.branch_ids:
-      return False
-
-    if abs(cvs_revision.timestamp - cvs_rev_source.timestamp) > 2:
       return False
 
     log_msg = metadata_db[cvs_revision.metadata_id].log_msg

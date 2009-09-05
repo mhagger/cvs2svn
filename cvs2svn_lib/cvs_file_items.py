@@ -673,7 +673,7 @@ class CVSFileItems(object):
     return bool(re.match(
         r'file .* was added on branch .* on '
         r'\d{4}\-\d{2}\-\d{2} \d{2}\:\d{2}\:\d{2}( [\+\-]\d{4})?'
-        '\n',
+        '\n$',
         log_msg,
         ))
 

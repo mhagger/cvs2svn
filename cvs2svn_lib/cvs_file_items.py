@@ -649,7 +649,7 @@ class CVSFileItems(object):
         # changed self.root_ids, so break out of the loop:
         break
 
-  def _initial_branch_delete_unneeded(self, lod_items, metadata_db):
+  def _is_unneeded_initial_branch_delete(self, lod_items, metadata_db):
     """Return True iff the initial revision in LOD_ITEMS can be deleted."""
 
     if lod_items.cvs_branch is None \
@@ -693,7 +693,7 @@ class CVSFileItems(object):
     revision."""
 
     for lod_items in self.iter_lods():
-      if self._initial_branch_delete_unneeded(lod_items, metadata_db):
+      if self._is_unneeded_initial_branch_delete(lod_items, metadata_db):
         cvs_revision = lod_items.cvs_revisions[0]
         Log().debug(
             'Removing unnecessary initial branch delete %s' % (cvs_revision,)

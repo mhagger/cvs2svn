@@ -357,12 +357,17 @@ class CVSFileItems(object):
     source, deleting the CVSBranch and creating a new root.  Also set
     LOD_ITEMS.cvs_branch to None.
 
+    If LOD_ITEMS has no source (e.g., because it is the trunk branch
+    or because it has already been severed), do nothing.
+
     This method can only be used before symbols have been grafted onto
     CVSBranches.  It does not adjust NTDBR, NTDBR_PREV_ID or
     NTDBR_NEXT_ID even if LOD_ITEMS describes a NTDB."""
 
     cvs_branch = lod_items.cvs_branch
-    assert cvs_branch is not None
+    if cvs_branch is None:
+      return
+
     assert not cvs_branch.tag_ids
     assert not cvs_branch.branch_ids
     source_rev = self[cvs_branch.source_id]
@@ -783,8 +788,7 @@ class CVSFileItems(object):
         rev_1_1 = self.get(first_rev.prev_id)
         rev_1_2 = self.get(last_rev.ntdbr_next_id)
 
-        if lod_items.cvs_branch is not None:
-          self._sever_branch(lod_items)
+        self._sever_branch(lod_items)
 
         if rev_1_1 is not None:
           rev_1_1.next_id = first_rev.id

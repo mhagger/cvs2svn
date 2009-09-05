@@ -671,13 +671,11 @@ class CVSFileItems(object):
     if abs(cvs_revision.timestamp - cvs_rev_source.timestamp) > 2:
       return False
 
-    # FIXME: This message will not match if the RCS file was renamed
-    # manually after it was created.
     log_msg = metadata_db[cvs_revision.metadata_id].log_msg
     return bool(re.match(
-        r'file %s was added on branch .* on '
+        r'file .* was added on branch .* on '
         r'\d{4}\-\d{2}\-\d{2} \d{2}\:\d{2}\:\d{2}( [\+\-]\d{4})?'
-        '\n' % (re.escape(self.cvs_file.basename),),
+        '\n',
         log_msg,
         ))
 

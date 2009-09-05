@@ -616,35 +616,26 @@ class CVSFileItems(object):
       if self._is_unneeded_initial_trunk_delete(cvs_item, metadata_db):
         Log().debug('Removing unnecessary delete %s' % (cvs_item,))
 
-        # Delete cvs_item:
+        # Sever any CVSBranches rooted at cvs_item.
+        for cvs_branch_id in cvs_item.branch_ids[:]:
+          cvs_branch = self[cvs_branch_id]
+          self._sever_branch(self.get_lod_items(cvs_branch))
+
+        # Tagging a dead revision doesn't do anything, so remove any
+        # CVSTags that refer to cvs_item:
+        while cvs_item.tag_ids:
+          del self[cvs_item.tag_ids.pop()]
+
+        # Now delete cvs_item itself:
         self.root_ids.remove(cvs_item.id)
-        del self[id]
+        del self[cvs_item.id]
         if cvs_item.next_id is not None:
           cvs_rev_next = self[cvs_item.next_id]
           cvs_rev_next.prev_id = None
           self.root_ids.add(cvs_rev_next.id)
 
-        # Delete all CVSBranches rooted at this revision.  If there is
-        # a CVSRevision on the branch, it should already be an add so
-        # it doesn't have to be changed.
-        for cvs_branch_id in cvs_item.branch_ids:
-          cvs_branch = self[cvs_branch_id]
-          del self[cvs_branch.id]
-
-          if cvs_branch.next_id is not None:
-            cvs_branch_next = self[cvs_branch.next_id]
-            cvs_branch_next.first_on_branch_id = None
-            cvs_branch_next.prev_id = None
-            self.root_ids.add(cvs_branch_next.id)
-
-        # Tagging a dead revision doesn't do anything, so remove any
-        # tags that were set on 1.1:
-        for cvs_tag_id in cvs_item.tag_ids:
-          del self[cvs_tag_id]
-
-        # This can only happen once per file, and we might have just
-        # changed self.root_ids, so break out of the loop:
-        break
+        # This can only happen once per file, so we're done:
+        return
 
   def _is_unneeded_initial_branch_delete(self, lod_items, metadata_db):
     """Return True iff the initial revision in LOD_ITEMS can be deleted."""

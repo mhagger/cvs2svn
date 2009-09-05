@@ -649,10 +649,6 @@ class CVSFileItems(object):
   def _is_unneeded_initial_branch_delete(self, lod_items, metadata_db):
     """Return True iff the initial revision in LOD_ITEMS can be deleted."""
 
-    if lod_items.cvs_branch is None \
-           or lod_items.cvs_branch.source_id is None:
-      return False
-
     if len(lod_items.cvs_revisions) < 2:
       return False
 

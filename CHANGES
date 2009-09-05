@@ -4,8 +4,10 @@ Version ?.?.? (not yet released)
  New features:
 
  Bugs fixed:
+ * Issue #127: Dead "file X added on branch Y" revisions not always dropped.
 
  Improvements and output changes:
+ * More aggressively omit unnecessary dead revisions.
 
  Miscellaneous:
 

@@ -355,7 +355,7 @@ class CVSFileItems(object):
 
     LOD_ITEMS describes a branch that should be severed from its
     source, deleting the CVSBranch and creating a new root.  Also set
-    LOD_ITEMS.cvs_branch to none.
+    LOD_ITEMS.cvs_branch to rnone.
 
     This method can only be used before symbols have been grafted onto
     CVSBranches.  It does not adjust NTDBR, NTDBR_PREV_ID or
@@ -599,13 +599,11 @@ class CVSFileItems(object):
     if cvs_item.ntdbr:
       return False
 
-    # FIXME: This message will not match if the RCS file was renamed
-    # manually after it was created.
     log_msg = metadata_db[cvs_item.metadata_id].log_msg
-    cvs_generated_msg = 'file %s was initially added on branch %s.\n' % (
-        self.cvs_file.basename,
-        self[cvs_item.branch_ids[0]].symbol.name,)
-    return log_msg == cvs_generated_msg
+    return bool(re.match(
+        r'file .* was initially added on branch .*\.\n$',
+        log_msg,
+        ))
 
   def remove_unneeded_deletes(self, metadata_db):
     """Remove unneeded deletes for this file.

@@ -587,12 +587,6 @@ class CVSFileItems(object):
     if not isinstance(cvs_item.lod, Trunk):
       return False
 
-    if not cvs_item.branch_ids:
-      return False
-
-    if self[cvs_item.branch_ids[0]].next_id is None:
-      return False
-
     if cvs_item.closed_symbols:
       return False
 

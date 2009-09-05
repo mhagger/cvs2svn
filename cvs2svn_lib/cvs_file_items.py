@@ -660,7 +660,7 @@ class CVSFileItems(object):
     if not isinstance(cvs_revision, CVSRevisionAbsent):
       return False
 
-    if cvs_revision.tag_ids or cvs_revision.branch_ids:
+    if cvs_revision.branch_ids:
       return False
 
     log_msg = metadata_db[cvs_revision.metadata_id].log_msg
@@ -702,6 +702,11 @@ class CVSFileItems(object):
           cvs_rev_next = self[cvs_revision.next_id]
           cvs_rev_next.prev_id = None
           self.root_ids.add(cvs_rev_next.id)
+
+        # Tagging a dead revision doesn't do anything, so remove any
+        # tags that were set on it:
+        for tag_id in cvs_revision.tag_ids:
+          del self[tag_id]
 
   def _exclude_tag(self, cvs_tag):
     """Exclude the specified CVS_TAG."""

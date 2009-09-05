@@ -604,7 +604,7 @@ class CVSFileItems(object):
         log_msg,
         ))
 
-  def remove_unneeded_deletes(self, metadata_db):
+  def remove_unneeded_initial_trunk_delete(self, metadata_db):
     """Remove unneeded deletes for this file.
 
     If a file is added on a branch, then a trunk revision is added at

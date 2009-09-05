@@ -1048,8 +1048,10 @@ class _ProjectDataCollector:
   def _process_cvs_file_items(self, cvs_file_items):
     """Process the CVSFileItems from one CVSFile."""
 
-    # Remove CVSRevisionDeletes that are not needed:
-    cvs_file_items.remove_unneeded_deletes(self.collect_data.metadata_db)
+    # Remove an initial delete on trunk if it is not needed:
+    cvs_file_items.remove_unneeded_initial_trunk_delete(
+        self.collect_data.metadata_db
+        )
 
     # Remove initial branch deletes that are not needed:
     cvs_file_items.remove_initial_branch_deletes(

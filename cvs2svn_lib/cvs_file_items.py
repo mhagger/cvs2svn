@@ -653,6 +653,9 @@ class CVSFileItems(object):
 
     cvs_revision = lod_items.cvs_revisions[0]
 
+    if cvs_revision.ntdbr:
+      return False
+
     if not isinstance(cvs_revision, CVSRevisionAbsent):
       return False
 

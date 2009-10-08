@@ -81,7 +81,7 @@ from cvs2svn_lib.log import Log
 from cvs2svn_lib.project import Project
 from cvs2svn_lib.git_revision_recorder import GitRevisionRecorder
 from cvs2svn_lib.git_output_option import GitRevisionInlineWriter
-from cvs2svn_lib.git_output_option import GitOutputOption
+from cvs2svn_lib.bzr_output_option import BzrOutputOption
 from cvs2svn_lib.revision_manager import NullRevisionRecorder
 from cvs2svn_lib.revision_manager import NullRevisionExcluder
 from cvs2svn_lib.fulltext_revision_recorder \
@@ -135,7 +135,7 @@ ctx.revision_recorder = NullRevisionRecorder()
 # excluded, so leave this option unchanged:
 ctx.revision_excluder = NullRevisionExcluder()
 
-# cvs2bzr's revision reader is set via the GitOutputOption constructor,
+# cvs2bzr's revision reader is set via the BzrOutputOption constructor,
 # so leave this option set to None.
 ctx.revision_reader = None
 
@@ -455,7 +455,7 @@ ctx.retain_conflicting_attic_files = False
 # example shown).  All values should be either Unicode strings (i.e.,
 # with "u" as a prefix) or 8-bit strings in the utf-8 encoding.
 # Please substitute your own project's usernames here to use with the
-# author_transforms option of GitOutputOption below.
+# author_transforms option of BzrOutputOption below.
 author_transforms={
     'jrandom' : ('J. Random', 'jrandom@example.com'),
     'mhagger' : ('Michael Haggerty', 'mhagger@alum.mit.edu'),
@@ -470,7 +470,7 @@ author_transforms={
 
 # This is the main option that causes cvs2svn to output to a
 # "fastimport"-format dumpfile rather than to Subversion:
-ctx.output_option = GitOutputOption(
+ctx.output_option = BzrOutputOption(
     # The file in which to write the "fastimport" stream:
     'cvs2svn-tmp/dumpfile.fi',
 

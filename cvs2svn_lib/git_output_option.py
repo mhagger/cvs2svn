@@ -37,15 +37,6 @@ from cvs2svn_lib.dvcs_common import MirrorUpdater
 from cvs2svn_lib.key_generator import KeyGenerator
 
 
-# The branch name to use for the "tag fixup branches".  The
-# git-fast-import documentation suggests using 'TAG_FIXUP' (outside of
-# the refs/heads namespace), but this is currently broken.  Use a name
-# containing '.', which is not allowed in CVS symbols, to avoid
-# conflicts (though of course a conflict could still result if the
-# user requests symbol transformations).
-FIXUP_BRANCH_NAME = 'refs/heads/TAG.FIXUP'
-
-
 class ExpectedDirectoryError(Exception):
   """A file was found where a directory was expected."""
 
@@ -414,6 +405,15 @@ class GitOutputOption(DVCSOutputOption):
     self.f.write('reset refs/%s/%s\n' % (category, symbol.name,))
     self.f.write('from :%d\n' % (mark,))
 
+  def get_tag_fixup_branch_name(self, svn_commit):
+    # The branch name to use for the "tag fixup branches".  The git-fast-import
+    # documentation suggests using 'TAG_FIXUP' (outside of the refs/heads
+    # namespace), but this is currently broken.
+    # Use a name containing '.', which is not allowed in CVS symbols, to avoid
+    # conflicts (though of course a conflict could still result if the user
+    # requests symbol transformations).
+    return 'refs/heads/TAG.FIXUP'
+
   def process_tag_commit(self, svn_commit):
     # FIXME: For now we create a fixup branch with the same name as
     # the tag, then the tag.  We never delete the fixup branch.  Also,
@@ -435,18 +435,20 @@ class GitOutputOption(DVCSOutputOption):
           '%s will be created via a fixup branch' % (svn_commit.symbol,)
           )
 
+      fixup_branch_name = self.get_tag_fixup_branch_name(svn_commit)
+
       # Create the fixup branch (which might involve making more than
       # one commit):
       for groups in get_chunks(source_groups, self.max_merges):
         mark = self._create_commit_mark(svn_commit.symbol, svn_commit.revnum)
         self._process_symbol_commit(
-            svn_commit, FIXUP_BRANCH_NAME, groups, mark
+            svn_commit, fixup_branch_name, groups, mark
             )
 
       # Store the mark of the last commit to the fixup branch as the
       # value of the tag:
       self._set_symbol(svn_commit.symbol, mark)
-      self.f.write('reset %s\n' % (FIXUP_BRANCH_NAME,))
+      self.f.write('reset %s\n' % (fixup_branch_name,))
       self.f.write('\n')
 
     self._mirror.end_commit()

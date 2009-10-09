@@ -531,7 +531,7 @@ class LODHistory(object):
     id = self.ids[index]
 
     if id is None:
-      raise KeyError()
+      raise KeyError(revnum)
 
     return id
 
@@ -563,7 +563,7 @@ class LODHistory(object):
     ceased to exist in REVNUM."""
 
     if revnum < self.revnums[-1]:
-      raise KeyError()
+      raise KeyError(revnum)
     elif revnum == self.revnums[-1]:
       # This is an attempt to overwrite an entry that was already
       # updated during this revision.  Don't allow the replacement

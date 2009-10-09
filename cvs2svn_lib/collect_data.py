@@ -274,7 +274,7 @@ class _SymbolDataCollector(object):
     self._symbol_defs = []
 
     # A set containing the transformed names of symbols in this file
-    # (used to detect duplicats during processing of unlabeled
+    # (used to detect duplicates during processing of unlabeled
     # branches):
     self._defined_symbols = set()
 

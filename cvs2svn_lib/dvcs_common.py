@@ -25,6 +25,7 @@ from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import InternalError
 from cvs2svn_lib.run_options import RunOptions
 from cvs2svn_lib.log import Log
+from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.project import Project

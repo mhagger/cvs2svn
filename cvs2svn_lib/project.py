@@ -79,11 +79,6 @@ class Project(object):
         self.determine_repository_root(
             os.path.abspath(self.project_cvs_repos_path))
 
-    # A regexp matching project_cvs_repos_path plus an optional separator:
-    self.project_prefix_re = re.compile(
-        r'^' + re.escape(self.project_cvs_repos_path)
-        + r'(' + re.escape(os.sep) + r'|$)')
-
     # The SVN directories to add when the project is first created:
     self._initial_directories = []
 

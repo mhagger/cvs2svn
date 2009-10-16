@@ -3449,14 +3449,14 @@ def main_git():
   #     ./run-tests <test-number>
   #     rm -rf .git
   #     git-init
-  #     cat cvs2svn-tmp/git-{blob,dump}.dat | git-fast-import
+  #     cat cvs2svn-tmp/{blobfile,dumpfile}.out | git fast-import
   #
   # Or, to load the dumpfiles separately:
   #
   #     cat cvs2svn-tmp/git-blob.dat \
-  #         | git-fast-import --export-marks=cvs2svn-tmp/git-marks.dat
+  #         | git fast-import --export-marks=cvs2svn-tmp/git-marks.dat
   #     cat cvs2svn-tmp/git-dump.dat \
-  #         | git-fast-import --import-marks=cvs2svn-tmp/git-marks.dat
+  #         | git fast-import --import-marks=cvs2svn-tmp/git-marks.dat
   #
   # Then use "gitk --all", "git log", etc. to test the contents of the
   # repository.
@@ -3484,16 +3484,6 @@ def main_hg():
   "output in git-fast-import format with inline data"
 
   # The output should be suitable for import by Mercurial.
-
-  # Note: To test importing into git, do
-  #
-  #     ./run-tests <test-number>
-  #     rm -rf .git
-  #     git-init
-  #     cat cvs2svn-tmp/git-dump.dat | git-fast-import
-  #
-  # Then use "gitk --all", "git log", etc. to test the contents of the
-  # repository.
 
   # We don't have the infrastructure to check that the resulting
   # Mercurial repository is correct, so we just check that the

@@ -273,11 +273,12 @@ class GitOutputOption(DVCSOutputOption):
   def _get_author(self, svn_commit):
     """Return the author to be used for SVN_COMMIT.
 
-    Return the author in the form needed by git; that is, 'foo <bar>'."""
+    Return the author as a UTF-8 string in the form needed by git fast-import;
+    that is, 'name <email>'."""
 
-    author = svn_commit.get_author()
-    (name, email,) = self.author_transforms.get(author, (author, author,))
-    return '%s <%s>' % (name, email,)
+    cvs_author = svn_commit.get_author()
+    return self.author_transforms.get(cvs_author,
+                                      "%s <%s>" % (cvs_author, cvs_author,))
 
   @staticmethod
   def _get_log_msg(svn_commit):

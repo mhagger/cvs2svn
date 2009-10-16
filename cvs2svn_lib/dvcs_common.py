@@ -109,15 +109,16 @@ class DVCSOutputOption(OutputOption):
     self._symbolings_reader = None
 
   def normalize_author_transforms(self, author_transforms):
-    """Return a new dict with the same content as author_transforms, but all
-    strings encoded to UTF-8.  Also turns None into the empty dict."""
+    """Return a new dict with the same content as author_transforms, but with
+    all strings encoded to UTF-8 and the (name, email) tuple turned into a
+    string.  Also turns None into the empty dict."""
     result = {}
     if author_transforms is not None:
       for (cvsauthor, (name, email,)) in author_transforms.iteritems():
         cvsauthor = to_utf8(cvsauthor)
         name = to_utf8(name)
         email = to_utf8(email)
-        result[cvsauthor] = (name, email,)
+        result[cvsauthor] = "%s <%s>" % (name, email,)
     return result
 
   def register_artifacts(self, which_pass):

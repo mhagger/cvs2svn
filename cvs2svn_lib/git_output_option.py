@@ -341,9 +341,20 @@ class GitOutputOption(DVCSOutputOption):
     author = self._get_author(svn_commit)
     log_msg = self._get_log_msg(svn_commit)
 
+    # Get the primary parent
+    p_source_lod, p_source_revnum = source_groups[0:2]
+    try:
+      p_source_node = self._mirror.get_old_lod_directory(p_source_lod, p_source_revnum)
+    except KeyError:
+      raise InternalError('Source %r does not exist' % (p_source_lod,))
+    cvs_files_to_delete = set(self._get_all_files(p_source_node))
+
     log_msg += "\n"
     for (source_lod, source_revnum, cvs_symbols,) in source_groups:
       log_msg += "\n%s %r (%r paths)" % (source_lod, source_revnum, len(cvs_symbols),)
+      for cvs_symbol in cvs_symbols:
+        cvs_files_to_delete.discard(cvs_symbol.cvs_file)
+    log_msg += "\ndeleted %r paths" % (len(cvs_files_to_delete.discard),)
 
     self.f.write('commit %s\n' % (git_branch,))
     self.f.write('mark :%d\n' % (mark,))
@@ -353,15 +364,17 @@ class GitOutputOption(DVCSOutputOption):
 
     # Only record actual DVCS ancestry for the primary sprout parent,
     # all the rest are effectively cherrypicks.
-    source_lod, source_revnum, cvs_symbols = source_groups[0]
     self.f.write(
         'merge :%d\n'
-        % (self._get_source_mark(source_lod, source_revnum),)
+        % (self._get_source_mark(p_source_lod, p_source_revnum),)
         )
 
     for (source_lod, source_revnum, cvs_symbols,) in source_groups:
       for cvs_symbol in cvs_symbols:
         self.revision_writer.branch_file(cvs_symbol)
+ 
+    for cvs_file in cvs_files_to_delete:
+      self.f.write('D %s\n' % (cvs_file.cvs_path,))
 
     self.f.write('\n')
 

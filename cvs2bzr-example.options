@@ -199,9 +199,9 @@ ctx.post_commit_message = (
     )
 
 # Template for the commit message to be used for commits in which
-# symbols are created.  This message can use '%(symbol_type)d' to
+# symbols are created.  This message can use '%(symbol_type)s' to
 # include the type of the symbol ('branch' or 'tag') or
-# '%(symbol_name)' to include the name of the symbol.
+# '%(symbol_name)s' to include the name of the symbol.
 ctx.symbol_commit_message = (
     "This commit was manufactured by cvs2svn to create %(symbol_type)s "
     "'%(symbol_name)s'."

@@ -34,13 +34,14 @@ class BzrOutputOption(GitOutputOption):
   def __init__(
         self, dump_filename, revision_writer,
         author_transforms=None,
+        tie_tag_fixup_branches=True,
         ):
     """Constructor.
 
     See superclass for meaning of parameters.
     """
     GitOutputOption.__init__(self, dump_filename, revision_writer,
-        author_transforms)
+        author_transforms, tie_tag_fixup_branches)
 
   def get_tag_fixup_branch_name(self, svn_commit):
     # Use a name containing '.', which is not allowed in CVS symbols, to avoid

@@ -232,6 +232,16 @@ ctx.symbol_commit_message = (
     "'%(symbol_name)s'."
     )
 
+# Template for the commit message to be used for commits in which
+# tags are pseudo-merged back to their source branch.  This message can
+# use '%(symbol_name)s' to include the name of the symbol.
+# (Not used by default unless you enable tie_tag_fixup_branches on
+# GitOutputOption.)
+ctx.tie_tag_ancestry_message = (
+    "This commit was manufactured by cvs2svn to tie ancestry for "
+    "tag '%(symbol_name)s' back to the source branch."
+    )
+
 # Some CVS clients for MacOS store resource fork data into CVS along
 # with the file contents itself by wrapping it all up in a container
 # format called "AppleSingle".  Subversion currently does not support

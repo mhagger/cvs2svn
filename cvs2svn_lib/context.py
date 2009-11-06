@@ -79,6 +79,10 @@ class Ctx:
         "This commit was manufactured by cvs2svn to create %(symbol_type)s "
         "'%(symbol_name)s'."
         )
+    self.tie_tag_ancestry_message = (
+        "This commit was manufactured by cvs2svn to tie ancestry for "
+        "tag '%(symbol_name)s' back to the source branch."
+        )
 
 
   def get_temp_filename(self, basename):

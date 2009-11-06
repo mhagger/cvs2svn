@@ -160,6 +160,7 @@ class GitOutputOption(DVCSOutputOption):
   def __init__(
         self, dump_filename, revision_writer,
         author_transforms=None,
+        tie_tag_fixup_branches=False,
         ):
     """Constructor.
 
@@ -177,12 +178,18 @@ class GitOutputOption(DVCSOutputOption):
     contents should either be Unicode strings or 8-bit strings encoded
     as UTF-8.
 
+    TIE_TAG_FIXUP_BRANCHES means whether after finishing with a tag fixup
+    branch, it should be psuedo-merged (ancestry linked but no content changes)
+    back into its source branch, to dispose of the open head.
+
     """
     DVCSOutputOption.__init__(self)
     self.dump_filename = dump_filename
     self.revision_writer = revision_writer
 
     self.author_transforms = self.normalize_author_transforms(author_transforms)
+
+    self.tie_tag_fixup_branches = tie_tag_fixup_branches
 
     self._mark_generator = KeyGenerator(GitOutputOption._first_commit_mark)
 
@@ -242,6 +249,9 @@ class GitOutputOption(DVCSOutputOption):
     that is, 'name <email>'."""
 
     cvs_author = svn_commit.get_author()
+    return self._map_author(cvs_author)
+
+  def _map_author(self, cvs_author):
     return self.author_transforms.get(cvs_author, "%s <>" % (cvs_author,))
 
   @staticmethod
@@ -434,7 +444,35 @@ class GitOutputOption(DVCSOutputOption):
       self.f.write('reset %s\n' % (fixup_branch_name,))
       self.f.write('\n')
 
+      if self.tie_tag_fixup_branches:
+        source_lod = source_groups[0][0]
+        source_lod_git_branch = 'refs/heads/%s' % (getattr(source_lod, 'name', 'master'),)
+
+        mark2 = self._create_commit_mark(source_lod, svn_commit.revnum)
+        author = self._map_author(Ctx().username)
+        log_msg = self._get_log_msg_for_ancestry_tie(svn_commit) 
+
+        self.f.write('commit %s\n' % (source_lod_git_branch,))
+        self.f.write('mark :%d\n' % (mark2,))
+        self.f.write('committer %s %d +0000\n' % (author, svn_commit.date,))
+        self.f.write('data %d\n' % (len(log_msg),))
+        self.f.write('%s\n' % (log_msg,))
+
+        self.f.write(
+            'merge :%d\n'
+            % (mark,)
+            )
+
+        self.f.write('\n')
+
     self._mirror.end_commit()
+
+  def _get_log_msg_for_ancestry_tie(self, svn_commit):
+    return Ctx().text_wrapper.fill(
+        Ctx().tie_tag_ancestry_message % {
+            'symbol_name' : svn_commit.symbol.name,
+            }
+        )
 
   def cleanup(self):
     DVCSOutputOption.cleanup(self)

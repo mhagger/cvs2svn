@@ -386,13 +386,29 @@ class GitOutputOption(DVCSOutputOption):
 
   def process_branch_commit(self, svn_commit):
     self._mirror.start_commit(svn_commit.revnum)
+
     source_groups = list(self._get_source_groups(svn_commit))
-    for groups in get_chunks(source_groups, self.max_merges):
-      self._process_symbol_commit(
-          svn_commit, 'refs/heads/%s' % (svn_commit.symbol.name,),
-          groups,
-          self._create_commit_mark(svn_commit.symbol, svn_commit.revnum),
+    if self._is_simple_copy(svn_commit, source_groups):
+      (source_lod, source_revnum, cvs_symbols) = source_groups[0]
+      Log().debug(
+          '%s will be created via a simple copy from %s:r%d'
+          % (svn_commit.symbol, source_lod, source_revnum,)
           )
+      mark = self._get_source_mark(source_lod, source_revnum)
+      self._set_symbol(svn_commit.symbol, mark)
+      self._mirror.copy_lod(source_lod, svn_commit.symbol, source_revnum)
+      self._create_commit_mark(svn_commit.symbol, svn_commit.revnum),
+    else:
+      Log().debug(
+          '%s will be created via fixup commit(s)' % (svn_commit.symbol,)
+          )
+      for groups in get_chunks(source_groups, self.max_merges):
+        self._process_symbol_commit(
+            svn_commit, 'refs/heads/%s' % (svn_commit.symbol.name,),
+            groups,
+            self._create_commit_mark(svn_commit.symbol, svn_commit.revnum),
+            )
+
     self._mirror.end_commit()
 
   def _set_symbol(self, symbol, mark):
@@ -416,9 +432,7 @@ class GitOutputOption(DVCSOutputOption):
 
   def process_tag_commit(self, svn_commit):
     # FIXME: For now we create a fixup branch with the same name as
-    # the tag, then the tag.  We never delete the fixup branch.  Also,
-    # a fixup branch is created even if the tag could be created from
-    # a single source.
+    # the tag, then the tag.  We never delete the fixup branch.
     self._mirror.start_commit(svn_commit.revnum)
 
     source_groups = list(self._get_source_groups(svn_commit))

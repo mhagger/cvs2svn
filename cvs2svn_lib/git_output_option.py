@@ -342,7 +342,7 @@ class GitOutputOption(DVCSOutputOption):
     log_msg = self._get_log_msg(svn_commit)
 
     # Get the primary parent
-    p_source_lod, p_source_revnum = source_groups[0:2]
+    p_source_lod, p_source_revnum, p_cvs_symbols = source_groups[0]
     try:
       p_source_node = self._mirror.get_old_lod_directory(p_source_lod, p_source_revnum)
     except KeyError:
@@ -354,7 +354,7 @@ class GitOutputOption(DVCSOutputOption):
       log_msg += "\n%s %r (%r paths)" % (source_lod, source_revnum, len(cvs_symbols),)
       for cvs_symbol in cvs_symbols:
         cvs_files_to_delete.discard(cvs_symbol.cvs_file)
-    log_msg += "\ndeleted %r paths" % (len(cvs_files_to_delete.discard),)
+    log_msg += "\ndeleted %r paths" % (len(cvs_files_to_delete),)
 
     self.f.write('commit %s\n' % (git_branch,))
     self.f.write('mark :%d\n' % (mark,))

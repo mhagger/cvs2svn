@@ -277,8 +277,7 @@ class GitOutputOption(DVCSOutputOption):
     that is, 'name <email>'."""
 
     cvs_author = svn_commit.get_author()
-    return self.author_transforms.get(cvs_author,
-                                      "%s <%s>" % (cvs_author, cvs_author,))
+    return self.author_transforms.get(cvs_author, "%s <>" % (cvs_author,))
 
   @staticmethod
   def _get_log_msg(svn_commit):

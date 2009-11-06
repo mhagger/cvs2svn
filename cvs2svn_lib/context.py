@@ -18,6 +18,7 @@
 
 
 import os
+import textwrap
 
 from cvs2svn_lib import config
 from cvs2svn_lib.common import CVSTextDecoder
@@ -62,6 +63,9 @@ class Ctx:
     self.cross_project_commits = True
     self.cross_branch_commits = True
     self.retain_conflicting_attic_files = False
+
+    # textwrap.TextWrapper instance to be used for wrapping log messages:
+    self.text_wrapper = textwrap.TextWrapper(width=76)
 
     self.initial_project_commit_message = (
         'Standard project directories initialized by cvs2svn.'

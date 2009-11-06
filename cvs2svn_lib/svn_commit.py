@@ -36,8 +36,6 @@ There are five types of SVNCommits:
 """
 
 
-import textwrap
-
 from cvs2svn_lib.common import InternalError
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.symbol import Branch
@@ -46,9 +44,6 @@ from cvs2svn_lib.symbol import Tag
 
 class SVNCommit:
   """This represents one commit to the Subversion Repository."""
-
-  # textwrap.TextWrapper instance to be used for wrapping log messages:
-  text_wrapper = textwrap.TextWrapper(width=76)
 
   def __init__(self, date, revnum):
     """Instantiate an SVNCommit.
@@ -144,7 +139,7 @@ class SVNInitialProjectCommit(SVNCommit):
     return Ctx().username
 
   def get_log_msg(self):
-    return self.text_wrapper.fill(
+    return Ctx().text_wrapper.fill(
         Ctx().initial_project_commit_message % {}
         )
 
@@ -281,7 +276,7 @@ class SVNPostCommit(SVNRevisionCommit):
   def get_log_msg(self):
     """Return a manufactured log message for this commit."""
 
-    return self.text_wrapper.fill(
+    return Ctx().text_wrapper.fill(
         Ctx().post_commit_message % {'revnum' : self.motivating_revnum}
         )
 
@@ -330,7 +325,7 @@ class SVNSymbolCommit(SVNCommit):
   def get_log_msg(self):
     """Return a manufactured log message for this commit."""
 
-    return self.text_wrapper.fill(
+    return Ctx().text_wrapper.fill(
         Ctx().symbol_commit_message % {
             'symbol_type' : self._get_symbol_type(),
             'symbol_name' : self.symbol.name,

@@ -169,7 +169,6 @@ A directory called \\fIcvs2svn-tmp\\fR (or the directory specified by
     ctx.output_option = GitOutputOption(
         self.options.dumpfile,
         GitRevisionMarkWriter(),
-        max_merges=None,
         # Optional map from CVS author names to git author names:
         author_transforms={}, # FIXME
         )

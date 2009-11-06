@@ -33,13 +33,13 @@ class BzrOutputOption(GitOutputOption):
 
   def __init__(
         self, dump_filename, revision_writer,
-        max_merges=None, author_transforms=None,
+        author_transforms=None,
         ):
     """Constructor.
 
     See superclass for meaning of parameters.
     """
-    GitOutputOption.__init__(self, dump_filename, revision_writer, max_merges,
+    GitOutputOption.__init__(self, dump_filename, revision_writer,
         author_transforms)
 
   def get_tag_fixup_branch_name(self, svn_commit):

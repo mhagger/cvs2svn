@@ -32,21 +32,13 @@
 #     cvs2git --options=cvs2hg-example.options
 #
 # Mercurial can (experimentally at this time) read git-fast-import
-# format via its "hg fastimport" extension, with a couple of
-# exceptions:
+# format via its "hg fastimport" extension, with exceptions:
 #
 # 1. "hg fastimport" does not support blobs, so the contents of the
 #    revisions are output inline rather than in a separate blobs file.
 #    This increases the size of the output, because file contents that
 #    appear identically on multiple branches have to be output
 #    multiple times.
-#
-# 2. Mercurial only allows a revsion to have two parents (not an
-#    arbitrary number, as allowed by git).  This affects the way that
-#    cvs2svn handles a symbol that includes content from multiple
-#    parent branches.  For output to Mercurial, files are only copied
-#    from one parent branch in each commit (therefore potentially
-#    taking multiple commits to create the symbol).
 #
 # Many options do not have defaults, so it is easier to copy this file
 # and modify what you need rather than creating a new options file
@@ -499,12 +491,6 @@ ctx.output_option = GitOutputOption(
         #RCSRevisionReader(co_executable=r'co')
         CVSRevisionReader(cvs_executable=r'cvs')
         ),
-
-    # This option limits the number of revisions that are merged with
-    # the main parent in any commit.  For Mercurial output, this
-    # should be set to 1 (see the comment at the top of this file for
-    # the reason).
-    max_merges=1,
 
     # Optional map from CVS author names to hg author names:
     author_transforms=author_transforms,

@@ -136,36 +136,6 @@ class GitRevisionInlineWriter(GitRevisionWriter):
     self.revision_reader.finish()
 
 
-def get_chunks(iterable, chunk_size):
-  """Generate lists containing chunks of the output of ITERABLE.
-
-  Each list contains at most CHUNK_SIZE items.  If CHUNK_SIZE is None,
-  yield the whole contents of ITERABLE in one list."""
-
-  if chunk_size is None:
-    yield list(iterable)
-  else:
-    it = iter(iterable)
-    while True:
-      # If this call to it.next() raises StopIteration, then we have
-      # no more chunks to emit, so simply pass the exception through:
-      chunk = [it.next()]
-
-      # Now try filling the rest of the chunk:
-      try:
-        while len(chunk) < chunk_size:
-          chunk.append(it.next())
-      except StopIteration:
-        # The iterator was exhausted while filling chunk, but chunk
-        # contains at least one element.  Yield it, then we're done.
-        yield chunk
-        break
-
-      # Yield the full chunk then continue with the next chunk:
-      yield chunk
-      del chunk
-
-
 class GitOutputOption(DVCSOutputOption):
   """An OutputOption that outputs to a git-fast-import formatted file.
 
@@ -189,7 +159,7 @@ class GitOutputOption(DVCSOutputOption):
 
   def __init__(
         self, dump_filename, revision_writer,
-        max_merges=None, author_transforms=None,
+        author_transforms=None,
         ):
     """Constructor.
 
@@ -202,10 +172,6 @@ class GitOutputOption(DVCSOutputOption):
     either the content of revisions or a mark that was previously used
     to label a blob.
 
-    MAX_MERGES can be set to an integer telling the maximum number of
-    parents that can be merged into a commit at once (aside from the
-    natural parent).  If it is set to None, then there is no limit.
-
     AUTHOR_TRANSFORMS is a map {cvsauthor : (fullname, email)} from
     CVS author names to git full name and email address.  All of the
     contents should either be Unicode strings or 8-bit strings encoded
@@ -215,7 +181,6 @@ class GitOutputOption(DVCSOutputOption):
     DVCSOutputOption.__init__(self)
     self.dump_filename = dump_filename
     self.revision_writer = revision_writer
-    self.max_merges = max_merges
 
     self.author_transforms = self.normalize_author_transforms(author_transforms)
 
@@ -366,17 +331,23 @@ class GitOutputOption(DVCSOutputOption):
     author = self._get_author(svn_commit)
     log_msg = self._get_log_msg(svn_commit)
 
+    log_msg += "\n"
+    for (source_lod, source_revnum, cvs_symbols,) in source_groups:
+      log_msg += "\n%s %r (%r paths)" % (source_lod, source_revnum, len(cvs_symbols),)
+
     self.f.write('commit %s\n' % (git_branch,))
     self.f.write('mark :%d\n' % (mark,))
     self.f.write('committer %s %d +0000\n' % (author, svn_commit.date,))
     self.f.write('data %d\n' % (len(log_msg),))
     self.f.write('%s\n' % (log_msg,))
 
-    for (source_lod, source_revnum, cvs_symbols,) in source_groups:
-      self.f.write(
-          'merge :%d\n'
-          % (self._get_source_mark(source_lod, source_revnum),)
-          )
+    # Only record actual DVCS ancestry for the primary sprout parent,
+    # all the rest are effectively cherrypicks.
+    source_lod, source_revnum, cvs_symbols = source_groups[0]
+    self.f.write(
+        'merge :%d\n'
+        % (self._get_source_mark(source_lod, source_revnum),)
+        )
 
     for (source_lod, source_revnum, cvs_symbols,) in source_groups:
       for cvs_symbol in cvs_symbols:
@@ -402,12 +373,11 @@ class GitOutputOption(DVCSOutputOption):
       Log().debug(
           '%s will be created via fixup commit(s)' % (svn_commit.symbol,)
           )
-      for groups in get_chunks(source_groups, self.max_merges):
-        self._process_symbol_commit(
-            svn_commit, 'refs/heads/%s' % (svn_commit.symbol.name,),
-            groups,
-            self._create_commit_mark(svn_commit.symbol, svn_commit.revnum),
-            )
+      self._process_symbol_commit(
+          svn_commit, 'refs/heads/%s' % (svn_commit.symbol.name,),
+          source_groups,
+          self._create_commit_mark(svn_commit.symbol, svn_commit.revnum),
+          )
 
     self._mirror.end_commit()
 
@@ -453,11 +423,10 @@ class GitOutputOption(DVCSOutputOption):
 
       # Create the fixup branch (which might involve making more than
       # one commit):
-      for groups in get_chunks(source_groups, self.max_merges):
-        mark = self._create_commit_mark(svn_commit.symbol, svn_commit.revnum)
-        self._process_symbol_commit(
-            svn_commit, fixup_branch_name, groups, mark
-            )
+      mark = self._create_commit_mark(svn_commit.symbol, svn_commit.revnum)
+      self._process_symbol_commit(
+          svn_commit, fixup_branch_name, source_groups, mark
+          )
 
       # Store the mark of the last commit to the fixup branch as the
       # value of the tag:

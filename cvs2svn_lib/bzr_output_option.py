@@ -22,6 +22,7 @@ the dialect of the fast-import file more suited to bzr.
 """
 
 from cvs2svn_lib.git_output_option import GitOutputOption
+from cvs2svn_lib.symbol import Trunk
 
 
 class BzrOutputOption(GitOutputOption):

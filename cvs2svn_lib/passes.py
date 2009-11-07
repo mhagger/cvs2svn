@@ -1763,24 +1763,6 @@ class OutputPass(Pass):
     self._register_temp_file_needed(config.CVS_REVS_TO_SVN_REVNUMS)
     Ctx().output_option.register_artifacts(self)
 
-  def get_svn_commits(self):
-    """Generate the SVNCommits in commit order."""
-
-    persistence_manager = PersistenceManager(DB_OPEN_READ)
-
-    svn_revnum = 1 # The first non-trivial commit
-
-    # Peek at the first revision to find the date to use to initialize
-    # the repository:
-    svn_commit = persistence_manager.get_svn_commit(svn_revnum)
-
-    while svn_commit:
-      yield svn_commit
-      svn_revnum += 1
-      svn_commit = persistence_manager.get_svn_commit(svn_revnum)
-
-    persistence_manager.close()
-
   def run(self, run_options, stats_keeper):
     Ctx()._projects = read_projects(
         artifact_manager.get_temp_file(config.PROJECTS)
@@ -1796,13 +1778,19 @@ class OutputPass(Pass):
         artifact_manager.get_temp_file(config.CVS_ITEMS_SORTED_INDEX_TABLE),
         DB_OPEN_READ)
     Ctx()._symbol_db = SymbolDatabase()
+    Ctx().persistence_manager = PersistenceManager(DB_OPEN_READ)
 
     Ctx().output_option.setup(stats_keeper.svn_rev_count())
 
-    for svn_commit in self.get_svn_commits():
+    svn_revnum = 1
+    svn_commit = Ctx().persistence_manager.get_svn_commit(svn_revnum)
+    while svn_commit:
       svn_commit.output(Ctx().output_option)
+      svn_revnum += 1
+      svn_commit = Ctx().persistence_manager.get_svn_commit(svn_revnum)
 
     Ctx().output_option.cleanup()
+    Ctx().persistence_manager.close()
 
     Ctx()._symbol_db.close()
     Ctx()._cvs_items_db.close()

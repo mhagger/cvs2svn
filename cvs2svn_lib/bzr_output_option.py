@@ -49,4 +49,11 @@ class BzrOutputOption(GitOutputOption):
     # requests symbol transformations).
     return 'refs/heads/tag-fixup.%s' % svn_commit.symbol.name
 
-
+  def describe_lod_to_user(self, lod):
+    """This needs to make sense to users of the fastimported result."""
+    # This sort of needs to replicate the entire branch name mapping logic from
+    # bzr-fastimport :-/
+    if isinstance(lod, Trunk):
+      return 'trunk'
+    else:
+      return lod.name

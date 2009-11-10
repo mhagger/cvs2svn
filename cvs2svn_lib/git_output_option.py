@@ -375,11 +375,11 @@ class GitOutputOption(DVCSOutputOption):
     # make up this symbol creation.
     log_msg += "\n"
     log_msg += "\nSprout from %s" % (
-        self._describe_commit(Ctx().persistence_manager.get_svn_commit(p_source_revnum),
+        self._describe_commit(Ctx()._persistence_manager.get_svn_commit(p_source_revnum),
           p_source_lod),)
     for (source_lod, source_revnum, cvs_symbols,) in source_groups[1:]:
       log_msg += "\nCherrypick from %s:" % (
-          self._describe_commit(Ctx().persistence_manager.get_svn_commit(source_revnum),
+          self._describe_commit(Ctx()._persistence_manager.get_svn_commit(source_revnum),
             source_lod),)
       for cvs_symbol in cvs_symbols:
         log_msg += "\n    %s" % (cvs_symbol.cvs_file.cvs_path,)

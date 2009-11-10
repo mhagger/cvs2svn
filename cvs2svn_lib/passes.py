@@ -1778,19 +1778,19 @@ class OutputPass(Pass):
         artifact_manager.get_temp_file(config.CVS_ITEMS_SORTED_INDEX_TABLE),
         DB_OPEN_READ)
     Ctx()._symbol_db = SymbolDatabase()
-    Ctx().persistence_manager = PersistenceManager(DB_OPEN_READ)
+    Ctx()._persistence_manager = PersistenceManager(DB_OPEN_READ)
 
     Ctx().output_option.setup(stats_keeper.svn_rev_count())
 
     svn_revnum = 1
-    svn_commit = Ctx().persistence_manager.get_svn_commit(svn_revnum)
+    svn_commit = Ctx()._persistence_manager.get_svn_commit(svn_revnum)
     while svn_commit:
       svn_commit.output(Ctx().output_option)
       svn_revnum += 1
-      svn_commit = Ctx().persistence_manager.get_svn_commit(svn_revnum)
+      svn_commit = Ctx()._persistence_manager.get_svn_commit(svn_revnum)
 
     Ctx().output_option.cleanup()
-    Ctx().persistence_manager.close()
+    Ctx()._persistence_manager.close()
 
     Ctx()._symbol_db.close()
     Ctx()._cvs_items_db.close()

@@ -23,6 +23,7 @@ For information about the format allowed by git-fast-import, see:
 """
 
 import bisect
+import time
 
 from cvs2svn_lib.common import InternalError
 from cvs2svn_lib.common import FatalError

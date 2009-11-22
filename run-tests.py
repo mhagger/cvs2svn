@@ -3697,6 +3697,16 @@ def many_deletes():
     ))
 
 
+cvs_description = Cvs2SvnPropertiesTestCase(
+    'main',
+    doc='test handling of CVS file descriptions',
+    props_to_test=['dc:description'],
+    expected_props=[
+        ('trunk/proj/default', ['This is an example file description.']),
+        ('trunk/proj/sub1/default', [None]),
+        ])
+
+
 ########################################################################
 # Run the tests
 
@@ -3897,6 +3907,7 @@ test_list = [
     unlabeled_branch_name_collision,
     collision_with_unlabeled_branch_name,
     many_deletes,
+    cvs_description,
     ]
 
 if __name__ == '__main__':

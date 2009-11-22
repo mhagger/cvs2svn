@@ -3707,7 +3707,7 @@ test_list = [
     show_usage,
     cvs2svn_manpage,
     cvs2git_manpage,
-    cvs2hg_manpage,
+    XFail(cvs2hg_manpage),
     attr_exec,
     space_fname,
     two_quick,

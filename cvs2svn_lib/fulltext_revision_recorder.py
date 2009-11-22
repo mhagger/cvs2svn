@@ -113,9 +113,11 @@ class SimpleFulltextRevisionRecorderAdapter(FulltextRevisionRecorderAdapter):
   def record_text(self, cvs_rev, log, text):
     # FIXME: We have to decide what to do about keyword substitution
     # and eol_style here:
-    fulltext = self.revision_reader.get_content_stream(
+    stream = self.revision_reader.get_content_stream(
         cvs_rev, suppress_keyword_substitution=False
-        ).read()
+        )
+    fulltext = stream.read()
+    stream.close()
     return self.fulltext_revision_recorder.record_fulltext(
         cvs_rev, log, fulltext
         )

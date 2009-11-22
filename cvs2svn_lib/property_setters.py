@@ -68,7 +68,8 @@ class ExecutablePropertySetter(SVNPropertySetter):
 class DescriptionPropertySetter(SVNPropertySetter):
   """Set the svn:description property based on cvs_rev.cvs_file.description."""
 
-  propname = 'cvs:description'
+  def __init__(self, propname='cvs:description'):
+    self.propname = propname
 
   def set_properties(self, s_item):
     if self.propname in s_item.svn_props:

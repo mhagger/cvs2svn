@@ -99,6 +99,7 @@ from cvs2svn_lib.property_setters import CVSRevisionNumberSetter
 from cvs2svn_lib.property_setters import DefaultEOLStyleSetter
 from cvs2svn_lib.property_setters import EOLStyleFromMimeTypeSetter
 from cvs2svn_lib.property_setters import ExecutablePropertySetter
+from cvs2svn_lib.property_setters import DescriptionPropertySetter
 from cvs2svn_lib.property_setters import KeywordsPropertySetter
 from cvs2svn_lib.property_setters import MimeMapper
 from cvs2svn_lib.property_setters import SVNBinaryFileKeywordsPropertySetter
@@ -482,6 +483,10 @@ ctx.svn_property_setters.extend([
     # Set the svn:executable flag on any files that are marked in CVS as
     # being executable:
     ExecutablePropertySetter(),
+
+    # Set the dc:description property on any files that have a CVS
+    # description:
+    DescriptionPropertySetter(),
 
     # Uncomment the following line to include the original CVS revision
     # numbers as file properties in the SVN archive:

@@ -65,6 +65,19 @@ class ExecutablePropertySetter(SVNPropertySetter):
       s_item.svn_props[self.propname] = '*'
 
 
+class DescriptionPropertySetter(SVNPropertySetter):
+  """Set the svn:description property based on cvs_rev.cvs_file.description."""
+
+  propname = 'dc:description'
+
+  def set_properties(self, s_item):
+    if self.propname in s_item.svn_props:
+      return
+
+    if s_item.cvs_rev.cvs_file.description:
+      s_item.svn_props[self.propname] = s_item.cvs_rev.cvs_file.description
+
+
 class CVSBinaryFileEOLStyleSetter(SVNPropertySetter):
   """Set the eol-style to None for files with CVS mode '-kb'."""
 

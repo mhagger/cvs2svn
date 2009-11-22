@@ -233,11 +233,12 @@ class CVSFile(CVSPath):
       'executable',
       'file_size',
       'mode',
+      'description'
       ]
 
   def __init__(
         self, id, project, parent_directory, basename, in_attic,
-        executable, file_size, mode
+        executable, file_size, mode, description
         ):
     """Initialize a new CVSFile object."""
 
@@ -246,6 +247,7 @@ class CVSFile(CVSPath):
     self.executable = executable
     self.file_size = file_size
     self.mode = mode
+    self.description = description
 
     assert self.parent_directory is not None
 
@@ -266,13 +268,13 @@ class CVSFile(CVSPath):
   def __getstate__(self):
     return (
         CVSPath.__getstate__(self),
-        self._in_attic, self.executable, self.file_size, self.mode,
+        self._in_attic, self.executable, self.file_size, self.mode, self.description
         )
 
   def __setstate__(self, state):
     (
         cvs_path_state,
-        self._in_attic, self.executable, self.file_size, self.mode,
+        self._in_attic, self.executable, self.file_size, self.mode, self.description
         ) = state
     CVSPath.__setstate__(self, cvs_path_state)
 

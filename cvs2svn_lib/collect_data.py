@@ -609,6 +609,11 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
     self.cvs_file.mode = mode
 
+  def set_description(self, description):
+    """This is a callback method declared in Sink."""
+
+    self.cvs_file.description = description
+
   def define_tag(self, name, revision):
     """Remember the symbol name and revision, but don't process them yet.
 
@@ -1220,7 +1225,7 @@ class CollectData:
     return CVSFile(
         self.file_key_generator.gen_id(),
         parent_directory.project, logical_parent_directory, basename[:-2],
-        in_attic, file_executable, file_size, None
+        in_attic, file_executable, file_size, None, None
         )
 
   def _get_attic_file(self, parent_directory, basename):

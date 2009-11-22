@@ -63,6 +63,7 @@ from cvs2svn_lib.property_setters import CVSRevisionNumberSetter
 from cvs2svn_lib.property_setters import DefaultEOLStyleSetter
 from cvs2svn_lib.property_setters import EOLStyleFromMimeTypeSetter
 from cvs2svn_lib.property_setters import ExecutablePropertySetter
+from cvs2svn_lib.property_setters import DescriptionPropertySetter
 from cvs2svn_lib.property_setters import KeywordsPropertySetter
 from cvs2svn_lib.property_setters import MimeMapper
 from cvs2svn_lib.property_setters import SVNBinaryFileKeywordsPropertySetter
@@ -1058,6 +1059,8 @@ class RunOptions(object):
           KeywordsPropertySetter(config.SVN_KEYWORDS_VALUE))
 
     ctx.svn_property_setters.append(ExecutablePropertySetter())
+
+    ctx.svn_property_setters.append(DescriptionPropertySetter())
 
   def process_options(self):
     """Do the main configuration based on command-line options.

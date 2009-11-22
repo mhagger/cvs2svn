@@ -254,8 +254,10 @@ def get_maybe_apple_single_stream(stream):
     string_io = StringIO(e.data_read)
     if e.eof:
       # The original stream already reached EOF, so the part already
-      # read contains the complete file contents:
-      return string_io
+      # read contains the complete file contents.  Nevertheless return
+      # a CompoundStream to make sure that the stream's close() method
+      # is called:
+      return CompoundStream([stream, string_io], stream_index=1)
     else:
       # The stream needs to output the part already read followed by
       # whatever hasn't been read of the original stream:

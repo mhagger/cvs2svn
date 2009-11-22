@@ -3700,7 +3700,7 @@ def many_deletes():
 cvs_description = Cvs2SvnPropertiesTestCase(
     'main',
     doc='test handling of CVS file descriptions',
-    props_to_test=['dc:description'],
+    props_to_test=['cvs:description'],
     expected_props=[
         ('trunk/proj/default', ['This is an example file description.']),
         ('trunk/proj/sub1/default', [None]),

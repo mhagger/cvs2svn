@@ -484,8 +484,8 @@ ctx.svn_property_setters.extend([
     # being executable:
     ExecutablePropertySetter(),
 
-    # Set the dc:description property on any files that have a CVS
-    # description:
+    # Set the cvs:description property to the CVS description of any
+    # file that has one:
     DescriptionPropertySetter(),
 
     # Uncomment the following line to include the original CVS revision

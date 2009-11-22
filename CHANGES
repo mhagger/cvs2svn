@@ -8,6 +8,7 @@ Version ?.?.? (not yet released)
 
  Improvements and output changes:
  * More aggressively omit unnecessary dead revisions.
+ * Consider it a failure if "cvs" or "co" writes something to stderr.
 
  Miscellaneous:
 

@@ -110,7 +110,7 @@ class PipeStream(object):
     self.pipe.stdout.close()
     error_output = self.pipe.stderr.read()
     exit_status = self.pipe.wait()
-    if exit_status:
+    if exit_status or error_output:
       raise CommandError(self._pipe_command_str, exit_status, error_output)
 
 

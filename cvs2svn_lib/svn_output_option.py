@@ -73,16 +73,16 @@ class SVNOutputOption(OutputOption):
 
     def to_utf8(s):
       if isinstance(s, unicode):
-	return s.encode('utf8')
+        return s.encode('utf8')
       else:
-	return s
+        return s
 
     self.author_transforms = {}
     if author_transforms is not None:
       for (cvsauthor, name) in author_transforms.iteritems():
-	cvsauthor = to_utf8(cvsauthor)
-	name = to_utf8(name)
-	self.author_transforms[cvsauthor] = name
+        cvsauthor = to_utf8(cvsauthor)
+        name = to_utf8(name)
+        self.author_transforms[cvsauthor] = name
 
   def register_artifacts(self, which_pass):
     # These artifacts are needed for SymbolingsReader:

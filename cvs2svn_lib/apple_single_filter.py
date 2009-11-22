@@ -208,9 +208,9 @@ class AppleSingleFilter(object):
 class CompoundStream(object):
   """A stream that reads from a series of streams, one after the other."""
 
-  def __init__(self, *streams):
+  def __init__(self, streams, stream_index=0):
     self.streams = list(streams)
-    self.stream_index = 0
+    self.stream_index = stream_index
 
   def read(self, size=-1):
     if size < 0:
@@ -259,7 +259,7 @@ def get_maybe_apple_single_stream(stream):
     else:
       # The stream needs to output the part already read followed by
       # whatever hasn't been read of the original stream:
-      return CompoundStream(string_io, stream)
+      return CompoundStream([string_io, stream])
 
 
 if __name__ == '__main__':

@@ -40,9 +40,10 @@ class SVNPropertySetter:
 
 
 class CVSRevisionNumberSetter(SVNPropertySetter):
-  """Set the cvs2svn:cvs-rev property to the CVS revision number."""
+  """Store the CVS revision number to an SVN property."""
 
-  propname = 'cvs2svn:cvs-rev'
+  def __init__(self, propname='cvs2svn:cvs-rev'):
+    self.propname = propname
 
   def set_properties(self, s_item):
     if self.propname in s_item.svn_props:

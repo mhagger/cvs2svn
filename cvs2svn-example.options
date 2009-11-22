@@ -490,7 +490,7 @@ ctx.svn_property_setters.extend([
 
     # Uncomment the following line to include the original CVS revision
     # numbers as file properties in the SVN archive:
-    #CVSRevisionNumberSetter(),
+    #CVSRevisionNumberSetter(propname='cvs2svn:cvs-rev'),
 
     ])
 

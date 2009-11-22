@@ -2,6 +2,7 @@ Version ?.?.? (not yet released)
 --------------------------------
 
  New features:
+ * Store CVS file descriptions in a Subversion property "cvs:description".
 
  Bugs fixed:
  * Issue #127: Dead "file X added on branch Y" revisions not always dropped.

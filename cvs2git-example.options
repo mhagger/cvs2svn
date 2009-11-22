@@ -110,7 +110,6 @@ from cvs2svn_lib.symbol_transform import NormalizePathsSymbolTransform
 from cvs2svn_lib.property_setters import AutoPropsPropertySetter
 from cvs2svn_lib.property_setters import CVSBinaryFileDefaultMimeTypeSetter
 from cvs2svn_lib.property_setters import CVSBinaryFileEOLStyleSetter
-from cvs2svn_lib.property_setters import CVSRevisionNumberSetter
 from cvs2svn_lib.property_setters import DefaultEOLStyleSetter
 from cvs2svn_lib.property_setters import EOLStyleFromMimeTypeSetter
 from cvs2svn_lib.property_setters import ExecutablePropertySetter

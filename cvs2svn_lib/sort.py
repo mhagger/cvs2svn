@@ -47,17 +47,17 @@ def merge(chunks, key=None):
     except StopIteration:
       pass
     else:
-      heapq.heappush(values, ((key(value), index, value, iterator, chunk)))
+      heapq.heappush(values, ((key(value), index, value, iterator)))
 
   while values:
-    k, index, value, iterator, chunk = heapq.heappop(values)
+    k, index, value, iterator = heapq.heappop(values)
     yield value
     try:
       value = iterator.next()
     except StopIteration:
       pass
     else:
-      heapq.heappush(values, (key(value), index, value, iterator, chunk))
+      heapq.heappush(values, (key(value), index, value, iterator))
 
 
 def sort_file(input, output, key=None, buffer_size=32000, tempdirs=[]):

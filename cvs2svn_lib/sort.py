@@ -82,19 +82,18 @@ def sort_file(input, output, key=None, buffer_size=32000, tempdirs=[]):
     try:
       for tempdir in itertools.cycle(tempdirs):
         current_chunk = list(itertools.islice(input_iterator, buffer_size))
-        if current_chunk:
-          current_chunk.sort(key=key)
-          (fd, filename) = tempfile.mkstemp(
-              '', 'sort%06i' % (len(chunks),), tempdir, False
-              )
-          os.close(fd)
-          output_chunk = open(filename, 'w+b', 64*1024)
-          output_chunk.writelines(current_chunk)
-          output_chunk.flush()
-          output_chunk.seek(0)
-          chunks.append(output_chunk)
-        else:
+        if not current_chunk:
           break
+        current_chunk.sort(key=key)
+        (fd, filename) = tempfile.mkstemp(
+            '', 'sort%06i' % (len(chunks),), tempdir, False
+            )
+        os.close(fd)
+        output_chunk = open(filename, 'w+b', 64*1024)
+        output_chunk.writelines(current_chunk)
+        output_chunk.flush()
+        output_chunk.seek(0)
+        chunks.append(output_chunk)
     except:
       for chunk in chunks:
         try:

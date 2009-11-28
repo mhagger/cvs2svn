@@ -90,21 +90,15 @@ def sort_file(input, output, key=None, buffer_size=32000, tempdirs=[]):
             )
         os.close(fd)
         output_chunk = open(filename, 'w+b', 64*1024)
+        chunks.append(output_chunk)
         output_chunk.writelines(current_chunk)
         output_chunk.flush()
         output_chunk.seek(0)
-        chunks.append(output_chunk)
     except:
       for chunk in chunks:
         try:
           chunk.close()
           os.remove(chunk.name)
-        except:
-          pass
-      if output_chunk not in chunks:
-        try:
-          output_chunk.close()
-          os.remove(output_chunk.name)
         except:
           pass
       return

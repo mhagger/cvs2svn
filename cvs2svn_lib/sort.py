@@ -75,7 +75,7 @@ def merge(chunks, key=None):
 
 def sort_file(input, output, key=None, buffer_size=32000, tempdirs=[]):
   if not tempdirs:
-    tempdirs.append(gettempdir())
+    tempdirs = [gettempdir()]
 
   input_file = file(input, 'rb', 64*1024)
   try:

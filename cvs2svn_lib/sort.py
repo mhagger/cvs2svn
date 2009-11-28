@@ -73,7 +73,6 @@ def sort_file(input, output, key=None, buffer_size=32000, tempdirs=[]):
     tempdirs = itertools.repeat(tempfile.gettempdir())
 
   filenames = []
-  chunks = []
   try:
     input_file = file(input, 'rb', BUFSIZE)
     try:
@@ -88,25 +87,28 @@ def sort_file(input, output, key=None, buffer_size=32000, tempdirs=[]):
             )
         filenames.append(filename)
         os.close(fd)
-        output_chunk = open(filename, 'w+b', BUFSIZE)
-        chunks.append(output_chunk)
-        output_chunk.writelines(current_chunk)
-        output_chunk.flush()
-        output_chunk.seek(0)
+        f = open(filename, 'w+b', BUFSIZE)
+        f.writelines(current_chunk)
+        f.close()
     finally:
       input_file.close()
 
     output_file = file(output, 'wb', BUFSIZE)
     try:
-      output_file.writelines(merge(chunks, key))
+      chunks = []
+      try:
+        for filename in filenames:
+          chunks.append(open(filename, 'rb', BUFSIZE))
+        output_file.writelines(merge(chunks, key))
+      finally:
+        for chunk in chunks:
+          try:
+            chunk.close()
+          except:
+            pass
     finally:
       output_file.close()
   finally:
-    for chunk in chunks:
-      try:
-        chunk.close()
-      except:
-        pass
     for filename in filenames:
       try:
         os.remove(filename)

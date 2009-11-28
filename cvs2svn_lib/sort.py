@@ -84,13 +84,28 @@ def merge_files(input_filenames, output_filename, key=None):
       output_file.close()
 
 
-def sort_file(input, output, key=None, buffer_size=32000, tempdirs=[]):
+def tempfile_generator(tempdirs=[]):
+  """Yield filenames of temporary files."""
+
   # Create an iterator that will choose directories to hold the
   # temporary files:
   if tempdirs:
     tempdirs = itertools.cycle(tempdirs)
   else:
     tempdirs = itertools.repeat(tempfile.gettempdir())
+
+  i = 0
+  while True:
+    (fd, filename) = tempfile.mkstemp(
+        '', 'sort%06i' % (i,), tempdirs.next(), False
+        )
+    os.close(fd)
+    yield filename
+    i += 1
+
+
+def sort_file(input, output, key=None, buffer_size=32000, tempdirs=[]):
+  tempfiles = tempfile_generator(tempdirs)
 
   filenames = []
   try:
@@ -102,11 +117,8 @@ def sort_file(input, output, key=None, buffer_size=32000, tempdirs=[]):
         if not current_chunk:
           break
         current_chunk.sort(key=key)
-        (fd, filename) = tempfile.mkstemp(
-            '', 'sort%06i' % (len(filenames),), tempdirs.next(), False
-            )
+        filename = tempfiles.next()
         filenames.append(filename)
-        os.close(fd)
         f = open(filename, 'w+b', BUFSIZE)
         try:
           f.writelines(current_chunk)

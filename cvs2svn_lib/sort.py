@@ -88,8 +88,10 @@ def sort_file(input, output, key=None, buffer_size=32000, tempdirs=[]):
         filenames.append(filename)
         os.close(fd)
         f = open(filename, 'w+b', BUFSIZE)
-        f.writelines(current_chunk)
-        f.close()
+        try:
+          f.writelines(current_chunk)
+        finally:
+          f.close()
     finally:
       input_file.close()
 

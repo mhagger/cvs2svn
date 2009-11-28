@@ -74,12 +74,12 @@ def sort_file(input, output, key=None, buffer_size=32000, tempdirs=[]):
   if not tempdirs:
     tempdirs = [tempfile.gettempdir()]
 
-  input_file = file(input, 'rb', 64*1024)
+  chunks = []
   try:
-    input_iterator = iter(input_file)
-
-    chunks = []
+    input_file = file(input, 'rb', 64*1024)
     try:
+      input_iterator = iter(input_file)
+
       for tempdir in itertools.cycle(tempdirs):
         current_chunk = list(itertools.islice(input_iterator, buffer_size))
         if not current_chunk:
@@ -94,20 +94,14 @@ def sort_file(input, output, key=None, buffer_size=32000, tempdirs=[]):
         output_chunk.writelines(current_chunk)
         output_chunk.flush()
         output_chunk.seek(0)
-    except:
-      for chunk in chunks:
-        try:
-          chunk.close()
-          os.remove(chunk.name)
-        except:
-          pass
-      return
-  finally:
-    input_file.close()
+    finally:
+      input_file.close()
 
-  output_file = file(output, 'wb', 64*1024)
-  try:
-    output_file.writelines(merge(chunks, key))
+    output_file = file(output, 'wb', 64*1024)
+    try:
+      output_file.writelines(merge(chunks, key))
+    finally:
+      output_file.close()
   finally:
     for chunk in chunks:
       try:
@@ -115,6 +109,5 @@ def sort_file(input, output, key=None, buffer_size=32000, tempdirs=[]):
         os.remove(chunk.name)
       except:
         pass
-    output_file.close()
 
 

@@ -28,7 +28,6 @@ DEFAULT_TAGS_BASE = 'tags'
 SVNADMIN_EXECUTABLE = 'svnadmin'
 CO_EXECUTABLE = 'co'
 CVS_EXECUTABLE = 'cvs'
-SORT_EXECUTABLE = 'sort'
 
 # A pickled list of the projects defined for this conversion.
 PROJECTS = 'projects.pck'

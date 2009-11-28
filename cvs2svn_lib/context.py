@@ -47,7 +47,6 @@ class Ctx:
     self.revision_excluder = None
     self.revision_reader = None
     self.svnadmin_executable = config.SVNADMIN_EXECUTABLE
-    self.sort_executable = config.SORT_EXECUTABLE
     self.trunk_only = False
     self.prune = True
     self.cvs_author_decoder = CVSTextDecoder(['ascii'])

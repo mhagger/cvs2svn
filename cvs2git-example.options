@@ -54,8 +54,8 @@
 #   another backslash ("\\"), or use a "raw string", as in one if the
 #   following equivalent examples:
 #
-#       ctx.sort_executable = 'c:\\windows\\system32\\sort.exe'
-#       ctx.sort_executable = r'c:\windows\system32\sort.exe'
+#       cvs_executable = 'c:\\windows\\system32\\cvs.exe'
+#       cvs_executable = r'c:\windows\system32\cvs.exe'
 #
 #   See http://docs.python.org/tutorial/introduction.html#strings for
 #   more information.
@@ -162,10 +162,6 @@ ctx.revision_excluder = NullRevisionExcluder()
 # refers to blobs that were output during CollectRevsPass, so leave
 # this option set to None.
 ctx.revision_reader = None
-
-# Set the name (and optionally the path) of some other executables
-# required by cvs2svn:
-ctx.sort_executable = r'sort'
 
 # Change the following line to True if the conversion should only
 # include the trunk of the repository (i.e., all branches and tags

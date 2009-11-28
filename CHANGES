@@ -12,6 +12,7 @@ Version ?.?.? (not yet released)
  * Consider it a failure if "cvs" or "co" writes something to stderr.
 
  Miscellaneous:
+ * Sort large files using Python to avoid dependency on GNU sort.
 
 
 Version 2.3.0 (22 August 2009)

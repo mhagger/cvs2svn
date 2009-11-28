@@ -296,8 +296,8 @@ class RunOptions(object):
             '\\fB--help-passes\\fR, \\fB--version\\fR, '
             '\\fB-v\\fR/\\fB--verbose\\fR, \\fB-q\\fR/\\fB--quiet\\fR, '
             '\\fB-p\\fR/\\fB--pass\\fR/\\fB--passes\\fR, \\fB--dry-run\\fR, '
-            '\\fB--profile\\fR, \\fB--sort\\fR, \\fB--trunk-only\\fR, '
-            '\\fB--encoding\\fR, and \\fB--fallback-encoding\\fR. '
+            '\\fB--profile\\fR, \\fB--trunk-only\\fR, \\fB--encoding\\fR, '
+            'and \\fB--fallback-encoding\\fR. '
             'Options are processed in the order specified on the command '
             'line.'
             ),
@@ -730,17 +730,6 @@ class RunOptions(object):
         man_help=(
             'Path to the \\fIcvs\\fR program.  (\\fIcvs\\fR is needed if the '
             '\\fB--use-cvs\\fR option is used.)'
-            ),
-        metavar='PATH',
-        ))
-    group.add_option(ContextOption(
-        '--sort', type='string',
-        action='store', dest='sort_executable',
-        compatible_with_option=True,
-        help='path to the GNU "sort" program',
-        man_help=(
-            'Path to the GNU \\fIsort\\fR program.  (cvs2svn requires GNU '
-            'sort.)'
             ),
         metavar='PATH',
         ))

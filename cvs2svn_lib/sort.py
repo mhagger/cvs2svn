@@ -66,6 +66,24 @@ def merge(iterables, key=None):
       heapq.heappush(values, (key(value), index, value, iterator))
 
 
+def merge_files(input_filenames, output_filename, key=None):
+    output_file = file(output_filename, 'wb', BUFSIZE)
+    try:
+      chunks = []
+      try:
+        for input_filename in input_filenames:
+          chunks.append(open(input_filename, 'rb', BUFSIZE))
+        output_file.writelines(merge(chunks, key))
+      finally:
+        for chunk in chunks:
+          try:
+            chunk.close()
+          except:
+            pass
+    finally:
+      output_file.close()
+
+
 def sort_file(input, output, key=None, buffer_size=32000, tempdirs=[]):
   # Create an iterator that will choose directories to hold the
   # temporary files:
@@ -97,21 +115,7 @@ def sort_file(input, output, key=None, buffer_size=32000, tempdirs=[]):
     finally:
       input_file.close()
 
-    output_file = file(output, 'wb', BUFSIZE)
-    try:
-      chunks = []
-      try:
-        for filename in filenames:
-          chunks.append(open(filename, 'rb', BUFSIZE))
-        output_file.writelines(merge(chunks, key))
-      finally:
-        for chunk in chunks:
-          try:
-            chunk.close()
-          except:
-            pass
-    finally:
-      output_file.close()
+    merge_files(filenames, output, key)
   finally:
     for filename in filenames:
       try:

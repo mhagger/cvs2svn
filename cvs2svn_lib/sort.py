@@ -34,6 +34,10 @@ import itertools
 import tempfile
 
 
+# The buffer size to use for open files:
+BUFSIZE = 64 * 1024
+
+
 def merge(iterables, key=None):
   if key is None:
     key = lambda x : x
@@ -70,7 +74,7 @@ def sort_file(input, output, key=None, buffer_size=32000, tempdirs=[]):
 
   chunks = []
   try:
-    input_file = file(input, 'rb', 64*1024)
+    input_file = file(input, 'rb', BUFSIZE)
     try:
       input_iterator = iter(input_file)
       while True:
@@ -82,7 +86,7 @@ def sort_file(input, output, key=None, buffer_size=32000, tempdirs=[]):
             '', 'sort%06i' % (len(chunks),), tempdirs.next(), False
             )
         os.close(fd)
-        output_chunk = open(filename, 'w+b', 64*1024)
+        output_chunk = open(filename, 'w+b', BUFSIZE)
         chunks.append(output_chunk)
         output_chunk.writelines(current_chunk)
         output_chunk.flush()
@@ -90,7 +94,7 @@ def sort_file(input, output, key=None, buffer_size=32000, tempdirs=[]):
     finally:
       input_file.close()
 
-    output_file = file(output, 'wb', 64*1024)
+    output_file = file(output, 'wb', BUFSIZE)
     try:
       output_file.writelines(merge(chunks, key))
     finally:

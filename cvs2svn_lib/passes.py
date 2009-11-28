@@ -516,7 +516,10 @@ class SortRevisionSummaryPass(Pass):
     sort_file(
         artifact_manager.get_temp_file(config.CVS_REVS_SUMMARY_DATAFILE),
         artifact_manager.get_temp_file(
-            config.CVS_REVS_SUMMARY_SORTED_DATAFILE))
+            config.CVS_REVS_SUMMARY_SORTED_DATAFILE
+            ),
+        tempdirs=[Ctx().tmpdir],
+        )
     Log().quiet("Done")
 
 
@@ -532,7 +535,10 @@ class SortSymbolSummaryPass(Pass):
     sort_file(
         artifact_manager.get_temp_file(config.CVS_SYMBOLS_SUMMARY_DATAFILE),
         artifact_manager.get_temp_file(
-            config.CVS_SYMBOLS_SUMMARY_SORTED_DATAFILE))
+            config.CVS_SYMBOLS_SUMMARY_SORTED_DATAFILE
+            ),
+        tempdirs=[Ctx().tmpdir],
+        )
     Log().quiet("Done")
 
 
@@ -1630,8 +1636,10 @@ class SortSymbolsPass(Pass):
     sort_file(
         artifact_manager.get_temp_file(config.SYMBOL_OPENINGS_CLOSINGS),
         artifact_manager.get_temp_file(
-            config.SYMBOL_OPENINGS_CLOSINGS_SORTED),
+            config.SYMBOL_OPENINGS_CLOSINGS_SORTED
+            ),
         key=sort_key,
+        tempdirs=[Ctx().tmpdir],
         )
     Log().quiet("Done")
 

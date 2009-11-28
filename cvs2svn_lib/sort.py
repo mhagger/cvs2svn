@@ -61,22 +61,25 @@ def merge(iterables, key=None):
 
 
 def sort_file(input, output, key=None, buffer_size=32000, tempdirs=[]):
-  if not tempdirs:
-    tempdirs = [tempfile.gettempdir()]
+  # Create an iterator that will choose directories to hold the
+  # temporary files:
+  if tempdirs:
+    tempdirs = itertools.cycle(tempdirs)
+  else:
+    tempdirs = itertools.repeat(tempfile.gettempdir())
 
   chunks = []
   try:
     input_file = file(input, 'rb', 64*1024)
     try:
       input_iterator = iter(input_file)
-
-      for tempdir in itertools.cycle(tempdirs):
+      while True:
         current_chunk = list(itertools.islice(input_iterator, buffer_size))
         if not current_chunk:
           break
         current_chunk.sort(key=key)
         (fd, filename) = tempfile.mkstemp(
-            '', 'sort%06i' % (len(chunks),), tempdir, False
+            '', 'sort%06i' % (len(chunks),), tempdirs.next(), False
             )
         os.close(fd)
         output_chunk = open(filename, 'w+b', 64*1024)

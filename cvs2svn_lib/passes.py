@@ -1623,11 +1623,15 @@ class SortSymbolsPass(Pass):
   def run(self, run_options, stats_keeper):
     Log().quiet("Sorting symbolic name source revisions...")
 
+    def sort_key(line):
+      line = line.split(' ', 2)
+      return (line[0], int(line[1]), line[2],)
+
     sort_file(
         artifact_manager.get_temp_file(config.SYMBOL_OPENINGS_CLOSINGS),
         artifact_manager.get_temp_file(
             config.SYMBOL_OPENINGS_CLOSINGS_SORTED),
-        options=['-k', '1,1', '-k', '2,2n', '-k', '3'],
+        key=sort_key,
         )
     Log().quiet("Done")
 

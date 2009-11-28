@@ -34,15 +34,15 @@ import itertools
 import tempfile
 
 
-def merge(chunks, key=None):
+def merge(iterables, key=None):
   if key is None:
     key = lambda x : x
 
   values = []
 
-  for index, chunk in enumerate(chunks):
+  for index, iterable in enumerate(iterables):
     try:
-      iterator = iter(chunk)
+      iterator = iter(iterable)
       value = iterator.next()
     except StopIteration:
       pass

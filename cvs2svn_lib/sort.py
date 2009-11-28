@@ -45,12 +45,7 @@ def merge(chunks, key=None):
       iterator = iter(chunk)
       value = iterator.next()
     except StopIteration:
-      try:
-        chunk.close()
-        os.remove(chunk.name)
-        chunks.remove(chunk)
-      except:
-        pass
+      pass
     else:
       heapq.heappush(values, ((key(value), index, value, iterator, chunk)))
 
@@ -60,12 +55,7 @@ def merge(chunks, key=None):
     try:
       value = iterator.next()
     except StopIteration:
-      try:
-        chunk.close()
-        os.remove(chunk.name)
-        chunks.remove(chunk)
-      except:
-        pass
+      pass
     else:
       heapq.heappush(values, (key(value), index, value, iterator, chunk))
 

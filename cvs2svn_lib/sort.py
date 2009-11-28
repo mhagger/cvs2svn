@@ -29,12 +29,9 @@ under the MIT license.
 
 
 import os
-from heapq import heapify
-from heapq import heappop
-from heapq import heappush
-from itertools import islice
-from itertools import cycle
-from tempfile import gettempdir
+import heapq
+import itertools
+import tempfile
 
 
 def merge(chunks, key=None):
@@ -55,10 +52,10 @@ def merge(chunks, key=None):
       except:
         pass
     else:
-      heappush(values, ((key(value), index, value, iterator, chunk)))
+      heapq.heappush(values, ((key(value), index, value, iterator, chunk)))
 
   while values:
-    k, index, value, iterator, chunk = heappop(values)
+    k, index, value, iterator, chunk = heapq.heappop(values)
     yield value
     try:
       value = iterator.next()
@@ -70,12 +67,12 @@ def merge(chunks, key=None):
       except:
         pass
     else:
-      heappush(values, (key(value), index, value, iterator, chunk))
+      heapq.heappush(values, (key(value), index, value, iterator, chunk))
 
 
 def sort_file(input, output, key=None, buffer_size=32000, tempdirs=[]):
   if not tempdirs:
-    tempdirs = [gettempdir()]
+    tempdirs = [tempfile.gettempdir()]
 
   input_file = file(input, 'rb', 64*1024)
   try:
@@ -83,8 +80,8 @@ def sort_file(input, output, key=None, buffer_size=32000, tempdirs=[]):
 
     chunks = []
     try:
-      for tempdir in cycle(tempdirs):
-        current_chunk = list(islice(input_iterator, buffer_size))
+      for tempdir in itertools.cycle(tempdirs):
+        current_chunk = list(itertools.islice(input_iterator, buffer_size))
         if current_chunk:
           current_chunk.sort(key=key)
           output_chunk = file(

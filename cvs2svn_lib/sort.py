@@ -37,6 +37,14 @@ import tempfile
 # The buffer size to use for open files:
 BUFSIZE = 64 * 1024
 
+# The maximum number of files to try to open at once.  There are
+# typically operating system limits to the number of files that a
+# process can open at once.  I don't know how to inquire what the
+# limit is other than to open files until an error occurs.  So instead
+# of using some kind of correct number, simply limit the number to
+# this constant, which will hopefully be OK on all operating systems:
+MAX_OPEN_FILES = 50
+
 
 def merge(iterables, key=None):
   if key is None:
@@ -126,6 +134,21 @@ def sort_file(input, output, key=None, buffer_size=32000, tempdirs=[]):
           f.close()
     finally:
       input_file.close()
+
+    while len(filenames) > MAX_OPEN_FILES:
+      generation = list(filenames)
+      while generation:
+        group = generation[:MAX_OPEN_FILES]
+        generation = generation[MAX_OPEN_FILES:]
+        group_output = tempfiles.next()
+        filenames.append(group_output)
+        merge_files(group, group_output, key)
+        for filename in group:
+          filenames.remove(filename)
+          try:
+            os.remove(filename)
+          except:
+            pass
 
     merge_files(filenames, output, key)
   finally:

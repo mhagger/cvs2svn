@@ -1631,7 +1631,7 @@ class SortSymbolsPass(Pass):
 
     def sort_key(line):
       line = line.split(' ', 2)
-      return (line[0], int(line[1]), line[2],)
+      return (int(line[0], 16), int(line[1]), line[2],)
 
     sort_file(
         artifact_manager.get_temp_file(config.SYMBOL_OPENINGS_CLOSINGS),

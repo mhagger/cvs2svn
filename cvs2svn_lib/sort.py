@@ -51,7 +51,9 @@ def merge(iterables, key=None):
     except StopIteration:
       pass
     else:
-      heapq.heappush(values, ((key(value), index, value, iterator)))
+      values.append((key(value), index, value, iterator))
+
+  heapq.heapify(values)
 
   while values:
     k, index, value, iterator = heapq.heappop(values)

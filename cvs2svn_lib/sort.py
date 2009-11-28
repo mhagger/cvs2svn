@@ -97,7 +97,7 @@ def tempfile_generator(tempdirs=[]):
   i = 0
   while True:
     (fd, filename) = tempfile.mkstemp(
-        '', 'sort%06i' % (i,), tempdirs.next(), False
+        '', 'sort%06i-' % (i,), tempdirs.next(), False
         )
     os.close(fd)
     yield filename

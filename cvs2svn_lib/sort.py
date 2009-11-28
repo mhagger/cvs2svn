@@ -84,9 +84,11 @@ def sort_file(input, output, key=None, buffer_size=32000, tempdirs=[]):
         current_chunk = list(itertools.islice(input_iterator, buffer_size))
         if current_chunk:
           current_chunk.sort(key=key)
-          output_chunk = file(
-              os.path.join(tempdir, '%06i'%len(chunks)), 'w+b', 64*1024
+          (fd, filename) = tempfile.mkstemp(
+              '', 'sort%06i' % (len(chunks),), tempdir, False
               )
+          os.close(fd)
+          output_chunk = open(filename, 'w+b', 64*1024)
           output_chunk.writelines(current_chunk)
           output_chunk.flush()
           output_chunk.seek(0)

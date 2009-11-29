@@ -37,13 +37,28 @@ import tempfile
 # The buffer size to use for open files:
 BUFSIZE = 64 * 1024
 
-# The maximum number of files to try to merge at once.  There are
-# typically operating system limits to the number of files that a
-# process can open at once.  I don't know how to inquire what the
-# limit is other than to open files until an error occurs.  So instead
-# of using some kind of correct number, simply limit the number to
-# this constant, which will hopefully be OK on all operating systems:
-MAX_MERGE = 50
+
+def get_default_max_merge():
+  """Return the default maximum number of files to merge at once."""
+
+  # The maximum number of files to merge at once.  This number cannot
+  # be unlimited because there are operating system restrictions on
+  # the number of files that a process can have open at once.  So...
+  try:
+    # If this constant is available via sysconf, we use half the
+    # number available to the process as a whole.
+    _SC_OPEN_MAX = os.sysconf('SC_OPEN_MAX')
+    if _SC_OPEN_MAX == -1:
+      # This also indicates an error:
+      raise ValueError()
+    return min(_SC_OPEN_MAX // 2, 100)
+  except:
+    # Otherwise, simply limit the number to this constant, which will
+    # hopefully be OK on all operating systems:
+    return 50
+
+
+MAX_MERGE = get_default_max_merge()
 
 
 def merge(iterables, key=None):

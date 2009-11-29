@@ -58,7 +58,7 @@ def get_default_max_merge():
     return 50
 
 
-MAX_MERGE = get_default_max_merge()
+DEFAULT_MAX_MERGE = get_default_max_merge()
 
 
 def merge(iterables, key=None):
@@ -127,7 +127,10 @@ def tempfile_generator(tempdirs=[]):
     i += 1
 
 
-def sort_file(input, output, key=None, buffer_size=32000, tempdirs=[]):
+def sort_file(
+      input, output, key=None,
+      buffer_size=32000, tempdirs=[], max_merge=DEFAULT_MAX_MERGE,
+      ):
   tempfiles = tempfile_generator(tempdirs)
 
   filenames = []
@@ -150,11 +153,11 @@ def sort_file(input, output, key=None, buffer_size=32000, tempdirs=[]):
     finally:
       input_file.close()
 
-    while len(filenames) > MAX_MERGE:
+    while len(filenames) > max_merge:
       generation = list(filenames)
       while generation:
-        group = generation[:MAX_MERGE]
-        generation = generation[MAX_MERGE:]
+        group = generation[:max_merge]
+        generation = generation[max_merge:]
         group_output = tempfiles.next()
         filenames.append(group_output)
         merge_files(group, group_output, key)

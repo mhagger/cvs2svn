@@ -475,8 +475,6 @@ class InternalRevisionRecorder(RevisionRecorder):
         DB_OPEN_NEW, PrimedPickleSerializer(primer))
 
   def start_file(self, cvs_file_items):
-    self._cvs_file_items = cvs_file_items
-
     # A map from cvs_rev_id to TextRecord instance:
     self.text_record_db = TextRecordDatabase(self._rcs_deltas, NullDatabase())
 
@@ -548,9 +546,6 @@ class InternalRevisionRecorder(RevisionRecorder):
     Compute the initial text record refcounts, discard any records
     that are unneeded, and store the text records for the file to the
     _rcs_trees database."""
-
-    # Delete our copy of the preliminary CVSFileItems:
-    del self._cvs_file_items
 
     self.text_record_db.recompute_refcounts(cvs_file_items)
     self.text_record_db.free_unused()

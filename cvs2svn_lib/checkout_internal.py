@@ -297,9 +297,9 @@ class TextRecordDatabase:
     #     deltas, so we just use a dummy object here.
     #
     # OutputPass: a disabled IndexedDatabase.  During this pass we
-    # need to retrieve deltas, but we are not allowed to modify the
-    # delta database.  So we use an IndexedDatabase whose __del__()
-    # method has been disabled to do nothing.
+    #     need to retrieve deltas, but we are not allowed to modify
+    #     the delta database.  So we use an IndexedDatabase whose
+    #     __del__() method has been disabled to do nothing.
     self.delta_db = delta_db
 
     # A database-like object using cvs_rev_ids as keys and containing

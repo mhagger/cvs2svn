@@ -137,7 +137,7 @@ class CVSFileItems(object):
 
   def __setstate__(self, state):
     (cvs_file_id, cvs_items,) = state
-    cvs_file = Ctx()._cvs_file_db.get_file(cvs_file_id)
+    cvs_file = Ctx()._cvs_path_db.get_path(cvs_file_id)
     CVSFileItems.__init__(
         self, cvs_file, cvs_file.project.get_trunk(), cvs_items,
         )

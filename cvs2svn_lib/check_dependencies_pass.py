@@ -25,7 +25,7 @@ from cvs2svn_lib.log import Log
 from cvs2svn_lib.pass_manager import Pass
 from cvs2svn_lib.project import read_projects
 from cvs2svn_lib.artifact_manager import artifact_manager
-from cvs2svn_lib.cvs_file_database import CVSFileDatabase
+from cvs2svn_lib.cvs_path_database import CVSPathDatabase
 from cvs2svn_lib.symbol_database import SymbolDatabase
 from cvs2svn_lib.cvs_item_database import OldCVSItemStore
 from cvs2svn_lib.cvs_item_database import IndexedCVSItemStore
@@ -40,7 +40,7 @@ class CheckDependenciesPass(Pass):
   def register_artifacts(self):
     self._register_temp_file_needed(config.PROJECTS)
     self._register_temp_file_needed(config.SYMBOL_DB)
-    self._register_temp_file_needed(config.CVS_FILES_DB)
+    self._register_temp_file_needed(config.CVS_PATHS_DB)
 
   def iter_cvs_items(self):
     raise NotImplementedError()
@@ -52,7 +52,7 @@ class CheckDependenciesPass(Pass):
     Ctx()._projects = read_projects(
         artifact_manager.get_temp_file(config.PROJECTS)
         )
-    Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
+    Ctx()._cvs_path_db = CVSPathDatabase(DB_OPEN_READ)
     self.symbol_db = SymbolDatabase()
     Ctx()._symbol_db = self.symbol_db
 
@@ -83,7 +83,7 @@ class CheckDependenciesPass(Pass):
 
     self.symbol_db.close()
     self.symbol_db = None
-    Ctx()._cvs_file_db.close()
+    Ctx()._cvs_path_db.close()
     Log().quiet("Done")
 
 

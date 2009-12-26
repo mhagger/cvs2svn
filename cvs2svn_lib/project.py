@@ -178,7 +178,7 @@ class Project(object):
     This method can only be called after self.root_cvs_directory_id
     has been initialized in CollectRevsPass."""
 
-    return Ctx()._cvs_file_db.get_file(self.root_cvs_directory_id)
+    return Ctx()._cvs_path_db.get_path(self.root_cvs_directory_id)
 
   def get_initial_directories(self):
     """Generate the project's initial SVN directories.

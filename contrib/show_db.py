@@ -28,7 +28,7 @@ def usage():
       '  -N      SVNRepositoryMirror nodes table\n'
       '  -r rev  SVNRepositoryMirror node tree for specific revision\n'
       '  -m      MetadataDatabase\n'
-      '  -f      CVSFileDatabase\n'
+      '  -f      CVSPathDatabase\n'
       '  -c      PersistenceManager SVNCommit table\n'
       '  -C      PersistenceManager cvs-revs-to-svn-revnums table\n'
       '  -i      CVSItemDatabase (normal)\n'
@@ -126,8 +126,8 @@ def prime_ctx():
 
   from cvs2svn_lib.common import DB_OPEN_READ
   from cvs2svn_lib.symbol_database import SymbolDatabase
-  from cvs2svn_lib.cvs_file_database import CVSFileDatabase
-  rf(config.CVS_FILES_DB)
+  from cvs2svn_lib.cvs_path_database import CVSPathDatabase
+  rf(config.CVS_PATHS_DB)
   rf(config.SYMBOL_DB)
   from cvs2svn_lib.cvs_item_database import OldCVSItemStore
   from cvs2svn_lib.metadata_database import MetadataDatabase
@@ -139,7 +139,7 @@ def prime_ctx():
 
   Ctx()._projects = ProjectList()
   Ctx()._symbol_db = SymbolDatabase()
-  Ctx()._cvs_file_db = CVSFileDatabase(DB_OPEN_READ)
+  Ctx()._cvs_path_db = CVSPathDatabase(DB_OPEN_READ)
   Ctx()._cvs_items_db = OldCVSItemStore(
       artifact_manager.get_temp_file(config.CVS_ITEMS_STORE)
       )
@@ -180,7 +180,7 @@ def main():
       show_str2marshal_db(config.METADATA_DB)
     elif o == "-f":
       prime_ctx()
-      cvs_files = list(Ctx()._cvs_file_db.itervalues())
+      cvs_files = list(Ctx()._cvs_path_db.itervalues())
       cvs_files.sort()
       for cvs_file in cvs_files:
         print '%6x: %s' % (cvs_file.id, cvs_file,)

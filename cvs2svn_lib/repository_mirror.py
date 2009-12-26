@@ -613,7 +613,7 @@ class _NodeDatabase(object):
   MIN_CACHE_LIMIT = 5000
 
   def __init__(self):
-    self.cvs_file_db = Ctx()._cvs_file_db
+    self.cvs_path_db = Ctx()._cvs_path_db
     self.db = IndexedDatabase(
         artifact_manager.get_temp_file(config.MIRROR_NODES_STORE),
         artifact_manager.get_temp_file(config.MIRROR_NODES_INDEX_TABLE),
@@ -630,7 +630,7 @@ class _NodeDatabase(object):
     # The number of directories in the repository:
     num_dirs = len([
         cvs_path
-        for cvs_path in self.cvs_file_db.itervalues()
+        for cvs_path in self.cvs_path_db.itervalues()
         if isinstance(cvs_path, CVSDirectory)
         ])
 
@@ -642,7 +642,7 @@ class _NodeDatabase(object):
   def _load(self, items):
     retval = {}
     for (id, value) in items:
-      retval[self.cvs_file_db.get_file(id)] = value
+      retval[self.cvs_path_db.get_path(id)] = value
     return retval
 
   def _dump(self, node):

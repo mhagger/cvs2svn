@@ -163,8 +163,9 @@ That's it -- the RCS file is done.
 
 When every CVS file is done, CollectRevsPass is complete, and:
 
-   - The basic information about each file (filename, path, etc) is
-     written as a pickled CVSFile instance to 'cvs-files.db'.
+   - The basic information about each file and directory (filename,
+     path, etc) is written as a pickled CVSPath instance to
+     'cvs-paths.db'.
 
    - Information about each symbol seen, along with statistics like
      how often it was used as a branch or tag, is written as a pickled

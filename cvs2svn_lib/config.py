@@ -124,8 +124,8 @@ MIRROR_NODES_STORE = 'mirror-nodes.pck'
 # from symbol_id to file offset.
 SYMBOL_OFFSETS_DB = 'symbol-offsets.pck'
 
-# Pickled map of CVSFile.id to instance.
-CVS_FILES_DB = 'cvs-files.pck'
+# Pickled map of CVSPath.id to instance.
+CVS_PATHS_DB = 'cvs-paths.pck'
 
 # A series of records.  The first is a pickled serializer.  Each
 # subsequent record is a serialized list of all CVSItems applying to a

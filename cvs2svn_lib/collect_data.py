@@ -1148,15 +1148,15 @@ class CollectData:
   def add_cvs_directory(self, cvs_directory):
     """Record CVS_DIRECTORY."""
 
-    Ctx()._cvs_file_db.log_file(cvs_directory)
+    Ctx()._cvs_path_db.log_path(cvs_directory)
 
   def add_cvs_file_items(self, cvs_file_items):
     """Record the information from CVS_FILE_ITEMS.
 
-    Store the CVSFile to _cvs_file_db under its persistent id, store
+    Store the CVSFile to _cvs_path_db under its persistent id, store
     the CVSItems, and record the CVSItems to self.stats_keeper."""
 
-    Ctx()._cvs_file_db.log_file(cvs_file_items.cvs_file)
+    Ctx()._cvs_path_db.log_path(cvs_file_items.cvs_file)
     self._cvs_item_store.add(cvs_file_items)
 
     self.stats_keeper.record_cvs_file(cvs_file_items.cvs_file)
@@ -1281,7 +1281,7 @@ class CollectData:
 
     if retained_attic_file:
       # If any files were retained in the Attic directory, then write
-      # the Attic directory to CVSFileDatabase:
+      # the Attic directory to CVSPathDatabase:
       self.add_cvs_directory(cvs_directory)
 
   def _get_non_attic_file(self, parent_directory, basename):
@@ -1411,7 +1411,7 @@ class CollectData:
     Log().verbose('Processed', self.num_files, 'files')
 
   def _set_cvs_path_ordinals(self):
-    cvs_files = list(Ctx()._cvs_file_db.itervalues())
+    cvs_files = list(Ctx()._cvs_path_db.itervalues())
     cvs_files.sort(CVSPath.slow_compare)
     for (i, cvs_file) in enumerate(cvs_files):
       cvs_file.ordinal = i

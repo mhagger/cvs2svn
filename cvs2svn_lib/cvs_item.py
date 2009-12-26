@@ -295,7 +295,7 @@ class CVSRevision(CVSItem):
      self.tag_ids, self.branch_ids, self.branch_commit_ids,
      self.opened_symbols, self.closed_symbols,
      self.revision_recorder_token) = data
-    self.cvs_file = Ctx()._cvs_file_db.get_file(cvs_file_id)
+    self.cvs_file = Ctx()._cvs_path_db.get_path(cvs_file_id)
     self.lod = Ctx()._symbol_db.get_symbol(lod_id)
 
   def get_effective_prev_id(self):
@@ -726,7 +726,7 @@ class CVSBranch(CVSSymbol):
         self.opened_symbols,
         self.revision_recorder_token,
         ) = data
-    self.cvs_file = Ctx()._cvs_file_db.get_file(cvs_file_id)
+    self.cvs_file = Ctx()._cvs_path_db.get_path(cvs_file_id)
     self.symbol = Ctx()._symbol_db.get_symbol(symbol_id)
     self.source_lod = Ctx()._symbol_db.get_symbol(source_lod_id)
 
@@ -849,7 +849,7 @@ class CVSTag(CVSSymbol):
         self.id, cvs_file_id, symbol_id, source_lod_id, self.source_id,
         self.revision_recorder_token,
         ) = data
-    self.cvs_file = Ctx()._cvs_file_db.get_file(cvs_file_id)
+    self.cvs_file = Ctx()._cvs_path_db.get_path(cvs_file_id)
     self.symbol = Ctx()._symbol_db.get_symbol(symbol_id)
     self.source_lod = Ctx()._symbol_db.get_symbol(source_lod_id)
 

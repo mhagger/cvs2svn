@@ -1,0 +1,13 @@
+This CVSROOT/ directory is only here to convince CVS to treat the
+neighboring directories as CVS repository modules.  Without it, CVS
+operations fail with an error like:
+
+  cvs [checkout aborted]: .../main-cvsrepos/CVSROOT: No such file or directory
+
+Of course, CVS doesn't seem to require that there actually be any
+files in CVSROOT/, which kind of makes one wonder why it cares about
+the directory at all.
+
+Although this directly is only strictly needed when the --use-cvs
+option is used, cvs2svn checks that every project has an associated
+CVSROOT directory to avoid complicating its bookkeeping.

@@ -63,9 +63,9 @@ from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.project import FileInAndOutOfAtticException
-from cvs2svn_lib.cvs_file import CVSPath
-from cvs2svn_lib.cvs_file import CVSDirectory
-from cvs2svn_lib.cvs_file import CVSFile
+from cvs2svn_lib.cvs_path import CVSPath
+from cvs2svn_lib.cvs_path import CVSDirectory
+from cvs2svn_lib.cvs_path import CVSFile
 from cvs2svn_lib.symbol import Symbol
 from cvs2svn_lib.symbol import Trunk
 from cvs2svn_lib.cvs_item import CVSRevision

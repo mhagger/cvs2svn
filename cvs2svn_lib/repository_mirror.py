@@ -139,8 +139,8 @@ from cvs2svn_lib.common import DB_OPEN_NEW
 from cvs2svn_lib.common import InternalError
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
-from cvs2svn_lib.cvs_file import CVSFile
-from cvs2svn_lib.cvs_file import CVSDirectory
+from cvs2svn_lib.cvs_path import CVSFile
+from cvs2svn_lib.cvs_path import CVSDirectory
 from cvs2svn_lib.key_generator import KeyGenerator
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.serializer import MarshalSerializer

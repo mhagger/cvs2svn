@@ -14,7 +14,7 @@
 # history and logs, available at http://cvs2svn.tigris.org/.
 # ====================================================================
 
-"""This module contains a class to store information about a CVS file."""
+"""Classes that represent files and directories within CVS repositories."""
 
 import os
 

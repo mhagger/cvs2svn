@@ -33,7 +33,7 @@ from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.process import CommandFailedException
 from cvs2svn_lib.process import check_command_runs
 from cvs2svn_lib.process import call_command
-from cvs2svn_lib.cvs_file import CVSDirectory
+from cvs2svn_lib.cvs_path import CVSDirectory
 from cvs2svn_lib.symbol import Trunk
 from cvs2svn_lib.symbol import LineOfDevelopment
 from cvs2svn_lib.cvs_item import CVSRevisionAdd

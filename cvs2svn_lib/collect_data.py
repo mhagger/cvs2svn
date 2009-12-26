@@ -1068,11 +1068,7 @@ class _ProjectDataCollector:
     else:
       self.num_files += 1
 
-    cvs_file_items = fdc.get_cvs_file_items()
-
-    del fdc
-
-    self.collect_data._process_cvs_file_items(cvs_file_items)
+    return fdc.get_cvs_file_items()
 
 
 class CollectData:
@@ -1396,7 +1392,8 @@ class CollectData:
 
     found_rcs_file = False
     for cvs_file in self._generate_cvs_files(root_cvs_directory):
-      pdc.process_file(cvs_file)
+      cvs_file_items = pdc.process_file(cvs_file)
+      self._process_cvs_file_items(cvs_file_items)
       found_rcs_file = True
 
     if not found_rcs_file:

@@ -160,6 +160,9 @@ class CVSDirectory(CVSPath):
 
     basename -- (string) the base name of this CVSDirectory (no ',v').
 
+    ordinal -- (int) the order that this instance should be sorted
+        relative to other CVSPath instances.  See CVSPath.ordinal.
+
   """
 
   __slots__ = []
@@ -209,6 +212,9 @@ class CVSFile(CVSPath):
         this CVSFile.
 
     basename -- (string) the base name of this CVSFile (no ',v').
+
+    ordinal -- (int) the order that this instance should be sorted
+        relative to other CVSPath instances.  See CVSPath.ordinal.
 
     _in_attic -- (bool) True if RCS file is in an Attic subdirectory
         that is not considered the parent directory.  (If a file is

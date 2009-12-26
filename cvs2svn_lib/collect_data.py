@@ -1050,31 +1050,6 @@ class _ProjectDataCollector:
               % (old_name, new_name, count,)
               )
 
-  def _process_cvs_file_items(self, cvs_file_items):
-    """Process the CVSFileItems from one CVSFile."""
-
-    # Remove an initial delete on trunk if it is not needed:
-    cvs_file_items.remove_unneeded_initial_trunk_delete(
-        self.collect_data.metadata_db
-        )
-
-    # Remove initial branch deletes that are not needed:
-    cvs_file_items.remove_initial_branch_deletes(
-        self.collect_data.metadata_db
-        )
-
-    # If this is a --trunk-only conversion, discard all branches and
-    # tags, then draft any non-trunk default branch revisions to
-    # trunk:
-    if Ctx().trunk_only:
-      cvs_file_items.exclude_non_trunk()
-
-    cvs_file_items.check_link_consistency()
-
-    self.collect_data.revision_recorder.finish_file(cvs_file_items)
-    self.collect_data.add_cvs_file_items(cvs_file_items)
-    self.collect_data.symbol_stats.register(cvs_file_items)
-
   def process_file(self, cvs_file):
     Log().normal(cvs_file.filename)
     fdc = _FileDataCollector(self, cvs_file)
@@ -1097,7 +1072,7 @@ class _ProjectDataCollector:
 
     del fdc
 
-    self._process_cvs_file_items(cvs_file_items)
+    self.collect_data._process_cvs_file_items(cvs_file_items)
 
 
 class CollectData:
@@ -1388,6 +1363,27 @@ class CollectData:
 
     # This causes a record to spring into existence:
     self.symbol_stats[trunk]
+
+  def _process_cvs_file_items(self, cvs_file_items):
+    """Process the CVSFileItems from one CVSFile."""
+
+    # Remove an initial delete on trunk if it is not needed:
+    cvs_file_items.remove_unneeded_initial_trunk_delete(self.metadata_db)
+
+    # Remove initial branch deletes that are not needed:
+    cvs_file_items.remove_initial_branch_deletes(self.metadata_db)
+
+    # If this is a --trunk-only conversion, discard all branches and
+    # tags, then draft any non-trunk default branch revisions to
+    # trunk:
+    if Ctx().trunk_only:
+      cvs_file_items.exclude_non_trunk()
+
+    cvs_file_items.check_link_consistency()
+
+    self.revision_recorder.finish_file(cvs_file_items)
+    self.add_cvs_file_items(cvs_file_items)
+    self.symbol_stats.register(cvs_file_items)
 
   def process_project(self, project):
     Ctx()._projects[project.id] = project

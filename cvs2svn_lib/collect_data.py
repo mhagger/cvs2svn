@@ -998,7 +998,7 @@ class _ProjectDataCollector:
     self.project.trunk_id = self.trunk.id
 
     # This causes a record for self.trunk to spring into existence:
-    self.collect_data.symbol_stats[self.trunk]
+    self.collect_data.register_trunk(self.trunk)
 
     # A map { name -> Symbol } for all known symbols in this project.
     # The symbols listed here are undifferentiated into Branches and
@@ -1382,6 +1382,12 @@ class CollectData:
 
       for cvs_file in self._generate_cvs_files(sub_directory):
         yield cvs_file
+
+  def register_trunk(self, trunk):
+    """Create a symbol statistics record for the specified trunk LOD."""
+
+    # This causes a record to spring into existence:
+    self.symbol_stats[trunk]
 
   def process_project(self, project):
     Ctx()._projects[project.id] = project

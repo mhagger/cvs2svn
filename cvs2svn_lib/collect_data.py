@@ -54,18 +54,13 @@ import re
 
 from cvs2svn_lib import config
 from cvs2svn_lib.common import DB_OPEN_NEW
-from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.common import error_prefix
-from cvs2svn_lib.common import IllegalSVNPathError
-from cvs2svn_lib.common import verify_svn_filename_legal
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
-from cvs2svn_lib.project import FileInAndOutOfAtticException
 from cvs2svn_lib.cvs_path import CVSPath
 from cvs2svn_lib.cvs_path import CVSDirectory
-from cvs2svn_lib.cvs_path import CVSFile
 from cvs2svn_lib.symbol import Symbol
 from cvs2svn_lib.symbol import Trunk
 from cvs2svn_lib.cvs_item import CVSRevision
@@ -79,6 +74,7 @@ from cvs2svn_lib.cvs_item_database import NewCVSItemStore
 from cvs2svn_lib.symbol_statistics import SymbolStatisticsCollector
 from cvs2svn_lib.metadata_database import MetadataDatabase
 from cvs2svn_lib.metadata_database import MetadataLogger
+from cvs2svn_lib.repository_walker import walk_repository
 
 import cvs2svn_rcsparse
 
@@ -1134,226 +1130,6 @@ class CollectData:
     for cvs_item in cvs_file_items.values():
       self.stats_keeper.record_cvs_item(cvs_item)
 
-  def _get_cvs_file(
-        self, parent_directory, basename, file_in_attic, leave_in_attic=False
-        ):
-    """Return a CVSFile describing the file with name BASENAME.
-
-    PARENT_DIRECTORY is the CVSDirectory instance describing the
-    directory that physically holds this file in the filesystem.
-    BASENAME must be the base name of a *,v file within
-    PARENT_DIRECTORY.
-
-    FILE_IN_ATTIC is a boolean telling whether the specified file is
-    in an Attic subdirectory.  If FILE_IN_ATTIC is True, then:
-
-    - If LEAVE_IN_ATTIC is True, then leave the 'Attic' component in
-      the filename.
-
-    - Otherwise, raise FileInAndOutOfAtticException if a file with the
-      same filename appears outside of Attic.
-
-    The CVSFile is assigned a new unique id.  All of the CVSFile
-    information is filled in except mode (which can only be determined
-    by parsing the file).
-
-    Raise FatalError if the resulting filename would not be legal in
-    SVN."""
-
-    filename = os.path.join(parent_directory.filename, basename)
-    try:
-      verify_svn_filename_legal(basename[:-2])
-    except IllegalSVNPathError, e:
-      raise FatalError(
-          'File %r would result in an illegal SVN filename: %s'
-          % (filename, e,)
-          )
-
-    if file_in_attic and not leave_in_attic:
-      in_attic = True
-      logical_parent_directory = parent_directory.parent_directory
-
-      # If this file also exists outside of the attic, it's a fatal
-      # error:
-      non_attic_filename = os.path.join(
-          logical_parent_directory.filename, basename,
-          )
-      if os.path.exists(non_attic_filename):
-        raise FileInAndOutOfAtticException(non_attic_filename, filename)
-    else:
-      in_attic = False
-      logical_parent_directory = parent_directory
-
-    file_stat = os.stat(filename)
-
-    # The size of the file in bytes:
-    file_size = file_stat[stat.ST_SIZE]
-
-    # Whether or not the executable bit is set:
-    file_executable = bool(file_stat[0] & stat.S_IXUSR)
-
-    # mode is not known, so we temporarily set it to None.
-    return CVSFile(
-        self.file_key_generator.gen_id(),
-        parent_directory.project, logical_parent_directory, basename[:-2],
-        in_attic, file_executable, file_size, None, None
-        )
-
-  def _get_attic_file(self, parent_directory, basename):
-    """Return a CVSFile object for the Attic file at BASENAME.
-
-    PARENT_DIRECTORY is the CVSDirectory that physically contains the
-    file on the filesystem (i.e., the Attic directory).  It is not
-    necessarily the parent_directory of the CVSFile that will be
-    returned.
-
-    Return CVSFile, whose parent directory is usually
-    PARENT_DIRECTORY.parent_directory, but might be PARENT_DIRECTORY
-    iff CVSFile will remain in the Attic directory."""
-
-    try:
-      return self._get_cvs_file(parent_directory, basename, True)
-    except FileInAndOutOfAtticException, e:
-      if Ctx().retain_conflicting_attic_files:
-        Log().warn(
-            "%s: %s;\n"
-            "   storing the latter into 'Attic' subdirectory.\n"
-            % (warning_prefix, e)
-            )
-      else:
-        self.record_fatal_error(str(e))
-
-      # Either way, return a CVSFile object so that the rest of the
-      # file processing can proceed:
-      return self._get_cvs_file(
-          parent_directory, basename, True, leave_in_attic=True
-          )
-
-  def _generate_attic_cvs_files(self, cvs_directory):
-    """Generate CVSFiles for the files in Attic directory CVS_DIRECTORY.
-
-    Also add CVS_DIRECTORY to self if any files are being retained in
-    that directory."""
-
-    retained_attic_file = False
-
-    fnames = os.listdir(cvs_directory.filename)
-    fnames.sort()
-    for fname in fnames:
-      pathname = os.path.join(cvs_directory.filename, fname)
-      if os.path.isdir(pathname):
-        Log().warn("Directory %s found within Attic; ignoring" % (pathname,))
-      elif fname.endswith(',v'):
-        cvs_file = self._get_attic_file(cvs_directory, fname)
-        if cvs_file.parent_directory == cvs_directory:
-          # This file will be retained in the Attic directory.
-          retained_attic_file = True
-        yield cvs_file
-
-    if retained_attic_file:
-      # If any files were retained in the Attic directory, then write
-      # the Attic directory to CVSPathDatabase:
-      self.add_cvs_directory(cvs_directory)
-
-  def _get_non_attic_file(self, parent_directory, basename):
-    """Return a CVSFile object for the non-Attic file at BASENAME."""
-
-    return self._get_cvs_file(parent_directory, basename, False)
-
-  def _generate_cvs_files(self, cvs_directory):
-    """Generate the CVSFiles under non-Attic directory CVS_DIRECTORY.
-
-    Process directories recursively, including Attic directories.
-    Also create and register CVSDirectories as they are found, and
-    look for conflicts between the filenames that will result from
-    files, attic files, and subdirectories."""
-
-    self.add_cvs_directory(cvs_directory)
-
-    # Map {cvs_file.basename : cvs_file.filename} for files directly
-    # in cvs_directory:
-    rcsfiles = {}
-
-    attic_dir = None
-
-    # Non-Attic subdirectories of cvs_directory (to be recursed into):
-    dirs = []
-
-    fnames = os.listdir(cvs_directory.filename)
-    fnames.sort()
-    for fname in fnames:
-      pathname = os.path.join(cvs_directory.filename, fname)
-      if os.path.isdir(pathname):
-        if fname == 'Attic':
-          attic_dir = fname
-        else:
-          dirs.append(fname)
-      elif fname.endswith(',v'):
-        cvs_file = self._get_non_attic_file(cvs_directory, fname)
-        rcsfiles[cvs_file.basename] = cvs_file.filename
-        yield cvs_file
-      else:
-        # Silently ignore other files:
-        pass
-
-    # Map {cvs_file.basename : cvs_file.filename} for files in an
-    # Attic directory within cvs_directory:
-    attic_rcsfiles = {}
-
-    if attic_dir is not None:
-      attic_directory = CVSDirectory(
-          self.file_key_generator.gen_id(),
-          cvs_directory.project, cvs_directory, 'Attic',
-          )
-
-      for cvs_file in self._generate_attic_cvs_files(attic_directory):
-        if cvs_file.parent_directory == cvs_directory:
-          attic_rcsfiles[cvs_file.basename] = cvs_file.filename
-        yield cvs_file
-
-      alldirs = dirs + [attic_dir]
-    else:
-      alldirs = dirs
-
-    # Check for conflicts between directory names and the filenames
-    # that will result from the rcs files (both in this directory and
-    # in attic).  (We recurse into the subdirectories nevertheless, to
-    # try to detect more problems.)
-    for fname in alldirs:
-      pathname = os.path.join(cvs_directory.filename, fname)
-      for rcsfile_list in [rcsfiles, attic_rcsfiles]:
-        if fname in rcsfile_list:
-          self.record_fatal_error(
-              'Directory name conflicts with filename.  Please remove or '
-              'rename one\n'
-              'of the following:\n'
-              '    "%s"\n'
-              '    "%s"'
-              % (pathname, rcsfile_list[fname],)
-              )
-
-    # Now recurse into the other subdirectories:
-    for fname in dirs:
-      dirname = os.path.join(cvs_directory.filename, fname)
-
-      # Verify that the directory name does not contain any illegal
-      # characters:
-      try:
-        verify_svn_filename_legal(fname)
-      except IllegalSVNPathError, e:
-        raise FatalError(
-            'Directory %r would result in an illegal SVN path name: %s'
-            % (dirname, e,)
-            )
-
-      sub_directory = CVSDirectory(
-          self.file_key_generator.gen_id(),
-          cvs_directory.project, cvs_directory, fname,
-          )
-
-      for cvs_file in self._generate_cvs_files(sub_directory):
-        yield cvs_file
-
   def register_trunk(self, trunk):
     """Create a symbol statistics record for the specified trunk LOD."""
 
@@ -1384,17 +1160,18 @@ class CollectData:
   def process_project(self, project):
     Ctx()._projects[project.id] = project
 
-    root_cvs_directory = CVSDirectory(
-        self.file_key_generator.gen_id(), project, None, ''
-        )
-    project.root_cvs_directory_id = root_cvs_directory.id
     pdc = _ProjectDataCollector(self, project)
 
     found_rcs_file = False
-    for cvs_file in self._generate_cvs_files(root_cvs_directory):
-      cvs_file_items = pdc.process_file(cvs_file)
-      self._process_cvs_file_items(cvs_file_items)
-      found_rcs_file = True
+    for cvs_path in walk_repository(
+          project, self.file_key_generator, self.record_fatal_error
+          ):
+      if isinstance(cvs_path, CVSDirectory):
+        self.add_cvs_directory(cvs_path)
+      else:
+        cvs_file_items = pdc.process_file(cvs_path)
+        self._process_cvs_file_items(cvs_file_items)
+        found_rcs_file = True
 
     if not found_rcs_file:
       self.record_fatal_error(

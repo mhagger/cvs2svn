@@ -964,7 +964,7 @@ def attr_exec():
     raise svntest.Skip()
   conv = ensure_conversion('main')
   st = os.stat(conv.get_wc('trunk', 'single-files', 'attr-exec'))
-  if not st[0] & stat.S_IXUSR:
+  if not st.st_mode & stat.S_IXUSR:
     raise Failure()
 
 

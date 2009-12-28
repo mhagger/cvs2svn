@@ -90,10 +90,10 @@ class _RepositoryWalker(object):
     file_stat = os.stat(filename)
 
     # The size of the file in bytes:
-    file_size = file_stat[stat.ST_SIZE]
+    file_size = file_stat.st_size
 
     # Whether or not the executable bit is set:
-    file_executable = bool(file_stat[0] & stat.S_IXUSR)
+    file_executable = bool(file_stat.st_mode & stat.S_IXUSR)
 
     # mode is not known, so we temporarily set it to None.
     return CVSFile(

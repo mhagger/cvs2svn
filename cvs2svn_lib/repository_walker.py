@@ -37,7 +37,8 @@ class _RepositoryWalker(object):
     self.error_handler = error_handler
 
   def _get_cvs_file(
-        self, parent_directory, basename, file_in_attic, leave_in_attic=False
+        self, parent_directory, basename,
+        file_in_attic=False, leave_in_attic=False,
         ):
     """Return a CVSFile describing the file with name BASENAME.
 
@@ -114,7 +115,9 @@ class _RepositoryWalker(object):
     iff CVSFile will remain in the Attic directory."""
 
     try:
-      return self._get_cvs_file(parent_directory, basename, True)
+      return self._get_cvs_file(
+          parent_directory, basename, file_in_attic=True,
+          )
     except FileInAndOutOfAtticException, e:
       if Ctx().retain_conflicting_attic_files:
         Log().warn(
@@ -128,7 +131,7 @@ class _RepositoryWalker(object):
       # Either way, return a CVSFile object so that the rest of the
       # file processing can proceed:
       return self._get_cvs_file(
-          parent_directory, basename, True, leave_in_attic=True
+          parent_directory, basename, file_in_attic=True, leave_in_attic=True,
           )
 
   def _generate_attic_cvs_files(self, cvs_directory):
@@ -166,7 +169,7 @@ class _RepositoryWalker(object):
   def _get_non_attic_file(self, parent_directory, basename):
     """Return a CVSFile object for the non-Attic file at BASENAME."""
 
-    return self._get_cvs_file(parent_directory, basename, False)
+    return self._get_cvs_file(parent_directory, basename)
 
   def generate_cvs_paths(self, cvs_directory):
     """Generate the CVSPaths under non-Attic directory CVS_DIRECTORY.

@@ -228,7 +228,6 @@ class _RepositoryWalker(object):
     # in attic).  (We recurse into the subdirectories nevertheless, to
     # try to detect more problems.)
     for fname in alldirs:
-      pathname = os.path.join(cvs_directory.filename, fname)
       for rcsfile_list in [rcsfiles, attic_rcsfiles]:
         if fname in rcsfile_list:
           self.error_handler(
@@ -236,8 +235,10 @@ class _RepositoryWalker(object):
               'rename one\n'
               'of the following:\n'
               '    "%s"\n'
-              '    "%s"'
-              % (pathname, rcsfile_list[fname],)
+              '    "%s"' % (
+                  os.path.join(cvs_directory.filename, fname),
+                  rcsfile_list[fname],
+                  )
               )
 
     # Now recurse into the other subdirectories:

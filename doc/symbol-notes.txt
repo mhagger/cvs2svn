@@ -286,14 +286,15 @@ BreakSymbolChangesetCyclesPass
 ==============================
 
 Read in the changeset graph consisting only of SymbolChangesets and
-break any cycles that are found by breaking up symbol changesets.
+break up symbol changesets as necessary to break any cycles that are
+found.
 
 
 BreakAllChangesetCyclesPass
 ===========================
 
-Read in the entire changeset graph and break any cycles that are found
-by breaking up symbol changesets.
+Read in the entire changeset graph and break up symbol changesets as
+necessary to break any cycles that are found.
 
 
 TopologicalSortPass
@@ -306,7 +307,7 @@ CreateRevsPass
 ==============
 
 Create SVNCommits and assign svn revision numbers to each one.  Create
-a database (SVN_COMMITS_DB) to map svn revision numbers to SVNCommits
+a database (SVN_COMMITS_*) to map svn revision numbers to SVNCommits
 and another (CVS_REVS_TO_SVN_REVNUMS) to map each CVSRevision id to
 the number of the svn revision containing it.
 

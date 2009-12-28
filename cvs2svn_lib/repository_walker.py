@@ -166,11 +166,6 @@ class _RepositoryWalker(object):
       for cvs_file in retained_attic_files:
         yield cvs_file
 
-  def _get_non_attic_file(self, parent_directory, basename):
-    """Return a CVSFile object for the non-Attic file at BASENAME."""
-
-    return self._get_cvs_file(parent_directory, basename)
-
   def generate_cvs_paths(self, cvs_directory):
     """Generate the CVSPaths under non-Attic directory CVS_DIRECTORY.
 
@@ -200,7 +195,7 @@ class _RepositoryWalker(object):
         else:
           dirs.append(fname)
       elif fname.endswith(',v'):
-        cvs_file = self._get_non_attic_file(cvs_directory, fname)
+        cvs_file = self._get_cvs_file(cvs_directory, fname)
         rcsfiles[cvs_file.basename] = cvs_file.filename
         yield cvs_file
       else:

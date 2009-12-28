@@ -231,8 +231,8 @@ out any CVSRevisions that reside on excluded CVSBranches.
 
 Write a line of text to CVS_SYMBOLS_DATAFILE for each surviving
 CVSSymbol, containing its Symbol id and a pickled version of the
-CVSSymbol.  (This file will be sorted in SortSymbolSummaryPass then
-used in InitializeChangesetsPass to create SymbolChangesets.)
+CVSSymbol.  (This file will be sorted in SortSymbolsPass then used in
+InitializeChangesetsPass to create SymbolChangesets.)
 
 Also adjust the file's dependency tree by grafting CVSSymbols onto
 their preferred parents.  This is not always possible; if not, leave
@@ -249,14 +249,14 @@ CVSSymbols that it opens.  Record in each CVSRevision a list of all of
 the CVSSymbols that it closes (CVSBranches cannot close CVSSymbols).
 
 
-SortRevisionSummaryPass
-=======================
+SortRevisionsPass
+=================
 
 N/A
 
 
-SortSymbolSummaryPass
-=====================
+SortSymbolsPass
+===============
 
 Sort CVS_SYMBOLS_DATAFILE, creating CVS_SYMBOLS_SORTED_DATAFILE.  The
 sort groups together symbol items that might be added to the same
@@ -316,8 +316,8 @@ each opening or closing for each CVSSymbol, noting in what SVN
 revision the opening or closing occurred.
 
 
-SortSymbolsPass
-===============
+SortSymbolOpeningsClosingsPass
+==============================
 
 This pass sorts SYMBOL_OPENINGS_CLOSINGS into
 SYMBOL_OPENINGS_CLOSINGS_SORTED.  This orders the file first by symbol

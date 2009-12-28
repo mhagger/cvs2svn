@@ -504,8 +504,8 @@ class FilterSymbolsPass(Pass):
     Log().quiet("Done")
 
 
-class SortRevisionSummaryPass(Pass):
-  """Sort the revision summary file."""
+class SortRevisionsPass(Pass):
+  """Sort the revisions file."""
 
   def register_artifacts(self):
     self._register_temp_file(config.CVS_REVS_SORTED_DATAFILE)
@@ -523,8 +523,8 @@ class SortRevisionSummaryPass(Pass):
     Log().quiet("Done")
 
 
-class SortSymbolSummaryPass(Pass):
-  """Sort the symbol summary file."""
+class SortSymbolsPass(Pass):
+  """Sort the symbols file."""
 
   def register_artifacts(self):
     self._register_temp_file(config.CVS_SYMBOLS_SORTED_DATAFILE)
@@ -1619,7 +1619,7 @@ class CreateRevsPass(Pass):
     Log().quiet("Done")
 
 
-class SortSymbolsPass(Pass):
+class SortSymbolOpeningsClosingsPass(Pass):
   """This pass was formerly known as pass6."""
 
   def register_artifacts(self):
@@ -1756,8 +1756,8 @@ passes = [
     CollateSymbolsPass(),
     #CheckItemStoreDependenciesPass(config.CVS_ITEMS_STORE),
     FilterSymbolsPass(),
-    SortRevisionSummaryPass(),
-    SortSymbolSummaryPass(),
+    SortRevisionsPass(),
+    SortSymbolsPass(),
     InitializeChangesetsPass(),
     #CheckIndexedItemStoreDependenciesPass(
     #    config.CVS_ITEMS_SORTED_STORE,
@@ -1768,7 +1768,7 @@ passes = [
     BreakAllChangesetCyclesPass(),
     TopologicalSortPass(),
     CreateRevsPass(),
-    SortSymbolsPass(),
+    SortSymbolOpeningsClosingsPass(),
     IndexSymbolsPass(),
     OutputPass(),
     ]

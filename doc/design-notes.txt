@@ -319,9 +319,9 @@ are in memory at once.)  It does the following things:
 
      where TIMESTAMP is a fixed-width timestamp, and CVS_REVISION is
      the pickled CVSRevision in a format that does not contain any
-     newlines.  These summaries will be sorted in
-     SortRevisionSummaryPass then used by InitializeChangesetsPass to
-     create preliminary RevisionChangesets.
+     newlines.  These summaries will be sorted in SortRevisionsPass
+     then used by InitializeChangesetsPass to create preliminary
+     RevisionChangesets.
 
    - Write the CVSSymbols to CVS_SYMBOLS_DATAFILE.  Each line of the
      file has the format
@@ -330,12 +330,12 @@ are in memory at once.)  It does the following things:
 
      where CVS_SYMBOL is the pickled CVSSymbol in a format that does
      not contain any newlines.  This information will be sorted by
-     SYMBOL_ID in SortSymbolSummaryPass then used to create
-     preliminary SymbolChangesets.
+     SYMBOL_ID in SortSymbolsPass then used to create preliminary
+     SymbolChangesets.
 
 
-SortRevisionSummaryPass
-=======================
+SortRevisionsPass
+=================
 
 Sort CVS_REVS_DATAFILE (written by FilterSymbolsPass), creating
 CVS_REVS_SORTED_DATAFILE.  The sort groups items that might be added
@@ -344,8 +344,8 @@ timestamp.  This step makes it easy for InitializeChangesetsPass to
 read the initial draft of RevisionChangesets straight from the file.
 
 
-SortSymbolSummaryPass
-=====================
+SortSymbolsPass
+===============
 
 Sort CVS_SYMBOLS_DATAFILE (written by FilterSymbolsPass), creating
 CVS_SYMBOLS_SORTED_DATAFILE.  The sort groups together symbol items
@@ -595,8 +595,8 @@ This pass does the following:
    See SymbolingsLogger for more details.
 
 
-SortSymbolsPass (formerly called pass6)
-===============
+SortSymbolOpeningsClosingsPass (formerly called pass6)
+==============================
 
 This pass sorts SYMBOL_OPENINGS_CLOSINGS into
 SYMBOL_OPENINGS_CLOSINGS_SORTED.  This orders the file first by symbol

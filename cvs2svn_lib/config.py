@@ -32,21 +32,21 @@ CVS_EXECUTABLE = 'cvs'
 # A pickled list of the projects defined for this conversion.
 PROJECTS = 'projects.pck'
 
-# A file holding the Serializer to be used for
-# CVS_REVS_SUMMARY_*_DATAFILE and CVS_SYMBOLS_SYMMARY_*_DATAFILE:
-SUMMARY_SERIALIZER = 'summary-serializer.pck'
+# A file holding the Serializer to be used for CVS_REVS_*_DATAFILE and
+# CVS_SYMBOLS_*_DATAFILE:
+ITEM_SERIALIZER = 'item-serializer.pck'
 
-# The first file contains enough information about each CVSRevision to
-# deduce preliminary Changesets.  The second file is a sorted version
-# of the first.
-CVS_REVS_SUMMARY_DATAFILE = 'revs-summary.txt'
-CVS_REVS_SUMMARY_SORTED_DATAFILE = 'revs-summary-s.txt'
+# The first file contains the CVSRevisions in a form that can be
+# sorted to deduce preliminary Changesets.  The second file is the
+# sorted version of the first.
+CVS_REVS_DATAFILE = 'revs.dat'
+CVS_REVS_SORTED_DATAFILE = 'revs-s.dat'
 
-# The first file contains enough information about each CVSSymbol to
-# deduce preliminary Changesets.  The second file is a sorted version
-# of the first.
-CVS_SYMBOLS_SUMMARY_DATAFILE = 'symbols-summary.txt'
-CVS_SYMBOLS_SUMMARY_SORTED_DATAFILE = 'symbols-summary-s.txt'
+# The first file contains the CVSSymbols in a form that can be sorted
+# to deduce preliminary Changesets.  The second file is the sorted
+# version of the first.
+CVS_SYMBOLS_DATAFILE = 'symbols.dat'
+CVS_SYMBOLS_SORTED_DATAFILE = 'symbols-s.dat'
 
 # A mapping from CVSItem id to Changeset id.
 CVS_ITEM_TO_CHANGESET = 'cvs-item-to-changeset.dat'

@@ -306,8 +306,8 @@ are in memory at once.)  It does the following things:
    - For each CVSRevision, record the list of symbols that the
      revision opens and closes.
 
-   - Write a summary of each surviving CVSRevision to
-     'revs-summary.txt'.  Each line of the file has the format
+   - Write each surviving CVSRevision to 'revs.dat'.  Each line of the
+     file has the format
 
          METADATA_ID TIMESTAMP CVS_REVISION
 
@@ -317,8 +317,8 @@ are in memory at once.)  It does the following things:
      SortRevisionSummaryPass then used by InitializeChangesetsPass to
      create preliminary RevisionChangesets.
 
-   - Write a summary of CVSSymbols to 'symbols-summary.txt'.  Each
-     line of the file has the format
+   - Write the CVSSymbols to 'symbols.dat'.  Each line of the file has
+     the format
 
          SYMBOL_ID CVS_SYMBOL
 
@@ -332,19 +332,19 @@ SortRevisionSummaryPass
 =======================
 
 Sort the revision summary written by FilterSymbolsPass, creating
-'revs-summary-s.txt'.  The sort groups items that might be added to
-the same changeset together and, within a group, sorts revisions by
-timestamp.  This step makes it easy for InitializeChangesetsPass to
-read the initial draft of RevisionChangesets straight from the file.
+'revs-s.dat'.  The sort groups items that might be added to the same
+changeset together and, within a group, sorts revisions by timestamp.
+This step makes it easy for InitializeChangesetsPass to read the
+initial draft of RevisionChangesets straight from the file.
 
 
 SortSymbolSummaryPass
 =====================
 
 Sort the symbol summary written by FilterSymbolsPass, creating
-'symbols-summary-s.txt'.  The sort groups together symbol items that
-might be added to the same changeset (though not in anything
-resembling chronological order).  The output of this pass is used by
+'symbols-s.dat'.  The sort groups together symbol items that might be
+added to the same changeset (though not in anything resembling
+chronological order).  The output of this pass is used by
 InitializeChangesetsPass.
 
 
@@ -355,14 +355,14 @@ This pass creates first-draft changesets, splitting them using
 COMMIT_THRESHOLD and breaking up any revision changesets that have
 internal dependencies.
 
-The raw material for creating revision changesets is
-'revs-summary-s.txt', which already has CVSRevisions sorted in such a
-way that potential changesets are grouped together and sorted by date.
-The contents of this file are read line by line, and the corresponding
-CVSRevisions are accumulated into a changeset.  Whenever the
-metadata_id changes, or whenever there is a time gap of more than
-COMMIT_THRESHOLD (currently set to 5 minutes) between CVSRevisions,
-then a new changeset is started.
+The raw material for creating revision changesets is 'revs-s.dat',
+which already has CVSRevisions sorted in such a way that potential
+changesets are grouped together and sorted by date.  The contents of
+this file are read line by line, and the corresponding CVSRevisions
+are accumulated into a changeset.  Whenever the metadata_id changes,
+or whenever there is a time gap of more than COMMIT_THRESHOLD
+(currently set to 5 minutes) between CVSRevisions, then a new
+changeset is started.
 
 At this point a revision changeset can have internal dependencies if
 two commits were made to the same file with the same log message
@@ -373,10 +373,9 @@ changeset by timestamp, then choosing the split point that breaks the
 most internal dependencies.  This procedure is continued recursively
 until there are no more dependencies internal to a single changeset.
 
-Analogously, the CVSSymbol items from 'symbols-summary-s.txt' are
-grouped into symbol changesets.  (Symbol changesets cannot have
-internal dependencies, so there is no need to break them up at this
-stage.)
+Analogously, the CVSSymbol items from 'symbols-s.dat' are grouped into
+symbol changesets.  (Symbol changesets cannot have internal
+dependencies, so there is no need to break them up at this stage.)
 
 Finally, this pass writes a CVSItem database with the CVSItems written
 in order grouped by the preliminary changeset to which they belong.
@@ -626,7 +625,7 @@ miniature dumpfiles representing a single revisions are created,
 loaded into the repository, and then removed.
 
 In both modes, the dumpfile revisions are created by walking through
-'data.s-revs.txt'.
+'data.s-revs.dat'.
 
 The database 'mirror-nodes.db' holds a skeletal mirror of the
 repository structure at each SVN revision.  This mirror keeps track of

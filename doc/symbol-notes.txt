@@ -223,10 +223,10 @@ and vice versa and excluding other CVSSymbols as specified by the
 types of the TypedSymbols in the SymbolDatabase.  Additionally, filter
 out any CVSRevisions that reside on excluded CVSBranches.
 
-Write a line of text to CVS_SYMBOLS_SUMMARY_DATAFILE for each
-surviving CVSSymbol, containing its Symbol id and CVSItem id.  (This
-file will be sorted in SortSymbolSummaryPass then used in
-InitializeChangesetsPass to create SymbolChangesets.)
+Write a line of text to CVS_SYMBOLS_DATAFILE for each surviving
+CVSSymbol, containing its Symbol id and a pickled version of the
+CVSSymbol.  (This file will be sorted in SortSymbolSummaryPass then
+used in InitializeChangesetsPass to create SymbolChangesets.)
 
 Also adjust the file's dependency tree by grafting CVSSymbols onto
 their preferred parents.  This is not always possible; if not, leave
@@ -252,16 +252,16 @@ N/A
 SortSymbolSummaryPass
 =====================
 
-Sort CVS_SYMBOLS_SUMMARY_DATAFILE, creating
-CVS_SYMBOLS_SUMMARY_SORTED_DATAFILE.  The sort groups together symbol
-items that might be added to the same SymbolChangeset.
+Sort CVS_SYMBOLS_DATAFILE, creating CVS_SYMBOLS_SORTED_DATAFILE.  The
+sort groups together symbol items that might be added to the same
+SymbolChangeset.
 
 
 InitializeChangesetsPass
 ========================
 
-Read CVS_SYMBOLS_SUMMARY_SORTED_DATAFILE, grouping CVSSymbol items
-with the same Symbol id into SymbolChangesets.
+Read CVS_SYMBOLS_SORTED_DATAFILE, grouping CVSSymbol items with the
+same Symbol id into SymbolChangesets.
 
 
 BreakCVSRevisionChangesetCyclesPass

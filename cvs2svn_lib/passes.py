@@ -431,9 +431,9 @@ class FilterSymbolsPass(Pass):
   references to the excluded symbols."""
 
   def register_artifacts(self):
-    self._register_temp_file(config.SUMMARY_SERIALIZER)
-    self._register_temp_file(config.CVS_REVS_SUMMARY_DATAFILE)
-    self._register_temp_file(config.CVS_SYMBOLS_SUMMARY_DATAFILE)
+    self._register_temp_file(config.ITEM_SERIALIZER)
+    self._register_temp_file(config.CVS_REVS_DATAFILE)
+    self._register_temp_file(config.CVS_SYMBOLS_DATAFILE)
     self._register_temp_file_needed(config.PROJECTS)
     self._register_temp_file_needed(config.SYMBOL_DB)
     self._register_temp_file_needed(config.CVS_PATHS_DB)
@@ -450,17 +450,17 @@ class FilterSymbolsPass(Pass):
         artifact_manager.get_temp_file(config.CVS_ITEMS_STORE))
 
     cvs_item_serializer = PrimedPickleSerializer(cvs_item_primer)
-    f = open(artifact_manager.get_temp_file(config.SUMMARY_SERIALIZER), 'wb')
+    f = open(artifact_manager.get_temp_file(config.ITEM_SERIALIZER), 'wb')
     cPickle.dump(cvs_item_serializer, f, -1)
     f.close()
 
     rev_db = NewSortableCVSRevisionDatabase(
-        artifact_manager.get_temp_file(config.CVS_REVS_SUMMARY_DATAFILE),
+        artifact_manager.get_temp_file(config.CVS_REVS_DATAFILE),
         cvs_item_serializer,
         )
 
     symbol_db = NewSortableCVSSymbolDatabase(
-        artifact_manager.get_temp_file(config.CVS_SYMBOLS_SUMMARY_DATAFILE),
+        artifact_manager.get_temp_file(config.CVS_SYMBOLS_DATAFILE),
         cvs_item_serializer,
         )
 
@@ -508,15 +508,15 @@ class SortRevisionSummaryPass(Pass):
   """Sort the revision summary file."""
 
   def register_artifacts(self):
-    self._register_temp_file(config.CVS_REVS_SUMMARY_SORTED_DATAFILE)
-    self._register_temp_file_needed(config.CVS_REVS_SUMMARY_DATAFILE)
+    self._register_temp_file(config.CVS_REVS_SORTED_DATAFILE)
+    self._register_temp_file_needed(config.CVS_REVS_DATAFILE)
 
   def run(self, run_options, stats_keeper):
     Log().quiet("Sorting CVS revision summaries...")
     sort_file(
-        artifact_manager.get_temp_file(config.CVS_REVS_SUMMARY_DATAFILE),
+        artifact_manager.get_temp_file(config.CVS_REVS_DATAFILE),
         artifact_manager.get_temp_file(
-            config.CVS_REVS_SUMMARY_SORTED_DATAFILE
+            config.CVS_REVS_SORTED_DATAFILE
             ),
         tempdirs=[Ctx().tmpdir],
         )
@@ -527,15 +527,15 @@ class SortSymbolSummaryPass(Pass):
   """Sort the symbol summary file."""
 
   def register_artifacts(self):
-    self._register_temp_file(config.CVS_SYMBOLS_SUMMARY_SORTED_DATAFILE)
-    self._register_temp_file_needed(config.CVS_SYMBOLS_SUMMARY_DATAFILE)
+    self._register_temp_file(config.CVS_SYMBOLS_SORTED_DATAFILE)
+    self._register_temp_file_needed(config.CVS_SYMBOLS_DATAFILE)
 
   def run(self, run_options, stats_keeper):
     Log().quiet("Sorting CVS symbol summaries...")
     sort_file(
-        artifact_manager.get_temp_file(config.CVS_SYMBOLS_SUMMARY_DATAFILE),
+        artifact_manager.get_temp_file(config.CVS_SYMBOLS_DATAFILE),
         artifact_manager.get_temp_file(
-            config.CVS_SYMBOLS_SUMMARY_SORTED_DATAFILE
+            config.CVS_SYMBOLS_SORTED_DATAFILE
             ),
         tempdirs=[Ctx().tmpdir],
         )
@@ -554,10 +554,10 @@ class InitializeChangesetsPass(Pass):
     self._register_temp_file_needed(config.PROJECTS)
     self._register_temp_file_needed(config.SYMBOL_DB)
     self._register_temp_file_needed(config.CVS_PATHS_DB)
-    self._register_temp_file_needed(config.SUMMARY_SERIALIZER)
-    self._register_temp_file_needed(config.CVS_REVS_SUMMARY_SORTED_DATAFILE)
+    self._register_temp_file_needed(config.ITEM_SERIALIZER)
+    self._register_temp_file_needed(config.CVS_REVS_SORTED_DATAFILE)
     self._register_temp_file_needed(
-        config.CVS_SYMBOLS_SUMMARY_SORTED_DATAFILE)
+        config.CVS_SYMBOLS_SORTED_DATAFILE)
 
   def get_revision_changesets(self):
     """Generate revision changesets, one at a time.
@@ -572,7 +572,7 @@ class InitializeChangesetsPass(Pass):
 
     db = OldSortableCVSRevisionDatabase(
         artifact_manager.get_temp_file(
-            config.CVS_REVS_SUMMARY_SORTED_DATAFILE
+            config.CVS_REVS_SORTED_DATAFILE
             ),
         self.cvs_item_serializer,
         )
@@ -604,7 +604,7 @@ class InitializeChangesetsPass(Pass):
 
     db = OldSortableCVSSymbolDatabase(
         artifact_manager.get_temp_file(
-            config.CVS_SYMBOLS_SUMMARY_SORTED_DATAFILE
+            config.CVS_SYMBOLS_SORTED_DATAFILE
             ),
         self.cvs_item_serializer,
         )
@@ -758,7 +758,7 @@ class InitializeChangesetsPass(Pass):
     Ctx()._cvs_path_db = CVSPathDatabase(DB_OPEN_READ)
     Ctx()._symbol_db = SymbolDatabase()
 
-    f = open(artifact_manager.get_temp_file(config.SUMMARY_SERIALIZER), 'rb')
+    f = open(artifact_manager.get_temp_file(config.ITEM_SERIALIZER), 'rb')
     self.cvs_item_serializer = cPickle.load(f)
     f.close()
 

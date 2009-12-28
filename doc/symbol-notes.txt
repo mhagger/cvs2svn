@@ -179,6 +179,12 @@ branch directory, rather than copying the file from the source
 directory to the branch directory.
 
 
+CleanMetadataPass
+=================
+
+N/A
+
+
 CollateSymbolsPass
 ==================
 
@@ -264,8 +270,8 @@ Read CVS_SYMBOLS_SORTED_DATAFILE, grouping CVSSymbol items with the
 same Symbol id into SymbolChangesets.
 
 
-BreakCVSRevisionChangesetCyclesPass
-==================================
+BreakRevisionChangesetCyclesPass
+================================
 
 N/A
 
@@ -276,15 +282,15 @@ RevisionTopologicalSortPass
 N/A
 
 
-BreakCVSSymbolChangesetCyclesPass
-================================
+BreakSymbolChangesetCyclesPass
+==============================
 
 Read in the changeset graph consisting only of SymbolChangesets and
 break any cycles that are found by breaking up symbol changesets.
 
 
 BreakAllChangesetCyclesPass
-================================
+===========================
 
 Read in the entire changeset graph and break any cycles that are found
 by breaking up symbol changesets.

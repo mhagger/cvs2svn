@@ -45,8 +45,7 @@ def main(progname, run_options, pass_manager):
 
   # Make sure the tmp directory exists.  Note that we don't check if
   # it's empty -- we want to be able to use, for example, "." to hold
-  # tempfiles.  But if we *did* want check if it were empty, we'd do
-  # something like os.stat(ctx.tmpdir)[stat.ST_NLINK], of course :-).
+  # tempfiles.
   if not os.path.exists(ctx.tmpdir):
     erase_tmpdir = True
     os.mkdir(ctx.tmpdir)

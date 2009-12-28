@@ -70,6 +70,10 @@ data it produces to files on disk, so that a) we don't hold huge
 amounts of state in memory, and b) the conversion process is
 resumable.
 
+The intermediate files are referred to here by the symbolic constants
+holding their filenames in config.py.
+
+
 CollectRevsPass (formerly called pass1)
 ===============
 
@@ -89,7 +93,7 @@ While a file is being processed, all of the data for the file (except
 for contents and log messages) is held in memory.  When the file has
 been read completely, its data is converted into an instance of
 CVSFileItems, and this instance is manipulated a bit then pickled and
-stored to 'cvs-items.pck'.
+stored to CVS_ITEMS_STORE.
 
 For each RCS file, the first thing the parser encounters is the
 administrative header, including the head revision, the principal
@@ -163,13 +167,15 @@ That's it -- the RCS file is done.
 
 When every CVS file is done, CollectRevsPass is complete, and:
 
+   - The basic information about each project is stored to PROJECTS.
+
    - The basic information about each file and directory (filename,
      path, etc) is written as a pickled CVSPath instance to
-     'cvs-paths.db'.
+     CVS_PATHS_DB.
 
    - Information about each symbol seen, along with statistics like
      how often it was used as a branch or tag, is written as a pickled
-     symbol_statistics._Stat object to 'symbol-statistics.pck'.  This
+     symbol_statistics._Stat object to SYMBOL_STATISTICS.  This
      includes the following information:
 
          ID -- a unique positive identifying integer
@@ -205,7 +211,7 @@ When every CVS file is done, CollectRevsPass is complete, and:
      from being filled at the same time.
 
    - Information about each CVS event is converted into a CVSItem
-     instance and stored to 'cvs-items.pck'.  There are several types
+     instance and stored to CVS_ITEMS_STORE.  There are several types
      of CVSItems:
 
          CVSRevision -- A specific revision of a specific CVS file.
@@ -221,8 +227,8 @@ When every CVS file is done, CollectRevsPass is complete, and:
      over the place.
 
    - Selected metadata for each CVS revision, including the author and
-     log message, is written to 'metadata-index.dat' and
-     'metadata.pck'.  The purpose is twofold: first, to save space by
+     log message, is written to METADATA_INDEX_TABLE and
+     METADATA_STORE.  The purpose is twofold: first, to save space by
      not having to save this information multiple times, and second
      because CVSRevisions that have the same metadata are candidates
      to be combined into an SVN changeset.
@@ -265,7 +271,7 @@ CleanMetadataPass
 
 Encode the cvs revision metadata as UTF-8, ensuring that all entries
 can be decoded using the chosen encodings.  Output the results to
-'metadata-clean-index.dat' and 'metadata-clean.pck'.
+METADATA_CLEAN_INDEX_TABLE and METADATA_CLEAN_STORE.
 
 
 CollateSymbolsPass
@@ -276,7 +282,7 @@ options to determine which symbols should be treated as branches,
 which as tags, and which should be excluded from the conversion
 altogether.
 
-Create 'symbols.pck', which contains a pickle of a list of TypedSymbol
+Create SYMBOL_DB, which contains a pickle of a list of TypedSymbol
 (Branch, Tag, or ExcludedSymbol) instances indicating how each symbol
 should be processed in the conversion.  The IDs used for a TypedSymbol
 is the same as the ID allocated to the corresponding symbol in
@@ -287,7 +293,7 @@ FilterSymbolsPass
 =================
 
 This pass works through the CVSFileItems instances stored in
-'cvs-items.pck', processing all of the items from each file as a
+CVS_ITEMS_STORE, processing all of the items from each file as a
 group.  (This is the last pass in which all of the CVSItems for a file
 are in memory at once.)  It does the following things:
 
@@ -306,8 +312,8 @@ are in memory at once.)  It does the following things:
    - For each CVSRevision, record the list of symbols that the
      revision opens and closes.
 
-   - Write each surviving CVSRevision to 'revs.dat'.  Each line of the
-     file has the format
+   - Write each surviving CVSRevision to CVS_REVS_DATAFILE.  Each line
+     of the file has the format
 
          METADATA_ID TIMESTAMP CVS_REVISION
 
@@ -317,8 +323,8 @@ are in memory at once.)  It does the following things:
      SortRevisionSummaryPass then used by InitializeChangesetsPass to
      create preliminary RevisionChangesets.
 
-   - Write the CVSSymbols to 'symbols.dat'.  Each line of the file has
-     the format
+   - Write the CVSSymbols to CVS_SYMBOLS_DATAFILE.  Each line of the
+     file has the format
 
          SYMBOL_ID CVS_SYMBOL
 
@@ -331,20 +337,20 @@ are in memory at once.)  It does the following things:
 SortRevisionSummaryPass
 =======================
 
-Sort the revision summary written by FilterSymbolsPass, creating
-'revs-s.dat'.  The sort groups items that might be added to the same
-changeset together and, within a group, sorts revisions by timestamp.
-This step makes it easy for InitializeChangesetsPass to read the
-initial draft of RevisionChangesets straight from the file.
+Sort CVS_REVS_DATAFILE (written by FilterSymbolsPass), creating
+CVS_REVS_SORTED_DATAFILE.  The sort groups items that might be added
+to the same changeset together and, within a group, sorts revisions by
+timestamp.  This step makes it easy for InitializeChangesetsPass to
+read the initial draft of RevisionChangesets straight from the file.
 
 
 SortSymbolSummaryPass
 =====================
 
-Sort the symbol summary written by FilterSymbolsPass, creating
-'symbols-s.dat'.  The sort groups together symbol items that might be
-added to the same changeset (though not in anything resembling
-chronological order).  The output of this pass is used by
+Sort CVS_SYMBOLS_DATAFILE (written by FilterSymbolsPass), creating
+CVS_SYMBOLS_SORTED_DATAFILE.  The sort groups together symbol items
+that might be added to the same changeset (though not in anything
+resembling chronological order).  The output of this pass is used by
 InitializeChangesetsPass.
 
 
@@ -355,14 +361,14 @@ This pass creates first-draft changesets, splitting them using
 COMMIT_THRESHOLD and breaking up any revision changesets that have
 internal dependencies.
 
-The raw material for creating revision changesets is 'revs-s.dat',
-which already has CVSRevisions sorted in such a way that potential
-changesets are grouped together and sorted by date.  The contents of
-this file are read line by line, and the corresponding CVSRevisions
-are accumulated into a changeset.  Whenever the metadata_id changes,
-or whenever there is a time gap of more than COMMIT_THRESHOLD
-(currently set to 5 minutes) between CVSRevisions, then a new
-changeset is started.
+The raw material for creating revision changesets is
+CVS_REVS_SORTED_DATAFILE, which already has CVSRevisions sorted in
+such a way that potential changesets are grouped together and sorted
+by date.  The contents of this file are read line by line, and the
+corresponding CVSRevisions are accumulated into a changeset.  Whenever
+the metadata_id changes, or whenever there is a time gap of more than
+COMMIT_THRESHOLD (currently set to 5 minutes) between CVSRevisions,
+then a new changeset is started.
 
 At this point a revision changeset can have internal dependencies if
 two commits were made to the same file with the same log message
@@ -373,9 +379,10 @@ changeset by timestamp, then choosing the split point that breaks the
 most internal dependencies.  This procedure is continued recursively
 until there are no more dependencies internal to a single changeset.
 
-Analogously, the CVSSymbol items from 'symbols-s.dat' are grouped into
-symbol changesets.  (Symbol changesets cannot have internal
-dependencies, so there is no need to break them up at this stage.)
+Analogously, the CVSSymbol items from CVS_SYMBOLS_SORTED_DATAFILE are
+grouped into symbol changesets.  (Symbol changesets cannot have
+internal dependencies, so there is no need to break them up at this
+stage.)
 
 Finally, this pass writes a CVSItem database with the CVSItems written
 in order grouped by the preliminary changeset to which they belong.
@@ -385,13 +392,13 @@ locality of disk accesses and thereby speeds up later passes.
 
 The result of this pass is two databases:
 
-   - 'cvs-item-to-changeset.dat', which maps CVSItem ids to the id of
-     the changeset containing the item, and
+   - CVS_ITEM_TO_CHANGESET, which maps CVSItem ids to the id of the
+     changeset containing the item, and
 
-   - 'changesets.pck' and 'changesets-index.dat', which contain the
+   - CHANGESETS_STORE and CHANGESETS_INDEX, which contain the
      changeset objects themselves, indexed by changeset id.
 
-   - 'cvs-items-sorted-index.dat' and 'cvs-items-sorted.pck', which
+   - CVS_ITEMS_SORTED_STORE and CVS_ITEMS_SORTED_INDEX_TABLE, which
      contain the pickled CVSItems ordered by changeset.
 
 
@@ -425,8 +432,8 @@ cycle is broken through the use of heuristics that try to determine an
 involved.
 
 The new RevisionChangesets are written to
-'cvs-item-to-changeset-revbroken.dat', 'changesets-revbroken.pck', and
-'changesets-revbroken-index.dat', along with the unmodified
+CVS_ITEM_TO_CHANGESET_REVBROKEN, CHANGESETS_REVBROKEN_STORE, and
+CHANGESETS_REVBROKEN_INDEX, along with the unmodified
 SymbolChangesets.  These files are in the same format as the analogous
 files produced by InitializeChangesetsPass.
 
@@ -445,8 +452,8 @@ links only to its commit-order predecessor and successor.  This
 simplified graph enforces the commit order that resulted from the
 topological sort, even after the SymbolChangesets are added back into
 the graph later.  Store the OrderedChangesets into
-'changesets-revsorted.pck' and 'changesets-revsorted-index.dat' along
-with the unmodified SymbolChangesets.
+CHANGESETS_REVSORTED_STORE and CHANGESETS_REVSORTED_INDEX along with
+the unmodified SymbolChangesets.
 
 
 BreakSymbolChangesetCyclesPass
@@ -461,8 +468,8 @@ caused by:
      SymbolChangesets.
 
 Break up such dependency loops.  Output the results to
-'cvs-item-to-changeset-symbroken.dat',
-'changesets-symbroken-index.dat', and 'changesets-symbroken.pck'.
+CVS_ITEM_TO_CHANGESET_SYMBROKEN, CHANGESETS_SYMBROKEN_STORE, and
+CHANGESETS_SYMBROKEN_INDEX.
 
 
 BreakAllChangesetCyclesPass
@@ -493,10 +500,10 @@ Because this pass doesn't break up any OrderedChangesets, it is
 constrained to finding places within the revision changeset sequence
 in which the symbol changeset commits can be inserted.
 
-The new changesets are written to
-'cvs-item-to-changeset-allbroken.dat', 'changesets-allbroken.pck', and
-'changesets-allbroken-index.dat', which are in the same format as the
-analogous files produced by InitializeChangesetsPass.
+The new changesets are written to CVS_ITEM_TO_CHANGESET_ALLBROKEN,
+CHANGESETS_ALLBROKEN_STORE, and CHANGESETS_ALLBROKEN_INDEX, which are
+in the same format as the analogous files produced by
+InitializeChangesetsPass.
 
 
 TopologicalSortPass
@@ -516,14 +523,14 @@ their predecessor.  Timestamps that lie in the future, on the other
 hand, are assumed to be bogus and are adjusted backwards, also to be
 just later than their predecessor.
 
-This pass writes a line to 'changesets-s.txt' for each
+This pass writes a line to CHANGESETS_SORTED_DATAFILE for each
 RevisionChangeset, in the order that the changesets should be
 committed.  Each lines contains
 
     CHANGESET_ID TIMESTAMP
 
 where CHANGESET_ID is the id of the changeset in the
-'changesets-allbroken' databases and TIMESTAMP is the timstamp that
+CHANGESETS_ALLBROKEN_* databases and TIMESTAMP is the timstamp that
 should be assigned to it when it is committed.  Both values are
 written in hexadecimal.
 
@@ -539,10 +546,10 @@ a vendor branch.)
 This pass does the following:
 
 1. Creates a database file to map Subversion revision numbers to
-   SVNCommit instances ('svn-commits-index.dat' and
-   'svn-commits.pck').  Creates another database file to map CVS
+   SVNCommit instances (SVN_COMMITS_STORE and
+   SVN_COMMITS_INDEX_TABLE).  Creates another database file to map CVS
    Revisions to their Subversion Revision numbers
-   ('cvs-revs-to-svn-revnums.db').
+   (CVS_REVS_TO_SVN_REVNUMS).
 
 2. When a file is copied to a symbolic name in cvs2svn, it is copied
    from a specific source: either a CVSRevision, or a copy created by
@@ -551,10 +558,10 @@ This pass does the following:
    revision when the source was created is called the symbol's
    "opening", and the SVN revision when it was deleted or overwritten
    is called the symbol's "closing".  In this pass, the
-   SymbolingsLogger class writes out a line to 'symbolic-names.txt'
-   for each symbol opening or closing.  Note that some openings do not
-   have closings, namely if the corresponding source is still present
-   at the HEAD revision.
+   SymbolingsLogger class writes out a line to
+   SYMBOL_OPENINGS_CLOSINGS for each symbol opening or closing.  Note
+   that some openings do not have closings, namely if the
+   corresponding source is still present at the HEAD revision.
 
    The format of each line is:
 
@@ -591,21 +598,21 @@ This pass does the following:
 SortSymbolsPass (formerly called pass6)
 ===============
 
-This pass sorts 'symbolic-names.txt' into 'symbolic-names-s.txt'.
-This orders the file first by symbol ID, and second by Subversion
-revision number, thus grouping all openings and closings for each
-symbolic name together.
+This pass sorts SYMBOL_OPENINGS_CLOSINGS into
+SYMBOL_OPENINGS_CLOSINGS_SORTED.  This orders the file first by symbol
+ID, and second by Subversion revision number, thus grouping all
+openings and closings for each symbolic name together.
 
 
 IndexSymbolsPass (formerly called pass7)
 ================
 
-This pass iterates through all the lines in 'symbolic-names-s.txt',
-writing out a pickle file ('symbol-offsets.pck') mapping SYMBOL_ID to
-the file offset in 'symbolic-names-s.txt' where SYMBOL_ID is first
-encountered.  This will allow us to seek to the various offsets in the
-file and sequentially read only the openings and closings that we
-need.
+This pass iterates through all the lines in
+SYMBOL_OPENINGS_CLOSINGS_SORTED, writing out a pickle file
+(SYMBOL_OFFSETS_DB) mapping SYMBOL_ID to the file offset in
+SYMBOL_OPENINGS_CLOSINGS_SORTED where SYMBOL_ID is first encountered.
+This will allow us to seek to the various offsets in the file and
+sequentially read only the openings and closings that we need.
 
 
 OutputPass (formerly called pass8)
@@ -625,13 +632,13 @@ miniature dumpfiles representing a single revisions are created,
 loaded into the repository, and then removed.
 
 In both modes, the dumpfile revisions are created by walking through
-'data.s-revs.dat'.
+the SVN_COMMITS_* database.
 
-The database 'mirror-nodes.db' holds a skeletal mirror of the
-repository structure at each SVN revision.  This mirror keeps track of
-which files existed on each LOD, but does not record any file
-contents.  cvs2svn requires this information to decide which paths to
-copy when filling branches and tags.
+The database in MIRROR_NODES_STORE and MIRROR_NODES_INDEX_TABLE holds
+a skeletal mirror of the repository structure at each SVN revision.
+This mirror keeps track of which files existed on each LOD, but does
+not record any file contents.  cvs2svn requires this information to
+decide which paths to copy when filling branches and tags.
 
 When .cvsignore files are modified, cvs2svn computes the corresponding
 svn:ignore properties and applies the properties to the parent

@@ -261,8 +261,7 @@ InitializeChangesetsPass
 ========================
 
 Read CVS_SYMBOLS_SUMMARY_SORTED_DATAFILE, grouping CVSSymbol items
-with the same Symbol id into SymbolChangesets.  The SymbolChangesets
-are currently unused.
+with the same Symbol id into SymbolChangesets.
 
 
 BreakCVSRevisionChangesetCyclesPass

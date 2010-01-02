@@ -426,6 +426,7 @@ class GitOutputOption(DVCSOutputOption):
       mark = self._get_source_mark(source_lod, source_revnum)
       self._set_symbol(svn_commit.symbol, mark)
       self._mirror.copy_lod(source_lod, svn_commit.symbol, source_revnum)
+      self._set_lod_mark(svn_commit.symbol, svn_commit.revnum, mark)
     else:
       Log().debug(
           '%s will be created via fixup commit(s)' % (svn_commit.symbol,)
@@ -471,6 +472,8 @@ class GitOutputOption(DVCSOutputOption):
           )
       mark = self._get_source_mark(source_lod, source_revnum)
       self._set_symbol(svn_commit.symbol, mark)
+      self._mirror.copy_lod(source_lod, svn_commit.symbol, source_revnum)
+      self._set_lod_mark(svn_commit.symbol, svn_commit.revnum, mark)
     else:
       Log().debug(
           '%s will be created via a fixup branch' % (svn_commit.symbol,)

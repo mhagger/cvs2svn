@@ -232,9 +232,11 @@ ctx.svnadmin_executable = r'svnadmin'
 # should be ignored):
 ctx.trunk_only = False
 
-# Change the following line to True if cvs2svn should delete a
-# directory once the last file has been deleted from it:
-ctx.prune = False
+# Normally, cvs2svn deletes a directory once the last file has been
+# deleted from it (a la "cvs -P").  Change the following line to False
+# if you would like such directories to be retained in the Subversion
+# repository through the rest of history:
+ctx.prune = True
 
 # How to convert author names, log messages, and filenames to Unicode.
 # The first argument to CVSTextDecoder is a list of encoders that are

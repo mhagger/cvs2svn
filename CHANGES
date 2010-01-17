@@ -3,8 +3,10 @@ Version ?.?.? (not yet released)
 
  New features:
  * Store CVS file descriptions in a Subversion property "cvs:description".
+ * SVN: Optionally include empty directories from the CVS repository.
 
  Bugs fixed:
+ * Issue #31: cvs2svn does not convert empty directories.
  * Issue #127: Dead "file X added on branch Y" revisions not always dropped.
 
  Improvements and output changes:

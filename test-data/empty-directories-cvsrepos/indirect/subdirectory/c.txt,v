@@ -1,0 +1,59 @@
+head	1.3;
+access;
+symbols
+	TAG:1.3
+	BRANCH:1.3.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.3
+date	2010.01.17.03.34.55;	author mhagger;	state Exp;
+branches;
+next	1.2;
+commitid	0ur5CblrKrQz3Fju;
+
+1.2
+date	2010.01.17.03.31.45;	author mhagger;	state dead;
+branches;
+next	1.1;
+commitid	7o2iSAs9MgMu2Fju;
+
+1.1
+date	2010.01.16.06.24.25;	author mhagger;	state Exp;
+branches;
+next	;
+commitid	qH19tYzVmpCI1yju;
+
+
+desc
+@@
+
+
+1.3
+log
+@Re-add c.txt.
+@
+text
+@c2
+@
+
+
+1.2
+log
+@Remove c.txt.
+@
+text
+@d1 1
+a1 1
+c
+@
+
+
+1.1
+log
+@Add c.txt.
+@
+text
+@@
+

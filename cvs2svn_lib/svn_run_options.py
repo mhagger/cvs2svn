@@ -242,6 +242,19 @@ A directory called \\fIcvs2svn-tmp\\fR (or the directory specified by
         metavar='PATH',
         ))
     group.add_option(ContextOption(
+        '--include-empty-directories',
+        action='store_true', dest='include_empty_directories',
+        help=(
+            'include empty directories within the CVS repository '
+            'in the conversion'
+            ),
+        man_help=(
+            'Treat empty subdirectories within the CVS repository as actual '
+            'directories, creating them when the parent directory is created '
+            'and removing them if and when the parent directory is pruned.'
+            ),
+        ))
+    group.add_option(ContextOption(
         '--no-prune',
         action='store_false', dest='prune',
         help='don\'t prune empty directories',

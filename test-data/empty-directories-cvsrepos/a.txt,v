@@ -1,0 +1,27 @@
+head	1.1;
+access;
+symbols
+	TAG:1.1
+	BRANCH:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2010.01.16.06.17.56;	author mhagger;	state Exp;
+branches;
+next	;
+commitid	1nYTVRk8r2OuZxju;
+
+
+desc
+@@
+
+
+1.1
+log
+@Add a.txt.
+@
+text
+@a
+@

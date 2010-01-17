@@ -208,6 +208,10 @@ class SVNOutputOption(OutputOption):
 
     # Don't invoke delegates.
     self._mirror.add_lod(project.get_trunk())
+    if Ctx().include_empty_directories:
+      self._make_empty_subdirectories(
+          project.get_root_cvs_directory(), project.get_trunk()
+          )
 
   def change_path(self, cvs_rev):
     """Register a change in self._youngest for the CVS_REV's svn_path."""
@@ -217,24 +221,40 @@ class SVNOutputOption(OutputOption):
     # content change does not cause any path changes.
     self._invoke_delegates('change_path', SVNCommitItem(cvs_rev, False))
 
+  def _make_empty_subdirectories(self, cvs_directory, lod):
+    """Make any empty subdirectories of CVS_DIRECTORY in LOD."""
+
+    for empty_subdirectory_id in cvs_directory.empty_subdirectory_ids:
+      empty_subdirectory = Ctx()._cvs_path_db.get_path(empty_subdirectory_id)
+      # There is no need to record the empty subdirectories in the
+      # mirror, since they live and die with their parent directories.
+      self._invoke_delegates('mkdir', lod, empty_subdirectory)
+      self._make_empty_subdirectories(empty_subdirectory, lod)
+
   def _mkdir_p(self, cvs_directory, lod):
     """Make sure that CVS_DIRECTORY exists in LOD.
 
     If not, create it, calling delegates.  Return the node for
     CVS_DIRECTORY."""
 
+    ancestry = cvs_directory.get_ancestry()
+
     try:
       node = self._mirror.get_current_lod_directory(lod)
     except KeyError:
       node = self._mirror.add_lod(lod)
       self._invoke_delegates('initialize_lod', lod)
+      if ancestry and Ctx().include_empty_directories:
+        self._make_empty_subdirectories(ancestry[0], lod)
 
-    for sub_path in cvs_directory.get_ancestry()[1:]:
+    for sub_path in ancestry[1:]:
       try:
         node = node[sub_path]
       except KeyError:
         node = node.mkdir(sub_path)
         self._invoke_delegates('mkdir', lod, sub_path)
+        if Ctx().include_empty_directories:
+          self._make_empty_subdirectories(sub_path, lod)
       if node is None:
         raise self.ExpectedDirectoryError(
             'File found at \'%s\' where directory was expected.' % (sub_path,)

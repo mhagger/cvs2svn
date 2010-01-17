@@ -3707,6 +3707,125 @@ cvs_description = Cvs2SvnPropertiesTestCase(
         ])
 
 
+@Cvs2SvnTestFunction
+def include_empty_directories():
+  "test --include-empty-directories option"
+
+  conv = ensure_conversion(
+      'empty-directories', args=['--include-empty-directories'],
+      )
+  conv.logs[1].check('Standard project directories', (
+    ('/%(trunk)s', 'A'),
+    ('/%(branches)s', 'A'),
+    ('/%(tags)s', 'A'),
+    ('/%(trunk)s/root-empty-directory', 'A'),
+    ('/%(trunk)s/root-empty-directory/empty-subdirectory', 'A'),
+    ))
+  conv.logs[3].check('Add b.txt.', (
+    ('/%(trunk)s/direct', 'A'),
+    ('/%(trunk)s/direct/b.txt', 'A'),
+    ('/%(trunk)s/direct/empty-directory', 'A'),
+    ('/%(trunk)s/direct/empty-directory/empty-subdirectory', 'A'),
+    ))
+  conv.logs[4].check('Add c.txt.', (
+    ('/%(trunk)s/indirect', 'A'),
+    ('/%(trunk)s/indirect/subdirectory', 'A'),
+    ('/%(trunk)s/indirect/subdirectory/c.txt', 'A'),
+    ('/%(trunk)s/indirect/empty-directory', 'A'),
+    ('/%(trunk)s/indirect/empty-directory/empty-subdirectory', 'A'),
+    ))
+  conv.logs[5].check('Remove b.txt', (
+    ('/%(trunk)s/direct', 'D'),
+    ))
+  conv.logs[6].check('Remove c.txt', (
+    ('/%(trunk)s/indirect', 'D'),
+    ))
+  conv.logs[7].check('Re-add b.txt.', (
+    ('/%(trunk)s/direct', 'A'),
+    ('/%(trunk)s/direct/b.txt', 'A'),
+    ('/%(trunk)s/direct/empty-directory', 'A'),
+    ('/%(trunk)s/direct/empty-directory/empty-subdirectory', 'A'),
+    ))
+  conv.logs[8].check('Re-add c.txt.', (
+    ('/%(trunk)s/indirect', 'A'),
+    ('/%(trunk)s/indirect/subdirectory', 'A'),
+    ('/%(trunk)s/indirect/subdirectory/c.txt', 'A'),
+    ('/%(trunk)s/indirect/empty-directory', 'A'),
+    ('/%(trunk)s/indirect/empty-directory/empty-subdirectory', 'A'),
+    ))
+  conv.logs[9].check('This commit was manufactured', (
+    ('/%(tags)s/TAG (from /%(trunk)s:8)', 'A'),
+    ))
+  conv.logs[10].check('This commit was manufactured', (
+    ('/%(branches)s/BRANCH (from /%(trunk)s:8)', 'A'),
+    ))
+  conv.logs[11].check('Import d.txt.', (
+    ('/%(branches)s/VENDORBRANCH', 'A'),
+    ('/%(branches)s/VENDORBRANCH/import', 'A'),
+    ('/%(branches)s/VENDORBRANCH/import/d.txt', 'A'),
+    ('/%(branches)s/VENDORBRANCH/root-empty-directory', 'A'),
+    ('/%(branches)s/VENDORBRANCH/root-empty-directory/empty-subdirectory',
+        'A'),
+    ('/%(branches)s/VENDORBRANCH/import/empty-directory', 'A'),
+    ('/%(branches)s/VENDORBRANCH/import/empty-directory/empty-subdirectory',
+        'A'),
+    ))
+  conv.logs[12].check('This commit was generated', (
+    ('/%(trunk)s/import', 'A'),
+    ('/%(trunk)s/import/d.txt '
+     '(from /%(branches)s/VENDORBRANCH/import/d.txt:11)', 'A'),
+    ('/%(trunk)s/import/empty-directory', 'A'),
+    ('/%(trunk)s/import/empty-directory/empty-subdirectory', 'A'),
+    ))
+
+
+@Cvs2SvnTestFunction
+def include_empty_directories_no_prune():
+  "test --include-empty-directories with --no-prune"
+
+  conv = ensure_conversion(
+      'empty-directories', args=['--include-empty-directories', '--no-prune'],
+      )
+  conv.logs[1].check('Standard project directories', (
+    ('/%(trunk)s', 'A'),
+    ('/%(branches)s', 'A'),
+    ('/%(tags)s', 'A'),
+    ('/%(trunk)s/root-empty-directory', 'A'),
+    ('/%(trunk)s/root-empty-directory/empty-subdirectory', 'A'),
+    ))
+  conv.logs[3].check('Add b.txt.', (
+    ('/%(trunk)s/direct', 'A'),
+    ('/%(trunk)s/direct/b.txt', 'A'),
+    ('/%(trunk)s/direct/empty-directory', 'A'),
+    ('/%(trunk)s/direct/empty-directory/empty-subdirectory', 'A'),
+    ))
+  conv.logs[4].check('Add c.txt.', (
+    ('/%(trunk)s/indirect', 'A'),
+    ('/%(trunk)s/indirect/subdirectory', 'A'),
+    ('/%(trunk)s/indirect/subdirectory/c.txt', 'A'),
+    ('/%(trunk)s/indirect/empty-directory', 'A'),
+    ('/%(trunk)s/indirect/empty-directory/empty-subdirectory', 'A'),
+    ))
+  conv.logs[5].check('Remove b.txt', (
+    ('/%(trunk)s/direct/b.txt', 'D'),
+    ))
+  conv.logs[6].check('Remove c.txt', (
+    ('/%(trunk)s/indirect/subdirectory/c.txt', 'D'),
+    ))
+  conv.logs[7].check('Re-add b.txt.', (
+    ('/%(trunk)s/direct/b.txt', 'A'),
+    ))
+  conv.logs[8].check('Re-add c.txt.', (
+    ('/%(trunk)s/indirect/subdirectory/c.txt', 'A'),
+    ))
+  conv.logs[9].check('This commit was manufactured', (
+    ('/%(tags)s/TAG (from /%(trunk)s:8)', 'A'),
+    ))
+  conv.logs[10].check('This commit was manufactured', (
+    ('/%(branches)s/BRANCH (from /%(trunk)s:8)', 'A'),
+    ))
+
+
 ########################################################################
 # Run the tests
 
@@ -3908,6 +4027,9 @@ test_list = [
     collision_with_unlabeled_branch_name,
     many_deletes,
     cvs_description,
+    include_empty_directories,
+# 170:
+    include_empty_directories_no_prune,
     ]
 
 if __name__ == '__main__':

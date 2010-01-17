@@ -232,6 +232,18 @@ ctx.svnadmin_executable = r'svnadmin'
 # should be ignored):
 ctx.trunk_only = False
 
+# Normally, cvs2svn ignores directories within the CVS repository if
+# they do not contain valid RCS files.  This produces a Subversion
+# repository whose behavior imitates that of CVS if CVS is typically
+# used with the "-P" option.  However, sometimes these empty
+# directories are needed by a project (e.g., by the build procedure).
+# If so, the following option can be sent to True to cause empty
+# directories to be created in the SVN repository when their parent
+# directory is created and removed when their parent directory is
+# removed.  (This is more likely to be useful than the behavior of CVS
+# when its "-P" option is not used.)
+ctx.include_empty_directories = False
+
 # Normally, cvs2svn deletes a directory once the last file has been
 # deleted from it (a la "cvs -P").  Change the following line to False
 # if you would like such directories to be retained in the Subversion

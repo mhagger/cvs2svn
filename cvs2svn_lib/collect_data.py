@@ -60,6 +60,7 @@ from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.cvs_path import CVSPath
+from cvs2svn_lib.cvs_path import CVSFile
 from cvs2svn_lib.cvs_path import CVSDirectory
 from cvs2svn_lib.symbol import Symbol
 from cvs2svn_lib.symbol import Trunk
@@ -1186,6 +1187,24 @@ class CollectData:
     self.num_files += pdc.num_files
     Log().verbose('Processed', self.num_files, 'files')
 
+  def _register_empty_subdirectories(self):
+    """Set the CVSDirectory.empty_subdirectory_id members."""
+
+    directories = set(
+        path
+        for path in Ctx()._cvs_path_db.itervalues()
+        if isinstance(path, CVSDirectory)
+        )
+    for path in Ctx()._cvs_path_db.itervalues():
+      if isinstance(path, CVSFile):
+        directory = path.parent_directory
+        while directory is not None and directory in directories:
+          directories.remove(directory)
+          directory = directory.parent_directory
+    for directory in directories:
+      if directory.parent_directory is not None:
+        directory.parent_directory.empty_subdirectory_ids.append(directory.id)
+
   def _set_cvs_path_ordinals(self):
     cvs_files = list(Ctx()._cvs_path_db.itervalues())
     cvs_files.sort(CVSPath.slow_compare)
@@ -1207,6 +1226,7 @@ class CollectData:
     self.metadata_db = None
     self._cvs_item_store.close()
     self._cvs_item_store = None
+    self._register_empty_subdirectories()
     self._set_cvs_path_ordinals()
     self.revision_recorder = None
     retval = self.fatal_errors

@@ -163,14 +163,21 @@ class CVSDirectory(CVSPath):
     ordinal -- (int) the order that this instance should be sorted
         relative to other CVSPath instances.  See CVSPath.ordinal.
 
+    empty_subdirectory_ids -- (list of int) a list of the ids of any
+        direct subdirectories that are empty.  (An empty directory is
+        defined to be a directory that doesn't contain any RCS files
+        or non-empty subdirectories.
+
   """
 
-  __slots__ = []
+  __slots__ = ['empty_subdirectory_ids']
 
   def __init__(self, id, project, parent_directory, basename):
     """Initialize a new CVSDirectory object."""
 
     CVSPath.__init__(self, id, project, parent_directory, basename)
+    # This member is filled in by CollectData.close():
+    self.empty_subdirectory_ids = []
 
   def get_filename(self):
     """Return the filesystem path to this CVSPath in the CVS repository."""
@@ -185,10 +192,17 @@ class CVSDirectory(CVSPath):
   filename = property(get_filename)
 
   def __getstate__(self):
-    return CVSPath.__getstate__(self)
+    return (
+        CVSPath.__getstate__(self),
+        self.empty_subdirectory_ids,
+        )
 
   def __setstate__(self, state):
-    CVSPath.__setstate__(self, state)
+    (
+        cvs_path_state,
+        self.empty_subdirectory_ids,
+        ) = state
+    CVSPath.__setstate__(self, cvs_path_state)
 
   def __str__(self):
     """For convenience only.  The format is subject to change at any time."""

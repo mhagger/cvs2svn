@@ -138,7 +138,10 @@ class _RepositoryWalker(object):
     """Generate CVSFiles for the files in Attic directory CVS_DIRECTORY.
 
     Also yield CVS_DIRECTORY if any files are being retained in the
-    Attic."""
+    Attic.
+
+    Silently ignore subdirectories named '.svn', but emit a warning if
+    any other directories are found within the Attic directory."""
 
     retained_attic_files = []
 
@@ -147,7 +150,14 @@ class _RepositoryWalker(object):
     for fname in fnames:
       pathname = os.path.join(cvs_directory.filename, fname)
       if os.path.isdir(pathname):
-        Log().warn("Directory %s found within Attic; ignoring" % (pathname,))
+        if fname == '.svn':
+          Log().debug(
+              "Directory %s found within Attic; ignoring" % (pathname,)
+              )
+        else:
+          Log().warn(
+              "Directory %s found within Attic; ignoring" % (pathname,)
+              )
       elif fname.endswith(',v'):
         cvs_file = self._get_attic_file(cvs_directory, fname)
         if cvs_file.parent_directory == cvs_directory:
@@ -172,7 +182,11 @@ class _RepositoryWalker(object):
     Yield CVSDirectory and CVSFile instances as they are found.
     Process directories recursively, including Attic directories.
     Also look for conflicts between the filenames that will result
-    from files, attic files, and subdirectories."""
+    from files, attic files, and subdirectories.
+
+    Silently ignore subdirectories named '.svn', as these don't make
+    much sense in a real conversion, but they are present in our test
+    suite."""
 
     yield cvs_directory
 
@@ -192,6 +206,8 @@ class _RepositoryWalker(object):
       if os.path.isdir(pathname):
         if fname == 'Attic':
           attic_dir = fname
+        elif fname == '.svn':
+          Log().debug("Directory %s ignored" % (pathname,))
         else:
           dirs.append(fname)
       elif fname.endswith(',v'):

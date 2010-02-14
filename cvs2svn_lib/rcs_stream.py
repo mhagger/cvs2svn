@@ -37,9 +37,18 @@ class MalformedDeltaException(Exception):
 
   pass
 
+
 class RCSStream:
-  """This class represents a single file object to which RCS deltas can be
-  applied in various ways."""
+  """This class allows RCS deltas to be accumulated.
+
+  This file holds the contents of a single RCS version in memory as an
+  array of lines.  It is able to apply an RCS delta to the version,
+  thereby transforming the stored text into the following RCS version.
+  While doing so, it can optionally also return the inverted delta.
+
+  This class holds revisions in memory.  It uses temporary memory
+  space of a few times the size of a single revision plus a few times
+  the size of a single delta."""
 
   ad_command = re.compile(r'^([ad])(\d+)\s(\d+)\n$')
   a_command = re.compile(r'^a(\d+)\s(\d+)\n$')

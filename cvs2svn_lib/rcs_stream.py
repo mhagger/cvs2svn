@@ -94,7 +94,8 @@ class RCSStream:
           raise MalformedDeltaException('Insertion before last edit')
         if start > len(self._lines):
           raise MalformedDeltaException('Insertion past file end')
-        new_lines += self._lines[ooff:start] + diffs[i:i + count]
+        new_lines += self._lines[ooff:start]
+        new_lines += diffs[i:i + count]
         ooff = start
         i += count
     self._lines = new_lines + self._lines[ooff:]
@@ -136,7 +137,8 @@ class RCSStream:
           inverse_diff.write("d%d %d\n" % (start + 1 + adjust, count2,))
           inverse_diff.write("a%d %d\n" % (start + adjust + count2, count,))
           inverse_diff.writelines(self._lines[start:start + count])
-          new_lines += self._lines[ooff:start] + diffs[i:i + count2]
+          new_lines += self._lines[ooff:start]
+          new_lines += diffs[i:i + count2]
           adjust += count2 - count
           i += count2
         else:
@@ -151,7 +153,8 @@ class RCSStream:
         if start > len(self._lines):
           raise MalformedDeltaException('Insertion past file end')
         inverse_diff.write("d%d %d\n" % (start + 1 + adjust, count))
-        new_lines += self._lines[ooff:start] + diffs[i:i + count]
+        new_lines += self._lines[ooff:start]
+        new_lines += diffs[i:i + count]
         ooff = start
         adjust += count
         i += count

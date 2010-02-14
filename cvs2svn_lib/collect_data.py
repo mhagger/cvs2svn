@@ -98,14 +98,6 @@ _branch_revision_re = re.compile(r'''
     ''', re.VERBOSE)
 
 
-def rev_tuple(rev):
-  """Return a tuple of integers corresponding to revision number REV.
-
-  For example, if REV is '1.2.3.4', then return (1,2,3,4)."""
-
-  return tuple([int(x) for x in rev.split('.')])
-
-
 def is_trunk_revision(rev):
   """Return True iff REV is a trunk revision.
 

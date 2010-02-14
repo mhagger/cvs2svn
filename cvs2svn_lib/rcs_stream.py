@@ -69,7 +69,11 @@ class RCSStream:
     """Apply the RCS diff DIFF to the current file content."""
 
     new_lines = []
+
+    # The number of lines from the old version that have been
+    # processed so far:
     ooff = 0
+
     diffs = msplit(diff)
     i = 0
     while i < len(diffs):
@@ -87,16 +91,22 @@ class RCSStream:
           raise MalformedDeltaException('Deletion past file end')
         if start + count > len(self._lines):
           raise MalformedDeltaException('Deletion beyond file end')
+        # Copy the lines before the chunk to be deleted:
         new_lines += self._lines[ooff:start]
-        ooff = start + count
+        ooff += start - ooff
+        # Now skip over the lines to be deleted without appending them
+        # to the output:
+        ooff += count
       else: # "a" - Add command
-        if start < ooff: # Also catches same place
+        if start < ooff:
           raise MalformedDeltaException('Insertion before last edit')
         if start > len(self._lines):
           raise MalformedDeltaException('Insertion past file end')
+        # Copy the lines before the chunk to be added:
         new_lines += self._lines[ooff:start]
+        ooff += start - ooff
+        # Now add the lines from the diff:
         new_lines += diffs[i:i + count]
-        ooff = start
         i += count
     self._lines = new_lines + self._lines[ooff:]
 
@@ -105,7 +115,11 @@ class RCSStream:
     generate an RCS diff suitable for reverting the change."""
 
     new_lines = []
+
+    # The number of lines from the old version that have been
+    # processed so far:
     ooff = 0
+
     diffs = msplit(diff)
     inverse_diff = StringIO()
     adjust = 0
@@ -137,25 +151,37 @@ class RCSStream:
           inverse_diff.write("d%d %d\n" % (start + 1 + adjust, count2,))
           inverse_diff.write("a%d %d\n" % (start + adjust + count2, count,))
           inverse_diff.writelines(self._lines[start:start + count])
+          # Copy over the lines that come before the substitution:
           new_lines += self._lines[ooff:start]
+          ooff += start - ooff
+          # Now add the lines from the diff:
           new_lines += diffs[i:i + count2]
           adjust += count2 - count
           i += count2
+          # Now skip over the lines to be deleted without appending
+          # them to the output:
+          ooff += count
         else:
           inverse_diff.write("a%d %d\n" % (start + adjust, count))
           inverse_diff.writelines(self._lines[start:start + count])
+          # Copy the lines before the chunk to be deleted:
           new_lines += self._lines[ooff:start]
+          ooff += start - ooff
           adjust -= count
-        ooff = start + count
+          # Now skip over the lines to be deleted without appending them
+          # to the output:
+          ooff += count
       else: # "a" - Add command
         if start < ooff: # Also catches same place
           raise MalformedDeltaException('Insertion before last edit')
         if start > len(self._lines):
           raise MalformedDeltaException('Insertion past file end')
         inverse_diff.write("d%d %d\n" % (start + 1 + adjust, count))
+        # Copy the lines before the chunk to be added:
         new_lines += self._lines[ooff:start]
+        ooff += start - ooff
+        # Now add the lines from the diff:
         new_lines += diffs[i:i + count]
-        ooff = start
         adjust += count
         i += count
     self._lines = new_lines + self._lines[ooff:]

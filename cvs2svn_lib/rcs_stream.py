@@ -69,7 +69,7 @@ def generate_blocks(numlines, diff):
 
   # The number of lines from the old version that have been processed
   # so far:
-  ooff = 0
+  input_pos = 0
 
   while i < len(diff):
     m = ed_command_re.match(diff[i])
@@ -83,37 +83,37 @@ def generate_blocks(numlines, diff):
       # "d" - Delete command
       start -= 1
 
-      if start < ooff:
+      if start < input_pos:
         raise MalformedDeltaException('Deletion before last edit')
       if start > numlines:
         raise MalformedDeltaException('Deletion past file end')
       if start + count > numlines:
         raise MalformedDeltaException('Deletion beyond file end')
 
-      if ooff < start:
-        yield ('c', ooff, start - ooff, [])
+      if input_pos < start:
+        yield ('c', input_pos, start - input_pos, [])
       yield (command, start, count, [])
-      ooff = start + count
+      input_pos = start + count
     else:
       # "a" - Add command
 
-      if start < ooff:
+      if start < input_pos:
         raise MalformedDeltaException('Insertion before last edit')
       if start > numlines:
         raise MalformedDeltaException('Insertion past file end')
       if i + count > len(diff):
         raise MalformedDeltaException('Add block truncated')
 
-      if ooff < start:
-        yield ('c', ooff, start - ooff, [])
-        ooff = start
+      if input_pos < start:
+        yield ('c', input_pos, start - input_pos, [])
+        input_pos = start
       yield (command, start, count, diff[i:i + count])
       i += count
 
   # Pass along the part of the input that follows all of the delta
   # blocks:
-  if ooff < numlines:
-    yield ('c', ooff, numlines - ooff, [])
+  if input_pos < numlines:
+    yield ('c', input_pos, numlines - input_pos, [])
 
 
 class RCSStream:

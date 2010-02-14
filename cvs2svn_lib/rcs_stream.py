@@ -17,7 +17,9 @@
 """This module processes RCS diffs (deltas)."""
 
 
+from cStringIO import StringIO
 import re
+
 
 def msplit(s):
   """Split S into an array of lines.
@@ -104,7 +106,7 @@ class RCSStream:
     new_lines = []
     ooff = 0
     diffs = msplit(diff)
-    ndiffs = []
+    inverse_diff = StringIO()
     adjust = 0
     i = 0
     while i < len(diffs):
@@ -131,15 +133,15 @@ class RCSStream:
         if amatch and int(amatch.group(1)) == sl + cn:
           cn2 = int(amatch.group(2))
           i += 1
-          ndiffs += ["d%d %d\na%d %d\n" % \
-                        (sl + 1 + adjust, cn2, sl + adjust + cn2, cn)] + \
-                    self._lines[sl:sl + cn]
+          inverse_diff.write("d%d %d\n" % (sl + 1 + adjust, cn2,))
+          inverse_diff.write("a%d %d\n" % (sl + adjust + cn2, cn,))
+          inverse_diff.writelines(self._lines[sl:sl + cn])
           new_lines += self._lines[ooff:sl] + diffs[i:i + cn2]
           adjust += cn2 - cn
           i += cn2
         else:
-          ndiffs += ["a%d %d\n" % (sl + adjust, cn)] + \
-                    self._lines[sl:sl + cn]
+          inverse_diff.write("a%d %d\n" % (sl + adjust, cn))
+          inverse_diff.writelines(self._lines[sl:sl + cn])
           new_lines += self._lines[ooff:sl]
           adjust -= cn
         ooff = sl + cn
@@ -148,11 +150,12 @@ class RCSStream:
           raise MalformedDeltaException('Insertion before last edit')
         if sl > len(self._lines):
           raise MalformedDeltaException('Insertion past file end')
-        ndiffs += ["d%d %d\n" % (sl + 1 + adjust, cn)]
+        inverse_diff.write("d%d %d\n" % (sl + 1 + adjust, cn))
         new_lines += self._lines[ooff:sl] + diffs[i:i + cn]
         ooff = sl
         adjust += cn
         i += cn
     self._lines = new_lines + self._lines[ooff:]
-    return "".join(ndiffs)
+    return inverse_diff.getvalue()
+
 

@@ -72,7 +72,6 @@
 
 
 # Import some modules that are used in setting the options:
-import re
 
 from cvs2svn_lib import config
 from cvs2svn_lib import changeset_database

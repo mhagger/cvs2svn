@@ -66,7 +66,7 @@ class RCSStream:
   def apply_diff(self, diff):
     """Apply the RCS diff DIFF to the current file content."""
 
-    ntexts = []
+    new_lines = []
     ooff = 0
     diffs = msplit(diff)
     i = 0
@@ -85,23 +85,23 @@ class RCSStream:
           raise MalformedDeltaException('Deletion past file end')
         if sl + cn > len(self._lines):
           raise MalformedDeltaException('Deletion beyond file end')
-        ntexts += self._lines[ooff:sl]
+        new_lines += self._lines[ooff:sl]
         ooff = sl + cn
       else: # "a" - Add command
         if sl < ooff: # Also catches same place
           raise MalformedDeltaException('Insertion before last edit')
         if sl > len(self._lines):
           raise MalformedDeltaException('Insertion past file end')
-        ntexts += self._lines[ooff:sl] + diffs[i:i + cn]
+        new_lines += self._lines[ooff:sl] + diffs[i:i + cn]
         ooff = sl
         i += cn
-    self._lines = ntexts + self._lines[ooff:]
+    self._lines = new_lines + self._lines[ooff:]
 
   def invert_diff(self, diff):
     """Apply the RCS diff DIFF to the current file content and simultaneously
     generate an RCS diff suitable for reverting the change."""
 
-    ntexts = []
+    new_lines = []
     ooff = 0
     diffs = msplit(diff)
     ndiffs = []
@@ -134,13 +134,13 @@ class RCSStream:
           ndiffs += ["d%d %d\na%d %d\n" % \
                         (sl + 1 + adjust, cn2, sl + adjust + cn2, cn)] + \
                     self._lines[sl:sl + cn]
-          ntexts += self._lines[ooff:sl] + diffs[i:i + cn2]
+          new_lines += self._lines[ooff:sl] + diffs[i:i + cn2]
           adjust += cn2 - cn
           i += cn2
         else:
           ndiffs += ["a%d %d\n" % (sl + adjust, cn)] + \
                     self._lines[sl:sl + cn]
-          ntexts += self._lines[ooff:sl]
+          new_lines += self._lines[ooff:sl]
           adjust -= cn
         ooff = sl + cn
       else: # "a" - Add command
@@ -149,10 +149,10 @@ class RCSStream:
         if sl > len(self._lines):
           raise MalformedDeltaException('Insertion past file end')
         ndiffs += ["d%d %d\n" % (sl + 1 + adjust, cn)]
-        ntexts += self._lines[ooff:sl] + diffs[i:i + cn]
+        new_lines += self._lines[ooff:sl] + diffs[i:i + cn]
         ooff = sl
         adjust += cn
         i += cn
-    self._lines = ntexts + self._lines[ooff:]
+    self._lines = new_lines + self._lines[ooff:]
     return "".join(ndiffs)
 

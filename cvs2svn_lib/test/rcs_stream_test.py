@@ -38,6 +38,12 @@ from cvs2svn_lib.rcs_stream import RCSStream
 TMPDIR = os.path.join(SRCPATH, 'cvs2svn-tmp')
 
 
+# Do we require that the inverse of an inverse delta is identical to
+# the original delta?  (This is not really required; it would be
+# enough if the deltas were functionally the same.)
+STRICT_INVERSES = True
+
+
 class RCSRecorder(Sink):
   def __init__(self):
     self.texts = {}
@@ -100,7 +106,11 @@ class RCSStreamTestCase(unittest.TestCase):
 
     self.applyTest(self.v2, delta, self.v1)
     self.applyTest(self.v1, invdelta, self.v2)
-    self.applyTest(self.v2, delta2, self.v1)
+
+    if STRICT_INVERSES:
+      self.assertEqual(delta2, delta)
+    elif delta2 != delta:
+      self.applyTest(self.v2, delta2, self.v1)
 
   def tearDown(self):
     shutil.rmtree(os.path.dirname(self.filename))

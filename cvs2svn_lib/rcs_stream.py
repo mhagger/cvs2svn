@@ -47,12 +47,12 @@ class RCSStream:
   def __init__(self, text):
     """Instantiate and initialize the file content with TEXT."""
 
-    self._texts = msplit(text)
+    self._lines = msplit(text)
 
   def get_text(self):
     """Return the current file content."""
 
-    return "".join(self._texts)
+    return "".join(self._lines)
 
   def apply_diff(self, diff):
     """Apply the RCS diff DIFF to the current file content."""
@@ -72,21 +72,21 @@ class RCSStream:
         sl -= 1
         if sl < ooff:
           raise MalformedDeltaException('Deletion before last edit')
-        if sl > len(self._texts):
+        if sl > len(self._lines):
           raise MalformedDeltaException('Deletion past file end')
-        if sl + cn > len(self._texts):
+        if sl + cn > len(self._lines):
           raise MalformedDeltaException('Deletion beyond file end')
-        ntexts += self._texts[ooff:sl]
+        ntexts += self._lines[ooff:sl]
         ooff = sl + cn
       else: # "a" - Add command
         if sl < ooff: # Also catches same place
           raise MalformedDeltaException('Insertion before last edit')
-        if sl > len(self._texts):
+        if sl > len(self._lines):
           raise MalformedDeltaException('Insertion past file end')
-        ntexts += self._texts[ooff:sl] + diffs[i:i + cn]
+        ntexts += self._lines[ooff:sl] + diffs[i:i + cn]
         ooff = sl
         i += cn
-    self._texts = ntexts + self._texts[ooff:]
+    self._lines = ntexts + self._lines[ooff:]
 
   def invert_diff(self, diff):
     """Apply the RCS diff DIFF to the current file content and simultaneously
@@ -109,9 +109,9 @@ class RCSStream:
         sl -= 1
         if sl < ooff:
           raise MalformedDeltaException('Deletion before last edit')
-        if sl > len(self._texts):
+        if sl > len(self._lines):
           raise MalformedDeltaException('Deletion past file end')
-        if sl + cn > len(self._texts):
+        if sl + cn > len(self._lines):
           raise MalformedDeltaException('Deletion beyond file end')
         # Handle substitution explicitly, as add must come after del
         # (last add may end in no newline, so no command can follow).
@@ -124,26 +124,26 @@ class RCSStream:
           i += 1
           ndiffs += ["d%d %d\na%d %d\n" % \
                         (sl + 1 + adjust, cn2, sl + adjust + cn2, cn)] + \
-                    self._texts[sl:sl + cn]
-          ntexts += self._texts[ooff:sl] + diffs[i:i + cn2]
+                    self._lines[sl:sl + cn]
+          ntexts += self._lines[ooff:sl] + diffs[i:i + cn2]
           adjust += cn2 - cn
           i += cn2
         else:
           ndiffs += ["a%d %d\n" % (sl + adjust, cn)] + \
-                    self._texts[sl:sl + cn]
-          ntexts += self._texts[ooff:sl]
+                    self._lines[sl:sl + cn]
+          ntexts += self._lines[ooff:sl]
           adjust -= cn
         ooff = sl + cn
       else: # "a" - Add command
         if sl < ooff: # Also catches same place
           raise MalformedDeltaException('Insertion before last edit')
-        if sl > len(self._texts):
+        if sl > len(self._lines):
           raise MalformedDeltaException('Insertion past file end')
         ndiffs += ["d%d %d\n" % (sl + 1 + adjust, cn)]
-        ntexts += self._texts[ooff:sl] + diffs[i:i + cn]
+        ntexts += self._lines[ooff:sl] + diffs[i:i + cn]
         ooff = sl
         adjust += cn
         i += cn
-    self._texts = ntexts + self._texts[ooff:]
+    self._lines = ntexts + self._lines[ooff:]
     return "".join(ndiffs)
 

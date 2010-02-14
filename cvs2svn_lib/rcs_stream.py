@@ -40,6 +40,37 @@ class MalformedDeltaException(Exception):
   pass
 
 
+ed_command_re = re.compile(r'^([ad])(\d+)\s(\d+)\n$')
+
+
+def generate_edit_commands(diff):
+  """Generate ed commands from a RCS diff block.
+
+  DIFF is a string holding an entire RCS file delta.  Generate a tuple
+  (COMMAND, START, COUNT, [LINE,...]) for each ed command contained in
+  DIFF.  START is expressed as a zero-offset line number within the
+  previous revision."""
+
+  diff = msplit(diff)
+  i = 0
+  while i < len(diff):
+    m = ed_command_re.match(diff[i])
+    if not m:
+      raise MalformedDeltaException('Bad ed command')
+    i += 1
+    command = m.group(1)
+    start = int(m.group(2))
+    count = int(m.group(3))
+    if command == 'd': # "d" - Delete command
+      yield (command, start - 1, count, [])
+    else:
+      # "a" - Add command
+      if i + count > len(diff):
+        raise MalformedDeltaException('Add block truncated')
+      yield (command, start, count, diff[i:i + count])
+      i += count
+
+
 class RCSStream:
   """This class allows RCS deltas to be accumulated.
 
@@ -51,9 +82,6 @@ class RCSStream:
   This class holds revisions in memory.  It uses temporary memory
   space of a few times the size of a single revision plus a few times
   the size of a single delta."""
-
-  ad_command = re.compile(r'^([ad])(\d+)\s(\d+)\n$')
-  a_command = re.compile(r'^a(\d+)\s(\d+)\n$')
 
   def __init__(self, text):
     """Instantiate and initialize the file content with TEXT."""
@@ -74,17 +102,8 @@ class RCSStream:
     # processed so far:
     ooff = 0
 
-    diffs = msplit(diff)
-    i = 0
-    while i < len(diffs):
-      admatch = self.ad_command.match(diffs[i])
-      if not admatch:
-        raise MalformedDeltaException('Bad ed command')
-      i += 1
-      start = int(admatch.group(2))
-      count = int(admatch.group(3))
-      if admatch.group(1) == 'd': # "d" - Delete command
-        start -= 1
+    for (command, start, count, lines) in generate_edit_commands(diff):
+      if command == 'd':
         if start < ooff:
           raise MalformedDeltaException('Deletion before last edit')
         if start > len(self._lines):
@@ -97,7 +116,7 @@ class RCSStream:
         # Now skip over the lines to be deleted without appending them
         # to the output:
         ooff += count
-      else: # "a" - Add command
+      else:
         if start < ooff:
           raise MalformedDeltaException('Insertion before last edit')
         if start > len(self._lines):
@@ -106,8 +125,8 @@ class RCSStream:
         new_lines += self._lines[ooff:start]
         ooff += start - ooff
         # Now add the lines from the diff:
-        new_lines += diffs[i:i + count]
-        i += count
+        new_lines += lines
+
     self._lines = new_lines + self._lines[ooff:]
 
   def invert_diff(self, diff):
@@ -120,19 +139,14 @@ class RCSStream:
     # processed so far:
     ooff = 0
 
-    diffs = msplit(diff)
     inverse_diff = StringIO()
     adjust = 0
+    edit_commands = list(generate_edit_commands(diff))
     i = 0
-    while i < len(diffs):
-      admatch = self.ad_command.match(diffs[i])
-      if not admatch:
-        raise MalformedDeltaException('Bad ed command')
+    while i < len(edit_commands):
+      (command, start, count, lines) = edit_commands[i]
       i += 1
-      start = int(admatch.group(2))
-      count = int(admatch.group(3))
-      if admatch.group(1) == 'd': # "d" - Delete command
-        start -= 1
+      if command == 'd':
         if start < ooff:
           raise MalformedDeltaException('Deletion before last edit')
         if start > len(self._lines):
@@ -141,12 +155,10 @@ class RCSStream:
           raise MalformedDeltaException('Deletion beyond file end')
         # Handle substitution explicitly, as add must come after del
         # (last add may end in no newline, so no command can follow).
-        if i < len(diffs):
-          amatch = self.a_command.match(diffs[i])
-        else:
-          amatch = None
-        if amatch and int(amatch.group(1)) == start + count:
-          count2 = int(amatch.group(2))
+        if i < len(edit_commands) \
+               and edit_commands[i][0] == 'a' \
+               and edit_commands[i][1] == start + count:
+          (command2, start2, count2, lines2) = edit_commands[i]
           i += 1
           inverse_diff.write("d%d %d\n" % (start + 1 + adjust, count2,))
           inverse_diff.write("a%d %d\n" % (start + adjust + count2, count,))
@@ -155,9 +167,8 @@ class RCSStream:
           new_lines += self._lines[ooff:start]
           ooff += start - ooff
           # Now add the lines from the diff:
-          new_lines += diffs[i:i + count2]
+          new_lines += lines2
           adjust += count2 - count
-          i += count2
           # Now skip over the lines to be deleted without appending
           # them to the output:
           ooff += count
@@ -171,8 +182,8 @@ class RCSStream:
           # Now skip over the lines to be deleted without appending them
           # to the output:
           ooff += count
-      else: # "a" - Add command
-        if start < ooff: # Also catches same place
+      else:
+        if start < ooff:
           raise MalformedDeltaException('Insertion before last edit')
         if start > len(self._lines):
           raise MalformedDeltaException('Insertion past file end')
@@ -181,9 +192,8 @@ class RCSStream:
         new_lines += self._lines[ooff:start]
         ooff += start - ooff
         # Now add the lines from the diff:
-        new_lines += diffs[i:i + count]
+        new_lines += lines
         adjust += count
-        i += count
     self._lines = new_lines + self._lines[ooff:]
     return inverse_diff.getvalue()
 

@@ -43,16 +43,34 @@ class MalformedDeltaException(Exception):
 ed_command_re = re.compile(r'^([ad])(\d+)\s(\d+)\n$')
 
 
-def generate_edit_commands(diff):
-  """Generate ed commands from a RCS diff block.
+def generate_blocks(numlines, diff):
+  """Generate edit blocks from an RCS diff block.
 
-  DIFF is a string holding an entire RCS file delta.  Generate a tuple
-  (COMMAND, START, COUNT, [LINE,...]) for each ed command contained in
-  DIFF.  START is expressed as a zero-offset line number within the
-  previous revision."""
+  NUMLINES is the number of lines in the old revision; DIFF is a
+  string holding an entire RCS file delta.  Generate a tuple (COMMAND,
+  START, COUNT, [LINE,...]) for each block implied by DIFF.  Blocks
+  consist of ed commands and copy blocks:
+
+      ('a', START, COUNT, LINES) : add LINES at the current position
+          in the output.  START is the logical position in the input
+          revision at which the insertion ends up.
+
+      ('d', START, COUNT, []) : ignore the COUNT lines starting at
+          line START in the input.
+
+      ('c', START, COUNT, []) : copy COUNT lines, starting at line
+          START in the input, to the output at the current position.
+
+  START is expressed as a zero-offset line number within the
+  input revision."""
 
   diff = msplit(diff)
   i = 0
+
+  # The number of lines from the old version that have been processed
+  # so far:
+  ooff = 0
+
   while i < len(diff):
     m = ed_command_re.match(diff[i])
     if not m:
@@ -61,14 +79,41 @@ def generate_edit_commands(diff):
     command = m.group(1)
     start = int(m.group(2))
     count = int(m.group(3))
-    if command == 'd': # "d" - Delete command
-      yield (command, start - 1, count, [])
+    if command == 'd':
+      # "d" - Delete command
+      start -= 1
+
+      if start < ooff:
+        raise MalformedDeltaException('Deletion before last edit')
+      if start > numlines:
+        raise MalformedDeltaException('Deletion past file end')
+      if start + count > numlines:
+        raise MalformedDeltaException('Deletion beyond file end')
+
+      if ooff < start:
+        yield ('c', ooff, start - ooff, [])
+      yield (command, start, count, [])
+      ooff = start + count
     else:
       # "a" - Add command
+
+      if start < ooff:
+        raise MalformedDeltaException('Insertion before last edit')
+      if start > numlines:
+        raise MalformedDeltaException('Insertion past file end')
       if i + count > len(diff):
         raise MalformedDeltaException('Add block truncated')
+
+      if ooff < start:
+        yield ('c', ooff, start - ooff, [])
+        ooff = start
       yield (command, start, count, diff[i:i + count])
       i += count
+
+  # Pass along the part of the input that follows all of the delta
+  # blocks:
+  if ooff < numlines:
+    yield ('c', ooff, numlines - ooff, [])
 
 
 class RCSStream:
@@ -98,36 +143,16 @@ class RCSStream:
 
     new_lines = []
 
-    # The number of lines from the old version that have been
-    # processed so far:
-    ooff = 0
-
-    for (command, start, count, lines) in generate_edit_commands(diff):
-      if command == 'd':
-        if start < ooff:
-          raise MalformedDeltaException('Deletion before last edit')
-        if start > len(self._lines):
-          raise MalformedDeltaException('Deletion past file end')
-        if start + count > len(self._lines):
-          raise MalformedDeltaException('Deletion beyond file end')
-        # Copy the lines before the chunk to be deleted:
-        new_lines += self._lines[ooff:start]
-        ooff += start - ooff
-        # Now skip over the lines to be deleted without appending them
-        # to the output:
-        ooff += count
+    for (command, start, count, lines) \
+            in generate_blocks(len(self._lines), diff):
+      if command == 'c':
+        new_lines += self._lines[start:start + count]
+      elif command == 'd':
+        pass
       else:
-        if start < ooff:
-          raise MalformedDeltaException('Insertion before last edit')
-        if start > len(self._lines):
-          raise MalformedDeltaException('Insertion past file end')
-        # Copy the lines before the chunk to be added:
-        new_lines += self._lines[ooff:start]
-        ooff += start - ooff
-        # Now add the lines from the diff:
         new_lines += lines
 
-    self._lines = new_lines + self._lines[ooff:]
+    self._lines = new_lines
 
   def invert_diff(self, diff):
     """Apply the RCS diff DIFF to the current file content and simultaneously
@@ -135,66 +160,39 @@ class RCSStream:
 
     new_lines = []
 
-    # The number of lines from the old version that have been
-    # processed so far:
-    ooff = 0
-
     inverse_diff = StringIO()
     adjust = 0
-    edit_commands = list(generate_edit_commands(diff))
+    edit_commands = list(generate_blocks(len(self._lines), diff))
     i = 0
     while i < len(edit_commands):
       (command, start, count, lines) = edit_commands[i]
       i += 1
-      if command == 'd':
-        if start < ooff:
-          raise MalformedDeltaException('Deletion before last edit')
-        if start > len(self._lines):
-          raise MalformedDeltaException('Deletion past file end')
-        if start + count > len(self._lines):
-          raise MalformedDeltaException('Deletion beyond file end')
+      if command == 'c':
+        new_lines += self._lines[start:start + count]
+      elif command == 'd':
         # Handle substitution explicitly, as add must come after del
         # (last add may end in no newline, so no command can follow).
-        if i < len(edit_commands) \
-               and edit_commands[i][0] == 'a' \
-               and edit_commands[i][1] == start + count:
+        if i < len(edit_commands) and edit_commands[i][0] == 'a':
           (command2, start2, count2, lines2) = edit_commands[i]
           i += 1
           inverse_diff.write("d%d %d\n" % (start + 1 + adjust, count2,))
           inverse_diff.write("a%d %d\n" % (start + adjust + count2, count,))
           inverse_diff.writelines(self._lines[start:start + count])
-          # Copy over the lines that come before the substitution:
-          new_lines += self._lines[ooff:start]
-          ooff += start - ooff
           # Now add the lines from the diff:
           new_lines += lines2
           adjust += count2 - count
-          # Now skip over the lines to be deleted without appending
-          # them to the output:
-          ooff += count
         else:
           inverse_diff.write("a%d %d\n" % (start + adjust, count))
           inverse_diff.writelines(self._lines[start:start + count])
-          # Copy the lines before the chunk to be deleted:
-          new_lines += self._lines[ooff:start]
-          ooff += start - ooff
           adjust -= count
-          # Now skip over the lines to be deleted without appending them
-          # to the output:
-          ooff += count
       else:
-        if start < ooff:
-          raise MalformedDeltaException('Insertion before last edit')
-        if start > len(self._lines):
-          raise MalformedDeltaException('Insertion past file end')
         inverse_diff.write("d%d %d\n" % (start + 1 + adjust, count))
-        # Copy the lines before the chunk to be added:
-        new_lines += self._lines[ooff:start]
-        ooff += start - ooff
-        # Now add the lines from the diff:
+        # Add the lines from the diff:
         new_lines += lines
         adjust += count
-    self._lines = new_lines + self._lines[ooff:]
+
+    self._lines = new_lines
+
     return inverse_diff.getvalue()
 
 

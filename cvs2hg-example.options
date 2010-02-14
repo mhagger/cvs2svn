@@ -78,6 +78,7 @@
 
 
 # Import some modules that are used in setting the options:
+import os
 
 from cvs2svn_lib import config
 from cvs2svn_lib import changeset_database
@@ -472,7 +473,7 @@ author_transforms={
 ctx.output_option = GitOutputOption(
     # The file in which to write the "hg fastimport" stream that
     # contains the changesets and branch/tag information:
-    'cvs2svn-tmp/hg-dump.dat',
+    os.path.join(ctx.tmpdir, 'hg-dump.dat'),
 
     # Write the file contents inline in the "hg fastimport" stream,
     # rather than using a separate blobs file (which "hg fastimport"

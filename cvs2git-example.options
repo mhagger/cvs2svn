@@ -72,6 +72,7 @@
 
 
 # Import some modules that are used in setting the options:
+import os
 
 from cvs2svn_lib import config
 from cvs2svn_lib import changeset_database
@@ -153,7 +154,7 @@ ctx.revision_recorder = SimpleFulltextRevisionRecorderAdapter(
 
     # The file in which to write the git-fast-import stream that
     # contains the file revision contents:
-    GitRevisionRecorder('cvs2svn-tmp/git-blob.dat'),
+    GitRevisionRecorder(os.path.join(ctx.tmpdir, 'git-blob.dat')),
     )
 
 # cvs2git does not need to keep track of what revisions will be
@@ -502,7 +503,7 @@ author_transforms={
 ctx.output_option = GitOutputOption(
     # The file in which to write the git-fast-import stream that
     # contains the changesets and branch/tag information:
-    'cvs2svn-tmp/git-dump.dat',
+    os.path.join(ctx.tmpdir, 'git-dump.dat'),
 
     # The blobs will be written via the revision recorder, so in
     # OutputPass we only have to emit references to the blob marks:

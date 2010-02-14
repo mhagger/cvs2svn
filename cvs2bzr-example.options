@@ -72,6 +72,7 @@
 
 
 # Import some modules that are used in setting the options:
+import os
 
 from cvs2svn_lib import config
 from cvs2svn_lib import changeset_database
@@ -476,7 +477,7 @@ author_transforms={
 # "fastimport"-format dumpfile rather than to Subversion:
 ctx.output_option = BzrOutputOption(
     # The file in which to write the "fastimport" stream:
-    'cvs2svn-tmp/dumpfile.fi',
+    os.path.join(ctx.tmpdir, 'dumpfile.fi'),
 
     # Write the file contents inline in the "fastimport" stream,
     # rather than using a separate blobs file (which "bzr fastimport"

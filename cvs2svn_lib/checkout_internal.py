@@ -90,7 +90,7 @@ after it has been updated for excluded symbols, symbol
 preferred-parent grafting, etc."""
 
 
-import cStringIO
+from cStringIO import StringIO
 import re
 import time
 
@@ -761,7 +761,7 @@ class InternalRevisionReader(RevisionReader):
       else:
         text = self._kwo_re.sub(_KeywordExpander(cvs_rev), text)
 
-    return cStringIO.StringIO(text)
+    return StringIO(text)
 
   def finish(self):
     self._text_record_db.log_leftovers()

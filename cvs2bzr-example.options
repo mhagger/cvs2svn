@@ -125,6 +125,9 @@ Log().log_level = Log.NORMAL
 #Log().log_level = Log.DEBUG
 
 
+# The directory to use for temporary files:
+ctx.tmpdir = r'cvs2svn-tmp'
+
 # cvs2bzr reads the contents of file revisions during OutputPass, so no
 # revision recorder is needed:
 ctx.revision_recorder = NullRevisionRecorder()
@@ -405,9 +408,6 @@ ctx.svn_property_setters.extend([
     ExecutablePropertySetter(),
 
     ])
-
-# The directory to use for temporary files:
-ctx.tmpdir = r'cvs2svn-tmp'
 
 # To skip the cleanup of temporary files, uncomment the following
 # option:

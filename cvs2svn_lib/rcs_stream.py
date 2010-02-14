@@ -116,6 +116,39 @@ def generate_blocks(numlines, diff):
     yield ('c', input_pos, numlines - input_pos, [])
 
 
+def reorder_blocks(blocks):
+  """Reorder blocks to reverse add,delete pairs.
+
+  If an add block is followed by a delete block, emit the blocks in
+  reverse order.  This is part of inverting diffs, because when the
+  blocks are inverted add,delete pairs will be in the original order
+  again.
+
+  1. This is required because the last line in the last 'add' block
+     might end in a line that is not terminated with a newline, in
+     which case no other command is allowed to follow it.
+
+  2. It is also nice to keep deltas in a canonical order; among other
+     things, this ensures that inverting twice gives back the original
+     delta."""
+
+  i = iter(blocks)
+
+  try:
+    (command1, start1, count1, lines1) = i.next()
+  except StopIteration:
+    return
+
+  for (command2, start2, count2, lines2) in i:
+    if command1 == 'd' and command2 == 'a':
+      yield (command2, start2 - count1, count2, lines2)
+    else:
+      yield (command1, start1, count1, lines1)
+      (command1, start1, count1, lines1) = (command2, start2, count2, lines2)
+
+  yield (command1, start1, count1, lines1)
+
+
 class RCSStream:
   """This class allows RCS deltas to be accumulated.
 
@@ -162,29 +195,14 @@ class RCSStream:
 
     inverse_diff = StringIO()
     adjust = 0
-    edit_commands = list(generate_blocks(len(self._lines), diff))
-    i = 0
-    while i < len(edit_commands):
-      (command, start, count, lines) = edit_commands[i]
-      i += 1
+    for (command, start, count, lines) \
+            in reorder_blocks(generate_blocks(len(self._lines), diff)):
       if command == 'c':
         new_lines += self._lines[start:start + count]
       elif command == 'd':
-        # Handle substitution explicitly, as add must come after del
-        # (last add may end in no newline, so no command can follow).
-        if i < len(edit_commands) and edit_commands[i][0] == 'a':
-          (command2, start2, count2, lines2) = edit_commands[i]
-          i += 1
-          inverse_diff.write("d%d %d\n" % (start + 1 + adjust, count2,))
-          inverse_diff.write("a%d %d\n" % (start + adjust + count2, count,))
-          inverse_diff.writelines(self._lines[start:start + count])
-          # Now add the lines from the diff:
-          new_lines += lines2
-          adjust += count2 - count
-        else:
-          inverse_diff.write("a%d %d\n" % (start + adjust, count))
-          inverse_diff.writelines(self._lines[start:start + count])
-          adjust -= count
+        inverse_diff.write("a%d %d\n" % (start + adjust, count))
+        inverse_diff.writelines(self._lines[start:start + count])
+        adjust -= count
       else:
         inverse_diff.write("d%d %d\n" % (start + 1 + adjust, count))
         # Add the lines from the diff:

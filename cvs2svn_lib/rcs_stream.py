@@ -77,26 +77,26 @@ class RCSStream:
       if not admatch:
         raise MalformedDeltaException('Bad ed command')
       i += 1
-      sl = int(admatch.group(2))
-      cn = int(admatch.group(3))
+      start = int(admatch.group(2))
+      count = int(admatch.group(3))
       if admatch.group(1) == 'd': # "d" - Delete command
-        sl -= 1
-        if sl < ooff:
+        start -= 1
+        if start < ooff:
           raise MalformedDeltaException('Deletion before last edit')
-        if sl > len(self._lines):
+        if start > len(self._lines):
           raise MalformedDeltaException('Deletion past file end')
-        if sl + cn > len(self._lines):
+        if start + count > len(self._lines):
           raise MalformedDeltaException('Deletion beyond file end')
-        new_lines += self._lines[ooff:sl]
-        ooff = sl + cn
+        new_lines += self._lines[ooff:start]
+        ooff = start + count
       else: # "a" - Add command
-        if sl < ooff: # Also catches same place
+        if start < ooff: # Also catches same place
           raise MalformedDeltaException('Insertion before last edit')
-        if sl > len(self._lines):
+        if start > len(self._lines):
           raise MalformedDeltaException('Insertion past file end')
-        new_lines += self._lines[ooff:sl] + diffs[i:i + cn]
-        ooff = sl
-        i += cn
+        new_lines += self._lines[ooff:start] + diffs[i:i + count]
+        ooff = start
+        i += count
     self._lines = new_lines + self._lines[ooff:]
 
   def invert_diff(self, diff):
@@ -114,15 +114,15 @@ class RCSStream:
       if not admatch:
         raise MalformedDeltaException('Bad ed command')
       i += 1
-      sl = int(admatch.group(2))
-      cn = int(admatch.group(3))
+      start = int(admatch.group(2))
+      count = int(admatch.group(3))
       if admatch.group(1) == 'd': # "d" - Delete command
-        sl -= 1
-        if sl < ooff:
+        start -= 1
+        if start < ooff:
           raise MalformedDeltaException('Deletion before last edit')
-        if sl > len(self._lines):
+        if start > len(self._lines):
           raise MalformedDeltaException('Deletion past file end')
-        if sl + cn > len(self._lines):
+        if start + count > len(self._lines):
           raise MalformedDeltaException('Deletion beyond file end')
         # Handle substitution explicitly, as add must come after del
         # (last add may end in no newline, so no command can follow).
@@ -130,31 +130,31 @@ class RCSStream:
           amatch = self.a_command.match(diffs[i])
         else:
           amatch = None
-        if amatch and int(amatch.group(1)) == sl + cn:
-          cn2 = int(amatch.group(2))
+        if amatch and int(amatch.group(1)) == start + count:
+          count2 = int(amatch.group(2))
           i += 1
-          inverse_diff.write("d%d %d\n" % (sl + 1 + adjust, cn2,))
-          inverse_diff.write("a%d %d\n" % (sl + adjust + cn2, cn,))
-          inverse_diff.writelines(self._lines[sl:sl + cn])
-          new_lines += self._lines[ooff:sl] + diffs[i:i + cn2]
-          adjust += cn2 - cn
-          i += cn2
+          inverse_diff.write("d%d %d\n" % (start + 1 + adjust, count2,))
+          inverse_diff.write("a%d %d\n" % (start + adjust + count2, count,))
+          inverse_diff.writelines(self._lines[start:start + count])
+          new_lines += self._lines[ooff:start] + diffs[i:i + count2]
+          adjust += count2 - count
+          i += count2
         else:
-          inverse_diff.write("a%d %d\n" % (sl + adjust, cn))
-          inverse_diff.writelines(self._lines[sl:sl + cn])
-          new_lines += self._lines[ooff:sl]
-          adjust -= cn
-        ooff = sl + cn
+          inverse_diff.write("a%d %d\n" % (start + adjust, count))
+          inverse_diff.writelines(self._lines[start:start + count])
+          new_lines += self._lines[ooff:start]
+          adjust -= count
+        ooff = start + count
       else: # "a" - Add command
-        if sl < ooff: # Also catches same place
+        if start < ooff: # Also catches same place
           raise MalformedDeltaException('Insertion before last edit')
-        if sl > len(self._lines):
+        if start > len(self._lines):
           raise MalformedDeltaException('Insertion past file end')
-        inverse_diff.write("d%d %d\n" % (sl + 1 + adjust, cn))
-        new_lines += self._lines[ooff:sl] + diffs[i:i + cn]
-        ooff = sl
-        adjust += cn
-        i += cn
+        inverse_diff.write("d%d %d\n" % (start + 1 + adjust, count))
+        new_lines += self._lines[ooff:start] + diffs[i:i + count]
+        ooff = start
+        adjust += count
+        i += count
     self._lines = new_lines + self._lines[ooff:]
     return inverse_diff.getvalue()
 

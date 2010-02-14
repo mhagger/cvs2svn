@@ -187,13 +187,16 @@ class RCSStream:
 
     self._lines = new_lines
 
-  def invert_diff(self, diff):
-    """Apply the RCS diff DIFF to the current file content and simultaneously
-    generate an RCS diff suitable for reverting the change."""
+  def apply_and_invert_diff(self, diff, inverse_diff):
+    """Apply DIFF and generate its inverse.
+
+    Apply the RCS diff DIFF to the current file content.
+    Simultaneously generate an RCS diff suitable for reverting the
+    change, and write it to the file-like object INVERSE_DIFF.  Return
+    INVERSE_DIFF."""
 
     new_lines = []
 
-    inverse_diff = StringIO()
     adjust = 0
     for (command, start, count, lines) \
             in reorder_blocks(generate_blocks(len(self._lines), diff)):
@@ -211,6 +214,15 @@ class RCSStream:
 
     self._lines = new_lines
 
+  def invert_diff(self, diff):
+    """Apply DIFF and generate its inverse.
+
+    Apply the RCS diff DIFF to the current file content.
+    Simultaneously generate an RCS diff suitable for reverting the
+    change, and return it as a string."""
+
+    inverse_diff = StringIO()
+    self.apply_and_invert_diff(diff, inverse_diff)
     return inverse_diff.getvalue()
 
 

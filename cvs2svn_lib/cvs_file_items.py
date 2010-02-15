@@ -113,7 +113,7 @@ class LODItems(object):
 
 
 class CVSFileItems(object):
-  def __init__(self, cvs_file, trunk, cvs_items):
+  def __init__(self, cvs_file, trunk, cvs_items, original_ids=None):
     # The file whose data this instance holds.
     self.cvs_file = cvs_file
 
@@ -132,14 +132,26 @@ class CVSFileItems(object):
       if isinstance(cvs_item, CVSRevision) and cvs_item.prev_id is None:
         self.root_ids.add(cvs_item.id)
 
+    # self.original_ids is a dict {cvs_rev.rev : cvs_rev.id} holding
+    # the IDs originally allocated to each CVS revision number.  This
+    # member is stored for the convenience of RevisionManagers.
+    if original_ids is not None:
+      self.original_ids = original_ids
+    else:
+      self.original_ids = {}
+      for cvs_item in cvs_items:
+        if isinstance(cvs_item, CVSRevision):
+          self.original_ids[cvs_item.rev] = cvs_item.id
+
   def __getstate__(self):
-    return (self.cvs_file.id, self.values(),)
+    return (self.cvs_file.id, self.values(), self.original_ids,)
 
   def __setstate__(self, state):
-    (cvs_file_id, cvs_items,) = state
+    (cvs_file_id, cvs_items, original_ids,) = state
     cvs_file = Ctx()._cvs_path_db.get_path(cvs_file_id)
     CVSFileItems.__init__(
         self, cvs_file, cvs_file.project.get_trunk(), cvs_items,
+        original_ids=original_ids,
         )
 
   def add(self, cvs_item):

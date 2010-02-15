@@ -38,7 +38,7 @@ file with a line like:
 
 The following RevisionReaders are supplied with cvs2svn:
 
-    InternalRevisionReader -- an InternalRevisionExcluder records the
+    InternalRevisionReader -- an InternalRevisionCollector records the
         revisions' delta text and their dependencies and discards
         unneeded deltas in FilterSymbolsPass; an
         InternalRevisionReader reconstitutes the revisions' contents

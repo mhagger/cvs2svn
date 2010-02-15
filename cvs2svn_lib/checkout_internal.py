@@ -20,12 +20,9 @@ The idea is to patch up the revisions' contents incrementally, thus
 avoiding the huge number of process spawns and the O(n^2) overhead of
 using 'co' and 'cvs'.
 
-InternalRevisionExcluder saves the RCS deltas and RCS revision trees
+InternalRevisionCollector saves the RCS deltas and RCS revision trees
 to databases.  Notably, deltas from the trunk need to be reversed, as
 CVS stores them so they apply from HEAD backwards.
-
-InternalRevisionExcluder copies the revision trees to a new database,
-omitting excluded branches.
 
 InternalRevisionReader produces the revisions' contents on demand.  To
 generate the text for a typical revision, we need the revision's delta
@@ -110,8 +107,7 @@ from cvs2svn_lib.database import Database
 from cvs2svn_lib.database import IndexedDatabase
 from cvs2svn_lib.rcs_stream import RCSStream
 from cvs2svn_lib.rcs_stream import MalformedDeltaException
-from cvs2svn_lib.revision_manager import RevisionRecorder
-from cvs2svn_lib.revision_manager import RevisionExcluder
+from cvs2svn_lib.revision_manager import RevisionCollector
 from cvs2svn_lib.revision_manager import RevisionReader
 from cvs2svn_lib.serializer import MarshalSerializer
 from cvs2svn_lib.serializer import CompressingSerializer
@@ -560,11 +556,11 @@ class _Sink(cvs2svn_rcsparse.Sink):
     return None
 
 
-class InternalRevisionExcluder(RevisionExcluder):
-  """The RevisionExcluder used by InternalRevisionReader."""
+class InternalRevisionCollector(RevisionCollector):
+  """The RevisionCollector used by InternalRevisionReader."""
 
   def __init__(self, compress):
-    RevisionExcluder.__init__(self)
+    RevisionCollector.__init__(self)
     self._compress = compress
 
   def register_artifacts(self, which_pass):

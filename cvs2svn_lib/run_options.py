@@ -39,7 +39,7 @@ from cvs2svn_lib.revision_manager import NullRevisionRecorder
 from cvs2svn_lib.revision_manager import NullRevisionExcluder
 from cvs2svn_lib.rcs_revision_manager import RCSRevisionReader
 from cvs2svn_lib.cvs_revision_manager import CVSRevisionReader
-from cvs2svn_lib.checkout_internal import InternalRevisionExcluder
+from cvs2svn_lib.checkout_internal import InternalRevisionCollector
 from cvs2svn_lib.checkout_internal import InternalRevisionReader
 from cvs2svn_lib.symbol_strategy import AllBranchRule
 from cvs2svn_lib.symbol_strategy import AllTagRule
@@ -974,7 +974,7 @@ class RunOptions(object):
     else:
       # --use-internal-co is the default:
       ctx.revision_recorder = NullRevisionRecorder()
-      ctx.revision_excluder = InternalRevisionExcluder(compress=True)
+      ctx.revision_excluder = InternalRevisionCollector(compress=True)
       ctx.revision_reader = InternalRevisionReader(compress=True)
 
   def process_symbol_strategy_options(self):

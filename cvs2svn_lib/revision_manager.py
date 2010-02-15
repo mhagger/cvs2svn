@@ -49,14 +49,8 @@ class RevisionRecorder:
 
     pass
 
-  def start_file(self, cvs_file_items):
-    """Prepare to receive data for the file with the specified CVS_FILE_ITEMS.
-
-    CVS_FILE_ITEMS is an instance of CVSFileItems describing the file
-    dependency topology right after the file tree was parsed out of
-    the RCS file.  (I.e., it reflects the original CVS dependency
-    structure.)  Please note that the CVSFileItems instance will be
-    changed later."""
+  def start_file(self, cvs_file):
+    """Prepare to receive data for CVS_FILE."""
 
     pass
 
@@ -74,10 +68,7 @@ class RevisionRecorder:
     """The current file is finished; finish and clean up.
 
     CVS_FILE_ITEMS is a CVSFileItems instance describing the file's
-    items at the end of processing of the RCS file in CollectRevsPass.
-    It may be modified relative to the CVS_FILE_ITEMS instance passed
-    to the corresponding start_file() call (revisions might be
-    deleted, topology changed, etc)."""
+    items at the end of processing of the RCS file in CollectRevsPass."""
 
     pass
 

@@ -837,8 +837,8 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
     self._cvs_file_items.check_link_consistency()
 
-    # Tell the revision recorder about the file dependency tree.
-    self.collect_data.revision_recorder.start_file(self._cvs_file_items)
+    # Warm up the revision recorder:
+    self.collect_data.revision_recorder.start_file(self.cvs_file)
 
   def set_revision_info(self, revision, log, text):
     """This is a callback method declared in Sink."""

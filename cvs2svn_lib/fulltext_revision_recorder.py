@@ -33,7 +33,7 @@ class FulltextRevisionRecorder:
   def start(self):
     pass
 
-  def start_file(self, cvs_file_items):
+  def start_file(self, cvs_file):
     pass
 
   def record_fulltext(self, cvs_rev, log, fulltext):
@@ -69,8 +69,8 @@ class FulltextRevisionRecorderAdapter(RevisionRecorder):
   def start(self):
     self.fulltext_revision_recorder.start()
 
-  def start_file(self, cvs_file_items):
-    self.fulltext_revision_recorder.start_file(cvs_file_items)
+  def start_file(self, cvs_file):
+    self.fulltext_revision_recorder.start_file(cvs_file)
 
   def record_text(self, cvs_rev, log, text):
     """This method should be overwridden.

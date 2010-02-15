@@ -474,7 +474,7 @@ class InternalRevisionRecorder(RevisionRecorder):
         artifact_manager.get_temp_file(config.RCS_TREES_INDEX_TABLE),
         DB_OPEN_NEW, PrimedPickleSerializer(primer))
 
-  def start_file(self, cvs_file_items):
+  def start_file(self, cvs_file):
     # A map from cvs_rev_id to TextRecord instance:
     self.text_record_db = TextRecordDatabase(self._rcs_deltas, NullDatabase())
 

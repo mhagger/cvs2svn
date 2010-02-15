@@ -34,7 +34,7 @@ from cvs2svn_lib.man_writer import ManWriter
 from cvs2svn_lib.revision_manager import NullRevisionCollector
 from cvs2svn_lib.rcs_revision_manager import RCSRevisionReader
 from cvs2svn_lib.cvs_revision_manager import CVSRevisionReader
-from cvs2svn_lib.git_revision_recorder import GitRevisionCollector
+from cvs2svn_lib.git_revision_collector import GitRevisionCollector
 from cvs2svn_lib.git_output_option import GitRevisionMarkWriter
 from cvs2svn_lib.git_output_option import GitOutputOption
 

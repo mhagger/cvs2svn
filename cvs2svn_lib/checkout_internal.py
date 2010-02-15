@@ -100,6 +100,7 @@ from cvs2svn_lib.common import DB_OPEN_READ
 from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import InternalError
+from cvs2svn_lib.common import is_trunk_revision
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.artifact_manager import artifact_manager
@@ -115,6 +116,8 @@ from cvs2svn_lib.revision_manager import RevisionReader
 from cvs2svn_lib.serializer import MarshalSerializer
 from cvs2svn_lib.serializer import CompressingSerializer
 from cvs2svn_lib.serializer import PrimedPickleSerializer
+
+import cvs2svn_rcsparse
 
 
 class TextRecord(object):
@@ -443,6 +446,120 @@ class TextRecordDatabase:
     return '\n'.join(retval)
 
 
+class _Sink(cvs2svn_rcsparse.Sink):
+  def __init__(self, revision_recorder, cvs_file_items):
+    self.revision_recorder = revision_recorder
+    self.cvs_file_items = cvs_file_items
+
+    # A map {rev : base_rev} indicating that the text for rev is
+    # stored in CVS as a delta relative to base_rev.
+    self.base_revisions = {}
+
+    # The revision that is stored with its fulltext in CVS (usually
+    # the oldest revision on trunk):
+    self.head_revision = None
+
+    # The first logical revision on trunk (usually '1.1'):
+    self.revision_1_1 = None
+
+    # Keep track of the revisions whose revision info has been seen so
+    # far (to avoid repeated revision info blocks):
+    self.revisions_seen = set()
+
+  def set_head_revision(self, revision):
+    self.head_revision = revision
+
+  def define_revision(
+        self, revision, timestamp, author, state, branches, next
+        ):
+    if next:
+      self.base_revisions[next] = revision
+    else:
+      if is_trunk_revision(revision):
+        self.revision_1_1 = revision
+
+    for branch in branches:
+      self.base_revisions[branch] = revision
+
+  def set_revision_info(self, revision, log, text):
+    if revision in self.revisions_seen:
+      # One common form of CVS repository corruption is that the
+      # Deltatext block for revision 1.1 appears twice.  CollectData
+      # has already warned about this problem; here we can just ignore
+      # it.
+      return
+    else:
+      self.revisions_seen.add(revision)
+
+    cvs_rev_id = self.cvs_file_items.original_ids[revision]
+    if is_trunk_revision(revision):
+      # On trunk, revisions are encountered in reverse order (1.<N>
+      # ... 1.1) and deltas are inverted.  The first text that we see
+      # is the fulltext for the HEAD revision.  After that, the text
+      # corresponding to revision 1.N is the delta (1.<N+1> ->
+      # 1.<N>)).  We have to invert the deltas here so that we can
+      # read the revisions out in dependency order; that is, for
+      # revision 1.1 we want the fulltext, and for revision 1.<N> we
+      # want the delta (1.<N-1> -> 1.<N>).  This means that we can't
+      # compute the delta for a revision until we see its logical
+      # parent.  When we finally see revision 1.1 (which is recognized
+      # because it doesn't have a parent), we can record the diff (1.1
+      # -> 1.2) for revision 1.2, and also the fulltext for 1.1.
+
+      if revision == self.head_revision:
+        # This is HEAD, as fulltext.  Initialize the RCSStream so
+        # that we can compute deltas backwards in time.
+        self._stream = RCSStream(text)
+        self._stream_revision = revision
+      else:
+        # Any other trunk revision is a backward delta.  Apply the
+        # delta to the RCSStream to mutate it to the contents of this
+        # revision, and also to get the reverse delta, which we store
+        # as the forward delta of our child revision.
+        try:
+          text = self._stream.invert_diff(text)
+        except MalformedDeltaException, e:
+          Log().error(
+              'Malformed RCS delta in %s, revision %s: %s'
+              % (self.cvs_file_items.cvs_file.filename, revision, e)
+              )
+          raise RuntimeError()
+        text_record = DeltaTextRecord(
+            self.cvs_file_items.original_ids[self._stream_revision],
+            cvs_rev_id
+            )
+        self.revision_recorder._writeout(text_record, text)
+        self._stream_revision = revision
+
+      if revision == self.revision_1_1:
+        # This is revision 1.1.  Write its fulltext:
+        text_record = FullTextRecord(cvs_rev_id)
+        self.revision_recorder._writeout(text_record, self._stream.get_text())
+
+        # There will be no more trunk revisions delivered, so free the
+        # RCSStream.
+        del self._stream
+        del self._stream_revision
+
+    else:
+      # On branches, revisions are encountered in logical order
+      # (<BRANCH>.1 ... <BRANCH>.<N>) and the text corresponding to
+      # revision <BRANCH>.<N> is the forward delta (<BRANCH>.<N-1> ->
+      # <BRANCH>.<N>).  That's what we need, so just store it.
+
+      # FIXME: It would be nice to avoid writing out branch deltas
+      # when --trunk-only.  (They will be deleted when finish_file()
+      # is called, but if the delta db is in an IndexedDatabase the
+      # deletions won't actually recover any disk space.)
+      text_record = DeltaTextRecord(
+          cvs_rev_id,
+          self.cvs_file_items.original_ids[self.base_revisions[revision]]
+          )
+      self.revision_recorder._writeout(text_record, text)
+
+    return None
+
+
 class InternalRevisionRecorder(RevisionRecorder):
   """A RevisionRecorder that reconstructs the fulltext internally."""
 
@@ -475,65 +592,9 @@ class InternalRevisionRecorder(RevisionRecorder):
         DB_OPEN_NEW, PrimedPickleSerializer(primer))
 
   def start_file(self, cvs_file):
-    # A map from cvs_rev_id to TextRecord instance:
-    self.text_record_db = TextRecordDatabase(self._rcs_deltas, NullDatabase())
+    pass
 
   def record_text(self, cvs_rev, log, text):
-    if isinstance(cvs_rev.lod, Trunk):
-      # On trunk, revisions are encountered in reverse order (1.<N>
-      # ... 1.1) and deltas are inverted.  The first text that we see
-      # is the fulltext for the HEAD revision.  After that, the text
-      # corresponding to revision 1.N is the delta (1.<N+1> ->
-      # 1.<N>)).  We have to invert the deltas here so that we can
-      # read the revisions out in dependency order; that is, for
-      # revision 1.1 we want the fulltext, and for revision 1.<N> we
-      # want the delta (1.<N-1> -> 1.<N>).  This means that we can't
-      # compute the delta for a revision until we see its logical
-      # parent.  When we finally see revision 1.1 (which is recognized
-      # because it doesn't have a parent), we can record the diff (1.1
-      # -> 1.2) for revision 1.2, and also the fulltext for 1.1.
-
-      if cvs_rev.next_id is None:
-        # This is HEAD, as fulltext.  Initialize the RCSStream so
-        # that we can compute deltas backwards in time.
-        self._stream = RCSStream(text)
-      else:
-        # Any other trunk revision is a backward delta.  Apply the
-        # delta to the RCSStream to mutate it to the contents of this
-        # revision, and also to get the reverse delta, which we store
-        # as the forward delta of our child revision.
-        try:
-          text = self._stream.invert_diff(text)
-        except MalformedDeltaException, (msg):
-          Log().error('Malformed RCS delta in %s, revision %s: %s'
-                      % (cvs_rev.cvs_file.get_filename(), cvs_rev.rev,
-                         msg))
-          raise RuntimeError
-        text_record = DeltaTextRecord(cvs_rev.next_id, cvs_rev.id)
-        self._writeout(text_record, text)
-
-      if cvs_rev.prev_id is None:
-        # This is revision 1.1.  Write its fulltext:
-        text_record = FullTextRecord(cvs_rev.id)
-        self._writeout(text_record, self._stream.get_text())
-
-        # There will be no more trunk revisions delivered, so free the
-        # RCSStream.
-        del self._stream
-
-    else:
-      # On branches, revisions are encountered in logical order
-      # (<BRANCH>.1 ... <BRANCH>.<N>) and the text corresponding to
-      # revision <BRANCH>.<N> is the forward delta (<BRANCH>.<N-1> ->
-      # <BRANCH>.<N>).  That's what we need, so just store it.
-
-      # FIXME: It would be nice to avoid writing out branch deltas
-      # when --trunk-only.  (They will be deleted when finish_file()
-      # is called, but if the delta db is in an IndexedDatabase the
-      # deletions won't actually recover any disk space.)
-      text_record = DeltaTextRecord(cvs_rev.id, cvs_rev.prev_id)
-      self._writeout(text_record, text)
-
     return None
 
   def _writeout(self, text_record, text):
@@ -546,6 +607,14 @@ class InternalRevisionRecorder(RevisionRecorder):
     Compute the initial text record refcounts, discard any records
     that are unneeded, and store the text records for the file to the
     _rcs_trees database."""
+
+    # A map from cvs_rev_id to TextRecord instance:
+    self.text_record_db = TextRecordDatabase(self._rcs_deltas, NullDatabase())
+
+    cvs2svn_rcsparse.parse(
+        open(cvs_file_items.cvs_file.filename, 'rb'),
+        _Sink(self, cvs_file_items),
+        )
 
     self.text_record_db.recompute_refcounts(cvs_file_items)
     self.text_record_db.free_unused()

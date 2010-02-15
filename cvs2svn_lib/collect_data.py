@@ -56,6 +56,7 @@ from cvs2svn_lib import config
 from cvs2svn_lib.common import DB_OPEN_NEW
 from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.common import error_prefix
+from cvs2svn_lib.common import is_trunk_revision
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
@@ -96,15 +97,6 @@ _branch_revision_re = re.compile(r'''
     (\d+)               # And the last digit group
     $
     ''', re.VERBOSE)
-
-
-def is_trunk_revision(rev):
-  """Return True iff REV is a trunk revision.
-
-  REV is a revision number corresponding to a specific revision (i.e.,
-  not a whole branch)."""
-
-  return rev.count('.') == 1
 
 
 def is_branch_revision_number(rev):

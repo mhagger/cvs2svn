@@ -274,6 +274,15 @@ def verify_paths_disjoint(*paths):
     raise PathsNotDisjointException(problems)
 
 
+def is_trunk_revision(rev):
+  """Return True iff REV is a trunk revision.
+
+  REV is a CVS revision number (e.g., '1.6' or '1.6.4.5').  Return
+  True iff the revision is on trunk."""
+
+  return rev.count('.') == 1
+
+
 def format_date(date):
   """Return an svn-compatible date string for DATE (seconds since epoch).
 

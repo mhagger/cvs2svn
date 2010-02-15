@@ -17,6 +17,54 @@
 """This module describes the interface to the CVS repository."""
 
 
+class RevisionCollector(object):
+  """Optionally collect revision information for CVS files."""
+
+  def __init__(self):
+    """Initialize the RevisionCollector.
+
+    Please note that a RevisionCollector is instantiated in every
+    program run, even if the data-collection pass will not be
+    executed.  (This is to allow it to register the artifacts that it
+    produces.)  Therefore, the __init__() method should not do much,
+    and more substantial preparation for use (like actually creating
+    the artifacts) should be done in start()."""
+
+    pass
+
+  def register_artifacts(self, which_pass):
+    """Register artifacts that will be needed while collecting data.
+
+    WHICH_PASS is the pass that will call our callbacks, so it should
+    be used to do the registering (e.g., call
+    WHICH_PASS.register_temp_file() and/or
+    WHICH_PASS.register_temp_file_needed())."""
+
+    pass
+
+  def start(self):
+    """Data will soon start being collected.
+
+    Any non-idempotent initialization should be done here."""
+
+    pass
+
+  def process_file(self, cvs_file_items):
+    """Collect data for the file described by CVS_FILE_ITEMS.
+
+    CVS_FILE_ITEMS has already been transformed into the logical
+    representation of the file's history as it should be output.
+    Therefore it is not necessarily identical to the history as
+    recorded in the RCS file."""
+
+    raise NotImplementedError()
+
+  def finish(self):
+    """All recording is done; clean up."""
+
+    pass
+
+
 class RevisionRecorder:
   """An object that can record text and deltas from CVS files."""
 

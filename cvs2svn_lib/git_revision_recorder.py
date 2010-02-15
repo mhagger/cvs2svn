@@ -62,23 +62,23 @@ class GitRevisionCollector(RevisionCollector):
     self.dump_file.write('data %d\n' % (len(fulltext),))
     self.dump_file.write(fulltext)
     self.dump_file.write('\n')
-    cvs_rev.revision_recorder_token = mark
+    cvs_rev.revision_reader_token = mark
 
   def _process_symbol(self, cvs_symbol, cvs_file_items):
     """Record the original source of CVS_SYMBOL.
 
     Determine the original revision source of CVS_SYMBOL, and store it
-    as the symbol's revision_recorder_token."""
+    as the symbol's revision_reader_token."""
 
     cvs_source = cvs_symbol.get_cvs_revision_source(cvs_file_items)
-    cvs_symbol.revision_recorder_token = cvs_source.revision_recorder_token
+    cvs_symbol.revision_reader_token = cvs_source.revision_reader_token
 
   def process_file(self, cvs_file_items):
     for lod_items in cvs_file_items.iter_lods():
       for cvs_rev in lod_items.cvs_revisions:
         self._process_revision(cvs_rev)
 
-    # Now that all CVSRevisions' revision_recorder_tokens are set,
+    # Now that all CVSRevisions' revision_reader_tokens are set,
     # iterate through symbols and set their tokens to those of their
     # original source revisions:
     for lod_items in cvs_file_items.iter_lods():

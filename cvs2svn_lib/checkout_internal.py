@@ -64,27 +64,16 @@ CheckedOutTextRecord -- Used during OutputPass for a revision that
     started out as a DeltaTextRecord, but has already been retrieved
     (and therefore its fulltext is stored in the checkout database).
 
-While a file is being processed during CollectRevsPass, the fulltext
+While a file is being processed during FilterSymbolsPass, the fulltext
 and deltas are stored to the delta database, and TextRecord instances
 are created to keep track of things.  The reference counts are all
-initialized to zero.
-
-After CollectRevsPass has done any preliminary tree mangling, its
-_FileDataCollector.parse_completed(), method calls
-RevisionRecorder.finish_file(), passing it the CVSFileItems instance
-that describes the revisions in the file.  At this point the reference
-counts for the file's TextRecords are updated: each record referred to
-by a delta has its refcount incremented, and each record that
-corresponds to a non-delete CVSRevision is incremented.  After that,
-any records with refcount==0 are removed.  When one record is removed,
-that can cause another record's reference count to go to zero and be
-removed too, recursively.  When a TextRecord is deleted at this stage,
-its deltatext is also deleted from the delta database.
-
-In FilterSymbolsPass, the exact same procedure (described in the
-previous paragraph) is repeated, but this time using the CVSFileItems
-after it has been updated for excluded symbols, symbol
-preferred-parent grafting, etc."""
+initialized: each record referred to by a delta has its refcount
+incremented, and each record that corresponds to a non-delete
+CVSRevision is incremented.  After that, any records with refcount==0
+are removed.  When one record is removed, that can cause another
+record's reference count to go to zero and be removed too,
+recursively.  When a TextRecord is deleted at this stage, its
+deltatext is also deleted from the delta database."""
 
 
 from cStringIO import StringIO
@@ -443,8 +432,8 @@ class TextRecordDatabase:
 
 
 class _Sink(cvs2svn_rcsparse.Sink):
-  def __init__(self, revision_recorder, cvs_file_items):
-    self.revision_recorder = revision_recorder
+  def __init__(self, revision_collector, cvs_file_items):
+    self.revision_collector = revision_collector
     self.cvs_file_items = cvs_file_items
 
     # A map {rev : base_rev} indicating that the text for rev is
@@ -524,13 +513,15 @@ class _Sink(cvs2svn_rcsparse.Sink):
             self.cvs_file_items.original_ids[self._stream_revision],
             cvs_rev_id
             )
-        self.revision_recorder._writeout(text_record, text)
+        self.revision_collector._writeout(text_record, text)
         self._stream_revision = revision
 
       if revision == self.revision_1_1:
         # This is revision 1.1.  Write its fulltext:
         text_record = FullTextRecord(cvs_rev_id)
-        self.revision_recorder._writeout(text_record, self._stream.get_text())
+        self.revision_collector._writeout(
+            text_record, self._stream.get_text()
+            )
 
         # There will be no more trunk revisions delivered, so free the
         # RCSStream.
@@ -551,7 +542,7 @@ class _Sink(cvs2svn_rcsparse.Sink):
           cvs_rev_id,
           self.cvs_file_items.original_ids[self.base_revisions[revision]]
           )
-      self.revision_recorder._writeout(text_record, text)
+      self.revision_collector._writeout(text_record, text)
 
     return None
 

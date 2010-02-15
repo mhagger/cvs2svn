@@ -18,8 +18,7 @@
 
 This module contains the code used to collect data from the CVS
 repository.  It parses *,v files, recording all useful information
-except for the actual file contents (though even the file contents
-might be recorded by the RevisionRecorder if one is configured).
+except for the actual file contents.
 
 As a *,v file is parsed, the information pertaining to the file is
 accumulated in memory, mostly in _RevisionData, _BranchData, and
@@ -181,10 +180,9 @@ class _RevisionData:
     # revision.
     self.tags_data = []
 
-    # A token that may be returned from
-    # RevisionRecorder.record_text().  It can be used by
+    # A token that may be set by a RevisionCollector, then used by
     # RevisionReader to obtain the text again.
-    self.revision_recorder_token = None
+    self.revision_reader_token = None
 
   def get_first_on_branch_id(self):
     return self.parent_branch_data and self.parent_branch_data.id
@@ -773,7 +771,8 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         rev_data.get_first_on_branch_id(),
         False, None, None,
         tag_ids, branch_ids, branch_commit_ids,
-        rev_data.revision_recorder_token)
+        rev_data.revision_reader_token
+        )
 
   def _get_cvs_revisions(self):
     """Generate the CVSRevisions present in this file."""
@@ -829,9 +828,6 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
     self._cvs_file_items.check_link_consistency()
 
-    # Warm up the revision recorder:
-    self.collect_data.revision_recorder.start_file(self.cvs_file)
-
   def set_revision_info(self, revision, log, text):
     """This is a callback method declared in Sink."""
 
@@ -872,9 +868,6 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     # whether this file might have had a default branch in the past.)
     if revision == '1.1':
       self._file_imported = (log == 'Initial revision\n')
-
-    cvs_rev.revision_recorder_token = \
-        self.collect_data.revision_recorder.record_text(cvs_rev, log, text)
 
   def parse_completed(self):
     """Finish the processing of this file.
@@ -1060,8 +1053,7 @@ class CollectData:
   class by _FileDataCollector instances, one of which is created for
   each file to be parsed."""
 
-  def __init__(self, revision_recorder, stats_keeper):
-    self.revision_recorder = revision_recorder
+  def __init__(self, stats_keeper):
     self._cvs_item_store = NewCVSItemStore(
         artifact_manager.get_temp_file(config.CVS_ITEMS_STORE))
     self.metadata_db = MetadataDatabase(
@@ -1083,8 +1075,6 @@ class CollectData:
 
     # Key generator for Symbols:
     self.symbol_key_generator = KeyGenerator()
-
-    self.revision_recorder.start()
 
   def record_fatal_error(self, err):
     """Record that fatal error ERR was found.
@@ -1138,7 +1128,6 @@ class CollectData:
 
     cvs_file_items.check_link_consistency()
 
-    self.revision_recorder.finish_file(cvs_file_items)
     self.add_cvs_file_items(cvs_file_items)
     self.symbol_stats.register(cvs_file_items)
 
@@ -1201,7 +1190,6 @@ class CollectData:
     Return a list of fatal errors encountered while processing input.
     Each list entry is a string describing one fatal error."""
 
-    self.revision_recorder.finish()
     self.symbol_stats.purge_ghost_symbols()
     self.symbol_stats.close()
     self.symbol_stats = None
@@ -1212,7 +1200,6 @@ class CollectData:
     self._cvs_item_store = None
     self._register_empty_subdirectories()
     self._set_cvs_path_ordinals()
-    self.revision_recorder = None
     retval = self.fatal_errors
     self.fatal_errors = None
     return retval

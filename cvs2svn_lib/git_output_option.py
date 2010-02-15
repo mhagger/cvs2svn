@@ -89,7 +89,7 @@ class GitRevisionMarkWriter(GitRevisionWriter):
 
     self.f.write(
         'M %s :%d %s\n'
-        % (mode, cvs_item.revision_recorder_token,
+        % (mode, cvs_item.revision_reader_token,
            cvs_item.cvs_file.cvs_path,)
         )
 

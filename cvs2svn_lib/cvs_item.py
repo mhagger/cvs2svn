@@ -58,13 +58,13 @@ class CVSItem(object):
   __slots__ = [
       'id',
       'cvs_file',
-      'revision_recorder_token',
+      'revision_reader_token',
       ]
 
-  def __init__(self, id, cvs_file, revision_recorder_token):
+  def __init__(self, id, cvs_file, revision_reader_token):
     self.id = id
     self.cvs_file = cvs_file
-    self.revision_recorder_token = revision_recorder_token
+    self.revision_reader_token = revision_reader_token
 
   def __eq__(self, other):
     return self.id == other.id
@@ -199,8 +199,8 @@ class CVSRevision(CVSItem):
         revision.  This member is set in FilterSymbolsPass; before
         then, it is None.
 
-    revision_recorder_token -- (arbitrary) a token that can be set by
-        RevisionRecorder for the later use of RevisionReader.
+    revision_reader_token -- (arbitrary) a token that can be set by
+        RevisionCollector for the later use of RevisionReader.
 
   """
 
@@ -223,18 +223,20 @@ class CVSRevision(CVSItem):
       'closed_symbols',
       ]
 
-  def __init__(self,
-               id, cvs_file,
-               timestamp, metadata_id,
-               prev_id, next_id,
-               rev, deltatext_exists,
-               lod, first_on_branch_id, ntdbr,
-               ntdbr_prev_id, ntdbr_next_id,
-               tag_ids, branch_ids, branch_commit_ids,
-               revision_recorder_token):
+  def __init__(
+        self,
+        id, cvs_file,
+        timestamp, metadata_id,
+        prev_id, next_id,
+        rev, deltatext_exists,
+        lod, first_on_branch_id, ntdbr,
+        ntdbr_prev_id, ntdbr_next_id,
+        tag_ids, branch_ids, branch_commit_ids,
+        revision_reader_token,
+        ):
     """Initialize a new CVSRevision object."""
 
-    CVSItem.__init__(self, id, cvs_file, revision_recorder_token)
+    CVSItem.__init__(self, id, cvs_file, revision_reader_token)
 
     self.timestamp = timestamp
     self.metadata_id = metadata_id
@@ -279,7 +281,7 @@ class CVSRevision(CVSItem):
         self.ntdbr_prev_id, self.ntdbr_next_id,
         self.tag_ids, self.branch_ids, self.branch_commit_ids,
         self.opened_symbols, self.closed_symbols,
-        self.revision_recorder_token,
+        self.revision_reader_token,
         )
 
   def __setstate__(self, data):
@@ -294,7 +296,7 @@ class CVSRevision(CVSItem):
      self.ntdbr_prev_id, self.ntdbr_next_id,
      self.tag_ids, self.branch_ids, self.branch_commit_ids,
      self.opened_symbols, self.closed_symbols,
-     self.revision_recorder_token) = data
+     self.revision_reader_token) = data
     self.cvs_file = Ctx()._cvs_path_db.get_path(cvs_file_id)
     self.lod = Ctx()._symbol_db.get_symbol(lod_id)
 
@@ -599,8 +601,8 @@ class CVSSymbol(CVSItem):
         CVSRevision, but can be changed to a CVSBranch via parent
         adjustment in FilterSymbolsPass.
 
-    revision_recorder_token -- (arbitrary) a token that can be set by
-        RevisionRecorder for the later use of RevisionReader.
+    revision_reader_token -- (arbitrary) a token that can be set by
+        RevisionCollector for the later use of RevisionReader.
 
   """
 
@@ -612,11 +614,11 @@ class CVSSymbol(CVSItem):
 
   def __init__(
       self, id, cvs_file, symbol, source_lod, source_id,
-      revision_recorder_token
+      revision_reader_token,
       ):
     """Initialize a CVSSymbol object."""
 
-    CVSItem.__init__(self, id, cvs_file, revision_recorder_token)
+    CVSItem.__init__(self, id, cvs_file, revision_reader_token)
 
     self.symbol = symbol
     self.source_lod = source_lod
@@ -677,8 +679,8 @@ class CVSBranch(CVSSymbol):
         branch.  This member is set in FilterSymbolsPass; before then,
         it is None.
 
-    revision_recorder_token -- (arbitrary) a token that can be set by
-        RevisionRecorder for the later use of RevisionReader.
+    revision_reader_token -- (arbitrary) a token that can be set by
+        RevisionCollector for the later use of RevisionReader.
 
   """
 
@@ -693,13 +695,13 @@ class CVSBranch(CVSSymbol):
   def __init__(
       self, id, cvs_file, symbol, branch_number,
       source_lod, source_id, next_id,
-      revision_recorder_token,
+      revision_reader_token,
       ):
     """Initialize a CVSBranch."""
 
     CVSSymbol.__init__(
         self, id, cvs_file, symbol, source_lod, source_id,
-        revision_recorder_token
+        revision_reader_token,
         )
     self.branch_number = branch_number
     self.next_id = next_id
@@ -714,7 +716,7 @@ class CVSBranch(CVSSymbol):
         self.source_lod.id, self.source_id, self.next_id,
         self.tag_ids, self.branch_ids,
         self.opened_symbols,
-        self.revision_recorder_token,
+        self.revision_reader_token,
         )
 
   def __setstate__(self, data):
@@ -724,7 +726,7 @@ class CVSBranch(CVSSymbol):
         source_lod_id, self.source_id, self.next_id,
         self.tag_ids, self.branch_ids,
         self.opened_symbols,
-        self.revision_recorder_token,
+        self.revision_reader_token,
         ) = data
     self.cvs_file = Ctx()._cvs_path_db.get_path(cvs_file_id)
     self.symbol = Ctx()._symbol_db.get_symbol(symbol_id)
@@ -819,8 +821,8 @@ class CVSTag(CVSSymbol):
         be changed to a CVSBranch via parent adjustment in
         FilterSymbolsPass.
 
-    revision_recorder_token -- (arbitrary) a token that can be set by
-        RevisionRecorder for the later use of RevisionReader.
+    revision_reader_token -- (arbitrary) a token that can be set by
+        RevisionCollector for the later use of RevisionReader.
 
   """
 
@@ -828,26 +830,26 @@ class CVSTag(CVSSymbol):
 
   def __init__(
       self, id, cvs_file, symbol, source_lod, source_id,
-      revision_recorder_token,
+      revision_reader_token,
       ):
     """Initialize a CVSTag."""
 
     CVSSymbol.__init__(
         self, id, cvs_file, symbol, source_lod, source_id,
-        revision_recorder_token,
+        revision_reader_token,
         )
 
   def __getstate__(self):
     return (
         self.id, self.cvs_file.id, self.symbol.id,
         self.source_lod.id, self.source_id,
-        self.revision_recorder_token,
+        self.revision_reader_token,
         )
 
   def __setstate__(self, data):
     (
         self.id, cvs_file_id, symbol_id, source_lod_id, self.source_id,
-        self.revision_recorder_token,
+        self.revision_reader_token,
         ) = data
     self.cvs_file = Ctx()._cvs_path_db.get_path(cvs_file_id)
     self.symbol = Ctx()._symbol_db.get_symbol(symbol_id)

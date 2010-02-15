@@ -69,7 +69,6 @@ from cvs2svn_lib.project import Project
 from cvs2svn_lib.svn_output_option import DumpfileOutputOption
 from cvs2svn_lib.svn_output_option import ExistingRepositoryOutputOption
 from cvs2svn_lib.svn_output_option import NewRepositoryOutputOption
-from cvs2svn_lib.revision_manager import NullRevisionRecorder
 from cvs2svn_lib.revision_manager import NullRevisionExcluder
 from cvs2svn_lib.rcs_revision_manager import RCSRevisionReader
 from cvs2svn_lib.cvs_revision_manager import CVSRevisionReader
@@ -212,15 +211,12 @@ ctx.dry_run = False
 # executable.
 #
 # Choose one of the following three groups of lines:
-ctx.revision_recorder = NullRevisionRecorder()
 ctx.revision_excluder = InternalRevisionCollector(compress=True)
 ctx.revision_reader = InternalRevisionReader(compress=True)
 
-#ctx.revision_recorder = NullRevisionRecorder()
 #ctx.revision_excluder = NullRevisionExcluder()
 #ctx.revision_reader = RCSRevisionReader(co_executable=r'co')
 
-#ctx.revision_recorder = NullRevisionRecorder()
 #ctx.revision_excluder = NullRevisionExcluder()
 #ctx.revision_reader = CVSRevisionReader(cvs_executable=r'cvs')
 

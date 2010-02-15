@@ -43,7 +43,6 @@ class Ctx:
 
     self.output_option = None
     self.dry_run = False
-    self.revision_recorder = None
     self.revision_excluder = None
     self.revision_reader = None
     self.svnadmin_executable = config.SVNADMIN_EXECUTABLE

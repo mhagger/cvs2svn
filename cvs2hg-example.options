@@ -87,7 +87,6 @@ from cvs2svn_lib.log import Log
 from cvs2svn_lib.project import Project
 from cvs2svn_lib.git_output_option import GitRevisionInlineWriter
 from cvs2svn_lib.git_output_option import GitOutputOption
-from cvs2svn_lib.revision_manager import NullRevisionRecorder
 from cvs2svn_lib.revision_manager import NullRevisionExcluder
 from cvs2svn_lib.rcs_revision_manager import RCSRevisionReader
 from cvs2svn_lib.cvs_revision_manager import CVSRevisionReader
@@ -130,10 +129,6 @@ Log().log_level = Log.NORMAL
 
 # The directory to use for temporary files:
 ctx.tmpdir = r'cvs2svn-tmp'
-
-# cvs2hg reads the contents of file revisions during OutputPass, so no
-# revision recorder is needed:
-ctx.revision_recorder = NullRevisionRecorder()
 
 # cvs2hg does not need to keep track of what revisions will be
 # excluded, so leave this option unchanged:

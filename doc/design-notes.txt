@@ -125,11 +125,7 @@ the _FileDataCollector class instance.
 Next, the parser encounters the *real* revision data, which has the
 log messages and file contents.  For each revision, it invokes
 _FileDataCollector.set_revision_info(), which sets some more fields in
-_RevisionData.  It also invokes RevisionRecorder.record_text(), which
-gives the RevisionRecorder the chance to record the file text if
-desired.  record_test() is allowed to return a token, which is carried
-along with the CVSRevision data and can be used by RevisionReader to
-retrieve the text in OutputPass.
+_RevisionData.
 
 When the parser is done with the file, _ProjectDataCollector takes the
 resulting CVSFileItems object and manipulates it to handle some CVS
@@ -159,9 +155,8 @@ features:
      2. delete all branches and tags and all remaining branch
         revisions.
 
-Finally, the RevisionRecorder.finish_file() callback is called, the
-CVSFileItems instance is stored to a database, and statistics about
-how symbols were used in the file are recorded.
+Finally, the CVSFileItems instance is stored to a database and
+statistics about how symbols were used in the file are recorded.
 
 That's it -- the RCS file is done.
 

@@ -1,4 +1,4 @@
-This file contains a description of the RevisionRecorder /
+This file contains a description of the RevisionCollector /
 RevisionExcluder / RevisionReader mechanism.
 
 
@@ -19,8 +19,8 @@ contents.)
 
 The following two other types of classes can help the RevisionReader:
 
-    RevisionRecorder -- can record the CVS revisions' text during
-        CollectRevsPass to avoid having to parse the RCS files again
+    RevisionCollector -- can record the CVS revisions' text during
+        FilterSymbolsPass to collect information that can be used
         during OutputPass.
 
     RevisionExcluder -- is informed during FilterSymbolsPass about CVS
@@ -32,7 +32,6 @@ The type of RevisionReader to be used for a run of cvs2svn can be set
 using --use-internal-co, --use-rcs, or --use-cvs, or via the --options
 file with a line like:
 
-    ctx.revision_recorder = MyRevisionRecorder()
     ctx.revision_excluder = MyRevisionExcluder()
     ctx.revision_reader = MyRevisionReader()
 
@@ -51,30 +50,23 @@ The following RevisionReaders are supplied with cvs2svn:
         InternalRevisionReader because "co" has to be executed very
         many times, but is better tested and does not require any
         temporary disk space.  RCSRevisionReader does not use a
-        RevisionRecorder or RevisionExcluder.
+        RevisionCollector or RevisionExcluder.
 
     CVSRevisionReader -- uses the "cvs" command to extract the
         revision text during OutputPass.  This is even slower than
         RCSRevisionReader, but it can handle a some CVS file quirks
         that stymy RCSRevisionReader (see the cvs2svn HTML
         documentation).  CVSRevisionReader does not use a
-        RevisionRecorder or RevisionExcluder.
+        RevisionCollector or RevisionExcluder.
 
 
 It is possible to write your own RevisionReader if you would like to
-do things differently.  A RevisionRecorder, with callback methods that
-are invoked as the CVS files are parsed, can be used to collect
-information during CollectRevsPass.  For example,
-RevisionRecorder.record_text() is passed the log message and text
-(full text or delta) for each file revision.  The record_text() method
-is allowed to return an arbitrary token (for example, a content hash),
-and that token is stored into CVSRevision.revision_recorder_token and
-carried along by cvs2svn.
-
-A RevisionExcluder, with callbacks that are invoked during
-FilterSymbolsPass, can be used to learn which CVS revisions will
-actually be needed by the conversion.  The RevisionExcluder has the
-opportunity to use this information to delete unneeded temporary data.
+do things differently.  A RevisionCollector, with callback methods
+that are invoked as the CVS files are parsed, can be used to collect
+information during FilterSymbolsPass.  Its process_file() method is
+allowed to set an arbitrary token (for example, a content hash) in
+CVSItem.revision_reader_token.  This token is carried along by cvs2svn
+for use by the RevisionReader in OutputPass.
 
 Later, when OutputPass requires the file contents, it calls
 RevisionReader.get_content_stream(), which is passed a CVSRevision

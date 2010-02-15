@@ -31,7 +31,6 @@ from cvs2svn_lib.run_options import ContextOption
 from cvs2svn_lib.run_options import IncompatibleOption
 from cvs2svn_lib.run_options import not_both
 from cvs2svn_lib.man_writer import ManWriter
-from cvs2svn_lib.revision_manager import NullRevisionRecorder
 from cvs2svn_lib.revision_manager import NullRevisionExcluder
 from cvs2svn_lib.rcs_revision_manager import RCSRevisionReader
 from cvs2svn_lib.cvs_revision_manager import CVSRevisionReader
@@ -148,7 +147,6 @@ A directory called \\fIcvs2svn-tmp\\fR (or the directory specified by
           cvs_executable=options.cvs_executable
           )
 
-    ctx.revision_recorder = NullRevisionRecorder()
     if ctx.dry_run:
       ctx.revision_excluder = NullRevisionExcluder()
     else:

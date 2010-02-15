@@ -91,13 +91,12 @@ class CollectRevsPass(Pass):
     self._register_temp_file(config.METADATA_STORE)
     self._register_temp_file(config.CVS_PATHS_DB)
     self._register_temp_file(config.CVS_ITEMS_STORE)
-    Ctx().revision_recorder.register_artifacts(self)
 
   def run(self, run_options, stats_keeper):
     Log().quiet("Examining all CVS ',v' files...")
     Ctx()._projects = {}
     Ctx()._cvs_path_db = CVSPathDatabase(DB_OPEN_NEW)
-    cd = CollectData(Ctx().revision_recorder, stats_keeper)
+    cd = CollectData(stats_keeper)
     for project in run_options.projects:
       cd.process_project(project)
     run_options.projects = None

@@ -13,19 +13,20 @@ demand during OutputPass.  The RevisionReader can read the CVS
 revision contents directly out of the RCS files during OutputPass.
 But additional hooks support the construction of different kinds of
 RevisionReader that record the CVS file revisions' contents during
-CollectRevsPass then output the contents during OutputPass.  (Indeed,
-for non-SVN backends, OutputPass might not even require the file
-contents.)
+FilterSymbolsPass then output the contents during OutputPass.
+(Indeed, for non-SVN backends, OutputPass might not even require the
+file contents.)
 
-The following two other types of classes can help the RevisionReader:
+The interface that is used during FilterSymbolsPass to allow the
+collection of revision information is:
 
-    RevisionCollector -- can record the CVS revisions' text during
-        FilterSymbolsPass to collect information that can be used
-        during OutputPass.
+    RevisionCollector -- can collect information during
+        FilterSymbolsPass to help the RevisionReader produce RCS file
+        revision contents during OutputPass.
 
-The type of RevisionReader to be used for a run of cvs2svn can be set
-using --use-internal-co, --use-rcs, or --use-cvs, or via the --options
-file with a line like:
+The type of RevisionCollector/RevisionReader to be used for a run of
+cvs2svn can be set using --use-internal-co, --use-rcs, or --use-cvs,
+or via the --options file with lines like:
 
     ctx.revision_collector = MyRevisionCollector()
     ctx.revision_reader = MyRevisionReader()
@@ -33,12 +34,12 @@ file with a line like:
 The following RevisionReaders are supplied with cvs2svn:
 
     InternalRevisionReader -- an InternalRevisionCollector records the
-        revisions' delta text and their dependencies and discards
-        unneeded deltas in FilterSymbolsPass; an
-        InternalRevisionReader reconstitutes the revisions' contents
-        during OutputPass from the recorded data.  This is by far the
-        fastest option, but it requires a substantial amount of
-        temporary disk space for the duration of the conversion.
+        revisions' delta text and their dependencies for required
+        revisions in FilterSymbolsPass; an InternalRevisionReader
+        reconstitutes the revisions' contents during OutputPass from
+        the recorded data.  This is by far the fastest option, but it
+        requires a substantial amount of temporary disk space for the
+        duration of the conversion.
 
     RCSRevisionReader -- uses RCS's "co" command to extract the
         revision text during OutputPass.  This is slower than
@@ -49,19 +50,18 @@ The following RevisionReaders are supplied with cvs2svn:
 
     CVSRevisionReader -- uses the "cvs" command to extract the
         revision text during OutputPass.  This is even slower than
-        RCSRevisionReader, but it can handle a some CVS file quirks
-        that stymy RCSRevisionReader (see the cvs2svn HTML
-        documentation).  CVSRevisionReader does not use a
-        RevisionCollector.
+        RCSRevisionReader, but it can handle some CVS file quirks that
+        stymy RCSRevisionReader (see the cvs2svn HTML documentation).
+        CVSRevisionReader does not use a RevisionCollector.
 
-
-It is possible to write your own RevisionReader if you would like to
-do things differently.  A RevisionCollector, with callback methods
-that are invoked as the CVS files are parsed, can be used to collect
-information during FilterSymbolsPass.  Its process_file() method is
-allowed to set an arbitrary token (for example, a content hash) in
-CVSItem.revision_reader_token.  This token is carried along by cvs2svn
-for use by the RevisionReader in OutputPass.
+It is possible to write your own RevisionCollector and RevisionReader
+if you would like to do things differently.  A RevisionCollector, with
+callback methods that are invoked as the CVS files are parsed, can be
+used to collect information during FilterSymbolsPass.  Its
+process_file() method is allowed to set an arbitrary token (for
+example, a content hash) in CVSItem.revision_reader_token.  This token
+is carried along by cvs2svn for use by the RevisionReader in
+OutputPass.
 
 Later, when OutputPass requires the file contents, it calls
 RevisionReader.get_content_stream(), which is passed a CVSRevision

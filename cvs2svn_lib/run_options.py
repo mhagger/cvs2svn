@@ -39,7 +39,6 @@ from cvs2svn_lib.revision_manager import NullRevisionRecorder
 from cvs2svn_lib.revision_manager import NullRevisionExcluder
 from cvs2svn_lib.rcs_revision_manager import RCSRevisionReader
 from cvs2svn_lib.cvs_revision_manager import CVSRevisionReader
-from cvs2svn_lib.checkout_internal import InternalRevisionRecorder
 from cvs2svn_lib.checkout_internal import InternalRevisionExcluder
 from cvs2svn_lib.checkout_internal import InternalRevisionReader
 from cvs2svn_lib.symbol_strategy import AllBranchRule
@@ -974,7 +973,7 @@ class RunOptions(object):
       ctx.revision_reader = CVSRevisionReader(options.cvs_executable)
     else:
       # --use-internal-co is the default:
-      ctx.revision_recorder = InternalRevisionRecorder()
+      ctx.revision_recorder = NullRevisionRecorder()
       ctx.revision_excluder = InternalRevisionExcluder(compress=True)
       ctx.revision_reader = InternalRevisionReader(compress=True)
 

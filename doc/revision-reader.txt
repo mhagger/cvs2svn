@@ -38,14 +38,13 @@ file with a line like:
 
 The following RevisionReaders are supplied with cvs2svn:
 
-    InternalRevisionReader -- an InternalRevisionRecorder records the
-        revisions' delta text and their dependencies during
-        CollectRevsPass; an InternalRevisionExcluder discards unneeded
-        deltas in FilterSymbolsPass; an InternalRevisionReader
-        reconstitutes the revisions' contents during OutputPass from
-        the recorded data.  This is by far the fastest option, but it
-        requires a substantial amount of temporary disk space for the
-        duration of the conversion.
+    InternalRevisionReader -- an InternalRevisionExcluder records the
+        revisions' delta text and their dependencies and discards
+        unneeded deltas in FilterSymbolsPass; an
+        InternalRevisionReader reconstitutes the revisions' contents
+        during OutputPass from the recorded data.  This is by far the
+        fastest option, but it requires a substantial amount of
+        temporary disk space for the duration of the conversion.
 
     RCSRevisionReader -- uses RCS's "co" command to extract the
         revision text during OutputPass.  This is slower than

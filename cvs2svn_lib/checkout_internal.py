@@ -20,7 +20,7 @@ The idea is to patch up the revisions' contents incrementally, thus
 avoiding the huge number of process spawns and the O(n^2) overhead of
 using 'co' and 'cvs'.
 
-InternalRevisionRecorder saves the RCS deltas and RCS revision trees
+InternalRevisionExcluder saves the RCS deltas and RCS revision trees
 to databases.  Notably, deltas from the trunk need to be reversed, as
 CVS stores them so they apply from HEAD backwards.
 
@@ -557,13 +557,6 @@ class _Sink(cvs2svn_rcsparse.Sink):
           )
       self.revision_recorder._writeout(text_record, text)
 
-    return None
-
-
-class InternalRevisionRecorder(RevisionRecorder):
-  """A RevisionRecorder that reconstructs the fulltext internally."""
-
-  def record_text(self, cvs_rev, log, text):
     return None
 
 

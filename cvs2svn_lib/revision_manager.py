@@ -65,59 +65,8 @@ class RevisionCollector(object):
     pass
 
 
-class RevisionExcluder:
-  """An interface for informing a RevisionReader about excluded revisions.
-
-  Currently, revisions can be excluded via the --exclude option and
-  various fixups for CVS peculiarities.  This interface can be used to
-  inform the associated RevisionReader about CVSItems that are being
-  excluded.  (The recorder might use that information to free some
-  temporary data or adjust its expectations about which revisions will
-  later be read.)"""
-
-  def __init__(self):
-    """Initialize the RevisionExcluder.
-
-    Please note that a RevisionExcluder is instantiated in every
-    program run, even if the branch-exclusion pass will not be
-    executed.  (This is to allow its register_artifacts() method to be
-    called.)  Therefore, the __init__() method should not do much, and
-    more substantial preparation for use (like actually creating the
-    artifacts) should be done in start()."""
-
-    pass
-
-  def register_artifacts(self, which_pass):
-    """Register artifacts that will be needed during branch exclusion.
-
-    WHICH_PASS is the pass that will call our callbacks, so it should
-    be used to do the registering (e.g., call
-    WHICH_PASS.register_temp_file() and/or
-    WHICH_PASS.register_temp_file_needed())."""
-
-    pass
-
-  def start(self):
-    """Prepare to handle branch exclusions."""
-
-    pass
-
-  def process_file(self, cvs_file_items):
-    """Called for files whose trees were modified in FilterSymbolsPass.
-
-    This callback is called once for each CVSFile whose topology was
-    modified in FilterSymbolsPass."""
-
-    raise NotImplementedError()
-
-  def finish(self):
-    """Called after all branch exclusions for all files are done."""
-
-    pass
-
-
-class NullRevisionExcluder(RevisionExcluder):
-  """A do-nothing variety of RevisionExcluder."""
+class NullRevisionCollector(RevisionCollector):
+  """A do-nothing variety of RevisionCollector."""
 
   def process_file(self, cvs_file_items):
     pass

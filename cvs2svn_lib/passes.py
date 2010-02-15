@@ -437,7 +437,7 @@ class FilterSymbolsPass(Pass):
     self._register_temp_file_needed(config.SYMBOL_DB)
     self._register_temp_file_needed(config.CVS_PATHS_DB)
     self._register_temp_file_needed(config.CVS_ITEMS_STORE)
-    Ctx().revision_excluder.register_artifacts(self)
+    Ctx().revision_collector.register_artifacts(self)
 
   def run(self, run_options, stats_keeper):
     Ctx()._projects = read_projects(
@@ -463,23 +463,27 @@ class FilterSymbolsPass(Pass):
         cvs_item_serializer,
         )
 
-    revision_excluder = Ctx().revision_excluder
+    revision_collector = Ctx().revision_collector
 
     Log().quiet("Filtering out excluded symbols and summarizing items...")
 
     stats_keeper.reset_cvs_rev_info()
-    revision_excluder.start()
+    revision_collector.start()
 
     # Process the cvs items store one file at a time:
     for cvs_file_items in cvs_item_store.iter_cvs_file_items():
       Log().verbose(cvs_file_items.cvs_file.filename)
-      cvs_file_items.filter_excluded_symbols(revision_excluder)
+      cvs_file_items.filter_excluded_symbols()
       cvs_file_items.mutate_symbols()
       cvs_file_items.adjust_parents()
       cvs_file_items.refine_symbols()
       cvs_file_items.record_opened_symbols()
       cvs_file_items.record_closed_symbols()
       cvs_file_items.check_link_consistency()
+
+      # Give the revision collector a chance to collect data about the
+      # file:
+      revision_collector.process_file(cvs_file_items)
 
       # Store whatever is left to the new file and update statistics:
       stats_keeper.record_cvs_file(cvs_file_items.cvs_file)
@@ -495,7 +499,7 @@ class FilterSymbolsPass(Pass):
 
     rev_db.close()
     symbol_db.close()
-    revision_excluder.finish()
+    revision_collector.finish()
     cvs_item_store.close()
     Ctx()._symbol_db.close()
     Ctx()._cvs_path_db.close()

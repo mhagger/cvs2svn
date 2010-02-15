@@ -34,7 +34,7 @@ from cvs2svn_lib.cvs_revision_manager import CVSRevisionReader
 from cvs2svn_lib.git_run_options import GitRunOptions
 from cvs2svn_lib.git_output_option import GitRevisionInlineWriter
 from cvs2svn_lib.git_output_option import GitOutputOption
-from cvs2svn_lib.revision_manager import NullRevisionExcluder
+from cvs2svn_lib.revision_manager import NullRevisionCollector
 
 
 description="""\
@@ -142,7 +142,7 @@ A directory called \\fIcvs2svn-tmp\\fR (or the directory specified by
     if not ctx.dry_run and not options.dumpfile:
       raise FatalError("must pass '--dry-run' or '--dumpfile' option.")
 
-    ctx.revision_excluder = NullRevisionExcluder()
+    ctx.revision_collector = NullRevisionCollector()
     ctx.revision_reader = None
 
     ctx.output_option = GitOutputOption(

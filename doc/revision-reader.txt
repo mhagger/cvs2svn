@@ -1,5 +1,5 @@
 This file contains a description of the RevisionCollector /
-RevisionExcluder / RevisionReader mechanism.
+RevisionReader mechanism.
 
 
 cvs2svn now includes hooks to make it possible to avoid having to
@@ -23,16 +23,11 @@ The following two other types of classes can help the RevisionReader:
         FilterSymbolsPass to collect information that can be used
         during OutputPass.
 
-    RevisionExcluder -- is informed during FilterSymbolsPass about CVS
-        revisions that have been excluded from the conversion and will
-        therefore not be needed during OutputPass.  This mechanism can
-        be used to discard temporary data that will not be required.
-
 The type of RevisionReader to be used for a run of cvs2svn can be set
 using --use-internal-co, --use-rcs, or --use-cvs, or via the --options
 file with a line like:
 
-    ctx.revision_excluder = MyRevisionExcluder()
+    ctx.revision_collector = MyRevisionCollector()
     ctx.revision_reader = MyRevisionReader()
 
 The following RevisionReaders are supplied with cvs2svn:
@@ -50,14 +45,14 @@ The following RevisionReaders are supplied with cvs2svn:
         InternalRevisionReader because "co" has to be executed very
         many times, but is better tested and does not require any
         temporary disk space.  RCSRevisionReader does not use a
-        RevisionCollector or RevisionExcluder.
+        RevisionCollector.
 
     CVSRevisionReader -- uses the "cvs" command to extract the
         revision text during OutputPass.  This is even slower than
         RCSRevisionReader, but it can handle a some CVS file quirks
         that stymy RCSRevisionReader (see the cvs2svn HTML
         documentation).  CVSRevisionReader does not use a
-        RevisionCollector or RevisionExcluder.
+        RevisionCollector.
 
 
 It is possible to write your own RevisionReader if you would like to

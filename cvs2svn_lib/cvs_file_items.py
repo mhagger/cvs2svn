@@ -848,11 +848,8 @@ class CVSFileItems(object):
     if ntdbr_excluded:
       self.graft_ntdbr_to_trunk()
 
-  def filter_excluded_symbols(self, revision_excluder):
-    """Delete any excluded symbols and references to them.
-
-    Call the revision_excluder's callback methods to let it know what
-    is being excluded."""
+  def filter_excluded_symbols(self):
+    """Delete any excluded symbols and references to them."""
 
     ntdbr_excluded = False
     for lod_items in self.iter_lods():
@@ -874,8 +871,6 @@ class CVSFileItems(object):
 
     if ntdbr_excluded:
       self.graft_ntdbr_to_trunk()
-
-    revision_excluder.process_file(self)
 
   def _mutate_branch_to_tag(self, cvs_branch):
     """Mutate the branch CVS_BRANCH into a tag."""

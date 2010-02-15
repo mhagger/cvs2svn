@@ -81,7 +81,7 @@ from cvs2svn_lib.log import Log
 from cvs2svn_lib.project import Project
 from cvs2svn_lib.git_output_option import GitRevisionInlineWriter
 from cvs2svn_lib.bzr_output_option import BzrOutputOption
-from cvs2svn_lib.revision_manager import NullRevisionExcluder
+from cvs2svn_lib.revision_manager import NullRevisionCollector
 from cvs2svn_lib.rcs_revision_manager import RCSRevisionReader
 from cvs2svn_lib.cvs_revision_manager import CVSRevisionReader
 from cvs2svn_lib.checkout_internal import InternalRevisionCollector
@@ -126,7 +126,7 @@ ctx.tmpdir = r'cvs2svn-tmp'
 
 # cvs2bzr does not need to keep track of what revisions will be
 # excluded, so leave this option unchanged:
-ctx.revision_excluder = NullRevisionExcluder()
+ctx.revision_collector = NullRevisionCollector()
 
 # cvs2bzr's revision reader is set via the BzrOutputOption constructor,
 # so leave this option set to None.

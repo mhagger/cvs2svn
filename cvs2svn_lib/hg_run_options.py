@@ -24,7 +24,7 @@ from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.run_options import IncompatibleOption
 from cvs2svn_lib.run_options import not_both
 from cvs2svn_lib.dvcs_common import DVCSRunOptions
-from cvs2svn_lib.revision_manager import NullRevisionExcluder
+from cvs2svn_lib.revision_manager import NullRevisionCollector
 from cvs2svn_lib.rcs_revision_manager import RCSRevisionReader
 from cvs2svn_lib.cvs_revision_manager import CVSRevisionReader
 from cvs2svn_lib.hg_output_option import HgOutputOption

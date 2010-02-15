@@ -31,7 +31,7 @@ from cvs2svn_lib.run_options import ContextOption
 from cvs2svn_lib.run_options import IncompatibleOption
 from cvs2svn_lib.run_options import not_both
 from cvs2svn_lib.man_writer import ManWriter
-from cvs2svn_lib.revision_manager import NullRevisionExcluder
+from cvs2svn_lib.revision_manager import NullRevisionCollector
 from cvs2svn_lib.rcs_revision_manager import RCSRevisionReader
 from cvs2svn_lib.cvs_revision_manager import CVSRevisionReader
 from cvs2svn_lib.git_revision_recorder import GitRevisionCollector
@@ -148,11 +148,11 @@ A directory called \\fIcvs2svn-tmp\\fR (or the directory specified by
           )
 
     if ctx.dry_run:
-      ctx.revision_excluder = NullRevisionExcluder()
+      ctx.revision_collector = NullRevisionCollector()
     else:
       if not (options.blobfile and options.dumpfile):
         raise FatalError("must pass '--blobfile' and '--dumpfile' options.")
-      ctx.revision_excluder = GitRevisionCollector(
+      ctx.revision_collector = GitRevisionCollector(
           options.blobfile, revision_reader,
           )
 

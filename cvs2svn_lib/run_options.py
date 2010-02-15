@@ -35,7 +35,7 @@ from cvs2svn_lib.log import Log
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.man_writer import ManOption
 from cvs2svn_lib.pass_manager import InvalidPassError
-from cvs2svn_lib.revision_manager import NullRevisionExcluder
+from cvs2svn_lib.revision_manager import NullRevisionCollector
 from cvs2svn_lib.rcs_revision_manager import RCSRevisionReader
 from cvs2svn_lib.cvs_revision_manager import CVSRevisionReader
 from cvs2svn_lib.checkout_internal import InternalRevisionCollector
@@ -963,14 +963,14 @@ class RunOptions(object):
              options.use_internal_co, '--use-internal-co')
 
     if options.use_rcs:
-      ctx.revision_excluder = NullRevisionExcluder()
+      ctx.revision_collector = NullRevisionCollector()
       ctx.revision_reader = RCSRevisionReader(options.co_executable)
     elif options.use_cvs:
-      ctx.revision_excluder = NullRevisionExcluder()
+      ctx.revision_collector = NullRevisionCollector()
       ctx.revision_reader = CVSRevisionReader(options.cvs_executable)
     else:
       # --use-internal-co is the default:
-      ctx.revision_excluder = InternalRevisionCollector(compress=True)
+      ctx.revision_collector = InternalRevisionCollector(compress=True)
       ctx.revision_reader = InternalRevisionReader(compress=True)
 
   def process_symbol_strategy_options(self):

@@ -563,8 +563,15 @@ class _Sink(cvs2svn_rcsparse.Sink):
 class InternalRevisionRecorder(RevisionRecorder):
   """A RevisionRecorder that reconstructs the fulltext internally."""
 
+  def record_text(self, cvs_rev, log, text):
+    return None
+
+
+class InternalRevisionExcluder(RevisionExcluder):
+  """The RevisionExcluder used by InternalRevisionReader."""
+
   def __init__(self, compress):
-    RevisionRecorder.__init__(self)
+    RevisionExcluder.__init__(self)
     self._compress = compress
 
   def register_artifacts(self, which_pass):
@@ -584,28 +591,24 @@ class InternalRevisionRecorder(RevisionRecorder):
     self._rcs_deltas = IndexedDatabase(
         artifact_manager.get_temp_file(config.RCS_DELTAS_STORE),
         artifact_manager.get_temp_file(config.RCS_DELTAS_INDEX_TABLE),
-        DB_OPEN_NEW, ser)
+        DB_OPEN_NEW, ser
+        )
     primer = (FullTextRecord, DeltaTextRecord)
     self._rcs_trees = IndexedDatabase(
         artifact_manager.get_temp_file(config.RCS_TREES_STORE),
         artifact_manager.get_temp_file(config.RCS_TREES_INDEX_TABLE),
-        DB_OPEN_NEW, PrimedPickleSerializer(primer))
-
-  def start_file(self, cvs_file):
-    pass
-
-  def record_text(self, cvs_rev, log, text):
-    return None
+        DB_OPEN_NEW, PrimedPickleSerializer(primer)
+        )
 
   def _writeout(self, text_record, text):
     self.text_record_db.add(text_record)
     self._rcs_deltas[text_record.id] = text
 
-  def finish_file(self, cvs_file_items):
-    """Finish processing of the current file.
+  def process_file(self, cvs_file_items):
+    """Read revision information for the file described by CVS_FILE_ITEMS.
 
-    Compute the initial text record refcounts, discard any records
-    that are unneeded, and store the text records for the file to the
+    Compute the text record refcounts, discard any records that are
+    unneeded, and store the text records for the file to the
     _rcs_trees database."""
 
     # A map from cvs_rev_id to TextRecord instance:
@@ -624,45 +627,6 @@ class InternalRevisionRecorder(RevisionRecorder):
   def finish(self):
     self._rcs_deltas.close()
     self._rcs_trees.close()
-
-
-class InternalRevisionExcluder(RevisionExcluder):
-  """The RevisionExcluder used by InternalRevisionReader."""
-
-  def register_artifacts(self, which_pass):
-    artifact_manager.register_temp_file_needed(
-        config.RCS_TREES_STORE, which_pass
-        )
-    artifact_manager.register_temp_file_needed(
-        config.RCS_TREES_INDEX_TABLE, which_pass
-        )
-    artifact_manager.register_temp_file(
-        config.RCS_TREES_FILTERED_STORE, which_pass
-        )
-    artifact_manager.register_temp_file(
-        config.RCS_TREES_FILTERED_INDEX_TABLE, which_pass
-        )
-
-  def start(self):
-    self._tree_db = IndexedDatabase(
-        artifact_manager.get_temp_file(config.RCS_TREES_STORE),
-        artifact_manager.get_temp_file(config.RCS_TREES_INDEX_TABLE),
-        DB_OPEN_READ)
-    primer = (FullTextRecord, DeltaTextRecord)
-    self._new_tree_db = IndexedDatabase(
-        artifact_manager.get_temp_file(config.RCS_TREES_FILTERED_STORE),
-        artifact_manager.get_temp_file(config.RCS_TREES_FILTERED_INDEX_TABLE),
-        DB_OPEN_NEW, PrimedPickleSerializer(primer))
-
-  def process_file(self, cvs_file_items):
-    text_record_db = self._tree_db[cvs_file_items.cvs_file.id]
-    text_record_db.recompute_refcounts(cvs_file_items)
-    text_record_db.free_unused()
-    self._new_tree_db[cvs_file_items.cvs_file.id] = text_record_db
-
-  def finish(self):
-    self._tree_db.close()
-    self._new_tree_db.close()
 
 
 class _KeywordExpander:
@@ -761,10 +725,10 @@ class InternalRevisionReader(RevisionReader):
         config.RCS_DELTAS_INDEX_TABLE, which_pass
         )
     artifact_manager.register_temp_file_needed(
-        config.RCS_TREES_FILTERED_STORE, which_pass
+        config.RCS_TREES_STORE, which_pass
         )
     artifact_manager.register_temp_file_needed(
-        config.RCS_TREES_FILTERED_INDEX_TABLE, which_pass
+        config.RCS_TREES_INDEX_TABLE, which_pass
         )
 
   def start(self):
@@ -774,8 +738,8 @@ class InternalRevisionReader(RevisionReader):
         DB_OPEN_READ)
     self._delta_db.__delitem__ = lambda id: None
     self._tree_db = IndexedDatabase(
-        artifact_manager.get_temp_file(config.RCS_TREES_FILTERED_STORE),
-        artifact_manager.get_temp_file(config.RCS_TREES_FILTERED_INDEX_TABLE),
+        artifact_manager.get_temp_file(config.RCS_TREES_STORE),
+        artifact_manager.get_temp_file(config.RCS_TREES_INDEX_TABLE),
         DB_OPEN_READ)
     ser = MarshalSerializer()
     if self._compress:

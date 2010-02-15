@@ -213,8 +213,8 @@ ctx.dry_run = False
 # executable.
 #
 # Choose one of the following three groups of lines:
-ctx.revision_recorder = InternalRevisionRecorder(compress=True)
-ctx.revision_excluder = InternalRevisionExcluder()
+ctx.revision_recorder = InternalRevisionRecorder()
+ctx.revision_excluder = InternalRevisionExcluder(compress=True)
 ctx.revision_reader = InternalRevisionReader(compress=True)
 
 #ctx.revision_recorder = NullRevisionRecorder()

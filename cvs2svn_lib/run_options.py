@@ -974,8 +974,8 @@ class RunOptions(object):
       ctx.revision_reader = CVSRevisionReader(options.cvs_executable)
     else:
       # --use-internal-co is the default:
-      ctx.revision_recorder = InternalRevisionRecorder(compress=True)
-      ctx.revision_excluder = InternalRevisionExcluder()
+      ctx.revision_recorder = InternalRevisionRecorder()
+      ctx.revision_excluder = InternalRevisionExcluder(compress=True)
       ctx.revision_reader = InternalRevisionReader(compress=True)
 
   def process_symbol_strategy_options(self):

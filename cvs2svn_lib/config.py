@@ -197,12 +197,6 @@ RCS_DELTAS_STORE = 'rcs-deltas.pck'
 RCS_TREES_INDEX_TABLE = 'rcs-trees-index.dat'
 RCS_TREES_STORE = 'rcs-trees.pck'
 
-# Records the revision tree of each RCS file after removing revisions
-# belonging to excluded branches.  Note that the branch ordering is arbitrary
-# in this file.
-RCS_TREES_FILTERED_INDEX_TABLE = 'rcs-trees-filtered-index.dat'
-RCS_TREES_FILTERED_STORE = 'rcs-trees-filtered.pck'
-
 # At any given time during OutputPass, holds the full text of each CVS
 # revision that was checked out already and still has descendants that will
 # be checked out.

@@ -79,13 +79,10 @@ from cvs2svn_lib import changeset_database
 from cvs2svn_lib.common import CVSTextDecoder
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.project import Project
-from cvs2svn_lib.git_revision_recorder import GitRevisionRecorder
 from cvs2svn_lib.git_output_option import GitRevisionInlineWriter
 from cvs2svn_lib.bzr_output_option import BzrOutputOption
 from cvs2svn_lib.revision_manager import NullRevisionRecorder
 from cvs2svn_lib.revision_manager import NullRevisionExcluder
-from cvs2svn_lib.fulltext_revision_recorder \
-     import SimpleFulltextRevisionRecorderAdapter
 from cvs2svn_lib.rcs_revision_manager import RCSRevisionReader
 from cvs2svn_lib.cvs_revision_manager import CVSRevisionReader
 from cvs2svn_lib.checkout_internal import InternalRevisionRecorder

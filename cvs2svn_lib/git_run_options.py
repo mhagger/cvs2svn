@@ -35,11 +35,9 @@ from cvs2svn_lib.revision_manager import NullRevisionRecorder
 from cvs2svn_lib.revision_manager import NullRevisionExcluder
 from cvs2svn_lib.rcs_revision_manager import RCSRevisionReader
 from cvs2svn_lib.cvs_revision_manager import CVSRevisionReader
-from cvs2svn_lib.git_revision_recorder import GitRevisionRecorder
+from cvs2svn_lib.git_revision_recorder import GitRevisionCollector
 from cvs2svn_lib.git_output_option import GitRevisionMarkWriter
 from cvs2svn_lib.git_output_option import GitOutputOption
-from cvs2svn_lib.fulltext_revision_recorder \
-     import SimpleFulltextRevisionRecorderAdapter
 
 
 class GitRunOptions(DVCSRunOptions):
@@ -150,17 +148,16 @@ A directory called \\fIcvs2svn-tmp\\fR (or the directory specified by
           cvs_executable=options.cvs_executable
           )
 
+    ctx.revision_recorder = NullRevisionRecorder()
     if ctx.dry_run:
-      ctx.revision_recorder = NullRevisionRecorder()
+      ctx.revision_excluder = NullRevisionExcluder()
     else:
       if not (options.blobfile and options.dumpfile):
         raise FatalError("must pass '--blobfile' and '--dumpfile' options.")
-      ctx.revision_recorder = SimpleFulltextRevisionRecorderAdapter(
-          revision_reader,
-          GitRevisionRecorder(options.blobfile),
+      ctx.revision_excluder = GitRevisionCollector(
+          options.blobfile, revision_reader,
           )
 
-    ctx.revision_excluder = NullRevisionExcluder()
     ctx.revision_reader = None
 
   def process_output_options(self):

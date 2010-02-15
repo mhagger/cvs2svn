@@ -21,21 +21,26 @@ import itertools
 from cvs2svn_lib.symbol import Trunk
 from cvs2svn_lib.cvs_item import CVSRevisionDelete
 from cvs2svn_lib.cvs_item import CVSSymbol
-from cvs2svn_lib.fulltext_revision_recorder import FulltextRevisionRecorder
+from cvs2svn_lib.revision_manager import RevisionCollector
 from cvs2svn_lib.key_generator import KeyGenerator
 
 
-class GitRevisionRecorder(FulltextRevisionRecorder):
+class GitRevisionCollector(RevisionCollector):
   """Output file revisions to git-fast-import."""
 
-  def __init__(self, blob_filename):
+  def __init__(self, blob_filename, revision_reader):
     self.blob_filename = blob_filename
+    self.revision_reader = revision_reader
+
+  def register_artifacts(self, which_pass):
+    self.revision_reader.register_artifacts(which_pass)
 
   def start(self):
+    self.revision_reader.start()
     self.dump_file = open(self.blob_filename, 'wb')
     self._mark_generator = KeyGenerator()
 
-  def record_fulltext(self, cvs_rev, log, fulltext):
+  def _process_revision(self, cvs_rev):
     """Write the revision fulltext to a blob if it is not dead."""
 
     if isinstance(cvs_rev, CVSRevisionDelete):
@@ -43,23 +48,47 @@ class GitRevisionRecorder(FulltextRevisionRecorder):
       # will never be needed:
       return None
 
+    # FIXME: We have to decide what to do about keyword substitution
+    # and eol_style here:
+    stream = self.revision_reader.get_content_stream(
+        cvs_rev, suppress_keyword_substitution=False,
+        )
+    fulltext = stream.read()
+    stream.close()
+
     mark = self._mark_generator.gen_id()
     self.dump_file.write('blob\n')
     self.dump_file.write('mark :%d\n' % (mark,))
     self.dump_file.write('data %d\n' % (len(fulltext),))
     self.dump_file.write(fulltext)
     self.dump_file.write('\n')
-    return mark
+    cvs_rev.revision_recorder_token = mark
 
-  def finish_file(self, cvs_file_items):
-    # Determine the original source of each CVSSymbol, and store it as
-    # the symbol's revision_recorder_token.
-    for cvs_item in cvs_file_items.values():
-      if isinstance(cvs_item, CVSSymbol):
-        cvs_source = cvs_item.get_cvs_revision_source(cvs_file_items)
-        cvs_item.revision_recorder_token = cvs_source.revision_recorder_token
+  def _process_symbol(self, cvs_symbol, cvs_file_items):
+    """Record the original source of CVS_SYMBOL.
+
+    Determine the original revision source of CVS_SYMBOL, and store it
+    as the symbol's revision_recorder_token."""
+
+    cvs_source = cvs_symbol.get_cvs_revision_source(cvs_file_items)
+    cvs_symbol.revision_recorder_token = cvs_source.revision_recorder_token
+
+  def process_file(self, cvs_file_items):
+    for lod_items in cvs_file_items.iter_lods():
+      for cvs_rev in lod_items.cvs_revisions:
+        self._process_revision(cvs_rev)
+
+    # Now that all CVSRevisions' revision_recorder_tokens are set,
+    # iterate through symbols and set their tokens to those of their
+    # original source revisions:
+    for lod_items in cvs_file_items.iter_lods():
+      if lod_items.cvs_branch is not None:
+        self._process_symbol(lod_items.cvs_branch, cvs_file_items)
+      for cvs_tag in lod_items.cvs_tags:
+        self._process_symbol(cvs_tag, cvs_file_items)
 
   def finish(self):
+    self.revision_reader.finish()
     self.dump_file.close()
 
 

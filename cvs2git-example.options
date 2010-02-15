@@ -79,13 +79,11 @@ from cvs2svn_lib import changeset_database
 from cvs2svn_lib.common import CVSTextDecoder
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.project import Project
-from cvs2svn_lib.git_revision_recorder import GitRevisionRecorder
+from cvs2svn_lib.git_revision_recorder import GitRevisionCollector
 from cvs2svn_lib.git_output_option import GitRevisionMarkWriter
 from cvs2svn_lib.git_output_option import GitOutputOption
 from cvs2svn_lib.revision_manager import NullRevisionRecorder
 from cvs2svn_lib.revision_manager import NullRevisionExcluder
-from cvs2svn_lib.fulltext_revision_recorder \
-     import SimpleFulltextRevisionRecorderAdapter
 from cvs2svn_lib.rcs_revision_manager import RCSRevisionReader
 from cvs2svn_lib.cvs_revision_manager import CVSRevisionReader
 from cvs2svn_lib.checkout_internal import InternalRevisionRecorder
@@ -129,37 +127,37 @@ Log().log_level = Log.NORMAL
 # The directory to use for temporary files:
 ctx.tmpdir = r'cvs2svn-tmp'
 
-# During CollectRevsPass, cvs2git records the contents of file
+ctx.revision_recorder = NullRevisionRecorder()
+
+# During FilterSymbolsPass, cvs2git records the contents of file
 # revisions into a "blob" file in git-fast-import format.  This option
 # configures that process:
-ctx.revision_recorder = SimpleFulltextRevisionRecorderAdapter(
-    # The following option specifies how the revision contents of the RCS
-    # files should be read.
+ctx.revision_excluder = GitRevisionCollector(
+    # The file in which to write the git-fast-import stream that
+    # contains the file revision contents:
+    'cvs2svn-tmp/git-blob.dat',
+
+    # The following option specifies how the revision contents of the
+    # RCS files should be read.
     #
-    # RCSRevisionReader uses RCS's "co" program to extract the revision
-    # contents of the RCS files during CollectRevsPass.  The constructor
-    # argument specifies how to invoke the "co" executable.
+    # RCSRevisionReader uses RCS's "co" program to extract the
+    # revision contents of the RCS files during CollectRevsPass.  The
+    # constructor argument specifies how to invoke the "co"
+    # executable.
     #
     # CVSRevisionReader uses the "cvs" program to extract the revision
     # contents out of the RCS files during OutputPass.  This option is
     # considerably slower than RCSRevisionReader because "cvs" is
-    # considerably slower than "co".  However, it works in some situations
-    # where RCSRevisionReader fails; see the HTML documentation of the
-    # "--use-cvs" option for details.  The constructor argument specifies
-    # how to invoke the "co" executable.
+    # considerably slower than "co".  However, it works in some
+    # situations where RCSRevisionReader fails; see the HTML
+    # documentation of the "--use-cvs" option for details.  The
+    # constructor argument specifies how to invoke the "co"
+    # executable.
     #
     # Uncomment one of the two following lines:
     #RCSRevisionReader(co_executable=r'co'),
     CVSRevisionReader(cvs_executable=r'cvs'),
-
-    # The file in which to write the git-fast-import stream that
-    # contains the file revision contents:
-    GitRevisionRecorder(os.path.join(ctx.tmpdir, 'git-blob.dat')),
     )
-
-# cvs2git does not need to keep track of what revisions will be
-# excluded, so leave this option unchanged:
-ctx.revision_excluder = NullRevisionExcluder()
 
 # cvs2git doesn't need a revision reader because OutputPass only
 # refers to blobs that were output during CollectRevsPass, so leave

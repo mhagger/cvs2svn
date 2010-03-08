@@ -276,6 +276,10 @@ class DestroyerFilterSink(FilterSink):
         self.author_substituter = author_substituter
         self.log_substituter = log_substituter
 
+    def set_head_revision(self, revision):
+        self.head_revision = revision
+        self.sink.set_head_revision(revision)
+
     def define_tag(self, name, revision):
         if destroy['symbols']:
             name = rewrite_symbol(name)
@@ -297,30 +301,38 @@ class DestroyerFilterSink(FilterSink):
 
     def set_revision_info(self, revision, log, text):
         if destroy['data']:
-            # If this is a no-op revision, preserve that fact.
-            # (It might be relied on by cvs2svn).
-            #
-            # Otherwise, replace the data.
-            if text != '':
-                # We either need fulltext or an RCS patch, depending on
-                # historical information we don't have easy access to here.
-                # However... an RCS patch is valid fulltext.
-                #
-                # So we just need an RCS patch that will work regardless
-                # of the thing we're patching.  We choose to use a simple
-                # patch that adds a new line to the start of the file.
-                #
-                # So the contents of the HEAD revision will be:
-                #     a 0 1
-                #     data
-                # the next-oldest will be:
-                #     data
-                #     a 0 1
-                #     data
-                # etc, with a new 'data' line being added at the start of the
-                # file for every step we take away from HEAD.
-                #
-                text = 'a 0 1\ndata\n'
+            if revision == self.head_revision:
+                # Set the HEAD text unconditionally.  (It could be
+                # that revision HEAD-1 has an empty deltatext, in
+                # which case the HEAD text was actually committed in
+                # an earlier commit.)
+                text = (
+                    'This text was last seen in HEAD (revision %s)\n'
+                    ) % (revision,)
+            elif text == '':
+                # This is a no-op revision; preserve that fact.  (It
+                # might be relied on by cvs2svn).
+                pass
+            else:
+                # Otherwise, replace the data.
+                if revision.count('.') == 1:
+                    # On trunk, it could be that revision N-1 has an
+                    # empty deltatext, in which case text for revision
+                    # N was actually committed in an earlier commit.
+                    text = (
+                        'd1 1\n'
+                        'a1 1\n'
+                        'This text was last seen in revision %s\n'
+                        ) % (revision,)
+                else:
+                    # On a branch, we know that the text was changed
+                    # in revision N (even though the same text might
+                    # also be kept across later revisions N+1 etc.)
+                    text = (
+                        'd1 1\n'
+                        'a1 1\n'
+                        'This text was committed in revision %s\n'
+                        ) % (revision,)
         if destroy['metadata'] or destroy['symbols'] or destroy['filenames']:
             log = self.log_substituter.get_substitution(log)
         FilterSink.set_revision_info(self, revision, log, text)

@@ -297,7 +297,30 @@ class DestroyerFilterSink(FilterSink):
 
     def set_revision_info(self, revision, log, text):
         if destroy['data']:
-            text = ''
+            # If this is a no-op revision, preserve that fact.
+            # (It might be relied on by cvs2svn).
+            #
+            # Otherwise, replace the data.
+            if text != '':
+                # We either need fulltext or an RCS patch, depending on
+                # historical information we don't have easy access to here.
+                # However... an RCS patch is valid fulltext.
+                #
+                # So we just need an RCS patch that will work regardless
+                # of the thing we're patching.  We choose to use a simple
+                # patch that adds a new line to the start of the file.
+                #
+                # So the contents of the HEAD revision will be:
+                #     a 0 1
+                #     data
+                # the next-oldest will be:
+                #     data
+                #     a 0 1
+                #     data
+                # etc, with a new 'data' line being added at the start of the
+                # file for every step we take away from HEAD.
+                #
+                text = 'a 0 1\ndata\n'
         if destroy['metadata'] or destroy['symbols'] or destroy['filenames']:
             log = self.log_substituter.get_substitution(log)
         FilterSink.set_revision_info(self, revision, log, text)

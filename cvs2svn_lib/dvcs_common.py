@@ -109,16 +109,36 @@ class DVCSOutputOption(OutputOption):
     self._symbolings_reader = None
 
   def normalize_author_transforms(self, author_transforms):
-    """Return a new dict with the same content as author_transforms, but with
-    all strings encoded to UTF-8 and the (name, email) tuple turned into a
-    string.  Also turns None into the empty dict."""
+    """Convert AUTHOR_TRANSFORMS into author strings.
+
+    AUTHOR_TRANSFORMS is a dict { CVSAUTHOR : DVCSAUTHOR } where
+    CVSAUTHOR is the CVS author and DVCSAUTHOR is either:
+
+    * a tuple (NAME, EMAIL) where NAME and EMAIL are strings.  Such
+      entries are converted into a UTF-8 string of the form 'name
+      <email>'.
+
+    * a string already in the form 'name <email>'.
+
+    Return a similar dict { CVSAUTHOR : DVCSAUTHOR } where all keys
+    and values are UTF-8-encoded strings.
+
+    Any of the input strings may be Unicode strings (in which case
+    they are encoded to UTF-8) or 8-bit strings (in which case they
+    are used as-is).  Also turns None into the empty dict."""
+
     result = {}
     if author_transforms is not None:
-      for (cvsauthor, (name, email,)) in author_transforms.iteritems():
+      for (cvsauthor, dvcsauthor) in author_transforms.iteritems():
         cvsauthor = to_utf8(cvsauthor)
-        name = to_utf8(name)
-        email = to_utf8(email)
-        result[cvsauthor] = "%s <%s>" % (name, email,)
+        if isinstance(dvcsauthor, basestring):
+          dvcsauthor = to_utf8(dvcsauthor)
+        else:
+          (name, email,) = dvcsauthor
+          name = to_utf8(name)
+          email = to_utf8(email)
+          dvcsauthor = "%s <%s>" % (name, email,)
+        result[cvsauthor] = dvcsauthor
     return result
 
   def register_artifacts(self, which_pass):

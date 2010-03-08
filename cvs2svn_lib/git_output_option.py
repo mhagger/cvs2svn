@@ -148,9 +148,10 @@ class GitOutputOption(DVCSOutputOption):
         git-fast-import commands for defining revisions will be
         written.
 
-    author_transforms -- a map {cvsauthor : (fullname, email)} from
-        CVS author names to git full name and email address.  All of
-        the contents are 8-bit strings encoded as UTF-8.
+    author_transforms -- a map from CVS author names to git full name
+        and email address.  See
+        DVCSOutputOption.normalize_author_transforms() for information
+        about the form of this parameter.
 
   """
 

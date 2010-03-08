@@ -278,12 +278,12 @@ class DestroyerFilterSink(FilterSink):
 
     def set_head_revision(self, revision):
         self.head_revision = revision
-        self.sink.set_head_revision(revision)
+        FilterSink.set_head_revision(self, revision)
 
     def define_tag(self, name, revision):
         if destroy['symbols']:
             name = rewrite_symbol(name)
-        self.sink.define_tag(name, revision)
+        FilterSink.define_tag(self, name, revision)
 
     def define_revision(
         self, revision, timestamp, author, state, branches, next

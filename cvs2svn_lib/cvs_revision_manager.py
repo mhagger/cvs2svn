@@ -41,23 +41,45 @@ class CVSRevisionReader(RevisionReader):
       ['-q'],
       ]
 
-  def __init__(self, cvs_executable):
+  def __init__(self, cvs_executable, global_options=None):
+    """Initialize a CVSRevisionReader.
+
+    CVS_EXECUTABLE is the CVS command (possibly including the full
+    path to the executable; otherwise it is sought in the $PATH).
+    GLOBAL_ARGUMENTS, if specified, should be a list of global options
+    that are passed to the CVS command before the subcommand.  If
+    GLOBAL_ARGUMENTS is not specified, then each of the possibilities
+    listed in _possible_global_options is checked in order until one
+    is found that runs successfully and without any output to stderr."""
+
     self.cvs_executable = cvs_executable
 
-    for global_options in self._possible_global_options:
+    if global_options is None:
+      for global_options in self._possible_global_options:
+        try:
+          self._check_cvs_runs(global_options)
+        except CommandFailedException, e:
+          pass
+        else:
+          break
+      else:
+        raise FatalError(
+            '%s\n'
+            'Please check that cvs is installed and in your PATH.' % (e,)
+            )
+    else:
       try:
         self._check_cvs_runs(global_options)
       except CommandFailedException, e:
-        pass
-      else:
-        # Those global options were OK; use them for all CVS invocations.
-        self.global_options = global_options
-        break
-    else:
-      raise FatalError(
-          '%s\n'
-          'Please check that cvs is installed and in your PATH.' % (e,)
-          )
+        raise FatalError(
+            '%s\n'
+            'Please check that cvs is installed and in your PATH and that\n'
+            'the global options that you specified (%r) are correct.'
+            % (e, global_options,)
+            )
+
+    # The global options were OK; use them for all CVS invocations.
+    self.global_options = global_options
 
   def _check_cvs_runs(self, global_options):
     """Check that CVS can be started.

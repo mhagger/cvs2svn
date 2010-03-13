@@ -31,6 +31,10 @@ class CVSRevisionReader(RevisionReader):
   # are the global options that we try to use, in order of decreasing
   # preference:
   _possible_global_options = [
+      ['-Q', '-R', '-f'],
+      ['-Q', '-R'],
+      ['-Q', '-f'],
+      ['-Q'],
       ['-q', '-R', '-f'],
       ['-q', '-R'],
       ['-q', '-f'],

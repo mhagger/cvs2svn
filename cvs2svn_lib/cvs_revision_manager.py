@@ -27,10 +27,10 @@ from cvs2svn_lib.revision_manager import RevisionReader
 class CVSRevisionReader(RevisionReader):
   """A RevisionReader that reads the contents via CVS."""
 
-  # Different versions of CVS support different global arguments.
-  # Here are the global arguments that we try to use, in order of
-  # decreasing preference:
-  _possible_global_arguments = [
+  # Different versions of CVS support different global options.  Here
+  # are the global options that we try to use, in order of decreasing
+  # preference:
+  _possible_global_options = [
       ['-q', '-R', '-f'],
       ['-q', '-R'],
       ['-q', '-f'],
@@ -40,14 +40,14 @@ class CVSRevisionReader(RevisionReader):
   def __init__(self, cvs_executable):
     self.cvs_executable = cvs_executable
 
-    for global_arguments in self._possible_global_arguments:
+    for global_options in self._possible_global_options:
       try:
-        self._check_cvs_runs(global_arguments)
+        self._check_cvs_runs(global_options)
       except CommandFailedException, e:
         pass
       else:
-        # Those global arguments were OK; use them for all CVS invocations.
-        self.global_arguments = global_arguments
+        # Those global options were OK; use them for all CVS invocations.
+        self.global_options = global_options
         break
     else:
       raise FatalError(
@@ -55,15 +55,15 @@ class CVSRevisionReader(RevisionReader):
           'Please check that cvs is installed and in your PATH.' % (e,)
           )
 
-  def _check_cvs_runs(self, global_arguments):
+  def _check_cvs_runs(self, global_options):
     """Check that CVS can be started.
 
     Try running 'cvs --version' with the current setting for
-    self.cvs_executable and the specified global_arguments.  If not
+    self.cvs_executable and the specified global_options.  If not
     successful, raise a CommandFailedException."""
 
     check_command_runs(
-        [self.cvs_executable] + global_arguments + ['--version'],
+        [self.cvs_executable] + global_options + ['--version'],
         self.cvs_executable,
         )
 
@@ -71,7 +71,7 @@ class CVSRevisionReader(RevisionReader):
     project = cvs_rev.cvs_file.project
     pipe_cmd = [
         self.cvs_executable
-        ] + self.global_arguments + [
+        ] + self.global_options + [
         '-d', project.cvs_repository_root,
         'co',
         '-r' + cvs_rev.rev,

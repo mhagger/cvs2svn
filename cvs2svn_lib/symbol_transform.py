@@ -244,7 +244,7 @@ class SubtreeSymbolTransform(SymbolTransform):
     CVS_PATH is the path in the repository.  INNER_SYMBOL_TRANSFORM is
     the SymbolTransform to wrap."""
 
-    assert type(cvs_path) == str
+    assert isinstance(cvs_path, str)
     self.__subtree = os.path.normcase(os.path.normpath(cvs_path))
     self.__inner = inner_symbol_transform
 

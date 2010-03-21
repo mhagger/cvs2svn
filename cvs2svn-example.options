@@ -453,7 +453,7 @@ ctx.svn_property_setters.extend([
 
     # To read mime types from a file, uncomment the following line and
     # specify a filename:
-    #MimeMapper(r'/etc/mime.types'),
+    #MimeMapper(r'/etc/mime.types', ignore_case=False),
 
     # Omit the svn:eol-style property from any files that are listed
     # as binary (i.e., mode '-kb') in CVS:

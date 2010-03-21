@@ -129,7 +129,10 @@ class MimeMapper(SVNPropertySetter):
           mix of uppercase and lowercase filenames."""
 
     self.mappings = { }
-    self.ignore_case = ignore_case
+    if ignore_case:
+      self.transform_case = _squash_case
+    else:
+      self.transform_case = _preserve_case
 
     if mime_types_file is None and mime_mappings is None:
       Log().error('Should specify MIME types file or dict.\n')
@@ -146,8 +149,7 @@ class MimeMapper(SVNPropertySetter):
           continue
         type = extensions.pop(0)
         for ext in extensions:
-          if ignore_case:
-            ext = ext.lower()
+          ext = self.transform_case(ext)
           if ext in self.mappings and self.mappings[ext] != type:
             Log().error(
                 "%s: ambiguous MIME mapping for *.%s (%s or %s)\n"
@@ -157,8 +159,7 @@ class MimeMapper(SVNPropertySetter):
 
     if mime_mappings is not None:
       for ext, type in mime_mappings.iteritems():
-        if ignore_case:
-          ext = ext.lower()
+        ext = self.transform_case(ext)
         if ext in self.mappings and self.mappings[ext] != type:
           Log().error(
               "%s: ambiguous MIME mapping for *.%s (%s or %s)\n"
@@ -182,8 +183,7 @@ class MimeMapper(SVNPropertySetter):
     if not extension:
       extension = basename
 
-    if self.ignore_case:
-      extension = extension.lower()
+    extension = self.transform_case(extension)
 
     mime_type = self.mappings.get(extension, None)
     if mime_type is not None:

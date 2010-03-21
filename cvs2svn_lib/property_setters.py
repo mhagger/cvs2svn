@@ -27,6 +27,14 @@ from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.log import Log
 
 
+def _squash_case(s):
+  return s.lower()
+
+
+def _preserve_case(s):
+  return s
+
+
 class SVNPropertySetter:
   """Abstract class for objects that can set properties on a SVNCommitItem."""
 
@@ -237,10 +245,10 @@ class AutoPropsPropertySetter(SVNPropertySetter):
   def __init__(self, configfilename, ignore_case=True):
     config = ConfigParser.ConfigParser()
     if ignore_case:
-      self.transform_case = self.squash_case
+      self.transform_case = _squash_case
     else:
-      config.optionxform = self.preserve_case
-      self.transform_case = self.preserve_case
+      config.optionxform = _preserve_case
+      self.transform_case = _preserve_case
 
     configtext = open(configfilename).read()
     if self.comment_re.search(configtext):
@@ -266,12 +274,6 @@ class AutoPropsPropertySetter(SVNPropertySetter):
           value = config.get(section, pattern)
           if value:
             self._add_pattern(pattern, value)
-
-  def squash_case(self, s):
-    return s.lower()
-
-  def preserve_case(self, s):
-    return s
 
   def _add_pattern(self, pattern, props):
     propdict = {}

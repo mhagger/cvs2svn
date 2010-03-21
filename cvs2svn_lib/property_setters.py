@@ -98,7 +98,10 @@ class MimeMapper(SVNPropertySetter):
 
   propname = 'svn:mime-type'
 
-  def __init__(self, mime_types_file, ignore_case=False):
+  def __init__(
+          self, mime_types_file=None, mime_mappings=None,
+          ignore_case=False
+          ):
     """Constructor.
 
     Arguments:
@@ -107,6 +110,9 @@ class MimeMapper(SVNPropertySetter):
           line of the file should contain the MIME type, then a
           whitespace-separated list of file extensions; e.g., one line
           might be 'text/plain txt c h cpp hpp'.
+
+      mime_mappings -- a dictionary mapping a file extension to a MIME
+          type; e.g., {'txt': 'text/plain', 'cpp': 'text/plain'}.
 
       ignore_case -- True iff case should be ignored in filename
           extensions.  Setting this option to True can be useful if
@@ -117,17 +123,32 @@ class MimeMapper(SVNPropertySetter):
     self.mappings = { }
     self.ignore_case = ignore_case
 
-    for line in file(mime_types_file):
-      if line.startswith("#"):
-        continue
+    if mime_types_file is None and mime_mappings is None:
+      Log().error('Should specify MIME types file or dict.\n')
 
-      # format of a line is something like
-      # text/plain c h cpp
-      extensions = line.split()
-      if len(extensions) < 2:
-        continue
-      type = extensions.pop(0)
-      for ext in extensions:
+    if mime_types_file is not None:
+      for line in file(mime_types_file):
+        if line.startswith("#"):
+          continue
+
+        # format of a line is something like
+        # text/plain c h cpp
+        extensions = line.split()
+        if len(extensions) < 2:
+          continue
+        type = extensions.pop(0)
+        for ext in extensions:
+          if ignore_case:
+            ext = ext.lower()
+          if ext in self.mappings and self.mappings[ext] != type:
+            Log().error(
+                "%s: ambiguous MIME mapping for *.%s (%s or %s)\n"
+                % (warning_prefix, ext, self.mappings[ext], type)
+                )
+          self.mappings[ext] = type
+
+    if mime_mappings is not None:
+      for ext, type in mime_mappings.iteritems():
         if ignore_case:
           ext = ext.lower()
         if ext in self.mappings and self.mappings[ext] != type:

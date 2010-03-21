@@ -234,3 +234,34 @@ class IgnoreSymbolTransform(SymbolTransform):
       return symbol_name
 
 
+class SubtreeSymbolTransform(SymbolTransform):
+  """A wrapper around another SymbolTransform, that limits it to a
+  specified subtree."""
+
+  def __init__(self, cvs_path, inner_symbol_transform):
+    """Constructor.
+
+    CVS_PATH is the path in the repository.  INNER_SYMBOL_TRANSFORM is
+    the SymbolTransform to wrap."""
+
+    assert type(cvs_path) == str
+    self.__subtree = os.path.normcase(os.path.normpath(cvs_path))
+    self.__inner = inner_symbol_transform
+
+  def __does_rule_apply_to(self, cvs_file):
+    cvs_path = os.path.normcase(os.path.normpath(cvs_file.filename))
+    while cvs_path != self.__subtree:
+      new_cvs_path = os.path.dirname(cvs_path)
+      if new_cvs_path == cvs_path:
+        return False
+      cvs_path = new_cvs_path
+    return True
+
+  def transform(self, cvs_file, symbol_name, revision):
+    if self.__does_rule_apply_to(cvs_file):
+      return self.__inner.transform(cvs_file, symbol_name, revision)
+    else:
+      # Rule does not apply to that path; return symbol name unaltered.
+      return symbol_name
+
+

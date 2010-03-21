@@ -98,7 +98,7 @@ class MimeMapper(SVNPropertySetter):
 
   propname = 'svn:mime-type'
 
-  def __init__(self, mime_types_file, case_insensitive=False):
+  def __init__(self, mime_types_file, ignore_case=False):
     """Constructor.
 
     Arguments:
@@ -108,14 +108,14 @@ class MimeMapper(SVNPropertySetter):
           whitespace-separated list of file extensions; e.g., one line
           might be 'text/plain txt c h cpp hpp'.
 
-      case_insensitive -- True iff case should be ignored in filename
+      ignore_case -- True iff case should be ignored in filename
           extensions.  Setting this option to True can be useful if
           your CVS repository was used on systems with
           case-insensitive filenames, in which case you might have a
           mix of uppercase and lowercase filenames."""
 
     self.mappings = { }
-    self.case_insensitive = case_insensitive
+    self.ignore_case = ignore_case
 
     for line in file(mime_types_file):
       if line.startswith("#"):
@@ -128,7 +128,7 @@ class MimeMapper(SVNPropertySetter):
         continue
       type = extensions.pop(0)
       for ext in extensions:
-        if case_insensitive:
+        if ignore_case:
           ext = ext.lower()
         if ext in self.mappings and self.mappings[ext] != type:
           Log().error(
@@ -153,7 +153,7 @@ class MimeMapper(SVNPropertySetter):
     if not extension:
       extension = basename
 
-    if self.case_insensitive:
+    if self.ignore_case:
       extension = extension.lower()
 
     mime_type = self.mappings.get(extension, None)

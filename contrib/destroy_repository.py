@@ -108,7 +108,7 @@ import os
 import shutil
 import re
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(sys.argv[0])))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from cvs2svn_lib.key_generator import KeyGenerator
 import cvs2svn_rcsparse

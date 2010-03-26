@@ -8,7 +8,7 @@ import getopt
 import cPickle as pickle
 from cStringIO import StringIO
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(sys.argv[0])))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from cvs2svn_lib import config
 from cvs2svn_lib.context import Ctx

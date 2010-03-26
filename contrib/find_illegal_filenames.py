@@ -27,7 +27,7 @@ SVN archive."""
 import sys
 import os
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(sys.argv[0])))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.collect_data import verify_filename_legal

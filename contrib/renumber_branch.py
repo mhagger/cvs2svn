@@ -44,7 +44,7 @@ in use, and fail in that case.
 import sys
 import os
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(sys.argv[0]))))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import cvs2svn_rcsparse
 from rcs_file_filter import WriteRCSFileSink, FilterSink

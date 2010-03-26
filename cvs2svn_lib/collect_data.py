@@ -138,7 +138,6 @@ class _RevisionData:
     self.rev = rev
     self.timestamp = timestamp
     self.author = author
-    self.original_timestamp = timestamp
     self.state = state
 
     # If this is the first revision on a branch, then this is the

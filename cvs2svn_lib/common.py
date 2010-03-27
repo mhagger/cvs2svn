@@ -283,6 +283,16 @@ def is_trunk_revision(rev):
   return rev.count('.') == 1
 
 
+def is_branch_revision_number(rev):
+  """Return True iff REV is a branch revision number.
+
+  REV is a CVS revision number in canonical form (i.e., with zeros
+  removed).  Return True iff it refers to a whole branch, as opposed
+  to a single revision."""
+
+  return rev.count('.') % 2 == 0
+
+
 def format_date(date):
   """Return an svn-compatible date string for DATE (seconds since epoch).
 

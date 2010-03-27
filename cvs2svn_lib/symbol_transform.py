@@ -265,3 +265,41 @@ class SubtreeSymbolTransform(SymbolTransform):
       return symbol_name
 
 
+class TagOnlyTransform(SymbolTransform):
+  """A wrapper around another SymbolTransform, that limits it to
+  CVS tags (not CVS branches)."""
+
+  def __init__(self, inner_symbol_transform):
+    """Constructor.
+
+    INNER_SYMBOL_TRANSFORM is the SymbolTransform to wrap."""
+    self.__inner = inner_symbol_transform
+
+  def transform(self, cvs_file, symbol_name, revision):
+    if revision.count('.') % 2 == 0:
+      # It's a branch
+      return symbol_name
+    else:
+      # It's a tag
+      return self.__inner.transform(cvs_file, symbol_name, revision)
+
+
+class BranchOnlyTransform(SymbolTransform):
+  """A wrapper around another SymbolTransform, that limits it to
+  CVS branches (not CVS tags)."""
+
+  def __init__(self, inner_symbol_transform):
+    """Constructor.
+
+    INNER_SYMBOL_TRANSFORM is the SymbolTransform to wrap."""
+    self.__inner = inner_symbol_transform
+
+  def transform(self, cvs_file, symbol_name, revision):
+    if revision.count('.') % 2 == 0:
+      # It's a branch
+      return self.__inner.transform(cvs_file, symbol_name, revision)
+    else:
+      # It's a tag
+      return symbol_name
+
+

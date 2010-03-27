@@ -107,7 +107,9 @@ def is_same_line_of_development(rev1, rev2):
 
   if rev1 is None or rev2 is None:
     return False
-  if rev1.count('.') == 1 and rev2.count('.') == 1:
+  if is_trunk_revision(rev1) and is_trunk_revision(rev2):
+    # Trunk revisions have to be handled specially because the main
+    # trunk version number can be changed; e.g., from 1 to 2.
     return True
   if rev1[0:rev1.rfind('.')] == rev2[0:rev2.rfind('.')]:
     return True

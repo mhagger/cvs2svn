@@ -24,6 +24,7 @@ from cvs2svn_lib.log import Log
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import IllegalSVNPathError
 from cvs2svn_lib.common import normalize_svn_path
+from cvs2svn_lib.common import is_branch_revision_number
 
 
 class SymbolTransform:
@@ -276,7 +277,7 @@ class TagOnlyTransform(SymbolTransform):
     self.__inner = inner_symbol_transform
 
   def transform(self, cvs_file, symbol_name, revision):
-    if revision.count('.') % 2 == 0:
+    if is_branch_revision_number(revision):
       # It's a branch
       return symbol_name
     else:
@@ -295,7 +296,7 @@ class BranchOnlyTransform(SymbolTransform):
     self.__inner = inner_symbol_transform
 
   def transform(self, cvs_file, symbol_name, revision):
-    if revision.count('.') % 2 == 0:
+    if is_branch_revision_number(revision):
       # It's a branch
       return self.__inner.transform(cvs_file, symbol_name, revision)
     else:

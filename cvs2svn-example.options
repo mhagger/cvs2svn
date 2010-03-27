@@ -392,7 +392,7 @@ global_symbol_strategy_rules = [
     ExcludeTrivialImportBranchRule(),
 
     # To exclude all vendor branches (branches that had "cvs import"s
-    # on them bug no other kinds of commits), uncomment the following
+    # on them but no other kinds of commits), uncomment the following
     # line:
     #ExcludeVendorBranchRule(),
 

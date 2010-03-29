@@ -41,6 +41,7 @@ from cvs2svn_lib.cvs_revision_manager import CVSRevisionReader
 from cvs2svn_lib.checkout_internal import InternalRevisionCollector
 from cvs2svn_lib.checkout_internal import InternalRevisionReader
 from cvs2svn_lib.symbol_strategy import AllBranchRule
+from cvs2svn_lib.symbol_strategy import AllExcludedRule
 from cvs2svn_lib.symbol_strategy import AllTagRule
 from cvs2svn_lib.symbol_strategy import BranchIfCommitsRule
 from cvs2svn_lib.symbol_strategy import ExcludeRegexpStrategyRule
@@ -426,12 +427,12 @@ class RunOptions(object):
     self.parser.set_default('symbol_default', 'heuristic')
     group.add_option(IncompatibleOption(
         '--symbol-default', type='choice',
-        choices=['heuristic', 'strict', 'branch', 'tag'],
+        choices=['heuristic', 'strict', 'branch', 'tag', 'exclude'],
         action='store',
         help=(
             'specify how ambiguous symbols are converted.  '
             'OPT is "heuristic" (default), "strict", "branch", '
-            'or "tag"'
+            '"tag" or "exclude"'
             ),
         man_help=(
             'Specify how to convert ambiguous symbols (those that appear in '
@@ -441,8 +442,9 @@ class RunOptions(object):
             'CVS), \'strict\' (no default; every ambiguous symbol has to be '
             'resolved manually using \\fB--force-branch\\fR, '
             '\\fB--force-tag\\fR, or \\fB--exclude\\fR), \'branch\' (treat '
-            'every ambiguous symbol as a branch), or \'tag\' (treat every '
-            'ambiguous symbol as a tag).  The default is \'heuristic\'.'
+            'every ambiguous symbol as a branch), \'tag\' (treat every '
+            'ambiguous symbol as a tag), or \'exclude\' (do not convert '
+            'ambiguous symbols).  The default is \'heuristic\'.'
             ),
         metavar='OPT',
         ))
@@ -1004,6 +1006,8 @@ class RunOptions(object):
       elif options.symbol_default == 'heuristic':
         options.symbol_strategy_rules.append(BranchIfCommitsRule())
         options.symbol_strategy_rules.append(HeuristicStrategyRule())
+      elif options.symbol_default == 'exclude':
+        options.symbol_strategy_rules.append(AllExcludedRule())
       else:
         assert False
 

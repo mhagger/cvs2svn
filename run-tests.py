@@ -3826,6 +3826,20 @@ def include_empty_directories_no_prune():
     ))
 
 
+@Cvs2SvnTestFunction
+def exclude_symbol_default():
+  "test 'exclude' symbol default"
+
+  conv = ensure_conversion(
+      'symbol-mess', args=['--symbol-default=exclude'])
+  if conv.path_exists('tags', 'MOSTLY_BRANCH') \
+     or conv.path_exists('branches', 'MOSTLY_BRANCH'):
+     raise Failure()
+  if conv.path_exists('tags', 'MOSTLY_TAG') \
+     or conv.path_exists('branches', 'MOSTLY_TAG'):
+     raise Failure()
+
+
 ########################################################################
 # Run the tests
 
@@ -4030,6 +4044,7 @@ test_list = [
     include_empty_directories,
 # 170:
     include_empty_directories_no_prune,
+    exclude_symbol_default,
     ]
 
 if __name__ == '__main__':

@@ -315,6 +315,22 @@ class AllTagRule(_CatchAllRule):
         )
 
 
+class AllExcludedRule(_CatchAllRule):
+  """Exclude all symbols.
+
+  Usually this rule will appear after a list of more careful rules
+  (including a SymbolHintsFileRule or several ManualSymbolRules)
+  and will therefore only apply to the symbols not handled earlier."""
+
+  def __init__(self):
+    _CatchAllRule.__init__(self, ExcludedSymbol)
+
+  def log(self, symbol):
+    Log().verbose(
+        'Excluding symbol %s by catch-all rule.' % (symbol,)
+        )
+
+
 class TrunkPathRule(StrategyRule):
   """Set the base path for Trunk."""
 

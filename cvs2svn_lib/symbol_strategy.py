@@ -257,25 +257,45 @@ class HeuristicStrategyRule(StrategyRule):
       return Branch(symbol)
 
 
-class AllBranchRule(StrategyRule):
+class _CatchAllRule(StrategyRule):
+  """Base class for catch-all rules.
+
+  Usually this rule will appear after a list of more careful rules
+  (including a general rule like UnambiguousUsageRule) and will
+  therefore only apply to the symbols not handled earlier."""
+
+  def __init__(self, action):
+    self._action = action
+
+  def log(self, symbol):
+    raise NotImplementedError()
+
+  def get_symbol(self, symbol, stats):
+    if isinstance(symbol, (Trunk, TypedSymbol)):
+      return symbol
+    else:
+      self.log(symbol)
+      return self._action(symbol)
+
+
+class AllBranchRule(_CatchAllRule):
   """Convert all symbols as branches.
 
   Usually this rule will appear after a list of more careful rules
   (including a general rule like UnambiguousUsageRule) and will
   therefore only apply to the symbols not handled earlier."""
 
-  def get_symbol(self, symbol, stats):
-    if isinstance(symbol, (Trunk, TypedSymbol)):
-      return symbol
-    else:
-      Log().verbose(
-          'Converting symbol %s as a branch because no other rules applied.'
-          % (symbol,)
-          )
-      return Branch(symbol)
+  def __init__(self):
+    _CatchAllRule.__init__(self, Branch)
+
+  def log(self, symbol):
+    Log().verbose(
+        'Converting symbol %s as a branch because no other rules applied.'
+        % (symbol,)
+        )
 
 
-class AllTagRule(StrategyRule):
+class AllTagRule(_CatchAllRule):
   """Convert all symbols as tags.
 
   We don't worry about conflicts here; they will be caught later by
@@ -285,15 +305,14 @@ class AllTagRule(StrategyRule):
   (including a general rule like UnambiguousUsageRule) and will
   therefore only apply to the symbols not handled earlier."""
 
-  def get_symbol(self, symbol, stats):
-    if isinstance(symbol, (Trunk, TypedSymbol)):
-      return symbol
-    else:
-      Log().verbose(
-          'Converting symbol %s as a tag because no other rules applied.'
-          % (symbol,)
-          )
-      return Tag(symbol)
+  def __init__(self):
+    _CatchAllRule.__init__(self, Tag)
+
+  def log(self, symbol):
+    Log().verbose(
+        'Converting symbol %s as a tag because no other rules applied.'
+        % (symbol,)
+        )
 
 
 class TrunkPathRule(StrategyRule):

@@ -142,6 +142,10 @@ for argv in sys.argv[1:]:
     elif argv == '--heads'or argv == '-h':
         do_heads = True
 
+if not (do_tags or do_heads):
+    # By default, process tags but not branches:
+    do_tags = True
+
 if do_tags:
     process_refs("tags")
 

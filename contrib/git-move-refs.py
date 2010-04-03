@@ -2,10 +2,10 @@
 
 """Remove redundant fixup commits from a cvs2svn-converted git repository.
 
-Process each head ref and tag in a git repository. If the associated
-commit is tree-wise identical with another commit, the head or tag is
-moved to point at the other commit (i.e., refs pointing at identical
-content will all point at a single fixup commit).
+Process each head ref and/or tag in a git repository. If the
+associated commit is tree-wise identical with another commit, the head
+or tag is moved to point at the other commit (i.e., refs pointing at
+identical content will all point at a single fixup commit).
 
 Furthermore, if one of the parents of the fixup commit is identical to
 the fixup commit itself, then the head or tag is moved to the parent.
@@ -16,7 +16,10 @@ refs (branches).
 
 """
 
+usage = 'USAGE: %prog [options]'
+
 import sys
+import optparse
 from subprocess import Popen, PIPE, call
 
 
@@ -134,23 +137,34 @@ def process_refs(ref_type):
 
 
 def main(args):
-    do_tags = False
-    do_heads = False
+    parser = optparse.OptionParser(
+        usage=usage, description=__doc__,
+        add_help_option=False,
+        )
+    parser.add_option(
+        '--tags', '-t',
+        action='store_true', default=False,
+        help='process tags',
+        )
+    parser.add_option(
+        '--heads', '-h',
+        action='store_true', default=False,
+        help='process heads',
+        )
 
-    for arg in args:
-        if arg == '--tags' or arg == '-t':
-            do_tags = True
-        elif arg == '--heads'or arg == '-h':
-            do_heads = True
+    (options, args) = parser.parse_args(args=args)
 
-    if not (do_tags or do_heads):
+    if args:
+        parser.error('Unexpected command-line arguments')
+
+    if not (options.tags or options.heads):
         # By default, process tags but not branches:
-        do_tags = True
+        options.tags = True
 
-    if do_tags:
+    if options.tags:
         process_refs("tags")
 
-    if do_heads:
+    if options.heads:
         process_refs("heads")
 
 

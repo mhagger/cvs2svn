@@ -147,7 +147,7 @@ get started.</p>
     from a single revision, but cvs2git does not realize it and
     creates a superfluous tag fixup branch.  It is possible to delete
     all superfluous tag fixup branches after the conversion, by
-    running the <tt>contrib/git-move-tags.py</tt> script within the
+    running the <tt>contrib/git-move-refs.py</tt> script within the
     resulting git repository.</li>
 
   <li>There are no checks that CVS branch and tag names are legal git
@@ -325,7 +325,7 @@ cat cvs2svn-tmp/git-blob.dat cvs2svn-tmp/git-dump.dat | git fast-import
   </li>
 
   <li>If you want to get rid of unnecessary tag fixup branches, then
-    run the <tt>contrib/git-move-tags.py</tt> script from within the
+    run the <tt>contrib/git-move-refs.py</tt> script from within the
     git repository.</li>
 
 </ol>

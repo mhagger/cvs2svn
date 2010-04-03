@@ -137,19 +137,16 @@ def process_refs(ref_type):
 
 
 def main(args):
-    parser = optparse.OptionParser(
-        usage=usage, description=__doc__,
-        add_help_option=False,
-        )
+    parser = optparse.OptionParser(usage=usage, description=__doc__)
     parser.add_option(
         '--tags', '-t',
         action='store_true', default=False,
         help='process tags',
         )
     parser.add_option(
-        '--heads', '-h',
+        '--branches', '-b',
         action='store_true', default=False,
-        help='process heads',
+        help='process branches',
         )
 
     (options, args) = parser.parse_args(args=args)
@@ -157,15 +154,15 @@ def main(args):
     if args:
         parser.error('Unexpected command-line arguments')
 
-    if not (options.tags or options.heads):
+    if not (options.tags or options.branches):
         # By default, process tags but not branches:
         options.tags = True
 
     if options.tags:
         process_refs("tags")
 
-    if options.heads:
-        process_refs("heads")
+    if options.branches:
+        process_refs("branches")
 
 
 main(sys.argv[1:])

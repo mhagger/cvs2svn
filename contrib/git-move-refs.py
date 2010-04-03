@@ -133,23 +133,27 @@ def process_refs(ref_type):
     assert get_ref_info.returncode == 0
 
 
-do_tags = False
-do_heads = False
+def main(args):
+    do_tags = False
+    do_heads = False
 
-for argv in sys.argv[1:]:
-    if argv == '--tags' or argv == '-t':
+    for arg in args:
+        if arg == '--tags' or arg == '-t':
+            do_tags = True
+        elif arg == '--heads'or arg == '-h':
+            do_heads = True
+
+    if not (do_tags or do_heads):
+        # By default, process tags but not branches:
         do_tags = True
-    elif argv == '--heads'or argv == '-h':
-        do_heads = True
 
-if not (do_tags or do_heads):
-    # By default, process tags but not branches:
-    do_tags = True
+    if do_tags:
+        process_refs("tags")
 
-if do_tags:
-    process_refs("tags")
+    if do_heads:
+        process_refs("heads")
 
-if do_heads:
-    process_refs("heads")
+
+main(sys.argv[1:])
 
 

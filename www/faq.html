@@ -79,6 +79,9 @@
     contain both repo/path/file.txt,v and
     repo/path/Attic/file.txt,v".  What can I do?</a></li>
 
+  <li><a href="#rcsfileinvalid">I get an error "ERROR:
+    <i>filename</i>,v is not a valid ,v file."</a></li>
+
   <li><a href="#gdbm-nfs">gdbm.error: (45, 'Operation not supported')</a></li>
 
   <li><a href="#apple-single">When converting a CVS repository that
@@ -845,6 +848,35 @@ case-sensitive operating system at some time.  A workaround for this
 problem is to copy the CVS repository to a case-sensitive operating
 system and convert it there.
 </p>
+
+
+<h3><a name="rcsfileinvalid" title="#rcsfileinvalid">I get an error
+    "ERROR: <i>filename</i>,v is not a valid ,v file."</a></h3>
+
+<p>The named file is corrupt in some way.  (Corruption is surprisingly
+common in CVS repositories.)  It is likely that even CVS has problems
+with this file; try checking out the head revision, revision 1.1, and
+the tip revision on each branch of this file; probably one or more of
+them don't work.</p>
+
+<p>Here are some options:</p>
+
+<ol>
+
+  <li>Omit this file from the conversion (by making a copy of your
+    repository, deleting this file from the copy, then converting from
+    the copy).</li>
+
+  <li>Restore an older copy of this file from backups, if you have
+    backups from before it was corrupted.</li>
+
+  <li>Hand-fix the file as best you can by opening it in a binary
+    editor and trying to put it back in RCS file format (documented in
+    the rcsfile(5) manpage).  Often it is older revisions that are
+    affected by corruption; you might need to delete some old
+    revisions to salvage newer ones.</li>
+
+</ol>
 
 
 <h3><a name="gdbm-nfs" title="#gdbm-nfs">gdbm.error: (45, 'Operation

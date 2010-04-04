@@ -17,6 +17,8 @@
 """The changeset dependency graph."""
 
 
+import heapq
+
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.changeset import RevisionChangeset
 from cvs2svn_lib.changeset import OrderedChangeset
@@ -37,62 +39,35 @@ class NoPredNodeInGraphException(Exception):
     Exception.__init__(self, 'Node %s has no predecessors' % (node,))
 
 
-class _NoPredNodes:
-  """Manage changesets that are to be processed.
+class _NoPredNodes(object):
+  """Manage changesets that are ready to be processed.
 
-  Output the changesets in order by time and changeset type.
-
-  The implementation of this class is crude: as changesets are added,
-  they are appended to a list.  When one is needed, the list is sorted
-  in reverse order and then the last changeset in the list is
-  returned.  To reduce the number of sorts that are needed, the class
-  keeps track of whether the list is currently sorted.
-
-  All this repeated sorting is wasteful and unnecessary.  We should
-  instead use a heap to output the changeset order, which would
-  require O(lg N) work per add()/get() rather than O(1) and O(N lg N)
-  as in the current implementation [1].  But: (1) the lame interface
-  of heapq doesn't allow an arbitrary compare function, so we would
-  have to store extra information in the array elements; (2) in
-  practice, the number of items in the list at any time is only a tiny
-  fraction of the total number of changesets; and (3) testing showed
-  that the heapq implementation is no faster than this one (perhaps
-  because of the increased memory usage).
-
-  [1] According to Objects/listsort.txt in the Python source code, the
-  Python list-sorting code is heavily optimized for arrays that have
-  runs of already-sorted elements, so the current cost of get() is
-  probably closer to O(N) than O(N lg N)."""
+  Output the changesets in order by time and changeset type."""
 
   def __init__(self, changeset_db):
     self.changeset_db = changeset_db
-    # A list [(node, changeset,)] of nodes with no predecessors:
+
+    # A heapified list of (node.time_range, changeset, node) tuples
+    # that have no predecessors.  These tuples sort in the desired
+    # commit order:
     self._nodes = []
-    self._sorted = True
 
   def __len__(self):
     return len(self._nodes)
 
-  @staticmethod
-  def _compare((node_1, changeset_1), (node_2, changeset_2)):
-    """Define a (reverse) ordering on self._nodes."""
-
-    return cmp(node_2.time_range, node_1.time_range) \
-           or cmp(changeset_2, changeset_1)
-
   def add(self, node):
-    self._nodes.append( (node, self.changeset_db[node.id],) )
-    self._sorted = False
+    node = (node.time_range, self.changeset_db[node.id], node)
+    heapq.heappush(self._nodes, node)
 
   def get(self):
-    """Return (node, changeset,) of the smallest node.
+    """Return (node, changeset,) of the next node to be committed.
 
-    'Smallest' is defined by self._compare()."""
+    'Smallest' is defined by the ordering of the tuples in
+    self._nodes; namely, the changeset with the earliest time_range,
+    with ties broken by comparing the changesets themselves."""
 
-    if not self._sorted:
-      self._nodes.sort(self._compare)
-      self._sorted = True
-    return self._nodes.pop()
+    (time_range, changeset, node) = heapq.heappop(self._nodes)
+    return (node, changeset)
 
 
 class ChangesetGraph(object):

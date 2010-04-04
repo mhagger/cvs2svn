@@ -44,13 +44,22 @@ class _NoPredNodes(object):
 
   Output the changesets in order by time and changeset type."""
 
-  def __init__(self, changeset_db):
+  def __init__(self, changeset_db, initial_nodes):
+    """Initialize.
+
+    INITIAL_NODES is an iterable over node to add to this object on
+    initialization."""
+
     self.changeset_db = changeset_db
 
     # A heapified list of (node.time_range, changeset, node) tuples
     # that have no predecessors.  These tuples sort in the desired
     # commit order:
-    self._nodes = []
+    self._nodes = [
+      (node.time_range, self.changeset_db[node.id], node)
+      for node in initial_nodes
+      ]
+    heapq.heapify(self._nodes)
 
   def __len__(self):
     return len(self._nodes)
@@ -271,10 +280,14 @@ class ChangesetGraph(object):
 
     # Find a list of (node,changeset,) where the node has no
     # predecessors:
-    nopred_nodes = _NoPredNodes(self._changeset_db)
-    for node in self.nodes.itervalues():
-      if not node.pred_ids:
-        nopred_nodes.add(node)
+    nopred_nodes = _NoPredNodes(
+      self._changeset_db,
+      (
+          node
+          for node in self.nodes.itervalues()
+          if not node.pred_ids
+          ),
+      )
 
     while nopred_nodes:
       (node, changeset,) = nopred_nodes.get()

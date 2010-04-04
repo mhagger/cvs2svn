@@ -41,4 +41,10 @@ class TimeRange(object):
     # Sorted by t_max, and break ties using t_min.
     return cmp(self.t_max, other.t_max) or cmp(self.t_min, other.t_min)
 
+  def __lt__(self, other):
+    c = cmp(self.t_max, other.t_max)
+    if 0 == c:
+      return self.t_min < other.t_min
+    return c < 0
+
 

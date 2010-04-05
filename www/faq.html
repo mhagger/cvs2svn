@@ -52,6 +52,9 @@
   <li><a href="#onetoone">How can I convert separate projects in my
     CVS repository into a single Subversion repository?</a></li>
 
+  <li><a href="#automation">I have hundreds of subprojects to convert
+    and my options file is getting huge</a></li>
+
   <li><a href="#inverted">How can I convert project <tt>foo</tt> so
     that <tt>trunk/tags/branches</tt> are inside of
     <tt>foo</tt>?</a></li>
@@ -327,6 +330,45 @@ run_options.add_project(
         #...whatever...
         ],
     )
+</pre>
+
+
+<h3><a name="automation" title="#automation">I have hundreds of
+    subprojects to convert and my options file is getting
+    huge</a></h3>
+
+<p>The options file is Python code, executed by the Python
+interpreter.  This makes it easy to automate parts of the
+configuration process.  For example, to add many subprojects, you can
+write a Python loop:</p>
+
+<pre>
+projects = ['A', 'B', 'C', ...etc...]
+
+cvs_repo_main_dir = r'test-data/main-cvsrepos'
+for project in projects:
+    run_options.add_project(
+        cvs_repo_main_dir + '/' + project,
+        trunk_path=(project + '/trunk'),
+        branches_path=(project + '/branches'),
+        tags_path=(project + '/tags'),
+        # ...
+        )
+</pre>
+
+<p>or you could even read the subprojects directly from the CVS
+repository:</p>
+
+<pre>
+import os
+cvs_repo_main_dir = r'test-data/main-cvsrepos'
+projects = os.listdir(cvs_repo_main_dir)
+
+# Probably you don't want to convert CVSROOT:
+projects.remove('CVSROOT')
+
+for project in projects:
+    # ...as above...
 </pre>
 
 

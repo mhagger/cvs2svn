@@ -98,7 +98,7 @@ class CVSRevisionReader(RevisionReader):
     pipe_cmd = [
         self.cvs_executable
         ] + self.global_options + [
-        '-d', project.cvs_repository_root,
+        '-d', ':local:' + project.cvs_repository_root,
         'co',
         '-r' + cvs_rev.rev,
         '-p'

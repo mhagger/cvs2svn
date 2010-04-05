@@ -3840,6 +3840,19 @@ def exclude_symbol_default():
      raise Failure()
 
 
+@Cvs2SvnTestFunction
+def add_on_branch2():
+  "another add-on-branch test case"
+
+  conv = ensure_conversion('add-on-branch2')
+  if len(conv.logs) != 2:
+    raise Failure()
+  conv.logs[2].check('add file on branch', (
+    ('/%(branches)s/BRANCH', 'A'),
+    ('/%(branches)s/BRANCH/file1', 'A'),
+    ))
+
+
 ########################################################################
 # Run the tests
 
@@ -4045,6 +4058,7 @@ test_list = [
 # 170:
     include_empty_directories_no_prune,
     exclude_symbol_default,
+    add_on_branch2,
     ]
 
 if __name__ == '__main__':

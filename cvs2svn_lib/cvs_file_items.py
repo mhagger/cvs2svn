@@ -611,10 +611,17 @@ class CVSFileItems(object):
       return False
 
     log_msg = metadata_db[cvs_item.metadata_id].log_msg
-    return bool(re.match(
-        r'file .* was initially added on branch .*\.\n$',
-        log_msg,
-        ))
+    return bool(
+        re.match(
+            r'file .* was initially added on branch .*\.\n$',
+            log_msg,
+            )
+        or re.match(
+            # This variant commit message was reported by one user:
+            r'file .* was added on branch .*\n$',
+            log_msg,
+            )
+        )
 
   def remove_unneeded_initial_trunk_delete(self, metadata_db):
     """Remove unneeded deletes for this file.

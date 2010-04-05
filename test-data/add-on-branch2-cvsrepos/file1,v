@@ -1,0 +1,40 @@
+head	1.1;
+access;
+symbols
+	BRANCH:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2005.12.05.22.35.31;	author gward;	state dead;
+branches
+	1.1.2.1;
+next	;
+
+1.1.2.1
+date	2005.12.05.22.35.31;	author gward;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@file file1 was added on branch BRANCH
+@
+text
+@@
+
+
+1.1.2.1
+log
+@add file on branch
+@
+text
+@@
+
+

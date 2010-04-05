@@ -64,7 +64,7 @@ class Ctx:
     self.retain_conflicting_attic_files = False
 
     # textwrap.TextWrapper instance to be used for wrapping log messages:
-    self.text_wrapper = textwrap.TextWrapper(width=76)
+    self.text_wrapper = textwrap.TextWrapper(width=76, break_long_words=False)
 
     self.initial_project_commit_message = (
         'Standard project directories initialized by cvs2svn.'

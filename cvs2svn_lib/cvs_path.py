@@ -55,6 +55,7 @@ class CVSPath(object):
       'parent_directory',
       'basename',
       'ordinal',
+      'filename',
       ]
 
   def __init__(self, id, project, parent_directory, basename):
@@ -62,6 +63,8 @@ class CVSPath(object):
     self.project = project
     self.parent_directory = parent_directory
     self.basename = basename
+
+    self.filename = os.path.normpath(self._calculate_filename())
 
   def __getstate__(self):
     """This method must only be called after ordinal has been set."""
@@ -79,6 +82,29 @@ class CVSPath(object):
         self.ordinal,
         ) = state
     self.project = Ctx()._projects[project_id]
+    self.filename = os.path.normpath(self._calculate_filename())
+
+  def get_filename(self):
+    """Return the filesystem path to this CVSPath in the CVS repository.
+
+    This is in native format, and already normalised the way
+    os.path.normpath() normalises paths.
+
+    It starts with the repository path passed to run_options.add_project()
+    in the options.py file."""
+
+    # This turns out to be a hot path through the code.
+    # It's used by SubtreeSymbolTransform and similar transforms, so it's
+    # called at least:
+    #   (num_files * num_symbols_per_file * num_subtree_symbol_transforms)
+    # times.  On a large repository with several subtree symbol transforms,
+    # that can exceed 100,000,000 calls.  And _calculate_filename() is quite
+    # complex, so doing that every time could add about 10 minutes to the
+    # cvs2svn runtime.
+    #
+    # So now we precalculate this and just return it.
+
+    return self.filename
 
   def get_ancestry(self):
     """Return a list of the CVSPaths leading from the root path to SELF.
@@ -175,21 +201,20 @@ class CVSDirectory(CVSPath):
   def __init__(self, id, project, parent_directory, basename):
     """Initialize a new CVSDirectory object."""
 
-    CVSPath.__init__(self, id, project, parent_directory, basename)
     # This member is filled in by CollectData.close():
     self.empty_subdirectory_ids = []
 
-  def get_filename(self):
+    CVSPath.__init__(self, id, project, parent_directory, basename)
+
+  def _calculate_filename(self):
     """Return the filesystem path to this CVSPath in the CVS repository."""
 
     if self.parent_directory is None:
       return self.project.project_cvs_repos_path
     else:
       return os.path.join(
-          self.parent_directory.get_filename(), self.basename
+          self.parent_directory.filename, self.basename
           )
-
-  filename = property(get_filename)
 
   def __getstate__(self):
     return (
@@ -262,16 +287,16 @@ class CVSFile(CVSPath):
         ):
     """Initialize a new CVSFile object."""
 
-    CVSPath.__init__(self, id, project, parent_directory, basename)
+    assert parent_directory is not None
+
     self._in_attic = in_attic
     self.executable = executable
     self.file_size = file_size
     self.mode = mode
     self.description = description
+    CVSPath.__init__(self, id, project, parent_directory, basename)
 
-    assert self.parent_directory is not None
-
-  def get_filename(self):
+  def _calculate_filename(self):
     """Return the filesystem path to this CVSPath in the CVS repository."""
 
     if self._in_attic:
@@ -282,8 +307,6 @@ class CVSFile(CVSPath):
       return os.path.join(
           self.parent_directory.filename, self.basename + ',v'
           )
-
-  filename = property(get_filename)
 
   def __getstate__(self):
     return (

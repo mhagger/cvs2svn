@@ -95,6 +95,10 @@
     command '['co', '-q', '-x,v', '-p1.1', '-kk',
     '/home/cvsroot/myfile,v']' failed" in pass 8.</a></li>
 
+  <li><a href="#nonstandardntdb">Vendor branches created with
+    "cvs import -b &lt;branch number&gt;" are not correctly
+    handled.</a></li>
+
 </ol>
 
 
@@ -973,6 +977,60 @@ Upgrade!</i></p>
 <p>But if you must, either install RCS, or ensure that CVS is
 installed and use cvs2svn's <a
 href="cvs2svn.html#use-cvs"><tt>--use-cvs</tt></a> option.</p>
+
+
+<h3><a name="nonstandardntdb" title="#nonstandardntdb">Vendor
+    branches created with "cvs import -b &lt;branch number&gt;"
+    are not correctly handled.</a></h3>
+
+<p>Normally, people using "cvs import" don't specify the
+"-b" flag.  cvs2svn handles this normal case fine.</p>
+
+<p>If you have a file which has an <i>active</i> vendor branch, i.e.
+there have never been any trunk commits but only "cvs imports" onto
+the vendor branch, then cvs2svn will handle this fine.  (Even if
+you've used the "-b" option to specify a non-standard branch
+number).</p>
+
+<p>If you've used "cvs import -b &lt;branch number&gt;", you didn't
+specify the standard CVS vendor branch number of 1.1.1, and there
+has since been a commit on trunk (either a modification or delete),
+then your history has been damaged.  This isn't cvs2svn's fault.
+CVS simply doesn't record the branch number of the old vendor branch,
+it assumes it was 1.1.1.  You will even get the wrong results from
+"cvs checkout -D" with a date when the vendor branch was active.</p>
+
+<p>Symptoms of this problem can include:</p>
+
+<ul>
+<li>cvs2svn refusing to let you exclude the vendor branch, because
+some other branch depends on it</li>
+<li>if you did more than one import onto the vendor branch, then
+your SVN history "missing" one of the changes on trunk (though
+the change will be on the vendor branch).</li>
+</ul>
+
+<p>(Note: There are other possible causes for these symptoms, don't
+assume you have a non-standard vendor branch number just because
+you see these symptoms).</p>
+
+<p>The way to solve this problem is to renumber the vendor branch to
+the standard 1.1.1 branch number.  This has to be done before you run
+cvs2svn.  To help you do this, there is the "renumber_branch.py"
+script in the "contrib" directroy of the cvs2svn distribution.</p>
+
+<p>The typical usage, assuming you used "cvs import -b 1.1.2 ..."
+to create your vendor branch, is:</p>
+<pre>
+      contrib/renumber_branch.py 1.1.2 1.1.1 repos/dir/file,v
+</pre>
+<p>You should only run this on a <b>copy</b> of your CVS repository,
+as it edits the repository in-place.  You can fix a single file or a
+whole directory tree at a time.</p>
+
+<p>The script will check that the 1.1.1 branch doesn't already exist;
+if it does exist then it will fail with an error message.</p>
+
 
 
 <h2>Getting help:</h2>

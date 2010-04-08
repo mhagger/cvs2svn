@@ -837,12 +837,17 @@ class RunOptions(object):
         help='prevent the deletion of intermediate files',
         man_help='Prevent the deletion of temporary files.',
         ))
+    prof = 'cProfile'
+    try:
+        import cProfile
+    except ImportError, e:
+        prof = 'hotshot'
     group.add_option(ManOption(
         '--profile',
         action='callback', callback=self.callback_profile,
-        help='profile with \'hotshot\' (into file cvs2svn.hotshot)',
+        help='profile with \'' + prof + '\' (into file cvs2svn.' + prof + ')',
         man_help=(
-            'Profile with \'hotshot\' (into file \\fIcvs2svn.hotshot\\fR).'
+            'Profile with \'' + prof + '\' (into file \\fIcvs2svn.' + prof + '\\fR).'
             ),
         ))
 

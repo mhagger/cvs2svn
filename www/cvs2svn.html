@@ -1203,7 +1203,10 @@ project-id symbol conversion svn-path parent-lod-name
 
   <tr>
     <td align="right"><tt>--profile</tt></td>
-    <td>Dump Python <a href="http://docs.python.org/lib/module-hotshot.html"
+    <td>Dump Python <a href="http://docs.python.org/library/profile.html"
+        >cProfile</a> profiling data to the file <tt>cvs2svn.cProfile</tt>.
+        In Python 2.4 and earlier, if cProfile is not installed, it will
+        instead dump <a href="http://docs.python.org/library/hotshot.html"
         >Hotshot</a> profiling data to the file <tt>cvs2svn.hotshot</tt>.</td>
   </tr>
 

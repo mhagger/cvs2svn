@@ -77,10 +77,19 @@ def main(progname, run_options, pass_manager):
 
   try:
     if run_options.profiling:
-      import hotshot
-      prof = hotshot.Profile('cvs2svn.hotshot')
-      prof.runcall(pass_manager.run, run_options)
-      prof.close()
+      try:
+        import cProfile
+      except ImportError:
+        # Old version of Python without cProfile.  Use hotshot instead.
+        import hotshot
+        prof = hotshot.Profile('cvs2svn.hotshot')
+        prof.runcall(pass_manager.run, run_options)
+        prof.close()
+      else:
+        # Recent version of Python (2.5+) with cProfile.
+        def run_with_profiling():
+          pass_manager.run(run_options)
+        cProfile.runctx('run_with_profiling()', globals(), locals(), 'cvs2svn.cProfile')
     else:
       pass_manager.run(run_options)
   finally:

@@ -150,7 +150,9 @@ class SymbolMapper(SymbolTransform):
     self._map[key] = new_name
 
   def transform(self, cvs_file, symbol_name, revision):
-    cvs_filename = os.path.normcase(os.path.normpath(cvs_file.filename))
+    # cvs_file.filename is guaranteed to already be normalised the way
+    # os.path.normpath() normalises paths.  No need to call it again.
+    cvs_filename = os.path.normcase(cvs_file.filename)
     return self._map.get(
         (cvs_filename, symbol_name, revision), symbol_name
         )
@@ -204,7 +206,9 @@ class SubtreeSymbolMapper(SymbolTransform):
       # No rules for that symbol name
       return symbol_name
 
-    cvs_path = os.path.normcase(os.path.normpath(cvs_file.filename))
+    # cvs_file.filename is guaranteed to already be normalised the way
+    # os.path.normpath() normalises paths.  No need to call it again.
+    cvs_path = os.path.normcase(cvs_file.filename)
     while True:
       try:
         return symbol_map[cvs_path]
@@ -250,7 +254,10 @@ class SubtreeSymbolTransform(SymbolTransform):
     self.__inner = inner_symbol_transform
 
   def __does_rule_apply_to(self, cvs_file):
-    cvs_path = os.path.normcase(os.path.normpath(cvs_file.filename))
+    # cvs_file.filename is guaranteed to already be normalised the way
+    # os.path.normpath() normalises paths.  So we don't need to call
+    # os.path.normpath() again.
+    cvs_path = os.path.normcase(cvs_file.filename)
     while cvs_path != self.__subtree:
       new_cvs_path = os.path.dirname(cvs_path)
       if new_cvs_path == cvs_path:

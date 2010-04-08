@@ -251,19 +251,51 @@ class SubtreeSymbolTransform(SymbolTransform):
 
     assert isinstance(cvs_path, str)
     self.__subtree = os.path.normcase(os.path.normpath(cvs_path))
+    self.__subtree_len = len(self.__subtree)
     self.__inner = inner_symbol_transform
 
   def __does_rule_apply_to(self, cvs_file):
+    #
+    # NOTE: This turns out to be a hot path through the code.
+    #
+    # It used to use logic similar to SubtreeSymbolMapper.transform().  And
+    # it used to take 44% of cvs2svn's total runtime on one real-world test.
+    # Now it's been optimized, it takes about 2%.
+    #
+    # This is called about:
+    #   (num_files * num_symbols_per_file * num_subtree_symbol_transforms)
+    # times.  On a large repository with several of these transforms,
+    # that can exceed 100,000,000 calls.
+    #
+
     # cvs_file.filename is guaranteed to already be normalised the way
     # os.path.normpath() normalises paths.  So we don't need to call
-    # os.path.normpath() again.
+    # os.path.normpath() again.  (The os.path.normpath() function does
+    # quite a lot, so it's expensive).
+    #
+    # os.path.normcase is a no-op on POSIX systems (and therefore fast).
+    # Even on Windows it's only a memory allocation and case-change, it
+    # should be quite fast.
     cvs_path = os.path.normcase(cvs_file.filename)
-    while cvs_path != self.__subtree:
-      new_cvs_path = os.path.dirname(cvs_path)
-      if new_cvs_path == cvs_path:
-        return False
-      cvs_path = new_cvs_path
-    return True
+
+    # Do most of the work in a single call, without allocating memory.
+    if not cvs_path.startswith(self.__subtree):
+      # Different prefix.
+      # This is the common "no match" case.
+      return False
+
+    if len(cvs_path) == self.__subtree_len:
+      # Exact match.
+      #
+      # This is quite rare, as self.__subtree is usually a directory and
+      # cvs_path is always a file.
+      return True
+
+    # We know cvs_path starts with self.__subtree, check the next character
+    # is a '/' (or if we're on Windows, a '\\').  If so, then cvs_path is a
+    # file under the self.__subtree directory tree, so we match.  If not,
+    # then it's not a match.
+    return cvs_path[self.__subtree_len] == os.path.sep
 
   def transform(self, cvs_file, symbol_name, revision):
     if self.__does_rule_apply_to(cvs_file):

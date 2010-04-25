@@ -55,7 +55,12 @@ class RevisionCollector(object):
     CVS_FILE_ITEMS has already been transformed into the logical
     representation of the file's history as it should be output.
     Therefore it is not necessarily identical to the history as
-    recorded in the RCS file."""
+    recorded in the RCS file.
+
+    This method is allowed to store a pickleable object to the
+    CVSItem.revision_reader_token member of CVSItems in
+    CVS_FILE_ITEMS.  These data are stored with the items and
+    available for the use of the RevisionReader."""
 
     raise NotImplementedError()
 

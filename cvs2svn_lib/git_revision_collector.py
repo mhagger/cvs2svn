@@ -46,7 +46,7 @@ class GitRevisionCollector(RevisionCollector):
     if isinstance(cvs_rev, CVSRevisionDelete):
       # There is no need to record a delete revision, and its token
       # will never be needed:
-      return None
+      return
 
     # FIXME: We have to decide what to do about keyword substitution
     # and eol_style here:

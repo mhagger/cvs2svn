@@ -4,6 +4,7 @@ Version ?.?.? (not yet released)
  New features:
  * Store CVS file descriptions in a Subversion property "cvs:description".
  * SVN: Optionally include empty directories from the CVS repository.
+ * Much faster cvs2git conversions possible via --use-external-blob-generator.
 
  Bugs fixed:
  * Issue #31: cvs2svn does not convert empty directories.

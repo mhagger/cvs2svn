@@ -165,11 +165,10 @@ get started.</p>
     git is typically used, I don't think that this is a significant
     limitation.</li>
 
-  <li>cvs2git is not especially fast.  Among other things, it still
-    uses RCS or CVS to extract the contents of the CVS revisions.
-    Implementing the <tt>--internal-co</tt> option for cvs2git (using
-    code that already exists in cvs2svn) might improve the conversion
-    speed considerably.</li>
+  <li>cvs2git is rather slow when started with the <tt>--use-rcs</tt>
+    or <tt>--use-cvs</tt> options.  It is much faster when started
+    with the <tt>--use-external-blob-generator</tt> option, but that
+    option is still experimental.</li>
 
   <li>The cvs2svn test suite does not include meaningful tests of git
     output.</li>

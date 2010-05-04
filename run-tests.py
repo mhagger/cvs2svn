@@ -3473,6 +3473,21 @@ def main_git():
 
 
 @Cvs2SvnTestFunction
+def main_git2():
+  "test cvs2git --use-external-blob-generator option"
+
+  # See comment in main_git() for more information.
+
+  conv = GitConversion('main', None, [
+      '--use-external-blob-generator',
+      '--blobfile=cvs2svn-tmp/blobfile.out',
+      '--dumpfile=cvs2svn-tmp/dumpfile.out',
+      '--username=cvs2git',
+      'test-data/main-cvsrepos',
+      ])
+
+
+@Cvs2SvnTestFunction
 def git_options():
   "test cvs2git using options file"
 
@@ -4030,10 +4045,11 @@ test_list = [
     branch_from_deleted_1_1,
     add_on_branch,
     main_git,
+    main_git2,
     git_options,
     main_hg,
-    invalid_symbol,
 # 150:
+    invalid_symbol,
     invalid_symbol_ignore,
     invalid_symbol_ignore2,
     EOLVariants('LF'),
@@ -4043,8 +4059,8 @@ test_list = [
     no_revs_file,
     mirror_keyerror_test,
     exclude_ntdb_test,
-    mirror_keyerror2_test,
 # 160:
+    mirror_keyerror2_test,
     mirror_keyerror3_test,
     XFail(add_cvsignore_to_branch_test),
     missing_deltatext,
@@ -4054,8 +4070,8 @@ test_list = [
     collision_with_unlabeled_branch_name,
     many_deletes,
     cvs_description,
-    include_empty_directories,
 # 170:
+    include_empty_directories,
     include_empty_directories_no_prune,
     exclude_symbol_default,
     add_on_branch2,

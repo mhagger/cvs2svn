@@ -35,6 +35,7 @@ from cvs2svn_lib.revision_manager import NullRevisionCollector
 from cvs2svn_lib.rcs_revision_manager import RCSRevisionReader
 from cvs2svn_lib.cvs_revision_manager import CVSRevisionReader
 from cvs2svn_lib.git_revision_collector import GitRevisionCollector
+from cvs2svn_lib.external_blob_generator import ExternalBlobGenerator
 from cvs2svn_lib.git_output_option import GitRevisionMarkWriter
 from cvs2svn_lib.git_output_option import GitOutputOption
 
@@ -124,39 +125,66 @@ A directory called \\fIcvs2svn-tmp\\fR (or the directory specified by
     group = super(GitRunOptions, self)._get_extraction_options_group()
     self._add_use_cvs_option(group)
     self._add_use_rcs_option(group)
+    self.parser.set_default('use_external_blob_generator', False)
+    group.add_option(IncompatibleOption(
+        '--use-external-blob-generator',
+        action='store_true',
+        help=(
+            'EXPERIMENTAL -- use an external Python program to extract file '
+            'revision contents (much faster than --use-rcs or --use-cvs but '
+            'not yet well tested)'
+            ),
+        man_help=(
+            'EXPERIMENTAL -- Use an external Python program to extract the '
+            'file revision contents from the RCS files and output them to '
+            'the blobfile.  This option is much faster than '
+            '\\fB--use-rcs\\fR or \\fB--use-cvs\\fR but is still '
+            'experimental.'
+            ),
+        ))
+
     return group
 
-  # XXX not quite the same as same method in SVNRunOptions, but it
-  # probably should be
   def process_extraction_options(self):
-    """Process options related to extracting data from the CVS
-    repository."""
+    """Process options related to extracting data from the CVS repository."""
+
     ctx = Ctx()
     options = self.options
 
     not_both(options.use_rcs, '--use-rcs',
              options.use_cvs, '--use-cvs')
+    not_both(options.use_external_blob_generator,
+                 '--use-external-blob-generator',
+             options.use_cvs, '--use-cvs')
+    not_both(options.use_external_blob_generator,
+                 '--use-external-blob-generator',
+             options.use_rcs, '--use-rcs')
 
-    if options.use_rcs:
-      revision_reader = RCSRevisionReader(
-          co_executable=options.co_executable
-          )
-    else:
-      # --use-cvs is the default:
-      revision_reader = CVSRevisionReader(
-          cvs_executable=options.cvs_executable
-          )
+    # cvs2git never needs a revision reader:
+    ctx.revision_reader = None
 
     if ctx.dry_run:
       ctx.revision_collector = NullRevisionCollector()
+      return
+
+    if not (options.blobfile and options.dumpfile):
+      raise FatalError("must pass '--blobfile' and '--dumpfile' options.")
+
+    if options.use_external_blob_generator:
+      ctx.revision_collector = ExternalBlobGenerator(options.blobfile)
     else:
-      if not (options.blobfile and options.dumpfile):
-        raise FatalError("must pass '--blobfile' and '--dumpfile' options.")
+      if options.use_rcs:
+        revision_reader = RCSRevisionReader(
+            co_executable=options.co_executable
+            )
+      else:
+        # --use-cvs is the default:
+        revision_reader = CVSRevisionReader(
+            cvs_executable=options.cvs_executable
+            )
       ctx.revision_collector = GitRevisionCollector(
           options.blobfile, revision_reader,
           )
-
-    ctx.revision_reader = None
 
   def process_output_options(self):
     """Process options related to fastimport output."""

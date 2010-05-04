@@ -1,7 +1,7 @@
 # (Be in -*- mode: python; coding: utf-8 -*- mode.)
 #
 # ====================================================================
-# Copyright (c) 2006-2009 CollabNet.  All rights reserved.
+# Copyright (c) 2006-2010 CollabNet.  All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.  The terms
@@ -80,6 +80,7 @@ from cvs2svn_lib.common import CVSTextDecoder
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.project import Project
 from cvs2svn_lib.git_revision_collector import GitRevisionCollector
+from cvs2svn_lib.external_blob_generator import ExternalBlobGenerator
 from cvs2svn_lib.git_output_option import GitRevisionMarkWriter
 from cvs2svn_lib.git_output_option import GitOutputOption
 from cvs2svn_lib.revision_manager import NullRevisionCollector
@@ -124,8 +125,12 @@ Log().log_level = Log.NORMAL
 ctx.tmpdir = r'cvs2svn-tmp'
 
 # During FilterSymbolsPass, cvs2git records the contents of file
-# revisions into a "blob" file in git-fast-import format.  This option
-# configures that process:
+# revisions into a "blob" file in git-fast-import format.  The
+# ctx.revision_collector option configures that process.  Choose one of the two ersions and customize its options.
+
+# This first alternative is much slower but is better tested and has a
+# chance of working with CVSNT repositories.  It invokes CVS or RCS to
+# reconstuct the contents of CVS file revisions:
 ctx.revision_collector = GitRevisionCollector(
     # The file in which to write the git-fast-import stream that
     # contains the file revision contents:
@@ -152,6 +157,10 @@ ctx.revision_collector = GitRevisionCollector(
     #RCSRevisionReader(co_executable=r'co'),
     CVSRevisionReader(cvs_executable=r'cvs'),
     )
+# This second alternative is vastly faster than the version above, but
+# it should be considered experimental.  It uses an external Python
+# program to reconstruct the contents of CVS file revisions:
+#ctx.revision_collector = ExternalBlobGenerator('cvs2svn-tmp/git-blob.dat')
 
 # cvs2git doesn't need a revision reader because OutputPass only
 # refers to blobs that were output during CollectRevsPass, so leave

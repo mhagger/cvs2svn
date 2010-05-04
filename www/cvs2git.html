@@ -313,8 +313,8 @@ cvs2git --options=OPTIONS-FILE
 
 <pre>
 git init
-cat cvs2svn-tmp/git-blob.dat | git fast-import --export-marks=cvs2svn-tmp/git-marks.dat
-cat cvs2svn-tmp/git-dump.dat | git fast-import --import-marks=cvs2svn-tmp/git-marks.dat
+git fast-import --export-marks=cvs2svn-tmp/git-marks.dat &lt; cvs2svn-tmp/git-blob.dat
+git fast-import --import-marks=cvs2svn-tmp/git-marks.dat &lt; cvs2svn-tmp/git-dump.dat
 </pre>
 
     <p>This can, of course, be shortened to:</p>

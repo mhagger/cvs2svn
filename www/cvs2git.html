@@ -126,29 +126,58 @@ get started.</p>
 
 <ul>
 
-  <li>The cvs2git documentation is still rather thin.  See <a
-    href="#docs">below</a> for more references.</li>
+  <li>The cvs2git documentation is still not as complete as that for
+    cvs2svn.  See <a href="#docs">below</a> for more references.</li>
 
-  <li>CVS allows a branch to be created from arbitrary combinations of
-    source revisions and/or source branches.  cvs2git tries to create
-    a branch from a single source, but if it can't figure out how to,
-    it creates the branch using "merge" from multiple sources.  In
-    pathological situations, the number of merge sources for a branch
-    can be arbitrarily large.</li>
+  <li>Differences between CVS and git branch/tag models: CVS allows a
+    branch or tag to be created from arbitrary combinations of source
+    revisions from multiple source branches.  It even allows file
+    revisions that were never contemporaneous to be added to a single
+    branch/tag.  Git, on the other hand, only allows the full source
+    tree, as it existed at some instant in the history, to be branched
+    or tagged as a unit.  Moreover, the ancestry of a git revision
+    makes <a
+    href="http://softwareswirl.blogspot.com/2009/08/git-mercurial-and-bazaarsimplicity.html">implications
+    about the contents of that revision</a>.  This difference means
+    that it is fundamentally impossible to represent an arbitrary CVS
+    history in a git repository 100% faithfully.  cvs2git uses the
+    following workarounds:
 
-  <li>If cvs2git cannot determine that a CVS tag can be created from a
-    single revision, then it creates a <a
-    href="http://www.kernel.org/pub/software/scm/git/docs/git-fast-import.html">tag
-    fixup branch</a> named <tt>TAG.FIXUP</tt>, then tags this branch.
-    (This is a necessary workaround for the fact that CVS tags are
-    fundamentally different than git tags.)  The <tt>TAG.FIXUP</tt>
-    branch is cleared at the end of the conversion, but not deleted.
-    There are some situations when a tag <em>could</em> be created
-    from a single revision, but cvs2git does not realize it and
-    creates a superfluous tag fixup branch.  It is possible to delete
-    all superfluous tag fixup branches after the conversion, by
-    running the <tt>contrib/git-move-refs.py</tt> script within the
-    resulting git repository.</li>
+    <ul>
+
+      <li>cvs2git tries to create a branch from a single source, but
+        if it can't figure out how to, it creates the branch using a
+        "merge" from multiple source branches.  In pathological
+        situations, the number of merge sources for a branch can be
+        arbitrarily large.  The resulting history implies that
+        whenever any file was added to a branch, the <em>entire</em>
+        source branch was merged into the destination branch, which is
+        clearly incorrect.  (The alternative, to omit the merge, would
+        discard the information that <em>some</em> content was moved
+        from one branch to the other.)</li>
+
+      <li>If cvs2git cannot determine that a CVS tag can be created
+        from a single revision, then it creates a <a
+        href="http://www.kernel.org/pub/software/scm/git/docs/git-fast-import.html">tag
+        fixup branch</a> named <tt>TAG.FIXUP</tt>, then tags this
+        branch.  (This is a necessary workaround for the fact that git
+        only allows existing revisions to be tagged.)  The
+        <tt>TAG.FIXUP</tt> branch is created as a merge between all of
+        the branches that contain file revisions included in the tag,
+        which involves the same tradeoff described above for branches.
+        The <tt>TAG.FIXUP</tt> branch is cleared at the end of the
+        conversion, but (due to a technical limitation of the git
+        fast-import file format) not deleted.  There are some
+        situations when a tag <em>could</em> be created from a single
+        revision, but cvs2git does not realize it and creates a
+        superfluous tag fixup branch.  It is possible to delete
+        superfluous tag fixup branches after the conversion by running
+        the <tt>contrib/git-move-refs.py</tt> script within the
+        resulting git repository.</li>
+
+    </ul>
+
+  </li>
 
   <li>There are no checks that CVS branch and tag names are legal git
     names.  There are probably other git constraints that should also

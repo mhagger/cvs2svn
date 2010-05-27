@@ -92,7 +92,7 @@ def generate_blocks(numlines, diff):
 
       if input_pos < start:
         yield ('c', input_pos, start - input_pos, [])
-      yield (command, start, count, [])
+      yield ('d', start, count, [])
       input_pos = start + count
     else:
       # "a" - Add command
@@ -107,7 +107,7 @@ def generate_blocks(numlines, diff):
       if input_pos < start:
         yield ('c', input_pos, start - input_pos, [])
         input_pos = start
-      yield (command, start, count, diff[i:i + count])
+      yield ('a', start, count, diff[i:i + count])
       i += count
 
   # Pass along the part of the input that follows all of the delta
@@ -141,7 +141,7 @@ def reorder_blocks(blocks):
 
   for (command2, start2, count2, lines2) in i:
     if command1 == 'd' and command2 == 'a':
-      yield (command2, start2 - count1, count2, lines2)
+      yield ('a', start2 - count1, count2, lines2)
     else:
       yield (command1, start1, count1, lines1)
       (command1, start1, count1, lines1) = (command2, start2, count2, lines2)

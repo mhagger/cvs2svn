@@ -117,12 +117,12 @@ def generate_blocks(numlines, diff):
 
 
 def reorder_blocks(blocks):
-  """Reorder blocks to reverse add,delete pairs.
+  """Reorder blocks to reverse delete,add pairs.
 
-  If an add block is followed by a delete block, emit the blocks in
+  If a delete block is followed by an add block, emit the blocks in
   reverse order.  This is part of inverting diffs, because when the
-  blocks are inverted add,delete pairs will be in the original order
-  again.
+  blocks are inverted the blocks will be in the original delete,add
+  order.
 
   1. This is required because the last line in the last 'add' block
      might end in a line that is not terminated with a newline, in

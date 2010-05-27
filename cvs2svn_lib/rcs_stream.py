@@ -43,6 +43,44 @@ class MalformedDeltaException(Exception):
 ed_command_re = re.compile(r'^([ad])(\d+)\s(\d+)\n$')
 
 
+def generate_edits(diff):
+  """Generate edit commands from an RCS diff block.
+
+  DIFF is a string holding an entire RCS file delta.  Generate a tuple
+  (COMMAND, START, ARG) for each block implied by DIFF.  Tuples
+  describe the ed commands:
+
+      ('a', INPUT_POS, LINES) : add LINES at INPUT_POS.  LINES is a
+          list of strings.
+
+      ('d', INPUT_POS, COUNT) : delete COUNT input lines starting at line
+          START.
+
+  In all cases, START is expressed as a zero-offset line number within
+  the input revision."""
+
+  diff = msplit(diff)
+  i = 0
+
+  while i < len(diff):
+    m = ed_command_re.match(diff[i])
+    if not m:
+      raise MalformedDeltaException('Bad ed command')
+    i += 1
+    command = m.group(1)
+    start = int(m.group(2))
+    count = int(m.group(3))
+    if command == 'd':
+      # "d" - Delete command
+      yield ('d', start - 1, count)
+    else:
+      # "a" - Add command
+      if i + count > len(diff):
+        raise MalformedDeltaException('Add block truncated')
+      yield ('a', start, diff[i:i + count])
+      i += count
+
+
 def generate_blocks(numlines, diff):
   """Generate edit blocks from an RCS diff block.
 
@@ -64,25 +102,14 @@ def generate_blocks(numlines, diff):
   START is expressed as a zero-offset line number within the
   input revision."""
 
-  diff = msplit(diff)
-  i = 0
-
   # The number of lines from the old version that have been processed
   # so far:
   input_pos = 0
 
-  while i < len(diff):
-    m = ed_command_re.match(diff[i])
-    if not m:
-      raise MalformedDeltaException('Bad ed command')
-    i += 1
-    command = m.group(1)
-    start = int(m.group(2))
-    count = int(m.group(3))
+  for (command, start, arg) in generate_edits(diff):
     if command == 'd':
       # "d" - Delete command
-      start -= 1
-
+      count = arg
       if start < input_pos:
         raise MalformedDeltaException('Deletion before last edit')
       if start > numlines:
@@ -96,19 +123,16 @@ def generate_blocks(numlines, diff):
       input_pos = start + count
     else:
       # "a" - Add command
-
+      lines = arg
       if start < input_pos:
         raise MalformedDeltaException('Insertion before last edit')
       if start > numlines:
         raise MalformedDeltaException('Insertion past file end')
-      if i + count > len(diff):
-        raise MalformedDeltaException('Add block truncated')
 
       if input_pos < start:
         yield ('c', input_pos, start - input_pos, [])
         input_pos = start
-      yield ('a', start, count, diff[i:i + count])
-      i += count
+      yield ('a', start, len(lines), lines)
 
   # Pass along the part of the input that follows all of the delta
   # blocks:

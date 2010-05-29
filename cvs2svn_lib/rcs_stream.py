@@ -81,65 +81,6 @@ def generate_edits(diff):
       i += count
 
 
-def generate_blocks(numlines, diff):
-  """Generate edit blocks from an RCS diff block.
-
-  NUMLINES is the number of lines in the old revision; DIFF is a
-  string holding an entire RCS file delta.  Generate a tuple (COMMAND,
-  START, COUNT, [LINE,...]) for each block implied by DIFF.  Blocks
-  consist of ed commands and copy blocks:
-
-      ('a', START, COUNT, LINES) : add LINES at the current position
-          in the output.  START is the logical position in the input
-          revision at which the insertion ends up.
-
-      ('d', START, COUNT, []) : ignore the COUNT lines starting at
-          line START in the input.
-
-      ('c', START, COUNT, []) : copy COUNT lines, starting at line
-          START in the input, to the output at the current position.
-
-  START is expressed as a zero-offset line number within the
-  input revision."""
-
-  # The number of lines from the old version that have been processed
-  # so far:
-  input_pos = 0
-
-  for (command, start, arg) in generate_edits(diff):
-    if command == 'd':
-      # "d" - Delete command
-      count = arg
-      if start < input_pos:
-        raise MalformedDeltaException('Deletion before last edit')
-      if start > numlines:
-        raise MalformedDeltaException('Deletion past file end')
-      if start + count > numlines:
-        raise MalformedDeltaException('Deletion beyond file end')
-
-      if input_pos < start:
-        yield ('c', input_pos, start - input_pos, [])
-      yield ('d', start, count, [])
-      input_pos = start + count
-    else:
-      # "a" - Add command
-      lines = arg
-      if start < input_pos:
-        raise MalformedDeltaException('Insertion before last edit')
-      if start > numlines:
-        raise MalformedDeltaException('Insertion past file end')
-
-      if input_pos < start:
-        yield ('c', input_pos, start - input_pos, [])
-        input_pos = start
-      yield ('a', start, len(lines), lines)
-
-  # Pass along the part of the input that follows all of the delta
-  # blocks:
-  if input_pos < numlines:
-    yield ('c', input_pos, numlines - input_pos, [])
-
-
 def reorder_blocks(blocks):
   """Reorder blocks to reverse delete,add pairs.
 
@@ -195,13 +136,69 @@ class RCSStream:
 
     return "".join(self._lines)
 
+  def generate_blocks(self, diff):
+    """Generate edit blocks from an RCS diff block.
+
+    DIFF is a string holding an entire RCS file delta.  Generate a
+    tuple (COMMAND, START, COUNT, [LINE,...]) for each block implied
+    by DIFF.  Blocks consist of ed commands and copy blocks:
+
+        ('a', START, COUNT, LINES) : add LINES at the current position
+            in the output.  START is the logical position in the input
+            revision at which the insertion ends up.
+
+        ('d', START, COUNT, []) : ignore the COUNT lines starting at
+            line START in the input.
+
+        ('c', START, COUNT, []) : copy COUNT lines, starting at line
+            START in the input, to the output at the current position.
+
+    START is expressed as a zero-offset line number within the input
+    revision."""
+
+    # The number of lines from the old version that have been processed
+    # so far:
+    input_pos = 0
+
+    for (command, start, arg) in generate_edits(diff):
+      if command == 'd':
+        # "d" - Delete command
+        count = arg
+        if start < input_pos:
+          raise MalformedDeltaException('Deletion before last edit')
+        if start > len(self._lines):
+          raise MalformedDeltaException('Deletion past file end')
+        if start + count > len(self._lines):
+          raise MalformedDeltaException('Deletion beyond file end')
+
+        if input_pos < start:
+          yield ('c', input_pos, start - input_pos, [])
+        yield ('d', start, count, [])
+        input_pos = start + count
+      else:
+        # "a" - Add command
+        lines = arg
+        if start < input_pos:
+          raise MalformedDeltaException('Insertion before last edit')
+        if start > len(self._lines):
+          raise MalformedDeltaException('Insertion past file end')
+
+        if input_pos < start:
+          yield ('c', input_pos, start - input_pos, [])
+          input_pos = start
+        yield ('a', start, len(lines), lines)
+
+    # Pass along the part of the input that follows all of the delta
+    # blocks:
+    if input_pos < len(self._lines):
+      yield ('c', input_pos, len(self._lines) - input_pos, [])
+
   def apply_diff(self, diff):
     """Apply the RCS diff DIFF to the current file content."""
 
     new_lines = []
 
-    for (command, start, count, lines) \
-            in generate_blocks(len(self._lines), diff):
+    for (command, start, count, lines) in self.generate_blocks(diff):
       if command == 'c':
         new_lines += self._lines[start:start + count]
       elif command == 'd':
@@ -223,7 +220,7 @@ class RCSStream:
 
     adjust = 0
     for (command, start, count, lines) \
-            in reorder_blocks(generate_blocks(len(self._lines), diff)):
+            in reorder_blocks(self.generate_blocks(diff)):
       if command == 'c':
         new_lines += self._lines[start:start + count]
       elif command == 'd':

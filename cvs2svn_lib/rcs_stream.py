@@ -278,18 +278,6 @@ class RCSStream:
 
     return generate_edits_from_blocks(invert_blocks(blocks))
 
-  def apply_and_invert_diff(self, diff, inverse_diff):
-    """Apply DIFF and generate its inverse.
-
-    Apply the RCS diff DIFF to the current file content.
-    Simultaneously generate an RCS diff suitable for reverting the
-    change, and write it to the file-like object INVERSE_DIFF.  Return
-    INVERSE_DIFF."""
-
-    write_edits(
-        inverse_diff, self.apply_and_invert_edits(generate_edits(diff))
-        )
-
   def invert_diff(self, diff):
     """Apply DIFF and generate its inverse.
 
@@ -298,7 +286,9 @@ class RCSStream:
     change, and return it as a string."""
 
     inverse_diff = StringIO()
-    self.apply_and_invert_diff(diff, inverse_diff)
+    write_edits(
+        inverse_diff, self.apply_and_invert_edits(generate_edits(diff))
+        )
     return inverse_diff.getvalue()
 
 

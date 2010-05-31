@@ -256,15 +256,13 @@ class RCSStream:
 
     self._lines = lines
 
-  def apply_and_invert_diff(self, diff, inverse_diff):
-    """Apply DIFF and generate its inverse.
+  def apply_and_invert_edits(self, edits):
+    """Apply EDITS and generate their inverse.
 
-    Apply the RCS diff DIFF to the current file content.
-    Simultaneously generate an RCS diff suitable for reverting the
-    change, and write it to the file-like object INVERSE_DIFF.  Return
-    INVERSE_DIFF."""
+    Apply EDITS to the current file content.  Simultaneously generate
+    edits suitable for reverting the change."""
 
-    blocks = self.generate_blocks(generate_edits(diff))
+    blocks = self.generate_blocks(edits)
 
     # Blocks have to be merged so that adjacent delete,add edits are
     # generated in that order:
@@ -278,8 +276,18 @@ class RCSStream:
     for (command, old_lines, new_lines) in blocks:
       self._lines += new_lines
 
+    return generate_edits_from_blocks(invert_blocks(blocks))
+
+  def apply_and_invert_diff(self, diff, inverse_diff):
+    """Apply DIFF and generate its inverse.
+
+    Apply the RCS diff DIFF to the current file content.
+    Simultaneously generate an RCS diff suitable for reverting the
+    change, and write it to the file-like object INVERSE_DIFF.  Return
+    INVERSE_DIFF."""
+
     write_edits(
-        inverse_diff, generate_edits_from_blocks(invert_blocks(blocks))
+        inverse_diff, self.apply_and_invert_edits(generate_edits(diff))
         )
 
   def invert_diff(self, diff):

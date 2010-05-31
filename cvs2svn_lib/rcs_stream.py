@@ -115,8 +115,11 @@ def invert_blocks(blocks):
     yield (command, new_lines, old_lines)
 
 
-def write_blocks(f, blocks):
-  """Write blocks to file-like object f as a valid RCS diff.
+def generate_edits_from_blocks(blocks):
+  """Convert BLOCKS into an equivalent series of RCS edits.
+
+  The edits are generated as tuples in the format described in the
+  docstring for generate_edits().
 
   It is important that deletes are emitted before adds in the output
   for two reasons:
@@ -128,17 +131,42 @@ def write_blocks(f, blocks):
   2. This is the canonical order used by RCS; this ensures that
      inverting twice gives back the original delta."""
 
+  # Merge adjacent 'r'eplace blocks to ensure that we emit adds and
+  # deletes in the right order:
+  blocks = merge_blocks(blocks)
+
   input_position = 0
   for (command, old_lines, new_lines) in blocks:
     if command == 'c':
       input_position += len(old_lines)
     elif command == 'r':
       if old_lines:
-        f.write('d%d %d\n' % (input_position + 1, len(old_lines),))
+        yield ('d', input_position, len(old_lines))
         input_position += len(old_lines)
       if new_lines:
-        f.write('a%d %d\n' % (input_position, len(new_lines),))
-        f.writelines(new_lines)
+        yield ('a', input_position, new_lines)
+
+
+def write_edits(f, edits):
+  """Write EDITS to file-like object f as an RCS diff."""
+
+  for (command, input_position, arg) in edits:
+    if command == 'd':
+      f.write('d%d %d\n' % (input_position + 1, arg,))
+    elif command == 'a':
+      lines = arg
+      f.write('a%d %d\n' % (input_position, len(lines),))
+      f.writelines(lines)
+      del lines
+    else:
+      raise MalformedDeltaException('Unknown command %r' % (command,))
+
+
+def write_blocks(f, blocks):
+  """Write blocks to file-like object f as a valid RCS diff."""
+
+  edits = generate_edits_from_blocks(blocks)
+  write_edits(f, edits)
 
 
 class RCSStream:

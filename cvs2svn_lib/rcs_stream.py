@@ -270,17 +270,17 @@ class RCSStream:
     # generated in that order:
     blocks = merge_blocks(blocks)
 
-    blocks = invert_blocks(blocks)
-
     # Convert the iterable into a list (1) so that we can modify
     # self._lines in-place, (2) because we need it twice.
     blocks = list(blocks)
 
     self._lines = []
     for (command, old_lines, new_lines) in blocks:
-      self._lines += old_lines
+      self._lines += new_lines
 
-    write_edits(inverse_diff, generate_edits_from_blocks(blocks))
+    write_edits(
+        inverse_diff, generate_edits_from_blocks(invert_blocks(blocks))
+        )
 
   def invert_diff(self, diff):
     """Apply DIFF and generate its inverse.

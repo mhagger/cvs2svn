@@ -162,13 +162,6 @@ def write_edits(f, edits):
       raise MalformedDeltaException('Unknown command %r' % (command,))
 
 
-def write_blocks(f, blocks):
-  """Write blocks to file-like object f as a valid RCS diff."""
-
-  edits = generate_edits_from_blocks(blocks)
-  write_edits(f, edits)
-
-
 class RCSStream:
   """This class allows RCS deltas to be accumulated.
 
@@ -287,7 +280,7 @@ class RCSStream:
     for (command, old_lines, new_lines) in blocks:
       self._lines += old_lines
 
-    write_blocks(inverse_diff, blocks)
+    write_edits(inverse_diff, generate_edits_from_blocks(blocks))
 
   def invert_diff(self, diff):
     """Apply DIFF and generate its inverse.

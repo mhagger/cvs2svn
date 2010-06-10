@@ -266,6 +266,12 @@ class Failures(object):
   def __init__(self):
     self.count = 0                      # number of failures seen
 
+  def __str__(self):
+    return str(self.count)
+
+  def __repr__(self):
+    return "<%s at 0x%x: %s>" % (self.__class__.__name__, id(self), self.count)
+
   def report(self, summary, details=None):
     self.count += 1
     sys.stdout.write(' FAIL: %s\n' % summary)

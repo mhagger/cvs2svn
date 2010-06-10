@@ -346,15 +346,20 @@ def tree_compare(failures, base1, base2, run_diff, rel_path=''):
   entries1.sort()
   entries2 = os.listdir(path2)
   entries2.sort()
+
+  ok = 1
+
   missing = filter(lambda x: x not in entries2, entries1)
   extra = filter(lambda x: x not in entries1, entries2)
   if missing:
     failures.report('Directory /%s is missing entries: %s' %
                     (rel_path, ', '.join(missing)))
+    ok = 0
   if extra:
     failures.report('Directory /%s has extra entries: %s' %
                     (rel_path, ', '.join(extra)))
-  ok = 1
+    ok = 0
+
   for entry in entries1:
     new_rel_path = os.path.join(rel_path, entry)
     if not tree_compare(failures, base1, base2, run_diff, new_rel_path):

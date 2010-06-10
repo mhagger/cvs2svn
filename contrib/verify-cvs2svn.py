@@ -321,10 +321,12 @@ def file_compare(failures, base1, base2, run_diff, rel_path):
 
 
 def tree_compare(failures, base1, base2, run_diff, rel_path=''):
-  """Compare the contents of two directory trees, including the contents
-  of all files.  The paths are specified as two base paths BASE1 and BASE2,
-  and a path REL_PATH that is relative to the two base paths.  Return 1
-  if the trees are identical, else 0."""
+  """Compare the contents of two directory trees, including file contents.
+
+  The paths are specified as two base paths BASE1 and BASE2, and a
+  path REL_PATH that is relative to the two base paths.  Return True
+  iff the trees are identical."""
+
   if not rel_path:
     path1 = base1
     path2 = base2
@@ -333,37 +335,37 @@ def tree_compare(failures, base1, base2, run_diff, rel_path=''):
     path2 = os.path.join(base2, rel_path)
   if not os.path.exists(path1):
     failures.report('%s does not exist' % path1)
-    return 0
+    return False
   if not os.path.exists(path2):
     failures.report('%s does not exist' % path2)
-    return 0
+    return False
   if os.path.isfile(path1) and os.path.isfile(path2):
     return file_compare(failures, base1, base2, run_diff, rel_path)
   if not (os.path.isdir(path1) and os.path.isdir(path2)):
     failures.report('Path types differ for %r' % rel_path)
-    return 0
+    return False
   entries1 = os.listdir(path1)
   entries1.sort()
   entries2 = os.listdir(path2)
   entries2.sort()
 
-  ok = 1
+  ok = True
 
   missing = filter(lambda x: x not in entries2, entries1)
   extra = filter(lambda x: x not in entries1, entries2)
   if missing:
     failures.report('Directory /%s is missing entries: %s' %
                     (rel_path, ', '.join(missing)))
-    ok = 0
+    ok = False
   if extra:
     failures.report('Directory /%s has extra entries: %s' %
                     (rel_path, ', '.join(extra)))
-    ok = 0
+    ok = False
 
   for entry in entries1:
     new_rel_path = os.path.join(rel_path, entry)
     if not tree_compare(failures, base1, base2, run_diff, new_rel_path):
-      ok = 0
+      ok = False
   return ok
 
 

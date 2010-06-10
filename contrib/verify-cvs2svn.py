@@ -445,7 +445,8 @@ def verify_contents(failures, cvsrepos, verifyrepos, ctx):
             ):
         locations.append('branch:' + branch)
 
-  assert bool(failures) == bool(locations)
+  assert bool(failures) == bool(locations), \
+         "failures = %r\nlocations = %r" % (failures, locations)
 
   # Show the results
   if failures:

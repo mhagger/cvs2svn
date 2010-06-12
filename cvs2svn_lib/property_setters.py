@@ -405,7 +405,7 @@ class EOLStyleFromMimeTypeSetter(FilePropertySetter):
         cvs_file.properties[self.propname] = None
 
 
-class DefaultEOLStyleSetter(RevisionPropertySetter):
+class DefaultEOLStyleSetter(FilePropertySetter):
   """Set the eol-style if one has not already been set."""
 
   propname = 'svn:eol-style'
@@ -415,11 +415,11 @@ class DefaultEOLStyleSetter(RevisionPropertySetter):
 
     self.value = value
 
-  def set_properties(self, s_item):
-    if self.propname in s_item.svn_props:
+  def set_properties(self, cvs_file):
+    if self.propname in cvs_file.properties:
       return
 
-    s_item.svn_props[self.propname] = self.value
+    cvs_file.properties[self.propname] = self.value
 
 
 class SVNBinaryFileKeywordsPropertySetter(RevisionPropertySetter):

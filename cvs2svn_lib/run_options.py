@@ -1041,7 +1041,7 @@ class RunOptions(object):
     if options.eol_from_mime_type:
       ctx.file_property_setters.append(EOLStyleFromMimeTypeSetter())
 
-    ctx.revision_property_setters.append(
+    ctx.file_property_setters.append(
         DefaultEOLStyleSetter(options.default_eol)
         )
 

@@ -472,8 +472,6 @@ ctx.file_property_setters.extend([
     # the following line:
     #EOLStyleFromMimeTypeSetter(),
 
-    ])
-ctx.revision_property_setters.extend([
     # Choose one of the following lines to set the default
     # svn:eol-style if none of the above rules applied.  The argument
     # is the svn:eol-style that should be applied, or None if no
@@ -491,6 +489,8 @@ ctx.revision_property_setters.extend([
     DefaultEOLStyleSetter(None),
     #DefaultEOLStyleSetter('native'),
 
+    ])
+ctx.revision_property_setters.extend([
     # Prevent svn:keywords from being set on files that have
     # svn:eol-style unset.
     SVNBinaryFileKeywordsPropertySetter(),

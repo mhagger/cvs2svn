@@ -200,7 +200,10 @@ class CVSRevision(CVSItem):
         then, it is None.
 
     properties -- (dict) the file properties that vary from revision
-        to revision.
+        to revision.  Keys are strings.  Values are strings
+        (indicating the property value) or None (indicating that the
+        property should be left unset, even if it is set in
+        SELF.cvs_file.properties).
 
     revision_reader_token -- (arbitrary) a token that can be set by
         RevisionCollector for the later use of RevisionReader.

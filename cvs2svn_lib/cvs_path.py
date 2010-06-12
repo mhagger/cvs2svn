@@ -272,7 +272,10 @@ class CVSFile(CVSPath):
         the RCS file.
 
     properties -- (dict) file properties that are preserved across
-        history.
+        history.  Keys are strings; values are strings (indicating the
+        property value) or None (indicating that the property should
+        be left unset).  These properties can be overridden by
+        CVSRevision.properties.
 
   PARENT_DIRECTORY might contain an 'Attic' component if it should be
   retained in the SVN repository; i.e., if the same filename exists out

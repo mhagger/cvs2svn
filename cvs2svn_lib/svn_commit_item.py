@@ -40,9 +40,9 @@ class SVNCommitItem:
     # The properties for this item as a map { key : value }.  If VALUE
     # is None, the property should be left unset.
     self.svn_props = cvs_rev.cvs_file.properties.copy()
-
-    for revision_property_setter in Ctx().revision_property_setters:
-      revision_property_setter.set_properties(self)
+    self.svn_props.update(cvs_rev.properties)
+    if self.svn_props != cvs_rev.cvs_file.properties:
+      self.svn_props_changed = True
 
   def has_keywords(self):
     return bool(self.svn_props.get('svn:keywords', None))

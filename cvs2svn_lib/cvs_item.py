@@ -199,6 +199,9 @@ class CVSRevision(CVSItem):
         revision.  This member is set in FilterSymbolsPass; before
         then, it is None.
 
+    properties -- (dict) the file properties that vary from revision
+        to revision.
+
     revision_reader_token -- (arbitrary) a token that can be set by
         RevisionCollector for the later use of RevisionReader.
 
@@ -221,6 +224,7 @@ class CVSRevision(CVSItem):
       'branch_commit_ids',
       'opened_symbols',
       'closed_symbols',
+      'properties',
       ]
 
   def __init__(
@@ -254,6 +258,7 @@ class CVSRevision(CVSItem):
     self.branch_commit_ids = branch_commit_ids
     self.opened_symbols = None
     self.closed_symbols = None
+    self.properties = None
 
   def _get_cvs_path(self):
     return self.cvs_file.cvs_path
@@ -281,6 +286,7 @@ class CVSRevision(CVSItem):
         self.ntdbr_prev_id, self.ntdbr_next_id,
         self.tag_ids, self.branch_ids, self.branch_commit_ids,
         self.opened_symbols, self.closed_symbols,
+        self.properties,
         self.revision_reader_token,
         )
 
@@ -296,6 +302,7 @@ class CVSRevision(CVSItem):
      self.ntdbr_prev_id, self.ntdbr_next_id,
      self.tag_ids, self.branch_ids, self.branch_commit_ids,
      self.opened_symbols, self.closed_symbols,
+     self.properties,
      self.revision_reader_token) = data
     self.cvs_file = Ctx()._cvs_path_db.get_path(cvs_file_id)
     self.lod = Ctx()._symbol_db.get_symbol(lod_id)

@@ -432,13 +432,13 @@ class KeywordsPropertySetter(FilePropertySetter):
 class RevisionPropertySetter:
   """Abstract class for objects that can set properties on a SVNCommitItem."""
 
-  def set_properties(self, s_item):
-    """Set any properties that can be determined for S_ITEM.
+  def set_properties(self, cvs_rev):
+    """Set any properties that can be determined for CVS_REV.
 
-    S_ITEM is an instance of SVNCommitItem.  This method should modify
-    S_ITEM.svn_props in place."""
+    CVS_REV is an instance of CVSRevision.  This method should modify
+    CVS_REV.properties in place."""
 
-    raise NotImplementedError
+    raise NotImplementedError()
 
 
 class CVSRevisionNumberSetter(RevisionPropertySetter):
@@ -447,11 +447,10 @@ class CVSRevisionNumberSetter(RevisionPropertySetter):
   def __init__(self, propname='cvs2svn:cvs-rev'):
     self.propname = propname
 
-  def set_properties(self, s_item):
-    if self.propname in s_item.svn_props:
+  def set_properties(self, cvs_rev):
+    if self.propname in cvs_rev.properties:
       return
 
-    s_item.svn_props[self.propname] = s_item.cvs_rev.rev
-    s_item.svn_props_changed = True
+    cvs_rev.properties[self.propname] = cvs_rev.rev
 
 

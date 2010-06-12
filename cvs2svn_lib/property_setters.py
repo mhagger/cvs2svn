@@ -47,7 +47,7 @@ class FilePropertySetter(object):
     raise NotImplementedError()
 
 
-class SVNPropertySetter:
+class RevisionPropertySetter:
   """Abstract class for objects that can set properties on a SVNCommitItem."""
 
   def set_properties(self, s_item):
@@ -59,7 +59,7 @@ class SVNPropertySetter:
     raise NotImplementedError
 
 
-class CVSRevisionNumberSetter(SVNPropertySetter):
+class CVSRevisionNumberSetter(RevisionPropertySetter):
   """Store the CVS revision number to an SVN property."""
 
   def __init__(self, propname='cvs2svn:cvs-rev'):
@@ -73,7 +73,7 @@ class CVSRevisionNumberSetter(SVNPropertySetter):
     s_item.svn_props_changed = True
 
 
-class ExecutablePropertySetter(SVNPropertySetter):
+class ExecutablePropertySetter(RevisionPropertySetter):
   """Set the svn:executable property based on cvs_rev.cvs_file.executable."""
 
   propname = 'svn:executable'
@@ -86,7 +86,7 @@ class ExecutablePropertySetter(SVNPropertySetter):
       s_item.svn_props[self.propname] = '*'
 
 
-class DescriptionPropertySetter(SVNPropertySetter):
+class DescriptionPropertySetter(RevisionPropertySetter):
   """Set the cvs:description property based on cvs_rev.cvs_file.description."""
 
   def __init__(self, propname='cvs:description'):
@@ -100,7 +100,7 @@ class DescriptionPropertySetter(SVNPropertySetter):
       s_item.svn_props[self.propname] = s_item.cvs_rev.cvs_file.description
 
 
-class CVSBinaryFileEOLStyleSetter(SVNPropertySetter):
+class CVSBinaryFileEOLStyleSetter(RevisionPropertySetter):
   """Set the eol-style to None for files with CVS mode '-kb'."""
 
   propname = 'svn:eol-style'
@@ -113,7 +113,7 @@ class CVSBinaryFileEOLStyleSetter(SVNPropertySetter):
       s_item.svn_props[self.propname] = None
 
 
-class MimeMapper(SVNPropertySetter):
+class MimeMapper(RevisionPropertySetter):
   """A class that provides mappings from file names to MIME types."""
 
   propname = 'svn:mime-type'
@@ -202,7 +202,7 @@ class MimeMapper(SVNPropertySetter):
       s_item.svn_props[self.propname] = mime_type
 
 
-class AutoPropsPropertySetter(SVNPropertySetter):
+class AutoPropsPropertySetter(RevisionPropertySetter):
   """Set arbitrary svn properties based on an auto-props configuration.
 
   This class supports case-sensitive or case-insensitive pattern
@@ -369,7 +369,7 @@ class AutoPropsPropertySetter(SVNPropertySetter):
         s_item.svn_props[k] = v
 
 
-class CVSBinaryFileDefaultMimeTypeSetter(SVNPropertySetter):
+class CVSBinaryFileDefaultMimeTypeSetter(RevisionPropertySetter):
   """If the file is binary and its svn:mime-type property is not yet
   set, set it to 'application/octet-stream'."""
 
@@ -383,7 +383,7 @@ class CVSBinaryFileDefaultMimeTypeSetter(SVNPropertySetter):
       s_item.svn_props[self.propname] = 'application/octet-stream'
 
 
-class EOLStyleFromMimeTypeSetter(SVNPropertySetter):
+class EOLStyleFromMimeTypeSetter(RevisionPropertySetter):
   """Set svn:eol-style based on svn:mime-type.
 
   If svn:mime-type is known but svn:eol-style is not, then set
@@ -404,7 +404,7 @@ class EOLStyleFromMimeTypeSetter(SVNPropertySetter):
         s_item.svn_props[self.propname] = None
 
 
-class DefaultEOLStyleSetter(SVNPropertySetter):
+class DefaultEOLStyleSetter(RevisionPropertySetter):
   """Set the eol-style if one has not already been set."""
 
   propname = 'svn:eol-style'
@@ -421,7 +421,7 @@ class DefaultEOLStyleSetter(SVNPropertySetter):
     s_item.svn_props[self.propname] = self.value
 
 
-class SVNBinaryFileKeywordsPropertySetter(SVNPropertySetter):
+class SVNBinaryFileKeywordsPropertySetter(RevisionPropertySetter):
   """Turn off svn:keywords for files with binary svn:eol-style."""
 
   propname = 'svn:keywords'
@@ -434,7 +434,7 @@ class SVNBinaryFileKeywordsPropertySetter(SVNPropertySetter):
       s_item.svn_props[self.propname] = None
 
 
-class KeywordsPropertySetter(SVNPropertySetter):
+class KeywordsPropertySetter(RevisionPropertySetter):
   """If the svn:keywords property is not yet set, set it based on the
   file's mode.  See issue #2."""
 

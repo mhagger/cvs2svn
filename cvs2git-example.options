@@ -370,16 +370,16 @@ global_symbol_strategy_rules = [
 # translated into a git-style name by the author_transforms map.
 ctx.username = 'cvs2svn'
 
-# ctx.svn_property_setters contains a list of rules used to set the
-# svn properties on files in the converted archive.  For each file,
-# the rules are tried one by one.  Any rule can add or suppress one or
-# more svn properties.  Typically the rules will not overwrite
+# ctx.revision_property_setters contains a list of rules used to set
+# the svn properties on files in the converted archive.  For each
+# file, the rules are tried one by one.  Any rule can add or suppress
+# one or more svn properties.  Typically the rules will not overwrite
 # properties set by a previous rule (though they are free to do so).
 #
 # Obviously, SVN properties per se are not interesting for a cvs2git
 # conversion, but some of these properties have side-effects that do
 # affect the git output.  FIXME: Document this in more detail.
-ctx.svn_property_setters.extend([
+ctx.revision_property_setters.extend([
     # To read auto-props rules from a file, uncomment the following line
     # and specify a filename.  The boolean argument specifies whether
     # case should be ignored when matching filenames to the filename

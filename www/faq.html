@@ -521,18 +521,18 @@ application/msword      doc
   <p>For total control over setting properties on files, you can use
     the <a
     href="cvs2svn.html#options-file-method"><tt>--options</tt>-file
-    method</a> and write your own <tt>SVNPropertySetter</tt> in
+    method</a> and write your own <tt>RevisionPropertySetter</tt> in
     Python.  For example,</p>
 <pre>
-from cvs2svn_lib.property_setters import SVNPropertySetter
+from cvs2svn_lib.property_setters import RevisionPropertySetter
 
-class MyPropertySetter(SVNPropertySetter):
+class MyPropertySetter(RevisionPropertySetter):
   def set_properties(self, s_item):
     if s_item.cvs_rev.cvs_file.cvs_path.startswith('path/to/funny/files/'):
       s_item.svn_props['svn:mime-type'] = 'text/plain'
       s_item.svn_props['svn:eol-style'] = 'CRLF'
 
-ctx.svn_property_setters.append(MyPropertySetter())
+ctx.revision_property_setters.append(MyPropertySetter())
 </pre>
   <p>See the file <tt>cvs2svn_lib/property_setters.py</tt> for more
     examples.</p>

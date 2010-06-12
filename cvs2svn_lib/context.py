@@ -56,7 +56,7 @@ class Ctx:
     self.symbol_info_filename = None
     self.username = None
     self.file_property_setters = []
-    self.svn_property_setters = []
+    self.revision_property_setters = []
     self.tmpdir = 'cvs2svn-tmp'
     self.skip_cleanup = False
     self.keep_cvsignore = False

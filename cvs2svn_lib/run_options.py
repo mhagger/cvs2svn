@@ -943,7 +943,7 @@ class RunOptions(object):
         )
 
   def callback_cvs_revnums(self, option, opt_str, value, parser):
-    Ctx().svn_property_setters.append(CVSRevisionNumberSetter())
+    Ctx().revision_property_setters.append(CVSRevisionNumberSetter())
 
   def callback_symbol_transform(self, option, opt_str, value, parser):
     [pattern, replacement] = value.split(":")
@@ -1027,33 +1027,33 @@ class RunOptions(object):
     options = self.options
 
     for value in options.auto_props_files:
-      ctx.svn_property_setters.append(
+      ctx.revision_property_setters.append(
           AutoPropsPropertySetter(value, options.auto_props_ignore_case)
           )
 
     for value in options.mime_types_files:
-      ctx.svn_property_setters.append(MimeMapper(value))
+      ctx.revision_property_setters.append(MimeMapper(value))
 
-    ctx.svn_property_setters.append(CVSBinaryFileEOLStyleSetter())
+    ctx.revision_property_setters.append(CVSBinaryFileEOLStyleSetter())
 
-    ctx.svn_property_setters.append(CVSBinaryFileDefaultMimeTypeSetter())
+    ctx.revision_property_setters.append(CVSBinaryFileDefaultMimeTypeSetter())
 
     if options.eol_from_mime_type:
-      ctx.svn_property_setters.append(EOLStyleFromMimeTypeSetter())
+      ctx.revision_property_setters.append(EOLStyleFromMimeTypeSetter())
 
-    ctx.svn_property_setters.append(
+    ctx.revision_property_setters.append(
         DefaultEOLStyleSetter(options.default_eol)
         )
 
-    ctx.svn_property_setters.append(SVNBinaryFileKeywordsPropertySetter())
+    ctx.revision_property_setters.append(SVNBinaryFileKeywordsPropertySetter())
 
     if not options.keywords_off:
-      ctx.svn_property_setters.append(
+      ctx.revision_property_setters.append(
           KeywordsPropertySetter(config.SVN_KEYWORDS_VALUE))
 
-    ctx.svn_property_setters.append(ExecutablePropertySetter())
+    ctx.revision_property_setters.append(ExecutablePropertySetter())
 
-    ctx.svn_property_setters.append(DescriptionPropertySetter())
+    ctx.revision_property_setters.append(DescriptionPropertySetter())
 
   def process_options(self):
     """Do the main configuration based on command-line options.

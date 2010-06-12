@@ -29,8 +29,8 @@ class SVNCommitItem:
     SVN_PROPS_CHANGED indicates whether the svn: properties are known
     to have changed since the last revision.
 
-    The properties are set by the SVNPropertySetters in
-    Ctx().svn_property_setters."""
+    The properties are set by the RevisionPropertySetter in
+    Ctx().revision_property_setters."""
 
     self.cvs_rev = cvs_rev
     # Did the svn properties change for this file (i.e., do they have
@@ -41,8 +41,8 @@ class SVNCommitItem:
     # is None, the property should be left unset.
     self.svn_props = cvs_rev.cvs_file.properties.copy()
 
-    for svn_property_setter in Ctx().svn_property_setters:
-      svn_property_setter.set_properties(self)
+    for revision_property_setter in Ctx().revision_property_setters:
+      revision_property_setter.set_properties(self)
 
   def has_keywords(self):
     return bool(self.svn_props.get('svn:keywords', None))

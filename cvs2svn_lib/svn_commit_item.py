@@ -39,7 +39,7 @@ class SVNCommitItem:
 
     # The properties for this item as a map { key : value }.  If VALUE
     # is None, the property should be left unset.
-    self.svn_props = { }
+    self.svn_props = cvs_rev.cvs_file.properties.copy()
 
     for svn_property_setter in Ctx().svn_property_setters:
       svn_property_setter.set_properties(self)

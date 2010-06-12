@@ -335,15 +335,22 @@ global_symbol_strategy_rules = [
 # translated into a Bazaar-style name by the author_transforms map.
 ctx.username = 'cvs2svn'
 
-# ctx.revision_property_setters contains a list of rules used to set the
-# svn properties on files in the converted archive.  For each file,
-# the rules are tried one by one.  Any rule can add or suppress one or
-# more svn properties.  Typically the rules will not overwrite
-# properties set by a previous rule (though they are free to do so).
+# ctx.file_property_setters and ctx.revision_property_setters contain
+# rules used to set the svn properties on files in the converted
+# archive.  For each file, the rules are tried one by one.  Any rule
+# can add or suppress one or more svn properties.  Typically the rules
+# will not overwrite properties set by a previous rule (though they
+# are free to do so).  ctx.file_property_setters should be used for
+# properties that remain the same for the life of the file; these
+# should implement FilePropertySetter.  ctx.revision_property_setters
+# should be used for properties that are allowed to vary from revision
+# to revision; these should implement RevisionPropertySetter.
 #
 # Obviously, SVN properties per se are not interesting for a cvs2bzr
 # conversion, but some of these properties have side-effects that do
 # affect the Bazaar output.  FIXME: Document this in more detail.
+ctx.file_property_setters.extend([
+    ])
 ctx.revision_property_setters.extend([
     # To read auto-props rules from a file, uncomment the following line
     # and specify a filename.  The boolean argument specifies whether

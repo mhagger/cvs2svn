@@ -447,8 +447,6 @@ ctx.username = None
 # should be used for properties that are allowed to vary from revision
 # to revision; these should implement RevisionPropertySetter.
 ctx.file_property_setters.extend([
-    ])
-ctx.revision_property_setters.extend([
     # To read auto-props rules from a file, uncomment the following line
     # and specify a filename.  The boolean argument specifies whether
     # case should be ignored when matching filenames to the filename
@@ -458,6 +456,8 @@ ctx.revision_property_setters.extend([
     #    ignore_case=True,
     #    ),
 
+    ])
+ctx.revision_property_setters.extend([
     # To read mime types from a file, uncomment the following line and
     # specify a filename:
     #MimeMapper(r'/etc/mime.types', ignore_case=False),

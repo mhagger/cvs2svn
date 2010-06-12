@@ -350,8 +350,6 @@ ctx.username = 'cvs2svn'
 # conversion, but some of these properties have side-effects that do
 # affect the Bazaar output.  FIXME: Document this in more detail.
 ctx.file_property_setters.extend([
-    ])
-ctx.revision_property_setters.extend([
     # To read auto-props rules from a file, uncomment the following line
     # and specify a filename.  The boolean argument specifies whether
     # case should be ignored when matching filenames to the filename
@@ -361,6 +359,8 @@ ctx.revision_property_setters.extend([
     #    ignore_case=True,
     #    ),
 
+    ])
+ctx.revision_property_setters.extend([
     # To read mime types from a file, uncomment the following line and
     # specify a filename:
     #MimeMapper(r'/etc/mime.types', ignore_case=False),

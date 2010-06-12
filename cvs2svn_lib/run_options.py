@@ -1027,7 +1027,7 @@ class RunOptions(object):
     options = self.options
 
     for value in options.auto_props_files:
-      ctx.revision_property_setters.append(
+      ctx.file_property_setters.append(
           AutoPropsPropertySetter(value, options.auto_props_ignore_case)
           )
 

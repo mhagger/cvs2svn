@@ -202,7 +202,7 @@ class MimeMapper(RevisionPropertySetter):
       s_item.svn_props[self.propname] = mime_type
 
 
-class AutoPropsPropertySetter(RevisionPropertySetter):
+class AutoPropsPropertySetter(FilePropertySetter):
   """Set arbitrary svn properties based on an auto-props configuration.
 
   This class supports case-sensitive or case-insensitive pattern
@@ -356,17 +356,18 @@ class AutoPropsPropertySetter(RevisionPropertySetter):
 
     return propdict
 
-  def set_properties(self, s_item):
-    propdict = self.get_propdict(s_item.cvs_rev.cvs_file)
+  def set_properties(self, cvs_file):
+    propdict = self.get_propdict(cvs_file)
     for (k,v) in propdict.items():
-      if k in s_item.svn_props:
-        if s_item.svn_props[k] != v:
+      if k in cvs_file.properties:
+        if cvs_file.properties[k] != v:
           Log().warn(
               "Property '%s' already set to %r for file %s; "
               "auto-props value (%r) ignored."
-              % (k, s_item.svn_props[k], s_item.cvs_rev.cvs_path, v,))
+              % (k, cvs_file.properties[k], cvs_file.cvs_path, v,)
+              )
       else:
-        s_item.svn_props[k] = v
+        cvs_file.properties[k] = v
 
 
 class CVSBinaryFileDefaultMimeTypeSetter(RevisionPropertySetter):

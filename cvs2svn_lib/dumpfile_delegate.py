@@ -237,15 +237,14 @@ class DumpfileDelegate(SVNRepositoryDelegate):
     # preserve the previous value of the property ourselves.
 
     # Calculate the (sorted-by-name) property string and length, if any.
+    svn_props = cvs_rev.get_properties()
     if s_item.svn_props_changed:
-      svn_props = s_item.svn_props
       prop_contents = ''
       prop_names = svn_props.keys()
       prop_names.sort()
       for pname in prop_names:
         pvalue = svn_props[pname]
-        if pvalue is not None:
-          prop_contents += self._string_for_prop(pname, pvalue)
+        prop_contents += self._string_for_prop(pname, pvalue)
       prop_contents += 'PROPS-END\n'
       props_header = 'Prop-content-length: %d\n' % len(prop_contents)
     else:
@@ -266,7 +265,7 @@ class DumpfileDelegate(SVNRepositoryDelegate):
 
     # Insert a filter to convert all EOLs to LFs if neccessary
 
-    eol_style = s_item.svn_props.get('svn:eol-style', None)
+    eol_style = svn_props.get('svn:eol-style', None)
     if eol_style:
       stream = LF_EOL_Filter(stream, eol_style)
 

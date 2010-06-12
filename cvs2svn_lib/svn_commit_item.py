@@ -35,16 +35,9 @@ class SVNCommitItem:
     self.cvs_rev = cvs_rev
     # Did the svn properties change for this file (i.e., do they have
     # to be written to the dumpfile?)
-    self.svn_props_changed = svn_props_changed
-
-    # The properties for this item as a map { key : value }.  If VALUE
-    # is None, the property should be left unset.
-    self.svn_props = cvs_rev.cvs_file.properties.copy()
-    self.svn_props.update(cvs_rev.properties)
-    if self.svn_props != cvs_rev.cvs_file.properties:
-      self.svn_props_changed = True
+    self.svn_props_changed = svn_props_changed or cvs_rev.properties_changed
 
   def has_keywords(self):
-    return bool(self.svn_props.get('svn:keywords', None))
+    return bool(self.cvs_rev.get_properties().get('svn:keywords', None))
 
 

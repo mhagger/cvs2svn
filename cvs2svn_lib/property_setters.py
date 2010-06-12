@@ -384,7 +384,7 @@ class CVSBinaryFileDefaultMimeTypeSetter(FilePropertySetter):
       cvs_file.properties[self.propname] = 'application/octet-stream'
 
 
-class EOLStyleFromMimeTypeSetter(RevisionPropertySetter):
+class EOLStyleFromMimeTypeSetter(FilePropertySetter):
   """Set svn:eol-style based on svn:mime-type.
 
   If svn:mime-type is known but svn:eol-style is not, then set
@@ -394,15 +394,15 @@ class EOLStyleFromMimeTypeSetter(RevisionPropertySetter):
 
   propname = 'svn:eol-style'
 
-  def set_properties(self, s_item):
-    if self.propname in s_item.svn_props:
+  def set_properties(self, cvs_file):
+    if self.propname in cvs_file.properties:
       return
 
-    if s_item.svn_props.get('svn:mime-type', None) is not None:
-      if s_item.svn_props['svn:mime-type'].startswith("text/"):
-        s_item.svn_props[self.propname] = 'native'
+    if cvs_file.properties.get('svn:mime-type', None) is not None:
+      if cvs_file.properties['svn:mime-type'].startswith("text/"):
+        cvs_file.properties[self.propname] = 'native'
       else:
-        s_item.svn_props[self.propname] = None
+        cvs_file.properties[self.propname] = None
 
 
 class DefaultEOLStyleSetter(RevisionPropertySetter):

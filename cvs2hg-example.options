@@ -367,12 +367,12 @@ ctx.file_property_setters.extend([
     # set, set svn:mime-type to 'application/octet-stream'.
     CVSBinaryFileDefaultMimeTypeSetter(),
 
-    ])
-ctx.revision_property_setters.extend([
     # To try to determine the eol-style from the mime type, uncomment
     # the following line:
     #EOLStyleFromMimeTypeSetter(),
 
+    ])
+ctx.revision_property_setters.extend([
     # Choose one of the following lines to set the default
     # svn:eol-style if none of the above rules applied.  The argument
     # is the svn:eol-style that should be applied, or None if no

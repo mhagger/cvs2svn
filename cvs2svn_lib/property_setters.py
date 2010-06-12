@@ -113,7 +113,7 @@ class CVSBinaryFileEOLStyleSetter(RevisionPropertySetter):
       s_item.svn_props[self.propname] = None
 
 
-class MimeMapper(RevisionPropertySetter):
+class MimeMapper(FilePropertySetter):
   """A class that provides mappings from file names to MIME types."""
 
   propname = 'svn:mime-type'
@@ -179,11 +179,11 @@ class MimeMapper(RevisionPropertySetter):
               )
         self.mappings[ext] = type
 
-  def set_properties(self, s_item):
-    if self.propname in s_item.svn_props:
+  def set_properties(self, cvs_file):
+    if self.propname in cvs_file.properties:
       return
 
-    basename, extension = os.path.splitext(s_item.cvs_rev.cvs_file.basename)
+    basename, extension = os.path.splitext(cvs_file.basename)
 
     # Extension includes the dot, so strip it (will leave extension
     # empty if filename ends with a dot, which is ok):
@@ -199,7 +199,7 @@ class MimeMapper(RevisionPropertySetter):
 
     mime_type = self.mappings.get(extension, None)
     if mime_type is not None:
-      s_item.svn_props[self.propname] = mime_type
+      cvs_file.properties[self.propname] = mime_type
 
 
 class AutoPropsPropertySetter(FilePropertySetter):

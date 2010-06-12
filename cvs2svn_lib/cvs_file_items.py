@@ -253,16 +253,16 @@ class CVSFileItems(object):
 
     LOD is the LineOfDevelopment where the iteration should start.
     CVS_BRANCH is the CVSBranch instance that starts the LOD if any;
-    otherwise it is None.  ID is the id of the first CVSRevision on
-    this LOD, or None if there are none.
+    otherwise it is None.  START_ID is the id of the first CVSRevision
+    on this LOD, or None if there are none.
 
     There are two cases handled by this routine: trunk (where LOD is a
-    Trunk instance, CVS_BRANCH is None, and ID is the id of the 1.1
-    revision) and a branch (where LOD is a Branch instance, CVS_BRANCH
-    is a CVSBranch instance, and ID is either the id of the first
-    CVSRevision on the branch or None if there are no CVSRevisions on
-    the branch).  Note that CVS_BRANCH and ID cannot simultaneously be
-    None.
+    Trunk instance, CVS_BRANCH is None, and START_ID is the id of the
+    1.1 revision) and a branch (where LOD is a Branch instance,
+    CVS_BRANCH is a CVSBranch instance, and START_ID is either the id
+    of the first CVSRevision on the branch or None if there are no
+    CVSRevisions on the branch).  Note that CVS_BRANCH and START_ID cannot
+    simultaneously be None.
 
     Yield an LODItems instance for each line of development."""
 

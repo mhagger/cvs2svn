@@ -282,11 +282,14 @@ class Failures(object):
   def __nonzero__(self):
     return self.count > 0
 
+
 def file_compare(failures, base1, base2, run_diff, rel_path):
-  """Compare the mode and contents of two files.  The paths are
-  specified as two base paths BASE1 and BASE2, and a path REL_PATH that
-  is relative to the two base paths.  Return 1 if the file mode and
-  contents are identical, else 0."""
+  """Compare the mode and contents of two files.
+
+  The paths are specified as two base paths BASE1 and BASE2, and a
+  path REL_PATH that is relative to the two base paths.  Return True
+  iff the file mode and contents are identical."""
+
   ok = True
   path1 = os.path.join(base1, rel_path)
   path2 = os.path.join(base2, rel_path)

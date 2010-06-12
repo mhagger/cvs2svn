@@ -254,8 +254,9 @@ class DumpfileDelegate(SVNRepositoryDelegate):
     # If the file has keywords, we must prevent CVS/RCS from expanding
     # the keywords because they must be unexpanded in the repository,
     # or Subversion will get confused.
+    has_keywords = bool(cvs_rev.get_properties().get('svn:keywords', None))
     stream = self._revision_reader.get_content_stream(
-        cvs_rev, suppress_keyword_substitution=s_item.has_keywords()
+        cvs_rev, suppress_keyword_substitution=has_keywords
         )
 
     if Ctx().decode_apple_single:

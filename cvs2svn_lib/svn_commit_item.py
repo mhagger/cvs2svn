@@ -28,7 +28,4 @@ class SVNCommitItem:
 
     self.cvs_rev = cvs_rev
 
-  def has_keywords(self):
-    return bool(self.cvs_rev.get_properties().get('svn:keywords', None))
-
 

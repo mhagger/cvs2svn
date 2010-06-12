@@ -100,17 +100,17 @@ class DescriptionPropertySetter(RevisionPropertySetter):
       s_item.svn_props[self.propname] = s_item.cvs_rev.cvs_file.description
 
 
-class CVSBinaryFileEOLStyleSetter(RevisionPropertySetter):
+class CVSBinaryFileEOLStyleSetter(FilePropertySetter):
   """Set the eol-style to None for files with CVS mode '-kb'."""
 
   propname = 'svn:eol-style'
 
-  def set_properties(self, s_item):
-    if self.propname in s_item.svn_props:
+  def set_properties(self, cvs_file):
+    if self.propname in cvs_file.properties:
       return
 
-    if s_item.cvs_rev.cvs_file.mode == 'b':
-      s_item.svn_props[self.propname] = None
+    if cvs_file.mode == 'b':
+      cvs_file.properties[self.propname] = None
 
 
 class MimeMapper(FilePropertySetter):

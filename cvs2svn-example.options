@@ -460,12 +460,12 @@ ctx.file_property_setters.extend([
     # specify a filename:
     #MimeMapper(r'/etc/mime.types', ignore_case=False),
 
-    ])
-ctx.revision_property_setters.extend([
     # Omit the svn:eol-style property from any files that are listed
     # as binary (i.e., mode '-kb') in CVS:
     CVSBinaryFileEOLStyleSetter(),
 
+    ])
+ctx.revision_property_setters.extend([
     # If the file is binary and its svn:mime-type property is not yet
     # set, set svn:mime-type to 'application/octet-stream'.
     CVSBinaryFileDefaultMimeTypeSetter(),

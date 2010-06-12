@@ -1034,7 +1034,7 @@ class RunOptions(object):
     for value in options.mime_types_files:
       ctx.file_property_setters.append(MimeMapper(value))
 
-    ctx.revision_property_setters.append(CVSBinaryFileEOLStyleSetter())
+    ctx.file_property_setters.append(CVSBinaryFileEOLStyleSetter())
 
     ctx.revision_property_setters.append(CVSBinaryFileDefaultMimeTypeSetter())
 

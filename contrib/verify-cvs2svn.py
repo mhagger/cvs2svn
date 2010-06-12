@@ -373,15 +373,17 @@ def tree_compare(failures, base1, base2, run_diff, rel_path=''):
 
 
 def verify_contents_single(failures, cvsrepos, verifyrepos, kind, label, ctx):
-  """Verify that the contents of the HEAD revision of all directories
-  and files in the conversion repository VERIFYREPOS matches the ones in
-  the CVS repository CVSREPOS.  KIND can be either 'trunk', 'tag' or
+  """Verify the HEAD revision of a trunk, tag, or branch.
+
+  Verify that the contents of the HEAD revision of all directories and
+  files in the conversion repository VERIFYREPOS match the ones in the
+  CVS repository CVSREPOS.  KIND can be either 'trunk', 'tag' or
   'branch'.  If KIND is either 'tag' or 'branch', LABEL is used to
   specify the name of the tag or branch.  CTX has the attributes:
   CTX.tmpdir: specifying the directory for all temporary files.
   CTX.skip_cleanup: if true, the temporary files are not deleted.
-  CTX.run_diff: if true, run diff on differing files.
-  """
+  CTX.run_diff: if true, run diff on differing files."""
+
   itemname = kind + (kind != 'trunk' and '-' + label or '')
   cvs_export_dir = os.path.join(
     ctx.tmpdir, 'cvs-export-%s' % itemname)
@@ -405,14 +407,14 @@ def verify_contents_single(failures, cvsrepos, verifyrepos, kind, label, ctx):
     if not tree_compare(
           failures, cvs_export_dir, vrf_export_dir, ctx.run_diff
           ):
-      return 0
+      return False
   finally:
     if not ctx.skip_cleanup:
       if os.path.exists(cvs_export_dir):
         shutil.rmtree(cvs_export_dir)
       if os.path.exists(vrf_export_dir):
         shutil.rmtree(vrf_export_dir)
-  return 1
+  return True
 
 
 def verify_contents(failures, cvsrepos, verifyrepos, ctx):

@@ -435,7 +435,7 @@ class SVNBinaryFileKeywordsPropertySetter(FilePropertySetter):
       cvs_file.properties[self.propname] = None
 
 
-class KeywordsPropertySetter(RevisionPropertySetter):
+class KeywordsPropertySetter(FilePropertySetter):
   """If the svn:keywords property is not yet set, set it based on the
   file's mode.  See issue #2."""
 
@@ -447,11 +447,11 @@ class KeywordsPropertySetter(RevisionPropertySetter):
 
     self.value = value
 
-  def set_properties(self, s_item):
-    if self.propname in s_item.svn_props:
+  def set_properties(self, cvs_file):
+    if self.propname in cvs_file.properties:
       return
 
-    if s_item.cvs_rev.cvs_file.mode in [None, 'kv', 'kvl']:
-      s_item.svn_props[self.propname] = self.value
+    if cvs_file.mode in [None, 'kv', 'kvl']:
+      cvs_file.properties[self.propname] = self.value
 
 

@@ -396,12 +396,12 @@ ctx.file_property_setters.extend([
     # svn:eol-style unset.
     SVNBinaryFileKeywordsPropertySetter(),
 
-    ])
-ctx.revision_property_setters.extend([
     # If svn:keywords has not been set yet, set it based on the file's
     # CVS mode:
     KeywordsPropertySetter(config.SVN_KEYWORDS_VALUE),
 
+    ])
+ctx.revision_property_setters.extend([
     # Set the svn:executable flag on any files that are marked in CVS as
     # being executable:
     ExecutablePropertySetter(),

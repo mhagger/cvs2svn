@@ -584,6 +584,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     """This is a callback method declared in Sink."""
 
     self.cvs_file.description = description
+    self.cvs_file.determine_file_properties(Ctx().file_property_setters)
 
   def define_tag(self, name, revision):
     """Remember the symbol name and revision, but don't process them yet.

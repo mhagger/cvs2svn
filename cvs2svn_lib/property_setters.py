@@ -35,6 +35,18 @@ def _preserve_case(s):
   return s
 
 
+class FilePropertySetter(object):
+  """Abstract class for objects that set properties on a CVSFile."""
+
+  def set_properties(self, cvs_file):
+    """Set any properties needed for CVS_FILE.
+
+    CVS_FILE is an instance of CVSFile.  This method should modify
+    CVS_FILE.properties in place."""
+
+    raise NotImplementedError()
+
+
 class SVNPropertySetter:
   """Abstract class for objects that can set properties on a SVNCommitItem."""
 

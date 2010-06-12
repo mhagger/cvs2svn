@@ -55,6 +55,7 @@ class Ctx:
     self.decode_apple_single = False
     self.symbol_info_filename = None
     self.username = None
+    self.file_property_setters = []
     self.svn_property_setters = []
     self.tmpdir = 'cvs2svn-tmp'
     self.skip_cleanup = False

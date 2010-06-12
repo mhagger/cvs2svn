@@ -265,7 +265,8 @@ class CVSFile(CVSPath):
 
     file_size -- (long) size of the RCS file in bytes.
 
-    mode -- (string or None) 'kkv', 'kb', etc.
+    mode -- (string or None) 'kkv', 'kb', etc., as read from the CVS
+        file.
 
     description -- (string or None) the file description as read from
         the RCS file.
@@ -306,7 +307,18 @@ class CVSFile(CVSPath):
     self.file_size = file_size
     self.mode = mode
     self.description = description
+    self.properties = None
+
+  def determine_file_properties(self, file_property_setters):
+    """Determine the properties for this file from FILE_PROPERTY_SETTERS.
+
+    This must only be called after SELF.mode and SELF.description have
+    been set by CollectData."""
+
     self.properties = {}
+
+    for file_property_setter in file_property_setters:
+      file_property_setter.set_properties(self)
 
   def _calculate_filename(self):
     """Return the filesystem path to this CVSPath in the CVS repository."""

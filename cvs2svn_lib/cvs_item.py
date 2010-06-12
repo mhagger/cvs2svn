@@ -205,6 +205,10 @@ class CVSRevision(CVSItem):
         property should be left unset, even if it is set in
         SELF.cvs_file.properties).
 
+    properties_changed -- (None or bool) Will this CVSRevision's
+        get_properties() method return a different value than the same
+        call of the predecessor revision?
+
     revision_reader_token -- (arbitrary) a token that can be set by
         RevisionCollector for the later use of RevisionReader.
 
@@ -228,6 +232,7 @@ class CVSRevision(CVSItem):
       'opened_symbols',
       'closed_symbols',
       'properties',
+      'properties_changed',
       ]
 
   def __init__(
@@ -262,6 +267,7 @@ class CVSRevision(CVSItem):
     self.opened_symbols = None
     self.closed_symbols = None
     self.properties = None
+    self.properties_changed = None
 
   def _get_cvs_path(self):
     return self.cvs_file.cvs_path
@@ -289,7 +295,7 @@ class CVSRevision(CVSItem):
         self.ntdbr_prev_id, self.ntdbr_next_id,
         self.tag_ids, self.branch_ids, self.branch_commit_ids,
         self.opened_symbols, self.closed_symbols,
-        self.properties,
+        self.properties, self.properties_changed,
         self.revision_reader_token,
         )
 
@@ -305,7 +311,7 @@ class CVSRevision(CVSItem):
      self.ntdbr_prev_id, self.ntdbr_next_id,
      self.tag_ids, self.branch_ids, self.branch_commit_ids,
      self.opened_symbols, self.closed_symbols,
-     self.properties,
+     self.properties, self.properties_changed,
      self.revision_reader_token) = data
     self.cvs_file = Ctx()._cvs_path_db.get_path(cvs_file_id)
     self.lod = Ctx()._symbol_db.get_symbol(lod_id)

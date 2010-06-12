@@ -29,6 +29,8 @@ from cvs2svn_lib.symbol import Tag
 from cvs2svn_lib.symbol import ExcludedSymbol
 from cvs2svn_lib.cvs_item import CVSRevision
 from cvs2svn_lib.cvs_item import CVSRevisionModification
+from cvs2svn_lib.cvs_item import CVSRevisionAdd
+from cvs2svn_lib.cvs_item import CVSRevisionChange
 from cvs2svn_lib.cvs_item import CVSRevisionAbsent
 from cvs2svn_lib.cvs_item import CVSRevisionNoop
 from cvs2svn_lib.cvs_item import CVSSymbol
@@ -1068,13 +1070,27 @@ class CVSFileItems(object):
             ]
 
   def determine_revision_properties(self, revision_property_setters):
-    """Set the properties field for any CVSRevisions."""
+    """Set the properties and properties_changed fields on CVSRevisions."""
 
     for lod_items in self.iter_lods():
       for cvs_rev in lod_items.cvs_revisions:
         cvs_rev.properties = {}
         for revision_property_setter in revision_property_setters:
           revision_property_setter.set_properties(cvs_rev)
+
+    for lod_items in self.iter_lods():
+      for cvs_rev in lod_items.cvs_revisions:
+        if isinstance(cvs_rev, CVSRevisionAdd):
+          cvs_rev.properties_changed = True
+        elif isinstance(cvs_rev, CVSRevisionChange):
+          prev_properties = self[
+              cvs_rev.get_effective_prev_id()
+              ].get_properties()
+          properties = cvs_rev.get_properties()
+
+          cvs_rev.properties_changed = properties != prev_properties
+        else:
+          cvs_rev.properties_changed = False
 
   def record_opened_symbols(self):
     """Set CVSRevision.opened_symbols for the surviving revisions."""

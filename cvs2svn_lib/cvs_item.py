@@ -310,6 +310,23 @@ class CVSRevision(CVSItem):
     self.cvs_file = Ctx()._cvs_path_db.get_path(cvs_file_id)
     self.lod = Ctx()._symbol_db.get_symbol(lod_id)
 
+  def get_properties(self):
+    """Return all of the properties needed for this CVSRevision.
+
+    Combine SELF.cvs_file.properties and SELF.properties to get the
+    final properties needed for this CVSRevision.  (The properties in
+    SELF have precedence.)  Return the properties as a map {key :
+    value}, where entries with value == None have been omitted."""
+
+    properties = self.cvs_file.properties.copy()
+    properties.update(self.properties)
+
+    for (k,v) in properties.items():
+      if v is None:
+        del properties[k]
+
+    return properties
+
   def get_effective_prev_id(self):
     """Return the ID of the effective predecessor of this item.
 

@@ -267,6 +267,9 @@ class CVSFile(CVSPath):
 
     mode -- (string or None) 'kkv', 'kb', etc.
 
+    description -- (string or None) the file description as read from
+        the RCS file.
+
   PARENT_DIRECTORY might contain an 'Attic' component if it should be
   retained in the SVN repository; i.e., if the same filename exists out
   of Attic and the --retain-conflicting-attic-files option was specified.

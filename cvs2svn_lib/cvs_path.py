@@ -201,10 +201,10 @@ class CVSDirectory(CVSPath):
   def __init__(self, id, project, parent_directory, basename):
     """Initialize a new CVSDirectory object."""
 
+    CVSPath.__init__(self, id, project, parent_directory, basename)
+
     # This member is filled in by CollectData.close():
     self.empty_subdirectory_ids = []
-
-    CVSPath.__init__(self, id, project, parent_directory, basename)
 
   def _calculate_filename(self):
     """Return the filesystem path to this CVSPath in the CVS repository."""
@@ -296,13 +296,17 @@ class CVSFile(CVSPath):
 
     assert parent_directory is not None
 
+    # This member is needed by _calculate_filename(), which is called
+    # by CVSPath.__init__().  So initialize it before calling
+    # CVSPath.__init__().
     self._in_attic = in_attic
+    CVSPath.__init__(self, id, project, parent_directory, basename)
+
     self.executable = executable
     self.file_size = file_size
     self.mode = mode
     self.description = description
     self.properties = {}
-    CVSPath.__init__(self, id, project, parent_directory, basename)
 
   def _calculate_filename(self):
     """Return the filesystem path to this CVSPath in the CVS repository."""

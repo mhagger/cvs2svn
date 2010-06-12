@@ -477,6 +477,9 @@ class FilterSymbolsPass(Pass):
       cvs_file_items.mutate_symbols()
       cvs_file_items.adjust_parents()
       cvs_file_items.refine_symbols()
+      cvs_file_items.determine_revision_properties(
+          Ctx().revision_property_setters
+          )
       cvs_file_items.record_opened_symbols()
       cvs_file_items.record_closed_symbols()
       cvs_file_items.check_link_consistency()

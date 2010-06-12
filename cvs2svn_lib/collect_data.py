@@ -1121,13 +1121,6 @@ class CollectData:
 
     cvs_file_items.check_link_consistency()
 
-    for cvs_item in cvs_file_items.values():
-      if isinstance(cvs_item, CVSRevision):
-        cvs_rev = cvs_item
-        cvs_rev.properties = {}
-        for revision_property_setter in Ctx().revision_property_setters:
-          revision_property_setter.set_properties(cvs_rev)
-
     self.add_cvs_file_items(cvs_file_items)
     self.symbol_stats.register(cvs_file_items)
 

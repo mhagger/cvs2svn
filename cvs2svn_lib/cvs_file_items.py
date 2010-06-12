@@ -1067,6 +1067,16 @@ class CVSFileItems(object):
             isinstance(source, CVSRevisionModification)
             ]
 
+  def determine_revision_properties(self, revision_property_setters):
+    """Set the properties field for any CVSRevisions."""
+
+    for cvs_item in self.values():
+      if isinstance(cvs_item, CVSRevision):
+        cvs_rev = cvs_item
+        cvs_rev.properties = {}
+        for revision_property_setter in revision_property_setters:
+          revision_property_setter.set_properties(cvs_rev)
+
   def record_opened_symbols(self):
     """Set CVSRevision.opened_symbols for the surviving revisions."""
 

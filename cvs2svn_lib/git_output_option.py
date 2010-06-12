@@ -182,16 +182,19 @@ class GitOutputOption(DVCSOutputOption):
     contents should either be Unicode strings or 8-bit strings encoded
     as UTF-8.
 
-    TIE_TAG_FIXUP_BRANCHES means whether after finishing with a tag fixup
-    branch, it should be psuedo-merged (ancestry linked but no content changes)
-    back into its source branch, to dispose of the open head.
+    TIE_TAG_FIXUP_BRANCHES means whether after finishing with a tag
+    fixup branch, it should be psuedo-merged (ancestry linked but no
+    content changes) back into its source branch, to dispose of the
+    open head.
 
     """
     DVCSOutputOption.__init__(self)
     self.dump_filename = dump_filename
     self.revision_writer = revision_writer
 
-    self.author_transforms = self.normalize_author_transforms(author_transforms)
+    self.author_transforms = self.normalize_author_transforms(
+        author_transforms
+        )
 
     self.tie_tag_fixup_branches = tie_tag_fixup_branches
 
@@ -249,8 +252,8 @@ class GitOutputOption(DVCSOutputOption):
   def _get_author(self, svn_commit):
     """Return the author to be used for SVN_COMMIT.
 
-    Return the author as a UTF-8 string in the form needed by git fast-import;
-    that is, 'name <email>'."""
+    Return the author as a UTF-8 string in the form needed by git
+    fast-import; that is, 'name <email>'."""
 
     cvs_author = svn_commit.get_author()
     return self._map_author(cvs_author)
@@ -350,7 +353,9 @@ class GitOutputOption(DVCSOutputOption):
       author = self._map_author(svn_commit.get_author())
       if author.endswith(" <>"):
         author = author[:-3]
-      date = time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime(svn_commit.date))
+      date = time.strftime(
+          "%Y-%m-%d %H:%M:%S UTC", time.gmtime(svn_commit.date)
+          )
       log_msg = svn_commit.get_log_msg()
       if log_msg.find('\n') != -1:
         log_msg = log_msg[:log_msg.index('\n')]
@@ -366,7 +371,9 @@ class GitOutputOption(DVCSOutputOption):
     # Get the primary parent
     p_source_lod, p_source_revnum, p_cvs_symbols = source_groups[0]
     try:
-      p_source_node = self._mirror.get_old_lod_directory(p_source_lod, p_source_revnum)
+      p_source_node = self._mirror.get_old_lod_directory(
+          p_source_lod, p_source_revnum
+          )
     except KeyError:
       raise InternalError('Source %r does not exist' % (p_source_lod,))
     cvs_files_to_delete = set(self._get_all_files(p_source_node))
@@ -379,12 +386,18 @@ class GitOutputOption(DVCSOutputOption):
     # make up this symbol creation.
     log_msg += "\n"
     log_msg += "\nSprout from %s" % (
-        self._describe_commit(Ctx()._persistence_manager.get_svn_commit(p_source_revnum),
-          p_source_lod),)
+        self._describe_commit(
+            Ctx()._persistence_manager.get_svn_commit(p_source_revnum),
+            p_source_lod
+            ),
+        )
     for (source_lod, source_revnum, cvs_symbols,) in source_groups[1:]:
       log_msg += "\nCherrypick from %s:" % (
-          self._describe_commit(Ctx()._persistence_manager.get_svn_commit(source_revnum),
-            source_lod),)
+          self._describe_commit(
+              Ctx()._persistence_manager.get_svn_commit(source_revnum),
+              source_lod
+              ),
+          )
       for cvs_symbol in cvs_symbols:
         log_msg += "\n    %s" % (cvs_symbol.cvs_file.cvs_path,)
     if len(cvs_files_to_delete):
@@ -408,7 +421,7 @@ class GitOutputOption(DVCSOutputOption):
     for (source_lod, source_revnum, cvs_symbols,) in source_groups:
       for cvs_symbol in cvs_symbols:
         self.revision_writer.branch_file(cvs_symbol)
- 
+
     for cvs_file in cvs_files_to_delete:
       self.f.write('D %s\n' % (cvs_file.cvs_path,))
 
@@ -451,12 +464,12 @@ class GitOutputOption(DVCSOutputOption):
     self.f.write('from :%d\n' % (mark,))
 
   def get_tag_fixup_branch_name(self, svn_commit):
-    # The branch name to use for the "tag fixup branches".  The git-fast-import
-    # documentation suggests using 'TAG_FIXUP' (outside of the refs/heads
-    # namespace), but this is currently broken.
-    # Use a name containing '.', which is not allowed in CVS symbols, to avoid
-    # conflicts (though of course a conflict could still result if the user
-    # requests symbol transformations).
+    # The branch name to use for the "tag fixup branches".  The
+    # git-fast-import documentation suggests using 'TAG_FIXUP'
+    # (outside of the refs/heads namespace), but this is currently
+    # broken.  Use a name containing '.', which is not allowed in CVS
+    # symbols, to avoid conflicts (though of course a conflict could
+    # still result if the user requests symbol transformations).
     return 'refs/heads/TAG.FIXUP'
 
   def process_tag_commit(self, svn_commit):
@@ -497,11 +510,12 @@ class GitOutputOption(DVCSOutputOption):
 
       if self.tie_tag_fixup_branches:
         source_lod = source_groups[0][0]
-        source_lod_git_branch = 'refs/heads/%s' % (getattr(source_lod, 'name', 'master'),)
+        source_lod_git_branch = \
+            'refs/heads/%s' % (getattr(source_lod, 'name', 'master'),)
 
         mark2 = self._create_commit_mark(source_lod, svn_commit.revnum)
         author = self._map_author(Ctx().username)
-        log_msg = self._get_log_msg_for_ancestry_tie(svn_commit) 
+        log_msg = self._get_log_msg_for_ancestry_tie(svn_commit)
 
         self.f.write('commit %s\n' % (source_lod_git_branch,))
         self.f.write('mark :%d\n' % (mark2,))

@@ -67,17 +67,17 @@ class SVNRepositoryDelegate:
 
     raise NotImplementedError()
 
-  def add_path(self, s_item):
-    """Add the path corresponding to S_ITEM to the repository.
+  def add_path(self, cvs_rev):
+    """Add the path corresponding to CVS_REV to the repository.
 
-    S_ITEM is an SVNCommitItem."""
+    CVS_REV is a CVSRevisionAdd."""
 
     raise NotImplementedError()
 
-  def change_path(self, s_item):
-    """Change the path corresponding to S_ITEM in the repository.
+  def change_path(self, cvs_rev):
+    """Change the path corresponding to CVS_REV in the repository.
 
-    S_ITEM is an SVNCommitItem."""
+    CVS_REV is a CVSRevisionChange."""
 
     raise NotImplementedError()
 

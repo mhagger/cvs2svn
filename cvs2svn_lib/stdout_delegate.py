@@ -52,15 +52,15 @@ class StdoutDelegate(SVNRepositoryDelegate):
         "  New Directory %s" % (lod.get_path(cvs_directory.cvs_path),)
         )
 
-  def add_path(self, s_item):
+  def add_path(self, cvs_rev):
     """Print a line stating what path we are 'adding'."""
 
-    Log().verbose("  Adding %s" % (s_item.cvs_rev.get_svn_path(),))
+    Log().verbose("  Adding %s" % (cvs_rev.get_svn_path(),))
 
-  def change_path(self, s_item):
+  def change_path(self, cvs_rev):
     """Print a line stating what path we are 'changing'."""
 
-    Log().verbose("  Changing %s" % (s_item.cvs_rev.get_svn_path(),))
+    Log().verbose("  Changing %s" % (cvs_rev.get_svn_path(),))
 
   def delete_lod(self, lod):
     """Print a line stating that we are 'deleting' LOD."""

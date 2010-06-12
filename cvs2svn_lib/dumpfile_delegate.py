@@ -196,15 +196,12 @@ class DumpfileDelegate(SVNRepositoryDelegate):
   def mkdir(self, lod, cvs_directory):
     self._make_any_dir(lod.get_path(cvs_directory.cvs_path))
 
-  def _add_or_change_path(self, s_item, op):
-    """Emit the addition or change corresponding to S_ITEM.
+  def _add_or_change_path(self, cvs_rev, op):
+    """Emit the addition or change corresponding to CVS_REV.
 
     OP is either the constant OP_ADD or OP_CHANGE."""
 
     assert op in [OP_ADD, OP_CHANGE]
-
-    # Convenience variables
-    cvs_rev = s_item.cvs_rev
 
     # The property handling here takes advantage of an undocumented
     # but IMHO consistent feature of the Subversion dumpfile-loading
@@ -353,15 +350,15 @@ class DumpfileDelegate(SVNRepositoryDelegate):
     # provide a blank line for readability.
     self.dumpfile.write('\n\n')
 
-  def add_path(self, s_item):
-    """Emit the addition corresponding to S_ITEM, an SVNCommitItem."""
+  def add_path(self, cvs_rev):
+    """Emit the addition corresponding to CVS_REV, a CVSRevisionAdd."""
 
-    self._add_or_change_path(s_item, OP_ADD)
+    self._add_or_change_path(cvs_rev, OP_ADD)
 
-  def change_path(self, s_item):
-    """Emit the change corresponding to S_ITEM, an SVNCommitItem."""
+  def change_path(self, cvs_rev):
+    """Emit the change corresponding to CVS_REV, a CVSRevisionChange."""
 
-    self._add_or_change_path(s_item, OP_CHANGE)
+    self._add_or_change_path(cvs_rev, OP_CHANGE)
 
   def delete_lod(self, lod):
     """Emit the deletion of LOD."""

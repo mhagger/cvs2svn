@@ -42,7 +42,6 @@ from cvs2svn_lib.cvs_item import CVSRevisionDelete
 from cvs2svn_lib.cvs_item import CVSRevisionNoop
 from cvs2svn_lib.repository_mirror import RepositoryMirror
 from cvs2svn_lib.repository_mirror import PathExistsError
-from cvs2svn_lib.svn_commit_item import SVNCommitItem
 from cvs2svn_lib.openings_closings import SymbolingsReader
 from cvs2svn_lib.fill_source import get_source_set
 from cvs2svn_lib.stdout_delegate import StdoutDelegate
@@ -219,7 +218,7 @@ class SVNOutputOption(OutputOption):
     # We do not have to update the nodes because our mirror is only
     # concerned with the presence or absence of paths, and a file
     # content change does not cause any path changes.
-    self._invoke_delegates('change_path', SVNCommitItem(cvs_rev))
+    self._invoke_delegates('change_path', cvs_rev)
 
   def _make_empty_subdirectories(self, cvs_directory, lod):
     """Make any empty subdirectories of CVS_DIRECTORY in LOD."""
@@ -272,7 +271,7 @@ class SVNOutputOption(OutputOption):
     lod = cvs_rev.lod
     parent_node = self._mkdir_p(parent_path, lod)
     parent_node.add_file(cvs_file)
-    self._invoke_delegates('add_path', SVNCommitItem(cvs_rev))
+    self._invoke_delegates('add_path', cvs_rev)
 
   def copy_lod(self, src_lod, dest_lod, src_revnum):
     """Copy all of SRC_LOD at SRC_REVNUM to DST_LOD.

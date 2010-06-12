@@ -21,21 +21,12 @@ from cvs2svn_lib.context import Ctx
 
 
 class SVNCommitItem:
-  """A wrapper class for CVSRevision objects upon which
-  Subversion-related data (such as properties) may be hung."""
+  """A wrapper class for CVSRevision objects with no real purpose."""
 
-  def __init__(self, cvs_rev, svn_props_changed):
-    """Initialize instance and record the properties for this file.
-    SVN_PROPS_CHANGED indicates whether the svn: properties are known
-    to have changed since the last revision.
-
-    The properties are set by the RevisionPropertySetter in
-    Ctx().revision_property_setters."""
+  def __init__(self, cvs_rev):
+    """Initialize instance."""
 
     self.cvs_rev = cvs_rev
-    # Did the svn properties change for this file (i.e., do they have
-    # to be written to the dumpfile?)
-    self.svn_props_changed = svn_props_changed or cvs_rev.properties_changed
 
   def has_keywords(self):
     return bool(self.cvs_rev.get_properties().get('svn:keywords', None))

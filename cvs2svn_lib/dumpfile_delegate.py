@@ -238,7 +238,7 @@ class DumpfileDelegate(SVNRepositoryDelegate):
 
     # Calculate the (sorted-by-name) property string and length, if any.
     svn_props = cvs_rev.get_properties()
-    if s_item.svn_props_changed:
+    if cvs_rev.properties_changed:
       prop_contents = ''
       prop_names = svn_props.keys()
       prop_names.sort()

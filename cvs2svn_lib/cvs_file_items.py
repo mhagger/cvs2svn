@@ -1070,9 +1070,8 @@ class CVSFileItems(object):
   def determine_revision_properties(self, revision_property_setters):
     """Set the properties field for any CVSRevisions."""
 
-    for cvs_item in self.values():
-      if isinstance(cvs_item, CVSRevision):
-        cvs_rev = cvs_item
+    for lod_items in self.iter_lods():
+      for cvs_rev in lod_items.cvs_revisions:
         cvs_rev.properties = {}
         for revision_property_setter in revision_property_setters:
           revision_property_setter.set_properties(cvs_rev)

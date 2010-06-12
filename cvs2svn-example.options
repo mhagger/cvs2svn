@@ -489,12 +489,12 @@ ctx.file_property_setters.extend([
     DefaultEOLStyleSetter(None),
     #DefaultEOLStyleSetter('native'),
 
-    ])
-ctx.revision_property_setters.extend([
     # Prevent svn:keywords from being set on files that have
     # svn:eol-style unset.
     SVNBinaryFileKeywordsPropertySetter(),
 
+    ])
+ctx.revision_property_setters.extend([
     # If svn:keywords has not been set yet, set it based on the file's
     # CVS mode:
     KeywordsPropertySetter(config.SVN_KEYWORDS_VALUE),

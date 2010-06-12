@@ -422,17 +422,17 @@ class DefaultEOLStyleSetter(FilePropertySetter):
     cvs_file.properties[self.propname] = self.value
 
 
-class SVNBinaryFileKeywordsPropertySetter(RevisionPropertySetter):
+class SVNBinaryFileKeywordsPropertySetter(FilePropertySetter):
   """Turn off svn:keywords for files with binary svn:eol-style."""
 
   propname = 'svn:keywords'
 
-  def set_properties(self, s_item):
-    if self.propname in s_item.svn_props:
+  def set_properties(self, cvs_file):
+    if self.propname in cvs_file.properties:
       return
 
-    if not s_item.svn_props.get('svn:eol-style'):
-      s_item.svn_props[self.propname] = None
+    if not cvs_file.properties.get('svn:eol-style'):
+      cvs_file.properties[self.propname] = None
 
 
 class KeywordsPropertySetter(RevisionPropertySetter):

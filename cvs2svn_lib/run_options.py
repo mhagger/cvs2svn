@@ -1045,7 +1045,7 @@ class RunOptions(object):
         DefaultEOLStyleSetter(options.default_eol)
         )
 
-    ctx.revision_property_setters.append(SVNBinaryFileKeywordsPropertySetter())
+    ctx.file_property_setters.append(SVNBinaryFileKeywordsPropertySetter())
 
     if not options.keywords_off:
       ctx.revision_property_setters.append(

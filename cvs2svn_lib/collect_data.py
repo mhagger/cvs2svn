@@ -575,23 +575,17 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     else:
       self.default_branch = branch
 
-  def set_expansion(self, mode):
-    """This is a callback method declared in Sink."""
-
-    self.cvs_file.mode = mode
-
-  def set_description(self, description):
-    """This is a callback method declared in Sink."""
-
-    self.cvs_file.description = description
-    self.cvs_file.determine_file_properties(Ctx().file_property_setters)
-
   def define_tag(self, name, revision):
     """Remember the symbol name and revision, but don't process them yet.
 
     This is a callback method declared in Sink."""
 
     self.sdc.define_symbol(name, revision)
+
+  def set_expansion(self, mode):
+    """This is a callback method declared in Sink."""
+
+    self.cvs_file.mode = mode
 
   def admin_completed(self):
     """This is a callback method declared in Sink."""
@@ -648,6 +642,29 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
         self._primary_dependencies.append( (next, revision,) )
       else:
         self._primary_dependencies.append( (revision, next,) )
+
+  def tree_completed(self):
+    """The revision tree has been parsed.
+
+    Analyze it for consistency and connect some loose ends.
+
+    This is a callback method declared in Sink."""
+
+    self._resolve_primary_dependencies()
+    self._resolve_branch_dependencies()
+    self._sort_branches()
+    self._resolve_tag_dependencies()
+
+    # Compute the preliminary CVSFileItems for this file:
+    cvs_items = []
+    cvs_items.extend(self._get_cvs_revisions())
+    cvs_items.extend(self._get_cvs_branches())
+    cvs_items.extend(self._get_cvs_tags())
+    self._cvs_file_items = CVSFileItems(
+        self.cvs_file, self.pdc.trunk, cvs_items
+        )
+
+    self._cvs_file_items.check_link_consistency()
 
   def _resolve_primary_dependencies(self):
     """Resolve the dependencies listed in self._primary_dependencies."""
@@ -726,53 +743,6 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
           # The tag_data's rev has the tag as a child:
           parent_data.tags_data.append(tag_data)
 
-  def _determine_operation(self, rev_data):
-    prev_rev_data = self._rev_data.get(rev_data.parent)
-    return cvs_revision_type_map[(
-        rev_data.state != 'dead',
-        prev_rev_data is not None and prev_rev_data.state != 'dead',
-        )]
-
-  def _get_cvs_revision(self, rev_data):
-    """Create and return a CVSRevision for REV_DATA."""
-
-    branch_ids = [
-        branch_data.id
-        for branch_data in rev_data.branches_data
-        ]
-
-    branch_commit_ids = [
-        self._get_rev_id(rev)
-        for rev in rev_data.branches_revs_data
-        ]
-
-    tag_ids = [
-        tag_data.id
-        for tag_data in rev_data.tags_data
-        ]
-
-    revision_type = self._determine_operation(rev_data)
-
-    return revision_type(
-        self._get_rev_id(rev_data.rev), self.cvs_file,
-        rev_data.timestamp, None,
-        self._get_rev_id(rev_data.parent),
-        self._get_rev_id(rev_data.child),
-        rev_data.rev,
-        True,
-        self.sdc.rev_to_lod(rev_data.rev),
-        rev_data.get_first_on_branch_id(),
-        False, None, None,
-        tag_ids, branch_ids, branch_commit_ids,
-        rev_data.revision_reader_token
-        )
-
-  def _get_cvs_revisions(self):
-    """Generate the CVSRevisions present in this file."""
-
-    for rev_data in self._rev_data.itervalues():
-      yield self._get_cvs_revision(rev_data)
-
   def _get_cvs_branches(self):
     """Generate the CVSBranches present in this file."""
 
@@ -798,28 +768,11 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
             None,
             )
 
-  def tree_completed(self):
-    """The revision tree has been parsed.
+  def set_description(self, description):
+    """This is a callback method declared in Sink."""
 
-    Analyze it for consistency and connect some loose ends.
-
-    This is a callback method declared in Sink."""
-
-    self._resolve_primary_dependencies()
-    self._resolve_branch_dependencies()
-    self._sort_branches()
-    self._resolve_tag_dependencies()
-
-    # Compute the preliminary CVSFileItems for this file:
-    cvs_items = []
-    cvs_items.extend(self._get_cvs_revisions())
-    cvs_items.extend(self._get_cvs_branches())
-    cvs_items.extend(self._get_cvs_tags())
-    self._cvs_file_items = CVSFileItems(
-        self.cvs_file, self.pdc.trunk, cvs_items
-        )
-
-    self._cvs_file_items.check_link_consistency()
+    self.cvs_file.description = description
+    self.cvs_file.determine_file_properties(Ctx().file_property_setters)
 
   def set_revision_info(self, revision, log, text):
     """This is a callback method declared in Sink."""
@@ -874,6 +827,66 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
             '%r has no deltatext section for revision %s'
             % (self.cvs_file.filename, cvs_item.rev,)
             )
+
+  def _determine_operation(self, rev_data):
+    prev_rev_data = self._rev_data.get(rev_data.parent)
+    return cvs_revision_type_map[(
+        rev_data.state != 'dead',
+        prev_rev_data is not None and prev_rev_data.state != 'dead',
+        )]
+
+  def _get_cvs_revisions(self):
+    """Generate the CVSRevisions present in this file."""
+
+    for rev_data in self._rev_data.itervalues():
+      yield self._get_cvs_revision(rev_data)
+
+  def _get_cvs_revision(self, rev_data):
+    """Create and return a CVSRevision for REV_DATA."""
+
+    branch_ids = [
+        branch_data.id
+        for branch_data in rev_data.branches_data
+        ]
+
+    branch_commit_ids = [
+        self._get_rev_id(rev)
+        for rev in rev_data.branches_revs_data
+        ]
+
+    tag_ids = [
+        tag_data.id
+        for tag_data in rev_data.tags_data
+        ]
+
+    revision_type = self._determine_operation(rev_data)
+
+    return revision_type(
+        self._get_rev_id(rev_data.rev), self.cvs_file,
+        rev_data.timestamp, None,
+        self._get_rev_id(rev_data.parent),
+        self._get_rev_id(rev_data.child),
+        rev_data.rev,
+        True,
+        self.sdc.rev_to_lod(rev_data.rev),
+        rev_data.get_first_on_branch_id(),
+        False, None, None,
+        tag_ids, branch_ids, branch_commit_ids,
+        rev_data.revision_reader_token
+        )
+
+  def get_cvs_file_items(self):
+    """Finish up and return a CVSFileItems instance for this file.
+
+    This method must only be called once."""
+
+    self._process_ntdbrs()
+
+    # Break a circular reference loop, allowing the memory for self
+    # and sdc to be freed.
+    del self.sdc
+
+    return self._cvs_file_items
 
   def _process_ntdbrs(self):
     """Fix up any non-trunk default branch revisions (if present).
@@ -937,19 +950,6 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       self._cvs_file_items.imported_remove_1_1(vendor_lod_items)
 
     self._cvs_file_items.check_link_consistency()
-
-  def get_cvs_file_items(self):
-    """Finish up and return a CVSFileItems instance for this file.
-
-    This method must only be called once."""
-
-    self._process_ntdbrs()
-
-    # Break a circular reference loop, allowing the memory for self
-    # and sdc to be freed.
-    del self.sdc
-
-    return self._cvs_file_items
 
 
 class _ProjectDataCollector:

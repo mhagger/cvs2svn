@@ -177,12 +177,27 @@ class RCSStream:
   def __init__(self, text):
     """Instantiate and initialize the file content with TEXT."""
 
-    self._lines = msplit(text)
+    self.set_text(text)
 
   def get_text(self):
     """Return the current file content."""
 
     return "".join(self._lines)
+
+  def set_lines(self, lines):
+    """Set the current contents to the specified LINES.
+
+    LINES is an iterable over well-formed lines; i.e., each line
+    contains exactly one LF as its last character, except that the
+    list line can be unterminated.  LINES will be consumed
+    immediately; if it is a sequence, it will be copied."""
+
+    self._lines = list(lines)
+
+  def set_text(self, text):
+    """Set the current file content."""
+
+    self._lines = msplit(text)
 
   def generate_blocks(self, edits):
     """Generate edit blocks from an iterable of RCS edits.

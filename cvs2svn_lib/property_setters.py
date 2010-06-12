@@ -86,18 +86,18 @@ class ExecutablePropertySetter(FilePropertySetter):
       cvs_file.properties[self.propname] = '*'
 
 
-class DescriptionPropertySetter(RevisionPropertySetter):
-  """Set the cvs:description property based on cvs_rev.cvs_file.description."""
+class DescriptionPropertySetter(FilePropertySetter):
+  """Set the cvs:description property based on cvs_file.description."""
 
   def __init__(self, propname='cvs:description'):
     self.propname = propname
 
-  def set_properties(self, s_item):
-    if self.propname in s_item.svn_props:
+  def set_properties(self, cvs_file):
+    if self.propname in cvs_file.properties:
       return
 
-    if s_item.cvs_rev.cvs_file.description:
-      s_item.svn_props[self.propname] = s_item.cvs_rev.cvs_file.description
+    if cvs_file.description:
+      cvs_file.properties[self.propname] = cvs_file.description
 
 
 class CVSBinaryFileEOLStyleSetter(FilePropertySetter):

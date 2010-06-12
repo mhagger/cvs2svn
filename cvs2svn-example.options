@@ -501,12 +501,12 @@ ctx.file_property_setters.extend([
     # being executable:
     ExecutablePropertySetter(),
 
-    ])
-ctx.revision_property_setters.extend([
     # Set the cvs:description property to the CVS description of any
     # file that has one:
     DescriptionPropertySetter(propname='cvs:description'),
 
+    ])
+ctx.revision_property_setters.extend([
     # Uncomment the following line to include the original CVS revision
     # numbers as file properties in the SVN archive:
     #CVSRevisionNumberSetter(propname='cvs2svn:cvs-rev'),

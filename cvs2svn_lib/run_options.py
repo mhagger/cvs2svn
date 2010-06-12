@@ -1054,7 +1054,7 @@ class RunOptions(object):
 
     ctx.file_property_setters.append(ExecutablePropertySetter())
 
-    ctx.revision_property_setters.append(DescriptionPropertySetter())
+    ctx.file_property_setters.append(DescriptionPropertySetter())
 
   def process_options(self):
     """Do the main configuration based on command-line options.

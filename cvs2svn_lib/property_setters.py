@@ -430,7 +430,7 @@ class KeywordsPropertySetter(FilePropertySetter):
 
 
 class RevisionPropertySetter:
-  """Abstract class for objects that can set properties on a SVNCommitItem."""
+  """Abstract class for objects that can set properties on a CVSRevision."""
 
   def set_properties(self, cvs_rev):
     """Set any properties that can be determined for CVS_REV.

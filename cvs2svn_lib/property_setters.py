@@ -370,18 +370,18 @@ class AutoPropsPropertySetter(FilePropertySetter):
         cvs_file.properties[k] = v
 
 
-class CVSBinaryFileDefaultMimeTypeSetter(RevisionPropertySetter):
+class CVSBinaryFileDefaultMimeTypeSetter(FilePropertySetter):
   """If the file is binary and its svn:mime-type property is not yet
   set, set it to 'application/octet-stream'."""
 
   propname = 'svn:mime-type'
 
-  def set_properties(self, s_item):
-    if self.propname in s_item.svn_props:
+  def set_properties(self, cvs_file):
+    if self.propname in cvs_file.properties:
       return
 
-    if s_item.cvs_rev.cvs_file.mode == 'b':
-      s_item.svn_props[self.propname] = 'application/octet-stream'
+    if cvs_file.mode == 'b':
+      cvs_file.properties[self.propname] = 'application/octet-stream'
 
 
 class EOLStyleFromMimeTypeSetter(RevisionPropertySetter):

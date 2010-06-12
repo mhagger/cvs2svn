@@ -1036,7 +1036,7 @@ class RunOptions(object):
 
     ctx.file_property_setters.append(CVSBinaryFileEOLStyleSetter())
 
-    ctx.revision_property_setters.append(CVSBinaryFileDefaultMimeTypeSetter())
+    ctx.file_property_setters.append(CVSBinaryFileDefaultMimeTypeSetter())
 
     if options.eol_from_mime_type:
       ctx.revision_property_setters.append(EOLStyleFromMimeTypeSetter())

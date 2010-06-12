@@ -400,12 +400,12 @@ ctx.file_property_setters.extend([
     # CVS mode:
     KeywordsPropertySetter(config.SVN_KEYWORDS_VALUE),
 
-    ])
-ctx.revision_property_setters.extend([
     # Set the svn:executable flag on any files that are marked in CVS as
     # being executable:
     ExecutablePropertySetter(),
 
+    ])
+ctx.revision_property_setters.extend([
     ])
 
 # To skip the cleanup of temporary files, uncomment the following

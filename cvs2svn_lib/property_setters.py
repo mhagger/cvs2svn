@@ -73,17 +73,17 @@ class CVSRevisionNumberSetter(RevisionPropertySetter):
     s_item.svn_props_changed = True
 
 
-class ExecutablePropertySetter(RevisionPropertySetter):
-  """Set the svn:executable property based on cvs_rev.cvs_file.executable."""
+class ExecutablePropertySetter(FilePropertySetter):
+  """Set the svn:executable property based on cvs_file.executable."""
 
   propname = 'svn:executable'
 
-  def set_properties(self, s_item):
-    if self.propname in s_item.svn_props:
+  def set_properties(self, cvs_file):
+    if self.propname in cvs_file.properties:
       return
 
-    if s_item.cvs_rev.cvs_file.executable:
-      s_item.svn_props[self.propname] = '*'
+    if cvs_file.executable:
+      cvs_file.properties[self.propname] = '*'
 
 
 class DescriptionPropertySetter(RevisionPropertySetter):

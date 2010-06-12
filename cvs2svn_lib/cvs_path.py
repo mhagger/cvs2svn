@@ -270,6 +270,9 @@ class CVSFile(CVSPath):
     description -- (string or None) the file description as read from
         the RCS file.
 
+    properties -- (dict) file properties that are preserved across
+        history.
+
   PARENT_DIRECTORY might contain an 'Attic' component if it should be
   retained in the SVN repository; i.e., if the same filename exists out
   of Attic and the --retain-conflicting-attic-files option was specified.
@@ -281,7 +284,8 @@ class CVSFile(CVSPath):
       'executable',
       'file_size',
       'mode',
-      'description'
+      'description',
+      'properties',
       ]
 
   def __init__(
@@ -297,6 +301,7 @@ class CVSFile(CVSPath):
     self.file_size = file_size
     self.mode = mode
     self.description = description
+    self.properties = {}
     CVSPath.__init__(self, id, project, parent_directory, basename)
 
   def _calculate_filename(self):
@@ -315,14 +320,14 @@ class CVSFile(CVSPath):
     return (
         CVSPath.__getstate__(self),
         self._in_attic, self.executable, self.file_size, self.mode,
-        self.description
+        self.description, self.properties,
         )
 
   def __setstate__(self, state):
     (
         cvs_path_state,
         self._in_attic, self.executable, self.file_size, self.mode,
-        self.description
+        self.description, self.properties,
         ) = state
     CVSPath.__setstate__(self, cvs_path_state)
 

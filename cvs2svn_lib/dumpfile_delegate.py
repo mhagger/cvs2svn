@@ -224,11 +224,11 @@ class DumpfileDelegate(SVNRepositoryDelegate):
     #
     # This works out great for cvs2svn, due to lucky coincidences:
     #
-    # For files, the only properties we ever set are set in the first
-    # revision; all other revisions (including on branches) inherit
-    # from that.  After the first revision, we never change file
-    # properties, therefore, there is no need to remember the full set
-    # of properties on a given file once we've set it.
+    # For files, we set most properties in the first revision and
+    # never change them.  (The only exception is the 'cvs2svn:cvs-rev'
+    # property.)  If 'cvs2svn:cvs-rev' is not being used, then there
+    # is no need to remember the full set of properties on a given
+    # file once we've set it.
     #
     # For directories, the only property we set is "svn:ignore", and
     # while we may change it after the first revision, we always do so

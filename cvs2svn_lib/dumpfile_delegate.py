@@ -104,10 +104,21 @@ class DumpfileDelegate(SVNRepositoryDelegate):
           "with '--fallback-encoding'."
           % (path,))
 
-  def _string_for_prop(self, name, value):
-    """Return a property in the form needed for the dumpfile."""
+  @staticmethod
+  def _string_for_props(properties):
+    """Return PROPERTIES in the form needed for the dumpfile."""
 
-    return 'K %d\n%s\nV %d\n%s\n' % (len(name), name, len(value), value)
+    prop_strings = []
+    for (k, v) in sorted(properties.iteritems()):
+      if v is None:
+        # None indicates that the property should be left unset.
+        pass
+      else:
+        prop_strings.append('K %d\n%s\nV %d\n%s\n' % (len(k), k, len(v), v))
+
+    prop_strings.append('PROPS-END\n')
+
+    return ''.join(prop_strings)
 
   def start_commit(self, revnum, revprops):
     """Emit the start of SVN_COMMIT (an SVNCommit)."""
@@ -145,15 +156,7 @@ class DumpfileDelegate(SVNRepositoryDelegate):
     # are always the same for revisions.
 
     # Calculate the output needed for the property definitions.
-    prop_names = revprops.keys()
-    prop_names.sort()
-    prop_strings = []
-    for propname in prop_names:
-      if revprops[propname] is not None:
-        prop_strings.append(
-            self._string_for_prop(propname, revprops[propname]))
-
-    all_prop_strings = ''.join(prop_strings) + 'PROPS-END\n'
+    all_prop_strings = self._string_for_props(revprops)
     total_len = len(all_prop_strings)
 
     # Print the revision header and revprops
@@ -256,13 +259,7 @@ class DumpfileDelegate(SVNRepositoryDelegate):
     # Calculate the (sorted-by-name) property string and length, if any.
     svn_props = cvs_rev.get_properties()
     if cvs_rev.properties_changed:
-      prop_contents = ''
-      prop_names = svn_props.keys()
-      prop_names.sort()
-      for pname in prop_names:
-        pvalue = svn_props[pname]
-        prop_contents += self._string_for_prop(pname, pvalue)
-      prop_contents += 'PROPS-END\n'
+      prop_contents = self._string_for_props(svn_props)
       props_header = 'Prop-content-length: %d\n' % len(prop_contents)
     else:
       prop_contents = ''

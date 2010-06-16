@@ -21,7 +21,9 @@ from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.process import check_command_runs
 from cvs2svn_lib.process import get_command_output
 from cvs2svn_lib.process import CommandFailedException
+from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.revision_manager import RevisionReader
+from cvs2svn_lib.apple_single_filter import get_maybe_apple_single
 
 
 class RCSRevisionReader(RevisionReader):
@@ -46,6 +48,13 @@ class RCSRevisionReader(RevisionReader):
     if cvs_rev.get_property('_keyword_handling') == 'collapsed':
       pipe_cmd.append('-kk')
     pipe_cmd.append(cvs_rev.cvs_file.filename)
-    return get_command_output(pipe_cmd)
+    data = get_command_output(pipe_cmd)
+
+    if Ctx().decode_apple_single:
+      # Insert a filter to decode any files that are in AppleSingle
+      # format:
+      data = get_maybe_apple_single(data)
+
+    return data
 
 

@@ -101,6 +101,7 @@ from cvs2svn_lib.revision_manager import RevisionReader
 from cvs2svn_lib.serializer import MarshalSerializer
 from cvs2svn_lib.serializer import CompressingSerializer
 from cvs2svn_lib.serializer import PrimedPickleSerializer
+from cvs2svn_lib.apple_single_filter import get_maybe_apple_single
 
 import cvs2svn_rcsparse
 
@@ -790,6 +791,11 @@ class InternalRevisionReader(RevisionReader):
           'Undefined _keyword_handling property (%r) for %s'
           % (keyword_handling, cvs_rev,)
           )
+
+    if Ctx().decode_apple_single:
+      # Insert a filter to decode any files that are in AppleSingle
+      # format:
+      text = get_maybe_apple_single(text)
 
     return text
 

@@ -270,11 +270,6 @@ class DumpfileDelegate(SVNRepositoryDelegate):
 
     data = self._revision_reader.get_content(cvs_rev)
 
-    if Ctx().decode_apple_single:
-      # Insert a filter to decode any files that are in AppleSingle
-      # format:
-      data = get_maybe_apple_single(data)
-
     # Convert all EOLs to LFs if neccessary
     eol_style = svn_props.get('svn:eol-style', None)
     if eol_style:

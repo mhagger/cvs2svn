@@ -342,6 +342,17 @@ class CVSRevision(CVSItem):
 
     return properties
 
+  def get_property(self, name, default=None):
+    """Return a particular property for this CVSRevision.
+
+    This is logically the same as SELF.get_properties().get(name,
+    default) but implemented more efficiently."""
+
+    if name in self.properties:
+      return self.properties[name]
+    else:
+      return self.cvs_file.properties.get(name, default)
+
   def get_effective_prev_id(self):
     """Return the ID of the effective predecessor of this item.
 

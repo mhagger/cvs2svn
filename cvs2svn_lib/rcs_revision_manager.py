@@ -19,7 +19,7 @@
 
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.process import check_command_runs
-from cvs2svn_lib.process import PipeStream
+from cvs2svn_lib.process import get_command_output
 from cvs2svn_lib.process import CommandFailedException
 from cvs2svn_lib.revision_manager import RevisionReader
 
@@ -46,9 +46,6 @@ class RCSRevisionReader(RevisionReader):
     if suppress_keyword_substitution:
       pipe_cmd.append('-kk')
     pipe_cmd.append(cvs_rev.cvs_file.filename)
-    stream = PipeStream(pipe_cmd)
-    data = stream.read()
-    stream.close()
-    return data
+    return get_command_output(pipe_cmd)
 
 

@@ -87,30 +87,24 @@ def check_command_runs(cmd, cmdname):
     raise CommandFailedException(msg)
 
 
-class PipeStream(object):
+def get_command_output(command):
+  """Run COMMAND and return its stdout.
+
+  COMMAND is a list of strings.  Run the command and return its stdout
+  as a string.  If the command exits with a nonzero return code or
+  writes something to stderr, raise a CommandError."""
+
   """A file-like object from which revision contents can be read."""
 
-  def __init__(self, pipe_command):
-    self._pipe_command_str = ' '.join(pipe_command)
-    self.pipe = subprocess.Popen(
-        pipe_command,
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        )
-    self.pipe.stdin.close()
-
-  def read(self, size=None):
-    if size is None:
-      return self.pipe.stdout.read()
-    else:
-      return self.pipe.stdout.read(size)
-
-  def close(self):
-    self.pipe.stdout.close()
-    error_output = self.pipe.stderr.read()
-    exit_status = self.pipe.wait()
-    if exit_status or error_output:
-      raise CommandError(self._pipe_command_str, exit_status, error_output)
+  pipe = subprocess.Popen(
+      command,
+      stdin=subprocess.PIPE,
+      stdout=subprocess.PIPE,
+      stderr=subprocess.PIPE,
+      )
+  (stdout, stderr) = pipe.communicate()
+  if pipe.returncode or stderr:
+    raise CommandError(' '.join(command), pipe.returncode, stderr)
+  return stdout
 
 

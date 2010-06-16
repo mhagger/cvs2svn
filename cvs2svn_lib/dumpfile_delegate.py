@@ -39,6 +39,26 @@ OP_ADD    = 'add'
 OP_CHANGE = 'change'
 
 
+# A mapping from the value of the svn:eol-style property to the EOL
+# string that should appear in a dumpfile:
+EOL_STYLE_REPLACEMENTS = {
+    'LF' : '\n',
+    'CR' : '\r',
+    'CRLF' : '\r\n',
+    'native' : '\n',
+    }
+
+
+def canonicalize_eol(text, eol):
+  """Replace any end-of-line sequences in TEXT with the string EOL."""
+
+  text = text.replace('\r\n', '\n')
+  text = text.replace('\r', '\n')
+  if eol != '\n':
+    text = text.replace('\n', eol)
+  return text
+
+
 class DumpfileDelegate(SVNRepositoryDelegate):
   """Create a Subversion dumpfile."""
 
@@ -261,14 +281,14 @@ class DumpfileDelegate(SVNRepositoryDelegate):
       # format:
       stream = get_maybe_apple_single_stream(stream)
 
-    # Insert a filter to convert all EOLs to LFs if neccessary
-
-    eol_style = svn_props.get('svn:eol-style', None)
-    if eol_style:
-      stream = LF_EOL_Filter(stream, eol_style)
-
     data = stream.read()
     stream.close()
+
+    # Convert all EOLs to LFs if neccessary
+    eol_style = svn_props.get('svn:eol-style', None)
+    if eol_style:
+      eol = EOL_STYLE_REPLACEMENTS[eol_style]
+      data = canonicalize_eol(data, eol)
 
     # treat .cvsignore as a directory property
     dir_path, basename = path_split(cvs_rev.get_svn_path())
@@ -456,44 +476,5 @@ def generate_ignores(raw_ignore_val):
     else:
       ignore_vals.append(ignore)
   return ignore_vals
-
-
-class LF_EOL_Filter:
-  """Filter a stream and convert all end-of-line markers (CRLF, CR or LF)
-  into the appropriate canonical eol style."""
-
-  eol_style_replacements = {
-      'LF' : '\n',
-      'CR' : '\r',
-      'CRLF' : '\r\n',
-      'native' : '\n',
-      }
-
-  def __init__(self, stream, eol_style):
-    self.stream = stream
-    self.replacement = self.eol_style_replacements[eol_style]
-    self.carry_cr = False
-    self.eof = False
-
-  def read(self, size=-1):
-    while True:
-      buf = self.stream.read(size)
-      self.eof = len(buf) == 0
-      if self.carry_cr:
-        buf = '\r' + buf
-        self.carry_cr = False
-      if not self.eof and buf[-1] == '\r':
-        self.carry_cr = True
-        buf = buf[:-1]
-      buf = buf.replace('\r\n', '\n')
-      buf = buf.replace('\r', '\n')
-      if self.replacement != '\n':
-        buf = buf.replace('\n', self.replacement)
-      if buf or self.eof:
-        return buf
-
-  def close(self):
-    self.stream.close()
-    self.stream = None
 
 

@@ -267,12 +267,12 @@ class DumpfileDelegate(SVNRepositoryDelegate):
     if eol_style:
       stream = LF_EOL_Filter(stream, eol_style)
 
-    buf = None
+    buf = stream.read()
+    stream.close()
 
     # treat .cvsignore as a directory property
     dir_path, basename = path_split(cvs_rev.get_svn_path())
     if basename == '.cvsignore':
-      buf = stream.read()
       ignore_vals = generate_ignores(buf)
       ignore_contents = '\n'.join(ignore_vals)
       if ignore_contents:
@@ -295,7 +295,6 @@ class DumpfileDelegate(SVNRepositoryDelegate):
              ignore_len, ignore_len, ignore_contents)
           )
       if not Ctx().keep_cvsignore:
-        stream.close()
         return
 
     self.dumpfile.write(
@@ -322,12 +321,6 @@ class DumpfileDelegate(SVNRepositoryDelegate):
 
     # Insert the rev contents, calculating length and checksum.
     checksum = md5()
-    if buf is None:
-      buf = stream.read()
-    else:
-      buf = buf + stream.read()
-    stream.close()
-
     checksum.update(buf)
     length = len(buf)
     self.dumpfile.write(buf)

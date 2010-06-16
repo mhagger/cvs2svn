@@ -31,7 +31,7 @@ from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.cvs_path import CVSDirectory
 from cvs2svn_lib.cvs_path import CVSFile
 from cvs2svn_lib.svn_repository_delegate import SVNRepositoryDelegate
-from cvs2svn_lib.apple_single_filter import get_maybe_apple_single_stream
+from cvs2svn_lib.apple_single_filter import get_maybe_apple_single
 
 
 # Things that can happen to a file.
@@ -276,13 +276,13 @@ class DumpfileDelegate(SVNRepositoryDelegate):
         cvs_rev, suppress_keyword_substitution=has_keywords
         )
 
+    data = stream.read()
+    stream.close()
+
     if Ctx().decode_apple_single:
       # Insert a filter to decode any files that are in AppleSingle
       # format:
-      stream = get_maybe_apple_single_stream(stream)
-
-    data = stream.read()
-    stream.close()
+      data = get_maybe_apple_single(data)
 
     # Convert all EOLs to LFs if neccessary
     eol_style = svn_props.get('svn:eol-style', None)

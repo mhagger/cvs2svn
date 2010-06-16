@@ -101,7 +101,10 @@ class RevisionReader(object):
     CVS_REV is a CVSRevision.  If CVS_REV has a property
     _keyword_handling=='collapsed' then collapse RCS/CVS keywords in
     the output.  If Ctx().decode_apple_single is set, then extract the
-    data fork from any content that looks like AppleSingle format."""
+    data fork from any content that looks like AppleSingle format.  If
+    CVS_REV has a property _eol_fix then convert all end-of-line
+    sequences to the value of that property (typically '\n' or
+    '\r\n')."""
 
     raise NotImplementedError()
 

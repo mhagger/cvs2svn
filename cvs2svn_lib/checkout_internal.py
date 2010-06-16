@@ -86,6 +86,7 @@ from cvs2svn_lib.common import DB_OPEN_READ
 from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import InternalError
+from cvs2svn_lib.common import canonicalize_eol
 from cvs2svn_lib.common import is_trunk_revision
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.log import Log
@@ -796,6 +797,10 @@ class InternalRevisionReader(RevisionReader):
       # Insert a filter to decode any files that are in AppleSingle
       # format:
       text = get_maybe_apple_single(text)
+
+    eol_fix = cvs_rev.get_property('_eol_fix')
+    if eol_fix:
+      text = canonicalize_eol(text, eol_fix)
 
     return text
 

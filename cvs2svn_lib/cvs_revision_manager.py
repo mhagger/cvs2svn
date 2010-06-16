@@ -18,6 +18,7 @@
 
 
 from cvs2svn_lib.common import FatalError
+from cvs2svn_lib.common import canonicalize_eol
 from cvs2svn_lib.process import check_command_runs
 from cvs2svn_lib.process import get_command_output
 from cvs2svn_lib.process import CommandFailedException
@@ -114,6 +115,10 @@ class CVSRevisionReader(RevisionReader):
       # Insert a filter to decode any files that are in AppleSingle
       # format:
       data = get_maybe_apple_single(data)
+
+    eol_fix = cvs_rev.get_property('_eol_fix')
+    if eol_fix:
+      data = canonicalize_eol(data, eol_fix)
 
     return data
 

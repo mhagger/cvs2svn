@@ -42,6 +42,33 @@ from cvs2svn_lib.symbol_strategy import TagsPathRule
 from cvs2svn_lib.property_setters import FilePropertySetter
 
 
+class SVNEOLFixPropertySetter(FilePropertySetter):
+  """Set _eol_fix property.
+
+  This keyword is used to tell the RevisionReader whether it has to
+  munge EOLs when generating the fulltext."""
+
+  # A mapping from the value of the svn:eol-style property to the EOL
+  # string that should appear in a dumpfile:
+  EOL_REPLACEMENTS = {
+      'LF' : '\n',
+      'CR' : '\r',
+      'CRLF' : '\r\n',
+      'native' : '\n',
+      }
+
+  propname = '_eol_fix'
+
+  def set_properties(self, cvs_file):
+    if self.propname in cvs_file.properties:
+      return
+
+    # Convert all EOLs to LFs if neccessary
+    eol_style = cvs_file.properties.get('svn:eol-style', None)
+    if eol_style:
+      cvs_file.properties[self.propname] = self.EOL_REPLACEMENTS[eol_style]
+
+
 class SVNKeywordHandlingPropertySetter(FilePropertySetter):
   """Set cvs2svn:_keyword_handling=collapsed if svn:keywords is set.
 
@@ -461,6 +488,7 @@ A directory called \\fIcvs2svn-tmp\\fR (or the directory specified by
     super(SVNRunOptions, self).process_property_setter_options()
 
     # Property setters for internal use:
+    Ctx().file_property_setters.append(SVNEOLFixPropertySetter())
     Ctx().file_property_setters.append(SVNKeywordHandlingPropertySetter())
 
   def process_options(self):

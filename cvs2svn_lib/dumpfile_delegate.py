@@ -40,16 +40,6 @@ OP_ADD    = 'add'
 OP_CHANGE = 'change'
 
 
-# A mapping from the value of the svn:eol-style property to the EOL
-# string that should appear in a dumpfile:
-EOL_STYLE_REPLACEMENTS = {
-    'LF' : '\n',
-    'CR' : '\r',
-    'CRLF' : '\r\n',
-    'native' : '\n',
-    }
-
-
 class DumpfileDelegate(SVNRepositoryDelegate):
   """Create a Subversion dumpfile."""
 
@@ -260,12 +250,6 @@ class DumpfileDelegate(SVNRepositoryDelegate):
       props_header = ''
 
     data = self._revision_reader.get_content(cvs_rev)
-
-    # Convert all EOLs to LFs if neccessary
-    eol_style = svn_props.get('svn:eol-style', None)
-    if eol_style:
-      eol = EOL_STYLE_REPLACEMENTS[eol_style]
-      data = canonicalize_eol(data, eol)
 
     # treat .cvsignore as a directory property
     dir_path, basename = path_split(cvs_rev.get_svn_path())

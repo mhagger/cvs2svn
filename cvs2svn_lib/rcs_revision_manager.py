@@ -58,7 +58,7 @@ class RCSRevisionReader(RevisionReader):
 
     eol_fix = cvs_rev.get_property('_eol_fix')
     if eol_fix:
-      text = canonicalize_eol(text, eol_fix)
+      data = canonicalize_eol(data, eol_fix)
 
     return data
 

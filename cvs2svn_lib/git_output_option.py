@@ -364,30 +364,42 @@ class GitOutputOption(DVCSOutputOption):
     author = self._get_author(svn_commit)
     log_msg = self._get_log_msg(svn_commit)
 
-    # Get the primary parent
-    p_source_lod, p_source_revnum, p_cvs_symbols = source_groups[0]
-    try:
-      p_source_node = self._mirror.get_old_lod_directory(
-          p_source_lod, p_source_revnum
-          )
-    except KeyError:
-      raise InternalError('Source %r does not exist' % (p_source_lod,))
-    cvs_files_to_delete = set(self._get_all_files(p_source_node))
+    # There are two distinct cases we need to care for here:
+    #  1. initial creation of a LOD
+    #  2. fixup of an existing LOD to include more files, because the LOD in
+    #     CVS was created piecemeal over time, with intervening commits
 
-    for (source_lod, source_revnum, cvs_symbols,) in source_groups:
-      for cvs_symbol in cvs_symbols:
-        cvs_files_to_delete.discard(cvs_symbol.cvs_file)
+    # We look at _marks here, but self._mirror._get_lod_history(lod).exists()
+    # might be technically more correct (though _get_lod_history is currently
+    # underscore-private)
+    is_initial_lod_creation = svn_commit.symbol not in self._marks
+
+    if is_initial_lod_creation:
+      # Get the primary parent
+      p_source_lod, p_source_revnum, p_cvs_symbols = source_groups[0]
+      try:
+        p_source_node = self._mirror.get_old_lod_directory(
+            p_source_lod, p_source_revnum
+            )
+      except KeyError:
+        raise InternalError('Source %r does not exist' % (p_source_lod,))
+      cvs_files_to_delete = set(self._get_all_files(p_source_node))
+
+      for (source_lod, source_revnum, cvs_symbols,) in source_groups:
+        for cvs_symbol in cvs_symbols:
+          cvs_files_to_delete.discard(cvs_symbol.cvs_file)
 
     # Write a trailer to the log message which describes the cherrypicks that
     # make up this symbol creation.
     log_msg += "\n"
-    log_msg += "\nSprout from %s" % (
-        self._describe_commit(
-            Ctx()._persistence_manager.get_svn_commit(p_source_revnum),
-            p_source_lod
-            ),
-        )
-    for (source_lod, source_revnum, cvs_symbols,) in source_groups[1:]:
+    if is_initial_lod_creation:
+      log_msg += "\nSprout from %s" % (
+          self._describe_commit(
+              Ctx()._persistence_manager.get_svn_commit(p_source_revnum),
+              p_source_lod
+              ),
+          )
+    for (source_lod, source_revnum, cvs_symbols,) in source_groups[(is_initial_lod_creation and 1 or 0):]:
       log_msg += "\nCherrypick from %s:" % (
           self._describe_commit(
               Ctx()._persistence_manager.get_svn_commit(source_revnum),
@@ -396,10 +408,11 @@ class GitOutputOption(DVCSOutputOption):
           )
       for cvs_symbol in cvs_symbols:
         log_msg += "\n    %s" % (cvs_symbol.cvs_file.cvs_path,)
-    if len(cvs_files_to_delete):
-      log_msg += "\nDelete:"
-      for cvs_file in sorted(cvs_files_to_delete):
-        log_msg += "\n    %s" % (cvs_file.cvs_path,)
+    if is_initial_lod_creation:
+      if len(cvs_files_to_delete):
+        log_msg += "\nDelete:"
+        for cvs_file in sorted(cvs_files_to_delete):
+          log_msg += "\n    %s" % (cvs_file.cvs_path,)
 
     self.f.write('commit %s\n' % (git_branch,))
     self.f.write('mark :%d\n' % (mark,))
@@ -409,17 +422,19 @@ class GitOutputOption(DVCSOutputOption):
 
     # Only record actual DVCS ancestry for the primary sprout parent,
     # all the rest are effectively cherrypicks.
-    self.f.write(
-        'merge :%d\n'
-        % (self._get_source_mark(p_source_lod, p_source_revnum),)
-        )
+    if is_initial_lod_creation:
+      self.f.write(
+          'from :%d\n'
+          % (self._get_source_mark(p_source_lod, p_source_revnum),)
+          )
 
     for (source_lod, source_revnum, cvs_symbols,) in source_groups:
       for cvs_symbol in cvs_symbols:
         self.revision_writer.branch_file(cvs_symbol)
 
-    for cvs_file in cvs_files_to_delete:
-      self.f.write('D %s\n' % (cvs_file.cvs_path,))
+    if is_initial_lod_creation:
+      for cvs_file in cvs_files_to_delete:
+        self.f.write('D %s\n' % (cvs_file.cvs_path,))
 
     self.f.write('\n')
 

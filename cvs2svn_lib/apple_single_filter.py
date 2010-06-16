@@ -264,6 +264,15 @@ def get_maybe_apple_single_stream(stream):
       return CompoundStream([string_io, stream])
 
 
+def get_maybe_apple_single(data):
+  """Treat DATA as AppleSingle if possible; otherwise treat it literally.
+
+  If DATA is in AppleSingle format, then return its data fork.
+  Otherwise, return the original DATA."""
+
+  return get_maybe_apple_single_stream(StringIO(data)).read()
+
+
 if __name__ == '__main__':
   # For fun and testing, allow use of this file as a pipe if it is
   # invoked as a script.  Specifically, if stdin is in AppleSingle
@@ -280,11 +289,10 @@ if __name__ == '__main__':
   #CHUNK_SIZE = -1
   CHUNK_SIZE = 100
 
-  f = get_maybe_apple_single_stream(sys.stdin)
-
   if CHUNK_SIZE < 0:
-    sys.stdout.write(f.read())
+    sys.stdout.write(get_maybe_apple_single(sys.stdin.read()))
   else:
+    f = get_maybe_apple_single_stream(sys.stdin)
     while True:
       s = f.read(CHUNK_SIZE)
       if not s:

@@ -254,10 +254,7 @@ class DumpfileDelegate(SVNRepositoryDelegate):
     # treat .cvsignore as a directory property
     dir_path, basename = path_split(cvs_rev.get_svn_path())
     if basename == '.cvsignore':
-      ignore_vals = generate_ignores(data)
-      ignore_contents = '\n'.join(ignore_vals)
-      if ignore_contents:
-        ignore_contents += '\n'
+      ignore_contents = ''.join((s + '\n') for s in generate_ignores(data))
       ignore_contents = ('K 10\nsvn:ignore\nV %d\n%s\n' % \
                          (len(ignore_contents), ignore_contents))
       ignore_contents += 'PROPS-END\n'

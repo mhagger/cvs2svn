@@ -267,13 +267,13 @@ class DumpfileDelegate(SVNRepositoryDelegate):
     if eol_style:
       stream = LF_EOL_Filter(stream, eol_style)
 
-    buf = stream.read()
+    data = stream.read()
     stream.close()
 
     # treat .cvsignore as a directory property
     dir_path, basename = path_split(cvs_rev.get_svn_path())
     if basename == '.cvsignore':
-      ignore_vals = generate_ignores(buf)
+      ignore_vals = generate_ignores(data)
       ignore_contents = '\n'.join(ignore_vals)
       if ignore_contents:
         ignore_contents += '\n'
@@ -321,9 +321,9 @@ class DumpfileDelegate(SVNRepositoryDelegate):
 
     # Insert the rev contents, calculating length and checksum.
     checksum = md5()
-    checksum.update(buf)
-    length = len(buf)
-    self.dumpfile.write(buf)
+    checksum.update(data)
+    length = len(data)
+    self.dumpfile.write(data)
 
     # Go back to overwrite the length and checksum headers with the
     # correct values.  The content length is the length of property

@@ -69,6 +69,7 @@ from cvs2svn_lib.project import Project
 from cvs2svn_lib.svn_output_option import DumpfileOutputOption
 from cvs2svn_lib.svn_output_option import ExistingRepositoryOutputOption
 from cvs2svn_lib.svn_output_option import NewRepositoryOutputOption
+from cvs2svn_lib.svn_run_options import SVNKeywordHandlingPropertySetter
 from cvs2svn_lib.revision_manager import NullRevisionCollector
 from cvs2svn_lib.rcs_revision_manager import RCSRevisionReader
 from cvs2svn_lib.cvs_revision_manager import CVSRevisionReader
@@ -504,6 +505,10 @@ ctx.file_property_setters.extend([
     # Set the cvs:description property to the CVS description of any
     # file that has one:
     DescriptionPropertySetter(propname='cvs:description'),
+
+    # The following is for internal use.  It determines how to handle
+    # keywords in the text being committed:
+    SVNKeywordHandlingPropertySetter(),
 
     ])
 ctx.revision_property_setters.extend([

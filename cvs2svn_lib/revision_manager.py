@@ -95,12 +95,12 @@ class RevisionReader(object):
 
     pass
 
-  def get_content(self, cvs_rev, suppress_keyword_substitution=False):
+  def get_content(self, cvs_rev):
     """Return the contents of CVS_REV.
 
-    CVS_REV is a CVSRevision.  If SUPPRESS_KEYWORD_SUBSTITUTION is
-    True, then suppress the substitution of RCS/CVS keywords in the
-    output."""
+    CVS_REV is a CVSRevision.  If CVS_REV has a property
+    _keyword_handling=='collapsed' then collapse RCS/CVS keywords in
+    the output."""
 
     raise NotImplementedError()
 

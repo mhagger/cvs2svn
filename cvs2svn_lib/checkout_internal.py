@@ -749,13 +749,13 @@ class InternalRevisionReader(RevisionReader):
 
     return self._text_record_db[cvs_rev.id]
 
-  def get_content(self, cvs_rev, suppress_keyword_substitution=False):
+  def get_content(self, cvs_rev):
     """Check out the text for revision C_REV from the repository.
 
-    Return the text.  If SUPPRESS_KEYWORD_SUBSTITUTION is True, any
-    RCS keywords will be _un_expanded prior to returning the file
-    content.  Note that $Log$ never actually generates a log (which
-    makes test 'requires_cvs()' fail).
+    Return the text.  If CVS_REV has a property
+    _keyword_handling=='collapsed', collapse any RCS keywords in the
+    file content.  Note that $Log$ never actually generates a log
+    (which makes test 'requires_cvs()' fail).
 
     Revisions may be requested in any order, but if they are not
     requested in dependency order the checkout database will become
@@ -767,8 +767,11 @@ class InternalRevisionReader(RevisionReader):
     except MalformedDeltaException, (msg):
       raise FatalError('Malformed RCS delta in %s, revision %s: %s'
                        % (cvs_rev.cvs_file.get_filename(), cvs_rev.rev, msg))
+
+    keyword_handling = cvs_rev.get_property('_keyword_handling')
+
     if cvs_rev.cvs_file.mode != 'b' and cvs_rev.cvs_file.mode != 'o':
-      if suppress_keyword_substitution or cvs_rev.cvs_file.mode == 'k':
+      if keyword_handling == 'collapsed' or cvs_rev.cvs_file.mode == 'k':
         text = self._kw_re.sub(r'$\1$', text)
       else:
         text = self._kwo_re.sub(_KeywordExpander(cvs_rev), text)

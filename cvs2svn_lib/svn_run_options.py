@@ -39,6 +39,23 @@ from cvs2svn_lib.svn_output_option import NewRepositoryOutputOption
 from cvs2svn_lib.symbol_strategy import TrunkPathRule
 from cvs2svn_lib.symbol_strategy import BranchesPathRule
 from cvs2svn_lib.symbol_strategy import TagsPathRule
+from cvs2svn_lib.property_setters import FilePropertySetter
+
+
+class SVNKeywordHandlingPropertySetter(FilePropertySetter):
+  """Set cvs2svn:_keyword_handling=collapsed if svn:keywords is set.
+
+  This keyword is used to tell the RevisionReader whether it has to
+  collapse RCS keywords when generating the fulltext."""
+
+  propname = '_keyword_handling'
+
+  def set_properties(self, cvs_file):
+    if self.propname in cvs_file.properties:
+      return
+
+    if cvs_file.properties.get('svn:keywords'):
+      cvs_file.properties[self.propname] = 'collapsed'
 
 
 class SVNRunOptions(RunOptions):
@@ -427,6 +444,12 @@ A directory called \\fIcvs2svn-tmp\\fR (or the directory specified by
 
     del self.projects[:]
     del self.project_symbol_strategy_rules[:]
+
+  def process_property_setter_options(self):
+    super(SVNRunOptions, self).process_property_setter_options()
+
+    # Property setters for internal use:
+    Ctx().file_property_setters.append(SVNKeywordHandlingPropertySetter())
 
   def process_options(self):
     # Consistency check for options and arguments.

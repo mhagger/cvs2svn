@@ -93,7 +93,7 @@ class CVSRevisionReader(RevisionReader):
         self.cvs_executable,
         )
 
-  def get_content(self, cvs_rev, suppress_keyword_substitution=False):
+  def get_content(self, cvs_rev):
     project = cvs_rev.cvs_file.project
     pipe_cmd = [
         self.cvs_executable
@@ -103,7 +103,7 @@ class CVSRevisionReader(RevisionReader):
         '-r' + cvs_rev.rev,
         '-p'
         ]
-    if suppress_keyword_substitution:
+    if cvs_rev.get_property('_keyword_handling') == 'collapsed':
       pipe_cmd.append('-kk')
     pipe_cmd.append(project.cvs_module + cvs_rev.cvs_path)
     return get_command_output(pipe_cmd)

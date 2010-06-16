@@ -36,14 +36,14 @@ class RCSRevisionReader(RevisionReader):
                        'Please check that co is installed and in your PATH\n'
                        '(it is a part of the RCS software).' % (e,))
 
-  def get_content(self, cvs_rev, suppress_keyword_substitution=False):
+  def get_content(self, cvs_rev):
     pipe_cmd = [
         self.co_executable,
         '-q',
         '-x,v',
         '-p%s' % (cvs_rev.rev,)
         ]
-    if suppress_keyword_substitution:
+    if cvs_rev.get_property('_keyword_handling') == 'collapsed':
       pipe_cmd.append('-kk')
     pipe_cmd.append(cvs_rev.cvs_file.filename)
     return get_command_output(pipe_cmd)

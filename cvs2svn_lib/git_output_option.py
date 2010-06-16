@@ -124,9 +124,7 @@ class GitRevisionInlineWriter(GitRevisionWriter):
 
     # FIXME: We have to decide what to do about keyword substitution
     # and eol_style here:
-    fulltext = self.revision_reader.get_content(
-        cvs_rev, suppress_keyword_substitution=False
-        )
+    fulltext = self.revision_reader.get_content(cvs_rev)
 
     self.f.write('data %d\n' % (len(fulltext),))
     self.f.write(fulltext)

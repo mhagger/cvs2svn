@@ -37,6 +37,31 @@ from cvs2svn_lib.svn_revision_range import RevisionScores
 from cvs2svn_lib.openings_closings import SymbolingsReader
 from cvs2svn_lib.repository_mirror import RepositoryMirror
 from cvs2svn_lib.output_option import OutputOption
+from cvs2svn_lib.property_setters import FilePropertySetter
+
+
+class KeywordHandlingPropertySetter(FilePropertySetter):
+  """Set property _keyword_handling to a specified value.
+
+  This keyword is used to tell the RevisionReader whether it has to
+  collapse/expand RCS keywords when generating the fulltext or leave
+  them alone."""
+
+  propname = '_keyword_handling'
+
+  def __init__(self, value):
+    if value not in ['collapsed', 'expanded', 'untouched', None]:
+      raise FatalError(
+          'Value for %s must be "collapsed", "expanded", or "untouched"'
+          % (self.propname,)
+          )
+    self.value = value
+
+  def set_properties(self, cvs_file):
+    if self.propname in cvs_file.properties:
+      return
+
+    cvs_file.properties[self.propname] = self.value
 
 
 class DVCSRunOptions(RunOptions):
@@ -72,6 +97,14 @@ class DVCSRunOptions(RunOptions):
 
     self.projects = [project]
     self.project_symbol_strategy_rules = [symbol_strategy_rules]
+
+  def process_property_setter_options(self):
+    super(DVCSRunOptions, self).process_property_setter_options()
+
+    # Property setters for internal use:
+    Ctx().file_property_setters.append(
+        KeywordHandlingPropertySetter('collapsed')
+        )
 
   def process_options(self):
     # Consistency check for options and arguments.

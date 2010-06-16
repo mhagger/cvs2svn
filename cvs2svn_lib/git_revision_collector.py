@@ -50,9 +50,7 @@ class GitRevisionCollector(RevisionCollector):
 
     # FIXME: We have to decide what to do about keyword substitution
     # and eol_style here:
-    fulltext = self.revision_reader.get_content(
-        cvs_rev, suppress_keyword_substitution=False,
-        )
+    fulltext = self.revision_reader.get_content(cvs_rev)
 
     mark = self._mark_generator.gen_id()
     self.dump_file.write('blob\n')

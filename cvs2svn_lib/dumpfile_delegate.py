@@ -320,18 +320,17 @@ class DumpfileDelegate(SVNRepositoryDelegate):
     if prop_contents:
       self.dumpfile.write(prop_contents)
 
-    # Insert the rev contents, calculating length and checksum as we go.
+    # Insert the rev contents, calculating length and checksum.
     checksum = md5()
-    length = 0
     if buf is None:
-      buf = stream.read(config.PIPE_READ_SIZE)
-    while buf != '':
-      checksum.update(buf)
-      length += len(buf)
-      self.dumpfile.write(buf)
-      buf = stream.read(config.PIPE_READ_SIZE)
-
+      buf = stream.read()
+    else:
+      buf = buf + stream.read()
     stream.close()
+
+    checksum.update(buf)
+    length = len(buf)
+    self.dumpfile.write(buf)
 
     # Go back to overwrite the length and checksum headers with the
     # correct values.  The content length is the length of property

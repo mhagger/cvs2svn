@@ -87,6 +87,16 @@ class CommandError(FatalError):
           % (self.command, self.exit_status))
 
 
+def canonicalize_eol(text, eol):
+  """Replace any end-of-line sequences in TEXT with the string EOL."""
+
+  text = text.replace('\r\n', '\n')
+  text = text.replace('\r', '\n')
+  if eol != '\n':
+    text = text.replace('\n', eol)
+  return text
+
+
 def path_join(*components):
   """Join two or more pathname COMPONENTS, inserting '/' as needed.
   Empty component are skipped."""

@@ -26,6 +26,7 @@ except ImportError:
 from cvs2svn_lib import config
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import InternalError
+from cvs2svn_lib.common import canonicalize_eol
 from cvs2svn_lib.common import path_split
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.cvs_path import CVSDirectory
@@ -47,16 +48,6 @@ EOL_STYLE_REPLACEMENTS = {
     'CRLF' : '\r\n',
     'native' : '\n',
     }
-
-
-def canonicalize_eol(text, eol):
-  """Replace any end-of-line sequences in TEXT with the string EOL."""
-
-  text = text.replace('\r\n', '\n')
-  text = text.replace('\r', '\n')
-  if eol != '\n':
-    text = text.replace('\n', eol)
-  return text
 
 
 class DumpfileDelegate(SVNRepositoryDelegate):

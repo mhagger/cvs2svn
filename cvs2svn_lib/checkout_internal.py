@@ -771,7 +771,7 @@ class InternalRevisionReader(RevisionReader):
     keyword_handling = cvs_rev.get_property('_keyword_handling')
 
     if cvs_rev.cvs_file.mode != 'b' and cvs_rev.cvs_file.mode != 'o':
-      if keyword_handling == 'collapsed' or cvs_rev.cvs_file.mode == 'k':
+      if keyword_handling == 'collapsed':
         text = self._kw_re.sub(r'$\1$', text)
       else:
         text = self._kwo_re.sub(_KeywordExpander(cvs_rev), text)

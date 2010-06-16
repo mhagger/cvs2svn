@@ -200,10 +200,15 @@ class CVSRevision(CVSItem):
         then, it is None.
 
     properties -- (dict) the file properties that vary from revision
-        to revision.  Keys are strings.  Values are strings
-        (indicating the property value) or None (indicating that the
-        property should be left unset, even if it is set in
-        SELF.cvs_file.properties).
+        to revision.  The get_properties() method combines the
+        properties found in SELF.cvs_file.properties with those here;
+        the latter take precedence.  Keys are strings.  Values are
+        strings (indicating the property value) or None (indicating
+        that the property should be left unset, even if it is set in
+        SELF.cvs_file.properties).  Different backends can use
+        properties for different purposes; for cvs2svn these become
+        SVN versioned properties.  Properties whose names start with
+        underscore are reserved for internal cvs2svn purposes.
 
     properties_changed -- (None or bool) Will this CVSRevision's
         get_properties() method return a different value than the same
@@ -322,7 +327,11 @@ class CVSRevision(CVSItem):
     Combine SELF.cvs_file.properties and SELF.properties to get the
     final properties needed for this CVSRevision.  (The properties in
     SELF have precedence.)  Return the properties as a map {key :
-    value}, where entries with value == None have been omitted."""
+    value}, where keys and values are both strings.  (Entries with
+    value == None are omitted.)  Different backends can use properties
+    for different purposes; for cvs2svn these become SVN versioned
+    properties.  Properties whose names start with underscore are
+    reserved for internal cvs2svn purposes."""
 
     properties = self.cvs_file.properties.copy()
     properties.update(self.properties)

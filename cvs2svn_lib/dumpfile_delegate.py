@@ -110,7 +110,10 @@ class DumpfileDelegate(SVNRepositoryDelegate):
 
     prop_strings = []
     for (k, v) in sorted(properties.iteritems()):
-      if v is None:
+      if k.startswith('_'):
+        # Such properties are for internal use only.
+        pass
+      elif v is None:
         # None indicates that the property should be left unset.
         pass
       else:

@@ -54,7 +54,10 @@ class SVNKeywordHandlingPropertySetter(FilePropertySetter):
     if self.propname in cvs_file.properties:
       return
 
-    if cvs_file.mode == 'k':
+    if cvs_file.mode == 'b' or cvs_file.mode == 'o':
+      # Leave keywords in the form that they were checked in.
+      cvs_file.properties[self.propname] = 'untouched'
+    elif cvs_file.mode == 'k':
       # The file is set in CVS to have keywords collapsed on checkout,
       # so we do the same:
       cvs_file.properties[self.propname] = 'collapsed'
@@ -62,6 +65,9 @@ class SVNKeywordHandlingPropertySetter(FilePropertySetter):
       # Subversion is going to expand the keywords, so they have to be
       # collapsed in the repository:
       cvs_file.properties[self.propname] = 'collapsed'
+    else:
+      # CVS expands keywords, so we will too.
+      cvs_file.properties[self.propname] = 'expanded'
 
 
 class SVNRunOptions(RunOptions):

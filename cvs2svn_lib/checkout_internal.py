@@ -752,10 +752,18 @@ class InternalRevisionReader(RevisionReader):
   def get_content(self, cvs_rev):
     """Check out the text for revision C_REV from the repository.
 
-    Return the text.  If CVS_REV has a property
-    _keyword_handling=='collapsed', collapse any RCS keywords in the
-    file content.  Note that $Log$ never actually generates a log
-    (which makes test 'requires_cvs()' fail).
+    Return the text.  If CVS_REV has a property _keyword_handling, use
+    it to determine how to handle RCS keywords in the output:
+
+        'collapsed' -- collapse keywords
+
+        'expanded' -- expand keywords
+
+        'untouched' -- output keywords in the form they are found in
+            the RCS file
+
+    Note that $Log$ never actually generates a log (which makes test
+    'requires_cvs()' fail).
 
     Revisions may be requested in any order, but if they are not
     requested in dependency order the checkout database will become
@@ -770,11 +778,18 @@ class InternalRevisionReader(RevisionReader):
 
     keyword_handling = cvs_rev.get_property('_keyword_handling')
 
-    if cvs_rev.cvs_file.mode != 'b' and cvs_rev.cvs_file.mode != 'o':
-      if keyword_handling == 'collapsed':
-        text = self._kw_re.sub(r'$\1$', text)
-      else:
-        text = self._kwo_re.sub(_KeywordExpander(cvs_rev), text)
+    if keyword_handling == 'untouched':
+      # Leave keywords in the form that they were checked in.
+      pass
+    elif keyword_handling == 'collapsed':
+      text = self._kw_re.sub(r'$\1$', text)
+    elif keyword_handling == 'expanded':
+      text = self._kwo_re.sub(_KeywordExpander(cvs_rev), text)
+    else:
+      raise FatalError(
+          'Undefined _keyword_handling property (%r) for %s'
+          % (keyword_handling, cvs_rev,)
+          )
 
     return text
 

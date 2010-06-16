@@ -1,0 +1,64 @@
+This file documents how file and revision properties are used in
+cvs2svn.
+
+cvs2svn allows arbitrary properties to be associated with CVSFile and
+CVSRevision instances.  These properties are combined to form the
+effective properties for each CVSRevision.  Properties set in a
+CVSRevision take precedence over properties set in the corresponding
+CVSFile.
+
+These properties can be set very flexibly by FilePropertySetter and
+RevisionPropertySetter objects, which in turn can be implemented
+arbitrarily and set via the conversion configuration file.  Several
+types of PropertySetters are already provided, and examples of there
+use are shown in the example configuration files.  The properties are
+determined early in the conversion and are retained for the duration
+of the conversion.
+
+CVSFile.properties holds properties that do not change for the life of
+the file; for example, whether keywords should be expanded in the file
+contents.
+
+CVSRevision.properties holds properties that can vary from one file
+revision to another.  The only current example of a revision property
+is the cvs2svn:rev-num property.
+
+Properties whose names start with underscore are reserved for the
+internal use of cvs2svn.
+
+The properties can be used by backends for any purpose.  Currently,
+they are used for two purposes:
+
+1. Passing RevisionReaders information about how to check out a file
+   revision's contents:
+
+       _keyword_handling -- How should RCS keywords be handled?
+
+           'untouched' -- The keywords should be output exactly as
+               they are found in the RCS file.
+
+           'collapsed' -- The keywords should be collapsed in the
+               output; e.g., "$Author: jrandom $" -> "$Author$".
+
+           'expanded' -- The keywords should be expanded in the
+               output; e.g., "$Author$" -> "$Author: jrandom $".
+
+           'deleted' -- To be implemented
+
+       _eol_fix -- Should end-of-line sequences be fixed before
+           committing to the target VCS?  If this property is set to a
+           non-empty value, then every end-of-line character sequence
+           ('\n', '\r\n', or '\r') is converted to the specified value
+           (which should obviously be a valid end-of-line character
+           sequence).
+
+2. cvs2svn: Specifying Subversion versioned properties.  Any
+   properties that do not start with an underscore are converted into
+   Subversion versioned properties on the associated file.  By this
+   mechanism, arbitrary Subversion properties can be set.  A number of
+   PropertySetters are provided to set common Subversion properties
+   such as svn:mime-type, svn:eol-style, svn:executable, and
+   svn:keywords.  Other properties can be set via the
+   AutoPropsPropertySetter or by implementing custom PropertySetters.
+
+

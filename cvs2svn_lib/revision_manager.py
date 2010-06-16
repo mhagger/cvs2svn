@@ -91,22 +91,22 @@ class RevisionReader(object):
     pass
 
   def start(self):
-    """Prepare for calls to get_content_stream."""
+    """Prepare for calls to get_content()."""
 
     pass
 
-  def get_content_stream(self, cvs_rev, suppress_keyword_substitution=False):
-    """Return a file-like object from which the contents of CVS_REV
-    can be read.
+  def get_content(self, cvs_rev, suppress_keyword_substitution=False):
+    """Return the contents of CVS_REV.
 
     CVS_REV is a CVSRevision.  If SUPPRESS_KEYWORD_SUBSTITUTION is
     True, then suppress the substitution of RCS/CVS keywords in the
     output."""
 
-    raise NotImplementedError
+    raise NotImplementedError()
 
   def finish(self):
-    """Inform the reader that all calls to get_content_stream are done.
+    """Inform the reader that all calls to get_content() are done.
+
     Start may be called again at a later point."""
 
     pass

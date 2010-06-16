@@ -749,14 +749,13 @@ class InternalRevisionReader(RevisionReader):
 
     return self._text_record_db[cvs_rev.id]
 
-  def get_content_stream(self, cvs_rev, suppress_keyword_substitution=False):
+  def get_content(self, cvs_rev, suppress_keyword_substitution=False):
     """Check out the text for revision C_REV from the repository.
 
-    Return the text wrapped in a readable file object.  If
-    SUPPRESS_KEYWORD_SUBSTITUTION is True, any RCS keywords will be
-    _un_expanded prior to returning the file content.  Note that $Log$
-    never actually generates a log (which makes test 'requires_cvs()'
-    fail).
+    Return the text.  If SUPPRESS_KEYWORD_SUBSTITUTION is True, any
+    RCS keywords will be _un_expanded prior to returning the file
+    content.  Note that $Log$ never actually generates a log (which
+    makes test 'requires_cvs()' fail).
 
     Revisions may be requested in any order, but if they are not
     requested in dependency order the checkout database will become
@@ -774,7 +773,7 @@ class InternalRevisionReader(RevisionReader):
       else:
         text = self._kwo_re.sub(_KeywordExpander(cvs_rev), text)
 
-    return StringIO(text)
+    return text
 
   def finish(self):
     self._text_record_db.log_leftovers()

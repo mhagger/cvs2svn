@@ -93,7 +93,7 @@ class CVSRevisionReader(RevisionReader):
         self.cvs_executable,
         )
 
-  def get_content_stream(self, cvs_rev, suppress_keyword_substitution=False):
+  def get_content(self, cvs_rev, suppress_keyword_substitution=False):
     project = cvs_rev.cvs_file.project
     pipe_cmd = [
         self.cvs_executable
@@ -106,6 +106,9 @@ class CVSRevisionReader(RevisionReader):
     if suppress_keyword_substitution:
       pipe_cmd.append('-kk')
     pipe_cmd.append(project.cvs_module + cvs_rev.cvs_path)
-    return PipeStream(pipe_cmd)
+    stream = PipeStream(pipe_cmd)
+    data = stream.read()
+    stream.close()
+    return data
 
 

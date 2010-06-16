@@ -36,7 +36,7 @@ class RCSRevisionReader(RevisionReader):
                        'Please check that co is installed and in your PATH\n'
                        '(it is a part of the RCS software).' % (e,))
 
-  def get_content_stream(self, cvs_rev, suppress_keyword_substitution=False):
+  def get_content(self, cvs_rev, suppress_keyword_substitution=False):
     pipe_cmd = [
         self.co_executable,
         '-q',
@@ -46,6 +46,9 @@ class RCSRevisionReader(RevisionReader):
     if suppress_keyword_substitution:
       pipe_cmd.append('-kk')
     pipe_cmd.append(cvs_rev.cvs_file.filename)
-    return PipeStream(pipe_cmd)
+    stream = PipeStream(pipe_cmd)
+    data = stream.read()
+    stream.close()
+    return data
 
 

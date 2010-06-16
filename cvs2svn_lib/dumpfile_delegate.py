@@ -272,12 +272,9 @@ class DumpfileDelegate(SVNRepositoryDelegate):
     # the keywords because they must be unexpanded in the repository,
     # or Subversion will get confused.
     has_keywords = bool(cvs_rev.get_properties().get('svn:keywords', None))
-    stream = self._revision_reader.get_content_stream(
-        cvs_rev, suppress_keyword_substitution=has_keywords
+    data = self._revision_reader.get_content(
+        cvs_rev, suppress_keyword_substitution=has_keywords,
         )
-
-    data = stream.read()
-    stream.close()
 
     if Ctx().decode_apple_single:
       # Insert a filter to decode any files that are in AppleSingle

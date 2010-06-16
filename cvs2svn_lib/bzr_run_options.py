@@ -24,25 +24,20 @@ import codecs
 from cvs2svn_lib.version import VERSION
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.context import Ctx
-from cvs2svn_lib.run_options import not_both
+from cvs2svn_lib.dvcs_common import DVCSRunOptions
 from cvs2svn_lib.run_options import RunOptions
 from cvs2svn_lib.run_options import ContextOption
 from cvs2svn_lib.run_options import IncompatibleOption
+from cvs2svn_lib.run_options import not_both
 from cvs2svn_lib.man_writer import ManWriter
+from cvs2svn_lib.revision_manager import NullRevisionCollector
 from cvs2svn_lib.rcs_revision_manager import RCSRevisionReader
 from cvs2svn_lib.cvs_revision_manager import CVSRevisionReader
-from cvs2svn_lib.git_run_options import GitRunOptions
 from cvs2svn_lib.git_output_option import GitRevisionInlineWriter
-from cvs2svn_lib.git_output_option import GitOutputOption
-from cvs2svn_lib.revision_manager import NullRevisionCollector
+from cvs2svn_lib.bzr_output_option import BzrOutputOption
 
 
-description="""\
-Convert a CVS repository into a Bazaar repository, including history.
-
-"""
-
-class BzrRunOptions(GitRunOptions):
+class BzrRunOptions(DVCSRunOptions):
 
   short_desc = 'convert a cvs repository into a Bazaar repository'
 
@@ -89,11 +84,8 @@ A directory called \\fIcvs2svn-tmp\\fR (or the directory specified by
     ]
 
 
-  def get_description(self):
-    return description
-
   def _get_output_options_group(self):
-    group = RunOptions._get_output_options_group(self)
+    group = super(BzrRunOptions, self)._get_output_options_group()
 
     group.add_option(IncompatibleOption(
         '--dumpfile', type='string',
@@ -117,17 +109,27 @@ A directory called \\fIcvs2svn-tmp\\fR (or the directory specified by
 
     return group
 
-  def process_io_options(self):
-    """Process input/output options.
+  def _get_extraction_options_group(self):
+    group = super(BzrRunOptions, self)._get_extraction_options_group()
+    self._add_use_cvs_option(group)
+    self._add_use_rcs_option(group)
+    return group
 
-    Process options related to extracting data from the CVS repository
-    and writing to a Bazaar-friendly fast-import file."""
+  def process_extraction_options(self):
+    """Process options related to extracting data from the CVS repository."""
 
     ctx = Ctx()
     options = self.options
 
     not_both(options.use_rcs, '--use-rcs',
              options.use_cvs, '--use-cvs')
+
+    # cvs2bzr defers acting on extraction options to process_output_options
+
+  def process_output_options(self):
+    """Process options related to fastimport output."""
+    ctx = Ctx()
+    options = self.options
 
     if options.use_rcs:
       revision_reader = RCSRevisionReader(
@@ -142,14 +144,13 @@ A directory called \\fIcvs2svn-tmp\\fR (or the directory specified by
     if not ctx.dry_run and not options.dumpfile:
       raise FatalError("must pass '--dry-run' or '--dumpfile' option.")
 
+    # See cvs2bzr-example.options for explanations of these
     ctx.revision_collector = NullRevisionCollector()
     ctx.revision_reader = None
 
-    ctx.output_option = GitOutputOption(
+    ctx.output_option = BzrOutputOption(
         options.dumpfile,
         GitRevisionInlineWriter(revision_reader),
         # Optional map from CVS author names to bzr author names:
         author_transforms={}, # FIXME
         )
-
-

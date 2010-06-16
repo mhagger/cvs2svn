@@ -22,7 +22,6 @@ import datetime
 import codecs
 
 from cvs2svn_lib.version import VERSION
-from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.dvcs_common import DVCSRunOptions

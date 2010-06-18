@@ -67,14 +67,9 @@ if not (os.path.exists('cvs2svn') and os.path.exists('test-data')):
 # Load the Subversion test framework.
 import svntest
 from svntest import Failure
-from svntest.main import run_command
-from svntest.main import run_tests
 from svntest.main import safe_rmtree
 from svntest.testcase import TestCase
-from svntest.testcase import Skip
 from svntest.testcase import XFail
-from svntest.tree import build_tree_from_wc
-from svntest.tree import get_child
 
 # Test if Mercurial >= 1.1 is available.
 try:
@@ -133,7 +128,7 @@ def run_program(program, error_re, *varargs):
   MissingErrorExpection."""
 
   # FIXME: exit_code is currently ignored.
-  exit_code, out, err = run_command(program, 1, 0, *varargs)
+  exit_code, out, err = svntest.main.run_command(program, 1, 0, *varargs)
 
   if error_re:
     # Specified error expected on stderr.
@@ -628,7 +623,7 @@ class Conversion:
 
   def get_wc_tree(self):
     if self._wc_tree is None:
-      self._wc_tree = build_tree_from_wc(self.get_wc(), 1)
+      self._wc_tree = svntest.tree.build_tree_from_wc(self.get_wc(), 1)
     return self._wc_tree
 
   def path_exists(self, *args):
@@ -2238,7 +2233,7 @@ def node_for_path(node, path):
   path = path.strip('/')
   components = path.split('/')
   for component in components:
-    node = get_child(node, component)
+    node = svntest.tree.get_child(node, component)
   return node
 
 # Helper for tests involving properties.
@@ -4095,7 +4090,7 @@ if __name__ == '__main__':
   svntest.main.svnadmin_binary    = svnadmin_binary
   svntest.main.svnversion_binary  = svnversion_binary
 
-  run_tests(test_list)
+  svntest.main.run_tests(test_list)
   # NOTREACHED
 
 

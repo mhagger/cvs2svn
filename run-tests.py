@@ -126,7 +126,7 @@ def run_program(program, error_re, *varargs):
 
   If there is any stderr and ERROR_RE is None, raise
   RunProgramException, and print the stderr lines if
-  svntest.main.verbose_mode is true.
+  svntest.main.options.verbose is true.
 
   If ERROR_RE is not None, it is a string regular expression that must
   match some line of stderr.  If it fails to match, raise
@@ -147,7 +147,7 @@ def run_program(program, error_re, *varargs):
   else:
     # No stderr allowed.
     if err:
-      if svntest.main.verbose_mode:
+      if svntest.main.options.verbose:
         print '\n%s said:\n' % program
         for line in err:
           print '   ' + line,
@@ -163,7 +163,7 @@ def run_script(script, error_re, *varargs):
 
   If there is any stderr and ERROR_RE is None, raise
   RunProgramException, and print the stderr lines if
-  svntest.main.verbose_mode is true.
+  svntest.main.options.verbose is true.
 
   If ERROR_RE is not None, it is a string regular expression that must
   match some line of stderr.  If it fails to match, raise
@@ -182,7 +182,7 @@ def run_script(script, error_re, *varargs):
 def run_svn(*varargs):
   """Run svn with VARARGS; return stdout as a list of lines.
   If there is any stderr, raise RunProgramException, and print the
-  stderr lines if svntest.main.verbose_mode is true."""
+  stderr lines if svntest.main.options.verbose is true."""
   return run_program(svn_binary, None, *varargs)
 
 

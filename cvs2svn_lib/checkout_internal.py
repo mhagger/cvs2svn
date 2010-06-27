@@ -683,8 +683,11 @@ class _KeywordExpander:
 
   def source(self):
     project = self.cvs_rev.cvs_file.project
-    return project.cvs_repository_root + '/' + project.cvs_module + \
-        self.cvs_rev.cvs_file.cvs_path + ",v"
+    return '%s/%s%s,v' % (
+        project.cvs_repository_root,
+        project.cvs_module,
+        self.cvs_rev.cvs_file.cvs_path,
+        )
 
   def state(self):
     # We check out only live revisions.

@@ -568,19 +568,19 @@ class InternalRevisionCollector(RevisionCollector):
     artifact_manager.register_temp_file(config.RCS_TREES_STORE, which_pass)
 
   def start(self):
-    ser = MarshalSerializer()
+    serializer = MarshalSerializer()
     if self._compress:
-      ser = CompressingSerializer(ser)
+      serializer = CompressingSerializer(serializer)
     self._rcs_deltas = IndexedDatabase(
         artifact_manager.get_temp_file(config.RCS_DELTAS_STORE),
         artifact_manager.get_temp_file(config.RCS_DELTAS_INDEX_TABLE),
-        DB_OPEN_NEW, ser
+        DB_OPEN_NEW, serializer,
         )
     primer = (FullTextRecord, DeltaTextRecord)
     self._rcs_trees = IndexedDatabase(
         artifact_manager.get_temp_file(config.RCS_TREES_STORE),
         artifact_manager.get_temp_file(config.RCS_TREES_INDEX_TABLE),
-        DB_OPEN_NEW, PrimedPickleSerializer(primer)
+        DB_OPEN_NEW, PrimedPickleSerializer(primer),
         )
 
   def _writeout(self, text_record, text):
@@ -723,18 +723,21 @@ class InternalRevisionReader(RevisionReader):
     self._delta_db = IndexedDatabase(
         artifact_manager.get_temp_file(config.RCS_DELTAS_STORE),
         artifact_manager.get_temp_file(config.RCS_DELTAS_INDEX_TABLE),
-        DB_OPEN_READ)
+        DB_OPEN_READ,
+        )
     self._delta_db.__delitem__ = lambda id: None
     self._tree_db = IndexedDatabase(
         artifact_manager.get_temp_file(config.RCS_TREES_STORE),
         artifact_manager.get_temp_file(config.RCS_TREES_INDEX_TABLE),
-        DB_OPEN_READ)
-    ser = MarshalSerializer()
+        DB_OPEN_READ,
+        )
+    serializer = MarshalSerializer()
     if self._compress:
-      ser = CompressingSerializer(ser)
+      serializer = CompressingSerializer(serializer)
     self._co_db = Database(
-        artifact_manager.get_temp_file(config.CVS_CHECKOUT_DB), DB_OPEN_NEW,
-        ser)
+        artifact_manager.get_temp_file(config.CVS_CHECKOUT_DB),
+        DB_OPEN_NEW, serializer,
+        )
 
     # The set of CVSFile instances whose TextRecords have already been
     # read:

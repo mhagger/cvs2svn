@@ -200,11 +200,11 @@ class DeltaTextRecord(TextRecord):
 
   def checkout(self, text_record_db):
     base_text = text_record_db[self.pred_id].checkout(text_record_db)
-    co = RCSStream(base_text)
+    rcs_stream = RCSStream(base_text)
     delta_text = text_record_db.delta_db[self.id]
-    co.apply_diff(delta_text)
-    text = co.get_text()
-    del co
+    rcs_stream.apply_diff(delta_text)
+    text = rcs_stream.get_text()
+    del rcs_stream
     self.refcount -= 1
     if self.refcount == 0:
       # This text will never be needed again; just delete ourselves
@@ -497,15 +497,15 @@ class _Sink(cvs2svn_rcsparse.Sink):
       if revision == self.head_revision:
         # This is HEAD, as fulltext.  Initialize the RCSStream so
         # that we can compute deltas backwards in time.
-        self._stream = RCSStream(text)
-        self._stream_revision = revision
+        self._rcs_stream = RCSStream(text)
+        self._rcs_stream_revision = revision
       else:
         # Any other trunk revision is a backward delta.  Apply the
         # delta to the RCSStream to mutate it to the contents of this
         # revision, and also to get the reverse delta, which we store
         # as the forward delta of our child revision.
         try:
-          text = self._stream.invert_diff(text)
+          text = self._rcs_stream.invert_diff(text)
         except MalformedDeltaException, e:
           Log().error(
               'Malformed RCS delta in %s, revision %s: %s'
@@ -513,23 +513,23 @@ class _Sink(cvs2svn_rcsparse.Sink):
               )
           raise RuntimeError()
         text_record = DeltaTextRecord(
-            self.cvs_file_items.original_ids[self._stream_revision],
+            self.cvs_file_items.original_ids[self._rcs_stream_revision],
             cvs_rev_id
             )
         self.revision_collector._writeout(text_record, text)
-        self._stream_revision = revision
+        self._rcs_stream_revision = revision
 
       if revision == self.revision_1_1:
         # This is revision 1.1.  Write its fulltext:
         text_record = FullTextRecord(cvs_rev_id)
         self.revision_collector._writeout(
-            text_record, self._stream.get_text()
+            text_record, self._rcs_stream.get_text()
             )
 
         # There will be no more trunk revisions delivered, so free the
         # RCSStream.
-        del self._stream
-        del self._stream_revision
+        del self._rcs_stream
+        del self._rcs_stream_revision
 
     else:
       # On branches, revisions are encountered in logical order

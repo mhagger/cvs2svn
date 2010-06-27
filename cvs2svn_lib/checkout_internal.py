@@ -49,9 +49,9 @@ id as used for the corresponding CVSRevision instance.  It also
 maintains a count of the times it is expected to be retrieved.
 TextRecords come in several varieties:
 
-FullTextRecord -- Used for revisions whose fulltext is contained
-    directly in the RCS file, and therefore available during
-    CollectRevsPass (i.e., typically revision 1.1 of each file).
+FullTextRecord -- Used for revisions whose fulltext is derived
+    directly from the RCS file by the InternalRevisionCollector (i.e.,
+    typically revision 1.1 of each file).
 
 DeltaTextRecord -- Used for revisions that are defined via a delta
     relative to some other TextRecord.  These records record the id of
@@ -159,6 +159,13 @@ class TextRecord(object):
 
 
 class FullTextRecord(TextRecord):
+  """A record whose revision's fulltext is stored in the delta_db.
+
+  These records are used for revisions whose fulltext was determined
+  by the InternalRevisionCollector during FilterSymbolsPass.  The
+  fulltext for such a revision is is stored in the delta_db as a
+  single string."""
+
   __slots__ = []
 
   def __getstate__(self):
@@ -180,6 +187,12 @@ class FullTextRecord(TextRecord):
 
 
 class DeltaTextRecord(TextRecord):
+  """A record whose revision's delta is stored as an RCS delta.
+
+  The text of this revision must be derived by applying an RCS delta
+  to the text of the predecessor revision.  The RCS delta is stored
+  in the delta_db."""
+
   __slots__ = ['pred_id']
 
   def __init__(self, id, pred_id):
@@ -230,6 +243,12 @@ class DeltaTextRecord(TextRecord):
 
 
 class CheckedOutTextRecord(TextRecord):
+  """A record whose revision's fulltext is stored in the text_record_db.
+
+  These records are used for revisions whose fulltext has been
+  computed already during OutputPass.  The fulltext for such a
+  revision is stored in the text_record_db as a single string."""
+
   __slots__ = []
 
   def __getstate__(self):
@@ -263,11 +282,11 @@ class NullDatabase(object):
 class TextRecordDatabase:
   """Holds the TextRecord instances that are currently live.
 
-  During CollectRevsPass and FilterSymbolsPass, files are processed
-  one by one and a new TextRecordDatabase instance is used for each
-  file.  During OutputPass, a single TextRecordDatabase instance is
-  used for the duration of OutputPass; individual records are added
-  and removed when they are active."""
+  During FilterSymbolsPass, files are processed one by one and a new
+  TextRecordDatabase instance is used for each file.  During
+  OutputPass, a single TextRecordDatabase instance is used for the
+  duration of OutputPass; individual records are added and removed
+  when they are active."""
 
   def __init__(self, delta_db, checkout_db):
     # A map { cvs_rev_id -> TextRecord }.
@@ -279,9 +298,6 @@ class TextRecordDatabase:
     # __delitem__() method is used to delete deltas when they can be
     # freed.  The modifiability of the delta database varies from pass
     # to pass, so the object stored here varies as well:
-    #
-    # CollectRevsPass: a fully-functional IndexedDatabase.  This
-    #     allows deltas that will not be needed to be deleted.
     #
     # FilterSymbolsPass: a NullDatabase.  The delta database cannot be
     #     modified during this pass, and we have no need to retrieve

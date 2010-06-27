@@ -136,7 +136,7 @@ class CVSFileItems(object):
 
     # self.original_ids is a dict {cvs_rev.rev : cvs_rev.id} holding
     # the IDs originally allocated to each CVS revision number.  This
-    # member is stored for the convenience of RevisionManagers.
+    # member is stored for the convenience of RevisionCollectors.
     if original_ids is not None:
       self.original_ids = original_ids
     else:

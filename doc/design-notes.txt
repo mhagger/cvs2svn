@@ -328,6 +328,10 @@ are in memory at once.)  It does the following things:
      SYMBOL_ID in SortSymbolsPass then used to create preliminary
      SymbolChangesets.
 
+   - Invokes callback methods of the registered RevisionCollector.
+     The purpose of RevisionCollectors and RevisionReaders is
+     documented in the file revision-reader.txt.
+
 
 SortRevisionsPass
 =================

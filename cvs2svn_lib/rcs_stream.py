@@ -47,17 +47,17 @@ def generate_edits(diff):
   """Generate edit commands from an RCS diff block.
 
   DIFF is a string holding an entire RCS file delta.  Generate a tuple
-  (COMMAND, START, ARG) for each block implied by DIFF.  Tuples
+  (COMMAND, INPUT_POS, ARG) for each block implied by DIFF.  Tuples
   describe the ed commands:
 
       ('a', INPUT_POS, LINES) : add LINES at INPUT_POS.  LINES is a
           list of strings.
 
-      ('d', INPUT_POS, COUNT) : delete COUNT input lines starting at line
-          START.
+      ('d', INPUT_POS, COUNT) : delete COUNT input lines starting at
+          line INPUT_POS.
 
-  In all cases, START is expressed as a zero-offset line number within
-  the input revision."""
+  In all cases, INPUT_POS is expressed as a zero-offset line number
+  within the input revision."""
 
   diff = msplit(diff)
   i = 0

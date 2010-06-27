@@ -571,7 +571,7 @@ class InternalRevisionCollector(RevisionCollector):
     serializer = MarshalSerializer()
     if self._compress:
       serializer = CompressingSerializer(serializer)
-    self._rcs_deltas = IndexedDatabase(
+    self._delta_db = IndexedDatabase(
         artifact_manager.get_temp_file(config.RCS_DELTAS_STORE),
         artifact_manager.get_temp_file(config.RCS_DELTAS_INDEX_TABLE),
         DB_OPEN_NEW, serializer,
@@ -585,7 +585,7 @@ class InternalRevisionCollector(RevisionCollector):
 
   def _writeout(self, text_record, text):
     self.text_record_db.add(text_record)
-    self._rcs_deltas[text_record.id] = text
+    self._delta_db[text_record.id] = text
 
   def process_file(self, cvs_file_items):
     """Read revision information for the file described by CVS_FILE_ITEMS.
@@ -595,7 +595,7 @@ class InternalRevisionCollector(RevisionCollector):
     _rcs_trees database."""
 
     # A map from cvs_rev_id to TextRecord instance:
-    self.text_record_db = TextRecordDatabase(self._rcs_deltas, NullDatabase())
+    self.text_record_db = TextRecordDatabase(self._delta_db, NullDatabase())
 
     cvs2svn_rcsparse.parse(
         open(cvs_file_items.cvs_file.filename, 'rb'),
@@ -608,7 +608,7 @@ class InternalRevisionCollector(RevisionCollector):
     del self.text_record_db
 
   def finish(self):
-    self._rcs_deltas.close()
+    self._delta_db.close()
     self._rcs_trees.close()
 
 

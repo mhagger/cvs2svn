@@ -7,15 +7,13 @@ invoke CVS or RCS zillions of times in OutputPass (which is otherwise
 the most expensive part of the conversion).  Here is a brief
 description of how the hooks work.
 
-Each conversion requires an instance of RevisionReader, whose
+Most conversions [1] require an instance of RevisionReader, whose
 responsibility is to produce the text contents of CVS revisions on
 demand during OutputPass.  The RevisionReader can read the CVS
 revision contents directly out of the RCS files during OutputPass.
 But additional hooks support the construction of different kinds of
 RevisionReader that record the CVS file revisions' contents during
 FilterSymbolsPass then output the contents during OutputPass.
-(Indeed, for non-SVN backends, OutputPass might not even require the
-file contents.)
 
 The interface that is used during FilterSymbolsPass to allow the
 collection of revision information is:
@@ -31,15 +29,36 @@ or via the --options file with lines like:
     ctx.revision_collector = MyRevisionCollector()
     ctx.revision_reader = MyRevisionReader()
 
+The following RevisionCollectors are supplied with cvs2svn:
+
+    NullRevisionCollector -- does nothing (for RevisionReaders that
+        don't need anything to happen in FilterSymbolsPass).
+
+    InternalRevisionCollector -- records the delta text and
+        dependencies for required revisions in FilterSymbolsPass, for
+        use with the InternalRevisionReader.
+
+    GitRevisionCollector -- uses another RevisionReader to reconstruct
+        the revisions' fulltext during FilterSymbolsPass, then writes
+        the fulltexts to a blobfile in git-fast-import format.  This
+        file, combined with the dumpfile created in OutputPass, can be
+        loaded into git.
+
+    ExternalBlobGenerator -- uses an external Python program to
+        reconstruct the revision fulltexts in FilterSymbolsPass and
+        write them to a blobfile in git-fast-import format.  This
+        option is very fast because (1) it uses code similar to that
+        used by InternalRevisionCollector/InternalRevisionReader, and
+        (2) it processes all revisions from a file at once, thereby
+        avoiding a lot of disk seeking.
+
 The following RevisionReaders are supplied with cvs2svn:
 
-    InternalRevisionReader -- an InternalRevisionCollector records the
-        revisions' delta text and their dependencies for required
-        revisions in FilterSymbolsPass; an InternalRevisionReader
-        reconstitutes the revisions' contents during OutputPass from
-        the recorded data.  This is by far the fastest option, but it
-        requires a substantial amount of temporary disk space for the
-        duration of the conversion.
+    InternalRevisionReader -- reconstitutes the revisions' contents
+        during OutputPass from the data recorded by
+        InternalRevisionCollector.  This is by far the fastest option
+        for cvs2svn conversions, but it requires a substantial amount
+        of temporary disk space for the duration of the conversion.
 
     RCSRevisionReader -- uses RCS's "co" command to extract the
         revision text during OutputPass.  This is slower than
@@ -69,4 +88,16 @@ and has to return the file revision's contents.  The fancy
 RevisionReader could use the token to retrieve the pre-stored file
 contents without having to call CVS or RCS at all.
 
+
+[1] The exception is cvs2git conversions, which need a
+    RevisionCollector but not a RevisionReader.  The reason is that
+    "git fast-import" allows file revision contents to be written as
+    "blobs" in arbitrary order, to be hooked together later into
+    proper changesets.  This feature is very beneficial to the
+    performance of cvs2git, because it allows all revisions of a
+    single file to be generated at the same time (with good disk
+    locality) rather than having to jump around from file to file
+    getting single revisions in changeset order.  Unfortunately,
+    neither "bzr fast-import" nor "hg fastimport" support separate
+    blobs.
 

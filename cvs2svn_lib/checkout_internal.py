@@ -224,8 +224,9 @@ class DeltaTextRecord(TextRecord):
     text_record_db[self.pred_id].decrement_refcount(text_record_db)
 
   def __str__(self):
-    return 'DeltaTextRecord(%x -> %x, %d)' \
-           % (self.pred_id, self.id, self.refcount,)
+    return 'DeltaTextRecord(%x -> %x, %d)' % (
+        self.pred_id, self.id, self.refcount,
+        )
 
 
 class CheckedOutTextRecord(TextRecord):
@@ -640,23 +641,25 @@ class _KeywordExpander:
     self.cvs_rev = cvs_rev
 
   def __call__(self, match):
-    return '$%s: %s $' % \
-           (match.group(1), getattr(self, match.group(1).lower())(),)
+    return '$%s: %s $' % (
+        match.group(1), getattr(self, match.group(1).lower())(),
+        )
 
   def author(self):
     return Ctx()._metadata_db[self.cvs_rev.metadata_id].original_author
 
   def date(self):
-    return time.strftime(self.date_fmt,
-                         time.gmtime(self.cvs_rev.timestamp))
+    return time.strftime(self.date_fmt, time.gmtime(self.cvs_rev.timestamp))
 
   def header(self):
-    return '%s %s %s %s Exp' % \
-           (self.source(), self.cvs_rev.rev, self.date(), self.author())
+    return '%s %s %s %s Exp' % (
+        self.source(), self.cvs_rev.rev, self.date(), self.author(),
+        )
 
   def id(self):
-    return '%s %s %s %s Exp' % \
-           (self.rcsfile(), self.cvs_rev.rev, self.date(), self.author())
+    return '%s %s %s %s Exp' % (
+        self.rcsfile(), self.cvs_rev.rev, self.date(), self.author(),
+        )
 
   def locker(self):
     # Handle kvl like kv, as a converted repo is supposed to have no

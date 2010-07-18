@@ -29,6 +29,7 @@ under the MIT license.
 
 
 import os
+import shutil
 import heapq
 import itertools
 import tempfile
@@ -96,21 +97,25 @@ def merge_files_onepass(input_filenames, output_filename, key=None):
   that the input files are each sorted, and (under that assumption)
   the output file will also be sorted."""
 
-  output_file = file(output_filename, 'wb', BUFSIZE)
-  try:
-    chunks = []
+  input_filenames = list(input_filenames)
+  if len(input_filenames) == 1:
+    shutil.move(input_filenames[0], output_filename)
+  else:
+    output_file = file(output_filename, 'wb', BUFSIZE)
     try:
-      for input_filename in input_filenames:
-        chunks.append(open(input_filename, 'rb', BUFSIZE))
-      output_file.writelines(merge(chunks, key))
+      chunks = []
+      try:
+        for input_filename in input_filenames:
+          chunks.append(open(input_filename, 'rb', BUFSIZE))
+        output_file.writelines(merge(chunks, key))
+      finally:
+        for chunk in chunks:
+          try:
+            chunk.close()
+          except:
+            pass
     finally:
-      for chunk in chunks:
-        try:
-          chunk.close()
-        except:
-          pass
-  finally:
-    output_file.close()
+      output_file.close()
 
 
 def tempfile_generator(tempdirs=[]):

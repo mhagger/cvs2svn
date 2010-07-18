@@ -284,9 +284,9 @@ class DumpfileDelegate(SVNRepositoryDelegate):
         'Node-kind: file\n'
         'Node-action: %s\n'
         '%s'  # no property header if no props
-        'Text-content-length: %16d\n'
-        'Text-content-md5: %32s\n'
-        'Content-length: %16d\n'
+        'Text-content-length: %d\n'
+        'Text-content-md5: %s\n'
+        'Content-length: %d\n'
         '\n' % (
             self._utf8_path(cvs_rev.get_svn_path()), op, props_header,
             len(data), checksum.hexdigest(), len(data) + len(prop_contents),

@@ -63,6 +63,11 @@ DEFAULT_MAX_MERGE = get_default_max_merge()
 
 
 def merge(iterables, key=None):
+  """Merge (in the sense of mergesort) ITERABLES.
+
+  Generate the output in order.  If KEY is specified, it should be a
+  function that returns the sort key."""
+
   if key is None:
     key = lambda x : x
 

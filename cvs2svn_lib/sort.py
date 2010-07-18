@@ -123,6 +123,16 @@ def merge_files_onepass(input_filenames, output_filename, key=None):
       output_file.close()
 
 
+def _try_delete_files(filenames):
+  """Try to remove the named files.  Ignore errors."""
+
+  for filename in filenames:
+    try:
+      os.remove(filename)
+    except:
+      pass
+
+
 def tempfile_generator(tempdirs=[]):
   """Yield filenames of temporary files."""
 
@@ -179,17 +189,10 @@ def sort_file(
         merge_files_onepass(group, group_output, key)
         for filename in group:
           filenames.remove(filename)
-          try:
-            os.remove(filename)
-          except:
-            pass
+        _try_delete_files(group)
 
     merge_files_onepass(filenames, output, key)
   finally:
-    for filename in filenames:
-      try:
-        os.remove(filename)
-      except:
-        pass
+    _try_delete_files(filenames)
 
 

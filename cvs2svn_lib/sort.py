@@ -231,8 +231,6 @@ def merge_files(
       # with them:
       delete_inputs = True
 
-    assert len(filenames) > 1
-
     # The last merge writes the results directly into the output
     # file:
     merge_files_onepass(filenames, output_filename, key=key)

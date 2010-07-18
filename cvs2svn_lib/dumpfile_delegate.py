@@ -274,45 +274,29 @@ class DumpfileDelegate(SVNRepositoryDelegate):
       if not Ctx().keep_cvsignore:
         return
 
+    checksum = md5()
+    checksum.update(data)
+
+    # The content length is the length of property data, text data,
+    # and any metadata around/inside around them:
     self.dumpfile.write(
         'Node-path: %s\n'
         'Node-kind: file\n'
         'Node-action: %s\n'
         '%s'  # no property header if no props
-        % (self._utf8_path(cvs_rev.get_svn_path()), op, props_header)
-        )
-
-    pos = self.dumpfile.tell()
-
-    content_header_fmt = (
         'Text-content-length: %16d\n'
         'Text-content-md5: %32s\n'
         'Content-length: %16d\n'
-        '\n'
+        '\n' % (
+            self._utf8_path(cvs_rev.get_svn_path()), op, props_header,
+            len(data), checksum.hexdigest(), len(data) + len(prop_contents),
+            )
         )
-
-    self.dumpfile.write(content_header_fmt % (0, '', 0,))
 
     if prop_contents:
       self.dumpfile.write(prop_contents)
 
-    # Insert the rev contents, calculating length and checksum.
-    checksum = md5()
-    checksum.update(data)
-    length = len(data)
     self.dumpfile.write(data)
-
-    # Go back to overwrite the length and checksum headers with the
-    # correct values.  The content length is the length of property
-    # data, text data, and any metadata around/inside around them:
-    self.dumpfile.seek(pos, 0)
-    self.dumpfile.write(
-        content_header_fmt
-        % (length, checksum.hexdigest(), length + len(prop_contents),)
-        )
-
-    # Jump back to the end of the stream
-    self.dumpfile.seek(0, 2)
 
     # This record is done (write two newlines -- one to terminate
     # contents that weren't themselves newline-termination, one to

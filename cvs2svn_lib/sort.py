@@ -89,7 +89,13 @@ def merge(iterables, key=None):
       heapq.heappush(values, (key(value), index, value, iterator))
 
 
-def merge_files(input_filenames, output_filename, key=None):
+def merge_files_onepass(input_filenames, output_filename, key=None):
+    """Merge a number of input files into one output file.
+
+    This is a merge in the sense of mergesort; namely, it is assumed
+    that the input files are each sorted, and (under that assumption)
+    the output file will also be sorted."""
+
     output_file = file(output_filename, 'wb', BUFSIZE)
     try:
       chunks = []
@@ -160,7 +166,7 @@ def sort_file(
         generation = generation[max_merge:]
         group_output = tempfiles.next()
         filenames.append(group_output)
-        merge_files(group, group_output, key)
+        merge_files_onepass(group, group_output, key)
         for filename in group:
           filenames.remove(filename)
           try:
@@ -168,7 +174,7 @@ def sort_file(
           except:
             pass
 
-    merge_files(filenames, output, key)
+    merge_files_onepass(filenames, output, key)
   finally:
     for filename in filenames:
       try:

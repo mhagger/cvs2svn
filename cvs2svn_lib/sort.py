@@ -90,27 +90,27 @@ def merge(iterables, key=None):
 
 
 def merge_files_onepass(input_filenames, output_filename, key=None):
-    """Merge a number of input files into one output file.
+  """Merge a number of input files into one output file.
 
-    This is a merge in the sense of mergesort; namely, it is assumed
-    that the input files are each sorted, and (under that assumption)
-    the output file will also be sorted."""
+  This is a merge in the sense of mergesort; namely, it is assumed
+  that the input files are each sorted, and (under that assumption)
+  the output file will also be sorted."""
 
-    output_file = file(output_filename, 'wb', BUFSIZE)
+  output_file = file(output_filename, 'wb', BUFSIZE)
+  try:
+    chunks = []
     try:
-      chunks = []
-      try:
-        for input_filename in input_filenames:
-          chunks.append(open(input_filename, 'rb', BUFSIZE))
-        output_file.writelines(merge(chunks, key))
-      finally:
-        for chunk in chunks:
-          try:
-            chunk.close()
-          except:
-            pass
+      for input_filename in input_filenames:
+        chunks.append(open(input_filename, 'rb', BUFSIZE))
+      output_file.writelines(merge(chunks, key))
     finally:
-      output_file.close()
+      for chunk in chunks:
+        try:
+          chunk.close()
+        except:
+          pass
+  finally:
+    output_file.close()
 
 
 def tempfile_generator(tempdirs=[]):

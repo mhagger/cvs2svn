@@ -153,6 +153,93 @@ def tempfile_generator(tempdirs=[]):
     i += 1
 
 
+def _merge_file_generation(
+    input_filenames, delete_inputs, key=None,
+    max_merge=DEFAULT_MAX_MERGE, tempfiles=None,
+    ):
+  """Merge multiple input files into fewer output files.
+
+  This is a merge in the sense of mergesort; namely, it is assumed
+  that the input files are each sorted, and (under that assumption)
+  the output file will also be sorted.  At most MAX_MERGE input files
+  will be merged at once, to avoid exceeding operating system
+  restrictions on the number of files that can be open at one time.
+
+  If DELETE_INPUTS is True, then the input files will be deleted when
+  they are no longer needed.
+
+  If temporary files need to be used, they will be created using the
+  specified TEMPFILES tempfile generator.
+
+  Generate the names of the output files."""
+
+  if max_merge <= 1:
+    raise ValueError('max_merge must be greater than one')
+
+  if tempfiles is None:
+    tempfiles = tempfile_generator()
+
+  filenames = list(input_filenames)
+  if len(filenames) <= 1:
+    raise ValueError('It makes no sense to merge a single file')
+
+  while filenames:
+    group = filenames[:max_merge]
+    del filenames[:max_merge]
+    group_output = tempfiles.next()
+    merge_files_onepass(group, group_output, key=key)
+    if delete_inputs:
+      _try_delete_files(group)
+    yield group_output
+
+
+def merge_files(
+    input_filenames, output_filename, key=None, delete_inputs=False,
+    max_merge=DEFAULT_MAX_MERGE, tempfiles=None,
+    ):
+  """Merge a number of input files into one output file.
+
+  This is a merge in the sense of mergesort; namely, it is assumed
+  that the input files are each sorted, and (under that assumption)
+  the output file will also be sorted.  At most MAX_MERGE input files
+  will be merged at once, to avoid exceeding operating system
+  restrictions on the number of files that can be open at one time.
+
+  If DELETE_INPUTS is True, then the input files will be deleted when
+  they are no longer needed.
+
+  If temporary files need to be used, they will be created using the
+  specified TEMPFILES tempfile generator."""
+
+  filenames = list(input_filenames)
+  if not filenames:
+    # Create an empty file:
+    open(output_filename, 'wb').close()
+  else:
+    if tempfiles is None:
+      tempfiles = tempfile_generator()
+    while len(filenames) > max_merge:
+      # Reduce the number of files by performing groupwise merges:
+      filenames = list(
+          _merge_file_generation(
+              filenames, delete_inputs, key=key,
+              max_merge=max_merge, tempfiles=tempfiles
+              )
+          )
+      # After the first iteration, we are only working with temporary
+      # files so they can definitely be deleted them when we are done
+      # with them:
+      delete_inputs = True
+
+    assert len(filenames) > 1
+
+    # The last merge writes the results directly into the output
+    # file:
+    merge_files_onepass(filenames, output_filename, key=key)
+    if delete_inputs:
+      _try_delete_files(filenames)
+
+
 def sort_file(
       input, output, key=None,
       buffer_size=32000, tempdirs=[], max_merge=DEFAULT_MAX_MERGE,
@@ -160,8 +247,9 @@ def sort_file(
   tempfiles = tempfile_generator(tempdirs)
 
   filenames = []
+
+  input_file = file(input, 'rb', BUFSIZE)
   try:
-    input_file = file(input, 'rb', BUFSIZE)
     try:
       input_iterator = iter(input_file)
       while True:
@@ -179,19 +267,10 @@ def sort_file(
     finally:
       input_file.close()
 
-    while len(filenames) > max_merge:
-      generation = list(filenames)
-      while generation:
-        group = generation[:max_merge]
-        generation = generation[max_merge:]
-        group_output = tempfiles.next()
-        filenames.append(group_output)
-        merge_files_onepass(group, group_output, key)
-        for filename in group:
-          filenames.remove(filename)
-        _try_delete_files(group)
-
-    merge_files_onepass(filenames, output, key)
+    merge_files(
+        filenames, output, key=key,
+        delete_inputs=True, max_merge=max_merge, tempfiles=tempfiles,
+        )
   finally:
     _try_delete_files(filenames)
 

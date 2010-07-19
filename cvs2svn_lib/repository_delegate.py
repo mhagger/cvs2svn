@@ -17,7 +17,6 @@
 """This module contains class RepositoryDelegate."""
 
 
-import os
 import subprocess
 
 from cvs2svn_lib.common import CommandError

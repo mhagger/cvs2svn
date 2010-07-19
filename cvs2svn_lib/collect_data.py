@@ -47,8 +47,6 @@ or branch.
 """
 
 
-import os
-import stat
 import re
 
 from cvs2svn_lib import config

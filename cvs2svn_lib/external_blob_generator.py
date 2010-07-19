@@ -39,13 +39,10 @@ import sys
 import os
 import subprocess
 import cPickle as pickle
-import itertools
 
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.log import Log
-from cvs2svn_lib.symbol import Trunk
 from cvs2svn_lib.cvs_item import CVSRevisionDelete
-from cvs2svn_lib.cvs_item import CVSSymbol
 from cvs2svn_lib.revision_manager import RevisionCollector
 from cvs2svn_lib.key_generator import KeyGenerator
 

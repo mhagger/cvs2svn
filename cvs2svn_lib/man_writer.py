@@ -17,7 +17,6 @@
 """This module contains the ManWriter class for outputting manpages."""
 
 
-import datetime
 import optparse
 import re
 

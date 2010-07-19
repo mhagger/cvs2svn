@@ -17,7 +17,6 @@
 """This module contains database facilities used by cvs2svn."""
 
 
-import re
 import os
 import cPickle
 

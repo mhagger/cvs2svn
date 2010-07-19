@@ -76,7 +76,6 @@ recursively.  When a TextRecord is deleted at this stage, its
 deltatext is also deleted from the delta database."""
 
 
-from cStringIO import StringIO
 import re
 import time
 
@@ -91,7 +90,6 @@ from cvs2svn_lib.common import is_trunk_revision
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.log import Log
 from cvs2svn_lib.artifact_manager import artifact_manager
-from cvs2svn_lib.symbol import Trunk
 from cvs2svn_lib.cvs_item import CVSRevisionModification
 from cvs2svn_lib.database import Database
 from cvs2svn_lib.database import IndexedDatabase

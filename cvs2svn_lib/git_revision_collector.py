@@ -16,11 +16,7 @@
 
 """Write file contents to a stream of git-fast-import blobs."""
 
-import itertools
-
-from cvs2svn_lib.symbol import Trunk
 from cvs2svn_lib.cvs_item import CVSRevisionDelete
-from cvs2svn_lib.cvs_item import CVSSymbol
 from cvs2svn_lib.revision_manager import RevisionCollector
 from cvs2svn_lib.key_generator import KeyGenerator
 

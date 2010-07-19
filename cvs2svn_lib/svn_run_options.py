@@ -20,7 +20,6 @@
 import sys
 import optparse
 
-from cvs2svn_lib.version import VERSION
 from cvs2svn_lib import config
 from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.common import error_prefix

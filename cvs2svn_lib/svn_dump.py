@@ -23,16 +23,13 @@ except ImportError:
   from md5 import new as md5
 
 
-from cvs2svn_lib import config
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import InternalError
-from cvs2svn_lib.common import canonicalize_eol
 from cvs2svn_lib.common import path_split
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.cvs_path import CVSDirectory
 from cvs2svn_lib.cvs_path import CVSFile
 from cvs2svn_lib.svn_repository_delegate import SVNRepositoryDelegate
-from cvs2svn_lib.apple_single_filter import get_maybe_apple_single
 
 
 # Things that can happen to a file.

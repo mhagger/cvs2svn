@@ -685,7 +685,9 @@ class NewRepositoryOutputOption(RepositoryOutputOption):
   """Output the result of the conversion into a new SVN repository."""
 
   def __init__(
-        self, target, fs_type=None, bdb_txn_nosync=None, author_transforms=None, create_options=[]
+        self, target,
+        fs_type=None, bdb_txn_nosync=None,
+        author_transforms=None, create_options=[],
         ):
     RepositoryOutputOption.__init__(self, target, author_transforms)
     self.bdb_txn_nosync = bdb_txn_nosync

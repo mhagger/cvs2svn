@@ -52,7 +52,7 @@ class DumpstreamDelegate(SVNRepositoryDelegate):
 
     self._revision_reader = revision_reader
     self._dumpfile = dumpfile
-    self._write_dumpfile_header(self._dumpfile)
+    self._write_dumpfile_header()
 
     # A set of the basic project infrastructure project directories
     # that have been created so far, as SVN paths.  (The root
@@ -61,13 +61,14 @@ class DumpstreamDelegate(SVNRepositoryDelegate):
     # directories etc.
     self._basic_directories = set([''])
 
-  def _write_dumpfile_header(self, dumpfile):
-    # Initialize the dumpfile with the standard headers.
-    #
-    # Since the CVS repository doesn't have a UUID, and the Subversion
-    # repository will be created with one anyway, we don't specify a
-    # UUID in the dumpflie
-    dumpfile.write('SVN-fs-dump-format-version: 2\n\n')
+  def _write_dumpfile_header(self):
+    """Initialize the dumpfile with the standard headers.
+
+    Since the CVS repository doesn't have a UUID, and the Subversion
+    repository will be created with one anyway, we don't specify a
+    UUID in the dumpfile."""
+
+    self._dumpfile.write('SVN-fs-dump-format-version: 2\n\n')
 
   def _utf8_path(self, path):
     """Return a copy of PATH encoded in UTF-8."""

@@ -189,7 +189,7 @@ class Project(object):
     # Yield the path of the Trunk symbol for this project (which might
     # differ from the one passed to the --trunk option because of
     # SymbolStrategyRules).  The trunk path might be '' during a
-    # trunk-only conversion, but that is OK because DumpfileDelegate
+    # trunk-only conversion, but that is OK because DumpstreamDelegate
     # considers that directory to exist already and will therefore
     # ignore it:
     yield self.get_trunk().base_path

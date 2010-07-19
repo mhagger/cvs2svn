@@ -22,25 +22,16 @@ import subprocess
 
 from cvs2svn_lib.common import CommandError
 from cvs2svn_lib.common import FatalError
-from cvs2svn_lib.config import DUMPFILE
 from cvs2svn_lib.context import Ctx
-from cvs2svn_lib.dumpfile_delegate import DumpfileDelegate
+from cvs2svn_lib.svn_dump import DumpstreamDelegate
 
 
-class RepositoryDelegate(DumpfileDelegate):
-  """Creates a new Subversion Repository.  DumpfileDelegate does all
-  of the heavy lifting."""
+class LoaderPipe(object):
+  """A file-like object that writes to 'svnadmin load'.
 
-  def __init__(self, revision_reader, target):
-    # Since the output of this run is a repository, not a dumpfile,
-    # the temporary dumpfiles we create should go in the tmpdir.  But
-    # since we delete it ourselves, we don't want to use
-    # artifact_manager.
-    DumpfileDelegate.__init__(
-        self, revision_reader, Ctx().get_temp_filename(DUMPFILE)
-        )
+  Some error checking and reporting are done when writing."""
 
-    self.dumpfile = open(self.dumpfile_path, 'w+b')
+  def __init__(self, target):
     self.loader_pipe = subprocess.Popen(
         [Ctx().svnadmin_executable, 'load', '-q', target],
         stdin=subprocess.PIPE,
@@ -48,49 +39,28 @@ class RepositoryDelegate(DumpfileDelegate):
         stderr=subprocess.PIPE,
         )
     self.loader_pipe.stdout.close()
+
+  def write(self, s):
     try:
-      self._write_dumpfile_header(self.loader_pipe.stdin)
-    except IOError:
+      self.loader_pipe.stdin.write(s)
+    except IOError, e:
       raise FatalError(
           'svnadmin failed with the following output while '
           'loading the dumpfile:\n%s'
           % (self.loader_pipe.stderr.read(),)
           )
 
-  def start_commit(self, revnum, revprops):
-    """Start a new commit."""
-
-    DumpfileDelegate.start_commit(self, revnum, revprops)
-
-  def end_commit(self):
-    """Feed the revision stored in the dumpfile to the svnadmin load pipe."""
-
-    DumpfileDelegate.end_commit(self)
-
-    self.dumpfile.seek(0)
-    while True:
-      data = self.dumpfile.read(128*1024) # Chunk size is arbitrary
-      if not data:
-        break
-      try:
-        self.loader_pipe.stdin.write(data)
-      except IOError:
-        raise FatalError("svnadmin failed with the following output "
-                         "while loading the dumpfile:\n"
-                         + self.loader_pipe.stderr.read())
-    self.dumpfile.seek(0)
-    self.dumpfile.truncate()
-
-  def finish(self):
-    """Clean up."""
-
-    self.dumpfile.close()
+  def close(self):
     self.loader_pipe.stdin.close()
     error_output = self.loader_pipe.stderr.read()
     exit_status = self.loader_pipe.wait()
     del self.loader_pipe
     if exit_status:
       raise CommandError('svnadmin load', exit_status, error_output)
-    os.remove(self.dumpfile_path)
+
+
+def RepositoryDelegate(revision_reader, target):
+  loader_pipe = LoaderPipe(target)
+  return DumpstreamDelegate(revision_reader, loader_pipe)
 
 

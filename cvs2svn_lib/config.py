@@ -204,11 +204,6 @@ CVS_CHECKOUT_DB = 'cvs-checkout.db'
 
 # End of DBs related to --use-internal-co.
 
-# If this run will output directly to a Subversion repository, then
-# this is the name of the file that each revision will temporarily be
-# written to prior to writing it into the repository.
-DUMPFILE = 'svn.dump'
-
 # flush a commit if a 5 minute gap occurs.
 COMMIT_THRESHOLD = 5 * 60
 

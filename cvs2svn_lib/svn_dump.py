@@ -50,9 +50,7 @@ class DumpstreamDelegate(SVNRepositoryDelegate):
     will be written."""
 
     self._revision_reader = revision_reader
-    self.dumpfile_path = dumpfile_path
-
-    self.dumpfile = open(self.dumpfile_path, 'wb')
+    self.dumpfile = open(dumpfile_path, 'wb')
     self._write_dumpfile_header(self.dumpfile)
 
     # A set of the basic project infrastructure project directories

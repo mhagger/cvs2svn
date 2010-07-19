@@ -647,7 +647,9 @@ class DumpfileOutputOption(SVNOutputOption):
     SVNOutputOption.setup(self, svn_rev_count)
     if not Ctx().dry_run:
       self.add_delegate(
-          DumpstreamDelegate(Ctx().revision_reader, self.dumpfile_path)
+          DumpstreamDelegate(
+              Ctx().revision_reader, open(self.dumpfile_path, 'wb')
+              )
           )
 
 

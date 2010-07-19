@@ -43,14 +43,15 @@ OP_CHANGE = 'change'
 class DumpstreamDelegate(SVNRepositoryDelegate):
   """Write output in Subversion dumpfile format."""
 
-  def __init__(self, revision_reader, dumpfile_path):
+  def __init__(self, revision_reader, dumpfile):
     """Return a new DumpstreamDelegate instance.
 
-    DUMPFILE_PATH is the name of the file to which the dump stream
-    will be written."""
+    DUMPFILE should be a file-like object opened in binary mode, to
+    which the dump stream will be written.  The only methods called on
+    the object are write() and close()."""
 
     self._revision_reader = revision_reader
-    self._dumpfile = open(dumpfile_path, 'wb')
+    self._dumpfile = dumpfile
     self._write_dumpfile_header(self._dumpfile)
 
     # A set of the basic project infrastructure project directories

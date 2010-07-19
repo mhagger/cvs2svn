@@ -107,8 +107,6 @@ class DumpstreamDelegate(SVNRepositoryDelegate):
   def start_commit(self, revnum, revprops):
     """Emit the start of SVN_COMMIT (an SVNCommit)."""
 
-    self.revision = revnum
-
     # The start of a new commit typically looks like this:
     #
     #   Revision-number: 1
@@ -151,7 +149,7 @@ class DumpstreamDelegate(SVNRepositoryDelegate):
         '\n'
         '%s'
         '\n'
-        % (self.revision, total_len, total_len, all_prop_strings)
+        % (revnum, total_len, total_len, all_prop_strings)
         )
 
   def end_commit(self):

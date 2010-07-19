@@ -163,3 +163,7 @@ class Log:
       self._write(self._out, *args)
 
 
+# Create an instance that everybody can use:
+logger = Log()
+
+

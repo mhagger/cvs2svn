@@ -22,7 +22,7 @@ import time
 import threading
 
 
-class Log:
+class _Log:
   """A Simple logging facility.
 
   If self.log_level is DEBUG or higher, each line will be timestamped
@@ -44,7 +44,7 @@ class Log:
   start_time = time.time()
 
   def __init__(self):
-    self.log_level = Log.NORMAL
+    self.log_level = _Log.NORMAL
 
     # The output file to use for errors:
     self._err = sys.stderr
@@ -58,21 +58,21 @@ class Log:
   def increase_verbosity(self):
     self.lock.acquire()
     try:
-      self.log_level = min(self.log_level + 1, Log.DEBUG)
+      self.log_level = min(self.log_level + 1, _Log.DEBUG)
     finally:
       self.lock.release()
 
   def decrease_verbosity(self):
     self.lock.acquire()
     try:
-      self.log_level = max(self.log_level - 1, Log.ERROR)
+      self.log_level = max(self.log_level - 1, _Log.ERROR)
     finally:
       self.lock.release()
 
   def is_on(self, level):
     """Return True iff messages at the specified LEVEL are currently on.
 
-    LEVEL should be one of the constants Log.WARN, Log.QUIET, etc."""
+    LEVEL should be one of the constants _Log.WARN, _Log.QUIET, etc."""
 
     return self.log_level >= level
 
@@ -81,7 +81,7 @@ class Log:
 
     retval = []
 
-    if self.log_level >= Log.DEBUG:
+    if self.log_level >= _Log.DEBUG:
       retval.append('%f: ' % (time.time() - self.start_time,))
 
     return ''.join(retval)
@@ -120,41 +120,41 @@ class Log:
   def error(self, *args):
     """Log a message at the ERROR level."""
 
-    if self.is_on(Log.ERROR):
+    if self.is_on(_Log.ERROR):
       self._write(self._err, *args)
 
   def warn(self, *args):
     """Log a message at the WARN level."""
 
-    if self.is_on(Log.WARN):
+    if self.is_on(_Log.WARN):
       self._write(self._out, *args)
 
   def quiet(self, *args):
     """Log a message at the QUIET level."""
 
-    if self.is_on(Log.QUIET):
+    if self.is_on(_Log.QUIET):
       self._write(self._out, *args)
 
   def normal(self, *args):
     """Log a message at the NORMAL level."""
 
-    if self.is_on(Log.NORMAL):
+    if self.is_on(_Log.NORMAL):
       self._write(self._out, *args)
 
   def verbose(self, *args):
     """Log a message at the VERBOSE level."""
 
-    if self.is_on(Log.VERBOSE):
+    if self.is_on(_Log.VERBOSE):
       self._write(self._out, *args)
 
   def debug(self, *args):
     """Log a message at the DEBUG level."""
 
-    if self.is_on(Log.DEBUG):
+    if self.is_on(_Log.DEBUG):
       self._write(self._out, *args)
 
 
 # Create an instance that everybody can use:
-logger = Log()
+logger = _Log()
 
 

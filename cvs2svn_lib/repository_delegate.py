@@ -32,8 +32,6 @@ class RepositoryDelegate(DumpfileDelegate):
   of the heavy lifting."""
 
   def __init__(self, revision_reader, target):
-    self.target = target
-
     # Since the output of this run is a repository, not a dumpfile,
     # the temporary dumpfiles we create should go in the tmpdir.  But
     # since we delete it ourselves, we don't want to use
@@ -44,7 +42,7 @@ class RepositoryDelegate(DumpfileDelegate):
 
     self.dumpfile = open(self.dumpfile_path, 'w+b')
     self.loader_pipe = subprocess.Popen(
-        [Ctx().svnadmin_executable, 'load', '-q', self.target],
+        [Ctx().svnadmin_executable, 'load', '-q', target],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,

@@ -46,7 +46,7 @@ from cvs2svn_lib.openings_closings import SymbolingsReader
 from cvs2svn_lib.fill_source import get_source_set
 from cvs2svn_lib.stdout_delegate import StdoutDelegate
 from cvs2svn_lib.svn_dump import DumpstreamDelegate
-from cvs2svn_lib.svn_dump import RepositoryDelegate
+from cvs2svn_lib.svn_dump import LoaderPipe
 from cvs2svn_lib.output_option import OutputOption
 
 
@@ -677,7 +677,7 @@ class RepositoryOutputOption(SVNOutputOption):
     SVNOutputOption.setup(self, svn_rev_count)
     if not Ctx().dry_run:
       self.add_delegate(
-          RepositoryDelegate(Ctx().revision_reader, self.target)
+          DumpstreamDelegate(Ctx().revision_reader, LoaderPipe(self.target))
           )
 
 

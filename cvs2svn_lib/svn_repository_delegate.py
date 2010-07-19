@@ -25,10 +25,9 @@ class SVNRepositoryDelegate:
   For each method, a subclass implements, in its own way, the
   Subversion operation implied by the method's name.  For example, for
   the add_path method, the DumpstreamDelegate would write out a
-  'Node-add:' command to a Subversion dumpfile, the StdoutDelegate
-  would merely print that the path is being added to the repository,
-  and the RepositoryDelegate would actually cause the path to be added
-  to the Subversion repository that it is creating."""
+  'Node-add:' command to a Subversion dumpfile, whereas the
+  StdoutDelegate would merely print that the path is being added to
+  the repository."""
 
   def start_commit(self, revnum, revprops):
     """An SVN commit is starting.

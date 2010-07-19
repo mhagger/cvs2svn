@@ -451,8 +451,3 @@ class LoaderPipe(object):
       raise CommandError('svnadmin load', exit_status, error_output)
 
 
-def RepositoryDelegate(revision_reader, target):
-  loader_pipe = LoaderPipe(target)
-  return DumpstreamDelegate(revision_reader, loader_pipe)
-
-

@@ -1,7 +1,7 @@
 # (Be in -*- python -*- mode.)
 #
 # ====================================================================
-# Copyright (c) 2000-2009 CollabNet.  All rights reserved.
+# Copyright (c) 2000-2010 CollabNet.  All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.  The terms
@@ -14,15 +14,17 @@
 # history and logs, available at http://cvs2svn.tigris.org/.
 # ====================================================================
 
-"""This module contains database facilities used by cvs2svn."""
+"""This module contains code to output to Subversion dumpfile format."""
 
+
+import subprocess
 
 try:
   from hashlib import md5
 except ImportError:
   from md5 import new as md5
 
-
+from cvs2svn_lib.common import CommandError
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import InternalError
 from cvs2svn_lib.common import path_split
@@ -414,5 +416,43 @@ def generate_ignores(raw_ignore_val):
     else:
       ignore_vals.append(ignore)
   return ignore_vals
+
+
+class LoaderPipe(object):
+  """A file-like object that writes to 'svnadmin load'.
+
+  Some error checking and reporting are done when writing."""
+
+  def __init__(self, target):
+    self.loader_pipe = subprocess.Popen(
+        [Ctx().svnadmin_executable, 'load', '-q', target],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        )
+    self.loader_pipe.stdout.close()
+
+  def write(self, s):
+    try:
+      self.loader_pipe.stdin.write(s)
+    except IOError, e:
+      raise FatalError(
+          'svnadmin failed with the following output while '
+          'loading the dumpfile:\n%s'
+          % (self.loader_pipe.stderr.read(),)
+          )
+
+  def close(self):
+    self.loader_pipe.stdin.close()
+    error_output = self.loader_pipe.stderr.read()
+    exit_status = self.loader_pipe.wait()
+    del self.loader_pipe
+    if exit_status:
+      raise CommandError('svnadmin load', exit_status, error_output)
+
+
+def RepositoryDelegate(revision_reader, target):
+  loader_pipe = LoaderPipe(target)
+  return DumpstreamDelegate(revision_reader, loader_pipe)
 
 

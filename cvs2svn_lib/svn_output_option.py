@@ -46,7 +46,7 @@ from cvs2svn_lib.openings_closings import SymbolingsReader
 from cvs2svn_lib.fill_source import get_source_set
 from cvs2svn_lib.stdout_delegate import StdoutDelegate
 from cvs2svn_lib.svn_dump import DumpstreamDelegate
-from cvs2svn_lib.repository_delegate import RepositoryDelegate
+from cvs2svn_lib.svn_dump import RepositoryDelegate
 from cvs2svn_lib.output_option import OutputOption
 
 

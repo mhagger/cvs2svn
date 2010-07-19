@@ -20,7 +20,7 @@
 import time
 
 from cvs2svn_lib.common import InternalError
-from cvs2svn_lib.log import Log
+from cvs2svn_lib.log import logger
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.cvs_item import CVSRevisionNoop
 from cvs2svn_lib.cvs_item import CVSBranchNoop
@@ -80,12 +80,12 @@ class SVNCommitCreator:
     for any resulting SVNCommits."""
 
     if not changeset.cvs_item_ids:
-      Log().warn('Changeset has no items: %r' % changeset)
+      logger.warn('Changeset has no items: %r' % changeset)
       return
 
-    Log().verbose('-' * 60)
-    Log().verbose('CVS Revision grouping:')
-    Log().verbose('  Time: %s' % time.ctime(timestamp))
+    logger.verbose('-' * 60)
+    logger.verbose('CVS Revision grouping:')
+    logger.verbose('  Time: %s' % time.ctime(timestamp))
 
     # Generate an SVNCommit unconditionally.  Even if the only change in
     # this group of CVSRevisions is a deletion of an already-deleted
@@ -141,7 +141,7 @@ class SVNCommitCreator:
           self.revnum_generator.gen_id(),
           )
     else:
-      Log().debug(
+      logger.debug(
           'Omitting %r because it contains only CVSTagNoops' % (changeset,)
           )
 
@@ -173,7 +173,7 @@ class SVNCommitCreator:
             cvs_branch, svn_commit.revnum
             )
     else:
-      Log().debug(
+      logger.debug(
           'Omitting %r because it contains only CVSBranchNoops' % (changeset,)
           )
 

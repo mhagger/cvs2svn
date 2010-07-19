@@ -21,7 +21,7 @@ import cPickle
 from cvs2svn_lib import config
 from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.common import FatalException
-from cvs2svn_lib.log import Log
+from cvs2svn_lib.log import logger
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.symbol import Trunk
 from cvs2svn_lib.symbol import IncludedSymbol
@@ -329,7 +329,7 @@ class SymbolStatisticsCollector:
 
     for stats in self._stats.values():
       if stats.is_ghost():
-        Log().warn('Deleting ghost symbol: %s' % (stats.lod,))
+        logger.warn('Deleting ghost symbol: %s' % (stats.lod,))
         del self._stats[stats.lod]
 
   def close(self):
@@ -399,7 +399,7 @@ class SymbolStatistics:
   def _check_blocked_excludes(self, symbol_map):
     """Check for any excluded LODs that are blocked by non-excluded symbols.
 
-    If any are found, describe the problem to Log().error() and raise
+    If any are found, describe the problem to logger.error() and raise
     a FatalException."""
 
     # A list of (lod,[blocker,...]) tuples for excludes that are
@@ -428,7 +428,7 @@ class SymbolStatistics:
         for blocker in lod_blockers:
           s.append('    %s\n' % (blocker,))
       s.append('\n')
-      Log().error(''.join(s))
+      logger.error(''.join(s))
 
       raise FatalException()
 
@@ -441,7 +441,7 @@ class SymbolStatistics:
     any tags with commits are found, output error messages describing
     the problems then raise a FatalException."""
 
-    Log().quiet("Checking for forced tags with commits...")
+    logger.quiet("Checking for forced tags with commits...")
 
     invalid_tags = [ ]
     for symbol in symbol_map.itervalues():
@@ -463,7 +463,7 @@ class SymbolStatistics:
     for tag in invalid_tags:
       s.append('    %s\n' % (tag.name))
     s.append('\n')
-    Log().error(''.join(s))
+    logger.error(''.join(s))
 
     raise FatalException()
 
@@ -472,7 +472,7 @@ class SymbolStatistics:
 
     SYMBOL_MAP is a map {AbstractSymbol : (Trunk|TypedSymbol)}
     indicating how each AbstractSymbol is to be converted.  If any
-    problems are detected, describe the problem to Log().error() and
+    problems are detected, describe the problem to logger.error() and
     raise a FatalException."""
 
     # We want to do all of the consistency checks even if one of them
@@ -488,7 +488,7 @@ class SymbolStatistics:
         try:
           stats.check_preferred_parent_allowed(lod)
         except SymbolPlanException, e:
-          Log().error('%s\n' % (e,))
+          logger.error('%s\n' % (e,))
           error_found = True
 
     try:

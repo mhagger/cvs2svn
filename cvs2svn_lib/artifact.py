@@ -20,7 +20,7 @@
 import os
 
 from cvs2svn_lib.context import Ctx
-from cvs2svn_lib.log import Log
+from cvs2svn_lib.log import logger
 
 
 class Artifact(object):
@@ -50,7 +50,7 @@ class TempFile(Artifact):
   filename = property(_get_filename)
 
   def cleanup(self):
-    Log().verbose("Deleting", self.filename)
+    logger.verbose("Deleting", self.filename)
     os.unlink(self.filename)
 
   def __str__(self):

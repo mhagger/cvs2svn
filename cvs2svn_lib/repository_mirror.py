@@ -137,7 +137,7 @@ import bisect
 from cvs2svn_lib import config
 from cvs2svn_lib.common import DB_OPEN_NEW
 from cvs2svn_lib.common import InternalError
-from cvs2svn_lib.log import Log
+from cvs2svn_lib.log import logger
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.cvs_path import CVSFile
 from cvs2svn_lib.cvs_path import CVSDirectory
@@ -676,7 +676,7 @@ class _NodeDatabase(object):
       # The size of the cache has exceeded the threshold.  Discard the
       # old cache values (but still store the new nodes into the
       # cache):
-      Log().debug('Clearing node cache')
+      logger.debug('Clearing node cache')
       self._cache.clear()
 
     data = {}

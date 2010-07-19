@@ -25,7 +25,7 @@ from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import normalize_svn_path
-from cvs2svn_lib.log import Log
+from cvs2svn_lib.log import logger
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.run_options import not_both
 from cvs2svn_lib.run_options import RunOptions
@@ -357,14 +357,14 @@ A directory called \\fIcvs2svn-tmp\\fR (or the directory specified by
 
   def callback_dump_only(self, option, opt_str, value, parser):
     parser.values.dump_only = True
-    Log().error(
+    logger.error(
         warning_prefix +
         ': The --dump-only option is deprecated (it is implied '
         'by --dumpfile).\n'
         )
 
   def callback_create(self, option, opt_str, value, parser):
-    Log().error(
+    logger.error(
         warning_prefix +
         ': The behaviour produced by the --create option is now the '
         'default;\n'
@@ -497,7 +497,7 @@ A directory called \\fIcvs2svn-tmp\\fR (or the directory specified by
       sys.exit(1)
 
     if len(self.args) > 1:
-      Log().error(error_prefix + ": must pass only one CVS repository.\n")
+      logger.error(error_prefix + ": must pass only one CVS repository.\n")
       self.usage()
       sys.exit(1)
 

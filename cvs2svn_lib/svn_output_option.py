@@ -27,7 +27,7 @@ from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.common import format_date
 from cvs2svn_lib.common import PathsNotDisjointException
 from cvs2svn_lib.common import verify_paths_disjoint
-from cvs2svn_lib.log import Log
+from cvs2svn_lib.log import logger
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.process import CommandFailedException
@@ -106,7 +106,7 @@ class SVNOutputOption(OutputOption):
     for lod in symbol_map.itervalues():
       if isinstance(lod, LineOfDevelopment):
         if lod.base_path is None:
-          Log().error('%s: No path was set for %r\n' % (error_prefix, lod,))
+          logger.error('%s: No path was set for %r\n' % (error_prefix, lod,))
           error_found = True
         else:
           paths.append(lod.base_path)
@@ -115,7 +115,7 @@ class SVNOutputOption(OutputOption):
     try:
       verify_paths_disjoint(*paths)
     except PathsNotDisjointException, e:
-      Log().error(str(e))
+      logger.error(str(e))
       error_found = True
 
     if error_found:
@@ -543,7 +543,7 @@ class SVNOutputOption(OutputOption):
       plural = "s"
     else:
       plural = ""
-    Log().verbose("Committing %d CVSRevision%s"
+    logger.verbose("Committing %d CVSRevision%s"
                   % (len(svn_commit.cvs_revs), plural))
     for cvs_rev in svn_commit.cvs_revs:
       if isinstance(cvs_rev, CVSRevisionNoop):
@@ -563,7 +563,7 @@ class SVNOutputOption(OutputOption):
   def process_post_commit(self, svn_commit):
     self.start_commit(svn_commit.revnum, self._get_revprops(svn_commit))
 
-    Log().verbose(
+    logger.verbose(
         'Synchronizing default branch motivated by %d'
         % (svn_commit.motivating_revnum,)
         )
@@ -597,7 +597,7 @@ class SVNOutputOption(OutputOption):
 
   def process_branch_commit(self, svn_commit):
     self.start_commit(svn_commit.revnum, self._get_revprops(svn_commit))
-    Log().verbose('Filling branch:', svn_commit.symbol.name)
+    logger.verbose('Filling branch:', svn_commit.symbol.name)
 
     # Get the set of sources for the symbolic name:
     source_set = get_source_set(
@@ -611,7 +611,7 @@ class SVNOutputOption(OutputOption):
 
   def process_tag_commit(self, svn_commit):
     self.start_commit(svn_commit.revnum, self._get_revprops(svn_commit))
-    Log().verbose('Filling tag:', svn_commit.symbol.name)
+    logger.verbose('Filling tag:', svn_commit.symbol.name)
 
     # Get the set of sources for the symbolic name:
     source_set = get_source_set(
@@ -643,7 +643,7 @@ class DumpfileOutputOption(SVNOutputOption):
     pass
 
   def setup(self, svn_rev_count):
-    Log().quiet("Starting Subversion Dumpfile.")
+    logger.quiet("Starting Subversion Dumpfile.")
     SVNOutputOption.setup(self, svn_rev_count)
     if not Ctx().dry_run:
       self.add_delegate(
@@ -673,7 +673,7 @@ class RepositoryOutputOption(SVNOutputOption):
             'installed and/or use the --svnadmin option.' % (e,))
 
   def setup(self, svn_rev_count):
-    Log().quiet("Starting Subversion Repository.")
+    logger.quiet("Starting Subversion Repository.")
     SVNOutputOption.setup(self, svn_rev_count)
     if not Ctx().dry_run:
       self.add_delegate(
@@ -723,7 +723,7 @@ class NewRepositoryOutputOption(RepositoryOutputOption):
                        % self.target)
 
   def setup(self, svn_rev_count):
-    Log().normal("Creating new repository '%s'" % (self.target))
+    logger.normal("Creating new repository '%s'" % (self.target))
     if Ctx().dry_run:
       # Do not actually create repository:
       pass

@@ -20,7 +20,7 @@
 import os
 import re
 
-from cvs2svn_lib.log import Log
+from cvs2svn_lib.log import logger
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import IllegalSVNPathError
 from cvs2svn_lib.common import normalize_svn_path
@@ -142,7 +142,7 @@ class SymbolMapper(SymbolTransform):
     cvs_filename = os.path.normcase(os.path.normpath(cvs_filename))
     key = (cvs_filename, symbol_name, revision)
     if key in self._map:
-      Log().warn(
+      logger.warn(
           'Overwriting symbol transform for\n'
           '    filename=%r symbol=%s revision=%s'
           % (cvs_filename, symbol_name, revision,)
@@ -192,7 +192,7 @@ class SubtreeSymbolMapper(SymbolTransform):
 
     cvs_path = os.path.normcase(os.path.normpath(cvs_path))
     if cvs_path in symbol_map:
-      Log().warn(
+      logger.warn(
           'Overwriting symbol transform for\n'
           '    directory=%r symbol=%s'
           % (cvs_path, symbol_name,)

@@ -24,7 +24,7 @@ import ConfigParser
 from cStringIO import StringIO
 
 from cvs2svn_lib.common import warning_prefix
-from cvs2svn_lib.log import Log
+from cvs2svn_lib.log import logger
 
 
 def _squash_case(s):
@@ -121,7 +121,7 @@ class MimeMapper(FilePropertySetter):
       self.transform_case = _preserve_case
 
     if mime_types_file is None and mime_mappings is None:
-      Log().error('Should specify MIME types file or dict.\n')
+      logger.error('Should specify MIME types file or dict.\n')
 
     if mime_types_file is not None:
       for line in file(mime_types_file):
@@ -137,7 +137,7 @@ class MimeMapper(FilePropertySetter):
         for ext in extensions:
           ext = self.transform_case(ext)
           if ext in self.mappings and self.mappings[ext] != type:
-            Log().error(
+            logger.error(
                 "%s: ambiguous MIME mapping for *.%s (%s or %s)\n"
                 % (warning_prefix, ext, self.mappings[ext], type)
                 )
@@ -147,7 +147,7 @@ class MimeMapper(FilePropertySetter):
       for ext, type in mime_mappings.iteritems():
         ext = self.transform_case(ext)
         if ext in self.mappings and self.mappings[ext] != type:
-          Log().error(
+          logger.error(
               "%s: ambiguous MIME mapping for *.%s (%s or %s)\n"
               % (warning_prefix, ext, self.mappings[ext], type)
               )
@@ -238,7 +238,7 @@ class AutoPropsPropertySetter(FilePropertySetter):
 
     configtext = open(configfilename).read()
     if self.comment_re.search(configtext):
-      Log().warn(
+      logger.warn(
           '%s: Please be aware that a space followed by a\n'
           'semicolon is sometimes treated as a comment in configuration\n'
           'files.  This pattern was seen in\n'
@@ -264,7 +264,7 @@ class AutoPropsPropertySetter(FilePropertySetter):
   def _add_pattern(self, pattern, props):
     propdict = {}
     if self.quoted_re.match(pattern):
-      Log().warn(
+      logger.warn(
           '%s: Quoting is not supported in auto-props; please verify rule\n'
           'for %r.  (Using pattern including quotation marks.)\n'
           % (warning_prefix, pattern,)
@@ -274,7 +274,7 @@ class AutoPropsPropertySetter(FilePropertySetter):
       m = self.property_unset_re.match(prop)
       if m:
         name = m.group('name')
-        Log().debug(
+        logger.debug(
             'auto-props: For %r, leaving %r unset.' % (pattern, name,)
             )
         propdict[name] = None
@@ -285,13 +285,13 @@ class AutoPropsPropertySetter(FilePropertySetter):
         name = m.group('name')
         value = m.group('value')
         if self.quoted_re.match(value):
-          Log().warn(
+          logger.warn(
               '%s: Quoting is not supported in auto-props; please verify\n'
               'rule %r for pattern %r.  (Using value\n'
               'including quotation marks.)\n'
               % (warning_prefix, prop, pattern,)
               )
-        Log().debug(
+        logger.debug(
             'auto-props: For %r, setting %r to %r.' % (pattern, name, value,)
             )
         propdict[name] = value
@@ -300,14 +300,14 @@ class AutoPropsPropertySetter(FilePropertySetter):
       m = self.property_novalue_re.match(prop)
       if m:
         name = m.group('name')
-        Log().debug(
+        logger.debug(
             'auto-props: For %r, setting %r to the empty string'
             % (pattern, name,)
             )
         propdict[name] = ''
         continue
 
-      Log().warn(
+      logger.warn(
           '%s: in auto-props line for %r, value %r cannot be parsed (ignored)'
           % (warning_prefix, pattern, prop,)
           )
@@ -322,7 +322,7 @@ class AutoPropsPropertySetter(FilePropertySetter):
         for (key,value) in pattern.propdict.items():
           if key in propdict:
             if propdict[key] != value:
-              Log().warn(
+              logger.warn(
                   "Contradictory values set for property '%s' for file %s."
                   % (key, cvs_file,))
           else:
@@ -335,7 +335,7 @@ class AutoPropsPropertySetter(FilePropertySetter):
     for (k,v) in propdict.items():
       if k in cvs_file.properties:
         if cvs_file.properties[k] != v:
-          Log().warn(
+          logger.warn(
               "Property '%s' already set to %r for file %s; "
               "auto-props value (%r) ignored."
               % (k, cvs_file.properties[k], cvs_file.cvs_path, v,)

@@ -29,7 +29,7 @@ from cvs2svn_lib import config
 from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.man_writer import ManWriter
-from cvs2svn_lib.log import Log
+from cvs2svn_lib.log import logger
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.man_writer import ManOption
 from cvs2svn_lib.pass_manager import InvalidPassError
@@ -248,10 +248,10 @@ class RunOptions(object):
     (self.options, self.args) = parser.parse_args(args=self.cmd_args)
 
     # Now the log level has been set; log the time when the run started:
-    Log().verbose(
+    logger.verbose(
         time.strftime(
             'Conversion start time: %Y-%m-%d %I:%M:%S %Z',
-            time.localtime(Log().start_time)
+            time.localtime(logger.start_time)
             )
         )
 
@@ -902,10 +902,10 @@ class RunOptions(object):
     sys.exit(0)
 
   def callback_verbose(self, option, opt_str, value, parser):
-    Log().increase_verbosity()
+    logger.increase_verbosity()
 
   def callback_quiet(self, option, opt_str, value, parser):
-    Log().decrease_verbosity()
+    logger.decrease_verbosity()
 
   def callback_passes(self, option, opt_str, value, parser):
     if value.find(':') >= 0:
@@ -1092,7 +1092,7 @@ class RunOptions(object):
     if self.options.options_incompatible_options or self.args:
       if self.options.options_incompatible_options:
         oio = self.options.options_incompatible_options
-        Log().error(
+        logger.error(
             '%s: The following options cannot be used in combination with '
             'the --options\n'
             'option:\n'
@@ -1100,7 +1100,7 @@ class RunOptions(object):
             % (error_prefix, '\n    '.join(oio))
             )
       if self.args:
-        Log().error(
+        logger.error(
             '%s: No cvs-repos-path arguments are allowed with the --options '
             'option.\n'
             % (error_prefix,)

@@ -23,7 +23,7 @@ import gc
 from cvs2svn_lib import config
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.context import Ctx
-from cvs2svn_lib.log import Log
+from cvs2svn_lib.log import logger
 from cvs2svn_lib.stats_keeper import StatsKeeper
 from cvs2svn_lib.stats_keeper import read_stats_keeper
 from cvs2svn_lib.artifact_manager import artifact_manager
@@ -44,13 +44,13 @@ def check_for_garbage():
   gc.set_debug(gc.DEBUG_SAVEALL)
   gc_count = gc.collect()
   if gc_count:
-    if Log().is_on(Log.DEBUG):
-      Log().debug(
+    if logger.is_on(logger.DEBUG):
+      logger.debug(
           'INTERNAL: %d unreachable object(s) were garbage collected:'
           % (gc_count,)
           )
       for g in gc.garbage:
-        Log().debug('    %s' % (g,))
+        logger.debug('    %s' % (g,))
     del gc.garbage[:]
 
 
@@ -166,7 +166,7 @@ class PassManager:
     start_time = time.time()
     for i in range(index_start, index_end):
       the_pass = self.passes[i]
-      Log().quiet('----- pass %d (%s) -----' % (i + 1, the_pass.name,))
+      logger.quiet('----- pass %d (%s) -----' % (i + 1, the_pass.name,))
       artifact_manager.pass_started(the_pass)
 
       if i == 0:
@@ -183,7 +183,7 @@ class PassManager:
       stats_keeper.log_duration_for_pass(
           end_time - start_time, i + 1, the_pass.name
           )
-      Log().normal(stats_keeper.single_pass_timing(i + 1))
+      logger.normal(stats_keeper.single_pass_timing(i + 1))
       stats_keeper.archive(
           artifact_manager.get_temp_file(config.STATISTICS_FILE % (i + 1,))
           )
@@ -199,8 +199,8 @@ class PassManager:
     for the_pass in self.passes[index_end:]:
       artifact_manager.pass_deferred(the_pass)
 
-    Log().quiet(stats_keeper)
-    Log().normal(stats_keeper.timings())
+    logger.quiet(stats_keeper)
+    logger.normal(stats_keeper.timings())
 
     # Consistency check:
     artifact_manager.check_clean()

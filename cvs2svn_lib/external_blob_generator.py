@@ -41,7 +41,7 @@ import subprocess
 import cPickle as pickle
 
 from cvs2svn_lib.common import FatalError
-from cvs2svn_lib.log import Log
+from cvs2svn_lib.log import logger
 from cvs2svn_lib.cvs_item import CVSRevisionDelete
 from cvs2svn_lib.revision_manager import RevisionCollector
 from cvs2svn_lib.key_generator import KeyGenerator
@@ -55,7 +55,7 @@ class ExternalBlobGenerator(RevisionCollector):
 
   def start(self):
     self._mark_generator = KeyGenerator()
-    Log().normal('Starting generate_blobs.py...')
+    logger.normal('Starting generate_blobs.py...')
     self._popen = subprocess.Popen(
         [
             sys.executable,
@@ -101,13 +101,13 @@ class ExternalBlobGenerator(RevisionCollector):
 
   def finish(self):
     self._popen.stdin.close()
-    Log().normal('Waiting for generate_blobs.py to finish...')
+    logger.normal('Waiting for generate_blobs.py to finish...')
     returncode = self._popen.wait()
     if returncode:
       raise FatalError(
           'generate_blobs.py failed with return code %s.' % (returncode,)
           )
     else:
-      Log().normal('generate_blobs.py is done.')
+      logger.normal('generate_blobs.py is done.')
 
 

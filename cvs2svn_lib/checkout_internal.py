@@ -88,7 +88,7 @@ from cvs2svn_lib.common import InternalError
 from cvs2svn_lib.common import canonicalize_eol
 from cvs2svn_lib.common import is_trunk_revision
 from cvs2svn_lib.context import Ctx
-from cvs2svn_lib.log import Log
+from cvs2svn_lib.log import logger
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.cvs_item import CVSRevisionModification
 from cvs2svn_lib.database import Database
@@ -433,11 +433,11 @@ class TextRecordDatabase:
     """If any TextRecords still exist, log them."""
 
     if self.text_records:
-      Log().warn(
+      logger.warn(
           "%s: internal problem: leftover revisions in the checkout cache:"
           % warning_prefix)
       for text_record in self.itervalues():
-        Log().warn('    %s' % (text_record,))
+        logger.warn('    %s' % (text_record,))
 
   def __repr__(self):
     """Debugging output of the current contents of the TextRecordDatabase."""
@@ -521,7 +521,7 @@ class _Sink(cvs2svn_rcsparse.Sink):
         try:
           text = self._rcs_stream.invert_diff(text)
         except MalformedDeltaException, e:
-          Log().error(
+          logger.error(
               'Malformed RCS delta in %s, revision %s: %s'
               % (self.cvs_file_items.cvs_file.filename, revision, e)
               )

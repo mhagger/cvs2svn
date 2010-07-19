@@ -19,7 +19,7 @@
 
 import heapq
 
-from cvs2svn_lib.log import Log
+from cvs2svn_lib.log import logger
 from cvs2svn_lib.changeset import RevisionChangeset
 from cvs2svn_lib.changeset import OrderedChangeset
 from cvs2svn_lib.changeset import BranchChangeset
@@ -131,8 +131,8 @@ class ChangesetGraph(object):
   def add_new_changeset(self, changeset):
     """Add the new CHANGESET to the graph and also to the databases."""
 
-    if Log().is_on(Log.DEBUG):
-      Log().debug('Adding changeset %r' % (changeset,))
+    if logger.is_on(logger.DEBUG):
+      logger.debug('Adding changeset %r' % (changeset,))
 
     self.add_changeset(changeset)
     self.store_changeset(changeset)
@@ -145,8 +145,8 @@ class ChangesetGraph(object):
     in CHANGESET are always added again as part of a new CHANGESET,
     which will cause the old values to be overwritten."""
 
-    if Log().is_on(Log.DEBUG):
-      Log().debug('Removing changeset %r' % (changeset,))
+    if logger.is_on(logger.DEBUG):
+      logger.debug('Removing changeset %r' % (changeset,))
 
     del self[changeset.id]
     del self._changeset_db[changeset.id]

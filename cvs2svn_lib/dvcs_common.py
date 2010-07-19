@@ -24,7 +24,7 @@ from cvs2svn_lib import config
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import InternalError
 from cvs2svn_lib.run_options import RunOptions
-from cvs2svn_lib.log import Log
+from cvs2svn_lib.log import logger
 from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
@@ -113,7 +113,7 @@ class DVCSRunOptions(RunOptions):
       sys.exit(1)
 
     if len(self.args) > 1:
-      Log().error(error_prefix + ": must pass only one CVS repository.\n")
+      logger.error(error_prefix + ": must pass only one CVS repository.\n")
       self.usage()
       sys.exit(1)
 

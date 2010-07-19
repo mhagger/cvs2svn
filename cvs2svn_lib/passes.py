@@ -32,7 +32,7 @@ from cvs2svn_lib.common import DB_OPEN_READ
 from cvs2svn_lib.common import DB_OPEN_WRITE
 from cvs2svn_lib.common import Timestamper
 from cvs2svn_lib.sort import sort_file
-from cvs2svn_lib.log import Log
+from cvs2svn_lib.log import logger
 from cvs2svn_lib.pass_manager import Pass
 from cvs2svn_lib.serializer import PrimedPickleSerializer
 from cvs2svn_lib.artifact_manager import artifact_manager
@@ -93,7 +93,7 @@ class CollectRevsPass(Pass):
     self._register_temp_file(config.CVS_ITEMS_STORE)
 
   def run(self, run_options, stats_keeper):
-    Log().quiet("Examining all CVS ',v' files...")
+    logger.quiet("Examining all CVS ',v' files...")
     Ctx()._projects = {}
     Ctx()._cvs_path_db = CVSPathDatabase(DB_OPEN_NEW)
     cd = CollectData(stats_keeper)
@@ -112,7 +112,7 @@ class CollectRevsPass(Pass):
 
     Ctx()._cvs_path_db.close()
     write_projects(artifact_manager.get_temp_file(config.PROJECTS))
-    Log().quiet("Done")
+    logger.quiet("Done")
 
 
 class CleanMetadataPass(Pass):
@@ -184,17 +184,17 @@ class CleanMetadataPass(Pass):
     try:
       metadata.author = self._get_clean_author(metadata.author)
     except UnicodeError, e:
-      Log().warn('%s: %s' % (warning_prefix, e,))
+      logger.warn('%s: %s' % (warning_prefix, e,))
       self.warnings = True
 
     try:
       metadata.log_msg = self._get_clean_log_msg(metadata.log_msg)
     except UnicodeError, e:
-      Log().warn('%s: %s' % (warning_prefix, e,))
+      logger.warn('%s: %s' % (warning_prefix, e,))
       self.warnings = True
 
   def run(self, run_options, stats_keeper):
-    Log().quiet("Converting metadata to UTF8...")
+    logger.quiet("Converting metadata to UTF8...")
     metadata_db = MetadataDatabase(
         artifact_manager.get_temp_file(config.METADATA_STORE),
         artifact_manager.get_temp_file(config.METADATA_INDEX_TABLE),
@@ -233,7 +233,7 @@ class CleanMetadataPass(Pass):
 
     metadata_clean_db.close()
     metadata_db.close()
-    Log().quiet("Done")
+    logger.quiet("Done")
 
 
 class CollateSymbolsPass(Pass):
@@ -420,7 +420,7 @@ class CollateSymbolsPass(Pass):
 
     del self.symbol_stats
 
-    Log().quiet("Done")
+    logger.quiet("Done")
 
 
 class FilterSymbolsPass(Pass):
@@ -465,14 +465,14 @@ class FilterSymbolsPass(Pass):
 
     revision_collector = Ctx().revision_collector
 
-    Log().quiet("Filtering out excluded symbols and summarizing items...")
+    logger.quiet("Filtering out excluded symbols and summarizing items...")
 
     stats_keeper.reset_cvs_rev_info()
     revision_collector.start()
 
     # Process the cvs items store one file at a time:
     for cvs_file_items in cvs_item_store.iter_cvs_file_items():
-      Log().verbose(cvs_file_items.cvs_file.filename)
+      logger.verbose(cvs_file_items.cvs_file.filename)
       cvs_file_items.filter_excluded_symbols()
       cvs_file_items.mutate_symbols()
       cvs_file_items.adjust_parents()
@@ -507,7 +507,7 @@ class FilterSymbolsPass(Pass):
     Ctx()._symbol_db.close()
     Ctx()._cvs_path_db.close()
 
-    Log().quiet("Done")
+    logger.quiet("Done")
 
 
 class SortRevisionsPass(Pass):
@@ -518,7 +518,7 @@ class SortRevisionsPass(Pass):
     self._register_temp_file_needed(config.CVS_REVS_DATAFILE)
 
   def run(self, run_options, stats_keeper):
-    Log().quiet("Sorting CVS revision summaries...")
+    logger.quiet("Sorting CVS revision summaries...")
     sort_file(
         artifact_manager.get_temp_file(config.CVS_REVS_DATAFILE),
         artifact_manager.get_temp_file(
@@ -526,7 +526,7 @@ class SortRevisionsPass(Pass):
             ),
         tempdirs=[Ctx().tmpdir],
         )
-    Log().quiet("Done")
+    logger.quiet("Done")
 
 
 class SortSymbolsPass(Pass):
@@ -537,7 +537,7 @@ class SortSymbolsPass(Pass):
     self._register_temp_file_needed(config.CVS_SYMBOLS_DATAFILE)
 
   def run(self, run_options, stats_keeper):
-    Log().quiet("Sorting CVS symbol summaries...")
+    logger.quiet("Sorting CVS symbol summaries...")
     sort_file(
         artifact_manager.get_temp_file(config.CVS_SYMBOLS_DATAFILE),
         artifact_manager.get_temp_file(
@@ -545,7 +545,7 @@ class SortSymbolsPass(Pass):
             ),
         tempdirs=[Ctx().tmpdir],
         )
-    Log().quiet("Done")
+    logger.quiet("Done")
 
 
 class InitializeChangesetsPass(Pass):
@@ -756,7 +756,7 @@ class InitializeChangesetsPass(Pass):
           )
 
   def run(self, run_options, stats_keeper):
-    Log().quiet("Creating preliminary commit sets...")
+    logger.quiet("Creating preliminary commit sets...")
 
     Ctx()._projects = read_projects(
         artifact_manager.get_temp_file(config.PROJECTS)
@@ -786,8 +786,8 @@ class InitializeChangesetsPass(Pass):
     self.changeset_key_generator = KeyGenerator()
 
     for (changeset, changeset_items) in self.get_changesets():
-      if Log().is_on(Log.DEBUG):
-        Log().debug(repr(changeset))
+      if logger.is_on(logger.DEBUG):
+        logger.debug(repr(changeset))
       changeset_db.store(changeset)
       for cvs_item in changeset_items:
         self.sorted_cvs_items_db.add(cvs_item)
@@ -801,7 +801,7 @@ class InitializeChangesetsPass(Pass):
 
     del self.cvs_item_serializer
 
-    Log().quiet("Done")
+    logger.quiet("Done")
 
 
 class ProcessedChangesetLogger:
@@ -809,12 +809,12 @@ class ProcessedChangesetLogger:
     self.processed_changeset_ids = []
 
   def log(self, changeset_id):
-    if Log().is_on(Log.DEBUG):
+    if logger.is_on(logger.DEBUG):
       self.processed_changeset_ids.append(changeset_id)
 
   def flush(self):
     if self.processed_changeset_ids:
-      Log().debug(
+      logger.debug(
           'Consumed changeset ids %s'
           % (', '.join(['%x' % id for id in self.processed_changeset_ids]),))
 
@@ -876,8 +876,8 @@ class BreakRevisionChangesetCyclesPass(Pass):
         best_i = i
         best_link = link
 
-    if Log().is_on(Log.DEBUG):
-      Log().debug(
+    if logger.is_on(logger.DEBUG):
+      logger.debug(
           'Breaking cycle %s by breaking node %x' % (
           ' -> '.join(['%x' % node.id for node in (cycle + [cycle[0]])]),
           best_link.changeset.id,))
@@ -890,7 +890,7 @@ class BreakRevisionChangesetCyclesPass(Pass):
       self.changeset_graph.add_new_changeset(changeset)
 
   def run(self, run_options, stats_keeper):
-    Log().quiet("Breaking revision changeset dependency cycles...")
+    logger.quiet("Breaking revision changeset dependency cycles...")
 
     Ctx()._projects = read_projects(
         artifact_manager.get_temp_file(config.PROJECTS)
@@ -947,7 +947,7 @@ class BreakRevisionChangesetCyclesPass(Pass):
     Ctx()._symbol_db.close()
     Ctx()._cvs_path_db.close()
 
-    Log().quiet("Done")
+    logger.quiet("Done")
 
 
 class RevisionTopologicalSortPass(Pass):
@@ -1016,7 +1016,7 @@ class RevisionTopologicalSortPass(Pass):
     changeset_graph.close()
 
   def run(self, run_options, stats_keeper):
-    Log().quiet("Generating CVSRevisions in commit order...")
+    logger.quiet("Generating CVSRevisions in commit order...")
 
     Ctx()._projects = read_projects(
         artifact_manager.get_temp_file(config.PROJECTS)
@@ -1041,7 +1041,7 @@ class RevisionTopologicalSortPass(Pass):
     Ctx()._symbol_db.close()
     Ctx()._cvs_path_db.close()
 
-    Log().quiet("Done")
+    logger.quiet("Done")
 
 
 class BreakSymbolChangesetCyclesPass(Pass):
@@ -1098,8 +1098,8 @@ class BreakSymbolChangesetCyclesPass(Pass):
         best_i = i
         best_link = link
 
-    if Log().is_on(Log.DEBUG):
-      Log().debug(
+    if logger.is_on(logger.DEBUG):
+      logger.debug(
           'Breaking cycle %s by breaking node %x' % (
           ' -> '.join(['%x' % node.id for node in (cycle + [cycle[0]])]),
           best_link.changeset.id,))
@@ -1112,7 +1112,7 @@ class BreakSymbolChangesetCyclesPass(Pass):
       self.changeset_graph.add_new_changeset(changeset)
 
   def run(self, run_options, stats_keeper):
-    Log().quiet("Breaking symbol changeset dependency cycles...")
+    logger.quiet("Breaking symbol changeset dependency cycles...")
 
     Ctx()._projects = read_projects(
         artifact_manager.get_temp_file(config.PROJECTS)
@@ -1169,7 +1169,7 @@ class BreakSymbolChangesetCyclesPass(Pass):
     Ctx()._symbol_db.close()
     Ctx()._cvs_path_db.close()
 
-    Log().quiet("Done")
+    logger.quiet("Done")
 
 
 class BreakAllChangesetCyclesPass(Pass):
@@ -1204,7 +1204,7 @@ class BreakAllChangesetCyclesPass(Pass):
   def _split_retrograde_changeset(self, changeset):
     """CHANGESET is retrograde.  Split it into non-retrograde changesets."""
 
-    Log().debug('Breaking retrograde changeset %x' % (changeset.id,))
+    logger.debug('Breaking retrograde changeset %x' % (changeset.id,))
 
     self.changeset_graph.delete_changeset(changeset)
 
@@ -1295,8 +1295,8 @@ class BreakAllChangesetCyclesPass(Pass):
         best_i = i
         best_link = link
 
-    if Log().is_on(Log.DEBUG):
-      Log().debug(
+    if logger.is_on(logger.DEBUG):
+      logger.debug(
           'Breaking segment %s by breaking node %x' % (
           ' -> '.join(['%x' % node.id for node in segment]),
           best_link.changeset.id,))
@@ -1322,8 +1322,8 @@ class BreakAllChangesetCyclesPass(Pass):
     It is not guaranteed that the cycle will be broken by one call to
     this routine, but at least some progress must be made."""
 
-    if Log().is_on(Log.DEBUG):
-      Log().debug(
+    if logger.is_on(logger.DEBUG):
+      logger.debug(
           'Breaking cycle %s' % (
           ' -> '.join(['%x' % changeset.id
                        for changeset in cycle + [cycle[0]]]),))
@@ -1332,7 +1332,7 @@ class BreakAllChangesetCyclesPass(Pass):
     self.break_segment([cycle[-1]] + cycle + [cycle[0]])
 
   def run(self, run_options, stats_keeper):
-    Log().quiet("Breaking CVSSymbol dependency loops...")
+    logger.quiet("Breaking CVSSymbol dependency loops...")
 
     Ctx()._projects = read_projects(
         artifact_manager.get_temp_file(config.PROJECTS)
@@ -1427,14 +1427,14 @@ class BreakAllChangesetCyclesPass(Pass):
       id = ordered_changesets[next_ordered_changeset]
       path = self.changeset_graph.search_for_path(id, ordered_changeset_ids)
       if path:
-        if Log().is_on(Log.DEBUG):
-          Log().debug('Breaking path from %s to %s' % (path[0], path[-1],))
+        if logger.is_on(logger.DEBUG):
+          logger.debug('Breaking path from %s to %s' % (path[0], path[-1],))
         self.break_segment(path)
       else:
         # There were no ordered changesets among the reachable
         # predecessors, so do generic cycle-breaking:
-        if Log().is_on(Log.DEBUG):
-          Log().debug(
+        if logger.is_on(logger.DEBUG):
+          logger.debug(
               'Breaking generic cycle found from %s'
               % (self.changeset_db[id],)
               )
@@ -1446,7 +1446,7 @@ class BreakAllChangesetCyclesPass(Pass):
     self.cvs_item_to_changeset_id = None
     self.changeset_db = None
 
-    Log().quiet("Done")
+    logger.quiet("Done")
 
 
 class TopologicalSortPass(Pass):
@@ -1505,7 +1505,7 @@ class TopologicalSortPass(Pass):
     changeset_graph.close()
 
   def run(self, run_options, stats_keeper):
-    Log().quiet("Generating CVSRevisions in commit order...")
+    logger.quiet("Generating CVSRevisions in commit order...")
 
     Ctx()._projects = read_projects(
         artifact_manager.get_temp_file(config.PROJECTS)
@@ -1530,7 +1530,7 @@ class TopologicalSortPass(Pass):
     Ctx()._symbol_db.close()
     Ctx()._cvs_path_db.close()
 
-    Log().quiet("Done")
+    logger.quiet("Done")
 
 
 class CreateRevsPass(Pass):
@@ -1582,17 +1582,17 @@ class CreateRevsPass(Pass):
   def log_svn_commit(self, svn_commit):
     """Output information about SVN_COMMIT."""
 
-    Log().normal(
+    logger.normal(
         'Creating Subversion r%d (%s)'
         % (svn_commit.revnum, svn_commit.get_description(),)
         )
 
     if isinstance(svn_commit, SVNRevisionCommit):
       for cvs_rev in svn_commit.cvs_revs:
-        Log().verbose(' %s %s' % (cvs_rev.cvs_path, cvs_rev.rev,))
+        logger.verbose(' %s %s' % (cvs_rev.cvs_path, cvs_rev.rev,))
 
   def run(self, run_options, stats_keeper):
-    Log().quiet("Mapping CVS revisions to Subversion commits...")
+    logger.quiet("Mapping CVS revisions to Subversion commits...")
 
     Ctx()._projects = read_projects(
         artifact_manager.get_temp_file(config.PROJECTS)
@@ -1622,7 +1622,7 @@ class CreateRevsPass(Pass):
     Ctx()._symbol_db.close()
     Ctx()._cvs_path_db.close()
 
-    Log().quiet("Done")
+    logger.quiet("Done")
 
 
 class SortSymbolOpeningsClosingsPass(Pass):
@@ -1633,7 +1633,7 @@ class SortSymbolOpeningsClosingsPass(Pass):
     self._register_temp_file_needed(config.SYMBOL_OPENINGS_CLOSINGS)
 
   def run(self, run_options, stats_keeper):
-    Log().quiet("Sorting symbolic name source revisions...")
+    logger.quiet("Sorting symbolic name source revisions...")
 
     def sort_key(line):
       line = line.split(' ', 2)
@@ -1647,7 +1647,7 @@ class SortSymbolOpeningsClosingsPass(Pass):
         key=sort_key,
         tempdirs=[Ctx().tmpdir],
         )
-    Log().quiet("Done")
+    logger.quiet("Done")
 
 
 class IndexSymbolsPass(Pass):
@@ -1682,7 +1682,7 @@ class IndexSymbolsPass(Pass):
       id, svn_revnum, ignored = line.split(" ", 2)
       id = int(id, 16)
       if id != old_id:
-        Log().verbose(' ', Ctx()._symbol_db.get_symbol(id).name)
+        logger.verbose(' ', Ctx()._symbol_db.get_symbol(id).name)
         old_id = id
         offsets[id] = fpos
 
@@ -1694,14 +1694,14 @@ class IndexSymbolsPass(Pass):
     offsets_db.close()
 
   def run(self, run_options, stats_keeper):
-    Log().quiet("Determining offsets for all symbolic names...")
+    logger.quiet("Determining offsets for all symbolic names...")
     Ctx()._projects = read_projects(
         artifact_manager.get_temp_file(config.PROJECTS)
         )
     Ctx()._symbol_db = SymbolDatabase()
     self.generate_offsets_for_symbolings()
     Ctx()._symbol_db.close()
-    Log().quiet("Done.")
+    logger.quiet("Done.")
 
 
 class OutputPass(Pass):

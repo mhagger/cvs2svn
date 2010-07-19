@@ -24,7 +24,7 @@ from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.common import IllegalSVNPathError
 from cvs2svn_lib.common import verify_svn_filename_legal
-from cvs2svn_lib.log import Log
+from cvs2svn_lib.log import logger
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.project import FileInAndOutOfAtticException
 from cvs2svn_lib.cvs_path import CVSDirectory
@@ -120,7 +120,7 @@ class _RepositoryWalker(object):
           )
     except FileInAndOutOfAtticException, e:
       if Ctx().retain_conflicting_attic_files:
-        Log().warn(
+        logger.warn(
             "%s: %s;\n"
             "   storing the latter into 'Attic' subdirectory.\n"
             % (warning_prefix, e)
@@ -151,11 +151,11 @@ class _RepositoryWalker(object):
       pathname = os.path.join(cvs_directory.filename, fname)
       if os.path.isdir(pathname):
         if fname == '.svn':
-          Log().debug(
+          logger.debug(
               "Directory %s found within Attic; ignoring" % (pathname,)
               )
         else:
-          Log().warn(
+          logger.warn(
               "Directory %s found within Attic; ignoring" % (pathname,)
               )
       elif fname.endswith(',v'):
@@ -207,7 +207,7 @@ class _RepositoryWalker(object):
         if fname == 'Attic':
           attic_dir = fname
         elif fname == '.svn':
-          Log().debug("Directory %s ignored" % (pathname,))
+          logger.debug("Directory %s ignored" % (pathname,))
         else:
           dirs.append(fname)
       elif fname.endswith(',v'):

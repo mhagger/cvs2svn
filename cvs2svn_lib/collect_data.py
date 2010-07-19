@@ -55,7 +55,7 @@ from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.common import is_trunk_revision
 from cvs2svn_lib.common import is_branch_revision_number
-from cvs2svn_lib.log import Log
+from cvs2svn_lib.log import logger
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.cvs_path import CVSPath
@@ -266,7 +266,7 @@ class _SymbolDataCollector(object):
     branch_data = self.branches_data.get(branch_number)
 
     if branch_data is not None:
-      Log().warn(
+      logger.warn(
           "%s: in '%s':\n"
           "   branch '%s' already has name '%s',\n"
           "   cannot also have name '%s', ignoring the latter\n"
@@ -350,14 +350,14 @@ class _SymbolDataCollector(object):
     if name is None:
       # Ignore symbol:
       self.pdc.log_symbol_transform(old_name, None)
-      Log().verbose(
+      logger.verbose(
           "   symbol '%s'=%s ignored in %s"
           % (old_name, revision, self.cvs_file.filename,)
           )
     else:
       if name != old_name:
         self.pdc.log_symbol_transform(old_name, name)
-        Log().verbose(
+        logger.verbose(
             "   symbol '%s'=%s transformed to '%s' in %s"
             % (old_name, revision, name, self.cvs_file.filename,)
             )
@@ -379,7 +379,7 @@ class _SymbolDataCollector(object):
         # The revision number is valid; record it for later processing:
         self._symbol_defs.append( (name, revision) )
       else:
-        Log().warn(
+        logger.warn(
             'In %r:\n'
             '    branch %r references invalid revision %s\n'
             '    and will be ignored.'
@@ -409,7 +409,7 @@ class _SymbolDataCollector(object):
     dup_indexes = set()
     for ((name, revision), indexes) in known_definitions.iteritems():
       if len(indexes) > 1:
-        Log().verbose(
+        logger.verbose(
             "in %r:\n"
             "   symbol %s:%s defined multiple times; ignoring duplicates\n"
             % (self.cvs_file.filename, name, revision,)
@@ -611,7 +611,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
     if revision in self._rev_data:
       # This revision has already been seen.
-      Log().error('File %r contains duplicate definitions of revision %s.'
+      logger.error('File %r contains duplicate definitions of revision %s.'
                   % (self.cvs_file.filename, revision,))
       raise RuntimeError
 
@@ -685,7 +685,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       try:
         parent_data = self._rev_data[branch_data.parent]
       except KeyError:
-        Log().warn(
+        logger.warn(
             'In %r:\n'
             '    branch %r references non-existing revision %s\n'
             '    and will be ignored.'
@@ -726,7 +726,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       try:
         parent_data = self._rev_data[rev]
       except KeyError:
-        Log().warn(
+        logger.warn(
             'In %r:\n'
             '    the following tag(s) reference non-existing revision %s\n'
             '    and will be ignored:\n'
@@ -787,7 +787,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       # that's what we will do.  (For the record: "cvs log" fails on
       # such a file; "rlog" prints the log message from the first
       # block and ignores the second one.)
-      Log().warn(
+      logger.warn(
           "%s: in '%s':\n"
           "   Deltatext block for revision %s appeared twice;\n"
           "   ignoring the second occurrence.\n"
@@ -1001,22 +1001,21 @@ class _ProjectDataCollector:
       self.symbol_transform_counts[old_name, new_name] = 1
 
   def summarize_symbol_transforms(self):
-    if self.symbol_transform_counts and Log().is_on(Log.NORMAL):
-      log = Log()
-      log.normal('Summary of symbol transforms:')
+    if self.symbol_transform_counts and logger.is_on(logger.NORMAL):
+      logger.normal('Summary of symbol transforms:')
       transforms = self.symbol_transform_counts.items()
       transforms.sort()
       for ((old_name, new_name), count) in transforms:
         if new_name is None:
-          log.normal('    "%s" ignored in %d files' % (old_name, count,))
+          logger.normal('    "%s" ignored in %d files' % (old_name, count,))
         else:
-          log.normal(
+          logger.normal(
               '    "%s" transformed to "%s" in %d files'
               % (old_name, new_name, count,)
               )
 
   def process_file(self, cvs_file):
-    Log().normal(cvs_file.filename)
+    logger.normal(cvs_file.filename)
     fdc = _FileDataCollector(self, cvs_file)
     try:
       cvs2svn_rcsparse.parse(open(cvs_file.filename, 'rb'), fdc)
@@ -1028,7 +1027,7 @@ class _ProjectDataCollector:
       # with other files:
       return
     except:
-      Log().warn("Exception occurred while parsing %s" % cvs_file.filename)
+      logger.warn("Exception occurred while parsing %s" % cvs_file.filename)
       raise
     else:
       self.num_files += 1
@@ -1075,7 +1074,7 @@ class CollectData:
     output again in a summary at the end of CollectRevsPass."""
 
     err = '%s: %s' % (error_prefix, err,)
-    Log().error(err + '\n')
+    logger.error(err + '\n')
     self.fatal_errors.append(err)
 
   def add_cvs_directory(self, cvs_directory):
@@ -1149,7 +1148,7 @@ class CollectData:
     pdc.summarize_symbol_transforms()
 
     self.num_files += pdc.num_files
-    Log().verbose('Processed', self.num_files, 'files')
+    logger.verbose('Processed', self.num_files, 'files')
 
   def _register_empty_subdirectories(self):
     """Set the CVSDirectory.empty_subdirectory_id members."""

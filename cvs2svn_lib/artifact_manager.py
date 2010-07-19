@@ -17,7 +17,7 @@
 """This module manages the artifacts produced by conversion passes."""
 
 
-from cvs2svn_lib.log import Log
+from cvs2svn_lib.log import logger
 from cvs2svn_lib.artifact import TempFile
 
 
@@ -245,7 +245,7 @@ class ArtifactManager:
         if artifact._passes_needed]
 
     if unclean_artifacts:
-      Log().warn(
+      logger.warn(
           'INTERNAL: The following artifacts were not cleaned up:\n    %s\n'
           % ('\n    '.join(unclean_artifacts)))
 

@@ -26,7 +26,7 @@ import bisect
 import time
 
 from cvs2svn_lib.common import InternalError
-from cvs2svn_lib.log import Log
+from cvs2svn_lib.log import logger
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.symbol import Trunk
 from cvs2svn_lib.symbol import Branch
@@ -443,7 +443,7 @@ class GitOutputOption(DVCSOutputOption):
     source_groups = list(self._get_source_groups(svn_commit))
     if self._is_simple_copy(svn_commit, source_groups):
       (source_lod, source_revnum, cvs_symbols) = source_groups[0]
-      Log().debug(
+      logger.debug(
           '%s will be created via a simple copy from %s:r%d'
           % (svn_commit.symbol, source_lod, source_revnum,)
           )
@@ -452,7 +452,7 @@ class GitOutputOption(DVCSOutputOption):
       self._mirror.copy_lod(source_lod, svn_commit.symbol, source_revnum)
       self._set_lod_mark(svn_commit.symbol, svn_commit.revnum, mark)
     else:
-      Log().debug(
+      logger.debug(
           '%s will be created via fixup commit(s)' % (svn_commit.symbol,)
           )
       self._process_symbol_commit(
@@ -490,7 +490,7 @@ class GitOutputOption(DVCSOutputOption):
     source_groups = list(self._get_source_groups(svn_commit))
     if self._is_simple_copy(svn_commit, source_groups):
       (source_lod, source_revnum, cvs_symbols) = source_groups[0]
-      Log().debug(
+      logger.debug(
           '%s will be created via a simple copy from %s:r%d'
           % (svn_commit.symbol, source_lod, source_revnum,)
           )
@@ -499,7 +499,7 @@ class GitOutputOption(DVCSOutputOption):
       self._mirror.copy_lod(source_lod, svn_commit.symbol, source_revnum)
       self._set_lod_mark(svn_commit.symbol, svn_commit.revnum, mark)
     else:
-      Log().debug(
+      logger.debug(
           '%s will be created via a fixup branch' % (svn_commit.symbol,)
           )
 

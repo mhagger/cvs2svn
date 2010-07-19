@@ -17,7 +17,7 @@
 """This module contains database facilities used by cvs2svn."""
 
 
-from cvs2svn_lib.log import Log
+from cvs2svn_lib.log import logger
 from cvs2svn_lib.svn_repository_delegate import SVNRepositoryDelegate
 
 
@@ -35,48 +35,48 @@ class StdoutDelegate(SVNRepositoryDelegate):
     """Prints out the Subversion revision number of the commit that is
     being started."""
 
-    Log().verbose("=" * 60)
-    Log().normal("Starting Subversion r%d / %d" % (revnum, self.total_revs))
+    logger.verbose("=" * 60)
+    logger.normal("Starting Subversion r%d / %d" % (revnum, self.total_revs))
 
   def end_commit(self):
     pass
 
   def initialize_project(self, project):
-    Log().verbose("  Initializing project %s" % (project,))
+    logger.verbose("  Initializing project %s" % (project,))
 
   def initialize_lod(self, lod):
-    Log().verbose("  Initializing %s" % (lod,))
+    logger.verbose("  Initializing %s" % (lod,))
 
   def mkdir(self, lod, cvs_directory):
-    Log().verbose(
+    logger.verbose(
         "  New Directory %s" % (lod.get_path(cvs_directory.cvs_path),)
         )
 
   def add_path(self, cvs_rev):
     """Print a line stating what path we are 'adding'."""
 
-    Log().verbose("  Adding %s" % (cvs_rev.get_svn_path(),))
+    logger.verbose("  Adding %s" % (cvs_rev.get_svn_path(),))
 
   def change_path(self, cvs_rev):
     """Print a line stating what path we are 'changing'."""
 
-    Log().verbose("  Changing %s" % (cvs_rev.get_svn_path(),))
+    logger.verbose("  Changing %s" % (cvs_rev.get_svn_path(),))
 
   def delete_lod(self, lod):
     """Print a line stating that we are 'deleting' LOD."""
 
-    Log().verbose("  Deleting %s" % (lod.get_path(),))
+    logger.verbose("  Deleting %s" % (lod.get_path(),))
 
   def delete_path(self, lod, cvs_path):
     """Print a line stating that we are 'deleting' PATH."""
 
-    Log().verbose("  Deleting %s" % (lod.get_path(cvs_path.cvs_path),))
+    logger.verbose("  Deleting %s" % (lod.get_path(cvs_path.cvs_path),))
 
   def _show_copy(self, src_path, dest_path, src_revnum):
     """Print a line stating that we are 'copying' revision SRC_REVNUM
     of SRC_PATH to DEST_PATH."""
 
-    Log().verbose(
+    logger.verbose(
         "  Copying revision %d of %s\n"
         "                to %s\n"
         % (src_revnum, src_path, dest_path,)
@@ -101,7 +101,7 @@ class StdoutDelegate(SVNRepositoryDelegate):
   def finish(self):
     """State that we are done creating our repository."""
 
-    Log().verbose("Finished creating Subversion repository.")
-    Log().quiet("Done.")
+    logger.verbose("Finished creating Subversion repository.")
+    logger.quiet("Done.")
 
 

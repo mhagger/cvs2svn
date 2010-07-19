@@ -41,7 +41,7 @@ import mmap
 from cvs2svn_lib.common import DB_OPEN_READ
 from cvs2svn_lib.common import DB_OPEN_WRITE
 from cvs2svn_lib.common import DB_OPEN_NEW
-from cvs2svn_lib.log import Log
+from cvs2svn_lib.log import logger
 
 
 # A unique value that can be used to stand for "unset" without
@@ -258,7 +258,7 @@ class RecordTable(AbstractRecordTable):
     self._limit_written = self._limit
 
   def flush(self):
-    Log().debug('Flushing cache for %s' % (self,))
+    logger.debug('Flushing cache for %s' % (self,))
 
     pairs = [(i, s) for (i, (dirty, s)) in self._cache.items() if dirty]
 

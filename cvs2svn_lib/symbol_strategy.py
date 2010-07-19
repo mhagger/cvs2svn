@@ -21,7 +21,7 @@ import re
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import path_join
 from cvs2svn_lib.common import normalize_svn_path
-from cvs2svn_lib.log import Log
+from cvs2svn_lib.log import logger
 from cvs2svn_lib.symbol import Trunk
 from cvs2svn_lib.symbol import TypedSymbol
 from cvs2svn_lib.symbol import Branch
@@ -112,7 +112,7 @@ class ForceBranchRegexpStrategyRule(_RegexpStrategyRule):
     _RegexpStrategyRule.__init__(self, pattern, Branch)
 
   def log(self, symbol):
-    Log().verbose(
+    logger.verbose(
         'Converting symbol %s as a branch because it matches regexp "%s".'
         % (symbol, self.regexp.pattern,)
         )
@@ -125,7 +125,7 @@ class ForceTagRegexpStrategyRule(_RegexpStrategyRule):
     _RegexpStrategyRule.__init__(self, pattern, Tag)
 
   def log(self, symbol):
-    Log().verbose(
+    logger.verbose(
         'Converting symbol %s as a tag because it matches regexp "%s".'
         % (symbol, self.regexp.pattern,)
         )
@@ -138,7 +138,7 @@ class ExcludeRegexpStrategyRule(_RegexpStrategyRule):
     _RegexpStrategyRule.__init__(self, pattern, ExcludedSymbol)
 
   def log(self, symbol):
-    Log().verbose(
+    logger.verbose(
         'Excluding symbol %s because it matches regexp "%s".'
         % (symbol, self.regexp.pattern,)
         )
@@ -156,7 +156,7 @@ class ExcludeTrivialImportBranchRule(StrategyRule):
       return symbol
     if stats.tag_create_count == 0 \
           and stats.branch_create_count == stats.trivial_import_count:
-      Log().verbose(
+      logger.verbose(
           'Excluding branch %s because it is a trivial import branch.'
           % (symbol,)
           )
@@ -177,7 +177,7 @@ class ExcludeVendorBranchRule(StrategyRule):
       return symbol
     if stats.tag_create_count == 0 \
           and stats.branch_create_count == stats.pure_ntdb_count:
-      Log().verbose(
+      logger.verbose(
           'Excluding branch %s because it is a pure vendor branch.'
           % (symbol,)
           )
@@ -198,14 +198,14 @@ class UnambiguousUsageRule(StrategyRule):
       # Can't decide
       return symbol
     elif is_branch:
-      Log().verbose(
+      logger.verbose(
           'Converting symbol %s as a branch because it is always used '
           'as a branch.'
           % (symbol,)
           )
       return Branch(symbol)
     elif is_tag:
-      Log().verbose(
+      logger.verbose(
           'Converting symbol %s as a tag because it is always used '
           'as a tag.'
           % (symbol,)
@@ -223,7 +223,7 @@ class BranchIfCommitsRule(StrategyRule):
     if isinstance(symbol, (Trunk, TypedSymbol)):
       return symbol
     elif stats.branch_commit_count > 0:
-      Log().verbose(
+      logger.verbose(
           'Converting symbol %s as a branch because there are commits on it.'
           % (symbol,)
           )
@@ -242,14 +242,14 @@ class HeuristicStrategyRule(StrategyRule):
     if isinstance(symbol, (Trunk, TypedSymbol)):
       return symbol
     elif stats.tag_create_count >= stats.branch_create_count:
-      Log().verbose(
+      logger.verbose(
           'Converting symbol %s as a tag because it is more often used '
           'as a tag.'
           % (symbol,)
           )
       return Tag(symbol)
     else:
-      Log().verbose(
+      logger.verbose(
           'Converting symbol %s as a branch because it is more often used '
           'as a branch.'
           % (symbol,)
@@ -289,7 +289,7 @@ class AllBranchRule(_CatchAllRule):
     _CatchAllRule.__init__(self, Branch)
 
   def log(self, symbol):
-    Log().verbose(
+    logger.verbose(
         'Converting symbol %s as a branch because no other rules applied.'
         % (symbol,)
         )
@@ -309,7 +309,7 @@ class AllTagRule(_CatchAllRule):
     _CatchAllRule.__init__(self, Tag)
 
   def log(self, symbol):
-    Log().verbose(
+    logger.verbose(
         'Converting symbol %s as a tag because no other rules applied.'
         % (symbol,)
         )
@@ -326,7 +326,7 @@ class AllExcludedRule(_CatchAllRule):
     _CatchAllRule.__init__(self, ExcludedSymbol)
 
   def log(self, symbol):
-    Log().verbose(
+    logger.verbose(
         'Excluding symbol %s by catch-all rule.' % (symbol,)
         )
 
@@ -404,10 +404,10 @@ class HeuristicPreferredParentRule(StrategyRule):
     if isinstance(symbol, TypedSymbol) and symbol.preferred_parent_id is None:
       preferred_parent = self._get_preferred_parent(stats)
       if preferred_parent is None:
-        Log().verbose('%s has no preferred parent' % (symbol,))
+        logger.verbose('%s has no preferred parent' % (symbol,))
       else:
         symbol.preferred_parent_id = preferred_parent.id
-        Log().verbose(
+        logger.verbose(
             'The preferred parent of %s is %s' % (symbol, preferred_parent,)
             )
 
@@ -446,7 +446,7 @@ class ManualTrunkRule(StrategyRule):
 
 
 def convert_as_branch(symbol):
-  Log().verbose(
+  logger.verbose(
       'Converting symbol %s as a branch because of manual setting.'
       % (symbol,)
       )
@@ -454,7 +454,7 @@ def convert_as_branch(symbol):
 
 
 def convert_as_tag(symbol):
-  Log().verbose(
+  logger.verbose(
       'Converting symbol %s as a tag because of manual setting.'
       % (symbol,)
       )
@@ -462,7 +462,7 @@ def convert_as_tag(symbol):
 
 
 def exclude(symbol):
-  Log().verbose(
+  logger.verbose(
       'Excluding symbol %s because of manual setting.'
       % (symbol,)
       )

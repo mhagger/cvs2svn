@@ -22,7 +22,7 @@ import re
 from cvs2svn_lib.common import InternalError
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.context import Ctx
-from cvs2svn_lib.log import Log
+from cvs2svn_lib.log import logger
 from cvs2svn_lib.symbol import Trunk
 from cvs2svn_lib.symbol import Branch
 from cvs2svn_lib.symbol import Tag
@@ -181,7 +181,7 @@ class CVSFileItems(object):
       try:
         cvs_item.check_links(self)
       except AssertionError:
-        Log().error(
+        logger.error(
             'Link consistency error in %s\n'
             'This is probably a bug internal to cvs2svn.  Please file a bug\n'
             'report including the following stack trace (see FAQ for more '
@@ -565,7 +565,7 @@ class CVSFileItems(object):
       cvs_branch = vendor_lod_items.cvs_branch
       rev_1_1 = self[cvs_branch.source_id]
       assert isinstance(rev_1_1, CVSRevision)
-      Log().debug('Removing unnecessary revision %s' % (rev_1_1,))
+      logger.debug('Removing unnecessary revision %s' % (rev_1_1,))
 
       # Delete the 1.1.1 CVSBranch and sever the vendor branch from trunk:
       self._sever_branch(vendor_lod_items)
@@ -635,7 +635,7 @@ class CVSFileItems(object):
     for id in self.root_ids:
       cvs_item = self[id]
       if self._is_unneeded_initial_trunk_delete(cvs_item, metadata_db):
-        Log().debug('Removing unnecessary delete %s' % (cvs_item,))
+        logger.debug('Removing unnecessary delete %s' % (cvs_item,))
 
         # Sever any CVSBranches rooted at cvs_item.
         for cvs_branch_id in cvs_item.branch_ids[:]:
@@ -697,7 +697,7 @@ class CVSFileItems(object):
     for lod_items in self.iter_lods():
       if self._is_unneeded_initial_branch_delete(lod_items, metadata_db):
         cvs_revision = lod_items.cvs_revisions[0]
-        Log().debug(
+        logger.debug(
             'Removing unnecessary initial branch delete %s' % (cvs_revision,)
             )
 
@@ -968,7 +968,7 @@ class CVSFileItems(object):
     parent = self[branch_id]
     assert isinstance(parent, CVSBranch)
 
-    Log().debug('Grafting %s from %s (on %s) onto %s' % (
+    logger.debug('Grafting %s from %s (on %s) onto %s' % (
                 cvs_tag, source, source.lod, parent,))
     # Switch parent:
     source.tag_ids.remove(cvs_tag.id)
@@ -1017,7 +1017,7 @@ class CVSFileItems(object):
     parent = possible_parent
     assert isinstance(parent, CVSBranch)
 
-    Log().debug('Grafting %s from %s (on %s) onto %s' % (
+    logger.debug('Grafting %s from %s (on %s) onto %s' % (
                 cvs_branch, source, source.lod, parent,))
     # Switch parent:
     source.branch_ids.remove(cvs_branch.id)

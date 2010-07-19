@@ -21,7 +21,7 @@ from cvs2svn_lib import config
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.common import FatalException
 from cvs2svn_lib.common import DB_OPEN_READ
-from cvs2svn_lib.log import Log
+from cvs2svn_lib.log import logger
 from cvs2svn_lib.pass_manager import Pass
 from cvs2svn_lib.project import read_projects
 from cvs2svn_lib.artifact_manager import artifact_manager
@@ -56,7 +56,7 @@ class CheckDependenciesPass(Pass):
     self.symbol_db = SymbolDatabase()
     Ctx()._symbol_db = self.symbol_db
 
-    Log().quiet("Checking dependency consistency...")
+    logger.quiet("Checking dependency consistency...")
 
     fatal_errors = []
     for cvs_item in self.iter_cvs_items():
@@ -84,7 +84,7 @@ class CheckDependenciesPass(Pass):
     self.symbol_db.close()
     self.symbol_db = None
     Ctx()._cvs_path_db.close()
-    Log().quiet("Done")
+    logger.quiet("Done")
 
 
 class CheckItemStoreDependenciesPass(CheckDependenciesPass):

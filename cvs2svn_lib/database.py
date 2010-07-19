@@ -26,7 +26,7 @@ from cvs2svn_lib.common import DB_OPEN_WRITE
 from cvs2svn_lib.common import DB_OPEN_NEW
 from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.common import error_prefix
-from cvs2svn_lib.log import Log
+from cvs2svn_lib.log import logger
 from cvs2svn_lib.record_table import FileOffsetPacker
 from cvs2svn_lib.record_table import RecordTable
 
@@ -44,7 +44,7 @@ except ImportError:
 # 2. These DBM modules are not good for cvs2svn.
 import anydbm
 if anydbm._defaultmod.__name__ in ['dumbdbm', 'dbm']:
-  Log().error(
+  logger.error(
       '%s: cvs2svn uses the anydbm package, which depends on lower level '
           'dbm\n'
       'libraries.  Your system has %s, with which cvs2svn is known to have\n'
@@ -64,7 +64,7 @@ if hasattr(anydbm._defaultmod, 'bsddb') \
   try:
     gdbm = __import__('gdbm')
   except ImportError:
-    Log().warn(
+    logger.warn(
         '%s: The version of the bsddb module found on your computer '
             'has been\n'
         'reported to malfunction on some datasets, causing KeyError '

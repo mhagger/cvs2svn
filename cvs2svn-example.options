@@ -64,7 +64,7 @@ import re
 from cvs2svn_lib import config
 from cvs2svn_lib import changeset_database
 from cvs2svn_lib.common import CVSTextDecoder
-from cvs2svn_lib.log import Log
+from cvs2svn_lib.log import logger
 from cvs2svn_lib.project import Project
 from cvs2svn_lib.svn_output_option import DumpfileOutputOption
 from cvs2svn_lib.svn_output_option import ExistingRepositoryOutputOption
@@ -106,11 +106,11 @@ from cvs2svn_lib.property_setters import SVNBinaryFileKeywordsPropertySetter
 
 # To choose the level of logging output, uncomment one of the
 # following lines:
-#Log().log_level = Log.WARN
-#Log().log_level = Log.QUIET
-Log().log_level = Log.NORMAL
-#Log().log_level = Log.VERBOSE
-#Log().log_level = Log.DEBUG
+#logger.log_level = logger.WARN
+#logger.log_level = logger.QUIET
+logger.log_level = logger.NORMAL
+#logger.log_level = logger.VERBOSE
+#logger.log_level = logger.DEBUG
 
 
 # The directory to use for temporary files:

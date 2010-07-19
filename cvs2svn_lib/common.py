@@ -21,7 +21,7 @@ import re
 import time
 import codecs
 
-from cvs2svn_lib.log import Log
+from cvs2svn_lib.log import logger
 
 
 # Always use these constants for opening databases.
@@ -375,7 +375,7 @@ class CVSTextDecoder:
       try:
         return decoder(s)[0]
       except ValueError:
-        Log().verbose("Encoding '%s' failed for string %r" % (name, s))
+        logger.verbose("Encoding '%s' failed for string %r" % (name, s))
 
     if self.fallback_decoder is not None:
       (name, decoder) = self.fallback_decoder
@@ -417,15 +417,15 @@ class Timestamper:
       # changesets with even earlier timestamps depend on this one.
       self.timestamp = self.timestamp + 1.0
       if not change_expected:
-        Log().warn(
+        logger.warn(
             'Timestamp "%s" is in the future; changed to "%s".'
             % (time.asctime(time.gmtime(timestamp)),
                time.asctime(time.gmtime(self.timestamp)),)
             )
     elif timestamp < self.timestamp + 1.0:
       self.timestamp = self.timestamp + 1.0
-      if not change_expected and Log().is_on(Log.VERBOSE):
-        Log().verbose(
+      if not change_expected and logger.is_on(logger.VERBOSE):
+        logger.verbose(
             'Timestamp "%s" adjusted to "%s" to ensure monotonicity.'
             % (time.asctime(time.gmtime(timestamp)),
                time.asctime(time.gmtime(self.timestamp)),)

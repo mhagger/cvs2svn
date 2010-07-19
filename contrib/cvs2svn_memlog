@@ -43,7 +43,7 @@ import optparse
 import threading
 
 from cvs2svn_lib.common import FatalException
-from cvs2svn_lib.log import Log
+from cvs2svn_lib.log import logger
 from cvs2svn_lib.main import main
 
 
@@ -82,7 +82,7 @@ class MemoryLogger(threading.Thread):
       delay = self.start_time + self.interval * i - time.time()
       if delay > 0:
         time.sleep(delay)
-      Log().write('Memory used: %s' % (get_memory_used(),))
+      logger.write('Memory used: %s' % (get_memory_used(),))
       i += 1
 
 

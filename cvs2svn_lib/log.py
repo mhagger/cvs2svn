@@ -29,9 +29,6 @@ class Log:
   with the number of wall-clock seconds since the time when this
   module was first imported.
 
-  If self.use_timestamps is True, each line will be timestamped with a
-  human-readable clock time.
-
   The public methods of this class are thread-safe.
 
   This class is a Borg; see
@@ -57,9 +54,6 @@ class Log:
       return
 
     self.log_level = Log.NORMAL
-
-    # Set this to True if you want to see timestamps on each line output.
-    self.use_timestamps = False
 
     # The output file to use for errors:
     self._err = sys.stderr
@@ -98,9 +92,6 @@ class Log:
 
     if self.log_level >= Log.DEBUG:
       retval.append('%f: ' % (time.time() - self.start_time,))
-
-    if self.use_timestamps:
-      retval.append(time.strftime('[%Y-%m-%d %I:%M:%S %Z] - '))
 
     return ''.join(retval)
 

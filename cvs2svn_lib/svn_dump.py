@@ -50,8 +50,8 @@ class DumpstreamDelegate(SVNRepositoryDelegate):
     will be written."""
 
     self._revision_reader = revision_reader
-    self.dumpfile = open(dumpfile_path, 'wb')
-    self._write_dumpfile_header(self.dumpfile)
+    self._dumpfile = open(dumpfile_path, 'wb')
+    self._write_dumpfile_header(self._dumpfile)
 
     # A set of the basic project infrastructure project directories
     # that have been created so far, as SVN paths.  (The root
@@ -144,7 +144,7 @@ class DumpstreamDelegate(SVNRepositoryDelegate):
     total_len = len(all_prop_strings)
 
     # Print the revision header and revprops
-    self.dumpfile.write(
+    self._dumpfile.write(
         'Revision-number: %d\n'
         'Prop-content-length: %d\n'
         'Content-length: %d\n'
@@ -160,7 +160,7 @@ class DumpstreamDelegate(SVNRepositoryDelegate):
   def _make_any_dir(self, path):
     """Emit the creation of directory PATH."""
 
-    self.dumpfile.write(
+    self._dumpfile.write(
         "Node-path: %s\n"
         "Node-kind: dir\n"
         "Node-action: add\n"
@@ -260,7 +260,7 @@ class DumpstreamDelegate(SVNRepositoryDelegate):
       ignore_len = len(ignore_contents)
 
       # write headers, then props
-      self.dumpfile.write(
+      self._dumpfile.write(
           'Node-path: %s\n'
           'Node-kind: dir\n'
           'Node-action: change\n'
@@ -279,7 +279,7 @@ class DumpstreamDelegate(SVNRepositoryDelegate):
 
     # The content length is the length of property data, text data,
     # and any metadata around/inside around them:
-    self.dumpfile.write(
+    self._dumpfile.write(
         'Node-path: %s\n'
         'Node-kind: file\n'
         'Node-action: %s\n'
@@ -294,14 +294,14 @@ class DumpstreamDelegate(SVNRepositoryDelegate):
         )
 
     if prop_contents:
-      self.dumpfile.write(prop_contents)
+      self._dumpfile.write(prop_contents)
 
-    self.dumpfile.write(data)
+    self._dumpfile.write(data)
 
     # This record is done (write two newlines -- one to terminate
     # contents that weren't themselves newline-termination, one to
     # provide a blank line for readability.
-    self.dumpfile.write('\n\n')
+    self._dumpfile.write('\n\n')
 
   def add_path(self, cvs_rev):
     """Emit the addition corresponding to CVS_REV, a CVSRevisionAdd."""
@@ -316,7 +316,7 @@ class DumpstreamDelegate(SVNRepositoryDelegate):
   def delete_lod(self, lod):
     """Emit the deletion of LOD."""
 
-    self.dumpfile.write(
+    self._dumpfile.write(
         'Node-path: %s\n'
         'Node-action: delete\n'
         '\n'
@@ -333,7 +333,7 @@ class DumpstreamDelegate(SVNRepositoryDelegate):
       ignore_len = len(ignore_contents)
 
       # write headers, then props
-      self.dumpfile.write(
+      self._dumpfile.write(
           'Node-path: %s\n'
           'Node-kind: dir\n'
           'Node-action: change\n'
@@ -347,7 +347,7 @@ class DumpstreamDelegate(SVNRepositoryDelegate):
       if not Ctx().keep_cvsignore:
         return
 
-    self.dumpfile.write(
+    self._dumpfile.write(
         'Node-path: %s\n'
         'Node-action: delete\n'
         '\n'
@@ -359,7 +359,7 @@ class DumpstreamDelegate(SVNRepositoryDelegate):
     # as needed:
     self._register_basic_directory(dest_lod.get_path(), False)
 
-    self.dumpfile.write(
+    self._dumpfile.write(
         'Node-path: %s\n'
         'Node-kind: dir\n'
         'Node-action: add\n'
@@ -385,7 +385,7 @@ class DumpstreamDelegate(SVNRepositoryDelegate):
     else:
       raise InternalError()
 
-    self.dumpfile.write(
+    self._dumpfile.write(
         'Node-path: %s\n'
         'Node-kind: %s\n'
         'Node-action: add\n'
@@ -404,7 +404,7 @@ class DumpstreamDelegate(SVNRepositoryDelegate):
     """Perform any cleanup necessary after all revisions have been
     committed."""
 
-    self.dumpfile.close()
+    self._dumpfile.close()
 
 
 def generate_ignores(raw_ignore_val):

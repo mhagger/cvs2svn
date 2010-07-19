@@ -29,10 +29,7 @@ class Log:
   with the number of wall-clock seconds since the time when this
   module was first imported.
 
-  The public methods of this class are thread-safe.
-
-  This class is a Borg; see
-  http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/66531."""
+  The public methods of this class are thread-safe."""
 
   # These constants represent the log levels that this class supports.
   # The increase_verbosity() and decrease_verbosity() methods rely on
@@ -46,13 +43,7 @@ class Log:
 
   start_time = time.time()
 
-  __shared_state = {}
-
   def __init__(self):
-    self.__dict__ = self.__shared_state
-    if self.__dict__:
-      return
-
     self.log_level = Log.NORMAL
 
     # The output file to use for errors:

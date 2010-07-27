@@ -351,6 +351,7 @@ A directory called \\fIcvs2svn-tmp\\fR (or the directory specified by
             'used.)'
             ),
         metavar='PATH',
+        compatible_with_option=True,
         ))
 
     return group

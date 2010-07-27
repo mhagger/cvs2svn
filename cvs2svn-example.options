@@ -224,8 +224,9 @@ ctx.revision_reader = InternalRevisionReader(compress=True)
 
 # Set the name (and optionally the path) to the 'svnadmin' command,
 # which is needed for NewRepositoryOutputOption or
-# ExistingRepositoryOutputOption:
-ctx.svnadmin_executable = r'svnadmin'
+# ExistingRepositoryOutputOption.  The default is the "svnadmin"
+# command in the user's PATH:
+#ctx.svnadmin_executable = r'svnadmin'
 
 # Change the following line to True if the conversion should only
 # include the trunk of the repository (i.e., all branches and tags

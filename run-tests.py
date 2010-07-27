@@ -536,6 +536,9 @@ class Conversion:
       erase(self._wc)
 
     args = list(args)
+    args.extend([
+        '--svnadmin=%s' % (svntest.main.svnadmin_binary,),
+        ])
     if options_file:
       self.options_file = os.path.join(cvsrepos, options_file)
       args.extend([

@@ -1,0 +1,48 @@
+#! /usr/bin/python
+
+"""A trivial test of sorting a large number of tiny files.
+
+This is mostly to verify that hierarchical merging doesn't blow up due
+to opening too many files at once."""
+
+
+import sys
+import os
+import shutil
+
+SRCPATH = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.insert(0, os.path.join(SRCPATH))
+
+from cvs2svn_lib import sort
+
+
+TMPDIR = 'cvs2svn-tmp'
+NUMFILES = 2200
+LINES_PER_FILE = 5
+
+OUTFILE = os.path.join(TMPDIR, 'out.dat')
+
+try:
+    shutil.rmtree(TMPDIR)
+except:
+    pass
+
+filenames = [
+    os.path.join(TMPDIR, '%04d.dat' % (i,))
+    for i in range(NUMFILES)
+    ]
+
+os.makedirs(TMPDIR)
+for (i, filename) in enumerate(filenames):
+    f = open(filename, 'w')
+    for j in range(LINES_PER_FILE):
+        f.write('%04d %04d\n' % (j, i,))
+    f.close()
+
+sort.merge_files(filenames, OUTFILE, max_merge=4)
+
+for (i, line) in enumerate(open(OUTFILE)):
+    assert line == '%04d %04d\n' % (i // NUMFILES, i % NUMFILES,)
+
+print 'OK'
+

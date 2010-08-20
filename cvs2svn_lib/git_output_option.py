@@ -358,7 +358,7 @@ class GitOutputOption(DVCSOutputOption):
           self.describe_lod_to_user(lod), date, author, log_msg,)
 
   def _process_symbol_commit(
-        self, svn_commit, git_branch, source_groups, mark
+        self, svn_commit, git_branch, source_groups
         ):
     author = self._get_author(svn_commit)
     log_msg = self._get_log_msg(svn_commit)
@@ -372,6 +372,9 @@ class GitOutputOption(DVCSOutputOption):
     # might be technically more correct (though _get_lod_history is currently
     # underscore-private)
     is_initial_lod_creation = svn_commit.symbol not in self._marks
+
+    # Create the mark, only after the check above
+    mark = self._create_commit_mark(svn_commit.symbol, svn_commit.revnum)
 
     if is_initial_lod_creation:
       # Get the primary parent
@@ -436,6 +439,7 @@ class GitOutputOption(DVCSOutputOption):
         self.f.write('D %s\n' % (cvs_file.cvs_path,))
 
     self.f.write('\n')
+    return mark
 
   def process_branch_commit(self, svn_commit):
     self._mirror.start_commit(svn_commit.revnum)
@@ -458,7 +462,6 @@ class GitOutputOption(DVCSOutputOption):
       self._process_symbol_commit(
           svn_commit, 'refs/heads/%s' % (svn_commit.symbol.name,),
           source_groups,
-          self._create_commit_mark(svn_commit.symbol, svn_commit.revnum),
           )
 
     self._mirror.end_commit()
@@ -507,9 +510,8 @@ class GitOutputOption(DVCSOutputOption):
 
       # Create the fixup branch (which might involve making more than
       # one commit):
-      mark = self._create_commit_mark(svn_commit.symbol, svn_commit.revnum)
-      self._process_symbol_commit(
-          svn_commit, fixup_branch_name, source_groups, mark
+      mark = self._process_symbol_commit(
+          svn_commit, fixup_branch_name, source_groups
           )
 
       # Store the mark of the last commit to the fixup branch as the

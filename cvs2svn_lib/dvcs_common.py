@@ -211,9 +211,9 @@ class DVCSOutputOption(OutputOption):
     """Return groups of sources for SVN_COMMIT.
 
     SVN_COMMIT is an instance of SVNSymbolCommit.  Return a list of tuples
-    (source_lod, svn_revnum, cvs_symbols) where source_lod is the line
-    of development and svn_revnum is the revision that should serve as
-    a source, and cvs_symbols is a list of CVSSymbolItems that can be
+    (svn_revnum, source_lod, cvs_symbols) where svn_revnum is the revision
+    that should serve as a source, source_lod is the CVS line of
+    development, and cvs_symbols is a list of CVSSymbolItems that can be
     copied from that source.  The list is in arbitrary order."""
 
     # Get a map {CVSSymbol : SVNRevisionRange}:
@@ -249,7 +249,7 @@ class DVCSOutputOption(OutputOption):
           if revnum in range:
             cvs_symbols.append(cvs_symbol)
             del lod_range_map[cvs_symbol]
-        source_groups.append((lod, revnum, cvs_symbols))
+        source_groups.append((revnum, lod, cvs_symbols))
 
     return source_groups
 
@@ -264,7 +264,7 @@ class DVCSOutputOption(OutputOption):
     if len(source_groups) != 1:
       return False
 
-    (source_lod, svn_revnum, cvs_symbols) = source_groups[0]
+    (svn_revnum, source_lod, cvs_symbols) = source_groups[0]
 
     # The second requirement is that the destination LOD not already
     # exist:

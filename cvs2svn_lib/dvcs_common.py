@@ -210,12 +210,11 @@ class DVCSOutputOption(OutputOption):
   def _get_source_groups(self, svn_commit):
     """Return groups of sources for SVN_COMMIT.
 
-    SVN_COMMIT is an instance of SVNSymbolCommit.  Yield tuples
+    SVN_COMMIT is an instance of SVNSymbolCommit.  Return a list of tuples
     (source_lod, svn_revnum, cvs_symbols) where source_lod is the line
     of development and svn_revnum is the revision that should serve as
     a source, and cvs_symbols is a list of CVSSymbolItems that can be
-    copied from that source.  The groups are returned in arbitrary
-    order."""
+    copied from that source.  The list is in arbitrary order."""
 
     # Get a map {CVSSymbol : SVNRevisionRange}:
     range_map = self._symbolings_reader.get_range_map(svn_commit)
@@ -239,6 +238,7 @@ class DVCSOutputOption(OutputOption):
         -cmp(len(lod_range_map1), len(lod_range_map2)) or cmp(lod1, lod2)
         )
 
+    source_groups = []
     for (lod, lod_range_map) in lod_ranges:
       while lod_range_map:
         revision_scores = RevisionScores(lod_range_map.values())
@@ -249,7 +249,9 @@ class DVCSOutputOption(OutputOption):
           if revnum in range:
             cvs_symbols.append(cvs_symbol)
             del lod_range_map[cvs_symbol]
-        yield (lod, revnum, cvs_symbols)
+        source_groups.append((lod, revnum, cvs_symbols))
+
+    return source_groups
 
   def _is_simple_copy(self, svn_commit, source_groups):
     """Return True iff SVN_COMMIT can be created as a simple copy.

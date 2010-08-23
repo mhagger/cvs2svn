@@ -444,7 +444,7 @@ class GitOutputOption(DVCSOutputOption):
   def process_branch_commit(self, svn_commit):
     self._mirror.start_commit(svn_commit.revnum)
 
-    source_groups = list(self._get_source_groups(svn_commit))
+    source_groups = self._get_source_groups(svn_commit)
     if self._is_simple_copy(svn_commit, source_groups):
       (source_lod, source_revnum, cvs_symbols) = source_groups[0]
       logger.debug(
@@ -490,7 +490,7 @@ class GitOutputOption(DVCSOutputOption):
     # the tag, then the tag.  We never delete the fixup branch.
     self._mirror.start_commit(svn_commit.revnum)
 
-    source_groups = list(self._get_source_groups(svn_commit))
+    source_groups = self._get_source_groups(svn_commit)
     if self._is_simple_copy(svn_commit, source_groups):
       (source_lod, source_revnum, cvs_symbols) = source_groups[0]
       logger.debug(

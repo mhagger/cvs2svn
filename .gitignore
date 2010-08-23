@@ -1,0 +1,13 @@
+# Files that git should ignore in any directory:
+*.pyc
+*.pyo
+val-tags
+
+# Ignores in the project root:
+/cvs2svn-tmp
+/*.tar.gz
+/svntest
+
+# Ignores in www/:
+/www/tigris-branding
+

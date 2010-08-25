@@ -60,9 +60,7 @@ you're debugging or patching cvs2svn, you might want to use the trunk version
 working copy from http://cvs2svn.tigris.org/svn/cvs2svn/trunk/ using a command
 like::
 
-  svn co --username=guest http://cvs2svn.tigris.org/svn/cvs2svn/trunk cvs2svn-trunk
-
-(the password is empty; i.e., just press return).
+  svn co --username=guest --password="" http://cvs2svn.tigris.org/svn/cvs2svn/trunk cvs2svn-trunk
 """,
     classifiers = [
         'Development Status :: 5 - Production/Stable',

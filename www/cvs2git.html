@@ -275,8 +275,7 @@ to git using cvs2git.</p>
           sure that you have Subversion installed and then run:</p>
 
 <pre>
-svn co --username=guest http://cvs2svn.tigris.org/svn/cvs2svn/trunk cvs2svn-trunk
-# The password is empty; i.e., just press return.
+svn co --username=guest --password="" http://cvs2svn.tigris.org/svn/cvs2svn/trunk cvs2svn-trunk
 cd cvs2svn-trunk
 make man # If you want to create manpages for the main programs
 make check # ...optional

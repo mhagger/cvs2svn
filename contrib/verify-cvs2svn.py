@@ -256,7 +256,7 @@ class GitRepos:
     self.path = path
     self.repo_cmd = [
         GIT_CMD,
-        '--git-dir=' + self.path + '/.git',
+        '--git-dir=' + os.path.join(self.path, '.git'),
         '--work-tree=' + self.path,
         ]
 

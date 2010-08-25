@@ -316,6 +316,7 @@ def file_compare(failures, base1, base2, run_diff, rel_path):
       failures.report('File contents differ for %s' % rel_path,
                       details=diff)
       ok = False
+      break
     if len(data1) == 0:
       # eof
       break

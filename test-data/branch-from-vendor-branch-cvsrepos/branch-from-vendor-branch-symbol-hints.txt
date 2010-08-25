@@ -1,0 +1,7 @@
+# Columns:
+#project_id  symbol_name    conversion  symbol_path        preferred_parent_name
+0            .trunk.        trunk       trunk              .
+0            my-branch      branch      branches/my-branch .trunk.
+0            vendor-tag     exclude     .                  .
+0            vendor-branch  exclude     .                  .
+

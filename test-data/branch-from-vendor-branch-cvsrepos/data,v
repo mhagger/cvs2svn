@@ -1,0 +1,63 @@
+head	1.1;
+branch	1.1.1;
+access;
+symbols
+	my-branch:1.1.1.1.0.2
+	vendor-tag:1.1.1.1
+	vendor-branch:1.1.1;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2010.04.08.15.37.56;	author fosterj;	state Exp;
+branches
+	1.1.1.1;
+next	;
+commitid	2i5HeSdvL0B9s8uu;
+
+1.1.1.1
+date	2010.04.08.15.37.56;	author fosterj;	state Exp;
+branches
+	1.1.1.1.2.1;
+next	;
+commitid	2i5HeSdvL0B9s8uu;
+
+1.1.1.1.2.1
+date	2010.04.08.15.38.58;	author fosterj;	state Exp;
+branches;
+next	;
+commitid	eDJ6tPpuBwVxs8uu;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@x
+@
+
+
+1.1.1.1
+log
+@Test import
+@
+text
+@@
+
+
+1.1.1.1.2.1
+log
+@Branch commit
+@
+text
+@d1 1
+a1 1
+y
+@
+

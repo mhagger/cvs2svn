@@ -3865,6 +3865,14 @@ def add_on_branch2():
     ('/%(branches)s/BRANCH/file1', 'A'),
     ))
 
+@Cvs2SvnTestFunction
+def branch_from_vendor_branch():
+  "branch from vendor branch"
+
+  ensure_conversion(
+      'branch-from-vendor-branch',
+      symbol_hints_file='branch-from-vendor-branch-symbol-hints.txt',
+      )
 
 ########################################################################
 # Run the tests
@@ -4073,6 +4081,7 @@ test_list = [
     include_empty_directories_no_prune,
     exclude_symbol_default,
     add_on_branch2,
+    XFail(branch_from_vendor_branch),
     ]
 
 if __name__ == '__main__':

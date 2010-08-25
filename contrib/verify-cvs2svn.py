@@ -527,6 +527,7 @@ def verify_contents(failures, cvsrepos, verifyrepos, ctx):
 
   # Verify contents of trunk
   print 'Verifying trunk'
+  sys.stdout.flush()
   if not verify_contents_single(
         failures, cvsrepos, verifyrepos, 'trunk', None, ctx
         ):
@@ -535,6 +536,7 @@ def verify_contents(failures, cvsrepos, verifyrepos, ctx):
   # Verify contents of all tags
   for tag in verifyrepos.tags():
     print 'Verifying tag', tag
+    sys.stdout.flush()
     if not verify_contents_single(
           failures, cvsrepos, verifyrepos, 'tag', tag, ctx
           ):
@@ -550,6 +552,7 @@ def verify_contents(failures, cvsrepos, verifyrepos, ctx):
             failures, cvsrepos, verifyrepos, 'branch', branch, ctx
             ):
         locations.append('branch:' + branch)
+    sys.stdout.flush()
 
   assert bool(failures) == bool(locations), \
          "failures = %r\nlocations = %r" % (failures, locations)
@@ -562,6 +565,7 @@ def verify_contents(failures, cvsrepos, verifyrepos, ctx):
       sys.stdout.write('  %s\n' % location)
   else:
     sys.stdout.write('PASS: %s == %s\n' % (cvsrepos, verifyrepos))
+  sys.stdout.flush()
 
 
 class OptionContext:

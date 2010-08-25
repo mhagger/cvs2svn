@@ -51,11 +51,13 @@ def pipe(cmd):
   status = child.wait()
   return (output, status)
 
+
 def cmd_failed(cmd, output, status):
   print 'CMD FAILED:', ' '.join(cmd)
   print 'Output:'
   sys.stdout.write(output)
   raise RuntimeError('%s command failed!' % cmd[0])
+
 
 class CvsRepos:
   def __init__(self, path):
@@ -86,14 +88,14 @@ class CvsRepos:
     the HEAD revision, or any valid CVS revision string to export that
     revision."""
     os.mkdir(dest_path)
-    cmd = [ CVS_CMD, '-Q', '-d', ':local:' + self.cvsroot, 'export' ]
+    cmd = [CVS_CMD, '-Q', '-d', ':local:' + self.cvsroot, 'export']
     if rev:
-      cmd.extend([ '-r', rev ])
+      cmd.extend(['-r', rev])
     else:
-      cmd.extend([ '-D', 'now' ])
+      cmd.extend(['-D', 'now'])
     if keyword_opt:
       cmd.append(keyword_opt)
-    cmd.extend([ '-d', dest_path, self.module ])
+    cmd.extend(['-d', dest_path, self.module])
     (output, status) = pipe(cmd)
     if status or output:
       cmd_failed(cmd, output, status)
@@ -130,7 +132,7 @@ class SvnRepos:
   def export(self, path, dest_path):
     """Export PATH to DEST_PATH."""
     url = '/'.join([self.url, path])
-    cmd = [ SVN_CMD, 'export', '-q', url, dest_path ]
+    cmd = [SVN_CMD, 'export', '-q', url, dest_path]
     (output, status) = pipe(cmd)
     if status or output:
       cmd_failed(cmd, output, status)
@@ -149,7 +151,7 @@ class SvnRepos:
 
   def list(self, path):
     """Return a list of all files and directories in PATH."""
-    cmd = [ SVN_CMD, 'ls', self.url + '/' + path ]
+    cmd = [SVN_CMD, 'ls', self.url + '/' + path]
     (output, status) = pipe(cmd)
     if status:
       cmd_failed(cmd, output, status)
@@ -166,6 +168,7 @@ class SvnRepos:
   def branches(self):
     """Return a list of all branches in the repository."""
     return self.branch_list
+
 
 class HgRepos:
   name = 'hg'
@@ -243,11 +246,13 @@ class HgRepos:
       cmd_failed(cmd, output, status)
     return output.split("\n")[:-1]
 
+
 class GitRepos:
   name = 'git'
 
   def __init__(self, path):
     raise NotImplementedError()
+
 
 def transform_symbol(ctx, name):
   """Transform the symbol NAME using the renaming rules specified
@@ -465,6 +470,7 @@ def verify_contents(failures, cvsrepos, verifyrepos, ctx):
   else:
     sys.stdout.write('PASS: %s == %s\n' % (cvsrepos, verifyrepos))
 
+
 class OptionContext:
   pass
 
@@ -571,6 +577,7 @@ def main(argv):
     pass
 
   sys.exit(failures and 1 or 0)
+
 
 if __name__ == '__main__':
   main(sys.argv)

@@ -36,12 +36,14 @@ import optparse
 import subprocess
 import shutil
 import re
+import tarfile
 
 
 # CVS and Subversion command line client commands
 CVS_CMD = 'cvs'
 SVN_CMD = 'svn'
 HG_CMD = 'hg'
+GIT_CMD = 'git'
 
 
 def pipe(cmd):
@@ -251,7 +253,98 @@ class GitRepos:
   name = 'git'
 
   def __init__(self, path):
-    raise NotImplementedError()
+    self.path = path
+    self.repo_cmd = [
+        GIT_CMD,
+        '--git-dir=' + self.path + '/.git',
+        '--work-tree=' + self.path,
+        ]
+
+    self._branches = None               # cache result of branches()
+    self._have_master = None           # so export_trunk() doesn't blow up
+
+  def __str__(self):
+    return os.path.basename(self.path)
+
+  def _export(self, dest_path, rev):
+    # clone the repository
+    cmd = [GIT_CMD, 'archive', '--remote=' + self.path, '--format=tar', rev]
+    git_proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+
+    if False:
+      # Unfortunately for some git tags the below causes
+      # git_proc.wait() to hang.  The git archive process is in a
+      # <defunct> state and the verify-cvs2svn hangs for good.
+      tar = tarfile.open(mode="r|", fileobj=git_proc.stdout)
+      for tarinfo in tar:
+        tar.extract(tarinfo, dest_path)
+      tar.close()
+    else:
+      os.mkdir(dest_path)
+      tar_proc = subprocess.Popen(
+          ['tar', '-C', dest_path, '-x'],
+          stdin=git_proc.stdout, stdout=subprocess.PIPE,
+          )
+      output = tar_proc.stdout.read()
+      status = tar_proc.wait()
+      if output or status:
+        raise RuntimeError(
+            'Git tar extraction of rev %s from repo %s to %s failed (%s)!'
+            % (rev, self.path, dest_path, output)
+            )
+
+    status = git_proc.wait()
+    if status:
+      raise RuntimeError(
+          'Git extract of rev %s from repo %s to %s failed!'
+          % (rev, self.path, dest_path)
+          )
+
+    if not os.path.exists(dest_path):
+      raise RuntimeError(
+          'Git clone of %s to %s failed!' % (self.path, dest_path)
+          )
+
+  def export_trunk(self, dest_path):
+    self.branches()                     # ensure _have_default is set
+    if self._have_master:
+      self._export(dest_path, 'master')
+    else:
+      # same as CVS does when exporting empty trunk
+      os.mkdir(dest_path)
+
+  def export_tag(self, dest_path, tag):
+    self._export(dest_path, tag)
+
+  def export_branch(self, dest_path, branch):
+    self._export(dest_path, branch)
+
+  def tags(self):
+    cmd = self.repo_cmd + ['tag']
+    tags = self._split_output(cmd)
+    return tags
+
+  def branches(self):
+    if self._branches is None:
+      cmd = self.repo_cmd + ['branch']
+      branches = self._split_output(cmd)
+      # Remove the two chracters at the start of the branch name
+      for i in range(len(branches)):
+        branches[i] = branches[i][2:]
+      self._branches = branches
+      try:
+        branches.remove('master')
+        self._have_master = True
+      except ValueError:
+        self._have_master = False
+
+    return self._branches
+
+  def _split_output(self, cmd):
+    (output, status) = pipe(cmd)
+    if status:
+      cmd_failed(cmd, output, status)
+    return output.split("\n")[:-1]
 
 
 def transform_symbol(ctx, name):
@@ -501,7 +594,7 @@ def main(argv):
                     help='assume verify-repos is hg')
   parser.add_option('--git',
                     action='store_const', dest='repos_type', const='git',
-                    help='assume verify-repos is git (not implemented!)')
+                    help='assume verify-repos is git')
   parser.add_option('--suppress-keywords',
                     action='store_const', dest='keyword_opt', const='-kk',
                     help='suppress CVS keyword expansion '

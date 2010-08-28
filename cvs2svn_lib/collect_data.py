@@ -613,7 +613,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       # This revision has already been seen.
       logger.error('File %r contains duplicate definitions of revision %s.'
                   % (self.cvs_file.filename, revision,))
-      raise RuntimeError
+      raise RuntimeError()
 
     # Record basic information about the revision:
     rev_data = _RevisionData(

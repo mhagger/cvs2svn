@@ -107,7 +107,7 @@ class ContextOption(ManOption):
     except KeyError:
       opt = args[0]
       if not opt.startswith('--'):
-        raise ValueError
+        raise ValueError()
       self.__dest = opt[2:].replace('-', '_')
     if 'const' in kw:
       self.__const = kw.pop('const')

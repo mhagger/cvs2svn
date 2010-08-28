@@ -64,7 +64,7 @@ class Pass(object):
   def register_artifacts(self):
     """Register artifacts (created and needed) in artifact_manager."""
 
-    raise NotImplementedError
+    raise NotImplementedError()
 
   def _register_temp_file(self, basename):
     """Helper method; for brevity only."""
@@ -82,7 +82,7 @@ class Pass(object):
     RUN_OPTIONS is an instance of RunOptions.  STATS_KEEPER is an
     instance of StatsKeeper."""
 
-    raise NotImplementedError
+    raise NotImplementedError()
 
 
 class PassManager:

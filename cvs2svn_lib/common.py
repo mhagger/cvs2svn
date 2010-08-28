@@ -381,7 +381,7 @@ class CVSTextDecoder:
       (name, decoder) = self.fallback_decoder
       return decoder(s, 'replace')[0]
     else:
-      raise UnicodeError
+      raise UnicodeError()
 
 
 class Timestamper:

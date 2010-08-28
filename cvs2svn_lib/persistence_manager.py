@@ -52,7 +52,7 @@ class PersistenceManager:
   def __init__(self, mode):
     self.mode = mode
     if mode not in (DB_OPEN_NEW, DB_OPEN_READ):
-      raise RuntimeError, "Invalid 'mode' argument to PersistenceManager"
+      raise RuntimeError("Invalid 'mode' argument to PersistenceManager")
     primer = (
         SVNInitialProjectCommit,
         SVNPrimaryCommit,
@@ -88,8 +88,9 @@ class PersistenceManager:
     CVS_REVS and record associated attributes."""
 
     if self.mode == DB_OPEN_READ:
-      raise RuntimeError, \
+      raise RuntimeError(
           'Write operation attempted on read-only PersistenceManager'
+          )
 
     self.svn_commit_db[svn_commit.revnum] = svn_commit
 

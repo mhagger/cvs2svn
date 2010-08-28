@@ -569,9 +569,28 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       # This just sets the default branch to trunk.  Normally this
       # shouldn't occur, but it has been seen in at least one CVS
       # repository.  Just ignore it.
-      pass
-    else:
-      self.default_branch = branch
+      return
+
+    m = _branch_revision_re.match(branch)
+    if not m:
+      self.collect_data.record_fatal_error(
+          'The default branch %s in file %r is not a valid branch number'
+          % (branch, self.cvs_file.filename,)
+          )
+      return
+
+    branch = m.group(1) + m.group(2)
+    if branch.count('.') != 2:
+      # We don't know how to deal with a non-top-level default
+      # branch (what does CVS do?).  So if this case is detected,
+      # punt:
+      self.collect_data.record_fatal_error(
+          'The default branch %s in file %r is not a top-level branch'
+          % (branch, self.cvs_file.filename,)
+          )
+      return
+
+    self.default_branch = branch
 
   def define_tag(self, name, revision):
     """Remember the symbol name and revision, but don't process them yet.

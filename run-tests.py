@@ -3865,6 +3865,7 @@ def add_on_branch2():
     ('/%(branches)s/BRANCH/file1', 'A'),
     ))
 
+
 @Cvs2SvnTestFunction
 def branch_from_vendor_branch():
   "branch from vendor branch"
@@ -3873,6 +3874,20 @@ def branch_from_vendor_branch():
       'branch-from-vendor-branch',
       symbol_hints_file='branch-from-vendor-branch-symbol-hints.txt',
       )
+
+
+@Cvs2SvnTestFunction
+def strange_default_branch():
+  "default branch too deep in the hierarchy"
+
+  ensure_conversion(
+      'strange-default-branch',
+      error_re=(
+          r'ERROR\: The default branch 1\.2\.4\.3\.2\.1\.2 '
+          r'in file .* is not a top-level branch'
+          ),
+      )
+
 
 ########################################################################
 # Run the tests
@@ -4082,6 +4097,7 @@ test_list = [
     exclude_symbol_default,
     add_on_branch2,
     XFail(branch_from_vendor_branch),
+    strange_default_branch,
     ]
 
 if __name__ == '__main__':

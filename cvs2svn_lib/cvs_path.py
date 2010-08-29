@@ -43,9 +43,9 @@ class CVSPath(object):
 
     ordinal -- (int) the order that this instance should be sorted
         relative to other CVSPath instances.  This member is set based
-        on the ordering imposed by slow_compare() by CVSPathDatabase
-        after all CVSFiles have been processed.  Comparisons of
-        CVSPath using __cmp__() simply compare the ordinals.
+        on the ordering imposed by sort_key() by CVSPathDatabase after
+        all CVSFiles have been processed.  Comparisons of CVSPath
+        using __cmp__() simply compare the ordinals.
 
   """
 
@@ -157,12 +157,17 @@ class CVSPath(object):
 
     return a is b
 
-  def slow_compare(a, b):
+  def sort_key(self):
+    """Return the key that should be used for sorting CVSPath instances.
+
+    This is a relatively expensive computation, so it is only used
+    once, the the results are used to set the ordinal member."""
+
     return (
         # Sort first by project:
-        cmp(a.project, b.project)
+        self.project,
         # Then by directory components:
-        or cmp(a._get_dir_components(), b._get_dir_components())
+        self._get_dir_components(),
         )
 
   def __cmp__(a, b):

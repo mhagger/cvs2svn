@@ -54,8 +54,7 @@ class CVSPathDatabase:
       raise RuntimeError('Invalid mode %r' % self.mode)
 
   def set_cvs_path_ordinals(self):
-    cvs_files = list(self.itervalues())
-    cvs_files.sort(CVSPath.slow_compare)
+    cvs_files = sorted(self.itervalues(), key=CVSPath.sort_key)
     for (i, cvs_file) in enumerate(cvs_files):
       cvs_file.ordinal = i
 

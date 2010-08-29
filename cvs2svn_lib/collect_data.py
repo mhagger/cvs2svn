@@ -74,7 +74,6 @@ from cvs2svn_lib.cvs_item_database import NewCVSItemStore
 from cvs2svn_lib.symbol_statistics import SymbolStatisticsCollector
 from cvs2svn_lib.metadata_database import MetadataDatabase
 from cvs2svn_lib.metadata_database import MetadataLogger
-from cvs2svn_lib.repository_walker import walk_repository
 
 import cvs2svn_rcsparse
 
@@ -1076,9 +1075,6 @@ class CollectData:
     self.symbol_stats = SymbolStatisticsCollector()
     self.stats_keeper = stats_keeper
 
-    # Key generator for CVSFiles:
-    self.file_key_generator = KeyGenerator()
-
     # Key generator for CVSItems:
     self.item_key_generator = KeyGenerator()
 
@@ -1140,13 +1136,11 @@ class CollectData:
     self.add_cvs_file_items(cvs_file_items)
     self.symbol_stats.register(cvs_file_items)
 
-  def process_project(self, project):
+  def process_project(self, project, cvs_paths):
     pdc = _ProjectDataCollector(self, project)
 
     found_rcs_file = False
-    for cvs_path in walk_repository(
-          project, self.file_key_generator, self.record_fatal_error
-          ):
+    for cvs_path in cvs_paths:
       if isinstance(cvs_path, CVSDirectory):
         self.add_cvs_directory(cvs_path)
       else:

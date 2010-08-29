@@ -74,6 +74,7 @@ from cvs2svn_lib.svn_commit import SVNRevisionCommit
 from cvs2svn_lib.openings_closings import SymbolingsLogger
 from cvs2svn_lib.svn_commit_creator import SVNCommitCreator
 from cvs2svn_lib.persistence_manager import PersistenceManager
+from cvs2svn_lib.repository_walker import walk_repository
 from cvs2svn_lib.collect_data import CollectData
 from cvs2svn_lib.check_dependencies_pass \
     import CheckItemStoreDependenciesPass
@@ -97,9 +98,16 @@ class CollectRevsPass(Pass):
     Ctx()._projects = {}
     Ctx()._cvs_path_db = CVSPathDatabase(DB_OPEN_NEW)
     cd = CollectData(stats_keeper)
+
+    # Key generator for CVSFiles:
+    file_key_generator = KeyGenerator()
+
     for project in run_options.projects:
       Ctx()._projects[project.id] = project
-      cd.process_project(project)
+      cd.process_project(
+          project,
+          walk_repository(project, file_key_generator, cd.record_fatal_error),
+          )
     run_options.projects = None
 
     fatal_errors = cd.close()

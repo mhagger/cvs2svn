@@ -157,22 +157,6 @@ def verify_svn_filename_legal(filename):
         )
 
 
-def verify_svn_path_legal(path):
-  """Verify that PATH is a legitimate SVN path.
-
-  If not, raise an IllegalSVNPathError."""
-
-  if path.startswith('/'):
-    raise IllegalSVNPathError("Path %r must not start with '/'." % (path,))
-  head = path
-  while head != '':
-    (head,tail) = path_split(head)
-    try:
-        verify_svn_filename_legal(tail)
-    except IllegalSVNPathError, e:
-        raise IllegalSVNPathError('Problem with path %r: %s' % (path, e,))
-
-
 def normalize_svn_path(path, allow_empty=False):
   """Normalize an SVN path (e.g., one supplied by a user).
 

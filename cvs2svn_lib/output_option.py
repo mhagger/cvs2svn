@@ -65,8 +65,8 @@ class OutputOption:
     m = OutputOption.ctrl_characters_regexp.search(filename)
     if m:
       raise IllegalSVNPathError(
-          "Character %r in filename %r is not supported by Subversion."
-          % (m.group(), filename,)
+          '%s does not allow character %r in filename %r.'
+          % (self.name, m.group(), filename,)
           )
 
   def check(self):

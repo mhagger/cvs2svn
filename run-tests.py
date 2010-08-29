@@ -2651,8 +2651,7 @@ def ctrl_char_in_filename():
 
     conv = ensure_conversion(
         'ctrl-char-filename',
-        error_re=(r'.*Character .* in filename .* '
-                  r'is not supported by Subversion\.'),
+        error_re=(r'.*Subversion does not allow character .*.'),
         )
   finally:
     safe_rmtree(dstrepos_path)

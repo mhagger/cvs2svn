@@ -61,8 +61,7 @@ class CVSPathDatabase:
     self._cvs_paths[cvs_path.id] = cvs_path
 
   def itervalues(self):
-    for value in self._cvs_paths.itervalues():
-      yield value
+    return self._cvs_paths.itervalues()
 
   def get_path(self, id):
     """Return the CVSPath with the specified ID."""

@@ -23,6 +23,7 @@ from cvs2svn_lib import config
 from cvs2svn_lib.common import DB_OPEN_READ
 from cvs2svn_lib.common import DB_OPEN_NEW
 from cvs2svn_lib.artifact_manager import artifact_manager
+from cvs2svn_lib.cvs_path import CVSPath
 
 
 class CVSPathDatabase:
@@ -52,6 +53,12 @@ class CVSPathDatabase:
     else:
       raise RuntimeError('Invalid mode %r' % self.mode)
 
+  def set_cvs_path_ordinals(self):
+    cvs_files = list(self.itervalues())
+    cvs_files.sort(CVSPath.slow_compare)
+    for (i, cvs_file) in enumerate(cvs_files):
+      cvs_file.ordinal = i
+
   def log_path(self, cvs_path):
     """Add CVS_PATH, a CVSPath instance, to the database."""
 
@@ -70,6 +77,7 @@ class CVSPathDatabase:
 
   def close(self):
     if self.mode == DB_OPEN_NEW:
+      self.set_cvs_path_ordinals()
       f = open(artifact_manager.get_temp_file(config.CVS_PATHS_DB), 'wb')
       cPickle.dump(self._cvs_paths.values(), f, -1)
       f.close()

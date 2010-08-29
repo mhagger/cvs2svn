@@ -43,9 +43,9 @@ class CVSPath(object):
 
     ordinal -- (int) the order that this instance should be sorted
         relative to other CVSPath instances.  This member is set based
-        on the ordering imposed by slow_compare() by CollectData after
-        all CVSFiles have been processed.  Comparisons of CVSPath
-        using __cmp__() simply compare the ordinals.
+        on the ordering imposed by slow_compare() by CVSPathDatabase
+        after all CVSFiles have been processed.  Comparisons of
+        CVSPath using __cmp__() simply compare the ordinals.
 
   """
 

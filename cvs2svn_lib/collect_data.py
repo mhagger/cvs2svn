@@ -58,7 +58,6 @@ from cvs2svn_lib.common import is_branch_revision_number
 from cvs2svn_lib.log import logger
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.artifact_manager import artifact_manager
-from cvs2svn_lib.cvs_path import CVSPath
 from cvs2svn_lib.cvs_path import CVSFile
 from cvs2svn_lib.cvs_path import CVSDirectory
 from cvs2svn_lib.symbol import Symbol
@@ -1179,12 +1178,6 @@ class CollectData:
       if directory.parent_directory is not None:
         directory.parent_directory.empty_subdirectory_ids.append(directory.id)
 
-  def _set_cvs_path_ordinals(self):
-    cvs_files = list(Ctx()._cvs_path_db.itervalues())
-    cvs_files.sort(CVSPath.slow_compare)
-    for (i, cvs_file) in enumerate(cvs_files):
-      cvs_file.ordinal = i
-
   def close(self):
     """Close the data structures associated with this instance.
 
@@ -1200,7 +1193,6 @@ class CollectData:
     self._cvs_item_store.close()
     self._cvs_item_store = None
     self._register_empty_subdirectories()
-    self._set_cvs_path_ordinals()
     retval = self.fatal_errors
     self.fatal_errors = None
     return retval

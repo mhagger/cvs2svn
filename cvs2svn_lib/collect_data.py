@@ -1141,8 +1141,6 @@ class CollectData:
     self.symbol_stats.register(cvs_file_items)
 
   def process_project(self, project):
-    Ctx()._projects[project.id] = project
-
     pdc = _ProjectDataCollector(self, project)
 
     found_rcs_file = False

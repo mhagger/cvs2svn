@@ -98,6 +98,7 @@ class CollectRevsPass(Pass):
     Ctx()._cvs_path_db = CVSPathDatabase(DB_OPEN_NEW)
     cd = CollectData(stats_keeper)
     for project in run_options.projects:
+      Ctx()._projects[project.id] = project
       cd.process_project(project)
     run_options.projects = None
 

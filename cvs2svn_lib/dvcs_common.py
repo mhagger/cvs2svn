@@ -133,10 +133,6 @@ class DVCSRunOptions(RunOptions):
 
 
 class DVCSOutputOption(OutputOption):
-  # name of output format (for error messages); must be set by
-  # subclasses
-  name = None
-
   def __init__(self):
     self._mirror = RepositoryMirror()
     self._symbolings_reader = None

@@ -53,6 +53,8 @@ from cvs2svn_lib.output_option import OutputOption
 class SVNOutputOption(OutputOption):
   """An OutputOption appropriate for output to Subversion."""
 
+  name = 'Subversion'
+
   class ParentMissingError(Exception):
     """The parent of a path is missing.
 

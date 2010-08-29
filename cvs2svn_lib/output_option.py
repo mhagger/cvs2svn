@@ -20,6 +20,11 @@
 class OutputOption:
   """Represents an output choice for a run of cvs2svn."""
 
+  # name of output format (for error messages), capitalized for use at
+  # the start of a sentence.  This class attribute must be set by
+  # subclasses
+  name = None
+
   def register_artifacts(self, which_pass):
     """Register artifacts that will be needed for this output option.
 

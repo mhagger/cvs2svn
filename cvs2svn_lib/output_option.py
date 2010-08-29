@@ -16,6 +16,10 @@
 
 """This module contains classes that hold the cvs2svn output options."""
 
+import re
+
+from cvs2svn_lib.common import IllegalSVNPathError
+
 
 class OutputOption:
   """Represents an output choice for a run of cvs2svn."""
@@ -34,6 +38,36 @@ class OutputOption:
     WHICH_PASS.register_temp_file_needed())."""
 
     pass
+
+  # Control characters (characters not allowed in Subversion filenames):
+  ctrl_characters_regexp = re.compile('[\\\x00-\\\x1f\\\x7f]')
+
+  def verify_filename_legal(self, filename):
+    """Verify that FILENAME is a legal filename.
+
+    FILENAME is a path component of a CVS path.  Check that it won't
+    choke the destination VCS:
+
+    - Check that it is not empty.
+
+    - Check that it is not equal to '.' or '..'.
+
+    - Check that the filename does not include any control characters.
+
+    If any of these tests fail, raise an IllegalSVNPathError."""
+
+    if filename == '':
+      raise IllegalSVNPathError("Empty filename component.")
+
+    if filename in ['.', '..']:
+      raise IllegalSVNPathError("Illegal filename component %r." % (filename,))
+
+    m = OutputOption.ctrl_characters_regexp.search(filename)
+    if m:
+      raise IllegalSVNPathError(
+          "Character %r in filename %r is not supported by Subversion."
+          % (m.group(), filename,)
+          )
 
   def check(self):
     """Check that the options stored in SELF are sensible.

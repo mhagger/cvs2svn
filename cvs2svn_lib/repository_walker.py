@@ -23,7 +23,6 @@ import stat
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.common import IllegalSVNPathError
-from cvs2svn_lib.common import verify_svn_filename_legal
 from cvs2svn_lib.log import logger
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.project import FileInAndOutOfAtticException
@@ -65,7 +64,7 @@ class _RepositoryWalker(object):
 
     filename = os.path.join(parent_directory.filename, basename)
     try:
-      verify_svn_filename_legal(basename[:-2])
+      Ctx().output_option.verify_filename_legal(basename[:-2])
     except IllegalSVNPathError, e:
       raise FatalError(
           'File %r would result in an illegal SVN filename: %s'
@@ -264,7 +263,7 @@ class _RepositoryWalker(object):
       # Verify that the directory name does not contain any illegal
       # characters:
       try:
-        verify_svn_filename_legal(fname)
+        Ctx().output_option.verify_filename_legal(fname)
       except IllegalSVNPathError, e:
         raise FatalError(
             'Directory %r would result in an illegal SVN path name: %s'

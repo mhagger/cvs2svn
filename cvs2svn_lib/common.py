@@ -17,7 +17,6 @@
 """This module contains common facilities used by cvs2svn."""
 
 
-import re
 import time
 import codecs
 
@@ -123,38 +122,6 @@ def path_split(path):
 
 class IllegalSVNPathError(FatalException):
   pass
-
-
-# Control characters (characters not allowed in Subversion filenames):
-ctrl_characters_regexp = re.compile('[\\\x00-\\\x1f\\\x7f]')
-
-
-def verify_svn_filename_legal(filename):
-  """Verify that FILENAME is a legal filename.
-
-  FILENAME is a path component of a CVS path.  Check that it won't
-  choke SVN:
-
-  - Check that it is not empty.
-
-  - Check that it is not equal to '.' or '..'.
-
-  - Check that the filename does not include any control characters.
-
-  If any of these tests fail, raise an IllegalSVNPathError."""
-
-  if filename == '':
-    raise IllegalSVNPathError("Empty filename component.")
-
-  if filename in ['.', '..']:
-    raise IllegalSVNPathError("Illegal filename component %r." % (filename,))
-
-  m = ctrl_characters_regexp.search(filename)
-  if m:
-    raise IllegalSVNPathError(
-        "Character %r in filename %r is not supported by Subversion."
-        % (m.group(), filename,)
-        )
 
 
 def normalize_svn_path(path, allow_empty=False):

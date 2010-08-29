@@ -30,15 +30,17 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from cvs2svn_lib.common import FatalError
-from cvs2svn_lib.collect_data import verify_filename_legal
+from cvs2svn_lib.output_option import OutputOption
+
 
 def visit_directory(unused, dirname, files):
     for file in files:
         path = os.path.join(dirname, file)
         try:
-            verify_filename_legal(path)
+            OutputOption().verify_filename_legal(file)
         except FatalError:
             sys.stderr.write('File %r contains illegal characters!\n' % path)
+
 
 if not sys.argv[1:]:
     sys.stderr.write('usage: %s PATH ...\n' % sys.argv[0])

@@ -18,6 +18,7 @@
 
 
 import os
+import re
 
 from cvs2svn_lib import config
 from cvs2svn_lib.common import InternalError
@@ -25,6 +26,7 @@ from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import FatalException
 from cvs2svn_lib.common import error_prefix
 from cvs2svn_lib.common import format_date
+from cvs2svn_lib.common import IllegalSVNPathError
 from cvs2svn_lib.common import PathsNotDisjointException
 from cvs2svn_lib.common import verify_paths_disjoint
 from cvs2svn_lib.log import logger
@@ -96,6 +98,19 @@ class SVNOutputOption(OutputOption):
 
     self._mirror.register_artifacts(which_pass)
     Ctx().revision_reader.register_artifacts(which_pass)
+
+  # Characters not allowed in Subversion filenames:
+  illegal_filename_characters_re = re.compile('[\\\x00-\\\x1f\\\x7f]')
+
+  def verify_filename_legal(self, filename):
+    OutputOption.verify_filename_legal(self, filename)
+
+    m = SVNOutputOption.illegal_filename_characters_re.search(filename)
+    if m:
+      raise IllegalSVNPathError(
+          '%s does not allow character %r in filename %r.'
+          % (self.name, m.group(), filename,)
+          )
 
   def check_symbols(self, symbol_map):
     """Check that the paths of all included LODs are set and disjoint."""

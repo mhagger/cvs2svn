@@ -41,6 +41,12 @@ class CVSPath(object):
     basename -- (string) the base name of this CVSPath (no ',v').  The
         basename of the root directory of a project is ''.
 
+    filename -- (string) the filesystem path to this CVSPath in the
+        CVS repository.  This is in native format, and already
+        normalised the way os.path.normpath() normalises paths.  It
+        starts with the repository path passed to
+        run_options.add_project() in the options.py file.
+
     ordinal -- (int) the order that this instance should be sorted
         relative to other CVSPath instances.  This member is set based
         on the ordering imposed by sort_key() by CVSPathDatabase after
@@ -64,6 +70,19 @@ class CVSPath(object):
     self.parent_directory = parent_directory
     self.basename = basename
 
+    # The filename used to be computed on demand, but it turned out to
+    # be a hot path through the code in some cases.  It's used by
+    # SubtreeSymbolTransform and similar transforms, so it's called at
+    # least:
+    #
+    #   (num_files * num_symbols_per_file * num_subtree_symbol_transforms)
+    #
+    # times.  On a large repository with several subtree symbol
+    # transforms, that can exceed 100,000,000 calls.  And
+    # _calculate_filename() is quite complex, so doing that every time
+    # could add about 10 minutes to the cvs2svn runtime.
+    #
+    # So now we precalculate this and just return it.
     self.filename = os.path.normpath(self._calculate_filename())
 
   def __getstate__(self):
@@ -83,28 +102,6 @@ class CVSPath(object):
         ) = state
     self.project = Ctx()._projects[project_id]
     self.filename = os.path.normpath(self._calculate_filename())
-
-  def get_filename(self):
-    """Return the filesystem path to this CVSPath in the CVS repository.
-
-    This is in native format, and already normalised the way
-    os.path.normpath() normalises paths.
-
-    It starts with the repository path passed to run_options.add_project()
-    in the options.py file."""
-
-    # This turns out to be a hot path through the code.
-    # It's used by SubtreeSymbolTransform and similar transforms, so it's
-    # called at least:
-    #   (num_files * num_symbols_per_file * num_subtree_symbol_transforms)
-    # times.  On a large repository with several subtree symbol transforms,
-    # that can exceed 100,000,000 calls.  And _calculate_filename() is quite
-    # complex, so doing that every time could add about 10 minutes to the
-    # cvs2svn runtime.
-    #
-    # So now we precalculate this and just return it.
-
-    return self.filename
 
   def get_ancestry(self):
     """Return a list of the CVSPaths leading from the root path to SELF.

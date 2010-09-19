@@ -38,8 +38,10 @@ class CVSPath(object):
     parent_directory -- (CVSDirectory or None) the CVSDirectory
         containing this CVSPath.
 
-    basename -- (string) the base name of this CVSPath (no ',v').  The
-        basename of the root directory of a project is ''.
+    basename -- (string) the base name of the filename path in the CVS
+        repository corresponding to this CVSPath (but with ',v'
+        removed for CVSFiles).  The basename of the root directory of
+        a project is ''.
 
     filename -- (string) the filesystem path to this CVSPath in the
         CVS repository.  This is in native format, and already
@@ -186,7 +188,9 @@ class CVSDirectory(CVSPath):
     parent_directory -- (CVSDirectory or None) the CVSDirectory
         containing this CVSDirectory.
 
-    basename -- (string) the base name of this CVSDirectory (no ',v').
+    basename -- (string) the base name of the filename path in the CVS
+        repository corresponding to this CVSDirectory.  The basename
+        of the root directory of a project is ''.
 
     ordinal -- (int) the order that this instance should be sorted
         relative to other CVSPath instances.  See CVSPath.ordinal.
@@ -252,7 +256,9 @@ class CVSFile(CVSPath):
     parent_directory -- (CVSDirectory) the CVSDirectory containing
         this CVSFile.
 
-    basename -- (string) the base name of this CVSFile (no ',v').
+    basename -- (string) the base name of the RCS file in the CVS
+        repository corresponding to this CVSPath (but with the ',v'
+        removed).
 
     ordinal -- (int) the order that this instance should be sorted
         relative to other CVSPath instances.  See CVSPath.ordinal.

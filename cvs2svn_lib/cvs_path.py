@@ -79,11 +79,11 @@ class CVSPath(object):
     #
     # times.  On a large repository with several subtree symbol
     # transforms, that can exceed 100,000,000 calls.  And
-    # _calculate_filename() is quite complex, so doing that every time
+    # _calculate_rcs_path() is quite complex, so doing that every time
     # could add about 10 minutes to the cvs2svn runtime.
     #
     # So now we precalculate this and just return it.
-    self.filename = os.path.normpath(self._calculate_filename())
+    self.filename = os.path.normpath(self._calculate_rcs_path())
 
   def __getstate__(self):
     """This method must only be called after ordinal has been set."""
@@ -101,7 +101,7 @@ class CVSPath(object):
         self.ordinal,
         ) = state
     self.project = Ctx()._projects[project_id]
-    self.filename = os.path.normpath(self._calculate_filename())
+    self.filename = os.path.normpath(self._calculate_rcs_path())
 
   def get_ancestry(self):
     """Return a list of the CVSPaths leading from the root path to SELF.
@@ -208,8 +208,8 @@ class CVSDirectory(CVSPath):
     # This member is filled in by CollectData.close():
     self.empty_subdirectory_ids = []
 
-  def _calculate_filename(self):
-    """Return the filesystem path to this CVSPath in the CVS repository."""
+  def _calculate_rcs_path(self):
+    """Return the filesystem path in the CVS repo corresponding to SELF."""
 
     if self.parent_directory is None:
       return self.project.project_cvs_repos_path
@@ -306,8 +306,8 @@ class CVSFile(CVSPath):
 
     assert parent_directory is not None
 
-    # This member is needed by _calculate_filename(), which is called
-    # by CVSPath.__init__().  So initialize it before calling
+    # This member is needed by _calculate_rcs_path(), which is
+    # called by CVSPath.__init__().  So initialize it before calling
     # CVSPath.__init__().
     self._in_attic = in_attic
     CVSPath.__init__(self, id, project, parent_directory, basename)
@@ -329,8 +329,8 @@ class CVSFile(CVSPath):
     for file_property_setter in file_property_setters:
       file_property_setter.set_properties(self)
 
-  def _calculate_filename(self):
-    """Return the filesystem path to this CVSPath in the CVS repository."""
+  def _calculate_rcs_path(self):
+    """Return the filesystem path to the RCS file for this CVSFile."""
 
     if self._in_attic:
       return os.path.join(

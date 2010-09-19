@@ -189,8 +189,8 @@ class _RepositoryWalker(object):
 
     yield cvs_directory
 
-    # Map {cvs_file.basename : cvs_file.filename} for files directly
-    # in cvs_directory:
+    # Map {cvs_file.rcs_basename : cvs_file.filename} for files
+    # directly in cvs_directory:
     rcsfiles = {}
 
     attic_dir = None
@@ -211,13 +211,13 @@ class _RepositoryWalker(object):
           dirs.append(fname)
       elif fname.endswith(',v'):
         cvs_file = self._get_cvs_file(cvs_directory, fname)
-        rcsfiles[cvs_file.basename] = cvs_file.filename
+        rcsfiles[cvs_file.rcs_basename] = cvs_file.filename
         yield cvs_file
       else:
         # Silently ignore other files:
         pass
 
-    # Map {cvs_file.basename : cvs_file.filename} for files in an
+    # Map {cvs_file.rcs_basename : cvs_file.filename} for files in an
     # Attic directory within cvs_directory:
     attic_rcsfiles = {}
 
@@ -230,7 +230,7 @@ class _RepositoryWalker(object):
       for cvs_path in self._generate_attic_cvs_files(attic_directory):
         if isinstance(cvs_path, CVSFile) \
                and cvs_path.parent_directory == cvs_directory:
-          attic_rcsfiles[cvs_path.basename] = cvs_path.filename
+          attic_rcsfiles[cvs_path.rcs_basename] = cvs_path.filename
 
         yield cvs_path
 

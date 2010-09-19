@@ -157,7 +157,7 @@ class MimeMapper(FilePropertySetter):
     if self.propname in cvs_file.properties:
       return
 
-    basename, extension = os.path.splitext(cvs_file.basename)
+    basename, extension = os.path.splitext(cvs_file.rcs_basename)
 
     # Extension includes the dot, so strip it (will leave extension
     # empty if filename ends with a dot, which is ok):
@@ -315,7 +315,7 @@ class AutoPropsPropertySetter(FilePropertySetter):
     self.patterns.append(self.Pattern(self.transform_case(pattern), propdict))
 
   def get_propdict(self, cvs_file):
-    basename = self.transform_case(cvs_file.basename)
+    basename = self.transform_case(cvs_file.rcs_basename)
     propdict = {}
     for pattern in self.patterns:
       if pattern.match(basename):

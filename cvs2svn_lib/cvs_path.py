@@ -38,10 +38,10 @@ class CVSPath(object):
     parent_directory -- (CVSDirectory or None) the CVSDirectory
         containing this CVSPath.
 
-    basename -- (string) the base name of the filename path in the CVS
-        repository corresponding to this CVSPath (but with ',v'
-        removed for CVSFiles).  The basename of the root directory of
-        a project is ''.
+    rcs_basename -- (string) the base name of the filename path in the
+        CVS repository corresponding to this CVSPath (but with ',v'
+        removed for CVSFiles).  The rcs_basename of the root directory
+        of a project is ''.
 
     filename -- (string) the filesystem path to this CVSPath in the
         CVS repository.  This is in native format, and already
@@ -61,16 +61,16 @@ class CVSPath(object):
       'id',
       'project',
       'parent_directory',
-      'basename',
+      'rcs_basename',
       'ordinal',
       'filename',
       ]
 
-  def __init__(self, id, project, parent_directory, basename):
+  def __init__(self, id, project, parent_directory, rcs_basename):
     self.id = id
     self.project = project
     self.parent_directory = parent_directory
-    self.basename = basename
+    self.rcs_basename = rcs_basename
 
     # The filename used to be computed on demand, but it turned out to
     # be a hot path through the code in some cases.  It's used by
@@ -92,14 +92,14 @@ class CVSPath(object):
 
     return (
         self.id, self.project.id,
-        self.parent_directory, self.basename,
+        self.parent_directory, self.rcs_basename,
         self.ordinal,
         )
 
   def __setstate__(self, state):
     (
         self.id, project_id,
-        self.parent_directory, self.basename,
+        self.parent_directory, self.rcs_basename,
         self.ordinal,
         ) = state
     self.project = Ctx()._projects[project_id]
@@ -136,7 +136,7 @@ class CVSPath(object):
 
     """
 
-    return path_join(*[p.basename for p in self.get_ancestry()[1:]])
+    return path_join(*[p.rcs_basename for p in self.get_ancestry()[1:]])
 
   cvs_path = property(get_cvs_path)
 
@@ -146,7 +146,7 @@ class CVSPath(object):
     The return value contains the base names of all of the parent
     directories (except for the root directory) and SELF."""
 
-    return [p.basename for p in self.get_ancestry()[1:]]
+    return [p.rcs_basename for p in self.get_ancestry()[1:]]
 
   def __eq__(a, b):
     """Compare two CVSPath instances for equality.
@@ -188,9 +188,9 @@ class CVSDirectory(CVSPath):
     parent_directory -- (CVSDirectory or None) the CVSDirectory
         containing this CVSDirectory.
 
-    basename -- (string) the base name of the filename path in the CVS
-        repository corresponding to this CVSDirectory.  The basename
-        of the root directory of a project is ''.
+    rcs_basename -- (string) the base name of the filename path in the
+        CVS repository corresponding to this CVSDirectory.  The
+        rcs_basename of the root directory of a project is ''.
 
     ordinal -- (int) the order that this instance should be sorted
         relative to other CVSPath instances.  See CVSPath.ordinal.
@@ -204,10 +204,10 @@ class CVSDirectory(CVSPath):
 
   __slots__ = ['empty_subdirectory_ids']
 
-  def __init__(self, id, project, parent_directory, basename):
+  def __init__(self, id, project, parent_directory, rcs_basename):
     """Initialize a new CVSDirectory object."""
 
-    CVSPath.__init__(self, id, project, parent_directory, basename)
+    CVSPath.__init__(self, id, project, parent_directory, rcs_basename)
 
     # This member is filled in by CollectData.close():
     self.empty_subdirectory_ids = []
@@ -219,7 +219,7 @@ class CVSDirectory(CVSPath):
       return self.project.project_cvs_repos_path
     else:
       return os.path.join(
-          self.parent_directory.filename, self.basename
+          self.parent_directory.filename, self.rcs_basename
           )
 
   def __getstate__(self):
@@ -256,7 +256,7 @@ class CVSFile(CVSPath):
     parent_directory -- (CVSDirectory) the CVSDirectory containing
         this CVSFile.
 
-    basename -- (string) the base name of the RCS file in the CVS
+    rcs_basename -- (string) the base name of the RCS file in the CVS
         repository corresponding to this CVSPath (but with the ',v'
         removed).
 
@@ -305,7 +305,7 @@ class CVSFile(CVSPath):
       ]
 
   def __init__(
-        self, id, project, parent_directory, basename, in_attic,
+        self, id, project, parent_directory, rcs_basename, in_attic,
         executable, file_size, mode, description
         ):
     """Initialize a new CVSFile object."""
@@ -316,7 +316,7 @@ class CVSFile(CVSPath):
     # called by CVSPath.__init__().  So initialize it before calling
     # CVSPath.__init__().
     self._in_attic = in_attic
-    CVSPath.__init__(self, id, project, parent_directory, basename)
+    CVSPath.__init__(self, id, project, parent_directory, rcs_basename)
 
     self.executable = executable
     self.file_size = file_size
@@ -340,11 +340,11 @@ class CVSFile(CVSPath):
 
     if self._in_attic:
       return os.path.join(
-          self.parent_directory.filename, 'Attic', self.basename + ',v'
+          self.parent_directory.filename, 'Attic', self.rcs_basename + ',v'
           )
     else:
       return os.path.join(
-          self.parent_directory.filename, self.basename + ',v'
+          self.parent_directory.filename, self.rcs_basename + ',v'
           )
 
   def __getstate__(self):

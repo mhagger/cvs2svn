@@ -690,7 +690,7 @@ class _KeywordExpander:
     return 'not supported by cvs2svn'
 
   def rcsfile(self):
-    return self.cvs_rev.cvs_file.basename + ",v"
+    return self.cvs_rev.cvs_file.rcs_basename + ",v"
 
   def revision(self):
     return self.cvs_rev.rev

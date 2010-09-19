@@ -3173,8 +3173,8 @@ def attic_directory_conflict():
 
 
 @Cvs2SvnTestFunction
-def internal_co():
-  "verify that --use-internal-co works"
+def use_rcs():
+  "verify that --use-rcs and --use-internal-co agree"
 
   rcs_conv = ensure_conversion(
       'main', args=['--use-rcs', '--default-eol=native'],
@@ -4049,7 +4049,7 @@ test_list = [
 # 130:
     file_directory_conflict,
     attic_directory_conflict,
-    internal_co,
+    use_rcs,
     internal_co_exclude,
     internal_co_trunk_only,
     internal_co_keywords,

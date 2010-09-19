@@ -62,7 +62,7 @@ class _RepositoryWalker(object):
     Raise FatalError if the resulting filename would not be legal in
     SVN."""
 
-    filename = os.path.join(parent_directory.filename, basename)
+    filename = os.path.join(parent_directory.rcs_path, basename)
     try:
       Ctx().output_option.verify_filename_legal(basename[:-2])
     except IllegalSVNPathError, e:
@@ -78,7 +78,7 @@ class _RepositoryWalker(object):
       # If this file also exists outside of the attic, it's a fatal
       # error:
       non_attic_filename = os.path.join(
-          logical_parent_directory.filename, basename,
+          logical_parent_directory.rcs_path, basename,
           )
       if os.path.exists(non_attic_filename):
         raise FileInAndOutOfAtticException(non_attic_filename, filename)
@@ -144,10 +144,10 @@ class _RepositoryWalker(object):
 
     retained_attic_files = []
 
-    fnames = os.listdir(cvs_directory.filename)
+    fnames = os.listdir(cvs_directory.rcs_path)
     fnames.sort()
     for fname in fnames:
-      pathname = os.path.join(cvs_directory.filename, fname)
+      pathname = os.path.join(cvs_directory.rcs_path, fname)
       if os.path.isdir(pathname):
         if fname == '.svn':
           logger.debug(
@@ -189,7 +189,7 @@ class _RepositoryWalker(object):
 
     yield cvs_directory
 
-    # Map {cvs_file.rcs_basename : cvs_file.filename} for files
+    # Map {cvs_file.rcs_basename : cvs_file.rcs_path} for files
     # directly in cvs_directory:
     rcsfiles = {}
 
@@ -198,10 +198,10 @@ class _RepositoryWalker(object):
     # Non-Attic subdirectories of cvs_directory (to be recursed into):
     dirs = []
 
-    fnames = os.listdir(cvs_directory.filename)
+    fnames = os.listdir(cvs_directory.rcs_path)
     fnames.sort()
     for fname in fnames:
-      pathname = os.path.join(cvs_directory.filename, fname)
+      pathname = os.path.join(cvs_directory.rcs_path, fname)
       if os.path.isdir(pathname):
         if fname == 'Attic':
           attic_dir = fname
@@ -211,13 +211,13 @@ class _RepositoryWalker(object):
           dirs.append(fname)
       elif fname.endswith(',v'):
         cvs_file = self._get_cvs_file(cvs_directory, fname)
-        rcsfiles[cvs_file.rcs_basename] = cvs_file.filename
+        rcsfiles[cvs_file.rcs_basename] = cvs_file.rcs_path
         yield cvs_file
       else:
         # Silently ignore other files:
         pass
 
-    # Map {cvs_file.rcs_basename : cvs_file.filename} for files in an
+    # Map {cvs_file.rcs_basename : cvs_file.rcs_path} for files in an
     # Attic directory within cvs_directory:
     attic_rcsfiles = {}
 
@@ -230,7 +230,7 @@ class _RepositoryWalker(object):
       for cvs_path in self._generate_attic_cvs_files(attic_directory):
         if isinstance(cvs_path, CVSFile) \
                and cvs_path.parent_directory == cvs_directory:
-          attic_rcsfiles[cvs_path.rcs_basename] = cvs_path.filename
+          attic_rcsfiles[cvs_path.rcs_basename] = cvs_path.rcs_path
 
         yield cvs_path
 
@@ -251,14 +251,14 @@ class _RepositoryWalker(object):
               'of the following:\n'
               '    "%s"\n'
               '    "%s"' % (
-                  os.path.join(cvs_directory.filename, fname),
+                  os.path.join(cvs_directory.rcs_path, fname),
                   rcsfile_list[fname],
                   )
               )
 
     # Now recurse into the other subdirectories:
     for fname in dirs:
-      dirname = os.path.join(cvs_directory.filename, fname)
+      dirname = os.path.join(cvs_directory.rcs_path, fname)
 
       # Verify that the directory name does not contain any illegal
       # characters:

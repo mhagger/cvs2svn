@@ -205,7 +205,7 @@ class SVNRevisionCommit(SVNCommit):
     retval = []
     retval.append(SVNCommit.get_warning_summary(self) + '  Related files:')
     for cvs_rev in self.cvs_revs:
-      retval.append('  ' + cvs_rev.cvs_file.filename)
+      retval.append('  ' + cvs_rev.cvs_file.rcs_path)
     return '\n'.join(retval)
 
   def __str__(self):

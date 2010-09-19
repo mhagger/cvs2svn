@@ -269,7 +269,7 @@ class _SymbolDataCollector(object):
           "   branch '%s' already has name '%s',\n"
           "   cannot also have name '%s', ignoring the latter\n"
           % (warning_prefix,
-             self.cvs_file.filename, branch_number,
+             self.cvs_file.rcs_path, branch_number,
              branch_data.symbol.name, name)
           )
       return branch_data
@@ -299,7 +299,7 @@ class _SymbolDataCollector(object):
               "Symbol name '%s' is already used in '%s'.\n"
               "The unlabeled branch '%s' must be renamed using "
               "--symbol-transform."
-              % (name, self.cvs_file.filename, original_name,)
+              % (name, self.cvs_file.rcs_path, original_name,)
               )
           return dup_name
 
@@ -311,7 +311,7 @@ class _SymbolDataCollector(object):
           "The unlabeled branch '%s' in '%s' contains commits.\n"
           "It may not be ignored via a symbol transform.  (Use --exclude "
           "instead.)"
-          % (original_name, self.cvs_file.filename,)
+          % (original_name, self.cvs_file.rcs_path,)
           )
       # Retain the original name to allow the conversion to continue:
       name = original_name
@@ -350,14 +350,14 @@ class _SymbolDataCollector(object):
       self.pdc.log_symbol_transform(old_name, None)
       logger.verbose(
           "   symbol '%s'=%s ignored in %s"
-          % (old_name, revision, self.cvs_file.filename,)
+          % (old_name, revision, self.cvs_file.rcs_path,)
           )
     else:
       if name != old_name:
         self.pdc.log_symbol_transform(old_name, name)
         logger.verbose(
             "   symbol '%s'=%s transformed to '%s' in %s"
-            % (old_name, revision, name, self.cvs_file.filename,)
+            % (old_name, revision, name, self.cvs_file.rcs_path,)
             )
 
     return name
@@ -381,7 +381,7 @@ class _SymbolDataCollector(object):
             'In %r:\n'
             '    branch %r references invalid revision %s\n'
             '    and will be ignored.'
-            % (self.cvs_file.filename, name, revision,)
+            % (self.cvs_file.rcs_path, name, revision,)
             )
 
   def _eliminate_trivial_duplicate_defs(self, symbol_defs):
@@ -410,7 +410,7 @@ class _SymbolDataCollector(object):
         logger.verbose(
             "in %r:\n"
             "   symbol %s:%s defined multiple times; ignoring duplicates\n"
-            % (self.cvs_file.filename, name, revision,)
+            % (self.cvs_file.rcs_path, name, revision,)
             )
         dup_indexes.update(indexes[:-1])
 
@@ -443,7 +443,7 @@ class _SymbolDataCollector(object):
         # This symbol was defined multiple times.
         self.collect_data.record_fatal_error(
             "Multiple definitions of the symbol '%s' in '%s': %s" % (
-                name, self.cvs_file.filename,
+                name, self.cvs_file.rcs_path,
                 ' '.join([symbol_defs[i][1] for i in indexes]),
                 )
             )
@@ -573,7 +573,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     if not m:
       self.collect_data.record_fatal_error(
           'The default branch %s in file %r is not a valid branch number'
-          % (branch, self.cvs_file.filename,)
+          % (branch, self.cvs_file.rcs_path,)
           )
       return
 
@@ -584,7 +584,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       # punt:
       self.collect_data.record_fatal_error(
           'The default branch %s in file %r is not a top-level branch'
-          % (branch, self.cvs_file.filename,)
+          % (branch, self.cvs_file.rcs_path,)
           )
       return
 
@@ -629,7 +629,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
     if revision in self._rev_data:
       # This revision has already been seen.
       logger.error('File %r contains duplicate definitions of revision %s.'
-                  % (self.cvs_file.filename, revision,))
+                  % (self.cvs_file.rcs_path, revision,))
       raise RuntimeError()
 
     # Record basic information about the revision:
@@ -706,7 +706,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
             'In %r:\n'
             '    branch %r references non-existing revision %s\n'
             '    and will be ignored.'
-            % (self.cvs_file.filename, branch_data.symbol.name,
+            % (self.cvs_file.rcs_path, branch_data.symbol.name,
                branch_data.parent,))
         del self.sdc.branches_data[branch_data.branch_number]
       else:
@@ -748,7 +748,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
             '    the following tag(s) reference non-existing revision %s\n'
             '    and will be ignored:\n'
             '    %s' % (
-                self.cvs_file.filename, rev,
+                self.cvs_file.rcs_path, rev,
                 ', '.join([repr(tag_data.symbol.name)
                            for tag_data in tag_data_list]),))
         del self.sdc.tags_data[rev]
@@ -808,7 +808,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
           "%s: in '%s':\n"
           "   Deltatext block for revision %s appeared twice;\n"
           "   ignoring the second occurrence.\n"
-          % (warning_prefix, self.cvs_file.filename, revision,)
+          % (warning_prefix, self.cvs_file.rcs_path, revision,)
           )
       return
 
@@ -840,7 +840,7 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
       if isinstance(cvs_item, CVSRevision) and cvs_item.metadata_id is None:
         self.collect_data.record_fatal_error(
             '%r has no deltatext section for revision %s'
-            % (self.cvs_file.filename, cvs_item.rev,)
+            % (self.cvs_file.rcs_path, cvs_item.rev,)
             )
 
   def _determine_operation(self, rev_data):
@@ -1032,19 +1032,19 @@ class _ProjectDataCollector:
               )
 
   def process_file(self, cvs_file):
-    logger.normal(cvs_file.filename)
+    logger.normal(cvs_file.rcs_path)
     fdc = _FileDataCollector(self, cvs_file)
     try:
-      cvs2svn_rcsparse.parse(open(cvs_file.filename, 'rb'), fdc)
+      cvs2svn_rcsparse.parse(open(cvs_file.rcs_path, 'rb'), fdc)
     except (cvs2svn_rcsparse.common.RCSParseError, ValueError, RuntimeError):
       self.collect_data.record_fatal_error(
-          "%r is not a valid ,v file" % (cvs_file.filename,)
+          "%r is not a valid ,v file" % (cvs_file.rcs_path,)
           )
       # Abort the processing of this file, but let the pass continue
       # with other files:
       return
     except:
-      logger.warn("Exception occurred while parsing %s" % cvs_file.filename)
+      logger.warn("Exception occurred while parsing %s" % cvs_file.rcs_path)
       raise
     else:
       self.num_files += 1

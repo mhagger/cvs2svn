@@ -87,7 +87,7 @@ class ExternalBlobGenerator(RevisionCollector):
     # doesn't grow very large.  The default ASCII protocol is used so
     # that this works without changes on systems that distinguish
     # between text and binary files.
-    pickle.dump((cvs_file_items.cvs_file.filename, marks), self._popen.stdin)
+    pickle.dump((cvs_file_items.cvs_file.rcs_path, marks), self._popen.stdin)
     self._popen.stdin.flush()
 
     # Now that all CVSRevisions' revision_reader_tokens are set,

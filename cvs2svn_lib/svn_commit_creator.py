@@ -64,7 +64,7 @@ class SVNCommitCreator:
 
     if cvs_revs:
       cvs_revs.sort(
-          lambda a, b: cmp(a.cvs_file.filename, b.cvs_file.filename)
+          lambda a, b: cmp(a.cvs_file.rcs_path, b.cvs_file.rcs_path)
           )
       # Generate an SVNCommit for all of our default branch cvs_revs.
       yield SVNPostCommit(
@@ -96,7 +96,7 @@ class SVNCommitCreator:
 
     cvs_revs = list(changeset.iter_cvs_items())
     if cvs_revs:
-      cvs_revs.sort(lambda a, b: cmp(a.cvs_file.filename, b.cvs_file.filename))
+      cvs_revs.sort(lambda a, b: cmp(a.cvs_file.rcs_path, b.cvs_file.rcs_path))
       svn_commit = SVNPrimaryCommit(
           cvs_revs, timestamp, self.revnum_generator.gen_id()
           )

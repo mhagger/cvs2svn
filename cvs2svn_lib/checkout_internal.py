@@ -523,7 +523,7 @@ class _Sink(cvs2svn_rcsparse.Sink):
         except MalformedDeltaException, e:
           logger.error(
               'Malformed RCS delta in %s, revision %s: %s'
-              % (self.cvs_file_items.cvs_file.filename, revision, e)
+              % (self.cvs_file_items.cvs_file.rcs_path, revision, e)
               )
           raise RuntimeError()
         text_record = DeltaTextRecord(
@@ -612,7 +612,7 @@ class InternalRevisionCollector(RevisionCollector):
     self.text_record_db = TextRecordDatabase(self._delta_db, NullDatabase())
 
     cvs2svn_rcsparse.parse(
-        open(cvs_file_items.cvs_file.filename, 'rb'),
+        open(cvs_file_items.cvs_file.rcs_path, 'rb'),
         _Sink(self, cvs_file_items),
         )
 
@@ -800,7 +800,7 @@ class InternalRevisionReader(RevisionReader):
     except MalformedDeltaException, (msg):
       raise FatalError(
           'Malformed RCS delta in %s, revision %s: %s'
-          % (cvs_rev.cvs_file.filename, cvs_rev.rev, msg)
+          % (cvs_rev.cvs_file.rcs_path, cvs_rev.rev, msg)
           )
 
     keyword_handling = cvs_rev.get_property('_keyword_handling')

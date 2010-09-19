@@ -150,9 +150,9 @@ class SymbolMapper(SymbolTransform):
     self._map[key] = new_name
 
   def transform(self, cvs_file, symbol_name, revision):
-    # cvs_file.filename is guaranteed to already be normalised the way
+    # cvs_file.rcs_path is guaranteed to already be normalised the way
     # os.path.normpath() normalises paths.  No need to call it again.
-    cvs_filename = os.path.normcase(cvs_file.filename)
+    cvs_filename = os.path.normcase(cvs_file.rcs_path)
     return self._map.get(
         (cvs_filename, symbol_name, revision), symbol_name
         )
@@ -206,9 +206,9 @@ class SubtreeSymbolMapper(SymbolTransform):
       # No rules for that symbol name
       return symbol_name
 
-    # cvs_file.filename is guaranteed to already be normalised the way
+    # cvs_file.rcs_path is guaranteed to already be normalised the way
     # os.path.normpath() normalises paths.  No need to call it again.
-    cvs_path = os.path.normcase(cvs_file.filename)
+    cvs_path = os.path.normcase(cvs_file.rcs_path)
     while True:
       try:
         return symbol_map[cvs_path]
@@ -268,7 +268,7 @@ class SubtreeSymbolTransform(SymbolTransform):
     # that can exceed 100,000,000 calls.
     #
 
-    # cvs_file.filename is guaranteed to already be normalised the way
+    # cvs_file.rcs_path is guaranteed to already be normalised the way
     # os.path.normpath() normalises paths.  So we don't need to call
     # os.path.normpath() again.  (The os.path.normpath() function does
     # quite a lot, so it's expensive).
@@ -276,7 +276,7 @@ class SubtreeSymbolTransform(SymbolTransform):
     # os.path.normcase is a no-op on POSIX systems (and therefore fast).
     # Even on Windows it's only a memory allocation and case-change, it
     # should be quite fast.
-    cvs_path = os.path.normcase(cvs_file.filename)
+    cvs_path = os.path.normcase(cvs_file.rcs_path)
 
     # Do most of the work in a single call, without allocating memory.
     if not cvs_path.startswith(self.__subtree):

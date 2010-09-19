@@ -48,7 +48,7 @@ class RCSRevisionReader(RevisionReader):
         ]
     if cvs_rev.get_property('_keyword_handling') == 'collapsed':
       pipe_cmd.append('-kk')
-    pipe_cmd.append(cvs_rev.cvs_file.filename)
+    pipe_cmd.append(cvs_rev.cvs_file.rcs_path)
     data = get_command_output(pipe_cmd)
 
     if Ctx().decode_apple_single:

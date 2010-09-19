@@ -490,7 +490,7 @@ class CVSFileItems(object):
     if rev_1_2_id is not None:
       raise VendorBranchError(
           'File \'%s\' has default branch=%s but also a revision %s'
-          % (self.cvs_file.filename,
+          % (self.cvs_file.rcs_path,
              vendor_lod_items.cvs_branch.branch_number, self[rev_1_2_id].rev,)
           )
 

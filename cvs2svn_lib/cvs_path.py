@@ -43,7 +43,7 @@ class CVSPath(object):
         removed for CVSFiles).  The rcs_basename of the root directory
         of a project is ''.
 
-    filename -- (string) the filesystem path to this CVSPath in the
+    rcs_path -- (string) the filesystem path to this CVSPath in the
         CVS repository.  This is in native format, and already
         normalised the way os.path.normpath() normalises paths.  It
         starts with the repository path passed to
@@ -63,7 +63,7 @@ class CVSPath(object):
       'parent_directory',
       'rcs_basename',
       'ordinal',
-      'filename',
+      'rcs_path',
       ]
 
   def __init__(self, id, project, parent_directory, rcs_basename):
@@ -72,7 +72,7 @@ class CVSPath(object):
     self.parent_directory = parent_directory
     self.rcs_basename = rcs_basename
 
-    # The filename used to be computed on demand, but it turned out to
+    # The rcs_path used to be computed on demand, but it turned out to
     # be a hot path through the code in some cases.  It's used by
     # SubtreeSymbolTransform and similar transforms, so it's called at
     # least:
@@ -85,7 +85,7 @@ class CVSPath(object):
     # could add about 10 minutes to the cvs2svn runtime.
     #
     # So now we precalculate this and just return it.
-    self.filename = os.path.normpath(self._calculate_rcs_path())
+    self.rcs_path = os.path.normpath(self._calculate_rcs_path())
 
   def __getstate__(self):
     """This method must only be called after ordinal has been set."""
@@ -103,7 +103,7 @@ class CVSPath(object):
         self.ordinal,
         ) = state
     self.project = Ctx()._projects[project_id]
-    self.filename = os.path.normpath(self._calculate_rcs_path())
+    self.rcs_path = os.path.normpath(self._calculate_rcs_path())
 
   def get_ancestry(self):
     """Return a list of the CVSPaths leading from the root path to SELF.
@@ -219,7 +219,7 @@ class CVSDirectory(CVSPath):
       return self.project.project_cvs_repos_path
     else:
       return os.path.join(
-          self.parent_directory.filename, self.rcs_basename
+          self.parent_directory.rcs_path, self.rcs_basename
           )
 
   def __getstate__(self):
@@ -290,8 +290,9 @@ class CVSFile(CVSPath):
         purposes.
 
   PARENT_DIRECTORY might contain an 'Attic' component if it should be
-  retained in the SVN repository; i.e., if the same filename exists out
-  of Attic and the --retain-conflicting-attic-files option was specified.
+  retained in the SVN repository; i.e., if the same filename exists
+  out of Attic and the --retain-conflicting-attic-files option was
+  specified.
 
   """
 
@@ -340,11 +341,11 @@ class CVSFile(CVSPath):
 
     if self._in_attic:
       return os.path.join(
-          self.parent_directory.filename, 'Attic', self.rcs_basename + ',v'
+          self.parent_directory.rcs_path, 'Attic', self.rcs_basename + ',v'
           )
     else:
       return os.path.join(
-          self.parent_directory.filename, self.rcs_basename + ',v'
+          self.parent_directory.rcs_path, self.rcs_basename + ',v'
           )
 
   def __getstate__(self):

@@ -481,7 +481,7 @@ class FilterSymbolsPass(Pass):
 
     # Process the cvs items store one file at a time:
     for cvs_file_items in cvs_item_store.iter_cvs_file_items():
-      logger.verbose(cvs_file_items.cvs_file.filename)
+      logger.verbose(cvs_file_items.cvs_file.rcs_path)
       cvs_file_items.filter_excluded_symbols()
       cvs_file_items.mutate_symbols()
       cvs_file_items.adjust_parents()

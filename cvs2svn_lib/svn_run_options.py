@@ -45,7 +45,9 @@ class SVNEOLFixPropertySetter(FilePropertySetter):
   """Set _eol_fix property.
 
   This keyword is used to tell the RevisionReader how to munge EOLs
-  when generating the fulltext, based on how svn:eol-style is set."""
+  when generating the fulltext, based on how svn:eol-style is set.  If
+  svn:eol-style is not set, it does _eol_style to None, thereby
+  disabling any EOL munging."""
 
   # A mapping from the value of the svn:eol-style property to the EOL
   # string that should appear in a dumpfile:
@@ -62,6 +64,10 @@ class SVNEOLFixPropertySetter(FilePropertySetter):
     if eol_style:
       self.maybe_set_property(
           cvs_file, '_eol_fix', self.EOL_REPLACEMENTS[eol_style]
+          )
+    else:
+      self.maybe_set_property(
+          cvs_file, '_eol_fix', None
           )
 
 

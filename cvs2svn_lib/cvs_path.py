@@ -273,7 +273,7 @@ class CVSFile(CVSPath):
 
     file_size -- (long) size of the RCS file in bytes.
 
-    mode -- (string or None) 'kkv', 'kb', etc., as read from the CVS
+    mode -- (string or None) 'kv', 'b', etc., as read from the CVS
         file.
 
     description -- (string or None) the file description as read from

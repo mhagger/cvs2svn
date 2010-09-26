@@ -35,22 +35,13 @@ class AbstractRCSRevisionReader(RevisionReader):
 
     raise NotImplementedError()
 
-  def select_k_option(self, cvs_rev):
-    """Return the '-k' option to be used for CVS_REV.
-
-    Return a list containing any '-k' option that should be used when
-    checking out content for CVS_REV.  If no option is needed, return
-    an empty list."""
-
-    if cvs_rev.get_property('_keyword_handling') == 'collapsed':
-      return ['-kk']
-    else:
-      return []
-
   def get_content(self, cvs_rev):
-    data = get_command_output(
-        self.get_pipe_command(cvs_rev, self.select_k_option(cvs_rev))
-        )
+    if cvs_rev.get_property('_keyword_handling') == 'collapsed':
+      k_option = ['-kk']
+    else:
+      k_option = []
+
+    data = get_command_output(self.get_pipe_command(cvs_rev, k_option))
 
     if Ctx().decode_apple_single:
       # Insert a filter to decode any files that are in AppleSingle

@@ -44,8 +44,8 @@ from cvs2svn_lib.property_setters import FilePropertySetter
 class SVNEOLFixPropertySetter(FilePropertySetter):
   """Set _eol_fix property.
 
-  This keyword is used to tell the RevisionReader whether it has to
-  munge EOLs when generating the fulltext."""
+  This keyword is used to tell the RevisionReader how to munge EOLs
+  when generating the fulltext, based on how svn:eol-style is set."""
 
   # A mapping from the value of the svn:eol-style property to the EOL
   # string that should appear in a dumpfile:
@@ -62,17 +62,17 @@ class SVNEOLFixPropertySetter(FilePropertySetter):
     if self.propname in cvs_file.properties:
       return
 
-    # Convert all EOLs to LFs if neccessary
+    # Fix EOLs if necessary:
     eol_style = cvs_file.properties.get('svn:eol-style', None)
     if eol_style:
       cvs_file.properties[self.propname] = self.EOL_REPLACEMENTS[eol_style]
 
 
 class SVNKeywordHandlingPropertySetter(FilePropertySetter):
-  """Set cvs2svn:_keyword_handling=collapsed if svn:keywords is set.
+  """Set _keyword_handling=collapsed based on the file mode and svn:keywords.
 
-  This keyword is used to tell the RevisionReader whether it has to
-  collapse RCS keywords when generating the fulltext."""
+  This setting tells the RevisionReader that it has to collapse RCS
+  keywords when generating the fulltext."""
 
   propname = '_keyword_handling'
 
@@ -84,12 +84,12 @@ class SVNKeywordHandlingPropertySetter(FilePropertySetter):
       # Leave keywords in the form that they were checked in.
       cvs_file.properties[self.propname] = 'untouched'
     elif cvs_file.mode == 'k':
-      # The file is set in CVS to have keywords collapsed on checkout,
-      # so we do the same:
+      # This mode causes CVS to collapse keywords on checkout, so we
+      # do the same:
       cvs_file.properties[self.propname] = 'collapsed'
     elif cvs_file.properties.get('svn:keywords'):
       # Subversion is going to expand the keywords, so they have to be
-      # collapsed in the repository:
+      # collapsed in the dumpfile:
       cvs_file.properties[self.propname] = 'collapsed'
     else:
       # CVS expands keywords, so we will too.

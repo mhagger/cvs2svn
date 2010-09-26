@@ -58,10 +58,7 @@ class KeywordHandlingPropertySetter(FilePropertySetter):
     self.value = value
 
   def set_properties(self, cvs_file):
-    if self.propname in cvs_file.properties:
-      return
-
-    cvs_file.properties[self.propname] = self.value
+    self.maybe_set_property(cvs_file, self.propname, self.value)
 
 
 class DVCSRunOptions(RunOptions):

@@ -56,16 +56,13 @@ class SVNEOLFixPropertySetter(FilePropertySetter):
       'native' : '\n',
       }
 
-  propname = '_eol_fix'
-
   def set_properties(self, cvs_file):
-    if self.propname in cvs_file.properties:
-      return
-
     # Fix EOLs if necessary:
     eol_style = cvs_file.properties.get('svn:eol-style', None)
     if eol_style:
-      cvs_file.properties[self.propname] = self.EOL_REPLACEMENTS[eol_style]
+      self.maybe_set_property(
+          cvs_file, '_eol_fix', self.EOL_REPLACEMENTS[eol_style]
+          )
 
 
 class SVNKeywordHandlingPropertySetter(FilePropertySetter):
@@ -74,26 +71,23 @@ class SVNKeywordHandlingPropertySetter(FilePropertySetter):
   This setting tells the RevisionReader that it has to collapse RCS
   keywords when generating the fulltext."""
 
-  propname = '_keyword_handling'
-
   def set_properties(self, cvs_file):
-    if self.propname in cvs_file.properties:
-      return
-
     if cvs_file.mode == 'b' or cvs_file.mode == 'o':
       # Leave keywords in the form that they were checked in.
-      cvs_file.properties[self.propname] = 'untouched'
+      value = 'untouched'
     elif cvs_file.mode == 'k':
       # This mode causes CVS to collapse keywords on checkout, so we
       # do the same:
-      cvs_file.properties[self.propname] = 'collapsed'
+      value = 'collapsed'
     elif cvs_file.properties.get('svn:keywords'):
       # Subversion is going to expand the keywords, so they have to be
       # collapsed in the dumpfile:
-      cvs_file.properties[self.propname] = 'collapsed'
+      value = 'collapsed'
     else:
       # CVS expands keywords, so we will too.
-      cvs_file.properties[self.propname] = 'expanded'
+      value = 'expanded'
+
+    self.maybe_set_property(cvs_file, '_keyword_handling', value)
 
 
 class SVNRunOptions(RunOptions):

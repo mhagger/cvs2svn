@@ -18,14 +18,10 @@
 
 
 from cvs2svn_lib.common import FatalError
-from cvs2svn_lib.common import canonicalize_eol
 from cvs2svn_lib.process import check_command_runs
-from cvs2svn_lib.process import get_command_output
 from cvs2svn_lib.process import CommandFailedException
-from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.revision_manager import RevisionReader
 from cvs2svn_lib.abstract_rcs_revision_manager import AbstractRCSRevisionReader
-from cvs2svn_lib.apple_single_filter import get_maybe_apple_single
 
 
 class CVSRevisionReader(AbstractRCSRevisionReader):
@@ -109,19 +105,5 @@ class CVSRevisionReader(AbstractRCSRevisionReader):
         ] + self.select_k_option(cvs_rev) + [
         project.cvs_module + cvs_rev.cvs_path
         ]
-
-  def get_content(self, cvs_rev):
-    data = get_command_output(self.get_pipe_command(cvs_rev))
-
-    if Ctx().decode_apple_single:
-      # Insert a filter to decode any files that are in AppleSingle
-      # format:
-      data = get_maybe_apple_single(data)
-
-    eol_fix = cvs_rev.get_property('_eol_fix')
-    if eol_fix:
-      data = canonicalize_eol(data, eol_fix)
-
-    return data
 
 

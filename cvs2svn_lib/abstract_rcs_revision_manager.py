@@ -17,11 +17,20 @@
 """Base class for RCSRevisionReader and CVSRevisionReader."""
 
 
+from cvs2svn_lib.common import canonicalize_eol
+from cvs2svn_lib.process import get_command_output
+from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.revision_manager import RevisionReader
+from cvs2svn_lib.apple_single_filter import get_maybe_apple_single
 
 
 class AbstractRCSRevisionReader(RevisionReader):
   """A base class for RCSRevisionReader and CVSRevisionReader."""
+
+  def get_pipe_command(self, cvs_rev):
+    """Return the command that is needed to get the contents for CVS_REV."""
+
+    raise NotImplementedError()
 
   def select_k_option(self, cvs_rev):
     """Return the '-k' option to be used for CVS_REV.
@@ -34,5 +43,19 @@ class AbstractRCSRevisionReader(RevisionReader):
       return ['-kk']
     else:
       return []
+
+  def get_content(self, cvs_rev):
+    data = get_command_output(self.get_pipe_command(cvs_rev))
+
+    if Ctx().decode_apple_single:
+      # Insert a filter to decode any files that are in AppleSingle
+      # format:
+      data = get_maybe_apple_single(data)
+
+    eol_fix = cvs_rev.get_property('_eol_fix')
+    if eol_fix:
+      data = canonicalize_eol(data, eol_fix)
+
+    return data
 
 

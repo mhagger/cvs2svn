@@ -1,0 +1,106 @@
+This file collects information about how the various VCSs deal with
+keyword expansion, EOL handling, and file permissions.
+
+
+CVS/RCS
+=======
+
+There are several keyword expansion modes that can be set on files.
+These options also affect whether EOLs are all converted to/from the
+local convention.  The following keywords are recognized: Author,
+CVSHeader (CVS only), Date, Header, Id, Locker, Name, RCSfile,
+Revision, Source, State, and Log.  ("Log" is a special case because
+its expansion is irreversible.)  Keyword names are case sensitive.
+There is also a provision to define "Local keywords", which use a
+user-defined name but expand as one of the standard keywords.
+
+These modes are selected via a "-k" command-line option, so for
+example the "kv" option is selected using the option "-kkv".
+
+The available modes are:
+
+* kv, kvl: Expand keywords, or expand them including locker name.
+  Also munge line endings.
+
+* k: Include keywords in unexpanded form, e.g. "$Id$".  Also munge
+  line endings.
+
+* o: Leave keywords in the form that they were checked in.  Also munge
+  line endings.
+
+* v: Generate only keyword values instead of the full keyword string;
+  e.g., "$Revision$" -> "5.7".  (This is mostly useful for export.)
+  Also munge line endings.
+
+* b: Leave keywords in the form that they were checked in, inhibit
+  munging of line endings between canonical LF to the local
+  convention, and prevent merging of file differences.
+
+Whether or not a file is executable is determined from the executable
+bit of the corresponding RCS file in the repository.
+
+Please note that CVSNT handles file modes differently: it supports
+additional modes, and it allows the file mode to differ from one file
+revision to another.  This is the main reason that cvs2svn doesn't
+work reliably with CVSNT repositories.
+
+
+Subversion
+==========
+
+* svn:executable: If this property is set, the file is marked as
+  executable upon checkout.
+
+* svn:mime-type: Used to decide whether line-based merging is safe,
+  whether to show diff-based deltas between revisions, etc.
+
+* svn:keywords: List the keywords that will be expanded in the file.
+
+* svn:eol-style: Specifies how to manipulate EOL characters.  If this
+  property is set, then the file can be committed to Subversion using
+  any mix of EOL conventions, and will be normalized to the LF
+  internal format in the Subversion repository.  On checkout or
+  export, the LFs will be converted to the specified EOL style.
+  Dumpfiles always contain the text in LF format (?).  Possible
+  values:
+
+  * LF, CRLF, CR:
+
+    On commit: text can contain any mixture of EOL styles.
+
+    svnadmin dump: file text contains the specified EOL format.
+
+    svnadmin load: TO BE DETERMINED
+
+  * native:
+
+    On commit: text can use any EOL style, but lines must be
+    consistent.
+
+    svnadmin dump: file text contains the canonical LF format.
+
+    svnadmin load: TO BE DETERMINED
+
+
+Git
+===
+
+* The executable status of a file is determined by a file mode
+  attribute in the fast-import file.
+
+* Keywords: Not obvious what to do.  There is support for expanding an
+  $Id$ keyword via the gitattributes mechanism.  Others could only be
+  supported via custom-written filters.
+
+* EOL style: Normally, git does not do any line-end conversion.
+  However, there is a way to use gitattributes to mark particular
+  files as text files, and to use the configuration settings of
+  core.autocrlf and core.safecrlf to affect conversions between LF and
+  CRLF formats.
+
+* The "diff" gitattribute can be used to tell how to generate diffs
+  for a file (otherwise a heuristic is used).  This attribute can be
+  used to force a file to be treated as text/binary, or tell what
+  "diff driver" to use.
+
+

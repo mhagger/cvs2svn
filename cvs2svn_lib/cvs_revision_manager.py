@@ -97,9 +97,9 @@ class CVSRevisionReader(AbstractRCSRevisionReader):
         self.cvs_executable,
         )
 
-  def get_content(self, cvs_rev):
+  def get_pipe_command(self, cvs_rev):
     project = cvs_rev.cvs_file.project
-    pipe_cmd = [
+    return [
         self.cvs_executable
         ] + self.global_options + [
         '-d', ':local:' + project.cvs_repository_root,
@@ -109,7 +109,9 @@ class CVSRevisionReader(AbstractRCSRevisionReader):
         ] + self.select_k_option(cvs_rev) + [
         project.cvs_module + cvs_rev.cvs_path
         ]
-    data = get_command_output(pipe_cmd)
+
+  def get_content(self, cvs_rev):
+    data = get_command_output(self.get_pipe_command(cvs_rev))
 
     if Ctx().decode_apple_single:
       # Insert a filter to decode any files that are in AppleSingle

@@ -24,10 +24,11 @@ from cvs2svn_lib.process import get_command_output
 from cvs2svn_lib.process import CommandFailedException
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.revision_manager import RevisionReader
+from cvs2svn_lib.abstract_rcs_revision_manager import AbstractRCSRevisionReader
 from cvs2svn_lib.apple_single_filter import get_maybe_apple_single
 
 
-class RCSRevisionReader(RevisionReader):
+class RCSRevisionReader(AbstractRCSRevisionReader):
   """A RevisionReader that reads the contents via RCS."""
 
   def __init__(self, co_executable):
@@ -45,10 +46,9 @@ class RCSRevisionReader(RevisionReader):
         '-q',
         '-x,v',
         '-p%s' % (cvs_rev.rev,)
+        ] + self.select_k_option(cvs_rev) + [
+        cvs_rev.cvs_file.rcs_path
         ]
-    if cvs_rev.get_property('_keyword_handling') == 'collapsed':
-      pipe_cmd.append('-kk')
-    pipe_cmd.append(cvs_rev.cvs_file.rcs_path)
     data = get_command_output(pipe_cmd)
 
     if Ctx().decode_apple_single:

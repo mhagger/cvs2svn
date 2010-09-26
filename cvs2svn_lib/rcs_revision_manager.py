@@ -35,13 +35,13 @@ class RCSRevisionReader(AbstractRCSRevisionReader):
                        'Please check that co is installed and in your PATH\n'
                        '(it is a part of the RCS software).' % (e,))
 
-  def get_pipe_command(self, cvs_rev):
+  def get_pipe_command(self, cvs_rev, k_option):
     return [
         self.co_executable,
         '-q',
         '-x,v',
         '-p%s' % (cvs_rev.rev,)
-        ] + self.select_k_option(cvs_rev) + [
+        ] + k_option + [
         cvs_rev.cvs_file.rcs_path
         ]
 

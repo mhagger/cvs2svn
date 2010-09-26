@@ -93,7 +93,7 @@ class CVSRevisionReader(AbstractRCSRevisionReader):
         self.cvs_executable,
         )
 
-  def get_pipe_command(self, cvs_rev):
+  def get_pipe_command(self, cvs_rev, k_option):
     project = cvs_rev.cvs_file.project
     return [
         self.cvs_executable
@@ -102,7 +102,7 @@ class CVSRevisionReader(AbstractRCSRevisionReader):
         'co',
         '-r' + cvs_rev.rev,
         '-p'
-        ] + self.select_k_option(cvs_rev) + [
+        ] + k_option + [
         project.cvs_module + cvs_rev.cvs_path
         ]
 

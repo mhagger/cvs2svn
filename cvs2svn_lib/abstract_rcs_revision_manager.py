@@ -27,8 +27,11 @@ from cvs2svn_lib.apple_single_filter import get_maybe_apple_single
 class AbstractRCSRevisionReader(RevisionReader):
   """A base class for RCSRevisionReader and CVSRevisionReader."""
 
-  def get_pipe_command(self, cvs_rev):
-    """Return the command that is needed to get the contents for CVS_REV."""
+  def get_pipe_command(self, cvs_rev, k_option):
+    """Return the command that is needed to get the contents for CVS_REV.
+
+    K_OPTION is a list containing the '-k' option that is needed, if
+    any."""
 
     raise NotImplementedError()
 
@@ -45,7 +48,9 @@ class AbstractRCSRevisionReader(RevisionReader):
       return []
 
   def get_content(self, cvs_rev):
-    data = get_command_output(self.get_pipe_command(cvs_rev))
+    data = get_command_output(
+        self.get_pipe_command(cvs_rev, self.select_k_option(cvs_rev))
+        )
 
     if Ctx().decode_apple_single:
       # Insert a filter to decode any files that are in AppleSingle

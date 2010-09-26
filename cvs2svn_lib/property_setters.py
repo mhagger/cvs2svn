@@ -38,6 +38,14 @@ def _preserve_case(s):
 class FilePropertySetter(object):
   """Abstract class for objects that set properties on a CVSFile."""
 
+  def maybe_set_property(self, cvs_file, name, value):
+    """Set a property on CVS_FILE if it does not already have a value.
+
+    This method is here for the convenience of derived classes."""
+
+    if name not in cvs_file.properties:
+      cvs_file.properties[name] = value
+
   def set_properties(self, cvs_file):
     """Set any properties needed for CVS_FILE.
 

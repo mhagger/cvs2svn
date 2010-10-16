@@ -2414,8 +2414,8 @@ def requires_cvs():
   if cl_contents.find("gregh\n//\n//Integration for locks") < 0:
     raise Failure()
 
-  if not (conv.logs[21].author == "William Lyon Phelps III" and
-          conv.logs[20].author == "j random"):
+  if not (conv.logs[6].author == "William Lyon Phelps III" and
+          conv.logs[5].author == "j random"):
     raise Failure()
 
 
@@ -3256,8 +3256,8 @@ def requires_internal_co():
   if atsign_contents[-1:] == "@":
     raise Failure()
 
-  if not (conv.logs[21].author == "William Lyon Phelps III" and
-          conv.logs[20].author == "j random"):
+  if not (conv.logs[6].author == "William Lyon Phelps III" and
+          conv.logs[5].author == "j random"):
     raise Failure()
 
 

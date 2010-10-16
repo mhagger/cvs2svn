@@ -21,11 +21,25 @@ from cvs2svn_lib.common import canonicalize_eol
 from cvs2svn_lib.process import get_command_output
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.revision_manager import RevisionReader
+from cvs2svn_lib.keyword_expander import expand_keywords
+from cvs2svn_lib.keyword_expander import collapse_keywords
 from cvs2svn_lib.apple_single_filter import get_maybe_apple_single
 
 
 class AbstractRCSRevisionReader(RevisionReader):
   """A base class for RCSRevisionReader and CVSRevisionReader."""
+
+  # A map from (eol_fix, keyword_handling) to ('-k' option needed for
+  # RCS/CVS, explicit_keyword_handling).
+  _text_options = {
+      (False, 'collapsed') : (['-kk'], None),
+      (False, 'expanded') : ([], None),
+      (False, 'untouched') : ([], None),
+
+      (True, 'collapsed') : (['-kk'], None),
+      (True, 'expanded') : ([], None),
+      (True, 'untouched') : ([], None),
+      }
 
   def get_pipe_command(self, cvs_rev, k_option):
     """Return the command that is needed to get the contents for CVS_REV.
@@ -36,10 +50,21 @@ class AbstractRCSRevisionReader(RevisionReader):
     raise NotImplementedError()
 
   def get_content(self, cvs_rev):
-    if cvs_rev.get_property('_keyword_handling') == 'collapsed':
-      k_option = ['-kk']
-    else:
-      k_option = []
+    # Is EOL fixing requested?
+    eol_fix = cvs_rev.get_property('_eol_fix') or None
+
+    # How do we want keywords to be handled?
+    keyword_handling = cvs_rev.get_property('_keyword_handling') or None
+
+    try:
+      (k_option, explicit_keyword_handling) = self._text_options[
+          bool(eol_fix), keyword_handling
+          ]
+    except KeyError:
+      raise FatalError(
+          'Undefined _keyword_handling property (%r) for %s'
+          % (keyword_handling, cvs_rev,)
+          )
 
     data = get_command_output(self.get_pipe_command(cvs_rev, k_option))
 
@@ -48,7 +73,11 @@ class AbstractRCSRevisionReader(RevisionReader):
       # format:
       data = get_maybe_apple_single(data)
 
-    eol_fix = cvs_rev.get_property('_eol_fix')
+    if explicit_keyword_handling == 'expanded':
+      data = expand_keywords(data, cvs_rev)
+    elif explicit_keyword_handling == 'collapsed':
+      data = collapse_keywords(data)
+
     if eol_fix:
       data = canonicalize_eol(data, eol_fix)
 

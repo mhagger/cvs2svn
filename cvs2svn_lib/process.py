@@ -21,6 +21,7 @@ import subprocess
 
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import CommandError
+from cvs2svn_lib.log import logger
 
 
 def call_command(command, **kw):
@@ -30,6 +31,7 @@ def call_command(command, **kw):
   with a non-zero exit code.  Pass KW as keyword arguments to
   subprocess.call()."""
 
+  logger.debug('Running command %r' % (command,))
   try:
     retcode = subprocess.call(command, **kw)
     if retcode < 0:
@@ -67,6 +69,7 @@ def check_command_runs(command, commandname):
   doesn't output anything to stderr.  If any of these conditions is
   not met, raise a CommandFailedException describing the problem."""
 
+  logger.debug('Running command %r' % (command,))
   try:
     pipe = subprocess.Popen(
         command,
@@ -96,6 +99,7 @@ def get_command_output(command):
 
   """A file-like object from which revision contents can be read."""
 
+  logger.debug('Running command %r' % (command,))
   pipe = subprocess.Popen(
       command,
       stdin=subprocess.PIPE,

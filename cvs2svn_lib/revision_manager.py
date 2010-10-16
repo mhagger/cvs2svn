@@ -98,13 +98,38 @@ class RevisionReader(object):
   def get_content(self, cvs_rev):
     """Return the contents of CVS_REV.
 
-    CVS_REV is a CVSRevision.  If CVS_REV has a property
-    _keyword_handling=='collapsed' then collapse RCS/CVS keywords in
-    the output.  If Ctx().decode_apple_single is set, then extract the
-    data fork from any content that looks like AppleSingle format.  If
-    CVS_REV has a property _eol_fix then convert all end-of-line
-    sequences to the value of that property (typically '\n' or
-    '\r\n')."""
+    CVS_REV is a CVSRevision.  The way that the contents are extracted
+    is influenced by properties that are set on CVS_REV:
+
+    * The CVS_REV property _keyword_handling specifies how RCS/CVS
+      keywords should be handled:
+
+      * 'collapsed' -- collapse RCS/CVS keywords in the output; e.g.,
+        '$Author: jrandom $' -> '$Author$'.
+
+      * 'expanded' -- expand RCS/CVS keywords in the output; e.g.,
+        '$Author$' -> '$Author: jrandom $'.
+
+      * 'untouched' -- leave RCS/CVS keywords untouched.  For a file
+        that had keyword expansion enabled in CVS, this typically
+        means that the keyword comes out expanded as for the
+        *previous* revision, because CVS expands keywords on checkout,
+        not checkin.
+
+      * unset -- undefined behavior; depends on which revision manager
+        is being used.
+
+    * The CVS_REV property _eol_fix specifies how EOL sequences should
+      be handled in the output.  If the property is unset or empty,
+      then leave EOL sequences untouched.  If it is non-empty, then
+      convert all end-of-line sequences to the value of that property
+      (typically '\n' or '\r\n').
+
+    See doc/properties.txt and doc/text-transformations.txt for more
+    information.
+
+    If Ctx().decode_apple_single is set, then extract the data fork
+    from any content that looks like AppleSingle format."""
 
     raise NotImplementedError()
 

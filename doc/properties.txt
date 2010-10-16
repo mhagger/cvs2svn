@@ -29,8 +29,13 @@ internal use of cvs2svn.
 The properties can be used by backends for any purpose.  Currently,
 they are used for two purposes:
 
-1. Passing RevisionReaders information about how to check out a file
-   revision's contents:
+1. Passing RevisionReaders information about how a file revision's
+   contents should be transformed before being written to the new VCS.
+   Please note that this does not necessarily correspond to how the
+   revision contents will look after being checked out of the new VCS;
+   for example, Subversion requires keywords to be *unexpanded* in the
+   dumpfile stream if Subversion is going to expand them.  These
+   properties are:
 
        _keyword_handling -- How should RCS keywords be handled?
 
@@ -45,7 +50,7 @@ they are used for two purposes:
 
            'deleted' -- To be implemented
 
-       _eol_fix -- Should end-of-line sequences be fixed before
+       _eol_fix -- Should end-of-line sequences be made uniform before
            committing to the target VCS?  If this property is set to a
            non-empty value, then every end-of-line character sequence
            ('\n', '\r\n', or '\r') is converted to the specified value

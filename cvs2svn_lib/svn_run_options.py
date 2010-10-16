@@ -72,7 +72,7 @@ class SVNEOLFixPropertySetter(FilePropertySetter):
 
 
 class SVNKeywordHandlingPropertySetter(FilePropertySetter):
-  """Set _keyword_handling=collapsed based on the file mode and svn:keywords.
+  """Set _keyword_handling property based on the file mode and svn:keywords.
 
   This setting tells the RevisionReader that it has to collapse RCS
   keywords when generating the fulltext."""

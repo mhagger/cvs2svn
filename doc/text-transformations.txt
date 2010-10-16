@@ -22,11 +22,11 @@ The available modes are:
 * kv, kvl: Expand keywords, or expand them including locker name.
   Also munge line endings.
 
-* k: Include keywords in unexpanded form, e.g. "$Id$".  Also munge
-  line endings.
+* k: Collapse keywords (e.g. "$Revision: 1.2 $ -> "$Revision$"), except
+  for the $Log$ option, which is expanded.  Also munge line endings.
 
-* o: Leave keywords in the form that they were checked in.  Also munge
-  line endings.
+* o: Leave keywords (including the $Log$ keyword) in the form that
+  they were checked in.  Also munge line endings.
 
 * v: Generate only keyword values instead of the full keyword string;
   e.g., "$Revision$" -> "5.7".  (This is mostly useful for export.)

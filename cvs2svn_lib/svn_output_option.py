@@ -46,7 +46,6 @@ from cvs2svn_lib.repository_mirror import RepositoryMirror
 from cvs2svn_lib.repository_mirror import PathExistsError
 from cvs2svn_lib.openings_closings import SymbolingsReader
 from cvs2svn_lib.fill_source import get_source_set
-from cvs2svn_lib.stdout_delegate import StdoutDelegate
 from cvs2svn_lib.svn_dump import DumpstreamDelegate
 from cvs2svn_lib.svn_dump import LoaderPipe
 from cvs2svn_lib.output_option import OutputOption
@@ -145,7 +144,7 @@ class SVNOutputOption(OutputOption):
     self._mirror.open()
     self._delegates = []
     Ctx().revision_reader.start()
-    self.add_delegate(StdoutDelegate(svn_rev_count))
+    self.svn_rev_count = svn_rev_count
 
   def _get_author(self, svn_commit):
     author = svn_commit.get_author()
@@ -163,6 +162,11 @@ class SVNOutputOption(OutputOption):
 
   def start_commit(self, revnum, revprops):
     """Start a new commit."""
+
+    logger.verbose("=" * 60)
+    logger.normal(
+        "Starting Subversion r%d / %d" % (revnum, self.svn_rev_count)
+        )
 
     self._mirror.start_commit(revnum)
     self._invoke_delegates('start_commit', revnum, revprops)
@@ -186,6 +190,7 @@ class SVNOutputOption(OutputOption):
       # Never delete a Trunk path.
       return
 
+    logger.verbose("  Deleting %s" % (lod.get_path(),))
     self._mirror.get_current_lod_directory(lod).delete()
     self._invoke_delegates('delete_lod', lod)
 
@@ -196,6 +201,7 @@ class SVNOutputOption(OutputOption):
       self.delete_lod(lod)
       return
 
+    logger.verbose("  Deleting %s" % (lod.get_path(cvs_path.cvs_path),))
     parent_node = self._mirror.get_current_path(
         cvs_path.parent_directory, lod
         )
@@ -215,11 +221,13 @@ class SVNOutputOption(OutputOption):
         else:
           parent_node = node.parent_mirror_dir
           node.delete()
+          logger.verbose("  Deleting %s" % (lod.get_path(cvs_path.cvs_path),))
           self._invoke_delegates('delete_path', lod, cvs_path)
 
   def initialize_project(self, project):
     """Create the basic structure for PROJECT."""
 
+    logger.verbose("  Initializing project %s" % (project,))
     self._invoke_delegates('initialize_project', project)
 
     # Don't invoke delegates.
@@ -232,6 +240,7 @@ class SVNOutputOption(OutputOption):
   def change_path(self, cvs_rev):
     """Register a change in self._youngest for the CVS_REV's svn_path."""
 
+    logger.verbose("  Changing %s" % (cvs_rev.get_svn_path(),))
     # We do not have to update the nodes because our mirror is only
     # concerned with the presence or absence of paths, and a file
     # content change does not cause any path changes.
@@ -242,6 +251,9 @@ class SVNOutputOption(OutputOption):
 
     for empty_subdirectory_id in cvs_directory.empty_subdirectory_ids:
       empty_subdirectory = Ctx()._cvs_path_db.get_path(empty_subdirectory_id)
+      logger.verbose(
+          "  New Directory %s" % (lod.get_path(empty_subdirectory.cvs_path),)
+          )
       # There is no need to record the empty subdirectories in the
       # mirror, since they live and die with their parent directories.
       self._invoke_delegates('mkdir', lod, empty_subdirectory)
@@ -258,6 +270,7 @@ class SVNOutputOption(OutputOption):
     try:
       node = self._mirror.get_current_lod_directory(lod)
     except KeyError:
+      logger.verbose("  Initializing %s" % (lod,))
       node = self._mirror.add_lod(lod)
       self._invoke_delegates('initialize_lod', lod)
       if ancestry and Ctx().include_empty_directories:
@@ -267,6 +280,9 @@ class SVNOutputOption(OutputOption):
       try:
         node = node[sub_path]
       except KeyError:
+        logger.verbose(
+            "  New Directory %s" % (lod.get_path(sub_path.cvs_path),)
+            )
         node = node.mkdir(sub_path)
         self._invoke_delegates('mkdir', lod, sub_path)
         if Ctx().include_empty_directories:
@@ -287,8 +303,19 @@ class SVNOutputOption(OutputOption):
     parent_path = cvs_file.parent_directory
     lod = cvs_rev.lod
     parent_node = self._mkdir_p(parent_path, lod)
+    logger.verbose("  Adding %s" % (cvs_rev.get_svn_path(),))
     parent_node.add_file(cvs_file)
     self._invoke_delegates('add_path', cvs_rev)
+
+  def _show_copy(self, src_path, dest_path, src_revnum):
+    """Print a line stating that we are 'copying' revision SRC_REVNUM
+    of SRC_PATH to DEST_PATH."""
+
+    logger.verbose(
+        "  Copying revision %d of %s\n"
+        "                to %s\n"
+        % (src_revnum, src_path, dest_path,)
+        )
 
   def copy_lod(self, src_lod, dest_lod, src_revnum):
     """Copy all of SRC_LOD at SRC_REVNUM to DST_LOD.
@@ -299,6 +326,7 @@ class SVNOutputOption(OutputOption):
     Return the new node at DEST_LOD.  Note that this node is not
     necessarily writable, though its parent node necessarily is."""
 
+    self._show_copy(src_lod.get_path(), dest_lod.get_path(), src_revnum)
     node = self._mirror.copy_lod(src_lod, dest_lod, src_revnum)
     self._invoke_delegates('copy_lod', src_lod, dest_lod, src_revnum)
     return node
@@ -343,10 +371,14 @@ class SVNOutputOption(OutputOption):
           % (dest_lod.get_path(cvs_path.cvs_path),)
           )
 
+    self._show_copy(
+        src_lod.get_path(cvs_path.cvs_path),
+        dest_lod.get_path(cvs_path.cvs_path),
+        src_revnum,
+        )
     dest_parent_node[cvs_path] = src_node
     self._invoke_delegates(
-        'copy_path',
-        cvs_path, src_lod, dest_lod, src_revnum
+        'copy_path', cvs_path, src_lod, dest_lod, src_revnum
         )
 
     return dest_parent_node[cvs_path]
@@ -521,6 +553,7 @@ class SVNOutputOption(OutputOption):
     # order:
     delete_list.sort()
     for cvs_path in delete_list:
+      logger.verbose("  Deleting %s" % (symbol.get_path(cvs_path.cvs_path),))
       del dest_node[cvs_path]
       self._invoke_delegates('delete_path', symbol, cvs_path)
 
@@ -642,6 +675,8 @@ class SVNOutputOption(OutputOption):
 
   def cleanup(self):
     self._invoke_delegates('finish')
+    logger.verbose("Finished creating Subversion repository.")
+    logger.quiet("Done.")
     self._mirror.close()
     self._mirror = None
     Ctx().revision_reader.finish()

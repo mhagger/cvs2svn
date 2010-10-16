@@ -79,14 +79,11 @@ def check_command_runs(command, commandname):
         )
   except OSError, e:
     raise CommandFailedException('error executing %s: %s' % (commandname, e,))
-  pipe.stdin.close()
-  pipe.stdout.read()
-  errmsg = pipe.stderr.read()
-  status = pipe.wait()
-  if status or errmsg:
-    msg = 'error executing %s: status %s' % (commandname, status,)
-    if errmsg:
-      msg += ', error output:\n%s' % (errmsg,)
+  (stdout, stderr) = pipe.communicate()
+  if pipe.returncode or stderr:
+    msg = 'error executing %s; returncode=%s' % (commandname, pipe.returncode,)
+    if stderr:
+      msg += ', error output:\n%s' % (stderr,)
     raise CommandFailedException(msg)
 
 

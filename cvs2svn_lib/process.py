@@ -55,7 +55,7 @@ class CommandFailedException(Exception):
   pass
 
 
-def check_command_runs(cmd, cmdname):
+def check_command_runs(command, commandname):
   """Check whether the command CMD can be executed without errors.
 
   CMD is a list or string, as accepted by subprocess.Popen().  CMDNAME
@@ -69,19 +69,19 @@ def check_command_runs(cmd, cmdname):
 
   try:
     pipe = subprocess.Popen(
-        cmd,
+        command,
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         )
   except OSError, e:
-    raise CommandFailedException('error executing %s: %s' % (cmdname, e,))
+    raise CommandFailedException('error executing %s: %s' % (commandname, e,))
   pipe.stdin.close()
   pipe.stdout.read()
   errmsg = pipe.stderr.read()
   status = pipe.wait()
   if status or errmsg:
-    msg = 'error executing %s: status %s' % (cmdname, status,)
+    msg = 'error executing %s: status %s' % (commandname, status,)
     if errmsg:
       msg += ', error output:\n%s' % (errmsg,)
     raise CommandFailedException(msg)

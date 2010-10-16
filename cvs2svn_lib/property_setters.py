@@ -375,10 +375,24 @@ class EOLStyleFromMimeTypeSetter(FilePropertySetter):
 class DefaultEOLStyleSetter(FilePropertySetter):
   """Set the eol-style if one has not already been set."""
 
+  valid_values = {
+      None : None,
+      # Also treat "binary" as None:
+      'binary' : None,
+      'native' : 'native',
+      'CRLF' : 'CRLF', 'LF' : 'LF', 'CR' : 'CR',
+      }
+
   def __init__(self, value):
     """Initialize with the specified default VALUE."""
 
-    self.value = value
+    try:
+      # Check that value is valid, and translate it to the proper case
+      self.value = self.valid_values[value]
+    except KeyError:
+      raise ValueError(
+          'Illegal value specified for the default EOL option: %r' % (value,)
+          )
 
   def set_properties(self, cvs_file):
     self.maybe_set_property(cvs_file, 'svn:eol-style', self.value)

@@ -559,6 +559,7 @@ class RunOptions(object):
             'unless the \\fB--mime-types\\fR option is also specified.'
             ),
         ))
+    self.parser.set_default('default_eol', 'binary')
     group.add_option(IncompatibleOption(
         '--default-eol', type='choice',
         choices=['binary', 'native', 'CRLF', 'LF', 'CR'],

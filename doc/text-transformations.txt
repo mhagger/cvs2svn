@@ -58,11 +58,11 @@ Subversion
 
 * svn:eol-style: Specifies how to manipulate EOL characters.  If this
   property is set, then the file can be committed to Subversion using
-  any mix of EOL conventions, and will be normalized to the LF
-  internal format in the Subversion repository.  On checkout or
+  somewhat more flexible EOL conventions.  In the Subversion
+  repository the text is normalized to a particular EOL style,
+  probably the "svnadmin dump" style listed below.  On checkout or
   export, the LFs will be converted to the specified EOL style.
-  Dumpfiles always contain the text in LF format (?).  Possible
-  values:
+  Possible values:
 
   * LF, CRLF, CR:
 
@@ -70,7 +70,8 @@ Subversion
 
     svnadmin dump: file text contains the specified EOL format.
 
-    svnadmin load: TO BE DETERMINED
+    svnadmin load: should presumably be consistent with the "svnadmin
+    dump" format.
 
   * native:
 
@@ -79,7 +80,8 @@ Subversion
 
     svnadmin dump: file text contains the canonical LF format.
 
-    svnadmin load: TO BE DETERMINED
+    svnadmin load: should presumably be consistent with the "svnadmin
+    dump" format.
 
 
 Git

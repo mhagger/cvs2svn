@@ -356,8 +356,11 @@ ctx.file_property_setters.extend([
     #    ignore_case=True,
     #    ),
 
-    # To read mime types from a file, uncomment the following line and
-    # specify a filename:
+    # To read mime types from a file and use them to set svn:mime-type
+    # based on the filename extensions, uncomment the following line
+    # and specify a filename (see
+    # http://en.wikipedia.org/wiki/Mime.types for information about
+    # mime.types files):
     #MimeMapper(r'/etc/mime.types', ignore_case=False),
 
     # Omit the svn:eol-style property from any files that are listed

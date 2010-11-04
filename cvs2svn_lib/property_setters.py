@@ -98,7 +98,9 @@ class MimeMapper(FilePropertySetter):
       mime_types_file -- a path to a MIME types file on disk.  Each
           line of the file should contain the MIME type, then a
           whitespace-separated list of file extensions; e.g., one line
-          might be 'text/plain txt c h cpp hpp'.
+          might be 'text/plain txt c h cpp hpp'.  (See
+          http://en.wikipedia.org/wiki/Mime.types for information
+          about mime.types files):
 
       mime_mappings -- a dictionary mapping a file extension to a MIME
           type; e.g., {'txt': 'text/plain', 'cpp': 'text/plain'}.

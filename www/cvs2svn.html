@@ -1010,12 +1010,14 @@ project-id symbol conversion svn-path parent-lod-name
   <tr>
     <td align="right"><tt>--keywords-off</tt></td>
     <td>By default, cvs2svn sets <tt>svn:keywords</tt> on CVS files to
-      "author id date" if the mode of the RCS file in question is
-      either kv, kvl or <b>not</b> kb.  If you use the
+      "Author Date Id Revision" if the file as an eol-style set (see
+      the <tt>--default-eol</tt> option).  If you use the
       <tt>--keywords-off</tt> switch, cvs2svn will not set
-      <tt>svn:keywords</tt> for any file.  While this will not touch
-      the keywords in the contents of your files, Subversion will not
-      expand them.</td>
+      <tt>svn:keywords</tt> for any file.  The effect will be that if
+      your files contain any keywords, they will be left with the
+      expansions that they had when committed to CVS, which usually
+      means that they are expanded to the values appropriate the
+      *previous* commit.</td>
   </tr>
 
   <tr>

@@ -158,9 +158,9 @@ ctx.revision_collector = GitRevisionCollector(
     #RCSRevisionReader(co_executable=r'co'),
     CVSRevisionReader(cvs_executable=r'cvs'),
     )
-# This second alternative is vastly faster than the version above, but
-# it should be considered experimental.  It uses an external Python
-# program to reconstruct the contents of CVS file revisions:
+# This second alternative is vastly faster than the version above.  It
+# uses an external Python program to reconstruct the contents of CVS
+# file revisions:
 #ctx.revision_collector = ExternalBlobGenerator('cvs2svn-tmp/git-blob.dat')
 
 # cvs2git doesn't need a revision reader because OutputPass only

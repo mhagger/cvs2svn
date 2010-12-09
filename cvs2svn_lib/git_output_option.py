@@ -357,9 +357,7 @@ class GitOutputOption(DVCSOutputOption):
       return "%s %s %s '%s'" % (
           self.describe_lod_to_user(lod), date, author, log_msg,)
 
-  def _process_symbol_commit(
-        self, svn_commit, git_branch, source_groups
-        ):
+  def _process_symbol_commit(self, svn_commit, git_branch, source_groups):
     author = self._get_author(svn_commit)
     log_msg = self._get_log_msg(svn_commit)
 
@@ -401,7 +399,8 @@ class GitOutputOption(DVCSOutputOption):
               p_source_lod
               ),
           )
-    for (source_revnum, source_lod, cvs_symbols,) in source_groups[(is_initial_lod_creation and 1 or 0):]:
+    for (source_revnum, source_lod, cvs_symbols,) \
+            in source_groups[(is_initial_lod_creation and 1 or 0):]:
       log_msg += "\nCherrypick from %s:" % (
           self._describe_commit(
               Ctx()._persistence_manager.get_svn_commit(source_revnum),

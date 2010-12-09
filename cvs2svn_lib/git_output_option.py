@@ -410,7 +410,7 @@ class GitOutputOption(DVCSOutputOption):
       for cvs_symbol in cvs_symbols:
         log_msg += "\n    %s" % (cvs_symbol.cvs_file.cvs_path,)
     if is_initial_lod_creation:
-      if len(cvs_files_to_delete):
+      if cvs_files_to_delete:
         log_msg += "\nDelete:"
         for cvs_file in sorted(cvs_files_to_delete):
           log_msg += "\n    %s" % (cvs_file.cvs_path,)

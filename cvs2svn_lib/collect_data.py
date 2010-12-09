@@ -1036,9 +1036,16 @@ class _ProjectDataCollector:
     fdc = _FileDataCollector(self, cvs_file)
     try:
       cvs2svn_rcsparse.parse(open(cvs_file.rcs_path, 'rb'), fdc)
-    except (cvs2svn_rcsparse.common.RCSParseError, ValueError, RuntimeError):
+    except (cvs2svn_rcsparse.common.RCSParseError, RuntimeError):
       self.collect_data.record_fatal_error(
           "%r is not a valid ,v file" % (cvs_file.rcs_path,)
+          )
+      # Abort the processing of this file, but let the pass continue
+      # with other files:
+      return
+    except ValueError, e:
+      self.collect_data.record_fatal_error(
+          "%r is not a valid ,v file (%s)" % (cvs_file.rcs_path, str(e),)
           )
       # Abort the processing of this file, but let the pass continue
       # with other files:

@@ -3888,6 +3888,40 @@ def strange_default_branch():
       )
 
 
+@Cvs2SvnTestFunction
+def move_parent():
+  "graft onto preferred parent that was itself moved"
+
+  conv = ensure_conversion(
+      'move-parent',
+      )
+  conv.logs[2].check('first', (
+    ('/%(trunk)s/file1', 'A'),
+    ('/%(trunk)s/file2', 'A'),
+    ))
+  conv.logs[3].check('This commit was manufactured', (
+    ('/%(branches)s/b2 (from /%(trunk)s:2)', 'A'),
+    ))
+  conv.logs[4].check('second', (
+    ('/%(branches)s/b2/file1', 'M'),
+    ))
+  conv.logs[5].check('This commit was manufactured', (
+    ('/%(branches)s/b1 (from /%(branches)s/b2:4)', 'A'),
+    ))
+
+  # b2 and b1 are equally good parents for b3, so accept either one.
+  # (Currently, cvs2svn chooses b1 as the preferred parent because it
+  # comes earlier than b2 in alphabetical order.)
+  try:
+    conv.logs[6].check('This commit was manufactured', (
+      ('/%(branches)s/b3 (from /%(branches)s/b1:5)', 'A'),
+      ))
+  except Failure:
+    conv.logs[6].check('This commit was manufactured', (
+      ('/%(branches)s/b3 (from /%(branches)s/b2:4)', 'A'),
+      ))
+
+
 ########################################################################
 # Run the tests
 
@@ -4097,6 +4131,7 @@ test_list = [
     add_on_branch2,
     XFail(branch_from_vendor_branch),
     strange_default_branch,
+    XFail(move_parent),
     ]
 
 if __name__ == '__main__':

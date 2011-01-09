@@ -1,0 +1,28 @@
+head	1.1;
+access;
+symbols
+	b3:1.1.0.6
+	b1:1.1.0.4
+	b2:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2011.01.03.14.26.48;	author pilegand;	state Exp;
+branches;
+next	;
+commitid	657b4d21dca84567;
+
+
+desc
+@@
+
+
+1.1
+log
+@first
+@
+text
+@file2
+@

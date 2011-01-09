@@ -39,23 +39,42 @@ they are used for two purposes:
 
        _keyword_handling -- How should RCS keywords be handled?
 
-           'untouched' -- The keywords should be output exactly as
-               they are found in the RCS file.
+           'untouched' -- The keywords should be output literally as
+               they are recorded in the RCS file.  Please note that
+               this results in the keywords' being expanded the way
+               they were when the revision was checked *in* to CVS,
+               which typically reflects how CVS expanded them when the
+               *previous* revision was checked *out* of CVS.  This
+               mode is appropriate for binary files.
 
            'collapsed' -- The keywords should be collapsed in the
-               output; e.g., "$Author: jrandom $" -> "$Author$".
+               output; e.g., "$Author: jrandom $" -> "$Author$".  This
+               mode is appropriate for output of non-binary files to
+               Subversion (because Subversion re-expands the keywords
+               itself) and might be useful for text files for other
+               VCSs if you would like this history to be "clean" of
+               keywords.
 
-           'expanded' -- The keywords should be expanded in the
-               output; e.g., "$Author$" -> "$Author: jrandom $".
+           'expanded' -- The keywords should be expanded in the output
+               the same way as CVS would expand keywords when checking
+               out the revision; e.g., "$Author$" -> "$Author: jrandom
+               $".  If this value is used, keywords are expanded
+               regardless of whether CVS considers the file to be a
+               text file.  This mode might be useful for outputting
+               text files to other VCSs if you would like the content
+               of historical revisions to be as similar as possible to
+               the content as it would be checked out of CVS.
 
-           'deleted' -- To be implemented
+           'deleted' -- Not implemented
 
        _eol_fix -- Should end-of-line sequences be made uniform before
            committing to the target VCS?  If this property is set to a
            non-empty value, then every end-of-line character sequence
            ('\n', '\r\n', or '\r') is converted to the specified value
            (which should obviously be a valid end-of-line character
-           sequence).
+           sequence).  If this property is not set, then the
+           end-of-line character sequences are output literally as
+           they are recorded in the RCS file.
 
 2. cvs2svn: Specifying Subversion versioned properties.  Any
    properties that do not start with an underscore are converted into

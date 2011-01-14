@@ -288,14 +288,26 @@ make check # ...optional
 
   <li>
 
-    Configure cvs2git for your conversion.  This can be done via
+    Configure cvs2git and run the conversion.  This can be done via
     command-line options or via an options file:
 
     <ul>
 
-      <li>The command-line options for running cvs2git are documented
+      <li>
+
+	<p>The command-line options for running cvs2git are documented
         in the cvs2git man page and in the output of <tt>cvs2git
-        --help</tt>.</li>
+        --help</tt>.  For example:</p>
+
+<pre>
+cvs2git \
+    --blobfile=cvs2svn-tmp/git-blob.dat \
+    --dumpfile=cvs2svn-tmp/git-dump.dat \
+    --username=cvs2git \
+    /path/to/cvs/repo
+</pre>
+
+      </li>
 
       <li>
 
@@ -316,11 +328,7 @@ cvs2git --options=OPTIONS-FILE
 
     </ul>
 
-  </li>
-
-  <li>
-
-    <p>Run cvs2git.  This creates two output files in <a
+    <p>This creates two output files in <a
     href="http://www.kernel.org/pub/software/scm/git/docs/git-fast-import.html">git
     fast-import</a> format.  The names of these files are specified by
     your options file or command-line arguments.  In the example,
@@ -331,20 +339,30 @@ cvs2git --options=OPTIONS-FILE
 
   <li>
 
-    <p>Initialize a git repository, and load the dump files using
-      git fast-import:</p>
+    <p>Initialize a git repository:</p>
 
 <pre>
+mkdir myproject.git
+cd myproject.git
 git init
-git fast-import --export-marks=cvs2svn-tmp/git-marks.dat &lt; cvs2svn-tmp/git-blob.dat
-git fast-import --import-marks=cvs2svn-tmp/git-marks.dat &lt; cvs2svn-tmp/git-dump.dat
+</pre>
+
+  </li>
+
+  <li>
+
+    <p>Load the dump files into the new git repository using <tt>git
+      fast-import</tt>:</p>
+
+<pre>
+git fast-import --export-marks=../cvs2svn-tmp/git-marks.dat &lt; ../cvs2svn-tmp/git-blob.dat
+git fast-import --import-marks=../cvs2svn-tmp/git-marks.dat &lt; ../cvs2svn-tmp/git-dump.dat
 </pre>
 
     <p>This can, of course, be shortened to:</p>
 
 <pre>
-git init
-cat cvs2svn-tmp/git-blob.dat cvs2svn-tmp/git-dump.dat | git fast-import
+cat ../cvs2svn-tmp/git-blob.dat ../cvs2svn-tmp/git-dump.dat | git fast-import
 </pre>
 
   </li>
@@ -352,6 +370,26 @@ cat cvs2svn-tmp/git-blob.dat cvs2svn-tmp/git-dump.dat | git fast-import
   <li>If you want to get rid of unnecessary tag fixup branches, then
     run the <tt>contrib/git-move-refs.py</tt> script from within the
     git repository.</li>
+
+  <li>
+
+    <p>(Optional) View the results of the conversion, for example:</p>
+
+<pre>
+gitk --all
+</pre>
+
+  </li>
+
+  <li>
+
+    <p>Check out the master branch into the working copy:</p>
+
+<pre>
+git checkout master
+</pre>
+
+  </li>
 
 </ol>
 

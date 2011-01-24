@@ -26,6 +26,7 @@ from cvs2svn_lib.run_options import not_both
 from cvs2svn_lib.revision_manager import NullRevisionCollector
 from cvs2svn_lib.rcs_revision_manager import RCSRevisionReader
 from cvs2svn_lib.cvs_revision_manager import CVSRevisionReader
+from cvs2svn_lib.output_option import NullOutputOption
 from cvs2svn_lib.git_output_option import GitRevisionInlineWriter
 from cvs2svn_lib.bzr_output_option import BzrOutputOption
 
@@ -141,9 +142,12 @@ A directory called \\fIcvs2svn-tmp\\fR (or the directory specified by
     ctx.revision_collector = NullRevisionCollector()
     ctx.revision_reader = None
 
-    ctx.output_option = BzrOutputOption(
-        options.dumpfile,
-        GitRevisionInlineWriter(revision_reader),
-        # Optional map from CVS author names to bzr author names:
-        author_transforms={}, # FIXME
-        )
+    if ctx.dry_run:
+      ctx.output_option = NullOutputOption()
+    else:
+      ctx.output_option = BzrOutputOption(
+          options.dumpfile,
+          GitRevisionInlineWriter(revision_reader),
+          # Optional map from CVS author names to bzr author names:
+          author_transforms={}, # FIXME
+          )

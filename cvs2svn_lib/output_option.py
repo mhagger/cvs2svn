@@ -110,3 +110,36 @@ class OutputOption:
     raise NotImplementedError()
 
 
+class NullOutputOption(OutputOption):
+  """An OutputOption that doesn't do anything."""
+
+  name = 'null'
+
+  def check(self):
+    pass
+
+  def check_symbols(self, symbol_map):
+    pass
+
+  def setup(self, svn_rev_count):
+    pass
+
+  def process_initial_project_commit(self, svn_commit):
+    pass
+
+  def process_primary_commit(self, svn_commit):
+    pass
+
+  def process_post_commit(self, svn_commit):
+    pass
+
+  def process_branch_commit(self, svn_commit):
+    pass
+
+  def process_tag_commit(self, svn_commit):
+    pass
+
+  def cleanup(self):
+    pass
+
+

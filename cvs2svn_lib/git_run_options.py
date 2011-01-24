@@ -28,6 +28,7 @@ from cvs2svn_lib.rcs_revision_manager import RCSRevisionReader
 from cvs2svn_lib.cvs_revision_manager import CVSRevisionReader
 from cvs2svn_lib.git_revision_collector import GitRevisionCollector
 from cvs2svn_lib.external_blob_generator import ExternalBlobGenerator
+from cvs2svn_lib.output_option import NullOutputOption
 from cvs2svn_lib.git_output_option import GitRevisionMarkWriter
 from cvs2svn_lib.git_output_option import GitOutputOption
 
@@ -184,9 +185,12 @@ A directory called \\fIcvs2svn-tmp\\fR (or the directory specified by
   def process_output_options(self):
     """Process options related to fastimport output."""
     ctx = Ctx()
-    ctx.output_option = GitOutputOption(
-        self.options.dumpfile,
-        GitRevisionMarkWriter(),
-        # Optional map from CVS author names to git author names:
-        author_transforms={}, # FIXME
-        )
+    if ctx.dry_run:
+      ctx.output_option = NullOutputOption()
+    else:
+      ctx.output_option = GitOutputOption(
+          self.options.dumpfile,
+          GitRevisionMarkWriter(),
+          # Optional map from CVS author names to git author names:
+          author_transforms={}, # FIXME
+          )

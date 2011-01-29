@@ -4131,7 +4131,7 @@ test_list = [
     add_on_branch2,
     XFail(branch_from_vendor_branch),
     strange_default_branch,
-    XFail(move_parent),
+    move_parent,
     ]
 
 if __name__ == '__main__':

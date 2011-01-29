@@ -1037,7 +1037,11 @@ class CVSFileItems(object):
       for cvs_tag in lod_items.cvs_tags:
         self._adjust_tag_parent(cvs_tag)
 
-      for cvs_branch in lod_items.cvs_branches:
+      # It is important to process branches in reverse order, so that
+      # a branch graft target (which necessarily occurs earlier in the
+      # list than the branch itself) is not moved before the branch
+      # itself.
+      for cvs_branch in reversed(lod_items.cvs_branches):
         self._adjust_branch_parents(cvs_branch)
 
   def _get_revision_source(self, cvs_symbol):

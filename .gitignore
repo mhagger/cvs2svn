@@ -10,4 +10,7 @@ val-tags
 
 # Ignores in www/:
 /www/tigris-branding
+/www/xhtml1-20020801
+/www/xhtml1.catalog
+/www/xhtml1.tgz
 

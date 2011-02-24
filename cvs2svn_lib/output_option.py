@@ -47,9 +47,12 @@ class OutputOption:
 
     - Check that it is not equal to '.' or '..'.
 
-    - Check that the filename does not include any control characters.
+    - Check that the filename does not include any characters that are
+      illegal in the destination VCS.
 
-    If any of these tests fail, raise an IllegalSVNPathError."""
+    If any of these tests fail, raise an IllegalSVNPathError.
+
+    This method should be overridden as needed by derived classes."""
 
     if filename == '':
       raise IllegalSVNPathError("Empty filename component.")

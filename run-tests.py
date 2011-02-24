@@ -2404,7 +2404,9 @@ def ignore():
 def requires_cvs():
   "test that CVS can still do what RCS can't"
   # See issues 4, 11, 29 for the bugs whose regression we're testing for.
-  conv = ensure_conversion('requires-cvs', args=["--use-cvs"])
+  conv = ensure_conversion(
+      'requires-cvs', args=['--use-cvs', '--default-eol=native'],
+      )
 
   atsign_contents = file(conv.get_wc("trunk", "atsign-add")).read()
   cl_contents = file(conv.get_wc("trunk", "client_lock.idl")).read()

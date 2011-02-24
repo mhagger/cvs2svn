@@ -30,15 +30,21 @@ class AbstractRCSRevisionReader(RevisionReader):
   """A base class for RCSRevisionReader and CVSRevisionReader."""
 
   # A map from (eol_fix, keyword_handling) to ('-k' option needed for
-  # RCS/CVS, explicit_keyword_handling).
+  # RCS/CVS, explicit_keyword_handling).  The preference is to allow
+  # CVS/RCS to handle keyword expansion itself whenever possible.  But
+  # it is not possible in combination with eol_fix==False, because the
+  # only option that CVS/RCS has that leaves the EOLs alone is '-kb'
+  # mode, which leaves the keywords untouched.  Therefore, whenever
+  # eol_fix is False, we need to use '-kb' mode and then (if
+  # necessary) expand or collapse the keywords ourselves.
   _text_options = {
-      (False, 'collapsed') : (['-kk'], None),
-      (False, 'expanded') : ([], None),
-      (False, 'untouched') : ([], None),
+      (False, 'collapsed') : (['-kb'], 'collapsed'),
+      (False, 'expanded') : (['-kb'], 'expanded'),
+      (False, 'untouched') : (['-kb'], None),
 
       (True, 'collapsed') : (['-kk'], None),
-      (True, 'expanded') : ([], None),
-      (True, 'untouched') : ([], None),
+      (True, 'expanded') : (['-kkv'], None),
+      (True, 'untouched') : (['-ko'], None),
       }
 
   def get_pipe_command(self, cvs_rev, k_option):

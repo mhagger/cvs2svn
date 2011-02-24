@@ -31,7 +31,9 @@ if [ ! -r "$LOCAL_CATALOG" ]; then
   RESULT=`echo 'resolve "-//W3C//DTD XHTML 1.0 Strict//EN" ' \
   '"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"' | xmlcatalog --shell`
   case $RESULT in
-    */xhtml1-strict.dtd*) ;;
+    *file:///*)
+      # It looks like the system already provides this
+      ;;
     *)
     ensure "http://www.w3.org/TR/xhtml1/xhtml1.tgz" "."
     rm -rf "$WWWDIR/xhtml1-20020801" "$LOCAL_CATALOG"

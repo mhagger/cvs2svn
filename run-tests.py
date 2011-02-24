@@ -3648,6 +3648,10 @@ def transform_unlabeled_branch_name():
           '--symbol-transform=unlabeled-1.1.4:BRANCH2',
           ],
       )
+  if conv.path_exists('branches', 'unlabeled-1.1.4'):
+    raise Failure('Branch unlabeled-1.1.4 not excluded')
+  if not conv.path_exists('branches', 'BRANCH2'):
+    raise Failure('Branch BRANCH2 not found')
 
 
 @Cvs2SvnTestFunction

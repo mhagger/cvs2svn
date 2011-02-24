@@ -3669,6 +3669,18 @@ def ignore_unlabeled_branch():
 
 
 @Cvs2SvnTestFunction
+def exclude_unlabeled_branch():
+  "exclude unlabeled branch"
+
+  conv = ensure_conversion(
+      'unlabeled-branch',
+      args=['--exclude=unlabeled-.*'],
+      )
+  if conv.path_exists('branches', 'unlabeled-1.1.4'):
+    raise Failure('Branch unlabeled-1.1.4 not excluded')
+
+
+@Cvs2SvnTestFunction
 def unlabeled_branch_name_collision():
   "transform unlabeled branch to same name as branch"
 
@@ -4124,11 +4136,12 @@ test_list = [
     missing_deltatext,
     transform_unlabeled_branch_name,
     ignore_unlabeled_branch,
+    exclude_unlabeled_branch,
     unlabeled_branch_name_collision,
     collision_with_unlabeled_branch_name,
     many_deletes,
-    cvs_description,
 # 170:
+    cvs_description,
     include_empty_directories,
     include_empty_directories_no_prune,
     exclude_symbol_default,

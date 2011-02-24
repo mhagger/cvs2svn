@@ -108,6 +108,9 @@
 
   <li><a href="#gettinghelp">How do I get help?</a></li>
 
+  <li><a href="#infoneeded">What information should I
+    include when requesting help?</a></li>
+
   <li><a href="#subscribing">How do I subscribe to a mailing list?</a></li>
 
   <li><a href="#reportingbugs">How do I report a bug?</a></li>
@@ -1058,25 +1061,68 @@ help?</a></h3>
 
   <li>The <a
   href="http://cvs2svn.tigris.org/servlets/ProjectMailingListList">mailing
-  list archives</a>.  Maybe your question has
+  list archives</a>.  Maybe your question has already
   been discussed on either the <tt>user@cvs2svn.tigris.org</tt> or
   <tt>dev@cvs2svn.tigris.org</tt> mailing list.</li>
 
-  <li>If you need help with running cvs2svn or problems converting
-  your repository, the <a
-  href="mailto:users@cvs2svn.tigris.org"><tt>users@cvs2svn.tigris.org</tt></a>
-  mailing list is the first place to send inquiries.  Please <a
-  href="http://cvs2svn.tigris.org/servlets/ProjectMailingListList">subscribe</a>
-  to the list so that you can follow ensuing discussions.</li>
+  <li>The <a href="mailto:users@cvs2svn.tigris.org"><tt>users@cvs2svn.tigris.org</tt></a>
+  mailing list can often help with questions about how to configure
+  and run cvs2svn, conversion strategies, or problems converting your
+  repository.
+  Please <a href="http://cvs2svn.tigris.org/servlets/ProjectMailingListList">subscribe</a>
+  to the list so that you can follow ensuing discussions.  Be sure to
+  include the information listed in <a href="#infoneeded">"What
+  information should I include when requesting help?"</a></li>
 
-  <li>You can also ask questions on IRC at <a
-  href="irc://irc.freenode.net/"><tt>irc.freenode.net</tt></a>,
-  channel <tt>#cvs2svn</tt>.</li>
+  <li>You can also ask questions
+  on <a href="irc://irc.freenode.net/#cvs2svn">the <tt>#cvs2svn</tt>
+  channel on irc.freenode.net</a>.</li>
 
   <li>If you think you have found a bug, please refer to <a
   href="#reportingbugs">"How do I report a bug?"</a></li>
 
+  <li>For individual help with your conversion (especially for
+  non-open-source projects), <a href="#commercialsupport">commercial
+  support is available</a>.</li>
+
 </ul>
+
+
+<h3><a name="infoneeded" title="#infoneeded">What information should I
+include when requesting help?</a></h3>
+
+<p>If you ask for help and/or report a bug on a mailing list, it is
+important that you include the following information.  Failure to
+include important information is the best way to dissuade the
+volunteers of the cvs2svn project from trying to help you.</p>
+
+<ol>
+
+  <li><em>Exactly what version</em> of cvs2svn are you using?  If you
+  are not using an official release, please tell us what branch and
+  revision number from the <a
+  href="http://cvs2svn.tigris.org/svn/cvs2svn/">svn archive</a> you
+  are using.  If you have modified cvs2svn, please tell us exactly
+  what you have changed.</li>
+
+  <li>What platform are you using (Linux, BSD, Windows, etc.)?  What
+  python version (e.g., type <tt>python --version</tt>)?</li>
+
+  <li>What is the <em>exact command line</em> that you used to start
+  the conversion?  If you used the <tt>--options</tt> option, please
+  attach a copy of the options file that you used.</li>
+
+  <li>What happened when you ran the program?  How did that differ
+  from what you wanted/expected?  Include transcripts and/or error
+  output if available.</li>
+
+  <li>If you think you have found a bug, try to submit a repository
+  that we can use to reproduce the problem.
+  See <a href="#testcase">"How can I produce a useful test case?"</a>
+  for more information.  In most cases, if we cannot reproduce the
+  problem, there is nothing we can do to help you.</li>
+
+</ol>
 
 
 <h3><a name="subscribing" title="#subscribing">How do I subscribe to a
@@ -1097,7 +1143,7 @@ lists.  There are two ways:</p>
 
   <li>If you do not have a tigris account, then you can subscribe by
   sending an email to $LIST-subscribe@cvs2svn.tigris.org, where $LIST
-  is one of "announce", "users", "dev", issues", or "commits".  Please
+  is one of "announce", "users", "dev", "issues", or "commits".  Please
   be sure to send the email to $LIST-subscribe and not to the list
   itself!  (To unsubscribe, send and email to
   $LIST-unsubscribe@cvs2svn.tigris.org.)  More details can be found <a
@@ -1145,38 +1191,11 @@ is no need to report it (though possibly you could contribute a <a
 href="#testcase">useful test case</a> or a workaround).</p>
 
 <p>If your bug seems new, then the best thing to do is report it via
-email to the <a
-href="http://cvs2svn.tigris.org/servlets/ProjectMailingListList">dev@cvs2svn.tigris.org</a>
-mailing list.  Be sure to include the following information in your
-message:</p>
-
-<ol>
-
-  <li><em>Exactly what version</em> of cvs2svn are you using?  If you
-  are not using an official release, please tell us what branch and
-  revision number from the <a
-  href="http://cvs2svn.tigris.org/svn/cvs2svn/">svn archive</a> you
-  are using.  If you have modified cvs2svn, please tell us exactly
-  what you have changed.</li>
-
-  <li>What platform are you using (Linux, BSD, Windows, etc.)?  What
-  python version (e.g., type <tt>python --version</tt>)?</li>
-
-  <li>What is the <em>exact command line</em> that you used to start
-  the conversion?  If you used the <tt>--options</tt> option, please
-  attach a copy of the options file that you used.</li>
-
-  <li>What happened when you ran the program?  Why do you think the
-  behavior was wrong?  Include transcripts and/or error output if
-  available.</li>
-
-  <li>If at all possible, include a test case repository that we can
-  use to reproduce the problem.  See <a href="#testcase">"How can I
-  produce a useful test case?"</a> for more information.  In most
-  cases, if we cannot reproduce the problem, there is nothing we can
-  do to help you.</li>
-
-</ol>
+email to
+the <a href="http://cvs2svn.tigris.org/servlets/ProjectMailingListList">dev@cvs2svn.tigris.org</a>
+mailing list.  Be sure to include the information listed
+in <a href="#infoneeded">"What information should I include when
+requesting help?"</a></p>
 
 
 <h3><a name="testcase" title="#testcase">How can I produce a useful

@@ -65,7 +65,15 @@ they are used for two purposes:
                of historical revisions to be as similar as possible to
                the content as it would be checked out of CVS.
 
-           'deleted' -- Not implemented
+           'deleted' -- The keywords and their values (and some
+               surrounding whitespace?) should be deleted entirely.
+               NOT YET IMPLEMENTED.
+
+           'replaced' -- The keywords should be deleted entirely and
+               replaced by their values; e.g., "$Author$" ->
+               "jrandom", like CVS's "-kv" option.  This is not a very
+               useful feature, but is listed for completeness.  NOT
+               YET IMPLEMENTED.
 
        _eol_fix -- Should end-of-line sequences be made uniform before
            committing to the target VCS?  If this property is set to a

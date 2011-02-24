@@ -3666,7 +3666,7 @@ def ignore_unlabeled_branch():
 
 @Cvs2SvnTestFunction
 def unlabeled_branch_name_collision():
-  "transform branch to same name as unlabeled branch"
+  "transform unlabeled branch to same name as branch"
 
   conv = ensure_conversion(
       'unlabeled-branch',
@@ -3681,7 +3681,7 @@ def unlabeled_branch_name_collision():
 
 @Cvs2SvnTestFunction
 def collision_with_unlabeled_branch_name():
-  "transform unlabeled branch to same name as branch"
+  "transform branch to same name as unlabeled branch"
 
   conv = ensure_conversion(
       'unlabeled-branch',

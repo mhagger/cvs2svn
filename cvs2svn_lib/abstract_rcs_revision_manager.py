@@ -18,6 +18,7 @@
 
 
 from cvs2svn_lib.common import canonicalize_eol
+from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.process import get_command_output
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.revision_manager import RevisionReader

@@ -35,6 +35,10 @@ def _preserve_case(s):
   return s
 
 
+def cvs_file_is_binary(cvs_file):
+  return cvs_file.mode == 'b'
+
+
 class FilePropertySetter(object):
   """Abstract class for objects that set properties on a CVSFile."""
 

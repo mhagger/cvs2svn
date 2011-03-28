@@ -104,6 +104,8 @@ from cvs2svn_lib.symbol_transform import RegexpSymbolTransform
 from cvs2svn_lib.symbol_transform import IgnoreSymbolTransform
 from cvs2svn_lib.symbol_transform import NormalizePathsSymbolTransform
 from cvs2svn_lib.property_setters import AutoPropsPropertySetter
+from cvs2svn_lib.property_setters import ConditionalPropertySetter
+from cvs2svn_lib.property_setters import cvs_file_is_binary
 from cvs2svn_lib.property_setters import CVSBinaryFileDefaultMimeTypeSetter
 from cvs2svn_lib.property_setters import CVSBinaryFileEOLStyleSetter
 from cvs2svn_lib.property_setters import DefaultEOLStyleSetter
@@ -443,8 +445,11 @@ ctx.file_property_setters.extend([
     # being executable:
     ExecutablePropertySetter(),
 
-    # The following causes keywords to be collapsed in all text to be
-    # committed:
+    # The following causes keywords to be untouched in binary files and
+    # collapsed in all text to be committed:
+    ConditionalPropertySetter(
+        cvs_file_is_binary, KeywordHandlingPropertySetter('untouched'),
+        ),
     KeywordHandlingPropertySetter('collapsed'),
 
     ])

@@ -53,7 +53,7 @@ class Project(object):
         self, id, project_cvs_repos_path,
         initial_directories=[],
         symbol_transforms=None,
-        exclude_paths=set(),
+        exclude_paths=[],
         ):
     """Create a new Project record.
 
@@ -68,10 +68,10 @@ class Project(object):
     which will be used to transform any symbol names within this
     project.
 
-    EXCLUDE_PATHS is a set (or anything implementing __contains__) of
-    paths that should be excluded from the conversion. The paths should
-    be relative to PROJECT_CVS_REPOS_PATH and use slashes ("/"). Paths
-    for individual files should include the ",v" extension.
+    EXCLUDE_PATHS is an iterable of paths that should be excluded from
+    the conversion.  The paths should be relative to
+    PROJECT_CVS_REPOS_PATH and use slashes ('/').  Paths for
+    individual files should include the ',v' extension.
     """
 
     self.id = id
@@ -107,7 +107,7 @@ class Project(object):
 
     self.symbol_transform = CompoundSymbolTransform(symbol_transforms)
 
-    self.exclude_paths = exclude_paths
+    self.exclude_paths = set(exclude_paths)
 
     # The ID of the Trunk instance for this Project.  This member is
     # filled in during CollectRevsPass.

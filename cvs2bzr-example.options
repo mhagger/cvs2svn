@@ -577,6 +577,6 @@ run_options.set_project(
 
     # Exclude paths from the conversion. Should be relative to
     # repository path and use forward slashes:
-    #exclude_paths=set(['file-to-exclude.txt,v', 'dir/to/exclude']),
+    #exclude_paths=['file-to-exclude.txt,v', 'dir/to/exclude'],
     )
 

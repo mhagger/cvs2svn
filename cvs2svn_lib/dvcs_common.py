@@ -74,7 +74,7 @@ class DVCSRunOptions(RunOptions):
         project_cvs_repos_path,
         symbol_transforms=None,
         symbol_strategy_rules=[],
-        exclude_paths=set(),
+        exclude_paths=[],
         ):
     """Set the project to be converted.
 

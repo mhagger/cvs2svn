@@ -429,7 +429,7 @@ A directory called \\fIcvs2svn-tmp\\fR (or the directory specified by
         initial_directories=[],
         symbol_transforms=None,
         symbol_strategy_rules=[],
-        exclude_paths=set(),
+        exclude_paths=[],
         ):
     """Add a project to be converted.
 

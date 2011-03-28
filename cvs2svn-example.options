@@ -652,6 +652,10 @@ run_options.add_project(
         # Additional, project-specific symbol strategy rules can
         # be added here.
         ] + global_symbol_strategy_rules,
+
+    # Exclude paths from the conversion. Should be relative to
+    # repository path and use forward slashes:
+    #exclude_paths=set(['file-to-exclude.txt,v', 'dir/to/exclude']),
     )
 
 # Add a second project, to be stored to projA/trunk, projA/branches,

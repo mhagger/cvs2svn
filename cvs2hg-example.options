@@ -571,5 +571,9 @@ run_options.set_project(
     # See the definition of global_symbol_strategy_rules above for a
     # description of this option:
     symbol_strategy_rules=global_symbol_strategy_rules,
+
+    # Exclude paths from the conversion. Should be relative to
+    # repository path and use forward slashes:
+    #exclude_paths=set(['file-to-exclude.txt,v', 'dir/to/exclude']),
     )
 

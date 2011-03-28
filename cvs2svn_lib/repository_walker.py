@@ -20,6 +20,7 @@
 import os
 import stat
 
+from cvs2svn_lib.common import path_join
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.common import IllegalSVNPathError
@@ -175,7 +176,7 @@ class _RepositoryWalker(object):
       for cvs_file in retained_attic_files:
         yield cvs_file
 
-  def generate_cvs_paths(self, cvs_directory):
+  def generate_cvs_paths(self, cvs_directory, exclude_paths):
     """Generate the CVSPaths under non-Attic directory CVS_DIRECTORY.
 
     Yield CVSDirectory and CVSFile instances as they are found.
@@ -202,7 +203,13 @@ class _RepositoryWalker(object):
     fnames.sort()
     for fname in fnames:
       pathname = os.path.join(cvs_directory.rcs_path, fname)
-      if os.path.isdir(pathname):
+      path_in_repository = path_join(cvs_directory.get_cvs_path(), fname)
+      if path_in_repository in exclude_paths:
+        logger.normal(
+            "Excluding file from conversion: %s" % (path_in_repository,)
+            )
+        pass
+      elif os.path.isdir(pathname):
         if fname == 'Attic':
           attic_dir = fname
         elif fname == '.svn':
@@ -275,7 +282,7 @@ class _RepositoryWalker(object):
           cvs_directory.project, cvs_directory, fname,
           )
 
-      for cvs_path in self.generate_cvs_paths(sub_directory):
+      for cvs_path in self.generate_cvs_paths(sub_directory, exclude_paths):
         yield cvs_path
 
 
@@ -310,7 +317,9 @@ def walk_repository(project, file_key_generator, error_handler):
       )
   project.root_cvs_directory_id = root_cvs_directory.id
   repository_walker = _RepositoryWalker(file_key_generator, error_handler)
-  for cvs_path in repository_walker.generate_cvs_paths(root_cvs_directory):
+  for cvs_path in repository_walker.generate_cvs_paths(
+        root_cvs_directory, project.exclude_paths
+        ):
     yield cvs_path
 
 

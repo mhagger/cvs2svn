@@ -429,6 +429,7 @@ A directory called \\fIcvs2svn-tmp\\fR (or the directory specified by
         initial_directories=[],
         symbol_transforms=None,
         symbol_strategy_rules=[],
+        exclude_paths=set(),
         ):
     """Add a project to be converted.
 
@@ -470,6 +471,7 @@ A directory called \\fIcvs2svn-tmp\\fR (or the directory specified by
         project_cvs_repos_path,
         initial_directories=initial_directories,
         symbol_transforms=symbol_transforms,
+        exclude_paths=exclude_paths,
         )
 
     self.projects.append(project)

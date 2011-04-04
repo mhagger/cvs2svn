@@ -141,6 +141,12 @@ class _Stats:
     # revision where the branch is rooted:
     register(parent_cvs_rev.lod)
 
+    if parent_cvs_rev.ntdbr:
+      # If the parent revision is a vendor branch revision, and it
+      # existed when the vendor branch was the default branch, then
+      # trunk is a possible parent.
+      register(cvs_file_items.trunk)
+
     # Any other branches that are rooted at the same revision and
     # were committed earlier than the branch are also possible
     # parents:

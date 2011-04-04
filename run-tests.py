@@ -1201,8 +1201,10 @@ class SimpleTags(Cvs2SvnTestCase):
 
     # The same, as a branch
     conv.logs[17].check(sym_log_msg('B_FROM_INITIALS_BUT_ONE'), (
-      ('/%(branches)s/B_FROM_INITIALS_BUT_ONE'+fromstr, 'A'),
+      ('/%(branches)s/B_FROM_INITIALS_BUT_ONE (from /%(trunk)s:13)', 'A'),
       ('/%(branches)s/B_FROM_INITIALS_BUT_ONE/proj/sub1/subsubB', 'D'),
+      ('/%(branches)s/B_FROM_INITIALS_BUT_ONE/single-files', 'D'),
+      ('/%(branches)s/B_FROM_INITIALS_BUT_ONE/partial-prune', 'D'),
       ))
 
 
@@ -4145,7 +4147,7 @@ test_list = [
     include_empty_directories_no_prune,
     exclude_symbol_default,
     add_on_branch2,
-    XFail(branch_from_vendor_branch),
+    branch_from_vendor_branch,
     strange_default_branch,
     move_parent,
     ]

@@ -141,10 +141,18 @@ class _Stats:
     # revision where the branch is rooted:
     register(parent_cvs_rev.lod)
 
+    # If the parent revision is a non-trunk default (vendor) branch
+    # revision, then count trunk as a possible parent.  In particular,
+    # the symbol could be grafted to the post-commit that copies the
+    # vendor branch changes to trunk.  On the other hand, our vendor
+    # branch handling is currently too stupid to do so.  On the other
+    # other hand, when the vendor branch is being excluded from the
+    # conversion, then the vendor branch revision will be moved to
+    # trunk, again making trunk a possible parent--and *this* our code
+    # can handle.  In the end, considering trunk a possible parent can
+    # never affect the correctness of the conversion, and on balance
+    # seems to improve the selection of symbol parents.
     if parent_cvs_rev.ntdbr:
-      # If the parent revision is a vendor branch revision, and it
-      # existed when the vendor branch was the default branch, then
-      # trunk is a possible parent.
       register(cvs_file_items.trunk)
 
     # Any other branches that are rooted at the same revision and

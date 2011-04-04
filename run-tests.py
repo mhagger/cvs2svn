@@ -995,24 +995,24 @@ class PruneWithCare(Cvs2SvnTestCase):
     # directory src/gnu/usr.bin/cvs/contrib/pcl-cvs/ in FreeBSD's CVS
     # repository (see issue #1302).  Step 4 is the doozy:
     #
-    #   revision 1:  adds trunk/blah/, adds trunk/blah/cookie
-    #   revision 2:  adds trunk/blah/NEWS
-    #   revision 3:  deletes trunk/blah/cookie
-    #   revision 4:  deletes blah [re-deleting trunk/blah/cookie pruned blah!]
+    #   revision 1:  adds trunk/blah/, adds trunk/blah/first
+    #   revision 2:  adds trunk/blah/second
+    #   revision 3:  deletes trunk/blah/first
+    #   revision 4:  deletes blah [re-deleting trunk/blah/first pruned blah!]
     #   revision 5:  does nothing
     #
     # After fixing cvs2svn, the sequence (correctly) looks like this:
     #
-    #   revision 1:  adds trunk/blah/, adds trunk/blah/cookie
-    #   revision 2:  adds trunk/blah/NEWS
-    #   revision 3:  deletes trunk/blah/cookie
-    #   revision 4:  does nothing [because trunk/blah/cookie already deleted]
+    #   revision 1:  adds trunk/blah/, adds trunk/blah/first
+    #   revision 2:  adds trunk/blah/second
+    #   revision 3:  deletes trunk/blah/first
+    #   revision 4:  does nothing [because trunk/blah/first already deleted]
     #   revision 5:  deletes blah
     #
-    # The difference is in 4 and 5.  In revision 4, it's not correct to
-    # prune blah/, because NEWS is still in there, so revision 4 does
-    # nothing now.  But when we delete NEWS in 5, that should bubble up
-    # and prune blah/ instead.
+    # The difference is in 4 and 5.  In revision 4, it's not correct
+    # to prune blah/, because second is still in there, so revision 4
+    # does nothing now.  But when we delete second in 5, that should
+    # bubble up and prune blah/ instead.
     #
     # ### Note that empty revisions like 4 are probably going to become
     # ### at least optional, if not banished entirely from cvs2svn's
@@ -1020,9 +1020,6 @@ class PruneWithCare(Cvs2SvnTestCase):
     # ### revision property explaining what happened.  Need to think
     # ### about that.  In some sense, it's a bug in Subversion itself,
     # ### that such revisions don't show up in 'svn log' output.
-    #
-    # In the test below, 'trunk/full-prune/first' represents
-    # cookie, and 'trunk/full-prune/second' represents NEWS.
 
     conv = self.ensure_conversion()
 

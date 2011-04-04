@@ -181,6 +181,13 @@ class _Stats:
     # revision where the branch is rooted:
     register(parent_cvs_rev.lod)
 
+    # If the parent revision is a non-trunk default (vendor) branch
+    # revision, then count trunk as a possible parent.  See the
+    # comment by the analogous code in
+    # register_branch_possible_parents() for more details.
+    if parent_cvs_rev.ntdbr:
+      register(cvs_file_items.trunk)
+
     # Branches that are rooted at the same revision are also
     # possible parents:
     for branch_id in parent_cvs_rev.branch_ids:

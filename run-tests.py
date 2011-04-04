@@ -1177,10 +1177,8 @@ class SimpleTags(Cvs2SvnTestCase):
       ('/%(trunk)s/proj/sub3/default', 'A'),
       ))
 
-    fromstr = ' (from /%(branches)s/B_FROM_INITIALS:14)'
-
     # Tag on rev 1.1.1.1 of all files in proj
-    conv.logs[14].check(sym_log_msg('B_FROM_INITIALS'), (
+    conv.logs[16].check(sym_log_msg('B_FROM_INITIALS'), (
       ('/%(branches)s/B_FROM_INITIALS (from /%(trunk)s:13)', 'A'),
       ('/%(branches)s/B_FROM_INITIALS/single-files', 'D'),
       ('/%(branches)s/B_FROM_INITIALS/partial-prune', 'D'),
@@ -1189,13 +1187,17 @@ class SimpleTags(Cvs2SvnTestCase):
     # The same, as a tag
     log = conv.find_tag_log('T_ALL_INITIAL_FILES')
     log.check(sym_log_msg('T_ALL_INITIAL_FILES',1), (
-      ('/%(tags)s/T_ALL_INITIAL_FILES'+fromstr, 'A'),
+      ('/%(tags)s/T_ALL_INITIAL_FILES (from /%(trunk)s:13)', 'A'),
+      ('/%(tags)s/T_ALL_INITIAL_FILES/single-files', 'D'),
+      ('/%(tags)s/T_ALL_INITIAL_FILES/partial-prune', 'D'),
       ))
 
     # Tag on rev 1.1.1.1 of all files in proj, except one
     log = conv.find_tag_log('T_ALL_INITIAL_FILES_BUT_ONE')
     log.check(sym_log_msg('T_ALL_INITIAL_FILES_BUT_ONE',1), (
-      ('/%(tags)s/T_ALL_INITIAL_FILES_BUT_ONE'+fromstr, 'A'),
+      ('/%(tags)s/T_ALL_INITIAL_FILES_BUT_ONE (from /%(trunk)s:13)', 'A'),
+      ('/%(tags)s/T_ALL_INITIAL_FILES_BUT_ONE/single-files', 'D'),
+      ('/%(tags)s/T_ALL_INITIAL_FILES_BUT_ONE/partial-prune', 'D'),
       ('/%(tags)s/T_ALL_INITIAL_FILES_BUT_ONE/proj/sub1/subsubB', 'D'),
       ))
 
@@ -1229,7 +1231,12 @@ def mixed_time_tag():
 
   log = conv.find_tag_log('T_MIXED')
   log.check_changes((
-    ('/%(tags)s/T_MIXED (from /%(branches)s/B_MIXED:20)', 'A'),
+    ('/%(tags)s/T_MIXED (from /%(trunk)s:19)', 'A'),
+    ('/%(tags)s/T_MIXED/single-files', 'D'),
+    ('/%(tags)s/T_MIXED/partial-prune', 'D'),
+    ('/%(tags)s/T_MIXED/proj/sub2/subsubA '
+     '(from /%(trunk)s/proj/sub2/subsubA:13)', 'R'),
+    ('/%(tags)s/T_MIXED/proj/sub3 (from /%(trunk)s/proj/sub3:18)', 'R'),
     ))
 
 
@@ -1241,7 +1248,7 @@ def mixed_time_branch_with_added_file():
 
   # A branch from the same place as T_MIXED in the previous test,
   # plus a file added directly to the branch
-  conv.logs[20].check(sym_log_msg('B_MIXED'), (
+  conv.logs[21].check(sym_log_msg('B_MIXED'), (
     ('/%(branches)s/B_MIXED (from /%(trunk)s:19)', 'A'),
     ('/%(branches)s/B_MIXED/partial-prune', 'D'),
     ('/%(branches)s/B_MIXED/single-files', 'D'),

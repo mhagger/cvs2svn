@@ -3946,6 +3946,21 @@ def move_parent():
       ))
 
 
+@Cvs2SvnTestFunction
+def log_message_eols():
+  "nonstandard EOLs in log messages"
+
+  conv = ensure_conversion(
+      'log-message-eols',
+      )
+  conv.logs[2].check('The CRLF at the end of this line\nshould', (
+    ('/%(trunk)s/lottalogs', 'A'),
+    ))
+  conv.logs[3].check('The CR at the end of this line\nshould', (
+    ('/%(trunk)s/lottalogs', 'M'),
+    ))
+
+
 ########################################################################
 # Run the tests
 
@@ -4157,6 +4172,7 @@ test_list = [
     branch_from_vendor_branch,
     strange_default_branch,
     move_parent,
+    log_message_eols,
     ]
 
 if __name__ == '__main__':

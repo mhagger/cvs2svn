@@ -50,7 +50,7 @@ class Ctx:
     self.include_empty_directories = False
     self.prune = True
     self.cvs_author_decoder = CVSTextDecoder(['ascii'])
-    self.cvs_log_decoder = CVSTextDecoder(['ascii'])
+    self.cvs_log_decoder = CVSTextDecoder(['ascii'], eol_fix='\n')
     self.cvs_filename_decoder = CVSTextDecoder(['ascii'])
     self.decode_apple_single = False
     self.symbol_info_filename = None

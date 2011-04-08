@@ -196,7 +196,8 @@ ctx.cvs_log_decoder = CVSTextDecoder(
         #'latin1',
         'ascii',
         ],
-    #fallback_encoding='ascii'
+    #fallback_encoding='ascii',
+    eol_fix='\n',
     )
 # You might want to be especially strict when converting filenames to
 # Unicode (e.g., maybe not specify a fallback_encoding).

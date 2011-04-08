@@ -311,7 +311,7 @@ class CVSTextDecoder:
     else:
       self.fallback_decoder = (encoding, codecs.lookup(encoding)[1])
 
-  def __call__(self, s):
+  def decode(self, s):
     """Try to decode string S using our configured source encodings.
 
     Return the string as a Unicode string.  If S is already a unicode
@@ -333,6 +333,9 @@ class CVSTextDecoder:
       return decoder(s, 'replace')[0]
     else:
       raise UnicodeError()
+
+  def __call__(self, s):
+    return self.decode(s)
 
 
 class Timestamper:

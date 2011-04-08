@@ -5,14 +5,26 @@ Version ?.?.? (not yet released)
  * Store CVS file descriptions in a Subversion property "cvs:description".
  * SVN: Optionally include empty directories from the CVS repository.
  * Much faster cvs2git conversions possible via --use-external-blob-generator.
+ * Use file properties for more flexibility over keyword and EOL handling.
+ * Add a ConditionalPropertySetter.
+ * Allow CVS repository paths to be excluded from the conversion.
+ * Normalize EOLs in CVS log messages to LF.
 
  Bugs fixed:
  * Issue #31: cvs2svn does not convert empty directories.
  * Issue #127: Dead "file X added on branch Y" revisions not always dropped.
+ * Fix --dry-run for cvs2git and cvs2bzr.
 
  Improvements and output changes:
  * More aggressively omit unnecessary dead revisions.
  * Consider it a failure if "cvs" or "co" writes something to stderr.
+ * Add concept of "file properties", which are only computed once per file.
+ * Refuse to accept a default branch that is not a top-level branch.
+ * Make check of illegal filename characters dependent on the target VCS.
+ * Improve error reporting for invalid date strings in CVS.
+ * Many documentation improvements.
+ * Allow grafting a branch onto a parent that has itself been grafted.
+ * Slightly improve choice of parent branch for vendor branches.
 
  Miscellaneous:
  * Sort large files using Python to avoid dependency on GNU sort.

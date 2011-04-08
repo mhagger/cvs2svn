@@ -265,7 +265,7 @@ def format_date(date):
 class CVSTextDecoder:
   """Callable that decodes CVS strings into Unicode."""
 
-  def __init__(self, encodings, fallback_encoding=None):
+  def __init__(self, encodings, fallback_encoding=None, eol_fix=None):
     """Create a CVSTextDecoder instance.
 
     ENCODINGS is a list containing the names of encodings that are
@@ -274,6 +274,10 @@ class CVSTextDecoder:
     FALLBACK_ENCODING, if specified, is the name of an encoding that
     should be used as a source encoding in lossy 'replace' mode if all
     of ENCODINGS failed.
+
+    EOL_FIX is the string to which all EOL sequences should be
+    converted.  If it is set to None, then EOL sequences are left
+    unchanged.
 
     Raise LookupError if any of the specified encodings is unknown."""
 
@@ -287,6 +291,7 @@ class CVSTextDecoder:
       self.fallback_decoder = (
           fallback_encoding, codecs.lookup(fallback_encoding)[1]
           )
+    self.eol_fix = eol_fix
 
   def add_encoding(self, encoding):
     """Add an encoding to be tried in 'strict' mode.
@@ -335,7 +340,10 @@ class CVSTextDecoder:
       raise UnicodeError()
 
   def __call__(self, s):
-    return self.decode(s)
+    s = self.decode(s)
+    if self.eol_fix is not None:
+      s = canonicalize_eol(s, self.eol_fix)
+    return s
 
 
 class Timestamper:

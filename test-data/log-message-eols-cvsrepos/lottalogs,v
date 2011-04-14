@@ -1,0 +1,38 @@
+head     1.2;
+access   ;
+symbols	 ;
+locks    ; strict;
+comment  @# @;
+
+
+1.2
+date     2003.08.28.15.00.00;  author jrandom;  state Exp;
+branches ;
+next     1.1;
+
+1.1
+date     2003.07.28.15.00.00;  author jrandom;  state Exp;
+branches ;
+next     ;
+
+
+desc
+@@
+
+
+1.2
+log
+@The CR at the end of this lineshould be turned into a LF.
+@
+text
+@Nothing to see here.
+@
+
+
+1.1
+log
+@The CRLF at the end of this line
+should be turned into a LF.
+@
+text
+@@

@@ -9,6 +9,7 @@ Version ?.?.? (not yet released)
  * Add a ConditionalPropertySetter.
  * Allow CVS repository paths to be excluded from the conversion.
  * Normalize EOLs in CVS log messages to LF.
+ * Ignore vendor branch declarations that refer to non-existent branches.
 
  Bugs fixed:
  * Issue #31: cvs2svn does not convert empty directories.

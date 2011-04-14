@@ -3961,6 +3961,19 @@ def log_message_eols():
     ))
 
 
+@Cvs2SvnTestFunction
+def missing_vendor_branch():
+  "default branch not present in RCS file"
+
+  conv = ensure_conversion(
+      'missing-vendor-branch',
+      )
+  if not conv.output_found(
+      r'.*vendor branch \'1\.1\.1\' is not present in file and will be ignored'
+      ):
+    raise Failure()
+
+
 ########################################################################
 # Run the tests
 
@@ -4173,6 +4186,7 @@ test_list = [
     strange_default_branch,
     move_parent,
     log_message_eols,
+    missing_vendor_branch,
     ]
 
 if __name__ == '__main__':

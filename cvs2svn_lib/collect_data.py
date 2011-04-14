@@ -937,7 +937,16 @@ class _FileDataCollector(cvs2svn_rcsparse.Sink):
 
     try:
       if self.default_branch:
-        vendor_cvs_branch_id = self.sdc.branches_data[self.default_branch].id
+        try:
+          vendor_cvs_branch_id = self.sdc.branches_data[self.default_branch].id
+        except KeyError:
+          logger.warn(
+              '%s: In %s:\n'
+              '    vendor branch %r is not present in file and will be ignored.'
+              % (warning_prefix, self.cvs_file.rcs_path, self.default_branch,)
+              )
+          self.default_branch = None
+          return
         vendor_lod_items = self._cvs_file_items.get_lod_items(
             self._cvs_file_items[vendor_cvs_branch_id]
             )

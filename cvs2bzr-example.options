@@ -78,15 +78,12 @@ from cvs2svn_lib import config
 from cvs2svn_lib import changeset_database
 from cvs2svn_lib.common import CVSTextDecoder
 from cvs2svn_lib.log import logger
-from cvs2svn_lib.project import Project
 from cvs2svn_lib.git_output_option import GitRevisionInlineWriter
 from cvs2svn_lib.bzr_output_option import BzrOutputOption
 from cvs2svn_lib.dvcs_common import KeywordHandlingPropertySetter
 from cvs2svn_lib.revision_manager import NullRevisionCollector
 from cvs2svn_lib.rcs_revision_manager import RCSRevisionReader
 from cvs2svn_lib.cvs_revision_manager import CVSRevisionReader
-from cvs2svn_lib.checkout_internal import InternalRevisionCollector
-from cvs2svn_lib.checkout_internal import InternalRevisionReader
 from cvs2svn_lib.symbol_strategy import AllBranchRule
 from cvs2svn_lib.symbol_strategy import AllTagRule
 from cvs2svn_lib.symbol_strategy import BranchIfCommitsRule

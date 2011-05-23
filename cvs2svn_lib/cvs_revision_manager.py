@@ -20,7 +20,6 @@
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.process import check_command_runs
 from cvs2svn_lib.process import CommandFailedException
-from cvs2svn_lib.revision_manager import RevisionReader
 from cvs2svn_lib.abstract_rcs_revision_manager import AbstractRCSRevisionReader
 
 

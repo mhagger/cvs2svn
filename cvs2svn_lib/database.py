@@ -37,7 +37,7 @@ from cvs2svn_lib.record_table import RecordTable
 #    so that the dbhash module used by anydbm will use bsddb3.
 try:
   import bsddb3
-  sys.modules['bsddb'] = sys.modules['bsddb3']
+  sys.modules['bsddb'] = bsddb3
 except ImportError:
   pass
 

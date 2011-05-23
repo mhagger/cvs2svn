@@ -26,7 +26,7 @@ from cvs2svn_lib.changeset import TagChangeset
 from cvs2svn_lib.record_table import UnsignedIntegerPacker
 from cvs2svn_lib.record_table import MmapRecordTable
 from cvs2svn_lib.record_table import RecordTable
-from cvs2svn_lib.database import IndexedStore
+from cvs2svn_lib.indexed_database import IndexedStore
 from cvs2svn_lib.serializer import PrimedPickleSerializer
 
 

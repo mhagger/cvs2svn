@@ -144,7 +144,7 @@ from cvs2svn_lib.cvs_path import CVSDirectory
 from cvs2svn_lib.key_generator import KeyGenerator
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.serializer import MarshalSerializer
-from cvs2svn_lib.database import IndexedDatabase
+from cvs2svn_lib.indexed_database import IndexedDatabase
 
 
 class RepositoryMirrorError(Exception):

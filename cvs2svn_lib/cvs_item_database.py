@@ -31,7 +31,7 @@ from cvs2svn_lib.cvs_item import CVSTagNoop
 from cvs2svn_lib.cvs_file_items import CVSFileItems
 from cvs2svn_lib.serializer import Serializer
 from cvs2svn_lib.serializer import PrimedPickleSerializer
-from cvs2svn_lib.database import IndexedStore
+from cvs2svn_lib.indexed_database import IndexedStore
 
 
 cvs_item_primer = (

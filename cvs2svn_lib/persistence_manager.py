@@ -25,7 +25,7 @@ from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.record_table import SignedIntegerPacker
 from cvs2svn_lib.record_table import RecordTable
 from cvs2svn_lib.serializer import PrimedPickleSerializer
-from cvs2svn_lib.database import IndexedDatabase
+from cvs2svn_lib.indexed_database import IndexedDatabase
 from cvs2svn_lib.svn_commit import SVNRevisionCommit
 from cvs2svn_lib.svn_commit import SVNInitialProjectCommit
 from cvs2svn_lib.svn_commit import SVNPrimaryCommit

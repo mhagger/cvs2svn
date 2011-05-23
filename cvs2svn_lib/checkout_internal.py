@@ -89,7 +89,7 @@ from cvs2svn_lib.log import logger
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.cvs_item import CVSRevisionModification
 from cvs2svn_lib.database import Database
-from cvs2svn_lib.database import IndexedDatabase
+from cvs2svn_lib.indexed_database import IndexedDatabase
 from cvs2svn_lib.rcs_stream import RCSStream
 from cvs2svn_lib.rcs_stream import MalformedDeltaException
 from cvs2svn_lib.keyword_expander import expand_keywords

@@ -37,18 +37,6 @@ from cvs2svn_lib.dvcs_common import MirrorUpdater
 from cvs2svn_lib.key_generator import KeyGenerator
 
 
-class ExpectedDirectoryError(Exception):
-  """A file was found where a directory was expected."""
-
-  pass
-
-
-class ExpectedFileError(Exception):
-  """A directory was found where a file was expected."""
-
-  pass
-
-
 class GitRevisionWriter(MirrorUpdater):
 
   def start(self, mirror, f):

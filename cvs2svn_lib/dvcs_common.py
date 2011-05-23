@@ -295,6 +295,18 @@ class DVCSOutputOption(OutputOption):
           yield sub_cvs_path
 
 
+class ExpectedDirectoryError(Exception):
+  """A file was found where a directory was expected."""
+
+  pass
+
+
+class ExpectedFileError(Exception):
+  """A directory was found where a file was expected."""
+
+  pass
+
+
 class MirrorUpdater(object):
   def register_artifacts(self, which_pass):
     pass

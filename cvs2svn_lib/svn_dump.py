@@ -435,7 +435,7 @@ class LoaderPipe(object):
   def write(self, s):
     try:
       self.loader_pipe.stdin.write(s)
-    except IOError, e:
+    except IOError:
       raise FatalError(
           'svnadmin failed with the following output while '
           'loading the dumpfile:\n%s'

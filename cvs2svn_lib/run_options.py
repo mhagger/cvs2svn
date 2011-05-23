@@ -839,7 +839,7 @@ class RunOptions(object):
     prof = 'cProfile'
     try:
         import cProfile
-    except ImportError, e:
+    except ImportError:
         prof = 'hotshot'
     group.add_option(ManOption(
         '--profile',

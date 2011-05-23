@@ -112,7 +112,6 @@ A directory called \\fIcvs2svn-tmp\\fR (or the directory specified by
   def process_extraction_options(self):
     """Process options related to extracting data from the CVS repository."""
 
-    ctx = Ctx()
     options = self.options
 
     not_both(options.use_rcs, '--use-rcs',

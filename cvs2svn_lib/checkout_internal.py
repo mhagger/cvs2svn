@@ -88,7 +88,6 @@ from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.log import logger
 from cvs2svn_lib.artifact_manager import artifact_manager
 from cvs2svn_lib.cvs_item import CVSRevisionModification
-from cvs2svn_lib.database import Database
 from cvs2svn_lib.indexed_database import IndexedDatabase
 from cvs2svn_lib.rcs_stream import RCSStream
 from cvs2svn_lib.rcs_stream import MalformedDeltaException
@@ -629,6 +628,12 @@ class InternalRevisionReader(RevisionReader):
   """A RevisionReader that reads the contents from an own delta store."""
 
   def __init__(self, compress):
+    # Only import Database if an InternalRevisionReader is really
+    # instantiated, because the import fails if a decent dbm is not
+    # installed.
+    from cvs2svn_lib.database import Database
+    self._Database = Database
+
     self._compress = compress
 
   def register_artifacts(self, which_pass):
@@ -661,7 +666,7 @@ class InternalRevisionReader(RevisionReader):
     serializer = MarshalSerializer()
     if self._compress:
       serializer = CompressingSerializer(serializer)
-    self._co_db = Database(
+    self._co_db = self._Database(
         artifact_manager.get_temp_file(config.CVS_CHECKOUT_DB),
         DB_OPEN_NEW, serializer,
         )

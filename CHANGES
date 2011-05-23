@@ -26,6 +26,7 @@ Version ?.?.? (not yet released)
  * Many documentation improvements.
  * Allow grafting a branch onto a parent that has itself been grafted.
  * Slightly improve choice of parent branch for vendor branches.
+ * Only import "database" if used, to avoid error if no DB module installed.
 
  Miscellaneous:
  * Sort large files using Python to avoid dependency on GNU sort.

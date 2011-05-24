@@ -1,0 +1,21 @@
+#!/usr/bin/env python
+
+"""Update the rcsparse library from ViewVC."""
+
+import sys
+import os
+import subprocess
+
+
+VIEWVC_REPOS = 'http://viewvc.tigris.org/svn/viewvc'
+BRANCH = 'trunk'
+URL = '/'.join([VIEWVC_REPOS, BRANCH, 'lib/vclib/ccvs/rcsparse'])
+
+cmd = ['svn', 'export', '--force', URL, os.path.dirname(__file__)]
+sys.stderr.write('%s\n' % (' '.join(cmd),))
+retcode = subprocess.call(cmd)
+
+if retcode:
+    sys.exit('Export failed!')
+
+

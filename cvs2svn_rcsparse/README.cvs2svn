@@ -7,8 +7,7 @@ Instead, we want to use the exact version of rcsparse that is tested &
 known to work with this version of cvs2svn.
 
 Hence this directory.  To upgrade to a newer rcsparse, we just run
-'update.sh', which fetches the current trunk versions using
-'svn export'.
+'update', which fetches the current trunk versions using 'svn export'.
 
 We control when these upgrades happen, and install this library under
 the name 'cvs2svn_rcsparse', so it won't conflict with any 'rcsparse'

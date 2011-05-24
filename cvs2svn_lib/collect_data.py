@@ -74,7 +74,9 @@ from cvs2svn_lib.symbol_statistics import SymbolStatisticsCollector
 from cvs2svn_lib.metadata_database import MetadataDatabase
 from cvs2svn_lib.metadata_database import MetadataLogger
 
-import cvs2svn_rcsparse
+from cvs2svn_lib.rcsparser import Sink
+from cvs2svn_lib.rcsparser import parse
+from cvs2svn_lib.rcsparser import RCSParseError
 
 
 # A regular expression defining "valid" revision numbers (used to
@@ -517,7 +519,7 @@ class _SymbolDataCollector(object):
       return self.rev_to_branch_data(revision).symbol
 
 
-class _FileDataCollector(cvs2svn_rcsparse.Sink):
+class _FileDataCollector(Sink):
   """Class responsible for collecting RCS data for a particular file.
 
   Any collected data that need to be remembered are stored into the
@@ -1044,8 +1046,8 @@ class _ProjectDataCollector:
     logger.normal(cvs_file.rcs_path)
     fdc = _FileDataCollector(self, cvs_file)
     try:
-      cvs2svn_rcsparse.parse(open(cvs_file.rcs_path, 'rb'), fdc)
-    except (cvs2svn_rcsparse.common.RCSParseError, RuntimeError):
+      parse(open(cvs_file.rcs_path, 'rb'), fdc)
+    except (RCSParseError, RuntimeError):
       self.collect_data.record_fatal_error(
           "%r is not a valid ,v file" % (cvs_file.rcs_path,)
           )

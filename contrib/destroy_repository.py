@@ -111,7 +111,7 @@ import re
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from cvs2svn_lib.key_generator import KeyGenerator
-import cvs2svn_rcsparse
+from cvs2svn_lib.rcsparser import parse
 from rcs_file_filter import WriteRCSFileSink
 from rcs_file_filter import FilterSink
 
@@ -347,7 +347,7 @@ class FileDestroyer:
         tmp_filename = get_tmp_filename()
         f = open(tmp_filename, 'wb')
         new_filename = rewrite_filename(filename)
-        cvs2svn_rcsparse.parse(
+        parse(
             open(filename, 'rb'),
             DestroyerFilterSink(
                 self.author_substituter,

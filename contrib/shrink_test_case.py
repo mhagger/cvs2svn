@@ -42,8 +42,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from cvs2svn_lib.key_generator import KeyGenerator
 
-import cvs2svn_rcsparse
-
+from cvs2svn_lib.rcsparser import Sink
+from cvs2svn_lib.rcsparser import parse
 
 from contrib.rcs_file_filter import WriteRCSFileSink
 from contrib.rcs_file_filter import FilterSink
@@ -388,7 +388,7 @@ class RCSFileFilter:
         fout = StringIO()
         sink = WriteRCSFileSink(fout)
         filter = self.get_filter_sink(sink)
-        cvs2svn_rcsparse.parse(StringIO(text), filter)
+        parse(StringIO(text), filter)
         return fout.getvalue()
 
     def get_subfilters(self):
@@ -422,7 +422,7 @@ class DeleteTagRCSFileFilter(RCSFileFilter):
 
 
 def get_tag_set(path):
-    class TagCollector(cvs2svn_rcsparse.Sink):
+    class TagCollector(Sink):
         def __init__(self):
             self.tags = set()
 
@@ -454,7 +454,7 @@ def get_tag_set(path):
             return tags
 
     tag_collector = TagCollector()
-    cvs2svn_rcsparse.parse(open(path, 'rb'), tag_collector)
+    parse(open(path, 'rb'), tag_collector)
     return tag_collector.get_tags()
 
 
@@ -519,7 +519,7 @@ def get_branch_tree(path):
 
     """
 
-    class BranchCollector(cvs2svn_rcsparse.Sink):
+    class BranchCollector(Sink):
         def __init__(self):
             self.branches = {}
 
@@ -551,7 +551,7 @@ def get_branch_tree(path):
             return retval
 
     branch_collector = BranchCollector()
-    cvs2svn_rcsparse.parse(open(path, 'rb'), branch_collector)
+    parse(open(path, 'rb'), branch_collector)
     return branch_collector.get_branches()
 
 

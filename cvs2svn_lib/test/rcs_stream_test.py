@@ -31,8 +31,8 @@ sys.path.insert(0, SRCPATH)
 
 import unittest
 
-from cvs2svn_rcsparse import Sink
-from cvs2svn_rcsparse import parse
+from cvs2svn_lib.rcsparser import Sink
+from cvs2svn_lib.rcsparser import parse
 from cvs2svn_lib.rcs_stream import RCSStream
 
 TMPDIR = os.path.join(SRCPATH, 'cvs2svn-tmp')

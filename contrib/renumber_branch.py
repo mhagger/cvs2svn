@@ -46,8 +46,10 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import cvs2svn_rcsparse
-from rcs_file_filter import WriteRCSFileSink, FilterSink
+from cvs2svn_lib.rcsparser import parse
+from rcs_file_filter import WriteRCSFileSink
+from rcs_file_filter import FilterSink
+
 
 class RenumberingFilter(FilterSink):
     '''A filter that transforms all revision numbers using a
@@ -112,7 +114,7 @@ def process_file(filename, rev_from, rev_to, force):
     try:
         writer = WriteRCSFileSink(outfp)
         revfilter = RenumberingFilter(writer, func)
-        cvs2svn_rcsparse.parse(infp, revfilter)
+        parse(infp, revfilter)
     finally:
         outfp.close()
         infp.close()

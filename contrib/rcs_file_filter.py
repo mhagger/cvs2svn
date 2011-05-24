@@ -24,7 +24,8 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import cvs2svn_rcsparse
+from cvs2svn_lib.rcsparser import Sink
+from cvs2svn_lib.rcsparser import parse
 
 
 def at_quote(s):
@@ -41,7 +42,7 @@ def format_date(date):
     return year + time.strftime('.%m.%d.%H.%M.%S', date_tuple)
 
 
-class WriteRCSFileSink(cvs2svn_rcsparse.Sink):
+class WriteRCSFileSink(Sink):
     """A Sink that outputs reconstructed RCS file contents."""
 
     def __init__(self, f):
@@ -138,7 +139,7 @@ class WriteRCSFileSink(cvs2svn_rcsparse.Sink):
         pass
 
 
-class FilterSink(cvs2svn_rcsparse.Sink):
+class FilterSink(Sink):
     """A Sink that passes callbacks through to another sink.
 
     This is intended for use as a base class for other filter classes
@@ -202,12 +203,10 @@ if __name__ == '__main__':
     if sys.argv[1:]:
         for path in sys.argv[1:]:
             if os.path.isfile(path) and path.endswith(',v'):
-                cvs2svn_rcsparse.parse(
-                    open(path, 'rb'), WriteRCSFileSink(sys.stdout)
-                    )
+                parse(open(path, 'rb'), WriteRCSFileSink(sys.stdout))
             else:
                 sys.stderr.write('%r is being ignored.\n' % path)
     else:
-        cvs2svn_rcsparse.parse(sys.stdin, WriteRCSFileSink(sys.stdout))
+        parse(sys.stdin, WriteRCSFileSink(sys.stdout))
 
 

@@ -50,8 +50,8 @@ import cPickle as pickle
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(sys.argv[0])))
 
-from cvs2svn_rcsparse import Sink
-from cvs2svn_rcsparse import parse
+from cvs2svn_lib.rcsparser import Sink
+from cvs2svn_lib.rcsparser import parse
 from cvs2svn_lib.rcs_stream import RCSStream
 
 

@@ -100,7 +100,8 @@ from cvs2svn_lib.serializer import CompressingSerializer
 from cvs2svn_lib.serializer import PrimedPickleSerializer
 from cvs2svn_lib.apple_single_filter import get_maybe_apple_single
 
-import cvs2svn_rcsparse
+from cvs2svn_lib.rcsparser import Sink
+from cvs2svn_lib.rcsparser import parse
 
 
 class TextRecord(object):
@@ -446,7 +447,7 @@ class TextRecordDatabase:
     return '\n'.join(retval)
 
 
-class _Sink(cvs2svn_rcsparse.Sink):
+class _Sink(Sink):
   def __init__(self, revision_collector, cvs_file_items):
     self.revision_collector = revision_collector
     self.cvs_file_items = cvs_file_items
@@ -609,7 +610,7 @@ class InternalRevisionCollector(RevisionCollector):
     # A map from cvs_rev_id to TextRecord instance:
     self.text_record_db = TextRecordDatabase(self._delta_db, NullDatabase())
 
-    cvs2svn_rcsparse.parse(
+    parse(
         open(cvs_file_items.cvs_file.rcs_path, 'rb'),
         _Sink(self, cvs_file_items),
         )

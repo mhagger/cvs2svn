@@ -4197,7 +4197,7 @@ test_list = [
     log_message_eols,
     missing_vendor_branch,
 # 180:
-    XFail(newphrases),
+    newphrases,
     ]
 
 if __name__ == '__main__':

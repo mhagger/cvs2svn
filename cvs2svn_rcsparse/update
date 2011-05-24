@@ -10,7 +10,8 @@ import re
 
 VIEWVC_REPOS = 'http://viewvc.tigris.org/svn/viewvc'
 BRANCH = 'trunk'
-URL = '/'.join([VIEWVC_REPOS, BRANCH, 'lib/vclib/ccvs/rcsparse'])
+RCSPARSE_URL = '/'.join([VIEWVC_REPOS, BRANCH, 'lib/vclib/ccvs/rcsparse'])
+LICENSE_URL = '/'.join([VIEWVC_REPOS, BRANCH, 'LICENSE.html'])
 
 DEST = os.path.dirname(__file__)
 
@@ -18,7 +19,7 @@ DEST = os.path.dirname(__file__)
 def get_current_revision():
     revision_re = re.compile(r'^Revision\:\s*(?P<revision>\d+)$')
 
-    cmd = ['svn', 'info', URL]
+    cmd = ['svn', 'info', VIEWVC_REPOS]
     sys.stderr.write('%s\n' % (' '.join(cmd),))
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
     (out, err) = p.communicate()
@@ -31,18 +32,23 @@ def get_current_revision():
         'Could not determine the current revision of the ViewVC repository!'
         )
 
+def export(url, revision, dest):
+    cmd = ['svn', 'export', '-r', str(revision), '--force', url, dest]
+    sys.stderr.write('%s\n' % (' '.join(cmd),))
+    retcode = subprocess.call(cmd)
+
+    if retcode:
+        sys.exit('Export failed!')
+
+
 revision = get_current_revision()
 
-cmd = ['svn', 'export', '-r', str(revision), '--force', URL, DEST]
-sys.stderr.write('%s\n' % (' '.join(cmd),))
-retcode = subprocess.call(cmd)
-
-if retcode:
-    sys.exit('Export failed!')
+export(RCSPARSE_URL, revision, DEST)
+export(LICENSE_URL, revision, os.path.join(DEST, 'LICENSE.html'))
 
 # Record which version of the upstream source was downloaded:
 open(os.path.join(DEST, 'UPSTREAM_SOURCE'), 'w').write(
-    '%s@%d\n' % (URL, revision,)
+    '%s@%d\n' % (RCSPARSE_URL, revision,)
     )
 
 

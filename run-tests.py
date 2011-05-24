@@ -3974,6 +3974,15 @@ def missing_vendor_branch():
     raise Failure()
 
 
+@Cvs2SvnTestFunction
+def newphrases():
+  "newphrases in RCS files"
+
+  ensure_conversion(
+      'newphrases',
+      )
+
+
 ########################################################################
 # Run the tests
 
@@ -4187,6 +4196,8 @@ test_list = [
     move_parent,
     log_message_eols,
     missing_vendor_branch,
+# 180:
+    XFail(newphrases),
     ]
 
 if __name__ == '__main__':

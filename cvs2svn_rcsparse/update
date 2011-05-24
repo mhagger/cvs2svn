@@ -15,6 +15,13 @@ LICENSE_URL = '/'.join([VIEWVC_REPOS, BRANCH, 'LICENSE.html'])
 
 DEST = os.path.dirname(__file__)
 
+INIT_TEXT = """\
+# This file causes Python to treat its containing directory it as a
+# package.  Please note that the contents of this file differ from
+# those of the __init__.py file distributed with ViewVC.
+
+"""
+
 
 def get_current_revision():
     revision_re = re.compile(r'^Revision\:\s*(?P<revision>\d+)$')
@@ -51,4 +58,7 @@ open(os.path.join(DEST, 'UPSTREAM_SOURCE'), 'w').write(
     '%s@%d\n' % (RCSPARSE_URL, revision,)
     )
 
+# Replace the upstream __init__.py file, which does some stuff that we
+# don't want:
+open(os.path.join(DEST, '__init__.py'), 'w').write(INIT_TEXT)
 

@@ -20,10 +20,38 @@
 from cvs2svn_rcsparse.common import Sink
 from cvs2svn_rcsparse.common import RCSParseError
 
-try:
-  from cvs2svn_rcsparse.texttools import Parser
-except ImportError:
-  from cvs2svn_rcsparse.default import Parser
+
+selected_parser = None
+
+def select_texttools_parser():
+  """Configure this module to use the texttools parser.
+
+  The texttools parser is faster but depends on mx.TextTools, which is
+  not part of the Python standard library.  If it is not installed,
+  this function will raise an ImportError."""
+
+  global selected_parser
+  import cvs2svn_rcsparse.texttools
+  selected_parser = cvs2svn_rcsparse.texttools.Parser
+
+
+def select_python_parser():
+  """Configure this module to use the Python parser.
+
+  The Python parser is slower but works everywhere."""
+
+  global selected_parser
+  import cvs2svn_rcsparse.default
+  selected_parser = cvs2svn_rcsparse.default.Parser
+
+
+def select_parser():
+  """Configure this module to use the best parser available."""
+
+  try:
+    select_texttools_parser()
+  except ImportError:
+    select_python_parser()
 
 
 def parse(file, sink):
@@ -33,6 +61,10 @@ def parse(file, sink):
   cvs2svn_rcsparse.common._Parser.parse() (see that method's docstring
   for more details).
   """
-  return Parser().parse(file, sink)
+
+  if selected_parser is None:
+    select_parser()
+
+  return selected_parser().parse(file, sink)
 
 

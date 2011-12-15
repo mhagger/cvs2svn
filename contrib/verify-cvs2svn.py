@@ -209,10 +209,7 @@ class HgRepos:
     if not os.path.exists(dest_path):
       cmd = self.base_cmd + ['manifest', '--rev', rev]
 
-      (output, status) = pipe(cmd)
-      if status:
-        cmd_failed(cmd, output, status)
-      manifest = [fn for fn in output.split(os.linesep)[:-1]
+      manifest = [fn for fn in split_output(cmd)
                   if not fn.startswith('.hg')]
       if not manifest:
         os.mkdir(dest_path)

@@ -164,11 +164,8 @@ class SvnRepos:
   def list(self, path):
     """Return a list of all files and directories in PATH."""
     cmd = [SVN_CMD, 'ls', self.url + '/' + path]
-    (output, status) = pipe(cmd)
-    if status:
-      cmd_failed(cmd, output, status)
     entries = []
-    for line in output.split(os.linesep):
+    for line in split_output(cmd):
       if line:
         entries.append(line[:-1])
     return entries

@@ -65,7 +65,10 @@ def split_output(self, cmd):
   (output, status) = pipe(cmd)
   if status:
     cmd_failed(cmd, output, status)
-  return output.split(os.linesep)[:-1]
+  retval = output.split(os.linesep)[:-1]
+  if retval and not retval[-1]:
+    del retval[-1]
+  return retval
 
 
 class CvsRepos:

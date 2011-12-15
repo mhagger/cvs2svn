@@ -167,7 +167,7 @@ class SvnRepos:
     entries = []
     for line in split_output(cmd):
       if line:
-        entries.append(line[:-1])
+        entries.append(line.rstrip('/'))
     return entries
 
   def tags(self):

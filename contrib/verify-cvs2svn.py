@@ -61,6 +61,13 @@ def cmd_failed(cmd, output, status):
   raise RuntimeError('%s command failed!' % cmd[0])
 
 
+def split_output(self, cmd):
+  (output, status) = pipe(cmd)
+  if status:
+    cmd_failed(cmd, output, status)
+  return output.split(os.linesep)[:-1]
+
+
 class CvsRepos:
   def __init__(self, path):
     """Open the CVS repository at PATH."""
@@ -226,14 +233,14 @@ class HgRepos:
 
   def tags(self):
     cmd = self.base_cmd + ['tags', '-q']
-    tags = self._split_output(cmd)
+    tags = split_output(cmd)
     tags.remove('tip')
     return tags
 
   def branches(self):
     if self._branches is None:
       cmd = self.base_cmd + ['branches', '-q']
-      self._branches = branches = self._split_output(cmd)
+      self._branches = branches = split_output(cmd)
       try:
         branches.remove('default')
         self._have_default = True
@@ -241,12 +248,6 @@ class HgRepos:
         self._have_default = False
 
     return self._branches
-
-  def _split_output(self, cmd):
-    (output, status) = pipe(cmd)
-    if status:
-      cmd_failed(cmd, output, status)
-    return output.split(os.linesep)[:-1]
 
 
 class GitRepos:
@@ -321,13 +322,13 @@ class GitRepos:
 
   def tags(self):
     cmd = self.repo_cmd + ['tag']
-    tags = self._split_output(cmd)
+    tags = split_output(cmd)
     return tags
 
   def branches(self):
     if self._branches is None:
       cmd = self.repo_cmd + ['branch']
-      branches = self._split_output(cmd)
+      branches = split_output(cmd)
       # Remove the two chracters at the start of the branch name
       for i in range(len(branches)):
         branches[i] = branches[i][2:]
@@ -339,12 +340,6 @@ class GitRepos:
         self._have_master = False
 
     return self._branches
-
-  def _split_output(self, cmd):
-    (output, status) = pipe(cmd)
-    if status:
-      cmd_failed(cmd, output, status)
-    return output.split(os.linesep)[:-1]
 
 
 def transform_symbol(ctx, name):

@@ -158,7 +158,7 @@ class SvnRepos:
     if status:
       cmd_failed(cmd, output, status)
     entries = []
-    for line in output.split("\n"):
+    for line in output.split(os.linesep):
       if line:
         entries.append(line[:-1])
     return entries
@@ -205,7 +205,7 @@ class HgRepos:
       (output, status) = pipe(cmd)
       if status:
         cmd_failed(cmd, output, status)
-      manifest = [fn for fn in output.split("\n")[:-1]
+      manifest = [fn for fn in output.split(os.linesep)[:-1]
                   if not fn.startswith('.hg')]
       if not manifest:
         os.mkdir(dest_path)
@@ -246,7 +246,7 @@ class HgRepos:
     (output, status) = pipe(cmd)
     if status:
       cmd_failed(cmd, output, status)
-    return output.split("\n")[:-1]
+    return output.split(os.linesep)[:-1]
 
 
 class GitRepos:
@@ -344,7 +344,7 @@ class GitRepos:
     (output, status) = pipe(cmd)
     if status:
       cmd_failed(cmd, output, status)
-    return output.split("\n")[:-1]
+    return output.split(os.linesep)[:-1]
 
 
 def transform_symbol(ctx, name):
@@ -408,7 +408,7 @@ def file_compare(failures, base1, base2, run_diff, rel_path):
       if run_diff:
         cmd = ['diff', '-u', path1, path2]
         (output, status) = pipe(cmd)
-        diff = output.split('\n')
+        diff = output.split(os.linesep)
       else:
         diff = None
       failures.report('File contents differ for %s' % rel_path,

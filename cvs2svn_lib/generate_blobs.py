@@ -133,7 +133,7 @@ class WriteBlobSink(Sink):
     # will still be needed:
     self.revrecs = {}
 
-    # The revisions that need markes will definitely be needed, so
+    # The revisions that need marks will definitely be needed, so
     # create records for them now (the rest will be filled in while
     # reading the RCS file):
     for (rev, mark) in marks.items():

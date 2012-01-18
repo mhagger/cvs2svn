@@ -3451,27 +3451,26 @@ def main_git():
 
   # Note: To test importing into git, do
   #
-  #     ./run-tests <test-number>
-  #     rm -rf .git
-  #     git-init
-  #     cat cvs2svn-tmp/{blobfile,dumpfile}.out | git fast-import
+  #     ./run-tests <this-test-number>
+  #     rm -rf cvs2svn-tmp/main.git
+  #     git init --bare cvs2svn-tmp/main.git
+  #     cd cvs2svn-tmp/main.git
+  #     cat ../git-{blob,dump}.dat | git fast-import
   #
   # Or, to load the dumpfiles separately:
   #
-  #     cat cvs2svn-tmp/git-blob.dat \
-  #         | git fast-import --export-marks=cvs2svn-tmp/git-marks.dat
-  #     cat cvs2svn-tmp/git-dump.dat \
-  #         | git fast-import --import-marks=cvs2svn-tmp/git-marks.dat
+  #     cat ../git-blob.dat | git fast-import --export-marks=../git-marks.dat
+  #     cat ../git-dump.dat | git fast-import --import-marks=../git-marks.dat
   #
   # Then use "gitk --all", "git log", etc. to test the contents of the
-  # repository.
+  # repository or "git clone" to make a non-bare clone.
 
   # We don't have the infrastructure to check that the resulting git
   # repository is correct, so we just check that the conversion runs
   # to completion:
   conv = GitConversion('main', None, [
-      '--blobfile=cvs2svn-tmp/blobfile.out',
-      '--dumpfile=cvs2svn-tmp/dumpfile.out',
+      '--blobfile=cvs2svn-tmp/git-blob.dat',
+      '--dumpfile=cvs2svn-tmp/git-dump.dat',
       '--username=cvs2git',
       'test-data/main-cvsrepos',
       ])

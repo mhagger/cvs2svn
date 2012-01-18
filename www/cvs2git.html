@@ -344,7 +344,7 @@ cvs2git --options=OPTIONS-FILE
 <pre>
 mkdir myproject.git
 cd myproject.git
-git init
+git init --bare
 </pre>
 
   </li>
@@ -359,17 +359,13 @@ git fast-import --export-marks=../cvs2svn-tmp/git-marks.dat &lt; ../cvs2svn-tmp/
 git fast-import --import-marks=../cvs2svn-tmp/git-marks.dat &lt; ../cvs2svn-tmp/git-dump.dat
 </pre>
 
-    <p>This can, of course, be shortened to:</p>
+    <p>On Linux/Unix this can be shortened to:</p>
 
 <pre>
 cat ../cvs2svn-tmp/git-blob.dat ../cvs2svn-tmp/git-dump.dat | git fast-import
 </pre>
 
   </li>
-
-  <li>If you want to get rid of unnecessary tag fixup branches, then
-    run the <tt>contrib/git-move-refs.py</tt> script from within the
-    git repository.</li>
 
   <li>
 
@@ -381,13 +377,26 @@ gitk --all
 
   </li>
 
+  <li>(Recommended) To get rid of unnecessary tag fixup branches, run
+    the <tt>contrib/git-move-refs.py</tt> script from within the git
+    repository.</li>
+
   <li>
 
-    <p>Check out the master branch into the working copy:</p>
+    <p>The result of this procedure is a <em>bare</em> git repository
+      (one that does not have a checked-out version of the source
+      tree).  This is the type of repository that you would put on
+      your server.  To work on your project, make a non-bare clone
+      (one that includes a checked-out source tree):</p>
 
 <pre>
-git checkout master
+cd $HOME
+git clone /path/to/myproject.git
+cd myproject
 </pre>
+
+    <p>Now you are ready to start editing files and committing to
+      git!</p>
 
   </li>
 

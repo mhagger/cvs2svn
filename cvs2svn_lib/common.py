@@ -281,16 +281,12 @@ class CVSTextDecoder:
 
     Raise LookupError if any of the specified encodings is unknown."""
 
-    self.decoders = [
-        (encoding, codecs.lookup(encoding)[1])
-        for encoding in encodings]
+    self.decoders = []
 
-    if fallback_encoding is None:
-      self.fallback_decoder = None
-    else:
-      self.fallback_decoder = (
-          fallback_encoding, codecs.lookup(fallback_encoding)[1]
-          )
+    for encoding in encodings:
+      self.add_encoding(encoding)
+
+    self.set_fallback_encoding(fallback_encoding)
     self.eol_fix = eol_fix
 
   def add_encoding(self, encoding):

@@ -263,7 +263,24 @@ def format_date(date):
 
 
 class CVSTextDecoder:
-  """Callable that decodes CVS strings into Unicode."""
+  """Callable that decodes CVS strings into Unicode.
+
+  Members:
+
+    decoders -- a list [(name, CodecInfo.decode), ...] containing the
+        names and decoders that will be used in 'strict' mode to
+        attempt to decode inputs.
+
+    fallback_decoder -- a tuple (name, CodecInfo.decode) containing
+        the name and decoder that will be used in 'replace' mode if
+        none of the decoders in DECODERS succeeds.  If no
+        fallback_decoder has been specified, this member contains
+        None.
+
+    eol_fix -- a string to which all EOL sequences will be converted,
+        or None if they should be left unchanged.
+
+  """
 
   def __init__(self, encodings, fallback_encoding=None, eol_fix=None):
     """Create a CVSTextDecoder instance.

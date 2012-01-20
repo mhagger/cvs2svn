@@ -16,7 +16,7 @@
 
 """The interface between cvs2svn and cvs2svn_rcsparse."""
 
-
+# These identifiers are imported to be exported:
 from cvs2svn_rcsparse.common import Sink
 from cvs2svn_rcsparse.common import RCSParseError
 

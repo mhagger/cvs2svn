@@ -444,6 +444,8 @@ class FilterSymbolsPass(Pass):
     self._register_temp_file(config.CVS_SYMBOLS_DATAFILE)
     self._register_temp_file_needed(config.PROJECTS)
     self._register_temp_file_needed(config.SYMBOL_DB)
+    self._register_temp_file_needed(config.METADATA_CLEAN_STORE)
+    self._register_temp_file_needed(config.METADATA_CLEAN_INDEX_TABLE)
     self._register_temp_file_needed(config.CVS_PATHS_DB)
     self._register_temp_file_needed(config.CVS_ITEMS_STORE)
     Ctx().revision_collector.register_artifacts(self)
@@ -453,6 +455,11 @@ class FilterSymbolsPass(Pass):
         artifact_manager.get_temp_file(config.PROJECTS)
         )
     Ctx()._cvs_path_db = CVSPathDatabase(DB_OPEN_READ)
+    Ctx()._metadata_db = MetadataDatabase(
+        artifact_manager.get_temp_file(config.METADATA_CLEAN_STORE),
+        artifact_manager.get_temp_file(config.METADATA_CLEAN_INDEX_TABLE),
+        DB_OPEN_READ,
+        )
     Ctx()._symbol_db = SymbolDatabase()
     cvs_item_store = OldCVSItemStore(
         artifact_manager.get_temp_file(config.CVS_ITEMS_STORE))

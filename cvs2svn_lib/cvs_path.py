@@ -235,12 +235,14 @@ class CVSDirectory(CVSPath):
     self.empty_subdirectory_ids = []
 
   def get_path_components(self, rcs=False):
-    if self.parent_directory is None:
-      return []
-    else:
-      components = self.parent_directory.get_path_components(rcs=rcs)
-      components.append(self.rcs_basename)
-      return components
+    components = []
+    p = self
+    while p.parent_directory is not None:
+      components.append(p.rcs_basename)
+      p = p.parent_directory
+
+    components.reverse()
+    return components
 
   def __getstate__(self):
     return (

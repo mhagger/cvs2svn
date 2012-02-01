@@ -94,10 +94,10 @@ class _KeywordExpander:
 
   def source(self):
     project = self.cvs_rev.cvs_file.project
-    return '%s/%s%s,v' % (
+    return '%s/%s%s' % (
         project.cvs_repository_root,
         project.cvs_module,
-        self.cvs_rev.cvs_file.cvs_path,
+        '/'.join(self.cvs_rev.cvs_file.get_path_components(rcs=True)),
         )
 
   def state(self):

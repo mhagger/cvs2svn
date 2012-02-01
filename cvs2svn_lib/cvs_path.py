@@ -154,14 +154,6 @@ class CVSPath(object):
 
   cvs_path = property(get_cvs_path)
 
-  def _get_dir_components(self):
-    """Return a list containing the components of the path leading to SELF.
-
-    The return value contains the base names of all of the parent
-    directories (except for the root directory) and SELF."""
-
-    return [p.rcs_basename for p in self.get_ancestry()[1:]]
-
   def _calculate_rcs_path(self):
     """Return the filesystem path in the CVS repo corresponding to SELF."""
 
@@ -188,7 +180,7 @@ class CVSPath(object):
         # Sort first by project:
         self.project,
         # Then by directory components:
-        self._get_dir_components(),
+        self.get_path_components(rcs=False),
         )
 
   def __cmp__(a, b):

@@ -150,7 +150,7 @@ class CVSPath(object):
 
     """
 
-    return path_join(*[p.rcs_basename for p in self.get_ancestry()[1:]])
+    return path_join(*self.get_path_components(rcs=False))
 
   cvs_path = property(get_cvs_path)
 

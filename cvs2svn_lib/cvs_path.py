@@ -120,6 +120,20 @@ class CVSPath(object):
     ancestry.reverse()
     return ancestry
 
+  def get_path_components(self, rcs=False):
+    """Return the path components to this CVSPath.
+
+    Return the components of this CVSPath's path, relative to the
+    project's project_cvs_repos_path, as a list of strings.  If rcs is
+    True, return the components of the filesystem path to the RCS file
+    corresponding to this CVSPath (i.e., including any 'Attic'
+    component and trailing ',v'.  If rcs is False, return the
+    components of the logical CVS path name (i.e., including 'Attic'
+    only if the file is to be left in an Attic directory in the SVN
+    repository and without trailing ',v')."""
+
+    raise NotImplementedError()
+
   def get_cvs_path(self):
     """Return the canonical path within the Project.
 
@@ -147,6 +161,14 @@ class CVSPath(object):
     directories (except for the root directory) and SELF."""
 
     return [p.rcs_basename for p in self.get_ancestry()[1:]]
+
+  def _calculate_rcs_path(self):
+    """Return the filesystem path in the CVS repo corresponding to SELF."""
+
+    return os.path.join(
+        self.project.project_cvs_repos_path,
+        *self.get_path_components(rcs=True)
+        )
 
   def __eq__(a, b):
     """Compare two CVSPath instances for equality.
@@ -212,15 +234,13 @@ class CVSDirectory(CVSPath):
     # This member is filled in by CollectData.close():
     self.empty_subdirectory_ids = []
 
-  def _calculate_rcs_path(self):
-    """Return the filesystem path in the CVS repo corresponding to SELF."""
-
+  def get_path_components(self, rcs=False):
     if self.parent_directory is None:
-      return self.project.project_cvs_repos_path
+      return []
     else:
-      return os.path.join(
-          self.parent_directory.rcs_path, self.rcs_basename
-          )
+      components = self.parent_directory.get_path_components(rcs=rcs)
+      components.append(self.rcs_basename)
+      return components
 
   def __getstate__(self):
     return (
@@ -336,17 +356,15 @@ class CVSFile(CVSPath):
     for file_property_setter in file_property_setters:
       file_property_setter.set_properties(self)
 
-  def _calculate_rcs_path(self):
-    """Return the filesystem path to the RCS file for this CVSFile."""
-
-    if self._in_attic:
-      return os.path.join(
-          self.parent_directory.rcs_path, 'Attic', self.rcs_basename + ',v'
-          )
+  def get_path_components(self, rcs=False):
+    components = self.parent_directory.get_path_components(rcs=rcs)
+    if rcs:
+      if self._in_attic:
+        components.append('Attic')
+      components.append(self.rcs_basename + ',v')
     else:
-      return os.path.join(
-          self.parent_directory.rcs_path, self.rcs_basename + ',v'
-          )
+      components.append(self.rcs_basename)
+    return components
 
   def __getstate__(self):
     return (

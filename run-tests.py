@@ -3283,10 +3283,17 @@ def internal_co_keywords():
   kk_cvs = file(conv_cvs.get_wc('trunk', 'dir', 'kk.txt')).read()
   kv_ic = file(conv_ic.get_wc('trunk', 'dir', 'kv.txt')).read()
   kv_cvs = file(conv_cvs.get_wc('trunk', 'dir', 'kv.txt')).read()
+  # Ensure proper "/Attic" expansion of $Source$ keyword in files
+  # which are in a deleted state in trunk
+  del_ic = file(conv_ic.get_wc('branches/b', 'dir', 'kv-deleted.txt')).read()
+  del_cvs = file(conv_cvs.get_wc('branches/b', 'dir', 'kv-deleted.txt')).read()
+
 
   if ko_ic != ko_cvs:
     raise Failure()
   if kk_ic != kk_cvs:
+    raise Failure()
+  if del_ic != del_cvs:
     raise Failure()
 
   # The date format changed between cvs and co ('/' instead of '-').

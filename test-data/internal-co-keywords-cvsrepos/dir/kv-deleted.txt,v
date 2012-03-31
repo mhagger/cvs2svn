@@ -1,0 +1,55 @@
+head	1.2;
+branch;
+access;
+symbols
+        b:1.1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2004.07.28.10.42.27;	author kfogel;	state dead;
+branches;
+next	1.1;
+
+1.1
+date	2004.07.19.20.57.24;	author jrandom;	state Exp;
+branches 1.1.1.1;
+next	;
+
+1.1.1.1
+date	2004.07.19.20.57.25;	author jrandom;	state Exp;
+branches;
+next	;
+
+desc
+@@
+
+
+1.2
+log
+@Deleting this dreadful file
+@
+text
+@This is a fine file.
+
+This file resides at $Source$
+@
+
+
+1.1
+log
+@Add a file.
+@
+text
+@@
+
+
+1.1.1.1
+log
+@Adding a line
+@
+text
+@a1 1
+branches are fun
+@

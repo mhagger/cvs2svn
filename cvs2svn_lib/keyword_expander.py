@@ -95,7 +95,7 @@ class _KeywordExpander:
   def source(self):
     project = self.cvs_rev.cvs_file.project
     return '%s/%s%s' % (
-        project.cvs_repository_root,
+        project.cvs_surrogate_root or project.cvs_repository_root,
         project.cvs_module,
         '/'.join(self.cvs_rev.cvs_file.get_path_components(rcs=True)),
         )

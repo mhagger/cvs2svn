@@ -54,6 +54,7 @@ class Project(object):
         initial_directories=[],
         symbol_transforms=None,
         exclude_paths=[],
+        cvs_surrogate_root=None,
         ):
     """Create a new Project record.
 
@@ -72,6 +73,11 @@ class Project(object):
     the conversion.  The paths should be relative to
     PROJECT_CVS_REPOS_PATH and use slashes ('/').  Paths for
     individual files should include the ',v' extension.
+
+    CVS_SURROGATE_REPOS_ROOT can be provided as an substitute for
+    PROJECT_CVS_REPOS_PATH in CVS $Header$ and $Source$ keyword
+    expansion. If this is not provided, the root is determined from
+    PROJECT_CVS_REPOS_PATH.
     """
 
     self.id = id
@@ -84,6 +90,8 @@ class Project(object):
     self.cvs_repository_root, self.cvs_module = \
         self.determine_repository_root(
             os.path.abspath(self.project_cvs_repos_path))
+
+    self.cvs_surrogate_root = cvs_surrogate_root
 
     # The SVN directories to add when the project is first created:
     self._initial_directories = []

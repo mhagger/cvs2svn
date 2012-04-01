@@ -75,6 +75,7 @@ class DVCSRunOptions(RunOptions):
         symbol_transforms=None,
         symbol_strategy_rules=[],
         exclude_paths=[],
+        project_cvs_surrogate_root=None,
         ):
     """Set the project to be converted.
 
@@ -92,6 +93,7 @@ class DVCSRunOptions(RunOptions):
         project_cvs_repos_path,
         symbol_transforms=symbol_transforms,
         exclude_paths=exclude_paths,
+        cvs_surrogate_root=project_cvs_surrogate_root,
         )
 
     self.projects = [project]

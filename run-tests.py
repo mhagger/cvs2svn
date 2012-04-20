@@ -3185,19 +3185,15 @@ def use_rcs():
   "verify that --use-rcs and --use-internal-co agree"
 
   rcs_conv = ensure_conversion(
-      'main', args=['--use-rcs', '--default-eol=native'],
+      'main', args=['--use-rcs', '--default-eol=native'], dumpfile='use-rcs-rcs.dump',
       )
   conv = ensure_conversion(
-      'main', args=['--default-eol=native'],
+      'main', args=['--default-eol=native'], dumpfile='use-rcs-int.dump',
       )
   if conv.output_found(r'WARNING\: internal problem\: leftover revisions'):
     raise Failure()
-  rcs_lines = run_program(
-      svntest.main.svnadmin_binary, None, 'dump', '-q', '-r', '1:HEAD',
-      rcs_conv.repos)
-  lines = run_program(
-      svntest.main.svnadmin_binary, None, 'dump', '-q', '-r', '1:HEAD',
-      conv.repos)
+  rcs_lines = list(open(rcs_conv.dumpfile, 'rb'))
+  lines = list(open(conv.dumpfile, 'rb'))
   # Compare all lines following the repository UUID:
   if lines[3:] != rcs_lines[3:]:
     raise Failure()
@@ -3210,19 +3206,17 @@ def internal_co_exclude():
   rcs_conv = ensure_conversion(
       'internal-co',
       args=['--use-rcs', '--exclude=BRANCH', '--default-eol=native'],
+      dumpfile='internal-co-exclude-rcs.dump',
       )
   conv = ensure_conversion(
       'internal-co',
       args=['--exclude=BRANCH', '--default-eol=native'],
+      dumpfile='internal-co-exclude-int.dump',
       )
   if conv.output_found(r'WARNING\: internal problem\: leftover revisions'):
     raise Failure()
-  rcs_lines = run_program(
-      svntest.main.svnadmin_binary, None, 'dump', '-q', '-r', '1:HEAD',
-      rcs_conv.repos)
-  lines = run_program(
-      svntest.main.svnadmin_binary, None, 'dump', '-q', '-r', '1:HEAD',
-      conv.repos)
+  rcs_lines = list(open(rcs_conv.dumpfile, 'rb'))
+  lines = list(open(conv.dumpfile, 'rb'))
   # Compare all lines following the repository UUID:
   if lines[3:] != rcs_lines[3:]:
     raise Failure()

@@ -162,7 +162,7 @@ def main(args):
         process_refs("tags")
 
     if options.branches:
-        process_refs("branches")
+        process_refs("heads")
 
 
 main(sys.argv[1:])

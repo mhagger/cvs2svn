@@ -402,6 +402,36 @@ cd myproject
 
 </ol>
 
+<h2><a name="non-bare">Converting to a non-bare repository</a></h2>
+
+<p>If you want to convert into a non-bare git repository (one
+  including a working tree), then you need to make two changes to the
+  above procedure:</p>
+
+<ul>
+
+  <li><p>Omit the <tt>--bare</tt> option in step 4; i.e., type</p>
+
+<pre>
+mkdir myproject.git
+cd myproject.git
+git init
+</pre>
+
+  </li>
+
+  <li><p>When the conversion is done, instead of cloning as described
+    in step 8, you need to explicitly check out the "master" version
+    of the files into your working tree:</p>
+
+<pre>
+git checkout
+</pre>
+
+  </li>
+
+</ul>
+
 <p>Feedback would be much appreciated, including reports of success
   using cvs2git.  Please send comments, bug reports, and patches to
   the <a

@@ -27,6 +27,9 @@ Version ?.?.? (not yet released)
  * Allow grafting a branch onto a parent that has itself been grafted.
  * Slightly improve choice of parent branch for vendor branches.
  * Only import "database" if used, to avoid error if no DB module installed.
+ * Ignore newphrases in RCS files more robustly.
+ * Fix the expansion of the $Source$ keyword for Attic files.
+ * Various other minor improvements and fixes.
 
  Miscellaneous:
  * Sort large files using Python to avoid dependency on GNU sort.

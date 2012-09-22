@@ -1,5 +1,5 @@
-Version ?.?.? (not yet released)
---------------------------------
+Version 2.4.0 (22 September 2012)
+---------------------------------
 
  New features:
  * Store CVS file descriptions in a Subversion property "cvs:description".

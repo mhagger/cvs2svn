@@ -1,5 +1,14 @@
 #!/bin/bash -e
 
+# If this script gives errors like
+#
+#     warning: failed to load external entity "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"
+#
+# and you happen to be using a Debian-derived version of Linux, it
+# might help to run (as root)
+#
+#     apt-get install w3c-dtd-xhtml
+
 WWWDIR="`dirname \"$0\"`"
 ensure ()
 {

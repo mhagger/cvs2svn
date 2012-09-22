@@ -216,6 +216,10 @@ ctx.revision_reader = InternalRevisionReader(compress=True)
 #ctx.revision_collector = NullRevisionCollector()
 #ctx.revision_reader = RCSRevisionReader(co_executable=r'co')
 
+# It is also possible to pass a global_options parameter to
+# CVSRevisionReader to specify which options should be passed to the
+# cvs command.  By default the correct options are usually chosen, but
+# for CVSNT you might want to add global_options=['-q', '-N', '-f'].
 #ctx.revision_collector = NullRevisionCollector()
 #ctx.revision_reader = CVSRevisionReader(cvs_executable=r'cvs')
 

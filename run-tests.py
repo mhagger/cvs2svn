@@ -1574,6 +1574,26 @@ class BranchDeleteFirst(Cvs2SvnTestCase):
 
 
 @Cvs2SvnTestFunction
+def nonascii_cvsignore():
+  "non ascii files in .cvsignore"
+
+  # The output seems to be in the C locale, where it looks like this
+  # (at least on one test system):
+  expected = (
+    'Sp?\\195?\\164tzle\n'
+    'Cr?\\195?\\168meBr?\\195?\\187l?\\195?\\169e\n'
+    'Jam?\\195?\\179nIb?\\195?\\169rico\n'
+    'Am?\\195?\\170ijoas?\\195?\\128Bulh?\\195?\\163oPato\n'
+    )
+
+  conv = ensure_conversion('non-ascii', args=['--encoding=latin1'])
+  props = props_for_path(conv.get_wc_tree(), 'trunk/single-files')
+
+  if props['svn:ignore'] != expected:
+    raise Failure()
+
+
+@Cvs2SvnTestFunction
 def nonascii_filenames():
   "non ascii files converted incorrectly"
   # see issue #1255
@@ -1630,6 +1650,7 @@ def nonascii_filenames():
       # create repos from existing main repos
       shutil.copytree(srcrepos_path, dstrepos_path)
       base_path = os.path.join(dstrepos_path, 'single-files')
+      os.remove(os.path.join(base_path, '.cvsignore,v'))
       shutil.copyfile(os.path.join(base_path, 'twoquick,v'),
                       os.path.join(base_path, 'two\366uick,v'))
       new_path = os.path.join(dstrepos_path, 'single\366files')
@@ -4038,6 +4059,7 @@ test_list = [
 # 40:
     BranchDeleteFirst(),
     BranchDeleteFirst(variant=1, trunk='a/1', branches='a/2', tags='a/3'),
+    nonascii_cvsignore,
     nonascii_filenames,
     UnicodeAuthor(
         warning_expected=1),
@@ -4055,8 +4077,8 @@ test_list = [
     UnicodeLog(
         warning_expected=0,
         variant='fallback-encoding', args=['--fallback-encoding=utf_8']),
-    vendor_branch_sameness,
 # 50:
+    vendor_branch_sameness,
     vendor_branch_trunk_only,
     default_branches,
     default_branches_trunk_only,
@@ -4066,8 +4088,8 @@ test_list = [
     PeerPathPruning(),
     PeerPathPruning(variant=1, trunk='a/1', branches='a/2', tags='a/3'),
     EmptyTrunk(),
-    EmptyTrunk(variant=1, trunk='a', branches='b', tags='c'),
 # 60:
+    EmptyTrunk(variant=1, trunk='a', branches='b', tags='c'),
     EmptyTrunk(variant=2, trunk='a/1', branches='a/2', tags='a/3'),
     no_spurious_svn_commits,
     invalid_closings_on_trunk,
@@ -4077,8 +4099,8 @@ test_list = [
     file_in_attic_too,
     retain_file_in_attic_too,
     symbolic_name_filling_guide,
-    eol_mime1,
 # 70:
+    eol_mime1,
     eol_mime2,
     eol_mime3,
     eol_mime4,
@@ -4088,8 +4110,8 @@ test_list = [
     ignore,
     requires_cvs,
     questionable_branch_names,
-    questionable_tag_names,
 # 80:
+    questionable_tag_names,
     revision_reorder_bug,
     exclude,
     vendor_branch_delete_add,
@@ -4099,8 +4121,8 @@ test_list = [
     double_fill2,
     resync_pass2_push_backward,
     double_add,
-    bogus_branch_copy,
 # 90:
+    bogus_branch_copy,
     nested_ttb_directories,
     auto_props_ignore_case,
     ctrl_char_in_filename,
@@ -4110,8 +4132,8 @@ test_list = [
     multiply_defined_symbols,
     multiply_defined_symbols_renamed,
     multiply_defined_symbols_ignored,
-    repeatedly_defined_symbols,
 # 100:
+    repeatedly_defined_symbols,
     double_branch_delete,
     symbol_mismatches,
     overlook_symbol_mismatches,
@@ -4121,8 +4143,8 @@ test_list = [
     unblock_blocked_excludes,
     regexp_force_symbols,
     heuristic_symbol_default,
-    branch_symbol_default,
 # 110:
+    branch_symbol_default,
     tag_symbol_default,
     symbol_transform,
     write_symbol_info,
@@ -4132,8 +4154,8 @@ test_list = [
     parent_hints_wildcards,
     path_hints,
     issue_99,
-    issue_100,
 # 120:
+    issue_100,
     issue_106,
     options_option,
     multiproject,
@@ -4143,8 +4165,8 @@ test_list = [
     repeated_deltatext,
     nasty_graphs,
     tagging_after_delete,
-    crossed_branches,
 # 130:
+    crossed_branches,
     file_directory_conflict,
     attic_directory_conflict,
     use_rcs,
@@ -4154,8 +4176,8 @@ test_list = [
     leftover_revs,
     requires_internal_co,
     timestamp_chaos,
-    symlinks,
 # 140:
+    symlinks,
     empty_trunk_path,
     preferred_parent_cycle,
     branch_from_empty_dir,
@@ -4165,8 +4187,8 @@ test_list = [
     main_git,
     main_git2,
     git_options,
-    main_hg,
 # 150:
+    main_hg,
     invalid_symbol,
     invalid_symbol_ignore,
     invalid_symbol_ignore2,
@@ -4176,8 +4198,8 @@ test_list = [
     EOLVariants('native'),
     no_revs_file,
     mirror_keyerror_test,
-    exclude_ntdb_test,
 # 160:
+    exclude_ntdb_test,
     mirror_keyerror2_test,
     mirror_keyerror3_test,
     add_cvsignore_to_branch_test,
@@ -4187,8 +4209,8 @@ test_list = [
     exclude_unlabeled_branch,
     unlabeled_branch_name_collision,
     collision_with_unlabeled_branch_name,
-    many_deletes,
 # 170:
+    many_deletes,
     cvs_description,
     include_empty_directories,
     include_empty_directories_no_prune,
@@ -4198,8 +4220,8 @@ test_list = [
     strange_default_branch,
     move_parent,
     log_message_eols,
-    missing_vendor_branch,
 # 180:
+    missing_vendor_branch,
     newphrases,
     ]
 

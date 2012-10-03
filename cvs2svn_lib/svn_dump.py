@@ -52,6 +52,18 @@ def utf8_path(path):
         % (path,))
 
 
+def generate_ignores(raw_ignore_val):
+  ignore_vals = [ ]
+  for ignore in raw_ignore_val.split():
+    # Reset the list if we encounter a '!'
+    # See http://cvsbook.red-bean.com/cvsbook.html#cvsignore
+    if ignore == '!':
+      ignore_vals = [ ]
+    else:
+      ignore_vals.append(ignore)
+  return ignore_vals
+
+
 class DumpstreamDelegate(SVNRepositoryDelegate):
   """Write output in Subversion dumpfile format."""
 
@@ -400,18 +412,6 @@ class DumpstreamDelegate(SVNRepositoryDelegate):
     committed."""
 
     self._dumpfile.close()
-
-
-def generate_ignores(raw_ignore_val):
-  ignore_vals = [ ]
-  for ignore in raw_ignore_val.split():
-    # Reset the list if we encounter a '!'
-    # See http://cvsbook.red-bean.com/cvsbook.html#cvsignore
-    if ignore == '!':
-      ignore_vals = [ ]
-    else:
-      ignore_vals.append(ignore)
-  return ignore_vals
 
 
 class LoaderPipe(object):

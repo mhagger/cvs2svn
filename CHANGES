@@ -1,3 +1,10 @@
+Version ?.?.? (not yet released)
+--------------------------------
+
+ Bugs fixed:
+ * Handle non-ASCII, non-UTF8 filenames in .cvsignore files.
+
+
 Version 2.4.0 (22 September 2012)
 ---------------------------------
 

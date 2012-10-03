@@ -52,7 +52,7 @@ def utf8_path(path):
         % (path,))
 
 
-def generate_ignores(raw_ignore_val):
+def generate_ignores(cvsignore, raw_ignore_val):
   ignore_vals = [ ]
   for ignore in raw_ignore_val.split():
     # Reset the list if we encounter a '!'
@@ -60,6 +60,14 @@ def generate_ignores(raw_ignore_val):
     if ignore == '!':
       ignore_vals = [ ]
     else:
+      try:
+        ignore = Ctx().cvs_filename_decoder.decode_path(ignore).encode('utf8')
+      except UnicodeError:
+        raise FatalError(
+            "Unable to convert path '%s' (found in file %s) to internal encoding.\n"
+            "Consider rerunning with one or more '--encoding' parameters or\n"
+            "with '--fallback-encoding'."
+            % (ignore, cvsignore,))
       ignore_vals.append(ignore)
   return ignore_vals
 
@@ -262,7 +270,9 @@ class DumpstreamDelegate(SVNRepositoryDelegate):
     dir_path, basename = path_split(cvs_rev.get_svn_path())
     if basename == '.cvsignore':
       ignore_contents = self._string_for_props({
-          'svn:ignore' : ''.join((s + '\n') for s in generate_ignores(data))
+          'svn:ignore' : ''.join(
+            (s + '\n') for s in generate_ignores(cvs_rev.get_svn_path(), data)
+            )
           })
       ignore_len = len(ignore_contents)
 

@@ -1624,8 +1624,8 @@ def nonascii_filenames():
     raise svntest.Skip()
 
   try:
-    srcrepos_path = os.path.join(test_data_dir,'main-cvsrepos')
-    dstrepos_path = os.path.join(test_data_dir,'non-ascii-cvsrepos')
+    srcrepos_path = os.path.join(test_data_dir, 'non-ascii-cvsrepos')
+    dstrepos_path = os.path.join(test_data_dir, 'non-ascii-copy-cvsrepos')
     if not os.path.exists(dstrepos_path):
       # create repos from existing main repos
       shutil.copytree(srcrepos_path, dstrepos_path)
@@ -1635,7 +1635,7 @@ def nonascii_filenames():
       new_path = os.path.join(dstrepos_path, 'single\366files')
       os.rename(base_path, new_path)
 
-    conv = ensure_conversion('non-ascii', args=['--encoding=latin1'])
+    conv = ensure_conversion('non-ascii-copy', args=['--encoding=latin1'])
   finally:
     if locale_changed:
       locale.setlocale(locale.LC_ALL, current_locale)

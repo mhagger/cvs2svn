@@ -27,8 +27,19 @@ import os
 import sys
 import re
 import urllib
+import logging
+import pprint
+
+if sys.version_info[0] >= 3:
+  # Python >=3.0
+  from io import StringIO
+else:
+  # Python <3.0
+  from cStringIO import StringIO
 
 import svntest
+
+logger = logging.getLogger()
 
 
 #
@@ -73,7 +84,7 @@ import svntest
 # Working revision, last-changed revision, and last author are whitespace
 # only if the item is missing.
 #
-_re_parse_status = re.compile('^([?!MACDRUGI_~ ][MACDRUG_ ])'
+_re_parse_status = re.compile('^([?!MACDRUGXI_~ ][MACDRUG_ ])'
                               '([L ])'
                               '([+ ])'
                               '([SX ])'
@@ -83,18 +94,20 @@ _re_parse_status = re.compile('^([?!MACDRUGI_~ ][MACDRUG_ ])'
                               '((?P<wc_rev>\d+|-|\?) +(\d|-|\?)+ +(\S+) +)?'
                               '(?P<path>.+)$')
 
-_re_parse_skipped = re.compile("^Skipped.* '(.+)'\n")
+_re_parse_skipped = re.compile("^Skipped[^']* '(.+)'( --.*)?\n")
 
 _re_parse_summarize = re.compile("^([MAD ][M ])      (.+)\n")
 
-_re_parse_checkout = re.compile('^([RMAGCUDE_ ][MAGCUDE_ ])'
+_re_parse_checkout = re.compile('^([RMAGCUDE_ B][MAGCUDE_ ])'
                                 '([B ])'
-                                '([C ])\s+'
+                                '([CAUD ])\s+'
                                 '(.+)')
-_re_parse_co_skipped = re.compile('^(Restored|Skipped)\s+\'(.+)\'')
+_re_parse_co_skipped = re.compile('^(Restored|Skipped|Removed external)'
+                                  '\s+\'(.+)\'(( --|: ).*)?')
 _re_parse_co_restored = re.compile('^(Restored)\s+\'(.+)\'')
 
 # Lines typically have a verb followed by whitespace then a path.
+_re_parse_commit_ext = re.compile('^(([A-Za-z]+( [a-z]+)*)) \'(.+)\'( --.*)?')
 _re_parse_commit = re.compile('^(\w+(  \(bin\))?)\s+(.+)')
 
 
@@ -133,9 +146,17 @@ class State:
       self.desc[path] = item
 
   def remove(self, *paths):
-    "Remove a path from the state (the path must exist)."
+    "Remove PATHS from the state (the paths must exist)."
     for path in paths:
       del self.desc[to_relpath(path)]
+
+  def remove_subtree(self, *paths):
+    "Remove PATHS recursively from the state (the paths must exist)."
+    for subtree_path in paths:
+      subtree_path = to_relpath(subtree_path)
+      for path, item in self.desc.items():
+        if path == subtree_path or path[:len(subtree_path) + 1] == subtree_path + '/':
+          del self.desc[path]
 
   def copy(self, new_root=None):
     """Make a deep copy of self.  If NEW_ROOT is not None, then set the
@@ -178,13 +199,12 @@ class State:
 
   def subtree(self, subtree_path):
     """Return a State object which is a deep copy of the sub-tree
-    identified by SUBTREE_PATH (which is assumed to contain only one
-    element rooted at the tree of this State object's WC_DIR)."""
+    beneath SUBTREE_PATH (which is assumed to be rooted at the tree of
+    this State object's WC_DIR).  Exclude SUBTREE_PATH itself."""
     desc = { }
     for path, item in self.desc.items():
-      path_elements = path.split("/")
-      if len(path_elements) > 1 and path_elements[0] == subtree_path:
-        desc["/".join(path_elements[1:])] = item.copy()
+      if path[:len(subtree_path) + 1] == subtree_path + '/':
+        desc[path[len(subtree_path) + 1:]] = item.copy()
     return State(self.wc_dir, desc)
 
   def write_to_disk(self, target_dir):
@@ -323,6 +343,10 @@ class State:
           if item.entry_rev is not None:
             item.wc_rev = item.entry_rev
             item.entry_rev = None
+          # status might vary as well, e.g. when a directory is missing
+          if item.entry_status is not None:
+            item.status = item.entry_status
+            item.entry_status = None
       if item.writelocked:
         # we don't contact the repository, so our only information is what
         # is in the working copy. 'K' means we have one and it matches the
@@ -349,9 +373,8 @@ class State:
     if 0:
       check = tree.as_state()
       if self != check:
-        import pprint
-        pprint.pprint(self.desc)
-        pprint.pprint(check.desc)
+        logger.warn(pprint.pformat(self.desc))
+        logger.warn(pprint.pformat(check.desc))
         # STATE -> TREE -> STATE is lossy.
         # In many cases, TREE -> STATE -> TREE is not.
         # Even though our conversion from a TREE has lost some information, we
@@ -456,8 +479,8 @@ class State:
 
       match = _re_parse_checkout.search(line)
       if match:
-        if match.group(3) == 'C':
-          treeconflict = 'C'
+        if match.group(3) != ' ':
+          treeconflict = match.group(3)
         else:
           treeconflict = None
         desc[to_relpath(match.group(4))] = StateItem(status=match.group(1),
@@ -476,6 +499,11 @@ class State:
     desc = { }
     for line in lines:
       if line.startswith('DBG:') or line.startswith('Transmitting'):
+        continue
+
+      match = _re_parse_commit_ext.search(line)
+      if match:
+        desc[to_relpath(match.group(4))] = StateItem(verb=match.group(1))
         continue
 
       match = _re_parse_commit.search(line)
@@ -551,17 +579,14 @@ class State:
     desc = { }
     dot_svn = svntest.main.get_admin_name()
 
-    for dirpath, dirs, files in os.walk(base):
-      if dot_svn in dirs:
-        # don't visit the .svn subdir
-        dirs.remove(dot_svn)
-      else:
-        # this is not a versioned directory. remove all subdirectories since
-        # we don't want to visit them. then skip this directory.
-        dirs[:] = []
-        continue
+    for dirpath in svntest.main.run_entriesdump_subdirs(base):
+
+      if base == '.' and dirpath != '.':
+        dirpath = '.' + os.path.sep + dirpath
 
       entries = svntest.main.run_entriesdump(dirpath)
+      if entries is None:
+        continue
 
       if dirpath == '.':
         parent = ''
@@ -578,6 +603,9 @@ class State:
         # DELETED node lives.
         if entry.deleted and entry.schedule != 1:
           continue
+        # entries that are ABSENT don't show up in status
+        if entry.absent:
+          continue
         if name and entry.kind == 2:
           # stub subdirectory. leave a "missing" StateItem in here. note
           # that we can't put the status as "! " because that gets tweaked
@@ -588,7 +616,7 @@ class State:
         item = StateItem.from_entry(entry)
         if name:
           desc[repos_join(parent, name)] = item
-          implied_url = repos_join(parent_url, svn_url_quote(name))
+          implied_url = repos_join(parent_url, svn_uri_quote(name))
         else:
           item._url = entry.url  # attach URL to directory StateItems
           desc[parent] = item
@@ -596,18 +624,12 @@ class State:
           grandpa, this_name = repos_split(parent)
           if grandpa in desc:
             implied_url = repos_join(desc[grandpa]._url,
-                                     svn_url_quote(this_name))
+                                     svn_uri_quote(this_name))
           else:
             implied_url = None
 
         if implied_url and implied_url != entry.url:
           item.switched = 'S'
-
-      # only recurse into directories found in this entries. remove any
-      # which are not mentioned.
-      unmentioned = set(dirs) - set(entries.keys())
-      for subdir in unmentioned:
-        dirs.remove(subdir)
 
     return cls('', desc)
 
@@ -621,7 +643,8 @@ class StateItem:
   """
 
   def __init__(self, contents=None, props=None,
-               status=None, verb=None, wc_rev=None, entry_rev=None,
+               status=None, verb=None, wc_rev=None,
+               entry_rev=None, entry_status=None,
                locked=None, copied=None, switched=None, writelocked=None,
                treeconflict=None):
     # provide an empty prop dict if it wasn't provided
@@ -644,9 +667,10 @@ class StateItem:
     self.verb = verb
     # The base revision number of the node in the WC, as a string.
     self.wc_rev = wc_rev
-    # This one will be set when we expect the wc_rev to differ from the one
-    # found ni the entries code.
+    # These will be set when we expect the wc_rev/status to differ from those
+    # found in the entries code.
     self.entry_rev = entry_rev
+    self.entry_status = entry_status
     # For the following attributes, the value is the status character of that
     # field from 'svn status', except using value None instead of status ' '.
     self.locked = locked
@@ -808,7 +832,7 @@ def repos_join(base, path):
   return base + '/' + path
 
 
-def svn_url_quote(url):
+def svn_uri_quote(url):
   # svn defines a different set of "safe" characters than Python does, so
   # we need to avoid escaping them. see subr/path.c:uri_char_validity[]
   return urllib.quote(url, "!$&'()*+,-./:=@_~")
@@ -816,12 +840,51 @@ def svn_url_quote(url):
 
 # ------------
 
+def open_wc_db(local_path):
+  """Open the SQLite DB for the WC path LOCAL_PATH.
+     Return (DB object, WC root path, WC relpath of LOCAL_PATH)."""
+  dot_svn = svntest.main.get_admin_name()
+  root_path = local_path
+  relpath = ''
+
+  while True:
+    db_path = os.path.join(root_path, dot_svn, 'wc.db')
+    try:
+      db = svntest.sqlite3.connect(db_path)
+      break
+    except: pass
+    head, tail = os.path.split(root_path)
+    if head == root_path:
+      raise svntest.Failure("No DB for " + local_path)
+    root_path = head
+    relpath = os.path.join(tail, relpath).replace(os.path.sep, '/').rstrip('/')
+
+  return db, root_path, relpath
+
+# ------------
+
 def text_base_path(file_path):
   """Return the path to the text-base file for the versioned file
      FILE_PATH."""
+
+  info = svntest.actions.run_and_parse_info(file_path)[0]
+
+  checksum = info['Checksum']
+  db, root_path, relpath = open_wc_db(file_path)
+
+  # Calculate single DB location
   dot_svn = svntest.main.get_admin_name()
-  return os.path.join(os.path.dirname(file_path), dot_svn, 'text-base',
-                      os.path.basename(file_path) + '.svn-base')
+  fn = os.path.join(root_path, dot_svn, 'pristine', checksum[0:2], checksum)
+
+  # For SVN_WC__VERSION < 29
+  if os.path.isfile(fn):
+    return fn
+
+  # For SVN_WC__VERSION >= 29
+  if os.path.isfile(fn + ".svn-base"):
+    return fn + ".svn-base"
+
+  raise svntest.Failure("No pristine text for " + relpath)
 
 
 # ------------
@@ -841,21 +904,29 @@ def display_nodes(label, path, expected, actual):
   'Display two nodes, expected and actual.'
   expected = item_to_node(path, expected)
   actual = item_to_node(path, actual)
-  print("=============================================================")
-  print("Expected '%s' and actual '%s' in %s tree are different!"
-        % (expected.name, actual.name, label))
-  print("=============================================================")
-  print("EXPECTED NODE TO BE:")
-  print("=============================================================")
-  expected.pprint()
-  print("=============================================================")
-  print("ACTUAL NODE FOUND:")
-  print("=============================================================")
-  actual.pprint()
+
+  o = StringIO()
+  o.write("=============================================================\n")
+  o.write("Expected '%s' and actual '%s' in %s tree are different!\n"
+                % (expected.name, actual.name, label))
+  o.write("=============================================================\n")
+  o.write("EXPECTED NODE TO BE:\n")
+  o.write("=============================================================\n")
+  expected.pprint(o)
+  o.write("=============================================================\n")
+  o.write("ACTUAL NODE FOUND:\n")
+  o.write("=============================================================\n")
+  actual.pprint(o)
+
+  logger.warn(o.getvalue())
+  o.close()
 
 ### yanked from tree.py
 def default_singleton_handler(description, path, item):
   node = item_to_node(path, item)
-  print("Couldn't find node '%s' in %s tree" % (node.name, description))
-  node.pprint()
+  logger.warn("Couldn't find node '%s' in %s tree" % (node.name, description))
+  o = StringIO()
+  node.pprint(o)
+  logger.warn(o.getvalue())
+  o.close()
   raise svntest.tree.SVNTreeUnequal

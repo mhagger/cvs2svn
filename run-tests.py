@@ -69,7 +69,7 @@ import svntest
 from svntest import Failure
 from svntest.main import safe_rmtree
 from svntest.testcase import TestCase
-from svntest.testcase import XFail
+from svntest.testcase import XFail_deco
 
 # Test if Mercurial >= 1.1 is available.
 try:
@@ -120,8 +120,8 @@ def run_program(program, error_re, *varargs):
   """Run PROGRAM with VARARGS, return stdout as a list of lines.
 
   If there is any stderr and ERROR_RE is None, raise
-  RunProgramException, and print the stderr lines if
-  svntest.main.options.verbose is true.
+  RunProgramException, and log the stderr lines via
+  svntest.main.logger.info().
 
   If ERROR_RE is not None, it is a string regular expression that must
   match some line of stderr.  If it fails to match, raise
@@ -142,11 +142,10 @@ def run_program(program, error_re, *varargs):
   else:
     # No stderr allowed.
     if err:
-      if svntest.main.options.verbose:
-        print '\n%s said:\n' % program
-        for line in err:
-          print '   ' + line,
-        print
+      log = svntest.main.logger.info
+      log('%s said:' % program)
+      for line in err:
+        log('   ' + line.rstrip())
       raise RunProgramException()
 
   return out
@@ -157,8 +156,8 @@ def run_script(script, error_re, *varargs):
   of lines.
 
   If there is any stderr and ERROR_RE is None, raise
-  RunProgramException, and print the stderr lines if
-  svntest.main.options.verbose is true.
+  RunProgramException, and log the stderr lines via
+  svntest.main.logger.info().
 
   If ERROR_RE is not None, it is a string regular expression that must
   match some line of stderr.  If it fails to match, raise
@@ -176,8 +175,8 @@ def run_script(script, error_re, *varargs):
 
 def run_svn(*varargs):
   """Run svn with VARARGS; return stdout as a list of lines.
-  If there is any stderr, raise RunProgramException, and print the
-  stderr lines if svntest.main.options.verbose is true."""
+  If there is any stderr, raise RunProgramException, and log the
+  stderr lines via svntest.main.logger.info()."""
   return run_program(svn_binary, None, *varargs)
 
 
@@ -941,6 +940,7 @@ def cvs2git_manpage():
   out = run_script(cvs2git, None, '--man')
 
 
+@XFail_deco()
 @Cvs2HgTestFunction
 def cvs2hg_manpage():
   "generate a manpage for cvs2hg"
@@ -2516,6 +2516,7 @@ def double_fill():
   # conversion doesn't fail.
 
 
+@XFail_deco()
 @Cvs2SvnTestFunction
 def double_fill2():
   "reveal a second bug that created a branch twice"
@@ -3137,6 +3138,7 @@ def nasty_graphs():
   conv = ensure_conversion('nasty-graphs')
 
 
+@XFail_deco()
 @Cvs2SvnTestFunction
 def tagging_after_delete():
   "optimal tag after deleting files"
@@ -3616,6 +3618,7 @@ def mirror_keyerror3_test():
   conv = ensure_conversion('mirror-keyerror3')
 
 
+@XFail_deco()
 @Cvs2SvnTestFunction
 def add_cvsignore_to_branch_test():
   "check adding .cvsignore to an existing branch"
@@ -3993,7 +3996,7 @@ test_list = [
     show_usage,
     cvs2svn_manpage,
     cvs2git_manpage,
-    XFail(cvs2hg_manpage),
+    cvs2hg_manpage,
     attr_exec,
     space_fname,
     two_quick,
@@ -4093,7 +4096,7 @@ test_list = [
     resync_pass2_pull_forward,
     native_eol,
     double_fill,
-    XFail(double_fill2),
+    double_fill2,
     resync_pass2_push_backward,
     double_add,
     bogus_branch_copy,
@@ -4139,7 +4142,7 @@ test_list = [
     delete_cvsignore,
     repeated_deltatext,
     nasty_graphs,
-    XFail(tagging_after_delete),
+    tagging_after_delete,
     crossed_branches,
 # 130:
     file_directory_conflict,
@@ -4177,7 +4180,7 @@ test_list = [
 # 160:
     mirror_keyerror2_test,
     mirror_keyerror3_test,
-    XFail(add_cvsignore_to_branch_test),
+    add_cvsignore_to_branch_test,
     missing_deltatext,
     transform_unlabeled_branch_name,
     ignore_unlabeled_branch,

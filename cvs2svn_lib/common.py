@@ -358,6 +358,17 @@ class CVSTextDecoder:
       s = canonicalize_eol(s, self.eol_fix)
     return s
 
+  def decode_path(self, path):
+    """Try to decode PATH using our configured source encodings.
+
+    Decode each path component separately (as they may each use
+    different encodings)."""
+
+    return u'/'.join([
+        self.decode(piece)
+        for piece in path.split('/')
+        ])
+
 
 class Timestamper:
   """Return monotonic timestamps derived from changeset timestamps."""

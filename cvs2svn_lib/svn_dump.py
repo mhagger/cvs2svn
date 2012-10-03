@@ -72,13 +72,8 @@ class DumpstreamDelegate(SVNRepositoryDelegate):
   def _utf8_path(self, path):
     """Return a copy of PATH encoded in UTF-8."""
 
-    # Convert each path component separately (as they may each use
-    # different encodings).
     try:
-      return '/'.join([
-          Ctx().cvs_filename_decoder(piece).encode('utf8')
-          for piece in path.split('/')
-          ])
+      return Ctx().cvs_filename_decoder.decode_path(path).encode('utf8')
     except UnicodeError:
       raise FatalError(
           "Unable to convert a path '%s' to internal encoding.\n"

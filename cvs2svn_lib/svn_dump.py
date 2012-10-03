@@ -39,6 +39,19 @@ OP_ADD    = 'add'
 OP_CHANGE = 'change'
 
 
+def utf8_path(path):
+  """Return a copy of PATH encoded in UTF-8."""
+
+  try:
+    return Ctx().cvs_filename_decoder.decode_path(path).encode('utf8')
+  except UnicodeError:
+    raise FatalError(
+        "Unable to convert a path '%s' to internal encoding.\n"
+        "Consider rerunning with one or more '--encoding' parameters or\n"
+        "with '--fallback-encoding'."
+        % (path,))
+
+
 class DumpstreamDelegate(SVNRepositoryDelegate):
   """Write output in Subversion dumpfile format."""
 
@@ -68,18 +81,6 @@ class DumpstreamDelegate(SVNRepositoryDelegate):
     UUID in the dumpfile."""
 
     self._dumpfile.write('SVN-fs-dump-format-version: 2\n\n')
-
-  def _utf8_path(self, path):
-    """Return a copy of PATH encoded in UTF-8."""
-
-    try:
-      return Ctx().cvs_filename_decoder.decode_path(path).encode('utf8')
-    except UnicodeError:
-      raise FatalError(
-          "Unable to convert a path '%s' to internal encoding.\n"
-          "Consider rerunning with one or more '--encoding' parameters or\n"
-          "with '--fallback-encoding'."
-          % (path,))
 
   @staticmethod
   def _string_for_props(properties):
@@ -160,7 +161,7 @@ class DumpstreamDelegate(SVNRepositoryDelegate):
         "Node-action: add\n"
         "\n"
         "\n"
-        % self._utf8_path(path)
+        % utf8_path(path)
         )
 
   def _register_basic_directory(self, path, create):
@@ -262,7 +263,7 @@ class DumpstreamDelegate(SVNRepositoryDelegate):
           'Content-length: %d\n'
           '\n'
           '%s'
-          % (self._utf8_path(dir_path),
+          % (utf8_path(dir_path),
              ignore_len, ignore_len, ignore_contents)
           )
       if not Ctx().keep_cvsignore:
@@ -282,7 +283,7 @@ class DumpstreamDelegate(SVNRepositoryDelegate):
         'Text-content-md5: %s\n'
         'Content-length: %d\n'
         '\n' % (
-            self._utf8_path(cvs_rev.get_svn_path()), op, props_header,
+            utf8_path(cvs_rev.get_svn_path()), op, props_header,
             len(data), checksum.hexdigest(), len(data) + len(prop_contents),
             )
         )
@@ -314,7 +315,7 @@ class DumpstreamDelegate(SVNRepositoryDelegate):
         'Node-path: %s\n'
         'Node-action: delete\n'
         '\n'
-        % (self._utf8_path(lod.get_path()),)
+        % (utf8_path(lod.get_path()),)
         )
     self._basic_directories.remove(lod.get_path())
 
@@ -335,7 +336,7 @@ class DumpstreamDelegate(SVNRepositoryDelegate):
           'Content-length: %d\n'
           '\n'
           '%s'
-          % (self._utf8_path(dir_path),
+          % (utf8_path(dir_path),
              ignore_len, ignore_len, ignore_contents)
           )
       if not Ctx().keep_cvsignore:
@@ -345,7 +346,7 @@ class DumpstreamDelegate(SVNRepositoryDelegate):
         'Node-path: %s\n'
         'Node-action: delete\n'
         '\n'
-        % (self._utf8_path(lod.get_path(cvs_path.cvs_path)),)
+        % (utf8_path(lod.get_path(cvs_path.cvs_path)),)
         )
 
   def copy_lod(self, src_lod, dest_lod, src_revnum):
@@ -360,8 +361,8 @@ class DumpstreamDelegate(SVNRepositoryDelegate):
         'Node-copyfrom-rev: %d\n'
         'Node-copyfrom-path: %s\n'
         '\n'
-        % (self._utf8_path(dest_lod.get_path()),
-           src_revnum, self._utf8_path(src_lod.get_path()))
+        % (utf8_path(dest_lod.get_path()),
+           src_revnum, utf8_path(src_lod.get_path()))
         )
 
   def copy_path(self, cvs_path, src_lod, dest_lod, src_revnum):
@@ -387,10 +388,10 @@ class DumpstreamDelegate(SVNRepositoryDelegate):
         'Node-copyfrom-path: %s\n'
         '\n'
         % (
-            self._utf8_path(dest_lod.get_path(cvs_path.cvs_path)),
+            utf8_path(dest_lod.get_path(cvs_path.cvs_path)),
             node_kind,
             src_revnum,
-            self._utf8_path(src_lod.get_path(cvs_path.cvs_path))
+            utf8_path(src_lod.get_path(cvs_path.cvs_path))
             )
         )
 

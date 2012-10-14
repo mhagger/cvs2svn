@@ -39,7 +39,7 @@ scratch space) in memory at a time.  But there are times when the
 fulltext of a revision is needed multiple times, for example when
 multiple branches sprout from the revision.  In these cases, the
 fulltext is written to disk.  If the fulltext is also needed for the
-blobfile, then the copy in the blobfils is read again when it is
+blobfile, then the copy in the blobfile is read again when it is
 needed.  If the fulltext is not needed in the blobfile, then it is
 written to a temporary file created with Python's tempfile module."""
 

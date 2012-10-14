@@ -185,10 +185,11 @@ class WriteBlobSink(Sink):
     while revrecs_to_remove:
       revrec = revrecs_to_remove.pop()
       del self.revrecs[revrec.rev]
-      base_revrec = self[revrec.base]
-      base_revrec.refs.remove(revrec.rev)
-      if not base_revrec.is_needed():
-        revrecs_to_remove.append(base_revrec)
+      if revrec.base is not None:
+        base_revrec = self[revrec.base]
+        base_revrec.refs.remove(revrec.rev)
+        if not base_revrec.is_needed():
+          revrecs_to_remove.append(base_revrec)
 
   def set_revision_info(self, rev, log, text):
     revrec = self.revrecs.get(rev)

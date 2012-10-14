@@ -3,6 +3,7 @@ Version ?.?.? (not yet released)
 
  Bugs fixed:
  * Handle non-ASCII, non-UTF8 filenames in .cvsignore files.
+ * ExternalBlobGenerator: Don't fail if no revisions are needed for a file.
 
 
 Version 2.4.0 (22 September 2012)

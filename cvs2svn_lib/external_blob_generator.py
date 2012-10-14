@@ -56,7 +56,7 @@ class ExternalBlobGenerator(RevisionCollector):
   def start(self):
     self._mark_generator = KeyGenerator()
     logger.normal('Starting generate_blobs.py...')
-    self._popen = subprocess.Popen(
+    self._pipe = subprocess.Popen(
         [
             sys.executable,
             os.path.join(os.path.dirname(__file__), 'generate_blobs.py'),
@@ -87,8 +87,8 @@ class ExternalBlobGenerator(RevisionCollector):
     # doesn't grow very large.  The default ASCII protocol is used so
     # that this works without changes on systems that distinguish
     # between text and binary files.
-    pickle.dump((cvs_file_items.cvs_file.rcs_path, marks), self._popen.stdin)
-    self._popen.stdin.flush()
+    pickle.dump((cvs_file_items.cvs_file.rcs_path, marks), self._pipe.stdin)
+    self._pipe.stdin.flush()
 
     # Now that all CVSRevisions' revision_reader_tokens are set,
     # iterate through symbols and set their tokens to those of their
@@ -100,9 +100,9 @@ class ExternalBlobGenerator(RevisionCollector):
         self._process_symbol(cvs_tag, cvs_file_items)
 
   def finish(self):
-    self._popen.stdin.close()
+    self._pipe.stdin.close()
     logger.normal('Waiting for generate_blobs.py to finish...')
-    returncode = self._popen.wait()
+    returncode = self._pipe.wait()
     if returncode:
       raise FatalError(
           'generate_blobs.py failed with return code %s.' % (returncode,)

@@ -83,12 +83,13 @@ class ExternalBlobGenerator(RevisionCollector):
           cvs_rev.revision_reader_token = mark
           marks[cvs_rev.rev] = mark
 
-    # A separate pickler is used for each dump(), so that its memo
-    # doesn't grow very large.  The default ASCII protocol is used so
-    # that this works without changes on systems that distinguish
-    # between text and binary files.
-    pickle.dump((cvs_file_items.cvs_file.rcs_path, marks), self._pipe.stdin)
-    self._pipe.stdin.flush()
+    if marks:
+      # A separate pickler is used for each dump(), so that its memo
+      # doesn't grow very large.  The default ASCII protocol is used so
+      # that this works without changes on systems that distinguish
+      # between text and binary files.
+      pickle.dump((cvs_file_items.cvs_file.rcs_path, marks), self._pipe.stdin)
+      self._pipe.stdin.flush()
 
     # Now that all CVSRevisions' revision_reader_tokens are set,
     # iterate through symbols and set their tokens to those of their

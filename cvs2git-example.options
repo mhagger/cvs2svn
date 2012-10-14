@@ -127,7 +127,8 @@ ctx.tmpdir = r'cvs2svn-tmp'
 
 # During FilterSymbolsPass, cvs2git records the contents of file
 # revisions into a "blob" file in git-fast-import format.  The
-# ctx.revision_collector option configures that process.  Choose one of the two ersions and customize its options.
+# ctx.revision_collector option configures that process.  Choose one
+# of the two versions and customize its options.
 
 # This first alternative is much slower but is better tested and has a
 # chance of working with CVSNT repositories.  It invokes CVS or RCS to

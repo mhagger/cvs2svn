@@ -383,10 +383,21 @@ gitk --all
 
   <li>
 
-    <p>The result of this procedure is a <em>bare</em> git repository
-      (one that does not have a checked-out version of the source
-      tree).  This is the type of repository that you would put on
-      your server.  To work on your project, make a non-bare clone
+    <p>(Recommended) Re-compact the repository and discard any
+      garbage:</p>
+
+<pre>
+git gc --prune=now
+</pre>
+
+  </li>
+
+  <li>
+
+    <p>The result of the above procedure is a <em>bare</em> git
+      repository (one that does not have a checked-out version of the
+      source tree).  This is the type of repository that you would put
+      on your server.  To work on your project, make a non-bare clone
       (one that includes a checked-out source tree):</p>
 
 <pre>
@@ -421,7 +432,7 @@ git init
   </li>
 
   <li><p>When the conversion is done, instead of cloning as described
-    in step 8, you need to explicitly check out the "master" version
+    in step 9, you need to explicitly check out the "master" version
     of the files into your working tree:</p>
 
 <pre>

@@ -55,6 +55,9 @@
   <li><a href="#automation">I have hundreds of subprojects to convert
     and my options file is getting huge</a></li>
 
+  <li><a href="#options-code">How can I define my own class and use it
+    in my options file?</a></li>
+
   <li><a href="#inverted">How can I convert project <tt>foo</tt> so
     that <tt>trunk/tags/branches</tt> are inside of
     <tt>foo</tt>?</a></li>
@@ -381,6 +384,51 @@ for project in projects:
 </pre>
 
 
+<h3><a name="options-code" title="#options-code">How can I define my
+    own class and use it in my options file?</a></h3>
+
+  <p>It is possible to customize your conversion using arbitrary
+    Python code.  Sometimes this requires you to define your own
+    Python class.  For technical reasons, such classes should not be
+    defined within the options file but rather in a separate file that
+    is imported into the options file.</p>
+
+  <p>[Technical explanation: The problem is that class instances used
+    in <tt>run_options</tt> are pickled in pass1 then unpickled in
+    later passes.  (Pickling is a Python mechanism for storing objects
+    to a file.)  But class instances can only be unpickled if the
+    class can be imported at the time of unpickling.  This, in turns,
+    requires the class to be defined at the top level of a Python
+    module.  The options file is <em>not</em> a valid Python module;
+    among other things, it is loaded using execfile(), not by being
+    imported.]</p>
+
+  <p>So create a separate file with a <tt>*.py</tt> filename,
+    like <tt>myoptionsclasses.py</tt>.  In that file, do any imports
+    needed by your code, then define your class:</p>
+
+<pre>
+from cvs2svn_lib.symbol_transform import SymbolTransform
+
+class MySymbolTransform(SymbolTransform):
+    def transform(self, cvs_file, symbol_name, revision):
+        [...]
+</pre>
+
+  <p>Then, in your main options file, import the class and use it:</p>
+
+<pre>
+from myoptionsclasses import MySymbolTransform
+
+run_options.add_project(
+    [...]
+    symbol_transforms=[
+        MySymbolTransform(),
+        ...
+        ])
+</pre>
+
+
 <h3><a name="inverted" title="#inverted">How can I convert project
     <tt>foo</tt> so that <tt>trunk/tags/branches</tt> are inside of
     <tt>foo</tt>?</a></h3>
@@ -539,8 +587,11 @@ class MyPropertySetter(FilePropertySetter):
 
 ctx.file_property_setters.append(MyPropertySetter())
 </pre>
-  <p>See the file <tt>cvs2svn_lib/property_setters.py</tt> for more
-    examples.</p>
+  <p>Please note that <a href="#options-code">the class must be
+    defined in a separate file</a>.</p>
+
+  <p>See the file <tt>cvs2svn_lib/property_setters.py</tt> for many
+    examples of property setters.</p>
 
 
 <h3><a name="path-symbol-transforms" title="#path-symbol-transforms">I
@@ -562,12 +613,12 @@ ctx.file_property_setters.append(MyPropertySetter())
     any legal symbol name, which will be used in the conversion
     instead of the original name.</p>
 
-  <p>To use this feature, you will have to use an <a
-    href="cvs2svn.html#options-file-method">options file</a> to start
-    the conversion.  You then write a new SymbolTransform class that
-    inherits from RegexpSymbolTransform but checks the path before
-    deciding whether to transform the symbol.  Add the following to
-    your options file:</p>
+  <p>To use this feature, you will have to use
+    an <a href="cvs2svn.html#options-file-method">options file</a> to
+    start the conversion.  You then write a new SymbolTransform class
+    that inherits from RegexpSymbolTransform but checks the path
+    before deciding whether to transform the symbol.  You can do
+    something like the following:</p>
 
 <pre>
 from cvs2svn_lib.symbol_transform import RegexpSymbolTransform
@@ -606,6 +657,9 @@ run_options.add_project(
     tags_path='tags',
     symbol_transforms=symbol_transforms))
 </pre>
+
+  <p>Please note that <a href="#options-code">the class must be
+    defined in a separate file</a>.</p>
 
   <p>This example causes any symbol under "project1" that looks like
     "release-3_12" to be transformed into a symbol named

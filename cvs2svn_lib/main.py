@@ -36,9 +36,17 @@ from cvs2svn_lib.passes import passes
 
 
 def main(progname, run_options, pass_manager):
-  # Disable garbage collection, as we try not to create any circular
-  # data structures:
-  gc.disable()
+  # Disable garbage collection, as we do not not create any circular
+  # data structures.  To verify this assumption, the function
+  # check_for_garbage() in pass_manager.py is run after every pass.
+  # It verifies that no unreachable objects have been created (or
+  # reports any that were found):
+  try:
+    gc.disable()
+  except (AttributeError, NotImplementedError):
+    # Other Python implementations implement garbage collection
+    # differently, so if an error occurs just ignore it.
+    pass
 
   # Convenience var, so we don't have to keep instantiating this Borg.
   ctx = Ctx()

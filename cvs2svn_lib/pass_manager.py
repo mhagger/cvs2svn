@@ -41,17 +41,22 @@ def check_for_garbage():
   # is therefore a waste of time.  So here we check for any
   # unreachable objects and generate a debug-level warning if any
   # occur:
-  gc.set_debug(gc.DEBUG_SAVEALL)
-  gc_count = gc.collect()
-  if gc_count:
-    if logger.is_on(logger.DEBUG):
-      logger.debug(
-          'INTERNAL: %d unreachable object(s) were garbage collected:'
-          % (gc_count,)
-          )
-      for g in gc.garbage:
-        logger.debug('    %s' % (g,))
-    del gc.garbage[:]
+  try:
+    gc.set_debug(gc.DEBUG_SAVEALL)
+    gc_count = gc.collect()
+    if gc_count:
+      if logger.is_on(logger.DEBUG):
+        logger.debug(
+            'INTERNAL: %d unreachable object(s) were garbage collected:'
+            % (gc_count,)
+            )
+        for g in gc.garbage:
+          logger.debug('    %s' % (g,))
+      del gc.garbage[:]
+  except (AttributeError, NotImplementedError):
+    # Other Python implementations implement garbage collection
+    # differently, so if errors occur just ignore them.
+    pass
 
 
 class Pass(object):

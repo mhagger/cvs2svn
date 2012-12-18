@@ -86,7 +86,7 @@ class _RegexpStrategyRule(StrategyRule):
     ACTION(name, id); otherwise it returns SYMBOL unchanged."""
 
     try:
-      self.regexp = re.compile('^' + pattern + '$')
+      self.regexp = re.compile('^(?:' + pattern + ')$')
     except re.error:
       raise FatalError("%r is not a valid regexp." % (pattern,))
 

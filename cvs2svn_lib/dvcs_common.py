@@ -18,6 +18,7 @@
 Git, Mercurial, or Bazaar).
 """
 
+import os
 import sys
 
 from cvs2svn_lib import config
@@ -106,8 +107,7 @@ class DVCSRunOptions(RunOptions):
   def process_options(self):
     # Consistency check for options and arguments.
     if len(self.args) == 0:
-      self.usage()
-      sys.exit(1)
+      self.args.append(os.getcwd())
 
     if len(self.args) > 1:
       logger.error(error_prefix + ": must pass only one CVS repository.\n")

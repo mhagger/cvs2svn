@@ -102,7 +102,7 @@ class SVNRunOptions(RunOptions):
 
   synopsis = """\
 .B cvs2svn
-[\\fIOPTION\\fR]... \\fIOUTPUT-OPTION CVS-REPOS-PATH\\fR
+[\\fIOPTION\\fR]... \\fIOUTPUT-OPTION [CVS-REPOS-PATH]\\fR
 .br
 .B cvs2svn
 [\\fIOPTION\\fR]... \\fI--options=PATH\\fR
@@ -115,7 +115,10 @@ repository, including such information as date of commit and id of the
 committer.
 .P
 \\fICVS-REPOS-PATH\\fR is the filesystem path of the part of the CVS
-repository that you want to convert.  It is not possible to convert a
+repository that you want to convert. If not specified, it defaults
+to the current directory.
+.P
+It is not possible to convert a
 CVS repository to which you only have remote access; see the FAQ for
 more information.  This path doesn't have to be the top level
 directory of a CVS repository; it can point at a project within a

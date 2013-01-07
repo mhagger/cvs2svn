@@ -38,7 +38,7 @@ class BzrRunOptions(DVCSRunOptions):
 
   synopsis = """\
 .B cvs2bzr
-[\\fIOPTION\\fR]... \\fIOUTPUT-OPTIONS CVS-REPOS-PATH\\fR
+[\\fIOPTION\\fR]... \\fIOUTPUT-OPTIONS [CVS-REPOS-PATH]\\fR
 .br
 .B cvs2bzr
 [\\fIOPTION\\fR]... \\fI--options=PATH\\fR
@@ -56,12 +56,12 @@ Plugin, available from https://launchpad.net/bzr-fastimport.
 
 .P
 \\fICVS-REPOS-PATH\\fR is the filesystem path of the part of the CVS
-repository that you want to convert.  This path doesn't have to be the
+repository that you want to convert. This path doesn't have to be the
 top level directory of a CVS repository; it can point at a project
 within a repository, in which case only that project will be
 converted.  This path or one of its parent directories has to contain
 a subdirectory called CVSROOT (though the CVSROOT directory can be
-empty).
+empty).   If not specified, it defaults to the current directory.
 .P
 It is not possible directly to convert a CVS repository to which you
 only have remote access, but the FAQ describes tools that may be used

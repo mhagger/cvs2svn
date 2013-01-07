@@ -28,13 +28,12 @@ class HgRunOptions(DVCSRunOptions):
 
   synopsis = """\
 .B cvs2hg
-[\\fIOPTION\\fR]... \\fIOUTPUT-OPTION CVS-REPOS-PATH\\fR
+[\\fIOPTION\\fR]... \\fIOUTPUT-OPTION [CVS-REPOS-PATH]\\fR
 .br
 .B cvs2hg
 [\\fIOPTION\\fR]... \\fI--options=PATH\\fR
 """
 
-  # XXX paragraph 2 copied straight from svn_run_options.py
   long_desc = """\
 Create a new Mercurial repository based on the version history stored in
 a CVS repository. Each CVS commit will be mirrored in the Mercurial
@@ -42,13 +41,15 @@ repository, including commit time and author (with optional remapping to
 Mercurial-style long usernames).
 .P
 \\fICVS-REPOS-PATH\\fR is the filesystem path of the part of the CVS
-repository that you want to convert.  It is not possible to convert a
-CVS repository to which you only have remote access; see the FAQ for
-more information.  This path doesn't have to be the top level
-directory of a CVS repository; it can point at a project within a
-repository, in which case only that project will be converted.  This
-path or one of its parent directories has to contain a subdirectory
-called CVSROOT (though the CVSROOT directory can be empty).
+repository that you want to convert. This path doesn't have to be the
+top level directory of a CVS repository; it can point at a project
+within a repository, in which case only that project will be
+converted.  This path or one of its parent directories has to contain
+a subdirectory called CVSROOT (though the CVSROOT directory can be
+empty). If not specified, it defaults to the current directory.
+.P
+It is not possible to convert a CVS repository to which you only have
+remote access; see the FAQ for more information.
 .P
 Unlike CVS or Subversion, Mercurial expects each repository to hold
 one independent project.  If your CVS repository contains multiple

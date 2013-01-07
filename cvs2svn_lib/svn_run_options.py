@@ -490,7 +490,39 @@ A directory under \\fI%s\\fR (or the directory specified by
     del self.project_symbol_strategy_rules[:]
 
   def process_property_setter_options(self):
-    super(SVNRunOptions, self).process_property_setter_options()
+    """Process the options that set SVN properties."""
+    ctx = Ctx()
+    options = self.options
+
+    for value in options.auto_props_files:
+      ctx.file_property_setters.append(
+          AutoPropsPropertySetter(value, options.auto_props_ignore_case)
+          )
+
+    for value in options.mime_types_files:
+      ctx.file_property_setters.append(MimeMapper(value))
+
+    ctx.file_property_setters.append(CVSBinaryFileEOLStyleSetter())
+
+    ctx.file_property_setters.append(CVSBinaryFileDefaultMimeTypeSetter())
+
+    if options.eol_from_mime_type:
+      ctx.file_property_setters.append(EOLStyleFromMimeTypeSetter())
+
+    ctx.file_property_setters.append(
+        DefaultEOLStyleSetter(options.default_eol)
+        )
+
+    ctx.file_property_setters.append(SVNBinaryFileKeywordsPropertySetter())
+
+    if not options.keywords_off:
+      ctx.file_property_setters.append(
+        KeywordsPropertySetter(config.SVN_KEYWORDS_VALUE)
+        )
+
+    ctx.file_property_setters.append(ExecutablePropertySetter())
+
+    ctx.file_property_setters.append(DescriptionPropertySetter())
 
     # Property setters for internal use:
     Ctx().file_property_setters.append(SVNEOLFixPropertySetter())

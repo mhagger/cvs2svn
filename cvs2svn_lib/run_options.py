@@ -240,7 +240,8 @@ class RunOptions(object):
     parser.add_option_group(self._get_output_options_group())
     parser.add_option_group(self._get_conversion_options_group())
     parser.add_option_group(self._get_symbol_handling_options_group())
-    parser.add_option_group(self._get_subversion_properties_options_group())
+    if self.progname == "cvs2svn":
+      parser.add_option_group(self._get_subversion_properties_options_group())
     parser.add_option_group(self._get_extraction_options_group())
     parser.add_option_group(self._get_environment_options_group())
     parser.add_option_group(self._get_partial_conversion_options_group())
@@ -1024,42 +1025,6 @@ class RunOptions(object):
       # Now add a rule whose job it is to pick the preferred parents of
       # branches and tags:
       options.symbol_strategy_rules.append(HeuristicPreferredParentRule())
-
-  def process_property_setter_options(self):
-    """Process the options that set SVN properties."""
-
-    ctx = Ctx()
-    options = self.options
-
-    for value in options.auto_props_files:
-      ctx.file_property_setters.append(
-          AutoPropsPropertySetter(value, options.auto_props_ignore_case)
-          )
-
-    for value in options.mime_types_files:
-      ctx.file_property_setters.append(MimeMapper(value))
-
-    ctx.file_property_setters.append(CVSBinaryFileEOLStyleSetter())
-
-    ctx.file_property_setters.append(CVSBinaryFileDefaultMimeTypeSetter())
-
-    if options.eol_from_mime_type:
-      ctx.file_property_setters.append(EOLStyleFromMimeTypeSetter())
-
-    ctx.file_property_setters.append(
-        DefaultEOLStyleSetter(options.default_eol)
-        )
-
-    ctx.file_property_setters.append(SVNBinaryFileKeywordsPropertySetter())
-
-    if not options.keywords_off:
-      ctx.file_property_setters.append(
-        KeywordsPropertySetter(config.SVN_KEYWORDS_VALUE)
-        )
-
-    ctx.file_property_setters.append(ExecutablePropertySetter())
-
-    ctx.file_property_setters.append(DescriptionPropertySetter())
 
   def process_options(self):
     """Do the main configuration based on command-line options.

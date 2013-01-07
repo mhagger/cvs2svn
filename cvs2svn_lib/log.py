@@ -79,6 +79,14 @@ class _Log:
 
     return self.log_level >= level
 
+  def set_streaming(self):
+    "Prevent the logger from using standard output."
+    self._out = sys.stderr
+
+  def is_streaming_set(self):
+    "Has streaming operation been set?"
+    return self._out == sys.stderr
+
   def _timestamp(self):
     """Return a timestamp if needed, as a string with a trailing space."""
 

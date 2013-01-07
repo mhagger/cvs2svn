@@ -24,6 +24,8 @@ For information about the format allowed by git-fast-import, see:
 
 import bisect
 import time
+import sys
+import os
 
 from cvs2svn_lib.common import InternalError
 from cvs2svn_lib.log import logger
@@ -145,11 +147,17 @@ class GitOutputOption(DVCSOutputOption):
   _first_commit_mark = 1000000000
 
   def __init__(
-        self, dump_filename, revision_writer,
+        self,
+        blob_filename,
+        dump_filename,
+        revision_writer,
         author_transforms=None,
         tie_tag_fixup_branches=False,
         ):
     """Constructor.
+
+    BLOB_FILENAME is the name of the file to which the content blobs
+    for the git-fast-import stream should be written.
 
     DUMP_FILENAME is the name of the file to which the git-fast-import
     commands for defining revisions should be written.  (Please note
@@ -172,6 +180,7 @@ class GitOutputOption(DVCSOutputOption):
 
     """
     DVCSOutputOption.__init__(self)
+    self.blob_filename = blob_filename
     self.dump_filename = dump_filename
     self.revision_writer = revision_writer
 
@@ -546,6 +555,13 @@ class GitOutputOption(DVCSOutputOption):
     DVCSOutputOption.cleanup(self)
     self.revision_writer.finish()
     self.f.close()
+    if logger.is_streaming_set():
+      for line in open(self.blob_filename):
+        sys.stdout.write(line)
+      for line in open(self.dump_filename):
+        sys.stdout.write(line)
+      os.remove(self.blob_filename)
+      os.remove(self.dump_filename)
     del self.f
 
 

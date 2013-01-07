@@ -20,6 +20,7 @@ import tempfile
 
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.context import Ctx
+from cvs2svn_lib.log import logger
 from cvs2svn_lib.dvcs_common import DVCSRunOptions
 from cvs2svn_lib.run_options import ContextOption
 from cvs2svn_lib.run_options import IncompatibleOption
@@ -36,24 +37,30 @@ from cvs2svn_lib.git_output_option import GitOutputOption
 
 class GitRunOptions(DVCSRunOptions):
 
-  short_desc = 'convert a cvs repository into a git repository'
+  short_desc = 'convert a CVS repository into a git fast-import stream'
 
   synopsis = """\
 .B cvs2git
-[\\fIOPTION\\fR]... \\fIOUTPUT-OPTIONS CVS-REPOS-PATH\\fR
+[\\fIOPTION\\fR]... [\\fIOUTPUT-OPTIONS] CVS-REPOS-PATH\\fR
 .br
 .B cvs2git
 [\\fIOPTION\\fR]... \\fI--options=PATH\\fR
 """
 
   long_desc = """\
-Create a new git repository based on the version history stored in a
-CVS repository. Each CVS commit will be mirrored in the git
-repository, including such information as date of commit and id of the
-committer.
+Translate the version history stored in a CVS repository into a git
+fast-import stream that can be used to create a live repository with
+.BR git-fast-import
+or any compatible importer.
 .P
-The output of this program are a "blobfile" and a "dumpfile", which
-together can be loaded into a git repository using "git fast-import".
+The CVS history's per-file commits and tags will be analyzed and
+grouped into changesets, each with a common commit date and author.
+.P
+Called without options, this program simply dumps the translated stream to
+standard output (and some statistical information to standard error). For
+backward compatibility with older versions, you can specify two filenames
+with command-line options in which to separately dump the content blobs
+and commits; in that case statistical information goes to standard output.
 .P
 \\fICVS-REPOS-PATH\\fR is the filesystem path of the part of the CVS
 repository that you want to convert.  This path doesn't have to be the
@@ -166,7 +173,12 @@ A directory under \\fI%s\\fR (or the directory specified by
       return
 
     if not (options.blobfile and options.dumpfile):
-      raise FatalError("must pass '--blobfile' and '--dumpfile' options.")
+      import tempfile
+      if not options.dumpfile:
+        options.dumpfile = tempfile.mkstemp(prefix="cvs2gitdump")[1]
+      if not options.blobfile:
+        options.blobfile = tempfile.mkstemp(prefix="cvs2gitblobs")[1]
+      logger.set_streaming()
 
     if options.use_external_blob_generator:
       ctx.revision_collector = ExternalBlobGenerator(options.blobfile)
@@ -191,6 +203,7 @@ A directory under \\fI%s\\fR (or the directory specified by
       ctx.output_option = NullOutputOption()
     else:
       ctx.output_option = GitOutputOption(
+          self.options.blobfile,
           self.options.dumpfile,
           GitRevisionMarkWriter(),
           # Optional map from CVS author names to git author names:

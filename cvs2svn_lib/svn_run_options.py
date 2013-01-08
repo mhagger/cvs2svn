@@ -138,6 +138,8 @@ A directory called \\fIcvs2svn-tmp\\fR (or the directory specified by
     ('svnadmin', '1'),
     ]
 
+  DEFAULT_USERNAME = None
+
   def _get_output_options_group(self):
     group = super(SVNRunOptions, self)._get_output_options_group()
 

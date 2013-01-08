@@ -64,14 +64,15 @@ A directory called \\fIcvs2svn-tmp\\fR (or the directory specified by
   # XXX the cvs2{svn,git,bzr,hg} man pages should probably reference
   # each other
   see_also = [
-  ('cvs', '1'),
-  ('hg', '1'),
-  ]
+    ('cvs', '1'),
+    ('hg', '1'),
+    ]
+
+  DEFAULT_USERNAME = 'cvs2hg'
 
   def __init__(self, *args, **kwargs):
     # Override some default values
     ctx = Ctx()
-    ctx.username = "cvs2hg"
     ctx.symbol_commit_message = (
       "artificial changeset to create "
       "%(symbol_type)s '%(symbol_name)s'")

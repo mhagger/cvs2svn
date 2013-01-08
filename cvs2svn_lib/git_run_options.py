@@ -78,6 +78,7 @@ A directory called \\fIcvs2svn-tmp\\fR (or the directory specified by
     ('git-fast-import', '1'),
     ]
 
+  DEFAULT_USERNAME = 'cvs2git'
 
   def _get_output_options_group(self):
     group = super(GitRunOptions, self)._get_output_options_group()

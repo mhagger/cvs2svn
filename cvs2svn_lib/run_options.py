@@ -497,16 +497,22 @@ class RunOptions(object):
 
   def _get_subversion_properties_options_group(self):
     group = OptionGroup(self.parser, 'Subversion properties')
+
+    if self.DEFAULT_USERNAME is None:
+      default = 'The default is to use no author at all for such commits.'
+    else:
+      default = 'Default: "%s".' % (self.DEFAULT_USERNAME,)
+
     group.add_option(ContextOption(
-        '--username', type='string',
+        '--username', type='string', default=self.DEFAULT_USERNAME,
         action='store',
-        help='username for synthesized commits',
+        help='username for synthesized commits. ' + default,
         man_help=(
             'Set the default username to \\fIname\\fR when this program needs '
             'to generate a commit for which CVS does not record the '
             'original username. This happens when a branch or tag is '
-            'created. The default is to use no author at all for such '
-            'commits.'
+            'created. '
+            + default
             ),
         metavar='NAME',
         ))

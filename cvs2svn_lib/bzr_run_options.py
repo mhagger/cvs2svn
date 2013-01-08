@@ -77,6 +77,7 @@ A directory called \\fIcvs2svn-tmp\\fR (or the directory specified by
     ('bzr', '1'),
     ]
 
+  DEFAULT_USERNAME = 'cvs2bzr'
 
   def _get_output_options_group(self):
     group = super(BzrRunOptions, self)._get_output_options_group()

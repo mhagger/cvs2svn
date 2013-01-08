@@ -210,11 +210,10 @@ class WriteBlobSink(Sink):
     elif self.last_revrec is not None and base_rev == self.last_revrec.rev:
       # Our base revision is stored in self.last_rcsstream.
       self.last_revrec.refs.remove(rev)
-      if self.last_revrec.is_needed():
-        if not self.last_revrec.is_written():
-          self.last_revrec.write(
-              self.fulltext_file, self.last_rcsstream.get_text()
-              )
+      if self.last_revrec.is_needed() and not self.last_revrec.is_written():
+        self.last_revrec.write(
+            self.fulltext_file, self.last_rcsstream.get_text()
+            )
       self.last_rcsstream.apply_diff(text)
       if revrec.mark is not None:
         revrec.write_blob(self.blobfile, self.last_rcsstream.get_text())

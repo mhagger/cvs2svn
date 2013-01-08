@@ -360,11 +360,11 @@ class RunOptions(object):
         help=(
             'if a file appears both in and out of '
             'the CVS Attic, then leave the attic version in a '
-            'SVN directory called "Attic"'
+            'subdirectory called "Attic"'
             ),
         man_help=(
-            'If a file appears both inside an outside of the CVS attic, '
-            'retain the attic version in an SVN subdirectory called '
+            'If a file appears both inside and outside of the CVS attic, '
+            'retain the attic version in a subdirectory called '
             '\'Attic\'.  (Normally this situation is treated as a fatal '
             'error.)'
             ),
@@ -384,8 +384,8 @@ class RunOptions(object):
             'respectively.  P must match the whole symbol name'
             ),
         man_help=(
-            'Transform RCS/CVS symbol names before entering them into '
-            'Subversion. \\fIpattern\\fR is a Python regexp pattern that '
+            'Transform RCS/CVS symbol names before entering them into the '
+            'output history. \\fIpattern\\fR is a Python regexp pattern that '
             'is matches against the entire symbol name; \\fIreplacement\\fR '
             'is a replacement using Python\'s regexp reference syntax. '
             'You may specify any number of these options; they will be '
@@ -500,9 +500,9 @@ class RunOptions(object):
     group.add_option(ContextOption(
         '--username', type='string',
         action='store',
-        help='username for cvs2svn-synthesized commits',
+        help='username for synthesized commits',
         man_help=(
-            'Set the default username to \\fIname\\fR when cvs2svn needs '
+            'Set the default username to \\fIname\\fR when this program needs '
             'to generate a commit for which CVS does not record the '
             'original username. This happens when a branch or tag is '
             'created. The default is to use no author at all for such '

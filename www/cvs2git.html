@@ -301,8 +301,8 @@ make check # ...optional
 
 <pre>
 cvs2git \
-    --blobfile=cvs2svn-tmp/git-blob.dat \
-    --dumpfile=cvs2svn-tmp/git-dump.dat \
+    --blobfile=cvs2git-tmp/git-blob.dat \
+    --dumpfile=cvs2git-tmp/git-dump.dat \
     --username=cvs2git \
     /path/to/cvs/repo
 </pre>
@@ -332,8 +332,8 @@ cvs2git --options=OPTIONS-FILE
     href="http://www.kernel.org/pub/software/scm/git/docs/git-fast-import.html">git
     fast-import</a> format.  The names of these files are specified by
     your options file or command-line arguments.  In the example,
-    these files are named <tt>cvs2svn-tmp/git-blob.dat</tt> and
-    <tt>cvs2svn-tmp/git-dump.dat</tt>.</p>
+    these files are named <tt>cvs2git-tmp/git-blob.dat</tt> and
+    <tt>cvs2git-tmp/git-dump.dat</tt>.</p>
 
   </li>
 
@@ -355,14 +355,14 @@ git init --bare
       fast-import</tt>:</p>
 
 <pre>
-git fast-import --export-marks=../cvs2svn-tmp/git-marks.dat &lt; ../cvs2svn-tmp/git-blob.dat
-git fast-import --import-marks=../cvs2svn-tmp/git-marks.dat &lt; ../cvs2svn-tmp/git-dump.dat
+git fast-import --export-marks=../cvs2git-tmp/git-marks.dat &lt; ../cvs2git-tmp/git-blob.dat
+git fast-import --import-marks=../cvs2git-tmp/git-marks.dat &lt; ../cvs2git-tmp/git-dump.dat
 </pre>
 
     <p>On Linux/Unix this can be shortened to:</p>
 
 <pre>
-cat ../cvs2svn-tmp/git-blob.dat ../cvs2svn-tmp/git-dump.dat | git fast-import
+cat ../cvs2git-tmp/git-blob.dat ../cvs2git-tmp/git-dump.dat | git fast-import
 </pre>
 
   </li>

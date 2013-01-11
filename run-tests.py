@@ -3324,7 +3324,7 @@ def internal_co_keywords():
 def timestamp_chaos():
   "test timestamp adjustments"
 
-  conv = ensure_conversion('timestamp-chaos', args=["-v"])
+  conv = ensure_conversion('timestamp-chaos')
 
   # The times are expressed here in UTC:
   times = [

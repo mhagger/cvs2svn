@@ -509,7 +509,7 @@ class Conversion:
 
   def __init__(
       self, conv_id, name, error_re, passbypass, symbols, args,
-      options_file=None, symbol_hints_file=None, dumpfile=None,
+      verbosity=None, options_file=None, symbol_hints_file=None, dumpfile=None,
       ):
     self.conv_id = conv_id
     self.name = name
@@ -544,12 +544,15 @@ class Conversion:
       args.extend([
           '--options=%s' % self.options_file,
           ])
+      args.append(verbosity or '-qqqqqq')
       assert not symbol_hints_file
     else:
       self.options_file = None
       args.extend([
           '--tmpdir=%s' % tmp_dir,
           ])
+
+      args.append(verbosity or '-qqqqqq')
 
       if symbol_hints_file:
         self.symbol_hints_file = os.path.join(cvsrepos, symbol_hints_file)
@@ -664,7 +667,7 @@ class GitConversion:
 
     stdout -- a list of lines written by cvs2svn to stdout."""
 
-  def __init__(self, name, error_re, args, options_file=None):
+  def __init__(self, name, error_re, args, verbosity=None, options_file=None):
     self.name = name
     if not os.path.isdir(tmp_dir):
       os.mkdir(tmp_dir)
@@ -680,6 +683,8 @@ class GitConversion:
     else:
       self.options_file = None
 
+    args.append(verbosity or '-qqqqqq')
+
     self.stdout = run_script(cvs2git, error_re, *args)
 
 
@@ -690,7 +695,8 @@ already_converted = { }
 def ensure_conversion(
     name, error_re=None, passbypass=None,
     trunk=None, branches=None, tags=None,
-    args=None, options_file=None, symbol_hints_file=None, dumpfile=None,
+    args=None, verbosity=None,
+    options_file=None, symbol_hints_file=None, dumpfile=None,
     ):
   """Convert CVS repository NAME to Subversion, but only if it has not
   been converted before by this invocation of this script.  If it has
@@ -715,6 +721,10 @@ def ensure_conversion(
   being one option, e.g., '--trunk-only'.  If the option takes an
   argument, include it directly, e.g., '--mime-types=PATH'.  Arguments
   are passed to cvs2svn in the order that they appear in ARGS.
+
+  If VERBOSITY is set, then it is passed to cvs2svn as an option.
+  Otherwise, the verbosity is turned way down so that only error
+  messages are emitted.
 
   If OPTIONS_FILE is specified, then it should be the name of a file
   within the main directory of the cvs repository associated with this
@@ -760,7 +770,7 @@ def ensure_conversion(
       already_converted[conv_id] = Conversion(
           conv_id, name, error_re, passbypass,
           {'trunk' : trunk, 'branches' : branches, 'tags' : tags},
-          args, options_file, symbol_hints_file, dumpfile,
+          args, verbosity, options_file, symbol_hints_file, dumpfile,
           )
     except Failure:
       # Remember the failure so that a future attempt to run this conversion
@@ -1389,10 +1399,11 @@ def bogus_tag():
 @Cvs2SvnTestFunction
 def overlapping_branch():
   "ignore a file with a branch with two names"
-  conv = ensure_conversion('overlapping-branch')
-
-  if not conv.output_found('.*cannot also have name \'vendorB\''):
-    raise Failure()
+  conv = ensure_conversion(
+    'overlapping-branch',
+    verbosity='-qq',
+    error_re='.*cannot also have name \'vendorB\'',
+    )
 
   conv.logs[2].check('imported', (
     ('/%(trunk)s/nonoverlapping-branch', 'A'),
@@ -3143,10 +3154,11 @@ def delete_cvsignore():
 def repeated_deltatext():
   "ignore repeated deltatext blocks with warning"
 
-  conv = ensure_conversion('repeated-deltatext')
-  warning_re = r'.*Deltatext block for revision 1.1 appeared twice'
-  if not conv.output_found(warning_re):
-    raise Failure()
+  conv = ensure_conversion(
+    'repeated-deltatext',
+    verbosity='-qq',
+    error_re=r'.*Deltatext block for revision 1.1 appeared twice',
+    )
 
 
 @Cvs2SvnTestFunction
@@ -3537,11 +3549,11 @@ def main_hg():
 def invalid_symbol():
   "a symbol with the incorrect format"
 
-  conv = ensure_conversion('invalid-symbol')
-  if not conv.output_found(
-        r".*branch 'SYMBOL' references invalid revision 1$"
-        ):
-    raise Failure()
+  conv = ensure_conversion(
+    'invalid-symbol',
+    verbosity='-qq',
+    error_re=r".*branch 'SYMBOL' references invalid revision 1$",
+    )
 
 
 @Cvs2SvnTestFunction
@@ -3990,11 +4002,9 @@ def missing_vendor_branch():
 
   conv = ensure_conversion(
       'missing-vendor-branch',
+      verbosity='-qq',
+      error_re=r'.*vendor branch \'1\.1\.1\' is not present in file and will be ignored',
       )
-  if not conv.output_found(
-      r'.*vendor branch \'1\.1\.1\' is not present in file and will be ignored'
-      ):
-    raise Failure()
 
 
 @Cvs2SvnTestFunction

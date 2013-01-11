@@ -49,8 +49,11 @@ class _Log:
     # The output file to use for errors:
     self._err = sys.stderr
 
-    # The output file to use for lower-priority messages:
-    self._out = sys.stdout
+    # The output file to use for lower-priority messages.  We also
+    # write these to stderr so that other output (e.g., dumpfiles) can
+    # be written to stdout without being contaminated with progress
+    # messages:
+    self._out = sys.stderr
 
     # Lock to serialize writes to the log:
     self.lock = threading.Lock()

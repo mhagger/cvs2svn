@@ -546,11 +546,9 @@ class Conversion:
       assert not symbol_hints_file
     else:
       self.options_file = None
-      if tmp_dir != 'cvs2svn-tmp':
-        # Only include this argument if it differs from cvs2svn's default:
-        args.extend([
-            '--tmpdir=%s' % tmp_dir,
-            ])
+      args.extend([
+          '--tmpdir=%s' % tmp_dir,
+          ])
 
       if symbol_hints_file:
         self.symbol_hints_file = os.path.join(cvsrepos, symbol_hints_file)

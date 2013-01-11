@@ -16,6 +16,7 @@
 
 """This module manages cvs2svn run options."""
 
+import tempfile
 
 import sys
 import optparse
@@ -128,9 +129,9 @@ repository in a single run of cvs2svn, but only by using an
 """
 
   files = """\
-A directory called \\fIcvs2svn-tmp\\fR (or the directory specified by
+A directory under \\fI%s\\fR (or the directory specified by
 \\fB--tmpdir\\fR) is used as scratch space for temporary data files.
-"""
+""" % (tempfile.gettempdir(),)
 
   see_also = [
     ('cvs', '1'),

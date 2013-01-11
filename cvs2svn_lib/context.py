@@ -22,6 +22,7 @@ import textwrap
 
 from cvs2svn_lib import config
 from cvs2svn_lib.common import CVSTextDecoder
+from cvs2svn_lib.common import FatalError
 
 
 class Ctx:
@@ -57,7 +58,7 @@ class Ctx:
     self.username = None
     self.file_property_setters = []
     self.revision_property_setters = []
-    self.tmpdir = 'cvs2svn-tmp'
+    self.tmpdir = None
     self.skip_cleanup = False
     self.keep_cvsignore = False
     self.cross_project_commits = True
@@ -86,6 +87,8 @@ class Ctx:
 
 
   def get_temp_filename(self, basename):
+    if self.tmpdir is None:
+      raise FatalError('Temporary directory has not been set!')
     return os.path.join(self.tmpdir, basename)
 
   def clean(self):

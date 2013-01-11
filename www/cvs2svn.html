@@ -1105,8 +1105,12 @@ project-id symbol conversion svn-path parent-lod-name
   <tr>
     <td align="right"><tt>--tmpdir=PATH</tt></td>
     <td>Use the directory PATH for all of cvs2svn's temporary data
-      (which can be a <i>lot</i> of data).  The default value is
-      <tt>cvs2svn-tmp</tt> in the current working directory.</td>
+      (which can be a <i>lot</i> of data).  The default is to store
+      the temporary data in a subdirectory under the platform's usual
+      place for temporary files (e.g., <tt>/tmp</tt>).  Please note
+      that if you want to use the <tt>--passes</tt> feature, you have
+      to pass the same <tt>--tmpdir</tt> option at each
+      invocation.</td>
   </tr>
 
   <tr>
@@ -1251,13 +1255,13 @@ specify <tt>--options</tt>:</p>
    $ cvs2svn --options OPTIONSFILE
 </pre>
 
-<p>As it works, cvs2svn will create many temporary files in a
-temporary directory called "cvs2svn-tmp" (or the directory specified
-with <tt>--tmpdir</tt>).  This is normal.  If the entire conversion is
-successful, however, those tempfiles will be automatically removed.
-If the conversion is not successful, or if you specify the
+<p>As it works, cvs2svn creates many temporary files
+(see <tt>--tmpdir</tt>).  This is normal.  After a pass completes
+successfully, the temporary files that are no longer needed are
+deleted automatically.  If a pass fails, or if you specify the
 '--skip-cleanup' option, cvs2svn will leave the temporary files behind
-for possible debugging.</p>
+for possible debugging and/or resumption of the pass using
+the <tt>--passes</tt> option.</p>
 
 </div>
 </body>

@@ -16,6 +16,7 @@
 
 """This module manages cvs2git run options."""
 
+import tempfile
 
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.context import Ctx
@@ -68,9 +69,9 @@ to create a local copy of a remote CVS repository.
 """
 
   files = """\
-A directory called \\fIcvs2svn-tmp\\fR (or the directory specified by
+A directory under \\fI%s\\fR (or the directory specified by
 \\fB--tmpdir\\fR) is used as scratch space for temporary data files.
-"""
+""" % (tempfile.gettempdir(),)
 
   see_also = [
     ('cvs', '1'),

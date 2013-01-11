@@ -21,6 +21,7 @@ import re
 import optparse
 from optparse import OptionGroup
 import datetime
+import tempfile
 import codecs
 import time
 
@@ -707,13 +708,12 @@ class RunOptions(object):
         action='store',
         help=(
             'directory to use for temporary data files '
-            '(default "cvs2svn-tmp")'
-            ),
+            '(default is to create a temporary subdirectory under %r)'
+            ) % (tempfile.gettempdir(),),
         man_help=(
-            'Set the \\fIpath\\fR to use for temporary data. Default '
-            'is a directory called \\fIcvs2svn-tmp\\fR under the current '
-            'directory.'
-            ),
+            'Set the \\fIpath\\fR to use for temporary data.  The default '
+            'is to create a temporary subdirectory under \\fI%s\\fR.'
+            ) % (tempfile.gettempdir(),),
         metavar='PATH',
         ))
     self.parser.set_default('co_executable', config.CO_EXECUTABLE)

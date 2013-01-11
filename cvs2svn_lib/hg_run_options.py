@@ -14,6 +14,8 @@
 # history and logs, available at http://cvs2svn.tigris.org/.
 # ====================================================================
 
+import tempfile
+
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.run_options import IncompatibleOption
 from cvs2svn_lib.dvcs_common import DVCSRunOptions
@@ -57,9 +59,9 @@ independent Mercurial repositories with multiple runs of
 
   # XXX copied from svn_run_options.py
   files = """\
-A directory called \\fIcvs2svn-tmp\\fR (or the directory specified by
+A directory under \\fI%s\\fR (or the directory specified by
 \\fB--tmpdir\\fR) is used as scratch space for temporary data files.
-"""
+""" % (tempfile.gettempdir(),)
 
   # XXX the cvs2{svn,git,bzr,hg} man pages should probably reference
   # each other

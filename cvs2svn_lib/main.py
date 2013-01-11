@@ -16,6 +16,7 @@
 # ====================================================================
 
 import os
+import tempfile
 import errno
 import gc
 
@@ -27,6 +28,7 @@ except ImportError:
   pass
 
 from cvs2svn_lib.common import FatalError
+from cvs2svn_lib.log import logger
 from cvs2svn_lib.svn_run_options import SVNRunOptions
 from cvs2svn_lib.git_run_options import GitRunOptions
 from cvs2svn_lib.bzr_run_options import BzrRunOptions
@@ -54,9 +56,17 @@ def main(progname, run_options, pass_manager):
   # Make sure the tmp directory exists.  Note that we don't check if
   # it's empty -- we want to be able to use, for example, "." to hold
   # tempfiles.
-  if not os.path.exists(ctx.tmpdir):
+  if ctx.tmpdir is None:
+    ctx.tmpdir = tempfile.mkdtemp(prefix=('%s-' % (progname,)))
     erase_tmpdir = True
+    logger.quiet(
+      'Writing temporary files to %r\n'
+      'Be sure to use --tmpdir=%r if you need to resume this conversion.'
+      % (ctx.tmpdir, ctx.tmpdir,),
+      )
+  elif not os.path.exists(ctx.tmpdir):
     os.mkdir(ctx.tmpdir)
+    erase_tmpdir = True
   elif not os.path.isdir(ctx.tmpdir):
     raise FatalError(
         "cvs2svn tried to use '%s' for temporary files, but that path\n"

@@ -61,7 +61,7 @@ def cmd_failed(cmd, output, status):
   raise RuntimeError('%s command failed!' % cmd[0])
 
 
-def split_output(self, cmd):
+def split_output(cmd):
   (output, status) = pipe(cmd)
   if status:
     cmd_failed(cmd, output, status)

@@ -1046,7 +1046,11 @@ class _ProjectDataCollector:
     logger.normal(cvs_file.rcs_path)
     fdc = _FileDataCollector(self, cvs_file)
     try:
-      parse(open(cvs_file.rcs_path, 'rb'), fdc)
+      f = open(cvs_file.rcs_path, 'rb')
+      try:
+        parse(f, fdc)
+      finally:
+        f.close()
     except (RCSParseError, RuntimeError):
       self.collect_data.record_fatal_error(
           "%r is not a valid ,v file" % (cvs_file.rcs_path,)

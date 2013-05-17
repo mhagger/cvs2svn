@@ -258,7 +258,11 @@ def main(args):
       (rcsfile, marks) = pickle.load(sys.stdin)
     except EOFError:
       break
-    parse(open(rcsfile, 'rb'), WriteBlobSink(blobfile, marks))
+    f = open(rcsfile, 'rb')
+    try:
+      parse(f, WriteBlobSink(blobfile, marks))
+    finally:
+      f.close()
 
   blobfile.close()
 

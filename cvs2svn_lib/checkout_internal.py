@@ -610,10 +610,11 @@ class InternalRevisionCollector(RevisionCollector):
     # A map from cvs_rev_id to TextRecord instance:
     self.text_record_db = TextRecordDatabase(self._delta_db, NullDatabase())
 
-    parse(
-        open(cvs_file_items.cvs_file.rcs_path, 'rb'),
-        _Sink(self, cvs_file_items),
-        )
+    f = open(cvs_file_items.cvs_file.rcs_path, 'rb')
+    try:
+      parse(f, _Sink(self, cvs_file_items))
+    finally:
+      f.close()
 
     self.text_record_db.recompute_refcounts(cvs_file_items)
     self.text_record_db.free_unused()

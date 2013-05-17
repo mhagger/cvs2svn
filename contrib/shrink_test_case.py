@@ -454,7 +454,11 @@ def get_tag_set(path):
             return tags
 
     tag_collector = TagCollector()
-    parse(open(path, 'rb'), tag_collector)
+    f = open(path, 'rb')
+    try:
+        parse(f, tag_collector)
+    finally:
+        f.close()
     return tag_collector.get_tags()
 
 
@@ -551,7 +555,11 @@ def get_branch_tree(path):
             return retval
 
     branch_collector = BranchCollector()
-    parse(open(path, 'rb'), branch_collector)
+    f = open(path, 'rb')
+    try:
+        parse(f, branch_collector)
+    finally:
+        f.close()
     return branch_collector.get_branches()
 
 
@@ -571,10 +579,21 @@ class RCSFileModification(Modification):
     def modify(self):
         self.tempfile = get_tmp_filename()
         shutil.move(self.path, self.tempfile)
-        text = open(self.tempfile, 'rb').read()
+
+        f = open(self.tempfile, 'rb')
+        try:
+            text = f.read()
+        finally:
+            f.close()
+
         for filter in self.filters:
             text = filter.filter(text)
-        open(self.path, 'wb').write(text)
+
+        f = open(self.path, 'wb')
+        try:
+            f.write(text)
+        finally:
+            f.close()
 
     def revert(self):
         shutil.move(self.tempfile, self.path)

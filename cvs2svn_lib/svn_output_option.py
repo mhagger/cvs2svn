@@ -807,10 +807,16 @@ class NewRepositoryOutputOption(RepositoryOutputOption):
     elif not self.bdb_txn_nosync and os.path.exists(db_config):
       no_sync = 'set_flags DB_TXN_NOSYNC\n'
 
-      contents = open(db_config, 'r').readlines()
+      f = open(db_config, 'r')
+      contents = f.readlines()
+      f.close()
+
       index = contents.index(no_sync)
       contents[index] = '# ' + no_sync
-      open(db_config, 'w').writelines(contents)
+
+      f = open(db_config, 'w')
+      f.writelines(contents)
+      f.close()
 
 
 class ExistingRepositoryOutputOption(RepositoryOutputOption):

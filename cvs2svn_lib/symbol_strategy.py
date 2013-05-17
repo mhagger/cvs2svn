@@ -618,89 +618,92 @@ class SymbolHintsFileRule(StrategyRule):
     self._rules = []
 
     f = open(self.filename, 'r')
-    for l in f:
-      l = l.rstrip()
-      s = l.lstrip()
-      if self.comment_re.match(s):
-        continue
-      fields = s.split()
+    try:
+      for l in f:
+        l = l.rstrip()
+        s = l.lstrip()
+        if self.comment_re.match(s):
+          continue
+        fields = s.split()
 
-      if len(fields) < 3:
-        raise FatalError(
-            'The following line in "%s" cannot be parsed:\n    "%s"'
-            % (self.filename, l,)
-            )
+        if len(fields) < 3:
+          raise FatalError(
+              'The following line in "%s" cannot be parsed:\n    "%s"'
+              % (self.filename, l,)
+              )
 
-      project_id = fields.pop(0)
-      symbol_name = fields.pop(0)
-      conversion = fields.pop(0)
+        project_id = fields.pop(0)
+        symbol_name = fields.pop(0)
+        conversion = fields.pop(0)
 
-      if fields:
-        svn_path = fields.pop(0)
-        if svn_path == '.':
+        if fields:
+          svn_path = fields.pop(0)
+          if svn_path == '.':
+            svn_path = None
+          elif svn_path[0] == '/':
+            svn_path = svn_path[1:]
+        else:
           svn_path = None
-        elif svn_path[0] == '/':
-          svn_path = svn_path[1:]
-      else:
-        svn_path = None
 
-      if fields:
-        parent_lod_name = fields.pop(0)
-      else:
-        parent_lod_name = '.'
-
-      if fields:
-        raise FatalError(
-            'The following line in "%s" cannot be parsed:\n    "%s"'
-            % (self.filename, l,)
-            )
-
-      if project_id == '.':
-        project_id = None
-      else:
-        try:
-          project_id = int(project_id)
-        except ValueError:
-          raise FatalError(
-              'Illegal project_id in the following line:\n    "%s"' % (l,)
-              )
-
-      if symbol_name == '.trunk.':
-        if conversion not in ['.', 'trunk']:
-          raise FatalError('Trunk cannot be converted as a different type')
-
-        if parent_lod_name != '.':
-          raise FatalError('Trunk\'s parent cannot be set')
-
-        if svn_path is None:
-          # This rule doesn't do anything:
-          pass
+        if fields:
+          parent_lod_name = fields.pop(0)
         else:
-          self._rules.append(ManualTrunkRule(project_id, svn_path))
+          parent_lod_name = '.'
 
-      else:
-        try:
-          conversion = self.conversion_map[conversion]
-        except KeyError:
+        if fields:
           raise FatalError(
-              'Illegal conversion in the following line:\n    "%s"' % (l,)
+              'The following line in "%s" cannot be parsed:\n    "%s"'
+              % (self.filename, l,)
               )
 
-        if parent_lod_name == '.':
-          parent_lod_name = None
-
-        if conversion is None \
-               and svn_path is None \
-               and parent_lod_name is None:
-          # There is nothing to be done:
-          pass
+        if project_id == '.':
+          project_id = None
         else:
-          self._rules.append(
-              ManualSymbolRule(
-                  project_id, symbol_name,
-                  conversion, svn_path, parent_lod_name
-                  )
-              )
+          try:
+            project_id = int(project_id)
+          except ValueError:
+            raise FatalError(
+                'Illegal project_id in the following line:\n    "%s"' % (l,)
+                )
+
+        if symbol_name == '.trunk.':
+          if conversion not in ['.', 'trunk']:
+            raise FatalError('Trunk cannot be converted as a different type')
+
+          if parent_lod_name != '.':
+            raise FatalError('Trunk\'s parent cannot be set')
+
+          if svn_path is None:
+            # This rule doesn't do anything:
+            pass
+          else:
+            self._rules.append(ManualTrunkRule(project_id, svn_path))
+
+        else:
+          try:
+            conversion = self.conversion_map[conversion]
+          except KeyError:
+            raise FatalError(
+                'Illegal conversion in the following line:\n    "%s"' % (l,)
+                )
+
+          if parent_lod_name == '.':
+            parent_lod_name = None
+
+          if conversion is None \
+                 and svn_path is None \
+                 and parent_lod_name is None:
+            # There is nothing to be done:
+            pass
+          else:
+            self._rules.append(
+                ManualSymbolRule(
+                    project_id, symbol_name,
+                    conversion, svn_path, parent_lod_name
+                    )
+                )
+    finally:
+      f.close()
 
     for rule in self._rules:
       rule.start(symbol_statistics)

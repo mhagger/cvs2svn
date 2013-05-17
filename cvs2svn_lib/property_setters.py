@@ -237,7 +237,9 @@ class AutoPropsPropertySetter(FilePropertySetter):
       config.optionxform = _preserve_case
       self.transform_case = _preserve_case
 
-    configtext = open(configfilename).read()
+    f = open(configfilename)
+    configtext = f.read()
+    f.close()
     if self.comment_re.search(configtext):
       logger.warn(
           '%s: Please be aware that a space followed by a\n'

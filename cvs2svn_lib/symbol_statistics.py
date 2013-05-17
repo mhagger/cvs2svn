@@ -395,7 +395,9 @@ class SymbolStatistics:
     # development:
     self._stats_by_id = { }
 
-    stats_list = cPickle.load(open(filename, 'rb'))
+    f = open(filename, 'rb')
+    stats_list = cPickle.load(f)
+    f.close()
 
     for stats in stats_list:
       self._stats[stats.lod] = stats

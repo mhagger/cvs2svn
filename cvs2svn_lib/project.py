@@ -211,12 +211,16 @@ class Project(object):
 
 def read_projects(filename):
   retval = {}
-  for project in cPickle.load(open(filename, 'rb')):
+  f = open(filename, 'rb')
+  for project in cPickle.load(f):
     retval[project.id] = project
+  f.close()
   return retval
 
 
 def write_projects(filename):
-  cPickle.dump(Ctx()._projects.values(), open(filename, 'wb'), -1)
+  f = open(filename, 'wb')
+  cPickle.dump(Ctx()._projects.values(), f, -1)
+  f.close()
 
 

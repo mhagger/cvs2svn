@@ -47,7 +47,10 @@ class CVSPathDatabase:
       pass
     elif self.mode == DB_OPEN_READ:
       f = open(artifact_manager.get_temp_file(config.CVS_PATHS_DB), 'rb')
-      cvs_paths = cPickle.load(f)
+      try:
+        cvs_paths = cPickle.load(f)
+      finally:
+        f.close()
       for cvs_path in cvs_paths:
         self._cvs_paths[cvs_path.id] = cvs_path
     else:

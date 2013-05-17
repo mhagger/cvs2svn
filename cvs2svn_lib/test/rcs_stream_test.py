@@ -71,11 +71,19 @@ class RCSStreamTestCase(unittest.TestCase):
   def setUp(self):
     if not os.path.isdir(os.path.dirname(self.filename)):
       os.makedirs(os.path.dirname(self.filename))
-    open(self.filename, 'wb').write(self.v1)
+
+    f = open(self.filename, 'wb')
+    f.write(self.v1)
+    f.close()
+
     self.call(
         ['ci', '-q', '-i', '-t-' + self.name, '-mv1', '-l', self.filename],
         )
-    open(self.filename, 'wb').write(self.v2)
+
+    f = open(self.filename, 'wb')
+    f.write(self.v2)
+    f.close()
+
     self.call(
         ['ci', '-q', '-f', '-mv2', self.filename],
         )
@@ -94,7 +102,13 @@ class RCSStreamTestCase(unittest.TestCase):
   def runTest(self):
     self.assert_(os.path.isfile(self.filename + ',v'))
     recorder = RCSRecorder()
-    parse(open(self.filename + ',v', 'rb'), recorder)
+
+    f = open(self.filename + ',v', 'rb')
+    try:
+      parse(f, recorder)
+    finally:
+      f.close()
+
     v2 = recorder.texts['1.2']
     self.assertEqual(v2, self.v2)
     delta = recorder.texts['1.1']

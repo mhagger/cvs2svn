@@ -347,14 +347,16 @@ class FileDestroyer:
         tmp_filename = get_tmp_filename()
         f = open(tmp_filename, 'wb')
         new_filename = rewrite_filename(filename)
+        oldf = open(filename, 'rb')
         parse(
-            open(filename, 'rb'),
+            oldf,
             DestroyerFilterSink(
                 self.author_substituter,
                 self.log_substituter,
                 WriteRCSFileSink(f),
                 )
             )
+        oldf.close()
         f.close()
 
         # Replace the original file with the new one:

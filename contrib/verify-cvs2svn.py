@@ -393,23 +393,27 @@ def file_compare(failures, base1, base2, run_diff, rel_path):
 
   file1 = open(path1, 'rb')
   file2 = open(path2, 'rb')
-  while True:
-    data1 = file1.read(8192)
-    data2 = file2.read(8192)
-    if data1 != data2:
-      if run_diff:
-        cmd = ['diff', '-u', path1, path2]
-        (output, status) = pipe(cmd)
-        diff = output.split(os.linesep)
-      else:
-        diff = None
-      failures.report('File contents differ for %s' % rel_path,
-                      details=diff)
-      ok = False
-      break
-    if len(data1) == 0:
-      # eof
-      break
+  try:
+    while True:
+      data1 = file1.read(8192)
+      data2 = file2.read(8192)
+      if data1 != data2:
+        if run_diff:
+          cmd = ['diff', '-u', path1, path2]
+          (output, status) = pipe(cmd)
+          diff = output.split(os.linesep)
+        else:
+          diff = None
+        failures.report('File contents differ for %s' % rel_path,
+                        details=diff)
+        ok = False
+        break
+      if len(data1) == 0:
+        # eof
+        break
+  finally:
+    file1.close()
+    file2.close()
 
   return ok
 

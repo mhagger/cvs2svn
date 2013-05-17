@@ -203,7 +203,11 @@ if __name__ == '__main__':
     if sys.argv[1:]:
         for path in sys.argv[1:]:
             if os.path.isfile(path) and path.endswith(',v'):
-                parse(open(path, 'rb'), WriteRCSFileSink(sys.stdout))
+                f = open(path, 'rb')
+                try:
+                    parse(f, WriteRCSFileSink(sys.stdout))
+                finally:
+                    f.close()
             else:
                 sys.stderr.write('%r is being ignored.\n' % path)
     else:

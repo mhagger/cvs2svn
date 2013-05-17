@@ -60,11 +60,15 @@ rss_re = re.compile(r'^VmRSS\:\s+(?P<mem>.*)$')
 
 def get_memory_used():
   filename = '/proc/%d/status' % (os.getpid(),)
-  for l in open(filename).readlines():
-    l = l.strip()
-    m = rss_re.match(l)
-    if m:
-      return m.group('mem')
+  f = open(filename)
+  try:
+    for l in f.readlines():
+      l = l.strip()
+      m = rss_re.match(l)
+      if m:
+        return m.group('mem')
+  finally:
+    f.close()
 
   return 'Unknown'
 

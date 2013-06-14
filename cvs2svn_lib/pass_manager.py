@@ -16,8 +16,9 @@
 
 """This module contains tools to manage the passes of a conversion."""
 
-
+import sys
 import time
+import platform
 import gc
 
 from cvs2svn_lib import config
@@ -36,9 +37,19 @@ class InvalidPassError(FatalError):
 
 
 class GarbageCollectionPolicy(object):
-  """Defines how garbage is to be handled.
+  """Defines how garbage is to be handled."""
 
-  This version just lets the Python garbage collector do its thing."""
+  def check_for_garbage(self):
+    raise NotImplementedError()
+
+
+class DefaultGarbageCollectionPolicy(GarbageCollectionPolicy):
+  """Leave the Python garbage collector at its default settings."""
+
+  def __init__(self):
+    logger.verbose(
+      'Leaving the Python garbage collector at its default settings'
+      )
 
   def check_for_garbage(self):
     pass
@@ -66,12 +77,8 @@ class NoGarbageCollectionPolicy(GarbageCollectionPolicy):
   """
 
   def __init__(self):
-    try:
-      gc.disable()
-    except (AttributeError, NotImplementedError):
-      # Other Python implementations implement garbage collection
-      # differently, so if an error occurs just ignore it.
-      pass
+    logger.verbose('Disabling the Python garbage collector (it is unneeded)')
+    gc.disable()
 
   def check_for_garbage(self):
     """Check for any unreachable objects.
@@ -94,6 +101,30 @@ class NoGarbageCollectionPolicy(GarbageCollectionPolicy):
       # Other Python implementations implement garbage collection
       # differently, so if errors occur just ignore them.
       pass
+
+
+def choose_garbage_collection_policy():
+  """Return the of GarbageCollectionPolicy to be used.
+
+  For CPython, we want to use NoGarbageCollectionPolicy.  But other
+  Python implementations (e.g., Jython, PyPy, IronPython) do not
+  necessarily use reference-counting for memory management, in which
+  case it is not possible to turn off the garbage collector.  So on
+  those platforms, use the DefaultGarbageCollectionPolicy."""
+
+  try:
+    implementation = platform.python_implementation()
+  except AttributeError:
+    # platform.python_implementation() was only added in Python 2.6.
+    # So if that call failed, we should leave garbage collection on
+    # just to be on the safe side.
+    implementation = None
+
+  if implementation == 'CPython':
+    return NoGarbageCollectionPolicy()
+  else:
+    logger.verbose('Leaving Python garbage collection at its default settings')
+    return DefaultGarbageCollectionPolicy()
 
 
 class Pass(object):
@@ -140,7 +171,7 @@ class PassManager:
 
     self.passes = passes
     self.num_passes = len(self.passes)
-    self.garbage_collection_policy = NoGarbageCollectionPolicy()
+    self.garbage_collection_policy = choose_garbage_collection_policy()
 
   def get_pass_number(self, pass_name, default=None):
     """Return the number of the pass indicated by PASS_NAME.

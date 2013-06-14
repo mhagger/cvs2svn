@@ -35,28 +35,65 @@ class InvalidPassError(FatalError):
         self, msg + '\nUse --help-passes for more information.')
 
 
-def check_for_garbage():
-  # We've turned off the garbage collector because we shouldn't
-  # need it (we don't create circular dependencies) and because it
-  # is therefore a waste of time.  So here we check for any
-  # unreachable objects and generate a debug-level warning if any
-  # occur:
-  try:
-    gc.set_debug(gc.DEBUG_SAVEALL)
-    gc_count = gc.collect()
-    if gc_count:
-      if logger.is_on(logger.DEBUG):
-        logger.debug(
-            'INTERNAL: %d unreachable object(s) were garbage collected:'
-            % (gc_count,)
-            )
-        for g in gc.garbage:
-          logger.debug('    %s' % (g,))
-      del gc.garbage[:]
-  except (AttributeError, NotImplementedError):
-    # Other Python implementations implement garbage collection
-    # differently, so if errors occur just ignore them.
+class GarbageCollectionPolicy(object):
+  """Defines how garbage is to be handled.
+
+  This version just lets the Python garbage collector do its thing."""
+
+  def check_for_garbage(self):
     pass
+
+
+class NoGarbageCollectionPolicy(GarbageCollectionPolicy):
+  """Disable the Python garbage collector.
+
+  When check_for_garbage() is called, run the garbage collector once
+  to verify that no garbage has been created since the last call.  If
+  any garbage was found, log it at the DEBUG level.
+
+  Since cvs2svn does not not create any circular data structures,
+  CPython's reference-counting works perfectly and garbage collection
+  is unnecessary.  But the automatic runs of the garbage collector
+  have a very measurable performance cost.  So we want to turn off
+  garbage collection.
+
+  However, it would be easy for a programming error to cause a
+  circular data structure to be created, creating garbage.  So the
+  check_for_garbage() method is run once per pass to see whether
+  garbage was indeed created.  If so, it reports the error at DEBUG
+  level.
+
+  """
+
+  def __init__(self):
+    try:
+      gc.disable()
+    except (AttributeError, NotImplementedError):
+      # Other Python implementations implement garbage collection
+      # differently, so if an error occurs just ignore it.
+      pass
+
+  def check_for_garbage(self):
+    """Check for any unreachable objects.
+
+    Generate a DEBUG-level warning if any were found."""
+
+    try:
+      gc.set_debug(gc.DEBUG_SAVEALL)
+      gc_count = gc.collect()
+      if gc_count:
+        if logger.is_on(logger.DEBUG):
+          logger.debug(
+              'INTERNAL: %d unreachable object(s) were garbage collected:'
+              % (gc_count,)
+              )
+          for g in gc.garbage:
+            logger.debug('    %s' % (g,))
+        del gc.garbage[:]
+    except (AttributeError, NotImplementedError):
+      # Other Python implementations implement garbage collection
+      # differently, so if errors occur just ignore them.
+      pass
 
 
 class Pass(object):
@@ -103,6 +140,7 @@ class PassManager:
 
     self.passes = passes
     self.num_passes = len(self.passes)
+    self.garbage_collection_policy = NoGarbageCollectionPolicy()
 
   def get_pass_number(self, pass_name, default=None):
     """Return the number of the pass indicated by PASS_NAME.
@@ -198,7 +236,7 @@ class PassManager:
       # longer needed:
       artifact_manager.pass_done(the_pass, Ctx().skip_cleanup)
 
-      check_for_garbage()
+      self.garbage_collection_policy.check_for_garbage()
 
     # Tell the artifact manager about passes that are being deferred:
     for the_pass in self.passes[index_end:]:

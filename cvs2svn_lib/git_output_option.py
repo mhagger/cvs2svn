@@ -269,10 +269,12 @@ class GitOutputOption(DVCSOutputOption):
       self.f.write('commit refs/heads/master\n')
     else:
       self.f.write('commit refs/heads/%s\n' % (lod.name,))
-    self.f.write(
-        'mark :%d\n'
-        % (self._create_commit_mark(lod, svn_commit.revnum),)
+    mark = self._create_commit_mark(lod, svn_commit.revnum)
+    logger.normal(
+        'Writing commit r%d on %s (mark :%d)'
+        % (svn_commit.revnum, lod, mark,)
         )
+    self.f.write('mark :%d\n' % (mark,))
     self.f.write(
         'committer %s %d +0000\n' % (author, svn_commit.date,)
         )
@@ -298,10 +300,12 @@ class GitOutputOption(DVCSOutputOption):
     self._mirror.start_commit(svn_commit.revnum)
     # FIXME: is this correct?:
     self.f.write('commit refs/heads/master\n')
-    self.f.write(
-        'mark :%d\n'
-        % (self._create_commit_mark(None, svn_commit.revnum),)
+    mark = self._create_commit_mark(None, svn_commit.revnum)
+    logger.normal(
+        'Writing post-commit r%d on %s (mark :%d)'
+        % (svn_commit.revnum, lod, mark,)
         )
+    self.f.write('mark :%d\n' % (mark,))
     self.f.write(
         'committer %s %d +0000\n' % (author, svn_commit.date,)
         )

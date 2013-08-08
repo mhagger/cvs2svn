@@ -134,7 +134,7 @@ class _RepositoryWalker(object):
           parent_directory, basename, file_in_attic=True, leave_in_attic=True,
           )
 
-  def _generate_attic_cvs_files(self, cvs_directory):
+  def _generate_attic_cvs_files(self, cvs_directory, exclude_paths):
     """Generate CVSFiles for the files in Attic directory CVS_DIRECTORY.
 
     Also yield CVS_DIRECTORY if any files are being retained in the
@@ -149,7 +149,12 @@ class _RepositoryWalker(object):
     fnames.sort()
     for fname in fnames:
       pathname = os.path.join(cvs_directory.rcs_path, fname)
-      if os.path.isdir(pathname):
+      path_in_repository = path_join(cvs_directory.get_cvs_path(), fname)
+      if path_in_repository in exclude_paths:
+        logger.normal(
+            "Excluding file from conversion: %s" % (path_in_repository,)
+            )
+      elif os.path.isdir(pathname):
         if fname == '.svn':
           logger.debug(
               "Directory %s found within Attic; ignoring" % (pathname,)
@@ -234,7 +239,7 @@ class _RepositoryWalker(object):
           cvs_directory.project, cvs_directory, 'Attic',
           )
 
-      for cvs_path in self._generate_attic_cvs_files(attic_directory):
+      for cvs_path in self._generate_attic_cvs_files(attic_directory, exclude_paths):
         if isinstance(cvs_path, CVSFile) \
                and cvs_path.parent_directory == cvs_directory:
           attic_rcsfiles[cvs_path.rcs_basename] = cvs_path.rcs_path

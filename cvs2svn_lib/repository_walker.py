@@ -140,8 +140,9 @@ class _RepositoryWalker(object):
     Also yield CVS_DIRECTORY if any files are being retained in the
     Attic.
 
-    Silently ignore subdirectories named '.svn', but emit a warning if
-    any other directories are found within the Attic directory."""
+    Silently ignore subdirectories named '.svn' or 'CVS', but emit a
+    warning if any other directories are found within the Attic
+    directory."""
 
     retained_attic_files = []
 
@@ -155,7 +156,7 @@ class _RepositoryWalker(object):
             "Excluding file from conversion: %s" % (path_in_repository,)
             )
       elif os.path.isdir(pathname):
-        if fname == '.svn':
+        if fname == '.svn' or fname == 'CVS':
           logger.debug(
               "Directory %s found within Attic; ignoring" % (pathname,)
               )
@@ -189,6 +190,8 @@ class _RepositoryWalker(object):
     Also look for conflicts between the filenames that will result
     from files, attic files, and subdirectories.
 
+    Silently ignore subdirectories named 'CVS', as these are used by
+    CVS to store metadata that are irrelevant to the conversion.
     Silently ignore subdirectories named '.svn', as these don't make
     much sense in a real conversion, but they are present in our test
     suite."""
@@ -217,7 +220,7 @@ class _RepositoryWalker(object):
       elif os.path.isdir(pathname):
         if fname == 'Attic':
           attic_dir = fname
-        elif fname == '.svn':
+        elif fname == '.svn' or fname == 'CVS':
           logger.debug("Directory %s ignored" % (pathname,))
         else:
           dirs.append(fname)

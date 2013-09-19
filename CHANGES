@@ -4,6 +4,15 @@ Version ?.?.? (not yet released)
  Bugs fixed:
  * Handle non-ASCII, non-UTF8 filenames in .cvsignore files.
  * ExternalBlobGenerator: Don't fail if no revisions are needed for a file.
+ * Fix the handling of symbol-matching regexps that include "|".
+ * Handle excluded pathes under Attic directories, too.
+
+ Improvements and output changes:
+ * Various small documentation fixes and improvements.
+ * Make cvs2xxx runnable under PyPy.
+ * Avoid some allusions to Subversion when converting to another VCS.
+ * Use tempfile.mkdtemp() to choose the location for temporary files.
+ * Write all progress information to stderr rather than stdout.
 
 
 Version 2.4.0 (22 September 2012)

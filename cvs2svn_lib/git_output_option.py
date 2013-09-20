@@ -302,8 +302,8 @@ class GitOutputOption(DVCSOutputOption):
     self.f.write('commit refs/heads/master\n')
     mark = self._create_commit_mark(None, svn_commit.revnum)
     logger.normal(
-        'Writing post-commit r%d on %s (mark :%d)'
-        % (svn_commit.revnum, lod, mark,)
+        'Writing post-commit r%d on Trunk (mark :%d)'
+        % (svn_commit.revnum, mark,)
         )
     self.f.write('mark :%d\n' % (mark,))
     self.f.write(

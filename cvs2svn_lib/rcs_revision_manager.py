@@ -29,7 +29,7 @@ class RCSRevisionReader(AbstractRCSRevisionReader):
   def __init__(self, co_executable):
     self.co_executable = co_executable
     try:
-      check_command_runs([self.co_executable, '-V'], self.co_executable)
+      check_command_runs([self.co_executable, '--version'], self.co_executable)
     except CommandFailedException, e:
       raise FatalError('%s\n'
                        'Please check that co is installed and in your PATH\n'

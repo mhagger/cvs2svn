@@ -34,7 +34,7 @@ from cvs2svn_lib.bzr_output_option import BzrOutputOption
 
 class BzrRunOptions(DVCSRunOptions):
 
-  short_desc = 'convert a cvs repository into a Bazaar repository'
+  short_desc = 'convert a CVS repository into a Bazaar repository'
 
   synopsis = """\
 .B cvs2bzr

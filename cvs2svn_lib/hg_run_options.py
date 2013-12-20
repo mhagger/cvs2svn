@@ -24,7 +24,7 @@ from cvs2svn_lib.hg_output_option import HgOutputOption
 
 class HgRunOptions(DVCSRunOptions):
 
-  short_desc = 'convert a cvs repository into a Mercurial repository'
+  short_desc = 'convert a CVS repository into a Mercurial repository'
 
   synopsis = """\
 .B cvs2hg

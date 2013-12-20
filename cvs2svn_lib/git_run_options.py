@@ -36,7 +36,7 @@ from cvs2svn_lib.git_output_option import GitOutputOption
 
 class GitRunOptions(DVCSRunOptions):
 
-  short_desc = 'convert a cvs repository into a git repository'
+  short_desc = 'convert a CVS repository into a git repository'
 
   synopsis = """\
 .B cvs2git

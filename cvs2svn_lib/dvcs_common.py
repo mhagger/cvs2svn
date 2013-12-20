@@ -62,11 +62,13 @@ class KeywordHandlingPropertySetter(FilePropertySetter):
 
 
 class DVCSRunOptions(RunOptions):
-  """Dumping ground for whatever is common to GitRunOptions and
-  HgRunOptions."""
+  """Dumping ground for whatever is common to GitRunOptions,
+  HgRunOptions, and BzrRunOptions."""
   def __init__(self, progname, cmd_args, pass_manager):
     Ctx().cross_project_commits = False
     Ctx().cross_branch_commits = False
+    if Ctx().username is None:
+      Ctx().username = self.DEFAULT_USERNAME
     RunOptions.__init__(self, progname, cmd_args, pass_manager)
 
   def set_project(

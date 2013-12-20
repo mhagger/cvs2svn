@@ -28,7 +28,7 @@ class HgRunOptions(DVCSRunOptions):
 
   synopsis = """\
 .B cvs2hg
-[\\fIOPTION\\fR]... \\fIOUTPUT-OPTION CVS-REPOS-PATH\\fR
+[\\fIOPTION\\fR]... \\fIOUTPUT-OPTION\\fR [\\fICVS-REPOS-PATH\\fR
 .br
 .B cvs2hg
 [\\fIOPTION\\fR]... \\fI--options=PATH\\fR
@@ -48,7 +48,8 @@ more information.  This path doesn't have to be the top level
 directory of a CVS repository; it can point at a project within a
 repository, in which case only that project will be converted.  This
 path or one of its parent directories has to contain a subdirectory
-called CVSROOT (though the CVSROOT directory can be empty).
+called CVSROOT (though the CVSROOT directory can be empty). If
+omitted, the repository path defaults to the current directory.
 .P
 Unlike CVS or Subversion, Mercurial expects each repository to hold
 one independent project.  If your CVS repository contains multiple

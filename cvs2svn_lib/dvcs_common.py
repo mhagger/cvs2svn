@@ -18,7 +18,7 @@
 Git, Mercurial, or Bazaar).
 """
 
-import sys
+import os, sys
 
 from cvs2svn_lib import config
 from cvs2svn_lib.common import FatalError
@@ -108,8 +108,8 @@ class DVCSRunOptions(RunOptions):
   def process_options(self):
     # Consistency check for options and arguments.
     if len(self.args) == 0:
-      self.usage()
-      sys.exit(1)
+      # Default to using '.' as the source repository path
+      self.args.append(os.getcwd())
 
     if len(self.args) > 1:
       logger.error(error_prefix + ": must pass only one CVS repository.\n")

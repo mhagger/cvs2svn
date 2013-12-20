@@ -102,7 +102,7 @@ class SVNRunOptions(RunOptions):
 
   synopsis = """\
 .B cvs2svn
-[\\fIOPTION\\fR]... \\fIOUTPUT-OPTION CVS-REPOS-PATH\\fR
+[\\fIOPTION\\fR]... \\fIOUTPUT-OPTION\\fR [\\fICVS-REPOS-PATH\\fR]
 .br
 .B cvs2svn
 [\\fIOPTION\\fR]... \\fI--options=PATH\\fR
@@ -121,7 +121,8 @@ more information.  This path doesn't have to be the top level
 directory of a CVS repository; it can point at a project within a
 repository, in which case only that project will be converted.  This
 path or one of its parent directories has to contain a subdirectory
-called CVSROOT (though the CVSROOT directory can be empty).
+called CVSROOT (though the CVSROOT directory can be empty). If omitted,
+the repository path defaults to the current directory.
 .P
 Multiple CVS repositories can be converted into a single Subversion
 repository in a single run of cvs2svn, but only by using an

@@ -69,10 +69,10 @@ from cvs2svn_lib.property_setters import SVNBinaryFileKeywordsPropertySetter
 
 usage = """\
 Usage: %prog --options OPTIONFILE
-       %prog [OPTION...] OUTPUT-OPTION CVS-REPOS-PATH"""
+       %prog [OPTION...] [OUTPUT-OPTION] [CVS-REPOS-PATH]"""
 
 description="""\
-Convert a CVS repository into a Subversion repository, including history.
+Convert a CVS repository to the target system, including history.
 """
 
 

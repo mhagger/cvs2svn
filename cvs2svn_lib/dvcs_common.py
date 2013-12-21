@@ -100,8 +100,6 @@ class DVCSRunOptions(RunOptions):
     self.project_symbol_strategy_rules = [symbol_strategy_rules]
 
   def process_property_setter_options(self):
-    super(DVCSRunOptions, self).process_property_setter_options()
-
     # Property setters for internal use:
     Ctx().file_property_setters.append(
         KeywordHandlingPropertySetter('collapsed')

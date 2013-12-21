@@ -19,21 +19,25 @@
 from cvs2svn_lib.cvs_item import CVSRevisionDelete
 from cvs2svn_lib.revision_manager import RevisionCollector
 from cvs2svn_lib.key_generator import KeyGenerator
+from cvs2svn_lib import config
+from cvs2svn_lib.artifact_manager import artifact_manager
 
 
 class GitRevisionCollector(RevisionCollector):
   """Output file revisions to git-fast-import."""
 
-  def __init__(self, blob_filename, revision_reader):
-    self.blob_filename = blob_filename
+  def __init__(self, revision_reader):
     self.revision_reader = revision_reader
 
   def register_artifacts(self, which_pass):
     self.revision_reader.register_artifacts(which_pass)
+    artifact_manager.register_temp_file(config.GIT_BLOB_STORE, which_pass)
+    artifact_manager.register_temp_file_needed(config.GIT_BLOB_STORE, which_pass)
 
   def start(self):
     self.revision_reader.start()
-    self.dump_file = open(self.blob_filename, 'wb')
+    blob_filename = artifact_manager.get_temp_file(config.GIT_BLOB_STORE)
+    self.dump_file = open(blob_filename, 'wb')
     self._mark_generator = KeyGenerator()
 
   def _process_revision(self, cvs_rev):

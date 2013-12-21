@@ -531,6 +531,10 @@ ctx.output_option = GitOutputOption(
     # contains the changesets and branch/tag information:
     os.path.join(ctx.tmpdir, 'git-dump.dat'),
 
+    # The file in which to write the portion of the git-fast-import stream that
+    # contains the changesets and branch/tag information:
+    os.path.join(ctx.tmpdir, 'git-blob.dat'),
+
     # The blobs will be written via the revision recorder, so in
     # OutputPass we only have to emit references to the blob marks:
     GitRevisionMarkWriter(),

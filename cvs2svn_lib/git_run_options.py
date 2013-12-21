@@ -181,7 +181,7 @@ A directory under \\fI%s\\fR (or the directory specified by
             cvs_executable=options.cvs_executable
             )
       ctx.revision_collector = GitRevisionCollector(
-          options.blobfile, revision_reader,
+          revision_reader,
           )
 
   def process_output_options(self):
@@ -192,6 +192,7 @@ A directory under \\fI%s\\fR (or the directory specified by
     else:
       ctx.output_option = GitOutputOption(
           self.options.dumpfile,
+          self.options.blobfile,
           GitRevisionMarkWriter(),
           # Optional map from CVS author names to git author names:
           author_transforms={}, # FIXME

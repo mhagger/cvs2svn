@@ -22,8 +22,10 @@ For information about the format allowed by git-fast-import, see:
 
 """
 
+import os
 import bisect
 import time
+import shutil
 
 from cvs2svn_lib.common import InternalError
 from cvs2svn_lib.log import logger
@@ -35,6 +37,8 @@ from cvs2svn_lib.cvs_item import CVSSymbol
 from cvs2svn_lib.dvcs_common import DVCSOutputOption
 from cvs2svn_lib.dvcs_common import MirrorUpdater
 from cvs2svn_lib.key_generator import KeyGenerator
+from cvs2svn_lib import config
+from cvs2svn_lib.artifact_manager import artifact_manager
 
 
 class GitRevisionWriter(MirrorUpdater):
@@ -145,7 +149,7 @@ class GitOutputOption(DVCSOutputOption):
   _first_commit_mark = 1000000000
 
   def __init__(
-        self, dump_filename, revision_writer,
+        self, dump_filename, blob_filename, revision_writer,
         author_transforms=None,
         tie_tag_fixup_branches=False,
         ):
@@ -155,6 +159,9 @@ class GitOutputOption(DVCSOutputOption):
     commands for defining revisions should be written.  (Please note
     that depending on the style of revision writer, the actual file
     contents might not be written to this file.)
+
+    BLOB_FILENAME is the name of the file to which the git-fast-import
+    content blobs should be written.
 
     REVISION_WRITER is a GitRevisionWriter that is used to output
     either the content of revisions or a mark that was previously used
@@ -173,6 +180,7 @@ class GitOutputOption(DVCSOutputOption):
     """
     DVCSOutputOption.__init__(self)
     self.dump_filename = dump_filename
+    self.blob_filename = blob_filename
     self.revision_writer = revision_writer
 
     self.author_transforms = self.normalize_author_transforms(
@@ -185,6 +193,7 @@ class GitOutputOption(DVCSOutputOption):
 
   def register_artifacts(self, which_pass):
     DVCSOutputOption.register_artifacts(self, which_pass)
+    artifact_manager.register_temp_file_needed(config.GIT_BLOB_STORE, which_pass)
     self.revision_writer.register_artifacts(which_pass)
 
   def check_symbols(self, symbol_map):
@@ -551,5 +560,8 @@ class GitOutputOption(DVCSOutputOption):
     self.revision_writer.finish()
     self.f.close()
     del self.f
-
-
+    blobs = artifact_manager.get_temp_file(config.GIT_BLOB_STORE)
+    try:
+      os.rename(blobs, self.blob_filename)
+    except:
+      shutil.copyfile(blobs, self.blob_filename)

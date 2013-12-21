@@ -52,8 +52,10 @@ CVS repository. Each CVS commit will be mirrored in the git
 repository, including such information as date of commit and id of the
 committer.
 .P
-The output of this program are a "blobfile" and a "dumpfile", which
-together can be loaded into a git repository using "git fast-import".
+The output of this program can be loaded into a git repository using
+"git fast-import".  Alternatively, if the a '--blobfile; and '--dumpfile'
+options are specified, relevant portions of the stream are left in
+those files; concatenate them (blobfile first) to get the whole dump.
 .P
 \\fICVS-REPOS-PATH\\fR is the filesystem path of the part of the CVS
 repository that you want to convert.  This path doesn't have to be the
@@ -165,11 +167,13 @@ A directory under \\fI%s\\fR (or the directory specified by
       ctx.revision_collector = NullRevisionCollector()
       return
 
-    if not (options.blobfile and options.dumpfile):
-      raise FatalError("must pass '--blobfile' and '--dumpfile' options.")
+    if (not options.blobfile) != (not options.dumpfile):
+      raise FatalError("the '--blobfile' and '--dumpfile' options cannot be separately set.")
 
     if options.use_external_blob_generator:
-      ctx.revision_collector = ExternalBlobGenerator(options.blobfile)
+      if options.blobfile:
+        ctx.revision_collector = ExternalBlobGenerator(options.blobfile)
+      raise FatalError("external generator requires the '--blobfile' option.")
     else:
       if options.use_rcs:
         revision_reader = RCSRevisionReader(

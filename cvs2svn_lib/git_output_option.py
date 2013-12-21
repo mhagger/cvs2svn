@@ -23,6 +23,7 @@ For information about the format allowed by git-fast-import, see:
 """
 
 import os
+import sys
 import bisect
 import time
 import shutil
@@ -183,6 +184,10 @@ class GitOutputOption(DVCSOutputOption):
     self.blob_filename = blob_filename
     self.revision_writer = revision_writer
 
+    self.stream_to_output = not (dump_filename or blob_filename)
+
+    print "Foo!", self.stream_to_output
+
     self.author_transforms = self.normalize_author_transforms(
         author_transforms
         )
@@ -196,6 +201,9 @@ class GitOutputOption(DVCSOutputOption):
     artifact_manager.register_temp_file_needed(
       config.GIT_BLOB_DATAFILE, which_pass,
       )
+    if self.stream_to_output:
+      artifact_manager.register_temp_file(config.GIT_DUMP_STORE, which_pass)
+      artifact_manager.register_temp_file_needed(config.GIT_DUMP_STORE, which_pass)
     self.revision_writer.register_artifacts(which_pass)
 
   def check_symbols(self, symbol_map):
@@ -204,6 +212,8 @@ class GitOutputOption(DVCSOutputOption):
 
   def setup(self, svn_rev_count):
     DVCSOutputOption.setup(self, svn_rev_count)
+    if self.stream_to_output:
+      self.dump_filename = artifact_manager.get_temp_file(config.GIT_DUMP_STORE)
     self.f = open(self.dump_filename, 'wb')
 
     # The youngest revnum that has been committed so far:
@@ -563,9 +573,15 @@ class GitOutputOption(DVCSOutputOption):
     self.f.close()
     del self.f
     blobs = artifact_manager.get_temp_file(config.GIT_BLOB_DATAFILE)
-    try:
-      os.rename(blobs, self.blob_filename)
-    except OSError:
-      shutil.copyfile(blobs, self.blob_filename)
+    if self.stream_to_output:
+      for line in open(blobs):
+        sys.stdout.write(line)
+      for line in open(self.dump_filename):
+        sys.stdout.write(line)
+    else:
+        try:
+          os.rename(blobs, self.blob_filename)
+        except OSError:
+          shutil.copyfile(blobs, self.blob_filename)
 
 

@@ -51,7 +51,12 @@ class TempFile(Artifact):
 
   def cleanup(self):
     logger.verbose("Deleting", self.filename)
-    os.unlink(self.filename)
+    try:
+      os.unlink(self.filename)
+    except OSError, e:
+      logger.warn(
+        'Temporary file %s could not be deleted: %s', self.filename, e,
+        )
 
   def __str__(self):
     return 'Temporary file %r' % (self.filename,)

@@ -573,10 +573,12 @@ class GitOutputOption(DVCSOutputOption):
     del self.f
     blobs = artifact_manager.get_temp_file(config.GIT_BLOB_DATAFILE)
     if self.stream_to_output:
-      for line in open(blobs):
-        sys.stdout.write(line)
-      for line in open(self.dump_filename):
-        sys.stdout.write(line)
+      f = open(blobs, 'rb')
+      shutil.copyfileobj(f, sys.stdout)
+      f.close()
+      f = open(self.dump_filename, 'rb')
+      shutil.copyfileobj(f, sys.stdout)
+      f.close()
     else:
         try:
           os.rename(blobs, self.blob_filename)

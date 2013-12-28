@@ -200,7 +200,7 @@ class GitOutputOption(DVCSOutputOption):
       config.GIT_BLOB_DATAFILE, which_pass,
       )
     if self.stream_to_output:
-      artifact_manager.register_temp_file(config.GIT_DUMP_STORE, which_pass)
+      artifact_manager.register_temp_file(config.GIT_DUMP_DATAFILE, which_pass)
     self.revision_writer.register_artifacts(which_pass)
 
   def check_symbols(self, symbol_map):
@@ -210,7 +210,9 @@ class GitOutputOption(DVCSOutputOption):
   def setup(self, svn_rev_count):
     DVCSOutputOption.setup(self, svn_rev_count)
     if self.stream_to_output:
-      self.dump_filename = artifact_manager.get_temp_file(config.GIT_DUMP_STORE)
+      self.dump_filename = artifact_manager.get_temp_file(
+        config.GIT_DUMP_DATAFILE,
+        )
     self.f = open(self.dump_filename, 'wb')
 
     # The youngest revnum that has been committed so far:

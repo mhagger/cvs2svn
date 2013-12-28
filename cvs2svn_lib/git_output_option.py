@@ -563,5 +563,7 @@ class GitOutputOption(DVCSOutputOption):
     blobs = artifact_manager.get_temp_file(config.GIT_BLOB_STORE)
     try:
       os.rename(blobs, self.blob_filename)
-    except:
+    except OSError:
       shutil.copyfile(blobs, self.blob_filename)
+
+

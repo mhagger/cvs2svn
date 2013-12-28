@@ -193,7 +193,9 @@ class GitOutputOption(DVCSOutputOption):
 
   def register_artifacts(self, which_pass):
     DVCSOutputOption.register_artifacts(self, which_pass)
-    artifact_manager.register_temp_file_needed(config.GIT_BLOB_STORE, which_pass)
+    artifact_manager.register_temp_file_needed(
+      config.GIT_BLOB_DATAFILE, which_pass,
+      )
     self.revision_writer.register_artifacts(which_pass)
 
   def check_symbols(self, symbol_map):
@@ -560,7 +562,7 @@ class GitOutputOption(DVCSOutputOption):
     self.revision_writer.finish()
     self.f.close()
     del self.f
-    blobs = artifact_manager.get_temp_file(config.GIT_BLOB_STORE)
+    blobs = artifact_manager.get_temp_file(config.GIT_BLOB_DATAFILE)
     try:
       os.rename(blobs, self.blob_filename)
     except OSError:

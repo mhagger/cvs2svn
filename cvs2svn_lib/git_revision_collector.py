@@ -31,11 +31,11 @@ class GitRevisionCollector(RevisionCollector):
 
   def register_artifacts(self, which_pass):
     self.revision_reader.register_artifacts(which_pass)
-    artifact_manager.register_temp_file(config.GIT_BLOB_STORE, which_pass)
+    artifact_manager.register_temp_file(config.GIT_BLOB_DATAFILE, which_pass)
 
   def start(self):
     self.revision_reader.start()
-    blob_filename = artifact_manager.get_temp_file(config.GIT_BLOB_STORE)
+    blob_filename = artifact_manager.get_temp_file(config.GIT_BLOB_DATAFILE)
     self.dump_file = open(blob_filename, 'wb')
     self._mark_generator = KeyGenerator()
 

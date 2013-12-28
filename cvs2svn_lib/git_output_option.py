@@ -186,8 +186,6 @@ class GitOutputOption(DVCSOutputOption):
 
     self.stream_to_output = not (dump_filename or blob_filename)
 
-    print "Foo!", self.stream_to_output
-
     self.author_transforms = self.normalize_author_transforms(
         author_transforms
         )

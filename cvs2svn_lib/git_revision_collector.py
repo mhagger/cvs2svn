@@ -32,7 +32,6 @@ class GitRevisionCollector(RevisionCollector):
   def register_artifacts(self, which_pass):
     self.revision_reader.register_artifacts(which_pass)
     artifact_manager.register_temp_file(config.GIT_BLOB_STORE, which_pass)
-    artifact_manager.register_temp_file_needed(config.GIT_BLOB_STORE, which_pass)
 
   def start(self):
     self.revision_reader.start()

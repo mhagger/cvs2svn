@@ -180,9 +180,7 @@ A directory under \\fI%s\\fR (or the directory specified by
         revision_reader = CVSRevisionReader(
             cvs_executable=options.cvs_executable
             )
-      ctx.revision_collector = GitRevisionCollector(
-          revision_reader,
-          )
+      ctx.revision_collector = GitRevisionCollector(revision_reader)
 
   def process_output_options(self):
     """Process options related to fastimport output."""

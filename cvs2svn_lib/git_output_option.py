@@ -201,7 +201,6 @@ class GitOutputOption(DVCSOutputOption):
       )
     if self.stream_to_output:
       artifact_manager.register_temp_file(config.GIT_DUMP_STORE, which_pass)
-      artifact_manager.register_temp_file_needed(config.GIT_DUMP_STORE, which_pass)
     self.revision_writer.register_artifacts(which_pass)
 
   def check_symbols(self, symbol_map):

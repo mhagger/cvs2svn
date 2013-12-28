@@ -52,10 +52,11 @@ CVS repository. Each CVS commit will be mirrored in the git
 repository, including such information as date of commit and id of the
 committer.
 .P
-The output of this program can be loaded into a git repository using
-"git fast-import".  Alternatively, if the a '--blobfile; and '--dumpfile'
-options are specified, relevant portions of the stream are left in
-those files; concatenate them (blobfile first) to get the whole dump.
+The standard output of this program can be piped into "git fast-import"
+ to load the history into a Git repository.  Alternatively, if the
+'--blobfile; and '--dumpfile' options are specified, the history is
+written to these two files in "git fast-import" format; concatenate
+them (blobfile first) to get the whole dump.
 .P
 \\fICVS-REPOS-PATH\\fR is the filesystem path of the part of the CVS
 repository that you want to convert.  This path doesn't have to be the

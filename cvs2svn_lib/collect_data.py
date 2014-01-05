@@ -614,6 +614,25 @@ class _FileDataCollector(Sink):
                       branches, next):
     """This is a callback method declared in Sink."""
 
+    # This function gets called only if we use an old version of
+    # cvs2svn_rcsparse.common.py that lacks define_revision_ex()
+    rev_hdrs = {
+      'date' : timestamp,
+      'author' : author,
+      'state' : state,
+      'branches' : branches,
+      'next' : next,
+      }
+    return self.define_revision_ex(revision, rev_hdrs)
+
+  def define_revision_ex(self, revision, rev_hdrs):
+    """This is a callback method declared in Sink."""
+
+    timestamp = rev_hdrs['date']
+    author    = rev_hdrs['author']
+    state     = rev_hdrs['state']
+    branches  = rev_hdrs['branches']
+    next      = rev_hdrs['next']
     mode      = None
 
     for branch in branches:

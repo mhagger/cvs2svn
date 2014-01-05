@@ -386,9 +386,8 @@ class _Parser:
         else:
           f(self, token)
 
-  def _parse_rcs_tree_entry(self, revision):
+  def _parse_rcs_tree_date(self, revision, token, rev_hdrs):
     # Parse date
-    self.ts.match('date')
     date = self.ts.get()
     self.ts.match(';')
 
@@ -407,53 +406,98 @@ class _Parser:
       timestamp = calendar.timegm(tuple(date_fields) + (0, 0, 0,))
     except ValueError, e:
       raise ValueError, 'invalid date for revision %s: %s' % (revision, e,)
+    rev_hdrs[token] = timestamp
 
+  def _parse_rcs_tree_author(self, revision, token, rev_hdrs):
     # Parse author
     ### NOTE: authors containing whitespace are violations of the
     ### RCS specification.  We are making an allowance here because
     ### CVSNT is known to produce these sorts of authors.
-    self.ts.match('author')
     author = ' '.join(self._read_until_semicolon())
+    rev_hdrs[token] = author
 
+  def _parse_rcs_tree_state(self, revision, token, rev_hdrs):
     # Parse state
-    self.ts.match('state')
     state = ''
     while 1:
-      token = self.ts.get()
-      if token == ';':
+      statetoken = self.ts.get()
+      if statetoken == ';':
         break
-      state = state + token + ' '
+      state = state + statetoken + ' '
     state = state[:-1]   # toss the trailing space
+    rev_hdrs[token] = state
 
+  def _parse_rcs_tree_branches(self, revision, token, rev_hdrs):
     # Parse branches
-    self.ts.match('branches')
     branches = self._read_until_semicolon()
+    rev_hdrs[token] = branches
 
+  def _parse_rcs_tree_next(self, revision, token, rev_hdrs):
     # Parse revision of next delta in chain
-    self.ts.match('next')
     next = self.ts.get()
     if next == ';':
       next = None
     else:
       self.ts.match(';')
+    rev_hdrs[token] = next
 
-    # there are some files with extra tags in them. for example:
-    #    owner	640;
-    #    group	15;
-    #    permissions	644;
-    #    hardlinks	@configure.in@;
-    #    commitid	mLiHw3bulRjnTDGr;
-    # this is "newphrase" in RCSFILE(5). we just want to skip over these.
+  def _parse_rcs_tree_newphrase(self, revision, token, rev_hdrs):
+    # "Newphrase" parsed as a list of tokens
+    # warn("Unexpected RCS token: $token\n")
+    tokenlist = self._read_until_semicolon()
+    rev_hdrs[token.upper()] = tokenlist
+
+  rcs_tree_token_map = {
+      'date'     : _parse_rcs_tree_date,
+      'author'   : _parse_rcs_tree_author,
+      'state'    : _parse_rcs_tree_state,
+      'branches' : _parse_rcs_tree_branches,
+      'next'     : _parse_rcs_tree_next,
+      # stop at 'desc'
+      'desc'     : None,
+      }
+
+  def _parse_rcs_tree_entry(self, revision):
+    rev_hdrs = {
+      'author' : 'Jane_\'CVS\'_Doe',
+      'branches' : [],
+      'next' : None,
+      }
     while 1:
       token = self.ts.get()
-      if token == 'desc' or token[0] in string.digits:
-        self.ts.unget(token)
-        break
-      # consume everything up to the semicolon
-      self._read_until_semicolon()
 
-    self.sink.define_revision_ex(revision,
-                                 {'timestamp':timestamp, 'author':author, 'state':state, 'branches':branches, 'next':next})
+      try:
+        f = self.rcs_tree_token_map[token]
+      except KeyError:
+        if token[0] in string.digits:
+          # We're done (with this revision) if we reach the next revision
+          self.ts.unget(token)
+          break
+        else:
+          # Miscellaneous revision headers
+          # there are some files with extra tags in them. for example:
+          #    owner        640;
+          #    group        15;
+          #    permissions  644;
+          #    hardlinks    @configure.in@;
+          #    commitid     mLiHw3bulRjnTDGr;
+          # this is "newphrase" in RCSFILE(5).
+          self._parse_rcs_tree_newphrase(revision, token, rev_hdrs)
+      else:
+        if f is None:
+          # We're done if we reach or the 'desc' section
+          self.ts.unget(token)
+          break
+        else:
+          f(self, revision, token, rev_hdrs)
+
+    # Some revision headers are mandatory and cannot have default values
+    if 'date' not in rev_hdrs:
+      raise ValueError, 'no timestamp for revision %s' % (revision,)
+    if 'state' not in rev_hdrs:
+      raise ValueError, 'state unspecified for revision %s' % (revision,)
+
+    self.sink.define_revision_ex(revision, rev_hdrs)
 
   def parse_rcs_tree(self):
     while 1:

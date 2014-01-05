@@ -141,6 +141,22 @@ class Sink:
 
   def define_revision(self, revision, timestamp, author, state,
                       branches, next):
+    """Reports metadata about a single revision, fallback version.
+
+    This function is called for each revision by the base class version
+    of define_revision_ex().  Used for backwards compatibility if the latter
+    (which receives all revison headers, not only a selection) is not overridden
+    in a derived class.
+
+    Parameter: REVISION is a revision number, as a string.  This is an
+    actual revision number, not a branch number.
+    TIMESTAMP corresponds to the 'date' revison header, while AUTHOR,
+    STATE, BRANCHES, and NEXT correspond to the same named headers.  See
+    define_revision_ex() for details.
+    """
+    pass
+
+  def define_revision_ex(self, revision, rev_hdrs):
     """Reports metadata about a single revision.
 
     This function is called for each revision.  It is called later than
@@ -148,27 +164,47 @@ class Sink:
 
     Parameter: REVISION is a revision number, as a string.  This is an
     actual revision number, not a branch number.
-    TIMESTAMP is the date and time that the revision was created, as an
-    integer number of seconds since the epoch.  (I.e. "UNIX time" format).
-    AUTHOR is the author name, as a string.
-    STATE is the state of the revision, as a string.  Common values are
-    "Exp" and "dead".
-    BRANCHES is a list of strings, with each string being an actual
-    revision number (not a branch number).  For each branch which is based
-    on this revision and has commits, the revision number of the first
-    branch commit is listed here.
-    NEXT is either None or a string representing an actual revision number
-    (not a branch number).
+    REV_HDRS is a dictionary that reflects all revision's headers.
 
-    When on trunk, NEXT points to what humans might consider to be the
-    'previous' revision number.  For example, 1.3's NEXT is 1.2.
-    However, on a branch, NEXT really does point to what humans would
-    consider to be the 'next' revision number.  For example, 1.1.2.1's
-    NEXT would be 1.1.2.2.
-    In other words, NEXT always means "where to find the next deltatext
-    that you need this revision to retrieve".
+    Standard headers, recognized and eventually processed by the parser,
+    use lowercase keys. Currently these are:
+    Key         Value
+    ----------  --------------------------------------------------------
+    'date'      The date and time that the revision was created, as an
+                integer number of seconds since the epoch.  (I.e. "UNIX
+                time" format).
+    'author'    The author name, as a string.
+    'state'     The state of the revision, as a string.  Common values
+                are "Exp" and "dead".
+    'branches'  A list of strings, with each string being an actual
+                revision number (not a branch number).  For each branch
+                which is based on this revision and has commits, the
+                revision number of the first branch commit is listed here.
+    'next'      Either None or a string representing an actual revision
+                number (not a branch number).
+              - When on trunk, NEXT points to what humans might consider
+                to be the 'previous' revision number.  For example, 1.3's
+                NEXT is 1.2.
+              - However, on a branch, NEXT really does point to what
+                humans would consider to be the 'next' revision number.
+                For example, 1.1.2.1's NEXT would be 1.1.2.2.
+              - In other words, NEXT always means "where to find the next
+                deltatext that you need this revision to retrieve".
+    ----------  --------------------------------------------------------
+
+    For all other revision headers, the dictionary contains a key equal
+    to the uppercase version of the header's id; the corresponding value
+    is a list of strings for the header's tokens.
+
+    If not overridden, the base class version of this function extracts
+    standard headers from REV_HDRS and passes them to define_revision().
     """
-    pass
+    timestamp = rev_hdrs.get('date', None)
+    author    = rev_hdrs.get('author', None)
+    state     = rev_hdrs.get('state', None)
+    branches  = rev_hdrs.get('branches', None)
+    next      = rev_hdrs.get('next', None)
+    self.define_revision(revision, timestamp, author, state, branches, next)
 
   def tree_completed(self):
     """Reports that the RCS revision tree has been parsed.  This function is
@@ -416,8 +452,8 @@ class _Parser:
       # consume everything up to the semicolon
       self._read_until_semicolon()
 
-    self.sink.define_revision(revision, timestamp, author, state, branches,
-                              next)
+    self.sink.define_revision_ex(revision,
+                                 {'timestamp':timestamp, 'author':author, 'state':state, 'branches':branches, 'next':next})
 
   def parse_rcs_tree(self):
     while 1:

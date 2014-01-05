@@ -43,24 +43,37 @@ def cvs_revision_is_binary(cvs_rev):
   return cvs_rev.mode == 'b'
 
 
-class FilePropertySetter(object):
-  """Abstract class for objects that set properties on a CVSFile."""
+class PropertySetterBase(object):
+  """Base class for objects that set properties on a CVSFile or CVSRevision."""
 
-  def maybe_set_property(self, cvs_file, name, value):
-    """Set a property on CVS_FILE if it does not already have a value.
+  def maybe_set_property(self, cvs_file_or_rev, name, value):
+    """Set a property on CVS_FILE_OR_REV if it does not already have a value.
 
     This method is here for the convenience of derived classes."""
 
-    if name not in cvs_file.properties:
-      cvs_file.properties[name] = value
+    if name not in cvs_file_or_rev.properties:
+      cvs_file_or_rev.properties[name] = value
 
-  def set_properties(self, cvs_file):
-    """Set any properties needed for CVS_FILE.
+  def set_properties(self, cvs_file_or_rev):
+    """Set any properties needed for CVS_FILE_OR_REV.
 
-    CVS_FILE is an instance of CVSFile.  This method should modify
-    CVS_FILE.properties in place."""
+    CVS_FILE_OR_REV is an instance of CVSFile or CVSRevision.  This method
+    should modify CVS_FILE_OR_REV.properties in place."""
 
     raise NotImplementedError()
+
+
+class FilePropertySetter(PropertySetterBase):
+  """Abstract class for objects that set properties on a CVSFile."""
+  pass
+
+class RevisionPropertySetter(PropertySetterBase):
+  """Abstract class for objects that set properties on a CVSRevision."""
+  pass
+
+class FileAndRevisionPropertySetter(FilePropertySetter, RevisionPropertySetter):
+  """Abstract class for objects that set properties on both CVSFiles and CVSRevisions."""
+  pass
 
 
 class ExecutablePropertySetter(FilePropertySetter):
@@ -451,18 +464,6 @@ class ConditionalPropertySetter(object):
     if self.predicate(cvs_file_or_rev):
       for property_setter in self.property_setters:
         property_setter.set_properties(cvs_file_or_rev)
-
-
-class RevisionPropertySetter:
-  """Abstract class for objects that can set properties on a CVSRevision."""
-
-  def set_properties(self, cvs_rev):
-    """Set any properties that can be determined for CVS_REV.
-
-    CVS_REV is an instance of CVSRevision.  This method should modify
-    CVS_REV.properties in place."""
-
-    raise NotImplementedError()
 
 
 class CVSRevisionNumberSetter(RevisionPropertySetter):

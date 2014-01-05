@@ -527,6 +527,9 @@ ctx.revision_property_setters.extend([
     # numbers as file properties in the SVN archive:
     #CVSRevisionNumberSetter(propname='cvs2svn:cvs-rev'),
 
+    # The following are both file- and revision- PropertySetters
+    # - one may want to add them to file_property_setters and revision_property_setters at the same time
+
     ])
 
 # To skip the cleanup of temporary files, uncomment the following

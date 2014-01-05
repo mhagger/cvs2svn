@@ -464,6 +464,9 @@ ctx.file_property_setters.extend([
 
     ])
 ctx.revision_property_setters.extend([
+    # The following are both file- and revision- PropertySetters
+    # - one may want to add them to file_property_setters and revision_property_setters at the same time
+
     ])
 
 # To skip the cleanup of temporary files, uncomment the following

@@ -633,7 +633,12 @@ class _FileDataCollector(Sink):
     state     = rev_hdrs['state']
     branches  = rev_hdrs['branches']
     next      = rev_hdrs['next']
-    mode      = None
+    if 'kopt' in rev_hdrs:
+      mode    = rev_hdrs['kopt']
+    elif 'KOPT' in rev_hdrs:
+      mode    = (rev_hdrs['KOPT'] + [''])[0]
+    else:
+      mode    = None
 
     for branch in branches:
       try:

@@ -123,13 +123,14 @@ class _RevisionData:
   state of the prev_rev, we are unable to distinguish between an add
   and a change."""
 
-  def __init__(self, cvs_rev_id, rev, timestamp, author, state):
+  def __init__(self, cvs_rev_id, rev, timestamp, author, state, mode):
     # The id of this revision:
     self.cvs_rev_id = cvs_rev_id
     self.rev = rev
     self.timestamp = timestamp
     self.author = author
     self.state = state
+    self.mode = mode
 
     # If this is the first revision on a branch, then this is the
     # branch_data of that branch; otherwise it is None.
@@ -613,6 +614,8 @@ class _FileDataCollector(Sink):
                       branches, next):
     """This is a callback method declared in Sink."""
 
+    mode      = None
+
     for branch in branches:
       try:
         branch_data = self.sdc.rev_to_branch_data(branch)
@@ -637,7 +640,7 @@ class _FileDataCollector(Sink):
     # Record basic information about the revision:
     rev_data = _RevisionData(
         self.collect_data.item_key_generator.gen_id(),
-        revision, int(timestamp), author, state)
+        revision, int(timestamp), author, state, mode)
     self._rev_data[revision] = rev_data
 
     # When on trunk, the RCS 'next' revision number points to what
@@ -883,7 +886,7 @@ class _FileDataCollector(Sink):
         rev_data.timestamp, None,
         self._get_rev_id(rev_data.parent),
         self._get_rev_id(rev_data.child),
-        rev_data.rev,
+        rev_data.rev, rev_data.mode,
         True,
         self.sdc.rev_to_lod(rev_data.rev),
         rev_data.get_first_on_branch_id(),

@@ -160,6 +160,9 @@ class CVSRevision(CVSItem):
 
     rev -- (string) the CVS revision number, e.g., '1.3'.
 
+    mode -- (string) versioned kopt ('b', 'kv', etc), or None if no kopt
+        specified for this revision; this is a CVSNT-specific feature.
+
     deltatext_exists -- (bool) true iff this revision's deltatext is
         not empty.
 
@@ -225,6 +228,7 @@ class CVSRevision(CVSItem):
       'prev_id',
       'next_id',
       'rev',
+      'mode',
       'deltatext_exists',
       'lod',
       'first_on_branch_id',
@@ -245,7 +249,7 @@ class CVSRevision(CVSItem):
         id, cvs_file,
         timestamp, metadata_id,
         prev_id, next_id,
-        rev, deltatext_exists,
+        rev, mode, deltatext_exists,
         lod, first_on_branch_id, ntdbr,
         ntdbr_prev_id, ntdbr_next_id,
         tag_ids, branch_ids, branch_commit_ids,
@@ -260,6 +264,7 @@ class CVSRevision(CVSItem):
     self.prev_id = prev_id
     self.next_id = next_id
     self.rev = rev
+    self.mode = mode
     self.deltatext_exists = deltatext_exists
     self.lod = lod
     self.first_on_branch_id = first_on_branch_id
@@ -293,6 +298,7 @@ class CVSRevision(CVSItem):
         self.timestamp, self.metadata_id,
         self.prev_id, self.next_id,
         self.rev,
+        self.mode,
         self.deltatext_exists,
         self.lod.id,
         self.first_on_branch_id,
@@ -309,6 +315,7 @@ class CVSRevision(CVSItem):
      self.timestamp, self.metadata_id,
      self.prev_id, self.next_id,
      self.rev,
+     self.mode,
      self.deltatext_exists,
      lod_id,
      self.first_on_branch_id,

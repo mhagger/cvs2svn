@@ -39,6 +39,10 @@ def cvs_file_is_binary(cvs_file):
   return cvs_file.mode == 'b'
 
 
+def cvs_revision_is_binary(cvs_rev):
+  return cvs_rev.mode == 'b'
+
+
 class FilePropertySetter(object):
   """Abstract class for objects that set properties on a CVSFile."""
 

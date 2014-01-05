@@ -217,6 +217,7 @@ class RunOptions(object):
     self.profiling = False
 
     self.projects = []
+    self.exclude_paths = []
 
     # A list of one list of SymbolStrategyRules for each project:
     self.project_symbol_strategy_rules = []
@@ -474,6 +475,16 @@ class RunOptions(object):
             'symbol name.'
             ),
         metavar='REGEXP',
+        ))
+    group.add_option(IncompatibleOption(
+        '--exclude-path', type='string',
+        action='callback', callback=self.callback_exclude_path,
+        help='exclude a file specified by its path',
+        man_help=(
+            'Exclude a path from the conversion; can be specified multiple '
+            'times in order to exclude more files. Should be relative to the '
+            'repository path, use forward slashes, and include the \\fI,v\\fR suffix.'
+            ),
         ))
     self.parser.set_default('keep_trivial_imports', False)
     group.add_option(IncompatibleOption(
@@ -942,6 +953,11 @@ class RunOptions(object):
   def callback_exclude(self, option, opt_str, value, parser):
     parser.values.symbol_strategy_rules.append(
         ExcludeRegexpStrategyRule(value)
+        )
+
+  def callback_exclude_path(self, option, opt_str, value, parser):
+    self.exclude_paths.append(
+        value
         )
 
   def callback_cvs_revnums(self, option, opt_str, value, parser):

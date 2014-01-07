@@ -82,7 +82,7 @@ A directory under \\fI%s\\fR (or the directory specified by
   DEFAULT_USERNAME = 'cvs2git'
 
   def _get_output_options_group(self):
-    group = super(GitRunOptions, self)._get_output_options_group()
+    group = DVCSRunOptions._get_output_options_group(self)
 
     group.add_option(IncompatibleOption(
         '--blobfile', type='string',
@@ -117,7 +117,7 @@ A directory under \\fI%s\\fR (or the directory specified by
     return group
 
   def _get_extraction_options_group(self):
-    group = super(GitRunOptions, self)._get_extraction_options_group()
+    group = DVCSRunOptions._get_extraction_options_group(self)
     self._add_use_cvs_option(group)
     self._add_use_rcs_option(group)
     self.parser.set_default('use_external_blob_generator', False)

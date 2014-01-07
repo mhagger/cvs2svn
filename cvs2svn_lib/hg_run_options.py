@@ -83,7 +83,7 @@ A directory under \\fI%s\\fR (or the directory specified by
       "artificial changeset: compensate for changes in %(revnum)s "
       "(on non-trunk default branch in CVS)")
 
-    super(HgRunOptions, self).__init__(*args, **kwargs)
+    DVCSRunOptions.__init__(self, *args, **kwargs)
 
   # This is a straight copy of SVNRunOptions._get_extraction_options_group();
   # would be nice to refactor, but it's a bit awkward because GitRunOptions
@@ -96,7 +96,7 @@ A directory under \\fI%s\\fR (or the directory specified by
     return group
 
   def _get_output_options_group(self):
-    group = super(HgRunOptions, self)._get_output_options_group()
+    group = DVCSRunOptions._get_output_options_group(self)
 
     # XXX what if the hg repo already exists? die, clobber, or append?
     # (currently we die at the start of OutputPass)

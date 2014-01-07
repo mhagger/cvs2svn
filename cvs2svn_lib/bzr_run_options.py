@@ -82,7 +82,7 @@ A directory under \\fI%s\\fR (or the directory specified by
   DEFAULT_USERNAME = 'cvs2bzr'
 
   def _get_output_options_group(self):
-    group = super(BzrRunOptions, self)._get_output_options_group()
+    group = DVCSRunOptions._get_output_options_group(self)
 
     group.add_option(IncompatibleOption(
         '--dumpfile', type='string',
@@ -107,7 +107,7 @@ A directory under \\fI%s\\fR (or the directory specified by
     return group
 
   def _get_extraction_options_group(self):
-    group = super(BzrRunOptions, self)._get_extraction_options_group()
+    group = DVCSRunOptions._get_extraction_options_group(self)
     self._add_use_cvs_option(group)
     self._add_use_rcs_option(group)
     return group

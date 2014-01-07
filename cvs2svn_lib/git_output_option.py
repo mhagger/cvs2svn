@@ -40,30 +40,30 @@ from cvs2svn_lib.key_generator import KeyGenerator
 class GitRevisionWriter(MirrorUpdater):
 
   def start(self, mirror, f):
-    super(GitRevisionWriter, self).start(mirror)
+    MirrorUpdater.start(self, mirror)
     self.f = f
 
   def _modify_file(self, cvs_item, post_commit):
     raise NotImplementedError()
 
   def add_file(self, cvs_rev, post_commit):
-    super(GitRevisionWriter, self).add_file(cvs_rev, post_commit)
+    MirrorUpdater.add_file(self, cvs_rev, post_commit)
     self._modify_file(cvs_rev, post_commit)
 
   def modify_file(self, cvs_rev, post_commit):
-    super(GitRevisionWriter, self).modify_file(cvs_rev, post_commit)
+    MirrorUpdater.modify_file(self, cvs_rev, post_commit)
     self._modify_file(cvs_rev, post_commit)
 
   def delete_file(self, cvs_rev, post_commit):
-    super(GitRevisionWriter, self).delete_file(cvs_rev, post_commit)
+    MirrorUpdater.delete_file(self, cvs_rev, post_commit)
     self.f.write('D %s\n' % (cvs_rev.cvs_file.cvs_path,))
 
   def branch_file(self, cvs_symbol):
-    super(GitRevisionWriter, self).branch_file(cvs_symbol)
+    MirrorUpdater.branch_file(self, cvs_symbol)
     self._modify_file(cvs_symbol, post_commit=False)
 
   def finish(self):
-    super(GitRevisionWriter, self).finish()
+    MirrorUpdater.finish(self)
     del self.f
 
 

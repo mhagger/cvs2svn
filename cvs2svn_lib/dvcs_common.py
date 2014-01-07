@@ -64,6 +64,7 @@ class KeywordHandlingPropertySetter(FilePropertySetter):
 class DVCSRunOptions(RunOptions):
   """Dumping ground for whatever is common to GitRunOptions,
   HgRunOptions, and BzrRunOptions."""
+
   def __init__(self, progname, cmd_args, pass_manager):
     Ctx().cross_project_commits = False
     Ctx().cross_branch_commits = False
@@ -100,7 +101,7 @@ class DVCSRunOptions(RunOptions):
     self.project_symbol_strategy_rules = [symbol_strategy_rules]
 
   def process_property_setter_options(self):
-    super(DVCSRunOptions, self).process_property_setter_options()
+    RunOptions.process_property_setter_options(self)
 
     # Property setters for internal use:
     Ctx().file_property_setters.append(

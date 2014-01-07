@@ -143,7 +143,7 @@ A directory under \\fI%s\\fR (or the directory specified by
   DEFAULT_USERNAME = None
 
   def _get_output_options_group(self):
-    group = super(SVNRunOptions, self)._get_output_options_group()
+    group = RunOptions._get_output_options_group(self)
 
     group.add_option(IncompatibleOption(
         '--svnrepos', '-s', type='string',
@@ -253,7 +253,7 @@ A directory under \\fI%s\\fR (or the directory specified by
     return group
 
   def _get_conversion_options_group(self):
-    group = super(SVNRunOptions, self)._get_conversion_options_group()
+    group = RunOptions._get_conversion_options_group(self)
 
     self.parser.set_default('trunk_base', config.DEFAULT_TRUNK_BASE)
     group.add_option(IncompatibleOption(
@@ -336,14 +336,14 @@ A directory under \\fI%s\\fR (or the directory specified by
     return group
 
   def _get_extraction_options_group(self):
-    group = super(SVNRunOptions, self)._get_extraction_options_group()
+    group = RunOptions._get_extraction_options_group(self)
     self._add_use_internal_co_option(group)
     self._add_use_cvs_option(group)
     self._add_use_rcs_option(group)
     return group
 
   def _get_environment_options_group(self):
-    group = super(SVNRunOptions, self)._get_environment_options_group()
+    group = RunOptions._get_environment_options_group(self)
 
     group.add_option(ContextOption(
         '--svnadmin', type='string',
@@ -491,7 +491,7 @@ A directory under \\fI%s\\fR (or the directory specified by
     del self.project_symbol_strategy_rules[:]
 
   def process_property_setter_options(self):
-    super(SVNRunOptions, self).process_property_setter_options()
+    RunOptions.process_property_setter_options(self)
 
     # Property setters for internal use:
     Ctx().file_property_setters.append(SVNEOLFixPropertySetter())

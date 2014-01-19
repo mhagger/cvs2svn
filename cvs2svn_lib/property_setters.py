@@ -448,9 +448,11 @@ class SVNBinaryFileKeywordsPropertySetter(SVNBinaryKeywordsPropertySetter):
   pass
 
 
-class KeywordsPropertySetter(FilePropertySetter):
+class KeywordsPropertySetter(FileAndRevisionPropertySetter):
   """If the svn:keywords property is not yet set, set it based on the
-  file's mode.  See issue #2."""
+  file's or revision's mode.  See issue #2.
+  Note that for CVSRevisions a mode of None means there is no kopt
+  revision header (standard CVS) so we examine the file's mode instead."""
 
   def __init__(self, value):
     """Use VALUE for the value of the svn:keywords property if it is
@@ -458,9 +460,12 @@ class KeywordsPropertySetter(FilePropertySetter):
 
     self.value = value
 
-  def set_properties(self, cvs_file):
-    if cvs_file.mode in [None, 'kv', 'kvl']:
-      self.maybe_set_property(cvs_file, 'svn:keywords', self.value)
+  def set_properties(self, cvs_file_or_rev):
+    itemmode = cvs_file_or_rev.mode
+    if itemmode is None and isinstance(cvs_file_or_rev, CVSRevision):
+      itemmode = cvs_file_or_rev.cvs_file.mode
+    if itemmode in [None, 'kv', 'kvl']:
+      self.maybe_set_property(cvs_file_or_rev, 'svn:keywords', self.value)
 
 
 class ConditionalPropertySetter(object):

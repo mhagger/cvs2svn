@@ -419,6 +419,7 @@ ctx.revision_property_setters.extend([
     DefaultEOLStyleSetter(None),
     #or: DefaultEOLStyleSetter('native'),
     SVNBinaryKeywordsPropertySetter(),
+    KeywordsPropertySetter(config.SVN_KEYWORDS_VALUE),
 
     ])
 

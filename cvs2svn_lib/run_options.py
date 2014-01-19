@@ -1058,6 +1058,9 @@ class RunOptions(object):
       ctx.file_property_setters.append(
         KeywordsPropertySetter(config.SVN_KEYWORDS_VALUE)
         )
+      ctx.revision_property_setters.append(
+        KeywordsPropertySetter(config.SVN_KEYWORDS_VALUE)
+        )
 
     ctx.file_property_setters.append(ExecutablePropertySetter())
 

@@ -64,7 +64,7 @@ from cvs2svn_lib.property_setters import ExecutablePropertySetter
 from cvs2svn_lib.property_setters import DescriptionPropertySetter
 from cvs2svn_lib.property_setters import KeywordsPropertySetter
 from cvs2svn_lib.property_setters import MimeMapper
-from cvs2svn_lib.property_setters import SVNBinaryFileKeywordsPropertySetter
+from cvs2svn_lib.property_setters import SVNBinaryKeywordsPropertySetter
 
 
 usage = """\
@@ -1051,7 +1051,8 @@ class RunOptions(object):
         DefaultEOLStyleSetter(options.default_eol)
         )
 
-    ctx.file_property_setters.append(SVNBinaryFileKeywordsPropertySetter())
+    ctx.file_property_setters.append(SVNBinaryKeywordsPropertySetter())
+    ctx.revision_property_setters.append(SVNBinaryKeywordsPropertySetter())
 
     if not options.keywords_off:
       ctx.file_property_setters.append(

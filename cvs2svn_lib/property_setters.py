@@ -468,7 +468,7 @@ class KeywordsPropertySetter(FileAndRevisionPropertySetter):
       self.maybe_set_property(cvs_file_or_rev, 'svn:keywords', self.value)
 
 
-class ConditionalPropertySetter(object):
+class ConditionalPropertySetter(FileAndRevisionPropertySetter):
   """Delegate to the passed property setters when the passed predicate applies.
   The predicate should be a function that takes a CVSFile or CVSRevision
   argument and return True if the property setters should be applied."""

@@ -102,6 +102,10 @@ class CVSBinaryEOLStyleSetter(FileAndRevisionPropertySetter):
     if cvs_file_or_rev.mode == 'b':
       self.maybe_set_property(cvs_file_or_rev, 'svn:eol-style', None)
 
+class CVSBinaryFileEOLStyleSetter(CVSBinaryEOLStyleSetter):
+  """OBSOLETE, use CVSBinaryEOLStyleSetter instead."""
+  pass
+
 
 class MimeMapper(FilePropertySetter):
   """A class that provides mappings from file names to MIME types."""

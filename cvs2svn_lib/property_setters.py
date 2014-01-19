@@ -443,6 +443,10 @@ class SVNBinaryKeywordsPropertySetter(FileAndRevisionPropertySetter):
     if not cvs_file_or_rev.properties.get('svn:eol-style'):
       cvs_file_or_rev.properties[self.propname] = None
 
+class SVNBinaryFileKeywordsPropertySetter(SVNBinaryKeywordsPropertySetter):
+  """OBSOLETE, use SVNBinaryKeywordsPropertySetter instead."""
+  pass
+
 
 class KeywordsPropertySetter(FilePropertySetter):
   """If the svn:keywords property is not yet set, set it based on the

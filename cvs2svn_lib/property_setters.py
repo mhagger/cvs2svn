@@ -25,6 +25,7 @@ from cStringIO import StringIO
 
 from cvs2svn_lib.common import warning_prefix
 from cvs2svn_lib.log import logger
+from cvs2svn_lib.cvs_item import CVSRevision
 
 
 def _squash_case(s):
@@ -401,7 +402,7 @@ class EOLStyleFromMimeTypeSetter(FilePropertySetter):
         cvs_file.properties[self.propname] = None
 
 
-class DefaultEOLStyleSetter(FilePropertySetter):
+class DefaultEOLStyleSetter(FileAndRevisionPropertySetter):
   """Set the eol-style if one has not already been set."""
 
   valid_values = {
@@ -423,8 +424,11 @@ class DefaultEOLStyleSetter(FilePropertySetter):
           'Illegal value specified for the default EOL option: %r' % (value,)
           )
 
-  def set_properties(self, cvs_file):
-    self.maybe_set_property(cvs_file, 'svn:eol-style', self.value)
+  def set_properties(self, cvs_file_or_rev):
+    if isinstance(cvs_file_or_rev, CVSRevision):
+      self.maybe_set_property(cvs_file_or_rev, 'svn:eol-style', cvs_file_or_rev.get_property('svn:eol-style', self.value))
+    else:
+      self.maybe_set_property(cvs_file_or_rev, 'svn:eol-style', self.value)
 
 
 class SVNBinaryFileKeywordsPropertySetter(FilePropertySetter):

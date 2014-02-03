@@ -111,18 +111,17 @@ href="http://www.kernel.org/pub/software/scm/git/docs/git
 fast-import.html">git fast-import</a> tool.</p>
 
 <p>Although cvs2git is considerably newer than cvs2svn, and much less
-well tested, it is believed that cvs2git can (cautiously) be used for
-production conversions.  If you use cvs2git, please let us know how it
-worked for you!</p>
+well tested, it is believed that cvs2git can be used for production
+conversions.  If you use cvs2git, please let us know how it worked for
+you!</p>
 
 
 <h2><a name="limitations">cvs2git limitations</a></h2>
 
-<p>cvs2git still has many limitations compared to cvs2svn.  The main
-cvs2svn developer has limited git experience and very limited time, so
-<strong>help would be much appreciated!</strong> Some of these missing
-features would be pretty easy to program, and I'd be happy to help you
-get started.</p>
+<p>cvs2git still has many limitations compared to
+cvs2svn.  <strong>Help would be much appreciated!</strong> Some of
+these missing features would be pretty easy to program, and I'd be
+happy to help you get started.</p>
 
 <ul>
 
@@ -191,8 +190,7 @@ get started.</p>
     the conversion.</li>
 
   <li>Only single projects can be converted at a time.  Given the way
-    git is typically used, I don't think that this is a significant
-    limitation.</li>
+    git is typically used, this is probably what you want anyway.</li>
 
   <li>The cvs2svn test suite does not include meaningful tests of git
     output.</li>
@@ -261,8 +259,8 @@ to git using cvs2git.</p>
       <li>To install cvs2svn from a <a
         href="http://cvs2svn.tigris.org/servlets/ProjectDocumentList">tarball</a>,
         simply unpack the tarball into a directory on your conversion
-        computer (cvs2git can be run directly from this
-        directory).</li>
+        computer; cvs2git can be run directly from this
+        directory.</li>
 
       <li>
 
@@ -295,9 +293,9 @@ make check # ...optional
 
       <li>
 
-	<p>The command-line options for running cvs2git are documented
-        in the cvs2git man page and in the output of <tt>cvs2git
-        --help</tt>.  For example:</p>
+        <p>The command-line options for running cvs2git are documented
+          in the cvs2git man page and in the output of <tt>cvs2git
+          --help</tt>.  For example:</p>
 
 <pre>
 cvs2git \
@@ -328,12 +326,12 @@ cvs2git --options=OPTIONS-FILE
 
     </ul>
 
-    <p>This creates two output files in <a
-    href="http://www.kernel.org/pub/software/scm/git/docs/git-fast-import.html">git
-    fast-import</a> format.  The names of these files are specified by
-    your options file or command-line arguments.  In the example,
-    these files are named <tt>cvs2git-tmp/git-blob.dat</tt> and
-    <tt>cvs2git-tmp/git-dump.dat</tt>.</p>
+    <p>This creates two output files
+      in <a href="http://www.kernel.org/pub/software/scm/git/docs/git-fast-import.html">git
+      fast-import</a> format.  The names of these files are specified
+      by your options file or command-line arguments.  In the example,
+      these files are named <tt>cvs2git-tmp/git-blob.dat</tt> and
+      <tt>cvs2git-tmp/git-dump.dat</tt>.</p>
 
   </li>
 
@@ -342,9 +340,8 @@ cvs2git --options=OPTIONS-FILE
     <p>Initialize a git repository:</p>
 
 <pre>
-mkdir myproject.git
-cd myproject.git
-git init --bare
+git init --bare /path/to/myproject.git
+cd /path/to/myproject.git
 </pre>
 
   </li>
@@ -355,14 +352,24 @@ git init --bare
       fast-import</tt>:</p>
 
 <pre>
-git fast-import --export-marks=../cvs2git-tmp/git-marks.dat &lt; ../cvs2git-tmp/git-blob.dat
-git fast-import --import-marks=../cvs2git-tmp/git-marks.dat &lt; ../cvs2git-tmp/git-dump.dat
+git fast-import --export-marks=../cvs2git-tmp/git-marks.dat &lt;../cvs2git-tmp/git-blob.dat
+git fast-import --import-marks=../cvs2git-tmp/git-marks.dat &lt;../cvs2git-tmp/git-dump.dat
 </pre>
 
     <p>On Linux/Unix this can be shortened to:</p>
 
 <pre>
 cat ../cvs2git-tmp/git-blob.dat ../cvs2git-tmp/git-dump.dat | git fast-import
+</pre>
+
+  </li>
+
+  <li>
+
+    <p>Delete the <tt>TAG.FIXUP</tt> branch:</p>
+
+<pre>
+git branch -D TAG.FIXUP
 </pre>
 
   </li>
@@ -416,27 +423,26 @@ cd myproject
 <h2><a name="non-bare">Converting to a non-bare repository</a></h2>
 
 <p>If you want to convert into a non-bare git repository (one
-  including a working tree), then you need to make two changes to the
-  above procedure:</p>
+  that includes a working tree), then you need to make two changes to
+  the above procedure:</p>
 
 <ul>
 
   <li><p>Omit the <tt>--bare</tt> option in step 4; i.e., type</p>
 
 <pre>
-mkdir myproject.git
-cd myproject.git
-git init
+git init /path/to/myproject.git
+cd /path/to/myproject.git
 </pre>
 
   </li>
 
   <li><p>When the conversion is done, instead of cloning as described
-    in step 9, you need to explicitly check out the "master" version
+    in step 10, you need to explicitly check out the "master" version
     of the files into your working tree:</p>
 
 <pre>
-git checkout
+git checkout master
 </pre>
 
   </li>

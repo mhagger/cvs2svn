@@ -98,6 +98,10 @@ class SVNKeywordHandlingPropertySetter(FilePropertySetter):
 
 
 class SVNRunOptions(RunOptions):
+  description="""\
+Convert a CVS repository into a Subversion repository, including history.
+"""
+
   short_desc = 'convert a CVS repository into a Subversion repository'
 
   synopsis = """\

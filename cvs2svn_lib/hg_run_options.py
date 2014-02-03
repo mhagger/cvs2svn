@@ -23,6 +23,9 @@ from cvs2svn_lib.hg_output_option import HgOutputOption
 
 
 class HgRunOptions(DVCSRunOptions):
+  description="""\
+Convert a CVS repository into a Mercurial repository, including history.
+"""
 
   short_desc = 'convert a CVS repository into a Mercurial repository'
 

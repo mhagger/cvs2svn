@@ -71,10 +71,6 @@ usage = """\
 Usage: %prog --options OPTIONFILE
        %prog [OPTION...] OUTPUT-OPTION CVS-REPOS-PATH"""
 
-description="""\
-Convert a CVS repository into a Subversion repository, including history.
-"""
-
 
 class IncompatibleOption(ManOption):
   """A ManOption that is incompatible with the --options option.
@@ -268,8 +264,9 @@ class RunOptions(object):
     # Check for problems with the options:
     self.check_options()
 
-  def get_description(self):
-    return description
+  @classmethod
+  def get_description(klass):
+    return klass.description
 
   def _get_options_file_options_group(self):
     group = OptionGroup(

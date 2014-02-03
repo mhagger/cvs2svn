@@ -6,6 +6,7 @@ Version ?.?.? (not yet released)
  * ExternalBlobGenerator: Don't fail if no revisions are needed for a file.
  * Fix the handling of symbol-matching regexps that include "|".
  * Handle excluded pathes under Attic directories, too.
+ * cvs2git: fix logging in process_post_commit().
 
  Improvements and output changes:
  * Various small documentation fixes and improvements.
@@ -13,6 +14,10 @@ Version ?.?.? (not yet released)
  * Avoid some allusions to Subversion when converting to another VCS.
  * Use tempfile.mkdtemp() to choose the location for temporary files.
  * Write all progress information to stderr rather than stdout.
+ * Write cvs2git and cvs2bzr output to stdout by default.
+
+ Miscellaneous:
+ * Use "co --version" rather than the deprecated "co -V".
 
 
 Version 2.4.0 (22 September 2012)

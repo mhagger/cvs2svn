@@ -181,7 +181,7 @@ A directory under \\fI%s\\fR (or the directory specified by
             cvs_executable=options.cvs_executable
             )
       ctx.revision_collector = GitRevisionCollector(
-          options.blobfile, revision_reader,
+          revision_reader, options.blobfile,
           )
 
   def process_output_options(self):

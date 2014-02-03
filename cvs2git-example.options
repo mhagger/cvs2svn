@@ -134,10 +134,6 @@ ctx.tmpdir = r'cvs2git-tmp'
 # chance of working with CVSNT repositories.  It invokes CVS or RCS to
 # reconstuct the contents of CVS file revisions:
 ctx.revision_collector = GitRevisionCollector(
-    # The file in which to write the git-fast-import stream that
-    # contains the file revision contents:
-    'cvs2git-tmp/git-blob.dat',
-
     # The following option specifies how the revision contents of the
     # RCS files should be read.
     #
@@ -162,6 +158,10 @@ ctx.revision_collector = GitRevisionCollector(
     # Uncomment one of the two following lines:
     #RCSRevisionReader(co_executable=r'co'),
     CVSRevisionReader(cvs_executable=r'cvs'),
+
+    # The file in which to write the git-fast-import stream that
+    # contains the file revision contents:
+    blob_filename='cvs2git-tmp/git-blob.dat',
     )
 # This second alternative is vastly faster than the version above.  It
 # uses an external Python program to reconstruct the contents of CVS

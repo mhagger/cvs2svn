@@ -24,9 +24,9 @@ from cvs2svn_lib.key_generator import KeyGenerator
 class GitRevisionCollector(RevisionCollector):
   """Output file revisions to git-fast-import."""
 
-  def __init__(self, blob_filename, revision_reader):
-    self.blob_filename = blob_filename
+  def __init__(self, revision_reader, blob_filename):
     self.revision_reader = revision_reader
+    self.blob_filename = blob_filename
 
   def register_artifacts(self, which_pass):
     self.revision_reader.register_artifacts(which_pass)

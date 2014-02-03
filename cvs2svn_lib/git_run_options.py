@@ -165,11 +165,13 @@ A directory under \\fI%s\\fR (or the directory specified by
       ctx.revision_collector = NullRevisionCollector()
       return
 
-    if not (options.blobfile and options.dumpfile):
-      raise FatalError("must pass '--blobfile' and '--dumpfile' options.")
+    if not (options.dumpfile):
+      raise FatalError('must pass \'--dumpfile\' option.')
 
     if options.use_external_blob_generator:
-      ctx.revision_collector = ExternalBlobGenerator(options.blobfile)
+      ctx.revision_collector = ExternalBlobGenerator(
+          blob_filename=options.blobfile,
+          )
     else:
       if options.use_rcs:
         revision_reader = RCSRevisionReader(
@@ -181,7 +183,7 @@ A directory under \\fI%s\\fR (or the directory specified by
             cvs_executable=options.cvs_executable
             )
       ctx.revision_collector = GitRevisionCollector(
-          revision_reader, options.blobfile,
+          revision_reader, blob_filename=options.blobfile,
           )
 
   def process_output_options(self):

@@ -160,13 +160,19 @@ ctx.revision_collector = GitRevisionCollector(
     CVSRevisionReader(cvs_executable=r'cvs'),
 
     # The file in which to write the git-fast-import stream that
-    # contains the file revision contents:
+    # contains the file revision contents.  If None, it will be
+    # written to a temporary file then streamed to stdout in
+    # OutputPass:
     blob_filename='cvs2git-tmp/git-blob.dat',
     )
 # This second alternative is vastly faster than the version above.  It
 # uses an external Python program to reconstruct the contents of CVS
-# file revisions:
-#ctx.revision_collector = ExternalBlobGenerator('cvs2git-tmp/git-blob.dat')
+# file revisions and write it to the specified file.  If blob_filename
+# is None, the blobs will be written to a temporary file then streamed
+# to stdout in OutputPass:
+#ctx.revision_collector = ExternalBlobGenerator(
+#    blob_filename='cvs2git-tmp/git-blob.dat',
+#    )
 
 # cvs2git doesn't need a revision reader because OutputPass only
 # refers to blobs that were output during CollectRevsPass, so leave

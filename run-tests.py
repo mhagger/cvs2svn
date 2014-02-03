@@ -3527,6 +3527,39 @@ def main_git2():
 
 
 @Cvs2SvnTestFunction
+def main_git_merged():
+  "cvs2git with no blobfile"
+
+  # Note: To test importing into git, do
+  #
+  #     ./run-tests <this-test-number>
+  #     rm -rf cvs2svn-tmp/main.git
+  #     git init --bare cvs2svn-tmp/main.git
+  #     cd cvs2svn-tmp/main.git
+  #     cat ../git-dump.dat | git fast-import
+
+  conv = GitConversion('main', None, [
+      '--dumpfile=cvs2svn-tmp/git-dump.dat',
+      '--username=cvs2git',
+      'test-data/main-cvsrepos',
+      ])
+
+
+@Cvs2SvnTestFunction
+def main_git2_merged():
+  "cvs2git external with no blobfile"
+
+  # See comment in main_git_merged() for more information.
+
+  conv = GitConversion('main', None, [
+      '--use-external-blob-generator',
+      '--dumpfile=cvs2svn-tmp/dumpfile.out',
+      '--username=cvs2git',
+      'test-data/main-cvsrepos',
+      ])
+
+
+@Cvs2SvnTestFunction
 def git_options():
   "test cvs2git using options file"
 
@@ -4195,8 +4228,10 @@ test_list = [
     add_on_branch,
     main_git,
     main_git2,
-    git_options,
+    main_git_merged,
 # 150:
+    main_git2_merged,
+    git_options,
     main_hg,
     invalid_symbol,
     invalid_symbol_ignore,
@@ -4205,9 +4240,9 @@ test_list = [
     EOLVariants('CR'),
     EOLVariants('CRLF'),
     EOLVariants('native'),
+# 160:
     no_revs_file,
     mirror_keyerror_test,
-# 160:
     exclude_ntdb_test,
     mirror_keyerror2_test,
     mirror_keyerror3_test,
@@ -4216,9 +4251,9 @@ test_list = [
     transform_unlabeled_branch_name,
     ignore_unlabeled_branch,
     exclude_unlabeled_branch,
+# 170:
     unlabeled_branch_name_collision,
     collision_with_unlabeled_branch_name,
-# 170:
     many_deletes,
     cvs_description,
     include_empty_directories,
@@ -4227,9 +4262,9 @@ test_list = [
     add_on_branch2,
     branch_from_vendor_branch,
     strange_default_branch,
+# 180:
     move_parent,
     log_message_eols,
-# 180:
     missing_vendor_branch,
     newphrases,
     ]

@@ -204,6 +204,9 @@ CVS_CHECKOUT_DB = 'cvs-checkout.db'
 
 # End of DBs related to --use-internal-co.
 
+# Hold the generated blob content for the git back end.
+GIT_BLOB_DATAFILE = "git-blobs.dat"
+
 # flush a commit if a 5 minute gap occurs.
 COMMIT_THRESHOLD = 5 * 60
 

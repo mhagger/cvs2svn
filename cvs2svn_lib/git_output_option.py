@@ -24,7 +24,9 @@ For information about the format allowed by git-fast-import, see:
 
 import bisect
 import time
+import shutil
 
+from cvs2svn_lib import config
 from cvs2svn_lib.common import InternalError
 from cvs2svn_lib.log import logger
 from cvs2svn_lib.context import Ctx
@@ -35,6 +37,7 @@ from cvs2svn_lib.cvs_item import CVSSymbol
 from cvs2svn_lib.dvcs_common import DVCSOutputOption
 from cvs2svn_lib.dvcs_common import MirrorUpdater
 from cvs2svn_lib.key_generator import KeyGenerator
+from cvs2svn_lib.artifact_manager import artifact_manager
 
 
 class GitRevisionWriter(MirrorUpdater):
@@ -68,6 +71,25 @@ class GitRevisionWriter(MirrorUpdater):
 
 
 class GitRevisionMarkWriter(GitRevisionWriter):
+  def register_artifacts(self, which_pass):
+    GitRevisionWriter.register_artifacts(self, which_pass)
+    if Ctx().revision_collector.blob_filename is None:
+      artifact_manager.register_temp_file_needed(
+        config.GIT_BLOB_DATAFILE, which_pass,
+        )
+
+  def start(self, mirror, f):
+    GitRevisionWriter.start(self, mirror, f)
+    if Ctx().revision_collector.blob_filename is None:
+      # The revision collector wrote the blobs to a temporary file;
+      # copy them into f:
+      logger.normal('Copying blob data to output')
+      blobf = open(
+          artifact_manager.get_temp_file(config.GIT_BLOB_DATAFILE), 'rb',
+          )
+      shutil.copyfileobj(blobf, f)
+      blobf.close()
+
   def _modify_file(self, cvs_item, post_commit):
     if cvs_item.cvs_file.executable:
       mode = '100755'

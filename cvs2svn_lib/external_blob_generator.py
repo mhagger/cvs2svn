@@ -40,27 +40,40 @@ import os
 import subprocess
 import cPickle as pickle
 
+from cvs2svn_lib import config
 from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.log import logger
 from cvs2svn_lib.cvs_item import CVSRevisionDelete
 from cvs2svn_lib.revision_manager import RevisionCollector
 from cvs2svn_lib.key_generator import KeyGenerator
+from cvs2svn_lib.artifact_manager import artifact_manager
 
 
 class ExternalBlobGenerator(RevisionCollector):
   """Have generate_blobs.py output file revisions to a blob file."""
 
-  def __init__(self, blob_filename):
+  def __init__(self, blob_filename=None):
     self.blob_filename = blob_filename
+
+  def register_artifacts(self, which_pass):
+    RevisionCollector.register_artifacts(self, which_pass)
+    if self.blob_filename is None:
+      artifact_manager.register_temp_file(
+        config.GIT_BLOB_DATAFILE, which_pass,
+        )
 
   def start(self):
     self._mark_generator = KeyGenerator()
     logger.normal('Starting generate_blobs.py...')
+    if self.blob_filename is None:
+      blob_filename = artifact_manager.get_temp_file(config.GIT_BLOB_DATAFILE)
+    else:
+      blob_filename = self.blob_filename
     self._pipe = subprocess.Popen(
         [
             sys.executable,
             os.path.join(os.path.dirname(__file__), 'generate_blobs.py'),
-            self.blob_filename,
+            blob_filename,
             ],
         stdin=subprocess.PIPE,
         )

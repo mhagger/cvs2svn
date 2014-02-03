@@ -18,7 +18,6 @@
 
 import tempfile
 
-from cvs2svn_lib.common import FatalError
 from cvs2svn_lib.context import Ctx
 from cvs2svn_lib.dvcs_common import DVCSRunOptions
 from cvs2svn_lib.run_options import ContextOption
@@ -90,7 +89,8 @@ A directory under \\fI%s\\fR (or the directory specified by
         help='path to which the "blob" data should be written',
         man_help=(
             'Write the "blob" data (containing revision contents) to '
-            '\\fIpath\\fR.'
+            '\\fIpath\\fR.  If not set, the blob data is written to the '
+            'same destination as the dumpfile output.'
             ),
         metavar='PATH',
         ))
@@ -99,7 +99,8 @@ A directory under \\fI%s\\fR (or the directory specified by
         action='store',
         help='path to which the revision data should be written',
         man_help=(
-            'Write the revision data (branches and commits) to \\fIpath\\fR.'
+            'Write the revision data (branches and commits) to \\fIpath\\fR.  '
+            'If not set, output goes to stdout.'
             ),
         metavar='PATH',
         ))
@@ -165,9 +166,6 @@ A directory under \\fI%s\\fR (or the directory specified by
       ctx.revision_collector = NullRevisionCollector()
       return
 
-    if not (options.dumpfile):
-      raise FatalError('must pass \'--dumpfile\' option.')
-
     if options.use_external_blob_generator:
       ctx.revision_collector = ExternalBlobGenerator(
           blob_filename=options.blobfile,
@@ -194,7 +192,7 @@ A directory under \\fI%s\\fR (or the directory specified by
     else:
       ctx.output_option = GitOutputOption(
           GitRevisionMarkWriter(),
-          self.options.dumpfile,
+          dump_filename=self.options.dumpfile,
           # Optional map from CVS author names to git author names:
           author_transforms={}, # FIXME
           )

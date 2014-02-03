@@ -538,8 +538,9 @@ ctx.output_option = GitOutputOption(
     GitRevisionMarkWriter(),
 
     # The file in which to write the git-fast-import stream that
-    # contains the changesets and branch/tag information:
-    os.path.join(ctx.tmpdir, 'git-dump.dat'),
+    # contains the changesets and branch/tag information, or None
+    # to write it to stdout:
+    dump_filename=os.path.join(ctx.tmpdir, 'git-dump.dat'),
 
     # Optional map from CVS author names to git author names:
     author_transforms=author_transforms,

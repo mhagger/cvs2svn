@@ -497,7 +497,7 @@ ctx.output_option = GitOutputOption(
 
     # The file in which to write the "hg fastimport" stream that
     # contains the changesets and branch/tag information:
-    os.path.join(ctx.tmpdir, 'hg-dump.dat'),
+    dump_filename=os.path.join(ctx.tmpdir, 'hg-dump.dat'),
 
     # Optional map from CVS author names to hg author names:
     author_transforms=author_transforms,

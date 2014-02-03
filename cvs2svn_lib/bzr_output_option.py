@@ -33,7 +33,8 @@ class BzrOutputOption(GitOutputOption):
   name = "Bzr"
 
   def __init__(
-        self, revision_writer, dump_filename,
+        self, revision_writer,
+        dump_filename=None,
         author_transforms=None,
         tie_tag_fixup_branches=True,
         ):
@@ -42,8 +43,10 @@ class BzrOutputOption(GitOutputOption):
     See superclass for meaning of parameters.
     """
     GitOutputOption.__init__(
-        self, revision_writer, dump_filename,
-        author_transforms, tie_tag_fixup_branches,
+        self, revision_writer,
+        dump_filename=dump_filename,
+        author_transforms=author_transforms,
+        tie_tag_fixup_branches=tie_tag_fixup_branches,
         )
 
   def get_tag_fixup_branch_name(self, svn_commit):

@@ -22,6 +22,7 @@ For information about the format allowed by git-fast-import, see:
 
 """
 
+import sys
 import bisect
 import time
 import shutil
@@ -149,9 +150,9 @@ class GitOutputOption(DVCSOutputOption):
 
   Members:
 
-    dump_filename -- (string) the name of the file to which the
-        git-fast-import commands for defining revisions will be
-        written.
+    dump_filename -- (string or None) the name of the file to which
+        the git-fast-import commands for defining revisions will be
+        written.  If None, the data will be written to stdout.
 
     author_transforms -- a map from CVS author names to git full name
         and email address.  See
@@ -167,7 +168,8 @@ class GitOutputOption(DVCSOutputOption):
   _first_commit_mark = 1000000000
 
   def __init__(
-        self, revision_writer, dump_filename,
+        self, revision_writer,
+        dump_filename=None,
         author_transforms=None,
         tie_tag_fixup_branches=False,
         ):
@@ -180,7 +182,8 @@ class GitOutputOption(DVCSOutputOption):
     DUMP_FILENAME is the name of the file to which the git-fast-import
     commands for defining revisions should be written.  (Please note
     that depending on the style of revision writer, the actual file
-    contents might not be written to this file.)
+    contents might not be written to this file.)  If it is None, then
+    the output is written to stdout.
 
     AUTHOR_TRANSFORMS is a map {cvsauthor : (fullname, email)} from
     CVS author names to git full name and email address.  All of the
@@ -215,7 +218,10 @@ class GitOutputOption(DVCSOutputOption):
 
   def setup(self, svn_rev_count):
     DVCSOutputOption.setup(self, svn_rev_count)
-    self.f = open(self.dump_filename, 'wb')
+    if self.dump_filename is None:
+      self.f = sys.stdout
+    else:
+      self.f = open(self.dump_filename, 'wb')
 
     # The youngest revnum that has been committed so far:
     self._youngest = 0
@@ -571,7 +577,8 @@ class GitOutputOption(DVCSOutputOption):
   def cleanup(self):
     DVCSOutputOption.cleanup(self)
     self.revision_writer.finish()
-    self.f.close()
+    if self.dump_filename is not None:
+      self.f.close()
     del self.f
 
 

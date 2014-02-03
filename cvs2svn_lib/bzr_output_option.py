@@ -33,7 +33,7 @@ class BzrOutputOption(GitOutputOption):
   name = "Bzr"
 
   def __init__(
-        self, dump_filename, revision_writer,
+        self, revision_writer, dump_filename,
         author_transforms=None,
         tie_tag_fixup_branches=True,
         ):
@@ -41,8 +41,10 @@ class BzrOutputOption(GitOutputOption):
 
     See superclass for meaning of parameters.
     """
-    GitOutputOption.__init__(self, dump_filename, revision_writer,
-        author_transforms, tie_tag_fixup_branches)
+    GitOutputOption.__init__(
+        self, revision_writer, dump_filename,
+        author_transforms, tie_tag_fixup_branches,
+        )
 
   def get_tag_fixup_branch_name(self, svn_commit):
     # Use a name containing '.', which is not allowed in CVS symbols, to avoid

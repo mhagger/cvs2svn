@@ -483,10 +483,6 @@ author_transforms={
 # This is the main option that causes cvs2hg to output to an "hg
 # fastimport"-format dumpfile rather than to Subversion:
 ctx.output_option = GitOutputOption(
-    # The file in which to write the "hg fastimport" stream that
-    # contains the changesets and branch/tag information:
-    os.path.join(ctx.tmpdir, 'hg-dump.dat'),
-
     # Write the file contents inline in the "hg fastimport" stream,
     # rather than using a separate blobs file (which "hg fastimport"
     # cannot handle).
@@ -498,6 +494,10 @@ ctx.output_option = GitOutputOption(
         #RCSRevisionReader(co_executable=r'co')
         CVSRevisionReader(cvs_executable=r'cvs')
         ),
+
+    # The file in which to write the "hg fastimport" stream that
+    # contains the changesets and branch/tag information:
+    os.path.join(ctx.tmpdir, 'hg-dump.dat'),
 
     # Optional map from CVS author names to hg author names:
     author_transforms=author_transforms,

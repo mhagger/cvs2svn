@@ -167,20 +167,20 @@ class GitOutputOption(DVCSOutputOption):
   _first_commit_mark = 1000000000
 
   def __init__(
-        self, dump_filename, revision_writer,
+        self, revision_writer, dump_filename,
         author_transforms=None,
         tie_tag_fixup_branches=False,
         ):
     """Constructor.
 
+    REVISION_WRITER is a GitRevisionWriter that is used to output
+    either the content of revisions or a mark that was previously used
+    to label a blob.
+
     DUMP_FILENAME is the name of the file to which the git-fast-import
     commands for defining revisions should be written.  (Please note
     that depending on the style of revision writer, the actual file
     contents might not be written to this file.)
-
-    REVISION_WRITER is a GitRevisionWriter that is used to output
-    either the content of revisions or a mark that was previously used
-    to label a blob.
 
     AUTHOR_TRANSFORMS is a map {cvsauthor : (fullname, email)} from
     CVS author names to git full name and email address.  All of the

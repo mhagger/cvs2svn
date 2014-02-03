@@ -193,8 +193,8 @@ A directory under \\fI%s\\fR (or the directory specified by
       ctx.output_option = NullOutputOption()
     else:
       ctx.output_option = GitOutputOption(
-          self.options.dumpfile,
           GitRevisionMarkWriter(),
+          self.options.dumpfile,
           # Optional map from CVS author names to git author names:
           author_transforms={}, # FIXME
           )

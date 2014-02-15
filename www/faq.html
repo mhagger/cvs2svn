@@ -43,9 +43,6 @@
   <li><a href="#repoaccess">How can I convert a CVS repository to
     which I only have remote access?</a></li>
 
-  <li><a href="#oneatatime">How can I convert my CVS repository one
-    module at a time?</a></li>
-
   <li><a href="#partialconversion">How can I convert part of a CVS
     repository?</a></li>
 
@@ -61,6 +58,9 @@
   <li><a href="#inverted">How can I convert project <tt>foo</tt> so
     that <tt>trunk/tags/branches</tt> are inside of
     <tt>foo</tt>?</a></li>
+
+  <li><a href="#oneatatime">What if I don't want to convert
+    all of my projects at once?</a></li>
 
   <li><a href="#eol-fixup">How do I fix up end-of-line translation
     problems?</a></li>
@@ -228,38 +228,6 @@ one of them, please tell us about your experience on the <a
 href="mailto:users@cvs2svn.tigris.org">users mailing list</a>.</p>
 
 
-<h3><a name="oneatatime" title="#oneatatime">How can I convert my CVS
-repository one module at a time?</a></h3>
-
-<p>If you need to convert certain CVS modules (in one large
-repository) to Subversion <b>now</b> and other modules <b>later</b>,
-you may want to convert your repository one module at a time.  This
-situation is typically encountered in large organizations where each
-project has a separate lifecycle and schedule, and a one-step
-conversion process is not practical.
-</p>
-
-<p>First you have to decide whether you want to put your converted
-projects into a single Subversion repositories or multiple ones.  This
-decision mostly depends on the degree of coupling between the projects
-and is beyond the scope of this FAQ.  See <a
-href="http://svnbook.red-bean.com/en/1.2/svn.reposadmin.projects.html#svn.reposadmin.projects.chooselayout">the
-Subversion book</a> for a discussion of repository organization.
-</p>
-
-<p>If you decide to convert your projects into separate Subversion
-repositories, then please follow the instructions in <a
-href="#partialconversion">How can I convert part of a CVS
-repository?</a> once for each repository.
-</p>
-
-<p>If you decide to put more than one CVS project into a single
-Subversion repository, then please follow the instructions in <a
-href="#onetoone">How can I convert separate projects in my CVS
-repository into a single Subversion repository?</a>.
-</p>
-
-
 <h3><a name="partialconversion" title="#partialconversion">How can I
 convert part of a CVS repository?</a></h3>
 
@@ -285,6 +253,11 @@ repository at <tt>/path/foo-svn</tt> that includes only the
 projects in my CVS repository into a single Subversion
 repository?</a></h3>
 
+<p>This question assumes that you will convert all of your projects at
+the same time.  If you must convert your projects at different times,
+please see <a href="#oneatatime">What if I don't want to convert all
+of my projects at once?</a></p>
+
 <p>cvs2svn supports multiproject conversions, but you have to use the
 <a href="cvs2svn.html#options-file-method">options file method</a> to
 start the conversion.  In your options file, you simply call
@@ -292,21 +265,21 @@ start the conversion.  In your options file, you simply call
 repository.  For example, if your CVS repository has the layout:</p>
 
 <pre>
-  /project_a
-  /project_b
+  /project-a
+  /project-b
 </pre>
 
   <p>and you want your Subversion repository to be laid out like this:</p>
 
 <pre>
-   project_a/
+   project-a/
       trunk/
          ...
       branches/
          ...
       tags/
          ...
-   project_b/
+   project-b/
       trunk/
          ...
       branches/
@@ -319,10 +292,10 @@ repository.  For example, if your CVS repository has the layout:</p>
 
 <pre>
 run_options.add_project(
-    'my/cvsrepo/project_a',
-    trunk_path='project_a/trunk',
-    branches_path='project_a/branches',
-    tags_path='project_a/tags',
+    'my/cvsrepo/project-a',
+    trunk_path='project-a/trunk',
+    branches_path='project-a/branches',
+    tags_path='project-a/tags',
     symbol_transforms=[
         #...whatever...
         ],
@@ -331,10 +304,10 @@ run_options.add_project(
         ],
     )
 run_options.add_project(
-    'my/cvsrepo/project_b',
-    trunk_path='project_b/trunk',
-    branches_path='project_b/branches',
-    tags_path='project_b/tags',
+    'my/cvsrepo/project-b',
+    trunk_path='project-b/trunk',
+    branches_path='project-b/branches',
+    tags_path='project-b/tags',
     symbol_transforms=[
         #...whatever...
         ],
@@ -462,6 +435,155 @@ run_options.add_project(
     href="#onetoone">How can I convert separate projects in my CVS
     repository into a single Subversion repository?</a> for more
     information.</p>
+
+
+<h3><a name="oneatatime" title="#oneatatime">What if I don't want to convert
+    all of my projects at once?</a></h3>
+
+<p>Suppose you need to convert some CVS projects to
+  Subversion <b>now</b> and other projects <b>later</b>.  This
+  situation is typically encountered in large organizations where each
+  project has a separate lifecycle and schedule, and a one-step
+  conversion process is not practical.</p>
+
+<p>First you have to decide whether you want to put your converted
+  projects into a single Subversion repository or multiple
+  repositories.  This is mostly an administrative decision and is
+  beyond the scope of this FAQ.
+  See <a href="http://svnbook.red-bean.com/en/1.2/svn.reposadmin.projects.html#svn.reposadmin.projects.chooselayout">the
+  Subversion book</a> for a discussion of repository organization.</p>
+
+<p>If you decide to convert your projects into separate Subversion
+  repositories, then please follow the instructions
+  in <a href="#partialconversion">How can I convert part of a CVS
+  repository?</a>, once for each repository.</p>
+
+<p>If, on the other hand, you want to convert the CVS projects at
+  different times but put them into a single Subversion repository,
+  then you need to follow the instructions in this section.</p>
+
+<p><b>NOTE:</b> importing projects one at a time into a single
+  Subversion repository will usually break date-based range commands
+  (e.g. <tt>svn diff -r {2002-02-17:2002-03-18}</tt>) for the
+  overlapping dates.  This is because Subversion uses a bisect-based
+  search to locate commits from a given date, and this algorithm fails
+  for non-monotonic dates.  While this is not the end of the world, it
+  can be an inconvenience.</p>
+
+<p>Remember that a multiproject Subversion repository should usually
+  be laid out like this:</p>
+
+<pre>
+   project-a/
+      trunk/
+         ...
+      branches/
+         ...
+      tags/
+         ...
+   project-b/
+      trunk/
+         ...
+      branches/
+         ...
+      tags/
+         ...
+</pre>
+
+<p>Note that each project has its own top-level directory that
+  contains <tt>trunk</tt>, <tt>branches</tt>, and <tt>tags</tt>
+  subdirectories.  The procedure is to convert each project separately
+  to a dumpfile with the following directory structure:</p>
+
+<pre>
+   project-a/
+      trunk/
+         ...
+      branches/
+         ...
+      tags/
+         ...
+</pre>
+
+<p>and then to load the dumpfile into the Subversion repository
+  using <tt>svnadmin load</tt>.</p>
+
+<p>Example:</p>
+
+<ol>
+  <li>If the svn repository doesn't already exist, create it:
+    <pre>
+      svnadmin create /path/to/svnrepos
+    </pre></li>
+
+  <li>Remember to <b>make a backup</b> before starting.  Never run
+    cvs2svn on a live CVS repository--always work on a copy of your
+    repository.</li>
+
+  <li>Run cvs2svn against one of the projects that you want converted:
+    <pre>
+      # Create a dumpfile containing the new CVS repository contents
+      $ cvs2svn --dumpfile=/tmp/project-a.dump \
+                --trunk=project-a/trunk \
+                --branches=project-a/branches \
+                --tags=project-a/tags \
+                /path/to/cvsrepo/project-a
+    </pre></li>
+
+
+  <li>Use <tt>svnadmin load</tt> to import the dump into the
+  Subversion repository:
+    <pre>
+      $ cd ~/svndump
+      $ svnadmin load /path/to/svnrepos &lt;/tmp/project-a.dump
+    </pre></li>
+
+  <li>Repeat steps 3 and 4 for each module you want to convert.</li>
+
+</ol>
+
+<p>Variations:</p>
+
+<ul>
+
+  <li>It is possible to convert more than one CVS repository per
+    batch; to do so, see <a href="#onetoone">How can I convert
+    separate projects in my CVS repository into a single Subversion
+    repository?</a>, remembering to have cvs2svn write its output to a
+    dumpfile each time.</li>
+
+  <li>For more complicated directory arrangements, it might be
+    necessary to use <tt>svnadmin load</tt>'s <tt>--parent-dir</tt>
+    option to place directories in their final location.  For example,
+    suppose you want the following layout in Subversion:
+
+<pre>
+   server/
+       project-a/
+       project-b/
+   client/
+       project-c/
+       project-d/
+</pre>
+
+    but you want to convert <tt>project-a</tt> and <tt>project-b</tt>
+    at different times.  The above recipe will not work, because
+    <tt>svnadmin load</tt> would give an error when <tt>project-b</tt>
+    tries to create directory <tt>server/</tt>, because the directory
+    already exists from when <tt>project-a</tt> was loaded.  The
+    solution is to convert <tt>project-b</tt> as a top-level project:
+    <pre>
+      $ cvs2svn --dumpfile=/tmp/project-b.dump \
+                /path/to/cvsrepo/project-b
+    </pre>
+    but then load it using the <tt>--parent-dir</tt> option:
+    <pre>
+      $ svnadmin load --parent-dir=project-b /path/to/svnrepos &lt;/tmp/project-b.dump
+    </pre>
+  </li>
+
+</ul>
+
 
 
 <h3><a name="eol-fixup" title="#eol-fixup">How do I fix up end-of-line

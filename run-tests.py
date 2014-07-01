@@ -358,11 +358,16 @@ def parse_log(svn_repos, symbols):
         this_log = Log(
             int(m.group('rev')), m.group('author'), m.group('date'), symbols)
         line = out.readline()
-        if not line.find('Changed paths:') == 0:
-          print 'unexpected log output (missing changed paths)'
+        if line == '\n':
+          # No changed paths
+          pass
+        elif line.startswith('Changed paths:'):
+          this_log.absorb_changed_paths(out)
+        else:
+          print 'unexpected log output'
           print "Line: '%s'" % line
           sys.exit(1)
-        this_log.absorb_changed_paths(out)
+
         absorb_message_body(out, int(m.group('lines')), this_log)
         logs[this_log.revision] = this_log
       elif len(line) == 0:

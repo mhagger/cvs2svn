@@ -689,6 +689,7 @@ class InitializeChangesetsPass(Pass):
       indexes = {}
       for (i, changeset_item) in enumerate(changeset_items):
         indexes[changeset_item.id] = i
+
       # How many internal dependencies would be broken by breaking the
       # Changeset after a particular index?
       breaks = [0] * len(changeset_items)
@@ -697,11 +698,12 @@ class InitializeChangesetsPass(Pass):
         succ_index = indexes[succ]
         breaks[min(pred_index, succ_index)] += 1
         breaks[max(pred_index, succ_index)] -= 1
+      for i in range(1, len(breaks)):
+        breaks[i] += breaks[i - 1]
+
       best_i = None
       best_count = -1
       best_time = 0
-      for i in range(1, len(breaks)):
-        breaks[i] += breaks[i - 1]
       for i in range(0, len(breaks) - 1):
         if breaks[i] > best_count:
           best_i = i

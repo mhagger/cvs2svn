@@ -717,7 +717,7 @@ class InitializeChangesetsPass(Pass):
           best_count = breaks[i]
           best_time = (changeset_items[i + 1].timestamp
                        - changeset_items[i].timestamp)
-      # Reuse the old changeset.id for the first of the split changesets.
+
       return [changeset_items[:best_i + 1], changeset_items[best_i + 1:]]
     else:
       return [changeset_items]

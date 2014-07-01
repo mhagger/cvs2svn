@@ -220,7 +220,7 @@ class Log:
 
   def absorb_changed_paths(self, out):
     'Read changed paths from OUT into self, until no more.'
-    while 1:
+    while True:
       line = out.readline()
       if len(line) == 1: return
       line = line[:-1]
@@ -341,7 +341,7 @@ def parse_log(svn_repos, symbols):
 
   out = LineFeeder(run_svn('log', '-v', repos_to_url(svn_repos)))
 
-  while 1:
+  while True:
     this_log = None
     line = out.readline()
     if not line: break
@@ -599,9 +599,9 @@ class Conversion:
     for line in self.stdout:
       if pattern_re.match(line):
         # We found the pattern that we were looking for.
-        return 1
+        return True
     else:
-      return 0
+      return False
 
   def find_tag_log(self, tagname):
     """Search LOGS for a log message containing 'TAGNAME' and return the

@@ -316,11 +316,13 @@ def parse_log(svn_repos, symbols):
 
   class LineFeeder:
     'Make a list of lines behave like an open file handle.'
+
     def __init__(self, lines):
-      self.lines = lines
+      self.lines = list(reversed(lines))
+
     def readline(self):
       if len(self.lines) > 0:
-        return self.lines.pop(0)
+        return self.lines.pop()
       else:
         return None
 

@@ -703,20 +703,20 @@ class InitializeChangesetsPass(Pass):
 
       best_i = None
       best_count = -1
-      best_time = 0
+      best_gap = 0
       for i in range(0, len(breaks) - 1):
         if breaks[i] > best_count:
           best_i = i
           best_count = breaks[i]
-          best_time = (changeset_items[i + 1].timestamp
+          best_gap = (changeset_items[i + 1].timestamp
                        - changeset_items[i].timestamp)
         elif breaks[i] == best_count \
              and (changeset_items[i + 1].timestamp
-                  - changeset_items[i].timestamp) < best_time:
+                  - changeset_items[i].timestamp) < best_gap:
           best_i = i
           best_count = breaks[i]
-          best_time = (changeset_items[i + 1].timestamp
-                       - changeset_items[i].timestamp)
+          best_gap = (changeset_items[i + 1].timestamp
+                      - changeset_items[i].timestamp)
 
       return [changeset_items[:best_i + 1], changeset_items[best_i + 1:]]
     else:

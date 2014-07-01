@@ -708,7 +708,7 @@ class InitializeChangesetsPass(Pass):
         gap = changeset_items[i + 1].timestamp - changeset_items[i].timestamp
         if (
             breaks[i] > best_count
-            or breaks[i] == best_count and gap < best_gap
+            or breaks[i] == best_count and gap > best_gap
             ):
           best_i = i
           best_count = breaks[i]

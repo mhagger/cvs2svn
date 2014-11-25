@@ -37,10 +37,12 @@ class _TokenStream:
     self.idx = 0
     self.buf = self.rcsfile.read(self.CHUNK_SIZE)
     if not self.buf:
-      raise RuntimeError, 'EOF'
+      self.buf = None
 
   def get(self):
-    "Get the next token from the RCS file."
+    """Get the next token from the RCS file.
+
+    Return None if EOF has been reached."""
 
     # Note: we can afford to loop within Python, examining individual
     # characters. For the whitespace and tokens, the number of iterations
@@ -48,6 +50,11 @@ class _TokenStream:
     # out more complex solutions.
 
     buf = self.buf
+
+    if buf is None:
+      # signal EOF by returning None as the token
+      return None
+
     lbuf = len(buf)
     idx = self.idx
 
@@ -56,7 +63,7 @@ class _TokenStream:
         buf = self.rcsfile.read(self.CHUNK_SIZE)
         if not buf:
           # signal EOF by returning None as the token
-          del self.buf   # so we fail if get() is called again
+          self.buf = None
           return None
         lbuf = len(buf)
         idx = 0

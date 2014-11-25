@@ -96,8 +96,8 @@ class _TokenStream:
         buf = self.rcsfile.read(self.CHUNK_SIZE)
         if not buf:
           # signal EOF by returning None as the token
-          del self.buf   # so we fail if get() is called again
-          return None
+          self.buf = None
+          return token
         lbuf = len(buf)
         idx = end = 0
 

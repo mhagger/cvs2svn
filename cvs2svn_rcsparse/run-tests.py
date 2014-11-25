@@ -30,8 +30,24 @@ from difflib import Differ
 script_dir = os.path.dirname(sys.argv[0])
 sys.path.insert(0, script_dir)
 
-from __init__ import parse
+try:
+  from texttools import Parser
+except ImportError:
+  from default import Parser
+
 from parse_rcs_file import LoggingSink
+
+def parse(file, sink):
+  """Parse an RCS file.
+
+  Parameters: FILE is the file object to parse.  (I.e. an object of the
+  built-in Python type "file", usually created using Python's built-in
+  "open()" function).  It should be opened in binary mode.
+  SINK is an instance of (some subclass of) Sink.  Its methods will be
+  called as the file is parsed; see the definition of Sink for the
+  details.
+  """
+  return Parser().parse(file, sink)
 
 
 test_dir = os.path.join(script_dir, 'test-data')

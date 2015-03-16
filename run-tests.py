@@ -976,6 +976,11 @@ def attr_exec():
   "detection of the executable flag"
   if sys.platform == 'win32':
     raise svntest.Skip()
+  st = os.stat(os.path.join('test-data', 'main-cvsrepos', 'single-files', 'attr-exec,v'))
+  if not st.st_mode & stat.S_IXUSR:
+    # This might be the case if the test is being run on a filesystem
+    # that is mounted "noexec".
+    raise svntest.Skip()
   conv = ensure_conversion('main')
   st = os.stat(conv.get_wc('trunk', 'single-files', 'attr-exec'))
   if not st.st_mode & stat.S_IXUSR:

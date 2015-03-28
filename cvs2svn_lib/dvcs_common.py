@@ -37,10 +37,10 @@ from cvs2svn_lib.svn_revision_range import RevisionScores
 from cvs2svn_lib.openings_closings import SymbolingsReader
 from cvs2svn_lib.repository_mirror import RepositoryMirror
 from cvs2svn_lib.output_option import OutputOption
-from cvs2svn_lib.property_setters import FilePropertySetter
+from cvs2svn_lib.property_setters import FileAndRevisionPropertySetter
 
 
-class KeywordHandlingPropertySetter(FilePropertySetter):
+class KeywordHandlingPropertySetter(FileAndRevisionPropertySetter):
   """Set property _keyword_handling to a specified value.
 
   This keyword is used to tell the RevisionReader whether it has to
@@ -105,6 +105,9 @@ class DVCSRunOptions(RunOptions):
 
     # Property setters for internal use:
     Ctx().file_property_setters.append(
+        KeywordHandlingPropertySetter('collapsed')
+        )
+    Ctx().revision_property_setters.append(
         KeywordHandlingPropertySetter('collapsed')
         )
 

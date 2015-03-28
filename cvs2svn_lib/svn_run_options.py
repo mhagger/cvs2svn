@@ -40,6 +40,7 @@ from cvs2svn_lib.symbol_strategy import TrunkPathRule
 from cvs2svn_lib.symbol_strategy import BranchesPathRule
 from cvs2svn_lib.symbol_strategy import TagsPathRule
 from cvs2svn_lib.property_setters import FilePropertySetter
+from cvs2svn_lib.property_setters import FileAndRevisionPropertySetter
 
 
 class SVNEOLFixPropertySetter(FilePropertySetter):
@@ -72,21 +73,21 @@ class SVNEOLFixPropertySetter(FilePropertySetter):
           )
 
 
-class SVNKeywordHandlingPropertySetter(FilePropertySetter):
+class SVNKeywordHandlingPropertySetter(FileAndRevisionPropertySetter):
   """Set _keyword_handling property based on the file mode and svn:keywords.
 
   This setting tells the RevisionReader that it has to collapse RCS
   keywords when generating the fulltext."""
 
-  def set_properties(self, cvs_file):
-    if cvs_file.mode == 'b' or cvs_file.mode == 'o':
+  def set_properties(self, cvs_file_or_rev):
+    if cvs_file_or_rev.mode == 'b' or cvs_file_or_rev.mode == 'o':
       # Leave keywords in the form that they were checked in.
       value = 'untouched'
-    elif cvs_file.mode == 'k':
+    elif cvs_file_or_rev.mode == 'k':
       # This mode causes CVS to collapse keywords on checkout, so we
       # do the same:
       value = 'collapsed'
-    elif cvs_file.properties.get('svn:keywords'):
+    elif cvs_file_or_rev.properties.get('svn:keywords'):
       # Subversion is going to expand the keywords, so they have to be
       # collapsed in the dumpfile:
       value = 'collapsed'
@@ -94,7 +95,7 @@ class SVNKeywordHandlingPropertySetter(FilePropertySetter):
       # CVS expands keywords, so we will too.
       value = 'expanded'
 
-    self.maybe_set_property(cvs_file, '_keyword_handling', value)
+    self.maybe_set_property(cvs_file_or_rev, '_keyword_handling', value)
 
 
 class SVNRunOptions(RunOptions):
@@ -500,6 +501,7 @@ A directory under \\fI%s\\fR (or the directory specified by
     # Property setters for internal use:
     Ctx().file_property_setters.append(SVNEOLFixPropertySetter())
     Ctx().file_property_setters.append(SVNKeywordHandlingPropertySetter())
+    Ctx().revision_property_setters.append(SVNKeywordHandlingPropertySetter())
 
   def process_options(self):
     # Consistency check for options and arguments.

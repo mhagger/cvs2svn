@@ -31,6 +31,7 @@ from cvs2svn_lib.external_blob_generator import ExternalBlobGenerator
 from cvs2svn_lib.output_option import NullOutputOption
 from cvs2svn_lib.git_output_option import GitRevisionMarkWriter
 from cvs2svn_lib.git_output_option import GitOutputOption
+from cvs2svn_lib.svn_run_options import SVNEOLFixPropertySetter
 
 
 class GitRunOptions(DVCSRunOptions):
@@ -199,3 +200,10 @@ A directory under \\fI%s\\fR (or the directory specified by
           # Optional map from CVS author names to git author names:
           author_transforms={}, # FIXME
           )
+
+  def process_property_setter_options(self):
+    super(GitRunOptions, self).process_property_setter_options()
+
+    # Property setters for internal use:
+    Ctx().file_property_setters.append(SVNEOLFixPropertySetter())
+    Ctx().revision_property_setters.append(SVNEOLFixPropertySetter())

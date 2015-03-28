@@ -535,6 +535,7 @@ ctx.revision_property_setters.extend([
     SVNBinaryKeywordsPropertySetter(),
     KeywordsPropertySetter(config.SVN_KEYWORDS_VALUE),
     SVNKeywordHandlingPropertySetter(),
+    SVNEOLFixPropertySetter(),
 
     ])
 

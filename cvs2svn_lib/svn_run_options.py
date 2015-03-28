@@ -39,11 +39,10 @@ from cvs2svn_lib.svn_output_option import NewRepositoryOutputOption
 from cvs2svn_lib.symbol_strategy import TrunkPathRule
 from cvs2svn_lib.symbol_strategy import BranchesPathRule
 from cvs2svn_lib.symbol_strategy import TagsPathRule
-from cvs2svn_lib.property_setters import FilePropertySetter
 from cvs2svn_lib.property_setters import FileAndRevisionPropertySetter
 
 
-class SVNEOLFixPropertySetter(FilePropertySetter):
+class SVNEOLFixPropertySetter(FileAndRevisionPropertySetter):
   """Set _eol_fix property.
 
   This keyword is used to tell the RevisionReader how to munge EOLs
@@ -60,16 +59,16 @@ class SVNEOLFixPropertySetter(FilePropertySetter):
       'native' : '\n',
       }
 
-  def set_properties(self, cvs_file):
+  def set_properties(self, cvs_file_or_rev):
     # Fix EOLs if necessary:
-    eol_style = cvs_file.properties.get('svn:eol-style', None)
+    eol_style = cvs_file_or_rev.properties.get('svn:eol-style', None)
     if eol_style:
       self.maybe_set_property(
-          cvs_file, '_eol_fix', self.EOL_REPLACEMENTS[eol_style]
+          cvs_file_or_rev, '_eol_fix', self.EOL_REPLACEMENTS[eol_style]
           )
     else:
       self.maybe_set_property(
-          cvs_file, '_eol_fix', None
+          cvs_file_or_rev, '_eol_fix', None
           )
 
 
@@ -500,6 +499,7 @@ A directory under \\fI%s\\fR (or the directory specified by
 
     # Property setters for internal use:
     Ctx().file_property_setters.append(SVNEOLFixPropertySetter())
+    Ctx().revision_property_setters.append(SVNEOLFixPropertySetter())
     Ctx().file_property_setters.append(SVNKeywordHandlingPropertySetter())
     Ctx().revision_property_setters.append(SVNKeywordHandlingPropertySetter())
 

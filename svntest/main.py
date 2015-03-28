@@ -1357,16 +1357,16 @@ class TestRunner:
 
   def _print_name(self, prefix):
     if self.pred.inprogress:
-      print("%s %s %s: %s [[WIMP: %s]]" % (prefix,
-                                           os.path.basename(sys.argv[0]),
-                                           str(self.index),
-                                           self.pred.description,
-                                           self.pred.inprogress))
+      print("%s %s %3d: %s [[WIMP: %s]]" % (prefix,
+                                            os.path.basename(sys.argv[0]),
+                                            self.index,
+                                            self.pred.description,
+                                            self.pred.inprogress))
     else:
-      print("%s %s %s: %s" % (prefix,
-                              os.path.basename(sys.argv[0]),
-                              str(self.index),
-                              self.pred.description))
+      print("%s %s %3d: %s" % (prefix,
+                               os.path.basename(sys.argv[0]),
+                               self.index,
+                               self.pred.description))
     sys.stdout.flush()
 
   def run(self):

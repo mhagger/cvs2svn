@@ -105,7 +105,7 @@ from cvs2svn_lib.property_setters import AutoPropsPropertySetter
 from cvs2svn_lib.property_setters import ConditionalPropertySetter
 from cvs2svn_lib.property_setters import cvs_file_is_binary
 from cvs2svn_lib.property_setters import CVSBinaryFileDefaultMimeTypeSetter
-from cvs2svn_lib.property_setters import CVSBinaryFileEOLStyleSetter
+from cvs2svn_lib.property_setters import CVSBinaryEOLStyleSetter
 from cvs2svn_lib.property_setters import DefaultEOLStyleSetter
 from cvs2svn_lib.property_setters import EOLStyleFromMimeTypeSetter
 from cvs2svn_lib.property_setters import ExecutablePropertySetter
@@ -414,9 +414,9 @@ ctx.file_property_setters.extend([
     # mime.types files):
     #MimeMapper(r'/etc/mime.types', ignore_case=False),
 
-    # Omit the svn:eol-style property from any files that are listed
+    # Omit the svn:eol-style property from any files/revisions that are listed
     # as binary (i.e., mode '-kb') in CVS:
-    CVSBinaryFileEOLStyleSetter(),
+    CVSBinaryEOLStyleSetter(),
 
     # If the file is binary and its svn:mime-type property is not yet
     # set, set svn:mime-type to 'application/octet-stream'.
@@ -466,6 +466,7 @@ ctx.file_property_setters.extend([
 ctx.revision_property_setters.extend([
     # The following are both file- and revision- PropertySetters
     # - one may want to add them to file_property_setters and revision_property_setters at the same time
+    CVSBinaryEOLStyleSetter(),
 
     ])
 

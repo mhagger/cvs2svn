@@ -56,7 +56,7 @@ from cvs2svn_lib.symbol_transform import RegexpSymbolTransform
 from cvs2svn_lib.symbol_transform import NormalizePathsSymbolTransform
 from cvs2svn_lib.property_setters import AutoPropsPropertySetter
 from cvs2svn_lib.property_setters import CVSBinaryFileDefaultMimeTypeSetter
-from cvs2svn_lib.property_setters import CVSBinaryFileEOLStyleSetter
+from cvs2svn_lib.property_setters import CVSBinaryEOLStyleSetter
 from cvs2svn_lib.property_setters import CVSRevisionNumberSetter
 from cvs2svn_lib.property_setters import DefaultEOLStyleSetter
 from cvs2svn_lib.property_setters import EOLStyleFromMimeTypeSetter
@@ -1036,7 +1036,8 @@ class RunOptions(object):
     for value in options.mime_types_files:
       ctx.file_property_setters.append(MimeMapper(value))
 
-    ctx.file_property_setters.append(CVSBinaryFileEOLStyleSetter())
+    ctx.file_property_setters.append(CVSBinaryEOLStyleSetter())
+    ctx.revision_property_setters.append(CVSBinaryEOLStyleSetter())
 
     ctx.file_property_setters.append(CVSBinaryFileDefaultMimeTypeSetter())
 

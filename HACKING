@@ -18,15 +18,19 @@ http://subversion.apache.org/docs/community-guide/conventions.html.
     The repository is readable by anybody using username="guest",
     password="" (i.e., just press return).
 
-  * Michael Haggerty maintains a git mirror of the trunk of cvs2svn
-    (and perhaps some other branches) at repo.or.cz.  The summary page
-    is at
+  * Michael Haggerty maintains a Git mirror of the trunk and some
+    other branches at GitHub:
 
-      http://repo.or.cz/w/cvs2svn.git
+      https://github.com/mhagger/cvs2svn
 
-    and the (read-only) mirror is at
+    The branches in this repository are subject to being rebased
+    and/or rewritten, though I'll try to avoid doing so with "master"
+    and release branches.
 
-      git://repo.or.cz/cvs2svn.git
+    Feel free to fork this repository and push your patches to your
+    fork, but please *also* email the dev mailing list with any
+    discussion and a link to the patches.  The mailing list remains
+    the main forum for discussing changes to cvs2svn.
 
 * Read the files under doc/, especially:
 

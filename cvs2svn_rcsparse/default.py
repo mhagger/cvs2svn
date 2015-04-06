@@ -36,7 +36,7 @@ class _TokenStream:
     self.rcsfile = file
     self.idx = 0
     self.buf = self.rcsfile.read(self.CHUNK_SIZE)
-    if self.buf == '':
+    if not self.buf:
       raise RuntimeError, 'EOF'
 
   def get(self):
@@ -54,7 +54,7 @@ class _TokenStream:
     while 1:
       if idx == lbuf:
         buf = self.rcsfile.read(self.CHUNK_SIZE)
-        if buf == '':
+        if not buf:
           # signal EOF by returning None as the token
           del self.buf   # so we fail if get() is called again
           return None
@@ -87,7 +87,7 @@ class _TokenStream:
 
         # we stopped at the end of the buffer, so we may have a partial token
         buf = self.rcsfile.read(self.CHUNK_SIZE)
-        if buf == '':
+        if not buf:
           # signal EOF by returning None as the token
           del self.buf   # so we fail if get() is called again
           return None
@@ -108,7 +108,7 @@ class _TokenStream:
       if idx == lbuf:
         idx = 0
         buf = self.rcsfile.read(self.CHUNK_SIZE)
-        if buf == '':
+        if not buf:
           raise RuntimeError, 'EOF'
         lbuf = len(buf)
       i = string.find(buf, '@', idx)

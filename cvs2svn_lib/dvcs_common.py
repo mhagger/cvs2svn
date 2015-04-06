@@ -131,7 +131,7 @@ class DVCSRunOptions(RunOptions):
         cvsroot,
         symbol_transforms=self.options.symbol_transforms,
         symbol_strategy_rules=self.options.symbol_strategy_rules,
-        exclude_paths=self.exclude_paths,
+        exclude_paths=self.options.exclude_paths,
         )
 
 

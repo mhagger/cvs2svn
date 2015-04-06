@@ -1,6 +1,6 @@
 # -*-python-*-
 #
-# Copyright (C) 1999-2008 The ViewCVS Group. All Rights Reserved.
+# Copyright (C) 1999-2014 The ViewCVS Group. All Rights Reserved.
 #
 # By using this file, you agree to the terms and conditions set forth in
 # the LICENSE.html file which can be found at the top level of the ViewVC
@@ -87,6 +87,10 @@ class _TokenStream:
 
         # we stopped at the end of the buffer, so we may have a partial token
         buf = self.rcsfile.read(self.CHUNK_SIZE)
+        if buf == '':
+          # signal EOF by returning None as the token
+          del self.buf   # so we fail if get() is called again
+          return None
         lbuf = len(buf)
         idx = end = 0
 

@@ -111,7 +111,7 @@ def process_refs(ref_type):
             elif objtype != "commit":
                 continue
 
-            if subject.startswith("This commit was manufactured by cvs2svn") \
+            if subject.startswith("This commit was manufactured by cvs2") \
                    or not subject:
                 # We shall try to move this ref, if possible
                 parent_list = []

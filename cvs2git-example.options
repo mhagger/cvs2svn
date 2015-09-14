@@ -163,7 +163,7 @@ ctx.revision_collector = GitRevisionCollector(
     # contains the file revision contents.  If None, it will be
     # written to a temporary file then streamed to stdout in
     # OutputPass:
-    blob_filename='cvs2git-tmp/git-blob.dat',
+    blob_filename=os.path.join(ctx.tmpdir, 'git-blob.dat'),
     )
 # This second alternative is vastly faster than the version above.  It
 # uses an external Python program to reconstruct the contents of CVS
@@ -171,7 +171,7 @@ ctx.revision_collector = GitRevisionCollector(
 # is None, the blobs will be written to a temporary file then streamed
 # to stdout in OutputPass:
 #ctx.revision_collector = ExternalBlobGenerator(
-#    blob_filename='cvs2git-tmp/git-blob.dat',
+#    blob_filename=os.path.join(ctx.tmpdir, 'git-blob.dat'),
 #    )
 
 # cvs2git doesn't need a revision reader because OutputPass only

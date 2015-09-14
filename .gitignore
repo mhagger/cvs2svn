@@ -9,6 +9,7 @@ val-tags
 /cvs2svn-tmp
 /*.tar.gz
 /svntest
+/.idea
 
 # Ignores in www/:
 /www/tigris-branding

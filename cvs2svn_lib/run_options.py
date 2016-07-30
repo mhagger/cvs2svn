@@ -16,6 +16,7 @@
 
 """This module contains classes to set common cvs2xxx run options."""
 
+import os
 import sys
 import re
 import optparse
@@ -883,11 +884,23 @@ class RunOptions(object):
     self.pass_manager.help_passes()
     sys.exit(0)
 
+  def _choose_build_date(self):
+    """Choose the data to embed in the man pages.
+
+    If environment variable SOURCE_DATE_EPOCH is set, use that.
+    Otherwise, use the current time."""
+
+    t = os.environ.get('SOURCE_DATE_EPOCH')
+    if t:
+      return datetime.datetime.utcfromtimestamp(int(t)).date()
+    else:
+      return datetime.date.today()
+
   def callback_manpage(self, option, opt_str, value, parser):
     f = codecs.getwriter('utf_8')(sys.stdout)
     writer = ManWriter(parser,
                        section='1',
-                       date=datetime.date.today(),
+                       date=self._choose_build_date(),
                        source='Version %s' % (VERSION,),
                        manual='User Commands',
                        short_desc=self.short_desc,

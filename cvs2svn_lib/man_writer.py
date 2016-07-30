@@ -93,7 +93,7 @@ class ManWriter(object):
         '.TH %s "%s" "%s" "%s" "%s"\n' % (
             self.parser.get_prog_name().upper(),
             self.section,
-            self.date.strftime('%b %d, %Y'),
+            self.date.strftime('%Y-%m-%d'),
             self.source,
             self.manual,
             )

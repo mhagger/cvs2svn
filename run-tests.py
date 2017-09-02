@@ -4061,7 +4061,6 @@ def newphrases():
       )
 
 
-@XFail_deco()
 @Cvs2SvnTestFunction
 def vendor_1_1_not_root():
   "supposed vendor 1.1 commit is not a root commit"

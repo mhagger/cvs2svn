@@ -567,6 +567,11 @@ class CVSFileItems(object):
     cvs_branch = vendor_lod_items.cvs_branch
     rev_1_1 = self[cvs_branch.source_id]
     assert isinstance(rev_1_1, CVSRevision)
+
+    if rev_1_1.prev_id:
+      # That's not a revision 1.1 after all, since it has a predecessor.
+      return
+
     logger.debug('Removing unnecessary revision %s' % (rev_1_1,))
 
     # Delete the 1.1.1 CVSBranch and sever the vendor branch from trunk:

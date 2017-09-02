@@ -1,0 +1,53 @@
+head	5.1;
+branch	5.1.0;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+5.1
+date	2014.01.08.18.04.10;	author author1;	state Exp;
+branches
+	5.1.0.1;
+next	1.1;
+
+1.1
+date	2002.08.23.16.30.15;	author author2;	state Exp;
+branches;
+next	;
+
+5.1.0.1
+date	2014.01.08.18.04.10;	author author1;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+5.1
+log
+@log 1@
+text
+@This text was last seen in HEAD (revision 5.1)
+@
+
+
+5.1.0.1
+log
+@log 2@
+text
+@@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d1 1
+a1 1
+This text was last seen in revision 1.1
+@

@@ -4061,6 +4061,16 @@ def newphrases():
       )
 
 
+@XFail_deco()
+@Cvs2SvnTestFunction
+def vendor_1_1_not_root():
+  "supposed vendor 1.1 commit is not a root commit"
+
+  ensure_conversion(
+      'vendor-1-1-non-root',
+      )
+
+
 ########################################################################
 # Run the tests
 
@@ -4279,6 +4289,7 @@ test_list = [
     log_message_eols,
     missing_vendor_branch,
     newphrases,
+    vendor_1_1_not_root,
     ]
 
 if __name__ == '__main__':

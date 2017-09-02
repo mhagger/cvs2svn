@@ -560,40 +560,42 @@ class CVSFileItems(object):
     assert vendor_lod_items.cvs_revisions
     cvs_rev = vendor_lod_items.cvs_revisions[0]
 
-    if isinstance(cvs_rev, CVSRevisionModification) \
-           and not cvs_rev.deltatext_exists:
-      cvs_branch = vendor_lod_items.cvs_branch
-      rev_1_1 = self[cvs_branch.source_id]
-      assert isinstance(rev_1_1, CVSRevision)
-      logger.debug('Removing unnecessary revision %s' % (rev_1_1,))
+    if not isinstance(cvs_rev, CVSRevisionModification) \
+       or cvs_rev.deltatext_exists:
+      return
 
-      # Delete the 1.1.1 CVSBranch and sever the vendor branch from trunk:
-      self._sever_branch(vendor_lod_items)
+    cvs_branch = vendor_lod_items.cvs_branch
+    rev_1_1 = self[cvs_branch.source_id]
+    assert isinstance(rev_1_1, CVSRevision)
+    logger.debug('Removing unnecessary revision %s' % (rev_1_1,))
 
-      # Delete rev_1_1:
-      self.root_ids.remove(rev_1_1.id)
-      del self[rev_1_1.id]
-      rev_1_2_id = rev_1_1.next_id
-      if rev_1_2_id is not None:
-        rev_1_2 = self[rev_1_2_id]
-        rev_1_2.prev_id = None
-        self.root_ids.add(rev_1_2.id)
+    # Delete the 1.1.1 CVSBranch and sever the vendor branch from trunk:
+    self._sever_branch(vendor_lod_items)
 
-      # Move any tags and branches from rev_1_1 to cvs_rev:
-      cvs_rev.tag_ids.extend(rev_1_1.tag_ids)
-      for id in rev_1_1.tag_ids:
-        cvs_tag = self[id]
-        cvs_tag.source_lod = cvs_rev.lod
-        cvs_tag.source_id = cvs_rev.id
-      cvs_rev.branch_ids[0:0] = rev_1_1.branch_ids
-      for id in rev_1_1.branch_ids:
-        cvs_branch = self[id]
-        cvs_branch.source_lod = cvs_rev.lod
-        cvs_branch.source_id = cvs_rev.id
-      cvs_rev.branch_commit_ids[0:0] = rev_1_1.branch_commit_ids
-      for id in rev_1_1.branch_commit_ids:
-        cvs_rev2 = self[id]
-        cvs_rev2.prev_id = cvs_rev.id
+    # Delete rev_1_1:
+    self.root_ids.remove(rev_1_1.id)
+    del self[rev_1_1.id]
+    rev_1_2_id = rev_1_1.next_id
+    if rev_1_2_id is not None:
+      rev_1_2 = self[rev_1_2_id]
+      rev_1_2.prev_id = None
+      self.root_ids.add(rev_1_2.id)
+
+    # Move any tags and branches from rev_1_1 to cvs_rev:
+    cvs_rev.tag_ids.extend(rev_1_1.tag_ids)
+    for id in rev_1_1.tag_ids:
+      cvs_tag = self[id]
+      cvs_tag.source_lod = cvs_rev.lod
+      cvs_tag.source_id = cvs_rev.id
+    cvs_rev.branch_ids[0:0] = rev_1_1.branch_ids
+    for id in rev_1_1.branch_ids:
+      cvs_branch = self[id]
+      cvs_branch.source_lod = cvs_rev.lod
+      cvs_branch.source_id = cvs_rev.id
+    cvs_rev.branch_commit_ids[0:0] = rev_1_1.branch_commit_ids
+    for id in rev_1_1.branch_commit_ids:
+      cvs_rev2 = self[id]
+      cvs_rev2.prev_id = cvs_rev.id
 
   def _is_unneeded_initial_trunk_delete(self, cvs_item, metadata_db):
     if not isinstance(cvs_item, CVSRevisionNoop):

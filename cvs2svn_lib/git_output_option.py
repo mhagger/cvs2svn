@@ -92,7 +92,7 @@ class GitRevisionMarkWriter(GitRevisionWriter):
       blobf.close()
 
   def _modify_file(self, cvs_item, post_commit):
-    if cvs_item.cvs_file.executable:
+    if cvs_item.cvs_file.executable or 'svn:executable' in cvs_item.cvs_file.properties:
       mode = '100755'
     else:
       mode = '100644'
@@ -117,7 +117,7 @@ class GitRevisionInlineWriter(GitRevisionWriter):
     self.revision_reader.start()
 
   def _modify_file(self, cvs_item, post_commit):
-    if cvs_item.cvs_file.executable:
+    if cvs_item.cvs_file.executable or 'svn:executable' in cvs_item.cvs_file.properties:
       mode = '100755'
     else:
       mode = '100644'

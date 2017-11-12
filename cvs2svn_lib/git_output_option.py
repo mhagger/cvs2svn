@@ -40,6 +40,8 @@ from cvs2svn_lib.dvcs_common import MirrorUpdater
 from cvs2svn_lib.key_generator import KeyGenerator
 from cvs2svn_lib.artifact_manager import artifact_manager
 
+def cvs_item_is_executable(cvs_item):
+  return 'svn:executable' in cvs_item.cvs_file.properties
 
 class GitRevisionWriter(MirrorUpdater):
 
@@ -92,7 +94,7 @@ class GitRevisionMarkWriter(GitRevisionWriter):
       blobf.close()
 
   def _modify_file(self, cvs_item, post_commit):
-    if cvs_item.cvs_file.executable or 'svn:executable' in cvs_item.cvs_file.properties:
+    if cvs_item_is_executable(cvs_item):
       mode = '100755'
     else:
       mode = '100644'
@@ -117,7 +119,7 @@ class GitRevisionInlineWriter(GitRevisionWriter):
     self.revision_reader.start()
 
   def _modify_file(self, cvs_item, post_commit):
-    if cvs_item.cvs_file.executable or 'svn:executable' in cvs_item.cvs_file.properties:
+    if cvs_item_is_executable(cvs_item):
       mode = '100755'
     else:
       mode = '100644'

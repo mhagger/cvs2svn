@@ -409,36 +409,6 @@ class GitOutputOption(DVCSOutputOption):
         for cvs_symbol in cvs_symbols:
           cvs_files_to_delete.discard(cvs_symbol.cvs_file)
 
-    # Write a trailer to the log message which describes the cherrypicks that
-    # make up this symbol creation.
-    log_msg += "\n"
-    if is_initial_lod_creation:
-      log_msg += "\nSprout from %s" % (
-          self._describe_commit(
-              Ctx()._persistence_manager.get_svn_commit(p_source_revnum),
-              p_source_lod
-              ),
-          )
-    for (source_revnum, source_lod, cvs_symbols,) \
-            in source_groups[(is_initial_lod_creation and 1 or 0):]:
-      log_msg += "\nCherrypick from %s:" % (
-          self._describe_commit(
-              Ctx()._persistence_manager.get_svn_commit(source_revnum),
-              source_lod
-              ),
-          )
-      for cvs_path in sorted(
-            cvs_symbol.cvs_file.cvs_path for cvs_symbol in cvs_symbols
-            ):
-        log_msg += "\n    %s" % (cvs_path,)
-    if is_initial_lod_creation:
-      if cvs_files_to_delete:
-        log_msg += "\nDelete:"
-        for cvs_path in sorted(
-              cvs_file.cvs_path for cvs_file in cvs_files_to_delete
-              ):
-          log_msg += "\n    %s" % (cvs_path,)
-
     self.f.write('commit %s\n' % (git_branch,))
     self.f.write('mark :%d\n' % (mark,))
     self.f.write('committer %s %d +0000\n' % (author, svn_commit.date,))

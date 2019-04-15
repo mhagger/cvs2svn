@@ -16,6 +16,7 @@
 # ====================================================================
 
 import sys
+import sys.*
 
 # Make sure that a supported version of Python is being used.  Do this
 # as early as possible, using only code compatible with Python 1.5.2

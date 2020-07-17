@@ -1,6 +1,6 @@
 # -*-python-*-
 #
-# Copyright (C) 1999-2014 The ViewCVS Group. All Rights Reserved.
+# Copyright (C) 1999-2020 The ViewCVS Group. All Rights Reserved.
 #
 # By using this file, you agree to the terms and conditions set forth in
 # the LICENSE.html file which can be found at the top level of the ViewVC
@@ -11,18 +11,20 @@
 # -----------------------------------------------------------------------
 
 import string
+import sys
 
 # note: this will raise an ImportError if it isn't available. the rcsparse
 # package will recognize this and switch over to the default parser.
 from mx import TextTools
 
-import common
+from . import common
+PY3 = (sys.version_info[0] >= 3)
 
 
 # for convenience
 _tt = TextTools
 
-_idchar_list = map(chr, range(33, 127)) + map(chr, range(160, 256))
+_idchar_list = list(map(chr, list(range(33, 127)))) + list(map(chr, list(range(160, 256))))
 _idchar_list.remove('$')
 _idchar_list.remove(',')
 #_idchar_list.remove('.')   # leave as part of 'num' symbol
@@ -136,7 +138,7 @@ class _mxTokenStream:
     #  \         4     6          12    14              /
     #   \_______/_____/            \    /              /
     #    \                           13               /
-    #     \__________________________________________/                    
+    #     \__________________________________________/
     #
     # #1: Skip over any whitespace.
     # #2: If now EOF, exit with code _E_COMPLETE.
@@ -317,7 +319,10 @@ class _mxTokenStream:
 #  _get = get
 #  def get(self):
     token = self._get()
-    print 'T:', `token`
+    if PY3:
+      print('T:', repr(token.decode('ascii', 'surrogateescape')))
+    else:
+      print('T:', repr(token))
     return token
 
   def match(self, match):
@@ -338,7 +343,7 @@ class _mxTokenStream:
       action = self._parse_more()
       if action == _EOF:
         ### fix this
-        raise RuntimeError, 'EOF hit while expecting tokens'
+        raise RuntimeError('EOF hit while expecting tokens')
     result = self.tokens[-count:]
     del self.tokens[-count:]
     return result

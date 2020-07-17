@@ -1,6 +1,6 @@
 # -*-python-*-
 #
-# Copyright (C) 1999-2014 The ViewCVS Group. All Rights Reserved.
+# Copyright (C) 1999-2020 The ViewCVS Group. All Rights Reserved.
 #
 # By using this file, you agree to the terms and conditions set forth in
 # the LICENSE.html file which can be found at the top level of the ViewVC
@@ -136,7 +136,7 @@ class _mxTokenStream:
     #  \         4     6          12    14              /
     #   \_______/_____/            \    /              /
     #    \                           13               /
-    #     \__________________________________________/                    
+    #     \__________________________________________/
     #
     # #1: Skip over any whitespace.
     # #2: If now EOF, exit with code _E_COMPLETE.

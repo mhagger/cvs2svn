@@ -1,10 +1,13 @@
-The following people have commit access to cvs2svn.  This is not a
-full list of cvs2svn's authors, however -- for that, you'd need to
-look over the log messages to see all the patch contributors.
+# Committers
 
-If you have a question or comment, it's probably best to mail
-dev@cvs2svn.tigris.org, rather than mailing any of these people
-directly.
+The following people had commit access to cvs2svn when it was in
+Subversion. This is not a full list of cvs2svn's authors, however —
+for that, you'd need to look over the log messages to see all the
+patch contributors.
+
+If you have a question or comment, please go to
+https://github.com/mhagger/cvs2svn, rather than mailing any of these
+people directly.
 
       cmpilato   C. Michael Pilato <cmpilato@collab.net>
         gstein   Greg Stein <gstein@lyra.org>
@@ -18,9 +21,3 @@ directly.
          david   David Summers <david@summersoft.fay.ar.us>
        mhagger   Michael Haggerty <mhagger@alum.mit.edu>
           ossi   Oswald Buddenhagen <ossi@kde.org>
-
-
-## Local Variables:
-## coding:utf-8
-## End:
-## vim:encoding=utf8

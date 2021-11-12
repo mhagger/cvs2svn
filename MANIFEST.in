@@ -7,9 +7,4 @@ include cvs2hg-example.options
 recursive-include svntest *
 recursive-include test-data *
 recursive-include doc *
-recursive-include www *
 recursive-include contrib *.py *.pl cvs2svn_memlog
-prune www/tigris-branding
-prune www/xhtml1-20020801
-prune www/xhtml1.catalog
-prune www/xhtml1.tgz

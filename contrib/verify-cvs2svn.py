@@ -5,16 +5,13 @@
 # Copyright (c) 2000-2009 CollabNet.  All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
-# you should have received as part of this distribution.  The terms
-# are also available at http://subversion.tigris.org/license-1.html.
-# If newer versions of this license are posted there, you may use a
-# newer version instead, at your option.
+# you should have received as part of this distribution.
 #
 # This software consists of voluntary contributions made by many
 # individuals.  For exact contribution history, see the revision
-# history and logs, available at http://cvs2svn.tigris.org/.
+# history and logs.
 # ====================================================================
-#
+
 # The purpose of verify-cvs2svn is to verify the result of a cvs2svn
 # repository conversion.  The following tests are performed:
 #
@@ -27,8 +24,6 @@
 # repository, and not the whole repository.  If you really did convert
 # a whole repository and need to check it, you must create a CVSROOT
 # directory above the current root using cvs init.
-#
-# ====================================================================
 
 import os
 import sys

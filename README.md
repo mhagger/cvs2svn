@@ -29,3 +29,8 @@ cvs2svn features or if you're debugging or patching cvs2svn, you might
 want to use the master version (which is usually quite stable). To do
 so, use Git to clone the repository, and run it straight from the
 working copy.
+
+This repository contains a `Dockerfile` that can be used to create a
+docker image in which cvs2svn can be run. (It has some dependencies
+that are no longer easily installable, so this is probably the easiest
+way to run cvs2svn.)

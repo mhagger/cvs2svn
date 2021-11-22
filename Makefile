@@ -3,7 +3,7 @@
 # The python interpreter to be used can be overridden here or via
 # something like "make ... PYTHON=/path/to/python2.5".  Please note
 # that this option only affects the "install" and "check" targets:
-PYTHON=python
+PYTHON := python
 
 all:
 	@echo "Supported make targets:"
@@ -31,12 +31,12 @@ dist:
 install:
 	@case "${DESTDIR}" in \
 	"") \
-	echo ${PYTHON} ./setup.py install ; \
-	${PYTHON} ./setup.py install ; \
-	;; \
+	    echo ${PYTHON} ./setup.py install ; \
+	    ${PYTHON} ./setup.py install ; \
+	    ;; \
 	*) \
-	echo ${PYTHON} ./setup.py install --root=${DESTDIR} ; \
-	${PYTHON} ./setup.py install --root=${DESTDIR} ; \
+	    echo ${PYTHON} ./setup.py install --root=${DESTDIR} ; \
+	    ${PYTHON} ./setup.py install --root=${DESTDIR} ; \
 	;; \
 	esac
 

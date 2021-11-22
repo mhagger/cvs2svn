@@ -53,6 +53,16 @@ cvs2svn requires the following:
   required. The CVS home page is http://ccvs.cvshome.org/. See the
   `--use-cvs` flag for more details.
 
+These dependencies are no longer so easy to find, so it might be
+convenient to use the `Dockerfile` in this repository to run
+`cvs2svn` inside a container. This can be done by running
+
+    make docker-image
+    docker run -it --rm \
+        --mount 'src=/path/to/my/cvs,dst=/cvs,readonly' \
+        --mount 'type=volume,src=/tmp,dst=/tmp' \
+        cvs2svn [OPTS] /cvs
+
 
 ## CVSNT repositories
 

@@ -137,6 +137,8 @@ def generate_edits_from_blocks(blocks):
 
   input_position = 0
   for (command, old_lines, new_lines) in blocks:
+    old_lines = msplit("".join(old_lines))
+    new_lines = msplit("".join(new_lines))
     if command == 'c':
       input_position += len(old_lines)
     elif command == 'r':
@@ -252,7 +254,13 @@ class RCSStream:
           yield ('c', copied_lines, copied_lines)
           del copied_lines
           input_pos = start
-        yield ('r', [], lines)
+        if lines[-1].endswith('\n') or input_pos == len(self._lines):
+          yield ('r', [], lines)
+        else:
+          copied_line = self._lines[input_pos]
+          yield ('r', [copied_line], lines + [copied_line])
+          del copied_line
+          input_pos = input_pos + 1
 
     # Pass along the part of the input that follows all of the delta
     # blocks:

@@ -1,0 +1,88 @@
+head	1.5;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.5
+date	2021.11.26.04.16.45;	author futatuki;	state Exp;
+branches;
+next	1.4;
+
+1.4
+date	2021.11.26.04.14.23;	author futatuki;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2021.11.26.03.46.06;	author futatuki;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2021.11.26.03.41.39;	author futatuki;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2021.11.26.03.34.28;	author futatuki;	state Exp;
+branches;
+next	;
+
+
+desc
+@create a new file irregular.txt
+@
+
+
+1.5
+log
+@r1.5:
+@
+text
+@aaa
+bbb
+ccc
+hhh@
+
+
+1.4
+log
+@r1.4:
+@
+text
+@d4 1
+a4 1
+ggg@
+
+
+1.3
+log
+@r1.3: s/eee/fff/
+@
+text
+@d3 1
+a3 1
+fff@
+
+
+1.2
+log
+@r1.2: s/ddd/eee/
+@
+text
+@d3 1
+a3 1
+eee@
+
+
+1.1
+log
+@r1.1
+@
+text
+@d3 1
+a3 1
+ddd@
+

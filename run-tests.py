@@ -46,6 +46,7 @@ import locale
 import textwrap
 import calendar
 import types
+import subprocess
 try:
   from hashlib import md5
 except ImportError:
@@ -53,9 +54,9 @@ except ImportError:
 from difflib import Differ
 
 # Make sure that a supported version of Python is being used:
-if not (0x02040000 <= sys.hexversion < 0x03000000):
+if not (0x02070000 <= sys.hexversion < 0x03000000):
   sys.stderr.write(
-      'error: Python 2, version 2.4 or higher required.\n'
+      'error: Python 2, version 2.7 or higher required.\n'
       )
   sys.exit(1)
 
@@ -4309,6 +4310,10 @@ if __name__ == '__main__':
   svntest.main.svnlook_binary     = svnlook_binary
   svntest.main.svnadmin_binary    = svnadmin_binary
   svntest.main.svnversion_binary  = svnversion_binary
+
+  # check version of svn_binary
+  svn_version = subprocess.check_output([svn_binary, '--version', '-q'])
+  svntest.main.SVN_VER_MINOR  = int(svn_version.split('.')[1])
 
   svntest.main.run_tests(test_list)
   # NOTREACHED

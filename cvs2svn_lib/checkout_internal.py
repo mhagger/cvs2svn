@@ -102,7 +102,10 @@ from cvs2svn_lib.rcsparser import parse
 
 
 class TextRecord(object):
-  """Bookkeeping data for the text of a single CVSRevision."""
+  """Bookkeeping data for the text of a single CVSRevision.
+
+  The text is stored as the list of logical lines manipulated
+  by RCSStream."""
 
   __slots__ = ['id', 'refcount']
 
@@ -137,7 +140,7 @@ class TextRecord(object):
   def checkout_as_lines(self, text_record_db):
     """Workhorse of the checkout process.
 
-    Return the text for this revision as list of logical lines,
+    Return the text for this revision as a list of logical lines,
     decrement our reference count, and update the databases depending
     on whether there will be future checkouts."""
 
@@ -146,7 +149,8 @@ class TextRecord(object):
   def checkout(self, text_record_db):
     """Return the text for this revision.
 
-     Just same as checkout_as_lines() but returns text as flat text string."""
+    Just as checkout_as_lines(), but returns the text as a flat text
+    string."""
 
     return "".join(self.checkout_as_lines(text_record_db))
 
@@ -165,7 +169,7 @@ class FullTextRecord(TextRecord):
   These records are used for revisions whose fulltext was determined
   by the InternalRevisionCollector during FilterSymbolsPass.  The
   fulltext for such a revision is is stored in the delta_db as a
-  single string."""
+  list of logical lines manipulated by RCSStream."""
 
   __slots__ = []
 
@@ -221,7 +225,7 @@ class DeltaTextRecord(TextRecord):
     del rcs_stream
     self.refcount -= 1
     if self.refcount == 0:
-      # This text will never be needed again; just delete ourselves
+      # This lines will never be needed again; just delete ourselves
       # without ever having stored the fulltext to the checkout
       # database:
       del text_record_db[self.id]
@@ -248,7 +252,8 @@ class CheckedOutTextRecord(TextRecord):
 
   These records are used for revisions whose fulltext has been
   computed already during OutputPass.  The fulltext for such a
-  revision is stored in the text_record_db as a single string."""
+  revision is stored in the text_record_db as a list of logical
+  lines manipulated by RCSStream."""
 
   __slots__ = []
 

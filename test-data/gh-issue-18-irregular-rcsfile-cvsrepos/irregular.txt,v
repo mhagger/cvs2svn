@@ -1,9 +1,14 @@
-head	1.5;
+head	1.6;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.6
+date	2021.12.21.11.21.57;	author futatuki;	state Exp;
+branches;
+next	1.5;
 
 1.5
 date	2021.11.26.04.16.45;	author futatuki;	state Exp;
@@ -42,15 +47,26 @@ desc
 @
 
 
+1.6
+log
+@r1.6:
+@
+text
+@aaa
+bbb
+bc
+cc
+hhh@
+
+
 1.5
 log
 @r1.5:
 @
 text
-@aaa
-bbb
-ccc
-hhh@
+@d3 1
+a3 1
+c@
 
 
 1.4
@@ -58,8 +74,8 @@ log
 @r1.4:
 @
 text
-@d4 1
-a4 1
+@d5 1
+a5 1
 ggg@
 
 
@@ -68,8 +84,8 @@ log
 @r1.3: s/eee/fff/
 @
 text
-@d3 1
-a3 1
+@d4 1
+a4 1
 fff@
 
 
@@ -78,8 +94,8 @@ log
 @r1.2: s/ddd/eee/
 @
 text
-@d3 1
-a3 1
+@d4 1
+a4 1
 eee@
 
 
@@ -88,8 +104,8 @@ log
 @rev:1.2.1.1
 @
 text
-@d3 1
-a3 2
+@d4 1
+a4 2
 ccc
 eeeggg
 @
@@ -100,7 +116,7 @@ log
 @r1.1
 @
 text
-@d3 1
-a3 1
+@d4 1
+a4 1
 ddd@
 

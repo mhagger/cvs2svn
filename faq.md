@@ -75,8 +75,7 @@ CVS repository via the CVS protocol:
 
 * [cvsclone](http://samba.org/ftp/tridge/rtc/cvsclone.l)
 
-* [CVSsuck](http://cvs.m17n.org/~akr/cvssuck/)
-
+* [CVSsuck](https://github.com/nathanclayton/cvssuck) - see [cvssuck and cvs2svn gist](https://gist.github.com/mbohun/3832048) for an example
 
 It should be possible to use one of these tools to fetch a copy of
 your CVS repository from your provider, then to use cvs2svn to convert

@@ -102,7 +102,10 @@ from cvs2svn_lib.rcsparser import parse
 
 
 class TextRecord(object):
-  """Bookkeeping data for the text of a single CVSRevision."""
+  """Bookkeeping data for the text of a single CVSRevision.
+
+  The text is stored as the list of logical lines manipulated
+  by RCSStream."""
 
   __slots__ = ['id', 'refcount']
 
@@ -134,14 +137,22 @@ class TextRecord(object):
     if self.refcount == 0:
       text_record_db.discard(self.id)
 
-  def checkout(self, text_record_db):
+  def checkout_as_lines(self, text_record_db):
     """Workhorse of the checkout process.
 
-    Return the text for this revision, decrement our reference count,
-    and update the databases depending on whether there will be future
-    checkouts."""
+    Return the text for this revision as a list of logical lines,
+    decrement our reference count, and update the databases depending
+    on whether there will be future checkouts."""
 
     raise NotImplementedError()
+
+  def checkout(self, text_record_db):
+    """Return the text for this revision.
+
+    Just as checkout_as_lines(), but returns the text as a flat text
+    string."""
+
+    return "".join(self.checkout_as_lines(text_record_db))
 
   def free(self, text_record_db):
     """This instance will never again be checked out; free it.
@@ -158,7 +169,7 @@ class FullTextRecord(TextRecord):
   These records are used for revisions whose fulltext was determined
   by the InternalRevisionCollector during FilterSymbolsPass.  The
   fulltext for such a revision is is stored in the delta_db as a
-  single string."""
+  list of logical lines manipulated by RCSStream."""
 
   __slots__ = []
 
@@ -168,10 +179,10 @@ class FullTextRecord(TextRecord):
   def __setstate__(self, state):
     (self.id, self.refcount,) = state
 
-  def checkout(self, text_record_db):
-    text = text_record_db.delta_db[self.id]
+  def checkout_as_lines(self, text_record_db):
+    lines = text_record_db.delta_db[self.id]
     self.decrement_refcount(text_record_db)
-    return text
+    return lines
 
   def free(self, text_record_db):
     del text_record_db.delta_db[self.id]
@@ -205,26 +216,26 @@ class DeltaTextRecord(TextRecord):
   def increment_dependency_refcounts(self, text_record_db):
     text_record_db[self.pred_id].refcount += 1
 
-  def checkout(self, text_record_db):
-    base_text = text_record_db[self.pred_id].checkout(text_record_db)
-    rcs_stream = RCSStream(base_text)
+  def checkout_as_lines(self, text_record_db):
+    base_lines = text_record_db[self.pred_id].checkout_as_lines(text_record_db)
+    rcs_stream = RCSStream(base_lines)
     delta_text = text_record_db.delta_db[self.id]
     rcs_stream.apply_diff(delta_text)
-    text = rcs_stream.get_text()
+    lines = rcs_stream.get_lines()
     del rcs_stream
     self.refcount -= 1
     if self.refcount == 0:
-      # This text will never be needed again; just delete ourselves
+      # This lines will never be needed again; just delete ourselves
       # without ever having stored the fulltext to the checkout
       # database:
       del text_record_db[self.id]
     else:
       # Store a new CheckedOutTextRecord in place of ourselves:
-      text_record_db.checkout_db['%x' % self.id] = text
+      text_record_db.checkout_db['%x' % self.id] = lines
       new_text_record = CheckedOutTextRecord(self.id)
       new_text_record.refcount = self.refcount
       text_record_db.replace(new_text_record)
-    return text
+    return lines
 
   def free(self, text_record_db):
     del text_record_db.delta_db[self.id]
@@ -241,7 +252,8 @@ class CheckedOutTextRecord(TextRecord):
 
   These records are used for revisions whose fulltext has been
   computed already during OutputPass.  The fulltext for such a
-  revision is stored in the text_record_db as a single string."""
+  revision is stored in the text_record_db as a list of logical
+  lines manipulated by RCSStream."""
 
   __slots__ = []
 
@@ -251,10 +263,10 @@ class CheckedOutTextRecord(TextRecord):
   def __setstate__(self, state):
     (self.id, self.refcount,) = state
 
-  def checkout(self, text_record_db):
-    text = text_record_db.checkout_db['%x' % self.id]
+  def checkout_as_lines(self, text_record_db):
+    lines = text_record_db.checkout_db['%x' % self.id]
     self.decrement_refcount(text_record_db)
-    return text
+    return lines
 
   def free(self, text_record_db):
     del text_record_db.checkout_db['%x' % self.id]
@@ -533,7 +545,7 @@ class _Sink(Sink):
         # This is revision 1.1.  Write its fulltext:
         text_record = FullTextRecord(cvs_rev_id)
         self.revision_collector._writeout(
-            text_record, self._rcs_stream.get_text()
+            text_record, self._rcs_stream.get_lines()
             )
 
         # There will be no more trunk revisions delivered, so free the

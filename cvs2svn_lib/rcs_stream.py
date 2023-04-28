@@ -174,12 +174,20 @@ class RCSStream:
   def __init__(self, text):
     """Instantiate and initialize the file content with TEXT."""
 
-    self.set_text(text)
+    if isinstance(text, bytes):
+      self.set_text(text)
+    else:
+      self.set_lines(text)
 
   def get_text(self):
     """Return the current file content."""
 
     return "".join(self._lines)
+
+  def get_lines(self):
+    """Return the current file content as list of logical lines."""
+
+    return self._lines
 
   def set_lines(self, lines):
     """Set the current contents to the specified LINES.
